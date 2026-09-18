@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "festfinder-design",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5500", "--bind", "127.0.0.1", "--directory", "design_handoff_festfinder/design"],
+      "port": 5500
+    },
+    {
+      "name": "festfinder-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "festfinder-backend"],
+      "port": 4000
+    }
+  ]
+}

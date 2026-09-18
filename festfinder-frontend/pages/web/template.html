@@ -1,0 +1,1473 @@
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+  body { margin:0; background:#06080D; font-family:'Manrope',system-ui,sans-serif; }
+  a { color:#2AC4E8; text-decoration:none; }
+  a:hover { color:#7FE0F5; }
+  *::-webkit-scrollbar { width:0 !important; height:0 !important; display:none; }
+  @keyframes ffRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes ffShimmer { from { background-position:-520px 0; } to { background-position:520px 0; } }
+  @keyframes ffDrift { 0%,100% { transform:translate3d(0,0,0) scale(1); } 50% { transform:translate3d(40px,-30px,0) scale(1.15); } }
+  @keyframes ffPulse { 0%,100% { opacity:.35; transform:scale(1); } 50% { opacity:.06; transform:scale(2.6); } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#06080D;color:#F3F6FC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden">
+
+<div style="position:fixed;top:-220px;left:-140px;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle,rgba(42,196,232,.16),transparent 66%);filter:blur(70px);animation:ffDrift 24s ease-in-out infinite;pointer-events:none;z-index:0"></div>
+<div style="position:fixed;bottom:-280px;right:-180px;width:660px;height:660px;border-radius:50%;background:radial-gradient(circle,rgba(140,107,255,.16),transparent 66%);filter:blur(80px);animation:ffDrift 30s ease-in-out infinite reverse;pointer-events:none;z-index:0"></div>
+
+<div style="position:sticky;top:0;z-index:40;background:rgba(10,14,26,.72);backdrop-filter:blur(26px) saturate(1.6);-webkit-backdrop-filter:blur(26px) saturate(1.6);border-bottom:1px solid rgba(38,47,68,.9)">
+  
+</div>
+
+<div style="position:fixed;right:22px;bottom:22px;z-index:60;display:flex;padding:5px;border-radius:999px;background:rgba(18,24,38,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid #33405C;box-shadow:0 16px 40px rgba(0,0,0,.6)">
+  <sc-for list="{{ screenTabs }}" as="t" hint-placeholder-count="3">
+    <div onClick="{{ t.go }}" style="cursor:pointer;padding:9px 15px;border-radius:999px;font-size:11.5px;font-weight:800;white-space:nowrap;transition:all .15s;background: {{ t.bg }};color: {{ t.fg }}">{{ t.label }}</div>
+  </sc-for>
+</div>
+
+<sc-if value="{{ isExplore }}" hint-placeholder-val="{{ true }}">
+<div style="position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:34px 28px 90px">
+
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:28px;flex-wrap:wrap;margin-bottom:26px">
+    <div style="width:100%;box-sizing:border-box;min-width:0;padding:14px 0;display:flex;align-items:center;gap:10px;flex-wrap:nowrap">
+    
+    
+    <img src="/ui/assets/ff-logo.png" alt="FestFinder" style="height: 30px; width: 127px; display: block; flex: none"><div style="flex: 1 1 140px; min-width: 0; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 12px; background: rgba(18,24,38,.7); border: 1px solid #262F44; transition: border-color .15s" style-hover="border-color:#39455F">
+      <i class="ph-bold ph-magnifying-glass" style="font-size:15px;color:#8891A8;flex:none"></i>
+      <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="{{ L.searchPh }}" style="flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #F3F6FC; font-family: 'Manrope',sans-serif; font-size: 13px; font-weight: 600">
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 999px; background: rgba(18,24,38,.7); border: 1px solid #262F44; font-size: 12.5px; font-weight: 700; white-space: nowrap; cursor: pointer; flex: none" style-hover="border-color:#2AC4E8">
+      <span style="width:6px;height:6px;border-radius:50%;background:#8C6BFF;box-shadow:0 0 8px #8C6BFF"></span>{{ cityLabel }}<i class="ph-bold ph-caret-down" style="font-size:11px;color:#7C859C"></i>
+    </div><div onClick="{{ goOrganizer }}" style="cursor:pointer;flex:none;padding:9px 13px;border-radius:12px;border:1px solid #2AC4E8;color:#2AC4E8;font-size:12px;font-weight:800;white-space:nowrap;transition:all .15s" style-hover="background:#2AC4E8;color:#0A0E1A">{{ L.listEvent }}</div><div onClick="{{ openAds }}" style="cursor: pointer; flex: none; padding: 9px 13px; border-radius: 12px; border: 1px solid #262F44; color: #C3CBDC; font-size: 12px; font-weight: 800; white-space: nowrap; transition: all .15s" style-hover="border-color:#8C6BFF;color:#C9BCFF">{{ L.advertise }}</div><div style="flex:1"></div>
+    
+    
+    <div style="flex:none;display:flex;align-items:center;gap:8px">
+      <sc-if value="{{ signedOut }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:8px;flex:none">
+          <div onClick="{{ startLogIn }}" style="cursor:pointer;padding:9px 13px;border-radius:12px;border:1px solid #262F44;color:#F3F6FC;font-size:12px;font-weight:800;white-space:nowrap;transition:all .15s" style-hover="border-color:#2AC4E8;color:#2AC4E8">{{ L.logIn }}</div>
+          <div onClick="{{ startSignUp }}" style="cursor:pointer;padding:9px 13px;border-radius:12px;background:#2AC4E8;color:#0A0E1A;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 10px 26px rgba(42,196,232,.22);transition:transform .15s" style-hover="transform:translateY(-1px)">{{ L.signUp }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;flex:none">
+          <div onClick="{{ toggleAcct }}" style="cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 4px 11px 4px 4px; border-radius: 999px; background: rgba(18,24,38,.7); border: 1px solid #262F44; transition: border-color .15s; width: 46px; height: 27px" style-hover="border-color:#2AC4E8">
+            <sc-if value="{{ hasPhoto }}" hint-placeholder-val="{{ false }}">
+              <div style="width:30px;height:30px;border-radius:50%;flex:none;background: {{ photoBg }}"></div>
+            </sc-if>
+            <sc-if value="{{ noPhoto }}" hint-placeholder-val="{{ true }}">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2AC4E8,#8C6BFF);display:flex;align-items:center;justify-content:center;color:#0A0E1A;font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:13px;flex:none">{{ userInitial }}</div>
+            </sc-if>
+            <i class="ph-bold ph-caret-down" style="font-size:11px;color:#7C859C"></i>
+          </div>
+          <sc-if value="{{ acctOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:46px;right:0;width:238px;padding:15px;border-radius:16px;background:rgba(18,24,38,.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid #33405C;box-shadow:0 22px 50px rgba(0,0,0,.6);z-index:60;animation:ffRise .18s ease both">
+              <div style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ userName }}</div>
+              <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:5px;display:flex;align-items:center;gap:5px"><i class="ph-fill ph-check-circle" style="font-size:12px;color:#2E9E5B;flex:none"></i>{{ userVia }}</div>
+              <div onClick="{{ openEdit }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:13px;padding:10px 11px;border-radius:12px;background:rgba(26,34,51,.7);border:1px solid #262F44;font-size:12px;font-weight:800;color:#F3F6FC;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="ph-bold ph-user-gear" style="font-size:14px;color:#2AC4E8;flex:none"></i>{{ L.editProfile }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:11px;color:#7C859C;flex:none"></i></div>
+              <div style="height:1px;background:#262F44;margin:13px 0"></div>
+              <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ L.connected }}</div>
+              <div style="display:flex;align-items:center;gap:7px;margin:-2px 0 9px"><i class="ph-bold ph-users-three" style="font-size:13px;color:#2AC4E8;flex:none"></i><div style="font-size:11px;font-weight:700;color:#C3CBDC">{{ L.connectFriends }}</div></div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <sc-for list="{{ connectRows }}" as="c" hint-placeholder-count="3">
+                  <div onClick="{{ c.go }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;background:rgba(26,34,51,.6);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#2AC4E8">
+                    <i class="{{ c.icon }}" style="font-size:15px;flex:none;color: {{ c.color }}"></i>
+                    <div style="flex:1;min-width:0;font-size:12px;font-weight:700">{{ c.label }}</div>
+                    <div style="font-size:10.5px;font-weight:800;color: {{ c.stateColor }}">{{ c.state }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="height:1px;background:#262F44;margin:13px 0"></div>
+              <div onClick="{{ openSaved }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:rgba(42,196,232,.08);border:1px solid rgba(42,196,232,.34);font-size:12px;font-weight:800;color:#7FE0F5;transition:all .15s" style-hover="background:rgba(42,196,232,.18);border-color:#2AC4E8">
+                <i class="ph-fill ph-heart" style="font-size:14px;flex:none"></i>
+                <div style="flex:1;min-width:0">{{ L.savedCount }}</div>
+                <div style="font-weight:800;color:#F3F6FC">{{ savedCount }}</div>
+                <i class="ph-bold ph-caret-right" style="font-size:12px;flex:none;color:#7C859C"></i>
+              </div>
+              <div onClick="{{ openNotifPrefs }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;margin-top:8px;padding:11px 12px;border-radius:12px;background:rgba(26,34,51,.7);border:1px solid #262F44;font-size:12px;font-weight:800;color:#F3F6FC;transition:border-color .15s" style-hover="border-color:#2AC4E8">
+                <i class="ph-bold ph-bell" style="font-size:14px;flex:none;color:#2AC4E8"></i>
+                <div style="flex:1;min-width:0">{{ L.notifPrefs }}</div>
+                <div style="font-size:10.5px;font-weight:800;color:#7C859C">{{ notifOnCount }}</div>
+                <i class="ph-bold ph-caret-right" style="font-size:12px;flex:none;color:#7C859C"></i>
+              </div>
+              <div onClick="{{ signOutNow }}" style="cursor:pointer;margin-top:13px;padding:10px;border-radius:12px;border:1px solid #262F44;text-align:center;font-size:12px;font-weight:800;color:#8891A8;transition:all .15s" style-hover="border-color:#FF8A3D;color:#FFB35C">{{ L.signOut }}</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div><div>
+      <div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:10px">{{ L.kicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(32px,4.2vw,46px);line-height:1.06;text-transform:uppercase;margin:0;letter-spacing:-.02em;max-width:640px;text-wrap:pretty">{{ L.h1a }} <span style="color:#2AC4E8">{{ L.h1b }}</span></h1>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <sc-for list="{{ statCards }}" as="s" hint-placeholder-count="3">
+        <div onClick="{{ s.open }}" title="{{ s.hint }}" style="cursor:pointer;min-width:126px;padding:14px 16px;border-radius:16px;background:rgba(18,24,38,.66);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #262F44;transition:border-color .15s, transform .15s" style-hover="border-color:#39455F;transform:translateY(-2px)" style-active="transform:translateY(0)">
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:23px;color: {{ s.color }}">{{ s.value }}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+            <div style="font-size:11px;font-weight:700;color:#8891A8;letter-spacing:.02em">{{ s.label }}</div>
+            <i class="ph-bold ph-arrow-up-right" style="font-size:11px;color:#7C859C;flex:none"></i>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;align-items:start">
+
+    <div style="position:sticky;top:96px;display:flex;flex-direction:column;gap:20px;padding:20px;border-radius:20px;background:rgba(18,24,38,.6);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ L.when }}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ timeOptions }}" as="t" hint-placeholder-count="4">
+            <div onClick="{{ t.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;font-size:12.5px;font-weight:700;transition:all .15s;background: {{ t.bg }};border:1px solid {{ t.bd }};color: {{ t.fg }}">
+              <i class="{{ t.icon }}" style="font-size:14px;flex:none"></i><span style="flex:1;min-width:0">{{ t.label }}</span><span style="font-size:11px;font-weight:800;color: {{ t.countColor }}">{{ t.count }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="height:1px;background:#262F44"></div>
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ L.genre }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ genreOptions }}" as="g" hint-placeholder-count="8">
+            <div onClick="{{ g.pick }}" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:11.5px;font-weight:700;transition:all .15s;background: {{ g.bg }};border:1px solid {{ g.bd }};color: {{ g.fg }}">{{ g.name }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="height:1px;background:#262F44"></div>
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ L.price }}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ priceOptions }}" as="p" hint-placeholder-count="3">
+            <div onClick="{{ p.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;font-size:12.5px;font-weight:700;transition:all .15s;background: {{ p.bg }};border:1px solid {{ p.bd }};color: {{ p.fg }}">
+              <span style="width:14px;height:14px;border-radius:4px;border:1.5px solid {{ p.boxBd }};background: {{ p.boxBg }};display:flex;align-items:center;justify-content:center;flex:none"><i class="ph-bold ph-check" style="font-size:9px;color:#0A0E1A;opacity: {{ p.tick }}"></i></span>{{ p.label }}
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div onClick="{{ resetFilters }}" style="cursor:pointer;text-align:center;padding:10px;border-radius:12px;border:1px solid #262F44;font-size:11.5px;font-weight:800;color:#8891A8;transition:all .15s" style-hover="border-color:#2AC4E8;color:#2AC4E8">{{ L.reset }}</div>
+    </div>
+
+    <div>
+      <sc-if value="{{ hero }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ hero.open }}" style="cursor:pointer;position:relative;border-radius:24px;overflow:hidden;border:1px solid rgba(140,107,255,.4);margin-bottom:22px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);min-height:264px;transition:border-color .2s,transform .2s" style-hover="border-color:#8C6BFF;transform:translateY(-2px)">
+          <div style="position:relative;background: {{ hero.art }};min-height:190px">
+            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,14,26,.1),rgba(18,24,38,.92))"></div>
+            <div style="position:absolute;top:16px;left:16px;display:flex;gap:7px">
+              <div style="padding:6px 11px;border-radius:999px;background:#8C6BFF;color:#0A0E1A;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em">{{ hero.badge }}</div>
+              <div style="padding:6px 11px;border-radius:999px;background:rgba(10,14,26,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(243,246,252,.2);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em">{{ hero.genre }}</div>
+            </div>
+          </div>
+          <div style="padding:26px 28px;display:flex;flex-direction:column;justify-content:center;background:rgba(18,24,38,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
+            <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:27px;line-height:1.06;text-transform:uppercase;text-wrap:pretty">{{ hero.title }}</div>
+            <div style="display:flex;flex-direction:column;gap:7px;margin-top:16px;font-size:13px;font-weight:600;color:#C3CBDC">
+              <div style="display:flex;align-items:center;gap:9px"><i class="ph-bold ph-calendar-blank" style="font-size:14px;color:#2AC4E8;flex:none"></i>{{ hero.whenLine }}</div>
+              <div style="display:flex;align-items:center;gap:9px"><i class="ph-bold ph-map-pin" style="font-size:14px;color:#2AC4E8;flex:none"></i>{{ hero.whereLine }}</div>
+              <div style="display:flex;align-items:center;gap:9px"><i class="ph-fill ph-fire" style="font-size:14px;color:#8C6BFF;flex:none"></i>{{ hero.hypeLine }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:20px">
+              <div onClick="{{ hero.buy }}" style="cursor:pointer;padding:12px 20px;border-radius:12px;background:#2AC4E8;color:#0A0E1A;font-size:13px;font-weight:800;transition:transform .15s" style-hover="transform:translateY(-1px)">{{ hero.cta }}</div>
+              <div style="font-size:13px;font-weight:800;color: {{ hero.priceColor }}">{{ hero.priceLine }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tipShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(36,28,64,.9),rgba(18,24,38,.7));border:1px solid #3A2F6B;margin-bottom:16px">
+          <i class="ph-fill ph-users-three" style="font-size:18px;color:#B9A8FF;flex:none"></i>
+          <div style="flex:1;min-width:0;font-size:12.5px;font-weight:700">{{ tipLine }}</div>
+          <div onClick="{{ hideTip }}" style="cursor:pointer;width:22px;height:22px;border-radius:50%;background:rgba(10,14,26,.6);display:flex;align-items:center;justify-content:center;flex:none"><i class="ph-bold ph-x" style="font-size:10px;color:#8891A8"></i></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ friendRowShow }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:22px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#B9A8FF;margin-bottom:12px">{{ L.becauseFriends }}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px">
+            <sc-for list="{{ friendRow }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.open }}" style="cursor:pointer;border-radius:16px;overflow:hidden;background:rgba(18,24,38,.7);border:1px solid #33405C;transition:transform .15s,border-color .15s" style-hover="transform:translateY(-2px);border-color:#8C6BFF">
+                <div style="height:74px;background: {{ r.art }}"></div>
+                <div style="padding:12px 13px 14px">
+                  <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:13.5px;line-height:1.2;height:33px;overflow:hidden">{{ r.title }}</div>
+                  <div style="font-size:10.5px;font-weight:700;color:#8891A8;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.whenLine }}</div>
+                  <div style="display:flex;align-items:center;gap:7px;margin-top:10px">
+                    <div style="display:flex;flex:none">
+                      <sc-for list="{{ r.faces }}" as="p" hint-placeholder-count="2">
+                        <div style="width:19px;height:19px;border-radius:50%;margin-right:-6px;border:1.5px solid #121826;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#0A0E1A;background: {{ p.color }}">{{ p.initials }}</div>
+                      </sc-for>
+                    </div>
+                    <div style="font-size:10.5px;font-weight:800;color:#B9A8FF;margin-left:4px">{{ r.line }}</div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ savedView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:15px 18px;border-radius:16px;background:linear-gradient(150deg,rgba(36,28,64,.9),rgba(18,24,38,.7));border:1px solid #3A2F6B;margin-bottom:16px">
+          <i class="ph-fill ph-heart" style="font-size:17px;color:#8C6BFF;flex:none"></i>
+          <div style="min-width:0">
+            <div style="font-size:13.5px;font-weight:800">{{ L.savedTitle }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#B9A8FF;margin-top:4px">{{ savedLine }}</div>
+          </div>
+          <div style="flex:1"></div>
+          <div onClick="{{ exitSaved }}" style="cursor:pointer;padding:10px 15px;border-radius:12px;border:1px solid #4A3F7B;color:#CFC6FF;font-size:11.5px;font-weight:800;white-space:nowrap;transition:all .15s" style-hover="border-color:#8C6BFF;color:#F3F6FC">{{ L.savedExit }}</div>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px">
+        <div style="font-size:12.5px;font-weight:700;color:#8891A8">{{ countLine }}</div>        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11.5px;font-weight:700;color:#7C859C">{{ L.sortBy }}</span>
+          <sc-for list="{{ sortOptions }}" as="s" hint-placeholder-count="3">
+            <div onClick="{{ s.pick }}" style="cursor:pointer;padding:7px 13px;border-radius:999px;font-size:11.5px;font-weight:700;transition:all .15s;background: {{ s.bg }};border:1px solid {{ s.bd }};color: {{ s.fg }}">{{ s.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ bannerAdShow }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;display:flex;gap:13px;align-items:center;flex-wrap:wrap;padding:12px 15px;border-radius:16px;margin-bottom:18px;background:rgba(18,24,38,.5);border:1px solid #2B3550;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background: {{ bannerAd.art }}"></div>
+          <div style="width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:12px;font-weight:900;color:#06080D;background: {{ bannerAd.art }}">{{ bannerAd.logo }}</div>
+          <div style="flex:1;min-width:200px">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+              <div style="padding:2px 7px;border-radius:999px;font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;background:rgba(140,107,255,.14);color:#B9A8FF">{{ L.sponsored }}</div>
+              <div style="font-size:10.5px;font-weight:800;color:#8891A8">{{ bannerAd.brand }}</div>
+            </div>
+            <div style="font-size:12.5px;font-weight:800;line-height:1.35;margin-top:5px;text-wrap:pretty">{{ bannerAd.head }}</div>
+            <div style="font-size:11px;font-weight:500;color:#8891A8;line-height:1.5;margin-top:3px;max-width:520px;text-wrap:pretty">{{ bannerAd.body }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex:none">
+            <div onClick="{{ bannerAd.why }}" style="cursor:pointer;font-size:10px;font-weight:700;color:#7C859C;transition:color .15s" style-hover="color:#7FE0F5">{{ L.adWhy }}</div>
+            <div onClick="{{ bannerAd.hide }}" style="cursor:pointer;font-size:10px;font-weight:700;color:#7C859C;transition:color .15s" style-hover="color:#7FE0F5">{{ L.adHide }}</div>
+            <div onClick="{{ bannerAd.click }}" style="cursor:pointer;padding:9px 16px;border-radius:10px;border:1px solid rgba(140,107,255,.55);color:#C9BCFF;font-size:11px;font-weight:800;white-space:nowrap;text-align:center;transition:all .15s" style-hover="background:rgba(140,107,255,.12);border-color:#8C6BFF">{{ bannerAd.cta }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(266px,1fr));gap:20px">
+          <sc-for list="{{ skeletons }}" as="s" hint-placeholder-count="6">
+            <div style="border-radius:20px;overflow:hidden;background:#121826;border:1px solid #262F44">
+              <div style="height:158px;background:linear-gradient(100deg,#141B2B 28%,#1E2740 50%,#141B2B 72%);background-size:520px 100%;animation:ffShimmer 1.3s linear infinite"></div>
+              <div style="padding:16px;display:flex;flex-direction:column;gap:9px">
+                <div style="height:14px;width:70%;border-radius:6px;background:linear-gradient(100deg,#141B2B 28%,#1E2740 50%,#141B2B 72%);background-size:520px 100%;animation:ffShimmer 1.3s linear infinite"></div>
+                <div style="height:10px;width:88%;border-radius:6px;background:#161E30"></div>
+                <div style="height:10px;width:54%;border-radius:6px;background:#161E30"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showGrid }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(266px,1fr));gap:20px">
+          <sc-for list="{{ grid }}" as="e" hint-placeholder-count="6">
+            <div onClick="{{ e.open }}" style="cursor:pointer;position:relative;display:flex;flex-direction:column;border-radius:20px;overflow:hidden;background:rgba(18,24,38,.68);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border:1px solid {{ e.cardBd }};transition:transform .18s,border-color .18s,box-shadow .18s;animation:ffRise .35s ease both" style-hover="transform:translateY(-4px);border-color:#3B4A6B;box-shadow:0 22px 46px rgba(0,0,0,.5)">
+              <div style="height:158px;position:relative;background: {{ e.art }};opacity: {{ e.artOpacity }}">
+                <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(18,24,38,.9),transparent 62%)"></div>
+                <sc-if value="{{ e.hasBadge }}" hint-placeholder-val="{{ true }}">
+                  <div style="position:absolute;top:13px;left:13px;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background: {{ e.badgeBg }};color:#0A0E1A">{{ e.badgeLabel }}</div>
+                </sc-if>
+                <div onClick="{{ e.save }}" style="position:absolute;top:11px;right:11px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background: {{ e.saveBg }};border:1px solid {{ e.saveBd }};color: {{ e.saveFg }};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:all .15s"><i class="ph-fill ph-heart" style="font-size:14px"></i></div>
+                <div style="position:absolute;bottom:12px;left:13px;padding:5px 10px;border-radius:999px;background:rgba(10,14,26,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:10.5px;font-weight:700">{{ e.genre }}</div>
+                <sc-if value="{{ e.unavailable }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;top:50%;left:0;right:0;display:flex;justify-content:center;transform:translateY(-50%)">
+                    <div style="padding:7px 16px;border-radius:999px;background:rgba(10,14,26,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid {{ e.unavailBd }};font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color: {{ e.unavailFg }}">{{ e.unavailLabel }}</div>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="padding:16px;display:flex;flex-direction:column;flex:1">
+                <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:16px;line-height:1.16;margin-bottom:9px;text-wrap:pretty">{{ e.title }}</div>
+                <sc-if value="{{ e.proofShow }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+                    <div style="display:flex;flex:none">
+                      <sc-for list="{{ e.proofFaces }}" as="p" hint-placeholder-count="2">
+                        <div style="width:19px;height:19px;border-radius:50%;margin-right:-6px;border:1.5px solid #121826;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#0A0E1A;background: {{ p.color }}">{{ p.initials }}</div>
+                      </sc-for>
+                    </div>
+                    <div style="font-size:11.5px;font-weight:700;color:#B9A8FF;margin-left:4px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.proofLine }}</div>
+                  </div>
+                </sc-if>
+                <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#8891A8">
+                  <div style="display:flex;align-items:center;gap:7px"><i class="ph-bold ph-clock" style="font-size:12px;color:#7C859C;flex:none"></i>{{ e.whenLine }}</div>
+                  <div style="display:flex;align-items:center;gap:7px"><i class="ph-bold ph-map-pin" style="font-size:12px;color:#7C859C;flex:none"></i>{{ e.whereLine }}</div>
+                </div>
+                <div style="flex:1;min-height:12px"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:12px;border-top:1px solid #1F2739">
+                  <div style="font-size:13px;font-weight:800;color: {{ e.priceColor }}">{{ e.priceLine }}</div>
+                  <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#8C6BFF"><i class="ph-fill ph-fire" style="font-size:12px"></i>{{ e.hypeShort }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div onClick="{{ loadMore }}" style="display: {{ loadMoreDisplay }};cursor:pointer;margin:26px auto 0;width:fit-content;padding:13px 26px;border-radius:12px;border:1px solid #262F44;background:rgba(18,24,38,.6);font-size:12.5px;font-weight:800;color:#F3F6FC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#2AC4E8">{{ L.loadMore }}</div>
+      </sc-if>
+
+      <sc-if value="{{ gridEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:70px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;border-radius:20px;border:1px dashed #262F44">
+          <i class="ph-bold ph-radio-button" style="font-size:30px;color:#39455F"></i>
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:18px;text-transform:uppercase">{{ L.emptyTitle }}</div>
+          <div style="font-size:13px;font-weight:600;color:#8891A8;max-width:330px;line-height:1.6">{{ L.emptyBody }}</div>
+          <div onClick="{{ resetFilters }}" style="cursor:pointer;margin-top:4px;padding:10px 18px;border-radius:999px;border:1px solid #2AC4E8;color:#2AC4E8;font-size:12px;font-weight:800">{{ L.reset }}</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:26px 28px 90px">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+    <sc-for list="{{ mapFilters }}" as="f" hint-placeholder-count="6">
+      <div onClick="{{ f.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;transition:all .15s;background: {{ f.bg }};border:1px solid {{ f.bd }};color: {{ f.fg }}" style-hover="border-color:#3B4A6B"><i class="{{ f.icon }}" style="font-size:13px"></i>{{ f.label }}</div>
+    </sc-for>
+    <div style="flex:1"></div>
+    <sc-if value="{{ mapLocked }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ clearMapArea }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:rgba(42,196,232,.12);border:1px solid #2AC4E8;font-size:12px;font-weight:800;color:#7FE0F5;white-space:nowrap"><i class="ph-bold ph-x" style="font-size:12px"></i>{{ L.mapClearArea }}</div>
+    </sc-if>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase">{{ L.mapTitle }}</div>
+        <div style="font-size:11.5px;font-weight:800;color:#7C859C">{{ mapCount }}</div>
+      </div>
+      <sc-if value="{{ showFriendsFilter }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ toggleFriendsOnly }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:12px;font-size:12px;font-weight:800;transition:all .15s;background: {{ friendsFilterBg }};border:1px solid {{ friendsFilterBd }};color: {{ friendsFilterFg }}"><i class="ph-fill ph-users-three" style="font-size:14px;flex:none"></i>{{ L.friendsFilter }}</div>
+      </sc-if>
+      <sc-for list="{{ mapCards }}" as="e" hint-placeholder-count="5">
+        <div onClick="{{ e.select }}" style="cursor:pointer;display:flex;gap:13px;padding:12px;border-radius:16px;background: {{ e.rowBg }};border:1px solid {{ e.rowBd }};transition:all .15s" style-hover="border-color:#3B4A6B">
+          <div style="width:74px;height:74px;border-radius:12px;flex:none;background: {{ e.art }}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:800;line-height:1.25;margin-bottom:5px">{{ e.title }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#8891A8;line-height:1.5">{{ e.whenLine }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#8891A8;line-height:1.5">{{ e.whereLine }}</div>
+            <div style="font-size:12px;font-weight:800;color: {{ e.priceColor }};margin-top:5px">{{ e.priceLine }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="position:sticky;top:96px;height:660px;border-radius:24px;overflow:hidden;border:1px solid #262F44;background:#0C1120">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(38,47,68,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(38,47,68,.5) 1px,transparent 1px);background-size:64px 64px"></div>
+      <div style="position:absolute;inset:0;background:radial-gradient(620px 420px at 45% 48%, rgba(42,196,232,.10), transparent 72%)"></div>
+      <div style="position:absolute;left:-6%;top:36%;width:112%;height:22px;background:linear-gradient(90deg,transparent,rgba(38,47,68,.9),transparent);transform:rotate(-5deg)"></div>
+      <div style="position:absolute;left:32%;top:-6%;width:20px;height:112%;background:linear-gradient(180deg,transparent,rgba(38,47,68,.85),transparent);transform:rotate(4deg)"></div>
+      <div style="position:absolute;left:-8%;top:68%;width:116%;height:46px;background:linear-gradient(90deg,transparent,rgba(27,107,214,.2),transparent);transform:rotate(3deg)"></div>
+
+      <div style="position:absolute;left:46%;top:52%;transform:translate(-50%,-50%)">
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#4EA1FF;animation:ffPulse 2.6s ease-out infinite"></div>
+        <div style="position:relative;width:15px;height:15px;border-radius:50%;background:#4EA1FF;border:3px solid #0A0E1A;box-shadow:0 0 16px rgba(78,161,255,.9)"></div>
+      </div>
+
+      <div style="position:absolute;right:14px;top:14px;z-index:8;display:flex;flex-direction:column;gap:7px">
+        <div onClick="{{ mapZoomIn }}" title="{{ L.mapZoomIn }}" style="cursor:pointer;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #33405C;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-plus" style="font-size:13px"></i></div>
+        <div onClick="{{ mapZoomOut }}" title="{{ L.mapZoomOut }}" style="cursor:pointer;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #33405C;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-minus" style="font-size:13px"></i></div>
+        <div onClick="{{ mapRecenter }}" title="{{ L.mapRecenter }}" style="cursor:pointer;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #33405C;color:#4EA1FF;transition:all .15s" style-hover="border-color:#4EA1FF"><i class="ph-fill ph-crosshair" style="font-size:14px"></i></div>
+      </div>
+      <div style="position:absolute;left:14px;top:14px;z-index:8;display:grid;grid-template-columns:repeat(3,26px);grid-template-rows:repeat(3,26px);gap:3px">
+        <div></div>
+        <div onClick="{{ mapPanUp }}" style="cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.8);border:1px solid #262F44;color:#8891A8;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-caret-up" style="font-size:11px"></i></div>
+        <div></div>
+        <div onClick="{{ mapPanLeft }}" style="cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.8);border:1px solid #262F44;color:#8891A8;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-caret-left" style="font-size:11px"></i></div>
+        <div style="border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.5);border:1px solid #1F2739;font-size:9px;font-weight:800;color:#7C859C">{{ mapZoomLabel }}</div>
+        <div onClick="{{ mapPanRight }}" style="cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.8);border:1px solid #262F44;color:#8891A8;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-caret-right" style="font-size:11px"></i></div>
+        <div></div>
+        <div onClick="{{ mapPanDown }}" style="cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,.8);border:1px solid #262F44;color:#8891A8;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-caret-down" style="font-size:11px"></i></div>
+        <div></div>
+      </div>
+      <sc-if value="{{ mapMoved }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ searchThisArea }}" style="position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:9;cursor:pointer;display:flex;align-items:center;gap:9px;padding:11px 18px;border-radius:999px;background:#2AC4E8;color:#06080D;font-size:12.5px;font-weight:800;white-space:nowrap;box-shadow:0 12px 30px rgba(42,196,232,.35);animation:ffRise .18s ease both"><i class="ph-bold ph-magnifying-glass" style="font-size:14px"></i>{{ L.mapSearchArea }}</div>
+      </sc-if>
+
+      <sc-for list="{{ mapPins }}" as="p" hint-placeholder-count="6">
+        <div onClick="{{ p.pick }}" style="position:absolute;cursor:pointer;z-index: {{ p.z }};left: {{ p.x }};top: {{ p.y }};opacity: {{ p.op }};transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center">
+          <sc-if value="{{ p.hasFriends }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;margin-bottom:4px">
+              <sc-for list="{{ p.faces }}" as="f" hint-placeholder-count="2">
+                <div style="width:22px;height:22px;border-radius:50%;margin-right:-7px;border:2px solid #0A0E1A;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;color:#0A0E1A;background: {{ f.color }}">{{ f.initials }}</div>
+              </sc-for>
+              <sc-if value="{{ p.moreShow }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-left:3px;padding:2px 6px;border-radius:999px;background:rgba(10,14,26,.9);border:1px solid #3A2F6B;font-size:9px;font-weight:800;color:#B9A8FF">{{ p.more }}</div>
+              </sc-if>
+            </div>
+          </sc-if>
+          <div style="padding:7px 12px;border-radius:12px;font-size:12px;font-weight:800;white-space:nowrap;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background: {{ p.bg }};border:1.5px solid {{ p.bd }};color: {{ p.fg }};box-shadow: {{ p.glow }}">{{ p.price }}</div>
+          <div style="width:1.5px;height:10px;background: {{ p.bd }}"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background: {{ p.bd }}"></div>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ mapSel }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:18px;bottom:18px;right:18px;max-width:420px;display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:20px;background:rgba(18,24,38,.9);backdrop-filter:blur(26px) saturate(1.5);-webkit-backdrop-filter:blur(26px) saturate(1.5);border:1px solid #3B4A6B;box-shadow:0 22px 50px rgba(0,0,0,.6);animation:ffRise .24s ease both">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:64px;height:64px;border-radius:16px;flex:none;background: {{ mapSel.art }}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:15px;line-height:1.2">{{ mapSel.title }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#8891A8;margin-top:5px">{{ mapSel.whenLine }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#8891A8;margin-top:2px">{{ mapSel.whereLine }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px;align-items:flex-end;flex:none">
+            <div onClick="{{ clearMapSel }}" style="cursor:pointer;width:24px;height:24px;border-radius:50%;background:#1A2233;display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-x" style="font-size:11px;color:#8891A8"></i></div>
+            <div onClick="{{ mapSel.buy }}" style="padding:9px 15px;border-radius:12px;background:#2AC4E8;color:#0A0E1A;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">{{ mapSel.cta }}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+          <div onClick="{{ toggleGoing }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:12px;font-size:11.5px;font-weight:800;transition:all .15s;background: {{ imGoingBg }};border:1px solid {{ imGoingBd }};color: {{ imGoingFg }}"><i class="ph-fill ph-check-circle" style="font-size:14px"></i>{{ imGoingLabel }}</div>
+          <sc-if value="{{ showFriendsFilter }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ openInvite }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:12px;border:1px solid #3A2F6B;color:#CFC6FF;font-size:11.5px;font-weight:800"><i class="ph-bold ph-user-plus" style="font-size:14px"></i>{{ L.inviteFriends }}</div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ mapSelHasFriends }}" hint-placeholder-val="{{ false }}">
+          <div style="padding-top:12px;border-top:1px solid #262F44">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#B9A8FF;margin-bottom:10px">{{ mapSelFriendsLine }}</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ mapSelFriends }}" as="f" hint-placeholder-count="2">
+                <div onClick="{{ f.open }}" style="cursor:pointer;display:flex;align-items:center;gap:10px">
+                  <div style="width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#0A0E1A;background: {{ f.color }}">{{ f.initials }}</div>
+                  <div style="flex:1;min-width:0;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.name }}</div>
+                  <i class="{{ f.icon }}" style="font-size:13px;flex:none;color: {{ f.iconColor }}"></i>
+                  <i class="ph-bold ph-chat-circle" style="font-size:14px;color:#7C859C;flex:none"></i>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 28px 90px">
+  <div onClick="{{ goBack }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:#8891A8;margin-bottom:18px;transition:color .15s" style-hover="color:#2AC4E8"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i>{{ backLabel }}</div>
+
+  <div style="border-radius:24px;overflow:hidden;border:1px solid #262F44;margin-bottom:22px;animation:ffRise .35s ease both">
+    <div style="height:clamp(200px,28vw,320px);position:relative;background: {{ detail.art }}">
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(6,8,13,.94),rgba(6,8,13,.25) 62%)"></div>
+      <div style="position:absolute;top:18px;left:20px;display:flex;gap:9px;flex-wrap:wrap">
+        <div style="padding:6px 12px;border-radius:999px;background:rgba(10,14,26,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:11px;font-weight:800">{{ detail.genre }}</div>
+        <sc-if value="{{ detail.hasBadge }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:6px 12px;border-radius:999px;background:#2AC4E8;color:#06080D;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">{{ detail.badgeLabel }}</div>
+        </sc-if>
+      </div>
+      <div style="position:absolute;left:20px;right:20px;bottom:20px">
+        <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(26px,4vw,44px);line-height:1.04;text-transform:uppercase;margin:0;text-wrap:pretty">{{ detail.title }}</h1>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:13px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#C3CBDC"><i class="ph-bold ph-calendar-dots" style="font-size:15px;color:#2AC4E8"></i>{{ detail.whenLine }}</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#C3CBDC"><i class="ph-bold ph-map-pin" style="font-size:15px;color:#2AC4E8"></i>{{ detail.whereLine }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:24px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:18px">
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px">
+        <sc-for list="{{ detail.facts }}" as="f" hint-placeholder-count="6">
+          <div style="padding:15px 17px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+              <i class="{{ f.icon }}" style="font-size:14px;color:#2AC4E8"></i>
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ f.label }}</div>
+            </div>
+            <div style="font-size:13.5px;font-weight:800;line-height:1.4;text-wrap:pretty">{{ f.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding:24px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0 0 15px">{{ L.aboutTitle }}</h2>
+        <div style="font-size:14.5px;font-weight:500;color:#C3CBDC;line-height:1.72;text-wrap:pretty">{{ detail.about }}</div>
+      </div>
+
+      <div style="padding:24px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:15px">
+          <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0">{{ L.lineupTitle }}</h2>
+          <div style="font-size:11.5px;font-weight:700;color:#7C859C">{{ L.followArtistHint }}</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <sc-for list="{{ detail.lineup }}" as="a" hint-placeholder-count="4">
+            <div onClick="{{ a.follow }}" title="{{ a.hint }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 14px 10px 16px;border-radius:999px;transition:all .15s;background: {{ a.bg }};border:1px solid {{ a.bd }};color: {{ a.fg }};font-size:13px;font-weight:700" style-hover="border-color:#2AC4E8">
+              {{ a.name }}<i class="{{ a.icon }}" style="font-size:14px;color: {{ a.iconFg }};flex:none"></i>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ detail.followingAny }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:flex-start;gap:11px;margin-top:16px;padding:13px 15px;border-radius:14px;background:rgba(42,196,232,.07);border:1px solid rgba(42,196,232,.3)">
+            <i class="ph-fill ph-bell-ringing" style="font-size:16px;color:#7FE0F5;flex:none;margin-top:1px"></i>
+            <div style="font-size:12px;font-weight:700;color:#C3CBDC;line-height:1.6;text-wrap:pretty">{{ detail.followingLine }}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ tt.show }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="min-width:0">
+            <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0">{{ L.ttTitle }}</h2>
+            <div style="font-size:12px;font-weight:600;color:#8891A8;line-height:1.6;margin-top:8px;max-width:440px;text-wrap:pretty">{{ L.ttSub }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ tt.days }}" as="d" hint-placeholder-count="3">
+              <div onClick="{{ d.pick }}" style="cursor:pointer;padding:9px 14px;border-radius:12px;font-size:12px;font-weight:800;white-space:nowrap;transition:all .15s;background: {{ d.bg }};border:1px solid {{ d.bd }};color: {{ d.fg }}">{{ d.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;padding-bottom:4px">
+          <div style="min-width:660px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <div style="width:104px;flex:none"></div>
+              <div style="flex:1;position:relative;height:16px">
+                <sc-for list="{{ tt.ticks }}" as="t" hint-placeholder-count="6">
+                  <div style="position:absolute;top:0;left: {{ t.left }};transform:translateX(-50%);font-size:10px;font-weight:800;color:#7C859C;white-space:nowrap">{{ t.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <sc-for list="{{ tt.stages }}" as="s" hint-placeholder-count="3">
+              <div style="display:flex;align-items:stretch;gap:12px;margin-bottom:9px">
+                <div style="width:104px;flex:none;display:flex;align-items:center">
+                  <div style="font-size:11.5px;font-weight:800;color:#C3CBDC;line-height:1.35;text-wrap:pretty">{{ s.name }}</div>
+                </div>
+                <div style="flex:1;position:relative;height:52px;border-radius:12px;background:rgba(10,14,26,.55);border:1px solid #1F2739;overflow:hidden">
+                  <sc-for list="{{ tt.gridLines }}" as="gl" hint-placeholder-count="6">
+                    <div style="position:absolute;top:0;bottom:0;width:1px;background:rgba(38,47,68,.75);left: {{ gl.left }}"></div>
+                  </sc-for>
+                  <sc-for list="{{ s.sets }}" as="x" hint-placeholder-count="3">
+                    <div onClick="{{ x.toggle }}" title="{{ x.hint }}" style="position:absolute;top:5px;bottom:5px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;padding:0 10px;box-sizing:border-box;border-radius:9px;overflow:hidden;transition:all .15s;left: {{ x.left }};width: {{ x.width }};background: {{ x.bg }};border:1px solid {{ x.bd }};box-shadow: {{ x.glow }}" style-hover="border-color:#7FE0F5">
+                      <div style="display:flex;align-items:center;gap:6px;min-width:0">
+                        <sc-if value="{{ x.picked }}" hint-placeholder-val="{{ false }}">
+                          <i class="{{ x.icon }}" style="font-size:11px;color: {{ x.iconFg }};flex:none"></i>
+                        </sc-if>
+                        <div style="font-size:11.5px;font-weight:800;color: {{ x.fg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ x.name }}</div>
+                      </div>
+                      <div style="font-size:10px;font-weight:700;color: {{ x.timeFg }};margin-top:3px;white-space:nowrap">{{ x.time }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #262F44">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color: {{ tt.planFg }}"><i class="ph-fill ph-list-checks" style="font-size:15px"></i>{{ tt.planLine }}</div>
+          <div style="flex:1"></div>
+          <sc-if value="{{ tt.hasPlan }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ tt.clear }}" style="cursor:pointer;font-size:11.5px;font-weight:800;color:#8891A8;transition:color .15s" style-hover="color:#F3F6FC">{{ L.ttClear }}</div>
+            <div onClick="{{ tt.remind }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:12px;background:#2AC4E8;color:#06080D;font-size:12px;font-weight:800;white-space:nowrap"><i class="ph-bold ph-bell" style="font-size:14px"></i>{{ L.ttRemind }}</div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ tt.hasClash }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:flex-start;gap:12px;margin-top:14px;padding:14px 16px;border-radius:14px;background:rgba(255,138,61,.1);border:1px solid rgba(255,138,61,.42)">
+            <i class="ph-fill ph-warning" style="font-size:17px;color:#FFB35C;flex:none;margin-top:1px"></i>
+            <div style="min-width:0">
+              <div style="font-size:12.5px;font-weight:800;color:#FFB35C">{{ tt.clashTitle }}</div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+                <sc-for list="{{ tt.clashes }}" as="c" hint-placeholder-count="1">
+                  <div style="font-size:12px;font-weight:600;color:#F0DCC8;line-height:1.55;text-wrap:pretty">{{ c.line }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tiers.show }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px">
+          <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0">{{ L.tiersTitle }}</h2>
+          <sc-if value="{{ tiers.hasUrgency }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;background:rgba(255,138,61,.12);border:1px solid rgba(255,138,61,.42);font-size:11px;font-weight:800;color:#FFB35C;white-space:nowrap"><i class="ph-fill ph-hourglass-high" style="font-size:12px"></i>{{ tiers.urgency }}</div>
+          </sc-if>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ tiers.rows }}" as="t" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:16px;align-items:center;padding:15px 0;border-bottom:1px solid #1F2739;opacity: {{ t.op }}">
+              <div style="min-width:0">
+                <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                  <div style="font-size:14px;font-weight:800;color: {{ t.nameFg }}">{{ t.name }}</div>
+                  <div style="padding:4px 10px;border-radius:999px;background: {{ t.stBg }};border:1px solid {{ t.stBd }};font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ t.stFg }};white-space:nowrap">{{ t.state }}</div>
+                </div>
+                <div style="font-size:11.5px;font-weight:600;color:#8891A8;line-height:1.55;margin-top:6px;text-wrap:pretty">{{ t.note }}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:15px;font-weight:800;color: {{ t.priceFg }};white-space:nowrap">{{ t.price }}</div>
+                <sc-if value="{{ t.hasLeft }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:10.5px;font-weight:800;color: {{ t.leftFg }};margin-top:5px;white-space:nowrap">{{ t.left }}</div>
+                </sc-if>
+              </div>
+              <div onClick="{{ t.buy }}" style="cursor: {{ t.cursor }};padding:11px 17px;border-radius:12px;font-size:12px;font-weight:800;white-space:nowrap;transition:all .15s;background: {{ t.ctaBg }};border:1px solid {{ t.ctaBd }};color: {{ t.ctaFg }}">{{ t.cta }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:11px;margin-top:16px">
+          <i class="ph-bold ph-arrow-u-up-left" style="font-size:15px;color:#7C859C;flex:none;margin-top:2px"></i>
+          <div style="font-size:11.5px;font-weight:600;color:#8891A8;line-height:1.6;text-wrap:pretty">{{ tiers.refund }}</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <div style="padding:24px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0 0 15px">{{ L.gettingThere }}</h2>
+        <div style="height:170px;border-radius:16px;position:relative;overflow:hidden;background:#0D1320;border:1px solid #262F44">
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(42,196,232,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(42,196,232,.07) 1px,transparent 1px);background-size:42px 42px"></div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:7px">
+            <div style="padding:7px 13px;border-radius:999px;background:rgba(10,14,26,.9);border:1px solid #2AC4E8;font-size:11.5px;font-weight:800;white-space:nowrap">{{ detail.mapPin }}</div>
+            <i class="ph-fill ph-map-pin" style="font-size:30px;color:#2AC4E8"></i>
+          </div>
+        </div>
+        <div onClick="{{ detail.openMaps }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;margin-top:15px;padding:11px 18px;border-radius:12px;border:1px solid #262F44;font-size:12.5px;font-weight:800;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-navigation-arrow" style="font-size:14px"></i>{{ L.openInMaps }}</div>
+      </div>
+
+      <div style="padding:24px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0 0 15px">{{ L.similarTitle }}</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:14px">
+          <sc-for list="{{ detail.similar }}" as="s" hint-placeholder-count="3">
+            <div onClick="{{ s.open }}" style="cursor:pointer;border-radius:16px;overflow:hidden;background:rgba(10,14,26,.6);border:1px solid #262F44;transition:all .18s" style-hover="border-color:#3B4A6B;transform:translateY(-3px)">
+              <div style="height:82px;background: {{ s.art }}"></div>
+              <div style="padding:13px">
+                <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:14px;line-height:1.2;text-wrap:pretty">{{ s.title }}</div>
+                <div style="font-size:11px;font-weight:700;color:#8891A8;margin-top:7px">{{ s.whenLine }}</div>
+                <div style="font-size:11.5px;font-weight:800;color:#2AC4E8;margin-top:6px">{{ s.priceLine }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="position:sticky;top:96px;display:flex;flex-direction:column;gap:14px">
+      <div style="padding:22px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ L.factPrice }}</div>
+        <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:32px;line-height:1;margin-top:9px;color: {{ detail.priceColor }}">{{ detail.priceBig }}</div>
+        <div style="font-size:11.5px;font-weight:600;color:#7C859C;margin-top:8px;line-height:1.5">{{ detail.priceSub }}</div>
+        <div onClick="{{ detail.buy }}" style="cursor:pointer;margin-top:18px;padding:15px 0;border-radius:16px;text-align:center;background: {{ detail.ctaBg }};color: {{ detail.ctaFg }};font-size:13.5px;font-weight:800;transition:transform .15s" style-hover="transform:translateY(-1px)">{{ detail.cta }}</div>
+        <div style="display:flex;gap:9px;margin-top:10px">
+          <div onClick="{{ detail.save }}" style="cursor:pointer;flex:1;padding:12px 0;border-radius:12px;text-align:center;background: {{ detail.saveBg }};border:1px solid {{ detail.saveBd }};color: {{ detail.saveFg }};font-size:12px;font-weight:800;transition:all .15s">{{ detail.saveLabel }}</div>
+          <div onClick="{{ detail.share }}" style="cursor:pointer;flex:1;padding:12px 0;border-radius:12px;text-align:center;border:1px solid #262F44;color:#C3CBDC;font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5">{{ L.shareEvent }}</div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#7C859C;line-height:1.6;margin-top:14px">{{ detail.ticketNote }}</div>
+      </div>
+
+      <sc-if value="{{ detail.friendsShow }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:19px 22px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:13px">{{ L.friendsGoingTitle }}</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="display:flex;flex:none">
+              <sc-for list="{{ detail.friendFaces }}" as="p" hint-placeholder-count="3">
+                <div style="width:30px;height:30px;border-radius:50%;margin-right:-8px;border:2px solid #121826;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:#0A0E1A;background: {{ p.color }}">{{ p.initials }}</div>
+              </sc-for>
+            </div>
+            <div style="font-size:12.5px;font-weight:800;color:#B9A8FF;margin-left:6px">{{ detail.friendsLine }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <div onClick="{{ detail.openOrg }}" style="cursor:pointer;padding:19px 22px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#2AC4E8">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ L.organisedBy }}</div>
+        <div style="display:flex;align-items:center;gap:13px">
+          <div style="width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:16px;font-weight:900;color:#06080D;background: {{ detail.orgArt }}">{{ detail.orgInitials }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="font-size:14px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ detail.orgName }}</div>
+              <sc-if value="{{ detail.orgVerified }}" hint-placeholder-val="{{ true }}">
+                <i class="ph-fill ph-seal-check" style="font-size:15px;color:#2AC4E8;flex:none"></i>
+              </sc-if>
+            </div>
+            <div style="font-size:11.5px;font-weight:700;color:#8891A8;margin-top:4px">{{ detail.orgMeta }}</div>
+          </div>
+          <i class="ph-bold ph-caret-right" style="font-size:13px;color:#7C859C;flex:none"></i>
+        </div>
+        <div onClick="{{ detail.followOrg }}" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:15px;padding:12px;border-radius:12px;font-size:12px;font-weight:800;transition:all .15s;background: {{ detail.followOrgBg }};border:1px solid {{ detail.followOrgBd }};color: {{ detail.followOrgFg }}"><i class="{{ detail.followOrgIcon }}" style="font-size:14px"></i>{{ detail.followOrgLabel }}</div>
+        <div style="font-size:10.5px;font-weight:600;color:#7C859C;line-height:1.55;margin-top:10px;text-wrap:pretty">{{ detail.followOrgNote }}</div>
+      </div>
+
+      <div onClick="{{ openReport }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:13px 16px;border-radius:14px;border:1px solid #262F44;color:#8891A8;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(255,138,61,.5);color:#FFB35C">
+        <i class="ph-bold ph-flag" style="font-size:14px;flex:none"></i>{{ L.reportCta }}
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOrg }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 28px 90px">
+  <div onClick="{{ goBack }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:#8891A8;margin-bottom:18px;transition:color .15s" style-hover="color:#2AC4E8"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i>{{ backLabel }}</div>
+
+  <div style="padding:28px;border-radius:20px;background:rgba(18,24,38,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid #262F44;margin-bottom:22px;animation:ffRise .35s ease both">
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start">
+      <div style="width:84px;height:84px;border-radius:24px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:29px;font-weight:900;color:#06080D;background: {{ org.art }}">{{ org.initials }}</div>
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3.2vw,34px);line-height:1.06;text-transform:uppercase;margin:0">{{ org.name }}</h1>
+          <sc-if value="{{ org.verified }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(42,196,232,.12);border:1px solid rgba(42,196,232,.45);font-size:11px;font-weight:800;color:#7FE0F5;white-space:nowrap">
+              <i class="ph-fill ph-seal-check" style="font-size:13px"></i>{{ org.verifiedLabel }}
+            </div>
+          </sc-if>
+        </div>
+        <div style="font-size:14px;font-weight:500;color:#C3CBDC;line-height:1.68;margin-top:13px;max-width:640px;text-wrap:pretty">{{ org.bio }}</div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:19px">
+          <sc-for list="{{ org.stats }}" as="s" hint-placeholder-count="3">
+            <div>
+              <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:21px;line-height:1;color:#2AC4E8">{{ s.value }}</div>
+              <div style="font-size:11px;font-weight:700;color:#8891A8;margin-top:6px">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div onClick="{{ org.follow }}" style="cursor:pointer;flex:none;padding:14px 26px;border-radius:16px;background: {{ org.followBg }};border:1px solid {{ org.followBd }};color: {{ org.followFg }};font-size:13px;font-weight:800;transition:all .15s" style-hover="transform:translateY(-1px)">{{ org.followLabel }}</div>
+    </div>
+  </div>
+
+  <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0 0 15px">{{ org.upTitle }}</h2>
+  <sc-if value="{{ org.upEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:34px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;font-size:13px;font-weight:600;color:#8891A8;text-align:center">{{ org.noUpcoming }}</div>
+  </sc-if>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:18px">
+    <sc-for list="{{ org.upcoming }}" as="e" hint-placeholder-count="3">
+      <div onClick="{{ e.open }}" style="cursor:pointer;border-radius:20px;overflow:hidden;background:rgba(18,24,38,.66);border:1px solid #262F44;transition:all .18s" style-hover="border-color:#3B4A6B;transform:translateY(-4px)">
+        <div style="height:132px;position:relative;background: {{ e.art }}">
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(18,24,38,.9),transparent 62%)"></div>
+          <div style="position:absolute;bottom:11px;left:13px;padding:5px 10px;border-radius:999px;background:rgba(10,14,26,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:10.5px;font-weight:700">{{ e.genre }}</div>
+        </div>
+        <div style="padding:16px">
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:15.5px;line-height:1.18;text-wrap:pretty">{{ e.title }}</div>
+          <div style="font-size:11.5px;font-weight:700;color:#8891A8;margin-top:9px">{{ e.whenLine }}</div>
+          <div style="font-size:11.5px;font-weight:600;color:#7C859C;margin-top:5px">{{ e.whereLine }}</div>
+          <div style="font-size:13px;font-weight:800;margin-top:12px;color: {{ e.priceColor }}">{{ e.priceLine }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ org.hasPast }}" hint-placeholder-val="{{ false }}">
+    <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin:0 0 15px;margin-top:34px">{{ org.pastTitle }}</h2>
+    <div style="border-radius:20px;background:rgba(18,24,38,.5);border:1px solid #262F44;padding:6px 20px 12px">
+      <sc-for list="{{ org.pastRows }}" as="p" hint-placeholder-count="2">
+        <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #1A2233;opacity:.66;transition:opacity .15s" style-hover="opacity:1">
+          <div style="width:52px;height:38px;border-radius:10px;flex:none;background: {{ p.art }}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:800;text-wrap:pretty">{{ p.title }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#8891A8;margin-top:4px">{{ p.whenLine }}</div>
+          </div>
+          <i class="ph-bold ph-caret-right" style="font-size:12px;color:#7C859C;flex:none"></i>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+
+<sc-if value="{{ adsOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:72;background:rgba(6,8,13,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-start;justify-content:center;padding:34px 24px;overflow-y:auto">
+    <div style="width:100%;max-width:560px;border-radius:24px;background:#121826;border:1px solid #33405C;box-shadow:0 30px 70px rgba(0,0,0,.6);padding:28px;animation:ffRise .24s ease both">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="flex:1;min-width:0">
+          <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:23px;line-height:1.08;text-transform:uppercase;margin:0">{{ L.adPartnerTitle }}</h2>
+          <div style="font-size:13px;font-weight:500;color:#C3CBDC;line-height:1.65;margin-top:11px;text-wrap:pretty">{{ L.adPartnerSub }}</div>
+        </div>
+        <div onClick="{{ closeAds }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44"><i class="ph-bold ph-x" style="font-size:13px;color:#C3CBDC"></i></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:9px;margin-top:18px;padding:13px 15px;border-radius:12px;background:rgba(42,196,232,.08);border:1px solid rgba(42,196,232,.3)">
+        <i class="ph-bold ph-users-three" style="font-size:16px;color:#2AC4E8;flex:none"></i>
+        <div style="font-size:12px;font-weight:700;color:#C3CBDC;line-height:1.5">{{ L.adReach }}</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:17px;margin-top:22px">
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.adBrandLabel }}</div>
+          <input value="{{ adBrand }}" onChange="{{ setAdBrand }}" placeholder="{{ L.adBrandPh }}" style="width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;background:#0A0E1A;border:1px solid #262F44;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:13.5px;font-weight:700">
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.adCatLabel }}</div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap">
+            <sc-for list="{{ adCats }}" as="c" hint-placeholder-count="3">
+              <div onClick="{{ c.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:12px;background: {{ c.bg }};border:1px solid {{ c.bd }};color: {{ c.fg }};font-size:12.5px;font-weight:800;transition:all .15s">
+                <i class="{{ c.icon }}" style="font-size:14px"></i>{{ c.label }}
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.adEmailLabel }}</div>
+          <input value="{{ adEmail }}" onChange="{{ setAdEmail }}" placeholder="{{ L.adEmailPh }}" style="width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;background:#0A0E1A;border:1px solid #262F44;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:13.5px;font-weight:700">
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.adBudgetLabel }}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ adBudgets }}" as="b" hint-placeholder-count="4">
+              <div onClick="{{ b.pick }}" style="cursor:pointer;padding:10px 15px;border-radius:999px;background: {{ b.bg }};border:1px solid {{ b.bd }};color: {{ b.fg }};font-size:12px;font-weight:800;transition:all .15s">{{ b.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:10px">{{ L.adPlaceLabel }}</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ adPlaces }}" as="p" hint-placeholder-count="3">
+              <div onClick="{{ p.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:10px">
+                <i class="{{ p.icon }}" style="font-size:17px;flex:none;color: {{ p.color }}"></i>
+                <div style="font-size:13px;font-weight:700;color: {{ p.fg }}">{{ p.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.adMsgLabel }}</div>
+          <textarea value="{{ adMsg }}" onChange="{{ setAdMsg }}" placeholder="{{ L.adMsgPh }}" rows="3" style="width:100%;box-sizing:border-box;padding:13px 15px;border-radius:12px;background:#0A0E1A;border:1px solid #262F44;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;line-height:1.55;resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;padding:16px 18px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ L.adRates }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ adRates }}" as="r" hint-placeholder-count="3">
+            <div style="font-size:12.5px;font-weight:700;color:#C3CBDC">{{ r.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ adErrShow }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:15px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#FF9A9A"><i class="ph-fill ph-warning-circle" style="font-size:14px"></i>{{ adErr }}</div>
+      </sc-if>
+
+      <div onClick="{{ submitAd }}" style="cursor:pointer;margin-top:20px;padding:16px;border-radius:16px;text-align:center;background:#2AC4E8;color:#06080D;font-size:14px;font-weight:800;transition:transform .15s" style-hover="transform:translateY(-1px)">{{ L.adSubmit }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isStat }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 28px 90px">
+  <div onClick="{{ goBack }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:#8891A8;margin-bottom:18px;transition:color .15s" style-hover="color:#2AC4E8"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i>{{ backLabel }}</div>
+
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:24px">
+    <div>
+      <div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color: {{ statAccent }};margin-bottom:10px">{{ statKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(26px,3.4vw,38px);line-height:1.08;text-transform:uppercase;margin:0;letter-spacing:-.02em;max-width:620px;text-wrap:pretty">{{ statTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;line-height:1.6;margin-top:12px;max-width:560px;text-wrap:pretty">{{ statSub }}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+        <sc-for list="{{ statChips }}" as="c" hint-placeholder-count="3">
+          <div style="padding:7px 13px;border-radius:999px;background:rgba(18,24,38,.7);border:1px solid #262F44;font-size:11px;font-weight:800;color:#8891A8;white-space:nowrap">{{ c.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <sc-if value="{{ statEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:34px 24px;border-radius:20px;border:1px dashed #33405C;text-align:center;color:#8891A8;font-size:13px;font-weight:600">{{ statEmptyNote }}</div>
+  </sc-if>
+
+  <div style="display:flex;flex-direction:column;gap:11px">
+    <sc-for list="{{ statRows }}" as="r" hint-placeholder-count="4">
+      <div onClick="{{ r.open }}" style="cursor:pointer;display:grid;grid-template-columns:56px minmax(150px,1fr) auto;gap:16px;align-items:center;padding:16px 18px;border-radius:16px;background:rgba(18,24,38,.62);border:1px solid #262F44;transition:border-color .15s, transform .15s" style-hover="border-color:#39455F;transform:translateY(-1px)">
+        <div style="width:56px;height:56px;border-radius:12px;flex:none;background: {{ r.art }};display:flex;align-items:center;justify-content:center"><i class="{{ r.icon }}" style="font-size:20px;color:#0A0E1A"></i></div>
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+            <div style="font-size:14.5px;font-weight:800;line-height:1.3;text-wrap:pretty">{{ r.title }}</div>
+            <sc-if value="{{ r.hasTag }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:4px 9px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background: {{ r.tagBg }};border:1px solid {{ r.tagBd }};color: {{ r.tagFg }};white-space:nowrap">{{ r.tag }}</div>
+            </sc-if>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px;line-height:1.55">{{ r.meta }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;flex:none">
+          <div style="text-align:right;min-width:74px">
+            <div style="font-size:13px;font-weight:800;color: {{ r.statFg }};white-space:nowrap">{{ r.stat }}</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7C859C;margin-top:4px;white-space:nowrap">{{ r.statLabel }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:12px;border:1px solid #262F44;font-size:11px;font-weight:800;color:#8891A8;white-space:nowrap"><i class="{{ r.ctaIcon }}" style="font-size:13px"></i>{{ r.cta }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:30px 28px 96px">
+  <div style="font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:10px">{{ L.abKicker }}</div>
+  <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(30px,4vw,44px);line-height:1.06;text-transform:uppercase;margin:0;letter-spacing:-.02em;max-width:660px;text-wrap:pretty">{{ L.abTitle }}</h1>
+  <div style="color:#C3CBDC;font-size:14.5px;font-weight:600;line-height:1.7;margin-top:16px;max-width:620px;text-wrap:pretty">{{ L.abLede }}</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:30px">
+    <sc-for list="{{ aboutFacts }}" as="f" hint-placeholder-count="3">
+      <div style="padding:18px 20px;border-radius:16px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;line-height:1;color: {{ f.color }}">{{ f.value }}</div>
+        <div style="font-size:11.5px;font-weight:600;color:#8891A8;margin-top:8px;line-height:1.5">{{ f.label }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:14px;margin-top:14px">
+    <sc-for list="{{ contactCards }}" as="c" hint-placeholder-count="3">
+      <div style="padding:22px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:36px;height:36px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ c.tint }}"><i class="{{ c.icon }}" style="font-size:17px;color: {{ c.color }}"></i></div>
+          <div style="font-size:14px;font-weight:800;min-width:0">{{ c.title }}</div>
+        </div>
+        <div style="color:#8891A8;font-size:12.5px;font-weight:600;line-height:1.6;text-wrap:pretty">{{ c.body }}</div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:auto">
+          <a href="{{ c.href }}" style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:12px;background:rgba(10,14,26,.7);border:1px solid #262F44;font-size:12.5px;font-weight:800;color:#F3F6FC;text-decoration:none;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="{{ c.linkIcon }}" style="font-size:14px;color: {{ c.color }};flex:none"></i><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.link }}</span></a>
+          <sc-if value="{{ c.hasAction }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ c.action }}" style="cursor:pointer;flex:none;padding:12px 15px;border-radius:12px;border:1px solid #2AC4E8;color:#7FE0F5;font-size:12.5px;font-weight:800;white-space:nowrap;transition:all .15s" style-hover="background:rgba(42,196,232,.12)">{{ c.actionLabel }}</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:34px">
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7C859C;margin-bottom:12px">{{ L.abSocial }}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <sc-for list="{{ socialLinks }}" as="s" hint-placeholder-count="4">
+        <a href="{{ s.href }}" style="display:flex;align-items:center;gap:9px;padding:12px 16px;border-radius:999px;background:rgba(18,24,38,.7);border:1px solid #262F44;text-decoration:none;transition:border-color .15s, transform .15s" style-hover="border-color:#39455F;transform:translateY(-1px)">
+          <i class="{{ s.icon }}" style="font-size:16px;color: {{ s.color }}"></i>
+          <div style="font-size:12.5px;font-weight:800;color:#F3F6FC">{{ s.label }}</div>
+          <div style="font-size:11.5px;font-weight:700;color:#8891A8">{{ s.handle }}</div>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="margin-top:34px;padding:22px;border-radius:20px;background:rgba(10,14,26,.6);border:1px solid #262F44;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
+    <sc-for list="{{ aboutMeta }}" as="m" hint-placeholder-count="3">
+      <div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:7px">{{ m.label }}</div>
+        <div style="font-size:12.5px;font-weight:700;color:#C3CBDC;line-height:1.6;text-wrap:pretty">{{ m.value }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="color:#7C859C;font-size:11.5px;font-weight:600;line-height:1.6;margin-top:18px;max-width:620px">{{ L.abNote }}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLanding }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;z-index:1">
+  <div style="max-width:1120px;margin:0 auto;padding:30px 28px 0">
+    <div style="display:flex;align-items:center;gap:9px;font-size:11.5px;font-weight:700;color:#7C859C;flex-wrap:wrap">
+      <span style="color:#8891A8;cursor:pointer">FestFinder</span><i class="ph-bold ph-caret-right" style="font-size:9px"></i>
+      <span style="color:#8891A8;cursor:pointer">{{ L.bcCity }}</span><i class="ph-bold ph-caret-right" style="font-size:9px"></i>
+      <span style="color:#8891A8;cursor:pointer">EDM</span><i class="ph-bold ph-caret-right" style="font-size:9px"></i>
+      <span style="color:#F3F6FC">{{ L.bcWeekend }}</span>
+    </div>
+
+    <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:44px;line-height:1.02;text-transform:uppercase;margin:22px 0 0;letter-spacing:-.02em;max-width:820px;text-wrap:pretty">{{ L.landingH1 }}</h1>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:12px;font-weight:700;color:#7C859C">
+      <div style="display:flex;align-items:center;gap:7px"><i class="ph-bold ph-clock-counter-clockwise" style="font-size:14px;color:#2AC4E8"></i>{{ L.updated }}</div>
+      <span>·</span><div>{{ landingCount }}</div><span>·</span>
+      <div style="display:flex;align-items:center;gap:7px"><i class="ph-bold ph-shield-check" style="font-size:14px;color:#2E9E5B"></i>{{ L.verifiedSources }}</div>
+    </div>
+    <p style="font-size:15.5px;font-weight:500;line-height:1.75;color:#C3CBDC;max-width:740px;margin:20px 0 0;text-wrap:pretty">{{ L.landingLede }}</p>
+
+    <div style="margin-top:28px;padding:22px 24px;border-radius:20px;background:linear-gradient(135deg,rgba(42,196,232,.12),rgba(140,107,255,.12));border:1px solid #33405C;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)">
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#2AC4E8;margin-bottom:13px">{{ L.quickAnswer }}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px">
+        <sc-for list="{{ answerRows }}" as="a" hint-placeholder-count="3">
+          <div>
+            <div style="font-size:11.5px;font-weight:700;color:#8891A8;margin-bottom:6px">{{ a.label }}</div>
+            <div style="font-size:14.5px;font-weight:800;line-height:1.4;color:#F3F6FC">{{ a.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:44px 28px 0">
+    <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;text-transform:uppercase;margin:0 0 18px">{{ L.landingListTitle }}</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ landingList }}" as="e" hint-placeholder-count="5">
+        <div onClick="{{ e.open }}" style="cursor:pointer;display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:20px;align-items:center;padding:18px;border-radius:20px;background:rgba(18,24,38,.6);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #262F44;transition:all .18s" style-hover="border-color:#3B4A6B;transform:translateY(-2px)">
+          <div style="width:76px;height:84px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background: {{ e.art }};flex:none">
+            <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:rgba(10,14,26,.75)">{{ e.dowShort }}</div>
+            <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:27px;line-height:1;color:#0A0E1A">{{ e.dayNum }}</div>
+            <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:rgba(10,14,26,.75)">{{ e.monShort }}</div>
+          </div>
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:7px">
+              <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:18px;line-height:1.15;text-wrap:pretty">{{ e.title }}</div>
+              <sc-if value="{{ e.unavailable }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:4px 9px;border-radius:999px;border:1px solid {{ e.unavailBd }};font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color: {{ e.unavailFg }}">{{ e.unavailLabel }}</div>
+              </sc-if>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:#8891A8;line-height:1.6">{{ e.metaLine }}</div>
+            <div style="font-size:12.5px;font-weight:600;color:#6C7691;line-height:1.6;margin-top:3px">{{ e.lineupLine }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex:none">
+            <div style="font-size:14px;font-weight:800;color: {{ e.priceColor }};white-space:nowrap">{{ e.priceLine }}</div>
+            <div style="padding:9px 16px;border-radius:12px;border:1px solid #2AC4E8;color:#2AC4E8;font-size:11.5px;font-weight:800;white-space:nowrap;transition:all .15s" style-hover="background:#2AC4E8;color:#0A0E1A">{{ L.viewEvent }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:44px 28px 0">
+    <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;text-transform:uppercase;margin:0 0 18px">{{ L.faqTitle }}</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+        <div onClick="{{ f.toggle }}" style="cursor:pointer;padding:18px 20px;border-radius:16px;background:rgba(18,24,38,.6);border:1px solid {{ f.bd }};transition:border-color .15s">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="flex:1;min-width:0;font-size:14.5px;font-weight:800;line-height:1.4">{{ f.q }}</div>
+            <i class="{{ f.icon }}" style="font-size:14px;color:#2AC4E8;flex:none"></i>
+          </div>
+          <div style="display: {{ f.display }};font-size:13.5px;font-weight:500;line-height:1.75;color:#C3CBDC;margin-top:12px;max-width:820px">{{ f.a }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:44px 28px 0">
+    <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;text-transform:uppercase;margin:0 0 18px">{{ L.relatedTitle }}</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px">
+      <sc-for list="{{ relatedLinks }}" as="r" hint-placeholder-count="8">
+        <div style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:12px;background:rgba(18,24,38,.5);border:1px solid #262F44;transition:all .15s" style-hover="border-color:#2AC4E8">
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#F3F6FC;line-height:1.35">{{ r.label }}</div>
+            <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px;font-family:ui-monospace,monospace">{{ r.href }}</div>
+          </div>
+          <i class="ph-bold ph-arrow-up-right" style="font-size:13px;color:#7C859C;flex:none"></i>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:44px auto 0;padding:0 28px">
+    <div style="padding:20px 22px;border-radius:20px;background:rgba(10,14,26,.8);border:1px dashed #33405C">
+      <div style="display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#8C6BFF;margin-bottom:15px"><i class="ph-bold ph-code" style="font-size:14px"></i>{{ L.devTitle }}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px">
+        <sc-for list="{{ devRows }}" as="d" hint-placeholder-count="4">
+          <div>
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7C859C;margin-bottom:6px">{{ d.label }}</div>
+            <div style="font-size:12px;font-weight:600;color:#C3CBDC;line-height:1.6;font-family:ui-monospace,monospace;word-break:break-word">{{ d.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:44px 28px 90px">
+    <div style="padding:34px 30px;border-radius:24px;background:linear-gradient(135deg,rgba(42,196,232,.14),rgba(140,107,255,.16));border:1px solid #33405C;display:flex;align-items:center;justify-content:space-between;gap:26px;flex-wrap:wrap">
+      <div style="min-width:0">
+        <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:26px;line-height:1.1;text-transform:uppercase;text-wrap:pretty">{{ L.ctaTitle }}</div>
+        <div style="font-size:13.5px;font-weight:600;color:#C3CBDC;margin-top:10px;max-width:520px;line-height:1.6">{{ L.ctaBody }}</div>
+      </div>
+      <div style="display:flex;gap:11px;flex-wrap:wrap">
+        <div style="cursor:pointer;padding:15px 24px;border-radius:16px;background:#2AC4E8;color:#0A0E1A;font-size:13.5px;font-weight:800;white-space:nowrap">{{ L.ctaPrimary }}</div>
+        <div style="cursor:pointer;padding:15px 24px;border-radius:16px;border:1px solid #5F6880;color:#F3F6FC;font-size:13.5px;font-weight:800;white-space:nowrap;transition:border-color .15s" style-hover="border-color:#2AC4E8">{{ L.ctaSecondary }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ cxOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ cxClose }}" style="position:fixed;inset:0;z-index:90;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:28px">
+    <div onClick="{{ stopProp }}" style="width:100%;max-width:400px;max-height:100%;overflow-y:auto;padding:26px;border-radius:24px;background:radial-gradient(520px 340px at 8% -10%, #1B2740 0%, #121826 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.7);animation:ffRise .24s ease both">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px">
+        <div style="width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44;flex:none"><i class="{{ cxIcon }}" style="font-size:19px;color: {{ cxColor }}"></i></div>
+        <div style="flex:1;min-width:0;font-size:12.5px;font-weight:800">{{ cxSrcLabel }}</div>
+        <div onClick="{{ cxClose }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44;flex:none" style-hover="border-color:#2AC4E8"><i class="ph-bold ph-x" style="font-size:13px;color:#F3F6FC"></i></div>
+      </div>
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:23px;line-height:1.08;text-transform:uppercase;letter-spacing:-.01em;text-wrap:pretty">{{ cxTitle }}</div>
+      <div style="color:#8891A8;font-size:12.5px;font-weight:600;line-height:1.6;margin-top:9px;overflow-wrap:anywhere">{{ cxSub }}</div>
+      <sc-if value="{{ cxStepPhone }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:18px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ cxIdLabel }}</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+            <i class="{{ cxIcon }}" style="font-size:16px;flex:none;color: {{ cxColor }}"></i>
+            <input value="{{ cxIdValue }}" onChange="{{ onCxId }}" type="tel" placeholder="{{ cxIdPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ cxStepOtp }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:18px;position:relative">
+          <div style="display:flex;gap:7px">
+            <sc-for list="{{ cxOtpCells }}" as="c" hint-placeholder-count="6">
+              <div style="flex:1;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;background:rgba(10,14,26,.6);border:1.5px solid {{ c.bd }};color:#F3F6FC">{{ c.ch }}</div>
+            </sc-for>
+          </div>
+          <input value="{{ cxOtpValue }}" onChange="{{ onCxOtp }}" inputMode="numeric" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;background:transparent;cursor:text;font-size:16px">
+        </div>
+      </sc-if>
+      <sc-if value="{{ cxStepConfirm }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+          <sc-for list="{{ cxScopes }}" as="s" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:12px;background:rgba(26,34,51,.6);border:1px solid #262F44"><i class="{{ s.icon }}" style="font-size:14px;flex:none;color:#2AC4E8"></i><div style="font-size:12px;font-weight:700;color:#C3CBDC;line-height:1.45">{{ s.t }}</div></div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ cxErrShow }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:12px;font-size:11.5px;font-weight:700;color:#FF8A3D">{{ cxErr }}</div>
+      </sc-if>
+      <div onClick="{{ cxSubmit }}" style="cursor:pointer;margin-top:18px;padding:14px;border-radius:14px;background:#2AC4E8;color:#0A0E1A;text-align:center;font-size:13.5px;font-weight:800;box-shadow:0 12px 30px rgba(42,196,232,.22);transition:transform .15s" style-hover="transform:translateY(-1px)">{{ cxCta }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ authOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ authClose }}" style="position:fixed;inset:0;z-index:80;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:28px">
+    <div onClick="{{ stopProp }}" style="width:100%;max-width:430px;max-height:100%;overflow-y:auto;padding:30px;border-radius:24px;background:radial-gradient(520px 340px at 8% -10%, #1B2740 0%, #121826 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.7);animation:ffRise .24s ease both">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px">
+        <div onClick="{{ authBack }}" style="cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="{{ authBackIcon }}" style="font-size:14px;color:#F3F6FC"></i></div>
+        <img src="/ui/assets/ff-icon.png" alt="" style="height:24px;width:auto;opacity:.8">
+      </div>
+
+      <sc-if value="{{ authNoteShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:rgba(42,196,232,.12);border:1px solid rgba(42,196,232,.4);color:#7FE0F5;font-size:11.5px;font-weight:800;margin-bottom:16px"><i class="ph-fill ph-lock-key" style="font-size:13px"></i>{{ authNote }}</div>
+      </sc-if>
+
+      <sc-if value="{{ authBarShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:5px;margin-bottom:20px">
+          <div style="height:3px;flex:1;border-radius:2px;background: {{ authBar1 }}"></div>
+          <div style="height:3px;flex:1;border-radius:2px;background: {{ authBar2 }}"></div>
+          <div style="height:3px;flex:1;border-radius:2px;background: {{ authBar3 }}"></div>
+        </div>
+      </sc-if>
+
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:26px;line-height:1.06;text-transform:uppercase;letter-spacing:-.01em;text-wrap:pretty">{{ authTitle }}</div>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;line-height:1.6;margin-top:10px;overflow-wrap:anywhere">{{ authSub }}</div>
+
+      <sc-if value="{{ authStepMethod }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:22px">
+          <sc-for list="{{ socialBtns }}" as="s" hint-placeholder-count="3">
+            <div onClick="{{ s.go }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:14px 15px;border-radius:16px;background:rgba(26,34,51,.6);border:1px solid #262F44;font-size:13.5px;font-weight:800;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="{{ s.icon }}" style="font-size:18px;flex:none;color: {{ s.color }}"></i>{{ s.label }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:12px;color:#7C859C;flex:none"></i></div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:7px;margin-top:10px"><i class="ph-bold ph-shield-check" style="font-size:13px;color:#7C859C;flex:none;margin-top:1px"></i><div style="font-size:11px;font-weight:600;color:#7C859C;line-height:1.5">{{ L.socialWhy }}</div></div>
+        <div style="display:flex;align-items:center;gap:12px;margin:18px 0 4px">
+          <div style="height:1px;flex:1;background:#262F44"></div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7C859C;white-space:nowrap">{{ L.socialOr }}</div>
+          <div style="height:1px;flex:1;background:#262F44"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+          <div onClick="{{ pickEmail }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:15px;border-radius:16px;background:rgba(26,34,51,.6);border:1px solid #262F44;font-size:14px;font-weight:800;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="ph-bold ph-envelope-simple" style="font-size:18px;color:#2AC4E8;flex:none"></i>{{ L.withEmail }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:13px;color:#7C859C;flex:none"></i></div>
+          <div onClick="{{ pickWa }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:15px;border-radius:16px;background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.4);font-size:14px;font-weight:800;transition:border-color .15s" style-hover="border-color:#25D366"><i class="ph-bold ph-whatsapp-logo" style="font-size:18px;color:#25D366;flex:none"></i>{{ L.withWa }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:13px;color:#7C859C;flex:none"></i></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ authStepIdAny }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ authIdLabel }}</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+            <i class="{{ authIdIcon }}" style="font-size:16px;color:#2AC4E8;flex:none"></i>
+            <input value="{{ authIdValue }}" onChange="{{ onAuthId }}" type="{{ authIdType }}" placeholder="{{ authIdPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ authStepOtp }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px">
+          <div style="position:relative">
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ authOtpCells }}" as="c" hint-placeholder-count="6">
+                <div style="flex:1;height:54px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:20px;background:rgba(10,14,26,.6);border:1.5px solid {{ c.bd }};color:#F3F6FC">{{ c.ch }}</div>
+              </sc-for>
+            </div>
+            <input value="{{ authOtpValue }}" onChange="{{ onAuthOtp }}" inputMode="numeric" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;background:transparent;cursor:text;font-size:16px">
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px">
+            <div style="font-size:11.5px;font-weight:600;color:#7C859C">{{ L.otpHint }}</div>
+            <div onClick="{{ authResend }}" style="cursor:pointer;font-size:11.5px;font-weight:800;color:#2AC4E8;white-space:nowrap">{{ L.otpResend }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ authStepPassAny }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+            <i class="ph-bold ph-lock-key" style="font-size:16px;color:#2AC4E8;flex:none"></i>
+            <input value="{{ authPassValue }}" onChange="{{ onAuthPass }}" type="{{ authPassType }}" placeholder="{{ L.passLabel }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+            <i class="{{ authPassEye }}" onClick="{{ toggleAuthPass }}" style="font-size:15px;color:#7C859C;cursor:pointer;flex:none"></i>
+          </div>
+          <sc-if value="{{ authStepPass }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+              <i class="ph-bold ph-check-circle" style="font-size:16px;color:#7C859C;flex:none"></i>
+              <input value="{{ authPass2Value }}" onChange="{{ onAuthPass2 }}" type="{{ authPassType }}" placeholder="{{ L.pass2Label }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+            </div>
+          </sc-if>
+          <sc-if value="{{ authStepLoginPass }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ authForgot }}" style="align-self:flex-start;cursor:pointer;font-size:12px;font-weight:700;color:#2AC4E8;margin-top:2px">{{ L.forgot }}</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ authFormShow }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <sc-if value="{{ authErrShow }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:7px;margin-top:12px;color:#FFB35C;font-size:12px;font-weight:700"><i class="ph-fill ph-warning-circle" style="font-size:14px;flex:none"></i>{{ authErr }}</div>
+          </sc-if>
+          <div onClick="{{ authSubmit }}" style="cursor:pointer;margin-top:18px;padding:15px;border-radius:16px;background:#2AC4E8;color:#0A0E1A;font-size:14.5px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 32px rgba(42,196,232,.24);transition:transform .15s" style-hover="transform:translateY(-1px)" style-active="transform:translateY(1px)">{{ authCta }}<i class="ph-bold ph-arrow-right" style="font-size:15px"></i></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ authSwitchShow }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:20px;font-size:12.5px;font-weight:700;color:#7C859C">{{ authSwitchQ }}<span onClick="{{ authSwitch }}" style="cursor:pointer;color:#2AC4E8;font-weight:800">{{ authSwitchLabel }}</span></div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ editOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeEdit }}" style="position:fixed;inset:0;z-index:80;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:28px">
+    <div onClick="{{ stopProp }}" style="width:100%;max-width:470px;max-height:100%;overflow-y:auto;padding:30px;border-radius:24px;background:radial-gradient(520px 340px at 8% -10%, #1B2740 0%, #121826 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.7);animation:ffRise .24s ease both">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div style="display:flex;align-items:center;gap:13px;min-width:0">
+          <sc-if value="{{ pHasPhoto }}" hint-placeholder-val="{{ false }}">
+            <div style="width:46px;height:46px;border-radius:16px;flex:none;border:1px solid #33405C;background: {{ pPhotoBg }}"></div>
+          </sc-if>
+          <sc-if value="{{ pNoPhoto }}" hint-placeholder-val="{{ true }}">
+            <div style="width:46px;height:46px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2AC4E8,#8C6BFF);color:#0A0E1A;font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px">{{ userInitial }}</div>
+          </sc-if>
+          <div style="min-width:0">
+            <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:21px;line-height:1.1;text-transform:uppercase">{{ L.profileTitle }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#8891A8;margin-top:5px;display:flex;align-items:center;gap:5px"><i class="ph-fill ph-check-circle" style="font-size:12px;color:#2E9E5B;flex:none"></i>{{ userVia }}</div>
+          </div>
+        </div>
+        <div onClick="{{ closeEdit }}" style="cursor:pointer;flex:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="ph-bold ph-x" style="font-size:13px;color:#F3F6FC"></i></div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:#8891A8;line-height:1.6;margin-top:14px">{{ L.profileSub }}</div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-top:20px;padding:14px;border-radius:16px;background:rgba(10,14,26,.5);border:1px dashed #33405C">
+        <label for="ffPhotoWeb" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 15px;border-radius:12px;border:1px solid #2AC4E8;color:#2AC4E8;font-size:12px;font-weight:800;white-space:nowrap;transition:background .15s" style-hover="background:rgba(42,196,232,.1)"><i class="ph-bold ph-upload-simple" style="font-size:14px"></i>{{ photoCta }}</label>
+        <input id="ffPhotoWeb" type="file" accept="image/*" onChange="{{ onPhoto }}" style="display:none">
+        <div style="flex:1;min-width:0;font-size:11.5px;font-weight:600;color:#7C859C;line-height:1.5">{{ L.photoHint }}</div>
+        <sc-if value="{{ pHasPhoto }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ clearPhoto }}" style="cursor:pointer;flex:none;font-size:11.5px;font-weight:800;color:#8891A8;transition:color .15s" style-hover="color:#FFB35C">{{ L.removePhoto }}</div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px">
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.nameLabel }}</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+            <i class="ph-bold ph-user" style="font-size:16px;color:#2AC4E8;flex:none"></i>
+            <input value="{{ pName }}" onChange="{{ onPName }}" placeholder="{{ L.namePh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ L.emailLabel }}</div>
+            <sc-if value="{{ emailIsLogin }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:3px 8px;border-radius:999px;background:rgba(42,196,232,.12);border:1px solid rgba(42,196,232,.35);color:#7FE0F5;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">{{ L.loginIdNote }}</div>
+            </sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+            <i class="ph-bold ph-envelope-simple" style="font-size:16px;color:#2AC4E8;flex:none"></i>
+            <input value="{{ pEmail }}" onChange="{{ onPEmail }}" type="email" placeholder="{{ L.emailPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ L.zaloLabel }}</div>
+            <sc-if value="{{ zaloIsLogin }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:3px 8px;border-radius:999px;background:rgba(42,196,232,.12);border:1px solid rgba(42,196,232,.35);color:#7FE0F5;font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase">{{ L.loginIdNote }}</div>
+            </sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+            <i class="ph-bold ph-chat-circle-dots" style="font-size:16px;color:#4EA1FF;flex:none"></i>
+            <input value="{{ pZalo }}" onChange="{{ onPZalo }}" type="tel" placeholder="{{ L.zaloPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:8px">{{ L.cityLabel }}</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 15px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+            <i class="ph-bold ph-map-pin" style="font-size:16px;color:#8C6BFF;flex:none"></i>
+            <input value="{{ pCity }}" onChange="{{ onPCity }}" placeholder="{{ L.cityPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700">
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ pErrShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:7px;margin-top:14px;color:#FFB35C;font-size:12px;font-weight:700"><i class="ph-fill ph-warning-circle" style="font-size:14px;flex:none"></i>{{ pErr }}</div>
+      </sc-if>
+
+      <div style="display:flex;gap:10px;margin-top:22px">
+        <div onClick="{{ saveProfile }}" style="cursor:pointer;flex:1;padding:15px;border-radius:16px;background:#2AC4E8;color:#0A0E1A;font-size:14px;font-weight:800;text-align:center;box-shadow:0 14px 32px rgba(42,196,232,.24);transition:transform .15s" style-hover="transform:translateY(-1px)" style-active="transform:translateY(1px)">{{ L.saveChanges }}</div>
+        <div onClick="{{ closeEdit }}" style="cursor:pointer;padding:15px 22px;border-radius:16px;border:1px solid #262F44;color:#8891A8;font-size:14px;font-weight:800;text-align:center;transition:all .15s" style-hover="border-color:#39455F;color:#F3F6FC">{{ L.cancel }}</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ friendSheetOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeFriendSheet }}" style="position:fixed;inset:0;z-index:84;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:28px">
+    <div onClick="{{ stopProp }}" style="width:100%;max-width:400px;padding:26px;border-radius:24px;background:radial-gradient(420px 300px at 8% -10%, #1B2740 0%, #121826 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.7);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:center;gap:13px">
+        <div style="position:relative;flex:none">
+          <div style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:18px;color:#0A0E1A;background: {{ fsColor }}">{{ fsInitials }}</div>
+          <div style="position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border-radius:50%;background:#121826;display:flex;align-items:center;justify-content:center"><i class="{{ fsIcon }}" style="font-size:12px;color: {{ fsIconColor }}"></i></div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;line-height:1.1">{{ fsName }}</div>
+          <div style="font-size:11.5px;font-weight:600;color:#8891A8;margin-top:4px">{{ fsSrcLabel }} · {{ fsMutual }}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:18px">
+        <div onClick="{{ fsChat }}" style="cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:12px;background:#2AC4E8;color:#0A0E1A;font-size:13px;font-weight:800"><i class="ph-fill ph-chat-circle-dots" style="font-size:16px"></i>{{ L.chat }}</div>
+        <div onClick="{{ fsFollow }}" style="cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:12px;background:rgba(26,34,51,.7);font-size:13px;font-weight:800;border:1px solid {{ fsFollowBd }};color: {{ fsFollowFg }}"><i class="ph-bold ph-user-circle-plus" style="font-size:16px"></i>{{ fsFollowLabel }}</div>
+      </div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:20px 0 10px">{{ L.friendsGoingTitle }}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ fsGoingList }}" as="e" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;background:rgba(26,34,51,.6);border:1px solid #262F44">
+            <i class="ph-fill ph-ticket" style="font-size:15px;color:#2AC4E8;flex:none"></i>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.title }}</div>
+              <div style="font-size:10.5px;font-weight:600;color:#8891A8;margin-top:2px">{{ e.when }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;right:24px;bottom:24px;z-index:86;width:330px;max-height:70vh;display:flex;flex-direction:column;border-radius:20px;overflow:hidden;background:rgba(18,24,38,.97);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border:1px solid #33405C;box-shadow:0 30px 70px rgba(0,0,0,.7);animation:ffRise .22s ease both">
+    <div style="flex:none;display:flex;align-items:center;gap:11px;padding:14px 15px;border-bottom:1px solid #262F44">
+      <div style="width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;color:#0A0E1A;background: {{ chatColor }}">{{ chatInitials }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ chatName }}</div>
+        <div style="font-size:10px;font-weight:600;color:#7C859C;margin-top:2px">{{ chatSrc }}</div>
+      </div>
+      <div onClick="{{ closeChat }}" style="cursor:pointer;width:26px;height:26px;border-radius:50%;background:rgba(26,34,51,.8);display:flex;align-items:center;justify-content:center;flex:none"><i class="ph-bold ph-x" style="font-size:11px;color:#8891A8"></i></div>
+    </div>
+    <div style="flex:1;min-height:120px;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:9px">
+      <sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
+        <div style="margin:auto;text-align:center;max-width:210px;display:flex;flex-direction:column;align-items:center;gap:9px">
+          <i class="ph-fill ph-lock-simple" style="font-size:22px;color:#39455F"></i>
+          <div style="font-size:12px;font-weight:600;color:#7C859C;line-height:1.55">{{ L.chatStart }}</div>
+        </div>
+      </sc-if>
+      <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="0">
+        <div style="display:flex;justify-content: {{ m.align }}">
+          <div style="max-width:78%;padding:10px 13px;font-size:12.5px;font-weight:600;line-height:1.5;background: {{ m.bg }};color: {{ m.fg }};border-radius: {{ m.radius }}">{{ m.text }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="flex:none;padding:12px 14px 14px;border-top:1px solid #262F44;display:flex;align-items:center;gap:9px">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;padding:11px 14px;border-radius:999px;background:rgba(10,14,26,.7);border:1px solid #262F44">
+        <input value="{{ chatDraft }}" onChange="{{ onChatDraft }}" placeholder="{{ L.chatPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600">
+      </div>
+      <div onClick="{{ sendChat }}" style="cursor:pointer;width:38px;height:38px;border-radius:50%;flex:none;background:#2AC4E8;color:#0A0E1A;display:flex;align-items:center;justify-content:center"><i class="ph-fill ph-paper-plane-right" style="font-size:16px"></i></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ inviteOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeInvite }}" style="position:fixed;inset:0;z-index:88;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:28px">
+    <div onClick="{{ stopProp }}" style="width:100%;max-width:420px;padding:26px;border-radius:24px;background:radial-gradient(420px 300px at 8% -10%, #1B2740 0%, #121826 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.7);animation:ffRise .22s ease both">
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase">{{ L.inviteTitle }}</div>
+      <div style="font-size:12.5px;font-weight:600;color:#8891A8;margin-top:8px">{{ L.inviteSub }}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;max-height:300px;overflow-y:auto">
+        <sc-for list="{{ inviteList }}" as="f" hint-placeholder-count="4">
+          <div onClick="{{ f.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;background:rgba(26,34,51,.6);border:1px solid {{ f.bd }};transition:border-color .15s">
+            <div style="width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;color:#0A0E1A;background: {{ f.color }}">{{ f.initials }}</div>
+            <div style="flex:1;min-width:0;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.name }}</div>
+            <i class="{{ f.icon }}" style="font-size:14px;flex:none;color: {{ f.iconColor }}"></i>
+            <div style="width:20px;height:20px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ f.tickBg }};border:1.5px solid {{ f.tickBd }}"><i class="ph-bold ph-check" style="font-size:11px;color:#0A0E1A;opacity: {{ f.tick }}"></i></div>
+          </div>
+        </sc-for>
+      </div>
+      <div onClick="{{ sendInvites }}" style="cursor:pointer;margin-top:18px;padding:14px;border-radius:12px;background:#2AC4E8;color:#0A0E1A;font-size:13.5px;font-weight:800;text-align:center;box-shadow:0 12px 30px rgba(42,196,232,.24)">{{ inviteCta }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ reportOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:rgba(6,8,13,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box">
+    <div onClick="{{ closeReport }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(540px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:28px;border-radius:24px;background:#121826;border:1px solid #33405C;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="flex:1;min-width:0">
+          <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:21px;line-height:1.1;text-transform:uppercase;margin:0">{{ L.reportTitle }}</h2>
+          <div style="font-size:12.5px;font-weight:600;color:#8891A8;line-height:1.65;margin-top:11px;text-wrap:pretty">{{ L.reportSub }}</div>
+        </div>
+        <div onClick="{{ closeReport }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="ph-bold ph-x" style="font-size:13px;color:#C3CBDC"></i></div>
+      </div>
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:22px 0 11px">{{ L.reportWhat }}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(214px,1fr));gap:9px">
+        <sc-for list="{{ reportCodes }}" as="c" hint-placeholder-count="6">
+          <div onClick="{{ c.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:14px;transition:all .15s;background: {{ c.bg }};border:1px solid {{ c.bd }}" style-hover="border-color:#3B4A6B">
+            <i class="{{ c.icon }}" style="font-size:16px;color: {{ c.iconFg }};flex:none"></i>
+            <div style="font-size:12.5px;font-weight:800;color: {{ c.fg }};min-width:0;line-height:1.35">{{ c.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:20px 0 10px">{{ L.reportMore }}</div>
+      <textarea value="{{ reportNote }}" onChange="{{ onReportNote }}" rows="3" placeholder="{{ L.reportMorePh }}" style="width:100%;box-sizing:border-box;padding:14px 15px;border-radius:12px;background:#0A0E1A;border:1px solid #262F44;outline:none;resize:vertical;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;line-height:1.6"></textarea>
+      <div onClick="{{ sendReport }}" style="cursor:pointer;margin-top:20px;padding:15px;border-radius:16px;text-align:center;background:#FF8A3D;color:#06080D;font-size:13.5px;font-weight:800;transition:transform .15s" style-hover="transform:translateY(-1px)">{{ L.reportSend }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:rgba(6,8,13,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box">
+    <div onClick="{{ closeNotifPrefs }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(620px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:28px;border-radius:24px;background:#121826;border:1px solid #33405C;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="flex:1;min-width:0">
+          <h2 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:21px;line-height:1.1;text-transform:uppercase;margin:0">{{ L.notifTitle }}</h2>
+          <div style="font-size:12.5px;font-weight:600;color:#8891A8;line-height:1.65;margin-top:11px;text-wrap:pretty">{{ L.notifSub }}</div>
+        </div>
+        <div onClick="{{ closeNotifPrefs }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#2AC4E8"><i class="ph-bold ph-x" style="font-size:13px;color:#C3CBDC"></i></div>
+      </div>
+
+      <div style="margin-top:22px;border-radius:18px;border:1px solid #262F44;overflow:hidden">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) repeat(3,64px);gap:10px;align-items:center;padding:13px 16px;background:rgba(10,14,26,.6);border-bottom:1px solid #1F2739">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ L.notifPrefs }}</div>
+          <sc-for list="{{ notifCols }}" as="c" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+              <i class="{{ c.icon }}" style="font-size:14px;color:#7C859C"></i>
+              <div style="font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#7C859C">{{ c.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-for list="{{ notifRows }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) repeat(3,64px);gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid #1F2739">
+            <div style="display:flex;align-items:center;gap:11px;min-width:0">
+              <i class="{{ r.icon }}" style="font-size:16px;color:#8891A8;flex:none"></i>
+              <div style="font-size:12.5px;font-weight:700;color:#C3CBDC;line-height:1.4;text-wrap:pretty">{{ r.label }}</div>
+            </div>
+            <sc-for list="{{ r.cells }}" as="x" hint-placeholder-count="3">
+              <div onClick="{{ x.toggle }}" title="{{ x.hint }}" style="cursor:pointer;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;transition:all .15s;background: {{ x.bg }};border:1px solid {{ x.bd }}" style-hover="border-color:#3B4A6B">
+                <i class="{{ x.icon }}" style="font-size:17px;color: {{ x.color }}"></i>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:11px;margin-top:16px">
+        <i class="ph-bold ph-moon" style="font-size:15px;color:#7C859C;flex:none;margin-top:2px"></i>
+        <div style="font-size:11.5px;font-weight:600;color:#8891A8;line-height:1.6;text-wrap:pretty">{{ L.notifQuiet }}</div>
+      </div>
+      <div onClick="{{ closeNotifPrefs }}" style="cursor:pointer;margin-top:20px;padding:15px;border-radius:16px;text-align:center;background:#2AC4E8;color:#06080D;font-size:13.5px;font-weight:800;transition:transform .15s" style-hover="transform:translateY(-1px)">{{ L.done }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:70;padding:12px 22px;border-radius:999px;background:rgba(26,34,51,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #3B4A6B;font-size:12.5px;font-weight:700;box-shadow:0 16px 40px rgba(0,0,0,.6);animation:ffRise .2s ease both">{{ toast }}</div>
+</sc-if>
+
+</div>

@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Local environment and the embedded dev database
+.env
+.data/
+*.log
+
+# Uploaded files kept on disk in development
+festfinder-backend/.uploads/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

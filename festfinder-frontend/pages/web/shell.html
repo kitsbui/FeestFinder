@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FestFinder — sự kiện ở TP.HCM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/pages/web/template.html" as="fetch" crossorigin>
+<link rel="preload" href="/pages/web/logic.js" as="fetch" crossorigin>
+<script src="/ui/ff-client.js"></script>
+</head>
+<body>
+<!-- The runtime reads the template from here and the logic from the script below;
+     FF.mount fills both in, after the data this route needs is in hand. -->
+<x-dc></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Explore&quot;,&quot;Map&quot;,&quot;SEO landing&quot;],&quot;default&quot;:&quot;Explore&quot;,&quot;tsType&quot;:&quot;'Explore' | 'Map' | 'SEO landing'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;signedIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;language&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;English&quot;,&quot;Tiếng Việt&quot;],&quot;default&quot;:&quot;English&quot;,&quot;tsType&quot;:&quot;'English' | 'Tiếng Việt'&quot;,&quot;section&quot;:&quot;Prototype&quot;}}"></script>
+<script>FF.mount({ surface: 'web', base: '/' });</script>
+</body>
+</html>

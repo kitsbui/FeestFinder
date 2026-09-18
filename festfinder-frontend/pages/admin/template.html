@@ -1,0 +1,994 @@
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+  body { margin:0; background:#06080D; font-family:'Manrope',system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+  a { color:#2AC4E8; text-decoration:none; }
+  a:hover { color:#7FE0F5; }
+  *::-webkit-scrollbar { width:0 !important; height:0 !important; display:none; }
+  @keyframes ffRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes ffDrift { 0%,100% { transform:translate3d(0,0,0) scale(1); } 50% { transform:translate3d(36px,-26px,0) scale(1.14); } }
+  @keyframes ffSlideIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes ffBlink { 0%,80%,100% { opacity:.28; } 40% { opacity:1; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#06080D;color:#F3F6FC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden">
+
+<div style="position:fixed;top:-200px;right:-160px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(140,107,255,.13),transparent 66%);filter:blur(74px);animation:ffDrift 26s ease-in-out infinite;pointer-events:none;z-index:0"></div>
+<div style="position:fixed;bottom:-240px;left:-180px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(42,196,232,.1),transparent 66%);filter:blur(78px);animation:ffDrift 32s ease-in-out infinite reverse;pointer-events:none;z-index:0"></div>
+
+<div style="position:sticky;top:0;z-index:40;background:rgba(10,14,26,.76);backdrop-filter:blur(26px) saturate(1.6);-webkit-backdrop-filter:blur(26px) saturate(1.6);border-bottom:1px solid rgba(38,47,68,.9)">
+  <sc-if value="{{ impOn }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:13px;padding:10px 28px;background:rgba(255,138,61,.15);border-bottom:1px solid rgba(255,138,61,.42);flex-wrap:wrap">
+      <i class="ph-fill ph-eye" style="font-size:15px;color:#FFB35C;flex:none"></i>
+      <div style="font-size:12.5px;font-weight:800;color:#FFD9B5;flex:none">{{ impLabel }}</div>
+      <div style="font-size:11.5px;font-weight:700;color:#FFB35C;flex:1;min-width:120px">{{ impNote }}</div>
+      <div onClick="{{ impExit }}" style="cursor:pointer;flex:none;padding:7px 14px;border-radius:999px;background:rgba(6,8,13,.45);border:1px solid rgba(255,138,61,.55);font-size:11.5px;font-weight:800;color:#FFD9B5;transition:all .15s" style-hover="background:rgba(255,138,61,.26)">{{ impExitLabel }}</div>
+    </div>
+  </sc-if>
+  <div style="max-width:1320px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+    <img src="/ui/assets/ff-logo.png" alt="FestFinder" style="height:35px;width:127px;display:block;flex:none">
+    <div style="padding:5px 11px;border-radius:999px;background:rgba(224,74,74,.14);border:1px solid rgba(224,74,74,.45);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#FF9A9A;white-space:nowrap;flex:none">{{ T.mode }}</div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:9px;flex:none">
+      <div style="position:relative;flex:none">
+        <div onClick="{{ toggleViewAs }}" title="{{ T.viewAsHead }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid {{ vaBd }};background: {{ vaBg }};font-size:11.5px;font-weight:800;color: {{ vaFg }};transition:all .15s" style-hover="border-color:#8C6BFF">
+          <i class="ph-bold ph-user-switch" style="font-size:14px"></i>{{ T.viewAs }}
+        </div>
+        <sc-if value="{{ viewAsOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:44px;right:0;width:258px;z-index:60;padding:8px;border-radius:16px;background:#0D1220;border:1px solid #33405C;box-shadow:0 24px 54px rgba(0,0,0,.62);animation:ffRise .16s ease both">
+            <div style="padding:8px 10px 10px;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ T.viewAsHead }}</div>
+            <sc-for list="{{ viewAsOpts }}" as="v" hint-placeholder-count="2">
+              <div onClick="{{ v.go }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:10px;border-radius:12px;transition:background .15s" style-hover="background:rgba(42,196,232,.1)">
+                <div style="width:31px;height:31px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ v.tint }}"><i class="{{ v.icon }}" style="font-size:14px;color: {{ v.color }}"></i></div>
+                <div style="min-width:0">
+                  <div style="font-size:12.5px;font-weight:800">{{ v.name }}</div>
+                  <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:2px">{{ v.role }}</div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="margin-top:5px;padding:10px 10px 5px;border-top:1px solid #1A2233;font-size:10.5px;font-weight:600;color:#7C859C;line-height:1.55;text-wrap:pretty">{{ T.viewAsNote }}</div>
+          </div>
+        </sc-if>
+      </div>
+      <div onClick="{{ toggleLang }}" style="cursor:pointer;padding:8px 12px;border-radius:999px;border:1px solid #262F44;font-size:11.5px;font-weight:800;letter-spacing:.05em;color:#8891A8;transition:all .15s" style-hover="color:#2AC4E8;border-color:#2AC4E8">{{ langLabel }}</div>
+      <div style="display:flex;align-items:center;gap:9px;padding:6px 13px 6px 7px;border-radius:999px;background:rgba(18,24,38,.7);border:1px solid #262F44">
+        <div style="width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:linear-gradient(135deg,#8C6BFF,#2AC4E8);color:#06080D;letter-spacing:-.02em">FA</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:800;white-space:nowrap">{{ T.admin }}</div>
+          <div style="font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7C859C">{{ T.role }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:1320px;margin:0 auto;padding:0 28px 12px;display:flex;gap:7px;flex-wrap:wrap">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+      <div onClick="{{ t.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background: {{ t.bg }};border:1px solid {{ t.bd }};color: {{ t.fg }};font-size:12.5px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F">
+        <i class="{{ t.icon }}" style="font-size:14px"></i>{{ t.label }}
+        <sc-if value="{{ t.hasCount }}" hint-placeholder-val="{{ false }}">
+          <div style="min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;background: {{ t.cBg }};color: {{ t.cFg }}">{{ t.count }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+</div>
+
+<div style="position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:26px 28px 90px">
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px;margin-bottom:24px">
+    <sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+      <div onClick="{{ h.open }}" style="cursor:pointer;padding:17px 19px;border-radius:16px;background:rgba(18,24,38,.62);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid #262F44;transition:border-color .15s, transform .15s" style-hover="border-color:#39455F;transform:translateY(-2px)" style-active="transform:translateY(0)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ h.label }}</div>
+          <i class="{{ h.icon }}" style="font-size:15px;color: {{ h.color }}"></i>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:7px">
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;line-height:1;color: {{ h.color }}">{{ h.value }}</div>
+          <div style="font-size:11px;font-weight:700;color:#7C859C;padding-bottom:2px">{{ h.unit }}</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:7px">
+          <div style="font-size:11px;font-weight:600;color:#8891A8;line-height:1.5;flex:1;min-width:0;min-height:33px">{{ h.note }}</div>
+          <i class="ph-bold ph-arrow-up-right" style="font-size:12px;color:#7C859C;flex:none;padding-bottom:3px"></i>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start;animation:ffRise .3s ease both">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.qKicker }}</div>
+          <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.qTitle }}</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ qFilters }}" as="f" hint-placeholder-count="5">
+            <div onClick="{{ f.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background: {{ f.bg }};border:1px solid {{ f.bd }};color: {{ f.fg }};font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F">
+              <i class="{{ f.icon }}" style="font-size:13px"></i>{{ f.label }}
+              <div style="min-width:17px;padding:1px 6px;box-sizing:border-box;border-radius:999px;text-align:center;font-size:10.5px;font-weight:800;background: {{ f.cBg }};color: {{ f.cFg }}">{{ f.count }}</div>
+            </div>
+          </sc-for>
+          <div onClick="{{ cycleSort }}" title="{{ T.sortHint }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid #262F44;color:#C3CBDC;font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5">
+            <i class="ph-bold ph-sort-descending" style="font-size:13px"></i>{{ sortLabel }}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;padding:12px 16px;border-radius:14px;background:rgba(18,24,38,.5);border:1px solid #262F44">
+        <div onClick="{{ toggleAll }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex:none">
+          <i class="{{ allIcon }}" style="font-size:18px;color: {{ allColor }}"></i>
+          <div style="font-size:12px;font-weight:800;color: {{ allFg }}">{{ allLabel }}</div>
+        </div>
+        <div style="width:1px;height:20px;background:#262F44;flex:none"></div>
+        <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:210px">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7C859C;flex:none">{{ T.ageHead }}</div>
+          <div style="display:flex;gap:2px;height:9px;flex:1;min-width:90px">
+            <sc-for list="{{ ageBuckets }}" as="b" hint-placeholder-count="4">
+              <div title="{{ b.hint }}" style="height:100%;border-radius:3px;width: {{ b.w }};background: {{ b.color }}"></div>
+            </sc-for>
+          </div>
+          <div style="font-size:11.5px;font-weight:800;color: {{ oldestFg }};flex:none;white-space:nowrap">{{ oldestLabel }}</div>
+        </div>
+        <div onClick="{{ openShortcuts }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;flex:none;font-size:11px;font-weight:800;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">
+          <i class="ph-bold ph-keyboard" style="font-size:15px"></i>{{ T.shortcuts }}
+        </div>
+      </div>
+
+      <sc-if value="{{ qEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:46px 26px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;text-align:center">
+          <i class="ph-fill ph-check-circle" style="font-size:38px;color:#2E9E5B"></i>
+          <div style="font-size:16px;font-weight:800;margin-top:14px">{{ T.qClear }}</div>
+          <div style="font-size:12.5px;font-weight:600;color:#8891A8;margin-top:7px">{{ T.qClearSub }}</div>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+        <div onClick="{{ q.focusIt }}" style="border-radius:20px;background: {{ q.bg }};border:1px solid {{ q.bd }};box-shadow: {{ q.ring }};overflow:hidden;transition:border-color .15s, box-shadow .15s">
+          <div style="display:flex;gap:14px;padding:17px">
+            <div onClick="{{ q.toggleSel }}" title="{{ T.selectHint }}" style="cursor:pointer;flex:none;padding-top:2px"><i class="{{ q.selIcon }}" style="font-size:19px;color: {{ q.selColor }}"></i></div>
+            <div style="width:104px;height:78px;border-radius:12px;flex:none;background: {{ q.art }};position:relative;overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,14,26,.72),transparent 58%)"></div>
+              <div style="position:absolute;left:6px;bottom:6px;display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;background:rgba(6,8,13,.8);font-size:10px;font-weight:800;color: {{ q.riskFg }}"><i class="ph-fill ph-shield-warning" style="font-size:10px"></i>{{ q.riskScore }}</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                <div style="font-size:15.5px;font-weight:800;text-wrap:pretty">{{ q.title }}</div>
+                <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background: {{ q.slaBg }};border:1px solid {{ q.slaBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ q.slaFg }};white-space:nowrap">
+                  <i class="{{ q.slaIcon }}" style="font-size:11px"></i>{{ q.slaLabel }}
+                </div>
+                <sc-if value="{{ q.flagged }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,138,61,.14);border:1px solid rgba(255,138,61,.4);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FFB35C;white-space:nowrap">
+                    <i class="ph-fill ph-warning" style="font-size:11px"></i>{{ q.flagLabel }}
+                  </div>
+                </sc-if>
+              </div>
+              <div style="font-size:12.5px;font-weight:600;color:#8891A8;margin-top:6px">{{ q.meta }}</div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:11px">
+                <sc-for list="{{ q.signals }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color: {{ s.color }}">
+                    <i class="{{ s.icon }}" style="font-size:13px"></i>{{ s.label }}
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;flex:none;width:118px">
+              <div onClick="{{ q.approve }}" style="cursor:pointer;padding:10px 0;border-radius:12px;background:#2E9E5B;color:#F3F6FC;font-size:12px;font-weight:800;text-align:center;transition:all .15s" style-hover="background:#37B86A">{{ T.approve }}</div>
+              <div onClick="{{ q.reject }}" style="cursor:pointer;padding:10px 0;border-radius:12px;border:1px solid #262F44;color:#8891A8;font-size:12px;font-weight:800;text-align:center;transition:all .15s" style-hover="border-color:rgba(224,74,74,.6);color:#FF9A9A">{{ T.reject }}</div>
+              <div onClick="{{ q.ask }}" style="cursor:pointer;padding:10px 0;border-radius:12px;font-size:11.5px;font-weight:800;text-align:center;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">{{ q.askLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="position:sticky;top:132px;display:flex;flex-direction:column;gap:14px">
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid {{ risk.bd }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ T.riskHead }}</div>
+          <div style="padding:3px 9px;border-radius:999px;background: {{ risk.tint }};font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color: {{ risk.color }}">{{ risk.band }}</div>
+        </div>
+        <div style="font-size:13px;font-weight:800;margin-top:11px;line-height:1.4;text-wrap:pretty">{{ risk.title }}</div>
+        <div style="display:flex;align-items:flex-end;gap:7px;margin-top:12px">
+          <div style="font-family:'Archivo',sans-serif;font-size:30px;font-weight:900;line-height:1;color: {{ risk.color }}">{{ risk.score }}</div>
+          <div style="font-size:11px;font-weight:700;color:#7C859C;padding-bottom:3px">/ 100</div>
+        </div>
+        <div style="height:8px;border-radius:4px;background:#1A2233;overflow:hidden;margin-top:11px">
+          <div style="height:100%;border-radius:4px;background: {{ risk.color }};width: {{ risk.w }}"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;margin-top:7px">
+          <sc-for list="{{ risk.factors }}" as="f" hint-placeholder-count="4">
+            <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid #1A2233">
+              <i class="{{ f.icon }}" style="font-size:15px;color: {{ f.color }};flex:none;margin-top:1px"></i>
+              <div style="flex:1;min-width:0;font-size:11.5px;font-weight:700;color:#C3CBDC;line-height:1.5">{{ f.label }}</div>
+              <div style="font-size:11px;font-weight:800;color: {{ f.color }};flex:none;white-space:nowrap">{{ f.weight }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:10.5px;font-weight:600;color:#7C859C;line-height:1.6;margin-top:13px;padding-top:13px;border-top:1px solid #1A2233;text-wrap:pretty">{{ T.riskNote }}</div>
+      </div>
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:6px">{{ T.autoChecks }}</div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ checks }}" as="c" hint-placeholder-count="5">
+            <div style="display:flex;gap:11px;padding:13px 0;border-top:1px solid #1A2233">
+              <i class="{{ c.icon }}" style="font-size:16px;color: {{ c.color }};flex:none;margin-top:1px"></i>
+              <div style="min-width:0">
+                <div style="font-size:12.5px;font-weight:700;line-height:1.45">{{ c.label }}</div>
+                <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px;line-height:1.5">{{ c.detail }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:18px 20px;border-radius:20px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B;display:flex;gap:12px">
+        <i class="ph-bold ph-shield-check" style="font-size:17px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+        <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65">{{ T.slaNote }}</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAppeals }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.apKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.apTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:620px;line-height:1.6;text-wrap:pretty">{{ T.apSub }}</div>
+    </div>
+    <sc-if value="{{ apEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:46px 26px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;text-align:center">
+        <i class="ph-fill ph-gavel" style="font-size:36px;color:#7C859C"></i>
+        <div style="font-size:15px;font-weight:800;margin-top:14px">{{ T.apEmpty }}</div>
+      </div>
+    </sc-if>
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <sc-for list="{{ appeals }}" as="a" hint-placeholder-count="2">
+        <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid {{ a.bd }};padding:18px">
+          <div style="display:flex;gap:15px">
+            <div style="width:52px;height:52px;border-radius:14px;flex:none;background: {{ a.art }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                <div style="font-size:15px;font-weight:800">{{ a.title }}</div>
+                <div style="padding:4px 10px;border-radius:999px;background: {{ a.stBg }};border:1px solid {{ a.stBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ a.stFg }};white-space:nowrap">{{ a.stLabel }}</div>
+              </div>
+              <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px">{{ a.meta }}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:12px;margin-top:15px">
+            <div style="padding:14px;border-radius:14px;background:rgba(224,74,74,.07);border:1px solid rgba(224,74,74,.28)">
+              <div style="font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#FF9A9A">{{ a.reasonHead }}</div>
+              <div style="font-size:12px;font-weight:600;color:#F0D5D5;line-height:1.6;margin-top:8px;text-wrap:pretty">{{ a.msg }}</div>
+            </div>
+            <sc-if value="{{ a.hasReply }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:14px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+                <div style="font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7FE0F5">{{ a.replyHead }}</div>
+                <div style="font-size:12px;font-weight:600;color:#C3CBDC;line-height:1.6;margin-top:8px;text-wrap:pretty">{{ a.reply }}</div>
+                <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:9px">{{ a.when }}</div>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;padding-top:15px;border-top:1px solid #1A2233">
+            <div onClick="{{ a.overturn }}" style="cursor:pointer;padding:10px 16px;border-radius:12px;background:#2E9E5B;color:#F3F6FC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="background:#37B86A">{{ T.overturn }}</div>
+            <div onClick="{{ a.uphold }}" style="cursor:pointer;padding:10px 16px;border-radius:12px;border:1px solid #262F44;color:#C3CBDC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(224,74,74,.6);color:#FF9A9A">{{ T.uphold }}</div>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:#7C859C"><i class="ph-bold ph-clock-countdown" style="font-size:13px"></i>{{ a.deadline }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isVerify }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.vKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.vTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:560px;line-height:1.6">{{ T.vSub }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ orgs }}" as="o" hint-placeholder-count="4">
+        <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid {{ o.bd }};padding:19px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:17px;align-items:center">
+          <div style="width:52px;height:52px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:19px;font-weight:900;background: {{ o.avBg }};color:#06080D">{{ o.initials }}</div>
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+              <div style="font-size:16px;font-weight:800">{{ o.name }}</div>
+              <div style="padding:4px 10px;border-radius:999px;background: {{ o.stBg }};border:1px solid {{ o.stBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ o.stFg }};white-space:nowrap">{{ o.status }}</div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px">{{ o.meta }}</div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:11px">
+              <sc-for list="{{ o.docs }}" as="d" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:10px;background:rgba(10,14,26,.6);border:1px solid #262F44;font-size:11px;font-weight:700;color: {{ d.color }}">
+                  <i class="{{ d.icon }}" style="font-size:12px"></i>{{ d.label }}
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:none;width:130px">
+            <div onClick="{{ o.verify }}" style="cursor:pointer;padding:10px 0;border-radius:12px;background: {{ o.ctaBg }};color: {{ o.ctaFg }};border:1px solid {{ o.ctaBd }};font-size:12px;font-weight:800;text-align:center;transition:all .15s">{{ o.cta }}</div>
+            <div onClick="{{ o.open }}" style="cursor:pointer;padding:10px 0;border-radius:12px;font-size:11.5px;font-weight:800;text-align:center;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">{{ T.viewDocs }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start;animation:ffRise .3s ease both">
+    <div>
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.rKicker }}</div>
+        <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.rTitle }}</h1>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ reports }}" as="r" hint-placeholder-count="4">
+          <div style="border-radius:16px;background:rgba(18,24,38,.62);border:1px solid {{ r.bd }};padding:17px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:7px;padding:4px 11px;border-radius:999px;background: {{ r.catBg }};border:1px solid {{ r.catBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ r.catFg }};white-space:nowrap">
+                <i class="{{ r.icon }}" style="font-size:11px"></i>{{ r.category }}
+              </div>
+              <div style="font-size:11.5px;font-weight:700;color:#7C859C">{{ r.count }}</div>
+              <div style="flex:1"></div>
+              <div style="font-size:11.5px;font-weight:700;color:#7C859C">{{ r.age }}</div>
+            </div>
+            <div style="font-size:14.5px;font-weight:800;margin-top:12px">{{ r.subject }}</div>
+            <div style="font-size:12.5px;font-weight:600;color:#C3CBDC;margin-top:7px;line-height:1.6;text-wrap:pretty">{{ r.quote }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid #1A2233">
+              <div onClick="{{ r.takeDown }}" style="cursor:pointer;padding:9px 15px;border-radius:12px;background:rgba(224,74,74,.14);border:1px solid rgba(224,74,74,.45);color:#FF9A9A;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="background:rgba(224,74,74,.24)">{{ T.takeDown }}</div>
+              <div onClick="{{ r.warn }}" style="cursor:pointer;padding:9px 15px;border-radius:12px;border:1px solid #262F44;color:#FFB35C;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(255,138,61,.6)">{{ T.warn }}</div>
+              <div onClick="{{ r.dismiss }}" style="cursor:pointer;padding:9px 15px;border-radius:12px;border:1px solid #262F44;color:#8891A8;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F">{{ T.dismiss }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="position:sticky;top:132px;padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:15px">{{ T.rBreakdown }}</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ reportStats }}" as="s" hint-placeholder-count="4">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px">
+              <div style="font-size:12px;font-weight:700;color:#C3CBDC;min-width:0">{{ s.label }}</div>
+              <div style="font-size:12px;font-weight:800;color: {{ s.color }};white-space:nowrap">{{ s.value }}</div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background: {{ s.color }};width: {{ s.barW }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isFeatured }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.fKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.fTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:600px;line-height:1.6">{{ T.fSub }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px">
+      <sc-for list="{{ shelves }}" as="s" hint-placeholder-count="3">
+        <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;padding:19px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px">
+            <div style="font-size:14.5px;font-weight:800">{{ s.name }}</div>
+            <div onClick="{{ s.toggle }}" style="cursor:pointer;width:42px;height:24px;border-radius:999px;flex:none;padding:3px;box-sizing:border-box;background: {{ s.swBg }};transition:background .18s;display:flex;justify-content: {{ s.swJustify }}">
+              <div style="width:18px;height:18px;border-radius:50%;background:#F3F6FC"></div>
+            </div>
+          </div>
+          <div style="font-size:11.5px;font-weight:600;color:#7C859C;line-height:1.55">{{ s.note }}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px;padding:11px 12px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+            <div style="display:flex;align-items:center;gap:6px;flex:none;padding:4px 9px;border-radius:999px;background: {{ s.schBg }};font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color: {{ s.schFg }};white-space:nowrap"><i class="{{ s.schIcon }}" style="font-size:11px"></i>{{ s.schLabel }}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex:none;margin-left:auto">
+              <input value="{{ s.from }}" onChange="{{ s.setFrom }}" placeholder="{{ s.fromPh }}" title="{{ s.fromTitle }}" style="width:64px;padding:6px 8px;box-sizing:border-box;border-radius:9px;background:rgba(6,8,13,.7);border:1px solid #262F44;outline:none;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-size:11px;font-weight:800;color:#F3F6FC">
+              <i class="ph-bold ph-arrow-right" style="font-size:11px;color:#7C859C;flex:none"></i>
+              <input value="{{ s.to }}" onChange="{{ s.setTo }}" placeholder="{{ s.toPh }}" title="{{ s.toTitle }}" style="width:64px;padding:6px 8px;box-sizing:border-box;border-radius:9px;background:rgba(6,8,13,.7);border:1px solid #262F44;outline:none;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-size:11px;font-weight:800;color:#F3F6FC">
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:4px">
+            <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid #1A2233">
+                <div style="width:34px;height:34px;border-radius:10px;flex:none;background: {{ it.art }}"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.title }}</div>
+                  <div style="font-size:10.5px;font-weight:600;color:#7C859C;margin-top:3px">{{ it.meta }}</div>
+                </div>
+                <div onClick="{{ it.remove }}" style="cursor:pointer;width:24px;height:24px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#7C859C;transition:all .15s" style-hover="color:#FF9A9A;border-color:rgba(224,74,74,.5)"><i class="ph-bold ph-minus" style="font-size:11px"></i></div>
+              </div>
+            </sc-for>
+          </div>
+          <div onClick="{{ s.preview }}" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:13px;padding:11px;border-radius:12px;border:1px solid #262F44;color:#C3CBDC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-device-mobile" style="font-size:14px"></i>{{ T.previewShelf }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAds }}" hint-placeholder-val="{{ false }}">
+<div style="animation:ffRise .3s ease both">
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ adT.kicker }}</div>
+    <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ adT.title }}</h1>
+    <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:640px;line-height:1.6">{{ adT.sub }}</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 346px;gap:22px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ adT.inbox }}</div>
+        <sc-if value="{{ inqEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:34px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;text-align:center;font-size:13px;font-weight:600;color:#8891A8">{{ adT.inboxEmpty }}</div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ inquiries }}" as="q" hint-placeholder-count="4">
+            <div onClick="{{ q.pick }}" style="cursor:pointer;padding:18px;border-radius:20px;background: {{ q.bg }};border:1px solid {{ q.bd }};transition:all .15s">
+              <div style="display:flex;align-items:flex-start;gap:14px">
+                <div style="width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:15px;font-weight:900;color:#06080D;background: {{ q.art }}">{{ q.logo }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                    <div style="font-size:15px;font-weight:800">{{ q.brand }}</div>
+                    <div style="padding:4px 10px;border-radius:999px;background:rgba(10,14,26,.7);border:1px solid #33405C;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#C3CBDC">{{ q.cat }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#8891A8">{{ q.age }}</div>
+                  </div>
+                  <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px">{{ q.email }} · {{ q.budget }}</div>
+                  <div style="font-size:12.5px;font-weight:500;color:#C3CBDC;line-height:1.6;margin-top:10px;text-wrap:pretty">{{ q.msg }}</div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
+                    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ adT.wants }}</div>
+                    <sc-for list="{{ q.wants }}" as="w" hint-placeholder-count="2">
+                      <div style="padding:4px 10px;border-radius:10px;background:rgba(42,196,232,.1);border:1px solid rgba(42,196,232,.34);font-size:10.5px;font-weight:800;color:#7FE0F5">{{ w.label }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;padding-top:15px;border-top:1px solid #1A2233">
+                <div onClick="{{ q.approve }}" style="cursor:pointer;padding:10px 17px;border-radius:12px;background:#2E9E5B;color:#F3F6FC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="background:#37B86A">{{ adT.approve }}</div>
+                <div onClick="{{ q.reply }}" style="cursor:pointer;padding:10px 17px;border-radius:12px;border:1px solid #262F44;color:#C3CBDC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5">{{ adT.reply }}</div>
+                <div onClick="{{ q.decline }}" style="cursor:pointer;padding:10px 17px;border-radius:12px;border:1px solid #262F44;color:#8891A8;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(224,74,74,.6);color:#FF9A9A">{{ adT.decline }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:6px">{{ adT.live }}</div>
+        <div style="display:grid;grid-template-columns:minmax(104px,1.4fr) minmax(90px,1.1fr) 62px 46px 56px 50px 40px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #1A2233">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colBrand }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colPlace }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colImp }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ adT.colCtr }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colSpend }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colPace }}</div>
+          <div></div>
+        </div>
+        <sc-for list="{{ campaigns }}" as="c" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:minmax(104px,1.4fr) minmax(90px,1.1fr) 62px 46px 56px 50px 40px;gap:10px;align-items:center;padding:14px 0;border-bottom:1px solid #1A2233">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              <div style="width:30px;height:30px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:11px;font-weight:900;color:#06080D;background: {{ c.art }}">{{ c.logo }}</div>
+              <div style="font-size:12px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color: {{ c.brandFg }}">{{ c.brand }}</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color: {{ c.fg }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.place }}</div>
+            <div style="font-size:11.5px;font-weight:700;color: {{ c.fg }};white-space:nowrap">{{ c.imp }}</div>
+            <div style="font-size:11.5px;font-weight:800;color: {{ c.ctrFg }};white-space:nowrap">{{ c.ctr }}</div>
+            <div style="font-size:11.5px;font-weight:800;color: {{ c.fg }};white-space:nowrap">{{ c.spend }}</div>
+            <div style="min-width:0">
+              <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+                <div style="height:100%;border-radius:3px;background: {{ c.paceFill }};width: {{ c.paceW }}"></div>
+              </div>
+              <div style="font-size:10.5px;font-weight:700;color:#8891A8;margin-top:5px">{{ c.paceLabel }}</div>
+            </div>
+            <div onClick="{{ c.toggle }}" style="cursor:pointer;width:40px;height:23px;border-radius:999px;flex:none;padding:3px;box-sizing:border-box;background: {{ c.swBg }};transition:background .18s;display:flex;justify-content: {{ c.swJustify }}">
+              <div style="width:17px;height:17px;border-radius:50%;background:#F3F6FC"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="position:sticky;top:132px;display:flex;flex-direction:column;gap:14px">
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ adT.setup }}</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+          <div style="width:38px;height:38px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:13px;font-weight:900;color:#06080D;background: {{ setupFor.art }}">{{ setupFor.logo }}</div>
+          <div style="min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ adT.setupFor }}</div>
+            <div style="font-size:13.5px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ setupFor.brand }}</div>
+          </div>
+        </div>
+
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:18px 0 11px">{{ adT.places }}</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ setupPlaces }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div onClick="{{ p.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+                <i class="{{ p.icon }}" style="font-size:17px;flex:none;color: {{ p.color }}"></i>
+                <div style="flex:1;min-width:0;font-size:12.5px;font-weight:700;color: {{ p.fg }}">{{ p.label }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;flex:none;padding:5px 8px;border-radius:10px;background:rgba(10,14,26,.7);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+                <input value="{{ p.rate }}" onChange="{{ p.setRate }}" inputMode="numeric" title="{{ adT.rateHint }}" style="width:52px;background:transparent;border:none;outline:none;text-align:right;font-family:'Manrope',system-ui,sans-serif;font-size:11.5px;font-weight:800;color: {{ p.rateFg }}">
+                <div style="font-size:10px;font-weight:800;color:#8891A8;white-space:nowrap">₫ CPM</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:18px 0 10px">{{ adT.genres }}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ setupGenres }}" as="gn" hint-placeholder-count="5">
+            <div onClick="{{ gn.toggle }}" style="cursor:pointer;padding:7px 13px;border-radius:999px;background: {{ gn.bg }};border:1px solid {{ gn.bd }};color: {{ gn.fg }};font-size:11.5px;font-weight:800;transition:all .15s">{{ gn.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:18px 0 10px">{{ adT.areas }}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ setupAreas }}" as="ar" hint-placeholder-count="4">
+            <div onClick="{{ ar.toggle }}" style="cursor:pointer;padding:7px 13px;border-radius:999px;background: {{ ar.bg }};border:1px solid {{ ar.bd }};color: {{ ar.fg }};font-size:11.5px;font-weight:800;transition:all .15s">{{ ar.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ adT.cpm }}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div onClick="{{ cpmDown }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-minus" style="font-size:11px"></i></div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:800;white-space:nowrap">{{ cpmValue }}</div>
+              <div onClick="{{ cpmUp }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-plus" style="font-size:11px"></i></div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ adT.cap }}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div onClick="{{ capDown }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-minus" style="font-size:11px"></i></div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:800">{{ capValue }}</div>
+              <div onClick="{{ capUp }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-plus" style="font-size:11px"></i></div>
+            </div>
+            <div style="font-size:10.5px;font-weight:700;color:#8891A8;margin-top:7px;text-align:center">{{ adT.capUnit }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:13px">{{ adT.preview }}</div>
+        <div style="border-radius:16px;overflow:hidden;background:rgba(10,14,26,.7);border:1px solid #33405C">
+          <div style="height:70px;background: {{ setupFor.art }}"></div>
+          <div style="padding:13px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="padding:3px 9px;border-radius:999px;background:rgba(140,107,255,.18);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#C9BCFF">{{ adT.sponsored }}</div>
+            </div>
+            <div style="font-size:13px;font-weight:800;margin-top:9px">{{ setupFor.brand }}</div>
+            <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:5px">{{ setupFor.cat }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:18px 20px;border-radius:20px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B;display:flex;gap:12px">
+        <i class="ph-bold ph-shield-check" style="font-size:17px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#C9BCFF">{{ adT.rules }}</div>
+          <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65;margin-top:7px">{{ adT.rulesBody }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isInsights }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:22px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.iKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.iTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:660px;line-height:1.6;text-wrap:pretty">{{ T.iSub }}</div>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.iOrgs }}</div>
+    <div style="padding:6px 20px 14px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;margin-bottom:26px">
+      <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 62px 78px 60px 70px 96px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #1A2233">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cOrg }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cLive }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cViews }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cCtr }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cReports }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cGmv }}</div>
+      </div>
+      <sc-for list="{{ orgStats }}" as="o" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 62px 78px 60px 70px 96px;gap:12px;align-items:center;padding:15px 0;border-bottom:1px solid #1A2233">
+          <div style="display:flex;align-items:center;gap:11px;min-width:0">
+            <div style="width:32px;height:32px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:11px;font-weight:900;color:#06080D;background: {{ o.art }}">{{ o.initials }}</div>
+            <div style="min-width:0;display:flex;align-items:center;gap:7px">
+              <div style="font-size:13px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.name }}</div>
+              <sc-if value="{{ o.verified }}" hint-placeholder-val="{{ false }}">
+                <i class="ph-fill ph-seal-check" style="font-size:13px;color:#2AC4E8;flex:none"></i>
+              </sc-if>
+            </div>
+          </div>
+          <div style="font-size:13px;font-weight:800;color:#F3F6FC;text-align:right">{{ o.live }}</div>
+          <div style="font-size:12.5px;font-weight:700;color:#C3CBDC;text-align:right">{{ o.views }}</div>
+          <div style="font-size:12.5px;font-weight:800;text-align:right;color: {{ o.ctrFg }}">{{ o.ctr }}</div>
+          <div style="font-size:12.5px;font-weight:800;text-align:right;color: {{ o.repFg }}">{{ o.reports }}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:13px;font-weight:900;color:#F3F6FC;text-align:right">{{ o.gmv }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.iUsers }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:13px;margin-bottom:18px">
+      <sc-for list="{{ userStats }}" as="u" hint-placeholder-count="5">
+        <div style="padding:17px 19px;border-radius:16px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ u.label }}</div>
+            <i class="{{ u.icon }}" style="font-size:15px;color: {{ u.color }}"></i>
+          </div>
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;line-height:1;color: {{ u.color }}">{{ u.value }}</div>
+          <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:7px;line-height:1.5">{{ u.note }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:26px">
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ T.iCities }}</div>
+        <sc-for list="{{ cityRows }}" as="c" hint-placeholder-count="4">
+          <div style="margin-bottom:13px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div style="font-size:12.5px;font-weight:700;color:#C3CBDC">{{ c.label }}</div>
+              <div style="font-size:12px;font-weight:800;color:#F3F6FC">{{ c.pct }}</div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#2AC4E8,#8C6BFF);width: {{ c.w }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ T.iGenres }}</div>
+        <sc-for list="{{ genreRows }}" as="c" hint-placeholder-count="4">
+          <div style="margin-bottom:13px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div style="font-size:12.5px;font-weight:700;color:#C3CBDC">{{ c.label }}</div>
+              <div style="font-size:12px;font-weight:800;color:#F3F6FC">{{ c.pct }}</div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#8C6BFF,#FF8A3D);width: {{ c.w }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.iAccounts }}</div>
+    <div style="padding:6px 20px 14px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+      <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 96px 78px 66px 66px 76px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #1A2233">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cUser }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cCity }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cJoined }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cSaved }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cHyped }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cTickets }}</div>
+      </div>
+      <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="5">
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 96px 78px 66px 66px 76px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #1A2233">
+          <div style="font-size:12.5px;font-weight:800;font-family:ui-monospace,monospace;color:#F3F6FC;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.h }}</div>
+          <div style="font-size:12px;font-weight:700;color:#C3CBDC">{{ a.city }}</div>
+          <div style="font-size:12px;font-weight:700;color:#8891A8">{{ a.joined }}</div>
+          <div style="font-size:12.5px;font-weight:800;color:#C3CBDC;text-align:right">{{ a.saved }}</div>
+          <div style="font-size:12.5px;font-weight:800;color:#C3CBDC;text-align:right">{{ a.hyped }}</div>
+          <div style="font-size:12.5px;font-weight:800;text-align:right;color: {{ a.tFg }}">{{ a.tickets }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;padding:18px 20px;border-radius:20px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B">
+      <i class="ph-bold ph-shield-check" style="font-size:17px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+      <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65;text-wrap:pretty">{{ T.iPrivacy }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.aKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.aTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:560px;line-height:1.6">{{ T.aSub }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px">
+      <sc-for list="{{ auditActors }}" as="f" hint-placeholder-count="3">
+        <div onClick="{{ f.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background: {{ f.bg }};border:1px solid {{ f.bd }};color: {{ f.fg }};font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F"><i class="{{ f.icon }}" style="font-size:13px"></i>{{ f.label }}</div>
+      </sc-for>
+      <div style="flex:1"></div>
+      <div onClick="{{ exportAudit }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid #262F44;color:#C3CBDC;font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-download-simple" style="font-size:14px"></i>{{ T.exportCsv }}</div>
+    </div>
+    <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;padding:6px 20px 14px">
+      <sc-for list="{{ audit }}" as="a" hint-placeholder-count="7">
+        <div style="border-bottom:1px solid #1A2233">
+          <div onClick="{{ a.toggle }}" style="cursor: {{ a.cursor }};display:grid;grid-template-columns:104px auto minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 0">
+            <div style="font-size:11.5px;font-weight:700;color:#7C859C;font-family:ui-monospace,monospace">{{ a.time }}</div>
+            <div style="width:30px;height:30px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ a.iconBg }}"><i class="{{ a.icon }}" style="font-size:14px;color: {{ a.color }}"></i></div>
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ a.text }}</div>
+              <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px">{{ a.target }}</div>
+            </div>
+            <div style="font-size:11.5px;font-weight:800;color:#8891A8;white-space:nowrap">{{ a.actor }}</div>
+            <div style="width:22px;display:flex;justify-content:flex-end"><i class="{{ a.chev }}" style="font-size:13px;color: {{ a.chevFg }}"></i></div>
+          </div>
+          <sc-if value="{{ a.open }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:4px 0 18px 118px">
+              <div style="border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44;overflow:hidden">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.3fr);gap:14px;padding:11px 15px;background:rgba(6,8,13,.45);border-bottom:1px solid #1A2233">
+                  <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.dField }}</div>
+                  <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.dBefore }}</div>
+                  <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.dAfter }}</div>
+                </div>
+                <sc-for list="{{ a.diff }}" as="d" hint-placeholder-count="2">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.3fr);gap:14px;padding:12px 15px;border-bottom:1px solid #1A2233;align-items:center">
+                    <div style="font-size:11.5px;font-weight:800;color:#C3CBDC;font-family:ui-monospace,monospace;min-width:0;overflow-wrap:anywhere">{{ d.field }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#FF9A9A;min-width:0;overflow-wrap:anywhere;text-decoration:line-through;text-decoration-color:rgba(255,154,154,.5)">{{ d.before }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#6FD79B;min-width:0;overflow-wrap:anywhere">{{ d.after }}</div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;align-items:center;gap:8px;padding:11px 15px;font-size:10.5px;font-weight:700;color:#7C859C"><i class="ph-bold ph-fingerprint" style="font-size:13px"></i>{{ a.hash }}</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+
+<sc-if value="{{ drillOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;display:flex;justify-content:flex-end;background:rgba(6,8,13,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)">
+    <div onClick="{{ closeDrill }}" style="flex:1"></div>
+    <div style="width:min(452px,100%);height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:radial-gradient(520px 340px at 100% -6%, #1B2740 0%, #0D1220 64%);border-left:1px solid #33405C;box-shadow:-34px 0 74px rgba(0,0,0,.6);animation:ffSlideIn .24s ease both">
+
+      <div style="flex:none;padding:20px 22px 17px;border-bottom:1px solid #1A2233">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ drill.tint }}"><i class="{{ drill.icon }}" style="font-size:18px;color: {{ drill.color }}"></i></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8891A8">{{ drill.kicker }}</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:5px">
+              <div style="font-family:'Archivo',sans-serif;font-size:20px;font-weight:900;line-height:1;color: {{ drill.color }}">{{ drill.value }}</div>
+              <div style="font-size:13px;font-weight:800;min-width:0">{{ drill.title }}</div>
+            </div>
+          </div>
+          <div onClick="{{ closeDrill }}" style="cursor:pointer;width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+        </div>
+        <div style="color:#8891A8;font-size:12px;font-weight:600;line-height:1.55;margin-top:12px;text-wrap:pretty">{{ drill.sub }}</div>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:8px 22px 20px">
+        <sc-for list="{{ drillRows }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid #1A2233">
+            <div style="width:34px;height:34px;border-radius:10px;flex:none;background: {{ r.art }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:800;text-wrap:pretty">{{ r.title }}</div>
+              <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:4px">{{ r.meta }}</div>
+            </div>
+            <div style="flex:none;text-align:right">
+              <div style="font-size:12px;font-weight:800;color: {{ r.statFg }};white-space:nowrap">{{ r.stat }}</div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8891A8;margin-top:4px;white-space:nowrap">{{ r.statLabel }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:none;padding:15px 22px 20px;border-top:1px solid #1A2233">
+        <div onClick="{{ drill.go }}" style="cursor:pointer;padding:13px;border-radius:12px;background:#2AC4E8;color:#06080D;font-size:12.5px;font-weight:800;text-align:center;transition:transform .15s" style-hover="transform:translateY(-1px)" style-active="transform:translateY(1px)">{{ drill.cta }}</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:90;display:flex;justify-content:flex-end;background:rgba(6,8,13,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)">
+    <div onClick="{{ closeChat }}" style="flex:1"></div>
+    <div style="width:min(452px,100%);height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:radial-gradient(520px 340px at 100% -6%, #1B2740 0%, #0D1220 64%);border-left:1px solid #33405C;box-shadow:-34px 0 74px rgba(0,0,0,.6);animation:ffSlideIn .24s ease both">
+
+      <div style="flex:none;padding:20px 22px 16px;border-bottom:1px solid #1A2233">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:14px;font-weight:900;color:#06080D;background: {{ chat.art }}">{{ chat.initials }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7C859C">{{ T.chatWith }}</div>
+            <div style="font-size:15.5px;font-weight:800;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ chat.org }}</div>
+          </div>
+          <div onClick="{{ closeChat }}" style="cursor:pointer;flex:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #33405C;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;border-color:#4A5877"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:11px 13px;border-radius:12px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+          <i class="ph-fill ph-stack" style="font-size:14px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:800;line-height:1.45;text-wrap:pretty">{{ chat.title }}</div>
+            <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:3px">{{ chat.when }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div ref="{{ msgRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:13px">
+        <sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:22px;border-radius:16px;background:rgba(18,24,38,.5);border:1px dashed #33405C;font-size:12px;font-weight:600;color:#8891A8;line-height:1.65;text-align:center;text-wrap:pretty">{{ T.chatEmpty }}</div>
+        </sc-if>
+        <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="2">
+          <div style="display:flex;justify-content: {{ m.align }}">
+            <div style="max-width:86%">
+              <div style="padding:11px 14px;border-radius: {{ m.radius }};background: {{ m.bg }};border:1px solid {{ m.bd }};font-size:12.5px;font-weight:600;line-height:1.65;text-wrap:pretty;color: {{ m.fg }}">{{ m.text }}</div>
+              <div style="font-size:10px;font-weight:700;color:#7C859C;margin-top:5px;text-align: {{ m.tAlign }}">{{ m.stamp }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ chatTyping }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="display:flex;gap:4px;padding:11px 13px;border-radius:16px 16px 16px 4px;background:rgba(18,24,38,.8);border:1px solid #262F44">
+              <div style="width:5px;height:5px;border-radius:50%;background:#8891A8;animation:ffBlink 1.2s infinite"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:#8891A8;animation:ffBlink 1.2s .18s infinite"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:#8891A8;animation:ffBlink 1.2s .36s infinite"></div>
+            </div>
+            <div style="font-size:10.5px;font-weight:700;color:#7C859C">{{ chatTypingLabel }}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="flex:none;padding:14px 22px 18px;border-top:1px solid #1A2233">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ T.chatQuick }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px">
+          <sc-for list="{{ chatQuick }}" as="c" hint-placeholder-count="4">
+            <div onClick="{{ c.send }}" title="{{ c.text }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(42,196,232,.08);border:1px solid rgba(42,196,232,.3);font-size:11px;font-weight:800;color:#7FE0F5;transition:all .15s" style-hover="background:rgba(42,196,232,.18);border-color:#2AC4E8"><i class="{{ c.icon }}" style="font-size:12px"></i>{{ c.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:9px;padding:10px 11px 10px 14px;border-radius:16px;background:#0A0E1A;border:1px solid #262F44">
+          <textarea value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onDraftKey }}" rows="2" placeholder="{{ T.chatPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;resize:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:12.5px;font-weight:600;line-height:1.6"></textarea>
+          <div onClick="{{ sendDraft }}" style="cursor:pointer;flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;background: {{ sendBg }};color: {{ sendFg }}"><i class="ph-fill ph-paper-plane-right" style="font-size:15px"></i></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:#7C859C;margin-top:9px">
+          <i class="ph-bold ph-lock-simple" style="font-size:11px"></i>{{ T.chatNote }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ bulkOn }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:78;display:flex;align-items:center;gap:13px;padding:12px 14px 12px 20px;border-radius:999px;background:rgba(13,18,32,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #33405C;box-shadow:0 20px 50px rgba(0,0,0,.6);animation:ffRise .18s ease both;flex-wrap:wrap;max-width:calc(100vw - 40px)">
+    <div style="font-size:12.5px;font-weight:800;color:#F3F6FC;white-space:nowrap">{{ bulkLabel }}</div>
+    <div style="width:1px;height:20px;background:#262F44;flex:none"></div>
+    <div onClick="{{ bulkApprove }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#2E9E5B;color:#F3F6FC;font-size:11.5px;font-weight:800;transition:all .15s;white-space:nowrap" style-hover="background:#37B86A"><i class="ph-bold ph-check" style="font-size:13px"></i>{{ bulkApproveLabel }}</div>
+    <div onClick="{{ bulkReject }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;border:1px solid rgba(224,74,74,.5);color:#FF9A9A;font-size:11.5px;font-weight:800;transition:all .15s;white-space:nowrap" style-hover="background:rgba(224,74,74,.18)"><i class="ph-bold ph-x" style="font-size:13px"></i>{{ bulkRejectLabel }}</div>
+    <div onClick="{{ bulkClear }}" style="cursor:pointer;padding:9px 13px;border-radius:999px;font-size:11.5px;font-weight:800;color:#8891A8;transition:color .15s;white-space:nowrap" style-hover="color:#F3F6FC">{{ T.clearSel }}</div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ rejectOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:94;display:flex;align-items:center;justify-content:center;padding:26px;box-sizing:border-box;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
+    <div onClick="{{ closeReject }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(640px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;border-radius:24px;background:radial-gradient(620px 340px at 100% -10%, #1B2740 0%, #0D1220 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.65);animation:ffRise .2s ease both">
+      <div style="padding:22px 24px 18px;border-bottom:1px solid #1A2233">
+        <div style="display:flex;align-items:flex-start;gap:13px">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(224,74,74,.14)"><i class="ph-fill ph-x-circle" style="font-size:19px;color:#FF9A9A"></i></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8891A8">{{ T.rejKicker }}</div>
+            <div style="font-size:16.5px;font-weight:800;margin-top:5px;line-height:1.35;text-wrap:pretty">{{ rejectTitle }}</div>
+          </div>
+          <div onClick="{{ closeReject }}" style="cursor:pointer;width:31px;height:31px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+        </div>
+      </div>
+      <div style="padding:20px 24px 4px">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.rejReason }}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(174px,1fr));gap:9px">
+          <sc-for list="{{ rejectCodes }}" as="c" hint-placeholder-count="6">
+            <div onClick="{{ c.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;background: {{ c.bg }};border:1px solid {{ c.bd }};transition:all .15s" style-hover="border-color:#39455F">
+              <i class="{{ c.icon }}" style="font-size:16px;color: {{ c.iconFg }};flex:none"></i>
+              <div style="min-width:0">
+                <div style="font-size:12.5px;font-weight:800;color: {{ c.fg }};line-height:1.35">{{ c.label }}</div>
+                <div style="font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7C859C;margin-top:4px;font-family:ui-monospace,monospace">{{ c.code }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:20px 24px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ T.rejMsg }}</div>
+          <div onClick="{{ resetRejectMsg }}" style="cursor:pointer;font-size:10.5px;font-weight:800;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">{{ T.rejReset }}</div>
+        </div>
+        <textarea value="{{ rejectMsg }}" onChange="{{ onRejectMsg }}" rows="4" style="width:100%;box-sizing:border-box;padding:14px;border-radius:14px;background:#0A0E1A;border:1px solid #262F44;outline:none;resize:vertical;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:12.5px;font-weight:600;line-height:1.65"></textarea>
+        <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:8px">{{ T.rejMsgNote }}</div>
+      </div>
+      <div style="padding:18px 24px 0">
+        <div onClick="{{ toggleAppeal }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid {{ appealBd }}">
+          <div style="width:42px;height:24px;border-radius:999px;flex:none;padding:3px;box-sizing:border-box;background: {{ appealSw }};transition:background .18s;display:flex;justify-content: {{ appealJustify }}">
+            <div style="width:18px;height:18px;border-radius:50%;background:#F3F6FC"></div>
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:800">{{ T.rejAppeal }}</div>
+            <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px;line-height:1.5">{{ appealNote }}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;padding:20px 24px 22px;flex-wrap:wrap">
+        <div onClick="{{ confirmReject }}" style="cursor:pointer;flex:1;min-width:170px;padding:14px;border-radius:14px;background:rgba(224,74,74,.9);color:#FFF;font-size:13px;font-weight:800;text-align:center;transition:transform .15s" style-hover="transform:translateY(-1px)" style-active="transform:translateY(1px)">{{ confirmRejectLabel }}</div>
+        <div onClick="{{ closeReject }}" style="cursor:pointer;padding:14px 22px;border-radius:14px;border:1px solid #262F44;color:#C3CBDC;font-size:13px;font-weight:800;text-align:center;transition:all .15s" style-hover="border-color:#39455F">{{ T.cancel }}</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ shortcutsOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:26px;box-sizing:border-box;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
+    <div onClick="{{ closeShortcuts }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(430px,100%);box-sizing:border-box;padding:24px;border-radius:22px;background:#0D1220;border:1px solid #33405C;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .18s ease both">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:800">{{ T.shortcutsTitle }}</div>
+        <div onClick="{{ closeShortcuts }}" style="cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+      </div>
+      <sc-for list="{{ keyRows }}" as="k" hint-placeholder-count="6">
+        <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #1A2233">
+          <div style="display:flex;gap:5px;flex:none;width:76px">
+            <sc-for list="{{ k.keys }}" as="key" hint-placeholder-count="1">
+              <div style="min-width:24px;padding:4px 7px;box-sizing:border-box;border-radius:7px;background:rgba(42,196,232,.1);border:1px solid rgba(42,196,232,.32);text-align:center;font-size:11px;font-weight:800;color:#7FE0F5;font-family:ui-monospace,monospace">{{ key.k }}</div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px;font-weight:700;color:#C3CBDC;min-width:0">{{ k.label }}</div>
+        </div>
+      </sc-for>
+      <div style="font-size:11px;font-weight:600;color:#7C859C;line-height:1.6;margin-top:16px;padding-top:14px;border-top:1px solid #1A2233;text-wrap:pretty">{{ T.shortcutsNote }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ shelfPreviewOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:92;display:flex;justify-content:flex-end;background:rgba(6,8,13,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)">
+    <div onClick="{{ closeShelfPreview }}" style="flex:1"></div>
+    <div style="width:min(430px,100%);height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:radial-gradient(520px 340px at 100% -6%, #1B2740 0%, #0D1220 64%);border-left:1px solid #33405C;box-shadow:-34px 0 74px rgba(0,0,0,.6);animation:ffSlideIn .24s ease both">
+      <div style="flex:none;padding:20px 22px 17px;border-bottom:1px solid #1A2233;display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8891A8">{{ T.previewHead }}</div>
+          <div style="font-size:16px;font-weight:800;margin-top:5px">{{ shelfPreview.name }}</div>
+          <div style="font-size:11.5px;font-weight:700;color:#7C859C;margin-top:6px">{{ shelfPreview.when }}</div>
+        </div>
+        <div onClick="{{ closeShelfPreview }}" style="cursor:pointer;width:31px;height:31px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:20px 22px 26px">
+        <div style="border-radius:22px;background:#0A0E1A;border:1px solid #262F44;padding:16px 0 18px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 13px">
+            <div style="font-size:15px;font-weight:800">{{ shelfPreview.name }}</div>
+            <div style="font-size:11px;font-weight:800;color:#2AC4E8">{{ T.seeAll }}</div>
+          </div>
+          <div style="display:flex;gap:11px;padding:0 16px;overflow-x:auto">
+            <sc-for list="{{ shelfPreviewItems }}" as="it" hint-placeholder-count="3">
+              <div style="width:174px;flex:none;border-radius:16px;overflow:hidden;background:rgba(18,24,38,.9);border:1px solid #262F44">
+                <div style="height:104px;background: {{ it.art }};position:relative">
+                  <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,14,26,.66),transparent 58%)"></div>
+                  <div style="position:absolute;left:9px;bottom:9px;padding:3px 8px;border-radius:999px;background:rgba(6,8,13,.76);font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#7FE0F5">{{ it.tag }}</div>
+                </div>
+                <div style="padding:11px 12px 13px">
+                  <div style="font-size:12.5px;font-weight:800;line-height:1.35;text-wrap:pretty">{{ it.title }}</div>
+                  <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:6px">{{ it.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:11px;margin-top:16px;padding:15px 16px;border-radius:16px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B">
+          <i class="ph-bold ph-info" style="font-size:16px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+          <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65;text-wrap:pretty">{{ shelfPreview.note }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:80;padding:13px 22px;border-radius:999px;background:rgba(10,14,26,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #2AC4E8;font-size:12.5px;font-weight:800;color:#F3F6FC;box-shadow:0 18px 44px rgba(0,0,0,.55);animation:ffRise .2s ease both;white-space:nowrap">{{ toast }}</div>
+</sc-if>
+
+</div>

@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+  body { margin:0; background:#06080D; font-family:'Manrope',system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+  a { color:#2AC4E8; text-decoration:none; }
+  a:hover { color:#7FE0F5; }
+  *::-webkit-scrollbar { width:0 !important; height:0 !important; display:none; }
+  @keyframes ffRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes ffDrift { 0%,100% { transform:translate3d(0,0,0) scale(1); } 50% { transform:translate3d(36px,-26px,0) scale(1.14); } }
+  @keyframes ffSlideIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes ffBlink { 0%,80%,100% { opacity:.28; } 40% { opacity:1; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#06080D;color:#F3F6FC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden">
+
+<div style="position:fixed;top:-200px;right:-160px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(140,107,255,.13),transparent 66%);filter:blur(74px);animation:ffDrift 26s ease-in-out infinite;pointer-events:none;z-index:0"></div>
+<div style="position:fixed;bottom:-240px;left:-180px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(42,196,232,.1),transparent 66%);filter:blur(78px);animation:ffDrift 32s ease-in-out infinite reverse;pointer-events:none;z-index:0"></div>
+
+<div style="position:sticky;top:0;z-index:40;background:rgba(10,14,26,.76);backdrop-filter:blur(26px) saturate(1.6);-webkit-backdrop-filter:blur(26px) saturate(1.6);border-bottom:1px solid rgba(38,47,68,.9)">
+  <sc-if value="{{ impOn }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:13px;padding:10px 28px;background:rgba(255,138,61,.15);border-bottom:1px solid rgba(255,138,61,.42);flex-wrap:wrap">
+      <i class="ph-fill ph-eye" style="font-size:15px;color:#FFB35C;flex:none"></i>
+      <div style="font-size:12.5px;font-weight:800;color:#FFD9B5;flex:none">{{ impLabel }}</div>
+      <div style="font-size:11.5px;font-weight:700;color:#FFB35C;flex:1;min-width:120px">{{ impNote }}</div>
+      <div onClick="{{ impExit }}" style="cursor:pointer;flex:none;padding:7px 14px;border-radius:999px;background:rgba(6,8,13,.45);border:1px solid rgba(255,138,61,.55);font-size:11.5px;font-weight:800;color:#FFD9B5;transition:all .15s" style-hover="background:rgba(255,138,61,.26)">{{ impExitLabel }}</div>
+    </div>
+  </sc-if>
+  <div style="max-width:1320px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px">
+    <img src="assets/ff-logo.png" alt="FestFinder" style="height:35px;width:127px;display:block;flex:none">
+    <div style="padding:5px 11px;border-radius:999px;background:rgba(224,74,74,.14);border:1px solid rgba(224,74,74,.45);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#FF9A9A;white-space:nowrap;flex:none">{{ T.mode }}</div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:9px;flex:none">
+      <div style="position:relative;flex:none">
+        <div onClick="{{ toggleViewAs }}" title="{{ T.viewAsHead }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid {{ vaBd }};background: {{ vaBg }};font-size:11.5px;font-weight:800;color: {{ vaFg }};transition:all .15s" style-hover="border-color:#8C6BFF">
+          <i class="ph-bold ph-user-switch" style="font-size:14px"></i>{{ T.viewAs }}
+        </div>
+        <sc-if value="{{ viewAsOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:44px;right:0;width:258px;z-index:60;padding:8px;border-radius:16px;background:#0D1220;border:1px solid #33405C;box-shadow:0 24px 54px rgba(0,0,0,.62);animation:ffRise .16s ease both">
+            <div style="padding:8px 10px 10px;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ T.viewAsHead }}</div>
+            <sc-for list="{{ viewAsOpts }}" as="v" hint-placeholder-count="2">
+              <div onClick="{{ v.go }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:10px;border-radius:12px;transition:background .15s" style-hover="background:rgba(42,196,232,.1)">
+                <div style="width:31px;height:31px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ v.tint }}"><i class="{{ v.icon }}" style="font-size:14px;color: {{ v.color }}"></i></div>
+                <div style="min-width:0">
+                  <div style="font-size:12.5px;font-weight:800">{{ v.name }}</div>
+                  <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:2px">{{ v.role }}</div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="margin-top:5px;padding:10px 10px 5px;border-top:1px solid #1A2233;font-size:10.5px;font-weight:600;color:#7C859C;line-height:1.55;text-wrap:pretty">{{ T.viewAsNote }}</div>
+          </div>
+        </sc-if>
+      </div>
+      <div onClick="{{ toggleLang }}" style="cursor:pointer;padding:8px 12px;border-radius:999px;border:1px solid #262F44;font-size:11.5px;font-weight:800;letter-spacing:.05em;color:#8891A8;transition:all .15s" style-hover="color:#2AC4E8;border-color:#2AC4E8">{{ langLabel }}</div>
+      <div style="display:flex;align-items:center;gap:9px;padding:6px 13px 6px 7px;border-radius:999px;background:rgba(18,24,38,.7);border:1px solid #262F44">
+        <div style="width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:linear-gradient(135deg,#8C6BFF,#2AC4E8);color:#06080D;letter-spacing:-.02em">FA</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:800;white-space:nowrap">{{ T.admin }}</div>
+          <div style="font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7C859C">{{ T.role }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:1320px;margin:0 auto;padding:0 28px 12px;display:flex;gap:7px;flex-wrap:wrap">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+      <div onClick="{{ t.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background: {{ t.bg }};border:1px solid {{ t.bd }};color: {{ t.fg }};font-size:12.5px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F">
+        <i class="{{ t.icon }}" style="font-size:14px"></i>{{ t.label }}
+        <sc-if value="{{ t.hasCount }}" hint-placeholder-val="{{ false }}">
+          <div style="min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;background: {{ t.cBg }};color: {{ t.cFg }}">{{ t.count }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+</div>
+
+<div style="position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:26px 28px 90px">
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px;margin-bottom:24px">
+    <sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+      <div onClick="{{ h.open }}" style="cursor:pointer;padding:17px 19px;border-radius:16px;background:rgba(18,24,38,.62);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid #262F44;transition:border-color .15s, transform .15s" style-hover="border-color:#39455F;transform:translateY(-2px)" style-active="transform:translateY(0)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ h.label }}</div>
+          <i class="{{ h.icon }}" style="font-size:15px;color: {{ h.color }}"></i>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:7px">
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;line-height:1;color: {{ h.color }}">{{ h.value }}</div>
+          <div style="font-size:11px;font-weight:700;color:#7C859C;padding-bottom:2px">{{ h.unit }}</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:7px">
+          <div style="font-size:11px;font-weight:600;color:#8891A8;line-height:1.5;flex:1;min-width:0;min-height:33px">{{ h.note }}</div>
+          <i class="ph-bold ph-arrow-up-right" style="font-size:12px;color:#7C859C;flex:none;padding-bottom:3px"></i>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start;animation:ffRise .3s ease both">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.qKicker }}</div>
+          <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.qTitle }}</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ qFilters }}" as="f" hint-placeholder-count="5">
+            <div onClick="{{ f.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background: {{ f.bg }};border:1px solid {{ f.bd }};color: {{ f.fg }};font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F">
+              <i class="{{ f.icon }}" style="font-size:13px"></i>{{ f.label }}
+              <div style="min-width:17px;padding:1px 6px;box-sizing:border-box;border-radius:999px;text-align:center;font-size:10.5px;font-weight:800;background: {{ f.cBg }};color: {{ f.cFg }}">{{ f.count }}</div>
+            </div>
+          </sc-for>
+          <div onClick="{{ cycleSort }}" title="{{ T.sortHint }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid #262F44;color:#C3CBDC;font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5">
+            <i class="ph-bold ph-sort-descending" style="font-size:13px"></i>{{ sortLabel }}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;padding:12px 16px;border-radius:14px;background:rgba(18,24,38,.5);border:1px solid #262F44">
+        <div onClick="{{ toggleAll }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex:none">
+          <i class="{{ allIcon }}" style="font-size:18px;color: {{ allColor }}"></i>
+          <div style="font-size:12px;font-weight:800;color: {{ allFg }}">{{ allLabel }}</div>
+        </div>
+        <div style="width:1px;height:20px;background:#262F44;flex:none"></div>
+        <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:210px">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7C859C;flex:none">{{ T.ageHead }}</div>
+          <div style="display:flex;gap:2px;height:9px;flex:1;min-width:90px">
+            <sc-for list="{{ ageBuckets }}" as="b" hint-placeholder-count="4">
+              <div title="{{ b.hint }}" style="height:100%;border-radius:3px;width: {{ b.w }};background: {{ b.color }}"></div>
+            </sc-for>
+          </div>
+          <div style="font-size:11.5px;font-weight:800;color: {{ oldestFg }};flex:none;white-space:nowrap">{{ oldestLabel }}</div>
+        </div>
+        <div onClick="{{ openShortcuts }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;flex:none;font-size:11px;font-weight:800;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">
+          <i class="ph-bold ph-keyboard" style="font-size:15px"></i>{{ T.shortcuts }}
+        </div>
+      </div>
+
+      <sc-if value="{{ qEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:46px 26px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;text-align:center">
+          <i class="ph-fill ph-check-circle" style="font-size:38px;color:#2E9E5B"></i>
+          <div style="font-size:16px;font-weight:800;margin-top:14px">{{ T.qClear }}</div>
+          <div style="font-size:12.5px;font-weight:600;color:#8891A8;margin-top:7px">{{ T.qClearSub }}</div>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+        <div onClick="{{ q.focusIt }}" style="border-radius:20px;background: {{ q.bg }};border:1px solid {{ q.bd }};box-shadow: {{ q.ring }};overflow:hidden;transition:border-color .15s, box-shadow .15s">
+          <div style="display:flex;gap:14px;padding:17px">
+            <div onClick="{{ q.toggleSel }}" title="{{ T.selectHint }}" style="cursor:pointer;flex:none;padding-top:2px"><i class="{{ q.selIcon }}" style="font-size:19px;color: {{ q.selColor }}"></i></div>
+            <div style="width:104px;height:78px;border-radius:12px;flex:none;background: {{ q.art }};position:relative;overflow:hidden">
+              <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,14,26,.72),transparent 58%)"></div>
+              <div style="position:absolute;left:6px;bottom:6px;display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;background:rgba(6,8,13,.8);font-size:10px;font-weight:800;color: {{ q.riskFg }}"><i class="ph-fill ph-shield-warning" style="font-size:10px"></i>{{ q.riskScore }}</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                <div style="font-size:15.5px;font-weight:800;text-wrap:pretty">{{ q.title }}</div>
+                <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background: {{ q.slaBg }};border:1px solid {{ q.slaBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ q.slaFg }};white-space:nowrap">
+                  <i class="{{ q.slaIcon }}" style="font-size:11px"></i>{{ q.slaLabel }}
+                </div>
+                <sc-if value="{{ q.flagged }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,138,61,.14);border:1px solid rgba(255,138,61,.4);font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#FFB35C;white-space:nowrap">
+                    <i class="ph-fill ph-warning" style="font-size:11px"></i>{{ q.flagLabel }}
+                  </div>
+                </sc-if>
+              </div>
+              <div style="font-size:12.5px;font-weight:600;color:#8891A8;margin-top:6px">{{ q.meta }}</div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:11px">
+                <sc-for list="{{ q.signals }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color: {{ s.color }}">
+                    <i class="{{ s.icon }}" style="font-size:13px"></i>{{ s.label }}
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;flex:none;width:118px">
+              <div onClick="{{ q.approve }}" style="cursor:pointer;padding:10px 0;border-radius:12px;background:#2E9E5B;color:#F3F6FC;font-size:12px;font-weight:800;text-align:center;transition:all .15s" style-hover="background:#37B86A">{{ T.approve }}</div>
+              <div onClick="{{ q.reject }}" style="cursor:pointer;padding:10px 0;border-radius:12px;border:1px solid #262F44;color:#8891A8;font-size:12px;font-weight:800;text-align:center;transition:all .15s" style-hover="border-color:rgba(224,74,74,.6);color:#FF9A9A">{{ T.reject }}</div>
+              <div onClick="{{ q.ask }}" style="cursor:pointer;padding:10px 0;border-radius:12px;font-size:11.5px;font-weight:800;text-align:center;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">{{ q.askLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="position:sticky;top:132px;display:flex;flex-direction:column;gap:14px">
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid {{ risk.bd }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ T.riskHead }}</div>
+          <div style="padding:3px 9px;border-radius:999px;background: {{ risk.tint }};font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color: {{ risk.color }}">{{ risk.band }}</div>
+        </div>
+        <div style="font-size:13px;font-weight:800;margin-top:11px;line-height:1.4;text-wrap:pretty">{{ risk.title }}</div>
+        <div style="display:flex;align-items:flex-end;gap:7px;margin-top:12px">
+          <div style="font-family:'Archivo',sans-serif;font-size:30px;font-weight:900;line-height:1;color: {{ risk.color }}">{{ risk.score }}</div>
+          <div style="font-size:11px;font-weight:700;color:#7C859C;padding-bottom:3px">/ 100</div>
+        </div>
+        <div style="height:8px;border-radius:4px;background:#1A2233;overflow:hidden;margin-top:11px">
+          <div style="height:100%;border-radius:4px;background: {{ risk.color }};width: {{ risk.w }}"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;margin-top:7px">
+          <sc-for list="{{ risk.factors }}" as="f" hint-placeholder-count="4">
+            <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid #1A2233">
+              <i class="{{ f.icon }}" style="font-size:15px;color: {{ f.color }};flex:none;margin-top:1px"></i>
+              <div style="flex:1;min-width:0;font-size:11.5px;font-weight:700;color:#C3CBDC;line-height:1.5">{{ f.label }}</div>
+              <div style="font-size:11px;font-weight:800;color: {{ f.color }};flex:none;white-space:nowrap">{{ f.weight }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:10.5px;font-weight:600;color:#7C859C;line-height:1.6;margin-top:13px;padding-top:13px;border-top:1px solid #1A2233;text-wrap:pretty">{{ T.riskNote }}</div>
+      </div>
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:6px">{{ T.autoChecks }}</div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ checks }}" as="c" hint-placeholder-count="5">
+            <div style="display:flex;gap:11px;padding:13px 0;border-top:1px solid #1A2233">
+              <i class="{{ c.icon }}" style="font-size:16px;color: {{ c.color }};flex:none;margin-top:1px"></i>
+              <div style="min-width:0">
+                <div style="font-size:12.5px;font-weight:700;line-height:1.45">{{ c.label }}</div>
+                <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px;line-height:1.5">{{ c.detail }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:18px 20px;border-radius:20px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B;display:flex;gap:12px">
+        <i class="ph-bold ph-shield-check" style="font-size:17px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+        <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65">{{ T.slaNote }}</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAppeals }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.apKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.apTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:620px;line-height:1.6;text-wrap:pretty">{{ T.apSub }}</div>
+    </div>
+    <sc-if value="{{ apEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:46px 26px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;text-align:center">
+        <i class="ph-fill ph-gavel" style="font-size:36px;color:#7C859C"></i>
+        <div style="font-size:15px;font-weight:800;margin-top:14px">{{ T.apEmpty }}</div>
+      </div>
+    </sc-if>
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <sc-for list="{{ appeals }}" as="a" hint-placeholder-count="2">
+        <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid {{ a.bd }};padding:18px">
+          <div style="display:flex;gap:15px">
+            <div style="width:52px;height:52px;border-radius:14px;flex:none;background: {{ a.art }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                <div style="font-size:15px;font-weight:800">{{ a.title }}</div>
+                <div style="padding:4px 10px;border-radius:999px;background: {{ a.stBg }};border:1px solid {{ a.stBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ a.stFg }};white-space:nowrap">{{ a.stLabel }}</div>
+              </div>
+              <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px">{{ a.meta }}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:12px;margin-top:15px">
+            <div style="padding:14px;border-radius:14px;background:rgba(224,74,74,.07);border:1px solid rgba(224,74,74,.28)">
+              <div style="font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#FF9A9A">{{ a.reasonHead }}</div>
+              <div style="font-size:12px;font-weight:600;color:#F0D5D5;line-height:1.6;margin-top:8px;text-wrap:pretty">{{ a.msg }}</div>
+            </div>
+            <sc-if value="{{ a.hasReply }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:14px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+                <div style="font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7FE0F5">{{ a.replyHead }}</div>
+                <div style="font-size:12px;font-weight:600;color:#C3CBDC;line-height:1.6;margin-top:8px;text-wrap:pretty">{{ a.reply }}</div>
+                <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:9px">{{ a.when }}</div>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;padding-top:15px;border-top:1px solid #1A2233">
+            <div onClick="{{ a.overturn }}" style="cursor:pointer;padding:10px 16px;border-radius:12px;background:#2E9E5B;color:#F3F6FC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="background:#37B86A">{{ T.overturn }}</div>
+            <div onClick="{{ a.uphold }}" style="cursor:pointer;padding:10px 16px;border-radius:12px;border:1px solid #262F44;color:#C3CBDC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(224,74,74,.6);color:#FF9A9A">{{ T.uphold }}</div>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:#7C859C"><i class="ph-bold ph-clock-countdown" style="font-size:13px"></i>{{ a.deadline }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isVerify }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.vKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.vTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:560px;line-height:1.6">{{ T.vSub }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ orgs }}" as="o" hint-placeholder-count="4">
+        <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid {{ o.bd }};padding:19px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:17px;align-items:center">
+          <div style="width:52px;height:52px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:19px;font-weight:900;background: {{ o.avBg }};color:#06080D">{{ o.initials }}</div>
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+              <div style="font-size:16px;font-weight:800">{{ o.name }}</div>
+              <div style="padding:4px 10px;border-radius:999px;background: {{ o.stBg }};border:1px solid {{ o.stBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ o.stFg }};white-space:nowrap">{{ o.status }}</div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px">{{ o.meta }}</div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:11px">
+              <sc-for list="{{ o.docs }}" as="d" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:10px;background:rgba(10,14,26,.6);border:1px solid #262F44;font-size:11px;font-weight:700;color: {{ d.color }}">
+                  <i class="{{ d.icon }}" style="font-size:12px"></i>{{ d.label }}
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:none;width:130px">
+            <div onClick="{{ o.verify }}" style="cursor:pointer;padding:10px 0;border-radius:12px;background: {{ o.ctaBg }};color: {{ o.ctaFg }};border:1px solid {{ o.ctaBd }};font-size:12px;font-weight:800;text-align:center;transition:all .15s">{{ o.cta }}</div>
+            <div onClick="{{ o.open }}" style="cursor:pointer;padding:10px 0;border-radius:12px;font-size:11.5px;font-weight:800;text-align:center;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">{{ T.viewDocs }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start;animation:ffRise .3s ease both">
+    <div>
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.rKicker }}</div>
+        <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.rTitle }}</h1>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ reports }}" as="r" hint-placeholder-count="4">
+          <div style="border-radius:16px;background:rgba(18,24,38,.62);border:1px solid {{ r.bd }};padding:17px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:7px;padding:4px 11px;border-radius:999px;background: {{ r.catBg }};border:1px solid {{ r.catBd }};font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color: {{ r.catFg }};white-space:nowrap">
+                <i class="{{ r.icon }}" style="font-size:11px"></i>{{ r.category }}
+              </div>
+              <div style="font-size:11.5px;font-weight:700;color:#7C859C">{{ r.count }}</div>
+              <div style="flex:1"></div>
+              <div style="font-size:11.5px;font-weight:700;color:#7C859C">{{ r.age }}</div>
+            </div>
+            <div style="font-size:14.5px;font-weight:800;margin-top:12px">{{ r.subject }}</div>
+            <div style="font-size:12.5px;font-weight:600;color:#C3CBDC;margin-top:7px;line-height:1.6;text-wrap:pretty">{{ r.quote }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid #1A2233">
+              <div onClick="{{ r.takeDown }}" style="cursor:pointer;padding:9px 15px;border-radius:12px;background:rgba(224,74,74,.14);border:1px solid rgba(224,74,74,.45);color:#FF9A9A;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="background:rgba(224,74,74,.24)">{{ T.takeDown }}</div>
+              <div onClick="{{ r.warn }}" style="cursor:pointer;padding:9px 15px;border-radius:12px;border:1px solid #262F44;color:#FFB35C;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(255,138,61,.6)">{{ T.warn }}</div>
+              <div onClick="{{ r.dismiss }}" style="cursor:pointer;padding:9px 15px;border-radius:12px;border:1px solid #262F44;color:#8891A8;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F">{{ T.dismiss }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="position:sticky;top:132px;padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+      <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:15px">{{ T.rBreakdown }}</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ reportStats }}" as="s" hint-placeholder-count="4">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px">
+              <div style="font-size:12px;font-weight:700;color:#C3CBDC;min-width:0">{{ s.label }}</div>
+              <div style="font-size:12px;font-weight:800;color: {{ s.color }};white-space:nowrap">{{ s.value }}</div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background: {{ s.color }};width: {{ s.barW }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isFeatured }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.fKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.fTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:600px;line-height:1.6">{{ T.fSub }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px">
+      <sc-for list="{{ shelves }}" as="s" hint-placeholder-count="3">
+        <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;padding:19px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px">
+            <div style="font-size:14.5px;font-weight:800">{{ s.name }}</div>
+            <div onClick="{{ s.toggle }}" style="cursor:pointer;width:42px;height:24px;border-radius:999px;flex:none;padding:3px;box-sizing:border-box;background: {{ s.swBg }};transition:background .18s;display:flex;justify-content: {{ s.swJustify }}">
+              <div style="width:18px;height:18px;border-radius:50%;background:#F3F6FC"></div>
+            </div>
+          </div>
+          <div style="font-size:11.5px;font-weight:600;color:#7C859C;line-height:1.55">{{ s.note }}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px;padding:11px 12px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+            <div style="display:flex;align-items:center;gap:6px;flex:none;padding:4px 9px;border-radius:999px;background: {{ s.schBg }};font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color: {{ s.schFg }};white-space:nowrap"><i class="{{ s.schIcon }}" style="font-size:11px"></i>{{ s.schLabel }}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex:none;margin-left:auto">
+              <input value="{{ s.from }}" onChange="{{ s.setFrom }}" placeholder="{{ s.fromPh }}" title="{{ s.fromTitle }}" style="width:64px;padding:6px 8px;box-sizing:border-box;border-radius:9px;background:rgba(6,8,13,.7);border:1px solid #262F44;outline:none;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-size:11px;font-weight:800;color:#F3F6FC">
+              <i class="ph-bold ph-arrow-right" style="font-size:11px;color:#7C859C;flex:none"></i>
+              <input value="{{ s.to }}" onChange="{{ s.setTo }}" placeholder="{{ s.toPh }}" title="{{ s.toTitle }}" style="width:64px;padding:6px 8px;box-sizing:border-box;border-radius:9px;background:rgba(6,8,13,.7);border:1px solid #262F44;outline:none;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-size:11px;font-weight:800;color:#F3F6FC">
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:4px">
+            <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid #1A2233">
+                <div style="width:34px;height:34px;border-radius:10px;flex:none;background: {{ it.art }}"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.title }}</div>
+                  <div style="font-size:10.5px;font-weight:600;color:#7C859C;margin-top:3px">{{ it.meta }}</div>
+                </div>
+                <div onClick="{{ it.remove }}" style="cursor:pointer;width:24px;height:24px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#7C859C;transition:all .15s" style-hover="color:#FF9A9A;border-color:rgba(224,74,74,.5)"><i class="ph-bold ph-minus" style="font-size:11px"></i></div>
+              </div>
+            </sc-for>
+          </div>
+          <div onClick="{{ s.preview }}" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:13px;padding:11px;border-radius:12px;border:1px solid #262F44;color:#C3CBDC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-device-mobile" style="font-size:14px"></i>{{ T.previewShelf }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAds }}" hint-placeholder-val="{{ false }}">
+<div style="animation:ffRise .3s ease both">
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ adT.kicker }}</div>
+    <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ adT.title }}</h1>
+    <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:640px;line-height:1.6">{{ adT.sub }}</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 346px;gap:22px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div>
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ adT.inbox }}</div>
+        <sc-if value="{{ inqEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:34px;border-radius:20px;background:rgba(18,24,38,.5);border:1px dashed #33405C;text-align:center;font-size:13px;font-weight:600;color:#8891A8">{{ adT.inboxEmpty }}</div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ inquiries }}" as="q" hint-placeholder-count="4">
+            <div onClick="{{ q.pick }}" style="cursor:pointer;padding:18px;border-radius:20px;background: {{ q.bg }};border:1px solid {{ q.bd }};transition:all .15s">
+              <div style="display:flex;align-items:flex-start;gap:14px">
+                <div style="width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:15px;font-weight:900;color:#06080D;background: {{ q.art }}">{{ q.logo }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                    <div style="font-size:15px;font-weight:800">{{ q.brand }}</div>
+                    <div style="padding:4px 10px;border-radius:999px;background:rgba(10,14,26,.7);border:1px solid #33405C;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#C3CBDC">{{ q.cat }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#8891A8">{{ q.age }}</div>
+                  </div>
+                  <div style="font-size:12px;font-weight:600;color:#8891A8;margin-top:6px">{{ q.email }} · {{ q.budget }}</div>
+                  <div style="font-size:12.5px;font-weight:500;color:#C3CBDC;line-height:1.6;margin-top:10px;text-wrap:pretty">{{ q.msg }}</div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">
+                    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ adT.wants }}</div>
+                    <sc-for list="{{ q.wants }}" as="w" hint-placeholder-count="2">
+                      <div style="padding:4px 10px;border-radius:10px;background:rgba(42,196,232,.1);border:1px solid rgba(42,196,232,.34);font-size:10.5px;font-weight:800;color:#7FE0F5">{{ w.label }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;padding-top:15px;border-top:1px solid #1A2233">
+                <div onClick="{{ q.approve }}" style="cursor:pointer;padding:10px 17px;border-radius:12px;background:#2E9E5B;color:#F3F6FC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="background:#37B86A">{{ adT.approve }}</div>
+                <div onClick="{{ q.reply }}" style="cursor:pointer;padding:10px 17px;border-radius:12px;border:1px solid #262F44;color:#C3CBDC;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5">{{ adT.reply }}</div>
+                <div onClick="{{ q.decline }}" style="cursor:pointer;padding:10px 17px;border-radius:12px;border:1px solid #262F44;color:#8891A8;font-size:11.5px;font-weight:800;transition:all .15s" style-hover="border-color:rgba(224,74,74,.6);color:#FF9A9A">{{ adT.decline }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:6px">{{ adT.live }}</div>
+        <div style="display:grid;grid-template-columns:minmax(104px,1.4fr) minmax(90px,1.1fr) 62px 46px 56px 50px 40px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #1A2233">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colBrand }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colPlace }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colImp }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ adT.colCtr }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colSpend }}</div>
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adT.colPace }}</div>
+          <div></div>
+        </div>
+        <sc-for list="{{ campaigns }}" as="c" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:minmax(104px,1.4fr) minmax(90px,1.1fr) 62px 46px 56px 50px 40px;gap:10px;align-items:center;padding:14px 0;border-bottom:1px solid #1A2233">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              <div style="width:30px;height:30px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:11px;font-weight:900;color:#06080D;background: {{ c.art }}">{{ c.logo }}</div>
+              <div style="font-size:12px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color: {{ c.brandFg }}">{{ c.brand }}</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color: {{ c.fg }};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.place }}</div>
+            <div style="font-size:11.5px;font-weight:700;color: {{ c.fg }};white-space:nowrap">{{ c.imp }}</div>
+            <div style="font-size:11.5px;font-weight:800;color: {{ c.ctrFg }};white-space:nowrap">{{ c.ctr }}</div>
+            <div style="font-size:11.5px;font-weight:800;color: {{ c.fg }};white-space:nowrap">{{ c.spend }}</div>
+            <div style="min-width:0">
+              <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+                <div style="height:100%;border-radius:3px;background: {{ c.paceFill }};width: {{ c.paceW }}"></div>
+              </div>
+              <div style="font-size:10.5px;font-weight:700;color:#8891A8;margin-top:5px">{{ c.paceLabel }}</div>
+            </div>
+            <div onClick="{{ c.toggle }}" style="cursor:pointer;width:40px;height:23px;border-radius:999px;flex:none;padding:3px;box-sizing:border-box;background: {{ c.swBg }};transition:background .18s;display:flex;justify-content: {{ c.swJustify }}">
+              <div style="width:17px;height:17px;border-radius:50%;background:#F3F6FC"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="position:sticky;top:132px;display:flex;flex-direction:column;gap:14px">
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ adT.setup }}</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:16px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+          <div style="width:38px;height:38px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:13px;font-weight:900;color:#06080D;background: {{ setupFor.art }}">{{ setupFor.logo }}</div>
+          <div style="min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ adT.setupFor }}</div>
+            <div style="font-size:13.5px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ setupFor.brand }}</div>
+          </div>
+        </div>
+
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:18px 0 11px">{{ adT.places }}</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ setupPlaces }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div onClick="{{ p.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+                <i class="{{ p.icon }}" style="font-size:17px;flex:none;color: {{ p.color }}"></i>
+                <div style="flex:1;min-width:0;font-size:12.5px;font-weight:700;color: {{ p.fg }}">{{ p.label }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;flex:none;padding:5px 8px;border-radius:10px;background:rgba(10,14,26,.7);border:1px solid #262F44;transition:border-color .15s" style-hover="border-color:#39455F">
+                <input value="{{ p.rate }}" onChange="{{ p.setRate }}" inputMode="numeric" title="{{ adT.rateHint }}" style="width:52px;background:transparent;border:none;outline:none;text-align:right;font-family:'Manrope',system-ui,sans-serif;font-size:11.5px;font-weight:800;color: {{ p.rateFg }}">
+                <div style="font-size:10px;font-weight:800;color:#8891A8;white-space:nowrap">₫ CPM</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:18px 0 10px">{{ adT.genres }}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ setupGenres }}" as="gn" hint-placeholder-count="5">
+            <div onClick="{{ gn.toggle }}" style="cursor:pointer;padding:7px 13px;border-radius:999px;background: {{ gn.bg }};border:1px solid {{ gn.bd }};color: {{ gn.fg }};font-size:11.5px;font-weight:800;transition:all .15s">{{ gn.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin:18px 0 10px">{{ adT.areas }}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ setupAreas }}" as="ar" hint-placeholder-count="4">
+            <div onClick="{{ ar.toggle }}" style="cursor:pointer;padding:7px 13px;border-radius:999px;background: {{ ar.bg }};border:1px solid {{ ar.bd }};color: {{ ar.fg }};font-size:11.5px;font-weight:800;transition:all .15s">{{ ar.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ adT.cpm }}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div onClick="{{ cpmDown }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-minus" style="font-size:11px"></i></div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:800;white-space:nowrap">{{ cpmValue }}</div>
+              <div onClick="{{ cpmUp }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-plus" style="font-size:11px"></i></div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ adT.cap }}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div onClick="{{ capDown }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-minus" style="font-size:11px"></i></div>
+              <div style="flex:1;text-align:center;font-size:13px;font-weight:800">{{ capValue }}</div>
+              <div onClick="{{ capUp }}" style="cursor:pointer;width:28px;height:28px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #262F44;color:#C3CBDC;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-plus" style="font-size:11px"></i></div>
+            </div>
+            <div style="font-size:10.5px;font-weight:700;color:#8891A8;margin-top:7px;text-align:center">{{ adT.capUnit }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:13px">{{ adT.preview }}</div>
+        <div style="border-radius:16px;overflow:hidden;background:rgba(10,14,26,.7);border:1px solid #33405C">
+          <div style="height:70px;background: {{ setupFor.art }}"></div>
+          <div style="padding:13px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="padding:3px 9px;border-radius:999px;background:rgba(140,107,255,.18);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#C9BCFF">{{ adT.sponsored }}</div>
+            </div>
+            <div style="font-size:13px;font-weight:800;margin-top:9px">{{ setupFor.brand }}</div>
+            <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:5px">{{ setupFor.cat }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:18px 20px;border-radius:20px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B;display:flex;gap:12px">
+        <i class="ph-bold ph-shield-check" style="font-size:17px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#C9BCFF">{{ adT.rules }}</div>
+          <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65;margin-top:7px">{{ adT.rulesBody }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isInsights }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:22px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.iKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.iTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:660px;line-height:1.6;text-wrap:pretty">{{ T.iSub }}</div>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.iOrgs }}</div>
+    <div style="padding:6px 20px 14px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;margin-bottom:26px">
+      <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 62px 78px 60px 70px 96px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #1A2233">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cOrg }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cLive }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cViews }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cCtr }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cReports }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cGmv }}</div>
+      </div>
+      <sc-for list="{{ orgStats }}" as="o" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:minmax(0,1.5fr) 62px 78px 60px 70px 96px;gap:12px;align-items:center;padding:15px 0;border-bottom:1px solid #1A2233">
+          <div style="display:flex;align-items:center;gap:11px;min-width:0">
+            <div style="width:32px;height:32px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:11px;font-weight:900;color:#06080D;background: {{ o.art }}">{{ o.initials }}</div>
+            <div style="min-width:0;display:flex;align-items:center;gap:7px">
+              <div style="font-size:13px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ o.name }}</div>
+              <sc-if value="{{ o.verified }}" hint-placeholder-val="{{ false }}">
+                <i class="ph-fill ph-seal-check" style="font-size:13px;color:#2AC4E8;flex:none"></i>
+              </sc-if>
+            </div>
+          </div>
+          <div style="font-size:13px;font-weight:800;color:#F3F6FC;text-align:right">{{ o.live }}</div>
+          <div style="font-size:12.5px;font-weight:700;color:#C3CBDC;text-align:right">{{ o.views }}</div>
+          <div style="font-size:12.5px;font-weight:800;text-align:right;color: {{ o.ctrFg }}">{{ o.ctr }}</div>
+          <div style="font-size:12.5px;font-weight:800;text-align:right;color: {{ o.repFg }}">{{ o.reports }}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:13px;font-weight:900;color:#F3F6FC;text-align:right">{{ o.gmv }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.iUsers }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:13px;margin-bottom:18px">
+      <sc-for list="{{ userStats }}" as="u" hint-placeholder-count="5">
+        <div style="padding:17px 19px;border-radius:16px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ u.label }}</div>
+            <i class="{{ u.icon }}" style="font-size:15px;color: {{ u.color }}"></i>
+          </div>
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:25px;line-height:1;color: {{ u.color }}">{{ u.value }}</div>
+          <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:7px;line-height:1.5">{{ u.note }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:26px">
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ T.iCities }}</div>
+        <sc-for list="{{ cityRows }}" as="c" hint-placeholder-count="4">
+          <div style="margin-bottom:13px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div style="font-size:12.5px;font-weight:700;color:#C3CBDC">{{ c.label }}</div>
+              <div style="font-size:12px;font-weight:800;color:#F3F6FC">{{ c.pct }}</div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#2AC4E8,#8C6BFF);width: {{ c.w }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:20px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:14px">{{ T.iGenres }}</div>
+        <sc-for list="{{ genreRows }}" as="c" hint-placeholder-count="4">
+          <div style="margin-bottom:13px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+              <div style="font-size:12.5px;font-weight:700;color:#C3CBDC">{{ c.label }}</div>
+              <div style="font-size:12px;font-weight:800;color:#F3F6FC">{{ c.pct }}</div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#1A2233;overflow:hidden">
+              <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#8C6BFF,#FF8A3D);width: {{ c.w }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.iAccounts }}</div>
+    <div style="padding:6px 20px 14px;border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44">
+      <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 96px 78px 66px 66px 76px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #1A2233">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cUser }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cCity }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.cJoined }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cSaved }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cHyped }}</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8;text-align:right">{{ T.cTickets }}</div>
+      </div>
+      <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="5">
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 96px 78px 66px 66px 76px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #1A2233">
+          <div style="font-size:12.5px;font-weight:800;font-family:ui-monospace,monospace;color:#F3F6FC;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.h }}</div>
+          <div style="font-size:12px;font-weight:700;color:#C3CBDC">{{ a.city }}</div>
+          <div style="font-size:12px;font-weight:700;color:#8891A8">{{ a.joined }}</div>
+          <div style="font-size:12.5px;font-weight:800;color:#C3CBDC;text-align:right">{{ a.saved }}</div>
+          <div style="font-size:12.5px;font-weight:800;color:#C3CBDC;text-align:right">{{ a.hyped }}</div>
+          <div style="font-size:12.5px;font-weight:800;text-align:right;color: {{ a.tFg }}">{{ a.tickets }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;padding:18px 20px;border-radius:20px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B">
+      <i class="ph-bold ph-shield-check" style="font-size:17px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+      <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65;text-wrap:pretty">{{ T.iPrivacy }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:ffRise .3s ease both">
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#2AC4E8;margin-bottom:9px">{{ T.aKicker }}</div>
+      <h1 style="font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:clamp(24px,3vw,32px);line-height:1.1;text-transform:uppercase;margin:0">{{ T.aTitle }}</h1>
+      <div style="color:#8891A8;font-size:13px;font-weight:600;margin-top:10px;max-width:560px;line-height:1.6">{{ T.aSub }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px">
+      <sc-for list="{{ auditActors }}" as="f" hint-placeholder-count="3">
+        <div onClick="{{ f.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;background: {{ f.bg }};border:1px solid {{ f.bd }};color: {{ f.fg }};font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#39455F"><i class="{{ f.icon }}" style="font-size:13px"></i>{{ f.label }}</div>
+      </sc-for>
+      <div style="flex:1"></div>
+      <div onClick="{{ exportAudit }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid #262F44;color:#C3CBDC;font-size:12px;font-weight:800;transition:all .15s" style-hover="border-color:#2AC4E8;color:#7FE0F5"><i class="ph-bold ph-download-simple" style="font-size:14px"></i>{{ T.exportCsv }}</div>
+    </div>
+    <div style="border-radius:20px;background:rgba(18,24,38,.62);border:1px solid #262F44;padding:6px 20px 14px">
+      <sc-for list="{{ audit }}" as="a" hint-placeholder-count="7">
+        <div style="border-bottom:1px solid #1A2233">
+          <div onClick="{{ a.toggle }}" style="cursor: {{ a.cursor }};display:grid;grid-template-columns:104px auto minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 0">
+            <div style="font-size:11.5px;font-weight:700;color:#7C859C;font-family:ui-monospace,monospace">{{ a.time }}</div>
+            <div style="width:30px;height:30px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ a.iconBg }}"><i class="{{ a.icon }}" style="font-size:14px;color: {{ a.color }}"></i></div>
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:700;line-height:1.45;text-wrap:pretty">{{ a.text }}</div>
+              <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px">{{ a.target }}</div>
+            </div>
+            <div style="font-size:11.5px;font-weight:800;color:#8891A8;white-space:nowrap">{{ a.actor }}</div>
+            <div style="width:22px;display:flex;justify-content:flex-end"><i class="{{ a.chev }}" style="font-size:13px;color: {{ a.chevFg }}"></i></div>
+          </div>
+          <sc-if value="{{ a.open }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:4px 0 18px 118px">
+              <div style="border-radius:14px;background:rgba(10,14,26,.6);border:1px solid #262F44;overflow:hidden">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.3fr);gap:14px;padding:11px 15px;background:rgba(6,8,13,.45);border-bottom:1px solid #1A2233">
+                  <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.dField }}</div>
+                  <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.dBefore }}</div>
+                  <div style="font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8891A8">{{ T.dAfter }}</div>
+                </div>
+                <sc-for list="{{ a.diff }}" as="d" hint-placeholder-count="2">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.3fr);gap:14px;padding:12px 15px;border-bottom:1px solid #1A2233;align-items:center">
+                    <div style="font-size:11.5px;font-weight:800;color:#C3CBDC;font-family:ui-monospace,monospace;min-width:0;overflow-wrap:anywhere">{{ d.field }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#FF9A9A;min-width:0;overflow-wrap:anywhere;text-decoration:line-through;text-decoration-color:rgba(255,154,154,.5)">{{ d.before }}</div>
+                    <div style="font-size:11.5px;font-weight:700;color:#6FD79B;min-width:0;overflow-wrap:anywhere">{{ d.after }}</div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;align-items:center;gap:8px;padding:11px 15px;font-size:10.5px;font-weight:700;color:#7C859C"><i class="ph-bold ph-fingerprint" style="font-size:13px"></i>{{ a.hash }}</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+
+<sc-if value="{{ drillOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;display:flex;justify-content:flex-end;background:rgba(6,8,13,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)">
+    <div onClick="{{ closeDrill }}" style="flex:1"></div>
+    <div style="width:min(452px,100%);height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:radial-gradient(520px 340px at 100% -6%, #1B2740 0%, #0D1220 64%);border-left:1px solid #33405C;box-shadow:-34px 0 74px rgba(0,0,0,.6);animation:ffSlideIn .24s ease both">
+
+      <div style="flex:none;padding:20px 22px 17px;border-bottom:1px solid #1A2233">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;background: {{ drill.tint }}"><i class="{{ drill.icon }}" style="font-size:18px;color: {{ drill.color }}"></i></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8891A8">{{ drill.kicker }}</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:5px">
+              <div style="font-family:'Archivo',sans-serif;font-size:20px;font-weight:900;line-height:1;color: {{ drill.color }}">{{ drill.value }}</div>
+              <div style="font-size:13px;font-weight:800;min-width:0">{{ drill.title }}</div>
+            </div>
+          </div>
+          <div onClick="{{ closeDrill }}" style="cursor:pointer;width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+        </div>
+        <div style="color:#8891A8;font-size:12px;font-weight:600;line-height:1.55;margin-top:12px;text-wrap:pretty">{{ drill.sub }}</div>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:8px 22px 20px">
+        <sc-for list="{{ drillRows }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid #1A2233">
+            <div style="width:34px;height:34px;border-radius:10px;flex:none;background: {{ r.art }}"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:800;text-wrap:pretty">{{ r.title }}</div>
+              <div style="font-size:11px;font-weight:600;color:#8891A8;margin-top:4px">{{ r.meta }}</div>
+            </div>
+            <div style="flex:none;text-align:right">
+              <div style="font-size:12px;font-weight:800;color: {{ r.statFg }};white-space:nowrap">{{ r.stat }}</div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8891A8;margin-top:4px;white-space:nowrap">{{ r.statLabel }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:none;padding:15px 22px 20px;border-top:1px solid #1A2233">
+        <div onClick="{{ drill.go }}" style="cursor:pointer;padding:13px;border-radius:12px;background:#2AC4E8;color:#06080D;font-size:12.5px;font-weight:800;text-align:center;transition:transform .15s" style-hover="transform:translateY(-1px)" style-active="transform:translateY(1px)">{{ drill.cta }}</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:90;display:flex;justify-content:flex-end;background:rgba(6,8,13,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)">
+    <div onClick="{{ closeChat }}" style="flex:1"></div>
+    <div style="width:min(452px,100%);height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:radial-gradient(520px 340px at 100% -6%, #1B2740 0%, #0D1220 64%);border-left:1px solid #33405C;box-shadow:-34px 0 74px rgba(0,0,0,.6);animation:ffSlideIn .24s ease both">
+
+      <div style="flex:none;padding:20px 22px 16px;border-bottom:1px solid #1A2233">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-size:14px;font-weight:900;color:#06080D;background: {{ chat.art }}">{{ chat.initials }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7C859C">{{ T.chatWith }}</div>
+            <div style="font-size:15.5px;font-weight:800;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ chat.org }}</div>
+          </div>
+          <div onClick="{{ closeChat }}" style="cursor:pointer;flex:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(26,34,51,.8);border:1px solid #33405C;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;border-color:#4A5877"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:11px 13px;border-radius:12px;background:rgba(10,14,26,.6);border:1px solid #262F44">
+          <i class="ph-fill ph-stack" style="font-size:14px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:800;line-height:1.45;text-wrap:pretty">{{ chat.title }}</div>
+            <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:3px">{{ chat.when }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div ref="{{ msgRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:13px">
+        <sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:22px;border-radius:16px;background:rgba(18,24,38,.5);border:1px dashed #33405C;font-size:12px;font-weight:600;color:#8891A8;line-height:1.65;text-align:center;text-wrap:pretty">{{ T.chatEmpty }}</div>
+        </sc-if>
+        <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="2">
+          <div style="display:flex;justify-content: {{ m.align }}">
+            <div style="max-width:86%">
+              <div style="padding:11px 14px;border-radius: {{ m.radius }};background: {{ m.bg }};border:1px solid {{ m.bd }};font-size:12.5px;font-weight:600;line-height:1.65;text-wrap:pretty;color: {{ m.fg }}">{{ m.text }}</div>
+              <div style="font-size:10px;font-weight:700;color:#7C859C;margin-top:5px;text-align: {{ m.tAlign }}">{{ m.stamp }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ chatTyping }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="display:flex;gap:4px;padding:11px 13px;border-radius:16px 16px 16px 4px;background:rgba(18,24,38,.8);border:1px solid #262F44">
+              <div style="width:5px;height:5px;border-radius:50%;background:#8891A8;animation:ffBlink 1.2s infinite"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:#8891A8;animation:ffBlink 1.2s .18s infinite"></div>
+              <div style="width:5px;height:5px;border-radius:50%;background:#8891A8;animation:ffBlink 1.2s .36s infinite"></div>
+            </div>
+            <div style="font-size:10.5px;font-weight:700;color:#7C859C">{{ chatTypingLabel }}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="flex:none;padding:14px 22px 18px;border-top:1px solid #1A2233">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7C859C;margin-bottom:9px">{{ T.chatQuick }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px">
+          <sc-for list="{{ chatQuick }}" as="c" hint-placeholder-count="4">
+            <div onClick="{{ c.send }}" title="{{ c.text }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(42,196,232,.08);border:1px solid rgba(42,196,232,.3);font-size:11px;font-weight:800;color:#7FE0F5;transition:all .15s" style-hover="background:rgba(42,196,232,.18);border-color:#2AC4E8"><i class="{{ c.icon }}" style="font-size:12px"></i>{{ c.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:9px;padding:10px 11px 10px 14px;border-radius:16px;background:#0A0E1A;border:1px solid #262F44">
+          <textarea value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onDraftKey }}" rows="2" placeholder="{{ T.chatPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;resize:none;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:12.5px;font-weight:600;line-height:1.6"></textarea>
+          <div onClick="{{ sendDraft }}" style="cursor:pointer;flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;background: {{ sendBg }};color: {{ sendFg }}"><i class="ph-fill ph-paper-plane-right" style="font-size:15px"></i></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:#7C859C;margin-top:9px">
+          <i class="ph-bold ph-lock-simple" style="font-size:11px"></i>{{ T.chatNote }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ bulkOn }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:78;display:flex;align-items:center;gap:13px;padding:12px 14px 12px 20px;border-radius:999px;background:rgba(13,18,32,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #33405C;box-shadow:0 20px 50px rgba(0,0,0,.6);animation:ffRise .18s ease both;flex-wrap:wrap;max-width:calc(100vw - 40px)">
+    <div style="font-size:12.5px;font-weight:800;color:#F3F6FC;white-space:nowrap">{{ bulkLabel }}</div>
+    <div style="width:1px;height:20px;background:#262F44;flex:none"></div>
+    <div onClick="{{ bulkApprove }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#2E9E5B;color:#F3F6FC;font-size:11.5px;font-weight:800;transition:all .15s;white-space:nowrap" style-hover="background:#37B86A"><i class="ph-bold ph-check" style="font-size:13px"></i>{{ bulkApproveLabel }}</div>
+    <div onClick="{{ bulkReject }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;border:1px solid rgba(224,74,74,.5);color:#FF9A9A;font-size:11.5px;font-weight:800;transition:all .15s;white-space:nowrap" style-hover="background:rgba(224,74,74,.18)"><i class="ph-bold ph-x" style="font-size:13px"></i>{{ bulkRejectLabel }}</div>
+    <div onClick="{{ bulkClear }}" style="cursor:pointer;padding:9px 13px;border-radius:999px;font-size:11.5px;font-weight:800;color:#8891A8;transition:color .15s;white-space:nowrap" style-hover="color:#F3F6FC">{{ T.clearSel }}</div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ rejectOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:94;display:flex;align-items:center;justify-content:center;padding:26px;box-sizing:border-box;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
+    <div onClick="{{ closeReject }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(640px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;border-radius:24px;background:radial-gradient(620px 340px at 100% -10%, #1B2740 0%, #0D1220 62%);border:1px solid #33405C;box-shadow:0 34px 80px rgba(0,0,0,.65);animation:ffRise .2s ease both">
+      <div style="padding:22px 24px 18px;border-bottom:1px solid #1A2233">
+        <div style="display:flex;align-items:flex-start;gap:13px">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(224,74,74,.14)"><i class="ph-fill ph-x-circle" style="font-size:19px;color:#FF9A9A"></i></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8891A8">{{ T.rejKicker }}</div>
+            <div style="font-size:16.5px;font-weight:800;margin-top:5px;line-height:1.35;text-wrap:pretty">{{ rejectTitle }}</div>
+          </div>
+          <div onClick="{{ closeReject }}" style="cursor:pointer;width:31px;height:31px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+        </div>
+      </div>
+      <div style="padding:20px 24px 4px">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C;margin-bottom:11px">{{ T.rejReason }}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(174px,1fr));gap:9px">
+          <sc-for list="{{ rejectCodes }}" as="c" hint-placeholder-count="6">
+            <div onClick="{{ c.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;background: {{ c.bg }};border:1px solid {{ c.bd }};transition:all .15s" style-hover="border-color:#39455F">
+              <i class="{{ c.icon }}" style="font-size:16px;color: {{ c.iconFg }};flex:none"></i>
+              <div style="min-width:0">
+                <div style="font-size:12.5px;font-weight:800;color: {{ c.fg }};line-height:1.35">{{ c.label }}</div>
+                <div style="font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7C859C;margin-top:4px;font-family:ui-monospace,monospace">{{ c.code }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:20px 24px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7C859C">{{ T.rejMsg }}</div>
+          <div onClick="{{ resetRejectMsg }}" style="cursor:pointer;font-size:10.5px;font-weight:800;color:#7C859C;transition:color .15s" style-hover="color:#2AC4E8">{{ T.rejReset }}</div>
+        </div>
+        <textarea value="{{ rejectMsg }}" onChange="{{ onRejectMsg }}" rows="4" style="width:100%;box-sizing:border-box;padding:14px;border-radius:14px;background:#0A0E1A;border:1px solid #262F44;outline:none;resize:vertical;color:#F3F6FC;font-family:'Manrope',sans-serif;font-size:12.5px;font-weight:600;line-height:1.65"></textarea>
+        <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:8px">{{ T.rejMsgNote }}</div>
+      </div>
+      <div style="padding:18px 24px 0">
+        <div onClick="{{ toggleAppeal }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:rgba(10,14,26,.6);border:1px solid {{ appealBd }}">
+          <div style="width:42px;height:24px;border-radius:999px;flex:none;padding:3px;box-sizing:border-box;background: {{ appealSw }};transition:background .18s;display:flex;justify-content: {{ appealJustify }}">
+            <div style="width:18px;height:18px;border-radius:50%;background:#F3F6FC"></div>
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:12.5px;font-weight:800">{{ T.rejAppeal }}</div>
+            <div style="font-size:11px;font-weight:600;color:#7C859C;margin-top:4px;line-height:1.5">{{ appealNote }}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;padding:20px 24px 22px;flex-wrap:wrap">
+        <div onClick="{{ confirmReject }}" style="cursor:pointer;flex:1;min-width:170px;padding:14px;border-radius:14px;background:rgba(224,74,74,.9);color:#FFF;font-size:13px;font-weight:800;text-align:center;transition:transform .15s" style-hover="transform:translateY(-1px)" style-active="transform:translateY(1px)">{{ confirmRejectLabel }}</div>
+        <div onClick="{{ closeReject }}" style="cursor:pointer;padding:14px 22px;border-radius:14px;border:1px solid #262F44;color:#C3CBDC;font-size:13px;font-weight:800;text-align:center;transition:all .15s" style-hover="border-color:#39455F">{{ T.cancel }}</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ shortcutsOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:26px;box-sizing:border-box;background:rgba(6,8,13,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
+    <div onClick="{{ closeShortcuts }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(430px,100%);box-sizing:border-box;padding:24px;border-radius:22px;background:#0D1220;border:1px solid #33405C;box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .18s ease both">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:800">{{ T.shortcutsTitle }}</div>
+        <div onClick="{{ closeShortcuts }}" style="cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+      </div>
+      <sc-for list="{{ keyRows }}" as="k" hint-placeholder-count="6">
+        <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #1A2233">
+          <div style="display:flex;gap:5px;flex:none;width:76px">
+            <sc-for list="{{ k.keys }}" as="key" hint-placeholder-count="1">
+              <div style="min-width:24px;padding:4px 7px;box-sizing:border-box;border-radius:7px;background:rgba(42,196,232,.1);border:1px solid rgba(42,196,232,.32);text-align:center;font-size:11px;font-weight:800;color:#7FE0F5;font-family:ui-monospace,monospace">{{ key.k }}</div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px;font-weight:700;color:#C3CBDC;min-width:0">{{ k.label }}</div>
+        </div>
+      </sc-for>
+      <div style="font-size:11px;font-weight:600;color:#7C859C;line-height:1.6;margin-top:16px;padding-top:14px;border-top:1px solid #1A2233;text-wrap:pretty">{{ T.shortcutsNote }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ shelfPreviewOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:92;display:flex;justify-content:flex-end;background:rgba(6,8,13,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)">
+    <div onClick="{{ closeShelfPreview }}" style="flex:1"></div>
+    <div style="width:min(430px,100%);height:100%;box-sizing:border-box;display:flex;flex-direction:column;background:radial-gradient(520px 340px at 100% -6%, #1B2740 0%, #0D1220 64%);border-left:1px solid #33405C;box-shadow:-34px 0 74px rgba(0,0,0,.6);animation:ffSlideIn .24s ease both">
+      <div style="flex:none;padding:20px 22px 17px;border-bottom:1px solid #1A2233;display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8891A8">{{ T.previewHead }}</div>
+          <div style="font-size:16px;font-weight:800;margin-top:5px">{{ shelfPreview.name }}</div>
+          <div style="font-size:11.5px;font-weight:700;color:#7C859C;margin-top:6px">{{ shelfPreview.when }}</div>
+        </div>
+        <div onClick="{{ closeShelfPreview }}" style="cursor:pointer;width:31px;height:31px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:#8891A8;transition:all .15s" style-hover="color:#F3F6FC;background:#1A2233"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:20px 22px 26px">
+        <div style="border-radius:22px;background:#0A0E1A;border:1px solid #262F44;padding:16px 0 18px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px 13px">
+            <div style="font-size:15px;font-weight:800">{{ shelfPreview.name }}</div>
+            <div style="font-size:11px;font-weight:800;color:#2AC4E8">{{ T.seeAll }}</div>
+          </div>
+          <div style="display:flex;gap:11px;padding:0 16px;overflow-x:auto">
+            <sc-for list="{{ shelfPreviewItems }}" as="it" hint-placeholder-count="3">
+              <div style="width:174px;flex:none;border-radius:16px;overflow:hidden;background:rgba(18,24,38,.9);border:1px solid #262F44">
+                <div style="height:104px;background: {{ it.art }};position:relative">
+                  <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,14,26,.66),transparent 58%)"></div>
+                  <div style="position:absolute;left:9px;bottom:9px;padding:3px 8px;border-radius:999px;background:rgba(6,8,13,.76);font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#7FE0F5">{{ it.tag }}</div>
+                </div>
+                <div style="padding:11px 12px 13px">
+                  <div style="font-size:12.5px;font-weight:800;line-height:1.35;text-wrap:pretty">{{ it.title }}</div>
+                  <div style="font-size:10.5px;font-weight:700;color:#7C859C;margin-top:6px">{{ it.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:11px;margin-top:16px;padding:15px 16px;border-radius:16px;background:rgba(36,28,64,.5);border:1px solid #3A2F6B">
+          <i class="ph-bold ph-info" style="font-size:16px;color:#8C6BFF;flex:none;margin-top:1px"></i>
+          <div style="font-size:11.5px;font-weight:600;color:#CFC6FF;line-height:1.65;text-wrap:pretty">{{ shelfPreview.note }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:80;padding:13px 22px;border-radius:999px;background:rgba(10,14,26,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #2AC4E8;font-size:12.5px;font-weight:800;color:#F3F6FC;box-shadow:0 18px 44px rgba(0,0,0,.55);animation:ffRise .2s ease both;white-space:nowrap">{{ toast }}</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;language&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;English&quot;,&quot;Tiếng Việt&quot;],&quot;default&quot;:&quot;English&quot;,&quot;tsType&quot;:&quot;'English' | 'Tiếng Việt'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;tab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Moderation queue&quot;,&quot;Organizer verification&quot;,&quot;User reports&quot;,&quot;Featured shelves&quot;,&quot;Ads &amp; partners&quot;,&quot;Insights&quot;,&quot;Audit log&quot;],&quot;default&quot;:&quot;Moderation queue&quot;,&quot;tsType&quot;:&quot;'Moderation queue' | 'Organizer verification' | 'User reports' | 'Featured shelves' | 'Ads &amp; partners' | 'Insights' | 'Audit log'&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+const ARTS = ['linear-gradient(135deg,#8C6BFF,#2AC4E8)','linear-gradient(135deg,#1B6BD6,#8C6BFF)','linear-gradient(135deg,#FFB35C,#FF8A3D)','linear-gradient(135deg,#2AC4E8,#2E9E5B)'];
+const TABS = { 'Moderation queue':'queue', 'Organizer verification':'verify', 'User reports':'reports', 'Featured shelves':'featured', 'Ads & partners':'ads', 'Insights':'insights', 'Audit log':'audit', 'Appeals':'appeals' };
+
+const QMETA = {
+  q1:{ hrs:2.6, newOrg:false, rf:[
+    { bad:false, w:0,  en:'Organizer verified since 2024', vi:'Nhà tổ chức đã xác minh từ 2024' },
+    { bad:false, w:0,  en:'Venue appears in 9 past listings', vi:'Địa điểm đã có ở 9 tin trước' },
+    { bad:true,  w:14, en:'Price 18% above district median', vi:'Giá cao hơn trung vị khu vực 18%' }] },
+  q2:{ hrs:3.7, newOrg:true, rf:[
+    { bad:true,  w:30, en:'First listing from this account', vi:'Tin đầu tiên của tài khoản này' },
+    { bad:true,  w:26, en:'Address does not resolve to a pin', vi:'Địa chỉ không định vị được trên bản đồ' },
+    { bad:true,  w:14, en:'Payout account added 2 days ago', vi:'Tài khoản nhận tiền thêm 2 ngày trước' },
+    { bad:false, w:0,  en:'Ticket link resolves', vi:'Link vé hoạt động' }] },
+  q3:{ hrs:1.1, newOrg:false, rf:[
+    { bad:false, w:0, en:'4 past listings, no reports', vi:'4 tin trước, không bị báo cáo' },
+    { bad:false, w:0, en:'Venue and pin match', vi:'Địa điểm khớp định vị' },
+    { bad:true,  w:6, en:'Capacity not stated', vi:'Chưa ghi sức chứa' }] },
+  q4:{ hrs:5.3, newOrg:false, rf:[
+    { bad:true,  w:24, en:'Image reused from a 2025 listing', vi:'Ảnh dùng lại từ tin năm 2025' },
+    { bad:true,  w:22, en:'Ticket URL returns 404', vi:'Link vé trả về 404' },
+    { bad:true,  w:18, en:'14 refund reports against this organizer', vi:'14 báo cáo hoàn tiền với nhà tổ chức này' },
+    { bad:false, w:0,  en:'Organizer verified', vi:'Nhà tổ chức đã xác minh' }] }
+};
+const QM = (id) => QMETA[id] || { hrs:0, newOrg:false, rf:[] };
+const RISK = (id) => QM(id).rf.reduce((a, f) => a + (f.bad ? f.w : 0), 0);
+const SLA_H = 4;
+
+const REASONS = [
+  { k:'venue', icon:'ph-fill ph-map-pin-line', appeal:true,
+    label:{ en:'Venue unverifiable', vi:'Không xác minh được địa điểm' },
+    msg:{ en:'We could not place this address on the map. Send the exact venue name and a nearby landmark and we will review again — usually within two hours.',
+      vi:'Chúng tôi không đặt được địa chỉ này lên bản đồ. Anh/chị gửi tên địa điểm chính xác kèm một mốc gần đó, chúng tôi sẽ duyệt lại — thường trong hai giờ.' } },
+  { k:'ticket', icon:'ph-fill ph-link-break', appeal:true,
+    label:{ en:'Ticket link broken', vi:'Link vé lỗi' },
+    msg:{ en:'The ticket link on this listing returns a 404. Replace it with a working link and resubmit — nothing else needs to change.',
+      vi:'Link vé trên tin trả về lỗi 404. Anh/chị thay bằng link còn hoạt động rồi gửi lại — những phần khác giữ nguyên.' } },
+  { k:'image', icon:'ph-fill ph-image', appeal:true,
+    label:{ en:'Image not original', vi:'Ảnh không phải ảnh gốc' },
+    msg:{ en:'This image already appears in an earlier listing. Upload an original photo of this event at 1600×900 and we will publish it.',
+      vi:'Ảnh này đã xuất hiện ở một tin trước đó. Anh/chị tải lên ảnh gốc của sự kiện, khổ 1600×900, chúng tôi sẽ đăng.' } },
+  { k:'permit', icon:'ph-fill ph-certificate', appeal:true,
+    label:{ en:'Permit missing', vi:'Thiếu giấy phép' },
+    msg:{ en:'For a crowd this size we need the venue permit on file before the listing can go live. Attach it and we will review the same day.',
+      vi:'Với quy mô này chúng tôi cần giấy phép địa điểm trước khi tin lên sóng. Anh/chị gửi kèm, chúng tôi duyệt trong ngày.' } },
+  { k:'duplicate', icon:'ph-fill ph-copy', appeal:true,
+    label:{ en:'Duplicate listing', vi:'Tin trùng lặp' },
+    msg:{ en:'This event is already live under another listing. Edit the original instead of posting a second one so saves and reminders stay in one place.',
+      vi:'Sự kiện này đã có một tin khác đang chạy. Anh/chị sửa tin gốc thay vì đăng thêm, để lượt lưu và nhắc lịch không bị chia ra.' } },
+  { k:'policy', icon:'ph-fill ph-prohibit', appeal:false,
+    label:{ en:'Breaks content policy', vi:'Vi phạm chính sách nội dung' },
+    msg:{ en:'This listing breaks our content policy and will not be published. Written to you separately with the specific clause.',
+      vi:'Tin này vi phạm chính sách nội dung và sẽ không được đăng. Chúng tôi gửi riêng điều khoản cụ thể.' } }
+];
+const RSN = (k) => REASONS.filter(r => r.k === k)[0] || REASONS[0];
+const T_none = (vi) => vi ? 'Chọn một tin để xem tín hiệu' : 'Pick a listing to see its signals';
+const T_sort = (vi, k) => k === 'age' ? (vi ? 'Chờ lâu nhất' : 'Oldest first') : k === 'risk' ? (vi ? 'Rủi ro cao nhất' : 'Highest risk') : (vi ? 'Mới nhất' : 'Newest first');
+const TODAY = 917;
+const DKEY = (s) => { const m = /^(\d{1,2})\D(\d{1,2})$/.exec((s || '').trim()); return m ? parseInt(m[2],10) * 100 + parseInt(m[1],10) : null; };
+const DEC = (x, vi) => { const s = (Math.round(x*10)/10).toFixed(1).replace(/\.0$/,''); return vi ? s.replace('.',',') : s; };
+const CNT = (v, vi) => v >= 1e6 ? DEC(v/1e6, vi) + (vi ? ' tr' : 'M') : v >= 1e3 ? DEC(v/1e3, vi) + 'k' : String(v);
+const VND = (v, vi) => v >= 1e9 ? DEC(v/1e9, vi) + (vi ? ' tỷ₫' : 'bn₫') : v >= 1e6 ? DEC(v/1e6, vi) + (vi ? 'tr₫' : 'M₫') : v.toLocaleString(vi ? 'vi-VN' : 'en-US') + '₫';
+const NUM = (v, vi, d) => { const s = v.toFixed(d == null ? 1 : d); return vi ? s.replace('.',',') : s; };
+const RATES = { feed:180000, banner:240000, live:520000 };
+const AD_ART = { 'F&B':'linear-gradient(135deg,#FFB35C,#FF5C5C)', 'Fashion':'linear-gradient(135deg,#8C6BFF,#FF6FA5)', 'Healthcare':'linear-gradient(135deg,#2AC4E8,#1B6BD6)' };
+
+class Component extends DCLogic {
+  state = {
+    lang: this.props.language === 'Tiếng Việt' ? 'vi' : 'en',
+    tab: TABS[this.props.tab] || 'queue',
+    toast: null,
+    chat: null,
+    threads: {},
+    draft: '',
+    typing: false,
+    qFilter: 'all',
+    qSort: 'age',
+    sel: {},
+    focus: 0,
+    shortcutsOpen: false,
+    rejectFor: null, rejectCode: 'venue', rejectMsg: '', rejectAppeal: true,
+    viewAsOpen: false, imp: null,
+    auditActor: 'all', auditOpen: {},
+    shelfPrev: null,
+    sched: { s1:{ from:'15/09', to:'22/09' }, s2:{ from:'01/10', to:'31/10' }, s3:{ from:'28/09', to:'12/10' } },
+    appeals: [
+      { id:'ap0', title:'Rooftop NYE Countdown', org:'Neon District', art:ARTS[1], code:'image', state:'replied',
+        msg:{ en:'This image already appears in an earlier listing. Upload an original photo of this event at 1600×900 and we will publish it.',
+          vi:'Ảnh này đã xuất hiện ở một tin trước đó. Anh/chị tải lên ảnh gốc của sự kiện, khổ 1600×900, chúng tôi sẽ đăng.' },
+        reply:{ en:'The photo is ours — it was shot at our own 2025 edition and we hold the file. Original attached, plus the photographer invoice.',
+          vi:'Ảnh là của chúng tôi — chụp tại kỳ 2025 do chúng tôi tổ chức và chúng tôi giữ file gốc. Đã gửi kèm ảnh gốc và hoá đơn nhiếp ảnh.' },
+        when:{ en:'Replied yesterday 18:40', vi:'Phản hồi hôm qua 18:40' }, left:'2d' },
+      { id:'ap1', title:'Pool Party · Quận 2', org:'Sunside Club', art:ARTS[3], code:'permit', state:'open',
+        msg:{ en:'For a crowd this size we need the venue permit on file before the listing can go live. Attach it and we will review the same day.',
+          vi:'Với quy mô này chúng tôi cần giấy phép địa điểm trước khi tin lên sóng. Anh/chị gửi kèm, chúng tôi duyệt trong ngày.' },
+        reply:null, when:{ en:'Rejected 2 days ago', vi:'Từ chối 2 ngày trước' }, left:'5d' }
+    ],
+    hDrill: null,
+    queue: [
+      { id:'q1', title:'Neon District Rooftop Session', org:'Neon District', when:'Sat 26 Sep · 20:00', art:ARTS[0], flagged:false,
+        signals:[{ok:true,en:'Venue resolves to a pin',vi:'Địa điểm có định vị trên bản đồ'},{ok:true,en:'Organizer verified',vi:'Nhà tổ chức đã xác minh'},{ok:true,en:'Image is original',vi:'Ảnh không trùng'}] },
+      { id:'q2', title:'Underground Techno — Warehouse 12', org:'W12 Collective', when:'Fri 25 Sep · 22:00', art:ARTS[1], flagged:true, flag:{en:'Venue unverified',vi:'Địa điểm chưa xác minh'},
+        signals:[{ok:false,en:'No map pin for this address',vi:'Địa chỉ không có định vị trên bản đồ'},{ok:false,en:'First listing from this account',vi:'Tin đầu tiên của tài khoản'},{ok:true,en:'Image is original',vi:'Ảnh không trùng'}] },
+      { id:'q3', title:'Acoustic Sunset · Thảo Điền', org:'Bside Cafe', when:'Sun 27 Sep · 17:30', art:ARTS[3], flagged:false,
+        signals:[{ok:true,en:'Venue resolves to a pin',vi:'Địa điểm có định vị trên bản đồ'},{ok:true,en:'4 listings, no reports',vi:'4 tin đăng, không bị báo cáo'},{ok:true,en:'Image is original',vi:'Ảnh không trùng'}] },
+      { id:'q4', title:'EDM Beach Bus — Vũng Tàu', org:'Tripside', when:'Sat 3 Oct · 06:00', art:ARTS[2], flagged:true, flag:{en:'Ticket link broken',vi:'Link vé lỗi'},
+        signals:[{ok:false,en:'Ticket URL returns 404',vi:'Link vé trả về 404'},{ok:true,en:'Organizer verified',vi:'Nhà tổ chức đã xác minh'},{ok:false,en:'Image reused from 2025 listing',vi:'Ảnh dùng lại từ tin 2025'}] }
+    ],
+    orgs: [
+      { id:'o1', name:'Ravolution Entertainment', initials:'RE', state:'verified', events:42, since:'2023', tax:true, id_:true, bank:true },
+      { id:'o2', name:'W12 Collective', initials:'W1', state:'pending', events:1, since:'2026', tax:false, id_:true, bank:false },
+      { id:'o3', name:'Bside Cafe', initials:'BC', state:'pending', events:4, since:'2025', tax:true, id_:true, bank:true },
+      { id:'o4', name:'Tripside Travel', initials:'TT', state:'flagged', events:9, since:'2024', tax:true, id_:false, bank:true }
+    ],
+    reports: [
+      { id:'r1', cat:'refund', count:14, age:'4h', subject:'EDM Beach Bus — Vũng Tàu', quote:{en:'The bus never showed up at the pickup point and nobody answered the hotline.',vi:'Xe không đến điểm hẹn và không ai trả lời hotline.'} },
+      { id:'r2', cat:'wrong', count:6, age:'11h', subject:'Underground Techno — Warehouse 12', quote:{en:'The address on the listing is a closed building. Real venue was two streets away.',vi:'Địa chỉ trên tin là toà nhà đã đóng. Địa điểm thật cách đó hai con phố.'} },
+      { id:'r3', cat:'price', count:3, age:'1d', subject:'Rooftop NYE Countdown', quote:{en:'Listed at 500k but the door charged 800k with no explanation.',vi:'Tin ghi 500k nhưng tại cửa thu 800k không giải thích.'} },
+      { id:'r4', cat:'safety', count:2, age:'2d', subject:'Warehouse Rave · Quận 4', quote:{en:'No visible fire exits and the crowd was well past what the room can hold.',vi:'Không thấy lối thoát hiểm và lượng người vượt quá sức chứa.'} }
+    ],
+    shelves: [
+      { id:'s1', on:true, items:[
+        { t:'Ravolution Music Festival 2026', m:'19 Sep · SECC', a:ARTS[0] },
+        { t:'Hozo Super Fest', m:'27 Sep · Nguyễn Huệ', a:ARTS[1] },
+        { t:'Da Lat Acoustic Weekend', m:'3 Oct · Đà Lạt', a:ARTS[3] }
+      ] },
+      { id:'s2', on:true, items:[
+        { t:'Bside Acoustic Sunset', m:'27 Sep · Thảo Điền', a:ARTS[3] },
+        { t:'Jazz Night · Đường Sách', m:'28 Sep · Quận 1', a:ARTS[1] }
+      ] },
+      { id:'s3', on:false, items:[
+        { t:'Mid-Autumn Lantern Walk', m:'30 Sep · Chợ Lớn', a:ARTS[2] },
+        { t:'Bánh Mì Festival', m:'5 Oct · Quận 3', a:ARTS[2] },
+        { t:'Night Market Tour', m:'Weekly · Bình Thạnh', a:ARTS[0] }
+      ] }
+    ],
+    audit: [],
+    orgStats: [
+      { id:'o1', live:12, views:486000, ctr:7.9, reports:2, gmv:8400000000, good:true },
+      { id:'o2', live:1, views:12400, ctr:5.2, reports:6, gmv:74000000, good:false },
+      { id:'o3', live:4, views:61800, ctr:6.6, reports:0, gmv:312000000, good:true },
+      { id:'o4', live:9, views:208000, ctr:5.7, reports:14, gmv:1900000000, good:false }
+    ],
+    accounts: [
+      { h:'@minh.ng', city:'TP.HCM', joined:'3/2025', saved:24, hyped:61, tickets:9 },
+      { h:'@linhtrn', city:'TP.HCM', joined:'7/2025', saved:11, hyped:28, tickets:4 },
+      { h:'@dat.pham', city:'Hà Nội', joined:'1/2026', saved:7, hyped:19, tickets:2 },
+      { h:'@khanh.le', city:'Đà Nẵng', joined:'8/2026', saved:3, hyped:6, tickets:0 },
+      { h:'@thuy.vo', city:'TP.HCM', joined:'9/2026', saved:1, hyped:2, tickets:0 }
+    ],
+    adsSel:'inq1',
+    inquiries: [
+      { id:'inq1', brand:'Zenkai Energy', cat:'F&B', logo:'ZK', email:'mai@zenkai.vn', budget:{en:'150–400M₫',vi:'150–400tr₫'}, age:'2h',
+        want:['feed','banner'],
+        msg:{en:'We want the EDM weekends in September and October, Saigon only. Launching a new can size.',
+          vi:'Chúng tôi muốn các cuối tuần EDM tháng 9 và 10, chỉ ở Sài Gòn. Đang ra mắt lon dung tích mới.'} },
+      { id:'inq2', brand:'Neon Thread', cat:'Fashion', logo:'NT', email:'drops@neonthread.co', budget:{en:'50–150M₫',vi:'50–150tr₫'}, age:'6h',
+        want:['feed','banner'],
+        msg:{en:'Streetwear drop timed to Ravolution. Happy to hand out samples at the gate too.',
+          vi:'Drop streetwear đúng dịp Ravolution. Có thể tặng mẫu thử tại cổng.'} },
+      { id:'inq3', brand:'EarGuard Pro', cat:'Healthcare', logo:'EG', email:'partners@earguard.asia', budget:{en:'400M₫+',vi:'400tr₫+'}, age:'1d',
+        want:['live','banner'],
+        msg:{en:'Filtered earplugs. We would like the in-event placement — that is the moment people wish they had them.',
+          vi:'Nút tai lọc âm. Chúng tôi muốn vị trí trong sự kiện — đúng lúc người ta thấy cần nó nhất.'} },
+      { id:'inq4', brand:'Medik Rapid Care', cat:'Healthcare', logo:'MR', email:'bd@medikrapid.vn', budget:{en:'Under 50M₫',vi:'Dưới 50tr₫'}, age:'2d',
+        want:['live'],
+        msg:{en:'On-site recovery clinics. We only want to appear to people already checked in at a festival.',
+          vi:'Phòng phục hồi tại chỗ. Chỉ muốn xuất hiện với người đã check-in tại lễ hội.'} }
+    ],
+    campaigns: [
+      { id:'c1', brand:'Hydra Salts', cat:'F&B', logo:'HS', place:'feed', on:true, imp:412800, clicks:9074, spend:74300000, pace:68 },
+      { id:'c2', brand:'Sài Gòn Denim', cat:'Fashion', logo:'SD', place:'banner', on:true, imp:186400, clicks:2609, spend:44700000, pace:91 },
+      { id:'c3', brand:'SleepWell Recovery', cat:'Healthcare', logo:'SW', place:'live', on:false, imp:38200, clicks:1184, spend:9100000, pace:22 }
+    ],
+    setup: { places:{ feed:true, banner:true }, genres:{ EDM:true, Festival:true }, areas:{ 'Quận 7':true, 'Thủ Đức':true }, cpm:180, cap:12,
+      rates: Object.assign({}, RATES) }
+  };
+
+  _msg = React.createRef();
+
+  componentDidMount() {
+    this._key = (e) => this.onKey(e);
+    if (typeof window !== 'undefined') window.addEventListener('keydown', this._key);
+  }
+
+  onKey(e) {
+    const t = e.target, tag = t && t.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;
+    const st = this.state;
+    if (e.key === 'Escape') { this.setState({ rejectFor:null, shortcutsOpen:false, viewAsOpen:false, shelfPrev:null, hDrill:null, chat:null }); return; }
+    if (st.rejectFor || st.chat) return;
+    if (e.key === '?') { e.preventDefault(); this.setState({ shortcutsOpen: !st.shortcutsOpen }); return; }
+    if (st.tab !== 'queue') return;
+    const list = this.visibleQueue();
+    if (!list.length) return;
+    const i = Math.min(st.focus, list.length - 1), q = list[i], k = e.key.toLowerCase();
+    if (k === 'j' || e.key === 'ArrowDown') { e.preventDefault(); this.setState({ focus: Math.min(list.length - 1, i + 1) }); }
+    else if (k === 'k' || e.key === 'ArrowUp') { e.preventDefault(); this.setState({ focus: Math.max(0, i - 1) }); }
+    else if (k === 'x') { e.preventDefault(); this.toggleSel(q.id); }
+    else if (k === 'a' && e.shiftKey) { e.preventDefault(); this.toggleAllSel(); }
+    else if (k === 'a') { e.preventDefault(); this.approveOne(q); }
+    else if (k === 'r') { e.preventDefault(); this.openReject(q.id); }
+    else if (k === 'm') { e.preventDefault(); this.openChat(q); }
+  }
+
+  visibleQueue() {
+    const st = this.state, f = st.qFilter;
+    const keep = (q) => f === 'all' ? true
+      : f === 'flagged' ? q.flagged
+      : f === 'clean' ? !q.flagged
+      : f === 'breach' ? QM(q.id).hrs >= SLA_H
+      : f === 'new' ? QM(q.id).newOrg : true;
+    const s = st.qSort;
+    return st.queue.filter(keep).slice().sort((a, b) =>
+      s === 'age' ? QM(b.id).hrs - QM(a.id).hrs
+      : s === 'risk' ? RISK(b.id) - RISK(a.id)
+      : QM(a.id).hrs - QM(b.id).hrs);
+  }
+
+  slaOf(id) { const h = QM(id).hrs; return h >= SLA_H ? 'breach' : h >= SLA_H - 2 ? 'soon' : 'ok'; }
+
+  blocked() {
+    if (!this.state.imp) return false;
+    const vi = this.state.lang === 'vi';
+    this.say(vi ? 'Chỉ đọc khi đang xem dưới tài khoản khác' : 'Read-only while viewing as someone else');
+    return true;
+  }
+
+  toggleSel(id) { this.setState(s => { const x = Object.assign({}, s.sel); x[id] = !x[id]; return { sel:x }; }); }
+
+  toggleAllSel() {
+    const list = this.visibleQueue(), st = this.state;
+    const all = list.length > 0 && list.every(q => st.sel[q.id]);
+    const x = {};
+    if (!all) list.forEach(q => { x[q.id] = true; });
+    this.setState({ sel:x });
+  }
+
+  approveOne(q) {
+    if (this.blocked()) return;
+    const vi = this.state.lang === 'vi';
+    this.setState(s => { const x = Object.assign({}, s.sel); delete x[q.id]; return { queue: s.queue.filter(y => y.id !== q.id), sel:x, focus:0 }; });
+    this.logAction('ph-fill ph-check-circle', '#6FD79B', vi ? 'Đã duyệt tin đăng' : 'Approved listing', q.title,
+      [{ f:'status', a: vi ? 'chờ duyệt' : 'pending', b: vi ? 'đang chạy' : 'live' }, { f:'visible_in', a:'—', b:'Explore · TP.HCM' }]);
+    this.say((vi ? 'Đã duyệt · ' : 'Approved · ') + q.title);
+  }
+
+  openReject(id) { if (this.blocked()) return; this.setState({ rejectFor:id, rejectCode:'venue', rejectMsg:'', rejectAppeal:true }); }
+
+  confirmReject() {
+    const st = this.state, vi = st.lang === 'vi', g = st.lang;
+    const ids = st.rejectFor === 'bulk' ? Object.keys(st.sel).filter(k => st.sel[k]) : [st.rejectFor];
+    const r = RSN(st.rejectCode);
+    const items = st.queue.filter(q => ids.indexOf(q.id) >= 0);
+    if (!items.length) { this.setState({ rejectFor:null }); return; }
+    const body = (st.rejectMsg || '').trim() || r.msg[g];
+    const allowAppeal = st.rejectAppeal && r.appeal !== false;
+    this.setState({
+      queue: st.queue.filter(q => ids.indexOf(q.id) < 0),
+      appeals: (allowAppeal ? items.map(q => ({
+        id:'ap' + q.id + Date.now(), title:q.title, org:q.org, art:q.art, code:r.k, state:'open',
+        msg:{ en:body, vi:body }, reply:null,
+        when:{ en:'Rejected just now', vi:'Vừa từ chối' }, left:'7d'
+      })) : []).concat(st.appeals),
+      sel:{}, rejectFor:null, focus:0
+    });
+    items.forEach(q => this.logAction('ph-fill ph-x-circle', '#FF9A9A',
+      (vi ? 'Đã từ chối · ' : 'Rejected · ') + r.label[g], q.title,
+      [{ f:'status', a: vi ? 'chờ duyệt' : 'pending', b: vi ? 'từ chối' : 'rejected' },
+       { f:'reason_code', a:'—', b:r.k },
+       { f:'appeal', a:'—', b: allowAppeal ? (vi ? 'mở 7 ngày' : 'open 7 days') : (vi ? 'không' : 'none') }]));
+    this.say(items.length > 1
+      ? (vi ? 'Đã từ chối ' + items.length + ' tin · ' + r.label.vi : items.length + ' rejected · ' + r.label.en)
+      : (vi ? 'Đã từ chối · ' + r.label.vi : 'Rejected · ' + r.label.en));
+  }
+
+  componentDidUpdate(prev, prevState) {
+    if (prev.language !== this.props.language) this.setState({ lang: this.props.language === 'Tiếng Việt' ? 'vi' : 'en' });
+    if (prev.tab !== this.props.tab) this.setState({ tab: TABS[this.props.tab] || 'queue' });
+    const st = this.state, ps = prevState || {};
+    const qid = st.chat && st.chat.qid;
+    const count = qid ? (st.threads[qid] || []).length : 0;
+    const wasQid = ps.chat && ps.chat.qid;
+    const wasCount = wasQid ? ((ps.threads || {})[wasQid] || []).length : 0;
+    if (qid && (qid !== wasQid || count !== wasCount || st.typing !== ps.typing)) {
+      const el = this._msg.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  }
+  componentWillUnmount() { clearTimeout(this._tt); clearTimeout(this._rt); if (typeof window !== 'undefined') window.removeEventListener('keydown', this._key); }
+
+  say(msg) { clearTimeout(this._tt); this.setState({ toast: msg }); this._tt = setTimeout(() => this.setState({ toast: null }), 2100); }
+
+  logAction(icon, color, text, target, diff) {
+    const d = new Date();
+    const time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+    this.setState(s => ({ audit: [{ id:'a'+Date.now()+Math.random(), time, icon, color, text, target, actor:'FestFinder Admin',
+      diff: Array.isArray(diff) ? diff : null }].concat(s.audit).slice(0, 14) }));
+  }
+
+  stamp() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  openChat(q) {
+    const initials = q.org.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+    this.setState({ chat: { qid:q.id, org:q.org, title:q.title, when:q.when, art:q.art, initials }, draft:'', typing:false });
+  }
+
+  push(qid, from, text) {
+    this.setState(s => {
+      const next = Object.assign({}, s.threads);
+      next[qid] = (next[qid] || []).concat([{ id:'m' + Date.now() + Math.random(), from, text, stamp: this.stamp() }]);
+      return { threads: next };
+    });
+  }
+
+  sendMsg(text) {
+    const chat = this.state.chat, vi = this.state.lang === 'vi';
+    const body = (text || '').trim();
+    if (!chat || !body) return;
+    this.push(chat.qid, 'admin', body);
+    this.setState({ draft:'', typing:true });
+    this.logAction('ph-fill ph-chat-circle-text', '#2AC4E8', vi ? 'Đã nhắn cho nhà tổ chức' : 'Messaged the organizer', chat.org + ' · ' + chat.title);
+    clearTimeout(this._rt);
+    this._rt = setTimeout(() => {
+      const pool = vi
+        ? ['Đã nhận — đang kiểm tra với địa điểm, sẽ gửi lại trong một giờ.',
+           'Cảm ơn anh/chị đã nhắc. Tối nay chúng tôi tải bản mới lên.',
+           'Đã rõ. Bên bán vé đang sửa, xong là chúng tôi báo ngay.']
+        : ['Got it — checking with the venue now, I will send it over within the hour.',
+           'Thanks for flagging that. We are uploading a new one tonight.',
+           'Understood. Our ticketing partner is fixing it and I will confirm here.'];
+      const n = (this.state.threads[chat.qid] || []).filter(m => m.from === 'org').length;
+      this.push(chat.qid, 'org', pool[n % pool.length]);
+      this.setState({ typing:false });
+    }, 1600);
+  }
+
+  renderVals() {
+    const st = this.state, g = st.lang, vi = g === 'vi';
+    const pending = st.queue.length;
+    const flagged = st.queue.filter(q => q.flagged).length;
+    const shelfNames = [
+      { name: vi ? 'Đang hot tuần này' : 'Trending this week', note: vi ? 'Hiện đầu trang Khám phá trong app và trên web.' : 'Sits at the top of Explore in the app and on the web.' },
+      { name: vi ? 'Đêm nhạc nhẹ' : 'Quiet nights', note: vi ? 'Dành cho người tìm sự kiện không phải EDM.' : 'For people browsing away from EDM.' },
+      { name: vi ? 'Ăn uống & văn hoá' : 'Food & culture', note: vi ? 'Tắt cho tới khi có đủ 5 sự kiện đã duyệt.' : 'Off until five approved events fill it.' }
+    ];
+    const cats = {
+      refund: { label: vi ? 'Đòi hoàn tiền' : 'Refund claim', icon:'ph-fill ph-receipt-x', fg:'#FF9A9A', bg:'rgba(224,74,74,.14)', bd:'rgba(224,74,74,.4)' },
+      wrong:  { label: vi ? 'Sai thông tin' : 'Wrong details', icon:'ph-fill ph-map-pin-line', fg:'#FFB35C', bg:'rgba(255,138,61,.14)', bd:'rgba(255,138,61,.4)' },
+      price:  { label: vi ? 'Giá không đúng' : 'Price mismatch', icon:'ph-fill ph-tag', fg:'#FFB35C', bg:'rgba(255,138,61,.14)', bd:'rgba(255,138,61,.4)' },
+      safety: { label: vi ? 'An toàn' : 'Safety', icon:'ph-fill ph-warning-octagon', fg:'#FF9A9A', bg:'rgba(224,74,74,.14)', bd:'rgba(224,74,74,.4)' }
+    };
+    const vis = this.visibleQueue();
+    const selIds = Object.keys(st.sel).filter(k => st.sel[k]);
+    const focusQ = vis.length ? vis[Math.min(st.focus, vis.length - 1)] : null;
+    const riskQ = selIds.length === 1 ? (st.queue.filter(q => q.id === selIds[0])[0] || focusQ) : focusQ;
+    const rejectItems = st.rejectFor === 'bulk' ? st.queue.filter(q => st.sel[q.id]) : st.queue.filter(q => q.id === st.rejectFor);
+    const rsn = RSN(st.rejectCode);
+    const askInfo = vi ? 'Yêu cầu bổ sung' : 'Ask for more';
+    const openThread = vi ? 'Mở hội thoại' : 'Open thread';
+    const chat = st.chat;
+    const thread = chat ? (st.threads[chat.qid] || []) : [];
+    const quickAsks = vi ? [
+      { icon:'ph-bold ph-link-break', label:'Link vé', text:'Link vé trên tin trả về lỗi 404. Anh/chị gửi lại link đặt vé còn hoạt động để chúng tôi duyệt nhé.' },
+      { icon:'ph-bold ph-map-pin-line', label:'Địa điểm', text:'Chúng tôi chưa đặt được địa chỉ này lên bản đồ. Anh/chị gửi tên địa điểm chính xác kèm một mốc gần đó giúp chúng tôi.' },
+      { icon:'ph-bold ph-image', label:'Ảnh gốc', text:'Ảnh này đã xuất hiện ở một tin năm 2025. Vui lòng tải lên ảnh gốc của sự kiện, khổ ngang 1600×900.' },
+      { icon:'ph-bold ph-certificate', label:'Giấy phép', text:'Với quy mô sự kiện này, chúng tôi cần giấy phép địa điểm trước khi đăng tin.' }
+    ] : [
+      { icon:'ph-bold ph-link-break', label:'Ticket link', text:'The ticket link on this listing returns a 404. Please send a working link so we can approve it.' },
+      { icon:'ph-bold ph-map-pin-line', label:'Venue', text:'We cannot place this address on the map. Please send the exact venue name and a nearby landmark.' },
+      { icon:'ph-bold ph-image', label:'Original image', text:'This image already appears in a 2025 listing. Please upload an original photo of this event, 1600×900 landscape.' },
+      { icon:'ph-bold ph-certificate', label:'Permit', text:'For a crowd this size we need the venue permit on file before the listing can go live.' }
+    ];
+
+    return {
+      T: {
+        mode: vi ? 'Quản trị nội bộ' : 'Internal admin',
+        admin: 'FestFinder Admin', role: vi ? 'Tài khoản duy nhất' : 'Sole account',
+        qKicker: vi ? 'Chờ duyệt' : 'Awaiting review',
+        qTitle: vi ? 'Hàng chờ kiểm duyệt' : 'Moderation queue',
+        qClear: vi ? 'Hàng chờ trống' : 'Queue is clear',
+        qClearSub: vi ? 'Mọi tin đã được xử lý. Tin mới sẽ xuất hiện ở đây.' : 'Everything has been handled. New submissions land here.',
+        approve: vi ? 'Duyệt' : 'Approve', reject: vi ? 'Từ chối' : 'Reject', askInfo: askInfo,
+        chatWith: vi ? 'Nhắn cho nhà tổ chức' : 'Messaging organizer',
+        chatQuick: vi ? 'Yêu cầu thường dùng' : 'Common requests',
+        chatPh: vi ? 'Viết cho nhà tổ chức…' : 'Write to the organizer…',
+        chatEmpty: vi ? 'Chưa có tin nhắn. Chọn một yêu cầu thường dùng hoặc tự viết — tin đăng vẫn nằm trong hàng chờ cho tới khi anh/chị quyết định.' : 'No messages yet. Pick a common request or write your own — the listing stays in the queue until you decide.',
+        chatNote: vi ? 'Mọi tin nhắn đều được ghi vào sổ hoạt động.' : 'Every message is recorded in the audit log.',
+        autoChecks: vi ? 'Kiểm tra tự động' : 'Automatic checks',
+        slaNote: vi ? 'Cam kết duyệt trong 2 giờ làm việc. Tin bị gắn cờ luôn cần người xem, không tự duyệt.' : 'The promise is a decision within two working hours. Flagged listings always need a human; nothing auto-approves.',
+        vKicker: vi ? 'Tài khoản' : 'Accounts',
+        vTitle: vi ? 'Xác minh nhà tổ chức' : 'Organizer verification',
+        vSub: vi ? 'Nhà tổ chức đã xác minh được hiện huy hiệu trên mọi thẻ sự kiện và được đẩy lên trong kết quả tìm kiếm.' : 'Verified organizers carry a badge on every event card and rank higher in search.',
+        viewDocs: vi ? 'Xem giấy tờ' : 'View documents',
+        rKicker: vi ? 'Từ người dùng' : 'From users',
+        rTitle: vi ? 'Báo cáo' : 'User reports',
+        rBreakdown: vi ? 'Phân loại 30 ngày' : 'Last 30 days',
+        takeDown: vi ? 'Hạ tin' : 'Take down', warn: vi ? 'Cảnh báo BTC' : 'Warn organizer', dismiss: vi ? 'Bỏ qua' : 'Dismiss',
+        fKicker: vi ? 'Biên tập' : 'Editorial',
+        fTitle: vi ? 'Mục nổi bật' : 'Featured shelves',
+        fSub: vi ? 'Những dãy sự kiện được chọn tay, hiện ở đầu trang Khám phá. Tắt một dãy sẽ ẩn ngay trên app và web.' : 'Hand-picked rows that sit at the top of Explore. Switching a shelf off hides it in the app and on the web immediately.',
+        iKicker: vi ? 'Chỉ tài khoản admin' : 'Admin account only',
+        iTitle: vi ? 'Số liệu nền tảng' : 'Platform numbers',
+        iSub: vi ? 'Một tài khoản admin duy nhất được duy trì. Tài khoản này xem được số liệu chi tiết của từng nhà tổ chức và của người dùng.' : 'One admin account is maintained. It can read the detailed numbers behind every organizer and the user base.',
+        iOrgs: vi ? 'Nhà tổ chức' : 'Organizers',
+        iUsers: vi ? 'Người dùng' : 'Users',
+        iAccounts: vi ? 'Tài khoản gần đây' : 'Recent accounts',
+        iCities: vi ? 'Theo thành phố' : 'By city',
+        iGenres: vi ? 'Theo thể loại' : 'By genre',
+        iPrivacy: vi ? 'Admin xem được số liệu tổng hợp và hoạt động trên nền tảng. Không xem được tin nhắn riêng, danh bạ hay lịch sử vị trí của người dùng.' : 'The admin sees aggregate numbers and on-platform activity. Private messages, contacts and location history stay out of reach.',
+        cOrg: vi ? 'Nhà tổ chức' : 'Organizer', cLive: vi ? 'Đang chạy' : 'Live', cViews: vi ? 'Lượt xem' : 'Views',
+        cCtr: 'CTR', cReports: vi ? 'Báo cáo' : 'Reports', cGmv: vi ? 'Doanh thu vé' : 'Ticket GMV',
+        cUser: vi ? 'Tài khoản' : 'Account', cCity: vi ? 'Thành phố' : 'City', cJoined: vi ? 'Tham gia' : 'Joined',
+        cSaved: vi ? 'Đã lưu' : 'Saved', cHyped: 'Hype', cTickets: vi ? 'Vé đã mua' : 'Tickets',
+        aKicker: vi ? 'Lịch sử' : 'History',
+        viewAs: vi ? 'Xem dưới' : 'View as',
+        viewAsHead: vi ? 'Xem nền tảng dưới tài khoản' : 'View the platform as',
+        viewAsNote: vi ? 'Phiên xem hộ là chỉ đọc và được ghi vào sổ hoạt động kèm tên người mở.' : 'An impersonated session is read-only and is written to the audit log against your name.',
+        impNote: vi ? 'Chỉ đọc · mọi hành động đều được ghi lại' : 'Read-only · every action is logged',
+        impExit: vi ? 'Thoát' : 'Exit',
+        ageHead: vi ? 'Tuổi hàng chờ' : 'Queue age',
+        shortcuts: vi ? 'Phím tắt' : 'Shortcuts',
+        shortcutsTitle: vi ? 'Phím tắt hàng chờ' : 'Queue shortcuts',
+        shortcutsNote: vi ? 'Phím tắt hoạt động khi con trỏ không ở trong ô nhập. Dấu ? mở lại bảng này.' : 'Shortcuts work whenever the cursor is not in a field. Press ? to reopen this sheet.',
+        selectHint: vi ? 'Chọn tin này (x)' : 'Select this listing (x)',
+        selectAll: vi ? 'Chọn tất cả' : 'Select all',
+        selectNone: vi ? 'Bỏ chọn' : 'Deselect all',
+        clearSel: vi ? 'Bỏ chọn' : 'Clear',
+        sortHint: vi ? 'Đổi cách sắp xếp' : 'Change the order',
+        sortAge: vi ? 'Chờ lâu nhất' : 'Oldest first',
+        sortRisk: vi ? 'Rủi ro cao nhất' : 'Highest risk',
+        sortNew: vi ? 'Mới nhất' : 'Newest first',
+        riskHead: vi ? 'Tín hiệu rủi ro' : 'Risk signals',
+        riskNote: vi ? 'Điểm chỉ để tham khảo. Không có tin nào tự bị từ chối — người vẫn là người quyết định.' : 'The score is advisory. Nothing is auto-rejected; a human still decides.',
+        riskNone: vi ? 'Chọn một tin để xem tín hiệu' : 'Pick a listing to see its signals',
+        rejKicker: vi ? 'Từ chối tin đăng' : 'Reject listing',
+        rejReason: vi ? 'Mã lý do' : 'Reason code',
+        rejMsg: vi ? 'Nhà tổ chức nhận được' : 'What the organizer receives',
+        rejReset: vi ? 'Dùng lại mẫu' : 'Reset to template',
+        rejMsgNote: vi ? 'Gửi qua Zalo và email, kèm mã lý do.' : 'Sent over Zalo and email with the reason code attached.',
+        rejAppeal: vi ? 'Cho phép khiếu nại trong 7 ngày' : 'Allow an appeal within 7 days',
+        cancel: vi ? 'Huỷ' : 'Cancel',
+        apKicker: vi ? 'Sau khi từ chối' : 'After rejection',
+        apTitle: vi ? 'Khiếu nại' : 'Appeals',
+        apSub: vi ? 'Tin bị từ chối kèm mã lý do sẽ nằm ở đây cho tới khi nhà tổ chức phản hồi hoặc hết 7 ngày.' : 'Rejected listings sit here with their reason code until the organizer replies or the seven days run out.',
+        apEmpty: vi ? 'Không có khiếu nại nào' : 'No open appeals',
+        overturn: vi ? 'Lật lại & duyệt' : 'Overturn & approve',
+        uphold: vi ? 'Giữ quyết định' : 'Uphold rejection',
+        exportCsv: vi ? 'Xuất CSV' : 'Export CSV',
+        dField: vi ? 'Trường' : 'Field', dBefore: vi ? 'Trước' : 'Before', dAfter: vi ? 'Sau' : 'After',
+        previewShelf: vi ? 'Xem trong Khám phá' : 'Preview in Explore',
+        previewHead: vi ? 'Xem trước dãy' : 'Shelf preview',
+        seeAll: vi ? 'Xem tất cả' : 'See all',
+        aTitle: vi ? 'Sổ ghi hoạt động' : 'Audit log',
+        aSub: vi ? 'Mọi quyết định kiểm duyệt đều được ghi lại kèm người thực hiện. Không thể xoá.' : 'Every moderation decision is recorded against the person who made it. Nothing can be deleted.'
+      },
+      langLabel: vi ? 'VI' : 'EN',
+      toggleLang: () => this.setState({ lang: vi ? 'en' : 'vi' }),
+      toast: st.toast,
+
+      impOn: !!st.imp,
+      impLabel: st.imp ? (vi ? 'Đang xem dưới ' : 'Viewing as ') + st.imp.name : '',
+      impExitLabel: vi ? 'Thoát phiên xem hộ' : 'Exit impersonation',
+      impNote: vi ? 'Chỉ đọc · mọi hành động đều được ghi lại' : 'Read-only · every action is logged',
+      impExit: () => {
+        const who = st.imp ? st.imp.name : '';
+        this.setState({ imp:null });
+        this.logAction('ph-fill ph-eye-slash', '#7C859C', vi ? 'Kết thúc phiên xem hộ' : 'Ended impersonated session', who);
+        this.say(vi ? 'Đã thoát phiên xem hộ' : 'Impersonation ended');
+      },
+      viewAsOpen: st.viewAsOpen,
+      toggleViewAs: () => this.setState({ viewAsOpen: !st.viewAsOpen }),
+      vaBd: st.imp ? 'rgba(255,138,61,.6)' : '#262F44',
+      vaBg: st.imp ? 'rgba(255,138,61,.12)' : 'transparent',
+      vaFg: st.imp ? '#FFB35C' : '#8891A8',
+      viewAsOpts: [
+        { name:'@minh.ng', role: vi ? 'Người dùng · TP.HCM · 24 đã lưu' : 'User · Ho Chi Minh City · 24 saved', icon:'ph-fill ph-user', color:'#2AC4E8', tint:'rgba(42,196,232,.14)' },
+        { name:'Ravolution Entertainment', role: vi ? 'Nhà tổ chức · 12 tin đang chạy' : 'Organizer · 12 live listings', icon:'ph-fill ph-buildings', color:'#8C6BFF', tint:'rgba(140,107,255,.16)' },
+        { name:'W12 Collective', role: vi ? 'Nhà tổ chức · chờ xác minh' : 'Organizer · pending verification', icon:'ph-fill ph-buildings', color:'#FFB35C', tint:'rgba(255,138,61,.14)' }
+      ].map(v => Object.assign({}, v, { go: () => {
+        this.setState({ imp:{ name:v.name }, viewAsOpen:false });
+        this.logAction('ph-fill ph-user-switch', '#FFB35C', vi ? 'Mở phiên xem hộ' : 'Started impersonated session', v.name,
+          [{ f:'session', a:'admin', b:'impersonate' }, { f:'scope', a:'read+write', b:'read-only' }]);
+        this.say(vi ? 'Đang xem dưới ' + v.name : 'Viewing as ' + v.name);
+      } })),
+
+      shortcutsOpen: st.shortcutsOpen,
+      openShortcuts: () => this.setState({ shortcutsOpen:true }),
+      closeShortcuts: () => this.setState({ shortcutsOpen:false }),
+      keyRows: [
+        { keys:['j','k'], label: vi ? 'Chuyển tin trước / sau' : 'Move between listings' },
+        { keys:['a'], label: vi ? 'Duyệt tin đang chọn' : 'Approve the focused listing' },
+        { keys:['r'], label: vi ? 'Mở hộp từ chối' : 'Open the reject sheet' },
+        { keys:['x'], label: vi ? 'Chọn / bỏ chọn' : 'Select or deselect' },
+        { keys:['⇧','A'], label: vi ? 'Chọn tất cả tin đang hiện' : 'Select everything in view' },
+        { keys:['m'], label: vi ? 'Nhắn cho nhà tổ chức' : 'Message the organizer' },
+        { keys:['?'], label: vi ? 'Mở bảng phím tắt' : 'Open this sheet' },
+        { keys:['esc'], label: vi ? 'Đóng mọi bảng' : 'Close any panel' }
+      ].map(r => ({ label:r.label, keys:r.keys.map(k => ({ k })) })),
+
+      chatOpen: !!chat,
+      msgRef: this._msg,
+      chat: chat || {},
+      closeChat: () => this.setState({ chat:null }),
+      chatEmpty: !!chat && thread.length === 0,
+      chatTyping: st.typing,
+      chatTypingLabel: chat ? chat.org + (vi ? ' đang trả lời…' : ' is typing…') : '',
+      chatMsgs: thread.map(m => m.from === 'admin' ? {
+        text:m.text, stamp: (vi ? 'Bạn · ' : 'You · ') + m.stamp,
+        align:'flex-end', tAlign:'right', radius:'14px 14px 4px 14px',
+        bg:'rgba(42,196,232,.13)', bd:'rgba(42,196,232,.34)', fg:'#DFF6FD'
+      } : {
+        text:m.text, stamp: (chat ? chat.org : '') + ' · ' + m.stamp,
+        align:'flex-start', tAlign:'left', radius:'14px 14px 14px 4px',
+        bg:'rgba(18,24,38,.82)', bd:'#262F44', fg:'#C3CBDC'
+      }),
+      chatQuick: quickAsks.map(x => ({ icon:x.icon, label:x.label, text:x.text, send: () => this.sendMsg(x.text) })),
+      draft: st.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onDraftKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMsg(this.state.draft); } },
+      sendDraft: () => this.sendMsg(this.state.draft),
+      sendBg: st.draft.trim() ? '#2AC4E8' : 'rgba(38,47,68,.85)',
+      sendFg: st.draft.trim() ? '#06080D' : '#7C859C',
+
+      tabs: [
+        { k:'queue', label: vi ? 'Hàng chờ' : 'Queue', icon:'ph-bold ph-stack', count: pending },
+        { k:'verify', label: vi ? 'Xác minh' : 'Verification', icon:'ph-bold ph-seal-check', count: st.orgs.filter(o => o.state !== 'verified').length },
+        { k:'reports', label: vi ? 'Báo cáo' : 'Reports', icon:'ph-bold ph-flag', count: st.reports.length },
+        { k:'featured', label: vi ? 'Nổi bật' : 'Featured', icon:'ph-bold ph-sparkle', count: 0 },
+        { k:'ads', label: vi ? 'Quảng cáo' : 'Ads', icon:'ph-bold ph-megaphone', count: st.inquiries.length },
+        { k:'insights', label: vi ? 'Số liệu' : 'Insights', icon:'ph-bold ph-chart-line-up', count: 0 },
+        { k:'audit', label: vi ? 'Hoạt động' : 'Audit', icon:'ph-bold ph-scroll', count: 0 },
+        { k:'appeals', label: vi ? 'Khiếu nại' : 'Appeals', icon:'ph-bold ph-gavel', count: st.appeals.length }
+      ].map(t => {
+        const on = st.tab === t.k;
+        return {
+          label:t.label, icon:t.icon, count:String(t.count), hasCount: t.count > 0,
+          bg: on ? 'rgba(42,196,232,.14)' : 'rgba(18,24,38,.6)',
+          bd: on ? '#2AC4E8' : '#262F44',
+          fg: on ? '#7FE0F5' : '#8891A8',
+          cBg: on ? '#2AC4E8' : '#33405C', cFg: on ? '#06080D' : '#C3CBDC',
+          pick: () => this.setState({ tab:t.k })
+        };
+      }),
+      isQueue: st.tab === 'queue', isVerify: st.tab === 'verify', isReports: st.tab === 'reports',
+      isFeatured: st.tab === 'featured', isAudit: st.tab === 'audit', isAds: st.tab === 'ads', isInsights: st.tab === 'insights',
+      isAppeals: st.tab === 'appeals',
+      apEmpty: st.appeals.length === 0,
+      appeals: st.appeals.map(a => {
+        const r = RSN(a.code);
+        const stMap = {
+          open: { label: vi ? 'Chờ phản hồi' : 'Awaiting reply', fg:'#FFB35C', bg:'rgba(255,138,61,.14)', bd:'rgba(255,138,61,.4)' },
+          replied: { label: vi ? 'Đã phản hồi' : 'Organizer replied', fg:'#7FE0F5', bg:'rgba(42,196,232,.14)', bd:'rgba(42,196,232,.4)' }
+        }[a.state] || { label:'—', fg:'#8891A8', bg:'rgba(95,104,128,.16)', bd:'#262F44' };
+        return {
+          title:a.title, art:a.art,
+          meta: a.org + ' · ' + a.when[g],
+          bd: a.state === 'replied' ? 'rgba(42,196,232,.3)' : '#262F44',
+          stLabel: stMap.label, stFg: stMap.fg, stBg: stMap.bg, stBd: stMap.bd,
+          reasonHead: (vi ? 'Lý do · ' : 'Reason · ') + r.label[g],
+          msg: a.msg[g],
+          hasReply: !!a.reply,
+          replyHead: vi ? 'Nhà tổ chức trả lời' : 'Organizer reply',
+          reply: a.reply ? a.reply[g] : '',
+          when: a.when[g],
+          deadline: (vi ? 'Còn ' : 'Closes in ') + a.left,
+          overturn: () => {
+            if (this.blocked()) return;
+            this.setState({ appeals: st.appeals.filter(x => x.id !== a.id) });
+            this.logAction('ph-fill ph-gavel', '#6FD79B', vi ? 'Lật lại quyết định, đã duyệt' : 'Overturned rejection, approved', a.title,
+              [{ f:'status', a: vi ? 'từ chối' : 'rejected', b: vi ? 'đang chạy' : 'live' }, { f:'appeal', a:'open', b:'upheld_organizer' }]);
+            this.say(vi ? 'Đã lật lại · ' + a.title : 'Overturned · ' + a.title);
+          },
+          uphold: () => {
+            if (this.blocked()) return;
+            this.setState({ appeals: st.appeals.filter(x => x.id !== a.id) });
+            this.logAction('ph-fill ph-seal-check', '#FF9A9A', vi ? 'Giữ quyết định từ chối' : 'Upheld rejection', a.title,
+              [{ f:'appeal', a:'open', b:'closed_upheld' }, { f:'reason_code', a:r.k, b:r.k }]);
+            this.say(vi ? 'Đã giữ quyết định' : 'Rejection upheld');
+          }
+        };
+      }),
+
+      rejectOpen: !!st.rejectFor,
+      closeReject: () => this.setState({ rejectFor:null }),
+      rejectTitle: st.rejectFor === 'bulk'
+        ? (vi ? rejectItems.length + ' tin đăng' : rejectItems.length + ' listings')
+        : (rejectItems[0] ? rejectItems[0].title : ''),
+      rejectCodes: REASONS.map(r => {
+        const on = st.rejectCode === r.k;
+        return { label:r.label[g], code:r.k, icon:r.icon,
+          bg: on ? 'rgba(42,196,232,.1)' : 'rgba(10,14,26,.6)',
+          bd: on ? '#2AC4E8' : '#262F44',
+          fg: on ? '#F3F6FC' : '#C3CBDC',
+          iconFg: on ? '#7FE0F5' : '#7C859C',
+          pick: () => this.setState({ rejectCode:r.k, rejectMsg:'', rejectAppeal: r.appeal !== false }) };
+      }),
+      rejectMsg: st.rejectMsg || rsn.msg[g],
+      onRejectMsg: (e) => this.setState({ rejectMsg: e.target.value }),
+      resetRejectMsg: () => this.setState({ rejectMsg:'' }),
+      toggleAppeal: () => { if (rsn.appeal === false) { this.say(vi ? 'Vi phạm chính sách không được khiếu nại' : 'Policy breaches cannot be appealed'); return; } this.setState({ rejectAppeal: !st.rejectAppeal }); },
+      appealSw: (st.rejectAppeal && rsn.appeal !== false) ? '#2E9E5B' : '#33405C',
+      appealJustify: (st.rejectAppeal && rsn.appeal !== false) ? 'flex-end' : 'flex-start',
+      appealBd: (st.rejectAppeal && rsn.appeal !== false) ? 'rgba(46,158,91,.4)' : '#262F44',
+      appealNote: rsn.appeal === false
+        ? (vi ? 'Mã lý do này không cho phép khiếu nại.' : 'This reason code does not allow an appeal.')
+        : (vi ? 'Nhà tổ chức có thể trả lời một lần; khiếu nại hiện ở tab Khiếu nại.' : 'The organizer can reply once; the appeal shows up in the Appeals tab.'),
+      confirmReject: () => this.confirmReject(),
+      confirmRejectLabel: st.rejectFor === 'bulk'
+        ? (vi ? 'Từ chối ' + rejectItems.length + ' tin' : 'Reject ' + rejectItems.length + ' listings')
+        : (vi ? 'Từ chối và gửi tin nhắn' : 'Reject and send the message'),
+
+      bulkOn: selIds.length > 0,
+      bulkLabel: vi ? 'Đã chọn ' + selIds.length : selIds.length + ' selected',
+      bulkApproveLabel: vi ? 'Duyệt ' + selIds.length : 'Approve ' + selIds.length,
+      bulkRejectLabel: vi ? 'Từ chối ' + selIds.length : 'Reject ' + selIds.length,
+      bulkClear: () => this.setState({ sel:{} }),
+      bulkApprove: () => {
+        if (this.blocked()) return;
+        const items = st.queue.filter(q => st.sel[q.id]);
+        this.setState({ queue: st.queue.filter(q => !st.sel[q.id]), sel:{}, focus:0 });
+        items.forEach(q => this.logAction('ph-fill ph-check-circle', '#6FD79B', vi ? 'Đã duyệt tin đăng (theo lô)' : 'Approved listing (bulk)', q.title,
+          [{ f:'status', a: vi ? 'chờ duyệt' : 'pending', b: vi ? 'đang chạy' : 'live' }]));
+        this.say(vi ? 'Đã duyệt ' + items.length + ' tin' : items.length + ' listings approved');
+      },
+      bulkReject: () => { if (this.blocked()) return; this.setState({ rejectFor:'bulk', rejectCode:'venue', rejectMsg:'', rejectAppeal:true }); },
+
+      risk: (() => {
+        if (!riskQ) return { title: T_none(vi), score:'—', band: vi ? 'Không có' : 'None', color:'#7C859C', tint:'rgba(95,104,128,.16)', bd:'#262F44', w:'0%', factors:[] };
+        const score = RISK(riskQ.id);
+        const band = score >= 60 ? { l: vi ? 'Cao' : 'High', c:'#FF9A9A', t:'rgba(224,74,74,.14)', bd:'rgba(224,74,74,.3)' }
+          : score >= 25 ? { l: vi ? 'Trung bình' : 'Medium', c:'#FFB35C', t:'rgba(255,138,61,.14)', bd:'rgba(255,138,61,.28)' }
+          : { l: vi ? 'Thấp' : 'Low', c:'#6FD79B', t:'rgba(46,158,91,.14)', bd:'#262F44' };
+        return {
+          title: riskQ.title, score:String(score), band: band.l, color: band.c, tint: band.t, bd: band.bd, w: Math.min(100, score) + '%',
+          factors: QM(riskQ.id).rf.slice().sort((a, b) => (b.bad ? b.w : -1) - (a.bad ? a.w : -1)).map(f => ({
+            label: f[g],
+            icon: f.bad ? 'ph-fill ph-warning-circle' : 'ph-fill ph-check-circle',
+            color: f.bad ? (f.w >= 20 ? '#FF9A9A' : '#FFB35C') : '#6FD79B',
+            weight: f.bad ? '+' + f.w : '0'
+          }))
+        };
+      })(),
+
+
+      adT: {
+        kicker: vi ? 'Đối tác thương hiệu' : 'Brand partners',
+        title: vi ? 'Quảng cáo & đối tác' : 'Ads & partners',
+        sub: vi ? 'Yêu cầu từ các thương hiệu ăn uống, thời trang và sức khoẻ muốn chạy quảng cáo trên FestFinder. Duyệt một yêu cầu là tạo chiến dịch từ phần cài đặt bên phải.'
+          : 'Enquiries from food, fashion and healthcare brands wanting to advertise on FestFinder. Approving one creates a campaign from the setup panel on the right.',
+        inbox: vi ? 'Yêu cầu mới' : 'New enquiries',
+        inboxEmpty: vi ? 'Không còn yêu cầu nào đang chờ.' : 'No enquiries waiting.',
+        wants: vi ? 'Vị trí họ muốn' : 'Placements requested',
+        approve: vi ? 'Tạo chiến dịch' : 'Create campaign',
+        decline: vi ? 'Từ chối' : 'Decline',
+        reply: vi ? 'Trả lời' : 'Reply',
+        live: vi ? 'Chiến dịch đang chạy' : 'Live campaigns',
+        colBrand: vi ? 'Thương hiệu' : 'Brand', colPlace: vi ? 'Vị trí' : 'Placement',
+        colImp: vi ? 'Hiển thị' : 'Impressions', colCtr: 'CTR', colSpend: vi ? 'Đã tiêu' : 'Spend',
+        colPace: vi ? 'Tiến độ' : 'Pacing',
+        setup: vi ? 'Cài đặt chiến dịch' : 'Campaign setup',
+        setupFor: vi ? 'Cho' : 'For',
+        places: vi ? 'Vị trí quảng cáo — giá mỗi 1.000 lượt hiển thị' : 'Placements — rate per 1,000 impressions',
+        rateHint: vi ? 'Sửa giá CPM cho vị trí này' : 'Edit the CPM rate for this placement',
+        genres: vi ? 'Thể loại nhắm tới' : 'Target genres',
+        areas: vi ? 'Khu vực' : 'Districts',
+        cpm: vi ? 'Giá CPM' : 'CPM rate',
+        cap: vi ? 'Giới hạn ngày' : 'Daily cap',
+        capUnit: vi ? 'triệu₫ / ngày' : 'million₫ / day',
+        preview: vi ? 'Xem trước thẻ feed' : 'Feed card preview',
+        rules: vi ? 'Luật quảng cáo' : 'Ad rules',
+        rulesBody: vi ? 'Mọi quảng cáo phải gắn nhãn Được tài trợ, không dùng dữ liệu cá nhân, và không nhắm theo sự kiện người dùng đã lưu. Quảng cáo rượu bia không hiện cho tài khoản dưới 18 tuổi.'
+          : 'Every ad carries a Sponsored label, uses no personal data, and never targets a user\u2019s saved events. Alcohol ads are withheld from accounts under 18.',
+        paused: vi ? 'Tạm dừng' : 'Paused', running: vi ? 'Đang chạy' : 'Running',
+        sponsored: vi ? 'Được tài trợ' : 'Sponsored'
+      },
+      inquiries: st.inquiries.map(q => {
+        const on = st.adsSel === q.id;
+        const names = { feed: vi ? 'Thẻ feed' : 'Feed card', banner: vi ? 'Banner' : 'Banner', live: vi ? 'Trong sự kiện' : 'In-event' };
+        return {
+          brand:q.brand, logo:q.logo, email:q.email, budget:q.budget[g],
+          art: AD_ART[q.cat], cat:q.cat,
+          age: vi ? q.age + ' trước' : q.age + ' ago',
+          msg: q.msg[g],
+          wants: q.want.map(w => ({ label: names[w] })),
+          bd: on ? '#2AC4E8' : '#262F44',
+          bg: on ? 'rgba(42,196,232,.06)' : 'rgba(18,24,38,.62)',
+          pick: () => this.setState({ adsSel:q.id }),
+          approve: () => {
+            this.setState({
+              inquiries: st.inquiries.filter(x => x.id !== q.id),
+              campaigns: [{ id:'c' + Date.now(), brand:q.brand, cat:q.cat, logo:q.logo, place:q.want[0], on:true, imp:0, clicks:0, spend:0, pace:0 }].concat(st.campaigns)
+            });
+            this.logAction('ph-fill ph-megaphone', '#6FD79B', vi ? 'Đã tạo chiến dịch quảng cáo' : 'Created ad campaign', q.brand);
+            this.say(vi ? 'Đã tạo chiến dịch · ' + q.brand : 'Campaign created · ' + q.brand);
+          },
+          decline: () => {
+            this.setState({ inquiries: st.inquiries.filter(x => x.id !== q.id) });
+            this.logAction('ph-fill ph-x-circle', '#FF9A9A', vi ? 'Đã từ chối đối tác quảng cáo' : 'Declined ad partner', q.brand);
+            this.say(vi ? 'Đã từ chối ' + q.brand : q.brand + ' declined');
+          },
+          reply: () => this.say(vi ? 'Đang mở thư tới ' + q.email : 'Opening a reply to ' + q.email)
+        };
+      }),
+      inqEmpty: st.inquiries.length === 0,
+      campaigns: st.campaigns.map(c => {
+        const names = { feed: vi ? 'Thẻ feed' : 'Feed card', banner: vi ? 'Banner Khám phá' : 'Explore banner', live: vi ? 'Trong sự kiện' : 'In-event' };
+        const ctr = c.imp ? NUM((c.clicks / c.imp) * 100, vi, 2) + '%' : '—';
+        return {
+          brand:c.brand, logo:c.logo, art: AD_ART[c.cat],
+          place: names[c.place] || c.place,
+          imp: c.imp ? c.imp.toLocaleString(vi ? 'vi-VN' : 'en-US') : '—',
+          ctr: ctr, spend: VND(c.spend, vi),
+          paceW: c.pace + '%',
+          paceLabel: c.on ? c.pace + '%' : (vi ? 'Dừng' : 'Paused'),
+          paceFill: c.on ? (c.pace > 85 ? '#FFB35C' : '#2AC4E8') : '#5F6880',
+          brandFg: c.on ? '#F3F6FC' : '#8891A8',
+          fg: c.on ? '#C3CBDC' : '#8891A8',
+          ctrFg: c.on ? '#7FE0F5' : '#8891A8',
+          on: c.on,
+          swBg: c.on ? '#2E9E5B' : '#33405C',
+          swJustify: c.on ? 'flex-end' : 'flex-start',
+          toggle: () => {
+            this.setState({ campaigns: st.campaigns.map(x => x.id === c.id ? Object.assign({}, x, { on: !x.on }) : x) });
+            this.logAction(c.on ? 'ph-fill ph-pause-circle' : 'ph-fill ph-play-circle', c.on ? '#FFB35C' : '#6FD79B',
+              c.on ? (vi ? 'Đã tạm dừng chiến dịch' : 'Paused campaign') : (vi ? 'Đã chạy lại chiến dịch' : 'Resumed campaign'), c.brand);
+            this.say(c.on ? (vi ? 'Đã tạm dừng ' + c.brand : c.brand + ' paused') : (vi ? 'Đã chạy lại ' + c.brand : c.brand + ' resumed'));
+          }
+        };
+      }),
+      setupFor: (() => {
+        const q = st.inquiries.filter(x => x.id === st.adsSel)[0] || st.inquiries[0];
+        return q ? { brand:q.brand, logo:q.logo, art: AD_ART[q.cat], cat:q.cat } : { brand: vi ? 'Chiến dịch mới' : 'New campaign', logo:'—', art:'#33405C', cat:'' };
+      })(),
+      setupPlaces: [
+        { k:'feed', label: vi ? 'Thẻ trong feed' : 'Feed card' },
+        { k:'banner', label: vi ? 'Banner Khám phá' : 'Explore banner' },
+        { k:'live', label: vi ? 'Trong sự kiện' : 'In-event' }
+      ].map(p => {
+        const on = !!st.setup.places[p.k];
+        const rates = st.setup.rates || RATES;
+        const rate = rates[p.k] || 0;
+        return { label:p.label,
+          icon: on ? 'ph-fill ph-check-square' : 'ph-bold ph-square',
+          color: on ? '#2AC4E8' : '#7C859C',
+          fg: on ? '#F3F6FC' : '#C3CBDC',
+          rate: rate ? rate.toLocaleString('vi-VN') : '',
+          rateFg: on ? '#F3F6FC' : '#8891A8',
+          setRate: (e) => {
+            const v = Math.min(9999000, parseInt(String(e.target.value).replace(/\D/g, ''), 10) || 0);
+            const x = Object.assign({}, rates); x[p.k] = v;
+            this.setState({ setup: Object.assign({}, st.setup, { rates:x }) });
+          },
+          toggle: () => { const x = Object.assign({}, st.setup.places); x[p.k] = !on; this.setState({ setup: Object.assign({}, st.setup, { places:x }) }); } };
+      }),
+      setupGenres: ['EDM','Festival','Hip-Hop','Indie','Food'].map(gn => {
+        const on = !!st.setup.genres[gn];
+        return { label:gn,
+          bg: on ? 'rgba(42,196,232,.14)' : 'rgba(10,14,26,.6)', bd: on ? '#2AC4E8' : '#262F44', fg: on ? '#7FE0F5' : '#C3CBDC',
+          toggle: () => { const x = Object.assign({}, st.setup.genres); x[gn] = !on; this.setState({ setup: Object.assign({}, st.setup, { genres:x }) }); } };
+      }),
+      setupAreas: ['Quận 1','Quận 7','Thủ Đức','Quận 11'].map(ar => {
+        const on = !!st.setup.areas[ar];
+        return { label:ar,
+          bg: on ? 'rgba(140,107,255,.14)' : 'rgba(10,14,26,.6)', bd: on ? '#8C6BFF' : '#262F44', fg: on ? '#C9BCFF' : '#C3CBDC',
+          toggle: () => { const x = Object.assign({}, st.setup.areas); x[ar] = !on; this.setState({ setup: Object.assign({}, st.setup, { areas:x }) }); } };
+      }),
+      cpmValue: st.setup.cpm.toLocaleString('vi-VN') + '₫',
+      capValue: String(st.setup.cap),
+      cpmDown: () => this.setState({ setup: Object.assign({}, st.setup, { cpm: Math.max(60, st.setup.cpm - 20) }) }),
+      cpmUp: () => this.setState({ setup: Object.assign({}, st.setup, { cpm: Math.min(600, st.setup.cpm + 20) }) }),
+      capDown: () => this.setState({ setup: Object.assign({}, st.setup, { cap: Math.max(1, st.setup.cap - 1) }) }),
+      capUp: () => this.setState({ setup: Object.assign({}, st.setup, { cap: Math.min(60, st.setup.cap + 1) }) }),
+      health: [
+        { k:'queue', label: vi ? 'Chờ duyệt' : 'In queue', value:String(pending), unit: vi ? 'tin' : 'listings', note: vi ? 'Cũ nhất: 3 giờ trước' : 'Oldest waiting: 3 hours', icon:'ph-bold ph-stack', color:'#FFB35C' },
+        { k:'approved', label: vi ? 'Đã duyệt hôm nay' : 'Approved today', value:'23', unit:'', note: vi ? 'Trung bình 41 phút mỗi tin' : 'Median 41 minutes to decision', icon:'ph-bold ph-check-circle', color:'#6FD79B' },
+        { k:'flagged', label: vi ? 'Bị gắn cờ' : 'Flagged', value:String(flagged), unit: vi ? 'tin' : 'listings', note: vi ? 'Cần người xem trực tiếp' : 'Need a human decision', icon:'ph-bold ph-warning', color:'#FF9A9A' },
+        { k:'reports', label: vi ? 'Báo cáo mở' : 'Open reports', value:String(st.reports.length), unit:'', note: vi ? '25 người dùng liên quan' : 'From 25 separate users', icon:'ph-bold ph-flag', color:'#8C6BFF' }
+      ].map(h => Object.assign({}, h, { open: () => this.setState({ hDrill: h.k }) })),
+
+      drillOpen: !!st.hDrill,
+      closeDrill: () => this.setState({ hDrill:null }),
+      drill: (() => {
+        const d = {
+          queue: { kicker: vi ? 'Chờ duyệt' : 'In queue', title: vi ? 'tin đang chờ' : 'listings waiting', value:String(pending),
+            icon:'ph-fill ph-stack', color:'#FFB35C', tint:'rgba(255,179,92,.14)',
+            sub: vi ? 'Xếp theo thời gian chờ. Mục tiêu nội bộ là quyết định trong 4 giờ làm việc.' : 'Ordered by wait. The internal target is a decision inside four working hours.',
+            cta: vi ? 'Mở hàng chờ' : 'Open the queue', tab:'queue', filter:'all' },
+          approved: { kicker: vi ? 'Đã duyệt hôm nay' : 'Approved today', title: vi ? 'tin đã lên sóng' : 'listings live', value:'23',
+            icon:'ph-fill ph-check-circle', color:'#6FD79B', tint:'rgba(111,215,155,.14)',
+            sub: vi ? 'Năm quyết định gần nhất, kèm thời gian từ lúc gửi đến lúc duyệt.' : 'The five most recent decisions, with time from submission to approval.',
+            cta: vi ? 'Xem hoạt động' : 'View the audit log', tab:'audit', filter:'all' },
+          flagged: { kicker: vi ? 'Bị gắn cờ' : 'Flagged', title: vi ? 'tin cần người xem' : 'need a human', value:String(flagged),
+            icon:'ph-fill ph-warning', color:'#FF9A9A', tint:'rgba(255,154,154,.14)',
+            sub: vi ? 'Bộ lọc tự động giữ lại những tin này. Số bên phải là tín hiệu không đạt.' : 'Automated checks held these back. The figure on the right is how many signals failed.',
+            cta: vi ? 'Xem tin gắn cờ' : 'Review flagged listings', tab:'queue', filter:'flagged' },
+          reports: { kicker: vi ? 'Báo cáo mở' : 'Open reports', title: vi ? 'chủ đề chưa xử lý' : 'threads open', value:String(st.reports.length),
+            icon:'ph-fill ph-flag', color:'#8C6BFF', tint:'rgba(140,107,255,.14)',
+            sub: vi ? 'Nhóm theo tin đăng. Số bên phải là số người dùng đã báo cáo.' : 'Grouped by listing. The figure on the right is how many users reported it.',
+            cta: vi ? 'Mở báo cáo' : 'Open reports', tab:'reports', filter:'all' }
+        }[st.hDrill];
+        if (!d) return { kicker:'', title:'', value:'', icon:'', color:'#2AC4E8', tint:'transparent', sub:'', cta:'' };
+        return Object.assign({}, d, { go: () => this.setState({ hDrill:null, tab:d.tab, qFilter:d.filter }) });
+      })(),
+      drillRows: (() => {
+        const k = st.hDrill;
+        if (k === 'queue' || k === 'flagged') {
+          const waits = { q1:'2h 40m', q2:'3h 05m', q3:'1h 12m', q4:'48m' };
+          return st.queue.filter(q => k === 'queue' ? true : q.flagged).map(q => ({
+            title:q.title, art:q.art,
+            meta: q.org + ' · ' + q.when,
+            stat: k === 'flagged' ? String(q.signals.filter(s => !s.ok).length) : (waits[q.id] || '—'),
+            statFg: k === 'flagged' ? '#FF9A9A' : '#FFB35C',
+            statLabel: k === 'flagged' ? (vi ? 'tín hiệu' : 'signals') : (vi ? 'đang chờ' : 'waiting')
+          }));
+        }
+        if (k === 'approved') {
+          return [
+            { t:'Ravolution After Hours', o:'Ravolution Entertainment', m:'14', a:ARTS[0] },
+            { t:'Sunset Rooftop · Bình Thạnh', o:'Neon District', m:'26', a:ARTS[1] },
+            { t:'Indie Night — The Yard', o:'Bside Cafe', m:'41', a:ARTS[3] },
+            { t:'Street Food Fest Quận 7', o:'Saigon Eats Co.', m:'58', a:ARTS[2] },
+            { t:'Hip-Hop Cypher Vol. 8', o:'Concrete Crew', m:'72', a:ARTS[1] }
+          ].map(x => ({ title:x.t, art:x.a, meta:x.o, stat:x.m + (vi ? ' phút' : ' min'), statFg:'#6FD79B', statLabel: vi ? 'đến quyết định' : 'to decision' }));
+        }
+        if (k === 'reports') {
+          const cats = { refund:{en:'Refund',vi:'Hoàn tiền'}, wrong:{en:'Wrong details',vi:'Sai thông tin'}, price:{en:'Price mismatch',vi:'Lệch giá'}, safety:{en:'Safety',vi:'An toàn'} };
+          const tints = { refund:ARTS[2], wrong:ARTS[1], price:ARTS[3], safety:ARTS[0] };
+          return st.reports.map(r => ({
+            title:r.subject, art:tints[r.cat],
+            meta: cats[r.cat][g] + ' · ' + r.age,
+            stat: String(r.count), statFg:'#8C6BFF', statLabel: vi ? 'người báo' : 'reporters'
+          }));
+        }
+        return [];
+      })(),
+
+      qFilters: [
+        { k:'all', label: vi ? 'Tất cả' : 'All', icon:'ph-bold ph-tray', n: st.queue.length },
+        { k:'breach', label: vi ? 'Quá hạn' : 'Past SLA', icon:'ph-bold ph-timer', n: st.queue.filter(q => this.slaOf(q.id) === 'breach').length },
+        { k:'flagged', label: vi ? 'Gắn cờ' : 'Flagged', icon:'ph-bold ph-warning', n: flagged },
+        { k:'new', label: vi ? 'BTC mới' : 'New organizers', icon:'ph-bold ph-user-plus', n: st.queue.filter(q => QM(q.id).newOrg).length },
+        { k:'clean', label: vi ? 'Sạch' : 'Clean', icon:'ph-bold ph-check-circle', n: st.queue.filter(q => !q.flagged).length }
+      ].map(f => {
+        const on = st.qFilter === f.k;
+        return { label:f.label, icon:f.icon, count:String(f.n),
+          bg: on ? 'rgba(42,196,232,.14)' : 'transparent', bd: on ? '#2AC4E8' : '#262F44', fg: on ? '#7FE0F5' : '#8891A8',
+          cBg: on ? '#2AC4E8' : '#1A2233', cFg: on ? '#06080D' : '#8891A8',
+          pick: () => this.setState({ qFilter:f.k, focus:0 }) };
+      }),
+      sortLabel: st.qSort === 'age' ? T_sort(vi,'age') : st.qSort === 'risk' ? T_sort(vi,'risk') : T_sort(vi,'new'),
+      cycleSort: () => this.setState({ qSort: st.qSort === 'age' ? 'risk' : st.qSort === 'risk' ? 'new' : 'age', focus:0 }),
+      allIcon: vis.length && vis.every(q => st.sel[q.id]) ? 'ph-fill ph-check-square' : selIds.length ? 'ph-fill ph-minus-square' : 'ph-bold ph-square',
+      allColor: selIds.length ? '#2AC4E8' : '#7C859C',
+      allFg: selIds.length ? '#F3F6FC' : '#C3CBDC',
+      allLabel: vis.length && vis.every(q => st.sel[q.id]) ? (vi ? 'Bỏ chọn' : 'Deselect all') : (vi ? 'Chọn tất cả (' + vis.length + ')' : 'Select all (' + vis.length + ')'),
+      toggleAll: () => this.toggleAllSel(),
+      ageBuckets: (() => {
+        const b = [
+          { max:1, color:'#2E9E5B', en:'under 1 hour', vi:'dưới 1 giờ' },
+          { max:2, color:'#2AC4E8', en:'1 to 2 hours', vi:'1 đến 2 giờ' },
+          { max:SLA_H, color:'#FFB35C', en:'2 to 4 hours', vi:'2 đến 4 giờ' },
+          { max:999, color:'#E04A4A', en:'past the 4 hour promise', vi:'quá mốc 4 giờ' }
+        ];
+        const total = st.queue.length || 1;
+        let lo = 0;
+        return b.map(x => {
+          const n = st.queue.filter(q => { const h = QM(q.id).hrs; return h >= lo && h < x.max; }).length;
+          lo = x.max;
+          return { w: Math.max(2, Math.round((n / total) * 100)) + '%', color: n ? x.color : '#1A2233', hint: n + ' · ' + x[g] };
+        });
+      })(),
+      oldestLabel: (() => {
+        const h = st.queue.reduce((m, q) => Math.max(m, QM(q.id).hrs), 0);
+        if (!h) return '—';
+        const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+        return (vi ? 'Cũ nhất ' : 'Oldest ') + hh + 'h ' + String(mm).padStart(2,'0') + 'm';
+      })(),
+      oldestFg: st.queue.some(q => QM(q.id).hrs >= SLA_H) ? '#FF9A9A' : '#C3CBDC',
+      qEmpty: vis.length === 0,
+      queue: vis.map((q, i) => {
+        const on = !!st.sel[q.id];
+        const focused = focusQ && focusQ.id === q.id;
+        const sla = this.slaOf(q.id), h = QM(q.id).hrs;
+        const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+        const slaMap = {
+          ok: { label: (vi ? 'Chờ ' : 'waiting ') + hh + 'h ' + String(mm).padStart(2,'0') + 'm', fg:'#6FD79B', bg:'rgba(46,158,91,.12)', bd:'rgba(46,158,91,.34)', icon:'ph-fill ph-clock' },
+          soon: { label: (vi ? 'Sắp quá hạn · ' : 'due soon · ') + hh + 'h ' + String(mm).padStart(2,'0') + 'm', fg:'#FFB35C', bg:'rgba(255,138,61,.13)', bd:'rgba(255,138,61,.4)', icon:'ph-fill ph-clock-countdown' },
+          breach: { label: (vi ? 'Quá hạn · ' : 'past SLA · ') + hh + 'h ' + String(mm).padStart(2,'0') + 'm', fg:'#FF9A9A', bg:'rgba(224,74,74,.14)', bd:'rgba(224,74,74,.45)', icon:'ph-fill ph-timer' }
+        }[sla];
+        const score = RISK(q.id);
+        return {
+          title:q.title, art:q.art, flagged:q.flagged,
+          flagLabel: q.flag ? q.flag[g] : '',
+          meta: q.org + ' · ' + q.when,
+          bg: on ? 'rgba(42,196,232,.06)' : q.flagged ? 'rgba(255,138,61,.05)' : 'rgba(18,24,38,.62)',
+          bd: focused ? '#2AC4E8' : on ? 'rgba(42,196,232,.5)' : q.flagged ? 'rgba(255,138,61,.32)' : '#262F44',
+          ring: focused ? '0 0 0 3px rgba(42,196,232,.14)' : 'none',
+          selIcon: on ? 'ph-fill ph-check-square' : 'ph-bold ph-square',
+          selColor: on ? '#2AC4E8' : '#4A5877',
+          riskScore: String(score),
+          riskFg: score >= 60 ? '#FF9A9A' : score >= 25 ? '#FFB35C' : '#6FD79B',
+          slaLabel: slaMap.label, slaFg: slaMap.fg, slaBg: slaMap.bg, slaBd: slaMap.bd, slaIcon: slaMap.icon,
+          focusIt: () => this.setState({ focus:i }),
+          toggleSel: () => this.toggleSel(q.id),
+          signals: q.signals.map(s => ({
+            label: s[g],
+            icon: s.ok ? 'ph-fill ph-check-circle' : 'ph-fill ph-x-circle',
+            color: s.ok ? '#6FD79B' : '#FF9A9A'
+          })),
+          approve: () => this.approveOne(q),
+          reject: () => this.openReject(q.id),
+          ask: () => this.openChat(q),
+          askLabel: (st.threads[q.id] || []).length ? openThread : askInfo
+        };
+      }),
+      orgStats: st.orgStats.map((s, i) => {
+        const o = st.orgs.find(x => x.id === s.id) || { name:'—', initials:'—', state:'pending' };
+        return {
+          name:o.name, initials:o.initials, art: ARTS[i % ARTS.length],
+          live:String(s.live), views:CNT(s.views, vi), ctr:NUM(s.ctr, vi) + '%', gmv:VND(s.gmv, vi), reports:String(s.reports),
+          ctrFg: s.good ? '#6FD79B' : '#C3CBDC',
+          repFg: s.reports > 5 ? '#FF9A9A' : s.reports > 0 ? '#FFB35C' : '#7C859C',
+          verified: o.state === 'verified'
+        };
+      }),
+      userStats: [
+        { label: vi ? 'Tài khoản' : 'Accounts', value: vi ? '184,2k' : '184.2k', note: vi ? '+3,1k trong 7 ngày' : '+3.1k in the last 7 days', icon:'ph-bold ph-users', color:'#2AC4E8' },
+        { label: vi ? 'Hoạt động / tuần' : 'Weekly active', value: vi ? '41,6k' : '41.6k', note: vi ? '22,6% tổng tài khoản' : '22.6% of the base', icon:'ph-bold ph-pulse', color:'#8C6BFF' },
+        { label: vi ? 'Lưu / người' : 'Saves per user', value: vi ? '6,2' : '6.2', note: vi ? 'Trung bình người đang hoạt động' : 'Average active user', icon:'ph-bold ph-heart', color:'#FF9A9A' },
+        { label: vi ? 'Hype / phiên' : 'Hype per session', value: vi ? '3,4' : '3.4', note: vi ? 'Chạm nút Hype' : 'Hype taps', icon:'ph-bold ph-fire', color:'#FFB35C' },
+        { label: vi ? 'Quay lại 7 ngày' : '7-day return', value:'27%', note: vi ? 'Mở lại app trong tuần' : 'Reopen within the week', icon:'ph-bold ph-arrow-u-up-left', color:'#6FD79B' }
+      ],
+      cityRows: [
+        { label:'TP.HCM', pct:'61%', w:'61%' },
+        { label:'Hà Nội', pct:'22%', w:'22%' },
+        { label:'Đà Nẵng', pct:'9%', w:'9%' },
+        { label: vi ? 'Khác' : 'Elsewhere', pct:'8%', w:'8%' }
+      ],
+      genreRows: [
+        { label:'EDM', pct:'38%', w:'38%' },
+        { label: vi ? 'Nhạc sống' : 'Live band', pct:'21%', w:'21%' },
+        { label:'Acoustic', pct:'14%', w:'14%' },
+        { label: vi ? 'Ăn uống & văn hoá' : 'Food & culture', pct:'27%', w:'27%' }
+      ],
+      accounts: st.accounts.map(a => ({
+        h:a.h, city:a.city, joined:a.joined,
+        saved:String(a.saved), hyped:String(a.hyped), tickets:String(a.tickets),
+        tFg: a.tickets > 0 ? '#6FD79B' : '#7C859C'
+      })),
+
+      checks: [
+        { icon:'ph-fill ph-check-circle', color:'#6FD79B', label: vi ? 'Địa điểm khớp dữ liệu' : 'Venue matches our records', detail: vi ? '3/4 hồ sơ có định vị bản đồ hợp lệ' : '3 of 4 submissions resolve to a map pin' },
+        { icon:'ph-fill ph-warning-circle', color:'#FFB35C', label: vi ? 'Link vé trả về 404' : 'Ticket link returns 404', detail:'EDM Beach Bus — Vũng Tàu' },
+        { icon:'ph-fill ph-check-circle', color:'#6FD79B', label: vi ? 'Ảnh không trùng nguồn khác' : 'No duplicate images found', detail: vi ? 'So với 12.400 ảnh đã đăng' : 'Compared against 12,400 published images' },
+        { icon:'ph-fill ph-warning-circle', color:'#FFB35C', label: vi ? 'Địa điểm chưa xác minh' : 'Venue not yet verified', detail:'Warehouse 12 · Quận 4' },
+        { icon:'ph-fill ph-check-circle', color:'#6FD79B', label: vi ? 'Không trùng sự kiện đã có' : 'No clashing duplicate listing', detail: vi ? 'Đối chiếu tên + ngày + địa điểm' : 'Matched on name, date and venue' }
+      ],
+
+      orgs: st.orgs.map((o, i) => {
+        const s = o.state;
+        const stMap = {
+          verified: { label: vi ? 'Đã xác minh' : 'Verified', fg:'#6FD79B', bg:'rgba(46,158,91,.14)', bd:'rgba(46,158,91,.4)' },
+          pending:  { label: vi ? 'Chờ xác minh' : 'Pending', fg:'#FFB35C', bg:'rgba(255,138,61,.14)', bd:'rgba(255,138,61,.4)' },
+          flagged:  { label: vi ? 'Cần xem lại' : 'Needs review', fg:'#FF9A9A', bg:'rgba(224,74,74,.14)', bd:'rgba(224,74,74,.4)' }
+        }[s];
+        const doc = (ok, en, viL) => ({ label: vi ? viL : en, icon: ok ? 'ph-fill ph-check-circle' : 'ph-fill ph-x-circle', color: ok ? '#6FD79B' : '#FF9A9A' });
+        return {
+          name:o.name, initials:o.initials,
+          avBg: ARTS[i % ARTS.length],
+          status: stMap.label, stFg: stMap.fg, stBg: stMap.bg, stBd: stMap.bd,
+          bd: s === 'flagged' ? 'rgba(224,74,74,.3)' : '#262F44',
+          meta: (vi ? o.events + ' sự kiện · Tham gia ' : o.events + ' events · Joined ') + o.since,
+          docs: [
+            doc(o.id_, 'ID document', 'Giấy tờ tuỳ thân'),
+            doc(o.tax, 'Tax code', 'Mã số thuế'),
+            doc(o.bank, 'Bank account', 'Tài khoản ngân hàng')
+          ],
+          cta: s === 'verified' ? (vi ? 'Thu hồi' : 'Revoke') : (vi ? 'Xác minh' : 'Verify'),
+          ctaBg: s === 'verified' ? 'transparent' : '#2AC4E8',
+          ctaFg: s === 'verified' ? '#8891A8' : '#06080D',
+          ctaBd: s === 'verified' ? '#262F44' : '#2AC4E8',
+          verify: () => {
+            const next = s === 'verified' ? 'pending' : 'verified';
+            this.setState({ orgs: st.orgs.map(x => x.id === o.id ? Object.assign({}, x, { state: next }) : x) });
+            this.logAction(next === 'verified' ? 'ph-fill ph-seal-check' : 'ph-fill ph-seal-warning', next === 'verified' ? '#6FD79B' : '#FFB35C',
+              next === 'verified' ? (vi ? 'Đã xác minh nhà tổ chức' : 'Verified organizer') : (vi ? 'Đã thu hồi xác minh' : 'Revoked verification'), o.name);
+            this.say(next === 'verified' ? (vi ? 'Đã xác minh ' + o.name : o.name + ' verified') : (vi ? 'Đã thu hồi ' + o.name : o.name + ' revoked'));
+          },
+          open: () => this.say(vi ? 'Đang mở giấy tờ của ' + o.name : 'Opening documents for ' + o.name)
+        };
+      }),
+
+      reports: st.reports.map(r => {
+        const c = cats[r.cat];
+        return {
+          category: c.label, icon: c.icon, catFg: c.fg, catBg: c.bg, catBd: c.bd,
+          bd: r.count > 10 ? 'rgba(224,74,74,.3)' : '#262F44',
+          count: vi ? r.count + ' người báo cáo' : r.count + ' reports',
+          age: vi ? r.age + ' trước' : r.age + ' ago',
+          subject: r.subject, quote: r.quote[g],
+          takeDown: () => {
+            this.setState({ reports: st.reports.filter(x => x.id !== r.id) });
+            this.logAction('ph-fill ph-prohibit', '#FF9A9A', vi ? 'Đã hạ tin đăng' : 'Took listing down', r.subject);
+            this.say(vi ? 'Đã hạ · ' + r.subject : 'Taken down · ' + r.subject);
+          },
+          warn: () => {
+            this.setState({ reports: st.reports.filter(x => x.id !== r.id) });
+            this.logAction('ph-fill ph-warning', '#FFB35C', vi ? 'Đã cảnh báo nhà tổ chức' : 'Warned organizer', r.subject);
+            this.say(vi ? 'Đã gửi cảnh báo' : 'Warning sent');
+          },
+          dismiss: () => {
+            this.setState({ reports: st.reports.filter(x => x.id !== r.id) });
+            this.logAction('ph-fill ph-x-circle', '#7C859C', vi ? 'Đã bỏ qua báo cáo' : 'Dismissed report', r.subject);
+            this.say(vi ? 'Đã bỏ qua' : 'Dismissed');
+          }
+        };
+      }),
+      reportStats: [
+        { label: vi ? 'Đòi hoàn tiền' : 'Refund claims', value:'41', barW:'100%', color:'#FF9A9A' },
+        { label: vi ? 'Sai thông tin' : 'Wrong details', value:'28', barW:'68%', color:'#FFB35C' },
+        { label: vi ? 'Giá không đúng' : 'Price mismatch', value:'12', barW:'29%', color:'#8C6BFF' },
+        { label: vi ? 'An toàn' : 'Safety', value:'4', barW:'10%', color:'#2AC4E8' }
+      ],
+
+      shelves: st.shelves.map((s, i) => {
+        const sc = (st.sched[s.id] || { from:'', to:'' });
+        const kf = DKEY(sc.from), kt = DKEY(sc.to);
+        const phase = !s.on ? 'off'
+          : (kf === null && kt === null) ? 'always'
+          : (kf !== null && TODAY < kf) ? 'scheduled'
+          : (kt !== null && TODAY > kt) ? 'ended' : 'live';
+        const pm = {
+          off: { label: vi ? 'Đã tắt' : 'Off', fg:'#8891A8', bg:'rgba(95,104,128,.16)', icon:'ph-fill ph-eye-slash' },
+          always: { label: vi ? 'Đang chạy' : 'Live now', fg:'#6FD79B', bg:'rgba(46,158,91,.16)', icon:'ph-fill ph-broadcast' },
+          live: { label: (vi ? 'Đang chạy · hết ' : 'Live · ends ') + sc.to, fg:'#6FD79B', bg:'rgba(46,158,91,.16)', icon:'ph-fill ph-broadcast' },
+          scheduled: { label: (vi ? 'Lên lịch ' : 'Scheduled ') + sc.from, fg:'#7FE0F5', bg:'rgba(42,196,232,.14)', icon:'ph-fill ph-calendar-dots' },
+          ended: { label: vi ? 'Đã kết thúc' : 'Ended', fg:'#FFB35C', bg:'rgba(255,138,61,.14)', icon:'ph-fill ph-calendar-x' }
+        }[phase];
+        const setSched = (key) => (e) => {
+          const v = String(e.target.value).slice(0, 5);
+          const next = Object.assign({}, st.sched);
+          next[s.id] = Object.assign({}, sc); next[s.id][key] = v;
+          this.setState({ sched: next });
+        };
+        return {
+          name: shelfNames[i].name, note: shelfNames[i].note,
+          swBg: s.on ? '#2E9E5B' : '#33405C',
+          swJustify: s.on ? 'flex-end' : 'flex-start',
+          from: sc.from, to: sc.to,
+          setFrom: setSched('from'), setTo: setSched('to'),
+          fromPh: vi ? 'dd/mm' : 'dd/mm', toPh: vi ? 'dd/mm' : 'dd/mm',
+          fromTitle: vi ? 'Bắt đầu hiển thị (ngày/tháng)' : 'Starts showing (day/month)',
+          toTitle: vi ? 'Ngừng hiển thị (ngày/tháng)' : 'Stops showing (day/month)',
+          schLabel: pm.label, schFg: pm.fg, schBg: pm.bg, schIcon: pm.icon,
+          preview: () => this.setState({ shelfPrev: s.id }),
+          toggle: () => {
+            this.setState({ shelves: st.shelves.map(x => x.id === s.id ? Object.assign({}, x, { on: !x.on }) : x) });
+            this.logAction(s.on ? 'ph-fill ph-eye-slash' : 'ph-fill ph-eye', s.on ? '#7C859C' : '#6FD79B',
+              s.on ? (vi ? 'Đã ẩn mục nổi bật' : 'Hid featured shelf') : (vi ? 'Đã bật mục nổi bật' : 'Published featured shelf'), shelfNames[i].name,
+              [{ f:'visible', a: s.on ? 'true' : 'false', b: s.on ? 'false' : 'true' },
+               { f:'window', a: sc.from && sc.to ? sc.from + ' → ' + sc.to : '—', b: sc.from && sc.to ? sc.from + ' → ' + sc.to : '—' }]);
+            this.say(s.on ? (vi ? 'Đã ẩn ' + shelfNames[i].name : shelfNames[i].name + ' hidden') : (vi ? 'Đã bật ' + shelfNames[i].name : shelfNames[i].name + ' is live'));
+          },
+          items: s.items.map(it => ({
+            title: it.t, meta: it.m, art: it.a,
+            remove: () => {
+              this.setState({ shelves: st.shelves.map(x => x.id === s.id ? Object.assign({}, x, { items: x.items.filter(y => y.t !== it.t) }) : x) });
+              this.logAction('ph-fill ph-minus-circle', '#FFB35C', vi ? 'Đã bỏ khỏi mục nổi bật' : 'Removed from shelf', it.t,
+                [{ f:'shelf_items', a:String(s.items.length), b:String(s.items.length - 1) }]);
+              this.say(vi ? 'Đã bỏ ' + it.t : it.t + ' removed');
+            }
+          }))
+        };
+      }),
+
+      shelfPreviewOpen: !!st.shelfPrev,
+      closeShelfPreview: () => this.setState({ shelfPrev:null }),
+      shelfPreview: (() => {
+        const i = st.shelves.map(s => s.id).indexOf(st.shelfPrev);
+        if (i < 0) return { name:'', when:'', note:'' };
+        const s = st.shelves[i], sc = st.sched[s.id] || { from:'', to:'' };
+        return {
+          name: shelfNames[i].name,
+          when: sc.from && sc.to ? (vi ? 'Hiển thị ' + sc.from + ' → ' + sc.to : 'Shows ' + sc.from + ' → ' + sc.to) : (vi ? 'Không giới hạn thời gian' : 'No date window'),
+          note: s.on
+            ? (vi ? 'Đúng thiết kế dãy này trên app và web — vị trí ngay dưới thanh tìm kiếm ở trang Khám phá.' : 'This is the real Explore row on app and web — it sits directly under the search bar.')
+            : (vi ? 'Dãy đang tắt. Đây là hình dạng nó sẽ có khi bật.' : 'The shelf is off. This is how it would look once switched on.')
+        };
+      })(),
+      shelfPreviewItems: (() => {
+        const s = st.shelves.filter(x => x.id === st.shelfPrev)[0];
+        if (!s) return [];
+        return s.items.map((it, n) => ({ title:it.t, meta:it.m, art:it.a, tag: n === 0 ? (vi ? 'Nổi bật' : 'Featured') : (vi ? 'Được chọn' : 'Picked') }));
+      })(),
+
+      auditActors: [
+        { k:'all', label: vi ? 'Tất cả' : 'All actors', icon:'ph-bold ph-users-three' },
+        { k:'admin', label: 'FestFinder Admin', icon:'ph-bold ph-user-circle' },
+        { k:'system', label: vi ? 'Hệ thống tự động' : 'Automatic checks', icon:'ph-bold ph-cpu' }
+      ].map(f => {
+        const on = st.auditActor === f.k;
+        return { label:f.label, icon:f.icon,
+          bg: on ? 'rgba(42,196,232,.14)' : 'transparent', bd: on ? '#2AC4E8' : '#262F44', fg: on ? '#7FE0F5' : '#8891A8',
+          pick: () => this.setState({ auditActor:f.k }) };
+      }),
+      exportAudit: () => this.say(vi ? 'Đang xuất sổ hoạt động 30 ngày · CSV' : 'Exporting the last 30 days · CSV'),
+      audit: st.audit.concat([
+        { time:'14:12:04', icon:'ph-fill ph-check-circle', color:'#6FD79B', text: vi ? 'Đã duyệt tin đăng' : 'Approved listing', target:'Hozo Super Fest · Nguyễn Huệ', actor:'FestFinder Admin',
+          diff:[{ f:'status', a: vi ? 'chờ duyệt' : 'pending', b: vi ? 'đang chạy' : 'live' }, { f:'decision_time', a:'—', b:'41m' }] },
+        { time:'14:02:55', icon:'ph-fill ph-shield-warning', color:'#FFB35C', text: vi ? 'Tự động giữ lại tin đăng' : 'Auto-check held a listing', target:'Underground Techno — Warehouse 12', actor:'System',
+          diff:[{ f:'risk_score', a:'0', b:'70' }, { f:'held_by', a:'—', b:'venue_unresolved, new_account' }] },
+        { time:'13:58:41', icon:'ph-fill ph-seal-check', color:'#6FD79B', text: vi ? 'Đã xác minh nhà tổ chức' : 'Verified organizer', target:'Ravolution Entertainment', actor:'FestFinder Admin',
+          diff:[{ f:'verified', a:'false', b:'true' }, { f:'badge', a:'—', b: vi ? 'hiện trên mọi thẻ' : 'shown on all cards' }] },
+        { time:'13:40:19', icon:'ph-fill ph-prohibit', color:'#FF9A9A', text: vi ? 'Đã hạ tin đăng' : 'Took listing down', target:'Rooftop NYE Countdown', actor:'FestFinder Admin',
+          diff:[{ f:'status', a: vi ? 'đang chạy' : 'live', b: vi ? 'đã hạ' : 'removed' }, { f:'reason_code', a:'—', b:'image' }, { f:'reports_open', a:'3', b:'0' }] },
+        { time:'12:26:55', icon:'ph-fill ph-eye', color:'#6FD79B', text: vi ? 'Đã bật mục nổi bật' : 'Published featured shelf', target: vi ? 'Đang hot tuần này' : 'Trending this week', actor:'FestFinder Admin',
+          diff:[{ f:'visible', a:'false', b:'true' }, { f:'window', a:'—', b:'15/09 → 22/09' }] },
+        { time:'11:47:08', icon:'ph-fill ph-chat-circle-text', color:'#2AC4E8', text: vi ? 'Đã yêu cầu bổ sung thông tin' : 'Requested more information', target:'W12 Collective', actor:'FestFinder Admin', diff:null },
+        { time:'10:31:22', icon:'ph-fill ph-warning', color:'#FFB35C', text: vi ? 'Đã cảnh báo nhà tổ chức' : 'Warned organizer', target:'Tripside Travel', actor:'FestFinder Admin',
+          diff:[{ f:'strikes', a:'1', b:'2' }, { f:'next_step', a:'—', b: vi ? 'tạm dừng ở lần thứ 3' : 'suspension at 3' }] },
+        { time:'09:52:10', icon:'ph-fill ph-cpu', color:'#8C6BFF', text: vi ? 'Đối chiếu ảnh trùng lặp' : 'Ran duplicate-image pass', target: vi ? '12.400 ảnh đã đăng' : '12,400 published images', actor:'System',
+          diff:[{ f:'matches', a:'0', b:'1' }, { f:'flagged_listing', a:'—', b:'EDM Beach Bus — Vũng Tàu' }] },
+        { time:'09:15:47', icon:'ph-fill ph-x-circle', color:'#FF9A9A', text: vi ? 'Đã từ chối tin đăng' : 'Rejected listing', target: vi ? 'Tiệc hồ bơi · không có giấy phép' : 'Pool party · no permit on file', actor:'FestFinder Admin',
+          diff:[{ f:'status', a: vi ? 'chờ duyệt' : 'pending', b: vi ? 'từ chối' : 'rejected' }, { f:'reason_code', a:'—', b:'permit' }, { f:'appeal', a:'—', b: vi ? 'mở 7 ngày' : 'open 7 days' }] }
+      ]).filter(a => st.auditActor === 'all' ? true : st.auditActor === 'system' ? a.actor === 'System' : a.actor !== 'System')
+        .slice(0, 18).map((a, i) => {
+        const key = a.id || (a.time + '-' + i);
+        const open = !!st.auditOpen[key];
+        const has = Array.isArray(a.diff) && a.diff.length > 0;
+        return {
+          time:a.time, icon:a.icon, color:a.color, text:a.text, target:a.target,
+          actor: a.actor === 'System' ? (vi ? 'Hệ thống' : 'System') : a.actor,
+          iconBg: a.color === '#6FD79B' ? 'rgba(46,158,91,.14)' : a.color === '#FF9A9A' ? 'rgba(224,74,74,.14)' : a.color === '#FFB35C' ? 'rgba(255,138,61,.14)' : a.color === '#2AC4E8' ? 'rgba(42,196,232,.14)' : a.color === '#8C6BFF' ? 'rgba(140,107,255,.16)' : 'rgba(95,104,128,.16)',
+          open: open && has,
+          diff: has ? a.diff.map(d => ({ field:d.f, before:d.a, after:d.b })) : [],
+          hash: (vi ? 'Không sửa được · ' : 'Tamper-evident · ') + 'sha256:' + key.replace(/\D/g,'').slice(0, 10).padEnd(10, '0'),
+          cursor: has ? 'pointer' : 'default',
+          chev: has ? (open ? 'ph-bold ph-caret-up' : 'ph-bold ph-caret-down') : 'ph-bold ph-minus',
+          chevFg: has ? '#7C859C' : '#33405C',
+          toggle: () => { if (!has) return; const x = Object.assign({}, st.auditOpen); x[key] = !open; this.setState({ auditOpen:x }); }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
