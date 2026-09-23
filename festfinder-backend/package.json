@@ -2,7 +2,7 @@
   "name": "festfinder-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "API for FestFinder: public web, attendee app, organizer back office and internal admin",
+  "description": "API for FeestFinder: public web, attendee app, organizer back office and internal admin",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -13,22 +13,32 @@
     "migrate": "node --env-file-if-exists=.env src/db/cli.ts migrate",
     "seed": "node --env-file-if-exists=.env src/db/cli.ts seed",
     "db:reset": "node --env-file-if-exists=.env src/db/cli.ts reset",
-    "typecheck": "tsc --noEmit",
-    "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\""
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
+    "test:screens": "playwright test",
+    "test:screens:next": "playwright test -c playwright.next.config.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.126.0",
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@aws-sdk/client-s3": "^3.1138.0",
     "@electric-sql/pglite": "^0.5.8",
     "@fastify/cookie": "^11.1.2",
     "@fastify/cors": "^11.3.0",
-    "@fastify/multipart": "^10.1.1",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/multipart": "^10.1.2",
+    "@fastify/rate-limit": "^11.2.0",
     "fastify": "^5.12.5",
+    "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
+    "web-push": "^3.6.7",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^24.13.5",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.13.6",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
+    "@types/web-push": "^3.6.4",
     "typescript": "^7.0.2"
   }
 }

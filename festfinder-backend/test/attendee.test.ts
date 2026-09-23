@@ -85,6 +85,19 @@ describe('attendee (Web + App, signed in)', () => {
     assert.ok(wider.body.matches > alert.body.matches);
   });
 
+  it('registers a browser push subscription as a web device', async () => {
+    const key = await env.as(token).get('/push/public-key');
+    assert.equal(key.status, 200);
+    assert.equal(key.body.key, null, 'no VAPID keys in tests');
+    env.ctx.config.webPush = { publicKey: 'BTestPublicKey', privateKey: 'k', subject: 'mailto:t@example.com' };
+    assert.equal((await env.as(token).get('/push/public-key')).body.key, 'BTestPublicKey');
+    env.ctx.config.webPush = null;
+    const sub = JSON.stringify({ endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'p', auth: 'a' } });
+    assert.equal((await env.as(token).post('/me/devices', { token: sub, platform: 'web' })).status, 200);
+    const rows = await many<any>(env.ctx.db, 'select platform from devices where token = $1', [sub]);
+    assert.deepEqual(rows.map((r) => r.platform), ['web']);
+  });
+
   it('pulls a listing from the feed once two people report it', async () => {
     const other = await env.login('team@ravolution.vn', 'ravolution2026');
     const id = env.ids.event.blues;

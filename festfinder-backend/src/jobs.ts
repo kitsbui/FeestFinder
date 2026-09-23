@@ -1,5 +1,5 @@
 import type { Ctx } from './context.ts';
-import { many } from './db/index.ts';
+import { many, one } from './db/index.ts';
 import { L } from './lib/i18n.ts';
 import { vnTime } from './lib/time.ts';
 import { deliverDue } from './services/messaging.ts';
@@ -118,7 +118,14 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['checkTicketLinks', 15 * 60_000],
 ];
 
-/** In-process scheduler. Run one instance with JOBS_ENABLED=true when you scale the API horizontally. */
+/**
+ * One scheduler per job name across the whole fleet.
+ *
+ * Every instance may run with JOBS_ENABLED=true: each tick takes a Postgres advisory
+ * lock named after the job and skips the run if another instance holds it. So scaling the
+ * API out does not send an announcement twice, and losing the instance that happened to
+ * hold a lock only delays that job by one interval.
+ */
 export function startJobs(ctx: Ctx): () => void {
   const timers: NodeJS.Timeout[] = [];
   const running = new Set<string>();
@@ -127,7 +134,7 @@ export function startJobs(ctx: Ctx): () => void {
       if (running.has(name)) return;
       running.add(name);
       try {
-        await jobs[name](ctx);
+        await withJobLock(ctx, name, () => jobs[name](ctx));
       } catch (e) {
         ctx.log(`job ${name} failed: ${(e as Error).stack ?? e}`);
       } finally {
@@ -136,6 +143,21 @@ export function startJobs(ctx: Ctx): () => void {
     }, every));
   }
   return () => timers.forEach(clearInterval);
+}
+
+/**
+ * Runs `fn` only if no other instance is running this job. The lock lives for the length
+ * of the transaction, so a crash releases it with the connection.
+ */
+export async function withJobLock(ctx: Ctx, name: string, fn: () => Promise<unknown>): Promise<unknown> {
+  // PGlite is in-process, so there is only ever one instance — and it has one connection,
+  // which a held transaction would starve the job of.
+  if (ctx.db.kind === 'pglite') return fn();
+  return ctx.db.tx(async (q) => {
+    const got = await one<{ locked: boolean }>(q, 'select pg_try_advisory_xact_lock(hashtext($1)) as locked', [`ff:job:${name}`]);
+    if (!got?.locked) return 'locked';
+    return fn();
+  });
 }
 
 export async function runAllJobsOnce(ctx: Ctx) {

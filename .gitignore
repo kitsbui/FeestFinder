@@ -9,6 +9,17 @@ node_modules/
 # Uploaded files kept on disk in development
 festfinder-backend/.uploads/
 
+# Playwright output
+test-results/
+playwright-report/
+
+# Next.js: build output, and what `npm run compile` generates from festfinder-frontend
+festfinder-web/.next/
+festfinder-web/next-env.d.ts
+festfinder-web/*.tsbuildinfo
+festfinder-web/src/screens/
+festfinder-web/public/ui/
+
 # Editor and OS noise
 .DS_Store
 Thumbs.db

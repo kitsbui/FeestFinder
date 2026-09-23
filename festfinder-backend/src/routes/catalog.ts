@@ -233,7 +233,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
         brand: ev.brand_url,
         tickets: ev.entry_mode === 'paid' ? ev.ticket_url : null,
       },
-      ticketNote: L('Tickets are sold by the organiser. FestFinder does not add a booking fee.', 'Vé do nhà tổ chức bán. FestFinder không thu thêm phí đặt vé.'),
+      ticketNote: L('Tickets are sold by the organiser. FeestFinder does not add a booking fee.', 'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'),
       tickets: ev.entry_mode === 'paid' && tierRows.length ? presentTiers(tierRows, now) : null,
       timetable,
       hasLiveMode: !!timetable,
@@ -298,13 +298,14 @@ export default async function catalogRoutes(app: FastifyInstance) {
   });
 
   app.get('/venues', async (req) => {
-    const { q } = parse(z.object({ q: z.string().max(100).optional() }), req.query);
-    const rows = await many<any>(ctx.db, 'select id, name, address, area, lat, lng, verified from venues order by name');
+    const { q, limit: max } = parse(z.object({ q: z.string().max(100).optional(), limit: z.coerce.number().int().min(1).max(50).default(5) }), req.query);
+    // Only venues the team has verified are offered; anything else is typed as a new venue and checked in review.
+    const rows = await many<any>(ctx.db, 'select id, name, address, area, lat, lng, verified from venues where verified order by name');
     const needle = q ? searchNormalize(q) : '';
     return {
       items: rows
         .filter((v) => !needle || searchNormalize(`${v.name} ${v.address} ${v.area}`).includes(needle))
-        .slice(0, 5),
+        .slice(0, max),
     };
   });
 

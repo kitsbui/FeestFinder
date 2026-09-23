@@ -1,10 +1,11 @@
 import { buildApp } from '../src/app.ts';
-import { loadConfig } from '../src/config.ts';
+import { loadConfig, type Config } from '../src/config.ts';
 import type { Ctx } from '../src/context.ts';
 import { openDb } from '../src/db/index.ts';
 import { migrate } from '../src/db/migrate.ts';
 import { seed } from '../src/db/seed.ts';
 import { fixedClock } from '../src/lib/time.ts';
+import { NoopReporter } from '../src/services/errors.ts';
 import { ConsoleTransport } from '../src/services/messaging.ts';
 import { MemoryStorage } from '../src/services/storage.ts';
 import { DisabledGuide, type GuideGenerator } from '../src/services/guide.ts';
@@ -33,12 +34,13 @@ async function freshDatabaseUrl(): Promise<string | null> {
   return url.toString();
 }
 
-export async function setup(opts: { now?: string; guide?: GuideGenerator; checkLink?: Ctx['checkLink'] } = {}) {
+export async function setup(opts: { now?: string; guide?: GuideGenerator; checkLink?: Ctx['checkLink']; config?: Partial<Config> } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
     paymentProvider: 'mock', publicBaseUrl: 'http://test.local', corsOrigins: ['http://localhost:3000'], cookieSecure: false,
     ticketSigningSecret: 'test-ticket-secret', paymentWebhookSecret: 'test-webhook-secret', aiGuideEnabled: true, fixedNow: null,
+    ...opts.config,
   });
   const db = await openDb(config);
   await migrate(db);
@@ -46,6 +48,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; checkL
   const transport = new ConsoleTransport(() => {});
   const ctx: Ctx = {
     config, db, clock, transport, storage: new MemoryStorage(),
+    errors: new NoopReporter(),
     guide: opts.guide ?? new DisabledGuide(),
     oauth: { fb: new MockOAuth('fb'), ig: new MockOAuth('ig') },
     checkLink: opts.checkLink ?? (async () => 'ok'),

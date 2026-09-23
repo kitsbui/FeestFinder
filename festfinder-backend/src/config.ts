@@ -15,6 +15,13 @@ function int(name: string, fallback: number): number {
   return n;
 }
 
+/** TRUST_PROXY: `true`, `false`, a hop count, or addresses/CIDRs/`loopback`… separated by commas. */
+function trust(v: string | undefined): boolean | number | string {
+  if (!v) return 'loopback,linklocal,uniquelocal';
+  if (v === 'true' || v === 'false') return v === 'true';
+  return /^\d+$/.test(v) ? Number(v) : v;
+}
+
 function bool(name: string, fallback: boolean): boolean {
   const v = process.env[name];
   if (v === undefined || v === '') return fallback;
@@ -48,6 +55,26 @@ export interface Config {
   /** Return OTP codes in API responses. Never enable in production. */
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
+  /** Requests allowed per IP per minute on the public API. */
+  rateLimitPerMinute: number;
+  /**
+   * Which peers may tell us the client's address in X-Forwarded-For. Default: proxies on
+   * this machine or a private network (the Next.js app, a load balancer). `true` would let
+   * any client claim any address, and dodge the rate limit with it.
+   */
+  trustProxy: boolean | number | string;
+  /** Object storage for uploads. Without S3_BUCKET, files stay on local disk. */
+  s3: { bucket: string; region: string; endpoint: string | null; accessKeyId: string; secretAccessKey: string; publicBaseUrl: string | null } | null;
+  /** SMTP relay for email. Without SMTP_HOST, email is printed to the log. */
+  smtp: { host: string; port: number; secure: boolean; user: string; pass: string; from: string } | null;
+  /** One endpoint that forwards push, Zalo and SMS to whichever provider is in use. */
+  messagingWebhook: { url: string; secret: string } | null;
+  /** VAPID keys for browser push. Without them, browser subscriptions go to the webhook too. */
+  webPush: { publicKey: string; privateKey: string; subject: string } | null;
+  /** Sentry-compatible DSN for unhandled errors. */
+  sentryDsn: string | null;
+  /** Release name reported alongside errors. */
+  release: string;
 }
 
 export function loadConfig(overrides: Partial<Config> = {}): Config {
@@ -77,6 +104,36 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     fixedNow: process.env.FF_NOW || null,
     exposeDevCodes: !prod && bool('EXPOSE_DEV_CODES', true),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
+    rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
+    trustProxy: trust(process.env.TRUST_PROXY),
+    s3: process.env.S3_BUCKET
+      ? {
+        bucket: str('S3_BUCKET'),
+        region: str('S3_REGION', 'auto'),
+        endpoint: process.env.S3_ENDPOINT || null,
+        accessKeyId: str('S3_ACCESS_KEY_ID'),
+        secretAccessKey: str('S3_SECRET_ACCESS_KEY'),
+        publicBaseUrl: process.env.S3_PUBLIC_BASE_URL || null,
+      }
+      : null,
+    smtp: process.env.SMTP_HOST
+      ? {
+        host: str('SMTP_HOST'),
+        port: int('SMTP_PORT', 587),
+        secure: bool('SMTP_SECURE', false),
+        user: str('SMTP_USER', ''),
+        pass: str('SMTP_PASSWORD', ''),
+        from: str('SMTP_FROM', 'FeestFinder <no-reply@festfinder.vn>'),
+      }
+      : null,
+    messagingWebhook: process.env.MESSAGING_WEBHOOK_URL
+      ? { url: str('MESSAGING_WEBHOOK_URL'), secret: str('MESSAGING_WEBHOOK_SECRET', '') }
+      : null,
+    webPush: process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
+      ? { publicKey: str('VAPID_PUBLIC_KEY'), privateKey: str('VAPID_PRIVATE_KEY'), subject: str('VAPID_SUBJECT', 'mailto:hello@festfinder.vn') }
+      : null,
+    sentryDsn: process.env.SENTRY_DSN || null,
+    release: str('RELEASE', 'dev'),
     ...overrides,
   };
   if (prod && cfg.paymentProvider === 'mock') {

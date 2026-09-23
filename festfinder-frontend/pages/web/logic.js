@@ -8,8 +8,8 @@ const FAQ_DESIGN = [
     a:{en:'From 1.200.000₫ for general admission at SECC in District 7. Doors open at 16:00 and the ticket includes re-entry until 22:00. Tickets are marked low, so the price tier may move before Saturday.',
       vi:'Từ 1.200.000₫ cho vé thường tại SECC, Quận 7. Mở cửa 16:00 và vé bao gồm ra vào lại đến 22:00. Vé đang còn ít nên mức giá có thể thay đổi trước thứ Bảy.'} },
   { q:{en:'Is anything already sold out?',vi:'Có show nào đã hết vé chưa?'},
-    a:{en:'Rap Việt Live Stage at Nhà thi đấu Phú Thọ on Sunday 20 September is sold out. Resale is handled by the ticketing partner, not by FestFinder — we mark a listing sold out within minutes of the organizer updating it.',
-      vi:'Rap Việt Live Stage tại Nhà thi đấu Phú Thọ ngày Chủ nhật 20/9 đã hết vé. Việc sang nhượng do đối tác bán vé xử lý, không phải FestFinder — chúng tôi đánh dấu hết vé trong vài phút sau khi nhà tổ chức cập nhật.'} },
+    a:{en:'Rap Việt Live Stage at Nhà thi đấu Phú Thọ on Sunday 20 September is sold out. Resale is handled by the ticketing partner, not by FeestFinder — we mark a listing sold out within minutes of the organizer updating it.',
+      vi:'Rap Việt Live Stage tại Nhà thi đấu Phú Thọ ngày Chủ nhật 20/9 đã hết vé. Việc sang nhượng do đối tác bán vé xử lý, không phải FeestFinder — chúng tôi đánh dấu hết vé trong vài phút sau khi nhà tổ chức cập nhật.'} },
   { q:{en:'How do I get to the riverside park for HOZO?',vi:'Đi tới công viên bờ sông dự HOZO thế nào?'},
     a:{en:'The entrance is on Nguyễn Thiện Thành in Thủ Đức, about 4 km from District 1. Parking near the gates fills before 18:00, so arriving early or by ride-hail is the safer plan on festival nights.',
       vi:'Cổng vào nằm trên đường Nguyễn Thiện Thành, Thủ Đức, cách Quận 1 khoảng 4 km. Bãi xe gần cổng thường đầy trước 18:00, nên đến sớm hoặc đi xe công nghệ sẽ chắc chắn hơn trong các đêm lễ hội.'} }
@@ -42,7 +42,7 @@ const S = {
   searchPh:{en:'Search events, artists, venues…',vi:'Tìm sự kiện, nghệ sĩ, địa điểm…'},
   listEvent:{en:'List your event',vi:'Đăng sự kiện'},
   kicker:{en:'Ho Chi Minh City · September 2026',vi:'TP. Hồ Chí Minh · Tháng 9/2026'},
-  h1a:{en:"WHAT'S HAPPENING",vi:'CUỐI TUẦN NÀY'}, h1b:{en:'NEAR YOU?',vi:'CÓ GÌ CHƠI?'},
+  h1a:{en:"What's happening",vi:'Cuối tuần này'}, h1b:{en:'near you?',vi:'có gì chơi?'},
   when:{en:'When',vi:'Thời gian'}, genre:{en:'Genre',vi:'Thể loại'}, price:{en:'Price',vi:'Giá vé'},
   tonight:{en:'Tonight',vi:'Tối nay'}, weekend:{en:'This weekend',vi:'Cuối tuần này'},
   next7:{en:'Next 7 days',vi:'7 ngày tới'}, month:{en:'This month',vi:'Tháng này'},
@@ -51,12 +51,12 @@ const S = {
   sortDate:{en:'Date',vi:'Ngày'}, sortHype:{en:'Hype',vi:'Hype'}, sortPrice:{en:'Price',vi:'Giá'},
   loadMore:{en:'Load more events',vi:'Tải thêm sự kiện'}, from:{en:'from',vi:'từ'},
   soldOut:{en:'Sold out',vi:'Hết vé'}, ended:{en:'Ended',vi:'Đã kết thúc'}, all:{en:'All',vi:'Tất cả'},
-  emptyTitle:{en:'NOTHING MATCHES YET',vi:'CHƯA CÓ GÌ PHÙ HỢP'},
+  emptyTitle:{en:'Nothing matches yet',vi:'Chưa có gì phù hợp'},
   emptyBody:{en:'Try a wider date range, or clear the price filter.',vi:'Thử mở rộng khoảng ngày, hoặc bỏ bộ lọc giá.'},
   getTickets:{en:'Get tickets',vi:'Mua vé'}, freeEntry:{en:'Free entry',vi:'Vào cửa miễn phí'},
   mapTitle:{en:'Events near you',vi:'Sự kiện quanh bạn'},
   bcCity:{en:'Ho Chi Minh City',vi:'TP. Hồ Chí Minh'}, bcWeekend:{en:'This weekend',vi:'Cuối tuần này'},
-  landingH1:{en:'EDM & FESTIVAL EVENTS IN HO CHI MINH CITY THIS WEEKEND',vi:'SỰ KIỆN EDM & LỄ HỘI Ở TP.HCM CUỐI TUẦN NÀY'},
+  landingH1:{en:'EDM & festival events in ho chi minh city this weekend',vi:'Sự kiện EDM & lễ hội ở TP.HCM cuối tuần này'},
   updated:{en:'Updated 14 Sep 2026, 09:20',vi:'Cập nhật 14/09/2026, 09:20'},
   verifiedSources:{en:'Organizer-verified listings',vi:'Đã xác minh với nhà tổ chức'},
   landingLede:{en:'Five events are running across Ho Chi Minh City between Friday 18 and Sunday 20 September, from a free three-night festival on the Saigon riverside to an indoor EDM festival at SECC. Below is every confirmed listing with start times, venues, ticket prices and what is already sold out.',
@@ -67,10 +67,10 @@ const S = {
   faqTitle:{en:'Frequently asked',vi:'Câu hỏi thường gặp'},
   relatedTitle:{en:'Related searches',vi:'Tìm kiếm liên quan'},
   devTitle:{en:'Handoff notes — this route',vi:'Ghi chú bàn giao — route này'},
-  ctaTitle:{en:'GET THIS LIST EVERY THURSDAY',vi:'NHẬN DANH SÁCH NÀY MỖI THỨ NĂM'},
+  ctaTitle:{en:'Get this list every Thursday',vi:'Nhận danh sách này mỗi Thứ Năm'},
   ctaBody:{en:'One email, the weekend ahead, only the genres and districts you pick. No ticket spam.',
     vi:'Một email, cho cuối tuần sắp tới, chỉ những thể loại và khu vực bạn chọn. Không spam vé.'},
-  ctaPrimary:{en:'Open FestFinder',vi:'Mở FestFinder'}, ctaSecondary:{en:'Get the weekly email',vi:'Nhận email hàng tuần'},
+  ctaPrimary:{en:'Open FeestFinder',vi:'Mở FeestFinder'}, ctaSecondary:{en:'Get the weekly email',vi:'Nhận email hàng tuần'},
   events:{en:'events',vi:'sự kiện'}, hypedPeople:{en:'people hyped',vi:'người đang hype'},
   tabExplore:{en:'Explore',vi:'Khám phá'}, tabMap:{en:'Map',vi:'Bản đồ'}, tabLanding:{en:'SEO page',vi:'Trang SEO'},
   tabAbout:{en:'About',vi:'Giới thiệu'},
@@ -87,9 +87,9 @@ const S = {
   statHype:{en:'hyped',vi:'đang hype'},
   statEventsOn:{en:'events on',vi:'sự kiện'},
   statCardHint:{en:'Open the full list',vi:'Mở danh sách đầy đủ'},
-  abKicker:{en:'About FestFinder',vi:'Về FestFinder'},
+  abKicker:{en:'About FeestFinder',vi:'Về FeestFinder'},
   abTitle:{en:'One place to see what is on tonight',vi:'Một nơi để biết tối nay có gì'},
-  abLede:{en:'FestFinder lists festivals, live shows and night markets across Ho Chi Minh City. Organisers publish for free, every listing is checked before it goes live, and tickets are sold by the organiser — we add no booking fee.',vi:'FestFinder tập hợp lễ hội, show nhạc sống và chợ đêm ở TP.HCM. Nhà tổ chức đăng miễn phí, mọi tin đều được kiểm tra trước khi lên sóng, và vé do nhà tổ chức bán — chúng tôi không thu thêm phí đặt vé.'},
+  abLede:{en:'FeestFinder lists festivals, live shows and night markets across Ho Chi Minh City. Organisers publish for free, every listing is checked before it goes live, and tickets are sold by the organiser — we add no booking fee.',vi:'FeestFinder tập hợp lễ hội, show nhạc sống và chợ đêm ở TP.HCM. Nhà tổ chức đăng miễn phí, mọi tin đều được kiểm tra trước khi lên sóng, và vé do nhà tổ chức bán — chúng tôi không thu thêm phí đặt vé.'},
   abSocial:{en:'Follow us',vi:'Theo dõi chúng tôi'},
   abNote:{en:'Email is answered within two working days. If something is going wrong at an event tonight, call the hotline instead — it is staffed until 02:00 on festival nights.',vi:'Email được trả lời trong hai ngày làm việc. Nếu đang có vấn đề tại sự kiện tối nay, hãy gọi hotline — trực đến 02:00 trong các đêm lễ hội.'},
   abContactUsers:{en:'For people going out',vi:'Cho người đi chơi'},
@@ -118,7 +118,7 @@ const S = {
   gateTickets:{en:'Log in to buy tickets',vi:'Đăng nhập để mua vé'},
   gateOrganizer:{en:'Log in to list your event',vi:'Đăng nhập để đăng sự kiện'},
   gateAds:{en:'Log in to book advertising',vi:'Đăng nhập để đặt quảng cáo'},
-  joinTitle:{en:'CREATE YOUR ACCOUNT',vi:'TẠO TÀI KHOẢN'},
+  joinTitle:{en:'Create your account',vi:'Tạo tài khoản'},
   joinSub:{en:'Continue with a social account, or verify an email or WhatsApp number.',vi:'Tiếp tục bằng tài khoản mạng xã hội, hoặc xác minh email / số WhatsApp.'},
   withEmail:{en:'Continue with email',vi:'Tiếp tục với email'},
   withZalo:{en:'Continue with Zalo number',vi:'Tiếp tục với số Zalo'},
@@ -134,27 +134,27 @@ const S = {
   emailLabel:{en:'Email address',vi:'Địa chỉ email'}, emailPh:{en:'you@example.com',vi:'ban@example.com'},
   zaloLabel:{en:'Zalo number',vi:'Số Zalo'}, zaloPh:{en:'09xx xxx xxx',vi:'09xx xxx xxx'},
   sendCode:{en:'Send code',vi:'Gửi mã'},
-  otpTitle:{en:'ENTER THE CODE',vi:'NHẬP MÃ XÁC MINH'},
+  otpTitle:{en:'Enter the code',vi:'Nhập mã xác minh'},
   otpSentEmail:{en:'Sent by email to',vi:'Đã gửi qua email tới'},
   otpSentZalo:{en:'Sent on Zalo to',vi:'Đã gửi qua Zalo tới'},
   otpHint:{en:'Any 6 digits work here.',vi:'Bản mẫu: nhập 6 số bất kỳ.'},
   otpResend:{en:'Resend code',vi:'Gửi lại mã'}, otpResent:{en:'Code sent again',vi:'Đã gửi lại mã'},
   verify:{en:'Verify',vi:'Xác minh'},
-  passTitle:{en:'SET A PASSWORD',vi:'ĐẶT MẬT KHẨU'},
+  passTitle:{en:'Set a password',vi:'Đặt mật khẩu'},
   passSub:{en:'At least 8 characters. You\u2019ll use it with your email or Zalo number to log in.',
     vi:'Tối thiểu 8 ký tự. Bạn sẽ dùng cùng email hoặc số Zalo để đăng nhập.'},
   passLabel:{en:'Password',vi:'Mật khẩu'}, pass2Label:{en:'Confirm password',vi:'Nhập lại mật khẩu'},
   createAccount:{en:'Create account',vi:'Tạo tài khoản'},
-  loginTitle:{en:'WELCOME BACK',vi:'CHÀO MỪNG TRỞ LẠI'},
+  loginTitle:{en:'Welcome back',vi:'Chào mừng trở lại'},
   loginSub:{en:'Use the email or Zalo number you registered with.',vi:'Dùng email hoặc số Zalo bạn đã đăng ký.'},
   loginIdLabel:{en:'Email or Zalo number',vi:'Email hoặc số Zalo'},
   loginIdPh:{en:'you@example.com or 09xx xxx xxx',vi:'ban@example.com hoặc 09xx xxx xxx'},
-  loginPassTitle:{en:'ENTER YOUR PASSWORD',vi:'NHẬP MẬT KHẨU'},
+  loginPassTitle:{en:'Enter your password',vi:'Nhập mật khẩu'},
   loginPassSub:{en:'The password you set when you registered.',vi:'Mật khẩu bạn đã đặt khi đăng ký.'},
   continueCta:{en:'Continue',vi:'Tiếp tục'},
   forgot:{en:'Forgot password?',vi:'Quên mật khẩu?'}, forgotToast:{en:'Reset code sent',vi:'Đã gửi mã đặt lại'},
   haveAccount:{en:'Already have an account?',vi:'Đã có tài khoản?'},
-  noAccount:{en:'New to FestFinder?',vi:'Chưa có tài khoản?'},
+  noAccount:{en:'New to FeestFinder?',vi:'Chưa có tài khoản?'},
   viaEmail:{en:'Verified by email',vi:'Đã xác minh qua email'}, viaZalo:{en:'Verified on Zalo',vi:'Đã xác minh qua Zalo'},
   errEmail:{en:'That email doesn\u2019t look right',vi:'Email chưa đúng định dạng'},
   errZalo:{en:'Enter a valid Vietnamese number',vi:'Số điện thoại chưa hợp lệ'},
@@ -166,7 +166,7 @@ const S = {
   welcomeToast:{en:'Account created — welcome',vi:'Đã tạo tài khoản — chào bạn'},
   loggedInToast:{en:'Logged in',vi:'Đã đăng nhập'}, signedOutToast:{en:'Signed out',vi:'Đã đăng xuất'},
   editProfile:{en:'Edit profile',vi:'Sửa thông tin'},
-  profileTitle:{en:'YOUR PROFILE',vi:'THÔNG TIN CỦA BẠN'},
+  profileTitle:{en:'Your profile',vi:'Thông tin của bạn'},
   profileSub:{en:'Used on your tickets and to reach you about the events you save.',
     vi:'Dùng trên vé của bạn và để liên hệ về những sự kiện bạn đã lưu.'},
   nameLabel:{en:'Display name',vi:'Tên hiển thị'}, namePh:{en:'Nguyễn Minh',vi:'Nguyễn Minh'},
@@ -185,12 +185,12 @@ const S = {
   connected:{en:'Connected accounts',vi:'Tài khoản đã liên kết'},
   connect:{en:'Connect',vi:'Liên kết'}, connectedToast:{en:'Connected',vi:'Đã liên kết'},
   disconnectedToast:{en:'Disconnected',vi:'Đã bỏ liên kết'},
-  cxTitleWord:{en:'CONNECT',vi:'LIÊN KẾT'},
+  cxTitleWord:{en:'Connect',vi:'Liên kết'},
   cxSubPhone:{en:'Enter the number on this account. We send a 6-digit code to confirm it is yours.',vi:'Nhập số dùng cho tài khoản này. Chúng tôi gửi mã 6 số để xác nhận.'},
   cxSubRedirect:{en:'You log in on their site first, then come back here to confirm the connection.',vi:'Bạn đăng nhập trên trang của họ trước, rồi quay lại đây xác nhận liên kết.'},
   cxGo:{en:'Continue to',vi:'Tiếp tục tới'},
-  cxTitleConfirm:{en:'CONFIRM CONNECTION',vi:'XÁC NHẬN LIÊN KẾT'},
-  cxSubConfirm:{en:'Logged in. Confirm what FestFinder may read:',vi:'Đã đăng nhập. Xác nhận những gì FestFinder được đọc:'},
+  cxTitleConfirm:{en:'Confirm connection',vi:'Xác nhận liên kết'},
+  cxSubConfirm:{en:'Logged in. Confirm what FeestFinder may read:',vi:'Đã đăng nhập. Xác nhận những gì FeestFinder được đọc:'},
   cxScope1:{en:'Your name and profile photo',vi:'Tên và ảnh đại diện'},
   cxScope2:{en:'Your friend list, to find who else is going',vi:'Danh sách bạn bè, để tìm ai cũng đi'},
   cxScope3:{en:'Nothing is ever posted for you',vi:'Không bao giờ đăng gì thay bạn'},
@@ -204,7 +204,7 @@ const S = {
     vi:'Bạn đang xem lễ hội ở TP.HCM trong tháng này. Thương hiệu chỉ nhắm theo thành phố và thể loại, không theo tên hay sự kiện bạn đã lưu.'},
   adHide:{en:'Hide this ad',vi:'Ẩn quảng cáo này'},
   adHidden:{en:'Hidden. Fewer ads from this brand.',vi:'Đã ẩn. Sẽ ít quảng cáo từ thương hiệu này hơn.'},
-  adPartnerTitle:{en:'ADVERTISE ON FESTFINDER',vi:'QUẢNG CÁO TRÊN FESTFINDER'},
+  adPartnerTitle:{en:'Advertise on FeestFinder',vi:'Quảng cáo trên FeestFinder'},
   adPartnerSub:{en:'For brands the festival crowd already carries: drinks, clothing, hearing protection, recovery. Tell us who you are and we come back within two working days.',
     vi:'Dành cho thương hiệu mà người đi lễ hội vốn đã dùng: nước uống, quần áo, bảo vệ tai, phục hồi. Cho chúng tôi biết bạn là ai, chúng tôi phản hồi trong hai ngày làm việc.'},
   adBrandLabel:{en:'Brand name',vi:'Tên thương hiệu'},
@@ -241,11 +241,11 @@ const S = {
   factPrice:{en:'Entry',vi:'Vào cửa'}, factDist:{en:'Distance',vi:'Khoảng cách'},
   saveEvent:{en:'Save',vi:'Lưu'}, savedEvent:{en:'Saved',vi:'Đã lưu'},
   shareEvent:{en:'Share',vi:'Chia sẻ'}, shareCopied:{en:'Link copied',vi:'Đã copy liên kết'},
-  ticketNote:{en:'Tickets are sold by the organiser. FestFinder does not add a booking fee.',vi:'Vé do nhà tổ chức bán. FestFinder không thu thêm phí đặt vé.'},
+  ticketNote:{en:'Tickets are sold by the organiser. FeestFinder does not add a booking fee.',vi:'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'},
   openInMaps:{en:'Open in Maps',vi:'Mở bản đồ'},
   orgEvents:{en:'events listed',vi:'sự kiện đã đăng'},
   orgFollowers:{en:'followers',vi:'người theo dõi'},
-  orgSince:{en:'On FestFinder since',vi:'Trên FestFinder từ'},
+  orgSince:{en:'On FeestFinder since',vi:'Trên FeestFinder từ'},
   orgVerified:{en:'Verified organiser',vi:'Nhà tổ chức đã xác minh'},
   orgUpcoming:{en:'Upcoming',vi:'Sắp diễn ra'}, orgPast:{en:'Past events',vi:'Đã diễn ra'},
   orgNoUpcoming:{en:'Nothing on sale right now. Follow to hear first.',vi:'Hiện chưa có sự kiện nào. Theo dõi để nhận tin sớm nhất.'},
@@ -279,7 +279,7 @@ const S = {
   tierSoldToast:{en:'That tier is gone. We will tell you if returns come back.',vi:'Hạng này đã hết. Có vé trả lại chúng tôi sẽ nhắn bạn.'},
   tierNotifyToast:{en:'We will message you the moment it opens',vi:'Vừa mở bán là chúng tôi nhắn bạn ngay'},
   reportCta:{en:'Report this listing',vi:'Báo cáo tin này'},
-  reportTitle:{en:'REPORT THIS LISTING',vi:'BÁO CÁO TIN NÀY'},
+  reportTitle:{en:'Report this listing',vi:'Báo cáo tin này'},
   reportSub:{en:'A moderator reads every report. Listings with two or more reports are pulled from the feed while we check.',vi:'Mọi báo cáo đều được kiểm duyệt viên đọc. Tin có từ hai báo cáo sẽ được tạm ẩn trong lúc kiểm tra.'},
   reportWhat:{en:'What is wrong?',vi:'Vấn đề là gì?'},
   reportMore:{en:'Anything else we should know',vi:'Điều gì khác chúng tôi nên biết'},
@@ -287,7 +287,7 @@ const S = {
   reportSend:{en:'Send report',vi:'Gửi báo cáo'},
   reportSent:{en:'Report sent. We usually come back within a day.',vi:'Đã gửi báo cáo. Chúng tôi thường phản hồi trong một ngày.'},
   notifPrefs:{en:'Notifications',vi:'Thông báo'},
-  notifTitle:{en:'WHAT WE MESSAGE YOU ABOUT',vi:'CHÚNG TÔI NHẮN BẠN VỀ VIỆC GÌ'},
+  notifTitle:{en:'What we message you about',vi:'Chúng tôi nhắn bạn về việc gì'},
   notifSub:{en:'One row per kind of update, one column per channel. Everything off means we never contact you.',vi:'Mỗi dòng là một loại thông tin, mỗi cột là một kênh. Tắt hết nghĩa là chúng tôi không liên hệ bạn.'},
   notifQuiet:{en:'Nothing between 23:00 and 08:00 except changes to an event starting today.',vi:'Không nhắn từ 23:00 đến 08:00, trừ thay đổi của sự kiện diễn ra trong ngày.'},
   notifSaved:{en:'Notification settings saved',vi:'Đã lưu cài đặt thông báo'},
@@ -302,7 +302,7 @@ const S = {
   friendsTitle:{en:'Friends',vi:'Bạn bè'}, friendsGoing:{en:'going',vi:'sẽ đi'},
   friendsGoingTitle:{en:'Friends going',vi:'Bạn bè sẽ đi'},
   friendsFilter:{en:'Friends going',vi:'Có bạn đi'},
-  becauseFriends:{en:'BECAUSE YOUR FRIENDS ARE GOING',vi:'VÌ BẠN BÈ CỦA BẠN SẼ ĐI'},
+  becauseFriends:{en:'Because your friends are going',vi:'Vì bạn bè của bạn sẽ đi'},
   alsoInterested:{en:'is also interested',vi:'cũng đang quan tâm'},
   andOthers:{en:'and {n} others',vi:'và {n} người khác'},
   friendsSaved:{en:'{n} friends saved events since yesterday',vi:'{n} người bạn đã lưu sự kiện từ hôm qua'},
@@ -310,7 +310,7 @@ const S = {
   goingPrivacy:{en:'Marking yourself going shows you to friends on the map.',vi:'Đánh dấu sẽ đi sẽ hiện bạn cho bạn bè trên bản đồ.'},
   chat:{en:'Chat',vi:'Nhắn tin'}, follow:{en:'Follow',vi:'Theo dõi'}, followingLabel:{en:'Following',vi:'Đang theo dõi'},
   inviteFriends:{en:'Invite friends',vi:'Mời bạn bè'},
-  inviteTitle:{en:'INVITE FRIENDS',vi:'MỜI BẠN BÈ'},
+  inviteTitle:{en:'Invite friends',vi:'Mời bạn bè'},
   inviteSub:{en:'They get the event card in chat with your name on it.',vi:'Họ sẽ nhận thẻ sự kiện trong tin nhắn kèm tên bạn.'},
   inviteSend:{en:'Send invites',vi:'Gửi lời mời'},
   inviteSent:{en:'Invites sent to {n} friends',vi:'Đã mời {n} người bạn'},
@@ -349,9 +349,9 @@ const NOTIF_ROWS = [
 
 const SRC = {
   wa: { label:'WhatsApp', icon:'ph-fill ph-whatsapp-logo', color:'#25D366' },
-  fb: { label:'Facebook', icon:'ph-fill ph-facebook-logo', color:'#4EA1FF' },
-  ig: { label:'Instagram', icon:'ph-fill ph-instagram-logo', color:'#FF6FA5' },
-  zalo: { label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8' }
+  fb: { label:'Facebook', icon:'ph-fill ph-facebook-logo', color:'#6FB0F0' },
+  ig: { label:'Instagram', icon:'ph-fill ph-instagram-logo', color:'#E88AA8' },
+  zalo: { label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#B6D9FC' }
 };
 // Live containers, refilled in place by applyWeb() after sign-in and sign-out.
 const FRIENDS = [];
@@ -404,10 +404,11 @@ function ttFromApi(t) {
 /* ---- routes ------------------------------------------------------------------
  * /                 explore            /e/<slug>        an event
  * /map              map                /o/<slug>        an organiser
- * /about            about FestFinder   /saved           saved events
+ * /about            about FeestFinder   /saved           saved events
  * /advertise        advertise with us  /stats/<key>     one explore stat
- * /city/<city>/<when>  the city landing page
+ * /vi/ho-chi-minh/this-weekend, /en/…   the city landing page (/city/… still opens it)
  */
+const LANDING = ['ho-chi-minh', 'this-weekend'];
 const eventBy = (key) => EVENTS.filter(e => e.slug === key || e.id === key)[0] || null;
 const orgBy = (key) => { for (const id in ORGS) if (ORGS[id].slug === key || id === key) return ORGS[id]; return null; };
 const slugOf = (id) => { const e = EVENTS.filter(x => x.id === id)[0]; return e ? (e.slug || e.id) : id; };
@@ -420,6 +421,7 @@ function routeState(r) {
   if (name === 'map') return Object.assign(clear, { screen:'map' });
   if (name === 'about') return Object.assign(clear, { screen:'about' });
   if (name === 'city') return Object.assign(clear, { screen:'landing' });
+  if ((name === 'vi' || name === 'en') && r.parts.slice(1).join('/') === LANDING.join('/')) return Object.assign(clear, { screen:'landing', lang:name });
   if (name === 'saved') return Object.assign(clear, { savedView:true });
   if (name === 'advertise') return Object.assign(clear, { adsOpen:true });
   if (name === 'stats' && param) return Object.assign(clear, { screen:'stat', statView:param });
@@ -435,7 +437,7 @@ function routePath(st) {
   if (st.screen === 'stat' && st.statView) return FF.href('stats', st.statView);
   if (st.screen === 'map') return FF.href('map');
   if (st.screen === 'about') return FF.href('about');
-  if (st.screen === 'landing') return FF.href('city', 'ho-chi-minh', 'this-weekend');
+  if (st.screen === 'landing') return FF.href(st.lang === 'en' ? 'en' : 'vi', ...LANDING);
   if (st.adsOpen) return FF.href('advertise');
   if (st.savedView) return FF.href('saved');
   return FF.href('');
@@ -714,7 +716,7 @@ class Component extends DCLogic {
     if (!r) return;
     if (r.name === 'e' && r.param) { const e = eventBy(r.param); if (e) this.loadDetail(e.id); }
     if (r.name === 'o' && r.param) { const o = orgBy(r.param); if (o) this.loadOrg(o.id); }
-    if (r.name === 'city' || r.name === 'about') await FF.webLanding(this);
+    if (r.name === 'city' || r.name === 'vi' || r.name === 'en' || r.name === 'about') await FF.webLanding(this);
   }
 
   openEvent(id) { this.setState({ screen:'detail', detailId:id, ttDay:0 }); this.loadDetail(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
@@ -750,19 +752,19 @@ class Component extends DCLogic {
     const st = this.state, un = e.soldOut || e.past;
     return {
       title:e.title, genre:e.genre, art:e.art, artOpacity: un ? '.4' : '1',
-      cardBd: e.featured ? 'rgba(140,107,255,.4)' : '#262F44',
+      cardBd: e.featured ? 'rgba(102,58,243,.4)' : 'rgba(186,215,247,.12)',
       hasBadge: !!e.badge && !un, badgeLabel: e.badge ? e.badge[st.lang] : '',
-      badgeBg: e.featured ? '#8C6BFF' : '#2AC4E8',
+      badgeBg: e.featured ? '#7A55F6' : '#B6D9FC',
       unavailable: un, unavailLabel: e.soldOut ? L.soldOut : L.ended,
-      unavailBd: e.soldOut ? '#FF8A3D' : '#39455F', unavailFg: e.soldOut ? '#FFB35C' : '#8891A8',
+      unavailBd: e.soldOut ? '#E46D4C' : 'rgba(186,215,247,.24)', unavailFg: e.soldOut ? '#F0A07F' : '#9DA7BA',
       whenLine: this.when(e), whereLine: e.venue + ' · ' + e.dist + ' km',
       priceLine: e.price === 0 ? L.free : L.from + ' ' + this.short(e.price),
-      priceColor: e.price === 0 ? '#2E9E5B' : '#F3F6FC',
+      priceColor: e.price === 0 ? '#269684' : '#D8ECF8',
       proofShow: this.proof(e.id).show, proofLine: this.proof(e.id).line, proofFaces: this.proof(e.id).faces,
       hypeShort: e.hype >= 1000 ? (e.hype / 1000).toFixed(1) + 'K' : String(e.hype),
-      saveBg: st.saved[e.id] ? '#2AC4E8' : 'rgba(10,14,26,.6)',
-      saveBd: st.saved[e.id] ? '#2AC4E8' : 'rgba(243,246,252,.2)',
-      saveFg: st.saved[e.id] ? '#0A0E1A' : '#F3F6FC',
+      saveBg: st.saved[e.id] ? '#B6D9FC' : 'rgba(5,6,15,.6)',
+      saveBd: st.saved[e.id] ? '#B6D9FC' : 'rgba(216,236,248,.2)',
+      saveFg: st.saved[e.id] ? '#090B16' : '#D8ECF8',
       open: () => this.openEvent(e.id),
       save: (ev) => { ev.stopPropagation(); if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateSave); this.toggleFlag('saved', '/me/saves/', e.id); }
     };
@@ -850,8 +852,8 @@ class Component extends DCLogic {
       editOpen: st.edit,
       hasPhoto: !!(st.user && st.user.photo), noPhoto: !(st.user && st.user.photo),
       userPhoto: st.user ? st.user.photo : '',
-      photoBg: st.user && st.user.photo ? 'url("' + st.user.photo + '") center/cover no-repeat' : 'rgba(26,34,51,.7)',
-      pPhotoBg: st.pPhoto ? 'url("' + st.pPhoto + '") center/cover no-repeat' : 'rgba(26,34,51,.7)',
+      photoBg: st.user && st.user.photo ? 'url("' + st.user.photo + '") center/cover no-repeat' : 'rgba(20,24,38,.7)',
+      pPhotoBg: st.pPhoto ? 'url("' + st.pPhoto + '") center/cover no-repeat' : 'rgba(20,24,38,.7)',
       pPhoto: st.pPhoto, pHasPhoto: !!st.pPhoto, pNoPhoto: !st.pPhoto,
       onPhoto: (e) => this.readPhoto(e),
       clearPhoto: () => this.setState({ pPhoto:'', pPhotoFile:null }),
@@ -896,9 +898,9 @@ class Component extends DCLogic {
       authSwitchShow: step === 'method' || step === 'loginId',
       authNote: st.authNote, authNoteShow: !!st.authNote,
       authBarShow: barStep > 0,
-      authBar1: barStep >= 1 ? '#8C6BFF' : '#262F44',
-      authBar2: barStep >= 2 ? '#8C6BFF' : '#262F44',
-      authBar3: barStep >= 3 ? '#8C6BFF' : '#262F44',
+      authBar1: barStep >= 1 ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      authBar2: barStep >= 2 ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      authBar3: barStep >= 3 ? '#7A55F6' : 'rgba(186,215,247,.12)',
       authIdLabel: step === 'loginId' ? L.loginIdLabel : st.authMethod === 'email' ? L.emailLabel : st.authMethod === 'wa' ? L.waLabel : L.zaloLabel,
       authIdPh: step === 'loginId' ? L.loginIdPh : st.authMethod === 'email' ? L.emailPh : st.authMethod === 'wa' ? L.waPh : L.zaloPh,
       authIdIcon: step === 'loginId' ? 'ph-bold ph-user' : st.authMethod === 'email' ? 'ph-bold ph-envelope-simple' : st.authMethod === 'wa' ? 'ph-bold ph-whatsapp-logo' : 'ph-bold ph-chat-circle-dots',
@@ -909,7 +911,7 @@ class Component extends DCLogic {
       onAuthOtp: (e) => this.setState({ authOtp: e.target.value.replace(/\D/g, '').slice(0, 6), authErr:'' }),
       authOtpCells: [0,1,2,3,4,5].map(i => ({
         ch: st.authOtp[i] || '',
-        bd: st.authOtp.length === i ? '#2AC4E8' : st.authOtp[i] ? '#3B4A6B' : '#262F44'
+        bd: st.authOtp.length === i ? '#B6D9FC' : st.authOtp[i] ? 'rgba(186,215,247,.28)' : 'rgba(186,215,247,.12)'
       })),
       authPassValue: st.authPass, authPass2Value: st.authPass2,
       onAuthPass: (e) => this.setState({ authPass: e.target.value, authErr:'' }),
@@ -923,6 +925,7 @@ class Component extends DCLogic {
       authClose: () => this.setState({ auth:null, authErr:'' }),
       stopProp: (e) => e.stopPropagation(),
       authBackShow: step !== 'method' && step !== 'loginId',
+      authBackIcon: step !== 'method' && step !== 'loginId' ? 'ph-bold ph-arrow-left' : 'ph-bold ph-x',
       pickEmail: () => this.setState({ auth:'id', authMethod:'email', authId:'', authErr:'' }),
       pickWa: () => this.setState({ auth:'id', authMethod:'wa', authId:'', authErr:'', authOtp:'' }),
       authResend: () => this.say(L.otpResent),
@@ -940,7 +943,7 @@ class Component extends DCLogic {
       cxOpen: !!st.cx,
       cxSrcLabel: st.cx ? SRC[st.cx.src].label : '',
       cxIcon: st.cx ? SRC[st.cx.src].icon : 'ph-fill ph-link',
-      cxColor: st.cx ? SRC[st.cx.src].color : '#2AC4E8',
+      cxColor: st.cx ? SRC[st.cx.src].color : '#B6D9FC',
       cxStepPhone: !!st.cx && st.cx.step === 'phone',
       cxStepOtp: !!st.cx && st.cx.step === 'otp',
       cxStepConfirm: !!st.cx && st.cx.step === 'confirm',
@@ -958,7 +961,7 @@ class Component extends DCLogic {
       onCxOtp: (e) => this.cxSet({ otp: e.target.value.replace(/\D/g, '').slice(0, 6), err:'' }),
       cxOtpCells: [0,1,2,3,4,5].map(i => {
         const o = (st.cx ? st.cx.otp : '') || '';
-        return { ch: o[i] || '', bd: o.length === i ? '#2AC4E8' : o[i] ? '#3B4A6B' : '#262F44' };
+        return { ch: o[i] || '', bd: o.length === i ? '#B6D9FC' : o[i] ? 'rgba(186,215,247,.28)' : 'rgba(186,215,247,.12)' };
       }),
       cxScopes: [
         { icon:'ph-fill ph-user-circle', t:L.cxScope1 },
@@ -974,15 +977,15 @@ class Component extends DCLogic {
         return {
           label: SRC[k].label, icon: SRC[k].icon, color: SRC[k].color,
           state: on ? L.connectedToast : L.connect,
-          stateColor: on ? '#6FD79B' : '#2AC4E8',
+          stateColor: on ? '#6CC7B6' : '#B6D9FC',
           go: () => this.connectSocial(k)
         };
       }),
       friendsAll: connected ? FRIENDS.map(f => this.fView(f)) : [],
       friendsOnly: st.friendsOnly, showFriendsFilter: connected,
-      friendsFilterBg: st.friendsOnly ? 'rgba(42,196,232,.14)' : 'transparent',
-      friendsFilterBd: st.friendsOnly ? '#2AC4E8' : '#262F44',
-      friendsFilterFg: st.friendsOnly ? '#7FE0F5' : '#8891A8',
+      friendsFilterBg: st.friendsOnly ? 'rgba(182,217,252,.14)' : 'transparent',
+      friendsFilterBd: st.friendsOnly ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+      friendsFilterFg: st.friendsOnly ? '#D8ECF8' : '#9DA7BA',
       toggleFriendsOnly: () => this.setState({ friendsOnly: !st.friendsOnly, mapSel:null }),
       friendRowShow: friendEvents.length > 0,
       friendRow: friendEvents.slice(0, 4).map(e => {
@@ -999,13 +1002,13 @@ class Component extends DCLogic {
       friendSheetOpen: !!fSel,
       closeFriendSheet: () => this.setState({ friendSheet:null }),
       fsName: fSel ? fSel.name : '', fsInitials: fSel ? initialsOf(fSel.name) : '',
-      fsColor: fSel ? fSel.color : 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
-      fsIcon: fSel ? SRC[fSel.src].icon : '', fsIconColor: fSel ? SRC[fSel.src].color : '#8891A8',
+      fsColor: fSel ? fSel.color : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
+      fsIcon: fSel ? SRC[fSel.src].icon : '', fsIconColor: fSel ? SRC[fSel.src].color : '#9DA7BA',
       fsSrcLabel: fSel ? SRC[fSel.src].label : '',
       fsMutual: fSel ? (fSel.going.length + fSel.interested.length) + ' ' + L.mutual : '',
       fsFollowLabel: fSel && st.following[fSel.id] ? L.followingLabel : L.follow,
-      fsFollowBd: fSel && st.following[fSel.id] ? '#8C6BFF' : '#262F44',
-      fsFollowFg: fSel && st.following[fSel.id] ? '#B9A8FF' : '#8891A8',
+      fsFollowBd: fSel && st.following[fSel.id] ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      fsFollowFg: fSel && st.following[fSel.id] ? '#C4B8F7' : '#9DA7BA',
       fsFollow: () => { if (!fSel) return; const fo = Object.assign({}, st.following); fo[fSel.id] = !fo[fSel.id]; this.setState({ following:fo }); },
       fsChat: () => {
         const id = st.friendSheet;
@@ -1020,12 +1023,12 @@ class Component extends DCLogic {
 
       chatOpen: !!chatF,
       chatName: chatF ? chatF.name : '', chatInitials: chatF ? initialsOf(chatF.name) : '',
-      chatColor: chatF ? chatF.color : 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
+      chatColor: chatF ? chatF.color : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
       chatSrc: chatF ? SRC[chatF.src].label : '',
       chatEmpty: chatLog.length === 0,
       chatMsgs: chatLog.map(m => ({
         text: m.t, align: m.me ? 'flex-end' : 'flex-start',
-        bg: m.me ? '#2AC4E8' : 'rgba(26,34,51,.85)', fg: m.me ? '#0A0E1A' : '#F3F6FC',
+        bg: m.me ? '#B6D9FC' : 'rgba(20,24,38,.85)', fg: m.me ? '#090B16' : '#D8ECF8',
         radius: m.me ? '16px 16px 4px 16px' : '16px 16px 16px 4px'
       })),
       chatDraft: st.chatDraft,
@@ -1045,9 +1048,9 @@ class Component extends DCLogic {
       inviteList: FRIENDS.map(f => ({
         name:f.name, initials: initialsOf(f.name), color:f.color,
         icon: SRC[f.src].icon, iconColor: SRC[f.src].color,
-        bd: st.inviteSel[f.id] ? '#2AC4E8' : '#262F44',
-        tickBg: st.inviteSel[f.id] ? '#2AC4E8' : 'transparent',
-        tickBd: st.inviteSel[f.id] ? '#2AC4E8' : '#39455F',
+        bd: st.inviteSel[f.id] ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        tickBg: st.inviteSel[f.id] ? '#B6D9FC' : 'transparent',
+        tickBd: st.inviteSel[f.id] ? '#B6D9FC' : 'rgba(186,215,247,.24)',
         tick: st.inviteSel[f.id] ? '1' : '0',
         pick: () => { const s = Object.assign({}, st.inviteSel); s[f.id] = !s[f.id]; this.setState({ inviteSel:s }); }
       })),
@@ -1085,15 +1088,15 @@ class Component extends DCLogic {
       ].map(c => {
         const on = st.adCat === c.k;
         return { label:c.label, icon:c.icon,
-          bg: on ? 'rgba(42,196,232,.14)' : 'rgba(10,14,26,.6)', bd: on ? '#2AC4E8' : '#262F44',
-          fg: on ? '#7FE0F5' : '#C3CBDC',
+          bg: on ? 'rgba(182,217,252,.14)' : 'rgba(5,6,15,.6)', bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          fg: on ? '#D8ECF8' : '#C7D3EA',
           pick: () => this.setState({ adCat:c.k }) };
       }),
       adBudgets: ['Dưới 50tr₫','50–150tr₫','150–400tr₫','400tr₫+'].map(b => {
         const on = st.adBudget === b;
         return { label:b,
-          bg: on ? 'rgba(42,196,232,.14)' : 'rgba(10,14,26,.6)', bd: on ? '#2AC4E8' : '#262F44',
-          fg: on ? '#7FE0F5' : '#C3CBDC',
+          bg: on ? 'rgba(182,217,252,.14)' : 'rgba(5,6,15,.6)', bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          fg: on ? '#D8ECF8' : '#C7D3EA',
           pick: () => this.setState({ adBudget:b }) };
       }),
       adPlaces: [
@@ -1103,8 +1106,8 @@ class Component extends DCLogic {
         const on = !!st.adPlaces[p.k];
         return { label:p.label,
           icon: on ? 'ph-fill ph-check-square' : 'ph-bold ph-square',
-          color: on ? '#2AC4E8' : '#7C859C',
-          fg: on ? '#F3F6FC' : '#C3CBDC',
+          color: on ? '#B6D9FC' : '#8A94A8',
+          fg: on ? '#D8ECF8' : '#C7D3EA',
           toggle: () => { const x = Object.assign({}, st.adPlaces); x[p.k] = !on; this.setState({ adPlaces:x }); } };
       }),
       adRates: [L.adRate1, L.adRate2, L.adRate3].map(r => ({ label:r })),
@@ -1147,11 +1150,11 @@ class Component extends DCLogic {
             const on = !!st.following['art:' + a];
             return { name:a,
               hint: on ? (vi1 ? 'Bỏ theo dõi ' + a : 'Unfollow ' + a) : (vi1 ? 'Theo dõi ' + a : 'Follow ' + a),
-              bg: on ? 'rgba(42,196,232,.12)' : 'rgba(10,14,26,.6)',
-              bd: on ? '#2AC4E8' : '#33405C',
-              fg: on ? '#F3F6FC' : '#C3CBDC',
+              bg: on ? 'rgba(182,217,252,.12)' : 'rgba(5,6,15,.6)',
+              bd: on ? '#B6D9FC' : 'rgba(186,215,247,.2)',
+              fg: on ? '#D8ECF8' : '#C7D3EA',
               icon: on ? 'ph-fill ph-bell-ringing' : 'ph-bold ph-plus',
-              iconFg: on ? '#7FE0F5' : '#7C859C',
+              iconFg: on ? '#D8ECF8' : '#8A94A8',
               follow: () => {
                 if (!st.user) return this.openAuth('signup', null, L.gateSave);
                 this.toggleFollow('art', a);
@@ -1169,12 +1172,13 @@ class Component extends DCLogic {
             { label:L.factAge, value: det ? (det.age === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : det.age) : (isFree ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : '18+'), icon:'ph-bold ph-user-circle' }
           ],
           priceBig: isFree ? L.free : this.short(e.price),
-          priceColor: isFree ? '#2E9E5B' : '#F3F6FC',
+          priceColor: isFree ? '#269684' : '#D8ECF8',
           priceSub: isFree ? (g === 'vi' ? 'Không cần vé' : 'No ticket needed') : (g === 'vi' ? 'Giá thấp nhất, chưa gồm phí cổng' : 'Lowest tier, before gateway fees'),
           soldOut: !!e.soldOut,
           cta: e.soldOut ? L.soldOut : isFree ? L.freeEntry : L.getTickets,
-          ctaBg: e.soldOut ? '#1A2233' : isFree ? '#2E9E5B' : '#2AC4E8',
-          ctaFg: e.soldOut ? '#7C859C' : '#06080D',
+          ctaClass: e.soldOut ? '' : 'ff-cta',
+          ctaBg: e.soldOut ? '#131725' : isFree ? '#269684' : '#B6D9FC',
+          ctaFg: e.soldOut ? '#8A94A8' : '#05060F',
           buy: () => {
             if (e.soldOut) return this.say(g === 'vi' ? 'Đêm này đã hết vé' : 'This date is sold out');
             if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateTickets);
@@ -1184,9 +1188,9 @@ class Component extends DCLogic {
           ticketNote:L.ticketNote,
           saved: !!st.saved[e.id],
           saveLabel: st.saved[e.id] ? L.savedEvent : L.saveEvent,
-          saveBg: st.saved[e.id] ? 'rgba(42,196,232,.14)' : 'transparent',
-          saveBd: st.saved[e.id] ? '#2AC4E8' : '#262F44',
-          saveFg: st.saved[e.id] ? '#7FE0F5' : '#C3CBDC',
+          saveBg: st.saved[e.id] ? 'rgba(182,217,252,.14)' : 'transparent',
+          saveBd: st.saved[e.id] ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          saveFg: st.saved[e.id] ? '#D8ECF8' : '#C7D3EA',
           save: () => {
             if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateSave);
             this.toggleFlag('saved', '/me/saves/', e.id);
@@ -1207,9 +1211,9 @@ class Component extends DCLogic {
           },
           followOrgLabel: st.following['org:' + org.id] ? L.followOrgDone : L.followOrgCta,
           followOrgIcon: st.following['org:' + org.id] ? 'ph-fill ph-bell-ringing' : 'ph-bold ph-bell',
-          followOrgBg: st.following['org:' + org.id] ? 'rgba(42,196,232,.12)' : 'transparent',
-          followOrgBd: st.following['org:' + org.id] ? '#2AC4E8' : '#33405C',
-          followOrgFg: st.following['org:' + org.id] ? '#7FE0F5' : '#C3CBDC',
+          followOrgBg: st.following['org:' + org.id] ? 'rgba(182,217,252,.12)' : 'transparent',
+          followOrgBd: st.following['org:' + org.id] ? '#B6D9FC' : 'rgba(186,215,247,.2)',
+          followOrgFg: st.following['org:' + org.id] ? '#D8ECF8' : '#C7D3EA',
           followOrgNote: L.followOrgNote,
           similar: (() => {
             if (det && det.similar) return det.similar.map(s => EVENTS.find(x => x.id === s.id)).filter(Boolean);
@@ -1227,7 +1231,7 @@ class Component extends DCLogic {
       tt: (() => {
         const e = EVENTS.filter(x => x.id === st.detailId)[0];
         const T = e ? TT[e.id] : null;
-        if (!T) return { show:false, days:[], ticks:[], gridLines:[], stages:[], clashes:[], hasPlan:false, hasClash:false, planLine:'', planFg:'#7C859C', clashTitle:'' };
+        if (!T) return { show:false, days:[], ticks:[], gridLines:[], stages:[], clashes:[], hasPlan:false, hasClash:false, planLine:'', planFg:'#8A94A8', clashTitle:'' };
         const di = Math.min(st.ttDay, T.days.length - 1), day = T.days[di];
         const w0 = T.win[0], w1 = T.win[1], span = w1 - w0;
         const pct = (m) => Math.round((m - w0) / span * 1000) / 10;
@@ -1252,9 +1256,9 @@ class Component extends DCLogic {
           show: true,
           days: T.days.map((d, i) => ({
             label: d[g],
-            bg: i === di ? 'rgba(42,196,232,.14)' : 'transparent',
-            bd: i === di ? '#2AC4E8' : '#262F44',
-            fg: i === di ? '#7FE0F5' : '#8891A8',
+            bg: i === di ? 'rgba(182,217,252,.14)' : 'transparent',
+            bd: i === di ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+            fg: i === di ? '#D8ECF8' : '#9DA7BA',
             pick: () => this.setState({ ttDay:i })
           })),
           ticks: ticks, gridLines: gridLines,
@@ -1267,13 +1271,13 @@ class Component extends DCLogic {
                 left: pct(x[1]) + '%', width: Math.max(4, pct(x[2]) - pct(x[1])) + '%',
                 picked: on,
                 hint: on ? (vi1 ? 'Bỏ khỏi lịch' : 'Remove from your plan') : (vi1 ? 'Thêm vào lịch' : 'Add to your plan'),
-                bg: on ? (bad ? 'rgba(255,138,61,.24)' : 'rgba(42,196,232,.22)') : 'rgba(26,34,51,.85)',
-                bd: on ? (bad ? '#FF8A3D' : '#2AC4E8') : '#2C3648',
-                glow: on ? (bad ? '0 0 0 1px rgba(255,138,61,.35)' : '0 0 0 1px rgba(42,196,232,.3)') : 'none',
-                fg: on ? '#F3F6FC' : '#C3CBDC',
-                timeFg: on ? (bad ? '#FFB35C' : '#7FE0F5') : '#7C859C',
+                bg: on ? (bad ? 'rgba(228,109,76,.24)' : 'rgba(182,217,252,.22)') : 'rgba(20,24,38,.85)',
+                bd: on ? (bad ? '#E46D4C' : '#B6D9FC') : '#2C3648',
+                glow: on ? (bad ? '0 0 0 1px rgba(228,109,76,.35)' : '0 0 0 1px rgba(182,217,252,.3)') : 'none',
+                fg: on ? '#D8ECF8' : '#C7D3EA',
+                timeFg: on ? (bad ? '#F0A07F' : '#D8ECF8') : '#8A94A8',
                 icon: bad ? 'ph-fill ph-warning' : 'ph-fill ph-check-circle',
-                iconFg: bad ? '#FFB35C' : '#7FE0F5',
+                iconFg: bad ? '#F0A07F' : '#D8ECF8',
                 toggle: () => {
                   if (!st.user) return this.openAuth('signup', null, L.gateSave);
                   const p = Object.assign({}, st.plan); p[id] = !on; this.setState({ plan:p });
@@ -1284,7 +1288,7 @@ class Component extends DCLogic {
           })),
           hasPlan: picked.length > 0,
           planLine: picked.length ? L.ttPlan.replace('{n}', String(picked.length)) : L.ttPlanEmpty,
-          planFg: picked.length ? '#7FE0F5' : '#7C859C',
+          planFg: picked.length ? '#D8ECF8' : '#8A94A8',
           hasClash: clashes.length > 0,
           clashTitle: L.ttClash,
           clashes: clashes,
@@ -1305,10 +1309,10 @@ class Component extends DCLogic {
         const names = { early:L.tierEarly, ga:L.tierGA, vip:L.tierVIP, table:L.tierTable };
         const notes = { early:L.tierEarlyNote, ga:L.tierGANote, vip:L.tierVIPNote, table:L.tierTableNote };
         const stMap = {
-          onsale: { label:L.tierOnSale, fg:'#6FD79B', bg:'rgba(46,158,91,.14)', bd:'rgba(46,158,91,.4)' },
-          last: { label:L.tierLast, fg:'#FFB35C', bg:'rgba(255,138,61,.14)', bd:'rgba(255,138,61,.42)' },
-          soldout: { label:L.tierSoldOut, fg:'#8891A8', bg:'rgba(95,104,128,.14)', bd:'#262F44' },
-          soon: { label:L.tierSoon, fg:'#B9A8FF', bg:'rgba(140,107,255,.14)', bd:'rgba(140,107,255,.4)' }
+          onsale: { label:L.tierOnSale, fg:'#6CC7B6', bg:'rgba(38,150,132,.14)', bd:'rgba(38,150,132,.4)' },
+          last: { label:L.tierLast, fg:'#F0A07F', bg:'rgba(228,109,76,.14)', bd:'rgba(228,109,76,.42)' },
+          soldout: { label:L.tierSoldOut, fg:'#9DA7BA', bg:'rgba(157,167,186,.112)', bd:'rgba(186,215,247,.12)' },
+          soon: { label:L.tierSoon, fg:'#C4B8F7', bg:'rgba(102,58,243,.14)', bd:'rgba(102,58,243,.4)' }
         };
         const urgent = set.tiers.filter(t => t.state === 'last')[0];
         return {
@@ -1321,18 +1325,18 @@ class Component extends DCLogic {
             return {
               name: t.name[g], note: t.note ? t.note[g] : (notes[t.key] || ''),
               price: this.short(t.price),
-              priceFg: out ? '#7C859C' : '#F3F6FC',
-              nameFg: out ? '#8891A8' : '#F3F6FC',
+              priceFg: out ? '#8A94A8' : '#D8ECF8',
+              nameFg: out ? '#9DA7BA' : '#D8ECF8',
               state: m.label, stFg: m.fg, stBg: m.bg, stBd: m.bd,
               op: out ? '.62' : '1',
               hasLeft: !!t.left && !out,
               left: t.left ? L.tierLeft.replace('{n}', String(t.left)) : '',
-              leftFg: t.state === 'last' ? '#FFB35C' : '#7C859C',
+              leftFg: t.state === 'last' ? '#F0A07F' : '#8A94A8',
               cta: out ? L.tierSoldOut : soon ? L.tierNotify : L.tierBuy,
               cursor: out ? 'default' : 'pointer',
-              ctaBg: out ? 'transparent' : soon ? 'transparent' : t.state === 'last' ? '#FF8A3D' : '#2AC4E8',
-              ctaBd: out ? '#262F44' : soon ? '#8C6BFF' : 'transparent',
-              ctaFg: out ? '#7C859C' : soon ? '#B9A8FF' : '#06080D',
+              ctaBg: out ? 'transparent' : soon ? 'transparent' : t.state === 'last' ? 'rgba(228,109,76,.14)' : 'rgba(186,214,247,.06)',
+              ctaBd: out ? 'rgba(186,215,247,.12)' : soon ? '#7A55F6' : t.state === 'last' ? 'rgba(228,109,76,.5)' : 'rgba(186,215,247,.2)',
+              ctaFg: out ? '#8A94A8' : soon ? '#C4B8F7' : t.state === 'last' ? '#F0A07F' : '#FFFFFF',
               buy: () => {
                 if (out) return this.say(L.tierSoldToast);
                 if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateTickets);
@@ -1351,10 +1355,10 @@ class Component extends DCLogic {
       reportCodes: REPORT_CODES.map(c => {
         const on = st.reportCode === c.k;
         return { label: c[g], icon:c.icon,
-          bg: on ? 'rgba(42,196,232,.1)' : 'rgba(10,14,26,.6)',
-          bd: on ? '#2AC4E8' : '#262F44',
-          fg: on ? '#F3F6FC' : '#C3CBDC',
-          iconFg: on ? '#7FE0F5' : '#7C859C',
+          bg: on ? 'rgba(182,217,252,.1)' : 'rgba(5,6,15,.6)',
+          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          fg: on ? '#D8ECF8' : '#C7D3EA',
+          iconFg: on ? '#D8ECF8' : '#8A94A8',
           pick: () => this.setState({ reportCode:c.k }) };
       }),
       reportNote: st.reportNote,
@@ -1387,9 +1391,9 @@ class Component extends DCLogic {
           const on = !!st.notifM[r.k][c];
           return {
             icon: on ? 'ph-fill ph-check-circle' : 'ph-bold ph-circle',
-            color: on ? '#2AC4E8' : '#33405C',
-            bg: on ? 'rgba(42,196,232,.1)' : 'transparent',
-            bd: on ? 'rgba(42,196,232,.4)' : '#1F2739',
+            color: on ? '#B6D9FC' : 'rgba(186,215,247,.2)',
+            bg: on ? 'rgba(182,217,252,.1)' : 'transparent',
+            bd: on ? 'rgba(182,217,252,.4)' : '#171B29',
             hint: (on ? (vi1 ? 'Tắt ' : 'Turn off ') : (vi1 ? 'Bật ' : 'Turn on ')) + r[g],
             toggle: () => {
               const m = Object.assign({}, st.notifM);
@@ -1419,9 +1423,9 @@ class Component extends DCLogic {
           ],
           following: following,
           followLabel: following ? L.followingLabel : L.follow,
-          followBg: following ? 'transparent' : '#2AC4E8',
-          followFg: following ? '#7FE0F5' : '#06080D',
-          followBd: following ? '#2AC4E8' : '#2AC4E8',
+          followBg: following ? 'transparent' : '#B6D9FC',
+          followFg: following ? '#D8ECF8' : '#05060F',
+          followBd: following ? '#B6D9FC' : '#B6D9FC',
           follow: () => {
             if (!st.user) return this.openAuth('signup', null, L.gateSave);
             this.toggleFollow('org', o.id);
@@ -1434,7 +1438,7 @@ class Component extends DCLogic {
             title:x.title, art:x.art, genre:x.genre, whenLine: this.when(x),
             whereLine: x.venue + ' · ' + x.dist + ' km',
             priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price),
-            priceColor: x.price === 0 ? '#2E9E5B' : '#F3F6FC',
+            priceColor: x.price === 0 ? '#269684' : '#D8ECF8',
             open: () => this.openEvent(x.id)
           })),
           pastRows: past
@@ -1445,19 +1449,19 @@ class Component extends DCLogic {
 
       screenTabs: tabDefs.map(t => ({
         label:t.label,
-        bg: st.screen === t.k ? '#2AC4E8' : 'transparent',
-        fg: st.screen === t.k ? '#0A0E1A' : '#8891A8',
+        bg: st.screen === t.k ? '#B6D9FC' : 'transparent',
+        fg: st.screen === t.k ? '#090B16' : '#9DA7BA',
         go: () => { this.setState({ screen:t.k }); if (t.k === 'landing' || t.k === 'about') FF.webLanding(this); }
       })),
       query: st.q, onQuery: (e) => this.refilter({ q: e.target.value }),
 
       statCards: [
-        { k:'free', value: String(statFree.length), label: L.statFree, color:'#2E9E5B' },
-        { k:'weekend', value: String(statWeekend.length), label: L.statWeekend, color:'#2AC4E8' },
-        { k:'venues', value: String(statVenueKeys.length), label: L.statVenues, color:'#8C6BFF' }
+        { k:'free', value: String(statFree.length), label: L.statFree, color:'#269684' },
+        { k:'weekend', value: String(statWeekend.length), label: L.statWeekend, color:'#B6D9FC' },
+        { k:'venues', value: String(statVenueKeys.length), label: L.statVenues, color:'#9D84F8' }
       ].map(s => ({ value:s.value, label:s.label, color:s.color, hint: L.statCardHint, open: () => this.openStat(s.k) })),
 
-      statAccent: statK === 'free' ? '#2E9E5B' : statK === 'venues' ? '#8C6BFF' : '#2AC4E8',
+      statAccent: statK === 'free' ? '#269684' : statK === 'venues' ? '#7A55F6' : '#B6D9FC',
       statKicker: L.statKicker,
       statTitle: statK === 'free' ? L.statHeadFree : statK === 'venues' ? L.statHeadVenues : L.statHeadWeekend,
       statSub: statK === 'free' ? L.statSubFree : statK === 'venues' ? L.statSubVenues : L.statSubWeekend,
@@ -1478,8 +1482,8 @@ class Component extends DCLogic {
             return {
               title: v, art: first.art, icon:'ph-fill ph-map-pin',
               meta: first.dist + ' km · ' + list.map(e => e.title).slice(0, 2).join(' · '),
-              hasTag: false, tag:'', tagBg:'transparent', tagBd:'transparent', tagFg:'#8891A8',
-              stat: String(list.length), statFg:'#B9A8FF', statLabel: L.statEventsOn,
+              hasTag: false, tag:'', tagBg:'transparent', tagBd:'transparent', tagFg:'#9DA7BA',
+              stat: String(list.length), statFg:'#C4B8F7', statLabel: L.statEventsOn,
               cta: L.statOpenMap, ctaIcon:'ph-bold ph-map-trifold',
               open: () => this.openOnMap(first.id)
             };
@@ -1490,35 +1494,35 @@ class Component extends DCLogic {
           meta: this.when(e) + ' · ' + e.venue + ' · ' + e.dist + ' km',
           hasTag: e.price === 0 || e.soldOut,
           tag: e.soldOut ? L.soldOut : L.free,
-          tagBg: e.soldOut ? 'rgba(255,138,61,.14)' : 'rgba(46,158,91,.14)',
-          tagBd: e.soldOut ? 'rgba(255,138,61,.5)' : 'rgba(46,158,91,.5)',
-          tagFg: e.soldOut ? '#FFB35C' : '#6FD79B',
+          tagBg: e.soldOut ? 'rgba(228,109,76,.14)' : 'rgba(38,150,132,.14)',
+          tagBd: e.soldOut ? 'rgba(228,109,76,.5)' : 'rgba(38,150,132,.5)',
+          tagFg: e.soldOut ? '#F0A07F' : '#6CC7B6',
           stat: e.hype >= 1000 ? (e.hype / 1000).toFixed(1) + 'K' : String(e.hype),
-          statFg:'#F3F6FC', statLabel: L.statHype,
+          statFg:'#D8ECF8', statLabel: L.statHype,
           cta: L.statOpenEvent, ctaIcon:'ph-bold ph-arrow-right',
           open: () => this.openEvent(e.id)
         }));
       })(),
 
       aboutFacts: [
-        { value: vi1 ? '48.200' : '48,200', label: vi1 ? 'người đã xem sự kiện ở TP.HCM trong 30 ngày qua' : 'people browsed events in Ho Chi Minh City in the last 30 days', color:'#2AC4E8' },
-        { value: vi1 ? '2 giờ' : '2 hours', label: vi1 ? 'thời gian duyệt trung bình cho một tin mới' : 'median time to check and publish a new listing', color:'#8C6BFF' },
-        { value: '0₫', label: vi1 ? 'phí đặt vé — vé do nhà tổ chức bán' : 'booking fee — tickets are sold by the organiser', color:'#2E9E5B' }
+        { value: vi1 ? '48.200' : '48,200', label: vi1 ? 'người đã xem sự kiện ở TP.HCM trong 30 ngày qua' : 'people browsed events in Ho Chi Minh City in the last 30 days', color:'#B6D9FC' },
+        { value: vi1 ? '2 giờ' : '2 hours', label: vi1 ? 'thời gian duyệt trung bình cho một tin mới' : 'median time to check and publish a new listing', color:'#9D84F8' },
+        { value: '0₫', label: vi1 ? 'phí đặt vé — vé do nhà tổ chức bán' : 'booking fee — tickets are sold by the organiser', color:'#269684' }
       ],
       contactCards: [
-        { title: L.abContactUsers, body: L.abContactUsersBody, icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8', tint:'rgba(42,196,232,.13)',
+        { title: L.abContactUsers, body: L.abContactUsersBody, icon:'ph-fill ph-chat-circle-dots', color:'#B6D9FC', tint:'rgba(182,217,252,.13)',
           link:'hello@festfinder.vn', href:'mailto:hello@festfinder.vn', linkIcon:'ph-bold ph-envelope-simple', hasAction:false },
-        { title: L.abContactOrg, body: L.abContactOrgBody, icon:'ph-fill ph-megaphone', color:'#6FD79B', tint:'rgba(46,158,91,.14)',
+        { title: L.abContactOrg, body: L.abContactOrgBody, icon:'ph-fill ph-megaphone', color:'#6CC7B6', tint:'rgba(38,150,132,.14)',
           link:'organisers@festfinder.vn', href:'mailto:organisers@festfinder.vn', linkIcon:'ph-bold ph-envelope-simple', hasAction:false },
-        { title: L.abContactBrand, body: L.abContactBrandBody, icon:'ph-fill ph-briefcase', color:'#B9A8FF', tint:'rgba(140,107,255,.14)',
+        { title: L.abContactBrand, body: L.abContactBrandBody, icon:'ph-fill ph-briefcase', color:'#C4B8F7', tint:'rgba(102,58,243,.14)',
           link:'partners@festfinder.vn', href:'mailto:partners@festfinder.vn', linkIcon:'ph-bold ph-envelope-simple',
           hasAction:true, actionLabel: L.abAdvertise, action: () => this.setState({ screen:'explore', adsOpen:true, adErr:'' }) }
       ],
       socialLinks: [
-        { label:'Facebook', handle:'/festfinder.vn', href:'https://facebook.com/festfinder.vn', icon:'ph-fill ph-facebook-logo', color:'#4EA1FF' },
-        { label:'Instagram', handle:'@festfinder.vn', href:'https://instagram.com/festfinder.vn', icon:'ph-fill ph-instagram-logo', color:'#FF6FA5' },
-        { label:'TikTok', handle:'@festfinder', href:'https://tiktok.com/@festfinder', icon:'ph-fill ph-tiktok-logo', color:'#F3F6FC' },
-        { label:'Zalo', handle:'FestFinder OA', href:'https://zalo.me/festfinder', icon:'ph-fill ph-chat-circle-text', color:'#2AC4E8' }
+        { label:'Facebook', handle:'/festfinder.vn', href:'https://facebook.com/festfinder.vn', icon:'ph-fill ph-facebook-logo', color:'#6FB0F0' },
+        { label:'Instagram', handle:'@festfinder.vn', href:'https://instagram.com/festfinder.vn', icon:'ph-fill ph-instagram-logo', color:'#E88AA8' },
+        { label:'TikTok', handle:'@festfinder', href:'https://tiktok.com/@festfinder', icon:'ph-fill ph-tiktok-logo', color:'#D8ECF8' },
+        { label:'Zalo', handle:'FeestFinder OA', href:'https://zalo.me/festfinder', icon:'ph-fill ph-chat-circle-text', color:'#B6D9FC' }
       ],
       aboutMeta: [
         { label: L.abOffice, value:'48 Lê Lợi, Bến Nghé, Quận 1, TP.HCM' },
@@ -1528,34 +1532,34 @@ class Component extends DCLogic {
 
       timeOptions: timeDefs.map(t => ({
         label:t.label, icon:t.icon, count: String(countFor(t.k)),
-        bg: st.time === t.k && !st.q ? 'rgba(42,196,232,.14)' : 'transparent',
-        bd: st.time === t.k && !st.q ? '#2AC4E8' : '#262F44',
-        fg: st.time === t.k && !st.q ? '#7FE0F5' : '#8891A8',
-        countColor: st.time === t.k && !st.q ? '#2AC4E8' : '#7C859C',
+        bg: st.time === t.k && !st.q ? 'rgba(182,217,252,.14)' : 'transparent',
+        bd: st.time === t.k && !st.q ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        fg: st.time === t.k && !st.q ? '#D8ECF8' : '#9DA7BA',
+        countColor: st.time === t.k && !st.q ? '#B6D9FC' : '#8A94A8',
         pick: () => this.refilter({ time:t.k, q:'' })
       })),
       genreOptions: GENRES.map(n => ({
         name: n === 'All' ? L.all : n,
-        bg: st.genre === n ? '#241C40' : 'transparent',
-        bd: st.genre === n ? '#8C6BFF' : '#262F44',
-        fg: st.genre === n ? '#CFC6FF' : '#8891A8',
+        bg: st.genre === n ? '#1A1236' : 'transparent',
+        bd: st.genre === n ? '#7A55F6' : 'rgba(186,215,247,.12)',
+        fg: st.genre === n ? '#D6CFFA' : '#9DA7BA',
         pick: () => this.refilter({ genre:n })
       })),
       priceOptions: priceDefs.map(p => ({
         label:p.label,
-        bg: st.prices[p.k] ? 'rgba(42,196,232,.1)' : 'transparent',
-        bd: st.prices[p.k] ? '#2AC4E8' : '#262F44',
-        fg: st.prices[p.k] ? '#7FE0F5' : '#8891A8',
-        boxBd: st.prices[p.k] ? '#2AC4E8' : '#39455F',
-        boxBg: st.prices[p.k] ? '#2AC4E8' : 'transparent',
+        bg: st.prices[p.k] ? 'rgba(182,217,252,.1)' : 'transparent',
+        bd: st.prices[p.k] ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        fg: st.prices[p.k] ? '#D8ECF8' : '#9DA7BA',
+        boxBd: st.prices[p.k] ? '#B6D9FC' : 'rgba(186,215,247,.24)',
+        boxBg: st.prices[p.k] ? '#B6D9FC' : 'transparent',
         tick: st.prices[p.k] ? '1' : '0',
         pick: () => { const n = Object.assign({}, st.prices); n[p.k] = !n[p.k]; this.refilter({ prices:n }); }
       })),
       sortOptions: sortDefs.map(s => ({
         label:s.label,
-        bg: st.sort === s.k ? '#2AC4E8' : 'transparent',
-        bd: st.sort === s.k ? '#2AC4E8' : '#262F44',
-        fg: st.sort === s.k ? '#0A0E1A' : '#8891A8',
+        bg: st.sort === s.k ? '#B6D9FC' : 'transparent',
+        bd: st.sort === s.k ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        fg: st.sort === s.k ? '#090B16' : '#9DA7BA',
         pick: () => this.setState({ sort:s.k })
       })),
       resetFilters: () => this.refilter({ time:'weekend', genre:'All', prices:{}, q:'', sort:'date' }),
@@ -1596,20 +1600,20 @@ class Component extends DCLogic {
       ].map(f => {
         const on = st.mapGenre === f.k;
         return { label:f.label, icon:f.icon,
-          bg: on ? 'rgba(42,196,232,.14)' : 'rgba(18,24,38,.6)',
-          bd: on ? '#2AC4E8' : '#262F44',
-          fg: on ? '#7FE0F5' : '#8891A8',
+          bg: on ? 'rgba(182,217,252,.14)' : 'rgba(13,16,28,.6)',
+          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          fg: on ? '#D8ECF8' : '#9DA7BA',
           pick: () => this.setState({ mapGenre:f.k, mapSel:null }) };
       }).concat([{
         label: L.mapFree, icon:'ph-bold ph-gift',
-        bg: st.mapFree ? 'rgba(46,158,91,.16)' : 'rgba(18,24,38,.6)',
-        bd: st.mapFree ? '#2E9E5B' : '#262F44',
-        fg: st.mapFree ? '#6FD79B' : '#8891A8',
+        bg: st.mapFree ? 'rgba(38,150,132,.16)' : 'rgba(13,16,28,.6)',
+        bd: st.mapFree ? '#269684' : 'rgba(186,215,247,.12)',
+        fg: st.mapFree ? '#6CC7B6' : '#9DA7BA',
         pick: () => this.setState({ mapFree: !st.mapFree, mapSel:null })
       }]),
       mapCards: mapList.map(e => Object.assign({}, this.card(e, L), {
-        rowBg: st.mapSel === e.id ? 'rgba(42,196,232,.1)' : 'rgba(18,24,38,.6)',
-        rowBd: st.mapSel === e.id ? '#2AC4E8' : '#262F44',
+        rowBg: st.mapSel === e.id ? 'rgba(182,217,252,.1)' : 'rgba(13,16,28,.6)',
+        rowBd: st.mapSel === e.id ? '#B6D9FC' : 'rgba(186,215,247,.12)',
         select: () => this.setState({ mapSel:e.id })
       })),
       mapPins: (() => {
@@ -1634,10 +1638,10 @@ class Component extends DCLogic {
         y: pinPos[e.id].y + '%',
         price: e.price === 0 ? L.free : this.short(e.price),
         z: st.mapSel === e.id ? 6 : 4,
-        bg: st.mapSel === e.id ? '#2AC4E8' : 'rgba(10,14,26,.82)',
-        bd: st.mapSel === e.id ? '#2AC4E8' : e.featured ? '#8C6BFF' : '#2AC4E8',
-        fg: st.mapSel === e.id ? '#0A0E1A' : '#F3F6FC',
-        glow: st.mapSel === e.id ? '0 6px 22px rgba(42,196,232,.5)' : '0 4px 14px rgba(0,0,0,.5)',
+        bg: st.mapSel === e.id ? '#B6D9FC' : 'rgba(5,6,15,.82)',
+        bd: st.mapSel === e.id ? '#B6D9FC' : e.featured ? '#7A55F6' : '#B6D9FC',
+        fg: st.mapSel === e.id ? '#090B16' : '#D8ECF8',
+        glow: st.mapSel === e.id ? '0 6px 22px rgba(182,217,252,.5)' : '0 4px 14px rgba(0,0,0,.5)',
         pick: () => this.setState({ mapSel:e.id })
       }; });
       })(),
@@ -1645,9 +1649,9 @@ class Component extends DCLogic {
       mapSelHasFriends: !!(sel && connected && this.fGoing(sel.id).length),
       mapSelFriendsLine: sel && connected ? this.fGoing(sel.id).length + ' ' + L.friendsGoing : '',
       imGoingLabel: sel && st.going[sel.id] ? L.youreGoing : L.imGoing,
-      imGoingBg: sel && st.going[sel.id] ? 'rgba(46,158,91,.16)' : 'transparent',
-      imGoingBd: sel && st.going[sel.id] ? '#2E9E5B' : '#39455F',
-      imGoingFg: sel && st.going[sel.id] ? '#6FD79B' : '#8891A8',
+      imGoingBg: sel && st.going[sel.id] ? 'rgba(38,150,132,.16)' : 'transparent',
+      imGoingBd: sel && st.going[sel.id] ? '#269684' : 'rgba(186,215,247,.24)',
+      imGoingFg: sel && st.going[sel.id] ? '#6CC7B6' : '#9DA7BA',
       toggleGoing: () => {
         if (!sel) return;
         if (!st.user) return this.openAuth('signup', null, L.gateSave);
@@ -1686,7 +1690,7 @@ class Component extends DCLogic {
         q: f.q[g], a: f.a[g],
         display: st.faqOpen[i] ? 'block' : 'none',
         icon: st.faqOpen[i] ? 'ph-bold ph-minus' : 'ph-bold ph-plus',
-        bd: st.faqOpen[i] ? '#33405C' : '#262F44',
+        bd: st.faqOpen[i] ? 'rgba(186,215,247,.2)' : 'rgba(186,215,247,.12)',
         toggle: () => { const o = Object.assign({}, st.faqOpen); o[i] = !o[i]; this.setState({ faqOpen:o }); }
       })),
       relatedLinks: RELATED.map(r => ({ label: r.label[g], href: r.href })),

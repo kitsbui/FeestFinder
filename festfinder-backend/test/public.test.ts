@@ -166,3 +166,53 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal(unauth.status, 401);
   });
 });
+
+describe('rate limit', () => {
+  let env: TestEnv;
+  before(async () => { env = await setup({ config: { rateLimitPerMinute: 3 } }); });
+  after(async () => { await env.close(); });
+
+  /** A request as the API sees it; `forwardedFor` also marks it as proxied by Next, as Next does. */
+  const hit = (remoteAddress: string, forwardedFor?: string, proxied = forwardedFor !== undefined) => env.app.inject({
+    method: 'GET', url: '/genres', remoteAddress,
+    headers: {
+      'x-lang': 'en',
+      ...(forwardedFor ? { 'x-forwarded-for': forwardedFor } : {}),
+      ...(proxied ? { 'x-forwarded-host': 'festfinder.vn' } : {}),
+    },
+  });
+
+  it('answers 429 with its own message once a client goes over', async () => {
+    for (let i = 0; i < 3; i++) assert.equal((await hit('203.0.113.9')).statusCode, 200);
+    const over = await hit('203.0.113.9');
+    assert.equal(over.statusCode, 429);
+    assert.equal(over.json().error.code, 'rate_limited');
+    assert.match(over.json().error.message, /Too many requests/);
+    assert.ok(over.headers['retry-after']);
+  });
+
+  it('counts each browser behind the Next.js app on its own', async () => {
+    for (let i = 0; i < 3; i++) assert.equal((await hit('127.0.0.1', '198.51.100.7')).statusCode, 200);
+    assert.equal((await hit('127.0.0.1', '198.51.100.7')).statusCode, 429);
+    assert.equal((await hit('127.0.0.1', '198.51.100.8')).statusCode, 200);
+  });
+
+  it('ignores a forwarded address from a client that is not our proxy', async () => {
+    for (let i = 0; i < 3; i++) await hit('203.0.113.50', `192.0.2.${i}`);
+    assert.equal((await hit('203.0.113.50', '192.0.2.99')).statusCode, 429);
+  });
+
+  it('never limits server-side rendering from our own network', async () => {
+    for (let i = 0; i < 6; i++) assert.equal((await hit('10.0.0.5')).statusCode, 200);
+  });
+
+  it('limits a browser that claims a private address through the proxy', async () => {
+    for (let i = 0; i < 3; i++) assert.equal((await hit('127.0.0.2', '10.9.9.9')).statusCode, 200);
+    assert.equal((await hit('127.0.0.2', '10.9.9.9')).statusCode, 429);
+  });
+
+  it('limits proxied browsers even when no forwarded address reaches us', async () => {
+    for (let i = 0; i < 3; i++) assert.equal((await hit('10.0.0.6', undefined, true)).statusCode, 200);
+    assert.equal((await hit('10.0.0.6', undefined, true)).statusCode, 429);
+  });
+});

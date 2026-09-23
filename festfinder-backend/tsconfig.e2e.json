@@ -1,0 +1,16 @@
+{
+  "//": "Playwright tests: their page.evaluate() callbacks run in the browser, so they get DOM types; the server code does not.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": [
+      "es2024",
+      "dom",
+      "dom.iterable"
+    ]
+  },
+  "include": [
+    "e2e",
+    "playwright.config.ts",
+    "playwright.next.config.ts"
+  ]
+}

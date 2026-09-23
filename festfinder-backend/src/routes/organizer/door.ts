@@ -157,7 +157,7 @@ export default async function doorRoutes(app: FastifyInstance) {
       await enqueue(q, null, 'sms', phone, 'staff_invite', {
         lang: 'vi',
         title: L(`You're on the door for ${ev.title}`, `Bạn soát vé cho ${ev.title}`),
-        body: L(`Sign in to FestFinder Door with this number: ${ctx.config.publicBaseUrl}/door`, `Đăng nhập FestFinder Door bằng số này: ${ctx.config.publicBaseUrl}/door`),
+        body: L(`Sign in to FeestFinder Door with this number: ${ctx.config.publicBaseUrl}/door`, `Đăng nhập FeestFinder Door bằng số này: ${ctx.config.publicBaseUrl}/door`),
       }, now);
       return p;
     });

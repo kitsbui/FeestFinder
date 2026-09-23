@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FestFinder</title>
+<title>FeestFinder</title>
+<link rel="icon" href="/ui/assets/favicon.ico" sizes="32x32">
+<link rel="icon" href="/ui/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/ui/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="/pages/app/template.html" as="fetch" crossorigin>
 <link rel="preload" href="/pages/app/logic.js" as="fetch" crossorigin>
 <script src="/ui/ff-client.js"></script>
 </head>
-<body>
+<body data-surface="app" data-base="/app">
 <!-- The runtime reads the template from here and the logic from the script below;
      FF.mount fills both in, after the data this route needs is in hand. -->
 <x-dc></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:460,&quot;height&quot;:990},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Onboarding&quot;,&quot;Explore feed&quot;],&quot;default&quot;:&quot;Onboarding&quot;,&quot;tsType&quot;:&quot;'Onboarding' | 'Explore feed'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;signedIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;language&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;English&quot;,&quot;Tiếng Việt&quot;],&quot;default&quot;:&quot;English&quot;,&quot;tsType&quot;:&quot;'English' | 'Tiếng Việt'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;loadSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0,&quot;max&quot;:2500,&quot;step&quot;:100,&quot;unit&quot;:&quot;ms&quot;,&quot;default&quot;:900,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;hideUnavailable&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}"></script>
-<script>FF.mount({ surface: 'app', base: '/app' });</script>
 </body>
 </html>

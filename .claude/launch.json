@@ -4,14 +4,61 @@
     {
       "name": "festfinder-design",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "5500", "--bind", "127.0.0.1", "--directory", "design_handoff_festfinder/design"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5500",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "design_handoff_festfinder/design"
+      ],
       "port": 5500
     },
     {
       "name": "festfinder-api",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "festfinder-backend"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "festfinder-backend"
+      ],
       "port": 4000
+    },
+    {
+      "name": "festfinder-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "festfinder-web"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "festfinder-web-prod",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--prefix",
+        "festfinder-web",
+        "next",
+        "start",
+        "festfinder-web",
+        "--port",
+        "3001"
+      ],
+      "port": 3001
+    },
+    {
+      "name": "festfinder-ops",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd festfinder-backend && PORT=4300 PUBLIC_BASE_URL=http://localhost:4300 PGLITE_DIR=./.data/pglite-ops UPLOAD_DIR=./.data/uploads-ops JOBS_ENABLED=false LINK_CHECKS_ENABLED=false exec node --env-file-if-exists=.env --watch src/server.ts"
+      ],
+      "port": 4300
     }
   ]
 }

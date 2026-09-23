@@ -28,7 +28,7 @@ function toEvent(c) {
     featured: !!c.featured, soldOut: !!c.soldOut,
     artists: c.artists || [], lineup: c.lineup || [],
     organizer: c.organizer.name, organizerId: c.organizer.id,
-    art: c.coverUrl ? 'url("' + c.coverUrl + '") center/cover no-repeat' : (c.art || 'linear-gradient(135deg,#8C6BFF,#2AC4E8)'),
+    art: c.coverUrl ? 'url("' + c.coverUrl + '") center/cover no-repeat' : (c.art || 'linear-gradient(135deg,#7A55F6,#B6D9FC)'),
     description: c.description || { en:'', vi:'' }
   };
 }
@@ -48,11 +48,11 @@ function applyApp(d) {
 const INTERESTS = ['EDM','Pop','Indie','Hip-Hop','Jazz','Theatre','Art','Food','Markets','Nightlife','Culture'];
 
 const SRC = {
-  email: { label:'Email', icon:'ph-fill ph-envelope-simple', color:'#8891A8' },
+  email: { label:'Email', icon:'ph-fill ph-envelope-simple', color:'#9DA7BA' },
   wa: { label:'WhatsApp', icon:'ph-fill ph-whatsapp-logo', color:'#25D366' },
-  fb: { label:'Facebook', icon:'ph-fill ph-facebook-logo', color:'#4EA1FF' },
-  ig: { label:'Instagram', icon:'ph-fill ph-instagram-logo', color:'#FF6FA5' },
-  zalo: { label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8' }
+  fb: { label:'Facebook', icon:'ph-fill ph-facebook-logo', color:'#6FB0F0' },
+  ig: { label:'Instagram', icon:'ph-fill ph-instagram-logo', color:'#E88AA8' },
+  zalo: { label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#B6D9FC' }
 };
 /** Notification chrome, keyed by the kinds /me/notifications returns. */
 const NOTIF_ICON = {
@@ -63,9 +63,9 @@ const NOTIF_ICON = {
   price_change:'ph-fill ph-tag', tier_watch:'ph-fill ph-ticket', report_update:'ph-fill ph-flag'
 };
 const NOTIF_COLOR = {
-  smart_alert:'#8C6BFF', friend_going:'#B9A8FF', invite:'#7BE3A6', plan_message:'#2AC4E8', plan_payment:'#FFB35C',
-  ticket:'#2AC4E8', order_paid:'#6FD79B', set_reminder:'#FFB35C', event_reminder:'#FFB35C',
-  announcement:'#8C6BFF', recap:'#FFD35C', wave:'#7BE3A6', price_change:'#FF8A3D', tier_watch:'#2AC4E8', report_update:'#FF9A9A'
+  smart_alert:'#7A55F6', friend_going:'#C4B8F7', invite:'#7FD3C3', plan_message:'#B6D9FC', plan_payment:'#F0A07F',
+  ticket:'#B6D9FC', order_paid:'#6CC7B6', set_reminder:'#F0A07F', event_reminder:'#F0A07F',
+  announcement:'#7A55F6', recap:'#FFD35C', wave:'#7FD3C3', price_change:'#E46D4C', tier_watch:'#B6D9FC', report_update:'#F4A3A3'
 };
 
 const ZONE_ICON = {
@@ -73,7 +73,7 @@ const ZONE_ICON = {
   medical:'ph-fill ph-first-aid-kit', toilets:'ph-fill ph-drop', bar:'ph-fill ph-martini', other:'ph-fill ph-map-pin'
 };
 const ZONE_COLOR = {
-  stage:'#2AC4E8', food:'#FFB35C', entry:'#6FD79B', medical:'#FF9A9A', toilets:'#8891A8', bar:'#8C6BFF', other:'#8891A8'
+  stage:'#B6D9FC', food:'#F0A07F', entry:'#6CC7B6', medical:'#F4A3A3', toilets:'#9DA7BA', bar:'#7A55F6', other:'#9DA7BA'
 };
 function initialsOf(n) { return n.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join(''); }
 const GENRES = ['All'].concat(APP.genres || []);
@@ -84,16 +84,16 @@ const AL_AREAS = APP.areas || [];
 const AL_CAPS = [{ v:0 }, { v:300000 }, { v:1000000 }, { v:9e9 }];
 
 const S = {
-  obLocTitleA:{en:"WHAT'S ON",vi:'CÓ GÌ'}, obLocTitleB:{en:'AROUND YOU?',vi:'QUANH BẠN?'},
-  obLocBody:{en:'FestFinder uses your location to show festivals, gigs and nights out within a few kilometres. Nothing is stored on our side.',
-    vi:'FestFinder dùng vị trí của bạn để hiển thị lễ hội, show diễn và điểm chơi đêm trong bán kính vài km. Chúng tôi không lưu lại dữ liệu này.'},
+  obLocTitleA:{en:"What's on",vi:'Có gì'}, obLocTitleB:{en:'around you?',vi:'quanh bạn?'},
+  obLocBody:{en:'FeestFinder uses your location to show festivals, gigs and nights out within a few kilometres. Nothing is stored on our side.',
+    vi:'FeestFinder dùng vị trí của bạn để hiển thị lễ hội, show diễn và điểm chơi đêm trong bán kính vài km. Chúng tôi không lưu lại dữ liệu này.'},
   obAllow:{en:'Use my location',vi:'Dùng vị trí của tôi'}, obPick:{en:'Pick a city instead',vi:'Chọn thành phố khác'},
   obPrivacy:{en:'Location stays on your device. You can change it any time.',vi:'Vị trí chỉ lưu trên thiết bị của bạn. Bạn có thể đổi bất cứ lúc nào.'},
-  obIntTitle:{en:'WHAT ARE YOU INTO?',vi:'BẠN THÍCH GÌ?'},
+  obIntTitle:{en:'What are you into?',vi:'Bạn thích gì?'},
   obIntBody:{en:'Pick a few. We use them to sort your feed — you can change this later in Profile.',
     vi:'Chọn vài thể loại. Chúng tôi dùng chúng để sắp xếp feed — bạn có thể đổi sau trong mục Cá nhân.'},
   obGo:{en:'Start exploring',vi:'Bắt đầu khám phá'}, obSkip:{en:'Skip for now',vi:'Bỏ qua'},
-  hero1:{en:"WHAT'S",vi:'CUỐI TUẦN'}, hero2:{en:'HAPPENING',vi:'NÀY'}, hero3:{en:'NEAR YOU?',vi:'CÓ GÌ CHƠI?'},
+  hero1:{en:"What's",vi:'Cuối tuần'}, hero2:{en:'happening',vi:'này'}, hero3:{en:'near you?',vi:'có gì chơi?'},
   heroSub:{en:'Festivals, gigs and nights out around you — picked for your vibe.',
     vi:'Lễ hội, show diễn và điểm chơi quanh bạn — chọn theo gu của bạn.'},
   searchPh:{en:'Search events, artists, venues…',vi:'Tìm sự kiện, nghệ sĩ, địa điểm…'},
@@ -103,17 +103,17 @@ const S = {
   featured:{en:'Featured',vi:'Nổi bật'}, soldOut:{en:'Sold out',vi:'Hết vé'}, ended:{en:'Ended',vi:'Đã kết thúc'},
   free:{en:'Free',vi:'Miễn phí'}, from:{en:'from',vi:'từ'},
   loadingMore:{en:'Loading more events…',vi:'Đang tải thêm…'}, endOfFeed:{en:"That's everything nearby",vi:'Đã hết sự kiện quanh bạn'},
-  emptyTitle:{en:'NOTHING HERE YET',vi:'CHƯA CÓ GÌ Ở ĐÂY'},
-  savedTitle:{en:'SAVED',vi:'ĐÃ LƯU'}, savedEmptyTitle:{en:'NO SAVED EVENTS',vi:'CHƯA LƯU SỰ KIỆN NÀO'},
+  emptyTitle:{en:'Nothing here yet',vi:'Chưa có gì ở đây'},
+  savedTitle:{en:'Saved',vi:'Đã lưu'}, savedEmptyTitle:{en:'No saved events',vi:'Chưa lưu sự kiện nào'},
   savedEmptyBody:{en:'Tap the heart on any event to keep it here.',vi:'Bấm vào trái tim trên sự kiện để lưu lại đây.'},
   savedSubEmpty:{en:'Events you\u2019re keeping an eye on',vi:'Những sự kiện bạn đang để mắt tới'},
-  youreInto:{en:"YOU'RE INTO",vi:'BẠN QUAN TÂM'},
+  youreInto:{en:"You're into",vi:'Bạn quan tâm'},
   youreIntoSub:{en:'Your feed is sorted around these. Tap to add or remove.',vi:'Feed của bạn được sắp theo những thể loại này. Bấm để thêm hoặc bỏ.'},
   smartAlert:{en:'Smart Alert',vi:'Cảnh báo thông minh'},
   smartAlertSub:{en:'We\u2019ll ping you when something matches — about once a week.',vi:'Chúng tôi sẽ nhắc bạn khi có sự kiện phù hợp — khoảng một lần mỗi tuần.'},
   smartAlertOff:{en:'Alerts are off. Turn them on to hear about matches.',vi:'Đang tắt cảnh báo. Bật lên để nhận sự kiện phù hợp.'},
   alertEdit:{en:'Adjust genres, artists, organizers, areas and price',vi:'Điều chỉnh thể loại, nghệ sĩ, nhà tổ chức, khu vực và giá'},
-  alertTitle:{en:'ALERT SETTINGS',vi:'THIẾT LẬP CẢNH BÁO'},
+  alertTitle:{en:'Alert settings',vi:'Thiết lập cảnh báo'},
   alertSub:{en:'Only events matching all of this reach you.',vi:'Chỉ sự kiện khớp tất cả mục này mới gửi cho bạn.'},
   alertGenres:{en:'Genres',vi:'Thể loại'},
   alertArtists:{en:'Artists',vi:'Nghệ sĩ'},
@@ -136,7 +136,7 @@ const S = {
   verified:{en:'Verified organizer',vi:'Nhà tổ chức đã xác minh'}, follow:{en:'Follow',vi:'Theo dõi'},
   refundPolicy:{en:'Refunds up to 7 days before the event, minus the payment fee. After that the organizer decides case by case.',vi:'Hoàn tiền tới trước sự kiện 7 ngày, trừ phí thanh toán. Sau đó nhà tổ chức xét từng trường hợp.'},
   reportCta:{en:'Report this listing',vi:'Báo cáo tin này'},
-  reportTitle:{en:'REPORT THIS LISTING',vi:'BÁO CÁO TIN NÀY'},
+  reportTitle:{en:'Report this listing',vi:'Báo cáo tin này'},
   reportSub:{en:'A moderator reads every report. Listings with two or more get pulled from the feed while we check.',vi:'Mọi báo cáo đều được kiểm duyệt viên đọc. Tin có từ hai báo cáo sẽ được tạm ẩn để kiểm tra.'},
   reportSend:{en:'Send report',vi:'Gửi báo cáo'},
   reportNote:{en:'We come back to you in the app, usually within a day.',vi:'Chúng tôi phản hồi ngay trong app, thường trong một ngày.'},
@@ -147,7 +147,7 @@ const S = {
   rDup:{en:'Posted twice',vi:'Đăng trùng hai lần'},
   rPrice:{en:'Price is not what was listed',vi:'Giá khác với tin đăng'},
   notifPrefs:{en:'Notifications',vi:'Thông báo'},
-  notifPrefTitle:{en:'NOTIFICATIONS',vi:'THÔNG BÁO'},
+  notifPrefTitle:{en:'Notifications',vi:'Thông báo'},
   notifPrefSub:{en:'One row per kind of update, one column per channel. Everything off means we never contact you.',vi:'Mỗi dòng là một loại thông tin, mỗi cột là một kênh. Tắt hết nghĩa là chúng tôi không liên hệ bạn.'},
   notifKind:{en:'What happens',vi:'Loại thông tin'},
   notifQuiet:{en:'Nothing between 23:00 and 08:00 except changes to an event starting today.',vi:'Không nhắn từ 23:00 đến 08:00, trừ thay đổi của sự kiện diễn ra trong ngày.'},
@@ -157,11 +157,11 @@ const S = {
   nrSets:{en:'Set reminders on the night',vi:'Nhắc giờ diễn trong đêm diễn'},
   nrFriends:{en:'What friends are going to',vi:'Bạn bè sẽ đi đâu'},
   nrOrgs:{en:'Organizers you follow',vi:'Nhà tổ chức bạn theo dõi'},
-  getTickets:{en:'GET TICKETS',vi:'MUA VÉ'}, freeEntry:{en:'FREE ENTRY · GET DIRECTIONS',vi:'VÀO CỬA MIỄN PHÍ · CHỈ ĐƯỜNG'},
-  soldOutCta:{en:'SOLD OUT',vi:'ĐÃ HẾT VÉ'}, endedCta:{en:'EVENT HAS ENDED',vi:'SỰ KIỆN ĐÃ KẾT THÚC'},
+  getTickets:{en:'Get tickets',vi:'Mua vé'}, freeEntry:{en:'Free entry · get directions',vi:'Vào cửa miễn phí · chỉ đường'},
+  soldOutCta:{en:'Sold out',vi:'Đã hết vé'}, endedCta:{en:'Event has ended',vi:'Sự kiện đã kết thúc'},
   ctaNote:{en:'You\u2019ll be redirected to our ticketing partner.',vi:'Bạn sẽ được chuyển sang trang của đối tác bán vé.'},
-  shareTitle:{en:'SHARE THIS',vi:'CHIA SẺ'}, shareSub:{en:'Sends a preview card with the date and venue.',vi:'Gửi kèm thẻ xem trước có ngày và địa điểm.'},
-  calTitle:{en:'ADD TO CALENDAR',vi:'THÊM VÀO LỊCH'}, remind24:{en:'Remind me 24 hours before',vi:'Nhắc tôi trước 24 giờ'},
+  shareTitle:{en:'Share this',vi:'Chia sẻ'}, shareSub:{en:'Sends a preview card with the date and venue.',vi:'Gửi kèm thẻ xem trước có ngày và địa điểm.'},
+  calTitle:{en:'Add to calendar',vi:'Thêm vào lịch'}, remind24:{en:'Remind me 24 hours before',vi:'Nhắc tôi trước 24 giờ'},
   directions:{en:'Directions',vi:'Chỉ đường'},
   linksTitle:{en:'Links',vi:'Liên kết'},
   linkEvent:{en:'Event page',vi:'Trang sự kiện'},
@@ -169,19 +169,19 @@ const S = {
   linkTickets:{en:'Ticket page',vi:'Trang bán vé'},
   linkOpening:{en:'Opening',vi:'Đang mở'},
   mapAll:{en:'All events near you',vi:'Tất cả sự kiện quanh bạn'},
-  account:{en:'ACCOUNT',vi:'TÀI KHOẢN'}, signOut:{en:'Sign out',vi:'Đăng xuất'},
+  account:{en:'Account',vi:'Tài khoản'}, signOut:{en:'Sign out',vi:'Đăng xuất'},
   logIn:{en:'Log in',vi:'Đăng nhập'}, signUp:{en:'Sign up',vi:'Đăng ký'},
-  authGateTitle:{en:'LOG IN TO UNLOCK',vi:'ĐĂNG NHẬP ĐỂ MỞ KHOÁ'},
+  authGateTitle:{en:'Log in to unlock',vi:'Đăng nhập để mở khoá'},
   authGateBody:{en:'Saved events, recommendations picked for your taste and ticket checkout all need an account.',
     vi:'Sự kiện đã lưu, gợi ý theo gu của bạn và mua vé đều cần có tài khoản.'},
   gate1:{en:'Keep events in Saved',vi:'Giữ sự kiện trong mục Đã lưu'},
   gate2:{en:'A feed sorted around what you like',vi:'Feed sắp theo gu của bạn'},
   gate3:{en:'Buy tickets without retyping your details',vi:'Mua vé không cần nhập lại thông tin'},
-  gateSavedTitle:{en:'SAVED NEEDS AN ACCOUNT',vi:'MỤC ĐÃ LƯU CẦN TÀI KHOẢN'},
+  gateSavedTitle:{en:'Saved needs an account',vi:'Mục đã lưu cần tài khoản'},
   gateSavedBody:{en:'Log in and every event you heart stays here, on any device.',vi:'Đăng nhập để mọi sự kiện bạn thích được giữ lại đây, trên mọi thiết bị.'},
   gateSave:{en:'Log in to save events',vi:'Đăng nhập để lưu sự kiện'},
   gateTickets:{en:'Log in to buy tickets',vi:'Đăng nhập để mua vé'},
-  joinTitle:{en:'CREATE YOUR ACCOUNT',vi:'TẠO TÀI KHOẢN'},
+  joinTitle:{en:'Create your account',vi:'Tạo tài khoản'},
   joinSub:{en:'Continue with a social account, or verify an email or WhatsApp number.',vi:'Tiếp tục bằng tài khoản mạng xã hội, hoặc xác minh email / số WhatsApp.'},
   withEmail:{en:'Continue with email',vi:'Tiếp tục với email'},
   withZalo:{en:'Continue with Zalo number',vi:'Tiếp tục với số Zalo'},
@@ -197,27 +197,27 @@ const S = {
   emailLabel:{en:'Email address',vi:'Địa chỉ email'}, emailPh:{en:'you@example.com',vi:'ban@example.com'},
   zaloLabel:{en:'Zalo number',vi:'Số Zalo'}, zaloPh:{en:'09xx xxx xxx',vi:'09xx xxx xxx'},
   sendCode:{en:'Send code',vi:'Gửi mã'},
-  otpTitle:{en:'ENTER THE CODE',vi:'NHẬP MÃ XÁC MINH'},
+  otpTitle:{en:'Enter the code',vi:'Nhập mã xác minh'},
   otpSentEmail:{en:'Sent by email to',vi:'Đã gửi qua email tới'},
   otpSentZalo:{en:'Sent on Zalo to',vi:'Đã gửi qua Zalo tới'},
   otpHint:{en:'Any 6 digits work here.',vi:'Bản mẫu: nhập 6 số bất kỳ.'},
   otpResend:{en:'Resend code',vi:'Gửi lại mã'}, otpResent:{en:'Code sent again',vi:'Đã gửi lại mã'},
   verify:{en:'Verify',vi:'Xác minh'},
-  passTitle:{en:'SET A PASSWORD',vi:'ĐẶT MẬT KHẨU'},
+  passTitle:{en:'Set a password',vi:'Đặt mật khẩu'},
   passSub:{en:'At least 8 characters. You\u2019ll use it with your email or Zalo number to log in.',
     vi:'Tối thiểu 8 ký tự. Bạn sẽ dùng cùng email hoặc số Zalo để đăng nhập.'},
   passLabel:{en:'Password',vi:'Mật khẩu'}, pass2Label:{en:'Confirm password',vi:'Nhập lại mật khẩu'},
   createAccount:{en:'Create account',vi:'Tạo tài khoản'},
-  loginTitle:{en:'WELCOME BACK',vi:'CHÀO MỪNG TRỞ LẠI'},
+  loginTitle:{en:'Welcome back',vi:'Chào mừng trở lại'},
   loginSub:{en:'Use the email or Zalo number you registered with.',vi:'Dùng email hoặc số Zalo bạn đã đăng ký.'},
   loginIdLabel:{en:'Email or Zalo number',vi:'Email hoặc số Zalo'},
   loginIdPh:{en:'you@example.com or 09xx xxx xxx',vi:'ban@example.com hoặc 09xx xxx xxx'},
-  loginPassTitle:{en:'ENTER YOUR PASSWORD',vi:'NHẬP MẬT KHẨU'},
+  loginPassTitle:{en:'Enter your password',vi:'Nhập mật khẩu'},
   loginPassSub:{en:'The password you set when you registered.',vi:'Mật khẩu bạn đã đặt khi đăng ký.'},
   continueCta:{en:'Continue',vi:'Tiếp tục'},
   forgot:{en:'Forgot password?',vi:'Quên mật khẩu?'}, forgotToast:{en:'Reset code sent',vi:'Đã gửi mã đặt lại'},
   haveAccount:{en:'Already have an account?',vi:'Đã có tài khoản?'},
-  noAccount:{en:'New to FestFinder?',vi:'Chưa có tài khoản?'},
+  noAccount:{en:'New to FeestFinder?',vi:'Chưa có tài khoản?'},
   viaEmail:{en:'Verified by email',vi:'Đã xác minh qua email'}, viaZalo:{en:'Verified on Zalo',vi:'Đã xác minh qua Zalo'},
   errEmail:{en:'That email doesn\u2019t look right',vi:'Email chưa đúng định dạng'},
   errZalo:{en:'Enter a valid Vietnamese number',vi:'Số điện thoại chưa hợp lệ'},
@@ -229,7 +229,7 @@ const S = {
   welcomeToast:{en:'Account created — welcome',vi:'Đã tạo tài khoản — chào bạn'},
   loggedInToast:{en:'Logged in',vi:'Đã đăng nhập'}, signedOutToast:{en:'Signed out',vi:'Đã đăng xuất'},
   editProfile:{en:'Edit profile',vi:'Sửa thông tin'},
-  profileTitle:{en:'YOUR PROFILE',vi:'THÔNG TIN CỦA BẠN'},
+  profileTitle:{en:'Your profile',vi:'Thông tin của bạn'},
   profileSub:{en:'Used on your tickets and to reach you about the events you save.',
     vi:'Dùng trên vé của bạn và để liên hệ về những sự kiện bạn đã lưu.'},
   nameLabel:{en:'Display name',vi:'Tên hiển thị'}, namePh:{en:'Nguyễn Minh',vi:'Nguyễn Minh'},
@@ -249,12 +249,12 @@ const S = {
   connectHint:{en:'Connect one to see which friends are going.',vi:'Liên kết để xem bạn bè nào sẽ đi.'},
   connect:{en:'Connect',vi:'Liên kết'}, connectedToast:{en:'Connected',vi:'Đã liên kết'},
   disconnectedToast:{en:'Disconnected',vi:'Đã bỏ liên kết'},
-  cxTitleWord:{en:'CONNECT',vi:'LIÊN KẾT'},
+  cxTitleWord:{en:'Connect',vi:'Liên kết'},
   cxSubPhone:{en:'Enter the number on this account. We send a 6-digit code to confirm it is yours.',vi:'Nhập số dùng cho tài khoản này. Chúng tôi gửi mã 6 số để xác nhận.'},
   cxSubRedirect:{en:'You log in on their site first, then come back here to confirm the connection.',vi:'Bạn đăng nhập trên trang của họ trước, rồi quay lại đây xác nhận liên kết.'},
   cxGo:{en:'Continue to',vi:'Tiếp tục tới'},
-  cxTitleConfirm:{en:'CONFIRM CONNECTION',vi:'XÁC NHẬN LIÊN KẾT'},
-  cxSubConfirm:{en:'Logged in. Confirm what FestFinder may read:',vi:'Đã đăng nhập. Xác nhận những gì FestFinder được đọc:'},
+  cxTitleConfirm:{en:'Confirm connection',vi:'Xác nhận liên kết'},
+  cxSubConfirm:{en:'Logged in. Confirm what FeestFinder may read:',vi:'Đã đăng nhập. Xác nhận những gì FeestFinder được đọc:'},
   cxScope1:{en:'Your name and profile photo',vi:'Tên và ảnh đại diện'},
   cxScope2:{en:'Your friend list, to find who else is going',vi:'Danh sách bạn bè, để tìm ai cũng đi'},
   cxScope3:{en:'Nothing is ever posted for you',vi:'Không bao giờ đăng gì thay bạn'},
@@ -264,7 +264,7 @@ const S = {
   friendsGoing:{en:'going',vi:'sẽ đi'},
   friendsGoingTitle:{en:'Friends going',vi:'Bạn bè sẽ đi'},
   friendsFilter:{en:'Friends going',vi:'Có bạn đi'},
-  becauseFriends:{en:'BECAUSE YOUR FRIENDS ARE GOING',vi:'VÌ BẠN BÈ CỦA BẠN SẼ ĐI'},
+  becauseFriends:{en:'Because your friends are going',vi:'Vì bạn bè của bạn sẽ đi'},
   alsoInterested:{en:'is also interested',vi:'cũng đang quan tâm'},
   andOthers:{en:'and {n} others',vi:'và {n} người khác'},
   friendsSaved:{en:'{n} friends saved this since yesterday',vi:'{n} người bạn đã lưu sự kiện này từ hôm qua'},
@@ -272,14 +272,14 @@ const S = {
   calPrivacy:{en:'Adding to your calendar tells friends you\u2019re going.',vi:'Thêm vào lịch sẽ cho bạn bè biết bạn đi.'},
   chat:{en:'Chat',vi:'Nhắn tin'}, follow:{en:'Follow',vi:'Theo dõi'}, followingLabel:{en:'Following',vi:'Đang theo dõi'},
   invite:{en:'Invite',vi:'Mời'}, inviteFriends:{en:'Invite friends',vi:'Mời bạn bè'},
-  inviteTitle:{en:'INVITE FRIENDS',vi:'MỜI BẠN BÈ'},
+  inviteTitle:{en:'Invite friends',vi:'Mời bạn bè'},
   inviteSub:{en:'Everyone you pick joins one group with the meeting point and the ticket split.',vi:'Người bạn chọn sẽ vào cùng một nhóm có điểm hẹn và phần chia tiền vé.'},
   inviteSend:{en:'Send invites',vi:'Gửi lời mời'},
   inviteSent:{en:'Invites sent to {n} friends',vi:'Đã mời {n} người bạn'},
   inviteSent1:{en:'Invite sent to {n} friend',vi:'Đã mời {n} người bạn'},
   inviteNone:{en:'Pick at least one friend',vi:'Chọn ít nhất một người'},
   planCta:{en:'Start a group',vi:'Tạo nhóm đi cùng'},
-  planTitle:{en:'GO TOGETHER',vi:'RỦ NHAU ĐI CÙNG'},
+  planTitle:{en:'Go together',vi:'Rủ nhau đi cùng'},
   planTabG:{en:'Group',vi:'Nhóm'}, planTabC:{en:'Chat',vi:'Chat'},
   planReqHint:{en:'Send one request and everyone pays into the same reference, so you can see who settled.',vi:'Gửi một yêu cầu, cả nhóm chuyển cùng một nội dung để bạn biết ai đã trả.'},
   planOwedLine:{en:'{n} still owe you {v}',vi:'{n} người còn nợ bạn {v}'},
@@ -328,7 +328,7 @@ const S = {
   inviteCard:{en:'Come with me?',vi:'Đi cùng mình nha?'},
   nInviteSent:{en:'Invitation delivered',vi:'Lời mời đã gửi'},
   nInviteBody:{en:'{n} · in their inbox',vi:'{n} · đã vào hộp thư của họ'},
-  followTitle:{en:'FOLLOWING',vi:'ĐANG THEO DÕI'},
+  followTitle:{en:'Following',vi:'Đang theo dõi'},
   followSub:{en:'You get a notification when these organizers publish something new, and their events come first in your feed.',
     vi:'Bạn nhận thông báo khi những nhà tổ chức này đăng sự kiện mới, và sự kiện của họ được xếp lên đầu feed.'},
   followUn:{en:'Unfollow',vi:'Bỏ theo dõi'}, followDo:{en:'Follow',vi:'Theo dõi'},
@@ -336,8 +336,8 @@ const S = {
   followNext:{en:'Next',vi:'Sắp tới'}, followNone:{en:'Nothing announced',vi:'Chưa có sự kiện mới'},
   followEvents:{en:'{n} events',vi:'{n} sự kiện'},
   followOff:{en:'Unfollowed {n}',vi:'Đã bỏ theo dõi {n}'}, followOn:{en:'Following {n}',vi:'Đang theo dõi {n}'},
-  followDiscover:{en:'Also on FestFinder',vi:'Cũng có trên FestFinder'},
-  hypedTitle:{en:'HYPED EVENTS',vi:'SỰ KIỆN ĐÃ HYPE'},
+  followDiscover:{en:'Also on FeestFinder',vi:'Cũng có trên FeestFinder'},
+  hypedTitle:{en:'Hyped events',vi:'Sự kiện đã hype'},
   hypedSub:{en:'Closest first.',vi:'Gần nhất lên trước.'},
   hypedEmpty:{en:'Nothing hyped yet. Tap 🔥 on an event.',vi:'Chưa hype sự kiện nào. Bấm 🔥 trên một sự kiện.'},
   hypedPast:{en:'Past',vi:'Đã qua'},
@@ -345,7 +345,7 @@ const S = {
   hypedHidePast:{en:'Hide past ({n})',vi:'Ẩn đã qua ({n})'},
   guideRow:{en:'Before & after the show',vi:'Trước & sau show'},
   guideRowSub:{en:'Eat, drink and what to wear around {n}',vi:'Ăn, uống và mặc gì quanh {n}'},
-  guideTitle:{en:'AROUND THIS EVENT',vi:'QUANH SỰ KIỆN NÀY'},
+  guideTitle:{en:'Around this event',vi:'Quanh sự kiện này'},
   guideBefore:{en:'Before doors',vi:'Trước giờ mở cửa'},
   guideAfter:{en:'After the show',vi:'Sau khi show tan'},
   guideExplore:{en:'Worth a detour',vi:'Đáng ghé'},
@@ -357,7 +357,7 @@ const S = {
   guideRetry:{en:'Try again',vi:'Thử lại'},
   guideRefresh:{en:'Other suggestions',vi:'Gợi ý khác'},
   guideAi:{en:'AI suggestions — check opening hours before you go.',vi:'Gợi ý do AI tạo — kiểm tra giờ mở cửa trước khi đi.'},
-  bTitle:{en:'FESTFINDER BESTIES',vi:'FESTFINDER BESTIES'},
+  bTitle:{en:'FeestFinder besties',vi:'FeestFinder besties'},
   bArmed:{en:'Besties light up at {t}',vi:'Besties sáng đèn lúc {t}'},
   bArmedSub:{en:'An hour in, every checked-in phone here glows at once.',vi:'Sau một giờ, mọi điện thoại đã check-in ở đây cùng sáng lên.'},
   bNow:{en:'Light it now',vi:'Sáng đèn ngay'},
@@ -372,7 +372,7 @@ const S = {
   chatPh:{en:'Message…',vi:'Nhập tin nhắn…'},
   chatStart:{en:'Say hi — messages stay between the two of you.',vi:'Chào một câu — tin nhắn chỉ hai người thấy.'},
   mutual:{en:'events in common',vi:'sự kiện chung'},
-  noFriendsTitle:{en:'NO FRIENDS CONNECTED',vi:'CHƯA LIÊN KẾT BẠN BÈ'},
+  noFriendsTitle:{en:'No friends connected',vi:'Chưa liên kết bạn bè'},
   noFriendsBody:{en:'Connect Facebook, Instagram or Zalo and we\u2019ll show which of your friends are going.',
     vi:'Liên kết Facebook, Instagram hoặc Zalo để xem bạn bè nào đang đi.'},
   friendsOnPin:{en:'friends going',vi:'bạn sẽ đi'},
@@ -385,7 +385,7 @@ const S = {
   adHidden:{en:'Hidden. Fewer ads from this brand.',vi:'Đã ẩn. Sẽ ít quảng cáo từ thương hiệu này hơn.'},
   liveCta:{en:'Live mode',vi:'Chế độ trực tiếp'},
   recapCta:{en:'Rate the night',vi:'Đánh giá đêm nhạc'},
-  liveTitle:{en:'LIVE MODE',vi:'ĐANG DIỄN RA'},
+  liveTitle:{en:'Live mode',vi:'Đang diễn ra'},
   liveNow:{en:'On now',vi:'Đang diễn'},
   liveNext:{en:'Next',vi:'Tiếp theo'},
   liveLeft:{en:'{n} min left',vi:'Còn {n} phút'},
@@ -404,7 +404,7 @@ const S = {
   liveWaved:{en:'Waved at {n}',vi:'Đã chào {n}'},
   liveOffline:{en:'Set times work offline. Everything here is cached.',vi:'Giờ diễn xem được khi mất mạng. Tất cả đã được lưu sẵn.'},
   liveStages:{en:'Stages',vi:'Sân khấu'},
-  recapTitle:{en:'THAT WAS THE NIGHT',vi:'ĐÊM NHẠC ĐÃ QUA'},
+  recapTitle:{en:'That was the night',vi:'Đêm nhạc đã qua'},
   recapSub:{en:'Rate it while it is fresh. The organiser sees the average, never your name.',vi:'Đánh giá khi còn nóng. Nhà tổ chức chỉ thấy điểm trung bình, không thấy tên bạn.'},
   recapRate:{en:'How was it?',vi:'Đêm đó thế nào?'},
   recapStars:{en:'Tap a star',vi:'Chạm vào ngôi sao'},
@@ -427,15 +427,15 @@ const S = {
   recapThanks:{en:'Thanks for coming',vi:'Cảm ơn bạn đã đến'},
   photoAdded:{en:'Photo added',vi:'Đã thêm ảnh'},
   myTickets:{en:'My tickets',vi:'Vé của tôi'},
-  ticketsTitle:{en:'MY TICKETS',vi:'VÉ CỦA TÔI'},
+  ticketsTitle:{en:'My tickets',vi:'Vé của tôi'},
   ticketsSub:{en:'Show the QR at the door. It works offline.',vi:'Đưa mã QR ở cổng. Không cần mạng vẫn quét được.'},
-  ticketsEmptyTitle:{en:'NO TICKETS YET',vi:'CHƯA CÓ VÉ NÀO'},
+  ticketsEmptyTitle:{en:'No tickets yet',vi:'Chưa có vé nào'},
   ticketsEmptyBody:{en:'Tickets you buy land here with a QR code.',vi:'Vé bạn mua sẽ nằm ở đây kèm mã QR.'},
   ticket:{en:'ticket',vi:'vé'}, ticketsWord:{en:'tickets',vi:'vé'},
   ticketValid:{en:'Valid',vi:'Còn hiệu lực'}, ticketUsed:{en:'Checked in',vi:'Đã check-in'},
   checkIn:{en:'Check in',vi:'Check-in'},
   ticketCode:{en:'Ticket code',vi:'Mã vé'},
-  checkoutTitle:{en:'CONFIRM YOUR ORDER',vi:'XÁC NHẬN ĐƠN HÀNG'},
+  checkoutTitle:{en:'Confirm your order',vi:'Xác nhận đơn hàng'},
   qtyLabel:{en:'Tickets',vi:'Số lượng vé'},
   totalLabel:{en:'Total',vi:'Tổng cộng'},
   feeLabel:{en:'Service fee',vi:'Phí dịch vụ'},
@@ -443,7 +443,7 @@ const S = {
   payNote:{en:'Demo checkout — no card is charged.',vi:'Bản mẫu — không trừ tiền thật.'},
   ticketDone:{en:'Tickets are in My tickets',vi:'Vé đã vào mục Vé của tôi'},
   checkedInToast:{en:'Checked in — enjoy the show',vi:'Đã check-in — chúc bạn vui'},
-  notifTitle:{en:'NOTIFICATIONS',vi:'THÔNG BÁO'},
+  notifTitle:{en:'Notifications',vi:'Thông báo'},
   notifEmpty:{en:'Nothing new right now',vi:'Chưa có gì mới'},
   notifReadAll:{en:'Mark all read',vi:'Đánh dấu đã đọc'},
   nTicket:{en:'Your tickets are ready',vi:'Vé của bạn đã sẵn sàng'},
@@ -703,7 +703,7 @@ class Component extends DCLogic {
       title: e.title, art: e.art, when: this.fmtWhen(e) + ' · ' + e.startTime,
       venue: e.venue + ' · ' + e.area,
       op: isPast ? '.5' : '1',
-      bd: isPast ? '#1C2437' : '#262F44',
+      bd: isPast ? '#151A28' : 'rgba(186,215,247,.12)',
       tag: isPast ? L.hypedPast : '',
       showTag: isPast,
       open: () => this.setState({ hypedPanel:false, detail: e.id }),
@@ -718,7 +718,7 @@ class Component extends DCLogic {
       meta: L.followEvents.replace('{n}', String(o.n)) + ' · ' + o.genres.slice(0, 2).join(', '),
       next: o.next ? (L.followNext + ' · ' + o.next.title) : L.followNone,
       label: on ? L.followUn : L.followDo,
-      fg: on ? '#8891A8' : '#2AC4E8', bd: on ? '#39455F' : '#2AC4E8',
+      fg: on ? '#9DA7BA' : '#B6D9FC', bd: on ? 'rgba(186,215,247,.24)' : '#B6D9FC',
       toggle: async () => {
         const f = Object.assign({}, this.state.orgFollow);
         if (on) delete f[o.id]; else f[o.id] = true;
@@ -744,7 +744,7 @@ class Component extends DCLogic {
   alChip(key, val, label) {
     const on = !!this.state[key][val];
     return {
-      label, bg: on ? '#8C6BFF' : 'transparent', fg: on ? '#0A0E1A' : '#C3CBDC', bd: on ? '#8C6BFF' : '#262F44',
+      label, bg: on ? '#7A55F6' : 'transparent', fg: on ? '#090B16' : '#C7D3EA', bd: on ? '#7A55F6' : 'rgba(186,215,247,.12)',
       pick: () => {
         const m = Object.assign({}, this.state[key]); if (m[val]) delete m[val]; else m[val] = true;
         this.setState({ [key]: m });
@@ -787,9 +787,9 @@ class Component extends DCLogic {
         away: b.zone ? b.zone : (this.state.lang === 'vi' ? 'đang tới' : 'on the way'),
         shared: tags[(i + 1) % tags.length] || ev.genre,
         label: waved ? L.bWaved : L.bWave,
-        fg: waved ? '#0A0E1A' : '#F3F6FC',
-        bg: waved ? '#7BE3A6' : 'rgba(255,255,255,.1)',
-        bd: waved ? '#7BE3A6' : 'rgba(255,255,255,.28)',
+        fg: waved ? '#090B16' : '#D8ECF8',
+        bg: waved ? '#7FD3C3' : 'rgba(255,255,255,.1)',
+        bd: waved ? '#7FD3C3' : 'rgba(255,255,255,.28)',
         wave: async () => {
           if (waved) return;
           const w = Object.assign({}, this.state.bestieWaved); w[ev.id + b.id] = true;
@@ -1076,10 +1076,10 @@ class Component extends DCLogic {
     const last = thread.length ? thread[thread.length - 1] : null;
     return { id:f.id, name:f.name, initials: initialsOf(f.name), color:f.color,
       icon: SRC[f.src].icon, iconColor: SRC[f.src].color, srcLabel: SRC[f.src].label,
-      dot: f.online ? '#3ED598' : '#7C859C',
+      dot: f.online ? '#3FB8A3' : '#8A94A8',
       statusLabel: f.online ? L.inboxOnline : L.inboxOffline,
       sub: last ? (last.invite ? L.inboxInvite + ' · ' + last.invite.title : (last.me ? (L.planYou + ': ') : '') + last.t) : (f.online ? L.inboxOnline : L.inboxOffline),
-      subFg: last ? '#8891A8' : (f.online ? '#3ED598' : '#7C87A1'),
+      subFg: last ? '#9DA7BA' : (f.online ? '#3FB8A3' : '#8A94A8'),
       open: () => this.setState({ friendSheet: f.id }) };
   }
   qrRows(code) {
@@ -1091,7 +1091,7 @@ class Component extends DCLogic {
       const cells = [];
       for (let x = 0; x < N; x++) {
         const corner = (x < 3 && y < 3) || (x > N - 4 && y < 3) || (x < 3 && y > N - 4);
-        cells.push({ bg: corner || rnd() > 0.48 ? '#0A0E1A' : 'transparent' });
+        cells.push({ bg: corner || rnd() > 0.48 ? '#090B16' : 'transparent' });
       }
       rows.push({ cells });
     }
@@ -1174,23 +1174,23 @@ class Component extends DCLogic {
     return {
       id: ev.id, title: ev.title, genre: ev.genre, art: ev.art, featured: !!ev.featured,
       artOpacity: unavailable ? '.42' : '1',
-      cardBd: ev.featured ? 'rgba(140,107,255,.45)' : '#262F44',
+      cardBd: ev.featured ? 'rgba(102,58,243,.45)' : 'rgba(186,215,247,.12)',
       hasBadge: !!ev.badge && !unavailable,
       badgeLabel: ev.badgeLabel ? ev.badgeLabel[st.lang] : '',
-      badgeBg: ev.badge === 'live' ? '#8C6BFF' : ev.badge === 'new' ? 'rgba(243,246,252,.92)' : '#2AC4E8',
-      badgeFg: '#0A0E1A',
+      badgeBg: ev.badge === 'live' ? '#7A55F6' : ev.badge === 'new' ? 'rgba(216,236,248,.92)' : '#B6D9FC',
+      badgeFg: '#090B16',
       unavailable, unavailLabel: ev.soldOut ? L.soldOut : L.ended,
-      unavailBd: ev.soldOut ? '#FF8A3D' : '#39455F', unavailFg: ev.soldOut ? '#FFB35C' : '#8891A8',
+      unavailBd: ev.soldOut ? '#E46D4C' : 'rgba(186,215,247,.24)', unavailFg: ev.soldOut ? '#F0A07F' : '#9DA7BA',
       whenLine: this.fmtWhen(ev) + ' · ' + this.fmtTime(ev),
       whereLine: ev.venue + ' · ' + ev.distance + ' km',
       priceLine: ev.price === 0 ? L.free : L.from + ' ' + this.short(ev.price),
-      priceColor: ev.price === 0 ? '#2E9E5B' : '#F3F6FC',
+      priceColor: ev.price === 0 ? '#269684' : '#D8ECF8',
       proofShow: this.proof(ev.id).show, proofLine: this.proof(ev.id).line, proofFaces: this.proof(ev.id).faces,
       priceShort: ev.price === 0 ? L.free : this.short(ev.price),
-      hypeBg: st.hyped[ev.id] ? '#8C6BFF' : '#1A2233', hypeBd: st.hyped[ev.id] ? '#8C6BFF' : '#262F44',
-      hypeFg: st.hyped[ev.id] ? '#0A0E1A' : '#7C859C',
-      saveBg: st.saved[ev.id] ? '#2AC4E8' : '#1A2233', saveBd: st.saved[ev.id] ? '#2AC4E8' : '#262F44',
-      saveFg: st.saved[ev.id] ? '#0A0E1A' : '#7C859C',
+      hypeBg: st.hyped[ev.id] ? '#7A55F6' : '#131725', hypeBd: st.hyped[ev.id] ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      hypeFg: st.hyped[ev.id] ? '#090B16' : '#8A94A8',
+      saveBg: st.saved[ev.id] ? '#B6D9FC' : '#131725', saveBd: st.saved[ev.id] ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+      saveFg: st.saved[ev.id] ? '#090B16' : '#8A94A8',
       open: () => this.openDetail(ev.id),
       save: (e) => {
         e.stopPropagation();
@@ -1237,12 +1237,12 @@ class Component extends DCLogic {
       const isEnd = (rs && +cd === +rs) || (re && +cd === +re);
       cells.push({
         label: String(i),
-        bg: isEnd ? '#2AC4E8' : 'transparent',
-        fg: isEnd ? '#0A0E1A' : past ? '#7C859C' : '#F3F6FC',
-        bd: isToday && !isEnd ? '#39455F' : 'transparent',
+        bg: isEnd ? '#B6D9FC' : 'transparent',
+        fg: isEnd ? '#090B16' : past ? '#8A94A8' : '#D8ECF8',
+        bd: isToday && !isEnd ? 'rgba(186,215,247,.24)' : 'transparent',
         op: past ? '.35' : '1',
-        dot: eventDays[dayKey(cd)] && !isEnd ? '#8C6BFF' : 'transparent',
-        rangeBg: inRange ? '#123244' : isEnd && re && +rs !== +re ? '#123244' : 'transparent',
+        dot: eventDays[dayKey(cd)] && !isEnd ? '#7A55F6' : 'transparent',
+        rangeBg: inRange ? '#111A2B' : isEnd && re && +rs !== +re ? '#111A2B' : 'transparent',
         rangeRadius: isEnd && re && +rs !== +re ? (+cd === +rs ? '999px 0 0 999px' : '0 999px 999px 0') : '0',
         cursor: past ? 'default' : 'pointer',
         pick: past ? () => {} : () => {
@@ -1265,14 +1265,14 @@ class Component extends DCLogic {
     ];
 
     const shareTargets = [
-      { k:'zalo', label:'Zalo', icon:'ph-bold ph-chat-circle-dots', bg:'rgba(27,107,214,.18)', fg:'#4EA1FF' },
-      { k:'ig', label:'IG Stories', icon:'ph-bold ph-instagram-logo', bg:'rgba(255,138,61,.16)', fg:'#FFB35C' },
-      { k:'tiktok', label:'TikTok', icon:'ph-bold ph-tiktok-logo', bg:'rgba(42,196,232,.16)', fg:'#2AC4E8' },
-      { k:'messenger', label:'Messenger', icon:'ph-bold ph-messenger-logo', bg:'rgba(140,107,255,.18)', fg:'#B9A8FF' },
-      { k:'fb', label:'Facebook', icon:'ph-bold ph-facebook-logo', bg:'rgba(27,107,214,.18)', fg:'#4EA1FF' },
-      { k:'tg', label:'Telegram', icon:'ph-bold ph-telegram-logo', bg:'rgba(42,196,232,.16)', fg:'#2AC4E8' },
-      { k:'copy', label: g === 'vi' ? 'Sao chép link' : 'Copy link', icon:'ph-bold ph-link-simple', bg:'rgba(26,34,51,.9)', fg:'#F3F6FC' },
-      { k:'more', label: g === 'vi' ? 'Khác' : 'More', icon:'ph-bold ph-dots-three', bg:'rgba(26,34,51,.9)', fg:'#8891A8' }
+      { k:'zalo', label:'Zalo', icon:'ph-bold ph-chat-circle-dots', bg:'rgba(49,89,214,.18)', fg:'#6FB0F0' },
+      { k:'ig', label:'IG Stories', icon:'ph-bold ph-instagram-logo', bg:'rgba(228,109,76,.16)', fg:'#F0A07F' },
+      { k:'tiktok', label:'TikTok', icon:'ph-bold ph-tiktok-logo', bg:'rgba(182,217,252,.16)', fg:'#B6D9FC' },
+      { k:'messenger', label:'Messenger', icon:'ph-bold ph-messenger-logo', bg:'rgba(102,58,243,.18)', fg:'#C4B8F7' },
+      { k:'fb', label:'Facebook', icon:'ph-bold ph-facebook-logo', bg:'rgba(49,89,214,.18)', fg:'#6FB0F0' },
+      { k:'tg', label:'Telegram', icon:'ph-bold ph-telegram-logo', bg:'rgba(182,217,252,.16)', fg:'#B6D9FC' },
+      { k:'copy', label: g === 'vi' ? 'Sao chép link' : 'Copy link', icon:'ph-bold ph-link-simple', bg:'rgba(20,24,38,.9)', fg:'#D8ECF8' },
+      { k:'more', label: g === 'vi' ? 'Khác' : 'More', icon:'ph-bold ph-dots-three', bg:'rgba(20,24,38,.9)', fg:'#9DA7BA' }
     ].map(s => Object.assign({}, s, { go: () => {
       this.setState({ sheet:null });
       const url = detail ? location.origin + '/e/' + (detail.slug || detail.id) : location.origin;
@@ -1355,7 +1355,7 @@ class Component extends DCLogic {
     const coEv = st.checkout ? EVENTS.find(e => e.id === st.checkout) : null;
     const soonEv = EVENTS.filter(e => !e.past)[0];
     const notifs = st.notifs.map(n => ({
-      k: n.id, icon: NOTIF_ICON[n.kind] || 'ph-fill ph-bell', color: NOTIF_COLOR[n.kind] || '#2AC4E8',
+      k: n.id, icon: NOTIF_ICON[n.kind] || 'ph-fill ph-bell', color: NOTIF_COLOR[n.kind] || '#B6D9FC',
       title: FF.text(n.title, g), body: FF.text(n.body, g), unread: n.unread,
       act: () => this.goNotif(n)
     }));
@@ -1364,9 +1364,9 @@ class Component extends DCLogic {
       const links = st.detailData.links || {};
       const host = (u) => String(u).replace(/^https?:\/\//, '').replace(/\/$/, '');
       const defs = [
-        { k:'event', icon:'ph-bold ph-calendar-star', color:'#2AC4E8', label:L.linkEvent },
-        { k:'brand', icon:'ph-bold ph-globe-simple', color:'#8C6BFF', label:L.linkBrand },
-        { k:'tickets', icon:'ph-bold ph-ticket', color:'#FFB35C', label:L.linkTickets }
+        { k:'event', icon:'ph-bold ph-calendar-star', color:'#B6D9FC', label:L.linkEvent },
+        { k:'brand', icon:'ph-bold ph-globe-simple', color:'#9D84F8', label:L.linkBrand },
+        { k:'tickets', icon:'ph-bold ph-ticket', color:'#F0A07F', label:L.linkTickets }
       ];
       return defs.filter(d => links[d.k]).map(d => ({
         icon: d.icon, color: d.color, label: d.label, host: host(links[d.k]),
@@ -1402,8 +1402,8 @@ class Component extends DCLogic {
       userName: st.user ? (st.user.name || st.user.handle) : '',
       hasPhoto: !!(st.user && st.user.photo), noPhoto: !(st.user && st.user.photo),
       userPhoto: st.user ? st.user.photo : '',
-      photoBg: st.user && st.user.photo ? 'url("' + st.user.photo + '") center/cover no-repeat' : 'rgba(26,34,51,.7)',
-      pPhotoBg: st.pPhoto ? 'url("' + st.pPhoto + '") center/cover no-repeat' : 'rgba(26,34,51,.7)',
+      photoBg: st.user && st.user.photo ? 'url("' + st.user.photo + '") center/cover no-repeat' : 'rgba(20,24,38,.7)',
+      pPhotoBg: st.pPhoto ? 'url("' + st.pPhoto + '") center/cover no-repeat' : 'rgba(20,24,38,.7)',
       editOpen: st.edit,
       openEdit: () => this.setState({ edit:true, pErr:'',
         pName: st.user.name || '', pEmail: st.user.email || '', pZalo: st.user.zalo || '',
@@ -1451,9 +1451,9 @@ class Component extends DCLogic {
       authSwitchShow: step === 'method' || step === 'loginId',
       authNote: st.authNote, authNoteShow: !!st.authNote,
       authBarShow: barStep > 0,
-      authBar1: barStep >= 1 ? '#8C6BFF' : '#262F44',
-      authBar2: barStep >= 2 ? '#8C6BFF' : '#262F44',
-      authBar3: barStep >= 3 ? '#8C6BFF' : '#262F44',
+      authBar1: barStep >= 1 ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      authBar2: barStep >= 2 ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      authBar3: barStep >= 3 ? '#7A55F6' : 'rgba(186,215,247,.12)',
       authIdLabel: step === 'loginId' ? L.loginIdLabel : st.authMethod === 'email' ? L.emailLabel : st.authMethod === 'wa' ? L.waLabel : L.zaloLabel,
       authIdPh: step === 'loginId' ? L.loginIdPh : st.authMethod === 'email' ? L.emailPh : st.authMethod === 'wa' ? L.waPh : L.zaloPh,
       authIdIcon: step === 'loginId' ? 'ph-bold ph-user' : st.authMethod === 'email' ? 'ph-bold ph-envelope-simple' : st.authMethod === 'wa' ? 'ph-bold ph-whatsapp-logo' : 'ph-bold ph-chat-circle-dots',
@@ -1464,7 +1464,7 @@ class Component extends DCLogic {
       onAuthOtp: (e) => this.setState({ authOtp: e.target.value.replace(/\D/g, '').slice(0, 6), authErr:'' }),
       authOtpCells: [0,1,2,3,4,5].map(i => ({
         ch: st.authOtp[i] || '',
-        bd: st.authOtp.length === i ? '#2AC4E8' : st.authOtp[i] ? '#3B4A6B' : '#262F44'
+        bd: st.authOtp.length === i ? '#B6D9FC' : st.authOtp[i] ? 'rgba(186,215,247,.28)' : 'rgba(186,215,247,.12)'
       })),
       authPassValue: st.authPass, authPass2Value: st.authPass2,
       onAuthPass: (e) => this.setState({ authPass: e.target.value, authErr:'' }),
@@ -1493,7 +1493,7 @@ class Component extends DCLogic {
       cxOpen: !!st.cx,
       cxSrcLabel: st.cx ? SRC[st.cx.src].label : '',
       cxIcon: st.cx ? SRC[st.cx.src].icon : 'ph-fill ph-link',
-      cxColor: st.cx ? SRC[st.cx.src].color : '#2AC4E8',
+      cxColor: st.cx ? SRC[st.cx.src].color : '#B6D9FC',
       cxStepPhone: !!st.cx && st.cx.step === 'phone',
       cxStepOtp: !!st.cx && st.cx.step === 'otp',
       cxStepConfirm: !!st.cx && st.cx.step === 'confirm',
@@ -1511,7 +1511,7 @@ class Component extends DCLogic {
       onCxOtp: (e) => this.cxSet({ otp: e.target.value.replace(/\D/g, '').slice(0, 6), err:'' }),
       cxOtpCells: [0,1,2,3,4,5].map(i => {
         const o = (st.cx ? st.cx.otp : '') || '';
-        return { ch: o[i] || '', bd: o.length === i ? '#2AC4E8' : o[i] ? '#3B4A6B' : '#262F44' };
+        return { ch: o[i] || '', bd: o.length === i ? '#B6D9FC' : o[i] ? 'rgba(186,215,247,.28)' : 'rgba(186,215,247,.12)' };
       }),
       cxScopes: [
         { icon:'ph-fill ph-user-circle', t:L.cxScope1 },
@@ -1527,7 +1527,7 @@ class Component extends DCLogic {
         return {
           label: SRC[k].label, icon: SRC[k].icon, color: SRC[k].color,
           state: on ? L.connectedToast : L.connect,
-          stateColor: on ? '#6FD79B' : '#2AC4E8',
+          stateColor: on ? '#6CC7B6' : '#B6D9FC',
           go: () => this.connectSocial(k)
         };
       }),
@@ -1535,9 +1535,9 @@ class Component extends DCLogic {
       friendsCountLine: FRIENDS.length + ' · ' + (g === 'vi' ? 'qua ' : 'via ') + (connected ? SRC[st.user.social].label : ''),
 
       friendsOnly: st.friendsOnly,
-      friendsFilterBg: st.friendsOnly ? '#2AC4E8' : 'rgba(26,34,51,.7)',
-      friendsFilterBd: st.friendsOnly ? '#2AC4E8' : '#262F44',
-      friendsFilterFg: st.friendsOnly ? '#0A0E1A' : '#8891A8',
+      friendsFilterBg: st.friendsOnly ? '#B6D9FC' : 'rgba(20,24,38,.7)',
+      friendsFilterBd: st.friendsOnly ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+      friendsFilterFg: st.friendsOnly ? '#090B16' : '#9DA7BA',
       toggleFriendsOnly: () => this.setState({ friendsOnly: !st.friendsOnly, mapSel:null }),
       showFriendsFilter: connected,
 
@@ -1568,23 +1568,23 @@ class Component extends DCLogic {
       friendSheetOpen: !!fSel,
       closeFriendSheet: () => this.setState({ friendSheet:null }),
       fsName: fSel ? fSel.name : '', fsInitials: fSel ? initialsOf(fSel.name) : '',
-      fsColor: fSel ? fSel.color : 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
-      fsIcon: fSel ? SRC[fSel.src].icon : '', fsIconColor: fSel ? SRC[fSel.src].color : '#8891A8',
+      fsColor: fSel ? fSel.color : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
+      fsIcon: fSel ? SRC[fSel.src].icon : '', fsIconColor: fSel ? SRC[fSel.src].color : '#9DA7BA',
       fsSrcLabel: fSel ? SRC[fSel.src].label : '',
       fsMutual: fSel ? (fSel.going.length + fSel.interested.length) + ' ' + L.mutual : '',
       fsFollowLabel: fSel && st.following[fSel.id] ? L.followingLabel : L.follow,
-      fsFollowBd: fSel && st.following[fSel.id] ? '#8C6BFF' : '#262F44',
-      fsFollowFg: fSel && st.following[fSel.id] ? '#B9A8FF' : '#8891A8',
+      fsFollowBd: fSel && st.following[fSel.id] ? '#7A55F6' : 'rgba(186,215,247,.12)',
+      fsFollowFg: fSel && st.following[fSel.id] ? '#C4B8F7' : '#9DA7BA',
       fsFollow: () => { if (!fSel) return; const fo = Object.assign({}, st.following); fo[fSel.id] = !fo[fSel.id]; this.setState({ following:fo }); },
       fsChat: () => this.openChat(st.friendSheet),
       fsGoingList: fSel ? fSel.going.map(id => { const e = EVENTS.find(x => x.id === id); return { title: e ? e.title : id, when: e ? this.fmtWhen(e) : '', open: () => this.setState({ friendSheet:null, detail:id }) }; }) : [],
 
       chatOpen: !!chatF,
       chatName: chatF ? chatF.name : '', chatInitials: chatF ? initialsOf(chatF.name) : '',
-      chatColor: chatF ? chatF.color : 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
+      chatColor: chatF ? chatF.color : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
       chatSrc: chatF ? SRC[chatF.src].label : '',
       chatEmpty: chatLog.length === 0,
-      chatDot: chatF ? (chatF.online ? '#3ED598' : '#7C859C') : '#7C859C',
+      chatDot: chatF ? (chatF.online ? '#3FB8A3' : '#8A94A8') : '#8A94A8',
       chatStatus: chatF ? (chatF.online ? L.inboxOnline : L.inboxOffline) : '',
       chatMsgs: chatLog.map((m, i) => ({
         text: m.t, key: i,
@@ -1593,8 +1593,8 @@ class Component extends DCLogic {
         cardWhen: m.invite ? m.invite.when : '',
         openCard: m.invite ? () => this.setState({ chatWith:null, detail: m.invite.id }) : () => {},
         align: m.me ? 'flex-end' : 'flex-start',
-        bg: m.me ? '#2AC4E8' : 'rgba(26,34,51,.85)',
-        fg: m.me ? '#0A0E1A' : '#F3F6FC',
+        bg: m.me ? '#B6D9FC' : 'rgba(20,24,38,.85)',
+        fg: m.me ? '#090B16' : '#D8ECF8',
         radius: m.me ? '16px 16px 4px 16px' : '16px 16px 16px 4px'
       })),
       chatDraft: st.chatDraft,
@@ -1667,10 +1667,10 @@ class Component extends DCLogic {
       planHeadLine: plan ? FF.text(plan.headsLine, g) : '',
       planOnGroup: st.planTab !== 'chat',
       planOnChat: st.planTab === 'chat',
-      planTabGBg: st.planTab !== 'chat' ? '#2AC4E8' : 'transparent',
-      planTabGFg: st.planTab !== 'chat' ? '#0A0E1A' : '#8891A8',
-      planTabCBg: st.planTab === 'chat' ? '#2AC4E8' : 'transparent',
-      planTabCFg: st.planTab === 'chat' ? '#0A0E1A' : '#8891A8',
+      planTabGBg: st.planTab !== 'chat' ? '#B6D9FC' : 'transparent',
+      planTabGFg: st.planTab !== 'chat' ? '#090B16' : '#9DA7BA',
+      planTabCBg: st.planTab === 'chat' ? '#B6D9FC' : 'transparent',
+      planTabCFg: st.planTab === 'chat' ? '#090B16' : '#9DA7BA',
       goPlanGroup: () => this.setState({ planTab:'group' }),
       goPlanChat: () => this.setState({ planTab:'chat' }),
 
@@ -1681,7 +1681,7 @@ class Component extends DCLogic {
           color: m.photoUrl ? 'url("' + m.photoUrl + '") center/cover no-repeat' : FF.colorFor(m.userId),
           name: m.owner ? L.planYou : m.name,
           status: on ? L.planGoing : L.planPending,
-          statusFg: on ? '#7BE3A6' : '#8891A8', statusBd: on ? '#235C40' : '#262F44'
+          statusFg: on ? '#7FD3C3' : '#9DA7BA', statusBd: on ? '#1D4E47' : 'rgba(186,215,247,.12)'
         };
       }),
 
@@ -1690,10 +1690,10 @@ class Component extends DCLogic {
         return {
           name: FF.text(s.name, g), time: s.time,
           icon: { gate:'ph-fill ph-door-open', cafe:'ph-fill ph-coffee', park:'ph-fill ph-motorcycle' }[s.id] || 'ph-fill ph-map-pin',
-          bd: on ? '#2AC4E8' : '#262F44',
-          fg: on ? '#2AC4E8' : '#8891A8',
-          dotBg: on ? '#2AC4E8' : 'transparent',
-          dotBd: on ? '#2AC4E8' : '#39455F',
+          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          fg: on ? '#B6D9FC' : '#9DA7BA',
+          dotBg: on ? '#B6D9FC' : 'transparent',
+          dotBd: on ? '#B6D9FC' : 'rgba(186,215,247,.24)',
           tick: on ? '1' : '0',
           pick: async () => {
             const id = this.planIdFor(st.planOpen);
@@ -1717,8 +1717,8 @@ class Component extends DCLogic {
         name: m.name, initials: m.initials || initialsOf(m.name), color: FF.colorFor(m.userId),
         amount: pSplit ? this.money(pSplit.perHead) : '',
         label: m.paid ? L.planPaid : L.planUnpaid,
-        fg: m.paid ? '#7BE3A6' : '#C3CBDC', bd: m.paid ? '#235C40' : '#262F44',
-        bg: m.paid ? 'rgba(35,92,64,.22)' : 'transparent',
+        fg: m.paid ? '#7FD3C3' : '#C7D3EA', bd: m.paid ? '#1D4E47' : 'rgba(186,215,247,.12)',
+        bg: m.paid ? 'rgba(29,78,71,.22)' : 'transparent',
         toggle: async () => {
           const id = this.planIdFor(st.planOpen);
           if (!id) return;
@@ -1740,8 +1740,8 @@ class Component extends DCLogic {
       planChatEmpty: !!(plan && !plan.messages.length),
       planMsgs: plan ? plan.messages.map(m => ({
         align: m.fromMe ? 'flex-end' : 'flex-start',
-        bg: m.fromMe ? '#2AC4E8' : 'rgba(26,34,51,.85)',
-        fg: m.fromMe ? '#0A0E1A' : '#F3F6FC',
+        bg: m.fromMe ? '#B6D9FC' : 'rgba(20,24,38,.85)',
+        fg: m.fromMe ? '#090B16' : '#D8ECF8',
         radius: m.fromMe ? '16px 16px 5px 16px' : '16px 16px 16px 5px',
         who: m.fromMe ? '' : m.author, showWho: !m.fromMe, text: m.body
       })) : [],
@@ -1762,9 +1762,9 @@ class Component extends DCLogic {
       inviteList: FRIENDS.map(f => ({
         name: f.name, initials: initialsOf(f.name), color: f.color,
         icon: SRC[f.src].icon, iconColor: SRC[f.src].color,
-        bd: st.inviteSel[f.id] ? '#2AC4E8' : '#262F44',
-        tickBg: st.inviteSel[f.id] ? '#2AC4E8' : 'transparent',
-        tickBd: st.inviteSel[f.id] ? '#2AC4E8' : '#39455F',
+        bd: st.inviteSel[f.id] ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        tickBg: st.inviteSel[f.id] ? '#B6D9FC' : 'transparent',
+        tickBd: st.inviteSel[f.id] ? '#B6D9FC' : 'rgba(186,215,247,.24)',
         tick: st.inviteSel[f.id] ? '1' : '0',
         pick: () => { const s = Object.assign({}, st.inviteSel); s[f.id] = !s[f.id]; this.setState({ inviteSel:s }); }
       })),
@@ -1790,10 +1790,10 @@ class Component extends DCLogic {
       alertLine: alBits.length ? alBits.join(' · ') : L.alertNone,
       alertOn: st.alertOn,
       alertKnobJustify: st.alertOn ? 'flex-end' : 'flex-start',
-      alertTrackBg: st.alertOn ? '#8C6BFF' : '#2B3347',
-      alertKnobBg: st.alertOn ? '#F3F6FC' : '#8891A8',
+      alertTrackBg: st.alertOn ? '#7A55F6' : '#2B3347',
+      alertKnobBg: st.alertOn ? '#D8ECF8' : '#9DA7BA',
       alertSubLine: st.alertOn ? L.smartAlertSub : L.smartAlertOff,
-      alertLineFg: st.alertOn ? '#F3F6FC' : '#8891A8',
+      alertLineFg: st.alertOn ? '#D8ECF8' : '#9DA7BA',
       toggleAlert: () => {
         const v = !st.alertOn;
         this.setState({ alertOn: v });
@@ -1809,9 +1809,9 @@ class Component extends DCLogic {
       alertAreaChips: AL_AREAS.map(x => this.alChip('alAreas', x, x)),
       alertCapChips: AL_CAPS.map(c => ({
         label: c.v === 0 ? L.alertFree : (c.v >= 9e9 ? L.alertAny : this.money(c.v)),
-        bg: st.alCap === c.v ? '#8C6BFF' : 'transparent',
-        fg: st.alCap === c.v ? '#0A0E1A' : '#C3CBDC',
-        bd: st.alCap === c.v ? '#8C6BFF' : '#262F44',
+        bg: st.alCap === c.v ? '#7A55F6' : 'transparent',
+        fg: st.alCap === c.v ? '#090B16' : '#C7D3EA',
+        bd: st.alCap === c.v ? '#7A55F6' : 'rgba(186,215,247,.12)',
         pick: () => { this.setState({ alCap: c.v }); this.saveAlertSoon(); }
       })),
       alertMatchLine: L.alertMatches.replace('{n}', String(st.alMatches)),
@@ -1828,13 +1828,13 @@ class Component extends DCLogic {
       skipLocation: () => this.setState({ stage:'interests' }),
       finishOnboard: () => this.setState({ stage:'app' }),
       toggleLang: () => this.setState({ lang: g === 'vi' ? 'en' : 'vi' }),
-      viBg: g === 'vi' ? '#2AC4E8' : 'transparent', viFg: g === 'vi' ? '#0A0E1A' : '#8891A8',
-      enBg: g === 'en' ? '#2AC4E8' : 'transparent', enFg: g === 'en' ? '#0A0E1A' : '#8891A8',
+      viBg: g === 'vi' ? '#B6D9FC' : 'transparent', viFg: g === 'vi' ? '#090B16' : '#9DA7BA',
+      enBg: g === 'en' ? '#B6D9FC' : 'transparent', enFg: g === 'en' ? '#090B16' : '#9DA7BA',
       onLogoTap: () => this.say(g === 'vi' ? 'Chế độ quản trị ở vòng sau' : 'Admin mode lands in the next round'),
 
       tabExplore: st.tab === 'explore', tabSaved: st.tab === 'saved', tabMap: st.tab === 'map', tabProfile: st.tab === 'profile',
       navItems: navDefs.map(n => ({
-        label:n.label, icon:n.icon, color: st.tab === n.k ? '#2AC4E8' : '#7C859C',
+        label:n.label, icon:n.icon, color: st.tab === n.k ? '#B6D9FC' : '#8A94A8',
         go: () => { this.setState({ tab:n.k, mapSel:null }); if (n.k === 'profile') FF.appRest(this); }
       })),
 
@@ -1844,10 +1844,10 @@ class Component extends DCLogic {
 
       timeChips: timeDefs.map(t => ({
         label:t.label, icon:t.icon,
-        bg: st.time === t.k ? '#2AC4E8' : 'rgba(18,24,38,.6)',
-        bd: st.time === t.k ? '#2AC4E8' : '#262F44',
-        fg: st.time === t.k ? '#0A0E1A' : '#8891A8',
-        glow: st.time === t.k ? '0 6px 20px rgba(42,196,232,.3)' : 'none',
+        bg: st.time === t.k ? '#B6D9FC' : 'rgba(13,16,28,.6)',
+        bd: st.time === t.k ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        fg: st.time === t.k ? '#090B16' : '#9DA7BA',
+        glow: st.time === t.k ? '0 6px 20px rgba(182,217,252,.3)' : 'none',
         pick: () => t.k === 'date'
           ? this.setState({ datePanel: !st.datePanel, artistPanel:false, time:'date' })
           : this.refilter({ time:t.k, datePanel:false, range:[null,null] })
@@ -1864,9 +1864,9 @@ class Component extends DCLogic {
 
       artistPill: {
         label: st.artist || L.artist,
-        bg: st.artist ? '#241C40' : 'rgba(18,24,38,.6)',
-        bd: st.artist ? '#8C6BFF' : '#262F44',
-        fg: st.artist ? '#B9A8FF' : '#8891A8'
+        bg: st.artist ? '#1A1236' : 'rgba(13,16,28,.6)',
+        bd: st.artist ? '#7A55F6' : 'rgba(186,215,247,.12)',
+        fg: st.artist ? '#C4B8F7' : '#9DA7BA'
       },
       artistChosen: !!st.artist, artistNotChosen: !st.artist,
       clearArtist: () => this.refilter({ artist:null }),
@@ -1876,24 +1876,24 @@ class Component extends DCLogic {
       artistEmpty: artistNames.length === 0,
       artistList: artistNames.map(a => ({
         name:a, count: artistCounts[a] + (g === 'vi' ? ' sự kiện' : ' events'),
-        bg: st.artist === a ? '#241C40' : 'transparent',
-        fg: st.artist === a ? '#B9A8FF' : '#F3F6FC',
+        bg: st.artist === a ? '#1A1236' : 'transparent',
+        fg: st.artist === a ? '#C4B8F7' : '#D8ECF8',
         pick: () => { this.refilter({ artist:a, artistPanel:false, artistQ:'' }); this.say(g === 'vi' ? 'Lọc theo ' + a : 'Filtered to ' + a); }
       })),
 
       genrePill: {
         label: st.genre === 'All' ? L.genreLabel : st.genre,
-        bg: st.genre !== 'All' ? '#241C40' : 'rgba(18,24,38,.6)',
-        bd: st.genre !== 'All' ? '#8C6BFF' : '#262F44',
-        fg: st.genre !== 'All' ? '#CFC6FF' : '#8891A8'
+        bg: st.genre !== 'All' ? '#1A1236' : 'rgba(13,16,28,.6)',
+        bd: st.genre !== 'All' ? '#7A55F6' : 'rgba(186,215,247,.12)',
+        fg: st.genre !== 'All' ? '#D6CFFA' : '#9DA7BA'
       },
       genrePanel: st.genrePanel,
       toggleGenrePanel: () => this.setState({ genrePanel: !st.genrePanel, artistPanel:false, datePanel:false }),
       genreList: GENRES.map(n => ({
         name: n === 'All' ? (g === 'vi' ? 'Tất cả thể loại' : 'All genres') : n,
         count: String(EVENTS.filter(e => n === 'All' || e.genre === n).length),
-        bg: st.genre === n ? '#241C40' : 'transparent',
-        fg: st.genre === n ? '#CFC6FF' : '#F3F6FC',
+        bg: st.genre === n ? '#1A1236' : 'transparent',
+        fg: st.genre === n ? '#D6CFFA' : '#D8ECF8',
         pick: () => this.refilter({ genre:n, genrePanel:false })
       })),
 
@@ -1913,9 +1913,9 @@ class Component extends DCLogic {
         } catch (e) { this.fail(e); await this.reloadFollows(); }
       },
       detailFollowLabel: detail && st.orgFollow[detail.organizerId] ? L.following : L.follow,
-      detailFollowBd: detail && st.orgFollow[detail.organizerId] ? '#39455F' : '#2AC4E8',
-      detailFollowFg: detail && st.orgFollow[detail.organizerId] ? '#8891A8' : '#2AC4E8',
-      detailFollowBg: detail && st.orgFollow[detail.organizerId] ? 'rgba(26,34,51,.7)' : 'transparent',
+      detailFollowBd: detail && st.orgFollow[detail.organizerId] ? 'rgba(186,215,247,.24)' : '#B6D9FC',
+      detailFollowFg: detail && st.orgFollow[detail.organizerId] ? '#9DA7BA' : '#B6D9FC',
+      detailFollowBg: detail && st.orgFollow[detail.organizerId] ? 'rgba(20,24,38,.7)' : 'transparent',
 
       reportOpen: !!st.reportFor,
       openReport: () => this.setState({ reportFor: detail ? detail.id : 'x', reportCode:'wrong' }),
@@ -1929,12 +1929,12 @@ class Component extends DCLogic {
       ].map(c => {
         const on = st.reportCode === c.k;
         return { label:c.label, icon:c.icon,
-          bg: on ? 'rgba(42,196,232,.1)' : 'rgba(26,34,51,.6)',
-          bd: on ? '#2AC4E8' : '#262F44',
-          fg: on ? '#F3F6FC' : '#C3CBDC',
-          iconFg: on ? '#7FE0F5' : '#8891A8',
-          dotBg: on ? '#2AC4E8' : 'transparent',
-          dotBd: on ? '#2AC4E8' : '#39455F',
+          bg: on ? 'rgba(182,217,252,.1)' : 'rgba(20,24,38,.6)',
+          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          fg: on ? '#D8ECF8' : '#C7D3EA',
+          iconFg: on ? '#D8ECF8' : '#9DA7BA',
+          dotBg: on ? '#B6D9FC' : 'transparent',
+          dotBd: on ? '#B6D9FC' : 'rgba(186,215,247,.24)',
           tick: on ? '1' : '0',
           pick: () => this.setState({ reportCode:c.k }) };
       }),
@@ -1969,13 +1969,15 @@ class Component extends DCLogic {
           const on = !!st.notifM[r.k][c];
           return {
             icon: on ? 'ph-fill ph-check-circle' : 'ph-bold ph-circle',
-            color: on ? '#2AC4E8' : '#39455F',
-            bg: on ? 'rgba(42,196,232,.1)' : 'transparent',
-            bd: on ? 'rgba(42,196,232,.4)' : '#1C2437',
+            color: on ? '#B6D9FC' : 'rgba(186,215,247,.24)',
+            bg: on ? 'rgba(182,217,252,.1)' : 'transparent',
+            bd: on ? 'rgba(182,217,252,.4)' : '#151A28',
             toggle: () => {
               const m = Object.assign({}, st.notifM);
               m[r.k] = Object.assign({}, m[r.k]); m[r.k][c] = !on;
               this.setState({ notifM:m });
+              // Switching push on is the tap that lets the browser ask for notifications.
+              if (c === 'push' && !on && FF.enablePush) FF.enablePush().catch(() => {});
               clearTimeout(this._np);
               this._np = setTimeout(() => FF.fire(FF.put('/me/notification-preferences', { matrix: this.state.notifM }), (e) => this.fail(e)), 500);
             }
@@ -1989,11 +1991,11 @@ class Component extends DCLogic {
       },
       offLabel: st.offline ? L.offOn : L.offOff,
       offIcon: st.offline ? 'ph-fill ph-cloud-slash' : 'ph-fill ph-cloud-check',
-      offBg: st.offline ? 'rgba(255,138,61,.14)' : 'rgba(46,158,91,.14)',
-      offBd: st.offline ? 'rgba(255,138,61,.45)' : 'rgba(46,158,91,.45)',
-      offFg: st.offline ? '#FFB35C' : '#6FD79B',
+      offBg: st.offline ? 'rgba(228,109,76,.14)' : 'rgba(38,150,132,.14)',
+      offBd: st.offline ? 'rgba(228,109,76,.45)' : 'rgba(38,150,132,.45)',
+      offFg: st.offline ? '#F0A07F' : '#6CC7B6',
       liveOffIcon: st.offline ? 'ph-fill ph-cloud-slash' : 'ph-bold ph-cloud-slash',
-      liveOffColor: st.offline ? '#FFB35C' : '#8C6BFF',
+      liveOffColor: st.offline ? '#F0A07F' : '#9D84F8',
       liveOffText: st.liveData
         ? FF.text(st.offline ? st.liveData.offline.offline : st.liveData.offline.online, g)
         : (st.offline ? L.liveOfflineOn : L.liveOffline),
@@ -2003,14 +2005,14 @@ class Component extends DCLogic {
       planOwed: !!(pSplit && pSplit.owedCount > 0),
       planOwedLine: pSplit ? FF.text(pSplit.owedLine, g) : '',
       payMethods: [
-        { k:'vietqr', label:'VietQR', icon:'ph-fill ph-qr-code', color:'#4EA1FF', tint:'rgba(78,161,255,.16)' },
-        { k:'momo', label:'Momo', icon:'ph-fill ph-wallet', color:'#FF6FA5', tint:'rgba(255,111,165,.16)' },
-        { k:'zalopay', label:'ZaloPay', icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8', tint:'rgba(42,196,232,.16)' }
+        { k:'vietqr', label:'VietQR', icon:'ph-fill ph-qr-code', color:'#6FB0F0', tint:'rgba(2,125,234,.16)' },
+        { k:'momo', label:'Momo', icon:'ph-fill ph-wallet', color:'#E88AA8', tint:'rgba(232,138,168,.16)' },
+        { k:'zalopay', label:'ZaloPay', icon:'ph-fill ph-chat-circle-dots', color:'#B6D9FC', tint:'rgba(182,217,252,.16)' }
       ].map(m => ({
         label:m.label, icon:m.icon, color:m.color,
-        bg: st.payReq === m.k ? 'rgba(42,196,232,.1)' : 'rgba(10,14,26,.6)',
-        bd: st.payReq === m.k ? '#2AC4E8' : '#262F44',
-        fg: st.payReq === m.k ? '#F3F6FC' : '#C3CBDC',
+        bg: st.payReq === m.k ? 'rgba(182,217,252,.1)' : 'rgba(5,6,15,.6)',
+        bd: st.payReq === m.k ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        fg: st.payReq === m.k ? '#D8ECF8' : '#C7D3EA',
         pick: async () => {
           this.setState({ payReq:m.k, payReqData:null });
           const id = this.planIdFor(st.planOpen);
@@ -2023,9 +2025,9 @@ class Component extends DCLogic {
       closePayReq: () => this.setState({ payReq:null }),
       payReq: (() => {
         const defs = {
-          vietqr: { label:'VietQR', icon:'ph-fill ph-qr-code', color:'#4EA1FF', tint:'rgba(78,161,255,.16)' },
-          momo: { label:'Momo', icon:'ph-fill ph-wallet', color:'#FF6FA5', tint:'rgba(255,111,165,.16)' },
-          zalopay: { label:'ZaloPay', icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8', tint:'rgba(42,196,232,.16)' }
+          vietqr: { label:'VietQR', icon:'ph-fill ph-qr-code', color:'#6FB0F0', tint:'rgba(2,125,234,.16)' },
+          momo: { label:'Momo', icon:'ph-fill ph-wallet', color:'#E88AA8', tint:'rgba(232,138,168,.16)' },
+          zalopay: { label:'ZaloPay', icon:'ph-fill ph-chat-circle-dots', color:'#B6D9FC', tint:'rgba(182,217,252,.16)' }
         };
         const d = defs[st.payReq];
         if (!d || !plan || !pSplit) return { qrRows: [] };
@@ -2068,10 +2070,10 @@ class Component extends DCLogic {
         const now = stage.sets.filter(s => s.state === 'now')[0] || stage.sets[0] || null;
         const nxt = stage.next;
         const stateMap = {
-          played: { fg:'#8891A8', bg:'transparent', label:L.livePlayed },
-          now: { fg:'#06080D', bg:'#2AC4E8', label:L.liveNow },
-          next: { fg:'#7FE0F5', bg:'rgba(42,196,232,.12)', label:L.liveNext },
-          later: { fg:'#C3CBDC', bg:'transparent', label:'' }
+          played: { fg:'#9DA7BA', bg:'transparent', label:L.livePlayed },
+          now: { fg:'#05060F', bg:'#B6D9FC', label:L.liveNow },
+          next: { fg:'#D8ECF8', bg:'rgba(182,217,252,.12)', label:L.liveNext },
+          later: { fg:'#C7D3EA', bg:'transparent', label:'' }
         };
         const minsLeft = now && now.endsAt ? Math.max(0, Math.round((new Date(now.endsAt).getTime() - FF.now().getTime()) / 60000)) : 0;
         const zoneOf = (id) => d.zones.filter(z => z.id === id)[0];
@@ -2084,9 +2086,9 @@ class Component extends DCLogic {
           nextLine: nxt ? nxt.time + ' · ' + nxt.artist : '—',
           stageTabs: d.stages.map((s, i) => ({
             label: FF.text(s.name, g),
-            bg: i === st.liveStage ? 'rgba(42,196,232,.14)' : 'rgba(26,34,51,.6)',
-            bd: i === st.liveStage ? '#2AC4E8' : '#262F44',
-            fg: i === st.liveStage ? '#7FE0F5' : '#8891A8',
+            bg: i === st.liveStage ? 'rgba(182,217,252,.14)' : 'rgba(20,24,38,.6)',
+            bd: i === st.liveStage ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+            fg: i === st.liveStage ? '#D8ECF8' : '#9DA7BA',
             pick: () => this.setState({ liveStage:i })
           })),
           sets: stage.sets.map(s => {
@@ -2097,13 +2099,13 @@ class Component extends DCLogic {
               chip: m.label, chipShow: !!m.label,
               chipBg: m.bg, chipFg: m.fg,
               opacity: '1',
-              timeFg: s.state === 'played' ? '#8891A8' : '#C3CBDC',
-              artistFg: s.state === 'played' ? '#8891A8' : '#F3F6FC',
-              rowBg: s.state === 'now' ? 'rgba(42,196,232,.07)' : 'transparent',
-              rowBd: s.state === 'now' ? 'rgba(42,196,232,.4)' : '#1C2437',
+              timeFg: s.state === 'played' ? '#9DA7BA' : '#C7D3EA',
+              artistFg: s.state === 'played' ? '#9DA7BA' : '#D8ECF8',
+              rowBg: s.state === 'now' ? 'rgba(182,217,252,.07)' : 'transparent',
+              rowBd: s.state === 'now' ? 'rgba(182,217,252,.4)' : '#151A28',
               remindShow: s.state === 'next' || s.state === 'later',
               remindLabel: on ? L.liveReminded.replace('{n}', s.time) : L.liveRemind,
-              remindFg: on ? '#6FD79B' : '#8891A8',
+              remindFg: on ? '#6CC7B6' : '#9DA7BA',
               remind: async () => {
                 const r = Object.assign({}, st.liveReminds); r[s.setId] = !on;
                 this.setState({ liveReminds:r });
@@ -2179,7 +2181,7 @@ class Component extends DCLogic {
           when: this.fmtWhen(e),
           stars: [1,2,3,4,5].map(n => ({
             icon: n <= st.recapStars ? 'ph-fill ph-star' : 'ph-bold ph-star',
-            color: n <= st.recapStars ? '#FFD35C' : '#39455F',
+            color: n <= st.recapStars ? '#FFD35C' : 'rgba(186,215,247,.24)',
             pick: () => this.setState({ recapStars:n })
           })),
           starsHint: st.recapStars ? st.recapStars + '/5' : L.recapStars,
@@ -2187,9 +2189,9 @@ class Component extends DCLogic {
             const on = !!st.recapAspects[a.k];
             return {
               label:a.label, icon:a.icon,
-              bg: on ? 'rgba(42,196,232,.14)' : 'rgba(26,34,51,.6)',
-              bd: on ? '#2AC4E8' : '#262F44',
-              fg: on ? '#7FE0F5' : '#C3CBDC',
+              bg: on ? 'rgba(182,217,252,.14)' : 'rgba(20,24,38,.6)',
+              bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+              fg: on ? '#D8ECF8' : '#C7D3EA',
               toggle: () => { const x = Object.assign({}, st.recapAspects); x[a.k] = !on; this.setState({ recapAspects:x }); }
             };
           }),
@@ -2221,9 +2223,9 @@ class Component extends DCLogic {
             }
           },
           stats: [
-            { label:L.recapCheckedAt, value: stats.checkedInAt ? FF.hhmm(stats.checkedInAt) : (e.startTime || '—'), icon:'ph-fill ph-sign-in', color:'#2AC4E8' },
-            { label:L.recapSetsSeen, value:String(stats.setsSeen), icon:'ph-fill ph-music-notes', color:'#8C6BFF' },
-            { label:L.recapFriendsThere, value:String(stats.friendsThere), icon:'ph-fill ph-users-three', color:'#6FD79B' }
+            { label:L.recapCheckedAt, value: stats.checkedInAt ? FF.hhmm(stats.checkedInAt) : (e.startTime || '—'), icon:'ph-fill ph-sign-in', color:'#B6D9FC' },
+            { label:L.recapSetsSeen, value:String(stats.setsSeen), icon:'ph-fill ph-music-notes', color:'#9D84F8' },
+            { label:L.recapFriendsThere, value:String(stats.friendsThere), icon:'ph-fill ph-users-three', color:'#6CC7B6' }
           ],
           submit: async () => {
             if (!st.recapStars) return this.say(L.recapNeedStars);
@@ -2251,18 +2253,18 @@ class Component extends DCLogic {
       ticketList: st.tickets.map(t => {
         const e = EVENTS.find(x => x.id === t.eventId) || {};
         return {
-          title: e.title || '', art: e.art || 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
+          title: e.title || '', art: e.art || 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
           when: e.ds ? this.fmtWhen(e) + ' · ' + this.fmtTime(e) : '',
           venue: (e.venue || '') + ' · ' + (e.area || ''),
           code: t.id, qrRows: this.qrRows(t.id),
           offNote: st.offline ? L.ticketOffNow : L.ticketOffReady,
           offIcon: st.offline ? 'ph-fill ph-cloud-slash' : 'ph-fill ph-check-circle',
-          offFg: st.offline ? '#FFB35C' : '#6FD79B',
+          offFg: st.offline ? '#F0A07F' : '#6CC7B6',
           qtyLine: t.qty + ' × ' + (t.qty > 1 ? L.ticketsWord : L.ticket),
           status: t.checked ? L.ticketUsed : L.ticketValid,
-          statusBg: t.checked ? 'rgba(95,104,128,.2)' : 'rgba(46,158,91,.16)',
-          statusFg: t.checked ? '#8891A8' : '#6FD79B',
-          statusBd: t.checked ? '#39455F' : '#2E9E5B',
+          statusBg: t.checked ? 'rgba(157,167,186,.16)' : 'rgba(38,150,132,.16)',
+          statusFg: t.checked ? '#9DA7BA' : '#6CC7B6',
+          statusBd: t.checked ? 'rgba(186,215,247,.24)' : '#269684',
           checkLabel: t.checked ? L.ticketUsed : L.checkIn,
           checkOp: t.checked ? '.5' : '1',
           check: async () => {
@@ -2289,7 +2291,7 @@ class Component extends DCLogic {
 
       checkoutOpen: !!st.checkout,
       closeCheckout: () => this.setState({ checkout:null, qty:1 }),
-      coTitle: coEv ? coEv.title : '', coArt: coEv ? coEv.art : 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
+      coTitle: coEv ? coEv.title : '', coArt: coEv ? coEv.art : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
       coWhen: coEv ? this.fmtWhen(coEv) + ' · ' + this.fmtTime(coEv) : '',
       coVenue: coEv ? coEv.venue : '',
       coQty: String(st.qty),
@@ -2318,8 +2320,8 @@ class Component extends DCLogic {
         const read = st.notifRead[n.k] || !n.unread;
         return {
           icon: n.icon, color: n.color, title: n.title, body: n.body,
-          dot: read ? 'transparent' : '#2AC4E8',
-          bg: read ? 'rgba(18,24,38,.5)' : 'rgba(26,34,51,.75)',
+          dot: read ? 'transparent' : '#B6D9FC',
+          bg: read ? 'rgba(13,16,28,.5)' : 'rgba(20,24,38,.75)',
           go: () => {
             const r = Object.assign({}, st.notifRead); r[n.k] = true;
             this.setState({ notifRead:r, notifOpen:false });
@@ -2406,9 +2408,9 @@ class Component extends DCLogic {
 
       interestChips: INTERESTS.map(n => ({
         name:n,
-        bg: st.interests[n] ? '#241C40' : 'rgba(18,24,38,.6)',
-        bd: st.interests[n] ? '#8C6BFF' : '#262F44',
-        fg: st.interests[n] ? '#CFC6FF' : '#8891A8',
+        bg: st.interests[n] ? '#1A1236' : 'rgba(13,16,28,.6)',
+        bd: st.interests[n] ? '#7A55F6' : 'rgba(186,215,247,.12)',
+        fg: st.interests[n] ? '#D6CFFA' : '#9DA7BA',
         toggle: () => {
           const i = Object.assign({}, st.interests);
           if (i[n]) delete i[n]; else i[n] = true;
@@ -2420,12 +2422,12 @@ class Component extends DCLogic {
         }
       })),
       profileRows: [
-        { icon:'ph-fill ph-ticket', iconColor:'#2AC4E8', label:L.myTickets, value: String(st.tickets.length), go: () => { this.setState({ ticketsOpen:true }); FF.appTickets(this); } },
-        { icon:'ph-bold ph-user-gear', iconColor:'#2AC4E8', label:L.editProfile, value:'', go: () => { if (st.user) this.setState({ edit:true, pErr:'', pName: st.user.name || '', pEmail: st.user.email || '', pZalo: st.user.zalo || '', pCity: st.user.city || '', pPhoto: st.user.photo || '' }); } },
-        { icon:'ph-fill ph-fire', iconColor:'#8C6BFF', label:L.hyped, value: String(Object.keys(st.hyped).filter(k => st.hyped[k]).length), go: () => this.setState({ hypedPanel:true }) },
-        { icon:'ph-bold ph-user-circle-plus', iconColor:'#8C6BFF', label:L.following, value: String(Object.keys(st.orgFollow).length), go: () => this.setState({ orgPanel:true }) },
-        { icon:'ph-bold ph-bell', iconColor:'#2AC4E8', label:L.notifPrefs, value:'', go: () => this.setState({ notifPrefOpen:true }) },
-        { icon:'ph-bold ph-megaphone', iconColor:'#2AC4E8', label:L.listEvent, value:'', go: () => { window.location.assign('/organizer'); } }
+        { icon:'ph-fill ph-ticket', iconColor:'#B6D9FC', label:L.myTickets, value: String(st.tickets.length), go: () => { this.setState({ ticketsOpen:true }); FF.appTickets(this); } },
+        { icon:'ph-bold ph-user-gear', iconColor:'#B6D9FC', label:L.editProfile, value:'', go: () => { if (st.user) this.setState({ edit:true, pErr:'', pName: st.user.name || '', pEmail: st.user.email || '', pZalo: st.user.zalo || '', pCity: st.user.city || '', pPhoto: st.user.photo || '' }); } },
+        { icon:'ph-fill ph-fire', iconColor:'#9D84F8', label:L.hyped, value: String(Object.keys(st.hyped).filter(k => st.hyped[k]).length), go: () => this.setState({ hypedPanel:true }) },
+        { icon:'ph-bold ph-user-circle-plus', iconColor:'#9D84F8', label:L.following, value: String(Object.keys(st.orgFollow).length), go: () => this.setState({ orgPanel:true }) },
+        { icon:'ph-bold ph-bell', iconColor:'#B6D9FC', label:L.notifPrefs, value:'', go: () => this.setState({ notifPrefOpen:true }) },
+        { icon:'ph-bold ph-megaphone', iconColor:'#B6D9FC', label:L.listEvent, value:'', go: () => { window.location.assign('/organizer'); } }
       ],
 
       mapFilterLine: st.genre !== 'All' ? st.genre + ' · ' + timeDefs.find(t => t.k === st.time).label : L.mapAll,
@@ -2441,10 +2443,10 @@ class Component extends DCLogic {
         y: (88 - ((e.lat - 10.71) / 0.15) * 62) + '%',
         price: e.price === 0 ? L.free : this.short(e.price),
         z: st.mapSel === e.id ? 6 : 4,
-        bg: st.mapSel === e.id ? '#2AC4E8' : 'rgba(10,14,26,.82)',
-        bd: st.mapSel === e.id ? '#2AC4E8' : e.badge === 'live' ? '#8C6BFF' : '#2AC4E8',
-        fg: st.mapSel === e.id ? '#0A0E1A' : '#F3F6FC',
-        glow: st.mapSel === e.id ? '0 6px 20px rgba(42,196,232,.5)' : '0 4px 14px rgba(0,0,0,.5)',
+        bg: st.mapSel === e.id ? '#B6D9FC' : 'rgba(5,6,15,.82)',
+        bd: st.mapSel === e.id ? '#B6D9FC' : e.badge === 'live' ? '#7A55F6' : '#B6D9FC',
+        fg: st.mapSel === e.id ? '#090B16' : '#D8ECF8',
+        glow: st.mapSel === e.id ? '0 6px 20px rgba(182,217,252,.5)' : '0 4px 14px rgba(0,0,0,.5)',
         pick: () => this.setState({ mapSel:e.id })
       }; }),
       mapPreviewFriends: mapSel && connected ? this.fGoing(mapSel.id).map(f => this.fView(f)) : [],
@@ -2463,17 +2465,18 @@ class Component extends DCLogic {
       closeDetail: () => this.setState({ detail:null, detailData:null }),
       detailLineup: detail ? (detail.lineup || []).map(n => ({ n })) : [],
       detailActions: detail ? [
-        { label:L.hype, icon:'ph-fill ph-fire', bg: st.hyped[detail.id] ? '#241C40' : 'rgba(26,34,51,.6)', bd: st.hyped[detail.id] ? '#8C6BFF' : '#262F44', fg: st.hyped[detail.id] ? '#B9A8FF' : '#8891A8',
+        { label:L.hype, icon:'ph-fill ph-fire', bg: st.hyped[detail.id] ? '#1A1236' : 'rgba(20,24,38,.6)', bd: st.hyped[detail.id] ? '#7A55F6' : 'rgba(186,215,247,.12)', fg: st.hyped[detail.id] ? '#C4B8F7' : '#9DA7BA',
           go: () => { if (!st.user) return this.openAuth('signup', null, L.gateSave); this.flag('hypes', detail.id, !st.hyped[detail.id]); } },
-        { label:L.save, icon:'ph-fill ph-heart', bg: st.saved[detail.id] ? '#123244' : 'rgba(26,34,51,.6)', bd: st.saved[detail.id] ? '#2AC4E8' : '#262F44', fg: st.saved[detail.id] ? '#7FE0F5' : '#8891A8',
+        { label:L.save, icon:'ph-fill ph-heart', bg: st.saved[detail.id] ? '#111A2B' : 'rgba(20,24,38,.6)', bd: st.saved[detail.id] ? '#B6D9FC' : 'rgba(186,215,247,.12)', fg: st.saved[detail.id] ? '#D8ECF8' : '#9DA7BA',
           go: () => { if (!st.user) return this.openAuth('signup', 'save:' + detail.id, L.gateSave); this.flag('saves', detail.id, !st.saved[detail.id]); } },
-        { label:L.calendar, icon:'ph-bold ph-calendar-plus', bg:'rgba(26,34,51,.6)', bd:'#262F44', fg:'#8891A8', go: () => this.setState({ sheet:'cal' }) },
-        { label:L.share, icon:'ph-bold ph-share-network', bg:'rgba(26,34,51,.6)', bd:'#262F44', fg:'#8891A8', go: () => this.setState({ sheet:'share' }) }
+        { label:L.calendar, icon:'ph-bold ph-calendar-plus', bg:'rgba(20,24,38,.6)', bd:'rgba(186,215,247,.12)', fg:'#9DA7BA', go: () => this.setState({ sheet:'cal' }) },
+        { label:L.share, icon:'ph-bold ph-share-network', bg:'rgba(20,24,38,.6)', bd:'rgba(186,215,247,.12)', fg:'#9DA7BA', go: () => this.setState({ sheet:'share' }) }
       ] : [],
       ctaLabel: !detail ? '' : detail.soldOut ? L.soldOutCta : detail.past ? L.endedCta : detail.price === 0 ? L.freeEntry : L.getTickets + ' · ' + L.from + ' ' + this.money(detail.price),
-      ctaBg: !detail ? '#2AC4E8' : detail.soldOut || detail.past ? '#1A2233' : '#2AC4E8',
-      ctaFg: !detail ? '#0A0E1A' : detail.soldOut || detail.past ? '#7C859C' : '#0A0E1A',
-      ctaShadow: !detail || detail.soldOut || detail.past ? 'none' : '0 14px 34px rgba(42,196,232,.3)',
+      ctaClass: !detail || detail.soldOut || detail.past ? '' : 'ff-cta',
+      ctaBg: !detail ? '#B6D9FC' : detail.soldOut || detail.past ? '#131725' : '#B6D9FC',
+      ctaFg: !detail ? '#090B16' : detail.soldOut || detail.past ? '#8A94A8' : '#090B16',
+      ctaShadow: !detail || detail.soldOut || detail.past ? 'none' : '0 14px 34px rgba(182,217,252,.3)',
       ctaOpacity: !detail || !(detail.soldOut || detail.past) ? '1' : '.6',
       getTickets: async () => {
         if (!detail) return;
@@ -2496,7 +2499,7 @@ class Component extends DCLogic {
       sheetShare: st.sheet === 'share', sheetCal: st.sheet === 'cal',
       closeSheet: () => this.setState({ sheet:null }),
       shareTargets,
-      shareArt: detail ? detail.art : 'linear-gradient(135deg,#2AC4E8,#8C6BFF)',
+      shareArt: detail ? detail.art : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
       shareTitleText: detail ? detail.title : '',
       shareMeta: detail ? this.fmtWhen(detail) + ' · ' + detail.area : '',
       calEventLine: detail ? detail.title + ' · ' + this.fmtWhen(detail) : '',

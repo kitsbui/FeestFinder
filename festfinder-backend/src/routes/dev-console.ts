@@ -9,7 +9,7 @@ const PAGE = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FestFinder API</title>
+<title>FeestFinder API</title>
 <link rel="icon" href="data:,">
 <style>
   :root { --bg:#06080D; --s1:#0A0E1A; --s2:#121826; --s3:#1A2233; --bd:#262F44; --tx:#F3F6FC; --tx2:#C3CBDC; --tx3:#8891A8; --ac:#2AC4E8; --ach:#7FE0F5; --vi:#B9A8FF; --gr:#6FD79B; --am:#FFB35C; --rd:#FF9A9A; }
@@ -207,5 +207,8 @@ renderNav();
 
 export default async function devConsoleRoutes(app: FastifyInstance) {
   if (app.ctx.config.env === 'production') return;
-  app.get('/_console', async (_req, reply) => reply.type('text/html; charset=utf-8').header('cache-control', 'no-store').send(PAGE));
+  // Development only, and its script is inline, so it gets a policy of its own.
+  app.get('/_console', async (_req, reply) => reply.type('text/html; charset=utf-8').header('cache-control', 'no-store')
+    .header('content-security-policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'")
+    .send(PAGE));
 }

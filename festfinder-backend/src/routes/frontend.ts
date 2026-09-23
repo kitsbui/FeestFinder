@@ -7,20 +7,43 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
 
 /**
- * The four Claude Design surfaces, wired to this API and served from the same origin.
+ * The four Claude Design surfaces, wired to this API and served from the same origin, and
+ * the operations back office (/ops) next to them.
  *
  * Each surface is a small shell that answers every route below its base, so the screens,
  * tabs and panels all have real URLs while the browser keeps one copy of the template,
  * the logic and the runtime.
  */
 const SURFACES = [
-  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/e/:slug', '/o/:slug', '/about', '/advertise', '/map', '/saved', '/stats/:key', '/city/:city/:when'] },
+  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/e/:slug', '/o/:slug', '/about', '/advertise', '/map', '/saved', '/stats/:key', '/city/:city/:when', '/vi/:city/:when', '/en/:city/:when'] },
   { base: '/app', shell: 'pages/app/shell.html', routes: ['/app', '/app/:screen', '/app/:screen/:param'] },
   // The back offices sit on their own namespaces: /organizer/* and /admin/* are API paths,
   // and a screen URL must never shadow an endpoint.
   { base: '/studio', shell: 'pages/organizer/shell.html', routes: ['/studio', '/studio/:screen', '/studio/:screen/:param'] },
   { base: '/console', shell: 'pages/admin/shell.html', routes: ['/console', '/console/:screen', '/console/:screen/:param'] },
+  // The operations back office is plain scripts, not the design runtime, so it keeps the
+  // strict policy from app.ts (no 'unsafe-eval').
+  { base: '/ops', shell: 'pages/ops/shell.html', routes: ['/ops', '/ops/*'], strict: true },
 ];
+
+/**
+ * The design runtime compiles each screen's template and logic with `new Function`, so
+ * its pages need 'unsafe-eval'. Scripts still load only from this origin and nothing runs
+ * inline, which is what keeps an injected script out. Every other response keeps the
+ * strict policy set in app.ts.
+ */
+export const DESIGN_RUNTIME_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join('; ');
 
 /** Where the old entry points went. */
 const MOVED: Record<string, string> = { '/organizer': '/studio', '/admin': '/console' };
@@ -34,6 +57,10 @@ const MIME: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.json': 'application/json; charset=utf-8',
   '.md': 'text/markdown; charset=utf-8',
+  // Icon fonts are already compressed, so they are served as they are.
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.ico': 'image/x-icon',
 };
 const COMPRESS = new Set(['.html', '.js', '.css', '.json', '.svg', '.md']);
 
@@ -86,6 +113,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
       app.get(route, async (req, reply) => {
         const entry = await load(shell);
         if (!entry) throw notFound();
+        if (!('strict' in surface)) reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
         // The shell carries no data of its own, so it may be revalidated cheaply.
         return serve(req, reply, entry, 0);
       });
@@ -113,5 +141,10 @@ export default async function frontendRoutes(app: FastifyInstance) {
     });
   }
 
-  app.get('/favicon.ico', async (_req, reply) => reply.type('image/png').send(await readFile(join(dir, 'ui/assets/ff-icon.png'))));
+  // Browsers ask for this path on their own, whatever the page links.
+  app.get('/favicon.ico', async (req, reply) => {
+    const entry = await load(join(dir, 'ui/assets/favicon.ico'));
+    if (!entry) throw notFound();
+    return serve(req, reply, entry, 86400);
+  });
 }

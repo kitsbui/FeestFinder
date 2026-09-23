@@ -44,7 +44,7 @@ export function presentDraft(ev: any) {
 }
 
 /** Ready to submit: the fields review can't work without, plus the logo and own event page the wizard asks for. */
-function missingForSubmit(ev: any): string[] {
+export function missingForSubmit(ev: any): string[] {
   const missing: string[] = [];
   if (!ev.title?.trim()) missing.push('title');
   if (!ev.genre) missing.push('genre');
@@ -56,7 +56,7 @@ function missingForSubmit(ev: any): string[] {
   return missing;
 }
 
-const DraftInput = z.object({
+export const DraftInput = z.object({
   title: z.string().max(120),
   genre: z.enum(GENRES).nullable(),
   description: localized,
@@ -81,9 +81,9 @@ const DraftInput = z.object({
 }).partial();
 
 /** Edits to these on a live listing send it back to review. */
-const REVIEWED_FIELDS = ['title', 'startsOn', 'endsOn', 'startTime', 'endTime', 'venueId', 'venueName', 'entryMode', 'priceFrom', 'coverUrl'];
+export const REVIEWED_FIELDS = ['title', 'startsOn', 'endsOn', 'startTime', 'endTime', 'venueId', 'venueName', 'entryMode', 'priceFrom', 'coverUrl'];
 
-async function applyDraft(ctx: Ctx, q: Queryable, id: string, body: z.infer<typeof DraftInput>) {
+export async function applyDraft(ctx: Ctx, q: Queryable, id: string, body: z.infer<typeof DraftInput>) {
   const set: Record<string, unknown> = {};
   const map: Record<string, string> = {
     title: 'title', genre: 'genre', logoUrl: 'logo_url', coverUrl: 'cover_url', startsOn: 'starts_on', endsOn: 'ends_on',
@@ -181,7 +181,9 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const rows = await many<any>(ctx.db,
       `select e.*, coalesce(m.views, 0)::int as views, coalesce(m.clicks, 0)::int as clicks,
               exists (select 1 from ticket_tiers t where t.event_id = e.id) as has_tiers,
-              (select count(*)::int from tickets t where t.event_id = e.id and t.status in ('valid','used')) as sold
+              (select count(*)::int from tickets t where t.event_id = e.id and t.status in ('valid','used')) as sold,
+              (select json_build_object('decision', d.decision, 'code', d.reason_code, 'message', d.message, 'at', d.decided_at)
+                 from moderation_decisions d where d.event_id = e.id order by d.decided_at desc limit 1) as last_decision
          from events e
          left join (select event_id, sum(views) as views, sum(ticket_clicks) as clicks from event_metrics_daily group by event_id) m on m.event_id = e.id
         where e.organizer_id = $1 ${filter}
@@ -205,6 +207,15 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
           status: e.status, statusLabel: STATUS_LABEL[e.status], meta,
           views: hasData ? e.views : null, saves: hasData ? e.save_count : null, clicks: hasData ? e.clicks : null,
           sold: e.sold, hasPerformance: e.status === 'live' && e.has_tiers,
+          // Raw fields for list views that filter and sort on their own.
+          startsOn: e.starts_on, endsOn: e.ends_on, startTime: e.start_time, endTime: e.end_time, genre: e.genre, area: e.area,
+          venueName: e.venue_name, venueResolved: !!e.venue_id || e.lat !== null, entryMode: e.entry_mode, priceFrom: e.price_from,
+          qualityScore: e.quality_score, missing: ['draft', 'rejected'].includes(e.status) ? missingForSubmit(e) : [],
+          submittedAt: e.submitted_at, publishedAt: e.published_at, updatedAt: e.updated_at,
+          lastDecision: e.last_decision ? {
+            decision: e.last_decision.decision, code: e.last_decision.code, message: e.last_decision.message, at: e.last_decision.at,
+            reason: e.last_decision.code ? REJECT_REASONS[e.last_decision.code]?.label ?? null : null,
+          } : null,
         };
       }),
     };
@@ -277,6 +288,14 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  /** "Duplicate": a new draft with the same details, for the next edition or a recurring night. Dates are left for the organiser. */
+  app.post<{ Params: { id: string } }>('/organizer/events/:id/duplicate', async (req, reply) => {
+    const org = await requireOrganizer(ctx, req);
+    const ev = await requireOwnEvent(ctx, org, req.params.id);
+    const copy = await duplicateEvent(ctx, ev, ev.organizer_id);
+    return reply.code(201).send({ ...presentDraft(copy), message: L('Copied into a new draft. Set the dates and submit.', 'Đã sao chép thành bản nháp mới. Chọn ngày rồi gửi duyệt.') });
+  });
+
   app.get<{ Params: { id: string } }>('/organizer/events/:id/quality', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
@@ -287,6 +306,10 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
     if (!['draft', 'rejected'].includes(ev.status)) throw conflict('already_submitted', L('This listing is already submitted', 'Tin này đã được gửi'));
+    const standing = await one<any>(ctx.db, 'select suspended_at from organizers where id = $1', [org.organizerId]);
+    if (standing?.suspended_at) {
+      throw conflict('organizer_suspended', L('This account is suspended. Contact FeestFinder support to lift it.', 'Tài khoản đang bị tạm dừng. Liên hệ FeestFinder để được mở lại.'));
+    }
     const missing = missingForSubmit(ev);
     if (missing.length) {
       throw badRequest('not_ready', L('Add the logo and your event page before submitting', 'Thêm logo và trang sự kiện trước khi gửi'), { missing });
@@ -316,42 +339,8 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
   app.put<{ Params: { id: string } }>('/organizer/events/:id/tiers', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const { tiers } = parse(z.object({
-      tiers: z.array(z.object({
-        key: z.string().regex(/^[a-z0-9_-]{2,24}$/),
-        name: localized,
-        note: localized.nullable().optional(),
-        price: z.number().int().min(0).max(100_000_000),
-        capacity: z.number().int().min(0).max(500_000),
-        isLast: z.boolean().default(false),
-        salesOpenAt: z.string().datetime({ offset: true }).nullable().optional(),
-        priceRiseOn: dateStr.nullable().optional(),
-        priceRiseTo: z.number().int().positive().nullable().optional(),
-      })).min(1).max(12),
-    }), req.body);
-    if (new Set(tiers.map((t) => t.key)).size !== tiers.length) throw badRequest('duplicate_tier', L('Each tier needs its own key', 'Mỗi loại vé cần mã riêng'));
-    await ctx.db.tx(async (q) => {
-      const existing = await many<any>(q, 'select id, key, sold from ticket_tiers where event_id = $1', [ev.id]);
-      for (const old of existing) {
-        const next = tiers.find((t) => t.key === old.key);
-        if (!next && old.sold > 0) throw conflict('tier_has_sales', L(`Tier ${old.key} has sales and can't be removed`, `Loại vé ${old.key} đã bán nên không xoá được`));
-        if (next && next.capacity < old.sold) throw conflict('capacity_below_sold', L(`Tier ${old.key} already sold ${old.sold}`, `Loại vé ${old.key} đã bán ${old.sold}`));
-        if (!next) await q.query('delete from ticket_tiers where id = $1', [old.id]);
-      }
-      for (const [i, t] of tiers.entries()) {
-        await q.query(
-          `insert into ticket_tiers (event_id, key, name, note, price, capacity, is_last, sales_open_at, price_rise_on, price_rise_to, sort)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-           on conflict (event_id, key) do update set name = excluded.name, note = excluded.note, price = excluded.price, capacity = excluded.capacity,
-             is_last = excluded.is_last, sales_open_at = excluded.sales_open_at, price_rise_on = excluded.price_rise_on,
-             price_rise_to = excluded.price_rise_to, sort = excluded.sort`,
-          [ev.id, t.key, json(t.name), json(t.note ?? null), t.price, t.capacity, t.isLast, t.salesOpenAt ?? null, t.priceRiseOn ?? null, t.priceRiseTo ?? null, i]);
-      }
-      const min = Math.min(...tiers.map((t) => t.price));
-      await q.query(`update events set price_from = $2, capacity = coalesce(capacity, $3) where id = $1 and entry_mode = 'paid'`,
-        [ev.id, min, tiers.reduce((n, t) => n + t.capacity, 0)]);
-      await refreshSoldOut(q, ev.id);
-    });
+    const { tiers } = parse(TiersInput, req.body);
+    await ctx.db.tx((q) => replaceTiers(q, ev.id, tiers));
     return { ok: true };
   });
 
@@ -402,6 +391,67 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       for (const z0 of zones) await q.query('insert into site_zones (event_id, label, kind, x, y, w) values ($1,$2,$3,$4,$5,$6)', [ev.id, z0.label, z0.kind, z0.x, z0.y, z0.w]);
     });
     return { ok: true };
+  });
+}
+
+/** Ticket tiers as the organiser wizard and the admin editor send them. */
+export const TiersInput = z.object({
+  tiers: z.array(z.object({
+    key: z.string().regex(/^[a-z0-9_-]{2,24}$/),
+    name: localized,
+    note: localized.nullable().optional(),
+    price: z.number().int().min(0).max(100_000_000),
+    capacity: z.number().int().min(0).max(500_000),
+    isLast: z.boolean().default(false),
+    salesOpenAt: z.string().datetime({ offset: true }).nullable().optional(),
+    priceRiseOn: dateStr.nullable().optional(),
+    priceRiseTo: z.number().int().positive().nullable().optional(),
+  })).min(1).max(12),
+});
+
+/** Replaces an event's tiers, keeping sales: a tier with sales can't go and can't shrink below what it sold. */
+export async function replaceTiers(q: Queryable, eventId: string, tiers: z.infer<typeof TiersInput>['tiers']): Promise<void> {
+  if (new Set(tiers.map((t) => t.key)).size !== tiers.length) throw badRequest('duplicate_tier', L('Each tier needs its own key', 'Mỗi loại vé cần mã riêng'));
+  const existing = await many<any>(q, 'select id, key, sold from ticket_tiers where event_id = $1', [eventId]);
+  for (const old of existing) {
+    const next = tiers.find((t) => t.key === old.key);
+    if (!next && old.sold > 0) throw conflict('tier_has_sales', L(`Tier ${old.key} has sales and can't be removed`, `Loại vé ${old.key} đã bán nên không xoá được`));
+    if (next && next.capacity < old.sold) throw conflict('capacity_below_sold', L(`Tier ${old.key} already sold ${old.sold}`, `Loại vé ${old.key} đã bán ${old.sold}`));
+    if (!next) await q.query('delete from ticket_tiers where id = $1', [old.id]);
+  }
+  for (const [i, t] of tiers.entries()) {
+    await q.query(
+      `insert into ticket_tiers (event_id, key, name, note, price, capacity, is_last, sales_open_at, price_rise_on, price_rise_to, sort)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       on conflict (event_id, key) do update set name = excluded.name, note = excluded.note, price = excluded.price, capacity = excluded.capacity,
+         is_last = excluded.is_last, sales_open_at = excluded.sales_open_at, price_rise_on = excluded.price_rise_on,
+         price_rise_to = excluded.price_rise_to, sort = excluded.sort`,
+      [eventId, t.key, json(t.name), json(t.note ?? null), t.price, t.capacity, t.isLast, t.salesOpenAt ?? null, t.priceRiseOn ?? null, t.priceRiseTo ?? null, i]);
+  }
+  const min = Math.min(...tiers.map((t) => t.price));
+  await q.query(`update events set price_from = $2, capacity = coalesce(capacity, $3) where id = $1 and entry_mode = 'paid'`,
+    [eventId, min, tiers.reduce((n, t) => n + t.capacity, 0)]);
+  await refreshSoldOut(q, eventId);
+}
+
+/** Copies a listing into a fresh draft for the same organiser: details, lineup, images and tiers, but no dates, sales or history. */
+export async function duplicateEvent(ctx: Ctx, ev: any, organizerId: string): Promise<any> {
+  return ctx.db.tx(async (q) => {
+    const title = `${ev.title}`.slice(0, 112);
+    const row = await one<any>(q,
+      `insert into events (slug, organizer_id, title, genre, description, city, venue_id, venue_name, address, area, lat, lng, start_time, end_time,
+                           entry_mode, price_from, capacity, age, lineup, artists, art, cover_url, cover_sha256, logo_url, ticket_url, event_url, brand_url,
+                           status, previous_edition_id)
+       select $2, $3, $4, genre, description, city, venue_id, venue_name, address, area, lat, lng, start_time, end_time,
+              entry_mode, price_from, capacity, age, lineup, artists, art, cover_url, cover_sha256, logo_url, ticket_url, event_url, brand_url,
+              'draft', id
+         from events where id = $1 returning id`,
+      [ev.id, `${slugify(title) || 'event'}-${randomCode(4).toLowerCase()}`, organizerId, title]);
+    await q.query(
+      `insert into ticket_tiers (event_id, key, name, note, price, capacity, is_last, sort)
+       select $2, key, name, note, price, capacity, is_last, sort from ticket_tiers where event_id = $1`, [ev.id, row.id]);
+    await refreshDerived(q, row.id);
+    return one<any>(q, 'select * from events where id = $1', [row.id]);
   });
 }
 

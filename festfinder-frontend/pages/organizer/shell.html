@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FestFinder cho nhà tổ chức</title>
+<title>FeestFinder cho nhà tổ chức</title>
+<link rel="icon" href="/ui/assets/favicon.ico" sizes="32x32">
+<link rel="icon" href="/ui/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/ui/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="/pages/organizer/template.html" as="fetch" crossorigin>
 <link rel="preload" href="/pages/organizer/logic.js" as="fetch" crossorigin>
 <script src="/ui/ff-client.js"></script>
 </head>
-<body>
+<body data-surface="organizer" data-base="/studio">
 <!-- The runtime reads the template from here and the logic from the script below;
      FF.mount fills both in, after the data this route needs is in hand. -->
 <x-dc></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;signedIn&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Wizard&quot;,&quot;Dashboard&quot;,&quot;Attendees&quot;,&quot;Announcements&quot;,&quot;Check-in&quot;,&quot;Promo codes&quot;,&quot;Revenue&quot;,&quot;Inbox&quot;],&quot;default&quot;:&quot;Wizard&quot;,&quot;tsType&quot;:&quot;'Wizard' | 'Dashboard' | 'Attendees' | 'Announcements' | 'Check-in' | 'Promo codes' | 'Revenue' | 'Inbox'&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;language&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;English&quot;,&quot;Tiếng Việt&quot;],&quot;default&quot;:&quot;English&quot;,&quot;tsType&quot;:&quot;'English' | 'Tiếng Việt'&quot;,&quot;section&quot;:&quot;Prototype&quot;}}"></script>
-<script>FF.mount({ surface: 'organizer', base: '/studio' });</script>
 </body>
 </html>

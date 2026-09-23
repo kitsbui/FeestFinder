@@ -107,14 +107,21 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
 
   // ---- audit log --------------------------------------------------------------------
 
-  const auditRows = async (actor: string, lim: number, offset: number) => many<any>(ctx.db,
-    `select * from audit_log where ($1 = 'all' or actor_type = $1) order by seq desc limit $2 offset $3`, [actor, lim, offset]);
+  /** `area` is the part of an action before the dot (listing, organizer, shelf…); `q` matches who or what. */
+  const auditRows = async (actor: string, lim: number, offset: number, area = '', q = '', targetId = '') => many<any>(ctx.db,
+    `select * from audit_log
+      where ($1 = 'all' or actor_type = $1) and ($4 = '' or split_part(action, '.', 1) = $4)
+        and ($5 = '' or actor_label ilike '%' || $5 || '%' or target_label ilike '%' || $5 || '%') and ($6 = '' or target_id = $6)
+      order by seq desc limit $2 offset $3`, [actor, lim, offset, area, q, targetId]);
 
   app.get('/admin/audit', async (req) => {
     requireAdmin(req);
-    const f = parse(z.object({ actor: z.enum(['all', 'admin', 'system', 'organizer']).default('all'), limit: limit(100, 18), cursor: z.string().optional() }), req.query);
+    const f = parse(z.object({
+      actor: z.enum(['all', 'admin', 'system', 'organizer']).default('all'), limit: limit(100, 18), cursor: z.string().optional(),
+      area: z.string().regex(/^[a-z_]{0,24}$/).default(''), q: z.string().max(60).default(''), targetId: z.string().max(60).default(''),
+    }), req.query);
     const offset = decodeCursor(f.cursor);
-    const rows = await auditRows(f.actor, f.limit + 1, offset);
+    const rows = await auditRows(f.actor, f.limit + 1, offset, f.area, f.q.replace(/[%_\\]/g, ''), f.targetId);
     const p = page(rows, offset, f.limit);
     return {
       items: p.items.map((a) => ({
@@ -197,7 +204,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
       }
       const { token, expiresAt } = await createSession(q, now, { kind: 'user', userId, readOnly: true, impersonatorId: s.user.id, ttlMs: IMPERSONATION_TTL_MS });
       await appendAudit(q, {
-        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FestFinder Admin', action: 'impersonation.started',
+        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'impersonation.started',
         targetType: body.targetType, targetId: body.targetId, targetLabel: label,
         diff: [{ f: 'session', a: 'admin', b: 'impersonate' }, { f: 'scope', a: 'read+write', b: 'read-only' }],
       });
@@ -217,7 +224,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
       if (!ended.length) throw notFound(L('No impersonation is running', 'Không có phiên xem hộ nào'));
       const u = await one<any>(q, 'select name, email, phone from users where id = $1', [ended[0].user_id]);
       await appendAudit(q, {
-        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FestFinder Admin', action: 'impersonation.ended',
+        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'impersonation.ended',
         targetType: 'user', targetId: ended[0].user_id, targetLabel: u?.name || u?.email || u?.phone || '—',
         diff: [{ f: 'session', a: 'impersonate', b: 'admin' }, { f: 'scope', a: 'read-only', b: 'read+write' }],
       });
@@ -242,7 +249,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
       const basis = ledger.lines.find((l) => l.key === 'gross_share' || l.key === 'held')?.amount ?? 0;
       await q.query('insert into payout_transfers (event_id, kind, amount, gross_basis, reference, paid_at) values ($1,$2,$3,$4,$5,$6)', [ev.id, kind, ledger.net, basis, reference, now]);
       await appendAudit(q, {
-        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FestFinder Admin', action: 'payout.marked_paid',
+        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'payout.marked_paid',
         targetType: 'event', targetId: ev.id, targetLabel: ev.title, diff: [{ f: kind, a: ledger.status, b: 'paid' }, { f: 'amount', a: '—', b: String(ledger.net) }],
       });
       return (await payoutLedger(q, ev, now)).find((r) => r.kind === kind);

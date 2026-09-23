@@ -210,8 +210,8 @@ const FAQ: [Localized, Localized][] = [
     L('From 1.200.000₫ for general admission at SECC in District 7. Doors open at 16:00 and the ticket includes re-entry until 22:00. Tickets are marked low, so the price tier may move before Saturday.',
       'Từ 1.200.000₫ cho vé thường tại SECC, Quận 7. Mở cửa 16:00 và vé bao gồm ra vào lại đến 22:00. Vé đang còn ít nên mức giá có thể thay đổi trước thứ Bảy.')],
   [L('Is anything already sold out?', 'Có show nào đã hết vé chưa?'),
-    L('Rap Việt Live Stage at Nhà thi đấu Phú Thọ on Sunday 20 September is sold out. Resale is handled by the ticketing partner, not by FestFinder — we mark a listing sold out within minutes of the organizer updating it.',
-      'Rap Việt Live Stage tại Nhà thi đấu Phú Thọ ngày Chủ nhật 20/9 đã hết vé. Việc sang nhượng do đối tác bán vé xử lý, không phải FestFinder — chúng tôi đánh dấu hết vé trong vài phút sau khi nhà tổ chức cập nhật.')],
+    L('Rap Việt Live Stage at Nhà thi đấu Phú Thọ on Sunday 20 September is sold out. Resale is handled by the ticketing partner, not by FeestFinder — we mark a listing sold out within minutes of the organizer updating it.',
+      'Rap Việt Live Stage tại Nhà thi đấu Phú Thọ ngày Chủ nhật 20/9 đã hết vé. Việc sang nhượng do đối tác bán vé xử lý, không phải FeestFinder — chúng tôi đánh dấu hết vé trong vài phút sau khi nhà tổ chức cập nhật.')],
   [L('How do I get to the riverside park for HOZO?', 'Đi tới công viên bờ sông dự HOZO thế nào?'),
     L('The entrance is on Nguyễn Thiện Thành in Thủ Đức, about 4 km from District 1. Parking near the gates fills before 18:00, so arriving early or by ride-hail is the safer plan on festival nights.',
       'Cổng vào nằm trên đường Nguyễn Thiện Thành, Thủ Đức, cách Quận 1 khoảng 4 km. Bãi xe gần cổng thường đầy trước 18:00, nên đến sớm hoặc đi xe công nghệ sẽ chắc chắn hơn trong các đêm lễ hội.')],
@@ -236,7 +236,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     const ids = { org: {} as Record<string, string>, venue: {} as Record<string, string>, event: {} as Record<string, string>, friend: {} as Record<string, string> };
 
     // ---- people ----
-    const admin = await one<any>(q, `insert into users (name, email, password_hash, signup_method, role, city, locale, created_at) values ('FestFinder Admin','admin@festfinder.vn',$1,'email','admin','TP.HCM','en',$2) returning id`, [adminHash, hours(24 * 400)]);
+    const admin = await one<any>(q, `insert into users (name, email, password_hash, signup_method, role, city, locale, created_at) values ('FeestFinder Admin','admin@festfinder.vn',$1,'email','admin','TP.HCM','en',$2) returning id`, [adminHash, hours(24 * 400)]);
     const demo = await one<any>(q,
       `insert into users (name, email, phone, password_hash, signup_method, city, locale, interests, birth_year, payee_bank_bin, payee_bank_name, payee_account_no, payee_account_name, created_at)
        values ('Minh Anh','minh@example.com','+84901234567',$1,'email','TP.HCM','en','{EDM,Indie,Nightlife}',1998,'970436','Vietcombank','0071008842','NGUYEN MINH ANH',$2) returning id`, [demoHash, hours(24 * 300)]);
@@ -589,7 +589,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
       q.query(`insert into ad_campaigns (brand, category, logo, art, placement, active, headline, body, cta, impressions, clicks, spend, budget_total, is_alcohol) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
         [brand, cat, logo, art, placement, active, json(head), json(body), json(cta), imp, clicks, spend, budget, alcohol]);
     await campaign('Zenkai Energy', 'F&B', 'ZK', 'linear-gradient(135deg,#FFB35C,#FF5C5C)', 'feed', true, L('Two cans, six hours of set times.', 'Hai lon, sáu tiếng đứng sàn.'),
-      L('Stalls at every FestFinder-listed festival in Saigon. Show the app, get the second can free.', 'Có mặt tại mọi lễ hội trên FestFinder ở Sài Gòn. Mở app, lon thứ hai miễn phí.'), L('Find a stall', 'Tìm gian hàng'), 120400, 2100, 21_700_000, 80_000_000);
+      L('Stalls at every FeestFinder-listed festival in Saigon. Show the app, get the second can free.', 'Có mặt tại mọi lễ hội trên FeestFinder ở Sài Gòn. Mở app, lon thứ hai miễn phí.'), L('Find a stall', 'Tìm gian hàng'), 120400, 2100, 21_700_000, 80_000_000);
     await campaign('EarGuard Pro', 'Healthcare', 'EG', 'linear-gradient(135deg,#2AC4E8,#1B6BD6)', 'banner', true, L('Hearing you can still use on Monday.', 'Đôi tai vẫn còn dùng được vào thứ Hai.'),
       L('Filtered earplugs made for live music — the sound stays, the damage does not. Delivered to your gate.', 'Nút tai lọc âm dành cho nhạc sống — giữ nguyên âm thanh, bỏ lại phần gây hại. Giao tới cổng sự kiện.'), L('Get a pair', 'Mua một cặp'), 80200, 1320, 19_200_000, 60_000_000);
     await campaign('Neon Thread', 'Fashion', 'NT', 'linear-gradient(135deg,#8C6BFF,#FF6FA5)', 'feed', true, L('Rave fits that survive a monsoon.', 'Outfit đi rave chịu được mưa Sài Gòn.'),
@@ -619,7 +619,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     ];
     for (const [h, actorType, action, label, targetType, diff] of hist) {
       await appendAudit(q, {
-        at: hours(h), actorType, actorId: actorType === 'admin' ? admin.id : null, actorLabel: actorType === 'admin' ? 'FestFinder Admin' : 'System',
+        at: hours(h), actorType, actorId: actorType === 'admin' ? admin.id : null, actorLabel: actorType === 'admin' ? 'FeestFinder Admin' : 'System',
         action, targetType, targetId: null, targetLabel: label, diff,
       });
     }

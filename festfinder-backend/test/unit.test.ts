@@ -10,6 +10,8 @@ import { qualityScore } from '../src/services/quality.ts';
 import { findClashes } from '../src/presenters/timetable.ts';
 import { hashPassword, verifyPassword } from '../src/lib/crypto.ts';
 import { splitSql } from '../src/db/migrate.ts';
+import { isInternal } from '../src/app.ts';
+import { linkUrl } from '../src/services/messaging.ts';
 
 describe('Vietnam time', () => {
   it('finds the coming weekend from a Monday, and the current one on a Saturday', () => {
@@ -142,5 +144,32 @@ describe('tickets & listings', () => {
     assert.equal(clashes.length, 1);
     assert.equal(clashes[0].minutes, 45);
     assert.equal(clashes[0].line.en, 'SlimV and Hoaprox overlap by 45 minutes');
+  });
+});
+
+describe('network', () => {
+  it('knows loopback and private addresses from public ones', () => {
+    for (const ip of ['127.0.0.1', '::1', '10.1.2.3', '172.16.0.1', '172.31.255.1', '192.168.1.10', '::ffff:10.0.0.2', 'fd12:3456::1', 'fe80::1']) {
+      assert.equal(isInternal(ip), true, ip);
+    }
+    for (const ip of ['8.8.8.8', '172.32.0.1', '172.15.0.1', '203.0.113.9', '::ffff:1.1.1.1', '2001:db8::1', '192.169.0.1']) {
+      assert.equal(isInternal(ip), false, ip);
+    }
+  });
+});
+
+describe('notification links', () => {
+  it('open the screen a notification is about', () => {
+    assert.equal(linkUrl({ screen: 'live', eventId: 'ev 1' }), '/app/live/ev%201');
+    assert.equal(linkUrl({ screen: 'tickets', orderId: 'o1' }), '/app/tickets');
+    assert.equal(linkUrl({ screen: 'event', eventId: 'e1' }), '/app/e/e1');
+    assert.equal(linkUrl({ url: '/app/saved' }), '/app/saved');
+    assert.equal(linkUrl(null), '/app');
+  });
+
+  it('never leave the site', () => {
+    for (const url of ['//evil.example/x', '/\\evil.example/x', 'https://evil.example/', 'javascript:alert(1)']) {
+      assert.equal(linkUrl({ url }), '/app/notifications', url);
+    }
   });
 });

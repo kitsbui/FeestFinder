@@ -124,7 +124,7 @@ export default async function discoveryRoutes(app: FastifyInstance) {
       path: `/${lang}/${CITY.slug}${suffix}`,
       revalidateSeconds: 900,
       meta: {
-        title: `${h1} | FestFinder`,
+        title: `${h1} | FeestFinder`,
         description,
         canonical: url(lang),
         alternates: { vi: url('vi'), en: url('en'), 'x-default': url('vi') },
@@ -160,7 +160,7 @@ export default async function discoveryRoutes(app: FastifyInstance) {
         {
           '@context': 'https://schema.org', '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'FestFinder', item: `${base}/${lang}` },
+            { '@type': 'ListItem', position: 1, name: 'FeestFinder', item: `${base}/${lang}` },
             { '@type': 'ListItem', position: 2, name: CITY[lang], item: `${base}/${lang}/${CITY.slug}` },
             ...(suffix ? [{ '@type': 'ListItem', position: 3, name: h1, item: url(lang) }] : []),
           ],

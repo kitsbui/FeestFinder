@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The jobs only read the code; the token they get can do nothing else.
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API (${{ matrix.database }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The suite runs on PGlite the way developers do, and on a real Postgres
+        # server the way production does.
+        database: [pglite, postgres]
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: festfinder-backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: festfinder-backend/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+        env:
+          TEST_DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgres://postgres:postgres@localhost:5432/postgres' || '' }}
+
+  web:
+    name: Web (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: festfinder-web
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: festfinder-web/package-lock.json
+
+      - run: npm ci
+
+      # Compiles the design templates to TSX, then checks them with everything else.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+  screens:
+    name: Screens (${{ matrix.front }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The design runtime served by the API, and the same screens on Next.js.
+        front: [design, next]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            festfinder-backend/package-lock.json
+            festfinder-web/package-lock.json
+
+      - run: npm ci
+        working-directory: festfinder-backend
+
+      - run: npm ci
+        if: matrix.front == 'next'
+        working-directory: festfinder-web
+
+      # The Chromium build that matches the Playwright version in the lockfile.
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: festfinder-backend
+
+      - name: Smoke-test every route
+        run: npm run ${{ matrix.front == 'next' && 'test:screens:next' || 'test:screens' }}
+        working-directory: festfinder-backend
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: Keep the traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-${{ matrix.front }}
+          path: festfinder-backend/test-results/
+          retention-days: 7

@@ -116,7 +116,7 @@ FF.preload = (async () => {
   const isAdmin = (s) => !!(s && s.user && s.user.role === 'admin');
   if (!isAdmin(FF.session)) {
     await FF.gate({
-      kicker: 'FestFinder · internal',
+      kicker: 'FeestFinder · internal',
       title: 'Sign in to the admin console',
       note: 'Moderation, verification and the audit log. Every decision here is recorded against your account.',
       idPlaceholder: 'Admin email',

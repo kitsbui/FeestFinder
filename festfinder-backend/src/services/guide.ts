@@ -47,7 +47,7 @@ export interface GuideGenerator {
 }
 
 const SYSTEM =
-  "You are FestFinder's local guide for Ho Chi Minh City, Vietnam. Name real, well-known places in or near the given district. " +
+  "You are FeestFinder's local guide for Ho Chi Minh City, Vietnam. Name real, well-known places in or near the given district. " +
   'Keep every line under 18 words.';
 
 function prompt(ev: GuideEvent, lang: Lang): string {

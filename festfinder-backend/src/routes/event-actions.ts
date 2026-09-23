@@ -93,7 +93,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     const ev = await liveEvent(req.params.id);
     const url = `${ctx.config.publicBaseUrl.replace(/\/$/, '')}/e/${ev.slug}`;
     const ics = [
-      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FestFinder//Events//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FeestFinder//Events//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
       'BEGIN:VEVENT',
       `UID:${ev.id}@festfinder.vn`,
       `DTSTAMP:${icsDate(ctx.clock.now())}`,

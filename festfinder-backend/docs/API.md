@@ -1,4 +1,4 @@
-# FestFinder API reference
+# FeestFinder API reference
 
 Grouped by the surface and screen in the design handoff. 🔒 needs a signed-in user, 🏢 an organiser team member, 🚪 the organiser team or an invited door scanner, 🛡 the admin.
 
@@ -129,7 +129,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | GET / POST | `/organizer/events/:id/guests`; PATCH / DELETE `…/guests/:guestId` | Guest list. |
 | GET | `/organizer/events/:id/revenue` | KPIs, 14-day paid vs promo chart, tier table, payout ledger, account, fees. |
 | GET | `/organizer/events/:id/payouts/:kind/statement.csv`, `…/invoice` | `kind = advance\|post_event\|refund_hold`. |
-| GET | `/organizer/inbox`, `/organizer/inbox/:threadId` | Threads with FestFinder; opening marks read. |
+| GET | `/organizer/inbox`, `/organizer/inbox/:threadId` | Threads with FeestFinder; opening marks read. |
 | POST | `/organizer/inbox/:threadId/messages` | Reply (auto-acknowledged). |
 | POST | `/organizer/events/:eventId/appeal` | `{reply}` once, within 7 days of a rejection. |
 | GET | `/organizer/notifications`; POST `…/:id/read`, `…/read-all`, `…/test` | Notification bell. |
@@ -167,3 +167,31 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | GET | `/admin/audit?actor=all\|admin\|system\|organizer`, `/admin/audit.csv`, `/admin/audit/verify` | Audit log with diffs and hash; chain verification. |
 | GET | `/admin/impersonation/options`; POST / DELETE `/admin/impersonation` | "View as": `{targetType: user\|organizer, targetId}` → read-only token and banner. |
 | POST | `/admin/payouts/:eventId/:kind` | `{reference}` — record a transfer; the organiser's ledger row shows paid. |
+
+---
+
+## Operations back office (/ops) 🛡
+
+The team mode of `/ops` uses the admin endpoints above plus these. Every write is in the audit log.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/meta/form-options` | Public. Every option list the forms and filters use: genres with hints, districts grouped (central, east, south, west & north, outside, plus any other area in the data), entry modes, ages, organiser types, statuses, badges, tier presets, banks, reject reasons, report categories, order statuses, payment and sign-up methods. |
+| GET | `/admin/overview` | What needs a person now: queue (total, past SLA, due soon, flagged, high risk, oldest), open reports and appeals, organisers awaiting verification, listings without a map pin, today's decisions and orders, growth, the next six live events, the last eight audit entries. |
+| GET | `/admin/events` | The catalogue, every status. `q` (title, venue, area, artists, organiser; diacritic-free), `status`, `genre` (comma lists), `area` (`\|`-separated), `organizerId`, `entry`, `when=all\|upcoming\|today\|week\|weekend\|month\|past\|undated\|range` with `from`/`to`, `featured`, `reported`, `unresolved` (no pin), `sort=date\|date_desc\|updated\|hype\|saves\|sold\|quality\|title`, `limit` ≤ 200, `offset`. Returns `total` and `facets.status` counts (all filters except status). `GET /admin/events.csv` takes the same filters. |
+| GET | `/admin/events/:id` | The draft plus organiser, tiers, stages, every moderation decision, appeal, open reports, metrics (views, clicks, saves, hype, tickets, revenue), the moderation thread, the audit trail, shelves it is on, and `missing` / `missingForPublish`. |
+| POST | `/admin/events` | Create for an organiser: the organiser draft fields plus `organizerId`, `featured`, `badge`, `publish`. `publish: true` needs title, genre, dates, venue and a price + ticket link when paid (`details.missing`); the organiser is told it went live. |
+| PATCH | `/admin/events/:id` | Team edit: the draft fields plus `featured`, `badge`. Does not send a live listing back to review; re-scores risk when a listing in review gets a venue, link, price or cover change. |
+| PUT | `/admin/events/:id/tiers` | Same body as the organiser's tiers. |
+| POST | `/admin/events/:id/status` | `{action: publish\|take_down\|cancel\|restore, code?, message?}`. A message goes to the organiser's moderation thread. Cancelling reports how many paid orders still need refunds. |
+| POST | `/admin/events/:id/duplicate` | Copy into a new draft for the same organiser. |
+| GET / POST / PATCH | `/admin/venues`, `/admin/venues/:id` | Registry with upcoming and total listings; `unresolved` lists live or in-review listings whose venue was typed by hand, each with likely matches. Duplicate names are refused (`venue_exists`). Editing a venue updates its upcoming listings. Only `verified` venues appear in `GET /venues`. |
+| GET | `/admin/organizers/:id` | Profile, documents, full payout account (for the test transfer), members (with whether they have a password), listings, stats. `GET /admin/organizers` also takes `q` and `type`. |
+| POST | `/admin/organizers` | Onboard: profile fields + `ownerEmail` (+ `ownerName`). Opens the owner account without a password when the email is new; they set one with "forgot password". |
+| PATCH | `/admin/organizers/:id/profile` | Brand, legal and contact fields (tax code 10–14 digits). |
+| POST | `/admin/organizers/:id/standing` | `{strikes 0–3, suspended, note}`. A suspended organiser cannot submit (`organizer_suspended`). |
+| POST / DELETE | `/admin/organizers/:id/members`, `…/members/:userId` | Add by email with a role; the last owner cannot be removed. |
+| GET / PATCH | `/admin/users`, `/admin/users/:id` | Search by name, email or phone; `kind=attendee\|organizer\|admin`, `method`, `city`, `active=7d\|30d\|dormant`, `sort`. PATCH `{role}` — never your own. |
+| GET / POST | `/admin/orders`, `/admin/orders/:id`, `/admin/orders/:id/refund` | Find by code, buyer, event, status, method, dates; `summary` counts every status. Refund takes `{reason}` for the audit log and refuses once a ticket was scanned. |
+
+Also: `GET /admin/audit` takes `area` (the part of the action before the dot), `q` and `targetId`; `GET /admin/queue` items carry genre, area, entry mode, price, quality score, logo and whether the venue is pinned; `GET /organizer/events` items carry raw dates, genre, area, venue, quality score, `missing` (what submitting still needs) and the last moderation decision; `POST /organizer/events/:id/duplicate` copies a listing into a new draft; `GET /venues` takes `limit` (≤ 50).

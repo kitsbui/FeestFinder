@@ -1,5 +1,5 @@
 /*
- * FestFinder client glue for the Claude Design screens.
+ * FeestFinder client glue for the Claude Design screens.
  *
  * A page is a small shell that calls FF.mount(). We read the route, fetch the session,
  * the server clock and only the data that route needs, fill in the template and logic,
@@ -9,8 +9,22 @@
 (function () {
   // Keep the raw template hidden and the ground dark while data loads.
   const style = document.createElement('style');
-  style.textContent = 'x-dc{display:none!important}html,body{background:#06080D;margin:0}';
+  style.textContent = 'x-dc{display:none!important}html,body{background:#05060F;margin:0}';
   document.head.appendChild(style);
+  for (const href of ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap', '/ui/theme.css']) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+
+  // The runtime asks for React from a CDN unless the host maps those URLs elsewhere.
+  // We serve our own copies, so the screens have no third-party dependency at runtime
+  // and a strict Content-Security-Policy can stay strict.
+  window.__resources = Object.assign({
+    'https://unpkg.com/react@18.3.1/umd/react.production.min.js': '/ui/vendor/react.production.min.js',
+    'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js': '/ui/vendor/react-dom.production.min.js',
+  }, window.__resources);
 
   const FF = (window.FF = { data: {}, session: null, lang: 'en', clockOffset: 0, route: null });
 
@@ -147,8 +161,8 @@
   // ---- shared presentation helpers ------------------------------------------------
 
   const GRADIENTS = [
-    'linear-gradient(135deg,#4EA1FF,#1B6BD6)', 'linear-gradient(135deg,#FF8A3D,#FF6FA5)', 'linear-gradient(135deg,#2AC4E8,#1B6BD6)',
-    'linear-gradient(135deg,#8C6BFF,#B9A8FF)', 'linear-gradient(135deg,#2E9E5B,#2AC4E8)', 'linear-gradient(135deg,#FFD35C,#FF8A3D)',
+    'linear-gradient(135deg,#6FB0F0,#3159D6)', 'linear-gradient(135deg,#E46D4C,#E88AA8)', 'linear-gradient(135deg,#B6D9FC,#3159D6)',
+    'linear-gradient(135deg,#7A55F6,#C4B8F7)', 'linear-gradient(135deg,#269684,#B6D9FC)', 'linear-gradient(135deg,#FFD35C,#E46D4C)',
   ];
   FF.colorFor = function (key) {
     let h = 0;
@@ -189,16 +203,22 @@
   FF.gate = function (opts) {
     const o = opts || {};
     const wrap = document.createElement('div');
-    wrap.setAttribute('style', 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#06080D;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:20px');
+    wrap.setAttribute('data-ff-gate', '');
+    wrap.setAttribute('style', "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#05060F;font-family:'Inter',system-ui,sans-serif;padding:20px");
+    // The auth-form card of the design system: deep glass, labelled wells, the violet action.
     wrap.innerHTML =
-      '<form style="width:100%;max-width:360px;background:rgba(18,24,38,.9);border:1px solid #262F44;border-radius:18px;padding:26px">' +
-      '<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7FE0F5;margin-bottom:8px">' + (o.kicker || 'FestFinder') + '</div>' +
-      '<div style="font-size:20px;font-weight:800;color:#F3F6FC;line-height:1.25;margin-bottom:6px">' + (o.title || 'Sign in') + '</div>' +
-      '<div style="font-size:13px;color:#8891A8;line-height:1.5;margin-bottom:18px">' + (o.note || '') + '</div>' +
-      '<input name="id" autocomplete="username" placeholder="' + (o.idPlaceholder || 'Email') + '" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:12px 14px;border-radius:12px;border:1px solid #262F44;background:rgba(10,14,26,.7);color:#F3F6FC;font-size:14px">' +
-      '<input name="pw" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;box-sizing:border-box;margin-bottom:14px;padding:12px 14px;border-radius:12px;border:1px solid #262F44;background:rgba(10,14,26,.7);color:#F3F6FC;font-size:14px">' +
-      '<button type="submit" style="width:100%;padding:13px;border:0;border-radius:12px;background:#2AC4E8;color:#06080D;font-size:14px;font-weight:800;cursor:pointer">Sign in</button>' +
-      '<div data-err style="min-height:18px;margin-top:10px;font-size:12px;color:#FF9A9A"></div>' +
+      '<div class="ff-atmos ff-atmos--local" aria-hidden="true"><div class="ff-aurora"></div><div class="ff-grain"></div></div>' +
+      '<form class="ff-deep ff-in" style="position:relative;z-index:1;width:100%;max-width:380px;box-sizing:border-box;border-radius:16px;padding:32px 28px 24px">' +
+      '<img src="/ui/assets/ff-logo.svg" alt="FeestFinder" style="height:22px;width:127px;display:block;margin:0 0 28px">' +
+      '<div class="ff-eyebrow" style="margin-bottom:10px">' + (o.kicker || 'FeestFinder') + '</div>' +
+      '<h1 class="ff-skywash" style="margin:0 0 8px;font-family:\'Space Grotesk\',\'Inter\',system-ui,sans-serif;font-size:28px;font-weight:500;line-height:1.1;letter-spacing:-.03em">' + (o.title || 'Sign in') + '</h1>' +
+      '<p style="margin:0 0 24px;font-size:14px;line-height:1.5;color:#9DA7BA">' + (o.note || '') + '</p>' +
+      '<label class="ff-label" for="ff-gate-id">Email</label>' +
+      '<input id="ff-gate-id" class="ff-input" name="id" autocomplete="username" placeholder="' + (o.idPlaceholder || 'Email') + '" style="margin-bottom:14px">' +
+      '<label class="ff-label" for="ff-gate-pw">Password</label>' +
+      '<input id="ff-gate-pw" class="ff-input" name="pw" type="password" autocomplete="current-password" style="margin-bottom:20px">' +
+      '<button type="submit" class="ff-cta" style="width:100%;padding:12px 24px;border:0;border-radius:999px;font:inherit;font-size:14px;font-weight:500;cursor:pointer">Sign in</button>' +
+      '<div data-err role="alert" style="min-height:18px;margin-top:12px;font-size:12.5px;color:#F4A3A3;text-align:center"></div>' +
       '</form>';
     document.body.appendChild(wrap);
     const form = wrap.querySelector('form');
@@ -329,10 +349,29 @@
       document.querySelector('script[data-dc-script]').textContent = js;
     } catch (e) {
       console.error('[ff] could not load the screen', e);
-      document.body.innerHTML = '<p style="color:#8891A8;font:15px system-ui;padding:24px">'
+      document.body.innerHTML = '<p style="color:#9DA7BA;font:15px system-ui;padding:24px">'
         + 'This screen could not load. Reload the page to try again.</p>';
       return;
     }
     await FF.loadScript('/ui/support.js');
   };
+
+  // Glass that answers the pointer: cards with .ff-spot get --mx/--my where it is, and
+  // the theme draws the light there. One delegated listener for the whole page.
+  document.addEventListener('pointermove', (e) => {
+    const el = e.target && e.target.closest ? e.target.closest('.ff-spot') : null;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }, { passive: true });
+
+  // The shell says which surface it is with data attributes, so the page carries no
+  // inline script and the Content-Security-Policy needs no exception for one.
+  const boot = () => {
+    const d = document.body.dataset;
+    if (d.surface) FF.mount({ surface: d.surface, base: d.base || '/' });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();

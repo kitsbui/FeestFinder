@@ -100,7 +100,7 @@ export default async function socialRoutes(app: FastifyInstance) {
       const me = await one<any>(q, 'select name from users where id = $1', [s.user.id]);
       await notifyUser(q, now, {
         userId: friendId, topic: null, kind: 'chat', inApp: false,
-        title: { en: me.name || 'FestFinder', vi: me.name || 'FestFinder' }, body: { en: body.slice(0, 120), vi: body.slice(0, 120) },
+        title: { en: me.name || 'FeestFinder', vi: me.name || 'FeestFinder' }, body: { en: body.slice(0, 120), vi: body.slice(0, 120) },
         link: { screen: 'chat', friendId: s.user.id },
       });
       return m;

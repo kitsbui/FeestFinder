@@ -24,6 +24,7 @@ function sla(minutes: number): { state: 'ok' | 'soon' | 'breach'; label: Localiz
 
 const QUEUE_SQL = `
   select e.id, e.slug, e.title, e.art, e.cover_url, e.starts_on, e.start_time, e.venue_name, e.flag, e.risk_score, e.signals, e.submitted_at,
+         e.genre, e.area, e.entry_mode, e.price_from, e.quality_score, e.logo_url, (e.venue_id is not null or e.lat is not null) as venue_resolved,
          e.organizer_id, o.name as org_name, o.verification_state,
          not exists (select 1 from events e2 where e2.organizer_id = e.organizer_id and e2.published_at is not null and e2.id <> e.id) as new_org,
          (select count(*)::int from inbox_messages m join inbox_threads t on t.id = m.thread_id where t.event_id = e.id and t.topic = 'moderation') as thread_messages
@@ -31,7 +32,7 @@ const QUEUE_SQL = `
    where e.status = 'in_review'`;
 
 async function actor(q: Queryable, s: UserSession) {
-  return { actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FestFinder Admin' };
+  return { actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin' };
 }
 
 export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eventId: string, action: 'listing.approved' | 'listing.approved_bulk' | 'appeal.overturned', extraDiff: DiffRow[] = []) {
@@ -76,6 +77,8 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         waitingMinutes: waiting, sla: sla(waiting),
         riskScore: r.risk_score ?? 0, riskBand: riskBand(r.risk_score ?? 0),
         signals: (r.signals ?? []).slice(0, 3), threadMessages: r.thread_messages,
+        genre: r.genre, area: r.area, entryMode: r.entry_mode, priceFrom: r.price_from, qualityScore: r.quality_score,
+        logoUrl: r.logo_url, venueResolved: r.venue_resolved,
       };
     });
     const keep = {
@@ -373,7 +376,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
       await resolveReports(q, eventId, category ?? null, 'warned', now);
       await notifyOrganizer(q, now, {
         organizerId: ev.organizer_id, topic: 'moderation', kind: 'reject',
-        title: L('Warning from FestFinder', 'Cảnh báo từ FestFinder'),
+        title: L('Warning from FeestFinder', 'Cảnh báo từ FeestFinder'),
         body: L(`Users reported ${ev.title}. This is warning ${next} of 3; the account is suspended at 3.`, `Người dùng đã báo cáo ${ev.title}. Đây là cảnh báo ${next}/3; tài khoản bị tạm dừng ở lần thứ 3.`),
         link: { screen: 'inbox' },
       });

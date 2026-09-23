@@ -10,8 +10,9 @@ import { inQuietHours, quietHoursEnd, vnDate } from '../../lib/time.ts';
 import { csv, limit, parse, uuid } from '../../lib/validate.ts';
 import { requireOrganizer, requireOwnEvent, requireUser } from '../../http/guards.ts';
 import { decodeCursor, page } from '../../http/sql.ts';
-import { enqueue, loadPrefs, notifyUser } from '../../services/notify.ts';
+import { enqueue, loadPrefs } from '../../services/notify.ts';
 import { qrToken } from '../../services/tickets.ts';
+import { refundOrder } from '../../services/orders.ts';
 
 type Audience = 'saved' | 'holders' | 'vip' | 'past';
 type Channel = 'push' | 'zalo' | 'email';
@@ -207,22 +208,7 @@ export default async function organizerAudienceRoutes(app: FastifyInstance) {
     const org = await requireOrganizer(ctx, req);
     if (org.role !== 'owner') throw forbidden('owner_only', L('Only the account owner can refund', 'Chỉ chủ tài khoản hoàn tiền được'));
     const now = ctx.clock.now();
-    const out = await ctx.db.tx(async (q) => {
-      const o = await one<any>(q, 'select o.*, e.organizer_id, e.title from orders o join events e on e.id = o.event_id where o.id = $1 for update of o', [parse(uuid, req.params.orderId)]);
-      if (!o || o.organizer_id !== org.organizerId) throw notFound();
-      if (o.status !== 'paid') throw conflict('not_paid', L('Only paid orders can be refunded', 'Chỉ hoàn được đơn đã thanh toán'));
-      const used = await one<any>(q, `select count(*)::int as n from tickets where order_id = $1 and status = 'used'`, [o.id]);
-      if (used.n) throw conflict('ticket_used', L('A ticket on this order was already scanned in', 'Một vé trong đơn đã được quét vào cửa'));
-      await q.query(`update orders set status = 'refunded', refunded_at = $2 where id = $1`, [o.id, now]);
-      await q.query(`update tickets set status = 'refunded' where order_id = $1`, [o.id]);
-      await q.query('update ticket_tiers set sold = greatest(sold - $2, 0) where id = $1', [o.tier_id, o.qty]);
-      await q.query('update events set sold_out = false where id = $1', [o.event_id]);
-      await notifyUser(q, now, {
-        userId: o.user_id, topic: 'tickets', kind: 'refund', urgent: true,
-        title: L('Your order was refunded', 'Đơn của bạn đã được hoàn tiền'), body: { en: o.title, vi: o.title }, link: { screen: 'tickets' },
-      });
-      return o;
-    });
+    const out = await ctx.db.tx((q) => refundOrder(q, parse(uuid, req.params.orderId), now, (o) => o.organizer_id === org.organizerId));
     return { ok: true, orderCode: out.code, message: L('Refunded', 'Đã hoàn tiền') };
   });
 

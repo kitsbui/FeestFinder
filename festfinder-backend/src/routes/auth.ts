@@ -268,7 +268,7 @@ export default async function authRoutes(app: FastifyInstance) {
 
     if (st.user_id) {
       if (holder && holder.user_id !== st.user_id) {
-        throw conflict('connection_taken', L('That account is already linked to another FestFinder user', 'Tài khoản này đã liên kết với người dùng khác'));
+        throw conflict('connection_taken', L('That account is already linked to another FeestFinder user', 'Tài khoản này đã liên kết với người dùng khác'));
       }
       await ctx.db.query(
         `insert into social_connections (user_id, provider, external_id, display_name) values ($1,$2,$3,$4)

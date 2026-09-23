@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
 import { GENRES, L, type Localized } from '../../lib/i18n.ts';
-import { initialsOf, slugify } from '../../lib/contact.ts';
+import { initialsOf, searchNormalize, slugify } from '../../lib/contact.ts';
 import { vnDate } from '../../lib/time.ts';
 import { dateStr, localized, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
@@ -16,7 +16,7 @@ const AD_ART: Record<string, string> = {
   Healthcare: 'linear-gradient(135deg,#2AC4E8,#1B6BD6)',
 };
 
-const admin = (s: UserSession) => ({ actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FestFinder Admin' });
+const admin = (s: UserSession) => ({ actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin' });
 
 const dm = (d: string | null) => (d ? `${d.slice(8, 10)}/${d.slice(5, 7)}` : null);
 
@@ -35,17 +35,30 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
 
   app.get('/admin/organizers', async (req) => {
     requireAdmin(req);
-    const { state } = parse(z.object({ state: z.enum(['all', 'pending', 'verified', 'flagged']).default('all') }), req.query);
+    const { state, type, q } = parse(z.object({
+      state: z.enum(['all', 'pending', 'verified', 'flagged']).default('all'),
+      type: z.enum(['all', 'promoter', 'venue', 'company', 'agency', 'public']).default('all'),
+      q: z.string().max(80).optional(),
+    }), req.query);
     const rows = await many<any>(ctx.db,
-      `select o.*, (select count(*)::int from events e where e.organizer_id = o.id and e.published_at is not null) as events
-         from organizers o where ($1 = 'all' or o.verification_state = $1)
-        order by (o.verification_state = 'verified'), o.created_at`, [state]);
+      `select o.*, (select count(*)::int from events e where e.organizer_id = o.id and e.published_at is not null) as events,
+              (select count(*)::int from events e where e.organizer_id = o.id and e.status = 'live' and (e.ends_at is null or e.ends_at >= $3)) as live_events,
+              (select count(*)::int from events e where e.organizer_id = o.id and e.status = 'in_review') as review_events,
+              (select count(*)::int from events e where e.organizer_id = o.id) as all_events,
+              (select count(*)::int from organizer_members m where m.organizer_id = o.id) as members,
+              (select u.email from organizer_members m join users u on u.id = m.user_id where m.organizer_id = o.id order by m.role = 'owner' desc limit 1) as owner_email
+         from organizers o where ($1 = 'all' or o.verification_state = $1) and ($2 = 'all' or o.type = $2)
+        order by (o.verification_state = 'verified'), o.created_at`, [state, type, ctx.clock.now()]);
+    const needle = q ? searchNormalize(q) : '';
     return {
-      items: rows.map((o) => ({
+      items: rows.filter((o) => !needle || searchNormalize(`${o.name} ${o.legal_name ?? ''} ${o.email ?? ''} ${o.owner_email ?? ''} ${o.tax_code ?? ''}`).includes(needle)).map((o) => ({
         id: o.id, slug: o.slug, name: o.name, initials: o.initials, state: o.verification_state, events: o.events, since: o.since_year,
         strikes: o.strikes, suspended: !!o.suspended_at,
         docs: { id: o.doc_id, tax: o.doc_tax, bank: o.doc_bank },
         legalName: o.legal_name, taxCode: o.tax_code, bankVerified: o.bank_verified,
+        type: o.type, logoUrl: o.logo_url, art: o.art, followers: o.followers_count, liveEvents: o.live_events, reviewEvents: o.review_events,
+        allEvents: o.all_events, members: o.members, email: o.email ?? o.owner_email, hotline: o.hotline, bankOnFile: !!o.bank_account_no,
+        createdAt: o.created_at,
       })),
       note: L('Verified organizers carry a badge on every event card and rank higher in search.', 'Nhà tổ chức đã xác minh được hiện huy hiệu trên mọi thẻ sự kiện và được đẩy lên trong kết quả tìm kiếm.'),
     };

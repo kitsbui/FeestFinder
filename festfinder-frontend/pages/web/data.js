@@ -6,7 +6,7 @@ FF.webEvent = function (c) {
     venue: c.venue.name || '', area: c.venue.area || '', lat: c.venue.lat, lng: c.venue.lng,
     price: c.priceFrom, hype: c.hypeCount, featured: c.featured, soldOut: c.soldOut, past: c.past, dist: c.distanceKm,
     badge: c.badge ? c.badge.label : undefined,
-    art: c.coverUrl ? 'url("' + c.coverUrl + '") center/cover no-repeat' : (c.art || 'linear-gradient(135deg,#8C6BFF,#2AC4E8)'),
+    art: c.coverUrl ? 'url("' + c.coverUrl + '") center/cover no-repeat' : (c.art || 'linear-gradient(135deg,#7A55F6,#B6D9FC)'),
     lineup: c.lineup || []
   };
 };

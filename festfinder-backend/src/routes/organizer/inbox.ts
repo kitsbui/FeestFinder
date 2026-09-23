@@ -11,9 +11,9 @@ import { appendAudit } from '../../services/audit.ts';
 import { DEFAULT_ORG_PREFS, loadOrgPrefs, notifyOrganizer } from '../../services/notify.ts';
 
 const TOPIC_WHO: Record<string, Localized> = {
-  moderation: L('FestFinder · Moderation', 'FestFinder · Kiểm duyệt'),
-  partnerships: L('FestFinder · Partnerships', 'FestFinder · Đối tác'),
-  support: L('FestFinder · Support', 'FestFinder · Hỗ trợ'),
+  moderation: L('FeestFinder · Moderation', 'FeestFinder · Kiểm duyệt'),
+  partnerships: L('FeestFinder · Partnerships', 'FeestFinder · Đối tác'),
+  support: L('FeestFinder · Support', 'FeestFinder · Hỗ trợ'),
 };
 
 const AUTO_ACK = L('Got it — we will review and come back within two working hours.', 'Đã nhận. Chúng tôi xem lại và phản hồi trong 2 giờ làm việc.');

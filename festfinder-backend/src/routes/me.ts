@@ -349,6 +349,9 @@ export default async function meRoutes(app: FastifyInstance) {
 
   // ---- devices & notification centre -----------------------------------------
 
+  /** The VAPID key browsers subscribe with; null when browser push is not set up. */
+  app.get('/push/public-key', async () => ({ key: ctx.config.webPush?.publicKey ?? null }));
+
   app.post('/me/devices', async (req) => {
     const s = requireUser(req);
     const body = parse(z.object({ token: z.string().min(10).max(4096), platform: z.enum(['ios', 'android', 'web']) }), req.body);
@@ -413,7 +416,7 @@ export default async function meRoutes(app: FastifyInstance) {
     if (ch.user_id !== s.user.id) throw notFound();
     const holder = await one<any>(ctx.db, 'select user_id from social_connections where provider = $1 and external_id = $2', [provider, ch.identifier]);
     if (holder && holder.user_id !== s.user.id) {
-      throw conflict('connection_taken', L('That number is already linked to another FestFinder user', 'Số này đã liên kết với người dùng khác'));
+      throw conflict('connection_taken', L('That number is already linked to another FeestFinder user', 'Số này đã liên kết với người dùng khác'));
     }
     await ctx.db.query(
       `insert into social_connections (user_id, provider, external_id) values ($1,$2,$3)
