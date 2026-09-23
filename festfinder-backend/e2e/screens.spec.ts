@@ -178,16 +178,16 @@ test.describe('Ops', () => {
   test.describe('team', () => {
     test.beforeEach(async ({ page }) => signIn(page, 'admin'));
     const routes: [string, RegExp][] = [
-      ['/ops', /đây là việc hôm nay/],
+      ['/ops', /Việc cần làm/],
       ['/ops/review', /Duyệt tin đăng/],
-      ['/ops/events', /tin khớp bộ lọc/],
-      ['/ops/events/new', /tạo thay nhà tổ chức/i],
+      ['/ops/events', /Đặc điểm/],
+      ['/ops/events/new', /Đăng ngay sau khi tạo/],
       ['/ops/reports', /Báo cáo người dùng/],
       ['/ops/organizers', /Thêm nhà tổ chức/],
       ['/ops/venues', /Thêm địa điểm/],
       ['/ops/featured', /Thêm dãy/],
-      ['/ops/users', /tài khoản khớp bộ lọc/],
-      ['/ops/orders', /Tra cứu đơn/],
+      ['/ops/users', /Đăng ký qua/],
+      ['/ops/orders', /Chờ thanh toán/i],
       ['/ops/audit', /Chuỗi hash hợp lệ/i],
     ];
     for (const [path, shows] of routes) {
@@ -200,7 +200,7 @@ test.describe('Ops', () => {
   test.describe('organizer', () => {
     test.beforeEach(async ({ page }) => signIn(page, 'organizer'));
     const routes: [string, RegExp][] = [
-      ['/ops/org', /Xin chào/],
+      ['/ops/org', /Cần bạn xử lý/],
       ['/ops/org/events', /Sự kiện của tôi/],
       ['/ops/org/events/new', /Thông tin cơ bản/],
       ['/ops/org/inbox', /Hộp thư kiểm duyệt/],
@@ -209,6 +209,6 @@ test.describe('Ops', () => {
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/org/inbox' ? /^\/ops\/org\/inbox(\/[0-9a-f-]{36})?$/ : path));
     }
-    test('/ops sends an organizer account to organizer mode', async ({ page }) => expectOps(page, '/ops', /Xin chào/, '/ops/org'));
+    test('/ops sends an organizer account to organizer mode', async ({ page }) => expectOps(page, '/ops', /Cần bạn xử lý/, '/ops/org'));
   });
 });

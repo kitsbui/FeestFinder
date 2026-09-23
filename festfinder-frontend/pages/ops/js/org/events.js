@@ -60,7 +60,7 @@ export function OrgEvents() {
     { key: 'act', label: '', width: 52, align: 'right', render: (e) => h(Menu, { items: [
       { icon: 'pencil-simple', label: t('Mở & sửa', 'Open & edit'), onClick: () => open(e) },
       ['draft', 'rejected'].includes(e.status) && !e.missing?.length ? { icon: 'paper-plane-right', label: e.status === 'rejected' ? t('Gửi duyệt lại', 'Resubmit') : t('Gửi duyệt', 'Submit for review'), tone: 'ok', onClick: () => submit(e) } : null,
-      { icon: 'copy', label: t('Nhân bản', 'Duplicate'), hint: t('Tạo bản nháp mới cùng thông tin', 'A new draft with the same details'), onClick: () => duplicate(e) },
+      { icon: 'copy', label: t('Nhân bản thành nháp', 'Duplicate as draft'), onClick: () => duplicate(e) },
       { icon: 'arrow-square-out', label: t('Xem trang sự kiện', 'View event page'), onClick: () => window.open(`/e/${e.slug}`, '_blank', 'noopener') },
       e.status === 'draft' ? '-' : null,
       e.status === 'draft' ? { icon: 'trash', label: t('Xoá bản nháp', 'Delete draft'), tone: 'danger', onClick: () => remove(e) } : null,
@@ -69,8 +69,7 @@ export function OrgEvents() {
 
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: t('Nhà tổ chức · danh sách tin', 'Organizer · listings'), title: t('Sự kiện của tôi', 'My events'),
-      sub: t('Mọi tin bạn đã tạo, theo trạng thái. Tin bị trả lại có ghi lý do; bản nháp ghi rõ còn thiếu gì.', 'Every listing you created, by status. Sent-back listings say why; drafts say what is missing.'),
+      title: t('Sự kiện của tôi', 'My events'),
       actions: h(Button, { variant: 'cta', icon: 'plus', onClick: () => navigate(href('org', 'events', 'new')) }, t('Tạo sự kiện mới', 'New event')),
     }),
     h(Tabs, { value: status, onChange: setStatus, items: [
@@ -95,6 +94,6 @@ export function OrgEvents() {
       columns, rows, loading, onRowClick: open, rowTone: (e) => (isPast(e) && e.status === 'live' ? 'is-dim' : null),
       empty: items.length
         ? h(Empty, { icon: 'funnel', title: t('Không có tin nào khớp bộ lọc', 'No listing matches these filters'), action: h(Button, { onClick: () => setQuery({ q: '', genre: '', when: '', status: '' }) }, t('Xem tất cả', 'Show all')) })
-        : h(Empty, { icon: 'calendar-plus', title: t('Chưa có sự kiện nào', 'No events yet'), body: t('Tạo tin đầu tiên — mất khoảng 4 phút. Phần lớn được duyệt trong 2 giờ.', 'Create your first listing — it takes about four minutes. Most are reviewed within two hours.'), action: h(Button, { variant: 'cta', icon: 'plus', onClick: () => navigate(href('org', 'events', 'new')) }, t('Tạo sự kiện', 'Create an event')) }),
+        : h(Empty, { icon: 'calendar-plus', title: t('Chưa có sự kiện nào', 'No events yet'), action: h(Button, { variant: 'cta', icon: 'plus', onClick: () => navigate(href('org', 'events', 'new')) }, t('Tạo sự kiện', 'Create an event')) }),
     }));
 }

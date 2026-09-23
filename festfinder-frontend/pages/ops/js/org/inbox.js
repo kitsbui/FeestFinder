@@ -32,10 +32,10 @@ function Thread({ id, onRead }) {
       h('div', { className: 'op-msg-bubble' }, tx(m.body)),
       h('div', { className: 'op-msg-meta' }, m.fromMe ? t('Bạn', 'You') : 'FeestFinder', ' · ', stamp(m.createdAt)))), h('div', { ref: end })),
     h('div', { className: 'op-thread-reply' },
-      h(TextArea, { rows: 3, value: text, onChange: setText, placeholder: t('Trả lời đội FeestFinder… (Ctrl/⌘+Enter để gửi)', 'Reply to the FeestFinder team… (Ctrl/⌘+Enter to send)'), maxLength: 2000,
+      h(TextArea, { rows: 3, value: text, onChange: setText, placeholder: t('Trả lời… (Ctrl/⌘+Enter để gửi)', 'Reply… (Ctrl/⌘+Enter to send)'), maxLength: 2000,
         onKeyDown: (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && text.trim()) send(); } }),
       h('div', { className: 'op-thread-reply-bar' },
-        h('span', { className: 'op-hint' }, t('Đội kiểm duyệt phản hồi trong 2 giờ làm việc, 09:00–18:00.', 'Moderators reply within two working hours, 09:00–18:00.')),
+        h('span', { className: 'op-spacer' }),
         h(Button, { variant: 'cta', icon: 'paper-plane-right', busy, disabled: !text.trim(), onClick: send }, t('Gửi', 'Send')))));
 }
 
@@ -53,7 +53,7 @@ export function OrgInbox({ rest }) {
   };
   if (loading && !data) return h(Spinner);
   return h(Fragment, null,
-    h(PageHeader, { eyebrow: t('Nhà tổ chức · liên lạc', 'Organizer · messages'), title: t('Hộp thư kiểm duyệt', 'Moderation inbox'), sub: t('Mọi trao đổi với đội FeestFinder về tin đăng, hợp tác và hỗ trợ.', 'Everything between you and the FeestFinder team: listings, partnerships and support.') }),
+    h(PageHeader, { title: t('Hộp thư kiểm duyệt', 'Moderation inbox') }),
     error ? h(ErrorBox, { error, onRetry: reload }) : null,
     h('div', { className: 'op-inbox' },
       h('div', { className: 'op-inbox-list op-card' },

@@ -12,7 +12,7 @@ const TICKET = { valid: ['ok', 'Hợp lệ', 'Valid'], used: ['info', 'Đã vào
 function OrderDrawer({ id, onClose, onChanged }) {
   const { data: o, error, loading, reload } = useFetch(`/admin/orders/${id}`, [id]);
   const refund = async () => {
-    const out = await confirm({ title: t(`Hoàn tiền đơn ${o.code}?`, `Refund order ${o.code}?`), body: t(`${money(o.total)} · ${o.qty} vé sẽ ngừng hiệu lực và chỗ được mở bán lại. Người mua được báo.`, `${money(o.total)} · ${o.qty} tickets stop working and the seats go back on sale. The buyer is told.`), confirm: t('Hoàn tiền', 'Refund'), tone: 'danger', withNote: { label: t('Lý do (ghi vào nhật ký)', 'Reason (for the audit log)'), placeholder: t('vd: Khách mua nhầm ngày', 'e.g. Bought the wrong date'), required: true } });
+    const out = await confirm({ title: t(`Hoàn tiền đơn ${o.code}?`, `Refund order ${o.code}?`), body: t(`${money(o.total)} · ${o.qty} vé sẽ mất hiệu lực.`, `${money(o.total)} · ${o.qty} tickets stop working.`), confirm: t('Hoàn tiền', 'Refund'), tone: 'danger', withNote: { label: t('Lý do (ghi vào nhật ký)', 'Reason (for the audit log)'), placeholder: t('vd: Khách mua nhầm ngày', 'e.g. Bought the wrong date'), required: true } });
     if (!out) return;
     try { const r = await post(`/admin/orders/${id}/refund`, { reason: out.note }); toast(tx(r.message)); reload(true); onChanged(); } catch (e) { toast(errorText(e), 'error'); }
   };
@@ -72,7 +72,7 @@ export function Orders({ rest }) {
     { key: 'status', label: t('Trạng thái', 'Status'), width: 140, render: (o) => h(Pill, { tone: TONE[o.status] }, tx(o.statusLabel)) },
   ];
   return h(Fragment, null,
-    h(PageHeader, { eyebrow: t('Nền tảng · hỗ trợ khách hàng', 'Platform · customer support'), title: t('Đơn hàng', 'Orders'), sub: t('Tra cứu đơn theo mã, người mua hoặc sự kiện. Hoàn tiền được ghi lý do vào nhật ký.', 'Look orders up by code, buyer or event. Refunds record a reason in the audit log.') }),
+    h(PageHeader, { title: t('Đơn hàng', 'Orders') }),
     h('div', { className: 'op-stats' },
       h(Stat, { label: t('Đã thanh toán', 'Paid'), icon: 'check-circle', value: num(sum.paid?.count ?? 0), note: money(sum.paid?.total ?? 0), tone: 'ok', active: status === 'paid', onClick: () => reset({ status: status === 'paid' ? '' : 'paid' }) }),
       h(Stat, { label: t('Chờ thanh toán', 'Awaiting payment'), icon: 'hourglass-medium', value: num(sum.pending?.count ?? 0), note: money(sum.pending?.total ?? 0), active: status === 'pending', onClick: () => reset({ status: status === 'pending' ? '' : 'pending' }) }),

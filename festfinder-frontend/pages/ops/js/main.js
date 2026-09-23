@@ -115,7 +115,7 @@ function Topbar({ mode, onMenu }) {
       h('img', { className: 'op-brand-word', src: '/ui/assets/ff-logo.svg', alt: 'FeestFinder', width: 124, height: 21 }),
       h('img', { className: 'op-brand-mark', src: '/ui/assets/ff-mark.svg', alt: 'FeestFinder', width: 26, height: 26 }),
       h('span', { className: 'op-brand-tag' }, 'Ops')),
-    h(ModeSwitch, { mode }),
+    isAdmin() && isOrganizer() ? h(ModeSwitch, { mode }) : null,
     h('div', { className: 'op-top-right' },
       mode === 'org' && orgs.length > 1 ? h('div', { className: 'op-orgpick' }, Icon('buildings'),
         h('select', { value: store.orgId ?? '', onChange: (e) => { setOrg(e.target.value); refreshCounts(); }, 'aria-label': t('Nhà tổ chức đang dùng', 'Acting for') },
@@ -148,16 +148,12 @@ function Sidebar({ mode, active, counts, open, onClose }) {
         : h('a', {
           key: r.key || 'home', href: to(r.key), className: cx('op-nav-item', active === r && 'is-on', r.accent && 'is-accent'), 'aria-current': active === r ? 'page' : undefined,
           onClick: (e) => { e.preventDefault(); onClose(); navigate(to(r.key)); },
-        }, Icon(r.icon, active === r), h('span', null, r.label()), r.count && counts[r.count] ? h('span', { className: cx('op-count', r.alert && 'is-alert') }, counts[r.count]) : null))),
-      h('div', { className: 'op-side-foot' },
-        mode === 'team'
-          ? h('div', { className: 'op-side-note' }, Icon('keyboard'), h('span', null, t('Duyệt tin: J/K chuyển tin · A duyệt · R trả lại', 'Review: J/K move · A approve · R send back')))
-          : h('div', { className: 'op-side-note' }, Icon('lightning'), h('span', null, t('Phần lớn tin được duyệt trong 2 giờ làm việc.', 'Most listings are reviewed within two working hours.'))))));
+        }, Icon(r.icon, active === r), h('span', null, r.label()), r.count && counts[r.count] ? h('span', { className: cx('op-count', r.alert && 'is-alert') }, counts[r.count]) : null)))));
 }
 
 // ---- sign-in, with "forgot password" for accounts the team just opened ---------------------------
 
-function SignIn({ mode, note }) {
+function SignIn({ mode }) {
   const [step, setStep] = useState('login');
   const [f, setF] = useState({ id: '', pw: '', code: '', pw2: '' });
   const [busy, setBusy] = useState(false);
@@ -188,20 +184,13 @@ function SignIn({ mode, note }) {
     : t('Đặt mật khẩu', 'Set your password');
   return h('div', { className: 'op-gate' },
     h('form', { className: 'op-gate-card ff-deep ff-in', onSubmit: submit },
-      h('img', { src: '/ui/assets/ff-logo.svg', alt: 'FeestFinder', width: 132, height: 23, className: 'op-gate-logo' }),
-      h('div', { className: 'ff-eyebrow op-eyebrow' }, team ? t('FeestFinder · nội bộ', 'FeestFinder · internal') : t('FeestFinder · đối tác', 'FeestFinder · partners')),
       h('h1', { className: 'op-gate-title ff-skywash' }, title),
-      h('p', { className: 'op-gate-note' }, note ?? (step === 'login'
-        ? (team ? t('Duyệt tin, quản lý sự kiện, nhà tổ chức và địa điểm. Mọi thao tác được ghi vào nhật ký.', 'Review listings and run the catalogue, organizers and venues. Every action is logged.')
-          : t('Tạo sự kiện, gửi duyệt và trao đổi với đội kiểm duyệt FeestFinder.', 'Create events, submit them for review and talk to the FeestFinder moderators.'))
-        : step === 'forgot' ? t('Nhập email tài khoản. Chúng tôi gửi mã 6 số để đặt mật khẩu — dùng cả khi đội FeestFinder vừa tạo tài khoản cho bạn.', 'Enter your account email. We send a 6-digit code to set a password — also when the FeestFinder team just opened the account for you.')
-          : step === 'code' ? t(`Nhập mã 6 số vừa gửi tới ${f.id}.`, `Enter the 6-digit code sent to ${f.id}.`)
-            : t('Tối thiểu 8 ký tự.', 'At least 8 characters.'))),
+      step === 'code' ? h('p', { className: 'op-gate-note' }, t(`Mã 6 số đã gửi tới ${f.id}.`, `6-digit code sent to ${f.id}.`)) : null,
       step === 'login' || step === 'forgot' ? h(Field, { label: 'Email', id: 'g-id' }, h(Input, { id: 'g-id', value: f.id, onChange: set('id'), autoComplete: 'username', type: step === 'forgot' ? 'email' : 'text', placeholder: team ? 'you@festfinder.vn' : 'team@yourbrand.vn', autoFocus: true, required: true })) : null,
       step === 'login' ? h(Field, { label: t('Mật khẩu', 'Password'), id: 'g-pw' }, h(Input, { id: 'g-pw', type: 'password', value: f.pw, onChange: set('pw'), autoComplete: 'current-password', required: true })) : null,
       step === 'code' ? h(Field, { label: t('Mã xác nhận', 'Code'), id: 'g-code' }, h(Input, { id: 'g-code', value: f.code, onChange: set('code'), inputMode: 'numeric', autoComplete: 'one-time-code', maxLength: 6, autoFocus: true, required: true })) : null,
       step === 'password' ? h(Fragment, null,
-        h(Field, { label: t('Mật khẩu mới', 'New password'), id: 'g-p1' }, h(Input, { id: 'g-p1', type: 'password', value: f.pw, onChange: set('pw'), autoComplete: 'new-password', minLength: 8, autoFocus: true, required: true })),
+        h(Field, { label: t('Mật khẩu mới', 'New password'), id: 'g-p1', hint: t('Tối thiểu 8 ký tự', 'At least 8 characters') }, h(Input, { id: 'g-p1', type: 'password', value: f.pw, onChange: set('pw'), autoComplete: 'new-password', minLength: 8, autoFocus: true, required: true })),
         h(Field, { label: t('Nhập lại mật khẩu', 'Repeat password'), id: 'g-p2' }, h(Input, { id: 'g-p2', type: 'password', value: f.pw2, onChange: set('pw2'), autoComplete: 'new-password', minLength: 8, required: true }))) : null,
       err ? h('div', { className: 'op-field-error op-gate-err', role: 'alert' }, Icon('warning-circle', true), err) : null,
       h(Button, { variant: 'cta', type: 'submit', busy, className: 'op-gate-submit' },
@@ -223,11 +212,9 @@ function WrongMode({ mode }) {
     h('div', { className: 'op-gate-card ff-deep ff-in' },
       h('div', { className: 'op-gate-icon' }, Icon(team ? 'shield-warning' : 'storefront', true)),
       h('h1', { className: 'op-gate-title ff-skywash' }, team ? t('Khu vực dành cho đội FeestFinder', 'For the FeestFinder team') : t('Tài khoản này chưa thuộc nhà tổ chức nào', 'This account is not on an organizer team')),
-      h('p', { className: 'op-gate-note' }, team
-        ? t(`${s.user.email || s.user.name} là tài khoản nhà tổ chức. Bạn có thể quản lý sự kiện của mình ở chế độ Nhà tổ chức.`, `${s.user.email || s.user.name} is an organizer account. Manage your events in Organizer mode.`)
-        : isAdmin()
-          ? t('Bạn đang dùng tài khoản admin. Để tạo sự kiện thay một nhà tổ chức, dùng Sự kiện → Tạo sự kiện trong chế độ Vận hành.', 'You are signed in as an admin. To create a listing for an organizer, use Events → New event in team mode.')
-          : t('Liên hệ FeestFinder để được mở tài khoản nhà tổ chức, hoặc đăng nhập bằng tài khoản khác.', 'Ask FeestFinder to open an organizer account, or sign in with another account.')),
+      team || !isAdmin() ? h('p', { className: 'op-gate-note' }, team
+        ? t(`${s.user.email || s.user.name} là tài khoản nhà tổ chức.`, `${s.user.email || s.user.name} is an organizer account.`)
+        : t('Liên hệ FeestFinder để được mở tài khoản nhà tổ chức.', 'Ask FeestFinder to open an organizer account.')) : null,
       h('div', { className: 'op-gate-actions' },
         canOther || isAdmin() ? h(Button, { variant: 'cta', onClick: () => navigate(team ? href('org') : isAdmin() ? href('events', 'new') : href()) }, team ? t('Sang chế độ Nhà tổ chức', 'Go to Organizer mode') : t('Tạo sự kiện thay nhà tổ chức', 'Create a listing for an organizer')) : null,
         h(Button, { icon: 'sign-out', onClick: signOut }, t('Đổi tài khoản', 'Switch account')))));

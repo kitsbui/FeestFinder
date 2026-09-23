@@ -35,9 +35,9 @@ function TakeDownDialog({ ev, onClose, onDone }) {
     open: !!ev, onClose, title: t('Gỡ tin khỏi FeestFinder', 'Take the listing down'),
     footer: h(Fragment, null, h(Button, { onClick: onClose }, t('Huỷ', 'Cancel')), h(Button, { variant: 'danger', icon: 'prohibit', busy, onClick: run }, t('Gỡ tin', 'Take down'))),
   },
-  h('div', { className: 'op-confirm-body' }, t(`"${ev?.title}" sẽ biến mất khỏi feed, bản đồ và tìm kiếm. Nhà tổ chức được báo.`, `"${ev?.title}" disappears from the feed, map and search. The organizer is told.`)),
+  h('div', { className: 'op-confirm-body' }, ev?.title),
   h(Field, { label: t('Lý do', 'Reason'), optional: true }, h(Select, { value: code, onChange: setCode, placeholder: t('— Không ghi lý do —', '— No reason code —'), options: rejectOptions() })),
-  h(Field, { label: t('Tin nhắn cho nhà tổ chức', 'Message to the organizer'), optional: true, hint: t('Gửi vào Hộp thư kiểm duyệt của họ.', 'Goes to their moderation inbox.') }, h(TextArea, { rows: 4, value: message, onChange: setMessage, maxLength: 2000 })));
+  h(Field, { label: t('Tin nhắn cho nhà tổ chức', 'Message to the organizer'), optional: true }, h(TextArea, { rows: 4, value: message, onChange: setMessage, maxLength: 2000 })));
 }
 
 export function useStatusActions(onChanged) {
@@ -45,9 +45,9 @@ export function useStatusActions(onChanged) {
   const run = async (ev, action) => {
     if (action === 'take_down') return setTakeDown(ev);
     const texts = {
-      publish: [t('Đăng tin này ngay?', 'Publish this listing now?'), t('Tin lên sóng ngay, bỏ qua hàng chờ. Nhà tổ chức và người theo dõi được báo.', 'It goes live now, skipping the queue. The organizer and followers are told.'), t('Đăng ngay', 'Publish'), 'cta'],
-      cancel: [t('Đánh dấu sự kiện đã huỷ?', 'Mark the event cancelled?'), t('Tin vẫn hiển thị nhưng ghi "Đã huỷ". Đơn đã thanh toán cần được hoàn tiền trong mục Đơn hàng.', 'The listing stays visible as "Cancelled". Paid orders need refunding from Orders.'), t('Đánh dấu huỷ', 'Mark cancelled'), 'danger'],
-      restore: [t('Khôi phục tin?', 'Restore the listing?'), t('Tin chạy lại ngay trên feed.', 'It goes back on the feed right away.'), t('Khôi phục', 'Restore'), 'cta'],
+      publish: [t('Đăng tin này ngay?', 'Publish this listing now?'), t('Bỏ qua hàng chờ.', 'Skips the queue.'), t('Đăng ngay', 'Publish'), 'cta'],
+      cancel: [t('Đánh dấu sự kiện đã huỷ?', 'Mark the event cancelled?'), t('Đơn đã thanh toán cần hoàn tiền ở mục Đơn hàng.', 'Paid orders need refunding from Orders.'), t('Đánh dấu huỷ', 'Mark cancelled'), 'danger'],
+      restore: [t('Khôi phục tin?', 'Restore the listing?'), null, t('Khôi phục', 'Restore'), 'cta'],
     }[action];
     if (!(await confirm({ title: texts[0], body: texts[1], confirm: texts[2], tone: texts[3] === 'danger' ? 'danger' : undefined }))) return;
     try { const out = await post(`/admin/events/${ev.id}/status`, { action }); toast(tx(out.message)); emit('counts'); onChanged(out); } catch (e) {
@@ -133,8 +133,7 @@ function EventList() {
 
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: t('Danh mục · mọi trạng thái', 'Catalogue · every status'), title: t('Sự kiện', 'Events'),
-      sub: data ? t(`${num(data.total)} tin khớp bộ lọc. Bấm một dòng để sửa, đổi trạng thái hoặc xem lịch sử.`, `${num(data.total)} listings match. Click a row to edit, change status or read its history.`) : null,
+      title: t('Sự kiện', 'Events'),
       actions: h(Fragment, null,
         h(Button, { icon: 'download-simple', href: csvHref, title: t('Tải CSV theo bộ lọc hiện tại', 'Download CSV with the current filters') }, 'CSV'),
         h(Button, { variant: 'cta', icon: 'plus', onClick: () => navigate(href('events', 'new')) }, t('Tạo sự kiện', 'New listing'))),
@@ -220,15 +219,14 @@ function EventDetail({ id }) {
       h(Stat, { label: t('Quan tâm · lưu', 'Hype · saves'), value: `${num(m.hype)} · ${num(m.saves)}` }),
       h(Stat, { label: t('Vé đã bán', 'Tickets sold'), value: num(m.tickets), note: ev.capacity ? t(`trên ${num(ev.capacity)} chỗ`, `of ${num(ev.capacity)}`) : null }),
       h(Stat, { label: t('Doanh thu vé', 'Ticket revenue'), value: money(m.gross), note: m.refunded ? t(`${m.refunded} đơn đã hoàn`, `${m.refunded} refunded`) : null }),
-      h(Stat, { label: t('Mục nổi bật', 'Shelves'), value: ev.shelves.length, note: ev.shelves.map((s) => tx(s.name)).join(', ') || t('Không có', 'None') })),
+      ev.shelves.length ? h(Stat, { label: t('Mục nổi bật', 'Shelves'), value: ev.shelves.length, note: ev.shelves.map((s) => tx(s.name)).join(', ') }) : null),
     h(Tabs, { value: tab, onChange: setTab, items: [
       { value: 'edit', icon: 'pencil-simple', label: t('Nội dung tin', 'Listing') },
       { value: 'history', icon: 'clock-counter-clockwise', label: t('Kiểm duyệt & lịch sử', 'Moderation & history'), count: ev.history.length },
     ] }),
     tab === 'history' ? h(History, { ev }) : h(EventForm, {
       key: `${ev.id}:${ev.status}:${ev.updatedAt}`, mode: 'team', draft: ev, actions, readOnly: false, orgName: ev.organizer.name,
-      banner: ev.status === 'in_review' ? h('div', { className: 'op-banner op-banner--warn' }, Icon('hourglass-medium', true), h('div', null, h('strong', null, t('Đang chờ duyệt', 'In review')), t(' — sửa ở đây không trả tin về cho nhà tổ chức; bấm "Duyệt & đăng" khi đã ổn.', ' — edits here do not bounce it back to the organizer; press "Approve & publish" when it is right.')))
-        : ev.status === 'rejected' ? h('div', { className: 'op-banner op-banner--danger' }, Icon('arrow-u-up-left', true), h('div', null, h('strong', null, t('Đã trả lại', 'Sent back')), ev.decisions[0]?.reason ? ` · ${tx(ev.decisions[0].reason)}` : '')) : null,
+      banner: ev.status === 'rejected' ? h('div', { className: 'op-banner op-banner--danger' }, Icon('arrow-u-up-left', true), h('div', null, h('strong', null, t('Đã trả lại', 'Sent back')), ev.decisions[0]?.reason ? ` · ${tx(ev.decisions[0].reason)}` : '')) : null,
       onSaved: (out) => out && setData(out),
     }),
     dialog);
@@ -244,8 +242,7 @@ function EventCreate() {
   return h(Fragment, null,
     h(PageHeader, {
       back: { href: href('events'), label: t('Sự kiện', 'Events'), onClick: (e) => { e.preventDefault(); navigate(href('events')); } },
-      eyebrow: t('Đội FeestFinder tạo thay nhà tổ chức', 'Created by the team for an organizer'), title: t('Tạo sự kiện', 'New listing'),
-      sub: t('Dùng cho sự kiện đội tự thu thập hoặc nhận qua email/Zalo. Tạo nháp để nhà tổ chức hoàn thiện, hoặc bật "Đăng ngay" khi đã kiểm chứng.', 'For events the team sources itself or receives by email/Zalo. Create a draft for the organizer to finish, or turn on "Publish" when it is verified.'),
+      title: t('Tạo sự kiện', 'New listing'),
     }),
     h(EventForm, { mode: 'team', draft: null, actions, presetOrganizer: preset, onSaved: (out, { created }) => { if (created && out?.id) { emit('counts'); navigate(href('events', out.id), { replace: true, force: true }); } } }));
 }

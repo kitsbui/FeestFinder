@@ -3,7 +3,7 @@
  * appeals against a send-back. Each row carries the decision buttons it needs.
  */
 import { h, Fragment, useState, useMemo, t, tx, cx, post, href, navigate, useFetch, useQueryState, toast, errorText, emit, duration, stamp, num } from '../core.js';
-import { PageHeader, Button, Icon, Pill, Thumb, Spinner, ErrorBox, Empty, FilterBar, FilterSelect, DataTable, Tabs, Stat, StatusPill, Card, confirm, Select } from '../ui.js';
+import { PageHeader, Button, Icon, Pill, Thumb, Spinner, ErrorBox, Empty, FilterBar, FilterSelect, DataTable, Tabs, StatusPill, Card, confirm, Select } from '../ui.js';
 import { rejectOptions } from '../opts.js';
 
 const CAT = { refund: ['danger', 'receipt-x'], wrong: ['warn', 'map-pin-line'], price: ['warn', 'tag'], safety: ['danger', 'warning-octagon'] };
@@ -16,12 +16,12 @@ function ReportsTab() {
   const rows = useMemo(() => (data?.items ?? []).filter((r) => !cat || r.category === cat).sort((a, b) => (sort === 'age' ? b.ageMinutes - a.ageMinutes : b.count - a.count)), [data, cat, sort]);
   const act = async (r, kind) => {
     const copy = {
-      dismiss: [t('Bỏ qua báo cáo này?', 'Dismiss these reports?'), t('Báo cáo được đóng, tin giữ nguyên. Nếu tin đang bị tạm ẩn do báo cáo, tin hiện lại.', 'The reports close and the listing stays. If it was held after reports, it shows again.'), t('Bỏ qua', 'Dismiss')],
-      warn: [t('Cảnh cáo nhà tổ chức?', 'Warn the organizer?'), t('Thêm một lần cảnh cáo. Đến 3 lần, tài khoản bị tạm dừng.', 'Adds a strike. At three, the account is suspended.'), t('Gửi cảnh cáo', 'Send warning')],
+      dismiss: [t('Bỏ qua báo cáo này?', 'Dismiss these reports?'), t('Tin giữ nguyên và hiện lại nếu đang bị tạm ẩn.', 'The listing stays and shows again if it was held.'), t('Bỏ qua', 'Dismiss')],
+      warn: [t('Cảnh cáo nhà tổ chức?', 'Warn the organizer?'), t('Cảnh cáo lần 3 sẽ tạm dừng tài khoản.', 'A third strike suspends the account.'), t('Gửi cảnh cáo', 'Send warning')],
     }[kind];
     let body = { category: r.category };
     if (kind === 'take_down') {
-      const out = await confirm({ title: t('Gỡ tin này?', 'Take this listing down?'), body: t(`"${r.subject}" sẽ bị gỡ khỏi FeestFinder và mọi báo cáo được đóng.`, `"${r.subject}" is removed from FeestFinder and every report closes.`), confirm: t('Gỡ tin', 'Take down'), tone: 'danger' });
+      const out = await confirm({ title: t('Gỡ tin này?', 'Take this listing down?'), body: r.subject, confirm: t('Gỡ tin', 'Take down'), tone: 'danger' });
       if (!out) return;
       body = {};
     } else if (!(await confirm({ title: copy[0], body: copy[1], confirm: copy[2], tone: kind === 'warn' ? 'danger' : undefined }))) return;
@@ -48,12 +48,11 @@ function ReportsTab() {
       r.eventStatus !== 'removed' ? h(Button, { size: 'sm', variant: 'danger', busy: busy === r.id + 'take_down', onClick: () => act(r, 'take_down') }, t('Gỡ tin', 'Take down')) : null) },
   ];
   return h(Fragment, null,
-    h('div', { className: 'op-stats' }, data.last30Days.map((c) => h(Stat, { key: c.category, label: tx(c.label), icon: CAT[c.category]?.[1], value: c.count, note: t('báo cáo trong 30 ngày', 'reports in 30 days'), active: cat === c.category, onClick: () => setCat(cat === c.category ? '' : c.category) }))),
     h(FilterBar, {
       active: cat ? 1 : 0, onReset: () => setCat(''),
       right: h(FilterSelect, { label: t('Sắp xếp', 'Sort'), icon: 'arrows-down-up', value: sort, onChange: (v) => setSort(v || 'count'), options: [{ value: 'count', label: t('Nhiều người báo nhất', 'Most reporters') }, { value: 'age', label: t('Mở lâu nhất', 'Open longest') }] }),
     }, h(FilterSelect, { label: t('Loại báo cáo', 'Category'), icon: 'flag', value: cat, onChange: setCat, allLabel: t('Mọi loại', 'Every category'), options: data.last30Days.map((c) => ({ value: c.category, label: tx(c.label), count: data.items.filter((x) => x.category === c.category).length })) })),
-    h(DataTable, { columns, rows, minWidth: 1000, empty: h(Empty, { icon: 'check-circle', title: t('Không có báo cáo đang mở', 'No open reports'), body: t('Hai người báo cáo cùng một tin sẽ tự tạm ẩn tin khỏi feed.', 'Two reporters on the same listing hold it from the feed automatically.') }) }));
+    h(DataTable, { columns, rows, minWidth: 1000, empty: h(Empty, { icon: 'check-circle', title: t('Không có báo cáo đang mở', 'No open reports') }) }));
 }
 
 function AppealsTab() {
@@ -62,14 +61,14 @@ function AppealsTab() {
   const decide = async (a, kind) => {
     const ok = await confirm(kind === 'overturn'
       ? { title: t('Lật lại quyết định và đăng tin?', 'Overturn and publish?'), body: t(`"${a.title}" sẽ lên sóng ngay.`, `"${a.title}" goes live now.`), confirm: t('Lật lại & đăng', 'Overturn & publish') }
-      : { title: t('Giữ quyết định trả lại?', 'Uphold the send-back?'), body: t('Kháng nghị được đóng; nhà tổ chức vẫn có thể sửa và gửi lại.', 'The appeal closes; the organizer can still fix and resubmit.'), confirm: t('Giữ quyết định', 'Uphold'), tone: 'danger' });
+      : { title: t('Giữ quyết định trả lại?', 'Uphold the send-back?'), body: a.title, confirm: t('Giữ quyết định', 'Uphold'), tone: 'danger' });
     if (!ok) return;
     setBusy(a.id + kind);
     try { const out = await post(`/admin/appeals/${a.id}/${kind}`); toast(tx(out.message)); emit('counts'); reload(true); } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(null); }
   };
   if (loading && !data) return h(Spinner);
   if (error) return h(ErrorBox, { error, onRetry: reload });
-  if (!data.items.length) return h(Empty, { icon: 'gavel', title: t('Không có kháng nghị đang mở', 'No open appeals'), body: t('Khi trả lại tin với lý do cho phép kháng nghị, nhà tổ chức có 7 ngày để phản hồi.', 'When a send-back allows an appeal, the organizer has 7 days to reply.') });
+  if (!data.items.length) return h(Empty, { icon: 'gavel', title: t('Không có kháng nghị đang mở', 'No open appeals') });
   return h('div', { className: 'op-appeals' }, data.items.map((a) => h(Card, { key: a.id, className: 'op-appeal-card' },
     h('div', { className: 'op-appeal-head' },
       h(Thumb, { src: a.coverUrl, art: a.art, title: a.title, w: 88 }),
@@ -90,7 +89,7 @@ function AppealsTab() {
 export function Reports({ counts }) {
   const [tab, setTab] = useQueryState('tab', 'reports');
   return h(Fragment, null,
-    h(PageHeader, { eyebrow: t('Kiểm duyệt · sau khi đăng', 'Moderation · after publishing'), title: t('Báo cáo & kháng nghị', 'Reports & appeals'), sub: t('Báo cáo từ người dùng về tin đang đăng, và phản hồi của nhà tổ chức khi bị trả lại.', 'User reports on live listings, and organizers answering a send-back.') }),
+    h(PageHeader, { title: t('Báo cáo & kháng nghị', 'Reports & appeals') }),
     h(Tabs, { value: tab, onChange: setTab, items: [
       { value: 'reports', icon: 'flag', label: t('Báo cáo người dùng', 'User reports'), count: counts.reports, alert: true },
       { value: 'appeals', icon: 'gavel', label: t('Kháng nghị', 'Appeals'), count: counts.appeals, alert: true },

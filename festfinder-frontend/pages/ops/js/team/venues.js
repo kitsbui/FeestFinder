@@ -77,14 +77,14 @@ function VenueDrawer({ venue, preset, onClose, onSaved }) {
   const mapsQuery = encodeURIComponent(`${f.name} ${f.address}`.trim());
   return h(Drawer, {
     open: true, onClose, width: 600, title: editing ? venue.name : t('Thêm địa điểm', 'Add a venue'),
-    sub: preset?.eventTitle ? t(`Sẽ gán cho tin "${preset.eventTitle}" sau khi lưu`, `Will be linked to "${preset.eventTitle}" once saved`) : t('Địa điểm đã xác minh hiện trong ô chọn của mọi form sự kiện.', 'Verified venues appear in every event form’s picker.'),
+    sub: preset?.eventTitle ? t(`Gán cho "${preset.eventTitle}" sau khi lưu`, `Links to "${preset.eventTitle}" once saved`) : null,
     footer: h(Fragment, null, h(Button, { onClick: onClose }, t('Huỷ', 'Cancel')), h('span', { className: 'op-spacer' }), h(Button, { variant: 'cta', icon: 'check', busy, disabled: !ok, onClick: save }, editing ? t('Lưu địa điểm', 'Save venue') : t('Thêm địa điểm', 'Add venue'))),
   },
   h('div', { className: 'op-form-grid' },
     h(Field, { label: t('Tên địa điểm', 'Venue name'), required: true, className: 'is-wide' }, h(Input, { value: f.name, onChange: set('name'), placeholder: t('vd: Nhà thi đấu Phú Thọ', 'e.g. Phú Thọ Arena'), autoFocus: !editing })),
     h(Field, { label: t('Địa chỉ', 'Address'), required: true, className: 'is-wide' }, h(Input, { value: f.address, onChange: set('address'), placeholder: t('Số nhà, đường, phường', 'Number, street, ward') })),
     h(Field, { label: t('Khu vực', 'District'), required: true }, h(Combobox, { value: f.area, options: areaOptions(), icon: 'map-trifold', placeholder: t('Chọn quận / khu vực', 'Pick a district'), onChange: (v) => set('area')(v ?? ''), onCreate: (v) => set('area')(v) })),
-    h(Field, { label: t('Dán link bản đồ hoặc toạ độ', 'Paste a map link or coordinates'), hint: paste && !parseCoords(paste) ? t('Chưa đọc được toạ độ từ nội dung này.', 'No coordinates found in that.') : t('Google Maps, Apple Maps, OpenStreetMap hoặc "10.7714, 106.657".', 'Google Maps, Apple Maps, OpenStreetMap or "10.7714, 106.657".') },
+    h(Field, { label: t('Dán link bản đồ hoặc toạ độ', 'Paste a map link or coordinates'), error: paste && !parseCoords(paste) ? t('Không đọc được toạ độ', 'No coordinates found') : null },
       h(Input, { value: paste, onChange: takePaste, icon: 'link', placeholder: 'https://maps.google.com/…@10.77,106.70' })),
     h(Field, { label: t('Vĩ độ', 'Latitude'), required: true }, h(Input, { value: f.lat, onChange: set('lat'), inputMode: 'decimal', placeholder: '10.7714', invalid: f.lat !== '' && !coordsOk })),
     h(Field, { label: t('Kinh độ', 'Longitude'), required: true }, h(Input, { value: f.lng, onChange: set('lng'), inputMode: 'decimal', placeholder: '106.6570', invalid: f.lng !== '' && !coordsOk })),
@@ -93,12 +93,12 @@ function VenueDrawer({ venue, preset, onClose, onSaved }) {
       h('div', { className: 'op-map-links' },
         h('a', { className: 'op-link', href: `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`, target: '_blank', rel: 'noopener noreferrer' }, Icon('magnifying-glass'), t('Tìm trên Google Maps', 'Find on Google Maps')),
         coordsOk ? h('a', { className: 'op-link', href: `https://www.google.com/maps?q=${lat},${lng}`, target: '_blank', rel: 'noopener noreferrer' }, Icon('arrow-square-out'), t('Mở ghim này', 'Open this pin')) : null)),
-    h(Field, { label: t('Xác minh', 'Verification') }, h(Switch, { checked: f.verified, onChange: set('verified'), label: t('Địa điểm đã xác minh', 'Verified venue'), hint: t('Hiện trong ô chọn của nhà tổ chức', 'Shown in organizers’ picker') })),
-    h(Field, { label: t('Giấy phép', 'Permit') }, h(Switch, { checked: f.permitOnFile, onChange: set('permitOnFile'), label: t('Đã có giấy phép địa điểm', 'Venue permit on file'), hint: t('Cần cho sự kiện đông người', 'Needed for large crowds') }))));
+    h(Switch, { checked: f.verified, onChange: set('verified'), label: t('Đã xác minh', 'Verified') }),
+    h(Switch, { checked: f.permitOnFile, onChange: set('permitOnFile'), label: t('Có giấy phép', 'Permit on file') })));
 }
 
 function Unresolved({ items, onLink, onCreate }) {
-  if (!items.length) return h(Empty, { icon: 'map-pin', title: t('Mọi tin đều đã có ghim bản đồ', 'Every listing has a map pin'), body: t('Tin có địa điểm gõ tay sẽ hiện ở đây để gán hoặc tạo địa điểm.', 'Listings with a hand-typed venue show up here to link or create one.') });
+  if (!items.length) return h(Empty, { icon: 'map-pin', title: t('Mọi tin đều đã có ghim bản đồ', 'Every listing has a map pin') });
   return h('div', { className: 'op-unresolved' }, items.map((e) => h(Card, { key: e.id, className: 'op-unres-card' },
     h('div', { className: 'op-unres-head' },
       h('div', { style: { flex: 1, minWidth: 0 } },
@@ -154,8 +154,7 @@ export function Venues() {
   const areasInUse = [...new Set(items.map((v) => v.area))].sort();
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: t('Đối tác · danh mục địa điểm', 'Partners · venue registry'), title: t('Địa điểm', 'Venues'),
-      sub: t('Một nguồn địa điểm chuẩn cho mọi form: tên, địa chỉ, quận và ghim bản đồ thống nhất.', 'One source of venues for every form: consistent names, addresses, districts and map pins.'),
+      title: t('Địa điểm', 'Venues'),
       actions: h(Button, { variant: 'cta', icon: 'plus', onClick: () => setDrawer({}) }, t('Thêm địa điểm', 'Add venue')),
     }),
     h(Tabs, { value: tab, onChange: setTab, items: [

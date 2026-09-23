@@ -4,7 +4,7 @@
  *
  * Six short sections instead of one long page of fields; every fixed list is picked from
  * a dropdown; the right-hand rail scores the listing live, lists what is still missing
- * before it can be sent, and shows the card exactly as the feed will.
+ * before it can be sent and what would raise the score, and shows the card as the feed will.
  */
 import {
   h, Fragment, useState, useEffect, useMemo, useRef, t, tx, cx, fold, money, day, vnDate, addDays, options, toast, errorText, useLeaveGuard, now,
@@ -36,6 +36,9 @@ const CHECKS = [
   { key: 'lineup', pts: 8, sec: 'lineup', vi: 'Có từ 3 nghệ sĩ', en: 'Three or more artists' },
   { key: 'event_url', pts: 4, sec: 'media', vi: 'Có trang sự kiện riêng', en: 'Own event page linked' },
 ];
+
+/** Quality checks that repeat a required item; the rail lists those once, as required. */
+const COVERED = { genre: 'genre', venue: 'venue', tickets: 'price', logo: 'logo', event_url: 'eventUrl' };
 
 const REQUIRED = {
   title: { sec: 'basics', vi: 'Tên sự kiện', en: 'Event name' },
@@ -258,7 +261,7 @@ function TierEditor({ f, set, original, canEdit }) {
         h(Button, { variant: 'quiet', size: 'sm', icon: 'trash', title: r.sold ? t('Hạng vé đã có người mua, không xoá được', 'This tier has sales and cannot be removed') : t('Xoá hạng vé', 'Remove tier'), disabled: r.sold > 0 || !canEdit, onClick: () => set({ tiers: rows.filter((_, j) => j !== i) }) })))) : null,
     h('div', { className: 'op-tiers-foot' },
       h(Button, { size: 'sm', icon: 'plus', onClick: add, disabled: rows.length >= 12 || !canEdit }, t('Thêm hạng vé', 'Add a tier')),
-      rows.length ? h('span', { className: 'op-hint' }, t(`Tổng ${total.toLocaleString('vi-VN')} vé · giá từ tự lấy theo hạng rẻ nhất`, `${total.toLocaleString('en-US')} tickets in total · "price from" follows the cheapest tier`)) : h('span', { className: 'op-hint' }, t('Chỉ cần khi bán vé qua FeestFinder. Bán qua đối tác thì chỉ cần link vé ở trên.', 'Only needed when FeestFinder sells the tickets. For a ticketing partner, the link above is enough.'))));
+      rows.length ? h('span', { className: 'op-hint' }, t(`Tổng ${total.toLocaleString('vi-VN')} vé`, `${total.toLocaleString('en-US')} tickets`)) : null));
 }
 
 /**
@@ -289,6 +292,7 @@ export function EventForm({ mode, draft, actions, onSaved, banner, readOnly, aut
   const dirty = JSON.stringify(payload) !== base || (id && showTiers && JSON.stringify(tiers) !== tierBase);
   const q = qualityOf(f);
   const missing = missingOf(f, mode);
+  const boosts = q.checks.filter((c) => !c.ok && !missing.includes(COVERED[c.key]));
   const live = draft?.status === 'live';
   const reviewedChanged = mode === 'org' && live && (() => { const b = JSON.parse(base); return REVIEWED.some((k) => JSON.stringify(b[k] ?? null) !== JSON.stringify(payload[k] ?? null)); })();
   const reviewedSections = mode === 'org' && live ? new Set(['basics', 'when', 'where', 'tickets', 'media']) : new Set();
@@ -318,7 +322,7 @@ export function EventForm({ mode, draft, actions, onSaved, banner, readOnly, aut
     if (readOnly) return null;
     if (!validate(opts.quiet)) { if (!opts.quiet) toast(t('Kiểm tra lại các ô được đánh dấu', 'Check the highlighted fields'), 'error'); return null; }
     if (reviewedChanged && !opts.confirmed && !opts.quiet) {
-      const ok = await confirm({ title: t('Gửi duyệt lại tin đang đăng?', 'Send this live listing back to review?'), body: t('Bạn đã sửa ngày, giờ, địa điểm, giá hoặc ảnh bìa. Tin sẽ tạm vào hàng chờ duyệt (thường dưới 2 giờ) và vẫn giữ lượt lưu, lượt quan tâm.', 'You changed the date, times, venue, price or cover. The listing goes back into the review queue (usually under two hours); saves and hype are kept.'), confirm: t('Lưu và gửi duyệt lại', 'Save and re-submit') });
+      const ok = await confirm({ title: t('Gửi duyệt lại tin đang đăng?', 'Send this live listing back to review?'), body: t('Bạn đã sửa ngày, giờ, địa điểm, giá hoặc ảnh bìa. Lượt lưu và quan tâm được giữ.', 'You changed the date, times, venue, price or cover. Saves and hype are kept.'), confirm: t('Lưu và gửi duyệt lại', 'Save and re-submit') });
       if (!ok) return null;
     }
     if (opts.quiet && reviewedChanged) return null;
@@ -385,31 +389,28 @@ export function EventForm({ mode, draft, actions, onSaved, banner, readOnly, aut
   return h('div', { className: 'op-form-layout' },
     h('div', { className: 'op-form-main' },
       banner ?? null,
-      h('nav', { className: 'op-steps', 'aria-label': t('Các mục', 'Sections') }, SECTIONS.map((s, i) =>
-        h('button', { key: s.id, type: 'button', className: cx('op-step', sectionDone(s.id, f) && 'is-done'), onClick: () => jump(s.id) },
-          h('span', { className: 'op-step-n' }, sectionDone(s.id, f) ? Icon('check') : i + 1), h('span', null, t(s.vi, s.en))))),
 
       h('fieldset', { className: 'op-fieldset', disabled: dis },
         // 1 · basics
-        h(Section, { id: 'basics', n: 1, f, locked: reviewedSections.has('basics'), sub: t('Tên, thể loại và mô tả hiện trên thẻ sự kiện và trong kết quả tìm kiếm.', 'Name, genre and description show on the card and in search.') },
-          mode === 'team' && !id ? h(Field, { label: t('Nhà tổ chức', 'Organizer'), required: true, error: err('organizer'), hint: t('Tin được tạo dưới tên nhà tổ chức này; họ thấy và sửa được trong Studio.', 'The listing is created for this organizer; they can see and edit it in their studio.') },
+        h(Section, { id: 'basics', n: 1, f, locked: reviewedSections.has('basics') },
+          mode === 'team' && !id ? h(Field, { label: t('Nhà tổ chức', 'Organizer'), required: true, error: err('organizer') },
             h(Combobox, { value: organizerId, valueLabel: organizerLabel, load: loadOrganizers, placeholder: t('Tìm theo tên, email, mã số thuế…', 'Search by name, email, tax code…'), icon: 'buildings', invalid: !!err('organizer'), onChange: (v, o) => { setOrganizerId(v); setOrganizerLabel(o?.label ?? null); } })) : null,
-          h(Field, { label: t('Tên sự kiện', 'Event name'), required: true, id: 'f-title', counter: [f.title.length, 120], error: err('title'), hint: t('Rõ ràng, có thương hiệu và năm nếu là sự kiện thường niên. Nên dưới 60 ký tự.', 'Clear, with the brand and year for a yearly event. Best under 60 characters.') },
+          h(Field, { label: t('Tên sự kiện', 'Event name'), required: true, id: 'f-title', counter: [f.title.length, 120], error: err('title') },
             h(Input, { id: 'f-title', value: f.title, onChange: (v) => set({ title: v }), placeholder: t('vd: Ravolution Music Festival 2026', 'e.g. Ravolution Music Festival 2026'), maxLength: 140, invalid: !!err('title') })),
           h('div', { className: 'op-row-2' },
-            h(Field, { label: t('Thể loại', 'Genre'), required: true, id: 'f-genre', hint: f.genre ? tx(options().genres.find((g) => g.value === f.genre)?.hint) : t('Quyết định sự kiện hiện ở bộ lọc nào.', 'Decides which filters the listing appears in.') },
+            h(Field, { label: t('Thể loại', 'Genre'), required: true, id: 'f-genre', hint: f.genre ? tx(options().genres.find((g) => g.value === f.genre)?.hint) : null },
               h(Select, { id: 'f-genre', value: f.genre, onChange: (v) => set({ genre: v }), placeholder: t('— Chọn thể loại —', '— Pick a genre —'), options: genreOptions() })),
             h(Field, { label: t('Độ tuổi', 'Age policy'), id: 'f-age' },
               h(Segmented, { value: f.age, onChange: (v) => set({ age: v }), options: ageOptions().map((a) => ({ value: a.value, label: a.value === 'All ages' ? t('Mọi lứa tuổi', 'All ages') : a.value })) }))),
-          h(Field, { label: t('Mô tả (tiếng Việt)', 'Description (Vietnamese)'), id: 'f-desc', counter: [f.descVi.length, 4000], hint: f.descVi.trim().length < 80 ? t(`Còn ${80 - f.descVi.trim().length} ký tự nữa để đạt mức tối thiểu 80. Nêu: có gì diễn ra, ai biểu diễn, mở cửa lúc mấy giờ, cần mang gì.`, `${80 - f.descVi.trim().length} more characters to reach 80. Say what happens, who plays, when doors open, what to bring.`) : t('Hai dòng đầu hiện trong kết quả tìm kiếm.', 'The first two lines show in search results.') },
+          h(Field, { label: t('Mô tả (tiếng Việt)', 'Description (Vietnamese)'), id: 'f-desc', counter: [f.descVi.length, 4000] },
             h(TextArea, { id: 'f-desc', rows: 5, value: f.descVi, onChange: (v) => set({ descVi: v }), maxLength: 4000, placeholder: t('Có gì diễn ra, ai biểu diễn, mở cửa khi nào, cần mang theo gì…', 'What happens, who is playing, when doors open, what to bring…') })),
           showEn
             ? h(Field, { label: t('Mô tả (tiếng Anh)', 'Description (English)'), optional: true, id: 'f-desc-en', counter: [f.descEn.length, 4000] },
               h(TextArea, { id: 'f-desc-en', rows: 4, value: f.descEn, onChange: (v) => set({ descEn: v }), maxLength: 4000, placeholder: 'What happens, who is playing, when doors open…' }))
-            : h('button', { type: 'button', className: 'op-link op-add-en', onClick: () => setShowEn(true) }, Icon('translate'), t('Thêm mô tả tiếng Anh cho khách quốc tế', 'Add an English description for visitors'))),
+            : h('button', { type: 'button', className: 'op-link op-add-en', onClick: () => setShowEn(true) }, Icon('translate'), t('Thêm mô tả tiếng Anh', 'Add an English description'))),
 
         // 2 · when
-        h(Section, { id: 'when', n: 2, f, locked: reviewedSections.has('when'), sub: dur && f.startsOn ? `${day(f.startsOn)}${f.multiDay && f.endsOn ? ' → ' + day(f.endsOn) : ''} · ${f.startTime} → ${f.endTime}${dur.overnight ? t(' (hôm sau)', ' (next day)') : ''} · ${Math.floor(dur.m / 60)}h${dur.m % 60 ? String(dur.m % 60).padStart(2, '0') : ''}` : t('Giờ sau nửa đêm được hiểu là rạng sáng hôm sau.', 'Times after midnight count as the next morning.') },
+        h(Section, { id: 'when', n: 2, f, locked: reviewedSections.has('when'), sub: dur && f.startsOn ? `${day(f.startsOn)}${f.multiDay && f.endsOn ? ' → ' + day(f.endsOn) : ''} · ${f.startTime} → ${f.endTime}${dur.overnight ? t(' (hôm sau)', ' (next day)') : ''} · ${Math.floor(dur.m / 60)}h${dur.m % 60 ? String(dur.m % 60).padStart(2, '0') : ''}` : null },
           h(Segmented, { value: f.multiDay ? 'multi' : 'one', onChange: (v) => set({ multiDay: v === 'multi', endsOn: v === 'multi' ? f.endsOn || f.startsOn : f.endsOn }), options: [{ value: 'one', label: t('Một ngày', 'One day') }, { value: 'multi', label: t('Nhiều ngày', 'Several days') }] }),
           h('div', { className: 'op-row-2' },
             h(Field, { label: f.multiDay ? t('Ngày bắt đầu', 'First day') : t('Ngày diễn ra', 'Date'), required: true, id: 'f-start' },
@@ -419,89 +420,87 @@ export function EventForm({ mode, draft, actions, onSaved, banner, readOnly, aut
               h(DateInput, { id: 'f-end', value: f.endsOn, min: f.startsOn || undefined, invalid: !!err('endsOn'), onChange: (v) => set({ endsOn: v ?? '' }) })) : h('div')),
           h('div', { className: 'op-row-2' },
             h(Field, { label: t('Giờ mở cửa', 'Doors open'), required: true, id: 'f-t1' }, h(TimeSelect, { id: 'f-t1', value: f.startTime, onChange: (v) => set({ startTime: v }) })),
-            h(Field, { label: t('Giờ kết thúc', 'Ends'), required: true, id: 'f-t2', hint: dur?.overnight ? t('Kết thúc sau nửa đêm — tính sang hôm sau.', 'Ends after midnight — counted as the next day.') : null },
+            h(Field, { label: t('Giờ kết thúc', 'Ends'), required: true, id: 'f-t2' },
               h(TimeSelect, { id: 'f-t2', value: f.endTime, after: f.startTime, onChange: (v) => set({ endTime: v }) }))),
-          h('div', { className: 'op-quick' }, h('span', { className: 'op-quick-label' }, t('Khung giờ nhanh:', 'Quick times:')),
+          h('div', { className: 'op-quick' },
             TIME_PICKS().map((p) => h('button', { key: p.s, type: 'button', className: cx('op-chip', f.startTime === p.s && f.endTime === p.e && 'is-on'), onClick: () => set({ startTime: p.s, endTime: p.e }) }, p.label)))),
 
         // 3 · where
-        h(Section, { id: 'where', n: 3, f, locked: reviewedSections.has('where'), sub: t('Chọn địa điểm có sẵn để tự điền địa chỉ, quận và ghim bản đồ.', 'Pick a saved venue to fill the address, district and map pin.') },
+        h(Section, { id: 'where', n: 3, f, locked: reviewedSections.has('where') },
           h(Segmented, { value: f.venueMode, onChange: (v) => set({ venueMode: v }), options: [{ value: 'saved', label: t('Chọn từ danh sách', 'Saved venue'), icon: 'map-pin' }, { value: 'new', label: t('Địa điểm mới', 'New venue'), icon: 'plus' }] }),
           f.venueMode === 'saved'
             ? h(Fragment, null,
-              h(Field, { label: t('Địa điểm', 'Venue'), required: true, id: 'f-venue', hint: t('Không thấy địa điểm? Chọn "Địa điểm mới" — đội FeestFinder sẽ xác minh và ghim bản đồ.', 'Not in the list? Choose "New venue" — the FeestFinder team verifies and pins it.') },
+              h(Field, { label: t('Địa điểm', 'Venue'), required: true, id: 'f-venue' },
                 h(Combobox, { id: 'f-venue', value: f.venueId, valueLabel: f.venueLabel, load: loadVenues, placeholder: t('Tìm tên địa điểm, đường, quận…', 'Search venue, street, district…'), icon: 'map-pin', onChange: (v, o) => set({ venueId: v, venueLabel: o?.label ?? null, venueSub: o?.sub ?? '', venueArea: o?.raw?.area ?? '' }), emptyText: t('Không có địa điểm này — hãy chọn "Địa điểm mới"', 'Not found — choose "New venue"') })),
               f.venueId ? h('div', { className: 'op-venue-card' }, Icon('map-pin', true), h('div', null, h('div', { className: 'op-venue-name' }, f.venueLabel), h('div', { className: 'op-venue-sub' }, f.venueSub)), h(Pill, { tone: 'ok', icon: 'check-circle' }, t('Có định vị', 'Pinned'))) : null)
             : h(Fragment, null,
               h('div', { className: 'op-row-2' },
                 h(Field, { label: t('Tên địa điểm', 'Venue name'), required: true, id: 'f-vname' }, h(Input, { id: 'f-vname', value: f.venueName, onChange: (v) => set({ venueName: v }), placeholder: t('vd: Warehouse 12', 'e.g. Warehouse 12') })),
-                h(Field, { label: t('Khu vực', 'District'), required: true, id: 'f-area', hint: t('Chọn từ danh sách để lọc theo quận chính xác.', 'Pick from the list so district filters work.') },
+                h(Field, { label: t('Khu vực', 'District'), required: true, id: 'f-area' },
                   h(Combobox, { id: 'f-area', value: f.area, options: areaOptions(), placeholder: t('Chọn quận / khu vực', 'Pick a district'), icon: 'map-trifold', onChange: (v) => set({ area: v ?? '' }), onCreate: (v) => set({ area: v }), createLabel: t('Khu vực khác: “{q}”', 'Other area: “{q}”') }))),
-              h(Field, { label: t('Địa chỉ', 'Address'), id: 'f-addr', hint: t('Số nhà, đường, phường. Kèm một mốc gần đó nếu khó tìm.', 'Number, street, ward. Add a landmark if it is hard to find.') }, h(Input, { id: 'f-addr', value: f.address, onChange: (v) => set({ address: v }), placeholder: t('vd: 12 Tôn Thất Thuyết, P. 16', 'e.g. 12 Tôn Thất Thuyết, Ward 16') })),
-              h('div', { className: 'op-note op-note--warn' }, Icon('info', true), h('span', null, t('Địa điểm mới cần được đội FeestFinder xác minh và ghim bản đồ trước khi hiện trên Map — việc duyệt có thể lâu hơn một chút.', 'A new venue has to be verified and pinned by the FeestFinder team before it shows on the map — review may take a little longer.'))))),
+              h(Field, { label: t('Địa chỉ', 'Address'), id: 'f-addr' }, h(Input, { id: 'f-addr', value: f.address, onChange: (v) => set({ address: v }), placeholder: t('vd: 12 Tôn Thất Thuyết, P. 16', 'e.g. 12 Tôn Thất Thuyết, Ward 16') })),
+              h('div', { className: 'op-note op-note--warn' }, Icon('info', true), h('span', null, t('Địa điểm mới cần FeestFinder xác minh trước khi hiện trên bản đồ.', 'A new venue shows on the map once FeestFinder verifies it.'))))),
 
         // 4 · tickets
-        h(Section, { id: 'tickets', n: 4, f, locked: reviewedSections.has('tickets'), sub: t('Hình thức vào cửa quyết định các ô bên dưới.', 'The entry type decides what else is needed.') },
+        h(Section, { id: 'tickets', n: 4, f, locked: reviewedSections.has('tickets') },
           h(RadioCards, { value: f.entryMode, onChange: (v) => set({ entryMode: v }), options: options().entryModes.map((e) => ({ value: e.value, label: tx(e.label), hint: tx(e.hint) })) }),
           f.entryMode === 'paid' ? h(Fragment, null,
             h('div', { className: 'op-row-2' },
-              h(Field, { label: t('Giá từ', 'Price from'), required: true, id: 'f-price', hint: t('Giá vé rẻ nhất, đã gồm VAT.', 'The cheapest ticket, VAT included.') },
+              h(Field, { label: t('Giá từ', 'Price from'), required: true, id: 'f-price', hint: t('Vé rẻ nhất, gồm VAT', 'Cheapest ticket, incl. VAT') },
                 h(MoneyInput, { id: 'f-price', value: f.priceFrom, onChange: (v) => set({ priceFrom: v }), presets: [100000, 150000, 200000, 300000, 500000, 1000000] })),
-              h(Field, { label: t('Sức chứa', 'Capacity'), optional: true, id: 'f-cap', error: err('capacity'), hint: t('Dùng để hiện "Sắp hết vé" và tính tiến độ bán.', 'Drives "Selling fast" and the sales pace.') },
+              h(Field, { label: t('Sức chứa', 'Capacity'), optional: true, id: 'f-cap', error: err('capacity') },
                 h(Input, { id: 'f-cap', type: 'number', min: 1, value: f.capacity, onChange: (v) => set({ capacity: v }), placeholder: t('vd: 800', 'e.g. 800'), invalid: !!err('capacity') }))),
-            h(Field, { label: t('Link bán vé', 'Ticket link'), required: true, id: 'f-ticket', error: err('ticketUrl'), aside: partnerOf(f.ticketUrl) ? h(Pill, { tone: 'ok', icon: 'seal-check' }, partnerOf(f.ticketUrl)) : null, hint: t('Link vé lỗi là lý do bị trả lại phổ biến thứ hai — hãy mở thử trước khi gửi.', 'A broken ticket link is the second most common send-back — open it once before submitting.') },
+            h(Field, { label: t('Link bán vé', 'Ticket link'), required: true, id: 'f-ticket', error: err('ticketUrl'), aside: partnerOf(f.ticketUrl) ? h(Pill, { tone: 'ok', icon: 'seal-check' }, partnerOf(f.ticketUrl)) : null },
               h(Input, { id: 'f-ticket', type: 'url', icon: 'link', value: f.ticketUrl, invalid: !!err('ticketUrl'), onChange: (v) => set({ ticketUrl: v }), onBlur: () => set({ ticketUrl: withScheme(f.ticketUrl) }), placeholder: 'https://ticketbox.vn/…' })),
             h('div', { className: 'op-tier-toggle' },
-              h(Switch, { checked: showTiers, onChange: setShowTiers, label: t('Chia hạng vé (Vé sớm, Thường, VIP…)', 'Ticket tiers (Early bird, GA, VIP…)'), hint: id ? t('Khi bán vé trực tiếp trên FeestFinder.', 'When FeestFinder sells the tickets.') : t('Lưu nháp trước, sau đó thêm hạng vé.', 'Save the draft first, then add tiers.'), disabled: !id })),
+              h(Switch, { checked: showTiers, onChange: setShowTiers, label: t('Chia hạng vé (Vé sớm, Thường, VIP…)', 'Ticket tiers (Early bird, GA, VIP…)'), hint: id ? null : t('Lưu nháp trước', 'Save the draft first'), disabled: !id })),
             showTiers && id ? h(TierEditor, { f, set, original: draft?.tiers ?? [], canEdit: !dis }) : null,
-            err('tiers') ? h('div', { className: 'op-field-error' }, Icon('warning-circle', true), err('tiers')) : null)
-            : h('div', { className: 'op-note' }, Icon('info', true), h('span', null, f.entryMode === 'free' ? t('Tin miễn phí hiện trong bộ lọc "Miễn phí" và các trang "Sự kiện miễn phí cuối tuần".', 'Free listings appear in the Free filter and the "free this weekend" pages.') : t('Khách trả tuỳ ý tại cửa. Ghi mức gợi ý trong mô tả nếu có.', 'People pay what they want at the door. Put a suggested amount in the description if you have one.')))),
+            err('tiers') ? h('div', { className: 'op-field-error' }, Icon('warning-circle', true), err('tiers')) : null) : null),
 
         // 5 · lineup
-        h(Section, { id: 'lineup', n: 5, f, sub: t('Tên nghệ sĩ được gợi ý từ các sự kiện khác để viết thống nhất — người theo dõi nghệ sĩ sẽ được báo.', 'Names are suggested from other listings so they are spelled the same — followers of an artist get told.') },
-          h(Field, { label: t('Dàn nghệ sĩ', 'Lineup'), optional: true, id: 'f-lineup', hint: t('Gõ tên rồi Enter, hoặc dán cả danh sách cách nhau bằng dấu phẩy. Thứ tự = thứ tự hiển thị. Từ 3 nghệ sĩ giúp tin vào mục Đang hot.', 'Type a name and press Enter, or paste a comma-separated list. Order is display order. Three or more qualifies for Trending.') },
+        h(Section, { id: 'lineup', n: 5, f },
+          h(Field, { label: t('Dàn nghệ sĩ', 'Lineup'), optional: true, id: 'f-lineup', hint: t('Enter để thêm · dán danh sách cách nhau bằng dấu phẩy', 'Enter to add · paste a comma-separated list') },
             h(ChipsInput, { id: 'f-lineup', value: f.lineup, onChange: (v) => set({ lineup: v }), suggest: suggestArtists, placeholder: t('vd: Hoaprox, DJ Mie, Wukong', 'e.g. Hoaprox, DJ Mie, Wukong') }))),
 
         // 6 · media
-        h(Section, { id: 'media', n: 6, f, locked: reviewedSections.has('media'), sub: t('Ảnh bìa chiếm 20 điểm chất lượng: thẻ không có ảnh mất khoảng 40% lượt bấm.', 'The cover is worth 20 quality points: cards without art lose about 40% of taps.') },
+        h(Section, { id: 'media', n: 6, f, locked: reviewedSections.has('media') },
           h('div', { className: 'op-row-media' },
             h(Field, { label: t('Ảnh bìa', 'Cover image'), optional: true }, h(Uploader, { purpose: 'cover', value: f.coverUrl, onChange: (v) => set({ coverUrl: v }) })),
             h(Field, { label: t('Logo thương hiệu', 'Brand logo'), required: mode === 'org' }, h(Uploader, { purpose: 'logo', value: f.logoUrl, onChange: (v) => set({ logoUrl: v }) }))),
           h('div', { className: 'op-row-2' },
-            h(Field, { label: t('Trang sự kiện', 'Event page'), required: mode === 'org', id: 'f-eurl', error: err('eventUrl'), hint: t('Dùng để đối chiếu thông tin khi duyệt.', 'Used to cross-check details during review.') },
+            h(Field, { label: t('Trang sự kiện', 'Event page'), required: mode === 'org', id: 'f-eurl', error: err('eventUrl') },
               h(Input, { id: 'f-eurl', type: 'url', icon: 'globe', value: f.eventUrl, invalid: !!err('eventUrl'), onChange: (v) => set({ eventUrl: v }), onBlur: () => set({ eventUrl: withScheme(f.eventUrl) }), placeholder: 'https://…' })),
-            h(Field, { label: t('Trang thương hiệu', 'Brand page'), optional: true, id: 'f-burl', error: err('brandUrl'), hint: t('Facebook, Instagram hoặc website.', 'Facebook, Instagram or website.') },
+            h(Field, { label: t('Trang thương hiệu', 'Brand page'), optional: true, id: 'f-burl', error: err('brandUrl') },
               h(Input, { id: 'f-burl', type: 'url', icon: 'link', value: f.brandUrl, invalid: !!err('brandUrl'), onChange: (v) => set({ brandUrl: v }), onBlur: () => set({ brandUrl: withScheme(f.brandUrl) }), placeholder: 'https://facebook.com/…' })))),
 
-        mode === 'team' ? h(Section, { id: 'team', n: 7, f, sub: t('Chỉ đội FeestFinder thấy và chỉnh được.', 'Only the FeestFinder team sees these.') },
+        mode === 'team' ? h(Section, { id: 'team', n: 7, f },
           h('div', { className: 'op-row-2' },
             h(Field, { label: t('Nổi bật', 'Featured') }, h(Switch, { checked: f.featured, onChange: (v) => set({ featured: v }), label: t('Ưu tiên trong feed Khám phá', 'Boost in the Explore feed') })),
             h(Field, { label: t('Nhãn trên thẻ', 'Card badge'), optional: true }, h(Select, { value: f.badge, onChange: (v) => set({ badge: v }), placeholder: t('— Không nhãn —', '— No badge —'), options: badgeOptions() }))),
-          !id ? h(Switch, { checked: publishNow, onChange: setPublishNow, label: t('Đăng ngay sau khi tạo', 'Publish as soon as it is created'), hint: t('Bỏ qua hàng chờ: dùng cho sự kiện đội FeestFinder tự thu thập và đã kiểm chứng.', 'Skips the queue: for listings the team sourced and checked itself.') }) : null) : null)),
+          !id ? h(Switch, { checked: publishNow, onChange: setPublishNow, label: t('Đăng ngay sau khi tạo', 'Publish as soon as it is created') }) : null) : null)),
 
     // ---- the rail --------------------------------------------------------------------------
     h('aside', { className: 'op-form-rail' },
       h('div', { className: 'op-rail-sticky' },
         h(Card, { className: 'op-rail-card' },
           h('div', { className: 'op-quality' },
-            h(QualityRing, { score: q.score, size: 70 }),
+            h(QualityRing, { score: q.score, size: 56 }),
             h('div', null,
               h('div', { className: 'op-quality-label' }, t('Chất lượng tin', 'Listing quality')),
-              h('div', { className: cx('op-quality-band', `is-${q.band}`) }, q.band === 'strong' ? t('Mạnh — thường duyệt trong 1 giờ', 'Strong — usually cleared within an hour') : q.band === 'passable' ? t('Đủ duyệt — xếp hạng thấp hơn tin đầy đủ', 'Passable — ranks below complete listings') : t('Rủi ro — dễ bị trả lại', 'At risk — likely to be sent back')))),
-          h('ul', { className: 'op-checks' }, q.checks.map((c) => h('li', { key: c.key },
-            h('button', { type: 'button', className: cx('op-check-row', c.ok && 'is-ok'), onClick: () => jump(c.sec) },
-              h('span', { className: 'op-check-ic' }, c.ok ? Icon('check-circle', true) : Icon('circle')), h('span', { className: 'op-check-text' }, t(c.vi, c.en)), h('span', { className: 'op-check-pts ff-num' }, `+${c.pts}`)))))),
-        h(Card, { className: 'op-rail-card' },
+              h('div', { className: cx('op-quality-band', `is-${q.band}`) }, q.band === 'strong' ? t('Tốt', 'Strong') : q.band === 'passable' ? t('Đủ duyệt', 'Passable') : t('Dễ bị trả lại', 'Likely sent back')))),
           missing.length
             ? h(Fragment, null,
               h('div', { className: 'op-rail-title' }, Icon('warning-circle', true), t(`Còn thiếu ${missing.length} mục bắt buộc`, `${missing.length} required item${missing.length > 1 ? 's' : ''} missing`)),
               h('div', { className: 'op-missing' }, missing.map((k) => h('button', { key: k, type: 'button', className: 'op-chip', onClick: () => jump(REQUIRED[k].sec) }, t(REQUIRED[k].vi, REQUIRED[k].en)))))
             : h('div', { className: 'op-rail-title is-ok' }, Icon('check-circle', true), mode === 'team' ? t('Đủ thông tin để đăng', 'Ready to publish') : t('Đủ thông tin để gửi duyệt', 'Ready to submit')),
+          boosts.length ? h('ul', { className: 'op-checks op-boosts' }, boosts.map((c) => h('li', { key: c.key },
+            h('button', { type: 'button', className: 'op-check-row', onClick: () => jump(c.sec) },
+              h('span', { className: 'op-check-ic' }, Icon('circle')), h('span', { className: 'op-check-text' }, t(c.vi, c.en)), h('span', { className: 'op-check-pts ff-num' }, `+${c.pts}`))))) : null,
           h('div', { className: 'op-rail-actions' },
             !readOnly ? h(Button, { icon: 'floppy-disk', busy: busy === 'save', onClick: () => save(), disabled: !dirty && !!id }, id ? (dirty ? t('Lưu thay đổi', 'Save changes') : t('Đã lưu', 'Saved')) : mode === 'team' ? (publishNow ? t('Tạo và đăng', 'Create and publish') : t('Tạo bản nháp', 'Create draft')) : t('Lưu nháp', 'Save draft')) : null,
             primaryLabel && !readOnly ? h(Button, { variant: 'cta', icon: 'paper-plane-right', busy: busy === 'primary', onClick: runPrimary, disabled: missing.length > 0 }, primaryLabel) : null),
-          h('div', { className: 'op-savestate' }, readOnly ? t('Tin này không còn sửa được.', 'This listing can no longer be edited.') : dirty ? (autosave && !reviewedChanged ? t('Đang có thay đổi — tự lưu sau vài giây', 'Unsaved — saving in a moment') : t('Có thay đổi chưa lưu · Ctrl/⌘+S', 'Unsaved changes · Ctrl/⌘+S')) : savedAt ? t(`Đã lưu lúc ${savedAt.toTimeString().slice(0, 5)}`, `Saved at ${savedAt.toTimeString().slice(0, 5)}`) : id ? t('Mọi thay đổi đã được lưu', 'All changes saved') : t('Chưa lưu', 'Not saved yet'))),
+          h('div', { className: 'op-savestate' }, readOnly ? t('Không sửa được nữa', 'Can no longer be edited') : dirty ? (autosave && !reviewedChanged ? t('Đang tự lưu…', 'Saving…') : t('Chưa lưu · Ctrl/⌘+S', 'Unsaved · Ctrl/⌘+S')) : savedAt ? t(`Đã lưu lúc ${savedAt.toTimeString().slice(0, 5)}`, `Saved at ${savedAt.toTimeString().slice(0, 5)}`) : id ? t('Đã lưu', 'Saved') : t('Chưa lưu', 'Not saved yet'))),
         h('div', { className: 'op-rail-preview' },
-          h('div', { className: 'op-rail-title op-rail-title--quiet' }, Icon('eye'), t('Xem trước trên feed', 'Feed preview')),
+          h('div', { className: 'op-rail-title op-rail-title--quiet' }, Icon('eye'), t('Xem trước', 'Preview')),
           h(CardPreview, { f, organizer: orgName ?? organizerLabel })))));
 }

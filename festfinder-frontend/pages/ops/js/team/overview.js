@@ -1,9 +1,9 @@
 /*
  * Team mode, first screen: what needs a person now (queue and SLA, reports, appeals,
- * verification, venues without a pin), today's numbers and the latest activity.
+ * verification, venues without a pin, ad enquiries), today's numbers and the latest activity.
  */
-import { h, Fragment, t, tx, href, navigate, useFetch, duration, money, num, day, ago, store } from '../core.js';
-import { PageHeader, Button, Stat, Card, Icon, Pill, Thumb, Spinner, ErrorBox, Empty, DateBox, Meter } from '../ui.js';
+import { h, Fragment, t, tx, href, navigate, useFetch, duration, money, num, ago } from '../core.js';
+import { PageHeader, Button, Stat, Card, Icon, Thumb, Spinner, ErrorBox, Empty, DateBox, Meter } from '../ui.js';
 
 const ACTION_TEXT = {
   'listing.submitted': ['gửi duyệt', 'submitted'], 'listing.approved': ['đã duyệt', 'approved'], 'listing.approved_bulk': ['đã duyệt (lô)', 'approved (bulk)'],
@@ -21,20 +21,20 @@ export function Overview() {
   if (error) return h(ErrorBox, { error, onRetry: reload });
   const d = data;
   const q = d.queue;
+  const n = (count, vi, en) => t(`${count} ${vi}`, `${count} ${en}${count > 1 ? 's' : ''}`);
   const todo = [
-    q.breach ? { tone: 'danger', icon: 'alarm', title: t(`${q.breach} tin quá hạn duyệt ${d.queue.slaMinutes / 60} giờ`, `${q.breach} listing${q.breach > 1 ? 's' : ''} past the ${d.queue.slaMinutes / 60}-hour SLA`), text: t(`Cũ nhất đã chờ ${duration(q.oldestMinutes)}`, `The oldest has waited ${duration(q.oldestMinutes)}`), to: href('review') + '?sla=breach', cta: t('Duyệt ngay', 'Review now') } : null,
-    q.soon ? { tone: 'warn', icon: 'hourglass-medium', title: t(`${q.soon} tin sắp quá hạn`, `${q.soon} listing${q.soon > 1 ? 's' : ''} due soon`), text: t('Còn dưới 2 giờ trước hạn SLA', 'Under two hours left on the SLA'), to: href('review') + '?sla=soon', cta: t('Mở hàng chờ', 'Open queue') } : null,
-    d.reports ? { tone: 'danger', icon: 'flag', title: t(`${d.reports} tin bị người dùng báo cáo`, `${d.reports} listing${d.reports > 1 ? 's' : ''} reported by users`), text: t('Hoàn tiền, sai thông tin, giá, an toàn', 'Refunds, wrong details, price, safety'), to: href('reports'), cta: t('Xử lý', 'Handle') } : null,
-    d.appeals ? { tone: 'warn', icon: 'gavel', title: t(`${d.appeals} kháng nghị đang mở`, `${d.appeals} open appeal${d.appeals > 1 ? 's' : ''}`), text: t('Nhà tổ chức phản hồi quyết định trả lại', 'Organizers answering a send-back'), to: href('reports') + '?tab=appeals', cta: t('Xem', 'Review') } : null,
-    d.unresolvedVenues ? { tone: 'info', icon: 'map-pin', title: t(`${d.unresolvedVenues} tin chưa có ghim bản đồ`, `${d.unresolvedVenues} listing${d.unresolvedVenues > 1 ? 's' : ''} without a map pin`), text: t('Tạo hoặc gán địa điểm để tin hiện trên Map', 'Create or link a venue so they show on the map'), to: href('venues') + '?tab=unresolved', cta: t('Gán địa điểm', 'Link venues') } : null,
-    d.verification ? { tone: 'info', icon: 'seal-warning', title: t(`${d.verification} nhà tổ chức chờ xác minh`, `${d.verification} organizer${d.verification > 1 ? 's' : ''} awaiting verification`), text: t('Kiểm tra giấy tờ, mã số thuế và tài khoản ngân hàng', 'Check ID, tax code and bank account'), to: href('organizers') + '?state=pending', cta: t('Xác minh', 'Verify') } : null,
+    q.breach ? { tone: 'danger', icon: 'alarm', title: n(q.breach, `tin quá hạn ${q.slaMinutes / 60} giờ`, `listing past the ${q.slaMinutes / 60}-hour SLA`), text: t(`Cũ nhất chờ ${duration(q.oldestMinutes)}`, `Oldest waiting ${duration(q.oldestMinutes)}`), to: href('review') + '?view=breach' } : null,
+    q.soon ? { tone: 'warn', icon: 'hourglass-medium', title: n(q.soon, 'tin sắp quá hạn', 'listing due soon'), to: href('review') + '?view=soon' } : null,
+    d.reports ? { tone: 'danger', icon: 'flag', title: n(d.reports, 'tin bị báo cáo', 'reported listing'), to: href('reports') } : null,
+    d.appeals ? { tone: 'warn', icon: 'gavel', title: n(d.appeals, 'kháng nghị đang mở', 'open appeal'), to: href('reports') + '?tab=appeals' } : null,
+    d.unresolvedVenues ? { tone: 'info', icon: 'map-pin', title: n(d.unresolvedVenues, 'tin chưa có ghim bản đồ', 'listing without a map pin'), to: href('venues') + '?tab=unresolved' } : null,
+    d.verification ? { tone: 'info', icon: 'seal-warning', title: n(d.verification, 'nhà tổ chức chờ xác minh', 'organizer awaiting verification'), to: href('organizers') + '?state=pending' } : null,
+    d.adInquiries ? { tone: 'info', icon: 'megaphone', title: n(d.adInquiries, 'yêu cầu quảng cáo mới', 'new ad enquiry'), to: '/console/ads', external: true } : null,
   ].filter(Boolean);
 
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: t('Vận hành · hôm nay', 'Operations · today'),
-      title: t(`Chào ${store.session?.user?.name?.split(' ').slice(-1)[0] ?? 'bạn'}, đây là việc hôm nay`, `Hi ${store.session?.user?.name?.split(' ')[0] ?? 'there'}, here is today`),
-      sub: todo.length ? t(`${todo.length} nhóm việc cần người xử lý. Hạn duyệt tin là ${q.slaMinutes / 60} giờ làm việc.`, `${todo.length} groups of work need a person. Listings are due within ${q.slaMinutes / 60} working hours.`) : t('Không có việc tồn đọng. Hàng chờ sạch.', 'Nothing is waiting. The queue is clear.'),
+      title: t('Tổng quan', 'Overview'),
       actions: h(Fragment, null,
         h(Button, { icon: 'plus', onClick: go(href('events', 'new')) }, t('Tạo sự kiện', 'New listing')),
         h(Button, { variant: 'cta', icon: 'stack', onClick: go(href('review')) }, q.total ? t(`Duyệt ${q.total} tin`, `Review ${q.total}`) : t('Hàng chờ duyệt', 'Review queue'))),
@@ -43,17 +43,16 @@ export function Overview() {
       h(Stat, { label: t('Chờ duyệt', 'In queue'), icon: 'stack', value: q.total, tone: q.breach ? 'danger' : q.total ? 'warn' : 'ok', note: q.total ? t(`Cũ nhất ${duration(q.oldestMinutes)} · ${q.flagged} bị gắn cờ`, `Oldest ${duration(q.oldestMinutes)} · ${q.flagged} flagged`) : t('Hàng chờ sạch', 'Queue is clear'), onClick: go(href('review')) }),
       h(Stat, { label: t('Quyết định hôm nay', 'Decided today'), icon: 'check-circle', value: d.today.approved + d.today.rejected, note: t(`${d.today.approved} duyệt · ${d.today.rejected} trả lại`, `${d.today.approved} approved · ${d.today.rejected} sent back`) }),
       h(Stat, { label: t('Đang đăng', 'Live listings'), icon: 'broadcast', value: num(d.catalog.live), tone: 'ok', note: t(`${d.catalog.next7Days} diễn ra trong 7 ngày`, `${d.catalog.next7Days} in the next 7 days`), onClick: go(href('events') + '?status=live&when=upcoming') }),
-      h(Stat, { label: t('Đơn hàng hôm nay', 'Orders today'), icon: 'receipt', value: num(d.today.orders), note: money(d.today.gross), onClick: go(href('orders')) }),
-      h(Stat, { label: t('Tăng trưởng', 'Growth'), icon: 'chart-line-up', value: `+${num(d.growth.newUsers7Days)}`, note: t(`người dùng mới 7 ngày · ${d.growth.newOrganizers30Days} NTC mới 30 ngày`, `new users in 7 days · ${d.growth.newOrganizers30Days} new organizers in 30`), onClick: go(href('users') + '?sort=new') })),
+      h(Stat, { label: t('Đơn hàng hôm nay', 'Orders today'), icon: 'receipt', value: num(d.today.orders), note: money(d.today.gross), onClick: go(href('orders')) })),
     h('div', { className: 'op-grid op-grid--main' },
       h('div', null,
         h(Card, { title: t('Việc cần làm', 'To do'), icon: 'list-checks', pad: false },
           todo.length ? h('ul', { className: 'op-todo' }, todo.map((x, i) => h('li', { key: i },
-            h('a', { className: 'op-todo-row', href: x.to, onClick: go(x.to) },
+            h('a', { className: 'op-todo-row', href: x.to, ...(x.external ? { target: '_blank', rel: 'noopener' } : { onClick: go(x.to) }) },
               h('span', { className: `op-todo-ic is-${x.tone}` }, Icon(x.icon, true)),
-              h('span', { className: 'op-todo-text' }, h('strong', null, x.title), h('small', null, x.text)),
-              h('span', { className: 'op-todo-cta' }, x.cta, Icon('caret-right'))))))
-            : h(Empty, { icon: 'check-circle', title: t('Không có việc tồn đọng', 'All caught up'), body: t('Tin chờ duyệt, báo cáo và kháng nghị mới sẽ hiện ở đây.', 'New listings, reports and appeals show up here.') })),
+              h('span', { className: 'op-todo-text' }, h('strong', null, x.title), x.text ? h('small', null, x.text) : null),
+              h('span', { className: 'op-todo-cta' }, Icon(x.external ? 'arrow-square-out' : 'caret-right'))))))
+            : h(Empty, { icon: 'check-circle', title: t('Không có việc tồn đọng', 'All caught up') })),
         h(Card, { title: t('Sắp diễn ra', 'Coming up'), icon: 'calendar-dots', pad: false, actions: h('a', { className: 'op-link', href: href('events') + '?when=week&status=live', onClick: go(href('events') + '?when=week&status=live') }, t('7 ngày tới', 'Next 7 days'), Icon('caret-right')) },
           d.upcoming.length ? h('ul', { className: 'op-list' }, d.upcoming.map((e) => h('li', { key: e.id },
             h('a', { className: 'op-list-row', href: href('events', e.id), onClick: go(href('events', e.id)) },
@@ -67,8 +66,5 @@ export function Overview() {
             h('span', { className: `op-feed-dot is-${a.actorType}` }),
             h('div', null,
               h('div', { className: 'op-feed-line' }, h('strong', null, a.actorType === 'system' ? t('Hệ thống', 'System') : a.actor), ' · ', a.label ? tx(a.label) : actionText(a.action), ' · ', h('span', { className: 'op-feed-target' }, a.target.label)),
-              h('div', { className: 'op-feed-time' }, ago(a.at))))))),
-        d.adInquiries ? h(Card, { title: t('Quảng cáo', 'Advertising'), icon: 'megaphone' },
-          h('p', { className: 'op-card-text' }, t(`${d.adInquiries} yêu cầu quảng cáo mới đang chờ trong console kiểm duyệt.`, `${d.adInquiries} new ad enquiries are waiting in the moderation console.`)),
-          h(Button, { size: 'sm', icon: 'arrow-square-out', href: '/console/ads', target: '_blank' }, t('Mở Quảng cáo & đối tác', 'Open Ads & partners'))) : null)));
+              h('div', { className: 'op-feed-time' }, ago(a.at))))))))));
 }

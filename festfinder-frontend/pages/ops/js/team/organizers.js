@@ -31,7 +31,7 @@ function Verification({ o, reload }) {
   const standing = async (body) => {
     let note;
     if (body.suspended === true) {
-      const out = await confirm({ title: t(`Tạm dừng ${o.name}?`, `Suspend ${o.name}?`), body: t('Nhà tổ chức không gửi được tin mới cho tới khi mở lại. Tin đang đăng giữ nguyên.', 'They cannot submit new listings until reinstated. Live listings stay.'), confirm: t('Tạm dừng', 'Suspend'), tone: 'danger', withNote: { label: t('Ghi chú nội bộ', 'Internal note'), placeholder: t('Lý do tạm dừng…', 'Why…') } });
+      const out = await confirm({ title: t(`Tạm dừng ${o.name}?`, `Suspend ${o.name}?`), body: t('Không gửi được tin mới. Tin đang đăng giữ nguyên.', 'No new submissions. Live listings stay.'), confirm: t('Tạm dừng', 'Suspend'), tone: 'danger', withNote: { label: t('Ghi chú nội bộ', 'Internal note'), placeholder: t('Lý do tạm dừng…', 'Why…') } });
       if (!out) return;
       note = out.note;
     }
@@ -58,13 +58,13 @@ function Verification({ o, reload }) {
         h(Segmented, { value: o.state, onChange: (v) => v !== o.state && save({ state: v }, 'state'), options: [
           { value: 'pending', label: t('Chờ xác minh', 'Pending'), icon: 'hourglass-medium' }, { value: 'verified', label: t('Đã xác minh', 'Verified'), icon: 'seal-check' }, { value: 'flagged', label: t('Gắn cờ', 'Flagged'), icon: 'flag' }] }),
         busy === 'state' ? h('span', { className: 'op-spin' }) : null),
-      !ready && o.state !== 'verified' ? h('p', { className: 'op-hint' }, t('Cần có giấy tờ tuỳ thân trước khi xác minh.', 'An ID document is needed before verifying.')) : h('p', { className: 'op-hint' }, t('Nhà tổ chức đã xác minh có huy hiệu trên mọi thẻ và được ưu tiên trong tìm kiếm.', 'Verified organizers carry a badge on every card and rank higher in search.'))),
+      !ready && o.state !== 'verified' ? h('p', { className: 'op-hint' }, t('Cần giấy tờ tuỳ thân trước khi xác minh.', 'An ID document is needed before verifying.')) : null),
     h('div', { className: 'op-section' },
       h('h3', { className: 'op-section-title' }, Icon('warning'), t('Mức độ tuân thủ', 'Standing')),
       h('div', { className: 'op-verify-row' },
         h('span', { className: 'op-label' }, t('Số lần cảnh cáo', 'Strikes')),
         h(Segmented, { size: 'sm', value: strikes, onChange: (v) => { setStrikes(v); standing({ strikes: Number(v) }); }, options: ['0', '1', '2', '3'].map((n) => ({ value: n, label: n })) })),
-      h('div', { style: { marginTop: 12 } }, h(Switch, { checked: o.suspended, disabled: busy === 'standing', onChange: (v) => standing({ suspended: v }), label: o.suspended ? t('Đang tạm dừng', 'Suspended') : t('Tạm dừng tài khoản', 'Suspend the account'), hint: o.suspended ? t(`Từ ${stamp(o.suspendedAt, true)} · không gửi được tin mới`, `Since ${stamp(o.suspendedAt, true)} · cannot submit`) : t('Cảnh cáo lần 3 sẽ tự tạm dừng.', 'A third strike suspends automatically.') }))));
+      h('div', { style: { marginTop: 12 } }, h(Switch, { checked: o.suspended, disabled: busy === 'standing', onChange: (v) => standing({ suspended: v }), label: o.suspended ? t('Đang tạm dừng', 'Suspended') : t('Tạm dừng tài khoản', 'Suspend the account'), hint: o.suspended ? t(`Từ ${stamp(o.suspendedAt, true)}`, `Since ${stamp(o.suspendedAt, true)}`) : null }))));
 }
 
 function ProfileForm({ o, reload }) {
@@ -122,7 +122,7 @@ function Members({ o, reload }) {
       h(Input, { value: f.name, onChange: (v) => setF((x) => ({ ...x, name: v })), placeholder: t('Họ tên (tuỳ chọn)', 'Name (optional)') }),
       h(Select, { value: f.role, onChange: (v) => setF((x) => ({ ...x, role: v })), options: [{ value: 'manager', label: t('Quản lý', 'Manager') }, { value: 'owner', label: t('Chủ tài khoản', 'Owner') }] }),
       h(Button, { icon: 'user-plus', busy, disabled: !/@/.test(f.email), onClick: add }, t('Thêm', 'Add'))),
-    h('p', { className: 'op-hint' }, t('Email chưa có tài khoản sẽ được tạo tài khoản mới; người đó đặt mật khẩu bằng "Quên mật khẩu" ở trang đăng nhập /ops.', 'An email without an account gets a new one; they set a password with "Forgot password" on the /ops sign-in.')));
+    h('p', { className: 'op-hint' }, t('Người mới đặt mật khẩu qua "Quên mật khẩu" ở /ops.', 'New people set a password via "Forgot password" on /ops.')));
 }
 
 function OrganizerDrawer({ id, onClose }) {
@@ -181,11 +181,10 @@ function Onboard({ open, onClose, onDone }) {
     open, onClose, width: 620, title: t('Thêm nhà tổ chức', 'Add an organizer'),
     footer: h(Fragment, null, h(Button, { onClick: onClose }, t('Huỷ', 'Cancel')), h(Button, { variant: 'cta', icon: 'check', busy, disabled: !ok, onClick: save }, t('Tạo nhà tổ chức', 'Create organizer'))),
   },
-  h('p', { className: 'op-confirm-body' }, t('Tạo tài khoản cho đối tác mới. Chủ tài khoản đăng nhập /ops bằng email này và đặt mật khẩu qua "Quên mật khẩu / lần đầu đăng nhập".', 'Opens an account for a new partner. The owner signs in to /ops with this email and sets a password via "Forgot password / first sign-in".')),
   h('div', { className: 'op-form-grid' },
     h(Field, { label: t('Tên thương hiệu', 'Brand name'), required: true }, h(Input, { value: f.name, onChange: set('name'), autoFocus: true, placeholder: t('vd: Neon District', 'e.g. Neon District') })),
     h(Field, { label: t('Loại nhà tổ chức', 'Type'), required: true }, h(Select, { value: f.type, onChange: set('type'), options: orgTypeOptions() })),
-    h(Field, { label: t('Email chủ tài khoản', 'Owner email'), required: true, hint: t('Dùng để đăng nhập.', 'Used to sign in.') }, h(Input, { type: 'email', value: f.ownerEmail, onChange: set('ownerEmail'), icon: 'envelope-simple', placeholder: 'booking@brand.vn' })),
+    h(Field, { label: t('Email chủ tài khoản', 'Owner email'), required: true, hint: t('Đặt mật khẩu qua "Quên mật khẩu" ở /ops.', 'Sets a password via "Forgot password" on /ops.') }, h(Input, { type: 'email', value: f.ownerEmail, onChange: set('ownerEmail'), icon: 'envelope-simple', placeholder: 'booking@brand.vn' })),
     h(Field, { label: t('Họ tên chủ tài khoản', 'Owner name'), optional: true }, h(Input, { value: f.ownerName, onChange: set('ownerName') })),
     h(Field, { label: 'Hotline', optional: true }, h(Input, { value: f.hotline, onChange: set('hotline'), icon: 'phone', inputMode: 'tel' })),
     h(Field, { label: 'Website', optional: true }, h(Input, { value: f.website, onChange: set('website'), icon: 'globe', placeholder: 'https://' })),
@@ -221,17 +220,15 @@ export function Organizers({ rest }) {
   ];
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: t('Đối tác', 'Partners'), title: t('Nhà tổ chức', 'Organizers'),
-      sub: t('Xác minh giấy tờ, quản lý hồ sơ, thành viên và mức độ tuân thủ của từng nhà tổ chức.', 'Verify documents and manage each organizer’s profile, team and standing.'),
+      title: t('Nhà tổ chức', 'Organizers'),
       actions: h(Button, { variant: 'cta', icon: 'user-plus', onClick: () => setOnboard(true) }, t('Thêm nhà tổ chức', 'Add organizer')),
     }),
     h('div', { className: 'op-stats' },
       h(Stat, { label: t('Chờ xác minh', 'Pending'), icon: 'seal-warning', value: count('pending'), tone: count('pending') ? 'warn' : null, active: state === 'pending', onClick: () => setState(state === 'pending' ? '' : 'pending') }),
       h(Stat, { label: t('Đã xác minh', 'Verified'), icon: 'seal-check', value: count('verified'), tone: 'ok', active: state === 'verified', onClick: () => setState(state === 'verified' ? '' : 'verified') }),
       h(Stat, { label: t('Gắn cờ', 'Flagged'), icon: 'flag', value: count('flagged'), tone: count('flagged') ? 'danger' : null, active: state === 'flagged', onClick: () => setState(state === 'flagged' ? '' : 'flagged') }),
-      h(Stat, { label: t('Đang tạm dừng', 'Suspended'), icon: 'prohibit', value: items.filter((o) => o.suspended).length, onClick: () => setStanding(st.includes('suspended') ? '' : 'suspended') })),
+      h(Stat, { label: t('Đang tạm dừng', 'Suspended'), icon: 'prohibit', value: items.filter((o) => o.suspended).length, active: st.includes('suspended'), onClick: () => setStanding(st.includes('suspended') ? '' : 'suspended') })),
     h(FilterBar, { search: q, onSearch: setQ, placeholder: t('Tên, pháp nhân, email, MST…', 'Name, legal name, email, tax code…'), active: [state, type, standing].filter(Boolean).length, onReset: () => setQuery({ state: '', type: '', standing: '' }) },
-      h(FilterSelect, { label: t('Xác minh', 'Verification'), icon: 'seal-check', value: state, onChange: setState, allLabel: t('Mọi trạng thái', 'Any'), options: Object.entries(STATE).map(([k, v]) => ({ value: k, label: t(v[2], v[3]), count: count(k) })) }),
       h(FilterSelect, { label: t('Loại', 'Type'), icon: 'storefront', value: type, onChange: setType, allLabel: t('Mọi loại', 'Any type'), options: orgTypeOptions().map((x) => ({ ...x, count: items.filter((o) => o.type === x.value).length })) }),
       h(FilterSelect, { label: t('Tình trạng', 'Standing'), icon: 'warning', multi: true, value: st, onChange: (v) => setStanding(v.join(',')), options: [
         { value: 'review', label: t('Có tin đang chờ duyệt', 'Has listings in review') }, { value: 'strikes', label: t('Có cảnh cáo', 'Has strikes') }, { value: 'suspended', label: t('Đang tạm dừng', 'Suspended') }, { value: 'nobank', label: t('Chưa có tài khoản NH', 'No payout account') }] })),

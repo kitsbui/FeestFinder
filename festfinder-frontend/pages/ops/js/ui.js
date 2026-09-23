@@ -560,7 +560,7 @@ export function DataTable({ columns, rows, rowKey = (r) => r.id, onRowClick, sel
         selectable ? h('td', { className: 'op-col-check' }, h(Checkbox, { checked: selected.includes(key), onChange: (v) => onSelect(v ? [...selected, key] : selected.filter((k) => k !== key)) })) : null,
         columns.map((c) => h('td', { key: c.key, style: { textAlign: c.align }, className: c.className }, c.render ? c.render(r, i) : r[c.key] ?? '—')));
       }))),
-    !loading && !rows.length ? empty ?? h(Empty, { title: t('Không có dữ liệu phù hợp', 'Nothing matches'), body: t('Thử bỏ bớt bộ lọc.', 'Try removing a filter.') }) : null,
+    !loading && !rows.length ? empty ?? h(Empty, { title: t('Không có dữ liệu phù hợp', 'Nothing matches') }) : null,
     loading && !rows.length ? h(Skeleton, { rows: 8 }) : null);
 }
 

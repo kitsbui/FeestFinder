@@ -36,7 +36,7 @@ function Shelf({ shelf, onChange }) {
     h('div', { className: 'op-shelf-window' },
       h(Field, { label: t('Hiện từ ngày', 'Show from') }, h(DateInput, { value: shelf.startsOn, onChange: (v) => save({ startsOn: v }, 'win') })),
       h(Field, { label: t('Đến hết ngày', 'Until') }, h(DateInput, { value: shelf.endsOn, min: shelf.startsOn ?? undefined, onChange: (v) => save({ endsOn: v }, 'win') })),
-      h('div', { className: 'op-quick' }, h('span', { className: 'op-quick-label' }, t('Nhanh:', 'Quick:')),
+      h('div', { className: 'op-quick' },
         h('button', { type: 'button', className: 'op-chip', onClick: () => { const d = vnDate(); save({ startsOn: d, endsOn: new Date(Date.parse(d) + 6 * 864e5).toISOString().slice(0, 10) }, 'win'); } }, t('7 ngày từ hôm nay', '7 days from today')),
         h('button', { type: 'button', className: 'op-chip', onClick: () => save({ startsOn: null, endsOn: null }, 'win') }, t('Không giới hạn', 'No window')))),
     h('div', { className: 'op-shelf-items' },
@@ -64,8 +64,7 @@ export function Featured() {
   if (error) return h(ErrorBox, { error, onRetry: reload });
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: t('Nền tảng · trang Khám phá', 'Platform · Explore'), title: t('Mục nổi bật', 'Featured shelves'),
-      sub: t('Các dãy tin ngay dưới thanh tìm kiếm trên app và web. Chỉ tin đang đăng mới vào được dãy.', 'The rows right under the search bar on app and web. Only live listings can go on a shelf.'),
+      title: t('Mục nổi bật', 'Featured shelves'),
       actions: h(Button, { variant: 'cta', icon: 'plus', onClick: () => setCreating(true) }, t('Thêm dãy', 'New shelf')),
     }),
     data.items.length ? h('div', { className: 'op-shelves' }, data.items.map((s) => h(Shelf, { key: s.id, shelf: s, onChange: (out) => setData((d) => ({ items: d.items.map((x) => (x.id === out.id ? out : x)) })) }))) : h(Empty, { icon: 'star', title: t('Chưa có dãy nổi bật', 'No shelves yet') }),
@@ -74,6 +73,5 @@ export function Featured() {
       footer: h(Fragment, null, h(Button, { onClick: () => setCreating(false) }, t('Huỷ', 'Cancel')), h(Button, { variant: 'cta', disabled: !name.vi.trim(), onClick: create }, t('Tạo', 'Create'))),
     },
     h(Field, { label: t('Tên (tiếng Việt)', 'Name (Vietnamese)'), required: true }, h(Input, { value: name.vi, onChange: (v) => setName((n) => ({ ...n, vi: v })), autoFocus: true, placeholder: t('vd: Lễ hội cuối tuần', 'e.g. Weekend festivals') })),
-    h(Field, { label: t('Tên (tiếng Anh)', 'Name (English)'), optional: true }, h(Input, { value: name.en, onChange: (v) => setName((n) => ({ ...n, en: v })) })),
-    h('p', { className: 'op-hint' }, t('Dãy mới ở trạng thái tắt — thêm tin rồi bật lên.', 'New shelves start switched off — add listings, then switch on.'))));
+    h(Field, { label: t('Tên (tiếng Anh)', 'Name (English)'), optional: true }, h(Input, { value: name.en, onChange: (v) => setName((n) => ({ ...n, en: v })) }))));
 }

@@ -30,9 +30,8 @@ export function Audit() {
   const v = verify.data;
   return h(Fragment, null,
     h(PageHeader, {
-      eyebrow: h(Fragment, null, t('Nền tảng · không thể xoá', 'Platform · append-only'), v ? h(Pill, { tone: v.ok ? 'ok' : 'danger', icon: v.ok ? 'shield-check' : 'shield-warning', className: 'op-ml' }, v.ok ? t(`Chuỗi hash hợp lệ · ${num(v.entries)} dòng`, `Hash chain intact · ${num(v.entries)} entries`) : t(`Chuỗi hỏng tại #${v.brokenAt}`, `Chain broken at #${v.brokenAt}`)) : null),
+      eyebrow: v ? h(Pill, { tone: v.ok ? 'ok' : 'danger', icon: v.ok ? 'shield-check' : 'shield-warning' }, v.ok ? t(`Chuỗi hash hợp lệ · ${num(v.entries)} dòng`, `Hash chain intact · ${num(v.entries)} entries`) : t(`Chuỗi hỏng tại #${v.brokenAt}`, `Chain broken at #${v.brokenAt}`)) : null,
       title: t('Nhật ký hoạt động', 'Audit log'),
-      sub: t('Mọi quyết định kiểm duyệt và thay đổi đều ghi người thực hiện và giá trị trước/sau.', 'Every moderation decision and change, with who made it and the before/after.'),
       actions: h(Button, { icon: 'download-simple', href: '/admin/audit.csv' + qs({ actor: actor || 'all', days: 90 }) }, t('Tải CSV 90 ngày', 'CSV · 90 days')),
     }),
     h(FilterBar, { search: q, onSearch: setQ, placeholder: t('Tìm người thực hiện hoặc đối tượng…', 'Search who or what…'), active: [actor, area].filter(Boolean).length, onReset: () => setQuery({ actor: '', area: '' }) },

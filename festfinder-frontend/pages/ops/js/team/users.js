@@ -13,8 +13,8 @@ function UserDrawer({ id, onClose }) {
   const { data: u, error, loading, reload } = useFetch(`/admin/users/${id}`, [id]);
   const setRole = async (role) => {
     const ok = await confirm(role === 'admin'
-      ? { title: t('Cấp quyền admin?', 'Make this account an admin?'), body: t('Tài khoản này sẽ vào được chế độ Vận hành và console kiểm duyệt. Mọi thao tác đều được ghi nhật ký.', 'They get team mode and the moderation console. Everything they do is logged.'), confirm: t('Cấp quyền', 'Grant access'), tone: 'danger' }
-      : { title: t('Gỡ quyền admin?', 'Remove admin access?'), body: t('Tài khoản trở lại quyền người dùng thường.', 'The account goes back to a regular user.'), confirm: t('Gỡ quyền', 'Remove access'), tone: 'danger' });
+      ? { title: t('Cấp quyền admin?', 'Make this account an admin?'), body: t('Vào được chế độ Vận hành và console kiểm duyệt.', 'They get team mode and the moderation console.'), confirm: t('Cấp quyền', 'Grant access'), tone: 'danger' }
+      : { title: t('Gỡ quyền admin?', 'Remove admin access?'), body: null, confirm: t('Gỡ quyền', 'Remove access'), tone: 'danger' });
     if (!ok) return;
     try { const out = await patch(`/admin/users/${id}`, { role }); toast(tx(out.message)); reload(true); } catch (e) { toast(errorText(e), 'error'); }
   };
@@ -76,7 +76,7 @@ export function Users({ rest }) {
     { key: 'joined', label: t('Tham gia', 'Joined'), width: 100, render: (u) => h('span', { className: 'op-cell-muted op-nowrap' }, monthYear(u.createdAt)) },
   ];
   return h(Fragment, null,
-    h(PageHeader, { eyebrow: t('Nền tảng · tài khoản', 'Platform · accounts'), title: t('Người dùng', 'Accounts'), sub: data ? t(`${num(data.total)} tài khoản khớp bộ lọc. Admin chỉ thấy hoạt động trên nền tảng — không xem được tin nhắn riêng hay vị trí.`, `${num(data.total)} accounts match. Admins see on-platform activity only — never private messages or location.`) : null }),
+    h(PageHeader, { title: t('Người dùng', 'Accounts') }),
     h(FilterBar, {
       search: q, onSearch: (v) => reset({ q: v }), placeholder: t('Tên, email, số điện thoại…', 'Name, email, phone…'), active: [kind, method, city, active].filter(Boolean).length,
       onReset: () => reset({ kind: '', method: '', city: '', active: '' }),
