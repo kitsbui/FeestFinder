@@ -22,7 +22,7 @@ const db = await openDb(config);
 await migrate(db, log);
 if (command === 'seed' || command === 'reset') {
   const clock = config.fixedNow ? fixedClock(config.fixedNow) : systemClock;
-  const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: process.env.SEED_VOLUME === 'small' ? 'small' : 'full' })) as Record<string, unknown>;
+  const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: process.env.SEED_VOLUME === 'small' ? 'small' : 'full', password: config.demoPassword ?? undefined })) as Record<string, unknown>;
   log(`seeded: ${JSON.stringify(summary)}`);
 }
 await db.close();

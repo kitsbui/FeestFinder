@@ -2,6 +2,7 @@ import type { Config } from './config.ts';
 import type { Ctx } from './context.ts';
 import { openDb } from './db/index.ts';
 import { migrate } from './db/migrate.ts';
+import { seed } from './db/seed.ts';
 import { fixedClock, systemClock } from './lib/time.ts';
 import { ConsoleTransport, RoutingTransport, SmtpTransport, WebhookTransport, WebPushTransport } from './services/messaging.ts';
 import { NoopReporter, SentryReporter } from './services/errors.ts';
@@ -15,6 +16,21 @@ export async function createContext(config: Config): Promise<Ctx> {
   const log = (msg: string) => console.log(`[festfinder] ${msg}`);
   const db = await openDb(config);
   await migrate(db, log);
+  const clock = config.fixedNow ? fixedClock(config.fixedNow) : systemClock;
+  // A fresh demo deployment fills itself with the sample data. The seed skips a database
+  // that has users and runs in one transaction, so a second instance starting at the same
+  // time rolls back instead of adding a copy.
+  if (config.seedIfEmpty) {
+    if (config.env === 'production' && !config.demoPassword) log('SEED_IF_EMPTY is set without DEMO_PASSWORD; not seeding accounts with the published passwords');
+    else {
+      try {
+        const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: 'full', password: config.demoPassword ?? undefined, log })) as Record<string, unknown>;
+        log(`seed: ${JSON.stringify(summary)}`);
+      } catch (e) {
+        log(`seed did not run: ${(e as Error).message}`);
+      }
+    }
+  }
   const hasAnthropic = !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_PROFILE);
   const oauthFor = (provider: 'fb' | 'ig') => {
     const id = process.env[provider === 'fb' ? 'FACEBOOK_APP_ID' : 'INSTAGRAM_APP_ID'];
@@ -46,7 +62,7 @@ export async function createContext(config: Config): Promise<Ctx> {
   return {
     config,
     db,
-    clock: config.fixedNow ? fixedClock(config.fixedNow) : systemClock,
+    clock,
     transport,
     storage,
     errors,

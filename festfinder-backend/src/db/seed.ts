@@ -217,7 +217,8 @@ const FAQ: [Localized, Localized][] = [
       'Cổng vào nằm trên đường Nguyễn Thiện Thành, Thủ Đức, cách Quận 1 khoảng 4 km. Bãi xe gần cổng thường đầy trước 18:00, nên đến sớm hoặc đi xe công nghệ sẽ chắc chắn hơn trong các đêm lễ hội.')],
 ];
 
-export interface SeedOptions { volume: 'full' | 'small'; log?: (m: string) => void }
+/** `password` replaces the three demo accounts' published passwords, for a public deployment. */
+export interface SeedOptions { volume: 'full' | 'small'; password?: string; log?: (m: string) => void }
 
 export async function seed(db: Db, now: Date, opts: SeedOptions) {
   const existing = await one<any>(db, 'select count(*)::int as n from users');
@@ -230,7 +231,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
   const n = (x: number) => Math.max(1, Math.round(x * scale));
   const hours = (h: number) => new Date(now.getTime() - h * 3600_000);
 
-  const [adminHash, demoHash, orgHash] = await Promise.all([hashPassword('festfinder-admin'), hashPassword('festfinder123'), hashPassword('ravolution2026')]);
+  const pw = (published: string) => opts.password ?? published;
+  const [adminHash, demoHash, orgHash] = await Promise.all([hashPassword(pw('festfinder-admin')), hashPassword(pw('festfinder123')), hashPassword(pw('ravolution2026'))]);
 
   return db.tx(async (q) => {
     const ids = { org: {} as Record<string, string>, venue: {} as Record<string, string>, event: {} as Record<string, string>, friend: {} as Record<string, string> };

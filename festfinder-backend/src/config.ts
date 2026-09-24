@@ -52,6 +52,10 @@ export interface Config {
   jobsEnabled: boolean;
   /** Fixed "now" for demos and tests, e.g. 2026-09-14T10:00:00+07:00. */
   fixedNow: string | null;
+  /** Fill an empty database with the sample data at startup (a demo deployment). */
+  seedIfEmpty: boolean;
+  /** Password for the seeded demo accounts; required to seed in production. */
+  demoPassword: string | null;
   /** Return OTP codes in API responses. Never enable in production. */
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
@@ -102,6 +106,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     aiGuideEnabled: bool('AI_GUIDE_ENABLED', true),
     jobsEnabled: bool('JOBS_ENABLED', env !== 'test'),
     fixedNow: process.env.FF_NOW || null,
+    seedIfEmpty: bool('SEED_IF_EMPTY', false),
+    demoPassword: process.env.DEMO_PASSWORD || null,
     exposeDevCodes: !prod && bool('EXPOSE_DEV_CODES', true),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
