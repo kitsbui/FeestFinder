@@ -32,7 +32,11 @@ export interface Config {
   env: 'development' | 'test' | 'production';
   port: number;
   host: string;
-  /** postgres://… for a real server; unset uses embedded PGlite at `pgliteDir`. */
+  /**
+   * postgres://… for a real server; unset uses embedded PGlite at `pgliteDir`. Read from
+   * DATABASE_URL, or from the variable DATABASE_URL_FROM names, for an integration that
+   * prefixes its own (Vercel's Neon connection sets PROD_FEESTFINDER_DATABASE_URL).
+   */
   databaseUrl: string | null;
   /** Directory for embedded PGlite data. `memory://` keeps it in RAM. */
   pgliteDir: string;
@@ -88,7 +92,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     env,
     port: int('PORT', 4000),
     host: str('HOST', '0.0.0.0'),
-    databaseUrl: process.env.DATABASE_URL || null,
+    databaseUrl: process.env.DATABASE_URL || (process.env.DATABASE_URL_FROM ? process.env[process.env.DATABASE_URL_FROM] : '') || null,
     pgliteDir: str('PGLITE_DIR', './.data/pglite'),
     publicBaseUrl: str('PUBLIC_BASE_URL', 'http://localhost:4000'),
     corsOrigins: str('CORS_ORIGINS', 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
