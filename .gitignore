@@ -26,3 +26,7 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Vercel CLI: project link and pulled environment
+.vercel
+.env*.local

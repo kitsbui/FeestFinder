@@ -1,4 +1,5 @@
 {
+  "//": "typeRoots is spelled out because Vercel compiles through a temporary tsconfig in /tmp that extends this one, and would look for @types there.",
   "compilerOptions": {
     "target": "es2024",
     "lib": [
@@ -8,6 +9,9 @@
     "moduleResolution": "nodenext",
     "types": [
       "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
     ],
     "noEmit": true,
     "allowImportingTsExtensions": true,
@@ -19,6 +23,7 @@
     "skipLibCheck": true
   },
   "include": [
+    "index.ts",
     "src",
     "test"
   ]

@@ -1,8 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Db } from './index.ts';
 
-const MIGRATIONS_DIR = join(import.meta.dirname, 'migrations');
+// A URL literal, so Vercel's file tracing ships the .sql files with the function.
+const MIGRATIONS_DIR = fileURLToPath(new URL('./migrations', import.meta.url));
 
 /** Applies every migrations/*.sql not yet recorded, in filename order, each in its own transaction. */
 export async function migrate(db: Db, log: (msg: string) => void = () => {}): Promise<string[]> {

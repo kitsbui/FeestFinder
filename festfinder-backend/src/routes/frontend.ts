@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
@@ -67,7 +68,9 @@ const COMPRESS = new Set(['.html', '.js', '.css', '.json', '.svg', '.md']);
 type Cached = { etag: string; body: Buffer; gzip?: Buffer; type: string };
 
 export default async function frontendRoutes(app: FastifyInstance) {
-  const dir = resolve(process.env.FRONTEND_DIR ?? '../festfinder-frontend');
+  // This repo's festfinder-frontend, wherever the process was started from. Written as a
+  // URL literal so Vercel's file tracing ships the folder with the function.
+  const dir = process.env.FRONTEND_DIR ? resolve(process.env.FRONTEND_DIR) : fileURLToPath(new URL('../../../festfinder-frontend', import.meta.url));
   if (!existsSync(join(dir, 'pages/web/shell.html'))) {
     app.ctx.log(`frontend not found at ${dir}; serving the API only`);
     return;
