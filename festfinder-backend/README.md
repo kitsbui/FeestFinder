@@ -191,7 +191,7 @@ Every outside service is switched on by its environment variables and logged ins
 | Clock | Real time | `FF_NOW`, the demo weekend |
 | Uploads | Supabase Storage over S3, public bucket `uploads` (made by migration `007`) | `/tmp` |
 | Jobs | pg_cron calls `POST /internal/jobs` every minute (`CRON_SECRET`) | Off |
-| First admin | `ADMIN_EMAIL`, password set with "Forgot password" | The demo accounts |
+| Admins | `ADMIN_EMAIL` (comma-separated), passwords set with "Forgot password" | The demo accounts |
 
 Migration `007` also closes Supabase's Data API over our tables: it serves the public schema to anyone with the project's anon key, and this API never uses it, so the `anon` and `authenticated` roles lose their grants and every table gets row level security with no policies.
 

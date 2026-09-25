@@ -60,8 +60,8 @@ export interface Config {
   seedIfEmpty: boolean;
   /** Password for the seeded demo accounts; required to seed a public production deployment. */
   demoPassword: string | null;
-  /** First admin account, made at startup while no admin exists. It has no password yet. */
-  adminEmail: string | null;
+  /** Admin accounts made at startup for listed emails that have no account yet; no password. */
+  adminEmails: string[];
   /**
    * Bearer secret for POST /internal/jobs, the serverless stand-in for the job timers. On
    * Supabase the API schedules pg_cron to call it every minute.
@@ -121,7 +121,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     fixedNow: process.env.FF_NOW || null,
     seedIfEmpty: bool('SEED_IF_EMPTY', false),
     demoPassword: process.env.DEMO_PASSWORD || null,
-    adminEmail: process.env.ADMIN_EMAIL?.trim().toLowerCase() || null,
+    adminEmails: (process.env.ADMIN_EMAIL ?? '').split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => e.includes('@')),
     // In production, a key of its own derived from the ticket secret when none is set, so
     // the scheduler works without one more secret to manage. Neither key reveals the other.
     cronSecret: process.env.CRON_SECRET || (prod ? createHmac('sha256', ticketSigningSecret).update('feestfinder:internal-jobs').digest('base64url') : null),

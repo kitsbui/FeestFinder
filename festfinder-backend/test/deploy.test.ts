@@ -27,17 +27,17 @@ describe('deployment', () => {
     } finally { await env.close(); }
   });
 
-  describe('first admin', () => {
+  describe('admin accounts', () => {
     let db: Db;
     before(async () => { db = await openDb({ databaseUrl: null, pgliteDir: 'memory://' }); await migrate(db); });
     after(async () => { await db.close(); });
     const admins = async () => (await db.query<{ email: string }>(`select email from users where role = 'admin' order by email`)).rows.map((r) => r.email);
 
-    it('is created once, without a password, while no admin exists', async () => {
+    it('is created once per listed email, without a password', async () => {
       await ensureAdmin(db, 'owner@feestfinder.vn', () => {});
       await ensureAdmin(db, 'owner@feestfinder.vn', () => {});
       await ensureAdmin(db, 'second@feestfinder.vn', () => {});
-      assert.deepEqual(await admins(), ['owner@feestfinder.vn']);
+      assert.deepEqual(await admins(), ['owner@feestfinder.vn', 'second@feestfinder.vn']);
       const row = (await db.query<{ password_hash: string | null }>(`select password_hash from users where email = 'owner@feestfinder.vn'`)).rows[0];
       assert.equal(row.password_hash, null);
     });

@@ -34,7 +34,7 @@ export async function createContext(config: Config): Promise<Ctx> {
       }
     }
   }
-  if (config.adminEmail) await ensureAdmin(db, config.adminEmail, log);
+  for (const email of config.adminEmails) await ensureAdmin(db, email, log);
   if (config.cronSecret && db.kind === 'postgres') {
     await scheduleSupabaseCron(db, `${config.publicBaseUrl}/internal/jobs`, config.cronSecret, log)
       .catch((e) => log(`pg_cron not scheduled: ${(e as Error).message}`));
@@ -82,20 +82,17 @@ export async function createContext(config: Config): Promise<Ctx> {
 }
 
 /**
- * The first admin of a fresh database: an account with no password, which its owner
- * claims with "Forgot password" on /ops. Nothing happens once any admin exists, and an
- * existing account with that email is never promoted, so the variable cannot hand out access.
+ * An admin account for an email that has no account yet. It has no password: its owner
+ * claims it with "Forgot password" on /ops, which only the mailbox's owner can do. An
+ * existing account is never promoted, so signing up first with a listed email gets nothing.
  */
 export async function ensureAdmin(db: Db, email: string, log: (msg: string) => void) {
   const out = await db.query<{ id: string }>(
-    `insert into users (name, email, signup_method, role)
-     select 'FeestFinder Admin', $1, 'email', 'admin'
-     where not exists (select 1 from users where role = 'admin') and not exists (select 1 from users where email = $1)
-     returning id`, [email]);
-  if (out.rows.length) log(`created the first admin account (${email}); set its password with "Forgot password" on /ops`);
+    `insert into users (name, email, signup_method, role) values ('FeestFinder Admin', $1, 'email', 'admin')
+     on conflict (email) do nothing returning id`, [email]);
+  if (out.rows.length) log(`created admin account ${email}; set its password with "Forgot password" on /ops`);
   else {
-    const taken = await db.query<{ role: string }>('select role from users where email = $1', [email]);
-    const admins = await db.query<{ n: number }>(`select count(*)::int as n from users where role = 'admin'`);
-    if (!admins.rows[0]?.n && taken.rows.length) log(`warning: ADMIN_EMAIL ${email} belongs to an existing account; not promoting it`);
+    const row = await db.query<{ role: string }>('select role from users where email = $1', [email]);
+    if (row.rows[0]?.role !== 'admin') log(`warning: ADMIN_EMAIL ${email} belongs to an existing account; not promoting it`);
   }
 }
