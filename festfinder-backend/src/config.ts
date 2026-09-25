@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 
 function str(name: string, fallback?: string): string {
   const v = process.env[name];
@@ -95,6 +95,7 @@ export interface Config {
 export function loadConfig(overrides: Partial<Config> = {}): Config {
   const env = (process.env.NODE_ENV === 'production' ? 'production' : process.env.NODE_ENV === 'test' ? 'test' : 'development') as Config['env'];
   const prod = env === 'production';
+  const ticketSigningSecret = prod ? str('TICKET_SIGNING_SECRET') : str('TICKET_SIGNING_SECRET', 'dev-ticket-secret');
   const cfg: Config = {
     env,
     port: int('PORT', 4000),
@@ -105,7 +106,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     publicBaseUrl: str('PUBLIC_BASE_URL', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:4000'),
     corsOrigins: str('CORS_ORIGINS', 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
     cookieSecure: bool('COOKIE_SECURE', prod),
-    ticketSigningSecret: prod ? str('TICKET_SIGNING_SECRET') : str('TICKET_SIGNING_SECRET', 'dev-ticket-secret'),
+    ticketSigningSecret,
     paymentWebhookSecret: prod ? str('PAYMENT_WEBHOOK_SECRET') : str('PAYMENT_WEBHOOK_SECRET', 'dev-webhook-secret'),
     paymentProvider: (str('PAYMENT_PROVIDER', prod ? 'vietqr' : 'mock') as Config['paymentProvider']),
     platformBank: {
@@ -121,7 +122,9 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     seedIfEmpty: bool('SEED_IF_EMPTY', false),
     demoPassword: process.env.DEMO_PASSWORD || null,
     adminEmail: process.env.ADMIN_EMAIL?.trim().toLowerCase() || null,
-    cronSecret: process.env.CRON_SECRET || null,
+    // In production, a key of its own derived from the ticket secret when none is set, so
+    // the scheduler works without one more secret to manage. Neither key reveals the other.
+    cronSecret: process.env.CRON_SECRET || (prod ? createHmac('sha256', ticketSigningSecret).update('feestfinder:internal-jobs').digest('base64url') : null),
     exposeDevCodes: !prod && bool('EXPOSE_DEV_CODES', true),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
