@@ -1,5 +1,5 @@
 import type { Ctx } from './context.ts';
-import { many, one } from './db/index.ts';
+import { many, one, type Db } from './db/index.ts';
 import { L } from './lib/i18n.ts';
 import { vnTime } from './lib/time.ts';
 import { deliverDue } from './services/messaging.ts';
@@ -164,4 +164,43 @@ export async function runAllJobsOnce(ctx: Ctx) {
   const out: Record<string, unknown> = {};
   for (const [name] of SCHEDULE) out[name] = await jobs[name](ctx);
   return out;
+}
+
+/**
+ * One call of POST /internal/jobs, made every minute by a scheduler outside the process
+ * (pg_cron on Supabase). Each job keeps roughly its interval: those under a minute run on
+ * every call, the others when the wall-clock minute is a multiple of theirs. Each still
+ * takes its lock, so an overlapping call skips what is already running.
+ */
+export async function runDueJobs(ctx: Ctx, at = new Date()) {
+  const minute = Math.floor(at.getTime() / 60_000);
+  const out: Record<string, unknown> = {};
+  for (const [name, every] of SCHEDULE) {
+    const minutes = Math.max(1, Math.round(every / 60_000));
+    if (minute % minutes !== 0) continue;
+    try {
+      out[name] = await withJobLock(ctx, name, () => jobs[name](ctx));
+    } catch (e) {
+      ctx.log(`job ${name} failed: ${(e as Error).stack ?? e}`);
+      out[name] = 'failed';
+    }
+  }
+  return out;
+}
+
+/**
+ * On Supabase: pg_cron posts to /internal/jobs every minute through pg_net, so the jobs run
+ * without a long-lived process. Called at startup; scheduling by name replaces the entry, so
+ * a new URL or secret takes effect on the next start. Elsewhere pg_cron is not available and
+ * this does nothing. The secret sits in cron.job, readable only by the database's owners.
+ */
+export async function scheduleSupabaseCron(db: Db, url: string, secret: string, log: (msg: string) => void) {
+  const available = await one<{ ok: boolean }>(db, `select count(*) = 2 as ok from pg_available_extensions where name in ('pg_cron', 'pg_net')`);
+  if (!available?.ok) return;
+  await db.query('create extension if not exists pg_cron');
+  await db.query('create extension if not exists pg_net with schema extensions');
+  const lit = (v: string) => `'${v.replaceAll("'", "''")}'`;
+  const call = `select net.http_post(url := ${lit(url)}, headers := jsonb_build_object('Authorization', ${lit(`Bearer ${secret}`)}, 'Content-Type', 'application/json'), body := '{}'::jsonb, timeout_milliseconds := 55000)`;
+  await db.query(`select cron.schedule('feestfinder-jobs', '* * * * *', $1)`, [call]);
+  log(`pg_cron calls ${url} every minute`);
 }

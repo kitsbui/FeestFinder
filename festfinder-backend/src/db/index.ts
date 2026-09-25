@@ -1,4 +1,5 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { PGlite } from '@electric-sql/pglite';
 
@@ -22,11 +23,29 @@ const DATE = 1082;
 const toNumber = (v: string) => (v === null ? null : Number(v));
 const asString = (v: string) => v;
 
+/**
+ * Supabase signs its Postgres certificates with its own root (Supabase Root 2021 CA, valid
+ * to 2031), which Node does not trust, so `sslmode=require` fails there with
+ * SELF_SIGNED_CERT_IN_CHAIN. For a Supabase host the connection is verified against that
+ * root instead, hostname included. The URL's own SSL parameters are dropped, because pg
+ * lets them override `ssl`. A URL literal, so file tracing ships the certificate.
+ */
+const SUPABASE_ROOT_CA = fileURLToPath(new URL('./certs/supabase-root-2021.crt', import.meta.url));
+
+export function poolConfig(url: string): pg.PoolConfig {
+  // Fail in seconds rather than hang a request when the database cannot be reached.
+  const base = { max: 10, connectionTimeoutMillis: 10_000 };
+  const u = new URL(url);
+  if (!/\.supabase\.(com|co)$/.test(u.hostname)) return { ...base, connectionString: url };
+  for (const k of ['sslmode', 'sslrootcert', 'sslcert', 'sslkey', 'uselibpqcompat', 'supa']) u.searchParams.delete(k);
+  return { ...base, connectionString: u.toString(), ssl: { ca: readFileSync(SUPABASE_ROOT_CA, 'utf8'), rejectUnauthorized: true } };
+}
+
 async function openPostgres(url: string): Promise<Db> {
   pg.types.setTypeParser(INT8, toNumber);
   pg.types.setTypeParser(NUMERIC, toNumber);
   pg.types.setTypeParser(DATE, asString);
-  const pool = new pg.Pool({ connectionString: url, max: 10 });
+  const pool = new pg.Pool(poolConfig(url));
   pool.on('connect', (client) => { client.query(`set time zone 'UTC'`).catch(() => {}); });
   return {
     kind: 'postgres',

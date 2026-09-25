@@ -183,7 +183,17 @@ Every outside service is switched on by its environment variables and logged ins
 
 **Backups.** [`scripts/backup.sh`](scripts/backup.sh) writes a compressed `pg_dump` and keeps the last 14 (`BACKUP_DIR`, `KEEP`). [`scripts/restore-check.sh`](scripts/restore-check.sh) restores a dump into a throwaway database. It then counts users, events, orders and tickets and checks that the audit chain is unbroken, and exits non-zero if anything is off. Schedule both, and copy the dumps off the machine.
 
-**Vercel.** The `feestfinder` project builds this folder (Root Directory `festfinder-backend`) with the Fastify preset. The preset runs the first of `app`, `index`, `server`, `src/app`… that imports fastify, so [`index.ts`](index.ts) exists to point it at `src/server.ts`. The frontend folder and the migrations are referenced as `new URL(…, import.meta.url)`, which is how file tracing ships them with the function. The project needs the database URL (Neon's connection sets `PROD_FEESTFINDER_DATABASE_URL`, and `DATABASE_URL_FROM` names it), `TICKET_SIGNING_SECRET`, `PAYMENT_WEBHOOK_SECRET`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, `TRUST_PROXY=true` (Vercel sets `X-Forwarded-For`) and `JOBS_ENABLED=false`, because functions do not keep timers running. `SEED_IF_EMPTY=true` fills an empty database with the sample data at startup. In production it only runs with `DEMO_PASSWORD` set, which then replaces the published passwords of the three demo accounts. `FF_NOW` keeps the demo weekend current. Without S3, uploads go to `/tmp` and last as long as one instance.
+**Vercel + Supabase.** The `feestfinder` project builds this folder (Root Directory `festfinder-backend`, functions in `hnd1`, next to the Supabase project in Tokyo) with the Fastify preset. The preset runs the first of `app`, `index`, `server`, `src/app`… that imports fastify, so [`index.ts`](index.ts) exists to point it at `src/server.ts`. The frontend folder, the migrations and the Supabase certificate are referenced as `new URL(…, import.meta.url)`, which is how file tracing ships them with the function.
+
+| | Production | Preview |
+| --- | --- | --- |
+| Database | Supabase Postgres through the transaction pooler, verified against Supabase's root CA | In-memory PGlite, seeded at startup (`SEED_IF_EMPTY`) |
+| Clock | Real time | `FF_NOW`, the demo weekend |
+| Uploads | Supabase Storage over S3, public bucket `uploads` (made by migration `007`) | `/tmp` |
+| Jobs | pg_cron calls `POST /internal/jobs` every minute (`CRON_SECRET`) | Off |
+| First admin | `ADMIN_EMAIL`, password set with "Forgot password" | The demo accounts |
+
+Migration `007` also closes Supabase's Data API over our tables: it serves the public schema to anyone with the project's anon key, and this API never uses it, so the `anon` and `authenticated` roles lose their grants and every table gets row level security with no policies.
 
 **CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright route tests against both fronts.
 

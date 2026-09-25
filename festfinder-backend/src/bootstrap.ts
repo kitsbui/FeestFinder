@@ -1,8 +1,9 @@
 import type { Config } from './config.ts';
 import type { Ctx } from './context.ts';
-import { openDb } from './db/index.ts';
+import { openDb, type Db } from './db/index.ts';
 import { migrate } from './db/migrate.ts';
 import { seed } from './db/seed.ts';
+import { scheduleSupabaseCron } from './jobs.ts';
 import { fixedClock, systemClock } from './lib/time.ts';
 import { ConsoleTransport, RoutingTransport, SmtpTransport, WebhookTransport, WebPushTransport } from './services/messaging.ts';
 import { NoopReporter, SentryReporter } from './services/errors.ts';
@@ -20,8 +21,10 @@ export async function createContext(config: Config): Promise<Ctx> {
   // A fresh demo deployment fills itself with the sample data. The seed skips a database
   // that has users and runs in one transaction, so a second instance starting at the same
   // time rolls back instead of adding a copy.
+  // Vercel previews sit behind Vercel's own sign-in, so they may keep the published passwords.
+  const publicDeployment = config.env === 'production' && process.env.VERCEL_ENV !== 'preview';
   if (config.seedIfEmpty) {
-    if (config.env === 'production' && !config.demoPassword) log('SEED_IF_EMPTY is set without DEMO_PASSWORD; not seeding accounts with the published passwords');
+    if (publicDeployment && !config.demoPassword) log('SEED_IF_EMPTY is set without DEMO_PASSWORD; not seeding accounts with the published passwords');
     else {
       try {
         const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: 'full', password: config.demoPassword ?? undefined, log })) as Record<string, unknown>;
@@ -30,6 +33,11 @@ export async function createContext(config: Config): Promise<Ctx> {
         log(`seed did not run: ${(e as Error).message}`);
       }
     }
+  }
+  if (config.adminEmail) await ensureAdmin(db, config.adminEmail, log);
+  if (config.cronSecret && db.kind === 'postgres') {
+    await scheduleSupabaseCron(db, `${config.publicBaseUrl}/internal/jobs`, config.cronSecret, log)
+      .catch((e) => log(`pg_cron not scheduled: ${(e as Error).message}`));
   }
   const hasAnthropic = !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_PROFILE);
   const oauthFor = (provider: 'fb' | 'ig') => {
@@ -71,4 +79,23 @@ export async function createContext(config: Config): Promise<Ctx> {
     checkLink,
     log,
   };
+}
+
+/**
+ * The first admin of a fresh database: an account with no password, which its owner
+ * claims with "Forgot password" on /ops. Nothing happens once any admin exists, and an
+ * existing account with that email is never promoted, so the variable cannot hand out access.
+ */
+export async function ensureAdmin(db: Db, email: string, log: (msg: string) => void) {
+  const out = await db.query<{ id: string }>(
+    `insert into users (name, email, signup_method, role)
+     select 'FeestFinder Admin', $1, 'email', 'admin'
+     where not exists (select 1 from users where role = 'admin') and not exists (select 1 from users where email = $1)
+     returning id`, [email]);
+  if (out.rows.length) log(`created the first admin account (${email}); set its password with "Forgot password" on /ops`);
+  else {
+    const taken = await db.query<{ role: string }>('select role from users where email = $1', [email]);
+    const admins = await db.query<{ n: number }>(`select count(*)::int as n from users where role = 'admin'`);
+    if (!admins.rows[0]?.n && taken.rows.length) log(`warning: ADMIN_EMAIL ${email} belongs to an existing account; not promoting it`);
+  }
 }

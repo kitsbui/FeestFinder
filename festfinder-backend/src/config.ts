@@ -58,8 +58,15 @@ export interface Config {
   fixedNow: string | null;
   /** Fill an empty database with the sample data at startup (a demo deployment). */
   seedIfEmpty: boolean;
-  /** Password for the seeded demo accounts; required to seed in production. */
+  /** Password for the seeded demo accounts; required to seed a public production deployment. */
   demoPassword: string | null;
+  /** First admin account, made at startup while no admin exists. It has no password yet. */
+  adminEmail: string | null;
+  /**
+   * Bearer secret for POST /internal/jobs, the serverless stand-in for the job timers. On
+   * Supabase the API schedules pg_cron to call it every minute.
+   */
+  cronSecret: string | null;
   /** Return OTP codes in API responses. Never enable in production. */
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
@@ -94,7 +101,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     host: str('HOST', '0.0.0.0'),
     databaseUrl: process.env.DATABASE_URL || (process.env.DATABASE_URL_FROM ? process.env[process.env.DATABASE_URL_FROM] : '') || null,
     pgliteDir: str('PGLITE_DIR', './.data/pglite'),
-    publicBaseUrl: str('PUBLIC_BASE_URL', 'http://localhost:4000'),
+    // A Vercel preview answers on its own URL.
+    publicBaseUrl: str('PUBLIC_BASE_URL', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:4000'),
     corsOrigins: str('CORS_ORIGINS', 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
     cookieSecure: bool('COOKIE_SECURE', prod),
     ticketSigningSecret: prod ? str('TICKET_SIGNING_SECRET') : str('TICKET_SIGNING_SECRET', 'dev-ticket-secret'),
@@ -112,6 +120,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     fixedNow: process.env.FF_NOW || null,
     seedIfEmpty: bool('SEED_IF_EMPTY', false),
     demoPassword: process.env.DEMO_PASSWORD || null,
+    adminEmail: process.env.ADMIN_EMAIL?.trim().toLowerCase() || null,
+    cronSecret: process.env.CRON_SECRET || null,
     exposeDevCodes: !prod && bool('EXPOSE_DEV_CODES', true),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
