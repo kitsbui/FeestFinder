@@ -53,8 +53,11 @@ for (const p of problems) console.log(`problem: ${p}`);
 
 const pool = new pg.Pool(poolConfig(url.trim()));
 try {
-  const r = await pool.query<{ who: string }>('select current_user as who');
-  console.log(`OK: connected as ${r.rows[0].who}. Put this exact URL in DATABASE_URL.`);
+  const r = await pool.query<{ who: string; labelled: boolean }>(
+    `select current_user as who, to_regclass('public.database_environment') is not null as labelled`);
+  const { who, labelled } = r.rows[0];
+  const label = labelled ? (await pool.query<{ name: string }>('select name from database_environment')).rows[0]?.name : null;
+  console.log(`OK: connected as ${who}. ${label ? `This is the ${label} database.` : 'The database has no environment label yet: the first deployment to start on it sets one.'}`);
 } catch (e) {
   console.log(`Could not connect: ${(e as Error).message}`);
   process.exitCode = 1;

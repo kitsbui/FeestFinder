@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { one } from '../db/index.ts';
 import { AppError, badRequest, conflict, notFound, tooMany } from '../lib/errors.ts';
 import { L, REPORT_CODES } from '../lib/i18n.ts';
-import { parse, uuid } from '../lib/validate.ts';
+import { imageUrl, parse, uuid } from '../lib/validate.ts';
 import { requireUser } from '../http/guards.ts';
 import { appendAudit } from '../services/audit.ts';
 import { GuideUnavailable, trimGuide } from '../services/guide.ts';
@@ -147,7 +147,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     const body = parse(z.object({
       stars: z.number().int().min(1).max(5),
       aspects: z.array(z.enum(['sound', 'crowd', 'value', 'org', 'queue', 'food'])).max(6).default([]),
-      photoUrls: z.array(z.string().url()).max(3).default([]),
+      photoUrls: z.array(imageUrl).max(3).default([]),
     }), req.body);
     if (new Date(ev.starts_at) > ctx.clock.now()) throw badRequest('not_started', L('You can rate it once it has started', 'Bạn đánh giá được khi sự kiện đã bắt đầu'));
     const attended = await one(ctx.db,

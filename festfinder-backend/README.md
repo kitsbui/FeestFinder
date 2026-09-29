@@ -4,7 +4,7 @@ The backend for all four FeestFinder surfaces in `design_handoff_festfinder/`: t
 
 - **Node 24 + TypeScript**, run directly (Node strips types, so there is no build step)
 - **Fastify 5**, **zod** validation
-- **PostgreSQL** with plain SQL migrations. Locally it runs on **PGlite** (Postgres compiled to WebAssembly, in-process), so there is nothing to install. Set `DATABASE_URL` to use a real Postgres server (Supabase, Neon, RDS…).
+- **PostgreSQL** with plain SQL migrations, on **Supabase**, in two projects: **production**, used by the production deployment only, and **staging**, shared by laptops and Vercel previews. Each database is labelled with the environment it serves, and a deployment on the other one's refuses to start before it migrates or writes anything. The automated tests use **PGlite** (Postgres compiled to WebAssembly, in-process) instead, with the demo data from `test/fixtures`.
 - **Claude** (`@anthropic-ai/sdk`) for the App's AI local guide
 
 ## Quick start
@@ -13,43 +13,36 @@ The backend for all four FeestFinder surfaces in `design_handoff_festfinder/`: t
 npm install
 ```
 
+Put the **staging** project's connection string in `.env` as `DATABASE_URL` (Supabase → Connect → Transaction pooler, port 6543), then check it:
+
 ```bash
-npm run db:reset
+npm run db:check
 ```
 
 ```bash
 npm run dev
 ```
 
-The API is on http://localhost:4000, and it serves the four screens too — see [The screens](#the-screens). The same screens on Next.js, with server-rendered pages for search engines, are in [`../festfinder-web`](../festfinder-web/README.md). `db:reset` loads the demo data from the prototypes (6,000 attendees, 28 events, about 3,600 orders). To make the seeded festival weekend (18–20 Sep 2026) count as "this weekend", pin the clock:
+The API is on http://localhost:4000, and it serves the four screens too — see [The screens](#the-screens). The same screens on Next.js, with server-rendered pages for search engines, are in [`../festfinder-web`](../festfinder-web/README.md). At startup the API checks the database's environment label, applies pending migrations and logs where the data goes (`database: supabase (…pooler.supabase.com)`, `environment: staging`); `GET /health` says the same.
 
-```bash
-FF_NOW=2026-09-14T10:00:00+07:00 npm run dev
-```
+There is no demo data outside the tests. Admins are the emails in `ADMIN_EMAIL`: each gets an account with no password, set with "Forgot password" on `/ops`. The team then adds organisers, venues and events on `/ops`.
 
-| Account | Login | Password |
-| --- | --- | --- |
-| Attendee (Minh Anh, has tickets, friends, a group plan) | `minh@example.com` | `festfinder123` |
-| Organizer (Ravolution Entertainment) | `team@ravolution.vn` | `ravolution2026` |
-| Admin | `admin@festfinder.vn` | `festfinder-admin` |
-
-In development, OTP codes are returned in the response as `devCode` and every outbound push, Zalo, email or SMS message is printed to the console.
+In development every outbound push, Zalo, email or SMS message is printed to the console, OTP codes included, and the background jobs run (`JOBS_ENABLED=false` turns them off). On staging, `EXPOSE_DEV_CODES=true` also returns OTP codes in the response as `devCode`, and `PAYMENT_PROVIDER=mock` makes payments instant; production refuses both. The stand-in Facebook/Instagram sign-in only exists on the tests' embedded database.
 
 ## Scripts
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | API with auto-reload and background jobs |
+| `npm run dev` | API with auto-reload, on the database in `DATABASE_URL` |
 | `npm start` | API without reload |
-| `npm run migrate` | Apply pending migrations |
-| `npm run seed` | Load demo data into an empty database (`SEED_VOLUME=small` for a light set) |
-| `npm run db:reset` | Delete the embedded database, migrate and seed |
-| `npm test` | 95 integration and unit tests (about 20 s on PGlite) |
+| `npm run migrate` | Apply pending migrations to the database in `DATABASE_URL`: staging from a laptop. For production, on purpose: `FF_ENV=production npm run migrate` with its URL |
+| `npm run db:check` | Connect with `DATABASE_URL` the way the API does, say whether it is the production or the staging database, and report what is wrong, never the password |
+| `npm test` | Integration and unit tests, on the demo data and on an empty database (about 35 s on PGlite) |
 | `npm run typecheck` | `tsc --noEmit` for the server, then for the Playwright tests (with browser types) |
-| `npm run test:screens` | Playwright: every route of the four screens, served by this API, boots cleanly |
+| `npm run test:screens` | Playwright: every route of the four screens and Ops, served by this API, boots cleanly on the demo data and on an empty database |
 | `npm run test:screens:next` | The same routes on the Next.js app, plus its SEO pages, headers and offline tickets |
 
-The tests use in-memory PGlite. To run the same suite against a real Postgres server, point `TEST_DATABASE_URL` at a role that can create databases:
+The tests never touch Supabase: they run on in-memory PGlite, and the screen tests start their own APIs on throwaway embedded databases. The demo data from the prototypes (6,000 attendees, 28 events around the 18–20 Sep 2026 weekend, about 3,600 orders, with the clock pinned to 14 Sep by `FF_NOW`) lives in [`test/fixtures/seed.ts`](test/fixtures/seed.ts) and refuses to load into Supabase. To run the suite against a real Postgres server, point `TEST_DATABASE_URL` at a role that can create databases:
 
 ```bash
 TEST_DATABASE_URL=postgres://user:pass@localhost:5432/postgres npm test
@@ -57,18 +50,18 @@ TEST_DATABASE_URL=postgres://user:pass@localhost:5432/postgres npm test
 
 ## The screens
 
-`../festfinder-frontend/` holds the four design prototypes with their fake data replaced by calls to this API. Every template, style and string is the handoff's own; only the data layer changed. With the server running they are served from the same origin, so the session cookie just works.
+`../festfinder-frontend/` holds the four design prototypes with their fake data replaced by calls to this API. With the server running they are served from the same origin, so the session cookie just works.
 
 **Every screen, tab and panel has its own URL**, so anything can be linked, bookmarked and reopened, and back and forward work:
 
 | Surface | Routes | Sign-in |
 | --- | --- | --- |
 | Web | `/` · `/map` · `/saved` · `/about` · `/advertise` · `/e/:slug` · `/o/:slug` · `/stats/:key` · `/vi/ho-chi-minh/this-weekend` · `/en/ho-chi-minh/this-weekend` (`/city/…` still works) | optional (sign-up sheet in place) |
-| App | `/app` · `/app/saved` · `/app/map` · `/app/profile` · `/app/tickets` · `/app/notifications` · `/app/alerts` · `/app/settings` · `/app/hyped` · `/app/following` · `/app/e/:slug` · `/app/live/:slug` · `/app/plan/:slug` · `/app/recap/:slug` · `/app/guide/:slug` · `/app/checkout/:slug` · `/app/chat/:friendId` | optional; the demo attendee is signed in after `db:reset` |
+| App | `/app` · `/app/saved` · `/app/map` · `/app/profile` · `/app/tickets` · `/app/notifications` · `/app/alerts` · `/app/settings` · `/app/hyped` · `/app/following` · `/app/e/:slug` · `/app/live/:slug` · `/app/plan/:slug` · `/app/recap/:slug` · `/app/guide/:slug` · `/app/checkout/:slug` · `/app/chat/:friendId` | optional |
 | Organizer | `/studio` · `/studio/new` · `/studio/attendees` · `/studio/announce` · `/studio/door` · `/studio/promos` · `/studio/revenue` · `/studio/inbox` · `/studio/profile` | the design's own sign-in gate |
 | Admin | `/console` · `/console/verification` · `/console/reports` · `/console/featured` · `/console/ads` · `/console/insights` · `/console/audit` · `/console/appeals` | a small sign-in card (the design ships no admin gate) |
 | Ops | Team: `/ops` · `/ops/review/:id?` · `/ops/events` · `/ops/events/new` · `/ops/events/:id` · `/ops/reports` · `/ops/organizers/:id?` · `/ops/venues` · `/ops/featured` · `/ops/users/:id?` · `/ops/orders/:id?` · `/ops/audit` — Organizer: `/ops/org` · `/ops/org/events` · `/ops/org/events/new` · `/ops/org/events/:id` · `/ops/org/inbox/:threadId?` · `/ops/org/profile` | its own sign-in, with "forgot password" for accounts the team opened |
-| Dev | `/_console` — API explorer with one-click demo sign-in (disabled in production) | — |
+| Dev | `/_console` — API explorer, using the session signed in on `/ops` (disabled in production) | — |
 
 **Ops** is the working back office, in two modes on one page: the FeestFinder team (review queue, catalogue, venues, organiser onboarding, accounts, orders, audit) and organisers (their listings, the event form, submit for review, messages from moderation). It is not a design prototype: plain ES modules on the vendored React, under the strict Content-Security-Policy (no `'unsafe-eval'`), styled with `ui/theme.css` plus `pages/ops/ops.css`. Every filter lives in the URL. Fixed lists (genres, districts, statuses, banks, reject reasons…) come from `GET /meta/form-options`, so forms pick rather than type.
 
@@ -76,9 +69,9 @@ The back offices sit on `/studio`, `/console` and `/ops` because `/organizer/*` 
 
 **How a screen loads.** Each surface is a ~700-byte shell that fetches three cacheable chunks — `template.html`, `logic.js`, `data.js` — alongside the session and only the data the open route needs, then hands the lot to the prototype runtime. So a screen renders live data on its first paint, a tab switch is a URL change plus one small fetch, and the next route's data is warmed on idle. Opening `/studio/revenue` makes four API calls, not twenty; the app's feed makes nine, not seventeen. Everything static is served with an ETag and gzip, so repeat visits and moving between surfaces mostly hit cache: a first visit transfers 57–92 KB, of which 24 KB is the shared runtime that is then reused.
 
-Two notes when demoing:
+Two notes:
 
-- **Live mode and check-in** open on the day of an event. With the clock pinned to 14 Sep the API answers "Live mode opens on the day of the event"; use `FF_NOW=2026-09-19T20:30:00+07:00` to walk the in-event screens (set times, site map, friends on site, the door scanner).
+- **Live mode and check-in** open on the day of an event: before then the API answers "Live mode opens on the day of the event".
 - **The AI local guide** needs `ANTHROPIC_API_KEY`. Without one the guide panel shows its own "taking a break" state.
 
 ## How clients talk to it
@@ -102,15 +95,15 @@ src/
   bootstrap.ts         wires real providers from env
   jobs.ts              scheduler: outbox, announcements, reminders, expiries, alerts, link checks
   db/
-    migrations/*.sql   schema (identity, catalog, commerce, engagement, operations)
-    index.ts           one query interface over node-postgres and PGlite
-    seed.ts            demo data lifted from the prototypes
+    migrations/*.sql   schema (identity, catalog, commerce, engagement, operations, stored files)
+    index.ts           one query interface over node-postgres (Supabase) and PGlite (tests)
   routes/              one file per area; organizer/ and admin/ mirror the design files
   services/            audit chain, notifications, outbox, payouts, risk, quality, tickets, AI guide, OAuth
   presenters/          event card/detail and timetable shapes shared by Web and App
   lib/                 VN time, VietQR, i18n, validation, CSV, image headers
   routes/frontend.ts   serves the screens, their chunks, ETags and gzip
 test/                  node:test suites per surface
+  fixtures/            the demo data (seed.ts) and the empty database (empty.ts) the tests run on
 ```
 
 The wired screens live next door, one folder per surface:
@@ -169,8 +162,9 @@ Every outside service is switched on by its environment variables and logged ins
 
 | Area | Variables | What happens |
 | --- | --- | --- |
-| Database | `DATABASE_URL` | Postgres. Migration `006` adds a `pg_trgm` index for search where the extension is available |
-| File storage | `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_BASE_URL` | Uploads go to S3 or any S3-compatible store (R2, B2, MinIO), with year-long immutable caching; point `S3_PUBLIC_BASE_URL` at a CDN |
+| Database | `DATABASE_URL`, `FF_ENV` | Required: this environment's Supabase database, the production project for the production deployment and the staging project for everything else. The API refuses to start without it, and on the other environment's database. `FF_ENV` (`production` or `staging`) settles which one a server is, e.g. a self-hosted staging server. Migration `006` adds a `pg_trgm` index for search where the extension is available |
+| Secrets | `TICKET_SIGNING_SECRET`, `PAYMENT_WEBHOOK_SECRET` | Required in production, which does not start without them; staging uses development values. The ticket secret signs every ticket's QR code, so it is set once and never changed. Make each with `openssl rand -base64 32` |
+| File storage | `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_BASE_URL` | Uploads go to Supabase Storage (or any S3-compatible store), with year-long immutable caching. Without these they are kept in the database (`stored_files`) and served from `/files/…`, the same path in every environment |
 | Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | OTP codes and email notifications go through any SMTP relay (SES, Postmark, Resend…) |
 | Browser push | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Sent straight to the browser's push service; a subscription the service reports gone is deleted and not retried. Make keys with `npx web-push generate-vapid-keys` |
 | Native push, Zalo ZNS, SMS | `MESSAGING_WEBHOOK_URL`, `MESSAGING_WEBHOOK_SECRET` | Each message is POSTed to one endpoint with an `x-ff-signature` HMAC-SHA256 header, which fans out to FCM/APNs, Zalo and the SMS gateway. A non-2xx answer is retried with backoff |
@@ -185,17 +179,26 @@ Every outside service is switched on by its environment variables and logged ins
 
 **Vercel + Supabase.** The `feestfinder` project builds this folder (Root Directory `festfinder-backend`, functions in `hnd1`, next to the Supabase project in Tokyo) with the Fastify preset. The preset runs the first of `app`, `index`, `server`, `src/app`… that imports fastify, so [`index.ts`](index.ts) exists to point it at `src/server.ts`. The frontend folder, the migrations and the Supabase certificate are referenced as `new URL(…, import.meta.url)`, which is how file tracing ships them with the function.
 
+The two Supabase projects:
+
+| | Supabase org | Project | Ref | Region |
+| --- | --- | --- | --- | --- |
+| **Production** | Feest Finder | Feest Finder | `ggrhmtdfxqrltzpiancl` | Tokyo (`ap-northeast-1`) |
+| **Staging** | Events Org (billed through the Vercel Marketplace) | Event Org | `cokiqvsoholtlruqgifn` | Singapore (`ap-southeast-1`) |
+
 | | Production | Preview |
 | --- | --- | --- |
-| Database | Supabase Postgres through the transaction pooler, verified against Supabase's root CA | In-memory PGlite, seeded at startup (`SEED_IF_EMPTY`) |
-| Clock | Real time | `FF_NOW`, the demo weekend |
-| Uploads | Supabase Storage over S3, public bucket `uploads` (made by migration `007`) | `/tmp` |
-| Jobs | pg_cron calls `POST /internal/jobs` every minute (`CRON_SECRET`) | Off |
-| Admins | `ADMIN_EMAIL` (comma-separated), passwords set with "Forgot password" | The demo accounts |
+| Database | The production Supabase project: `DATABASE_URL` for Production. Through the transaction pooler, verified against Supabase's root CA | The staging project: `DATABASE_URL` for Preview and Development |
+| Clock | Real time | Real time |
+| Uploads | The production project's Storage over S3, public bucket `uploads` (made by migration `007`), or its database | The staging project's: `S3_*` for Preview point at its Storage |
+| Jobs | pg_cron calls `POST /internal/jobs` on the production domain every minute (`CRON_SECRET`) | Off: previews schedule nothing. A laptop runs them itself |
+| Admins | `ADMIN_EMAIL` (comma-separated), passwords set with "Forgot password" | The staging database's own accounts |
+
+A deployment's startup log names its database and environment (`database: supabase (…)`, `environment: production`) and where uploads go, and `GET /health` answers `{"environment":"production","database":"supabase","uploads":…}`, so each environment can be checked from outside. `SEED_IF_EMPTY`, `DEMO_PASSWORD`, `PGLITE_DIR` and `FF_NOW` no longer do anything on a deployment: remove them from the Vercel project. Work that finishes after a response — sending a sign-in code, checking a ticket link — is handed to Vercel's `waitUntil`, so it is not frozen with the instance.
 
 Migration `007` also closes Supabase's Data API over our tables: it serves the public schema to anyone with the project's anon key, and this API never uses it, so the `anon` and `authenticated` roles lose their grants and every table gets row level security with no policies.
 
-**CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright route tests against both fronts.
+**CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright route tests against both fronts, on the demo data and on an empty database.
 
 ## Before production: what still needs a real provider
 
@@ -220,5 +223,4 @@ I picked a behaviour for each of these; they're worth a product decision:
 1. **Booking fee.** The Web says "FeestFinder does not add a booking fee", but the App checkout adds a 5% "Service fee". The fee is configurable with `SERVICE_FEE_PCT`; set it to `0` to match the Web copy.
 2. **Moderation promise.** The admin notes say "a decision within two working hours", but the SLA pills breach at 4 hours. The code uses 4 (`SLA_HOURS`).
 3. **App "Check in" button.** In the prototype it marks the ticket used. Here it records presence on site (live mode, friends on the map), and only a gate scan marks a ticket used, so the button can't lock someone out at the door.
-4. **Rap Việt Live Stage** is marked sold out but shows a GA tier "on sale" in the tier ladder. The seed makes every tier sold out.
-5. **Organizer numbers.** The prototype's hard-coded stats (views, reach, sold) don't agree with each other. Everything is computed from real rows, so seeded figures differ slightly from the mock-ups.
+4. **Organizer numbers.** The prototype's hard-coded stats (views, reach, sold) don't agree with each other. Everything is computed from real rows.

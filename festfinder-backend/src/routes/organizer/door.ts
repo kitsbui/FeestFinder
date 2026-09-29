@@ -12,6 +12,7 @@ import { requireDoorAccess, requireOrganizer, requireOwnEvent } from '../../http
 import { createSession, setSessionCookie } from '../../http/session.ts';
 import { enqueue } from '../../services/notify.ts';
 import { deliverDue } from '../../services/messaging.ts';
+import { inBackground } from '../../lib/background.ts';
 import { eventScanKey, readQrToken, verifyQrSignature } from '../../services/tickets.ts';
 import { checkOtp, startOtp } from '../auth.ts';
 
@@ -161,7 +162,7 @@ export default async function doorRoutes(app: FastifyInstance) {
       }, now);
       return p;
     });
-    deliverDue(ctx.db, ctx.clock, ctx.transport).catch(() => {});
+    inBackground(deliverDue(ctx.db, ctx.clock, ctx.transport));
     return reply.code(201).send({ ...presentStaff(row, now), message: fill(L('Scanner invite sent to {n}', 'Đã gửi lời mời soát vé cho {n}'), { n: row.name }) });
   });
 
@@ -196,7 +197,7 @@ export default async function doorRoutes(app: FastifyInstance) {
       `select 1 from event_staff s join events e on e.id = s.event_id where s.phone = $1 and e.ends_at > $2`, [e164, ctx.clock.now()]);
     if (!invited) throw notFound(L('This number has not been invited to scan', 'Số này chưa được mời soát vé'));
     const out = await ctx.db.tx((q) => startOtp(ctx, q, { purpose: 'staff', channel: 'sms', identifier: e164 }));
-    deliverDue(ctx.db, ctx.clock, ctx.transport).catch(() => {});
+    inBackground(deliverDue(ctx.db, ctx.clock, ctx.transport));
     return out;
   });
 
@@ -262,7 +263,7 @@ export default async function doorRoutes(app: FastifyInstance) {
       deviceId: z.string().min(1).max(100),
       scans: z.array(z.object({
         token: z.string().min(4).max(200), clientScanId: z.string().min(1).max(100),
-        scannedAt: z.string().datetime({ offset: true }), gate: z.enum(['main', 'vip', 'side']).optional(),
+        scannedAt: z.string().datetime({ offset: true }), gate: z.enum(['main', 'vip', 'side']).optional(), manual: z.boolean().optional(),
       })).max(2000),
     }), req.body);
     const ordered = [...body.scans].sort((a, b) => a.scannedAt.localeCompare(b.scannedAt));

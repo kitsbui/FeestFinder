@@ -3,7 +3,7 @@ import { loadConfig, type Config } from '../src/config.ts';
 import type { Ctx } from '../src/context.ts';
 import { openDb } from '../src/db/index.ts';
 import { migrate } from '../src/db/migrate.ts';
-import { seed } from '../src/db/seed.ts';
+import { seed } from './fixtures/seed.ts';
 import { fixedClock } from '../src/lib/time.ts';
 import { NoopReporter } from '../src/services/errors.ts';
 import { ConsoleTransport } from '../src/services/messaging.ts';
@@ -34,7 +34,11 @@ async function freshDatabaseUrl(): Promise<string | null> {
   return url.toString();
 }
 
-export async function setup(opts: { now?: string; guide?: GuideGenerator; checkLink?: Ctx['checkLink']; config?: Partial<Config> } = {}) {
+/**
+ * A test API on a fresh database. With `seed: false` the database has the migrations only,
+ * the way production starts; otherwise it holds the demo data from fixtures/seed.ts.
+ */
+export async function setup(opts: { now?: string; guide?: GuideGenerator; checkLink?: Ctx['checkLink']; config?: Partial<Config>; seed?: boolean } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
@@ -44,7 +48,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; checkL
   });
   const db = await openDb(config);
   await migrate(db);
-  const seeded: any = await seed(db, clock.now(), { volume: 'small' });
+  const seeded: any = opts.seed === false ? { ids: { event: {}, org: {}, friend: {} } } : await seed(db, clock.now(), { volume: 'small' });
   const transport = new ConsoleTransport(() => {});
   const ctx: Ctx = {
     config, db, clock, transport, storage: new MemoryStorage(),

@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { PGlite } from '@electric-sql/pglite';
+import { attachDatabasePool } from '@vercel/functions';
 
 /** Anything that can run a parameterised query: the pool, or a transaction. */
 export interface Queryable {
@@ -10,6 +11,10 @@ export interface Queryable {
 
 export interface Db extends Queryable {
   kind: 'postgres' | 'pglite';
+  /** Where the data lives, for the startup log and /health: never the credentials. */
+  provider: 'supabase' | 'postgres' | 'pglite';
+  /** The host, or the embedded database's directory. */
+  location: string;
   tx<T>(fn: (q: Queryable) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
@@ -32,11 +37,13 @@ const asString = (v: string) => v;
  */
 const SUPABASE_ROOT_CA = fileURLToPath(new URL('./certs/supabase-root-2021.crt', import.meta.url));
 
+export const isSupabaseHost = (hostname: string) => /\.supabase\.(com|co)$/.test(hostname);
+
 export function poolConfig(url: string): pg.PoolConfig {
   // Fail in seconds rather than hang a request when the database cannot be reached.
   const base = { max: 10, connectionTimeoutMillis: 10_000 };
   const u = new URL(url);
-  if (!/\.supabase\.(com|co)$/.test(u.hostname)) return { ...base, connectionString: url };
+  if (!isSupabaseHost(u.hostname)) return { ...base, connectionString: url };
   for (const k of ['sslmode', 'sslrootcert', 'sslcert', 'sslkey', 'uselibpqcompat', 'supa']) u.searchParams.delete(k);
   return { ...base, connectionString: u.toString(), ssl: { ca: readFileSync(SUPABASE_ROOT_CA, 'utf8'), rejectUnauthorized: true } };
 }
@@ -47,8 +54,13 @@ async function openPostgres(url: string): Promise<Db> {
   pg.types.setTypeParser(DATE, asString);
   const pool = new pg.Pool(poolConfig(url));
   pool.on('connect', (client) => { client.query(`set time zone 'UTC'`).catch(() => {}); });
+  // On Vercel, keeps a suspended instance from holding idle connections to the pooler.
+  if (process.env.VERCEL) attachDatabasePool(pool);
+  const host = new URL(url).hostname;
   return {
     kind: 'postgres',
+    provider: isSupabaseHost(host) ? 'supabase' : 'postgres',
+    location: host,
     query: (sql, params) => pool.query(sql, params as any[]) as any,
     async tx(fn) {
       const client = await pool.connect();
@@ -84,14 +96,22 @@ async function openPglite(dir: string): Promise<Db> {
   };
   return {
     kind: 'pglite',
+    provider: 'pglite',
+    location: dir,
     query: (sql, params) => run(() => lite.query(sql, params as any[])) as any,
     tx: (fn) => run(() => lite.transaction((t) => fn({ query: (sql, params) => t.query(sql, params as any[]) as any }))),
     close: () => lite.close(),
   };
 }
 
-export async function openDb(opts: { databaseUrl: string | null; pgliteDir: string }): Promise<Db> {
-  return opts.databaseUrl ? openPostgres(opts.databaseUrl) : openPglite(opts.pgliteDir);
+/**
+ * The Supabase database from DATABASE_URL. The embedded PGlite is for the automated tests and
+ * is only opened when asked for by name, so a missing URL is an error, never a quiet local copy.
+ */
+export async function openDb(opts: { databaseUrl: string | null; pgliteDir: string | null }): Promise<Db> {
+  if (opts.databaseUrl) return openPostgres(opts.databaseUrl);
+  if (opts.pgliteDir) return openPglite(opts.pgliteDir);
+  throw new Error('No database configured. Set DATABASE_URL in festfinder-backend/.env to the Supabase connection string (Supabase → Connect → Transaction pooler). PGLITE_DIR opens the embedded database the tests use.');
 }
 
 /** Serialise a value bound for a jsonb column (node-postgres would turn arrays into PG arrays). */

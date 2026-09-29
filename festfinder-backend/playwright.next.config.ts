@@ -15,6 +15,8 @@ const WEB = `http://localhost:${WEB_PORT}`;
 
 export default defineConfig({
   testDir: './e2e',
+  // The empty-database routes run against the API's own screens only (playwright.config.ts).
+  testIgnore: ['empty.spec.ts'],
   timeout: 30_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -28,7 +30,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'node --env-file-if-exists=.env src/db/cli.ts reset && node src/server.ts',
+      // Not .env: that points at Supabase. The demo data goes into a throwaway embedded database.
+      command: 'node test/fixtures/reset.ts && node src/server.ts',
       url: `${API}/health`,
       timeout: 180_000,
       reuseExistingServer: false,
@@ -36,6 +39,8 @@ export default defineConfig({
         PORT: String(API_PORT),
         // Behind the Next app, links and uploads use its address.
         PUBLIC_BASE_URL: WEB,
+        DATABASE_URL: '',
+        DATABASE_URL_FROM: '',
         PGLITE_DIR: './.data/pglite-screens',
         UPLOAD_DIR: './.data/uploads-screens',
         FF_NOW: '2026-09-14T10:00:00+07:00',

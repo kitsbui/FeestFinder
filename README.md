@@ -4,7 +4,7 @@ An event-discovery platform for Ho Chi Minh City: festivals, gigs and night mark
 
 ```
 design_handoff_festfinder/   the original Claude Design handoff (untouched reference)
-festfinder-backend/          the API: Node 24 + TypeScript, Fastify, PostgreSQL
+festfinder-backend/          the API: Node 24 + TypeScript, Fastify, PostgreSQL on Supabase
 festfinder-frontend/         the four screens, wired to that API (served by the API itself)
 festfinder-web/              the same screens on Next.js 16 + React 19 + TypeScript: SEO pages, PWA
 ```
@@ -15,15 +15,13 @@ festfinder-web/              the same screens on Next.js 16 + React 19 + TypeScr
 npm install --prefix festfinder-backend
 ```
 
-```bash
-npm run db:reset --prefix festfinder-backend
-```
+Put the **staging** Supabase project's connection string in `festfinder-backend/.env` as `DATABASE_URL` (Supabase → Connect → Transaction pooler), then:
 
 ```bash
 npm run dev --prefix festfinder-backend
 ```
 
-Then open http://localhost:4000. Nothing else to install: locally the database runs in-process on PGlite (Postgres compiled to WebAssembly), and the same code talks to a real Postgres server when `DATABASE_URL` is set.
+Then open http://localhost:4000. There are two Supabase projects: **production**, used by the production deployment only, and **staging**, shared by laptops and Vercel previews. Each database is labelled with the environment it serves and the API refuses to start on the other one's, so nothing done while developing reaches real accounts. There is no demo data outside the automated tests: the team signs in on `/ops` with an `ADMIN_EMAIL` account (password set with "Forgot password") and adds organisers, venues and events there.
 
 For the Next.js front — server-rendered event and landing pages, sitemap, the installable app — keep the API running and start it next to it:
 
@@ -46,10 +44,4 @@ Then open http://localhost:3000. It has the same screens and URLs; everything th
 | Ops — the working back office: the FeestFinder team (review, catalogue, organizers, venues, accounts, orders) and organizers (create and submit events) | `/ops` · `/ops/org` |
 | API explorer (development only) | `/_console` |
 
-| Demo account | Login | Password |
-| --- | --- | --- |
-| Attendee | `minh@example.com` | `festfinder123` |
-| Organizer | `team@ravolution.vn` | `ravolution2026` |
-| Admin | `admin@festfinder.vn` | `festfinder-admin` |
-
-The full picture — endpoints, decisions, production settings (storage, email, push, errors, backups), what still needs a real provider — is in [festfinder-backend/README.md](festfinder-backend/README.md) and [festfinder-backend/docs/API.md](festfinder-backend/docs/API.md). CI (typecheck, tests on PGlite and Postgres, the Next build, Playwright on both fronts) is in [.github/workflows/ci.yml](.github/workflows/ci.yml).
+The full picture — endpoints, decisions, production settings (storage, email, push, errors, backups), what still needs a real provider — is in [festfinder-backend/README.md](festfinder-backend/README.md) and [festfinder-backend/docs/API.md](festfinder-backend/docs/API.md). CI (typecheck, tests on PGlite and Postgres, the Next build, Playwright on both fronts, on the demo data and on an empty database) is in [.github/workflows/ci.yml](.github/workflows/ci.yml). The tests never touch Supabase.

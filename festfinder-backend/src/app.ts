@@ -192,9 +192,10 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
     reply.code(404).send({ error: { code: 'route_not_found', message: `${req.method} ${req.url}` } });
   });
 
+  // Says where reads and writes go, so a deployment can be checked from outside.
   app.get('/health', async () => {
     await ctx.db.query('select 1');
-    return { ok: true, time: ctx.clock.now() };
+    return { ok: true, time: ctx.clock.now(), environment: ctx.config.environment, database: ctx.db.provider, uploads: ctx.storage.kind };
   });
 
   await app.register(authRoutes);

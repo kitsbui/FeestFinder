@@ -33,13 +33,24 @@ export interface Config {
   port: number;
   host: string;
   /**
-   * postgres://… for a real server; unset uses embedded PGlite at `pgliteDir`. Read from
-   * DATABASE_URL, or from the variable DATABASE_URL_FROM names, for an integration that
-   * prefixes its own (Vercel's Neon connection sets PROD_FEESTFINDER_DATABASE_URL).
+   * Which Supabase project this deployment belongs on. Production is the production
+   * deployment (or a long-lived NODE_ENV=production server); laptops and Vercel previews are
+   * staging. FF_ENV overrides it. Each database is labelled with the one it serves, and a
+   * deployment on the other's database refuses to start (see claimEnvironment).
+   */
+  environment: 'production' | 'staging';
+  /**
+   * postgres://… — this environment's Supabase database: the production project in
+   * production, the staging project everywhere else. Read from DATABASE_URL, or from the
+   * variable DATABASE_URL_FROM names, for an integration that sets its own. Required in
+   * production and on Vercel.
    */
   databaseUrl: string | null;
-  /** Directory for embedded PGlite data. `memory://` keeps it in RAM. */
-  pgliteDir: string;
+  /**
+   * Embedded PGlite for the automated tests: a directory, or `memory://`. Only used when set
+   * and DATABASE_URL is not; never in production or on Vercel.
+   */
+  pgliteDir: string | null;
   publicBaseUrl: string;
   corsOrigins: string[];
   cookieSecure: boolean;
@@ -50,24 +61,34 @@ export interface Config {
   paymentProvider: 'mock' | 'vietqr';
   /** Collecting account for ticket sales paid by VietQR transfer. */
   platformBank: { bin: string; accountNo: string; accountName: string };
+  /** Uploads on local disk, with the embedded test database only. */
   uploadDir: string;
   anthropicModel: string;
   aiGuideEnabled: boolean;
+  /**
+   * Run the job timers in this process: on a laptop (the staging database) and a long-lived
+   * server. On Vercel pg_cron calls POST /internal/jobs instead, for production only.
+   */
   jobsEnabled: boolean;
-  /** Fixed "now" for demos and tests, e.g. 2026-09-14T10:00:00+07:00. */
+  /**
+   * Fixed "now" for the demo data in the tests, e.g. 2026-09-14T10:00:00+07:00. Honoured
+   * with the embedded test database only: on Supabase it would stamp real rows with a fake date.
+   */
   fixedNow: string | null;
-  /** Fill an empty database with the sample data at startup (a demo deployment). */
-  seedIfEmpty: boolean;
-  /** Password for the seeded demo accounts; required to seed a public production deployment. */
-  demoPassword: string | null;
   /** Admin accounts made at startup for listed emails that have no account yet; no password. */
   adminEmails: string[];
   /**
    * Bearer secret for POST /internal/jobs, the serverless stand-in for the job timers. On
-   * Supabase the API schedules pg_cron to call it every minute.
+   * Supabase the production deployment schedules pg_cron to call it every minute.
    */
   cronSecret: string | null;
-  /** Return OTP codes in API responses. Never enable in production. */
+  /**
+   * Whether this instance (re)points pg_cron at its own /internal/jobs at startup. Only the
+   * production deployment does: a second production instance elsewhere would take the
+   * schedule over and point it somewhere the production jobs never run.
+   */
+  schedulesCron: boolean;
+  /** Return OTP codes in API responses: never in production; on staging only when asked for. */
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
   /** Requests allowed per IP per minute on the public API. */
@@ -78,7 +99,7 @@ export interface Config {
    * any client claim any address, and dodge the rate limit with it.
    */
   trustProxy: boolean | number | string;
-  /** Object storage for uploads. Without S3_BUCKET, files stay on local disk. */
+  /** Object storage for uploads (Supabase Storage over S3). Without S3_BUCKET they go to the database. */
   s3: { bucket: string; region: string; endpoint: string | null; accessKeyId: string; secretAccessKey: string; publicBaseUrl: string | null } | null;
   /** SMTP relay for email. Without SMTP_HOST, email is printed to the log. */
   smtp: { host: string; port: number; secure: boolean; user: string; pass: string; from: string } | null;
@@ -95,20 +116,33 @@ export interface Config {
 export function loadConfig(overrides: Partial<Config> = {}): Config {
   const env = (process.env.NODE_ENV === 'production' ? 'production' : process.env.NODE_ENV === 'test' ? 'test' : 'development') as Config['env'];
   const prod = env === 'production';
-  const ticketSigningSecret = prod ? str('TICKET_SIGNING_SECRET') : str('TICKET_SIGNING_SECRET', 'dev-ticket-secret');
+  const onVercel = !!process.env.VERCEL;
+  // Production answers on the project's production domain; each preview on its own URL,
+  // which Vercel's sign-in protects.
+  const vercelHost = process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+    : process.env.VERCEL_URL;
+  const databaseUrl = process.env.DATABASE_URL || (process.env.DATABASE_URL_FROM ? process.env[process.env.DATABASE_URL_FROM] : '') || null;
+  const environment = deploymentEnvironment(prod);
+  // Real secrets for real money and tickets. Staging (previews included) holds test data
+  // only, so it runs on the development defaults when none is set.
+  const live = environment === 'production';
+  const ticketSigningSecret = live ? str('TICKET_SIGNING_SECRET') : str('TICKET_SIGNING_SECRET', 'dev-ticket-secret');
   const cfg: Config = {
     env,
+    environment,
     port: int('PORT', 4000),
-    host: str('HOST', '0.0.0.0'),
-    databaseUrl: process.env.DATABASE_URL || (process.env.DATABASE_URL_FROM ? process.env[process.env.DATABASE_URL_FROM] : '') || null,
-    pgliteDir: str('PGLITE_DIR', './.data/pglite'),
-    // A Vercel preview answers on its own URL.
-    publicBaseUrl: str('PUBLIC_BASE_URL', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:4000'),
+    // A laptop serves only itself.
+    host: str('HOST', prod ? '0.0.0.0' : 'localhost'),
+    databaseUrl,
+    pgliteDir: process.env.PGLITE_DIR || null,
+    publicBaseUrl: str('PUBLIC_BASE_URL', vercelHost ? `https://${vercelHost}` : 'http://localhost:4000'),
     corsOrigins: str('CORS_ORIGINS', 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
     cookieSecure: bool('COOKIE_SECURE', prod),
     ticketSigningSecret,
-    paymentWebhookSecret: prod ? str('PAYMENT_WEBHOOK_SECRET') : str('PAYMENT_WEBHOOK_SECRET', 'dev-webhook-secret'),
-    paymentProvider: (str('PAYMENT_PROVIDER', prod ? 'vietqr' : 'mock') as Config['paymentProvider']),
+    paymentWebhookSecret: live ? str('PAYMENT_WEBHOOK_SECRET') : str('PAYMENT_WEBHOOK_SECRET', 'dev-webhook-secret'),
+    // Instant fake payments: the tests' embedded database, or staging when asked for.
+    paymentProvider: (str('PAYMENT_PROVIDER', prod || databaseUrl ? 'vietqr' : 'mock') as Config['paymentProvider']),
     platformBank: {
       bin: str('PLATFORM_BANK_BIN', '970436'),
       accountNo: str('PLATFORM_BANK_ACCOUNT', '0000000000'),
@@ -117,15 +151,16 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     uploadDir: str('UPLOAD_DIR', './.data/uploads'),
     anthropicModel: str('ANTHROPIC_MODEL', 'claude-opus-5'),
     aiGuideEnabled: bool('AI_GUIDE_ENABLED', true),
-    jobsEnabled: bool('JOBS_ENABLED', env !== 'test'),
+    jobsEnabled: bool('JOBS_ENABLED', !onVercel),
     fixedNow: process.env.FF_NOW || null,
-    seedIfEmpty: bool('SEED_IF_EMPTY', false),
-    demoPassword: process.env.DEMO_PASSWORD || null,
     adminEmails: (process.env.ADMIN_EMAIL ?? '').split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => e.includes('@')),
     // In production, a key of its own derived from the ticket secret when none is set, so
     // the scheduler works without one more secret to manage. Neither key reveals the other.
-    cronSecret: process.env.CRON_SECRET || (prod ? createHmac('sha256', ticketSigningSecret).update('feestfinder:internal-jobs').digest('base64url') : null),
-    exposeDevCodes: !prod && bool('EXPOSE_DEV_CODES', true),
+    cronSecret: process.env.CRON_SECRET || (live ? createHmac('sha256', ticketSigningSecret).update('feestfinder:internal-jobs').digest('base64url') : null),
+    schedulesCron: prod && environment === 'production',
+    // A code in a response lets anyone who can reach the server into any account, so never on
+    // real accounts; on staging only with EXPOSE_DEV_CODES. The server log has the codes too.
+    exposeDevCodes: environment === 'staging' && bool('EXPOSE_DEV_CODES', !databaseUrl),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
     trustProxy: trust(process.env.TRUST_PROXY),
@@ -159,10 +194,30 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     release: str('RELEASE', 'dev'),
     ...overrides,
   };
-  if (prod && cfg.paymentProvider === 'mock') {
-    throw new Error('PAYMENT_PROVIDER=mock is not allowed in production');
+  if (cfg.environment === 'production' && cfg.paymentProvider === 'mock') {
+    throw new Error('PAYMENT_PROVIDER=mock is not allowed in production: it issues tickets nobody paid for.');
+  }
+  // A deployment never falls back to a database of its own: one that lives in memory or on
+  // an instance's disk loses every write, and no two instances would ever agree.
+  if ((prod || onVercel) && !cfg.databaseUrl) {
+    throw new Error(`DATABASE_URL is not set. Every deployment reads and writes a Supabase database: set DATABASE_URL to the ${cfg.environment} project's connection string (Supabase → Connect → Transaction pooler) for this environment.`);
   }
   return cfg;
+}
+
+/**
+ * Production is the production deployment on Vercel, or a long-lived server started with
+ * NODE_ENV=production. Previews, `vercel dev` and laptops are staging. FF_ENV settles it
+ * explicitly, e.g. for a self-hosted staging server.
+ */
+function deploymentEnvironment(prod: boolean): Config['environment'] {
+  const named = process.env.FF_ENV;
+  if (named) {
+    if (named !== 'production' && named !== 'staging') throw new Error('FF_ENV must be production or staging');
+    return named;
+  }
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === 'production' ? 'production' : 'staging';
+  return prod ? 'production' : 'staging';
 }
 
 export function randomSecret(): string {

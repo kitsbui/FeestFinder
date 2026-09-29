@@ -215,6 +215,19 @@ describe('organizer back office (Ravolution)', () => {
     assert.equal((await env.as(scanner).get(`/door/events/${ravo}/manifest`)).status, 401, 'paused scanners are signed out');
   });
 
+  it('takes a ticket code typed at the door, at once or synced after a signal drop', async () => {
+    const [a, b] = await many<any>(env.ctx.db, `select code from tickets where event_id = $1 and status = 'valid' limit 2`, [ravo]);
+    const typed = await env.as(token).post(`/door/events/${ravo}/scans`, { token: a.code, manual: true, deviceId: 'studio-1', clientScanId: 'm1' });
+    assert.equal(typed.body.result, 'valid', 'the organiser team may admit by the printed code');
+    const synced = await env.as(token).post(`/door/events/${ravo}/scans/sync`, { deviceId: 'studio-1', scans: [
+      { token: b.code, manual: true, clientScanId: 'm2', scannedAt: '2026-09-19T19:50:00+07:00' },
+      { token: a.code, manual: true, clientScanId: 'm3', scannedAt: '2026-09-19T19:51:00+07:00' },
+    ] });
+    assert.deepEqual(synced.body.summary, { valid: 1, duplicate: 1, invalid: 0 });
+    const unmarked = await env.as(token).post(`/door/events/${ravo}/scans`, { token: 'FF-NOPE-0000', deviceId: 'studio-1', clientScanId: 'm4' });
+    assert.equal(unmarked.body.reason, 'bad_signature', 'a bare code needs the manual flag');
+  });
+
   it('manages promo codes and the guest list', async () => {
     const created = await env.as(token).post(`/organizer/events/${ravo}/promos`, { code: 'press-50', pct: 50, cap: 20 });
     assert.equal(created.body.code, 'PRESS50');

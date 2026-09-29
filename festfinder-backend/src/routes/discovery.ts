@@ -149,7 +149,8 @@ export default async function discoveryRoutes(app: FastifyInstance) {
               location: { '@type': 'Place', name: e.venue.name, address: [e.venue.address, e.venue.area, CITY.en].filter(Boolean).join(', ') },
               organizer: { '@type': 'Organization', name: e.organizer.name },
               offers: { '@type': 'Offer', price: e.priceFrom, priceCurrency: 'VND', availability: e.soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' },
-              ...(e.coverUrl ? { image: e.coverUrl } : {}),
+              // Images kept in the database have a path, not a full URL.
+              ...(e.coverUrl ? { image: new URL(e.coverUrl, `${base}/`).href } : {}),
             },
           })),
         },

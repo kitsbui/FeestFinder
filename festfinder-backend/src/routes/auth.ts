@@ -10,6 +10,7 @@ import { createSession, SESSION_COOKIE, setSessionCookie } from '../http/session
 import { requireUser } from '../http/guards.ts';
 import { enqueue } from '../services/notify.ts';
 import { deliverDue } from '../services/messaging.ts';
+import { inBackground } from '../lib/background.ts';
 import { syncFriends } from '../services/friends.ts';
 import type { Ctx } from '../context.ts';
 import type { Queryable } from '../db/index.ts';
@@ -107,7 +108,7 @@ export default async function authRoutes(app: FastifyInstance) {
     return { token, expiresAt, created, user: publicUser(user) };
   };
 
-  const kick = () => { deliverDue(ctx.db, ctx.clock, ctx.transport).catch((e) => ctx.log(`otp delivery failed: ${e}`)); };
+  const kick = () => inBackground(deliverDue(ctx.db, ctx.clock, ctx.transport), (e) => ctx.log(`otp delivery failed: ${e}`));
 
   // Password guessing: 10 failures per identifier (or per IP) in 15 minutes, then wait.
   const failures = new Map<string, number[]>();

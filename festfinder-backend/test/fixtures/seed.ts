@@ -1,19 +1,20 @@
 /**
- * Demo data lifted from the design prototypes, so every screen shows the same content
- * the designs do. Accounts:
+ * Test fixture: the demo data lifted from the design prototypes (28 events around the
+ * 18–20 Sep 2026 weekend), so the integration and screen tests have every screen full.
+ * It is loaded into throwaway test databases only — never into Supabase. Accounts:
  *   attendee   minh@example.com     / festfinder123
  *   organiser  team@ravolution.vn   / ravolution2026
  *   admin      admin@festfinder.vn  / festfinder-admin
  */
-import type { Db, Queryable } from './index.ts';
-import { json, many, one } from './index.ts';
-import { hashPassword } from '../lib/crypto.ts';
-import { L, type Localized } from '../lib/i18n.ts';
-import { addDays, atVn } from '../lib/time.ts';
-import { sha256 } from '../lib/crypto.ts';
-import { appendAudit } from '../services/audit.ts';
-import { refreshDerived } from '../services/events.ts';
-import { assessRisk } from '../services/risk.ts';
+import type { Db, Queryable } from '../../src/db/index.ts';
+import { json, many, one } from '../../src/db/index.ts';
+import { hashPassword } from '../../src/lib/crypto.ts';
+import { L, type Localized } from '../../src/lib/i18n.ts';
+import { addDays, atVn } from '../../src/lib/time.ts';
+import { sha256 } from '../../src/lib/crypto.ts';
+import { appendAudit } from '../../src/services/audit.ts';
+import { refreshDerived } from '../../src/services/events.ts';
+import { assessRisk } from '../../src/services/risk.ts';
 
 const ART = {
   violetCyan: 'linear-gradient(135deg,#8C6BFF,#2AC4E8)',
@@ -217,13 +218,13 @@ const FAQ: [Localized, Localized][] = [
       'Cổng vào nằm trên đường Nguyễn Thiện Thành, Thủ Đức, cách Quận 1 khoảng 4 km. Bãi xe gần cổng thường đầy trước 18:00, nên đến sớm hoặc đi xe công nghệ sẽ chắc chắn hơn trong các đêm lễ hội.')],
 ];
 
-/** `password` replaces the three demo accounts' published passwords, for a public deployment. */
-export interface SeedOptions { volume: 'full' | 'small'; password?: string; log?: (m: string) => void }
+export interface SeedOptions { volume: 'full' | 'small'; log?: (m: string) => void }
 
 export async function seed(db: Db, now: Date, opts: SeedOptions) {
+  if (db.provider === 'supabase') throw new Error('The demo data is a test fixture and never goes into the Supabase database');
   const existing = await one<any>(db, 'select count(*)::int as n from users');
   if (existing.n > 0) {
-    opts.log?.('database already has users; skipping seed (run db:reset to start over)');
+    opts.log?.('database already has users; skipping seed');
     return { skipped: true };
   }
   const log = opts.log ?? (() => {});
@@ -231,8 +232,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
   const n = (x: number) => Math.max(1, Math.round(x * scale));
   const hours = (h: number) => new Date(now.getTime() - h * 3600_000);
 
-  const pw = (published: string) => opts.password ?? published;
-  const [adminHash, demoHash, orgHash] = await Promise.all([hashPassword(pw('festfinder-admin')), hashPassword(pw('festfinder123')), hashPassword(pw('ravolution2026'))]);
+  const [adminHash, demoHash, orgHash] = await Promise.all([hashPassword('festfinder-admin'), hashPassword('festfinder123'), hashPassword('ravolution2026')]);
 
   return db.tx(async (q) => {
     const ids = { org: {} as Record<string, string>, venue: {} as Record<string, string>, event: {} as Record<string, string>, friend: {} as Record<string, string> };

@@ -1,8 +1,14 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, normalize } from 'node:path';
+import type { Queryable } from '../db/index.ts';
 
-/** Where uploaded images live: local disk in development, object storage in production. */
+/**
+ * Where uploaded images live: Supabase Storage (over S3) when it is configured, otherwise the
+ * Supabase database itself. Local disk is for the embedded test database only.
+ */
 export interface Storage {
+  /** Short name for the startup log and /health. */
+  readonly kind: 's3' | 'database' | 'disk' | 'memory';
   put(key: string, data: Buffer, mime: string): Promise<string>;
   get(key: string): Promise<Buffer | null>;
 }
@@ -17,6 +23,7 @@ export interface S3Config {
 }
 
 export class LocalStorage implements Storage {
+  readonly kind = 'disk';
   private readonly dir: string;
   private readonly publicBaseUrl: string;
 
@@ -55,6 +62,7 @@ export class LocalStorage implements Storage {
  * development and tests never load it.
  */
 export class S3Storage implements Storage {
+  readonly kind = 's3';
   private readonly cfg: S3Config;
   private client: any = null;
 
@@ -105,7 +113,35 @@ export class S3Storage implements Storage {
   }
 }
 
+/**
+ * Images kept in the database, in `stored_files`, when no object storage is configured. Every
+ * instance reads the same rows, so an upload survives a cold start and shows up everywhere
+ * at once. The URL is a path on this API, the same on every deployment that shares the
+ * database; keys are content hashes, so a row never changes.
+ */
+export class DbStorage implements Storage {
+  readonly kind = 'database';
+  private readonly db: Queryable;
+
+  constructor(db: Queryable) {
+    this.db = db;
+  }
+
+  async put(key: string, data: Buffer, mime: string): Promise<string> {
+    await this.db.query(
+      `insert into stored_files (key, mime, bytes, data) values ($1, $2, $3, $4) on conflict (key) do nothing`,
+      [key, mime, data.length, data]);
+    return `/files/${key}`;
+  }
+
+  async get(key: string): Promise<Buffer | null> {
+    const { rows } = await this.db.query<{ data: Uint8Array }>('select data from stored_files where key = $1', [key]);
+    return rows[0] ? Buffer.from(rows[0].data) : null;
+  }
+}
+
 export class MemoryStorage implements Storage {
+  readonly kind = 'memory';
   readonly files = new Map<string, Buffer>();
   async put(key: string, data: Buffer) {
     this.files.set(key, data);

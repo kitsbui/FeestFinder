@@ -1,8 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 
 /**
- * A small API explorer at `/_console` for local development: click a request, see the JSON,
- * sign in as a demo account to try the organiser and admin endpoints. Not served in production.
+ * A small API explorer at `/_console` for local development: click a request, see the JSON.
+ * Requests carry the session of whoever signed in on /ops in the same browser. Not served
+ * in production.
  */
 const PAGE = `<!doctype html>
 <html lang="en">
@@ -21,6 +22,8 @@ const PAGE = `<!doctype html>
   .who { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:12px; color:var(--tx3); }
   button { font:inherit; cursor:pointer; border-radius:999px; border:1px solid var(--bd); background:transparent; color:var(--tx2); padding:5px 11px; font-size:12px; font-weight:600; }
   button:hover { border-color:var(--ac); color:var(--ach); }
+  a.pill { border-radius:999px; border:1px solid var(--bd); color:var(--tx2); padding:5px 11px; font-size:12px; font-weight:600; text-decoration:none; }
+  a.pill:hover { border-color:var(--ac); color:var(--ach); }
   button.on { background:rgba(42,196,232,.14); border-color:var(--ac); color:var(--ach); }
   main { display:grid; grid-template-columns:minmax(260px, 340px) 1fr; min-height:calc(100vh - 57px); }
   nav { border-right:1px solid var(--bd); overflow:auto; padding:10px 0 30px; }
@@ -46,10 +49,7 @@ const PAGE = `<!doctype html>
   <h1>Fest<span>Finder</span> API</h1>
   <div class="who">
     <span id="who">Signed out</span>
-    <button data-login="minh@example.com|festfinder123">Attendee</button>
-    <button data-login="team@ravolution.vn|ravolution2026">Organizer</button>
-    <button data-login="admin@festfinder.vn|festfinder-admin">Admin</button>
-    <button id="logout">Sign out</button>
+    <a class="pill" href="/ops" target="_blank" rel="noopener">Sign in on /ops</a>
     <button id="lang">EN</button>
   </div>
 </header>
@@ -61,7 +61,7 @@ const PAGE = `<!doctype html>
       <button id="send">Send</button>
       <span id="status" class="status">GET</span>
     </div>
-    <pre id="out"><div class="hint">Pick a request on the left, or type a path and press Send. Requests marked <span class="lock">sign in</span> need one of the demo accounts above. The full reference is in <code>docs/API.md</code>.</div></pre>
+    <pre id="out"><div class="hint">Pick a request on the left, or type a path and press Send. Requests marked <span class="lock">sign in</span> need an account: sign in on /ops in this browser, then reload. The full reference is in <code>docs/API.md</code>.</div></pre>
   </section>
 </main>
 <script>
@@ -71,14 +71,13 @@ const groups = [
     ['Tonight', '/events?time=tonight'],
     ['Search "thu duc"', '/events?q=thu%20duc&limit=10'],
     ['Free this month', '/events?time=month&price=free'],
-    ['Event detail: Ravolution', '/events/ravo'],
-    ['Event detail: HOZO', '/events/hozo'],
+    ['Event detail (first listed)', '/events/{event}'],
     ['Map search, District 7', '/events/map?bbox=106.70,10.70,106.75,10.75'],
     ['Hero stat cards', '/explore/stats?view=venues'],
-    ['Organiser profile', '/organizers/ravoent'],
+    ['Organiser profile (first listed)', '/organizers/{organizer}'],
     ['Featured shelves', '/shelves'],
     ['Artists', '/artists'],
-    ['Venues', '/venues?q=phu%20tho'],
+    ['Venues', '/venues'],
     ['SEO landing page', '/seo/landing/en/ho-chi-minh/free/this-weekend'],
     ['SEO landing (vi)', '/seo/landing/vi/ho-chi-minh/edm'],
     ['Sponsored card', '/ads?placement=feed'],
@@ -102,14 +101,14 @@ const groups = [
     ['Business profile', '/organizer/profile', 1],
     ['Inbox', '/organizer/inbox', 1],
     ['Notification bell', '/organizer/notifications', 1],
-    ['Ravolution: performance', '/organizer/events/{ravo}/performance', 1],
-    ['Ravolution: attendees', '/organizer/events/{ravo}/attendees', 1],
-    ['Ravolution: announcements', '/organizer/events/{ravo}/announcements', 1],
-    ['Ravolution: reach estimate', '/organizer/events/{ravo}/announcements/estimate?audience=saved&channels=push,zalo', 1],
-    ['Ravolution: door summary', '/door/events/{ravo}/summary', 1],
-    ['Ravolution: promos', '/organizer/events/{ravo}/promos', 1],
-    ['Ravolution: guests', '/organizer/events/{ravo}/guests', 1],
-    ['Ravolution: revenue & payouts', '/organizer/events/{ravo}/revenue', 1],
+    ['My first event: performance', '/organizer/events/{own}/performance', 1],
+    ['My first event: attendees', '/organizer/events/{own}/attendees', 1],
+    ['My first event: announcements', '/organizer/events/{own}/announcements', 1],
+    ['My first event: reach estimate', '/organizer/events/{own}/announcements/estimate?audience=saved&channels=push,zalo', 1],
+    ['My first event: door summary', '/door/events/{own}/summary', 1],
+    ['My first event: promos', '/organizer/events/{own}/promos', 1],
+    ['My first event: guests', '/organizer/events/{own}/guests', 1],
+    ['My first event: revenue & payouts', '/organizer/events/{own}/revenue', 1],
   ]],
   ['Admin (sign in)', [
     ['Tab counts', '/admin/counts', 1],
@@ -126,7 +125,7 @@ const groups = [
   ]],
 ];
 
-let token = null, lang = 'en', ravoId = null;
+let signedIn = false, lang = 'en';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
@@ -138,10 +137,19 @@ function highlight(json) {
   });
 }
 
+/** {event}, {organizer} and {own} stand for the first listing there is, read when needed. */
+const firsts = {
+  event: async () => ((await (await fetch('/events?time=all&limit=1')).json()).items || [])[0]?.id,
+  organizer: async () => ((await (await fetch('/events?time=all&limit=1')).json()).items || [])[0]?.organizer?.slug,
+  own: async () => ((await (await fetch('/organizer/events')).json()).items || [])[0]?.id,
+};
 async function resolve(path) {
-  if (!path.includes('{ravo}')) return path;
-  if (!ravoId) ravoId = (await (await fetch('/events/ravo')).json()).id;
-  return path.replace('{ravo}', ravoId);
+  for (const [key, find] of Object.entries(firsts)) {
+    if (!path.includes('{' + key + '}')) continue;
+    const value = await find().catch(() => null);
+    path = path.replace('{' + key + '}', value || 'none-yet');
+  }
+  return path;
 }
 
 async function send(path) {
@@ -151,7 +159,7 @@ async function send(path) {
   $('status').textContent = 'GET …';
   const t0 = performance.now();
   try {
-    const res = await fetch(path, { headers: { 'x-lang': lang, ...(token ? { authorization: 'Bearer ' + token } : {}) } });
+    const res = await fetch(path, { headers: { 'x-lang': lang } });
     const ms = Math.round(performance.now() - t0);
     const type = res.headers.get('content-type') || '';
     const body = type.includes('json') ? JSON.stringify(await res.json(), null, 2) : await res.text();
@@ -168,7 +176,7 @@ async function send(path) {
 function renderNav() {
   $('nav').innerHTML = groups.map(([title, items]) =>
     '<h2>' + title + '</h2>' + items.map(([label, path, auth]) =>
-      '<a href="#" data-path="' + path + '">' + label + (auth && !token ? ' <span class="lock">sign in</span>' : '') + '<small>' + esc(path) + '</small></a>').join('')).join('');
+      '<a href="#" data-path="' + path + '">' + label + (auth && !signedIn ? ' <span class="lock">sign in</span>' : '') + '<small>' + esc(path) + '</small></a>').join('')).join('');
 }
 
 $('nav').addEventListener('click', (e) => {
@@ -182,22 +190,13 @@ $('nav').addEventListener('click', (e) => {
 $('send').onclick = () => send($('url').value || '/health');
 $('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') send($('url').value); });
 
-document.querySelectorAll('[data-login]').forEach((btn) => btn.onclick = async () => {
-  const [identifier, password] = btn.dataset.login.split('|');
-  const res = await fetch('/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ identifier, password }) });
-  const body = await res.json();
-  if (!res.ok) { $('who').textContent = body.error?.message || 'Sign-in failed'; return; }
-  token = body.token;
-  document.querySelectorAll('[data-login]').forEach((b) => b.classList.toggle('on', b === btn));
-  $('who').textContent = 'Signed in as ' + (body.user.name || identifier);
+fetch('/auth/session').then((r) => r.json()).then((s) => {
+  const u = s && s.user;
+  if (!u) return;
+  signedIn = true;
+  $('who').textContent = 'Signed in as ' + (u.name || u.email || u.phone) + (u.role === 'admin' ? ' (admin)' : '');
   renderNav();
-});
-$('logout').onclick = () => {
-  token = null;
-  document.querySelectorAll('[data-login]').forEach((b) => b.classList.remove('on'));
-  $('who').textContent = 'Signed out';
-  renderNav();
-};
+}).catch(() => {});
 $('lang').onclick = () => { lang = lang === 'en' ? 'vi' : 'en'; $('lang').textContent = lang.toUpperCase(); };
 
 renderNav();

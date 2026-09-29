@@ -54,9 +54,10 @@ export default async function uploadRoutes(app: FastifyInstance) {
     if (!/^(cover|logo|avatar|recap)\/[0-9a-f]{2}\/[0-9a-f]{64}\.(png|jpg|webp)$/.test(key)) throw notFound();
     const data = await ctx.storage.get(key);
     if (!data) throw notFound();
+    // Content-addressed, so browsers and the CDN in front of the API keep it for good.
     return reply
       .type(MIME_BY_EXT[key.split('.').pop()!])
-      .header('cache-control', 'public, max-age=31536000, immutable')
+      .header('cache-control', 'public, max-age=31536000, s-maxage=31536000, immutable')
       .send(data);
   });
 }

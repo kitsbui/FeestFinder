@@ -56,7 +56,7 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "cd festfinder-backend && PORT=4300 PUBLIC_BASE_URL=http://localhost:4300 PGLITE_DIR=./.data/pglite-ops UPLOAD_DIR=./.data/uploads-ops JOBS_ENABLED=false LINK_CHECKS_ENABLED=false exec node --env-file-if-exists=.env --watch src/server.ts"
+        "cd festfinder-backend && PORT=4300 PUBLIC_BASE_URL=http://localhost:4300 LINK_CHECKS_ENABLED=false exec node --env-file-if-exists=.env --watch src/server.ts"
       ],
       "port": 4300
     }

@@ -4,7 +4,7 @@ import { many, one } from '../db/index.ts';
 import { badRequest, conflict, notFound } from '../lib/errors.ts';
 import { fill, GENRES, L, NOTIFICATION_TOPICS, QUIET_HOURS_RULE } from '../lib/i18n.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
-import { limit, parse, uuid } from '../lib/validate.ts';
+import { imageUrl, limit, parse, uuid } from '../lib/validate.ts';
 import { BANKS } from '../lib/vietqr.ts';
 import { requireUser } from '../http/guards.ts';
 import { decodeCursor, page } from '../http/sql.ts';
@@ -12,6 +12,7 @@ import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
 import { findClashes } from '../presenters/timetable.ts';
 import { loadPrefs } from '../services/notify.ts';
 import { deliverDue } from '../services/messaging.ts';
+import { inBackground } from '../lib/background.ts';
 import { checkOtp, identifierFor, publicUser, startOtp } from './auth.ts';
 
 const INTERESTS = ['EDM', 'Pop', 'Indie', 'Hip-Hop', 'Jazz', 'Theatre', 'Art', 'Food', 'Markets', 'Nightlife', 'Culture'] as const;
@@ -51,7 +52,7 @@ export default async function meRoutes(app: FastifyInstance) {
       email: z.string().max(200).optional(),
       zalo: z.string().max(30).optional(),
       city: z.string().max(80).optional(),
-      photoUrl: z.string().url().nullable().optional(),
+      photoUrl: imageUrl.nullable().optional(),
       locale: z.enum(['en', 'vi']).optional(),
       interests: z.array(z.enum(INTERESTS)).max(INTERESTS.length).optional(),
       birthYear: z.number().int().min(1900).max(2030).nullable().optional(),
@@ -404,7 +405,7 @@ export default async function meRoutes(app: FastifyInstance) {
     const { phone } = parse(z.object({ phone: z.string().min(8).max(30) }), req.body);
     const identifier = identifierFor(provider, phone);
     const out = await ctx.db.tx((q) => startOtp(ctx, q, { purpose: 'connect', channel: provider, identifier, userId: s.user.id }));
-    deliverDue(ctx.db, ctx.clock, ctx.transport).catch(() => {});
+    inBackground(deliverDue(ctx.db, ctx.clock, ctx.transport));
     return out;
   });
 

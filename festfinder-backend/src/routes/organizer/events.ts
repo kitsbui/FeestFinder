@@ -9,7 +9,7 @@ import { isEmail, normalizeEmail, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { vnd } from '../../lib/format.ts';
 import { atVn, toMinutes, addDays, vnDate } from '../../lib/time.ts';
-import { dateStr, localized, parse, timeStr, uuid } from '../../lib/validate.ts';
+import { dateStr, imageUrl, localized, parse, timeStr, uuid } from '../../lib/validate.ts';
 import { BANKS } from '../../lib/vietqr.ts';
 import { requireOrganizer, requireOwnEvent } from '../../http/guards.ts';
 import { appendAudit } from '../../services/audit.ts';
@@ -17,6 +17,7 @@ import { draftFacts, refreshDerived } from '../../services/events.ts';
 import { qualityScore } from '../../services/quality.ts';
 import { assessRisk } from '../../services/risk.ts';
 import { refreshSoldOut } from '../../services/tickets.ts';
+import { inBackground } from '../../lib/background.ts';
 
 export const STATUS_LABEL: Record<string, Localized> = {
   draft: L('Draft', 'Nháp'),
@@ -60,8 +61,8 @@ export const DraftInput = z.object({
   title: z.string().max(120),
   genre: z.enum(GENRES).nullable(),
   description: localized,
-  logoUrl: z.string().url().nullable(),
-  coverUrl: z.string().url().nullable(),
+  logoUrl: imageUrl.nullable(),
+  coverUrl: imageUrl.nullable(),
   startsOn: dateStr.nullable(),
   endsOn: dateStr.nullable(),
   startTime: timeStr.nullable(),
@@ -138,7 +139,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const org = await requireOrganizer(ctx, req);
     const body = parse(z.object({
       name: z.string().max(80), type: z.enum(['promoter', 'venue', 'company', 'agency', 'public']), bio: localized,
-      logoUrl: z.string().url().nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
+      logoUrl: imageUrl.nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
       taxCode: z.string().max(20), address: z.string().max(240), email: z.string().max(200), hotline: z.string().max(30),
       zalo: z.string().max(80), contactName: z.string().max(80), contactRole: z.string().max(80),
     }).partial(), req.body);
@@ -328,7 +329,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       });
     });
     if (ev.ticket_url && ev.entry_mode === 'paid' && ctx.config.linkChecksEnabled) {
-      checkTicketLink(ctx, ev.id, ev.ticket_url).catch((e) => ctx.log(`link check failed: ${e}`));
+      inBackground(checkTicketLink(ctx, ev.id, ev.ticket_url), (e) => ctx.log(`link check failed: ${e}`));
     }
     const updated = await one<any>(ctx.db, 'select * from events where id = $1', [ev.id]);
     return { ...presentDraft(updated), message: L('Submitted for review · usually live within 2 hours', 'Đã gửi kiểm duyệt · thường xong trong 2 giờ') };

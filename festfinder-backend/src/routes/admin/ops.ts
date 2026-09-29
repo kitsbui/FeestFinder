@@ -9,7 +9,7 @@ import { initialsOf, isEmail, normalizeEmail, searchNormalize, slugify } from '.
 import { randomCode } from '../../lib/crypto.ts';
 import { toCsv } from '../../lib/csv.ts';
 import { addDays, atVn, monthEnd, vnDate, weekendRange } from '../../lib/time.ts';
-import { bool, csv, dateStr, limit, localized, parse, uuid } from '../../lib/validate.ts';
+import { bool, csv, dateStr, imageUrl, limit, localized, parse, uuid } from '../../lib/validate.ts';
 import { BANKS } from '../../lib/vietqr.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { SqlParams } from '../../http/sql.ts';
@@ -675,7 +675,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
 
   const ProfileInput = z.object({
     name: z.string().trim().min(2).max(80), type: z.enum(['promoter', 'venue', 'company', 'agency', 'public']), bio: localized,
-    logoUrl: z.string().url().nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
+    logoUrl: imageUrl.nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
     taxCode: z.string().max(20), address: z.string().max(240), email: z.string().max(200), hotline: z.string().max(30),
     zalo: z.string().max(80), contactName: z.string().max(80), contactRole: z.string().max(80),
   }).partial();
