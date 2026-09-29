@@ -5,7 +5,7 @@
   "description": "API for FeestFinder: public web, attendee app, organizer back office and internal admin",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch src/server.ts",
