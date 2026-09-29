@@ -6,14 +6,14 @@ The screens look exactly like the design: they are compiled from the same templa
 
 ## Run it
 
-The API has to be running (see [`../festfinder-backend`](../festfinder-backend/README.md)):
+The API has to be running, on the staging Supabase database in its `.env` (see [`../festfinder-backend`](../festfinder-backend/README.md)):
 
 ```bash
 npm install --prefix festfinder-backend
 ```
 
 ```bash
-FF_NOW=2026-09-14T10:00:00+07:00 npm run dev --prefix festfinder-backend
+npm run dev --prefix festfinder-backend
 ```
 
 Then, in a second terminal:
@@ -69,32 +69,43 @@ public/sw.js                 the service worker
 
 **What is TypeScript.** Everything written for this app — the runtime, pages, SEO, PWA — is strict TypeScript, and the generated views typecheck with it. The screens' own logic and loaders (`festfinder-frontend/pages/*/logic.js`, `data.js`) stay JavaScript and are bundled as they are, so that the design runtime and this app run the very same files.
 
-## Design system: Midnight Glass
+## Design system: Bảng phấn (Chalkboard)
 
-Both fronts share one stylesheet, [`festfinder-frontend/ui/theme.css`](../festfinder-frontend/ui/theme.css). Every template links it, and so does the Next layout. It holds the tokens, the atmosphere, the components and the motion. The look follows the Authkit reference: a near-black canvas, glass surfaces lit from below, and text stepping down from ice to fog. The only chromatic accent is violet.
+Both fronts share one stylesheet, [`festfinder-frontend/ui/theme.css`](../festfinder-frontend/ui/theme.css). Every template links it, and so does the Next layout. It holds the tokens, the atmosphere, the components and the motion. The look follows the GSAP reference on refero (tokens.json, DESIGN.md): a near-black board (`#0e100f`), warm cream chalk (`#fffce1`) for type and outlines, hairlines in `#42433d`, and soft 3D shapes lit from inside instead of drop shadows. It replaced Midnight Glass on 2026-09-29; the class names stayed, so every screen and `/ops` picked it up.
 
-- **Type.** The reference faces are commercial, so each has a documented stand-in with Vietnamese support:
-  - Inter replaces Untitled Sans for body and UI.
-  - Space Grotesk 500 replaces aeonikPro for display.
-  - JetBrains Mono replaces dotDigital for the tracked caps eyebrows.
-- **Colour.** Violet (`.ff-cta`) marks the one action a screen exists for: *Get tickets*, *Sign up*, *Sign in*, *New event*. Everything else is monochrome glass. Ember and teal appear only as status.
-- **Shape.** Buttons are pills, cards and modals are 16px, inputs are 6px, and icon containers are circles.
+- **Type.** One face, Be Vietnam Pro (400–700), stands in for the reference's commercial Mori and carries Vietnamese. Headlines are 600 with tight tracking; section eyebrows are curly-bracket annotations, `{ like this }`, in sentence case. No text is set in capitals.
+- **Colour is genre.** Lễ hội (Festival) orange `#ff8709`, EDM blue `#00bae2`, Nhạc sống (indie, hip-hop, pop, jazz) lilac `#9d95ff`, Văn hoá (food, culture) pink `#fec5fb`. FeestFinder's green `#0ae448` / `#abff84` is the brand and what is free. `FF.tone`, `FF.genreHue` and `FF.genreArt` (in `ui/ff-client.js` and `src/runtime/ff.ts`) map a genre to them, and `FF.artOf` gives an event without a cover its genre's art. Errors use a warm coral, `#ff6b5e`, the only colour outside the reference.
+- **Actions.** Every button is a pill. The one action a screen exists for (`.ff-cta`: *Get tickets*, *Sign up*, *New event*) is a ghost pill with a flowing green stroke; everything else (`.ff-ghost`) is outlined in cream.
+- **Shape.** Cards and modals are 8px, buttons and chips are pills, icon containers are circles.
 
 | Class | What it does |
 | --- | --- |
-| `ff-atmos` (+ `ff-aurora`, `ff-grain`) | The room: a blueprint grid fading from the top, a conic spotlight beam, a low aurora and film grain |
-| `ff-skywash`, `ff-shine`, `ff-headline` | The display gradient; a band of light across muted text; letters assembling from blur |
-| `ff-eyebrow` (`--lines`, `--lead`) | Mono caps section markers |
-| `ff-glass`, `ff-deep` | Card and modal elevation (inset frost edge, inner glow, cool drop) |
-| `ff-spot`, `ff-lift` | A light and a brighter rim that follow the pointer; a small lift on hover |
-| `ff-art`, `ff-poster` | Event art seen through glass; the event's name etched huge into its cover |
+| `ff-atmos` (+ `ff-aurora`, `ff-grain`) | Genre shapes at the edges of the page — an orange orb, a blue capsule, a lilac ring — and chalk grain. The studio and console calm them. |
+| `ff-skywash` / `ff-grad`, `ff-shine`, `ff-headline` | The brand gradient moving across display words; light passing across cream; headlines rising out of a mask |
+| `ff-eyebrow` (`--lines`, `--lead`), `ff-brace` | Curly-bracket annotations |
+| `ff-glass`, `ff-deep` | Panels one step off the board; modals with a hairline |
+| `ff-spot`, `ff-lift` | A lime light and a cream rim that follow the pointer; a lift on hover |
+| `ff-art`, `ff-poster` | Event art at full colour with a ring, a sphere and a key light drawn over it; the event's name outlined huge across it |
+| `ff-sh` (`--orb`, `--pill`, `--dome`, `--star`, `--ring`, `--liquid`) with `ff-t-fest` / `-edm` / `-live` / `-culture` / `-brand` | Decorative 3D shapes in a genre's colours, with `ff-m-float`, `ff-m-spin`, `ff-m-orbit` |
+| `ff-marquee` (+ `__track`, `--rev`), `ff-outline` | A band of words running sideways; outlined type |
 | `ff-cta`, `ff-ghost`, `ff-press`, `ff-input`, `ff-label` | Actions and form fields |
-| `ff-in` (+ `--ff-i`), `ff-screen` | Plates settling in one after another; each screen's entrance |
+| `ff-in` (+ `--ff-i`), `ff-screen` | Plates rising in one after another; each screen's entrance |
 | `ff-l-*` | Layout hooks that fold the public site into one column below 900px |
+| `ff-l-app*` | The attendee app on real devices (below) |
+
+**The attendee app on devices.** The app template draws one phone frame, and every screen, panel and sheet inside it is `position:absolute; inset:0`. The theme pins its stage (`ff-l-appstage`) to the viewport, pads it by the safe areas (notch, Dynamic Island, home indicator, landscape cut-outs), and lets the frame (`ff-l-appframe`) fill what is left:
+
+- **Under 600px** (phones, folded foldables, down to 280px covers): edge to edge. Below 340px the wordmark shrinks and the city drops to a second line.
+- **600px and up** (tablets, unfolded foldables, phones on their side): a full-height column of at most 560px. On short screens the event cover shrinks.
+- **A desktop with a mouse:** the phone card, centred and fitted to the window.
+- **Dual screens:** spanning the hinge (`horizontal-viewport-segments: 2`, Surface Duo and foldables in Chrome), the app takes the first screen. In tabletop posture (`vertical-viewport-segments: 2`) it takes the top half.
+- **Viewport and keyboard.** `/app` sets `viewport-fit=cover` and `interactive-widget=resizes-content`, so the keyboard shrinks the layout rather than covering fields. On touch screens, text fields are 16px, so iOS does not zoom into them.
+- **Home screen.** `/app` carries the home-screen tags (black-translucent status bar). The manifest allows any orientation.
+- **Touch.** Hover styles only apply where a pointer can hover (`@media (hover: hover)`, in `support.js` and `compile-screens.ts` alike), so a tap never leaves one stuck.
 
 - **Motion.** Every animation uses the tokens' easing and stops under `prefers-reduced-motion`.
 - **Pointer light.** It comes from one delegated listener: `ui/ff-client.js` on the design runtime, `src/runtime/motion.ts` here.
-- **Contrast.** Copy colours stay at or above 4.5:1 on the canvas, except the quietest disabled labels.
+- **Contrast.** Copy stays at or above 4.5:1 on the board: helper text is `#a5a493`, the quietest `#8c8b7d` (the reference's `#7c7c6f` is kept for icons and disabled labels).
 
 ## Brand
 
@@ -102,13 +113,13 @@ The product is **FeestFinder** (renamed from FestFinder on 2026-09-23). Code nam
 
 | File | Use |
 | --- | --- |
-| [`ff-logo.svg`](../festfinder-frontend/ui/assets/ff-logo.svg) | The wordmark: skywash letters, violet flags and sparkles. Headers and sign-in screens, on dark backgrounds only. Size it by height (26px in headers, 22px in the app); its width is 5.77× that. |
+| [`ff-logo.svg`](../festfinder-frontend/ui/assets/ff-logo.svg) | The wordmark: cream letters, green flags and sparkles. Headers and sign-in screens, on dark backgrounds only. Size it by height (26px in headers, 22px in the app); its width is 5.77× that. |
 | [`ff-mark.svg`](../festfinder-frontend/ui/assets/ff-mark.svg) | The flag F on its own, where the wordmark does not fit: sign-in sheets, the share card. |
-| [`ff-appicon.svg`](../festfinder-frontend/ui/assets/ff-appicon.svg) | The mark on its midnight tile: the app icon, also shown in notification previews. |
-| `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | Favicons for both fronts. The SVG follows the browser's theme: ink on light, skywash on dark. The ICO and the touch icon use the tile. |
+| [`ff-appicon.svg`](../festfinder-frontend/ui/assets/ff-appicon.svg) | The mark on its board-black tile: the app icon, also shown in notification previews. |
+| `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | Favicons for both fronts. The SVG follows the browser's theme: ink on light, cream on dark. The ICO and the touch icon use the tile. |
 | `public/icons/app-icon-*.png`, `notification-badge.png` | The installed app's icons. The maskable one is full-bleed with the mark inside the safe zone. The badge is the white mark that Android shows in the status bar. |
 
-The SVGs are the vectors from the logo pack (`FeestFinder_logo_pack_2`), cropped to the artwork, with coordinates rounded and each outline within 0.15px of the original at any size the screens use. The PNGs are rendered from them.
+The SVGs are the vectors from the logo pack (`FeestFinder_logo_pack_2`), cropped to the artwork, with coordinates rounded and each outline within 0.15px of the original at any size the screens use. The PNGs are rendered from them. On 2026-09-29 they were recoloured for the Chalkboard system (letters `#fffce1`, flags `#0ae448`, tile `#0e100f`) and the PNGs re-rendered with Playwright's Chromium.
 
 ## Search engines
 

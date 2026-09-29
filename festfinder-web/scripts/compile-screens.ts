@@ -312,7 +312,9 @@ function pseudoCss(ctx: Ctx): string {
     const pseudo = k.slice(0, i);
     const css = k.slice(i + 1);
     const isElement = pseudo === 'before' || pseudo === 'after';
-    rules.push(`.${cls}${isElement ? '::' : ':'}${pseudo}{${isElement ? css : importantify(css)}}`);
+    const rule = `.${cls}${isElement ? '::' : ':'}${pseudo}{${isElement ? css : importantify(css)}}`;
+    // As the runtime does: hover only where a pointer hovers, so a tap leaves nothing stuck.
+    rules.push(pseudo === 'hover' ? `@media (hover: hover){${rule}}` : rule);
   }
   return rules.join('\n') + '\n';
 }

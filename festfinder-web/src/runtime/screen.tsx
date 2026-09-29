@@ -31,6 +31,8 @@ export function ScreenHost({ surface, children }: { surface: SurfaceModules; chi
 
   useEffect(() => {
     trackSpotlights();
+    // The theme reads it, as on the design runtime's shells (the back offices calm their shapes).
+    document.body.dataset.surface = surface.name;
     let live = true;
     (async () => {
       surface.setup?.(FF);

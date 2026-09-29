@@ -58,17 +58,23 @@ FF.admShelves = (cmp) => FF.once('shelves', async () => {
 
 /** Brand enquiries and the campaigns already running. */
 FF.admAds = (cmp) => FF.once('ads', async () => {
-  const [ads, genres] = await Promise.all([
+  const [ads, genres, opts] = await Promise.all([
     FF.maybe(FF.get('/admin/ads'), null),
-    FF.maybe(FF.get('/genres'), null)
+    FF.maybe(FF.get('/genres'), null),
+    FF.maybe(FF.get('/meta/form-options'), null)
   ]);
   if (genres) meta().genres = genres.items.map(x => x.genre);
+  // Districts to target: the same list every form picks from.
+  if (opts) meta().areas = opts.areaGroups.reduce((all, grp) => all.concat(grp.areas), []);
   if (ads) {
     meta().ads = ads;
+    const first = ads.inquiries[0];
+    const places = {};
+    (first ? first.placements : []).forEach(k => { places[k] = true; });
     cmp.setState({
       inquiries: ads.inquiries, campaigns: ads.campaigns,
-      adsSel: ads.inquiries.length ? ads.inquiries[0].id : null,
-      setup: Object.assign({}, cmp.state.setup, { rates: Object.assign({}, ads.rates) })
+      adsSel: first ? first.id : null,
+      setup: Object.assign({}, cmp.state.setup, { places, rates: Object.assign({}, ads.rates) })
     });
   }
   return ads;

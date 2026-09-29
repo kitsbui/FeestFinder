@@ -253,7 +253,7 @@ export function Review({ rest }) {
     h('div', { className: 'op-filterbar' },
       h('div', { className: 'op-search' }, Icon('magnifying-glass'), h('input', { value: q, onChange: (e) => setQ(e.target.value), placeholder: t('Tìm tên tin, nhà tổ chức…', 'Search listing, organizer…') })),
       h('div', { className: 'op-filters' },
-        h(FilterSelect, { label: t('Rủi ro', 'Risk'), icon: 'shield-warning', value: risk, onChange: setRisk, allLabel: t('Mọi mức', 'Any'), options: [{ value: 'high', label: t('Cao', 'High'), dot: '#F4A3A3' }, { value: 'medium', label: t('Vừa', 'Medium'), dot: '#F0A07F' }, { value: 'low', label: t('Thấp', 'Low'), dot: '#6CC7B6' }] }),
+        h(FilterSelect, { label: t('Rủi ro', 'Risk'), icon: 'shield-warning', value: risk, onChange: setRisk, allLabel: t('Mọi mức', 'Any'), options: [{ value: 'high', label: t('Cao', 'High'), dot: '#FF8A7A' }, { value: 'medium', label: t('Vừa', 'Medium'), dot: '#FF8709' }, { value: 'low', label: t('Thấp', 'Low'), dot: '#0AE448' }] }),
         h(FilterSelect, { label: t('Cờ', 'Flag'), icon: 'flag', value: flag, onChange: setFlag, allLabel: t('Mọi loại', 'Any'), options: flagOptions }),
         h(FilterSelect, { label: t('Thể loại', 'Genre'), icon: 'music-notes', multi: true, value: genres, onChange: (v) => setGenre(v.join(',')), options: genreOptions().map((g) => ({ ...g, count: items.filter((i) => i.genre === g.value).length })) }),
         h(FilterSelect, { label: t('Khu vực', 'District'), icon: 'map-trifold', multi: true, value: areas, onChange: (v) => setArea(v.join('|')), options: areaOptions().map((a) => ({ ...a, count: items.filter((i) => i.area === a.value).length })) }),

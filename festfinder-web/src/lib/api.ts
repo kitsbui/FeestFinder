@@ -163,7 +163,8 @@ export function eventJsonLd(e: EventDetail, url: string) {
     endDate: e.endsAt ?? undefined,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    image: e.coverUrl ? [e.coverUrl] : undefined,
+    // Images kept in the API's database have a path on this site, not a full URL.
+    image: e.coverUrl ? [new URL(e.coverUrl, SITE_URL).href] : undefined,
     url,
     isAccessibleForFree: e.entryMode === 'free',
     location: {

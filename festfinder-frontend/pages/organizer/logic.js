@@ -43,7 +43,7 @@ const S = {
   livePreview:{en:'Live preview — how it looks in the feed',vi:'Xem trước — thẻ hiện trong feed thế nào'},
   previewNote:{en:'This is the real feed card component. What you type here is what people see.',vi:'Đây chính là component thẻ trong feed. Bạn gõ gì thì người dùng thấy đúng như vậy.'},
   dashKicker:{en:'Organizer dashboard',vi:'Bảng điều khiển nhà tổ chức'},
-  dashTitle:{en:'Ravolution · 4 listings',vi:'Ravolution · 4 sự kiện'},
+  dashTitle:{en:'Listings',vi:'Sự kiện'},
   newEvent:{en:'New event',vi:'Sự kiện mới'},
   yourEvents:{en:'Your events',vi:'Sự kiện của bạn'},
   views:{en:'views',vi:'lượt xem'}, saves:{en:'saves',vi:'lượt lưu'}, clicks:{en:'ticket clicks',vi:'lượt bấm mua vé'},
@@ -96,7 +96,7 @@ const S = {
   bizErrTax:{en:'A tax code is 10 to 14 digits',vi:'Mã số thuế gồm 10 đến 14 số'},
   soonReset:{en:'Reset link sent to your email',vi:'Đã gửi liên kết đặt lại qua email'},
   soonSignup:{en:'Organizer sign-up opens in the next round',vi:'Phần tạo tài khoản sẽ có ở vòng sau'},
-  welcome:{en:'Signed in as Ravolution',vi:'Đã đăng nhập với Ravolution'},
+  welcome:{en:'Signed in',vi:'Đã đăng nhập'},
   adminKicker:{en:'Admin · Moderation',vi:'Quản trị · Kiểm duyệt'},
   adminTitle:{en:'Submission queue',vi:'Hàng chờ kiểm duyệt'},
   approve:{en:'Approve',vi:'Duyệt'},
@@ -166,7 +166,6 @@ const S2 = {
 const GENRES = ['EDM','Festival','Indie','Hip-Hop','Pop','Jazz','Food','Culture'];
 const ORG = (FF.data.org || { authed:false });
 const VENUES = (ORG.venues || []).map(v => ({ id:v.id, name:v.name, addr:(v.address || '') + (v.area ? ', ' + v.area : '') }));
-const ARTS = ['linear-gradient(135deg,#7A55F6,#B6D9FC)','linear-gradient(135deg,#3159D6,#7A55F6)','linear-gradient(135deg,#F0A07F,#E46D4C)','linear-gradient(135deg,#B6D9FC,#269684)'];
 
 const SCREENS = { 'Dashboard':'dash', 'Attendees':'guests', 'Announcements':'announce', 'Check-in':'door', 'Promo codes':'promos', 'Revenue':'money', 'Inbox':'inbox' };
 
@@ -206,7 +205,7 @@ function short(n, vi) {
 function toEvent(e) {
   return {
     id:e.id, slug:e.slug, title:e.title, mon:e.mon, day:e.day,
-    art: e.coverUrl ? 'url("' + e.coverUrl + '") center/cover no-repeat' : e.art,
+    art: FF.artOf(e),
     live: e.status === 'live', status:e.statusLabel, meta:e.meta,
     views:{ en:cnum(e.views, false), vi:cnum(e.views, true) },
     saves:{ en:cnum(e.saves, false), vi:cnum(e.saves, true) },
@@ -246,26 +245,26 @@ function applyOrg(d) {
 applyOrg(ORG);
 /** Dashboard KPI chrome, keyed by what /organizer/dashboard returns. */
 const KPI = {
-  views:        { label:{ en:'Views', vi:'Lượt xem' }, icon:'ph-bold ph-eye', color:'#B6D9FC' },
-  saves:        { label:{ en:'Saves', vi:'Lượt lưu' }, icon:'ph-fill ph-heart', color:'#9D84F8' },
-  ticketClicks: { label:{ en:'Ticket clicks', vi:'Bấm mua vé' }, icon:'ph-bold ph-ticket', color:'#269684' },
-  inReview:     { label:{ en:'In review', vi:'Đang chờ duyệt' }, icon:'ph-bold ph-hourglass-high', color:'#F0A07F' }
+  views:        { label:{ en:'Views', vi:'Lượt xem' }, icon:'ph-bold ph-eye', color:'#ABFF84' },
+  saves:        { label:{ en:'Saves', vi:'Lượt lưu' }, icon:'ph-fill ph-heart', color:'#ABFF84' },
+  ticketClicks: { label:{ en:'Ticket clicks', vi:'Bấm mua vé' }, icon:'ph-bold ph-ticket', color:'#0AE448' },
+  inReview:     { label:{ en:'In review', vi:'Đang chờ duyệt' }, icon:'ph-bold ph-hourglass-high', color:'#FF8709' }
 };
 const TODO = {
-  image:   { icon:'ph-bold ph-image', color:'#B6D9FC' },
-  lineup:  { icon:'ph-bold ph-megaphone', color:'#9D84F8' },
-  price:   { icon:'ph-bold ph-currency-circle-dollar', color:'#269684' },
-  venue:   { icon:'ph-bold ph-map-pin-line', color:'#F0A07F' },
-  tickets: { icon:'ph-bold ph-ticket', color:'#F0A07F' },
-  reply:   { icon:'ph-bold ph-chat-circle-text', color:'#6FB0F0' }
+  image:   { icon:'ph-bold ph-image', color:'#ABFF84' },
+  lineup:  { icon:'ph-bold ph-megaphone', color:'#ABFF84' },
+  price:   { icon:'ph-bold ph-currency-circle-dollar', color:'#0AE448' },
+  venue:   { icon:'ph-bold ph-map-pin-line', color:'#FF8709' },
+  tickets: { icon:'ph-bold ph-ticket', color:'#FF8709' },
+  reply:   { icon:'ph-bold ph-chat-circle-text', color:'#00BAE2' }
 };
 const KIND = { valid:'ok', duplicate:'dup', invalid:'bad' };
 const PAYOUT = {
-  paid:      { label:{ en:'Paid', vi:'Đã chuyển' }, icon:'ph-fill ph-check-circle', fg:'#6CC7B6', bg:'rgba(38,150,132,.14)', bd:'rgba(38,150,132,.45)' },
-  available: { label:{ en:'Available', vi:'Có thể rút' }, icon:'ph-fill ph-check-circle', fg:'#6CC7B6', bg:'rgba(38,150,132,.14)', bd:'rgba(38,150,132,.45)' },
-  scheduled: { label:{ en:'Scheduled', vi:'Đang chờ' }, icon:'ph-bold ph-clock-countdown', fg:'#D8ECF8', bg:'rgba(182,217,252,.12)', bd:'rgba(182,217,252,.4)' },
-  held:      { label:{ en:'Held', vi:'Đang giữ' }, icon:'ph-bold ph-lock-simple', fg:'#F0A07F', bg:'rgba(240,160,127,.12)', bd:'rgba(240,160,127,.4)' },
-  released:  { label:{ en:'Released', vi:'Đã giải phóng' }, icon:'ph-fill ph-check-circle', fg:'#6CC7B6', bg:'rgba(38,150,132,.14)', bd:'rgba(38,150,132,.45)' }
+  paid:      { label:{ en:'Paid', vi:'Đã chuyển' }, icon:'ph-fill ph-check-circle', fg:'#0AE448', bg:'rgba(10,228,72,.14)', bd:'rgba(10,228,72,.45)' },
+  available: { label:{ en:'Available', vi:'Có thể rút' }, icon:'ph-fill ph-check-circle', fg:'#0AE448', bg:'rgba(10,228,72,.14)', bd:'rgba(10,228,72,.45)' },
+  scheduled: { label:{ en:'Scheduled', vi:'Đang chờ' }, icon:'ph-bold ph-clock-countdown', fg:'#FFFCE1', bg:'rgba(171,255,132,.12)', bd:'rgba(171,255,132,.4)' },
+  held:      { label:{ en:'Held', vi:'Đang giữ' }, icon:'ph-bold ph-lock-simple', fg:'#FF8709', bg:'rgba(255,135,9,.12)', bd:'rgba(255,135,9,.4)' },
+  released:  { label:{ en:'Released', vi:'Đã giải phóng' }, icon:'ph-fill ph-check-circle', fg:'#0AE448', bg:'rgba(10,228,72,.14)', bd:'rgba(10,228,72,.45)' }
 };
 
 /* Shared with the preload below, which needs them before this logic is evaluated. */
@@ -329,11 +328,11 @@ const SCREEN_ROUTE = { dash: '', wizard: 'new', guests: 'attendees', announce: '
   door: 'door', promos: 'promos', money: 'revenue', inbox: 'inbox' };
 
 const NK = {
-  reject:  { icon:'ph-fill ph-warning-circle', color:'#E46D4C', tint:'rgba(228,109,76,.14)' },
-  tickets: { icon:'ph-fill ph-ticket',         color:'#F0A07F', tint:'rgba(240,160,127,.14)' },
-  payout:  { icon:'ph-fill ph-bank',           color:'#6FB0F0', tint:'rgba(2,125,234,.14)' },
-  live:    { icon:'ph-fill ph-check-circle',   color:'#B6D9FC', tint:'rgba(182,217,252,.13)' },
-  crew:    { icon:'ph-fill ph-users-three',    color:'#9D84F8', tint:'rgba(102,58,243,.14)' }
+  reject:  { icon:'ph-fill ph-warning-circle', color:'#FF8709', tint:'rgba(255,135,9,.14)' },
+  tickets: { icon:'ph-fill ph-ticket',         color:'#FF8709', tint:'rgba(255,135,9,.14)' },
+  payout:  { icon:'ph-fill ph-bank',           color:'#00BAE2', tint:'rgba(0,186,226,.14)' },
+  live:    { icon:'ph-fill ph-check-circle',   color:'#ABFF84', tint:'rgba(171,255,132,.13)' },
+  crew:    { icon:'ph-fill ph-users-three',    color:'#ABFF84', tint:'rgba(10,228,72,.14)' }
 };
 
 class Component extends DCLogic {
@@ -342,7 +341,7 @@ class Component extends DCLogic {
     screen: ROUTE_SCREEN[FF.route ? FF.route.name : ''] || 'dash',
     bizOpenAtBoot: FF.route && FF.route.name === 'profile',
     authed: ORG.authed === true,
-    email:'team@ravolution.vn', pass:'ravolution2026', loginErr:false, loggingIn:false,
+    email:'', pass:'', loginErr:false, loggingIn:false,
     logoOver:false, bizEdit:false, bizErr:'',
     biz: ORG.biz || { logo:null, name:'', type:'promoter', bio:'', website:'', legal:'', tax:'', address:'', email:'', hotline:'', zalo:'', contactName:'', contactRole:'' },
     bizDraft:{},
@@ -360,7 +359,9 @@ class Component extends DCLogic {
     doorResult:null, doorLog: ORG.door ? ORG.door.recent : [], doorInside: ORG.door ? ORG.door.inside : 0,
     doorCap: ORG.door ? ORG.door.capacity : 0, doorRate: ORG.door ? ORG.door.throughputPerHour : 0,
     scanners: ORG.door ? ORG.door.scannersActive : 0,
-    offline:false, oq:0, syncing:false, syncedAt: ORG.door && ORG.door.lastSyncedAt ? FF.hhmm(ORG.door.lastSyncedAt) : null,
+    doorCode:'',
+    offline: typeof navigator !== 'undefined' && navigator.onLine === false,
+    oq:0, syncing:false, syncedAt: ORG.door && ORG.door.lastSyncedAt ? FF.hhmm(ORG.door.lastSyncedAt) : null,
     atQuery:'', atFilter:'all', resent:{},
     payoutOpen:{},
     annAud:'saved', annCh:{ push:true, zalo:true, email:false }, annWhen:'now',
@@ -424,11 +425,22 @@ class Component extends DCLogic {
     this.openScreen(screen);
   }
 
-  componentWillUnmount() { [this._tt, this._pt, this._save, this._at, this._est].forEach(clearTimeout); }
+  componentWillUnmount() {
+    [this._tt, this._pt, this._save, this._at, this._est].forEach(clearTimeout);
+    if (this._net) { window.removeEventListener('online', this._net); window.removeEventListener('offline', this._net); }
+  }
   _thread = React.createRef();
 
   componentDidMount() {
     if (FF.data.orgError) this.say(FF.errorText(FF.data.orgError, this.state.lang));
+    // The door keeps scanning with no signal; what it held goes up as soon as signal is back.
+    this._net = () => {
+      const offline = navigator.onLine === false;
+      this.setState({ offline });
+      if (!offline && this._queue && this._queue.length) this.syncDoor();
+    };
+    window.addEventListener('online', this._net);
+    window.addEventListener('offline', this._net);
     FF.onRoute = (r) => {
       const screen = ROUTE_SCREEN[r.name] || 'dash';
       this.setState({ screen, bizEdit: r.name === 'profile' });
@@ -452,7 +464,7 @@ class Component extends DCLogic {
     if (screen === 'wizard') return FF.orgWizard(this);
     if (screen === 'guests') return FF.orgAttendees(this, id);
     if (screen === 'announce') return FF.orgAnnounce(this, id);
-    if (screen === 'door') return FF.orgDoor(this, id);
+    if (screen === 'door') { this.loadManifest(); return FF.orgDoor(this, id); }
     if (screen === 'promos') return FF.orgPromos(this, id);
     if (screen === 'money') return FF.orgMoney(this, id);
     if (screen === 'inbox') return FF.orgInbox(this);
@@ -603,21 +615,34 @@ class Component extends DCLogic {
   }
 
   /**
-   * The next ticket to present at the gate. A real scanner reads a QR; here we take the
-   * next code off the manifest the door screen downloaded and sign it with the event's
-   * scan key, exactly as the QR on the ticket is signed.
+   * The event's ticket list and scan key, downloaded while there is signal, so a scan can
+   * still be judged when there is none (see queueScan).
    */
-  async nextTicket() {
-    if (!this._manifest) {
-      this._manifest = await FF.maybe(FF.get('/door/events/' + this.state.eventId + '/manifest'), null);
-      this._mi = 0;
+  async loadManifest() {
+    const id = this.state.eventId;
+    if (!id || this._manifestFor === id) return this._manifest;
+    const m = await FF.maybe(FF.get('/door/events/' + id + '/manifest'), null);
+    if (m) { this._manifest = m; this._manifestFor = id; }
+    return this._manifest;
+  }
+
+  /** Check in what the reader typed into the box: a QR token, or the code printed on the ticket. */
+  async checkIn() {
+    const st = this.state, vi = st.lang === 'vi';
+    const token = st.doorCode.trim();
+    if (!st.eventId) { this.say(vi ? 'Chưa có sự kiện để soát vé' : 'No event to check in for'); return; }
+    if (token.length < 4) { this.say(vi ? 'Quét QR hoặc nhập mã trên vé' : 'Scan the QR or type the code on the ticket'); return; }
+    this.setState({ doorCode:'' });
+    if (st.offline) return this.queueScan(token);
+    try {
+      const r = await FF.post('/door/events/' + st.eventId + '/scans',
+        { token, deviceId: FF.deviceId(), clientScanId: 'c' + Date.now(), manual: token.indexOf('.') < 0 });
+      this.applyScan(r);
+    } catch (e) {
+      // Lost signal on the way: keep the scan on the device instead of losing it.
+      if (navigator.onLine === false || !e.status) { this.setState({ offline:true }); return this.queueScan(token); }
+      this.fail(e);
     }
-    const m = this._manifest;
-    if (!m || !m.tickets.length) return null;
-    if (this._mi >= m.tickets.length) this._mi = 0;
-    const t = m.tickets[this._mi++];
-    const sig = await FF.hmac22(m.scanKey, t.code);
-    return { code:t.code, status:t.status, tier:t.tier, name:t.name, token: t.code + '.' + sig, signed:true };
   }
 
   /** Show a scan result and keep the counters in step with it. */
@@ -630,26 +655,51 @@ class Component extends DCLogic {
     }));
   }
 
-  /** No signal: hold the scan on the device and decide from the downloaded manifest. */
-  queueScan(next) {
+  /** No signal: hold the scan on the device and judge it from the downloaded ticket list. */
+  async queueScan(token) {
     const at = FF.now().toISOString();
-    const local = next.status === 'refunded' || next.status === 'void'
+    const dot = token.lastIndexOf('.');
+    const code = dot > 0 ? token.slice(0, dot) : token, sig = dot > 0 ? token.slice(dot + 1) : null;
+    const m = this._manifest;
+    const next = m ? m.tickets.find(t => t.code === code) : null;
+    const forged = !!(sig && m && (await FF.hmac22(m.scanKey, code)) !== sig);
+    const local = !next || forged
+      ? { result:'invalid', message:{ en:'Rejected', vi:'Từ chối' }, detail:{ en:'Not a ticket for this event', vi:'Không phải vé của sự kiện này' } }
+      : next.status === 'refunded' || next.status === 'void'
       ? { result:'invalid', message:{ en:'Rejected', vi:'Từ chối' }, detail:{ en:'Refunded ticket — do not admit', vi:'Vé đã hoàn tiền — không cho vào' } }
-      : next.status === 'used' || this._seen && this._seen[next.code]
+      : next.status === 'used' || this._seen && this._seen[code]
         ? { result:'duplicate', message:{ en:'Already used — call a gate lead', vi:'Vé đã dùng — gọi trưởng cửa' }, detail:{ en:'Already scanned on this device', vi:'Đã quét trên máy này' } }
         : { result:'valid', message:{ en:'Valid — let them in', vi:'Hợp lệ — mời vào' },
             detail:{ en:(next.tier || 'GA') + ' · saved offline, will sync', vi:(next.tier || 'GA') + ' · lưu offline, chờ đồng bộ' } };
     this._seen = this._seen || {};
-    this._seen[next.code] = true;
+    this._seen[code] = true;
     const clientScanId = 'q' + Date.now();
-    this._queue = (this._queue || []).concat([{ token: next.token, clientScanId, scannedAt: at }]);
-    const row = Object.assign({ holder:{ name: next.name, tier: next.tier }, name: next.name, tier: next.tier, time: FF.hhmm(at), queued:true }, local);
+    this._queue = (this._queue || []).concat([{ token, clientScanId, scannedAt: at, manual: !sig }]);
+    const row = Object.assign({ holder: next ? { name: next.name, tier: next.tier } : null, name: next ? next.name : '—', tier: next ? next.tier : null, time: FF.hhmm(at), queued:true }, local);
     this.setState(s => ({
       doorResult: row,
       doorLog: [row].concat(s.doorLog).slice(0, 6),
       doorInside: local.result === 'valid' ? s.doorInside + 1 : s.doorInside,
       oq: this._queue.length
     }));
+  }
+  /** Upload the scans held while offline, in the order they happened. */
+  async syncDoor() {
+    const st = this.state, vi = st.lang === 'vi';
+    if (st.syncing || !this._queue || !this._queue.length) return;
+    const queue = this._queue.slice();
+    this.setState({ syncing:true });
+    try {
+      const out = await FF.post('/door/events/' + st.eventId + '/scans/sync',
+        { deviceId: FF.deviceId(), scans: queue.map(q => ({ token:q.token, clientScanId:q.clientScanId, scannedAt:q.scannedAt, manual:q.manual })) });
+      this._queue = this._queue.slice(queue.length);
+      this.setState({ syncing:false, oq:this._queue.length, syncedAt: this.clock() });
+      this.say(FF.text(out.message, st.lang));
+      await this.reloadDoor();
+    } catch (e) {
+      this.setState({ syncing:false });
+      this.say(vi ? 'Chưa đồng bộ được — lượt quét vẫn nằm trên máy' : 'Not synced yet — the scans are still on this device');
+    }
   }
   say(m) { clearTimeout(this._tt); this.setState({ toast:m }); this._tt = setTimeout(() => this.setState({ toast:null }), 2100); }
   patch(k, v) {
@@ -719,14 +769,14 @@ class Component extends DCLogic {
     return {
       L, langLabel: g === 'vi' ? 'VI' : 'EN',
       toggleLang: () => this.setState({ lang: g === 'vi' ? 'en' : 'vi' }),
-      accountName: st.biz.name || 'Ravolution',
-      accountInitials: (st.biz.name || 'RV').replace(/[^A-Za-zÀ-ỹ ]/g,'').trim().split(/\s+/).slice(0,2).map(w => w.charAt(0).toUpperCase()).join('') || 'RV',
-      accountLogoBg: st.biz.logo ? 'url("' + st.biz.logo + '") center/cover no-repeat' : 'linear-gradient(135deg,#B6D9FC,#7A55F6)',
+      accountName: st.biz.name || '',
+      accountInitials: (st.biz.name || '').replace(/[^A-Za-zÀ-ỹ ]/g,'').trim().split(/\s+/).slice(0,2).map(w => w.charAt(0).toUpperCase()).join('') || 'FF',
+      accountLogoBg: st.biz.logo ? 'url("' + st.biz.logo + '") center/cover no-repeat' : 'linear-gradient(135deg,#ABFF84,#0AE448)',
       accountHasLogo: !!st.biz.logo, accountNoLogo: !st.biz.logo,
       openBiz: () => this.setState({ bizEdit:true, bizErr:'', bizDraft: Object.assign({}, st.biz) }),
       closeBiz: () => this.setState({ bizEdit:false, bizErr:'' }),
       bizOpen: st.bizEdit, biz: st.bizDraft,
-      bizLogoBg: st.bizDraft.logo ? 'url("' + st.bizDraft.logo + '") center/cover no-repeat' : 'rgba(5,6,15,.6)',
+      bizLogoBg: st.bizDraft.logo ? 'url("' + st.bizDraft.logo + '") center/cover no-repeat' : 'rgba(14,16,15,.6)',
       bizHasLogo: !!st.bizDraft.logo, bizNoLogo: !st.bizDraft.logo,
       bizLogoCta: st.bizDraft.logo ? L.bizLogoChange : L.bizLogoUpload,
       onBizLogo: (e) => this.readBizLogo(e),
@@ -750,9 +800,9 @@ class Component extends DCLogic {
         { k:'public', label: g === 'vi' ? 'Cơ quan nhà nước' : 'Public body' }
       ].map(t => ({
         label: t.label,
-        bg: st.bizDraft.type === t.k ? '#1A1236' : 'rgba(20,24,38,.6)',
-        bd: st.bizDraft.type === t.k ? '#7A55F6' : 'rgba(186,215,247,.12)',
-        fg: st.bizDraft.type === t.k ? '#D6CFFA' : '#9DA7BA',
+        bg: st.bizDraft.type === t.k ? '#0F2414' : 'rgba(28,29,27,.6)',
+        bd: st.bizDraft.type === t.k ? '#0AE448' : 'rgba(255,252,225,.19)',
+        fg: st.bizDraft.type === t.k ? '#DFFFD1' : '#A5A493',
         pick: () => this.bizPatch('type', t.k)
       })),
       bizErr: st.bizErr, bizErrShow: !!st.bizErr,
@@ -788,12 +838,12 @@ class Component extends DCLogic {
         inbox: vi ? 'Tin nhắn từ FeestFinder' : 'Messages from FeestFinder',
         admin: L.adminKicker
       })[st.screen] || L.wizardKicker,
-      modeBg: st.screen === 'admin' ? 'rgba(228,109,76,.14)' : 'rgba(182,217,252,.12)',
-      modeBd: st.screen === 'admin' ? 'rgba(228,109,76,.5)' : 'rgba(182,217,252,.5)',
-      modeFg: st.screen === 'admin' ? '#F0A07F' : '#D8ECF8',
+      modeBg: st.screen === 'admin' ? 'rgba(255,135,9,.14)' : 'rgba(171,255,132,.12)',
+      modeBd: st.screen === 'admin' ? 'rgba(255,135,9,.5)' : 'rgba(171,255,132,.5)',
+      modeFg: st.screen === 'admin' ? '#FF8709' : '#FFFCE1',
       authed: st.authed, needsLogin: !st.authed,
       email: st.email, pass: st.pass, loginErr: st.loginErr,
-      emailBd: st.loginErr ? 'rgba(228,109,76,.7)' : 'rgba(186,215,247,.12)',
+      emailBd: st.loginErr ? 'rgba(255,135,9,.7)' : 'rgba(255,252,225,.19)',
       loginCta: st.loggingIn ? L.loginBusy : L.loginBtn,
       loginPoints: [
         { icon:'ph-bold ph-rocket-launch', text:L.loginP1 },
@@ -815,7 +865,7 @@ class Component extends DCLogic {
           if (!this.state.authed) { this.setState({ loginErr:true }); this.say(vi ? 'Tài khoản này chưa có trang nhà tổ chức' : 'This account has no organiser page'); return; }
           await this.openScreen(this.state.screen);
           FF.prefetch(() => FF.orgRest(this));
-          this.say(L.welcome);
+          this.say(L.welcome + (this.state.biz.name ? ' · ' + this.state.biz.name : ''));
         } catch (e) {
           this.setState({ loginErr:true });
           this.say(FF.errorText(e, g));
@@ -842,9 +892,9 @@ class Component extends DCLogic {
       ].map(n => {
         const on = st.screen === n.k;
         return { label:n.label, icon:n.icon,
-          bg: on ? 'rgba(182,217,252,.14)' : 'transparent',
-          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
-          fg: on ? '#D8ECF8' : '#9DA7BA',
+          bg: on ? 'rgba(171,255,132,.14)' : 'transparent',
+          bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)',
+          fg: on ? '#FFFCE1' : '#A5A493',
           dot: n.k === 'inbox' && st.threads.some(t => t.unread),
           go: () => this.go(n.k) };
       }),
@@ -857,9 +907,9 @@ class Component extends DCLogic {
       notifUnread: st.notifs.filter(n => n.unread).length,
       loadNotifs: () => this.refreshNotifs(),
       notifHasUnread: st.notifs.some(n => n.unread),
-      bellBg: st.notifs.some(n => n.unread) ? 'rgba(228,109,76,.12)' : 'transparent',
-      bellBd: st.notifs.some(n => n.unread) ? 'rgba(228,109,76,.5)' : 'rgba(186,215,247,.12)',
-      bellFg: st.notifs.some(n => n.unread) ? '#F0A07F' : '#9DA7BA',
+      bellBg: st.notifs.some(n => n.unread) ? 'rgba(255,135,9,.12)' : 'transparent',
+      bellBd: st.notifs.some(n => n.unread) ? 'rgba(255,135,9,.5)' : 'rgba(255,252,225,.19)',
+      bellFg: st.notifs.some(n => n.unread) ? '#FF8709' : '#A5A493',
       markAllRead: () => {
         FF.fire(FF.post('/organizer/notifications/read-all'));
         this.setState(s => ({ notifs: s.notifs.map(n => Object.assign({}, n, { unread:false })) }));
@@ -868,9 +918,9 @@ class Component extends DCLogic {
       notifList: st.notifs.map(n => Object.assign({}, NK[n.kind] || NK.live, {
         title: FF.text(n.title, g), body: FF.text(n.body, g), cta: FF.text(n.cta, g), when: n.when[g],
         unread: n.unread,
-        titleFg: n.unread ? '#D8ECF8' : '#C7CEDC',
+        titleFg: n.unread ? '#FFFCE1' : '#E6E3C8',
         iconBg: (NK[n.kind] || NK.live).tint,
-        bg: n.unread ? 'rgba(182,217,252,.05)' : 'transparent',
+        bg: n.unread ? 'rgba(171,255,132,.05)' : 'transparent',
         open: () => this.openNotif(n)
       })),
       notifPrefRows: [
@@ -881,7 +931,7 @@ class Component extends DCLogic {
       ].map(p => ({
         label: p.label, icon: p.icon,
         channel: !st.notifPrefs[p.k] ? L.notifChanOff : (p.sms ? L.notifChanOn : L.notifChanPush),
-        trackBg: st.notifPrefs[p.k] ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+        trackBg: st.notifPrefs[p.k] ? '#ABFF84' : 'rgba(255,252,225,.19)',
         knob: st.notifPrefs[p.k] ? 'translateX(16px)' : 'translateX(0)',
         toggle: () => {
           const next = Object.assign({}, st.notifPrefs, { [p.k]: !st.notifPrefs[p.k] });
@@ -902,7 +952,7 @@ class Component extends DCLogic {
       pushTitle: st.push ? FF.text(st.push.title, g) : '',
       pushBody: st.push ? FF.text(st.push.body, g) : '',
       pushIcon: st.push ? (NK[st.push.kind] || NK.live).icon : '',
-      pushColor: st.push ? (NK[st.push.kind] || NK.live).color : '#B6D9FC',
+      pushColor: st.push ? (NK[st.push.kind] || NK.live).color : '#ABFF84',
       dismissPush: () => { clearTimeout(this._pt); this.setState({ push:null }); },
       openPush: () => { if (st.push) this.openNotif(st.push); },
 
@@ -915,8 +965,8 @@ class Component extends DCLogic {
         { k:'inbox', label: g === 'vi' ? 'Tin nhắn' : 'Inbox' }
       ].map(t => ({
         label:t.label,
-        bg: st.screen === t.k ? '#B6D9FC' : 'transparent',
-        fg: st.screen === t.k ? '#090B16' : '#9DA7BA',
+        bg: st.screen === t.k ? '#ABFF84' : 'transparent',
+        fg: st.screen === t.k ? '#141514' : '#A5A493',
         dot: t.k === 'inbox' && st.threads.filter(x => x.unread).length > 0 && st.screen !== 'inbox',
         go: () => this.go(t.k)
       })),
@@ -926,12 +976,12 @@ class Component extends DCLogic {
         const n = i + 1, done = st.step > n, active = st.step === n;
         return {
           label, num: done ? '✓' : String(n),
-          bg: active ? 'rgba(182,217,252,.12)' : 'transparent',
-          bd: active ? '#B6D9FC' : done ? '#269684' : 'rgba(186,215,247,.12)',
-          fg: active ? '#D8ECF8' : done ? '#6CC7B6' : '#9DA7BA',
-          numBg: active ? '#B6D9FC' : done ? '#269684' : 'rgba(186,215,247,.12)',
-          numFg: active || done ? '#090B16' : '#9DA7BA',
-          bar: active ? '#B6D9FC' : done ? '#269684' : '#171B29',
+          bg: active ? 'rgba(171,255,132,.12)' : 'transparent',
+          bd: active ? '#ABFF84' : done ? '#0AE448' : 'rgba(255,252,225,.19)',
+          fg: active ? '#FFFCE1' : done ? '#0AE448' : '#A5A493',
+          numBg: active ? '#ABFF84' : done ? '#0AE448' : 'rgba(255,252,225,.19)',
+          numFg: active || done ? '#141514' : '#A5A493',
+          bar: active ? '#ABFF84' : done ? '#0AE448' : '#1E1F1C',
           go: () => this.setState({ step:n })
         };
       }),
@@ -960,33 +1010,33 @@ class Component extends DCLogic {
       setPrice: (e) => this.patch('price', e.target.value),
       setUrl: (e) => this.patch('url', e.target.value),
       descCount: f.desc.length + ' / 600',
-      descCountColor: f.desc.length > 600 ? '#FF7A7A' : '#8A94A8',
+      descCountColor: f.desc.length > 600 ? '#FF8A7A' : '#8C8B7D',
       genreChips: GENRES.map(n => ({
         name:n,
-        bg: f.genre === n ? '#1A1236' : 'rgba(5,6,15,.6)',
-        bd: f.genre === n ? '#7A55F6' : 'rgba(186,215,247,.12)',
-        fg: f.genre === n ? '#D6CFFA' : '#9DA7BA',
+        bg: f.genre === n ? FF.genreHue(n) : 'rgba(14,16,15,.6)',
+        bd: f.genre === n ? FF.genreHue(n) : 'rgba(255,252,225,.19)',
+        fg: f.genre === n ? '#0E100F' : FF.genreHue(n),
         pick: () => this.patch('genre', n)
       })),
       venueMatches: matches.map(v => ({
         name:v.name, addr:v.addr, selected: f.venue === v.name,
-        bg: f.venue === v.name ? 'rgba(182,217,252,.1)' : 'rgba(5,6,15,.55)',
+        bg: f.venue === v.name ? 'rgba(171,255,132,.1)' : 'rgba(14,16,15,.55)',
         pick: () => { this.setState({ form: Object.assign({}, f, { venue:v.name, venueId:v.id }) }); this.saveDraft('venueId', Object.assign({}, f, { venue:v.name, venueId:v.id })); }
       })),
       entryModes: entryDefs.map(m => ({
         label:m.label, hint:m.hint, icon:m.icon,
-        bg: f.entry === m.k ? 'rgba(182,217,252,.1)' : 'rgba(5,6,15,.6)',
-        bd: f.entry === m.k ? '#B6D9FC' : 'rgba(186,215,247,.12)',
-        fg: f.entry === m.k ? '#D8ECF8' : '#D8ECF8',
-        iconFg: f.entry === m.k ? '#B6D9FC' : '#8A94A8',
+        bg: f.entry === m.k ? 'rgba(171,255,132,.1)' : 'rgba(14,16,15,.6)',
+        bd: f.entry === m.k ? '#ABFF84' : 'rgba(255,252,225,.19)',
+        fg: f.entry === m.k ? '#FFFCE1' : '#FFFCE1',
+        iconFg: f.entry === m.k ? '#ABFF84' : '#8C8B7D',
         pick: () => this.patch('entry', m.k)
       })),
       paidMode: f.entry === 'paid',
       ageChips: ['All ages', '16+', '18+'].map(a => ({
         label: a === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : a,
-        bg: f.age === a ? '#1A1236' : 'rgba(5,6,15,.6)',
-        bd: f.age === a ? '#7A55F6' : 'rgba(186,215,247,.12)',
-        fg: f.age === a ? '#D6CFFA' : '#9DA7BA',
+        bg: f.age === a ? '#0F2414' : 'rgba(14,16,15,.6)',
+        bd: f.age === a ? '#0AE448' : 'rgba(255,252,225,.19)',
+        fg: f.age === a ? '#DFFFD1' : '#A5A493',
         pick: () => this.patch('age', a)
       })),
       lineupTags: f.lineup.map((n, i) => ({
@@ -1049,18 +1099,18 @@ class Component extends DCLogic {
       removeCover: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.patch('cover', null); },
       hasCover: !!f.cover, noCover: !f.cover,
       coverImg: f.cover ? 'url("' + f.cover + '")' : 'none',
-      coverZoneBd: st.coverOver ? '#B6D9FC' : (f.cover ? 'rgba(186,215,247,.2)' : 'rgba(186,215,247,.24)'),
-      coverZoneBg: st.coverOver ? 'rgba(182,217,252,.08)' : 'rgba(5,6,15,.6)',
+      coverZoneBd: st.coverOver ? '#ABFF84' : (f.cover ? 'rgba(255,252,225,.32)' : 'rgba(255,252,225,.38)'),
+      coverZoneBg: st.coverOver ? 'rgba(171,255,132,.08)' : 'rgba(14,16,15,.6)',
       coverBadge: f.cover ? L.logoUploaded : L.required,
-      coverBadgeBg: f.cover ? 'rgba(38,150,132,.16)' : 'rgba(228,109,76,.14)',
-      coverBadgeFg: f.cover ? '#6CC7B6' : '#F0A07F',
+      coverBadgeBg: f.cover ? 'rgba(10,228,72,.16)' : 'rgba(255,135,9,.14)',
+      coverBadgeFg: f.cover ? '#0AE448' : '#FF8709',
       logo: f.logo, hasLogo: !!f.logo, noLogo: !f.logo,
       logoImg: f.logo ? 'url("' + f.logo + '")' : 'none',
-      logoZoneBd: st.logoOver ? '#B6D9FC' : (f.logo ? 'rgba(186,215,247,.2)' : 'rgba(186,215,247,.24)'),
-      logoZoneBg: st.logoOver ? 'rgba(182,217,252,.08)' : 'rgba(5,6,15,.6)',
+      logoZoneBd: st.logoOver ? '#ABFF84' : (f.logo ? 'rgba(255,252,225,.32)' : 'rgba(255,252,225,.38)'),
+      logoZoneBg: st.logoOver ? 'rgba(171,255,132,.08)' : 'rgba(14,16,15,.6)',
       logoBadge: f.logo ? L.logoUploaded : L.required,
-      logoBadgeBg: f.logo ? 'rgba(38,150,132,.16)' : 'rgba(228,109,76,.14)',
-      logoBadgeFg: f.logo ? '#6CC7B6' : '#F0A07F',
+      logoBadgeBg: f.logo ? 'rgba(10,228,72,.16)' : 'rgba(255,135,9,.14)',
+      logoBadgeFg: f.logo ? '#0AE448' : '#FF8709',
       setEventUrl: (e) => this.patch('eventUrl', e.target.value),
       setBrandUrl: (e) => this.patch('brandUrl', e.target.value),
       readyOk: !!f.logo && !!f.eventUrl.trim(),
@@ -1098,9 +1148,9 @@ class Component extends DCLogic {
             why: vi ? 'Dùng để đối chiếu thông tin khi duyệt.' : 'We use it to cross-check details during review.' }
         ];
         const score = checks.reduce((n, c) => n + (c.ok ? c.pts : 0), 0);
-        const band = score >= 85 ? { l: vi ? 'Mạnh' : 'Strong', c:'#6CC7B6', t:'rgba(38,150,132,.16)', bd:'rgba(38,150,132,.4)' }
-          : score >= 60 ? { l: vi ? 'Đủ duyệt' : 'Passable', c:'#F0A07F', t:'rgba(228,109,76,.14)', bd:'rgba(228,109,76,.34)' }
-          : { l: vi ? 'Rủi ro' : 'At risk', c:'#F4A3A3', t:'rgba(224,74,74,.14)', bd:'rgba(224,74,74,.34)' };
+        const band = score >= 85 ? { l: vi ? 'Mạnh' : 'Strong', c:'#0AE448', t:'rgba(10,228,72,.16)', bd:'rgba(10,228,72,.4)' }
+          : score >= 60 ? { l: vi ? 'Đủ duyệt' : 'Passable', c:'#FF8709', t:'rgba(255,135,9,.14)', bd:'rgba(255,135,9,.34)' }
+          : { l: vi ? 'Rủi ro' : 'At risk', c:'#FF8A7A', t:'rgba(255,107,94,.14)', bd:'rgba(255,107,94,.34)' };
         return {
           head: vi ? 'Điểm chất lượng tin' : 'Listing quality',
           score: String(score), w: score + '%', band: band.l, color: band.c, tint: band.t, bd: band.bd,
@@ -1112,8 +1162,8 @@ class Component extends DCLogic {
           rows: checks.map(c => ({
             label: c.label, why: c.why, showWhy: !c.ok,
             icon: c.ok ? 'ph-fill ph-check-circle' : 'ph-fill ph-circle-dashed',
-            color: c.ok ? '#6CC7B6' : '#F0A07F',
-            fg: c.ok ? '#C7D3EA' : '#D8ECF8',
+            color: c.ok ? '#0AE448' : '#FF8709',
+            fg: c.ok ? '#E6E3C8' : '#FFFCE1',
             pts: c.ok ? '+' + c.pts : '—',
             cursor: c.ok ? 'default' : 'pointer',
             fix: () => { if (!c.ok) this.setState({ step: c.step }); }
@@ -1121,27 +1171,27 @@ class Component extends DCLogic {
         };
       })(),
       reviewRows: [
-        { label:L.fName, value:f.name, color:'#D8ECF8', step:1 },
-        { label:L.fGenre, value:f.genre, color:'#D6CFFA', step:1 },
-        { label:L.fDate, value:f.date + ' · ' + f.time, color:'#D8ECF8', step:2 },
-        { label:L.fVenue, value:f.venue, color:'#D8ECF8', step:2 },
-        { label:L.fEntry, value: f.entry === 'free' ? L.entryFree : f.entry === 'donation' ? L.entryDonation : f.price + '₫', color: f.entry === 'free' ? '#6CC7B6' : '#D8ECF8', step:3 },
-        { label:L.fAge, value: f.age === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : f.age, color:'#D8ECF8', step:3 },
-        { label:L.fLineup, value: f.lineup.join(' · ') || '—', color:'#D6CFFA', step:3 },
-        { label:L.fLogo, value: f.logo ? L.logoUploaded : L.logoMissing, color: f.logo ? '#6CC7B6' : '#E46D4C', step:1 },
-        { label:L.fEventUrl, value: f.eventUrl || '—', color:'#D8ECF8', step:3 },
-        { label:L.fBrandUrl, value: f.brandUrl || '—', color:'#D8ECF8', step:3 }
+        { label:L.fName, value:f.name, color:'#FFFCE1', step:1 },
+        { label:L.fGenre, value:f.genre, color:'#DFFFD1', step:1 },
+        { label:L.fDate, value:f.date + ' · ' + f.time, color:'#FFFCE1', step:2 },
+        { label:L.fVenue, value:f.venue, color:'#FFFCE1', step:2 },
+        { label:L.fEntry, value: f.entry === 'free' ? L.entryFree : f.entry === 'donation' ? L.entryDonation : f.price + '₫', color: f.entry === 'free' ? '#0AE448' : '#FFFCE1', step:3 },
+        { label:L.fAge, value: f.age === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : f.age, color:'#FFFCE1', step:3 },
+        { label:L.fLineup, value: f.lineup.join(' · ') || '—', color:'#DFFFD1', step:3 },
+        { label:L.fLogo, value: f.logo ? L.logoUploaded : L.logoMissing, color: f.logo ? '#0AE448' : '#FF8709', step:1 },
+        { label:L.fEventUrl, value: f.eventUrl || '—', color:'#FFFCE1', step:3 },
+        { label:L.fBrandUrl, value: f.brandUrl || '—', color:'#FFFCE1', step:3 }
       ].map(r => Object.assign({}, r, { edit: () => this.setState({ step:r.step }) })),
 
       previewBrandHost: (f.brandUrl || f.eventUrl || '').replace(/^https?:\/\//,'').replace(/\/$/,'') || (g === 'vi' ? 'Chưa có liên kết' : 'No link yet'),
       previewEventHost: (f.eventUrl || '').replace(/^https?:\/\//,'').replace(/\/$/,''),
-      previewArt: f.cover ? 'url("' + f.cover + '") center/cover no-repeat' : ARTS[GENRES.indexOf(f.genre) % ARTS.length],
+      previewArt: f.cover ? 'url("' + f.cover + '") center/cover no-repeat' : FF.genreArt(f.genre),
       previewName: f.name || (g === 'vi' ? 'Tên sự kiện' : 'Event name'),
       previewGenre: f.genre,
       previewWhen: f.date.replace(/ /g, '') + ' · ' + f.time,
       previewWhere: f.venue || (g === 'vi' ? 'Chưa chọn địa điểm' : 'No venue yet'),
       previewPrice: f.entry === 'free' ? L.entryFree : f.entry === 'donation' ? L.entryDonation : (g === 'vi' ? 'từ ' : 'from ') + f.price + '₫',
-      previewPriceColor: f.entry === 'free' ? '#269684' : '#D8ECF8',
+      previewPriceColor: f.entry === 'free' ? '#0AE448' : '#FFFCE1',
 
       ranges: [
         { k:'7d', label: vi ? '7 ngày' : '7 days' },
@@ -1149,8 +1199,8 @@ class Component extends DCLogic {
         { k:'all', label: vi ? 'Tất cả' : 'All time' }
       ].map(x => ({
         label:x.label,
-        bg: st.range === x.k ? '#B6D9FC' : 'transparent',
-        fg: st.range === x.k ? '#090B16' : '#9DA7BA',
+        bg: st.range === x.k ? '#ABFF84' : 'transparent',
+        fg: st.range === x.k ? '#141514' : '#A5A493',
         pick: async () => {
           this.setState({ range:x.k });
           const d = await FF.maybe(FF.get('/organizer/dashboard?range=' + x.k), null);
@@ -1159,7 +1209,7 @@ class Component extends DCLogic {
       })),
       exportCsv: () => { this.say(L.toastExport); FF.download('/organizer/events/' + st.eventId + '/attendees.csv'); },
       kpis: st.kpis.map(k => {
-        const d = KPI[k.key] || { icon:'ph-bold ph-eye', color:'#B6D9FC' };
+        const d = KPI[k.key] || { icon:'ph-bold ph-eye', color:'#ABFF84' };
         return {
           label: k.key === 'views' ? (vi ? 'Lượt xem · ' : 'Views · ') + rangeWord : d.label[g],
           value: k.key === 'inReview' ? String(k.value) : cnum(k.value, vi),
@@ -1182,10 +1232,10 @@ class Component extends DCLogic {
           pct:pct + '%', days:String(p.daysLeft), need:nf(need), pace:nf(p.pace),
           proj:nf(proj) + ' · ' + p.projection.pct + '%',
           verdict: FF.text(p.verdict.label, g),
-          vFg: ok ? '#6CC7B6' : '#F0A07F',
-          vBg: ok ? 'rgba(38,150,132,.14)' : 'rgba(228,109,76,.14)',
-          vBd: ok ? 'rgba(38,150,132,.45)' : 'rgba(228,109,76,.45)',
-          fill: ok ? 'linear-gradient(90deg,#269684,#B6D9FC)' : 'linear-gradient(90deg,#E46D4C,#F0A07F)'
+          vFg: ok ? '#0AE448' : '#FF8709',
+          vBg: ok ? 'rgba(10,228,72,.14)' : 'rgba(255,135,9,.14)',
+          vBd: ok ? 'rgba(10,228,72,.45)' : 'rgba(255,135,9,.45)',
+          fill: ok ? 'linear-gradient(90deg,#0AE448,#ABFF84)' : 'linear-gradient(90deg,#FF8709,#FF8709)'
         };
       })() : {},
       perfFunnel: p ? p.funnel.map((v, i) => ({
@@ -1194,7 +1244,7 @@ class Component extends DCLogic {
         w: Math.max(4, Math.round(v / p.funnel[0] * 100)) + '%',
         share: Math.round(v / p.funnel[0] * 100) + '%',
         step: i === 0 ? '' : Math.round(v / p.funnel[i-1] * 100) + '%',
-        color: ['#B6D9FC','#7A55F6','#6FB0F0','#6CC7B6'][i]
+        color: ['#ABFF84','#0AE448','#00BAE2','#0AE448'][i]
       })) : [],
       perfTrend: p ? (() => { const mx = Math.max.apply(null, p.trend); return p.trend.map(v => ({ h: Math.max(8, Math.round(v / mx * 100)) + '%' })); })() : [],
       trendFrom: p ? dayLabel(p.from, g) : '', trendTo: p ? dayLabel(p.to, g) : '',
@@ -1206,7 +1256,7 @@ class Component extends DCLogic {
         const pc = t.cap ? Math.round(t.sold / t.cap * 100) : 0, out = t.sold >= t.cap;
         return {
           label: FF.text(t.n, g), value: nf(t.sold) + ' / ' + nf(t.cap), pct:pc + '%', w:pc + '%', out,
-          fill: out ? 'linear-gradient(90deg,#269684,#6CC7B6)' : 'linear-gradient(90deg,#7A55F6,#B6D9FC)'
+          fill: out ? 'linear-gradient(90deg,#0AE448,#0AE448)' : 'linear-gradient(90deg,#0AE448,#ABFF84)'
         };
       }) : [],
       perfHasPrev: !!(p && p.prev),
@@ -1214,7 +1264,7 @@ class Component extends DCLogic {
       perfPrevLabel: p && p.prev ? FF.text(p.prev.label, g) : '',
       perfPrevRows: p && p.prev ? p.prev.rows.map(r => ({
         label: FF.text(r[0], g), value: FF.text(r[1], g),
-        fg: r[2] ? '#6CC7B6' : '#F0A07F',
+        fg: r[2] ? '#0AE448' : '#FF8709',
         icon: r[2] ? 'ph-bold ph-trend-up' : 'ph-bold ph-trend-down'
       })) : [],
 
@@ -1225,8 +1275,8 @@ class Component extends DCLogic {
         return {
           who: FF.text(t.who, g), subj: FF.text(t.subj, g), when:t.when, unread:t.unread,
           snippet: FF.text(t.msgs.length ? t.msgs[t.msgs.length - 1].text : t.snippet, g).slice(0, 76) + '…',
-          bg: on ? 'rgba(182,217,252,.1)' : 'rgba(13,16,28,.6)',
-          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
+          bg: on ? 'rgba(171,255,132,.1)' : 'rgba(25,25,25,.6)',
+          bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)',
           open: () => this.openThread(t.id)
         };
       }),
@@ -1237,11 +1287,11 @@ class Component extends DCLogic {
       inboxMsgs: thread ? thread.msgs.map(m => m.from === 'me' ? {
         text: FF.text(m.text, g), stamp:(vi ? 'Bạn · ' : 'You · ') + m.stamp,
         align:'flex-end', tAlign:'right', radius:'14px 14px 4px 14px',
-        bg:'rgba(182,217,252,.13)', bd:'rgba(182,217,252,.34)', fg:'#E3F0FA'
+        bg:'rgba(171,255,132,.13)', bd:'rgba(171,255,132,.34)', fg:'#FFFCE1'
       } : {
         text: FF.text(m.text, g), stamp:'FeestFinder · ' + m.stamp,
         align:'flex-start', tAlign:'left', radius:'14px 14px 14px 4px',
-        bg:'rgba(13,16,28,.82)', bd:'rgba(186,215,247,.12)', fg:'#C7D3EA'
+        bg:'rgba(25,25,25,.82)', bd:'rgba(255,252,225,.19)', fg:'#E6E3C8'
       }) : [],
       quickReplies: (vi ? [
         { icon:'ph-bold ph-image', label:'Ảnh mới', text:'Chúng tôi vừa tải ảnh ngang 1600×900 lên, nhờ anh/chị kiểm tra lại.' },
@@ -1256,15 +1306,15 @@ class Component extends DCLogic {
       onReply: (e) => this.setState({ replyDraft: e.target.value }),
       onReplyKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendReply(this.state.replyDraft); } },
       sendReplyNow: () => this.sendReply(this.state.replyDraft),
-      replyBg: st.replyDraft.trim() ? '#B6D9FC' : 'rgba(186,215,247,.119)',
-      replyFg: st.replyDraft.trim() ? '#05060F' : '#8A94A8',
+      replyBg: st.replyDraft.trim() ? '#ABFF84' : 'rgba(255,252,225,.19)',
+      replyFg: st.replyDraft.trim() ? '#0E100F' : '#8C8B7D',
       dashFilters: [
         { k:'all', label:L.filterAll }, { k:'live', label:L.filterLive }, { k:'review', label:L.filterReview }
       ].map(x => ({
         label:x.label,
-        bg: st.dashFilter === x.k ? '#B6D9FC' : 'transparent',
-        bd: st.dashFilter === x.k ? '#B6D9FC' : 'rgba(186,215,247,.12)',
-        fg: st.dashFilter === x.k ? '#090B16' : '#9DA7BA',
+        bg: st.dashFilter === x.k ? '#ABFF84' : 'transparent',
+        bd: st.dashFilter === x.k ? '#ABFF84' : 'rgba(255,252,225,.19)',
+        fg: st.dashFilter === x.k ? '#141514' : '#A5A493',
         pick: () => this.setState({ dashFilter:x.k })
       })),
       dashRows: EVENTS.map((e, i) => ({ e, i }))
@@ -1273,13 +1323,13 @@ class Component extends DCLogic {
           title:x.e.title, mon:x.e.mon, day:x.e.day, art:x.e.art,
           status:x.e.status[g], meta:x.e.meta[g],
           views:x.e.views[g], saves:x.e.saves[g], clicks:x.e.clicks[g],
-          statusBg: x.e.live ? 'rgba(38,150,132,.14)' : 'rgba(228,109,76,.12)',
-          statusBd: x.e.live ? 'rgba(38,150,132,.45)' : 'rgba(228,109,76,.45)',
-          statusFg: x.e.live ? '#6CC7B6' : '#F0A07F',
+          statusBg: x.e.live ? 'rgba(10,228,72,.14)' : 'rgba(255,135,9,.12)',
+          statusBd: x.e.live ? 'rgba(10,228,72,.45)' : 'rgba(255,135,9,.45)',
+          statusFg: x.e.live ? '#0AE448' : '#FF8709',
           perfLabel: x.e.hasPerf ? L.perfOpen : L.perfNone,
           perfIcon: x.e.hasPerf ? 'ph-bold ph-chart-line-up' : 'ph-bold ph-clock-countdown',
-          perfBd: x.e.hasPerf ? '#B6D9FC' : 'rgba(186,215,247,.12)',
-          perfFg: x.e.hasPerf ? '#D8ECF8' : '#8A94A8',
+          perfBd: x.e.hasPerf ? '#ABFF84' : 'rgba(255,252,225,.19)',
+          perfFg: x.e.hasPerf ? '#FFFCE1' : '#8C8B7D',
           openPerf: async () => {
             if (!x.e.hasPerf) return this.say(L.noData);
             if (!x.e.perf) {
@@ -1292,7 +1342,7 @@ class Component extends DCLogic {
         })),
       audienceRows: st.audience ? st.audience.rows.map(r => ({ label: FF.text(r.label, g), pct: r.pct + '%' })) : [],
       todoRows: st.todo.map(t => {
-        const d = TODO[t.kind] || { icon:'ph-bold ph-warning-circle', color:'#F0A07F' };
+        const d = TODO[t.kind] || { icon:'ph-bold ph-warning-circle', color:'#FF8709' };
         return { icon:d.icon, color:d.color, text: FF.text(t.text, g) };
       }),
 
@@ -1318,10 +1368,10 @@ class Component extends DCLogic {
         const k = AT.kpis || { sold:0, capacity:0, checkedIn:0, checkedInPct:0, notIn:0, refunded:0, refundedPct:0 };
         const inside = Math.max(k.checkedIn, st.doorInside);
         return [
-          { label: vi ? 'Vé đã bán' : 'Tickets sold', value: nf(k.sold), note: (vi ? 'trên ' : 'of ') + nf(k.capacity) + (vi ? ' chỗ' : ' capacity'), color:'#D8ECF8' },
-          { label: vi ? 'Đã vào cửa' : 'Checked in', value: nf(inside), note: (k.sold ? Math.round(inside / k.sold * 100) : 0) + (vi ? '% vé đã bán' : '% of sold'), color:'#B6D9FC' },
-          { label: vi ? 'Chưa vào' : 'Not yet in', value: nf(Math.max(0, k.sold - inside)), note: doorsClose, color:'#9D84F8' },
-          { label: vi ? 'Đã hoàn tiền' : 'Refunded', value: nf(k.refunded), note: (vi ? String(k.refundedPct).replace('.', ',') : k.refundedPct) + (vi ? '% — dưới trung bình' : '% — below average'), color:'#F0A07F' }
+          { label: vi ? 'Vé đã bán' : 'Tickets sold', value: nf(k.sold), note: (vi ? 'trên ' : 'of ') + nf(k.capacity) + (vi ? ' chỗ' : ' capacity'), color:'#FFFCE1' },
+          { label: vi ? 'Đã vào cửa' : 'Checked in', value: nf(inside), note: (k.sold ? Math.round(inside / k.sold * 100) : 0) + (vi ? '% vé đã bán' : '% of sold'), color:'#ABFF84' },
+          { label: vi ? 'Chưa vào' : 'Not yet in', value: nf(Math.max(0, k.sold - inside)), note: doorsClose, color:'#ABFF84' },
+          { label: vi ? 'Đã hoàn tiền' : 'Refunded', value: nf(k.refunded), note: (vi ? String(k.refundedPct).replace('.', ',') : k.refundedPct) + (vi ? '% — dưới trung bình' : '% — below average'), color:'#FF8709' }
         ];
       })(),
       atQuery: st.atQuery,
@@ -1337,33 +1387,33 @@ class Component extends DCLogic {
       ].map(x => {
         const on = st.atFilter === x.k;
         return { label:x.label, count:String(x.n),
-          bg: on ? 'rgba(182,217,252,.14)' : 'transparent', bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)', fg: on ? '#D8ECF8' : '#9DA7BA',
-          cBg: on ? '#B6D9FC' : '#131725', cFg: on ? '#05060F' : '#9DA7BA',
+          bg: on ? 'rgba(171,255,132,.14)' : 'transparent', bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: on ? '#FFFCE1' : '#A5A493',
+          cBg: on ? '#ABFF84' : '#191919', cFg: on ? '#0E100F' : '#A5A493',
           pick: () => { this.setState({ atFilter:x.k }); this.searchAttendees(x.k); } };
       }),
       attendees: (() => {
-        const tiers = { ga:{ label:'GA', fg:'#C7D3EA' }, early:{ label:'GA', fg:'#C7D3EA' }, vip:{ label:'VIP', fg:'#C4B8F7' },
-          table:{ label: vi ? 'Bàn' : 'Table', fg:'#C4B8F7' }, guest:{ label: vi ? 'Khách mời' : 'Guest', fg:'#8A94A8' }, crew:{ label: vi ? 'Khách mời' : 'Guest', fg:'#8A94A8' } };
+        const tiers = { ga:{ label:'GA', fg:'#E6E3C8' }, early:{ label:'GA', fg:'#E6E3C8' }, vip:{ label:'VIP', fg:'#DFFFD1' },
+          table:{ label: vi ? 'Bàn' : 'Table', fg:'#DFFFD1' }, guest:{ label: vi ? 'Khách mời' : 'Guest', fg:'#8C8B7D' }, crew:{ label: vi ? 'Khách mời' : 'Guest', fg:'#8C8B7D' } };
         const states = {
-          in: { label: vi ? 'Đã vào' : 'Inside', fg:'#6CC7B6', bg:'rgba(38,150,132,.13)', bd:'rgba(38,150,132,.4)', icon:'ph-fill ph-check-circle' },
-          out: { label: vi ? 'Chưa vào' : 'Not in', fg:'#9DA7BA', bg:'rgba(157,167,186,.096)', bd:'rgba(186,215,247,.12)', icon:'ph-bold ph-clock' },
-          refunded: { label: vi ? 'Hoàn tiền' : 'Refunded', fg:'#F0A07F', bg:'rgba(228,109,76,.13)', bd:'rgba(228,109,76,.36)', icon:'ph-fill ph-arrow-u-up-left' }
+          in: { label: vi ? 'Đã vào' : 'Inside', fg:'#0AE448', bg:'rgba(10,228,72,.13)', bd:'rgba(10,228,72,.4)', icon:'ph-fill ph-check-circle' },
+          out: { label: vi ? 'Chưa vào' : 'Not in', fg:'#A5A493', bg:'rgba(165,164,147,.096)', bd:'rgba(255,252,225,.19)', icon:'ph-bold ph-clock' },
+          refunded: { label: vi ? 'Hoàn tiền' : 'Refunded', fg:'#FF8709', bg:'rgba(255,135,9,.13)', bd:'rgba(255,135,9,.36)', icon:'ph-fill ph-arrow-u-up-left' }
         };
         return ATTENDEES.map(a => {
-          const t = tiers[a.tier] || { label: FF.text(a.tierName, g) || 'GA', fg:'#C7D3EA' }, s = states[a.state] || states.out;
+          const t = tiers[a.tier] || { label: FF.text(a.tierName, g) || 'GA', fg:'#E6E3C8' }, s = states[a.state] || states.out;
           const vip = a.tier === 'vip' || a.tier === 'table';
           const resent = st.resent[a.ticketId] || a.resent;
           return {
             name:a.name, phone:a.phone, order:a.orderCode,
             bought: FF.text(a.bought, g) + (a.checkedInAt ? ' · ' + (vi ? 'vào ' : 'in ') + FF.hhmm(a.checkedInAt) : ''),
             initial: a.name.trim().split(' ').slice(-1)[0].charAt(0),
-            avBg: vip ? 'rgba(102,58,243,.18)' : 'rgba(182,217,252,.14)',
-            avFg: vip ? '#C4B8F7' : '#D8ECF8',
+            avBg: vip ? 'rgba(10,228,72,.18)' : 'rgba(171,255,132,.14)',
+            avFg: vip ? '#DFFFD1' : '#FFFCE1',
             tier: t.label, tierFg: t.fg,
             state: resent ? (vi ? 'Đã gửi lại' : 'Resent') : s.label,
-            stFg: resent ? '#D8ECF8' : s.fg,
-            stBg: resent ? 'rgba(182,217,252,.13)' : s.bg,
-            stBd: resent ? 'rgba(182,217,252,.4)' : s.bd,
+            stFg: resent ? '#FFFCE1' : s.fg,
+            stBg: resent ? 'rgba(171,255,132,.13)' : s.bg,
+            stBd: resent ? 'rgba(171,255,132,.4)' : s.bd,
             stIcon: resent ? 'ph-fill ph-paper-plane-tilt' : s.icon,
             resendHint: vi ? 'Gửi lại vé qua Zalo và email' : 'Resend the ticket over Zalo and email',
             resend: async () => {
@@ -1419,10 +1469,10 @@ class Component extends DCLogic {
         const on = st.annAud === a.k;
         return { label:a.label, icon:a.icon,
           size: nf(a.n) + ' ' + a.note,
-          bg: on ? 'rgba(182,217,252,.1)' : 'rgba(5,6,15,.6)',
-          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
-          fg: on ? '#D8ECF8' : '#C7D3EA',
-          iconFg: on ? '#D8ECF8' : '#8A94A8',
+          bg: on ? 'rgba(171,255,132,.1)' : 'rgba(14,16,15,.6)',
+          bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)',
+          fg: on ? '#FFFCE1' : '#E6E3C8',
+          iconFg: on ? '#FFFCE1' : '#8C8B7D',
           pick: () => { this.setState({ annAud:a.k }); this.estimateReach(a.k, st.annCh); } };
       }),
       annChannels: [
@@ -1432,12 +1482,12 @@ class Component extends DCLogic {
       ].map(c => {
         const on = !!st.annCh[c.k];
         return { label:c.label, note:c.note, icon:c.icon,
-          bg: on ? 'rgba(182,217,252,.1)' : 'rgba(5,6,15,.6)',
-          bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)',
-          fg: on ? '#D8ECF8' : '#C7D3EA',
-          iconFg: on ? '#D8ECF8' : '#8A94A8',
+          bg: on ? 'rgba(171,255,132,.1)' : 'rgba(14,16,15,.6)',
+          bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)',
+          fg: on ? '#FFFCE1' : '#E6E3C8',
+          iconFg: on ? '#FFFCE1' : '#8C8B7D',
           check: on ? 'ph-fill ph-check-circle' : 'ph-bold ph-circle',
-          checkFg: on ? '#B6D9FC' : 'rgba(186,215,247,.24)',
+          checkFg: on ? '#ABFF84' : 'rgba(255,252,225,.38)',
           toggle: () => { const x = Object.assign({}, st.annCh); x[c.k] = !on; this.setState({ annCh:x }); this.estimateReach(st.annAud, x); } };
       }),
       annSubject: st.annSubject,
@@ -1445,7 +1495,7 @@ class Component extends DCLogic {
       onAnnSubject: (e) => this.setState({ annSubject: e.target.value }),
       onAnnBody: (e) => this.setState({ annBody: e.target.value }),
       annLen: st.annBody.length + ' / 320',
-      annLenFg: st.annBody.length > 320 ? '#F4A3A3' : st.annBody.length > 240 ? '#F0A07F' : '#8A94A8',
+      annLenFg: st.annBody.length > 320 ? '#FF8A7A' : st.annBody.length > 240 ? '#FF8709' : '#8C8B7D',
       annTemplates: [
         { k:'lineup', icon:'ph-bold ph-music-notes', label: vi ? 'Đội hình' : 'Lineup drop',
           s: vi ? 'Đội hình đầy đủ đã có' : 'The full lineup is out',
@@ -1463,7 +1513,7 @@ class Component extends DCLogic {
       ].map(w => {
         const on = st.annWhen === w.k;
         return { label:w.label, icon:w.icon,
-          bg: on ? 'rgba(182,217,252,.14)' : 'transparent', bd: on ? '#B6D9FC' : 'rgba(186,215,247,.12)', fg: on ? '#D8ECF8' : '#9DA7BA',
+          bg: on ? 'rgba(171,255,132,.14)' : 'transparent', bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: on ? '#FFFCE1' : '#A5A493',
           pick: () => this.setState({ annWhen:w.k }) };
       }),
       annScheduled: st.annWhen === 'later',
@@ -1481,9 +1531,9 @@ class Component extends DCLogic {
         ? (vi ? 'Hẹn gửi ' + st.annDate + ' ' + st.annTime : 'Schedule for ' + st.annDate + ' ' + st.annTime)
         : (vi ? 'Gửi ngay' : 'Send now'),
       annSendIcon: st.annWhen === 'later' ? 'ph-bold ph-calendar-check' : 'ph-fill ph-paper-plane-right',
-      annSendBg: (st.annSubject.trim() && st.annBody.trim() && (st.annCh.push || st.annCh.zalo || st.annCh.email)) ? '#B6D9FC' : '#131725',
-      annSendFg: (st.annSubject.trim() && st.annBody.trim() && (st.annCh.push || st.annCh.zalo || st.annCh.email)) ? '#090B16' : '#8A94A8',
-      annSendShadow: (st.annSubject.trim() && st.annBody.trim() && (st.annCh.push || st.annCh.zalo || st.annCh.email)) ? '0 14px 32px rgba(182,217,252,.24)' : 'none',
+      annSendBg: (st.annSubject.trim() && st.annBody.trim() && (st.annCh.push || st.annCh.zalo || st.annCh.email)) ? '#ABFF84' : '#191919',
+      annSendFg: (st.annSubject.trim() && st.annBody.trim() && (st.annCh.push || st.annCh.zalo || st.annCh.email)) ? '#141514' : '#8C8B7D',
+      annSendShadow: (st.annSubject.trim() && st.annBody.trim() && (st.annCh.push || st.annCh.zalo || st.annCh.email)) ? '0 14px 32px rgba(171,255,132,.24)' : 'none',
       annSendNote: ORG.annRule ? FF.text(ORG.annRule, g) : (vi ? 'Giới hạn một thông báo mỗi 24 giờ cho một sự kiện. Người nhận có thể tắt bất kỳ lúc nào.' : 'One announcement per event per 24 hours. Recipients can switch them off at any time.'),
       annSend: async () => {
         const s = st.annSubject.trim(), b = st.annBody.trim();
@@ -1507,8 +1557,8 @@ class Component extends DCLogic {
       annSentRows: st.annSent.map(a => ({
         subject: a.subject, meta: annMeta(a, g), reach: nf(a.reach || 0), opened: a.openedPct === null || a.openedPct === undefined ? '—' : a.openedPct + '%',
         status: a.status === 'sent' ? (vi ? 'Đã gửi' : 'Sent') : (vi ? 'Đã hẹn' : 'Scheduled'),
-        stBg: a.status === 'sent' ? 'rgba(38,150,132,.16)' : 'rgba(182,217,252,.14)',
-        stFg: a.status === 'sent' ? '#6CC7B6' : '#D8ECF8',
+        stBg: a.status === 'sent' ? 'rgba(10,228,72,.16)' : 'rgba(171,255,132,.14)',
+        stFg: a.status === 'sent' ? '#0AE448' : '#FFFCE1',
         actionLabel: a.status === 'sent' ? (vi ? 'Xem' : 'View') : (vi ? 'Huỷ hẹn' : 'Cancel'),
         action: async () => {
           if (a.status === 'sent') { this.say(vi ? 'Mở báo cáo thông báo' : 'Opening the announcement report'); return; }
@@ -1529,8 +1579,13 @@ class Component extends DCLogic {
         title: g === 'vi' ? 'Soát vé' : 'Check-in',
         sub: evTitle + (ORG.venueName ? ' · ' + ORG.venueName : ''),
         doorOpen: g === 'vi' ? 'Cửa đang mở' : 'Doors open',
-        scanCta: g === 'vi' ? 'Quét vé tiếp theo' : 'Scan next ticket',
-        scanHint: g === 'vi' ? 'Hướng camera vào mã QR trên vé. Mỗi mã chỉ dùng được một lần.' : 'Point the camera at the QR on the ticket. Each code works once.',
+        scanCta: g === 'vi' ? 'Kiểm tra vé' : 'Check ticket',
+        scanHint: g === 'vi' ? 'Quét QR bằng máy quét cầm tay, hoặc gõ mã in trên vé. Mỗi mã chỉ dùng được một lần.' : 'Scan the QR with a handheld reader, or type the code printed on the ticket. Each code works once.',
+        codePh: g === 'vi' ? 'Mã vé, vd: FF-ABCD-1234' : 'Ticket code, e.g. FF-ABCD-1234',
+        code: st.doorCode,
+        setCode: (e) => this.setState({ doorCode: e.target.value }),
+        // A handheld reader types the QR and presses Enter.
+        codeKey: (e) => { if (e.key === 'Enter' || e.keyCode === 13) { e.preventDefault(); this.checkIn(); } },
         recent: g === 'vi' ? 'Vừa quét' : 'Recent scans',
         recentEmpty: g === 'vi' ? 'Chưa có lượt quét nào trong phiên này.' : 'No scans in this session yet.',
         inside: g === 'vi' ? 'Đang ở trong' : 'Inside now',
@@ -1550,27 +1605,18 @@ class Component extends DCLogic {
         staffScans: g === 'vi' ? 'lượt quét' : 'scans',
         staffNote: g === 'vi' ? 'Lời mời gửi qua tin nhắn. Người nhận đăng nhập bằng số điện thoại đó, không cần tài khoản riêng.' : 'Invites go out by SMS. They sign in with that number — no separate account needed.',
         offline: g === 'vi' ? 'Quét được khi mất mạng. Dữ liệu tự đồng bộ khi có lại kết nối.' : 'Scanning works offline. Scans sync automatically once the connection is back.',
-        scan: async () => {
-          const next = await this.nextTicket();
-          if (!next) { this.say(vi ? 'Không còn vé nào để quét' : 'No more tickets to scan'); return; }
-          if (st.offline) return this.queueScan(next);
-          try {
-            const r = await FF.post('/door/events/' + st.eventId + '/scans',
-              { token: next.token, deviceId: FF.deviceId(), clientScanId: 'c' + Date.now(), manual: !next.signed });
-            this.applyScan(r);
-          } catch (e) { this.fail(e); }
-        }
+        scan: () => this.checkIn()
       },
       doorHasResult: !!st.doorResult,
       dR: (() => {
         const r = st.doorResult; if (!r) return {};
         const k = KIND[r.result] || 'bad';
         const map = {
-          ok:  { bg:'rgba(38,150,132,.12)', bd:'rgba(38,150,132,.5)', iconBg:'rgba(38,150,132,.18)', icon:'ph-fill ph-check-circle', fg:'#6CC7B6',
+          ok:  { bg:'rgba(10,228,72,.12)', bd:'rgba(10,228,72,.5)', iconBg:'rgba(10,228,72,.18)', icon:'ph-fill ph-check-circle', fg:'#0AE448',
                  status: vi ? 'Hợp lệ — mời vào' : 'Valid — let them in' },
-          dup: { bg:'rgba(228,109,76,.12)', bd:'rgba(228,109,76,.5)', iconBg:'rgba(228,109,76,.18)', icon:'ph-fill ph-copy', fg:'#F0A07F',
+          dup: { bg:'rgba(255,135,9,.12)', bd:'rgba(255,135,9,.5)', iconBg:'rgba(255,135,9,.18)', icon:'ph-fill ph-copy', fg:'#FF8709',
                  status: vi ? 'Vé đã dùng — gọi trưởng cửa' : 'Already used — call a gate lead' },
-          bad: { bg:'rgba(224,74,74,.12)', bd:'rgba(224,74,74,.5)', iconBg:'rgba(224,74,74,.18)', icon:'ph-fill ph-x-circle', fg:'#FF8C8C',
+          bad: { bg:'rgba(255,107,94,.12)', bd:'rgba(255,107,94,.5)', iconBg:'rgba(255,107,94,.18)', icon:'ph-fill ph-x-circle', fg:'#FF8A7A',
                  status: vi ? 'Từ chối' : 'Rejected' }
         }[k];
         return {
@@ -1589,45 +1635,30 @@ class Component extends DCLogic {
           name: r.name || (r.holder ? r.holder.name : '—'),
           tier: tier + (r.queued ? (vi ? ' · chờ đồng bộ' : ' · queued') : ''), time:r.time,
           icon: k === 'ok' ? 'ph-fill ph-check-circle' : k === 'dup' ? 'ph-fill ph-copy' : 'ph-fill ph-x-circle',
-          fg: k === 'ok' ? '#6CC7B6' : k === 'dup' ? '#F0A07F' : '#FF8C8C'
+          fg: k === 'ok' ? '#0AE448' : k === 'dup' ? '#FF8709' : '#FF8A7A'
         };
       }),
       ofl: {
         icon: st.offline ? 'ph-fill ph-cloud-slash' : 'ph-fill ph-cloud-check',
-        color: st.offline ? '#F0A07F' : '#6CC7B6',
-        bd: st.offline ? 'rgba(228,109,76,.4)' : 'rgba(186,215,247,.12)',
+        color: st.offline ? '#FF8709' : '#0AE448',
+        bd: st.offline ? 'rgba(255,135,9,.4)' : 'rgba(255,252,225,.19)',
         title: st.offline ? (vi ? 'Chế độ offline' : 'Offline mode') : (vi ? 'Đã kết nối' : 'Connected'),
         body: st.offline
           ? (ORG.offlineNote ? FF.text(ORG.offlineNote, g) : (vi ? 'Máy vẫn quét bình thường. Danh sách vé đã tải sẵn nên vẫn chặn được vé trùng trong cùng máy này.' : 'Scanning keeps working. The ticket list is already on the device, so duplicates within this scanner are still caught.'))
           : (vi ? 'Mọi lượt quét đồng bộ ngay giữa các máy ở mọi cổng.' : 'Every scan syncs immediately across all scanners at every gate.'),
-        toggle: () => this.setState({ offline: !st.offline }),
-        toggleLabel: st.offline ? (vi ? 'Giả lập: có mạng' : 'Simulate: back online') : (vi ? 'Giả lập: mất mạng' : 'Simulate: lose signal'),
-        toggleHint: vi ? 'Chỉ dùng để thử trong bản mẫu' : 'Prototype control only',
         queueHead: vi ? 'Chờ đồng bộ' : 'Waiting to sync',
         queue: st.syncing ? '•••' : String(st.oq),
         queueUnit: vi ? 'lượt quét' : 'scans',
-        qColor: st.oq > 0 ? '#F0A07F' : '#6CC7B6',
+        qColor: st.oq > 0 ? '#FF8709' : '#0AE448',
         syncLabel: st.syncing ? (vi ? 'Đang đồng bộ' : 'Syncing') : (vi ? 'Đồng bộ ngay' : 'Sync now'),
         syncIcon: st.syncing ? 'ph-bold ph-circle-notch' : 'ph-bold ph-arrows-clockwise',
-        syncBg: st.oq > 0 && !st.offline ? '#B6D9FC' : 'transparent',
-        syncBd: st.oq > 0 && !st.offline ? '#B6D9FC' : 'rgba(186,215,247,.2)',
-        syncFg: st.oq > 0 && !st.offline ? '#090B16' : '#9DA7BA',
-        sync: async () => {
+        syncBg: st.oq > 0 && !st.offline ? '#ABFF84' : 'transparent',
+        syncBd: st.oq > 0 && !st.offline ? '#ABFF84' : 'rgba(255,252,225,.32)',
+        syncFg: st.oq > 0 && !st.offline ? '#141514' : '#A5A493',
+        sync: () => {
           if (st.offline) { this.say(vi ? 'Không có mạng — sẽ tự đồng bộ khi có lại' : 'No connection — it will sync itself once signal is back'); return; }
           if (st.oq === 0) { this.say(vi ? 'Không có gì chờ đồng bộ' : 'Nothing waiting to sync'); return; }
-          const queue = (this._queue || []).slice();
-          this.setState({ syncing:true });
-          try {
-            const out = await FF.post('/door/events/' + st.eventId + '/scans/sync',
-              { deviceId: FF.deviceId(), scans: queue.map(q => ({ token:q.token, clientScanId:q.clientScanId, scannedAt:q.scannedAt })) });
-            this._queue = [];
-            this.setState({ syncing:false, oq:0, syncedAt: this.clock() });
-            this.say(FF.text(out.message, g));
-            await this.reloadDoor();
-          } catch (e) {
-            this.setState({ syncing:false });
-            this.fail(e);
-          }
+          this.syncDoor();
         },
         lastSync: (() => {
           const n = st.staff.length, active = st.scanners;
@@ -1647,8 +1678,8 @@ class Component extends DCLogic {
           name:p.name, phone:p.phone,
           gate: gates[p.gate] + (p.role === 'lead' ? (vi ? ' · trưởng cửa' : ' · gate lead') : ''),
           count: invited ? (vi ? 'Chờ nhận' : 'Invited') : nf(p.scanCount) + (vi ? ' lượt quét' : ' scans'),
-          dot: p.online ? '#269684' : on ? '#B6D9FC' : invited ? '#F0A07F' : 'rgba(186,215,247,.24)',
-          fg: on ? '#6CC7B6' : invited ? '#F0A07F' : '#8A94A8',
+          dot: p.online ? '#0AE448' : on ? '#ABFF84' : invited ? '#FF8709' : 'rgba(255,252,225,.38)',
+          fg: on ? '#0AE448' : invited ? '#FF8709' : '#8C8B7D',
           toggleLabel: on ? (vi ? 'Tạm ngưng' : 'Pause') : (vi ? 'Cho soát vé' : 'Resume'),
           toggleIcon: on ? 'ph-bold ph-pause' : 'ph-bold ph-play',
           toggle: () => this.toggleStaff(p),
@@ -1667,11 +1698,11 @@ class Component extends DCLogic {
         { k:'main', label: vi ? 'Cổng chính' : 'Main' },
         { k:'vip', label: 'VIP' },
         { k:'side', label: vi ? 'Cổng phụ' : 'Side' }
-      ].map(o => ({ label:o.label, bg: st.sGate === o.k ? '#B6D9FC' : 'transparent', fg: st.sGate === o.k ? '#090B16' : '#9DA7BA', pick: () => this.setState({ sGate:o.k }) })),
+      ].map(o => ({ label:o.label, bg: st.sGate === o.k ? '#ABFF84' : 'transparent', fg: st.sGate === o.k ? '#141514' : '#A5A493', pick: () => this.setState({ sGate:o.k }) })),
       roleOpts: [
         { k:'scanner', label: vi ? 'Soát vé' : 'Scan only' },
         { k:'lead', label: vi ? 'Trưởng cửa' : 'Gate lead' }
-      ].map(o => ({ label:o.label, bg: st.sRole === o.k ? '#B6D9FC' : 'transparent', fg: st.sRole === o.k ? '#090B16' : '#9DA7BA', pick: () => this.setState({ sRole:o.k }) })),
+      ].map(o => ({ label:o.label, bg: st.sRole === o.k ? '#ABFF84' : 'transparent', fg: st.sRole === o.k ? '#141514' : '#A5A493', pick: () => this.setState({ sRole:o.k }) })),
 
       /* ---- promos + guest list ---- */
       pT: {
@@ -1693,14 +1724,14 @@ class Component extends DCLogic {
       promoRows: st.promos.map(c => ({
         code:c.code, note: FF.text(c.note, g),
         value: FF.text(c.value, g),
-        codeFg: c.active ? '#D8ECF8' : '#8A94A8',
+        codeFg: c.active ? '#FFFCE1' : '#8C8B7D',
         used: nf(c.used) + ' / ' + nf(c.cap),
         barW: Math.min(100, c.usedPct) + '%',
-        barFill: c.nearlyUsedUp ? '#E46D4C' : 'linear-gradient(90deg,#B6D9FC,#7A55F6)',
+        barFill: c.nearlyUsedUp ? '#FF8709' : 'linear-gradient(90deg,#ABFF84,#0AE448)',
         status: c.active ? (g === 'vi' ? 'Đang chạy' : 'Live') : (g === 'vi' ? 'Đã tắt' : 'Paused'),
-        stBg: c.active ? 'rgba(38,150,132,.14)' : 'rgba(157,167,186,.096)',
-        stBd: c.active ? 'rgba(38,150,132,.45)' : 'rgba(186,215,247,.12)',
-        stFg: c.active ? '#6CC7B6' : '#9DA7BA',
+        stBg: c.active ? 'rgba(10,228,72,.14)' : 'rgba(165,164,147,.096)',
+        stBd: c.active ? 'rgba(10,228,72,.45)' : 'rgba(255,252,225,.19)',
+        stFg: c.active ? '#0AE448' : '#A5A493',
         copy: (e) => {
           if (e && e.stopPropagation) e.stopPropagation();
           if (navigator.clipboard) navigator.clipboard.writeText(c.code).catch(() => {});
@@ -1730,13 +1761,13 @@ class Component extends DCLogic {
       guestRows: st.guests.map(gs => ({
         name:gs.name, note: FF.text(gs.note, g),
         initial: gs.name.trim().charAt(0).toUpperCase(),
-        avBg: gs.checkedIn ? 'rgba(182,217,252,.16)' : 'rgba(157,167,186,.112)',
-        avFg: gs.checkedIn ? '#D8ECF8' : '#9DA7BA',
+        avBg: gs.checkedIn ? 'rgba(171,255,132,.16)' : 'rgba(165,164,147,.112)',
+        avFg: gs.checkedIn ? '#FFFCE1' : '#A5A493',
         seats: gs.seats + (g === 'vi' ? ' chỗ' : gs.seats === 1 ? ' seat' : ' seats'),
         status: gs.checkedIn ? (g === 'vi' ? 'Đã vào' : 'Checked in') : (g === 'vi' ? 'Chưa vào' : 'Expected'),
-        stBg: gs.checkedIn ? 'rgba(38,150,132,.14)' : 'transparent',
-        stBd: gs.checkedIn ? 'rgba(38,150,132,.45)' : 'rgba(186,215,247,.12)',
-        stFg: gs.checkedIn ? '#6CC7B6' : '#9DA7BA',
+        stBg: gs.checkedIn ? 'rgba(10,228,72,.14)' : 'transparent',
+        stBd: gs.checkedIn ? 'rgba(10,228,72,.45)' : 'rgba(255,252,225,.19)',
+        stFg: gs.checkedIn ? '#0AE448' : '#A5A493',
         toggle: async () => {
           try {
             const out = await FF.patch('/organizer/events/' + st.eventId + '/guests/' + gs.id, { checkedIn: !gs.checkedIn });
@@ -1761,9 +1792,9 @@ class Component extends DCLogic {
         const top = st.promos.slice().sort((a, b) => b.used - a.used)[0];
         const share = s.redemptions && top ? Math.round(top.used / s.redemptions * 100) : 0;
         return [
-          { value: nf(s.ticketsWithCode), unit: g === 'vi' ? 'lượt' : 'uses', label: g === 'vi' ? 'Vé bán qua mã giảm giá' : 'Tickets sold through a code', color:'#B6D9FC' },
-          { value: money(-s.discountGiven, vi, 0), unit:'VND', label: g === 'vi' ? 'Giá trị đã giảm' : 'Discount given away', color:'#E46D4C' },
-          { value: share + '%', unit:'', label: top ? (g === 'vi' ? 'lượt dùng là mã ' + top.code : 'of code uses were ' + top.code) : '', color:'#9D84F8' }
+          { value: nf(s.ticketsWithCode), unit: g === 'vi' ? 'lượt' : 'uses', label: g === 'vi' ? 'Vé bán qua mã giảm giá' : 'Tickets sold through a code', color:'#ABFF84' },
+          { value: money(-s.discountGiven, vi, 0), unit:'VND', label: g === 'vi' ? 'Giá trị đã giảm' : 'Discount given away', color:'#FF8709' },
+          { value: share + '%', unit:'', label: top ? (g === 'vi' ? 'lượt dùng là mã ' + top.code : 'of code uses were ' + top.code) : '', color:'#ABFF84' }
         ];
       })(),
 
@@ -1799,10 +1830,10 @@ class Component extends DCLogic {
         const lo = paid.length ? paid[0] : null, hi = paid.length ? paid[paid.length - 1] : null;
         const tierNote = lo && hi ? FF.text(lo.name, g) + ' ' + short(lo.price, vi) + ' · ' + FF.text(hi.name, g) + ' ' + short(hi.price, vi) : '';
         return [
-          { label: g === 'vi' ? 'Tổng thu' : 'Gross', value: money(k.gross, vi), note: nf(k.ticketsSold) + (g === 'vi' ? ' vé đã bán' : ' tickets sold'), icon:'ph-bold ph-trend-up', color:'#B6D9FC' },
-          { label: g === 'vi' ? 'Thực nhận' : 'Net', value: money(k.net, vi), note: g === 'vi' ? 'Sau phí & hoàn tiền' : 'After fees and refunds', icon:'ph-bold ph-wallet', color:'#6CC7B6' },
-          { label: g === 'vi' ? 'Giá vé trung bình' : 'Avg ticket', value: money(k.avgTicket, vi, 2), note: tierNote, icon:'ph-bold ph-ticket', color:'#9D84F8' },
-          { label: g === 'vi' ? 'Hoàn tiền' : 'Refunds', value: String(k.refunds.tickets), note: (vi ? String(k.refunds.pct).replace('.', ',') : k.refunds.pct) + (g === 'vi' ? '% — dưới mức trung bình' : '% — below average'), icon:'ph-bold ph-arrow-u-up-left', color:'#F0A07F' }
+          { label: g === 'vi' ? 'Tổng thu' : 'Gross', value: money(k.gross, vi), note: nf(k.ticketsSold) + (g === 'vi' ? ' vé đã bán' : ' tickets sold'), icon:'ph-bold ph-trend-up', color:'#ABFF84' },
+          { label: g === 'vi' ? 'Thực nhận' : 'Net', value: money(k.net, vi), note: g === 'vi' ? 'Sau phí & hoàn tiền' : 'After fees and refunds', icon:'ph-bold ph-wallet', color:'#0AE448' },
+          { label: g === 'vi' ? 'Giá vé trung bình' : 'Avg ticket', value: money(k.avgTicket, vi, 2), note: tierNote, icon:'ph-bold ph-ticket', color:'#ABFF84' },
+          { label: g === 'vi' ? 'Hoàn tiền' : 'Refunds', value: String(k.refunds.tickets), note: (vi ? String(k.refunds.pct).replace('.', ',') : k.refunds.pct) + (g === 'vi' ? '% — dưới mức trung bình' : '% — below average'), icon:'ph-bold ph-arrow-u-up-left', color:'#FF8709' }
         ];
       })(),
       moneyBars: (() => {
@@ -1815,8 +1846,8 @@ class Component extends DCLogic {
           const hTotal = Math.round((d.fullPrice + d.withCode) / max * 160);
           const hPromo = (d.fullPrice + d.withCode) ? Math.round(hTotal * d.withCode / (d.fullPrice + d.withCode)) : 0;
           const hPaid = hTotal - hPromo;
-          out.push({ x, y: 168 - hTotal, h: hPromo, fill:'#7A55F6' });
-          out.push({ x, y: 168 - hPaid, h: hPaid, fill:'#B6D9FC' });
+          out.push({ x, y: 168 - hTotal, h: hPromo, fill:'#0AE448' });
+          out.push({ x, y: 168 - hPaid, h: hPaid, fill:'#ABFF84' });
         });
         return out;
       })(),
@@ -1827,7 +1858,7 @@ class Component extends DCLogic {
         price: t.price ? exact(t.price, vi) : '0₫',
         sold: nf(t.sold), barW: t.barPct + '%',
         gross: t.gross ? money(t.gross, vi) : '—',
-        fill: t.price === 0 ? 'rgba(186,215,247,.24)' : FF.text(t.name, 'en').toLowerCase().indexOf('vip') >= 0 ? '#7A55F6' : 'linear-gradient(90deg,#B6D9FC,#7A55F6)'
+        fill: t.price === 0 ? 'rgba(255,252,225,.38)' : FF.text(t.name, 'en').toLowerCase().indexOf('vip') >= 0 ? '#0AE448' : 'linear-gradient(90deg,#ABFF84,#0AE448)'
       })),
       payoutRows: (R.payouts || []).map(p => {
         const look = PAYOUT[p.status] || PAYOUT.scheduled;
@@ -1835,7 +1866,7 @@ class Component extends DCLogic {
           period: FF.text(p.period, g), bank: R.account ? R.account.bankName + ' ' + R.account.accountMasked : '—',
           amount: money(p.net, vi), status: FF.text(look.label, g), icon: look.icon, fg: look.fg, stBg: look.bg, stBd: look.bd,
           settles: FF.text(p.settles, g),
-          lines: p.lines.map(l => ({ label: FF.text(l.label, g), value: money(l.amount, vi), color: l.amount < 0 && l.key === 'refund_hold' ? '#F0A07F' : '#C7D3EA' })),
+          lines: p.lines.map(l => ({ label: FF.text(l.label, g), value: money(l.amount, vi), color: l.amount < 0 && l.key === 'refund_hold' ? '#FF8709' : '#E6E3C8' })),
           netLabel: vi ? 'Thực nhận' : 'Net to you',
           net: money(p.net, vi),
           open: !!st.payoutOpen[p.kind],
@@ -1847,7 +1878,7 @@ class Component extends DCLogic {
       }),
       feeRows: (R.fees || []).map(f => ({
         label: FF.text(f.label, g), value: money(f.amount, vi),
-        color: f.key === 'refunds' ? '#F0A07F' : '#C7D3EA'
+        color: f.key === 'refunds' ? '#FF8709' : '#E6E3C8'
       })),
       toast: st.toast
     };

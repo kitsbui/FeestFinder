@@ -4,9 +4,9 @@ import { SITE_URL } from '@/lib/api';
 import { ExtensionGuardRelease, ExtensionGuardScript } from '@/components/extension-guard';
 import './globals.css';
 
-/** Inter, Space Grotesk and JetBrains Mono: the design system's faces, all with Vietnamese. */
+/** Be Vietnam Pro: the design system's one face, drawn for Vietnamese. */
 const FONTS =
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap';
+  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   applicationName: 'FeestFinder',
   openGraph: { siteName: 'FeestFinder', locale: 'vi_VN', alternateLocale: ['en_US'], type: 'website' },
   // The ICO first with its size, so browsers that read SVG favicons still choose the SVG,
-  // which switches between ink and skywash with the browser's light or dark theme.
+  // which switches between ink and cream with the browser's light or dark theme.
   icons: {
     icon: [
       { url: '/ui/assets/favicon.ico', sizes: '32x32' },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#05060F',
+  themeColor: '#0E100F',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

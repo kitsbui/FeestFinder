@@ -217,7 +217,7 @@ function Section({ id, n, f, children, sub, locked }) {
 
 /** The feed card, as attendees will see it. */
 export function CardPreview({ f, organizer }) {
-  const art = 'linear-gradient(135deg,#8C6BFF,#2AC4E8)';
+  const art = 'linear-gradient(135deg,#0AE448,#00BAE2)';
   const price = f.entryMode === 'free' ? t('Miễn phí', 'Free') : f.entryMode === 'donation' ? t('Tuỳ tâm', 'Pay what you want') : f.priceFrom ? t(`Từ ${money(f.priceFrom)}`, `From ${money(f.priceFrom)}`) : t('Chưa có giá', 'No price yet');
   const where = f.venueMode === 'saved' ? f.venueLabel : f.venueName;
   const area = f.venueMode === 'saved' ? f.venueArea : f.area;

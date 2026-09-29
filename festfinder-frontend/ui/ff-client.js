@@ -9,9 +9,9 @@
 (function () {
   // Keep the raw template hidden and the ground dark while data loads.
   const style = document.createElement('style');
-  style.textContent = 'x-dc{display:none!important}html,body{background:#05060F;margin:0}';
+  style.textContent = 'x-dc{display:none!important}html,body{background:#0E100F;margin:0}';
   document.head.appendChild(style);
-  for (const href of ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap', '/ui/theme.css']) {
+  for (const href of ['https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', '/ui/theme.css']) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
@@ -161,14 +161,30 @@
   // ---- shared presentation helpers ------------------------------------------------
 
   const GRADIENTS = [
-    'linear-gradient(135deg,#6FB0F0,#3159D6)', 'linear-gradient(135deg,#E46D4C,#E88AA8)', 'linear-gradient(135deg,#B6D9FC,#3159D6)',
-    'linear-gradient(135deg,#7A55F6,#C4B8F7)', 'linear-gradient(135deg,#269684,#B6D9FC)', 'linear-gradient(135deg,#FFD35C,#E46D4C)',
+    'linear-gradient(150deg,#FFD29C,#FF8709)', 'linear-gradient(150deg,#BFF3FF,#00BAE2)', 'linear-gradient(150deg,#E4E1FF,#9D95FF)',
+    'linear-gradient(150deg,#FFF1FE,#FEC5FB)', 'linear-gradient(150deg,#DFFFD1,#0AE448)', 'linear-gradient(150deg,#FFFCE1,#ABFF84)',
   ];
+  // Colour is genre: Lễ hội orange, EDM blue, Nhạc sống lilac (indie, hip-hop, pop, jazz),
+  // Văn hoá pink (food, culture), and FeestFinder green for anything else. An event without
+  // a cover wears its genre's art: a two-hue body with a lit sphere of the neighbouring hue.
+  const GENRE_TONE = { Festival: 'fest', EDM: 'edm', Indie: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
+  const TONES = {
+    fest: { hue: '#FF8709', art: 'radial-gradient(circle at 76% 72%,#FFF1FE 0,#FEC5FB 12%,#F100CB 30%,rgba(241,0,203,0) 30.5%),linear-gradient(150deg,#FFD29C 0%,#FF8709 48%,#E8388A 118%)' },
+    edm: { hue: '#00BAE2', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#FEC5FB 12%,#9D95FF 30%,rgba(157,149,255,0) 30.5%),linear-gradient(150deg,#BFF3FF 0%,#00BAE2 48%,#5A62E0 120%)' },
+    live: { hue: '#9D95FF', art: 'radial-gradient(circle at 76% 72%,#E9FCFF 0,#7FE3F5 12%,#00BAE2 30%,rgba(0,186,226,0) 30.5%),linear-gradient(150deg,#E4E1FF 0%,#9D95FF 48%,#C22FCF 120%)' },
+    culture: { hue: '#FEC5FB', art: 'radial-gradient(circle at 76% 72%,#FFF3DF 0,#FFB35C 12%,#FF8709 30%,rgba(255,135,9,0) 30.5%),linear-gradient(150deg,#FFF1FE 0%,#FEC5FB 45%,#E86FD8 120%)' },
+    brand: { hue: '#0AE448', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#DFFFD1 12%,#00BAE2 30%,rgba(0,186,226,0) 30.5%),linear-gradient(150deg,#DFFFD1 0%,#ABFF84 35%,#0AE448 75%,#00BAE2 130%)' },
+  };
   FF.colorFor = function (key) {
     let h = 0;
     for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return GRADIENTS[h % GRADIENTS.length];
   };
+  FF.tone = (genre) => GENRE_TONE[genre] || 'brand';
+  FF.genreHue = (genre) => TONES[FF.tone(genre)].hue;
+  FF.genreArt = (genre) => TONES[FF.tone(genre)].art;
+  /** An event's art: its cover when it has one, else its genre's. */
+  FF.artOf = (x) => (x && x.coverUrl ? 'url("' + x.coverUrl + '") center/cover no-repeat' : x && x.genre ? FF.genreArt(x.genre) : (x && x.art) || TONES.brand.art);
   FF.initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   FF.text = (loc, lang) => (loc && typeof loc === 'object' ? loc[lang] || loc.en || '' : loc || '');
   FF.errorText = (e, lang) => (e && e.message) || (lang === 'vi' ? 'Đã có lỗi xảy ra' : 'Something went wrong');
@@ -204,21 +220,21 @@
     const o = opts || {};
     const wrap = document.createElement('div');
     wrap.setAttribute('data-ff-gate', '');
-    wrap.setAttribute('style', "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#05060F;font-family:'Inter',system-ui,sans-serif;padding:20px");
-    // The auth-form card of the design system: deep glass, labelled wells, the violet action.
+    wrap.setAttribute('style', "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0E100F;font-family:'Be Vietnam Pro', system-ui, sans-serif;padding:20px");
+    // The auth-form card of the design system: a deep panel, labelled fields, the green-stroked action.
     wrap.innerHTML =
       '<div class="ff-atmos ff-atmos--local" aria-hidden="true"><div class="ff-aurora"></div><div class="ff-grain"></div></div>' +
       '<form class="ff-deep ff-in" style="position:relative;z-index:1;width:100%;max-width:380px;box-sizing:border-box;border-radius:16px;padding:32px 28px 24px">' +
       '<img src="/ui/assets/ff-logo.svg" alt="FeestFinder" style="height:22px;width:127px;display:block;margin:0 0 28px">' +
       '<div class="ff-eyebrow" style="margin-bottom:10px">' + (o.kicker || 'FeestFinder') + '</div>' +
-      '<h1 class="ff-skywash" style="margin:0 0 8px;font-family:\'Space Grotesk\',\'Inter\',system-ui,sans-serif;font-size:28px;font-weight:500;line-height:1.1;letter-spacing:-.03em">' + (o.title || 'Sign in') + '</h1>' +
-      '<p style="margin:0 0 24px;font-size:14px;line-height:1.5;color:#9DA7BA">' + (o.note || '') + '</p>' +
+      '<h1 class="ff-skywash" style="margin:0 0 8px;font-family:\'Be Vietnam Pro\',system-ui,sans-serif;font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-.03em">' + (o.title || 'Sign in') + '</h1>' +
+      '<p style="margin:0 0 24px;font-size:14px;line-height:1.5;color:#A5A493">' + (o.note || '') + '</p>' +
       '<label class="ff-label" for="ff-gate-id">Email</label>' +
       '<input id="ff-gate-id" class="ff-input" name="id" autocomplete="username" placeholder="' + (o.idPlaceholder || 'Email') + '" style="margin-bottom:14px">' +
       '<label class="ff-label" for="ff-gate-pw">Password</label>' +
       '<input id="ff-gate-pw" class="ff-input" name="pw" type="password" autocomplete="current-password" style="margin-bottom:20px">' +
       '<button type="submit" class="ff-cta" style="width:100%;padding:12px 24px;border:0;border-radius:999px;font:inherit;font-size:14px;font-weight:500;cursor:pointer">Sign in</button>' +
-      '<div data-err role="alert" style="min-height:18px;margin-top:12px;font-size:12.5px;color:#F4A3A3;text-align:center"></div>' +
+      '<div data-err role="alert" style="min-height:18px;margin-top:12px;font-size:12.5px;color:#FF8A7A;text-align:center"></div>' +
       '</form>';
     document.body.appendChild(wrap);
     const form = wrap.querySelector('form');
@@ -349,7 +365,7 @@
       document.querySelector('script[data-dc-script]').textContent = js;
     } catch (e) {
       console.error('[ff] could not load the screen', e);
-      document.body.innerHTML = '<p style="color:#9DA7BA;font:15px system-ui;padding:24px">'
+      document.body.innerHTML = '<p style="color:#A5A493;font:15px system-ui;padding:24px">'
         + 'This screen could not load. Reload the page to try again.</p>';
       return;
     }

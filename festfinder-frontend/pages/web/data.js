@@ -6,7 +6,7 @@ FF.webEvent = function (c) {
     venue: c.venue.name || '', area: c.venue.area || '', lat: c.venue.lat, lng: c.venue.lng,
     price: c.priceFrom, hype: c.hypeCount, featured: c.featured, soldOut: c.soldOut, past: c.past, dist: c.distanceKm,
     badge: c.badge ? c.badge.label : undefined,
-    art: c.coverUrl ? 'url("' + c.coverUrl + '") center/cover no-repeat' : (c.art || 'linear-gradient(135deg,#7A55F6,#B6D9FC)'),
+    art: FF.artOf(c),
     lineup: c.lineup || []
   };
 };
@@ -38,7 +38,6 @@ FF.loadWeb = async function () {
   }
   const u = me && me.user;
   const socials = me ? me.connections.map(c => c.provider) : [];
-  const ravo = cards.find(c => c.slug === 'ravo');
   return {
     events: cards.map(FF.webEvent),
     friends: friends.items.map(f => ({ id: f.id, name: f.name, src: f.source, color: FF.colorFor(f.id),
@@ -51,7 +50,7 @@ FF.loadWeb = async function () {
     saved: flags(saves.items), going: flags(going.items), following,
     notifM: prefs ? prefs.matrix : null,
     faqs: [],
-    mapSel: ravo ? ravo.id : (cards[0] ? cards[0].id : null)
+    mapSel: cards[0] ? cards[0].id : null
   };
 };
 /** The city landing page: the questions people ask, in both languages. */

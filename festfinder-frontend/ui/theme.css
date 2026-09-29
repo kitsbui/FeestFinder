@@ -1,83 +1,101 @@
 /*
- * FeestFinder — Midnight Glass.
+ * FeestFinder — Bảng phấn (Chalkboard).
  *
  * The design system every screen shares, on both fronts (the design runtime and Next.js).
- * A near-black canvas under a faint blueprint grid and a spotlight beam; surfaces are glass
- * plates lit from below (an inset frost edge, a soft inner glow, a cool dark drop) rather
- * than bordered boxes; type steps down from ice to fog; one violet marks the one action
- * that matters on a screen. Everything else is monochrome.
+ * A near-black board, warm cream chalk for type and outlines, and one colour per genre:
+ * Lễ hội orange, EDM blue, Nhạc sống lilac, Văn hoá pink, with FeestFinder's green for the
+ * brand and for what is free. Buttons are ghost pills; the one action a screen exists for
+ * wears a flowing green stroke. Depth comes from soft 3D shapes lit from inside, never
+ * from drop shadows, and almost everything moves a little.
  *
- * Sources: tokens.json / variables.css / DESIGN.md (the Authkit reference). Commercial
- * faces are swapped for their documented substitutes: Untitled Sans → Inter,
- * aeonikPro → Space Grotesk, dotDigital → JetBrains Mono. All three carry Vietnamese.
+ * Sources: tokens.json / variables.css / DESIGN.md (the GSAP reference on refero). Mori is
+ * commercial, so the one face is Be Vietnam Pro, drawn for Vietnamese. Surface 50 (#7c7c6f)
+ * is lifted to #858577 for small text so it keeps 4.5:1 on the board. The reference has no
+ * red: errors use a warm coral (#ff6b5e), the only colour outside it.
  */
 
 :root {
   color-scheme: dark;
 
   /* ---- Reference palette ------------------------------------------------------------ */
-  --color-midnight-canvas: #05060f;
-  --color-steel-plate: #2f343e;
-  --color-fog-veil: #9da7ba;
-  --color-moon-mist: #c7d3ea;
-  --color-frost-glow: #d1e4fa;
-  --color-ice-highlight: #d8ecf8;
-  --color-pure-white: #ffffff;
-  --color-void-violet: #663af3;
-  --color-blueprint-blue: #b6d9fc;
-  --color-ember-glow: #e46d4c;
-  --color-signal-blue: #027dea;
-  --color-deep-teal: #269684;
-  --color-gridline-blue: #3f4959;
-  --color-glass-edge: #bad7f71f;
-  --color-luminous-fill: #c7d3ea1f;
-  --gradient-skywash: linear-gradient(180deg, #d8ecf8 0%, #98c0ef 100%);
+  --color-just-black: #0e100f;
+  --color-surface-cream: #fffce1;
+  --color-surface-50: #7c7c6f;
+  --color-surface-25: #42433d;
+  --color-off-black: #191919;
+  --color-shockingly-green: #0ae448;
+  --color-light-green: #abff84;
+  --color-orangey: #ff8709;
+  --color-pink: #fec5fb;
+  --color-lilac: #9d95ff;
+  --color-blue: #00bae2;
+  --color-core-green: #dfffd1;
+  --color-lipstick-pink: #f100cb;
+  --gradient-shockingly-green: linear-gradient(114.41deg, #0ae448 20.74%, #abff84 65.5%);
 
-  /* ---- Roles -------------------------------------------------------------------------- */
-  --ff-canvas: #05060f;
-  --ff-surface-1: #090b16;
-  --ff-surface-2: #0e111d;
-  --ff-glass: rgba(186, 214, 247, 0.03);
-  --ff-glass-2: rgba(186, 214, 247, 0.06);
-  --ff-glass-3: rgba(186, 214, 247, 0.12);
-  --ff-deep-glass: rgba(5, 6, 15, 0.97);
-  --ff-edge: rgba(186, 215, 247, 0.12);
-  --ff-edge-strong: rgba(186, 215, 247, 0.24);
+  /* Soft 3D: a cream key light top-left, an ink shade bottom-right, a two-hue body. */
+  --ff-hl: radial-gradient(55% 50% at 30% 24%, rgba(255, 252, 225, 0.9), rgba(255, 252, 225, 0) 62%);
+  --ff-sh: radial-gradient(85% 85% at 84% 94%, rgba(14, 16, 15, 0.42), rgba(14, 16, 15, 0) 60%);
+  --ff-g-fest: var(--ff-hl), var(--ff-sh), linear-gradient(150deg, #ffd29c 0%, #ff8709 46%, #f100cb 125%);
+  --ff-g-edm: var(--ff-hl), var(--ff-sh), linear-gradient(150deg, #fec5fb 0%, #9d95ff 34%, #00bae2 78%);
+  --ff-g-live: var(--ff-hl), var(--ff-sh), linear-gradient(150deg, #e4e1ff 0%, #9d95ff 46%, #f100cb 130%);
+  --ff-g-culture: var(--ff-hl), var(--ff-sh), linear-gradient(150deg, #fff1fe 0%, #fec5fb 40%, #ff8709 125%);
+  --ff-g-brand: var(--ff-hl), var(--ff-sh), linear-gradient(150deg, #dfffd1 0%, #abff84 32%, #0ae448 68%, #00bae2 125%);
 
-  --ff-text-1: #d8ecf8; /* headings */
-  --ff-text-2: #d1e4fa; /* body, links */
-  --ff-text-3: #c7d3ea; /* secondary */
-  --ff-text-4: #9da7ba; /* helper */
-  --ff-text-5: #8a94a8; /* quietest */
+  /* ---- Roles (the names every screen and /ops read) --------------------------------- */
+  --ff-canvas: #0e100f;
+  --ff-surface-1: #141514;
+  --ff-surface-2: #191919;
+  --ff-glass: rgba(255, 252, 225, 0.035);
+  --ff-glass-2: rgba(255, 252, 225, 0.07);
+  --ff-glass-3: rgba(255, 252, 225, 0.12);
+  --ff-deep-glass: rgba(22, 23, 22, 0.98);
+  --ff-edge: rgba(255, 252, 225, 0.19);
+  --ff-edge-strong: rgba(255, 252, 225, 0.38);
 
-  --ff-accent: #b6d9fc;
-  --ff-cta: #663af3;
-  --ff-cta-hi: #7a55f6;
-  --ff-ok: #3fb8a3;
-  --ff-warn: #e46d4c;
+  --ff-text-1: #fffce1; /* headings */
+  --ff-text-2: #fffce1; /* body */
+  --ff-text-3: #e6e3c8; /* secondary */
+  --ff-text-4: #a5a493; /* helper */
+  --ff-text-5: #8c8b7d; /* quietest that still reads */
+
+  --ff-accent: #abff84;
+  --ff-cta: #0ae448;
+  --ff-cta-hi: #abff84;
+  --ff-ok: #0ae448;
+  --ff-warn: #ff8709;
+  --ff-danger: #ff6b5e;
+
+  /* Genre hues: colour is taxonomy. */
+  --ff-fest: #ff8709;
+  --ff-edm: #00bae2;
+  --ff-live: #9d95ff;
+  --ff-culture: #fec5fb;
+  --ff-brand: #0ae448;
 
   /* ---- Type --------------------------------------------------------------------------- */
-  --ff-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --ff-font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --ff-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ff-font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ff-font-display: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --ff-font-mono: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
 
-  /* ---- Shape, elevation, light ---------------------------------------------------------- */
-  --radius-cards: 16px;
-  --radius-badges: 6px;
-  --radius-inputs: 6px;
-  --radius-buttons: 999px;
-  --ff-shadow-card: inset 0 1px 1px rgba(199, 211, 234, 0.12), inset 0 24px 48px rgba(199, 211, 234, 0.05), 0 24px 32px rgba(6, 6, 14, 0.7);
-  --ff-shadow-modal: inset 0 1px 1px rgba(216, 236, 248, 0.2), inset 0 24px 48px rgba(168, 216, 245, 0.06), 0 16px 32px rgba(0, 0, 0, 0.3);
-  --ff-shadow-edge: inset 0 0 0 1px rgba(186, 215, 247, 0.12);
-  --ff-halo: 0 0 6px rgba(186, 207, 247, 0.32), 0 0 12px rgba(238, 186, 247, 0.24);
+  /* ---- Shape, elevation --------------------------------------------------------------- */
+  --radius-cards: 8px;
+  --radius-badges: 8px;
+  --radius-inputs: 8px;
+  --radius-buttons: 100px;
+  --radius-pills: 9999px;
+  --ff-shadow-card: inset 0 0 0 1px rgba(255, 252, 225, 0.06);
+  --ff-shadow-modal: inset 0 0 0 1px #42433d;
+  --ff-shadow-edge: inset 0 0 0 1px rgba(255, 252, 225, 0.19);
+  --ff-halo: 0 0 0 1px rgba(171, 255, 132, 0.4);
 
   /* ---- Motion ------------------------------------------------------------------------- */
   --ff-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ff-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ff-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ff-dur-1: 0.16s;
-  --ff-dur-2: 0.32s;
-  --ff-dur-3: 0.7s;
+  --ff-dur-1: 0.18s;
+  --ff-dur-2: 0.4s;
+  --ff-dur-3: 0.9s;
 }
 
 /* ---- Base ------------------------------------------------------------------------------- */
@@ -89,30 +107,30 @@ html {
 }
 
 body {
-  font-feature-settings: 'cv11', 'ss01', 'ss03';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
 }
 
 ::selection {
-  background: rgba(102, 58, 243, 0.45);
-  color: #fff;
+  background: #0ae448;
+  color: #0e100f;
 }
 
 :focus-visible {
-  outline: 2px solid rgba(182, 217, 252, 0.7) !important;
+  outline: 2px solid rgba(171, 255, 132, 0.85) !important;
   outline-offset: 2px !important;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: rgba(199, 211, 234, 0.55);
+  color: rgba(255, 252, 225, 0.5);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  caret-color: var(--ff-accent);
+  caret-color: #abff84;
 }
 
 /* Numbers that change in place (counts, prices, countdowns) keep their width. */
@@ -120,7 +138,9 @@ select:focus {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- Atmosphere: the blueprint grid, the spotlight beam, grain --------------------------- */
+/* ---- Atmosphere: genre shapes drifting behind the board -----------------------------------
+   Three soft 3D shapes sit at the edges of every screen and peek through the panels: an
+   orange orb, a blue capsule and a lilac ring, with a little chalk grain over everything. */
 
 .ff-atmos {
   position: fixed;
@@ -135,76 +155,88 @@ select:focus {
   position: absolute;
 }
 
-/* The grid: 1px frost lines every 80px, fading out from the top centre. */
 .ff-atmos::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(186, 215, 247, 0.055) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(186, 215, 247, 0.055) 1px, transparent 1px);
-  background-size: 80px 80px;
-  background-position: center -1px;
-  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, #000 20%, transparent 78%);
-  mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, #000 20%, transparent 78%);
+  right: -9vmax;
+  top: -10vmax;
+  width: 34vmax;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--ff-g-fest);
+  opacity: 0.5;
+  animation: ffDriftA 22s var(--ff-ease-in-out) infinite alternate;
 }
 
-/* The beam: a conic spotlight falling from above the viewport, breathing slowly. */
 .ff-atmos::after {
   content: '';
   position: absolute;
-  left: 50%;
-  top: -12vh;
-  width: 180vmax;
-  height: 110vh;
-  translate: -50% 0;
-  background:
-    conic-gradient(from 180deg at 50% 0%, transparent 163deg, rgba(124, 145, 182, 0.16) 172deg, rgba(152, 192, 239, 0.34) 180deg, rgba(124, 145, 182, 0.16) 188deg, transparent 197deg),
-    radial-gradient(ellipse 38% 34% at 50% 0%, rgba(152, 192, 239, 0.2), transparent 70%);
-  filter: blur(18px);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 85%);
-  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 85%);
-  transform-origin: 50% 0%;
-  animation: ffBeam 14s var(--ff-ease-in-out) infinite alternate;
+  left: -12vmax;
+  bottom: 4vh;
+  width: 38vmax;
+  height: 13vmax;
+  border-radius: 999px;
+  background: var(--ff-g-edm);
+  opacity: 0.36;
+  rotate: -24deg;
+  animation: ffDriftB 28s var(--ff-ease-in-out) infinite alternate;
 }
 
-/* Film grain, so the large dark planes do not band. */
+/* A lilac ring, turning slowly. */
+.ff-aurora {
+  position: absolute;
+  right: 8vw;
+  bottom: -6vmax;
+  width: 20vmax;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--ff-g-live);
+  opacity: 0.45;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.4vmax), #000 calc(100% - 1.4vmax + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.4vmax), #000 calc(100% - 1.4vmax + 1px));
+  animation: ffSpin 60s linear infinite;
+}
+
+/* Inside the phone frame the shapes are sized to the phone, not the window. */
+.ff-atmos--local::before { width: 240px; right: -110px; top: -120px; opacity: 0.4; }
+.ff-atmos--local::after { width: 300px; height: 96px; left: -150px; bottom: 90px; opacity: 0.3; }
+.ff-atmos--local .ff-aurora { width: 180px; right: -60px; bottom: -70px; opacity: 0.35; }
+
+/* Chalk grain, so the large dark planes read as a board and do not band. */
 .ff-grain {
   position: absolute;
   inset: 0;
-  opacity: 0.05;
+  opacity: 0.07;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* A low aurora at the bottom of the page: the only colour in the room, and barely. */
-.ff-aurora {
-  position: absolute;
-  left: 50%;
-  bottom: -38vh;
-  width: 120vw;
-  height: 60vh;
-  translate: -50% 0;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(102, 58, 243, 0.14), rgba(2, 125, 234, 0.05) 45%, transparent 70%);
-  filter: blur(40px);
-  animation: ffAurora 22s var(--ff-ease-in-out) infinite alternate;
-}
+/* The back offices are for working: the shapes step back. */
+[data-surface='organizer'] .ff-atmos::before,
+[data-surface='admin'] .ff-atmos::before { opacity: 0.28; }
+[data-surface='organizer'] .ff-atmos::after,
+[data-surface='admin'] .ff-atmos::after { opacity: 0.2; }
+[data-surface='organizer'] .ff-aurora,
+[data-surface='admin'] .ff-aurora { opacity: 0.25; }
 
 /* ---- Type utilities ---------------------------------------------------------------------- */
 
-/* Skywash: ice to soft blue, for the display wordmark and the largest headings only. */
-.ff-skywash {
-  background: var(--gradient-skywash);
+/* The brand gradient, moving slowly: display words and the largest headings. The name is
+   the one the screens already use, so every screen picks it up. */
+.ff-skywash,
+.ff-grad {
+  background: linear-gradient(100deg, #0ae448 0%, #abff84 30%, #00bae2 55%, #abff84 78%, #0ae448 100%);
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  animation: ffSweep 8s var(--ff-ease-in-out) infinite alternate;
 }
 
-/* A slow band of light passing across muted text: the second line of a headline. */
+/* The second line of a headline: cream chalk with light passing across it. */
 .ff-shine {
-  background: linear-gradient(100deg, #7d879c 0%, #9da7ba 32%, #eef6fd 50%, #9da7ba 68%, #7d879c 100%);
+  background: linear-gradient(100deg, #fffce1 0%, #fffce1 38%, #fec5fb 50%, #fffce1 62%, #fffce1 100%);
   background-size: 260% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -215,20 +247,31 @@ select:focus {
 
 .ff-display {
   font-family: var(--ff-font-display);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-/* Section eyebrow: tracked mono caps between fading hairlines. */
+/* Genre words in their own hue. */
+.ff-hue { color: var(--ff-hue, #fffce1); }
+.ff-t-fest { --ff-hue: #ff8709; --ff-ga: var(--ff-g-fest); --ff-gb: var(--ff-g-culture); }
+.ff-t-edm { --ff-hue: #00bae2; --ff-ga: var(--ff-g-edm); --ff-gb: var(--ff-g-live); }
+.ff-t-live { --ff-hue: #9d95ff; --ff-ga: var(--ff-g-live); --ff-gb: var(--ff-g-edm); }
+.ff-t-culture { --ff-hue: #fec5fb; --ff-ga: var(--ff-g-culture); --ff-gb: var(--ff-g-fest); }
+.ff-t-brand { --ff-hue: #0ae448; --ff-ga: var(--ff-g-brand); --ff-gb: var(--ff-g-edm); }
+
+/* Section eyebrow: a curly-bracket annotation in cream, the reference's signature. */
 .ff-eyebrow {
-  font-family: var(--ff-font-mono);
+  font-family: var(--ff-font-sans);
   font-weight: 400;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ff-text-3);
-  font-feature-settings: 'tnum' 1;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  text-transform: none;
+  color: #fffce1;
 }
+
+.ff-eyebrow:not(.ff-eyebrow--lines)::before { content: '{\00a0'; color: #abff84; }
+.ff-eyebrow:not(.ff-eyebrow--lines)::after { content: '\00a0}'; color: #abff84; }
 
 .ff-eyebrow--lines {
   display: flex;
@@ -242,29 +285,33 @@ select:focus {
   flex: 1 1 0;
   min-width: 24px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(186, 215, 247, 0.16), transparent);
+  background: #42433d;
 }
 
+/* The lead eyebrow's opening brace blinks like a cursor. */
 .ff-eyebrow--lead::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 10px;
-  border-radius: 1px;
-  background: var(--ff-accent);
-  box-shadow: 0 0 10px rgba(182, 217, 252, 0.8);
-  vertical-align: 1px;
   animation: ffBlink 2.4s steps(1) infinite;
 }
 
+/* The curly annotation as its own element. */
+.ff-brace {
+  font-size: 16px;
+  font-weight: 400;
+  color: #fffce1;
+  white-space: nowrap;
+}
+
+.ff-brace::before { content: '{\00a0'; color: #abff84; }
+.ff-brace::after { content: '\00a0}'; color: #abff84; }
+
 /* ---- Surfaces ---------------------------------------------------------------------------- */
 
+/* Panels: one step lifted from the board, no border, no drop shadow. */
 .ff-glass {
-  background: var(--ff-glass) !important;
+  background: rgba(25, 25, 25, 0.82) !important;
   box-shadow: var(--ff-shadow-card) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
 }
 
 .ff-deep {
@@ -272,8 +319,8 @@ select:focus {
   box-shadow: var(--ff-shadow-modal) !important;
 }
 
-/* A card that answers the pointer: a soft light follows it across the glass, and the
-   rim brightens where it is. --mx/--my are set by a delegated pointer listener. */
+/* A card that answers the pointer: a lime light follows it and the rim warms to cream
+   where it is. --mx/--my are set by a delegated pointer listener. */
 .ff-spot {
   position: relative;
   isolation: isolate;
@@ -292,13 +339,13 @@ select:focus {
 
 .ff-spot::before {
   z-index: -1;
-  background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 0%), rgba(182, 217, 252, 0.075), transparent 42%);
+  background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 0%), rgba(171, 255, 132, 0.07), transparent 42%);
 }
 
 .ff-spot::after {
   z-index: 3;
   padding: 1px;
-  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), rgba(216, 236, 248, 0.42), transparent 45%);
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 252, 225, 0.6), transparent 45%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -310,18 +357,20 @@ select:focus {
 }
 
 .ff-lift {
-  transition: transform var(--ff-dur-2) var(--ff-ease-out), box-shadow var(--ff-dur-2) var(--ff-ease-out), background-color var(--ff-dur-2);
+  transition: transform 0.7s var(--ff-ease-out), background-color var(--ff-dur-2), border-color var(--ff-dur-2);
 }
 
 .ff-lift:hover {
-  transform: translateY(-3px);
+  transform: translateY(-6px);
 }
 
-/* Event art seen through glass: the organiser's colours, calmed into the night — a top
-   sheen, a grid etched in the plate, and a fade into the canvas at the foot. */
+/* Event art: the genre's colours at full strength, lit like a soft 3D shape — a cream key
+   light, an orbiting ring and a small sphere drawn over the art — and a shade at the foot
+   so type set on it reads. */
 .ff-art {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
 }
 
 .ff-art::before {
@@ -331,7 +380,7 @@ select:focus {
   z-index: -1;
   border-radius: inherit;
   background: inherit;
-  filter: saturate(0.72) brightness(0.9) contrast(1.05);
+  transition: transform 1.2s var(--ff-ease-out);
 }
 
 .ff-art::after {
@@ -342,33 +391,40 @@ select:focus {
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(216, 236, 248, 0.22), transparent 55%),
-    linear-gradient(to right, rgba(216, 236, 248, 0.07) 1px, transparent 1px) 0 0 / 28px 28px,
-    linear-gradient(to bottom, rgba(216, 236, 248, 0.07) 1px, transparent 1px) 0 0 / 28px 28px,
-    linear-gradient(180deg, rgba(5, 6, 15, 0) 35%, rgba(5, 6, 15, 0.62) 100%);
+    radial-gradient(circle at 82% 26%, transparent 0 15%, rgba(255, 252, 225, 0.5) 15.4% 16.2%, transparent 16.6%),
+    radial-gradient(circle at 16% 78%, rgba(255, 252, 225, 0.95) 0, rgba(255, 252, 225, 0.35) 3.5%, transparent 7%),
+    radial-gradient(60% 70% at 26% 14%, rgba(255, 252, 225, 0.32), transparent 60%),
+    linear-gradient(180deg, rgba(14, 16, 15, 0) 42%, rgba(14, 16, 15, 0.55) 100%);
+  animation: ffArtDrift 14s var(--ff-ease-in-out) infinite alternate;
+}
+
+*:hover > .ff-art::before,
+.ff-art:hover::before {
+  transform: scale(1.06);
 }
 
 .ff-art--flat::after {
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(216, 236, 248, 0.2), transparent 60%),
-    linear-gradient(180deg, rgba(5, 6, 15, 0) 40%, rgba(5, 6, 15, 0.35) 100%);
+    radial-gradient(60% 70% at 26% 14%, rgba(255, 252, 225, 0.3), transparent 60%),
+    linear-gradient(180deg, rgba(14, 16, 15, 0) 45%, rgba(14, 16, 15, 0.3) 100%);
+  animation: none;
 }
 
-/* Poster type: the event's own name, huge and hairline, etched into its art. */
+/* Poster type: the event's own name, huge and outlined in chalk, across its art. */
 .ff-poster {
   position: absolute;
   left: 22px;
   right: 0;
   bottom: -0.17em;
   font-family: var(--ff-font-display);
-  font-weight: 500;
+  font-weight: 600;
   font-size: clamp(72px, 9vw, 136px);
   line-height: 0.82;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.04em;
   white-space: nowrap;
   overflow: hidden;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(216, 236, 248, 0.28);
+  -webkit-text-stroke: 1.5px rgba(255, 252, 225, 0.55);
   -webkit-mask-image: linear-gradient(90deg, #000 50%, transparent 96%);
   mask-image: linear-gradient(90deg, #000 50%, transparent 96%);
   pointer-events: none;
@@ -388,51 +444,97 @@ select:focus {
   animation-direction: alternate-reverse;
 }
 
-/* ---- Actions ----------------------------------------------------------------------------- */
+/* ---- Decorative shapes -------------------------------------------------------------------
+   Soft 3D shapes in a genre's colours (set a .ff-t-* tone on them or a parent). They sit
+   behind or across headlines, never catch the pointer, and loop quietly. */
 
-/* The one violet: the action this screen exists for. */
-.ff-cta {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  background: var(--ff-cta) !important;
-  color: #fff !important;
-  border-color: transparent !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 30px -10px rgba(102, 58, 243, 0.75), 0 0 0 1px rgba(102, 58, 243, 0.4) !important;
-  transition: transform var(--ff-dur-1) var(--ff-ease-out), box-shadow var(--ff-dur-2) var(--ff-ease-out), background-color var(--ff-dur-2) !important;
+.ff-sh {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  background: var(--ff-ga, var(--ff-g-brand));
 }
 
-.ff-cta::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.28) 48%, transparent 66%);
-  translate: -120% 0;
-  transition: translate 0.9s var(--ff-ease-out);
+.ff-sh--alt { background: var(--ff-gb, var(--ff-g-edm)); }
+.ff-sh--cream { background: var(--ff-hl), linear-gradient(150deg, #fffce1, #dfffd1); }
+.ff-sh--orb { border-radius: 50%; aspect-ratio: 1; }
+.ff-sh--pill { border-radius: 999px; }
+.ff-sh--dome { border-radius: 999px 999px 0 0; }
+.ff-sh--star { aspect-ratio: 1; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+.ff-sh--ring {
+  border-radius: 50%;
+  aspect-ratio: 1;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--ff-rw, 14px)), #000 calc(100% - var(--ff-rw, 14px) + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--ff-rw, 14px)), #000 calc(100% - var(--ff-rw, 14px) + 1px));
+}
+.ff-sh--liquid { aspect-ratio: 1; border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; animation: ffMorph 12s ease-in-out infinite, ffFloatR 9s var(--ff-ease-in-out) infinite; }
+
+.ff-m-float { animation: ffFloatR var(--ff-dur, 8s) var(--ff-ease-in-out) var(--ff-dl, 0s) infinite; }
+.ff-m-spin { animation: ffSpin var(--ff-dur, 18s) linear infinite; }
+.ff-m-orbit { animation: ffOrbit var(--ff-dur, 14s) linear infinite; }
+
+/* A band of words that runs sideways forever; the track holds its content twice. */
+.ff-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.ff-marquee__track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: ffMarquee var(--ff-dur, 40s) linear infinite;
+}
+
+.ff-marquee--rev .ff-marquee__track { animation-direction: reverse; }
+.ff-marquee:hover .ff-marquee__track { animation-play-state: paused; }
+
+.ff-outline {
+  color: transparent !important;
+  -webkit-text-stroke: 1.5px #fffce1;
+}
+
+/* ---- Actions ----------------------------------------------------------------------------- */
+
+/* The one chromatic control: a ghost pill whose stroke is the brand green, flowing. */
+.ff-cta {
+  position: relative;
+  isolation: isolate;
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(var(--ff-cta-bg, #0e100f), var(--ff-cta-bg, #0e100f)) padding-box,
+    linear-gradient(114.41deg, #0ae448 0%, #abff84 25%, #00bae2 50%, #abff84 75%, #0ae448 100%) border-box !important;
+  background-size: 100% 100%, 300% 100% !important;
+  color: #fffce1 !important;
+  box-shadow: none !important;
+  animation: ffStroke 6s linear infinite;
+  transition: transform var(--ff-dur-1) var(--ff-ease-out), color var(--ff-dur-2) !important;
 }
 
 .ff-cta:hover {
-  background: var(--ff-cta-hi) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 14px 40px -10px rgba(122, 85, 246, 0.9), 0 0 0 1px rgba(122, 85, 246, 0.55) !important;
+  --ff-cta-bg: #102313;
+  color: #abff84 !important;
 }
 
-.ff-cta:hover::after {
-  translate: 120% 0;
-}
-
-/* Ghost pill: the default button. */
+/* Every button is a pill in this system. */
+.ff-cta,
 .ff-ghost {
-  background: rgba(186, 214, 247, 0.06) !important;
-  box-shadow: inset 0 0 0 1px rgba(186, 215, 247, 0.12) !important;
+  border-radius: 100px !important;
+}
+
+/* Ghost pill: the default button, a hairline of cream chalk. */
+.ff-ghost {
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 252, 225, 0.7) !important;
   border-color: transparent !important;
-  color: #fff !important;
-  transition: background-color var(--ff-dur-1), box-shadow var(--ff-dur-1), transform var(--ff-dur-1) var(--ff-ease-out) !important;
+  color: #fffce1 !important;
+  transition: box-shadow var(--ff-dur-2) var(--ff-ease-out), color var(--ff-dur-2), transform var(--ff-dur-1) var(--ff-ease-out) !important;
 }
 
 .ff-ghost:hover {
-  background: rgba(186, 214, 247, 0.12) !important;
-  box-shadow: inset 0 0 0 1px rgba(186, 215, 247, 0.24) !important;
+  box-shadow: inset 0 0 0 1px #abff84 !important;
+  color: #abff84 !important;
 }
 
 .ff-press {
@@ -442,42 +544,41 @@ select:focus {
 .ff-press:active,
 .ff-cta:active,
 .ff-ghost:active {
-  transform: scale(0.97) !important;
+  transform: scale(0.96) !important;
 }
 
 /* ---- Forms -------------------------------------------------------------------------------- */
 
 .ff-label {
   display: block;
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ff-text-3);
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ff-text-4);
 }
 
-/* Text input: a frosted well with a hairline that brightens on focus. */
+/* Text input: a hairline box on the board that turns to cream chalk on focus. */
 .ff-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 11px 12px;
+  padding: 12px 14px;
   border: 0;
   border-radius: var(--radius-inputs);
-  background: rgba(199, 211, 234, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(186, 215, 247, 0.12);
-  color: #fff;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px #42433d;
+  color: #fffce1;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
-  transition: box-shadow var(--ff-dur-1), background-color var(--ff-dur-1);
+  transition: box-shadow var(--ff-dur-2) var(--ff-ease-out);
 }
 
 .ff-input:hover {
-  box-shadow: inset 0 0 0 1px rgba(186, 215, 247, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(255, 252, 225, 0.5);
 }
 
 .ff-input:focus {
-  background: rgba(199, 211, 234, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(186, 215, 247, 0.36), 0 0 0 4px rgba(102, 58, 243, 0.18);
+  box-shadow: inset 0 0 0 1px #fffce1;
 }
 
 .ff-input:focus-visible {
@@ -486,23 +587,23 @@ select:focus {
 
 /* ---- Motion ------------------------------------------------------------------------------ */
 
-/* A plate settling into place: rises, sharpens, lights up. Stagger with --ff-i. Fill mode
-   backwards: once settled, the element's own transforms (hover lifts) apply again. */
+/* A plate rising into place. Stagger with --ff-i. Fill mode backwards: once settled, the
+   element's own transforms (hover lifts) apply again. */
 .ff-in {
-  animation: ffGlassIn var(--ff-dur-3) var(--ff-ease-out) backwards;
-  animation-delay: calc(min(var(--ff-i, 0), 12) * 55ms);
+  animation: ffUp var(--ff-dur-3) var(--ff-ease-out) backwards;
+  animation-delay: calc(min(var(--ff-i, 0), 12) * 60ms);
 }
 
 .ff-in-soft {
-  animation: ffFadeIn 0.5s var(--ff-ease-out) backwards;
+  animation: ffFadeIn 0.6s var(--ff-ease-out) backwards;
 }
 
 /* Each screen enters the same way when it is swapped in. */
 .ff-screen {
-  animation: ffScreenIn 0.55s var(--ff-ease-out) backwards;
+  animation: ffScreenIn 0.6s var(--ff-ease-out) backwards;
 }
 
-/* The headline wordmark: letters of light assembling from blur. */
+/* Headlines rise out of a mask, line by line in one motion. */
 .ff-headline {
   animation: ffHeadline 1.1s var(--ff-ease-out) backwards;
 }
@@ -524,9 +625,15 @@ select:focus {
   animation: ffPing 1.8s var(--ff-ease-out) infinite;
 }
 
+@keyframes ffUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The name the old theme used; screens still ask for it. */
 @keyframes ffGlassIn {
-  from { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(8px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes ffFadeIn {
@@ -535,13 +642,13 @@ select:focus {
 }
 
 @keyframes ffScreenIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
 
 @keyframes ffHeadline {
-  from { opacity: 0; filter: blur(14px); letter-spacing: 0.02em; transform: translateY(10px); }
-  to { opacity: 1; filter: none; transform: none; }
+  from { opacity: 0; transform: translateY(0.45em); clip-path: inset(0 0 100% 0); }
+  to { opacity: 1; transform: none; clip-path: inset(0 0 -0.3em 0); }
 }
 
 @keyframes ffShine {
@@ -549,14 +656,29 @@ select:focus {
   55%, 100% { background-position: 0% 0; }
 }
 
-@keyframes ffBeam {
-  0% { opacity: 0.75; transform: rotate(-2.5deg) scaleX(0.94); }
-  100% { opacity: 1; transform: rotate(2.5deg) scaleX(1.04); }
+@keyframes ffSweep {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
 }
 
-@keyframes ffAurora {
-  0% { transform: translateX(-6%) scale(1); opacity: 0.8; }
-  100% { transform: translateX(6%) scale(1.12); opacity: 1; }
+@keyframes ffStroke {
+  from { background-position: 0 0, 0% 0; }
+  to { background-position: 0 0, 150% 0; }
+}
+
+@keyframes ffDriftA {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { transform: translate(-4vmax, 3vmax) rotate(24deg) scale(1.08); }
+}
+
+@keyframes ffDriftB {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(5vmax, -3vmax); }
+}
+
+@keyframes ffArtDrift {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: -14px 10px, 10px -8px, 0 0, 0 0; }
 }
 
 @keyframes ffPosterDrift {
@@ -566,17 +688,41 @@ select:focus {
 
 @keyframes ffFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes ffFloatR {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--ff-r, 0deg)); }
+  50% { transform: translate3d(0, -16px, 0) rotate(calc(var(--ff-r, 0deg) + 6deg)); }
+}
+
+@keyframes ffSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ffOrbit {
+  from { transform: rotate(0deg) translateX(var(--ff-rad, 120px)) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(var(--ff-rad, 120px)) rotate(-360deg); }
+}
+
+@keyframes ffMorph {
+  0%, 100% { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; }
+  33% { border-radius: 63% 37% 41% 59% / 58% 36% 64% 42%; }
+  66% { border-radius: 36% 64% 52% 48% / 38% 62% 38% 62%; }
+}
+
+@keyframes ffMarquee {
+  to { transform: translateX(-50%); }
 }
 
 @keyframes ffPing {
   0% { transform: scale(0.6); opacity: 0.9; }
-  100% { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.4); opacity: 0; }
 }
 
 @keyframes ffBlink {
   0%, 60% { opacity: 1; }
-  61%, 100% { opacity: 0.25; }
+  61%, 100% { opacity: 0.3; }
 }
 
 /* ---- Layout: the public site on a phone ---------------------------------------------------
@@ -661,6 +807,17 @@ select:focus {
     height: 420px !important;
     order: -1;
   }
+  /* The hero shapes shrink and drop below the wrapped header, behind the headline. */
+  .ff-l-heroart {
+    top: 250px !important;
+    opacity: 0.5;
+    transform: scale(0.6);
+    transform-origin: top right;
+  }
+  /* One orb at a time on a phone: the backdrop steps back behind the hero's. */
+  .ff-atmos::before {
+    opacity: 0.22;
+  }
 }
 
 @media (max-width: 560px) {
@@ -677,30 +834,195 @@ select:focus {
   }
 }
 
+/* ---- The attendee app on real devices -----------------------------------------------------
+   The app template draws one 420 × 900 phone. Every screen, panel and sheet inside it is
+   `position:absolute; inset:0`, so making that frame the device's own screen makes all of
+   them fit. The stage (.ff-l-appstage) is pinned to the viewport and padded by the safe
+   areas — notch, Dynamic Island, home indicator, rounded corners, landscape cut-outs — so
+   nothing sits under them; the frame (.ff-l-appframe) fills what is left.
+
+   - Phones and folded foldables (under 600px wide): edge to edge.
+   - Tablets, unfolded foldables, landscape phones: a full-height column, 560px at most.
+   - A desktop with a mouse: the phone card, centred and fitted to the window.
+   - A dual-screen device spanning its hinge: the app takes the first screen, so no control
+     falls into the fold; stacked (tabletop) posture keeps it on the top half. */
+
+.ff-l-appstage {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0;
+  min-height: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  box-sizing: border-box !important;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px) !important;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+
+.ff-l-appframe {
+  flex: 0 1 auto !important;
+  width: min(560px, 100%) !important;
+  height: 100% !important;
+  max-height: none !important;
+  box-sizing: border-box !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid rgba(255, 252, 225, 0.12) !important;
+  border-right: 1px solid rgba(255, 252, 225, 0.12) !important;
+  box-shadow: none !important;
+}
+
+/* Above a home indicator the stage already leaves its inset, so the tab bar's own bottom
+   padding shrinks by as much. */
+.ff-l-apptabs {
+  padding-bottom: max(6px, calc(20px - env(safe-area-inset-bottom, 0px))) !important;
+}
+
+/* Text fields at 16px on touch screens, so iOS does not zoom the page into them. */
+@media (pointer: coarse) {
+  .ff-l-appframe input,
+  .ff-l-appframe textarea,
+  .ff-l-appframe select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* The page itself never scrolls or bounces under the app: its screens scroll inside. */
+body[data-surface='app'] {
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+@media (max-width: 599px) {
+  .ff-l-appstage {
+    background: #141514 !important;
+  }
+  .ff-l-appframe {
+    width: 100% !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+  }
+}
+
+/* The narrowest screens (folded covers, 280–340px): a smaller wordmark, and the city drops
+   to a second line under the bell and the language switch. */
+@media (max-width: 340px) {
+  .ff-l-applogo {
+    width: 104px !important;
+    height: 18px !important;
+  }
+  .ff-l-apptools {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 8px;
+  }
+}
+
+@media (min-width: 1100px) and (min-height: 760px) and (hover: hover) and (pointer: fine) {
+  .ff-l-appstage {
+    align-items: center !important;
+    padding: 24px !important;
+  }
+  .ff-l-appframe {
+    width: 430px !important;
+    height: min(920px, 100%) !important;
+    border-radius: 36px !important;
+    border: 1px solid rgba(255, 252, 225, 0.19) !important;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6) !important;
+  }
+}
+
+/* Short screens (a phone on its side): the event cover gives the details room. */
+@media (max-height: 560px) {
+  .ff-l-appcover {
+    height: 180px !important;
+  }
+}
+
+/* Dual screens side by side (Surface Duo, a foldable spanned in Chrome): the first screen. */
+@media (horizontal-viewport-segments: 2) {
+  .ff-l-appstage {
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px) !important;
+  }
+  .ff-l-appframe {
+    width: calc(env(viewport-segment-width 0 0) - env(safe-area-inset-left, 0px)) !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* A foldable half-open like a laptop (tabletop posture): the top half. */
+@media (vertical-viewport-segments: 2) {
+  .ff-l-appstage {
+    align-items: flex-start !important;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px) !important;
+  }
+  .ff-l-appframe {
+    width: 100% !important;
+    height: calc(env(viewport-segment-height 0 0) - env(safe-area-inset-top, 0px)) !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* The first Surface Duo builds of Edge named the fold differently. */
+@media (spanning: single-fold-vertical) {
+  .ff-l-appstage {
+    justify-content: flex-start !important;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) 0 !important;
+  }
+  .ff-l-appframe {
+    width: env(fold-left) !important;
+    border: 0 !important;
+  }
+}
+
+/* Touch screens have no hover: a tap must not leave a card lifted or a button lit. */
+@media (hover: none) {
+  .ff-lift:hover { transform: none; }
+  *:hover > .ff-art::before,
+  .ff-art:hover::before { transform: none; }
+  .ff-spot:hover::before,
+  .ff-spot:hover::after { opacity: 0; }
+  .ff-marquee:hover .ff-marquee__track { animation-play-state: running; }
+  .ff-cta:hover { --ff-cta-bg: #0e100f; color: #fffce1 !important; }
+  .ff-ghost:hover { box-shadow: inset 0 0 0 1px rgba(255, 252, 225, 0.7) !important; color: #fffce1 !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .ff-atmos::before,
   .ff-atmos::after,
   .ff-aurora,
+  .ff-art::after,
   .ff-in,
   .ff-in-soft,
   .ff-screen,
   .ff-headline,
   .ff-float,
   .ff-shine,
+  .ff-skywash,
+  .ff-grad,
   .ff-poster,
+  .ff-cta,
+  .ff-sh,
+  .ff-sh--liquid,
+  .ff-marquee__track,
   .ff-live-dot::after,
   .ff-eyebrow--lead::before {
     animation: none !important;
   }
-  .ff-lift:hover {
+  .ff-lift:hover,
+  *:hover > .ff-art::before,
+  .ff-art:hover::before {
     transform: none;
-  }
-  .ff-cta::after {
-    display: none;
-  }
-}
-
-@media print {
-  .ff-atmos {
-    display: none;
   }
 }

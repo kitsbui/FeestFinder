@@ -9,7 +9,7 @@ html,
 body {
   height: 100%;
   margin: 0;
-  background: #05060f;
+  background: #0e100f;
 }
 
 /* The page wrapper (app/layout.tsx): a block as tall as the page, like <body> itself. */
@@ -29,7 +29,7 @@ ff-app {
   height: 1em;
   overflow: hidden;
   vertical-align: text-bottom;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 252, 225, 0.3);
   border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 2px;
   box-sizing: border-box;
@@ -49,7 +49,7 @@ ff-app {
   max-width: 60ch;
   padding: 6px 10px;
   background: #b00020;
-  color: #fff;
+  color: #fffce1;
   font: 12px/1.4 ui-monospace, monospace;
   border-radius: 4px;
   white-space: pre-wrap;
@@ -87,7 +87,7 @@ ff-app {
 
 /*
  * The server-rendered page a crawler reads, shown until the screen takes over — and the
- * whole page for the other landing facets and the 404. Midnight Glass without a script:
+ * whole page for the other landing facets and the 404. The Chalkboard system without a script:
  * tokens and fonts come from /ui/theme.css (see layout.tsx).
  */
 .ff-ssr {
@@ -96,42 +96,38 @@ ff-app {
   max-width: 880px;
   margin: 0 auto;
   padding: 72px 24px 96px;
-  color: #c7d3ea;
-  font: 400 16px/1.6 'Inter', system-ui, sans-serif;
+  color: #e6e3c8;
+  font: 400 16px/1.6 'Be Vietnam Pro', system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
 .ff-ssr h1 {
   margin: 0 0 14px;
-  font: 500 clamp(36px, 5vw, 56px) / 1.02 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  letter-spacing: -0.035em;
+  font: 600 clamp(40px, 6.4vw, 76px) / 0.98 'Be Vietnam Pro', system-ui, sans-serif;
+  letter-spacing: -0.03em;
   text-wrap: balance;
-  background: linear-gradient(180deg, #d8ecf8 0%, #98c0ef 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: #fffce1;
 }
 .ff-ssr h2 {
   margin: 56px 0 16px;
-  color: #d8ecf8;
-  font: 500 22px/1.2 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  color: #fffce1;
+  font: 600 28px/1.15 'Be Vietnam Pro', system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 .ff-ssr h3 {
   margin: 22px 0 6px;
-  color: #d1e4fa;
-  font: 500 16px/1.4 'Inter', system-ui, sans-serif;
+  color: #fffce1;
+  font: 600 17px/1.3 'Be Vietnam Pro', system-ui, sans-serif;
 }
 .ff-ssr p {
   max-width: 640px;
 }
 .ff-ssr a {
-  color: #d1e4fa;
+  color: #abff84;
   text-decoration: none;
-  transition: color 0.16s;
+  transition: color 0.3s;
 }
 .ff-ssr a:hover {
-  color: #fff;
+  color: #0ae448;
 }
 .ff-ssr ul {
   display: grid;
@@ -140,61 +136,62 @@ ff-app {
   padding: 0;
   list-style: none;
 }
-/* Each listing a glass plate. */
+/* Each listing a panel one step off the board. */
 .ff-ssr li {
-  padding: 16px 20px;
-  border-radius: 16px;
-  background: rgba(186, 214, 247, 0.03);
-  box-shadow: inset 0 1px 1px rgba(199, 211, 234, 0.1), inset 0 0 0 1px rgba(186, 215, 247, 0.08);
+  padding: 18px 22px;
+  border-radius: 8px;
+  background: #191919;
 }
 .ff-ssr li > a {
-  color: #d8ecf8;
-  font: 500 17px/1.3 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  color: #fffce1;
+  font: 600 18px/1.3 'Be Vietnam Pro', system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
 .ff-ssr .meta {
   margin-top: 4px;
-  color: #9da7ba;
+  color: #a5a493;
   font-size: 13px;
 }
-/* The line above a heading is the eyebrow: tracked mono caps. */
+/* The line above a heading is the eyebrow: a curly-bracket annotation. */
 .ff-ssr > .meta:first-child,
 .ff-ssr > .meta:first-of-type,
 .ff-ssr article > .meta:first-child {
-  margin: 0 0 16px;
-  color: #c7d3ea;
-  font: 400 12px/1.2 'JetBrains Mono', ui-monospace, monospace;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  margin: 0 0 18px;
+  color: #fffce1;
+  font: 400 16px/1.2 'Be Vietnam Pro', system-ui, sans-serif;
 }
+.ff-ssr > .meta:first-child::before,
+.ff-ssr > .meta:first-of-type::before,
+.ff-ssr article > .meta:first-child::before { content: '{\00a0'; color: #abff84; }
+.ff-ssr > .meta:first-child::after,
+.ff-ssr > .meta:first-of-type::after,
+.ff-ssr article > .meta:first-child::after { content: '\00a0}'; color: #abff84; }
 .ff-404 {
   padding-top: 20vh;
 }
-/* The one violet action. */
+/* The one action: a ghost pill with the brand's green stroke. */
 .ff-ssr .ff-btn {
   display: inline-block;
   margin-top: 16px;
-  padding: 12px 24px;
-  border-radius: 999px;
-  background: #663af3;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 30px -10px rgba(102, 58, 243, 0.75);
-  transition: background-color 0.32s;
+  padding: 15px 24px;
+  border: 2px solid transparent;
+  border-radius: 100px;
+  background: linear-gradient(#0e100f, #0e100f) padding-box, linear-gradient(114.41deg, #0ae448 20.74%, #abff84 65.5%) border-box;
+  color: #fffce1;
+  font-size: 16px;
+  font-weight: 600;
+  transition: color 0.3s;
 }
 .ff-ssr .ff-btn:hover {
-  background: #7a55f6;
-  color: #fff;
+  color: #abff84;
 }
 .ff-ssr .ff-crumbs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 32px;
-  color: #8a94a8;
-  font: 400 12px/1.4 'JetBrains Mono', ui-monospace, monospace;
-  letter-spacing: 0.06em;
+  color: #8c8b7d;
+  font: 400 14px/1.4 'Be Vietnam Pro', system-ui, sans-serif;
 }
 .ff-ssr .ff-answers {
   display: grid;
@@ -203,18 +200,15 @@ ff-app {
   margin: 32px 0 0;
 }
 .ff-ssr .ff-answers div {
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: rgba(186, 214, 247, 0.03);
-  box-shadow: inset 0 1px 1px rgba(199, 211, 234, 0.1), inset 0 0 0 1px rgba(186, 215, 247, 0.08);
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: #191919;
 }
 .ff-ssr .ff-answers dt {
-  color: #9da7ba;
-  font: 400 11px/1.3 'JetBrains Mono', ui-monospace, monospace;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  color: #a5a493;
+  font: 400 14px/1.3 'Be Vietnam Pro', system-ui, sans-serif;
 }
 .ff-ssr .ff-answers dd {
   margin: 6px 0 0;
-  color: #d8ecf8;
+  color: #fffce1;
 }

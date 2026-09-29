@@ -6,12 +6,14 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'FeestFinder',
     short_name: 'FeestFinder',
     description: 'Lễ hội, show và chợ đêm ở TP.HCM — vé, kế hoạch nhóm và chế độ trực tiếp.',
+    id: '/app',
     start_url: '/app',
     scope: '/',
     display: 'standalone',
-    orientation: 'portrait',
-    background_color: '#05060F',
-    theme_color: '#05060F',
+    // Any way up: tablets and unfolded foldables are often held sideways.
+    orientation: 'any',
+    background_color: '#0E100F',
+    theme_color: '#0E100F',
     lang: 'vi',
     categories: ['entertainment', 'music', 'lifestyle'],
     icons: [

@@ -1,5 +1,5 @@
 /*
- * The Ops component kit: Midnight Glass controls built for data entry. Enumerations are
+ * The Ops component kit: Chalkboard (theme.css) controls built for data entry. Enumerations are
  * always picked (Select, FilterSelect, Combobox), money and times have their own inputs,
  * and every list view shares one table, one filter bar and one drawer.
  */
@@ -41,13 +41,13 @@ export function Img({ src, fallback = null, ...rest }) {
 }
 
 export function Avatar({ name, src, art, size = 32, square }) {
-  const style = { width: size, height: size, fontSize: Math.round(size * 0.38), borderRadius: square ? Math.round(size * 0.28) : '50%', background: art || 'linear-gradient(135deg,#3159D6,#7A55F6)' };
+  const style = { width: size, height: size, fontSize: Math.round(size * 0.38), borderRadius: square ? Math.round(size * 0.28) : '50%', background: art || 'linear-gradient(135deg,#00BAE2,#0AE448)' };
   return h('span', { className: 'op-avatar', style }, h(Img, { src, fallback: initials(name) }));
 }
 
 /** Event art: the cover when there is one, the organiser's gradient otherwise. */
 export function Thumb({ src, art, title, w = 56, ratio = 16 / 9 }) {
-  return h('span', { className: 'op-thumb ff-art ff-art--flat', style: { width: w, height: Math.round(w / ratio), background: art || 'linear-gradient(135deg,#1B6BD6,#8C6BFF)' } },
+  return h('span', { className: 'op-thumb ff-art ff-art--flat', style: { width: w, height: Math.round(w / ratio), background: art || 'linear-gradient(135deg,#00BAE2,#0AE448)' } },
     h(Img, { src, fallback: h('span', null, initials(title)) }));
 }
 
