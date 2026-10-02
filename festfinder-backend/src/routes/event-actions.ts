@@ -95,7 +95,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     const ics = [
       'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FeestFinder//Events//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
       'BEGIN:VEVENT',
-      `UID:${ev.id}@festfinder.vn`,
+      `UID:${ev.id}@feestfinder.com`,
       `DTSTAMP:${icsDate(ctx.clock.now())}`,
       `DTSTART:${icsDate(new Date(ev.starts_at))}`,
       `DTEND:${icsDate(new Date(ev.ends_at))}`,

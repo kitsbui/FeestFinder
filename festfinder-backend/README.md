@@ -209,6 +209,7 @@ The two Supabase projects:
 
 | | Production | Preview |
 | --- | --- | --- |
+| Address | https://feestfinder.com: `PUBLIC_BASE_URL` and `CORS_ORIGINS` for Production. It is what canonicals, the sitemap, llms.txt and pg_cron use. `feestfinder.vercel.app` and `www.feestfinder.com` redirect (308) to it; the domain's DNS is at Mắt Bão | The preview's own `*.vercel.app` address |
 | Database | The production Supabase project: `DATABASE_URL` for Production. Through the transaction pooler, verified against Supabase's root CA | The staging project: `DATABASE_URL` for Preview and Development |
 | Clock | Real time | Real time |
 | Uploads | The production project's Storage over S3, public bucket `uploads` (made by migration `007`), or its database | The staging project's: `S3_*` for Preview point at its Storage |

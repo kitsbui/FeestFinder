@@ -48,7 +48,7 @@ export async function fetchPublicPage(raw: string, opts: { maxBytes?: number; ti
     try {
       res = await fetch(current, {
         redirect: 'manual',
-        headers: { 'user-agent': 'Mozilla/5.0 (compatible; FeestFinderBot/1.0; +https://festfinder.vn)', accept: 'text/html,application/xhtml+xml', 'accept-language': 'vi,en;q=0.8' },
+        headers: { 'user-agent': 'Mozilla/5.0 (compatible; FeestFinderBot/1.0; +https://feestfinder.com)', accept: 'text/html,application/xhtml+xml', 'accept-language': 'vi,en;q=0.8' },
         signal: AbortSignal.timeout(opts.timeoutMs ?? 8000),
       });
     } catch (e) {

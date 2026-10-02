@@ -109,7 +109,7 @@ Both fronts share one stylesheet, [`festfinder-frontend/ui/theme.css`](../festfi
 
 ## Brand
 
-The product is **FeestFinder** (renamed from FestFinder on 2026-09-23). Code names, folders, packages, the `festfinder.vn` domain and its addresses keep the old spelling. So do the company's legal name on invoices and the payout bank account name, which change only if the company's do.
+The product is **FeestFinder** (renamed from FestFinder on 2026-09-23), at **feestfinder.com** (since 2026-10-02; its email addresses are `@feestfinder.com`). Code names, folders and packages keep the old spelling. So do the company's legal name on invoices and the payout bank account name, which change only if the company's do.
 
 | File | Use |
 | --- | --- |

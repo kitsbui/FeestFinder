@@ -197,14 +197,14 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
         secure: bool('SMTP_SECURE', false),
         user: str('SMTP_USER', ''),
         pass: str('SMTP_PASSWORD', ''),
-        from: str('SMTP_FROM', 'FeestFinder <no-reply@festfinder.vn>'),
+        from: str('SMTP_FROM', 'FeestFinder <no-reply@feestfinder.com>'),
       }
       : null,
     messagingWebhook: process.env.MESSAGING_WEBHOOK_URL
       ? { url: str('MESSAGING_WEBHOOK_URL'), secret: str('MESSAGING_WEBHOOK_SECRET', '') }
       : null,
     webPush: process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
-      ? { publicKey: str('VAPID_PUBLIC_KEY'), privateKey: str('VAPID_PRIVATE_KEY'), subject: str('VAPID_SUBJECT', 'mailto:hello@festfinder.vn') }
+      ? { publicKey: str('VAPID_PUBLIC_KEY'), privateKey: str('VAPID_PRIVATE_KEY'), subject: str('VAPID_SUBJECT', 'mailto:hello@feestfinder.com') }
       : null,
     sentryDsn: process.env.SENTRY_DSN || null,
     release: str('RELEASE', 'dev'),

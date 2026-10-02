@@ -2038,11 +2038,11 @@ class Component extends DCLogic {
       ],
       contactCards: [
         { title: L.abContactUsers, body: L.abContactUsersBody, icon:'ph-fill ph-chat-circle-dots', color:'#ABFF84', tint:'rgba(171,255,132,.13)',
-          link:'hello@festfinder.vn', href:'mailto:hello@festfinder.vn', linkIcon:'ph-bold ph-envelope-simple', hasAction:false },
+          link:'hello@feestfinder.com', href:'mailto:hello@feestfinder.com', linkIcon:'ph-bold ph-envelope-simple', hasAction:false },
         { title: L.abContactOrg, body: L.abContactOrgBody, icon:'ph-fill ph-megaphone', color:'#0AE448', tint:'rgba(10,228,72,.14)',
-          link:'organisers@festfinder.vn', href:'mailto:organisers@festfinder.vn', linkIcon:'ph-bold ph-envelope-simple', hasAction:false },
+          link:'organisers@feestfinder.com', href:'mailto:organisers@feestfinder.com', linkIcon:'ph-bold ph-envelope-simple', hasAction:false },
         { title: L.abContactBrand, body: L.abContactBrandBody, icon:'ph-fill ph-briefcase', color:'#DFFFD1', tint:'rgba(10,228,72,.14)',
-          link:'partners@festfinder.vn', href:'mailto:partners@festfinder.vn', linkIcon:'ph-bold ph-envelope-simple',
+          link:'partners@feestfinder.com', href:'mailto:partners@feestfinder.com', linkIcon:'ph-bold ph-envelope-simple',
           hasAction:true, actionLabel: L.abAdvertise, action: () => this.setState({ screen:'explore', adsOpen:true, adErr:'' }) }
       ],
       socialLinks: [
