@@ -13,6 +13,8 @@ import { announceNewListing } from '../../services/listing.ts';
 import { notifyOrganizer } from '../../services/notify.ts';
 import { assessRisk, riskBand, SLA_HOURS } from '../../services/risk.ts';
 import { moderationThread } from '../organizer/inbox.ts';
+import { notifySubmitter } from '../../services/community.ts';
+import { queueIndexNow } from '../../services/seo.ts';
 
 const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 
@@ -25,10 +27,10 @@ function sla(minutes: number): { state: 'ok' | 'soon' | 'breach'; label: Localiz
 const QUEUE_SQL = `
   select e.id, e.slug, e.title, e.art, e.cover_url, e.starts_on, e.start_time, e.venue_name, e.flag, e.risk_score, e.signals, e.submitted_at,
          e.genre, e.area, e.entry_mode, e.price_from, e.quality_score, e.logo_url, (e.venue_id is not null or e.lat is not null) as venue_resolved,
-         e.organizer_id, o.name as org_name, o.verification_state,
+         e.organizer_id, o.name as org_name, o.verification_state, o.is_community, e.submitted_by, su.name as submitter_name,
          not exists (select 1 from events e2 where e2.organizer_id = e.organizer_id and e2.published_at is not null and e2.id <> e.id) as new_org,
          (select count(*)::int from inbox_messages m join inbox_threads t on t.id = m.thread_id where t.event_id = e.id and t.topic = 'moderation') as thread_messages
-    from events e join organizers o on o.id = e.organizer_id
+    from events e join organizers o on o.id = e.organizer_id left join users su on su.id = e.submitted_by
    where e.status = 'in_review'`;
 
 async function actor(q: Queryable, s: UserSession) {
@@ -56,6 +58,8 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
     cta: L('View dashboard', 'Xem dashboard'), link: { screen: 'dash', eventId: ev.id },
   });
   if (!ev.published_at) await announceNewListing(q, ev.id, now);
+  await notifySubmitter(q, ev, now, 'live');
+  await queueIndexNow(q, ctx, ev.slug);
   return ev;
 }
 
@@ -71,7 +75,8 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
       const waiting = Math.max(0, Math.round((now.getTime() - new Date(r.submitted_at).getTime()) / 60000));
       return {
         id: r.id, slug: r.slug, title: r.title, art: r.art, coverUrl: r.cover_url,
-        organizer: { id: r.organizer_id, name: r.org_name, initials: initialsOf(r.org_name), verified: r.verification_state === 'verified', newOrganizer: r.new_org },
+        organizer: { id: r.organizer_id, name: r.org_name, initials: initialsOf(r.org_name), verified: r.verification_state === 'verified', newOrganizer: r.new_org, community: r.is_community },
+        submittedBy: r.submitted_by ? { id: r.submitted_by, name: r.submitter_name || null } : null,
         startsOn: r.starts_on, startTime: r.start_time, venueName: r.venue_name,
         flagged: !!r.flag, flag: r.flag ? { code: r.flag, label: REJECT_REASONS[r.flag].label } : null,
         waitingMinutes: waiting, sla: sla(waiting),
@@ -189,6 +194,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
           body: L(`${ev.title}: ${reason.label.en}.`, `${ev.title}: ${reason.label.vi}.`),
           cta: L('Open moderation thread', 'Mở thư kiểm duyệt'), link: { screen: 'inbox', threadId },
         });
+        await notifySubmitter(q, ev, now, 'rejected', { en: `${reason.label.en}. ${message.en}`, vi: `${reason.label.vi}. ${message.vi}` });
         await appendAudit(q, {
           at: now, ...(await actor(q, s)), action: 'listing.rejected', targetType: 'event', targetId: id, targetLabel: ev.title,
           diff: [{ f: 'status', a: 'in_review', b: 'rejected' }, { f: 'reason_code', a: '—', b: body.code }, { f: 'appeal', a: '—', b: allowAppeal ? 'open 7 days' : 'none' }],

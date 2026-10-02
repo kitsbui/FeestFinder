@@ -3,7 +3,7 @@
  * payment method and date; open it to see the tickets and refund when the rules allow.
  */
 import { h, Fragment, useState, t, tx, cx, get, post, href, navigate, useFetch, useQueryState, useRoute, setQuery, qs, toast, errorText, stamp, num, money, day } from '../core.js';
-import { PageHeader, Button, Icon, Pill, Spinner, ErrorBox, FilterBar, FilterSelect, DataTable, Pagination, Drawer, KV, DateInput, Combobox, confirm, Stat } from '../ui.js';
+import { PageHeader, Button, Icon, Pill, Spinner, ErrorBox, FilterBar, FilterSelect, DataTable, Pagination, Drawer, KV, DateInput, Combobox, confirm, Stat, Tabs, Empty } from '../ui.js';
 import { orderStatusOptions, payMethodOptions, loadEvents } from '../opts.js';
 
 const TONE = { paid: 'ok', pending: 'warn', refunded: 'info', cancelled: 'neutral', expired: 'neutral' };
@@ -46,7 +46,58 @@ function OrderDrawer({ id, onClose, onChanged }) {
         h('td', { className: 'op-cell-muted' }, x.checkedInAt ? `${stamp(x.checkedInAt)}${x.gate ? ' · ' + x.gate : ''}` : ''))))))));
 }
 
+/**
+ * Tickets attendees passed on to each other. FeestFinder holds the buyer's money until the
+ * event has happened, then pays the seller by bank transfer and records the reference here.
+ */
+function Resale() {
+  const [state, setState] = useQueryState('rs', 'due');
+  const { data, error, loading, reload } = useFetch(`/admin/resale?state=${state}`, [state]);
+  const [busy, setBusy] = useState(null);
+  const payout = async (r) => {
+    const out = await confirm({ title: t(`Đã chuyển ${money(r.price)} cho ${r.seller.name}?`, `Paid ${money(r.price)} to ${r.seller.name}?`),
+      body: r.seller.bank ? `${r.seller.bank.name} · ${r.seller.bank.accountNo} · ${r.seller.bank.accountName}` : t('Người bán chưa có tài khoản ngân hàng.', 'The seller has no bank account on file.'),
+      confirm: t('Ghi nhận đã chuyển', 'Record payout'), withNote: { label: t('Mã giao dịch ngân hàng', 'Bank reference'), placeholder: 'VCB 220926 001', required: true } });
+    if (!out) return;
+    setBusy(r.id);
+    try { const x = await post(`/admin/resale/${r.id}/payout`, { reference: out.note }); toast(tx(x.message)); reload(true); } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(null); }
+  };
+  const refund = async (r) => {
+    if (!(await confirm({ title: t(`Hoàn ${money(r.total)} cho ${r.buyer.name}?`, `Refund ${money(r.total)} to ${r.buyer.name}?`), body: r.event.title, confirm: t('Đã hoàn tiền', 'Refunded'), tone: 'danger' }))) return;
+    setBusy(r.id);
+    try { const x = await post(`/admin/resale/${r.id}/refund`); toast(tx(x.message)); reload(true); } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(null); }
+  };
+  const columns = [
+    { key: 'code', label: t('Mã', 'Code'), width: 110, render: (r) => h('span', { className: 'op-mono' }, r.code) },
+    { key: 'event', label: t('Sự kiện', 'Event'), render: (r) => h('div', null, h('div', { className: 'op-cell-title' }, r.event.title), r.event.cancelled ? h(Pill, { tone: 'danger' }, t('Sự kiện đã huỷ', 'Event cancelled')) : null) },
+    { key: 'seller', label: t('Người bán → người mua', 'Seller → buyer'), render: (r) => h('div', null, h('div', { className: 'op-cell-title' }, `${r.seller.name} → ${r.buyer.name}`), h('div', { className: 'op-cell-sub' }, r.seller.bank ? `${r.seller.bank.name} · ${r.seller.bank.accountNo}` : t('Chưa có tài khoản', 'No bank account'))) },
+    { key: 'price', label: t('Người bán nhận', 'Seller gets'), width: 140, align: 'right', render: (r) => h('span', { className: 'op-cell-num' }, money(r.price)) },
+    { key: 'due', label: state === 'paid_out' ? t('Đã chuyển', 'Paid out') : t('Đến hạn', 'Due'), width: 150, render: (r) => h('span', { className: 'op-cell-muted op-nowrap' }, stamp(r.paidOutAt ?? r.payoutDueAt ?? r.paidAt)) },
+    { key: 'act', label: '', width: 170, align: 'right', render: (r) => state === 'due' && !r.event.cancelled ? h(Button, { size: 'sm', variant: 'ok', icon: 'bank', busy: busy === r.id, onClick: () => payout(r) }, t('Đã chuyển', 'Paid'))
+      : state === 'failed' || (r.event.cancelled && !r.paidOutAt) ? h(Button, { size: 'sm', variant: 'danger', busy: busy === r.id, onClick: () => refund(r) }, t('Hoàn tiền', 'Refund'))
+      : r.payoutRef ? h('span', { className: 'op-mono op-cell-muted' }, r.payoutRef) : null },
+  ];
+  return h(Fragment, null,
+    h(FilterBar, { active: 0 }, h(FilterSelect, { label: t('Trạng thái', 'State'), icon: 'circle-half', value: state, onChange: (v) => setState(v || 'due'), options: [
+      { value: 'due', label: t('Đến hạn trả người bán', 'Due to sellers') }, { value: 'upcoming', label: t('Chờ sự kiện diễn ra', 'Waiting for the event') },
+      { value: 'paid_out', label: t('Đã chuyển', 'Paid out') }, { value: 'failed', label: t('Cần hoàn cho người mua', 'Refund to buyer') },
+    ] })),
+    error ? h(ErrorBox, { error, onRetry: reload }) : null,
+    h(DataTable, { columns, rows: data?.items ?? [], loading, minWidth: 980, empty: h(Empty, { icon: 'check-circle', title: t('Không có giao dịch', 'Nothing here') }) }));
+}
+
 export function Orders({ rest }) {
+  const [view, setView] = useQueryState('view', 'orders');
+  if (view === 'resale') {
+    return h(Fragment, null,
+      h(PageHeader, { title: t('Đơn hàng', 'Orders') }),
+      h(Tabs, { value: view, onChange: setView, items: [{ value: 'orders', icon: 'receipt', label: t('Đơn bán vé', 'Ticket orders') }, { value: 'resale', icon: 'arrows-left-right', label: t('Pass vé', 'Resale') }] }),
+      h(Resale));
+  }
+  return h(OrderList, { rest, tabs: h(Tabs, { value: view, onChange: setView, items: [{ value: 'orders', icon: 'receipt', label: t('Đơn bán vé', 'Ticket orders') }, { value: 'resale', icon: 'arrows-left-right', label: t('Pass vé', 'Resale') }] }) });
+}
+
+function OrderList({ rest, tabs }) {
   const route = useRoute();
   const [q, setQ] = useQueryState('q', '');
   const [status, setStatus] = useQueryState('status', '');
@@ -73,6 +124,7 @@ export function Orders({ rest }) {
   ];
   return h(Fragment, null,
     h(PageHeader, { title: t('Đơn hàng', 'Orders') }),
+    tabs,
     h('div', { className: 'op-stats' },
       h(Stat, { label: t('Đã thanh toán', 'Paid'), icon: 'check-circle', value: num(sum.paid?.count ?? 0), note: money(sum.paid?.total ?? 0), tone: 'ok', active: status === 'paid', onClick: () => reset({ status: status === 'paid' ? '' : 'paid' }) }),
       h(Stat, { label: t('Chờ thanh toán', 'Awaiting payment'), icon: 'hourglass-medium', value: num(sum.pending?.count ?? 0), note: money(sum.pending?.total ?? 0), active: status === 'pending', onClick: () => reset({ status: status === 'pending' ? '' : 'pending' }) }),

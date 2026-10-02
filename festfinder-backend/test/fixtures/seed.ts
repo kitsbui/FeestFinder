@@ -627,6 +627,57 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     }
     await q.query(`update organizers set strikes = 2 where id = $1`, [ids.org.tripside]);
 
+    // ---- community: proven numbers, the Ravolution discussion, hype goals, shares, resale ----
+    // Everyone with a number here proved it, as if they had connected Zalo.
+    await q.query('update users set phone_verified_at = created_at where phone is not null');
+    const post = async (slug: string, userId: string, kind: string, body: string, ageH: number, extra: { parentId?: string; official?: boolean; helpful?: number } = {}) => {
+      const r = await one<any>(q,
+        `insert into event_posts (event_id, user_id, parent_id, kind, body, official, helpful_count, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
+        [ids.event[slug], userId, extra.parentId ?? null, kind, body, !!extra.official, extra.helpful ?? 0, hours(ageH)]);
+      if (extra.parentId) await q.query('update event_posts set reply_count = reply_count + 1 where id = $1', [extra.parentId]);
+      return r.id as string;
+    };
+    const someone = async (n: number) => (await one<any>(q, `select id from ${synthetic} s where rn = $1`, [n])).id as string;
+    const parking = await post('ravo', ids.friend.f1, 'qa', 'Có chỗ gửi xe máy ở SECC không mọi người?', 50, { helpful: 18 });
+    await post('ravo', orgUser.id, 'qa', 'Có. Bãi xe B cạnh cổng số 3, 5.000₫ một lượt, mở từ 15:00. Xe hơi gửi ở bãi A.', 48, { parentId: parking, official: true });
+    const reentry = await post('ravo', ids.friend.f3, 'qa', 'Vé có cho ra vào lại không ạ?', 40, { helpful: 11 });
+    await post('ravo', orgUser.id, 'qa', 'Có, đến 22:00. Giữ vòng tay trên tay, ra cổng quét lại là vào được.', 39, { parentId: reentry, official: true });
+    await post('ravo', await someone(7), 'qa', 'Có tủ gửi đồ không, mình mang theo balo?', 6, { helpful: 4 });
+    const hype = await post('ravo', ids.friend.f6, 'talk', 'Set Hoaprox năm ngoái cháy thật sự, năm nay chắc chắn đứng hàng đầu 🔥', 30, { helpful: 9 });
+    await post('ravo', ids.friend.f2, 'talk', 'Đồng ý, nhớ mang nút tai nha mọi người.', 29, { parentId: hype });
+    await post('ravo', ids.friend.f6, 'crew', 'Mình đi từ Quận 7, có ai muốn đi chung Grab không? Hẹn ở cổng chính lúc 17:00.', 20, { helpful: 3 });
+    await post('ravo', await someone(12), 'talk', 'Năm nay có khu ăn uống bên trong không ạ?', 3);
+
+    await q.query(`insert into hype_goals (event_id, threshold, reward, reached_at) values
+      ($1, 2000, $2, $5), ($1, 2500, $3, null), ($1, 3000, $4, null)`, [ids.event.ravo,
+      json(L('200 more early-bird tickets', 'Mở thêm 200 vé early bird')),
+      json(L('Reveal the secret closing act', 'Công bố nghệ sĩ bí mật')),
+      json(L('50 free upgrades to VIP', 'Tặng 50 suất nâng hạng VIP')), hours(26)]);
+
+    // Two friends' share links brought people to Ravolution.
+    await q.query(`update users set ref_code = 'MTRAN2' where id = $1`, [ids.friend.f1]);
+    await q.query(`update users set ref_code = 'NGOCA7' where id = $1`, [ids.friend.f6]);
+    await q.query(`insert into share_visits (event_id, ref_user, visitor, channel, created_at)
+                   select $1::uuid, $2::uuid, 'v' || i, (array['zalo','facebook','threads'])[1 + i % 3], $4::timestamptz - make_interval(hours => i) from generate_series(1, 37) i
+                   union all select $1::uuid, $3::uuid, 'w' || i, 'zalo', $4::timestamptz - make_interval(hours => i) from generate_series(1, 12) i`,
+    [ids.event.ravo, ids.friend.f1, ids.friend.f6, now]);
+
+    // Rap Việt is sold out: Linh passes on her ticket at face value, and a Ravolution GA is up too.
+    const rapGa = (await one<any>(q, `select id from ticket_tiers where event_id = $1 and key = 'ga'`, [ids.event.rapviet])).id;
+    const linhOrder = await one<any>(q,
+      `insert into orders (code, user_id, event_id, tier_id, qty, unit_price, subtotal, discount, fee, total, status, payment_method, created_at, expires_at, paid_at)
+       values ('FFRAPLNH', $1, $2, $3, 1, 650000, 650000, 0, 32500, 682500, 'paid', 'momo', $4, $4, $4) returning id`, [ids.friend.f2, ids.event.rapviet, rapGa, hours(24 * 20)]);
+    const linhTicket = await one<any>(q,
+      `insert into tickets (order_id, event_id, tier_id, user_id, code, holder_name, holder_phone) values ($1,$2,$3,$4,'FF-RAPV-LNH1','Linh Phạm','+84908000002') returning id`,
+      [linhOrder.id, ids.event.rapviet, rapGa, ids.friend.f2]);
+    await q.query(`insert into ticket_listings (ticket_id, event_id, seller_id, price, face_value, created_at) values ($1,$2,$3,650000,650000,$4)`,
+      [linhTicket.id, ids.event.rapviet, ids.friend.f2, hours(5)]);
+    const ravoSeller = await one<any>(q,
+      `select t.id, t.user_id from tickets t join orders o on o.id = t.order_id where t.event_id = $1 and t.status = 'valid' and o.unit_price = 1200000 and t.user_id <> $2 order by t.code limit 1`,
+      [ids.event.ravo, demo.id]);
+    await q.query(`insert into ticket_listings (ticket_id, event_id, seller_id, price, face_value, created_at) values ($1,$2,$3,1050000,1200000,$4)`,
+      [ravoSeller.id, ids.event.ravo, ravoSeller.user_id, hours(2)]);
+
     const counts = await one<any>(q,
       `select (select count(*)::int from users) as users, (select count(*)::int from events) as events, (select count(*)::int from orders) as orders,
               (select count(*)::int from tickets) as tickets, (select count(*)::int from saves) as saves`);

@@ -474,6 +474,20 @@
     </div>
   </div>
 
+  <sc-if value="{{ comm.community.show }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:-8px 0 18px;padding:12px 16px;border-radius:8px;background:rgba(171,255,132,.07);border:1px solid rgba(171,255,132,.3)">
+      <i class="ph-fill ph-users-three" style="font-size:16px;color:#ABFF84;flex:none"></i>
+      <div style="font-size:12.5px;font-weight:600;color:#FFFCE1">{{ comm.community.line }}</div>
+      <div style="flex:1"></div>
+      <sc-if value="{{ comm.community.claimShow }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ comm.community.claim }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid #ABFF84;color:#ABFF84;font-size:12px;font-weight:600;white-space:nowrap" style-hover="background:rgba(171,255,132,.1)"><i class="ph-bold ph-seal-check" style="font-size:14px"></i>{{ comm.community.claimLabel }}</div>
+      </sc-if>
+      <sc-if value="{{ comm.community.pending }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:6px 12px;border-radius:999px;background:rgba(255,252,225,.1);font-size:11.5px;font-weight:600;color:#FFFCE1">{{ L.claimPending }}</div>
+      </sc-if>
+    </div>
+  </sc-if>
+
   <div class="ff-l-detail" style="display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:24px;align-items:start">
     <div style="display:flex;flex-direction:column;gap:18px">
 
@@ -493,6 +507,18 @@
         <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0 0 15px">{{ L.aboutTitle }}</h2>
         <div style="font-size:14.5px;font-weight:400;color:#E6E3C8;line-height:1.72;text-wrap:pretty">{{ detail.about }}</div>
       </div>
+
+      <sc-if value="{{ comm.hasFaq }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0;margin-bottom:6px">{{ L.faqEvent }}</h2>
+        <sc-for list="{{ comm.faq }}" as="f" hint-placeholder-count="2">
+          <div style="padding:14px 0;border-bottom:1px solid #1E1F1C">
+            <div style="font-size:13.5px;font-weight:600;color:#FFFCE1;line-height:1.5;text-wrap:pretty">{{ f.q }}</div>
+            <div style="display:flex;gap:9px;margin-top:7px"><i class="ph-fill ph-seal-check" style="font-size:14px;color:#ABFF84;flex:none;margin-top:3px"></i><div style="font-size:13px;font-weight:400;color:#E6E3C8;line-height:1.65;text-wrap:pretty;white-space:pre-wrap">{{ f.a }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
 
       <div style="padding:24px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:15px">
@@ -623,6 +649,149 @@
       </div>
       </sc-if>
 
+      <sc-if value="{{ comm.resale.show }}" hint-placeholder-val="{{ false }}">
+      <div id="pass-ve" style="padding:24px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0">{{ L.resaleTitle }}</h2>
+          <div style="padding:5px 11px;border-radius:999px;background:rgba(171,255,132,.12);border:1px solid rgba(171,255,132,.4);font-size:11px;font-weight:600;color:#ABFF84;white-space:nowrap">{{ L.resaleCap }}</div>
+          <sc-if value="{{ comm.resale.live }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:rgba(255,135,9,.12);border:1px solid rgba(255,135,9,.42);font-size:11px;font-weight:600;color:#FF8709;white-space:nowrap"><i class="ph-fill ph-circle" style="font-size:8px"></i>{{ L.resaleLive }}</div>
+          </sc-if>
+          <div style="flex:1"></div>
+          <div onClick="{{ comm.resale.watch }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:7px;border:1px solid rgba(255,252,225,.32);color:#E6E3C8" style-hover="border-color:#ABFF84;color:#FFFCE1"><i class="{{ comm.resale.watchIcon }}" style="font-size:13px"></i>{{ comm.resale.watchLabel }}</div>
+        </div>
+        <sc-for list="{{ comm.resale.items }}" as="r" hint-placeholder-count="2">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #1E1F1C">
+            <div style="min-width:0">
+              <div style="font-size:13.5px;font-weight:600;color:#FFFCE1">{{ r.tier }} <span style="font-weight:500;color:#8C8B7D">· {{ r.seller }}</span></div>
+              <div style="font-size:11.5px;font-weight:500;color:#8C8B7D;margin-top:5px">{{ r.face }}</div>
+            </div>
+            <div style="font-size:15px;font-weight:600;color:#FFFCE1;white-space:nowrap">{{ r.price }}</div>
+            <div onClick="{{ r.buy }}" class="ff-cta" style="cursor:pointer;padding:11px 18px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12px;font-weight:600;white-space:nowrap">{{ L.resaleBuy }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ comm.resale.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 0 4px;font-size:13px;font-weight:500;color:#A5A493">{{ L.resaleNone }}</div>
+        </sc-if>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px">
+          <div style="font-size:11.5px;font-weight:500;color:#8C8B7D">{{ comm.resale.fee }}</div>
+          <div style="flex:1"></div>
+          <sc-if value="{{ comm.resale.canSell }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ comm.resale.sell }}" style="cursor:pointer;font-size:12px;font-weight:600;color:#ABFF84" style-hover="color:#FFFCE1">{{ L.resaleSell }} →</div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ comm.show }}" hint-placeholder-val="{{ false }}">
+      <div id="thao-luan" style="padding:24px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+          <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0">{{ L.discTitle }}</h2>
+          <div style="flex:1"></div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:12px;font-weight:600">
+            <div onClick="{{ comm.disc.setTop }}" style="cursor:pointer;color:{{ comm.disc.sortTopFg }}">{{ L.discTop }}</div>
+            <div onClick="{{ comm.disc.setNew }}" style="cursor:pointer;color:{{ comm.disc.sortNewFg }}">{{ L.discNew }}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px">
+          <sc-for list="{{ comm.disc.tabs }}" as="t" hint-placeholder-count="3">
+            <div onClick="{{ t.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;flex:none;background:{{ t.bg }};border:1px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }}</div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ comm.disc.composer }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:6px">
+            <sc-if value="{{ comm.disc.trackid }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                <sc-for list="{{ comm.disc.setChips }}" as="c" hint-placeholder-count="3">
+                  <div onClick="{{ c.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;padding:7px 11px;font-size:11.5px;background:{{ c.bg }};border:1px solid {{ c.bd }};color:{{ c.fg }}">{{ c.label }}</div>
+                </sc-for>
+                <input aria-label="{{ L.discAt }}" value="{{ comm.disc.heard }}" onChange="{{ comm.disc.onHeard }}" placeholder="{{ L.discAt }}" maxLength="5" style="width:78px;box-sizing:border-box;padding:7px 11px;border-radius:999px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:11.5px;font-weight:600">
+              </div>
+            </sc-if>
+            <textarea aria-label="{{ L.discTitle }}" value="{{ comm.disc.draft }}" onChange="{{ comm.disc.onDraft }}" rows="3" maxLength="1000" placeholder="{{ comm.disc.placeholder }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;resize:vertical;line-height:1.6;padding:13px 15px"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:10px">
+              <div onClick="{{ comm.disc.send }}" style="cursor:pointer;opacity:{{ comm.disc.sendOp }};padding:11px 20px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12.5px;font-weight:600">{{ L.discPost }}</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ comm.disc.gateShow }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ comm.disc.gateGo }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:8px;background:#141514;border:1px dashed rgba(255,252,225,.32);color:#E6E3C8;font-size:13px;font-weight:600;margin-bottom:6px" style-hover="border-color:#ABFF84;color:#FFFCE1"><i class="ph-bold ph-pencil-simple-line" style="font-size:15px;color:#ABFF84"></i>{{ comm.disc.gateLabel }}</div>
+        </sc-if>
+        <sc-if value="{{ comm.disc.closed }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px;font-weight:500;color:#8C8B7D;margin-bottom:6px">{{ L.discClosed }}</div>
+        </sc-if>
+
+        <sc-for list="{{ comm.disc.items }}" as="p" hint-placeholder-count="2">
+          <div style="display:flex;gap:12px;padding:16px 0;border-top:1px solid #1E1F1C;opacity:{{ p.op }}">
+            <div style="width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:#0E100F;background:{{ p.a.photo }}">{{ p.a.initials }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <div style="font-size:13px;font-weight:600;color:#FFFCE1">{{ p.a.name }}</div>
+                <sc-for list="{{ p.a.badges }}" as="b" hint-placeholder-count="1">
+                  <div style="padding:3px 8px;border-radius:999px;font-size:10.5px;font-weight:600;background:{{ b.bg }};color:{{ b.fg }}">{{ b.label }}</div>
+                </sc-for>
+                <div style="font-size:11.5px;font-weight:500;color:#8C8B7D">{{ p.ago }}</div>
+                <sc-if value="{{ p.pinned }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#ABFF84"><i class="ph-fill ph-push-pin" style="font-size:12px"></i>{{ L.discPinned }}</div></sc-if>
+                <sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;font-weight:600;color:#FF8709">{{ L.discHidden }}</div></sc-if>
+              </div>
+              <sc-if value="{{ p.hasSet }}" hint-placeholder-val="{{ false }}">
+                <div style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:4px 10px;border-radius:999px;background:rgba(0,186,226,.12);border:1px solid rgba(0,186,226,.4);font-size:11px;font-weight:600;color:#BFF3FF"><i class="ph-fill ph-music-notes" style="font-size:12px"></i>{{ p.setLine }}</div>
+              </sc-if>
+              <div style="font-size:13.5px;font-weight:400;color:{{ p.bodyFg }};line-height:1.6;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere">{{ p.body }}</div>
+              <sc-if value="{{ p.canAct }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;font-weight:600;color:#A5A493">
+                  <div onClick="{{ p.help }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;color:{{ p.helpedFg }}" style-hover="color:#FFFCE1"><i class="{{ p.helpedIcon }}" style="font-size:14px"></i>{{ L.discHelpful }} {{ p.helpful }}</div>
+                  <sc-if value="{{ p.canReply }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.reply }}" style="cursor:pointer" style-hover="color:#FFFCE1">{{ L.discReply }}</div></sc-if>
+                  <sc-if value="{{ p.mine }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.remove }}" style="cursor:pointer" style-hover="color:#FF8709">{{ L.discDelete }}</div></sc-if>
+                  <sc-if value="{{ p.canPin }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.pin }}" style="cursor:pointer" style-hover="color:#FFFCE1">{{ p.pinLabel }}</div></sc-if>
+                  <sc-if value="{{ p.mod }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.hide }}" style="cursor:pointer" style-hover="color:#FF8709">{{ p.hideLabel }}</div></sc-if>
+                  <sc-if value="{{ p.reportable }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.report }}" style="cursor:pointer;color:#8C8B7D" style-hover="color:#FF8709">{{ L.discReport }}</div></sc-if>
+                </div>
+              </sc-if>
+
+              <sc-for list="{{ p.replies }}" as="r" hint-placeholder-count="1">
+                <div style="display:flex;gap:10px;margin-top:14px;padding:12px 14px;border-radius:8px;background:{{ r.boxBg }};border:1px solid {{ r.boxBd }}">
+                  <div style="width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#0E100F;background:{{ r.a.photo }}">{{ r.a.initials }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                      <div style="font-size:12.5px;font-weight:600;color:#FFFCE1">{{ r.a.name }}</div>
+                      <sc-for list="{{ r.a.badges }}" as="b" hint-placeholder-count="1">
+                        <div style="padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;background:{{ b.bg }};color:{{ b.fg }}">{{ b.label }}</div>
+                      </sc-for>
+                      <sc-if value="{{ r.official }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:#ABFF84"><i class="ph-fill ph-seal-check" style="font-size:12px"></i>{{ L.discOfficial }}</div></sc-if>
+                      <div style="font-size:11px;font-weight:500;color:#8C8B7D">{{ r.ago }}</div>
+                    </div>
+                    <div style="font-size:13px;font-weight:400;color:{{ r.bodyFg }};line-height:1.6;margin-top:5px;white-space:pre-wrap;overflow-wrap:anywhere">{{ r.body }}</div>
+                    <sc-if value="{{ r.canAct }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:14px;margin-top:8px;font-size:11.5px;font-weight:600;color:#A5A493">
+                        <div onClick="{{ r.help }}" style="cursor:pointer;display:flex;align-items:center;gap:5px;color:{{ r.helpedFg }}"><i class="{{ r.helpedIcon }}" style="font-size:13px"></i>{{ r.helpful }}</div>
+                        <sc-if value="{{ r.mine }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.remove }}" style="cursor:pointer" style-hover="color:#FF8709">{{ L.discDelete }}</div></sc-if>
+                        <sc-if value="{{ r.mod }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.hide }}" style="cursor:pointer" style-hover="color:#FF8709">{{ r.hideLabel }}</div></sc-if>
+                        <sc-if value="{{ r.reportable }}" hint-placeholder-val="{{ false }}"><div onClick="{{ r.report }}" style="cursor:pointer;color:#8C8B7D" style-hover="color:#FF8709">{{ L.discReport }}</div></sc-if>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ p.hasMore }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ p.more }}" style="cursor:pointer;margin-top:10px;font-size:12px;font-weight:600;color:#ABFF84">{{ p.moreLabel }}</div>
+              </sc-if>
+              <sc-if value="{{ p.replyOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:9px;align-items:flex-end;margin-top:12px">
+                  <textarea aria-label="{{ L.discReply }}" value="{{ comm.disc.replyDraft }}" onChange="{{ comm.disc.onReplyDraft }}" rows="2" maxLength="1000" placeholder="{{ L.discReplyPh }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;flex:1;resize:vertical;line-height:1.55"></textarea>
+                  <div onClick="{{ comm.disc.sendReply }}" style="cursor:pointer;padding:11px 16px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12px;font-weight:600;white-space:nowrap">{{ L.discReply }}</div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ comm.disc.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px 0 4px;border-top:1px solid #1E1F1C;font-size:13px;font-weight:500;color:#8C8B7D">{{ L.discEmpty }}</div>
+        </sc-if>
+      </div>
+      </sc-if>
+
       <div style="padding:24px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
         <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0 0 15px">{{ L.gettingThere }}</h2>
         <div style="height:170px;border-radius:8px;position:relative;overflow:hidden;background:#131413;border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
@@ -665,6 +834,33 @@
         <div style="font-size:11px;font-weight:500;color:#8C8B7D;line-height:1.6;margin-top:14px">{{ detail.ticketNote }}</div>
       </div>
 
+      <sc-if value="{{ comm.show }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:22px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.hypeTitle }}</div>
+            <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:32px;line-height:1;margin-top:9px;letter-spacing:-.02em">{{ comm.hype.count }}</div>
+          </div>
+          <div onClick="{{ comm.hype.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:11px 16px;border-radius:999px;background:{{ comm.hype.bg }};border:1px solid {{ comm.hype.bd }};color:{{ comm.hype.fg }};font-size:12.5px;font-weight:600;white-space:nowrap;transition:all .15s"><i class="{{ comm.hype.icon }}" style="font-size:15px"></i>{{ comm.hype.label }}</div>
+        </div>
+        <div style="font-size:11.5px;font-weight:500;color:#ABFF84;margin-top:8px">{{ comm.hype.recent }}</div>
+        <sc-if value="{{ comm.hype.hasNext }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:14px;height:8px;border-radius:999px;background:#1E1F1C;overflow:hidden"><div style="height:100%;width:{{ comm.hype.pct }};border-radius:999px;background:linear-gradient(90deg,#0AE448,#ABFF84);transition:width .4s"></div></div>
+          <div style="display:flex;align-items:flex-start;gap:9px;margin-top:10px">
+            <i class="ph-bold ph-lock-simple-open" style="font-size:14px;color:#ABFF84;flex:none;margin-top:2px"></i>
+            <div style="font-size:12px;font-weight:600;color:#E6E3C8;line-height:1.5">{{ comm.hype.nextReward }} <span style="color:#8C8B7D;font-weight:500">· {{ comm.hype.nextLeft }}</span></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ comm.hype.hasGoals }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:14px;padding-top:14px;border-top:1px solid #1E1F1C">
+            <sc-for list="{{ comm.hype.goals }}" as="x" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:9px;opacity:{{ x.op }}"><i class="{{ x.icon }}" style="font-size:14px;color:{{ x.fg }};flex:none"></i><div style="font-size:11.5px;font-weight:600;color:#FFFCE1;flex:none;min-width:44px">{{ x.label }}</div><div style="font-size:11.5px;font-weight:500;color:#A5A493;line-height:1.4;min-width:0">{{ x.reward }}</div></div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
       <sc-if value="{{ detail.friendsShow }}" hint-placeholder-val="{{ false }}">
         <div style="padding:19px 22px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
           <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin-bottom:13px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.friendsGoingTitle }}</div>
@@ -676,6 +872,25 @@
             </div>
             <div style="font-size:12.5px;font-weight:600;color:#DFFFD1;margin-left:6px">{{ detail.friendsLine }}</div>
           </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ comm.hasAmb }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:19px 22px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+          <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:12px">{{ L.ambTitle }}</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ comm.amb }}" as="a" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:18px;font-size:11.5px;font-weight:600;color:#8C8B7D;text-align:right">{{ a.rank }}</div>
+                <div style="width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#0E100F;background:{{ a.color }}">{{ a.initials }}</div>
+                <div style="flex:1;min-width:0;font-size:12.5px;font-weight:600">{{ a.name }}</div>
+                <div style="font-size:11.5px;font-weight:500;color:#A5A493;white-space:nowrap">{{ a.visits }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ comm.hasBrought }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;font-size:11.5px;font-weight:600;color:#ABFF84">{{ comm.brought }}</div>
+          </sc-if>
         </div>
       </sc-if>
 
@@ -1450,6 +1665,149 @@
         <div style="font-size:11.5px;font-weight:500;color:#A5A493;line-height:1.6;text-wrap:pretty">{{ L.notifQuiet }}</div>
       </div>
       <div onClick="{{ closeNotifPrefs }}" style="cursor:pointer;margin-top:20px;padding:15px;border-radius:8px;text-align:center;background:#ABFF84;color:#0E100F;font-size:13.5px;font-weight:600;transition:transform .15s" style-hover="transform:translateY(-1px)">{{ L.done }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ shareOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:rgba(14,16,15,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box">
+    <div onClick="{{ closeShare }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(440px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:26px;border-radius:8px;background:#191919;border:1px solid rgba(255,252,225,.32);box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:center;gap:14px">
+        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:21px;margin:0;letter-spacing:-.02em">{{ L.shareTitle }}</h2>
+        <div onClick="{{ closeShare }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(28,29,27,.8);border:1px solid rgba(255,252,225,.19);transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-x" style="font-size:13px;color:#E6E3C8"></i></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px">
+        <sc-for list="{{ shareTargets }}" as="t" hint-placeholder-count="7">
+          <div onClick="{{ t.go }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);transition:all .15s" style-hover="border-color:#ABFF84">
+            <i class="{{ t.icon }}" style="font-size:24px;color:{{ t.color }}"></i>
+            <div style="font-size:11.5px;font-weight:600;color:#E6E3C8;text-align:center">{{ t.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ comm.hasBrought }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;font-size:12px;font-weight:600;color:#ABFF84">{{ comm.brought }}</div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ claimOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:rgba(14,16,15,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box">
+    <div onClick="{{ claimF.close }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(480px,100%);box-sizing:border-box;padding:26px;border-radius:8px;background:#191919;border:1px solid rgba(255,252,225,.32);box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:20px;margin:0">{{ L.claimTitle }}</h2>
+        <div onClick="{{ claimF.close }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(28,29,27,.8);border:1px solid rgba(255,252,225,.19)"><i class="ph-bold ph-x" style="font-size:13px;color:#E6E3C8"></i></div>
+      </div>
+      <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.claimNote }}</div>
+      <textarea aria-label="{{ L.claimNote }}" value="{{ claimF.note }}" onChange="{{ claimF.onNote }}" rows="4" maxLength="1000" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;resize:vertical;line-height:1.6"></textarea>
+      <div style="font-size:11px;font-weight:500;color:#8C8B7D;margin-top:5px">{{ L.claimShort }}</div>
+      <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin:14px 0 7px">{{ L.claimProof }}</div>
+      <input aria-label="{{ L.claimProof }}" value="{{ claimF.proof }}" onChange="{{ claimF.onProof }}" type="url" placeholder="https://" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500">
+      <div onClick="{{ claimF.send }}" style="cursor:pointer;margin-top:20px;padding:13px;border-radius:999px;background:#ABFF84;color:#0E100F;text-align:center;font-size:13px;font-weight:600">{{ claimF.label }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ submitOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:rgba(14,16,15,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box">
+    <div onClick="{{ closeSubmit }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(620px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:28px;border-radius:8px;background:#191919;border:1px solid rgba(255,252,225,.32);box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:center;gap:14px">
+        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:21px;margin:0;letter-spacing:-.02em">{{ L.submitTitle }}</h2>
+        <div onClick="{{ closeSubmit }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(28,29,27,.8);border:1px solid rgba(255,252,225,.19);transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-x" style="font-size:13px;color:#E6E3C8"></i></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <sc-for list="{{ submitTabs }}" as="t" hint-placeholder-count="2">
+          <div onClick="{{ t.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;background:{{ t.bg }};border:1px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }}</div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ submitTabNew }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:20px">
+          <div style="padding:14px;border-radius:8px;background:rgba(171,255,132,.06);border:1px dashed rgba(171,255,132,.45)">
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;color:#ABFF84;margin-bottom:8px;display:flex;align-items:center;gap:7px"><i class="ph-fill ph-magic-wand" style="font-size:14px"></i>{{ L.fAuto }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input aria-label="{{ L.fAutoLink }}" placeholder="{{ L.fAutoLink }}" value="{{ sf.auto }}" onChange="{{ sf.onAuto }}" type="url" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;flex:1 1 220px;width:auto">
+              <div onClick="{{ sf.autoGo }}" style="cursor:pointer;display:flex;align-items:center;padding:11px 18px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12.5px;font-weight:600;white-space:nowrap">{{ sf.autoLabel }}</div>
+              <label for="ffPosterIn" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:11px 16px;border-radius:999px;border:1px solid rgba(255,252,225,.32);color:#FFFCE1;font-size:12.5px;font-weight:600;white-space:nowrap" style-hover="border-color:#ABFF84"><i class="ph-bold ph-image" style="font-size:14px"></i>{{ L.fAutoPoster }}</label>
+              <input id="ffPosterIn" type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ sf.onPoster }}" style="display:none">
+            </div>
+            <sc-if value="{{ sf.hasAutoErr }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:8px;font-size:12px;font-weight:600;color:#FF8709">{{ sf.autoErr }}</div>
+            </sc-if>
+          </div>
+          <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fTitle }}</div><input aria-label="{{ L.fTitle }}" value="{{ sf.title }}" onChange="{{ sf.onTitle }}" type="text" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+          <div>
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:8px">{{ L.fGenre }}</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ sf.genres }}" as="x" hint-placeholder-count="8">
+                <div onClick="{{ x.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;padding:7px 12px;background:{{ x.bg }};border:1px solid {{ x.bd }};color:{{ x.fg }}">{{ x.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:8px">{{ L.fCity }}</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ sf.cities }}" as="x" hint-placeholder-count="4">
+                <div onClick="{{ x.pick }}" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;background:{{ x.bg }};border:1px solid {{ x.bd }};color:{{ x.fg }}">{{ x.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fDate }}</div><input aria-label="{{ L.fDate }}" value="{{ sf.date }}" onChange="{{ sf.onDate }}" type="{{ sf.tDate }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fStart }}</div><input aria-label="{{ L.fStart }}" value="{{ sf.start }}" onChange="{{ sf.onStart }}" type="{{ sf.tTime }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fEnd }}</div><input aria-label="{{ L.fEnd }}" value="{{ sf.end }}" onChange="{{ sf.onEnd }}" type="{{ sf.tTime }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fEndDate }}</div><input aria-label="{{ L.fEndDate }}" value="{{ sf.endDate }}" onChange="{{ sf.onEndDate }}" type="{{ sf.tDate }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fVenue }}</div><input aria-label="{{ L.fVenue }}" value="{{ sf.venue }}" onChange="{{ sf.onVenue }}" type="text" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fArea }}</div><input aria-label="{{ L.fArea }}" value="{{ sf.area }}" onChange="{{ sf.onArea }}" type="text" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+          </div>
+          <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fAddress }}</div><input aria-label="{{ L.fAddress }}" value="{{ sf.address }}" onChange="{{ sf.onAddress }}" type="text" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+          <div>
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:8px">{{ L.fEntry }}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <sc-for list="{{ sf.entries }}" as="x" hint-placeholder-count="2">
+                <div onClick="{{ x.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;background:{{ x.bg }};border:1px solid {{ x.bd }};color:{{ x.fg }}">{{ x.label }}</div>
+              </sc-for>
+              <sc-if value="{{ sf.paid }}" hint-placeholder-val="{{ true }}">
+                <input aria-label="{{ L.fPrice }}" value="{{ sf.price }}" onChange="{{ sf.onPrice }}" inputMode="numeric" placeholder="{{ L.fPrice }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;width:auto;flex:1;min-width:160px">
+              </sc-if>
+            </div>
+          </div>
+          <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fSource }}</div><input aria-label="{{ L.fSource }}" value="{{ sf.source }}" onChange="{{ sf.onSource }}" type="url" placeholder="https://" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+          <sc-if value="{{ sf.paid }}" hint-placeholder-val="{{ true }}">
+            <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fTicket }}</div><input aria-label="{{ L.fTicket }}" value="{{ sf.ticket }}" onChange="{{ sf.onTicket }}" type="url" placeholder="https://" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"></div>
+          </sc-if>
+          <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fLineup }}</div><input aria-label="{{ L.fLineup }}" value="{{ sf.lineup }}" onChange="{{ sf.onLineup }}" type="text" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500"><div style="font-size:11px;font-weight:500;color:#8C8B7D;margin-top:6px">{{ L.fLineupHint }}</div></div>
+          <div><div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:7px">{{ L.fDesc }}</div><textarea aria-label="{{ L.fDesc }}" value="{{ sf.desc }}" onChange="{{ sf.onDesc }}" rows="4" maxLength="4000" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;resize:vertical;line-height:1.6"></textarea></div>
+          <sc-if value="{{ sf.hasErr }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;font-weight:600;color:#FF8709">{{ sf.err }}</div>
+          </sc-if>
+          <div onClick="{{ sf.send }}" class="ff-cta" style="cursor:pointer;padding:15px;border-radius:999px;text-align:center;background:#ABFF84;color:#0E100F;font-size:13.5px;font-weight:600">{{ sf.sendLabel }}</div>
+          <div onClick="{{ goStudio }}" style="cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:#8C8B7D" style-hover="color:#ABFF84">{{ L.studioLink }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ submitTabMine }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;margin-top:14px">
+          <sc-for list="{{ sf.mine }}" as="x" hint-placeholder-count="2">
+            <div onClick="{{ x.open }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #1E1F1C">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:600;color:#FFFCE1">{{ x.title }}</div>
+                <div style="font-size:11.5px;font-weight:500;color:#8C8B7D;margin-top:5px">{{ x.when }}</div>
+                <sc-if value="{{ x.hasReason }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;font-weight:500;color:#FF8709;margin-top:5px">{{ x.reason }}</div></sc-if>
+              </div>
+              <div style="padding:5px 11px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap;background:{{ x.stBg }};color:{{ x.stFg }}">{{ x.status }}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ sf.mineEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px 0;font-size:13px;font-weight:500;color:#8C8B7D">{{ L.submitNone }}</div>
+          </sc-if>
+        </div>
+      </sc-if>
     </div>
   </div>
 </sc-if>

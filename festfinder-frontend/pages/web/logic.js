@@ -297,6 +297,59 @@ const S = {
   noFriendsBody:{en:'Connect Facebook, Instagram or Zalo and we\u2019ll show which of your friends are going.',
     vi:'Liên kết Facebook, Instagram hoặc Zalo để xem bạn bè nào đang đi.'},
 
+  /* ---- the event page as a community ---- */
+  hypeTitle:{en:'Hype',vi:'Hype'}, hypeCta:{en:'Hype it',vi:'Hype ngay'}, hypeDone:{en:'Hyped',vi:'Đã hype'},
+  hype24:{en:'+{n} in the last 24h',vi:'+{n} trong 24 giờ qua'},
+  hypeLeft:{en:'{n} to go',vi:'Còn {n}'},
+  hypeToast:{en:'Hyped',vi:'Đã hype'},
+  communityBy:{en:'Sent in by {n}',vi:'{n} gửi lên'},
+  communityBySomeone:{en:'Sent in by the community',vi:'Cộng đồng gửi lên'},
+  claimCta:{en:'I organise this',vi:'Tôi là BTC'}, claimPending:{en:'Claim under review',vi:'Đang chờ duyệt'},
+  claimTitle:{en:'Take over this event',vi:'Nhận quản lý sự kiện'}, claimNote:{en:'Who you are, and how we can check',vi:'Bạn là ai, và cách chúng tôi xác minh'},
+  claimProof:{en:'Proof link (page or post)',vi:'Link chứng minh (fanpage, bài đăng)'}, claimSend:{en:'Send request',vi:'Gửi yêu cầu'},
+  claimShort:{en:'At least 10 characters',vi:'Ít nhất 10 ký tự'},
+  faqEvent:{en:'Asked & answered',vi:'Hỏi & đáp'},
+  resaleTitle:{en:'Resale',vi:'Pass vé'}, resaleCap:{en:'At most face value',vi:'Không quá giá gốc'},
+  resaleNone:{en:'No tickets up right now',vi:'Chưa có vé pass'},
+  resaleWatch:{en:'Tell me when one comes up',vi:'Báo tôi khi có vé'}, resaleWatching:{en:'We will tell you',vi:'Đang chờ báo'},
+  resaleBuy:{en:'Buy',vi:'Mua'}, resaleMine:{en:'Yours',vi:'Vé của bạn'}, resaleLive:{en:'On now',vi:'Đang diễn ra'},
+  resaleFee:{en:'+{p}% service fee',vi:'+{p}% phí dịch vụ'}, resaleFace:{en:'Face value {p}',vi:'Giá gốc {p}'},
+  resaleSell:{en:'Pass on your ticket',vi:'Pass vé của bạn'},
+  discTitle:{en:'Discussion',vi:'Thảo luận'}, discTop:{en:'Helpful',vi:'Hữu ích'}, discNew:{en:'Newest',vi:'Mới nhất'},
+  discPh_qa:{en:'Ask the organiser and everyone…',vi:'Hỏi BTC và mọi người…'},
+  discPh_talk:{en:'Say something…',vi:'Nói gì đó…'},
+  discPh_crew:{en:'Where from, what time?',vi:'Bạn đi từ đâu, mấy giờ?'},
+  discPh_trackid:{en:'Describe the track…',vi:'Tả đoạn nhạc…'},
+  discPh_memory:{en:'How was the night?',vi:'Đêm đó thế nào?'},
+  discPost:{en:'Post',vi:'Đăng'}, discReply:{en:'Reply',vi:'Trả lời'}, discReplyPh:{en:'Write a reply…',vi:'Viết trả lời…'},
+  discHelpful:{en:'Helpful',vi:'Hữu ích'}, discReport:{en:'Report',vi:'Báo cáo'}, discDelete:{en:'Delete',vi:'Xoá'},
+  discPin:{en:'Pin',vi:'Ghim'}, discUnpin:{en:'Unpin',vi:'Bỏ ghim'}, discHide:{en:'Hide',vi:'Ẩn'}, discShow:{en:'Show',vi:'Hiện lại'},
+  discPinned:{en:'Pinned',vi:'Đã ghim'}, discOfficial:{en:'Organiser’s answer',vi:'BTC trả lời'}, discHidden:{en:'Hidden',vi:'Đang ẩn'},
+  discRemoved:{en:'Deleted',vi:'Đã xoá'}, discMore:{en:'{n} more replies',vi:'Thêm {n} trả lời'},
+  discEmpty:{en:'Nothing here yet',vi:'Chưa có bài nào'}, discClosed:{en:'Closed for new posts',vi:'Đang đóng'},
+  discSignin:{en:'Sign in to post',vi:'Đăng nhập để đăng bài'}, discVerify:{en:'Confirm your phone to post',vi:'Xác thực SĐT để đăng bài'},
+  discAnySet:{en:'Which set?',vi:'Set nào?'}, discAt:{en:'HH:MM',vi:'HH:MM'},
+  discMember:{en:'FeestFinder member',vi:'Thành viên FeestFinder'}, discReported:{en:'Reported · thanks',vi:'Đã báo cáo · cảm ơn bạn'},
+  ago0:{en:'just now',vi:'vừa xong'}, agoM:{en:'{n}m',vi:'{n} phút'}, agoH:{en:'{n}h',vi:'{n} giờ'}, agoD:{en:'{n}d',vi:'{n} ngày'},
+  shareTitle:{en:'Share',vi:'Chia sẻ'}, shareCopy:{en:'Copy link',vi:'Copy link'}, shareMore:{en:'More',vi:'Khác'},
+  shareCopiedZalo:{en:'Link copied — paste it into Zalo',vi:'Đã copy — dán vào Zalo'},
+  shareBrought:{en:'Your links brought {n} people here',vi:'Link của bạn đã mang về {n} người'},
+  ambTitle:{en:'Ambassadors',vi:'Đại sứ'}, ambVisits:{en:'{n} visits',vi:'{n} lượt xem'},
+  submitTitle:{en:'Send in an event',vi:'Gửi sự kiện'}, submitNew:{en:'New',vi:'Gửi mới'}, submitMine:{en:'Sent',vi:'Đã gửi'},
+  fTitle:{en:'Event name',vi:'Tên sự kiện'}, fGenre:{en:'Genre',vi:'Thể loại'}, fDate:{en:'Date',vi:'Ngày'},
+  fStart:{en:'Starts',vi:'Bắt đầu'}, fEnd:{en:'Ends',vi:'Kết thúc'}, fVenue:{en:'Venue',vi:'Địa điểm'},
+  fAddress:{en:'Address',vi:'Địa chỉ'}, fArea:{en:'Area',vi:'Khu vực'}, fEntry:{en:'Entry',vi:'Vào cửa'},
+  fFree:{en:'Free',vi:'Miễn phí'}, fPaid:{en:'Ticketed',vi:'Có vé'}, fPrice:{en:'Lowest price (₫)',vi:'Giá thấp nhất (₫)'},
+  fSource:{en:'Where you saw it',vi:'Link nguồn'}, fTicket:{en:'Ticket link',vi:'Link mua vé'},
+  fLineup:{en:'Lineup',vi:'Đội hình'}, fLineupHint:{en:'Separate names with commas',vi:'Cách nhau bằng dấu phẩy'},
+  fDesc:{en:'Description',vi:'Mô tả'}, fSend:{en:'Send for review',vi:'Gửi kiểm duyệt'},
+  fAuto:{en:'Fill in for me',vi:'Điền giúp tôi'}, fAutoLink:{en:'Paste the event link',vi:'Dán link sự kiện'},
+  fAutoGo:{en:'Fill in',vi:'Điền'}, fAutoPoster:{en:'Poster',vi:'Poster'}, fAutoDone:{en:'Filled in — check before sending',vi:'Đã điền — kiểm tra lại trước khi gửi'},
+  fAutoBad:{en:'Paste a full link, starting with https://',vi:'Dán link đầy đủ, bắt đầu bằng https://'}, fCity:{en:'City',vi:'Thành phố'}, fEndDate:{en:'Last day',vi:'Ngày kết thúc'},
+  fErrRequired:{en:'Fill in name, genre, date, times, venue and the source link',vi:'Điền tên, thể loại, ngày, giờ, địa điểm và link nguồn'},
+  submitNone:{en:'Nothing sent yet',vi:'Chưa gửi sự kiện nào'},
+  studioLink:{en:'Organiser? Open the studio',vi:'Bạn là BTC? Mở trang quản lý'},
+
   /* ---- the list of every event: a table or a grid ---- */
   listTitle:{en:'Every event',vi:'Tất cả sự kiện'}, listAll:{en:'All',vi:'Tất cả'}, listAllTime:{en:'Any time',vi:'Mọi lúc'},
   listTable:{en:'Table',vi:'Bảng'}, listGrid:{en:'Grid',vi:'Lưới'},
@@ -458,7 +511,11 @@ class Component extends DCLogic {
     adHidden:{},
     acct:false, savedView:false, auth:null, authMode:'signup', authMethod:'email', authId:'', authOtp:'',
     authPass:'', authPass2:'', authErr:'', authNote:'', authNext:null, authShowPass:false,
+    // The event page's community: discussion, resale, hype, sharing, and sending events in.
+    disc:null, discKind:null, discSort:'top', discDraft:'', discSet:'', discHeard:'', discReplyTo:null, discReplyDraft:'', discMore:{}, discBusy:false,
+    resale:null, hyped:{}, shareOpen:false, claimOpen:false, claimNote:'', claimProof:'', claimBusy:false,
     listView:'table', listCity:'all', listTime:'all', listGenre:'All', listSort:'date', listDesc:false, listAt: LOADED_AT, listAdded:0,
+    submitOpen:false, submitTab:'new', submitForm:{ genre:'EDM', entry:'paid', city:'ho-chi-minh' }, submitErr:'', submitBusy:false, prefillBusy:false, prefillErr:'', submissions:null
   };
 
   componentDidMount() {
@@ -588,8 +645,12 @@ class Component extends DCLogic {
     }
     if (next === 'ads') patch.adsOpen = true;
     if (next === 'organizer') setTimeout(() => { window.location.href = '/organizer'; }, 500);
+    if (next === 'submit') Object.assign(patch, { submitOpen:true, submitTab:'new', submitErr:'' });
     this.setState(patch);
     this.say(st.authMode === 'login' ? L.loggedInToast : L.welcomeToast);
+    if (next === 'submit') this.loadSubmissions();
+    // Signed in on an event page: its discussion now knows who is reading.
+    if (this.state.detailId) { this.loadDiscussion(this.state.detailId); this.loadDetail(this.state.detailId); }
   }
 
   readPhoto(e) {
@@ -628,6 +689,10 @@ class Component extends DCLogic {
     const patch = await this.reloadWeb();
     this.setState(Object.assign(patch, { cx:null }));
     this.say(L.connectedToast + ' · ' + SRC[c.src].label);
+    const after = this._afterPhone;
+    this._afterPhone = null;
+    if (after) after();
+    if (this.state.detailId) this.loadDiscussion(this.state.detailId);
   }
   connectSocial(src) {
     const L = this.L(), cur = this.state.user || {};
@@ -662,7 +727,17 @@ class Component extends DCLogic {
     return on;
   }
   loadDetail(id) {
-    FF.fire(FF.post('/events/' + id + '/track', { type:'view', source:'feed' }));
+    // Arrived on someone's share link: credit them, once.
+    const q = FF.route && FF.route.query, ref = q && q.get('ref'), ch = q && q.get('ch');
+    if (ref && !this._refSent) {
+      this._refSent = true;
+      FF.fire(FF.post('/events/' + id + '/track', { type:'view', source:'shared', ref: ref, channel: ch || 'copy' }));
+    } else {
+      FF.fire(FF.post('/events/' + id + '/track', { type:'view', source:'feed' }));
+    }
+    if (this._discFor !== id) { this._discFor = id; this.setState({ disc:null, discKind:null, discMore:{}, discReplyTo:null, resale:null }); }
+    this.loadDiscussion(id);
+    this.loadResale(id);
     FF.get('/events/' + id).then(d => {
       ABOUT[id] = d.description;
       if (d.organizer) {
@@ -685,6 +760,163 @@ class Component extends DCLogic {
       this.setState(patch);
     }, e => console.warn('[ff] detail', e));
   }
+  /** One tab of the event's discussion; asked again when the tab or the order changes. */
+  loadDiscussion(id, patch) {
+    const st = Object.assign({}, this.state, patch || {});
+    const key = id + '|' + (st.discKind || '') + '|' + st.discSort;
+    this._discKey = key;
+    const qs = 'sort=' + st.discSort + (st.discKind ? '&kind=' + st.discKind : '');
+    FF.get('/events/' + id + '/discussion?' + qs).then(d => {
+      if (this._discKey !== key) return;
+      this.setState({ disc: d, discKind: d.kind, discMore:{} });
+    }, e => console.warn('[ff] discussion', e));
+  }
+  /** An organiser asks the moderators to move a community event to their account. */
+  sendClaim() {
+    const st = this.state, L = this.L(), id = st.detailId, note = st.claimNote.trim(), proof = st.claimProof.trim();
+    if (note.length < 10) return this.say(L.claimShort);
+    const body = { note };
+    if (proof) body.proofUrl = /^https?:\/\//.test(proof) ? proof : 'https://' + proof;
+    this.setState({ claimBusy:true });
+    FF.post('/events/' + id + '/claims', body).then(out => {
+      this.setState({ claimBusy:false, claimOpen:false, claimNote:'', claimProof:'' });
+      this.say(FF.text(out.message, st.lang));
+      this.loadDetail(id);
+    }, e => { this.setState({ claimBusy:false }); this.say(FF.errorText(e, st.lang)); });
+  }
+  loadResale(id) {
+    FF.get('/events/' + id + '/resale').then(r => { if (this.state.detailId === id) this.setState({ resale: r }); }, e => console.warn('[ff] resale', e));
+  }
+  /** Writing needs a phone number proven by a code: open the Zalo step, then carry on. */
+  needPhone(after) {
+    this._afterPhone = after;
+    this.startConnect('zalo');
+  }
+  /** Runs a write; signs in or proves the phone first when the API asks for it. */
+  write(run, retry) {
+    const L = this.L();
+    if (!this.state.user) { this.openAuth('signup', null, L.discSignin); return Promise.reject(new Error('signin')); }
+    return run().catch(e => {
+      const code = e && e.code;
+      if (code === 'phone_unverified') this.needPhone(retry || (() => this.write(run).catch(() => {})));
+      else this.say(FF.errorText(e, this.state.lang));
+      throw e;
+    });
+  }
+  postToDiscussion(parentId) {
+    const st = this.state, L = this.L(), id = st.detailId;
+    const body = (parentId ? st.discReplyDraft : st.discDraft).trim();
+    if (!id || !body || st.discBusy) return;
+    const payload = parentId ? { parentId, body } : { kind: st.discKind, body };
+    if (!parentId && st.discKind === 'trackid') {
+      if (st.discSet) payload.setId = st.discSet;
+      if (/^([01]\d|2[0-3]):[0-5]\d$/.test(st.discHeard)) payload.heardAt = st.discHeard;
+    }
+    this.setState({ discBusy:true });
+    this.write(() => FF.post('/events/' + id + '/posts', payload), () => this.postToDiscussion(parentId)).then(out => {
+      this.setState(parentId ? { discReplyDraft:'', discReplyTo:null, discBusy:false } : { discDraft:'', discHeard:'', discBusy:false });
+      this.say(FF.text(out.message, st.lang) || L.discPost);
+      this.loadDiscussion(id);
+      this.loadDetail(id);
+    }, () => this.setState({ discBusy:false }));
+  }
+  /** More replies to one thread than the first three. */
+  loadReplies(postId) {
+    FF.get('/posts/' + postId + '/replies').then(r => {
+      const m = Object.assign({}, this.state.discMore); m[postId] = r.items;
+      this.setState({ discMore: m });
+    }, e => this.say(FF.errorText(e, this.state.lang)));
+  }
+  toggleHype(id) {
+    const st = this.state, L = this.L();
+    if (!st.user) return this.openAuth('signup', null, L.gateSave);
+    const det = st.details[id];
+    const was = id in st.hyped ? st.hyped[id] : !!(det && det.viewer && det.viewer.hyped);
+    const h = Object.assign({}, st.hyped); h[id] = !was;
+    this.setState({ hyped: h });
+    (was ? FF.del('/me/hypes/' + id) : FF.put('/me/hypes/' + id)).then(() => {
+      if (!was) this.say(L.hypeToast);
+      this.loadDetail(id);
+    }, e => { const b = Object.assign({}, this.state.hyped); b[id] = was; this.setState({ hyped: b }); this.say(FF.errorText(e, st.lang)); });
+  }
+  /** A share link tagged with who shared it and where, then the place it goes. */
+  share(channel) {
+    const st = this.state, L = this.L(), e = EVENTS.find(x => x.id === st.detailId);
+    if (!e) return;
+    const text = e.title + ' · ' + this.when(e);
+    const go = (url) => {
+      const u = encodeURIComponent(url), t = encodeURIComponent(text);
+      const copy = (msg) => { if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => this.say(msg), () => this.say(url)); else this.say(url); };
+      const open = (href) => window.open(href, '_blank', 'noopener');
+      if (channel === 'facebook') return open('https://www.facebook.com/sharer/sharer.php?u=' + u);
+      if (channel === 'threads') return open('https://www.threads.net/intent/post?text=' + encodeURIComponent(text + ' ' + url));
+      if (channel === 'x') return open('https://x.com/intent/post?text=' + t + '&url=' + u);
+      if (channel === 'telegram') return open('https://t.me/share/url?url=' + u + '&text=' + t);
+      // Zalo has no web share link: the phone's share sheet has the app; elsewhere, paste it in.
+      if ((channel === 'native' || channel === 'zalo') && navigator.share) return navigator.share({ title: e.title, text, url }).catch(() => {});
+      return copy(channel === 'zalo' ? L.shareCopiedZalo : L.shareCopied);
+    };
+    FF.post('/events/' + e.id + '/shares', { channel }).then(out => go(out.url), () => go(location.origin + FF.href('e', e.slug || e.id)));
+  }
+  /** Send in an event for the moderators to check. */
+  sendSubmission() {
+    const st = this.state, L = this.L(), f = st.submitForm;
+    const need = [f.title, f.genre, f.date, f.start, f.end, f.venue, f.source];
+    if (need.some(x => !x || !String(x).trim())) return this.setState({ submitErr: L.fErrRequired });
+    const body = {
+      title: f.title.trim(), genre: f.genre, description: (f.desc || '').trim(),
+      startsOn: f.date, startTime: f.start, endTime: f.end, city: f.city || 'ho-chi-minh',
+      venueName: f.venue.trim(), address: (f.address || '').trim(), area: (f.area || '').trim(),
+      entryMode: f.entry, priceFrom: f.entry === 'paid' ? Math.max(0, parseInt(String(f.price || '0').replace(/\D/g, ''), 10) || 0) : 0,
+      sourceUrl: f.source.trim(), lineup: (f.lineup || '').split(',').map(x => x.trim()).filter(Boolean)
+    };
+    if (f.ticket && f.ticket.trim()) body.ticketUrl = f.ticket.trim();
+    if (f.endDate && f.endDate > f.date) body.endsOn = f.endDate;
+    this.setState({ submitBusy:true, submitErr:'' });
+    this.write(() => FF.post('/community/events', body), () => this.sendSubmission()).then(out => {
+      this.setState({ submitBusy:false, submitForm:{ genre:'EDM', entry:'paid', city:'ho-chi-minh' }, submitTab:'mine', submissions:null });
+      this.say(FF.text(out.message, st.lang));
+      this.loadSubmissions();
+    }, e => this.setState({ submitBusy:false, submitErr: e && e.code && e.code !== 'phone_unverified' ? FF.errorText(e, st.lang) : '' }));
+  }
+  /** Let the server read a link or a poster and fill the form; the person checks it before sending. */
+  prefill(file) {
+    const st = this.state, L = this.L(), link = (st.submitForm.auto || '').trim();
+    if (!file && !/^https?:\/\/\S+\.\S+/.test(link)) return this.setState({ prefillErr: L.fAutoBad });
+    if (!st.user) return this.openAuth('signup', null, L.gateOrganizer);
+    let call;
+    if (file) { const form = new FormData(); form.append('file', file); call = () => FF.api('POST', '/community/prefill/poster', form); }
+    else call = () => FF.post('/community/prefill', { url: link });
+    this.setState({ prefillBusy:true, prefillErr:'' });
+    call().then(out => {
+      const x = out.fields, f = Object.assign({}, this.state.submitForm), put = (k, v) => { if (v != null && v !== '') f[k] = String(v); };
+      put('title', x.title); put('date', x.startsOn); put('endDate', x.endsOn); put('start', x.startTime); put('end', x.endTime);
+      put('venue', x.venueName); put('address', x.address); put('area', x.area); put('desc', x.description); put('ticket', x.ticketUrl);
+      if (x.genre && GENRES.indexOf(x.genre) > 0) f.genre = x.genre;
+      if (x.city) f.city = x.city;
+      if (x.entryMode) f.entry = x.entryMode;
+      if (x.priceFrom) f.price = String(x.priceFrom);
+      if (x.lineup && x.lineup.length) f.lineup = x.lineup.join(', ');
+      if (!f.source) f.source = out.sourceUrl || (file ? '' : link);
+      this.setState({ prefillBusy:false, submitForm: f });
+      this.say(L.fAutoDone);
+    }, e => {
+      this.setState({ prefillBusy:false, prefillErr: e && e.code === 'phone_unverified' ? '' : FF.errorText(e, st.lang) });
+      if (e && e.code === 'phone_unverified') this.needPhone(() => this.prefill(file));
+    });
+  }
+  loadSubmissions() {
+    if (!this.state.user) return;
+    FF.get('/me/submissions').then(r => this.setState({ submissions: r.items }), e => console.warn('[ff] submissions', e));
+  }
+  ago(ts) {
+    const L = this.L(), m = Math.max(0, Math.round((FF.now().getTime() - new Date(ts).getTime()) / 60000));
+    if (m < 1) return L.ago0;
+    if (m < 60) return L.agoM.replace('{n}', String(m));
+    if (m < 60 * 24) return L.agoH.replace('{n}', String(Math.round(m / 60)));
+    return L.agoD.replace('{n}', String(Math.round(m / 1440)));
+  }
+
   loadOrg(id) {
     const o = ORGS[id];
     if (!o || !o.slug) return;
@@ -1091,7 +1323,13 @@ class Component extends DCLogic {
       isStat: st.screen === 'stat', isAbout: st.screen === 'about',
       /* ---- advertising ---- */
       openAds: () => st.user ? this.setState({ adsOpen:true, adErr:'' }) : this.openAuth('signup', 'ads', L.gateAds),
-      goOrganizer: () => st.user ? (window.location.href = '/organizer') : this.openAuth('signup', 'organizer', L.gateOrganizer),
+      // Anyone can send an event in; it goes live once a moderator has checked it.
+      goOrganizer: () => {
+        if (!st.user) return this.openAuth('signup', 'submit', L.gateOrganizer);
+        this.setState({ submitOpen:true, submitTab:'new', submitErr:'' });
+        this.loadSubmissions();
+      },
+      goStudio: () => { window.location.href = '/ops/org'; },
       closeAds: () => this.setState({ adsOpen:false }),
       adsOpen: st.adsOpen,
       adBrand: st.adBrand, setAdBrand: (e) => this.setState({ adBrand: e.target.value }),
@@ -1211,7 +1449,7 @@ class Component extends DCLogic {
             if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateSave);
             this.toggleFlag('saved', '/me/saves/', e.id);
           },
-          share: () => this.say(L.shareCopied),
+          share: () => this.setState({ shareOpen:true }),
           friendsShow: fr.length > 0,
           friendsLine: fr.length + ' ' + L.friendsGoing,
           friendFaces: fr.slice(0, 5).map(f => ({ initials: initialsOf(f.name), color: f.color })),
@@ -1362,6 +1600,243 @@ class Component extends DCLogic {
               }
             };
           })
+        };
+      })(),
+
+      /* ---- the event page's community: hype, FAQ, resale, discussion, sharing ---- */
+      comm: (() => {
+        const e = EVENTS.filter(x => x.id === st.detailId)[0];
+        const det = e ? st.details[e.id] : null;
+        if (!e || !det || !det.hype) return { show:false, hype:{}, faq:[], resale:{ items:[] }, disc:{ tabs:[], items:[] }, amb:[], community:{} };
+        const money = (n) => (n || 0).toLocaleString(vi1 ? 'vi-VN' : 'en-US') + '₫';
+        const hyped = e.id in st.hyped ? st.hyped[e.id] : !!(det.viewer && det.viewer.hyped);
+        const H = det.hype;
+        const goals = H.goals.map(x => ({
+          label: x.threshold.toLocaleString(vi1 ? 'vi-VN' : 'en-US'), reward: x.reward[g] || x.reward.vi,
+          icon: x.reached ? 'ph-fill ph-check-circle' : 'ph-bold ph-lock-simple',
+          fg: x.reached ? '#ABFF84' : '#A5A493', op: x.reached ? '1' : '.86'
+        }));
+
+        // Resale: the list, and what the viewer can do about it.
+        const R = st.resale;
+        const resale = {
+          show: !!(det.resale && det.resale.enabled) || !!(R && R.count),
+          live: det.phase === 'live',
+          items: R ? R.items.map(it => ({
+            price: money(it.price), tier: it.tier ? it.tier[g] : 'GA', seller: it.seller.name,
+            face: L.resaleFace.replace('{p}', money(it.faceValue)), mine: it.mine,
+            under: it.price < it.faceValue,
+            buy: () => {
+              if (it.mine) return this.say(L.resaleMine);
+              if (!st.user) return this.openAuth('signup', null, L.gateTickets);
+              window.location.href = '/app/checkout/' + encodeURIComponent(e.slug || e.id) + '?listing=' + it.id;
+            }
+          })) : [],
+          empty: !!R && R.count === 0,
+          fee: L.resaleFee.replace('{p}', String(det.resale ? det.resale.feePct : 5)),
+          watching: !!(R && R.watching),
+          watchLabel: R && R.watching ? L.resaleWatching : L.resaleWatch,
+          watchIcon: R && R.watching ? 'ph-fill ph-bell-ringing' : 'ph-bold ph-bell',
+          watch: () => {
+            if (!st.user) return this.openAuth('signup', null, L.gateSave);
+            const on = !(R && R.watching);
+            FF.fire((on ? FF.put : FF.del)('/events/' + e.id + '/resale/watch').then(out => { this.say(FF.text(out.message, g)); this.loadResale(e.id); }), (err) => this.say(FF.errorText(err, g)));
+          },
+          canSell: !!(det.mine && det.mine.validTickets),
+          sell: () => { window.location.href = '/app/tickets'; }
+        };
+
+        // Discussion: tabs, the composer, and the threads with their first replies.
+        const D = st.disc;
+        const team = !!(D && D.me && D.me.isTeam);
+        const author = (a) => a ? {
+          name: a.name || L.discMember, initials: a.initials, photo: a.photoUrl ? 'url("' + a.photoUrl + '") center/cover no-repeat' : FF.colorFor(a.name || 'ff'),
+          badges: a.badges.map(b => ({ label: b.label[g], fg: b.key === 'team' || b.key === 'ff' ? '#0E100F' : '#ABFF84', bg: b.key === 'team' || b.key === 'ff' ? '#ABFF84' : 'rgba(171,255,132,.12)' }))
+        } : { name: L.discRemoved, initials: '–', photo: '#1E1F1C', badges: [] };
+        const postView = (p, isReply) => {
+          const moreList = !isReply && st.discMore[p.id];
+          const replies = !isReply ? (moreList || p.replies || []) : [];
+          return {
+            id: p.id, a: author(p.author), body: p.removed ? L.discRemoved : p.body, bodyFg: p.removed ? '#8C8B7D' : '#E6E3C8',
+            ago: this.ago(p.createdAt),
+            pinned: p.pinned, official: p.official, hidden: p.hidden,
+            setLine: p.set ? p.set.artist + (p.heardAt ? ' · ' + p.heardAt : '') : (p.heardAt || ''),
+            hasSet: !!(p.set || p.heardAt),
+            helpful: p.helpfulCount ? String(p.helpfulCount) : '',
+            helpedFg: p.me && p.me.helped ? '#ABFF84' : '#A5A493',
+            helpedIcon: p.me && p.me.helped ? 'ph-fill ph-thumbs-up' : 'ph-bold ph-thumbs-up',
+            canAct: !p.removed,
+            op: p.hidden ? '.6' : '1',
+            boxBg: p.official ? 'rgba(171,255,132,.07)' : 'rgba(14,16,15,.5)', boxBd: p.official ? 'rgba(171,255,132,.32)' : '#1E1F1C',
+            reportable: !(p.me && p.me.mine) && !p.removed,
+            mine: !!(p.me && p.me.mine), mod: team && !p.removed,
+            pinLabel: p.pinned ? L.discUnpin : L.discPin, hideLabel: p.hidden ? L.discShow : L.discHide,
+            canPin: team && !isReply && !p.removed,
+            help: () => {
+              if (!st.user) return this.openAuth('signup', null, L.gateSave);
+              if (p.me && p.me.mine) return;
+              const on = !(p.me && p.me.helped);
+              FF.fire((on ? FF.put : FF.del)('/posts/' + p.id + '/helpful').then(() => this.loadDiscussion(e.id)), (err) => this.say(FF.errorText(err, g)));
+            },
+            report: () => {
+              if (!st.user) return this.openAuth('signup', null, L.gateSave);
+              FF.fire(FF.post('/posts/' + p.id + '/reports', { code: 'other' }).then(() => this.say(L.discReported)), (err) => this.say(FF.errorText(err, g)));
+            },
+            remove: () => FF.fire(FF.del('/posts/' + p.id).then(out => { this.say(FF.text(out.message, g)); this.loadDiscussion(e.id); }), (err) => this.say(FF.errorText(err, g))),
+            pin: () => FF.fire(FF.patch('/posts/' + p.id, { pinned: !p.pinned }).then(out => { this.say(FF.text(out.message, g)); this.loadDiscussion(e.id); }), (err) => this.say(FF.errorText(err, g))),
+            hide: () => FF.fire(FF.patch('/posts/' + p.id, { hidden: !p.hidden }).then(out => { this.say(FF.text(out.message, g)); this.loadDiscussion(e.id); }), (err) => this.say(FF.errorText(err, g))),
+            replyOpen: st.discReplyTo === p.id,
+            canReply: !isReply && !p.removed,
+            reply: () => {
+              if (!st.user) return this.openAuth('signup', null, L.discSignin);
+              this.setState({ discReplyTo: st.discReplyTo === p.id ? null : p.id, discReplyDraft:'' });
+            },
+            replies: replies.map(r => postView(r, true)),
+            hasMore: !isReply && !moreList && p.replyCount > (p.replies || []).length,
+            moreLabel: L.discMore.replace('{n}', String(p.replyCount - (p.replies || []).length)),
+            more: () => this.loadReplies(p.id)
+          };
+        };
+        const tabs = D ? D.kinds.map(k => ({
+          label: k.label[g] + (k.count ? ' · ' + k.count : ''),
+          bg: k.kind === D.kind ? 'rgba(171,255,132,.14)' : 'transparent', bd: k.kind === D.kind ? '#ABFF84' : 'rgba(255,252,225,.19)',
+          fg: k.kind === D.kind ? '#FFFCE1' : '#A5A493',
+          pick: () => { this.setState({ discKind: k.kind, discReplyTo:null }); this.loadDiscussion(e.id, { discKind: k.kind }); }
+        })) : [];
+        const open = D ? (D.kinds.find(k => k.kind === D.kind) || {}).open : false;
+        const gate = D ? D.me.canWrite : 'signin';
+        const T = TT[e.id];
+        const sets = [];
+        if (T) T.days.forEach(d => d.stages.forEach(sg => sg.s.forEach(x => sets.push({ id: x[3], label: x[0] + ' · ' + sg[g] }))));
+        const disc = {
+          tabs, items: D ? D.items.map(p => postView(p, false)) : [],
+          loading: !D, empty: !!D && D.items.length === 0,
+          sortTop: st.discSort === 'top',
+          sortTopFg: st.discSort === 'top' ? '#FFFCE1' : '#8C8B7D', sortNewFg: st.discSort === 'new' ? '#FFFCE1' : '#8C8B7D',
+          setTop: () => { this.setState({ discSort:'top' }); this.loadDiscussion(e.id, { discSort:'top' }); },
+          setNew: () => { this.setState({ discSort:'new' }); this.loadDiscussion(e.id, { discSort:'new' }); },
+          composer: open && gate === 'ok', closed: !!D && !open,
+          gateShow: open && gate !== 'ok', gateLabel: gate === 'verify_phone' ? L.discVerify : L.discSignin,
+          gateGo: () => gate === 'verify_phone' ? this.needPhone(null) : this.openAuth('signup', null, L.discSignin),
+          draft: st.discDraft, onDraft: (ev) => this.setState({ discDraft: ev.target.value }),
+          placeholder: L['discPh_' + (D ? D.kind : 'talk')],
+          trackid: !!D && D.kind === 'trackid' && sets.length > 0,
+          setChips: sets.map(x => ({
+            label: x.label, bg: st.discSet === x.id ? 'rgba(0,186,226,.16)' : 'transparent', bd: st.discSet === x.id ? '#00BAE2' : 'rgba(255,252,225,.19)',
+            fg: st.discSet === x.id ? '#FFFCE1' : '#A5A493', pick: () => this.setState({ discSet: st.discSet === x.id ? '' : x.id })
+          })),
+          heard: st.discHeard, onHeard: (ev) => this.setState({ discHeard: ev.target.value }),
+          send: () => this.postToDiscussion(null), sendOp: st.discDraft.trim() && !st.discBusy ? '1' : '.5',
+          replyDraft: st.discReplyDraft, onReplyDraft: (ev) => this.setState({ discReplyDraft: ev.target.value }),
+          sendReply: () => this.postToDiscussion(st.discReplyTo),
+          count: D ? String(D.total) : ''
+        };
+
+        const mine = det.mine || {};
+        return {
+          show: true,
+          community: (() => {
+            const C = det.community, claim = mine.claim;
+            return {
+              show: !!C, line: C ? (C.submittedBy && C.submittedBy.name ? L.communityBy.replace('{n}', C.submittedBy.name) : L.communityBySomeone) : '',
+              claimShow: !!(C && C.claimable) && !(claim && claim.pending), pending: !!(claim && claim.pending), claimLabel: L.claimCta,
+              claim: () => {
+                if (!st.user) return this.openAuth('signup', null, L.gateOrganizer);
+                if (!claim || !claim.organiser) { window.location.href = '/studio'; return; }
+                this.setState({ claimOpen:true });
+              }
+            };
+          })(),
+          hype: {
+            count: H.count.toLocaleString(vi1 ? 'vi-VN' : 'en-US'),
+            recent: H.last24h ? L.hype24.replace('{n}', String(H.last24h)) : '',
+            hasNext: !!H.next, nextReward: H.next ? (H.next.reward[g] || H.next.reward.vi) : '',
+            nextLeft: H.next ? L.hypeLeft.replace('{n}', H.next.left.toLocaleString(vi1 ? 'vi-VN' : 'en-US')) : '',
+            pct: H.next ? Math.round(H.next.progress * 100) + '%' : '100%',
+            goals, hasGoals: goals.length > 0,
+            on: hyped, label: hyped ? L.hypeDone : L.hypeCta,
+            bg: hyped ? 'rgba(171,255,132,.14)' : '#ABFF84', fg: hyped ? '#FFFCE1' : '#0E100F', bd: hyped ? '#ABFF84' : '#ABFF84',
+            icon: hyped ? 'ph-fill ph-fire' : 'ph-bold ph-fire',
+            toggle: () => this.toggleHype(e.id)
+          },
+          faq: (det.faq || []).map(f => ({ q: f.question, a: f.answer })),
+          hasFaq: (det.faq || []).length > 0,
+          resale, disc,
+          amb: (det.ambassadors || []).map((a, i) => ({ rank: String(i + 1), name: a.name, initials: a.initials, color: FF.colorFor(a.name + i), visits: L.ambVisits.replace('{n}', String(a.visits)) })),
+          hasAmb: (det.ambassadors || []).length > 0,
+          brought: mine.broughtVisits ? L.shareBrought.replace('{n}', String(mine.broughtVisits)) : '',
+          hasBrought: !!mine.broughtVisits
+        };
+      })(),
+
+      claimOpen: st.claimOpen,
+      claimF: {
+        note: st.claimNote, onNote: (ev) => this.setState({ claimNote: ev.target.value }),
+        proof: st.claimProof, onProof: (ev) => this.setState({ claimProof: ev.target.value }),
+        send: () => this.sendClaim(), label: st.claimBusy ? '…' : L.claimSend,
+        close: () => this.setState({ claimOpen:false })
+      },
+      shareOpen: st.shareOpen,
+      openShare: () => this.setState({ shareOpen:true }),
+      closeShare: () => this.setState({ shareOpen:false }),
+      shareTargets: [
+        { k:'zalo', label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8' },
+        { k:'facebook', label:'Facebook', icon:'ph-fill ph-facebook-logo', color:'#1877F2' },
+        { k:'threads', label:'Threads', icon:'ph-bold ph-threads-logo', color:'#FFFCE1' },
+        { k:'x', label:'X', icon:'ph-bold ph-x-logo', color:'#FFFCE1' },
+        { k:'telegram', label:'Telegram', icon:'ph-fill ph-telegram-logo', color:'#2AABEE' },
+        { k:'copy', label:L.shareCopy, icon:'ph-bold ph-link', color:'#ABFF84' },
+        { k:'native', label:L.shareMore, icon:'ph-bold ph-share-network', color:'#ABFF84' }
+      ].map(t => Object.assign({}, t, { go: () => { this.share(t.k); if (t.k !== 'copy') this.setState({ shareOpen:false }); } })),
+
+      submitOpen: st.submitOpen,
+      openSubmit: () => {
+        if (!st.user) return this.openAuth('signup', null, L.gateOrganizer);
+        this.setState({ submitOpen:true, submitTab:'new', submitErr:'' });
+        this.loadSubmissions();
+      },
+      closeSubmit: () => this.setState({ submitOpen:false }),
+      submitTabNew: st.submitTab === 'new', submitTabMine: st.submitTab === 'mine',
+      submitTabs: [{ k:'new', label:L.submitNew }, { k:'mine', label:L.submitMine + (st.submissions && st.submissions.length ? ' · ' + st.submissions.length : '') }].map(t => ({
+        label: t.label, bg: st.submitTab === t.k ? 'rgba(171,255,132,.14)' : 'transparent', bd: st.submitTab === t.k ? '#ABFF84' : 'rgba(255,252,225,.19)',
+        fg: st.submitTab === t.k ? '#FFFCE1' : '#A5A493', pick: () => this.setState({ submitTab: t.k })
+      })),
+      sf: (() => {
+        const f = st.submitForm, set = (k) => (ev) => this.setState({ submitForm: Object.assign({}, st.submitForm, { [k]: ev.target.value }), submitErr:'' });
+        return {
+          title: f.title || '', onTitle: set('title'), date: f.date || '', onDate: set('date'), start: f.start || '', onStart: set('start'),
+          end: f.end || '', onEnd: set('end'), venue: f.venue || '', onVenue: set('venue'), address: f.address || '', onAddress: set('address'),
+          area: f.area || '', onArea: set('area'), price: f.price || '', onPrice: set('price'), source: f.source || '', onSource: set('source'),
+          ticket: f.ticket || '', onTicket: set('ticket'), lineup: f.lineup || '', onLineup: set('lineup'), desc: f.desc || '', onDesc: set('desc'),
+          endDate: f.endDate || '', onEndDate: set('endDate'),
+          auto: f.auto || '', onAuto: (ev) => this.setState({ submitForm: Object.assign({}, st.submitForm, { auto: ev.target.value }), prefillErr:'' }), autoErr: st.prefillErr, hasAutoErr: !!st.prefillErr, autoGo: () => this.prefill(null), autoBusy: st.prefillBusy, autoLabel: st.prefillBusy ? '…' : L.fAutoGo,
+          onPoster: (ev) => { const file = ev.target.files && ev.target.files[0]; ev.target.value = ''; if (file) this.prefill(file); },
+          cities: CITY_LIST.map(c => ({
+            label: c[g], bg: (f.city || 'ho-chi-minh') === c.k ? 'rgba(171,255,132,.14)' : 'transparent', bd: (f.city || 'ho-chi-minh') === c.k ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: (f.city || 'ho-chi-minh') === c.k ? '#FFFCE1' : '#A5A493',
+            pick: () => this.setState({ submitForm: Object.assign({}, st.submitForm, { city: c.k }) })
+          })),
+          // Bound rather than written in the template, so the browser never parses "{{ }}" as a date.
+          tDate: 'date', tTime: 'time',
+          paid: f.entry === 'paid',
+          genres: GENRES.filter(x => x !== 'All').map(x => ({
+            label: x, bg: f.genre === x ? 'rgba(171,255,132,.14)' : 'transparent', bd: f.genre === x ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: f.genre === x ? '#FFFCE1' : '#A5A493',
+            pick: () => this.setState({ submitForm: Object.assign({}, st.submitForm, { genre: x }) })
+          })),
+          entries: [{ k:'paid', label:L.fPaid }, { k:'free', label:L.fFree }].map(x => ({
+            label: x.label, bg: f.entry === x.k ? 'rgba(171,255,132,.14)' : 'transparent', bd: f.entry === x.k ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: f.entry === x.k ? '#FFFCE1' : '#A5A493',
+            pick: () => this.setState({ submitForm: Object.assign({}, st.submitForm, { entry: x.k }) })
+          })),
+          err: st.submitErr, hasErr: !!st.submitErr,
+          send: () => this.sendSubmission(), sendLabel: st.submitBusy ? '…' : L.fSend,
+          mine: (st.submissions || []).map(x => ({
+            title: x.title, when: FF.dayLabel(x.startsOn, g) + (x.startTime ? ' · ' + x.startTime : '') + ' · ' + (x.venueName || ''),
+            status: x.statusLabel ? x.statusLabel[g] : x.status,
+            stFg: x.status === 'live' ? '#0E100F' : x.status === 'rejected' ? '#FF8709' : '#FFFCE1',
+            stBg: x.status === 'live' ? '#ABFF84' : x.status === 'rejected' ? 'rgba(255,135,9,.14)' : 'rgba(255,252,225,.1)',
+            reason: x.reason ? x.reason[g] : '', hasReason: !!x.reason,
+            open: () => { if (x.status === 'live') { this.setState({ submitOpen:false }); const ev = eventBy(x.slug); if (ev) this.openEvent(ev.id); else window.location.href = FF.href('e', x.slug); } }
+          })),
+          mineEmpty: !!st.submissions && st.submissions.length === 0
         };
       })(),
 

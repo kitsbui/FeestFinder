@@ -71,6 +71,44 @@ test.describe('Web', () => {
   });
 });
 
+test.describe('Event page community', () => {
+  test('the event page arrives as HTML with its facts, FAQ and structured data', async ({ request }) => {
+    const res = await request.get('/e/ravo');
+    expect(res.status()).toBe(200);
+    const html = await res.text();
+    // Both fronts: the API's shell and the Next.js page.
+    expect(html).toMatch(/<title>Ravolution Music Festival[^<]*<\/title>/);
+    expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+    const types = blocks.map((b) => b['@type']);
+    expect(types).toContain('MusicEvent');
+    expect(types).toContain('FAQPage');
+    expect(html).toMatch(/<main class="ff-ssr">[\s\S]*<h1>Ravolution Music Festival<\/h1>[\s\S]*Câu hỏi thường gặp/);
+    expect((await request.get('/e/no-such-event')).status()).toBe(404);
+  });
+
+  test('shows hype goals, resale, the discussion and the FAQ', async ({ page }) => {
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    const text = await page.locator('body').innerText();
+    expect(text).toMatch(/Asked & answered/i);
+    expect(text).toMatch(/Resale/);
+    expect(text).toMatch(/1,050,000₫/);
+    expect(text).toMatch(/Discussion/);
+    expect(text).toMatch(/Questions · 3/);
+    expect(text).toMatch(/Reveal the secret closing act/);
+    expect(text).toMatch(/Ambassadors/);
+  });
+
+  test('a signed-in attendee posts a question', async ({ page }) => {
+    await signIn(page, 'attendee');
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByPlaceholder('Ask the organiser and everyone…').fill('Có tủ gửi đồ cho balo không ạ?');
+    await page.getByText('Post', { exact: true }).click();
+    await expect(page.getByText('Có tủ gửi đồ cho balo không ạ?').first()).toBeVisible();
+    await expect(page.getByText('Questions · 4')).toBeVisible();
+  });
+});
+
 test.describe('App', () => {
   test('/app signed out opens on onboarding', async ({ page }) => expectScreen(page, '/app', /AROUND YOU/i));
 
@@ -87,6 +125,27 @@ test.describe('App', () => {
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
     }
+
+    test('each ticket can be given away or resold from the wallet', async ({ page }) => {
+      await expectScreen(page, '/app/tickets', /MY TICKETS/i);
+      await expect(page.getByText('Resell', { exact: true })).toHaveCount(2);
+      await page.getByText('Resell', { exact: true }).first().click();
+      await expect(page.getByText('Pass on this ticket')).toBeVisible();
+      await expect(page.getByText(/At most 1\.200\.000₫/)).toBeVisible();
+    });
+
+    test('the event sheet carries the FAQ and the discussion', async ({ page }) => {
+      await expectScreen(page, '/app/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+      await expect(page.getByText('Frequently asked')).toBeVisible();
+      await expect(page.getByText(/^Questions · \d+$/)).toBeVisible();
+    });
+
+    test('a resale ticket opens its own checkout', async ({ page }) => {
+      const listing = (await (await page.request.get('/events/rapviet/resale')).json()).items[0];
+      await page.goto(`/app/checkout/rapviet?listing=${listing.id}`);
+      await expect(page.getByText(/Resale ticket · General admission/)).toBeVisible();
+      await expect(page.getByText('682.500₫')).toBeVisible();
+    });
   });
 });
 
@@ -148,6 +207,7 @@ test.describe('Ops', () => {
     const routes: [string, RegExp][] = [
       ['/ops', /Việc cần làm/],
       ['/ops/review', /Duyệt tin đăng/],
+      ['/ops/claims', /Nhận quản lý sự kiện/],
       ['/ops/events', /Đặc điểm/],
       ['/ops/events/new', /Đăng ngay sau khi tạo/],
       ['/ops/reports', /Báo cáo người dùng/],

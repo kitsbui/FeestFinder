@@ -427,6 +427,7 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     [this._tt, this._pt, this._save, this._at, this._est].forEach(clearTimeout);
+    clearInterval(this._mf);
     if (this._net) { window.removeEventListener('online', this._net); window.removeEventListener('offline', this._net); }
   }
   _thread = React.createRef();
@@ -623,7 +624,21 @@ class Component extends DCLogic {
     if (!id || this._manifestFor === id) return this._manifest;
     const m = await FF.maybe(FF.get('/door/events/' + id + '/manifest'), null);
     if (m) { this._manifest = m; this._manifestFor = id; }
+    // Tickets keep changing hands up to the last minute: pick up what changed every 20 seconds.
+    clearInterval(this._mf);
+    this._mf = setInterval(() => this.refreshManifest(), 20000);
     return this._manifest;
+  }
+  /** Only what changed since the last download: a ticket passed on, scanned or refunded. */
+  async refreshManifest() {
+    const m = this._manifest;
+    if (!m || this.state.offline || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    const d = await FF.maybe(FF.get('/door/events/' + m.event.id + '/manifest?since=' + (m.cursor || 0)), null);
+    if (!d || this._manifest !== m) return;
+    const byCode = {};
+    m.tickets.forEach((t, i) => { byCode[t.code] = i; });
+    d.tickets.forEach(t => { if (t.code in byCode) m.tickets[byCode[t.code]] = t; else m.tickets.push(t); });
+    m.cursor = d.cursor;
   }
 
   /** Check in what the reader typed into the box: a QR token, or the code printed on the ticket. */
@@ -659,20 +674,34 @@ class Component extends DCLogic {
   async queueScan(token) {
     const at = FF.now().toISOString();
     const dot = token.lastIndexOf('.');
-    const code = dot > 0 ? token.slice(0, dot) : token, sig = dot > 0 ? token.slice(dot + 1) : null;
+    // A ticket that changed hands carries its version: "<code>~<v>.<sig>", signed over "<code>~<v>".
+    const payload = dot > 0 ? token.slice(0, dot) : token, sig = dot > 0 ? token.slice(dot + 1) : null;
+    const tilde = payload.lastIndexOf('~');
+    const version = tilde > 0 && /^\d+$/.test(payload.slice(tilde + 1)) ? +payload.slice(tilde + 1) : 0;
+    const code = version ? payload.slice(0, tilde) : payload;
     const m = this._manifest;
-    const next = m ? m.tickets.find(t => t.code === code) : null;
-    const forged = !!(sig && m && (await FF.hmac22(m.scanKey, code)) !== sig);
+    let next = m ? m.tickets.find(t => t.code === code) : null;
+    const forged = !!(sig && m && (await FF.hmac22(m.scanKey, payload)) !== sig);
+    // A genuine QR newer than this device's list: the ticket moved after the last download.
+    // Trust the signature and remember the version, so the older QR is turned away from now on.
+    if (!forged && sig && m && (!next || version > (next.v || 0))) {
+      if (!next) { next = { code, status:'valid', tier:null, name:'', v: version }; m.tickets.push(next); }
+      else next.v = version;
+    }
     const local = !next || forged
       ? { result:'invalid', message:{ en:'Rejected', vi:'Từ chối' }, detail:{ en:'Not a ticket for this event', vi:'Không phải vé của sự kiện này' } }
+      : sig && version < (next.v || 0)
+      ? { result:'invalid', message:{ en:'Rejected', vi:'Từ chối' }, detail:{ en:'This QR was replaced when the ticket changed hands', vi:'Vé đã chuyển nhượng, QR này hết hiệu lực' } }
       : next.status === 'refunded' || next.status === 'void'
       ? { result:'invalid', message:{ en:'Rejected', vi:'Từ chối' }, detail:{ en:'Refunded ticket — do not admit', vi:'Vé đã hoàn tiền — không cho vào' } }
-      : next.status === 'used' || this._seen && this._seen[code]
+      // Already let in on this device — unless this QR is newer than the one that was: the ticket
+      // changed hands after the old QR got in, and the new holder is the one to admit.
+      : next.status === 'used' || this._seen && code in this._seen && this._seen[code] >= version
         ? { result:'duplicate', message:{ en:'Already used — call a gate lead', vi:'Vé đã dùng — gọi trưởng cửa' }, detail:{ en:'Already scanned on this device', vi:'Đã quét trên máy này' } }
         : { result:'valid', message:{ en:'Valid — let them in', vi:'Hợp lệ — mời vào' },
             detail:{ en:(next.tier || 'GA') + ' · saved offline, will sync', vi:(next.tier || 'GA') + ' · lưu offline, chờ đồng bộ' } };
     this._seen = this._seen || {};
-    this._seen[code] = true;
+    if (local.result === 'valid') this._seen[code] = version;
     const clientScanId = 'q' + Date.now();
     this._queue = (this._queue || []).concat([{ token, clientScanId, scannedAt: at, manual: !sig }]);
     const row = Object.assign({ holder: next ? { name: next.name, tier: next.tier } : null, name: next ? next.name : '—', tier: next ? next.tier : null, time: FF.hhmm(at), queued:true }, local);

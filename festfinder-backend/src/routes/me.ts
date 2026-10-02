@@ -14,6 +14,7 @@ import { loadPrefs } from '../services/notify.ts';
 import { deliverDue } from '../services/messaging.ts';
 import { inBackground } from '../lib/background.ts';
 import { checkOtp, identifierFor, publicUser, startOtp } from './auth.ts';
+import { hypeGoalsReached } from '../services/community.ts';
 
 const INTERESTS = ['EDM', 'Pop', 'Indie', 'Hip-Hop', 'Jazz', 'Theatre', 'Art', 'Food', 'Markets', 'Nightlife', 'Culture'] as const;
 
@@ -82,6 +83,8 @@ export default async function meRoutes(app: FastifyInstance) {
         throw badRequest('login_phone_locked', L('This is the number you sign in with', 'Đây là số bạn dùng để đăng nhập'));
       }
       patch.phone = phone;
+      // A number typed in here is unproven until a code confirms it (Settings → connect Zalo).
+      if (phone !== current.phone) patch.phone_verified_at = null;
     }
     const keys = Object.keys(patch);
     if (keys.length) {
@@ -127,6 +130,7 @@ export default async function meRoutes(app: FastifyInstance) {
         if (!ev) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
         const ins = await one(q, `insert into ${t.table} (user_id, event_id, created_at) values ($1,$2,$3) on conflict do nothing returning 1`, [s.user.id, eventId, ctx.clock.now()]);
         if (ins && t.counter) await q.query(`update events set ${t.counter} = ${t.counter} + 1 where id = $1`, [eventId]);
+        if (ins && t.path === 'hypes') await hypeGoalsReached(q, eventId, ctx.clock.now());
         return !!ins;
       });
       const extra = t.path === 'going'
@@ -419,11 +423,25 @@ export default async function meRoutes(app: FastifyInstance) {
     if (holder && holder.user_id !== s.user.id) {
       throw conflict('connection_taken', L('That number is already linked to another FeestFinder user', 'Số này đã liên kết với người dùng khác'));
     }
-    await ctx.db.query(
-      `insert into social_connections (user_id, provider, external_id) values ($1,$2,$3)
-       on conflict (user_id, provider) do update set external_id = excluded.external_id, connected_at = now()`,
-      [s.user.id, provider, ch.identifier]);
-    return { connected: provider, message: L(`Connected · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`, `Đã liên kết · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`) };
+    const verified = await ctx.db.tx(async (q) => {
+      await q.query(
+        `insert into social_connections (user_id, provider, external_id) values ($1,$2,$3)
+         on conflict (user_id, provider) do update set external_id = excluded.external_id, connected_at = now()`,
+        [s.user.id, provider, ch.identifier]);
+      // The code proved this number, so it becomes the account's number unless the account
+      // already has another proven one. Whoever had only typed it in loses it.
+      const me = await one<any>(q, 'select phone, phone_verified_at from users where id = $1', [s.user.id]);
+      if (me.phone_verified_at && me.phone !== ch.identifier) return true;
+      const holder = await one<any>(q, 'select id, phone_verified_at from users where phone = $1 and id <> $2', [ch.identifier, s.user.id]);
+      if (holder?.phone_verified_at) return false;
+      if (holder) await q.query('update users set phone = null where id = $1', [holder.id]);
+      await q.query('update users set phone = $2, phone_verified_at = $3 where id = $1', [s.user.id, ch.identifier, ctx.clock.now()]);
+      return true;
+    });
+    return {
+      connected: provider, phoneVerified: verified,
+      message: L(`Connected · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`, `Đã liên kết · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`),
+    };
   });
 
   app.delete<{ Params: { provider: string } }>('/me/connections/:provider', async (req) => {

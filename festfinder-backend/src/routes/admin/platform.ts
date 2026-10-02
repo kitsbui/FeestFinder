@@ -26,6 +26,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
               (select count(*)::int from organizers where verification_state <> 'verified') as verification,
               (select count(distinct event_id)::int from listing_reports where resolved_at is null) as reports,
               (select count(*)::int from ad_inquiries where status = 'new') as ads,
+              (select count(*)::int from event_claims where status = 'pending') as claims,
               (select count(*)::int from appeals where state in ('open','replied') and closes_at > $1) as appeals`, [ctx.clock.now()]);
     return r;
   });

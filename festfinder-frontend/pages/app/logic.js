@@ -437,6 +437,27 @@ const S = {
   ticketValid:{en:'Valid',vi:'Còn hiệu lực'}, ticketUsed:{en:'Checked in',vi:'Đã check-in'},
   checkIn:{en:'Check in',vi:'Check-in'},
   ticketCode:{en:'Ticket code',vi:'Mã vé'},
+  xGift:{en:'Give',vi:'Tặng vé'}, xSell:{en:'Resell',vi:'Pass vé'}, xUnlist:{en:'Take down',vi:'Gỡ'},
+  xReceived:{en:'Passed to you',vi:'Được chuyển cho bạn'}, xListed:{en:'Up for resale · {p}',vi:'Đang pass · {p}'},
+  xGiftTitle:{en:'Give this ticket',vi:'Tặng vé này'}, xSellTitle:{en:'Pass on this ticket',vi:'Pass vé này'},
+  xPhone:{en:'Their phone number',vi:'Số điện thoại người nhận'}, xPrice:{en:'Price (₫)',vi:'Giá (₫)'},
+  xCap:{en:'At most {p}',vi:'Tối đa {p}'},
+  xBank:{en:'Bank for the money',vi:'Ngân hàng nhận tiền'}, xAccount:{en:'Account number',vi:'Số tài khoản'}, xAccountName:{en:'Account name',vi:'Tên chủ tài khoản'},
+  xSendGift:{en:'Send the ticket',vi:'Gửi vé'}, xSendSell:{en:'List it',vi:'Đăng pass'},
+  xPayee:{en:'Paid to {b} after the event',vi:'Tiền về {b} sau sự kiện'},
+  resoldTitle:{en:'Resold',vi:'Vé đã pass'}, resoldDue:{en:'Paid out from {d}',vi:'Tiền về từ {d}'}, resoldPaid:{en:'Paid out',vi:'Đã chuyển tiền'},
+  rsTitle:{en:'Resale',vi:'Pass vé'}, rsCap:{en:'At most face value',vi:'Không quá giá gốc'}, rsNone:{en:'None right now',vi:'Chưa có vé pass'},
+  rsWatch:{en:'Tell me',vi:'Báo tôi'}, rsWatching:{en:'Alert on',vi:'Đang chờ báo'}, rsBuy:{en:'Buy',vi:'Mua'},
+  coResale:{en:'Resale ticket',vi:'Vé pass'},
+  discOpen:{en:'Discussion',vi:'Thảo luận'}, faqTitle:{en:'Frequently asked',vi:'Câu hỏi thường gặp'},
+  discPh_qa:{en:'Ask the organiser and everyone…',vi:'Hỏi BTC và mọi người…'}, discPh_talk:{en:'Say something…',vi:'Nói gì đó…'},
+  discPh_crew:{en:'Where from, what time?',vi:'Bạn đi từ đâu, mấy giờ?'}, discPh_trackid:{en:'Describe the track…',vi:'Tả đoạn nhạc…'},
+  discPh_memory:{en:'How was the night?',vi:'Đêm đó thế nào?'},
+  discPost:{en:'Post',vi:'Đăng'}, discReply:{en:'Reply',vi:'Trả lời'}, discReplyTo:{en:'Replying to {n}',vi:'Trả lời {n}'},
+  discEmpty:{en:'Nothing here yet',vi:'Chưa có bài nào'}, discMember:{en:'FeestFinder member',vi:'Thành viên FeestFinder'},
+  discRemoved:{en:'Deleted',vi:'Đã xoá'}, discSignin:{en:'Log in to join the discussion',vi:'Đăng nhập để tham gia thảo luận'},
+  discAll:{en:'See all on the event page',vi:'Xem tất cả trên trang sự kiện'},
+  ago0:{en:'just now',vi:'vừa xong'}, agoM:{en:'{n}m',vi:'{n} phút'}, agoH:{en:'{n}h',vi:'{n} giờ'}, agoD:{en:'{n}d',vi:'{n} ngày'},
   checkoutTitle:{en:'Confirm your order',vi:'Xác nhận đơn hàng'},
   qtyLabel:{en:'Tickets',vi:'Số lượng vé'},
   totalLabel:{en:'Total',vi:'Tổng cộng'},
@@ -594,7 +615,9 @@ class Component extends DCLogic {
     notifOpen:false, notifRead:{}, notifs: APP.notifs || [],
     auth:null, authMode:'signup', authMethod:'email', authId:'', authOtp:'', authPass:'', authPass2:'',
     authErr:'', authNote:'', authNext:null, authShowPass:false, authBusy:false, authChallenge:null, authSignupToken:null,
-    liveData:null, detailData:null
+    liveData:null, detailData:null, dsc:null, dscKind:null, dscDraft:'', dscBusy:false, dscReplyTo:null, faqOpen:{},
+    // Tickets changing hands: the sheet on a wallet card, what was resold, and buying a resale ticket.
+    xfer:null, resold:[], payee:null, coListing:null, detailResale:null
   }, routeState(FF.route));
 
   /** Everything this screen needs after signing in or out. */
@@ -654,9 +677,14 @@ class Component extends DCLogic {
     if (!r) return;
     if (r.name === 'e' || r.name === 'guide' || r.name === 'checkout') {
       const ev = eventBy(r.param);
+      // Read before anything awaits: the URL is rewritten to the screen's own path meanwhile.
+      const listing = r.query && r.query.get('listing');
       if (ev) await this.openDetail(ev.id, { silent: true });
       if (r.name === 'guide' && ev) this.loadGuide(ev);
-      if (r.name === 'checkout' && ev) this.startCheckout(ev.id);
+      if (r.name === 'checkout' && ev) {
+        if (listing) this.startResaleCheckout(listing, ev.id);
+        else this.startCheckout(ev.id);
+      }
     }
     if (r.name === 'live') { const ev = eventBy(r.param); if (ev) await this.openLive(ev.id); }
     if (r.name === 'recap') { const ev = eventBy(r.param); if (ev) await this.openRecap(ev.id); }
@@ -984,6 +1012,9 @@ class Component extends DCLogic {
     }
     await this.reloadApp();
     this.say(L.connectedToast + ' · ' + SRC[c.src].label);
+    const after = this._afterPhone;
+    this._afterPhone = null;
+    if (after) after();
   }
 
   async connectSocial(src) {
@@ -1033,6 +1064,55 @@ class Component extends DCLogic {
       this.setState({ recap: r, recapStars: r.submitted ? r.submitted.stars : 0 });
     }
   }
+  /** Buying a ticket someone is passing on: the checkout sheet prices that listing instead. */
+  async startResaleCheckout(listingId, eventId) {
+    if (!this.state.user) return this.openAuth('signup', null, this.L().authGateBody);
+    try {
+      const quote = await FF.post('/resale/' + listingId + '/quote');
+      this.setState({ checkout: eventId, detail: eventId, coListing: Object.assign({ id: listingId }, quote), quote:null });
+    } catch (e) { this.fail(e); }
+  }
+  async loadDetailResale(id) {
+    const r = await FF.maybe(FF.get('/events/' + id + '/resale'), null);
+    if (r && this.state.detail === id) this.setState({ detailResale: r });
+  }
+  /** Give a ticket away or put it up for resale, from its wallet card. */
+  async sendXfer() {
+    const st = this.state, L = this.L(), x = st.xfer;
+    if (!x || x.busy) return;
+    const fresh = Object.assign({}, x, { busy:true, err:'' });
+    this.setState({ xfer: fresh });
+    try {
+      let out;
+      if (x.mode === 'gift') {
+        out = await FF.post('/me/tickets/' + x.ticketId + '/transfer', { phone: (x.phone || '').trim() });
+      } else {
+        const body = { price: parseInt(String(x.price || '').replace(/\D/g, ''), 10) || 0 };
+        if (!st.payee) body.payee = { bankBin: x.bankBin || '970436', accountNo: (x.accountNo || '').trim(), accountName: (x.accountName || '').trim() };
+        out = await FF.post('/me/tickets/' + x.ticketId + '/listing', body);
+      }
+      this.setState({ xfer:null });
+      this.say(FF.text(out.message, st.lang));
+      FF.forget('tickets');
+      await FF.appTickets(this);
+    } catch (e) {
+      if (e && e.code === 'phone_unverified') {
+        this.setState({ xfer: Object.assign({}, x, { busy:false }) });
+        this._afterPhone = () => this.sendXfer();
+        return this.startConnect('zalo');
+      }
+      this.setState({ xfer: Object.assign({}, x, { busy:false, err: FF.errorText(e, st.lang) }) });
+    }
+  }
+  async unlist(ticketId) {
+    try {
+      const out = await FF.del('/me/tickets/' + ticketId + '/listing');
+      this.say(FF.text(out.message, this.state.lang));
+      FF.forget('tickets');
+      await FF.appTickets(this);
+    } catch (e) { this.fail(e); }
+  }
+
   /** Open the checkout sheet for an event, pricing the cheapest tier on sale. */
   async startCheckout(id) {
     if (!this.state.detailData || this.state.detailData.id !== id) {
@@ -1187,8 +1267,43 @@ class Component extends DCLogic {
     return list;
   }
 
+  ago(ts) {
+    const L = this.L(), m = Math.max(0, Math.round((FF.now().getTime() - new Date(ts).getTime()) / 60000));
+    if (m < 1) return L.ago0;
+    if (m < 60) return L.agoM.replace('{n}', String(m));
+    if (m < 60 * 24) return L.agoH.replace('{n}', String(Math.round(m / 60)));
+    return L.agoD.replace('{n}', String(Math.round(m / 1440)));
+  }
+  /** One tab of the event's discussion, inside the detail sheet. */
+  loadDsc(id, kind) {
+    const key = id + '|' + (kind || '');
+    this._dscKey = key;
+    FF.get('/events/' + id + '/discussion?sort=top' + (kind ? '&kind=' + kind : '')).then(d => {
+      if (this._dscKey === key) this.setState({ dsc: d, dscKind: d.kind });
+    }, e => console.warn('[ff] discussion', e));
+  }
+  async postDsc() {
+    const st = this.state, L = this.L(), id = st.detail, body = st.dscDraft.trim();
+    if (!id || !body || st.dscBusy) return;
+    if (!st.user) return this.openAuth('signup', null, L.discSignin);
+    this.setState({ dscBusy:true });
+    try {
+      const payload = st.dscReplyTo ? { parentId: st.dscReplyTo.id, body } : { kind: st.dscKind, body };
+      const out = await FF.post('/events/' + id + '/posts', payload);
+      this.setState({ dscBusy:false, dscDraft:'', dscReplyTo:null });
+      this.say(FF.text(out.message, st.lang) || L.discPost);
+      this.loadDsc(id, st.dscKind);
+    } catch (e) {
+      this.setState({ dscBusy:false });
+      if (e && e.code === 'phone_unverified') { this._afterPhone = () => this.postDsc(); return this.startConnect('zalo'); }
+      this.fail(e);
+    }
+  }
+
   async openDetail(id, opts) {
-    this.setState({ detail: id, detailData: null });
+    this.setState({ detail: id, detailData: null, detailResale: null, dsc:null, dscKind:null, dscDraft:'', dscReplyTo:null, faqOpen:{} });
+    this.loadDsc(id, null);
+    this.loadDetailResale(id);
     if (!(opts && opts.silent)) {
       FF.fire(FF.post('/events/' + id + '/track', { type: 'view', source: this.state.tab === 'list' ? 'list' : this.state.q ? 'search' : 'feed' }));
     }
@@ -2301,6 +2416,12 @@ class Component extends DCLogic {
               if (s.bestieArmed === t.eventId && !s.liveOpen && !s.recapOpen) this.setState({ bestieSplash: t.eventId, ticketsOpen:false });
             }, 6500);
           },
+          receivedShow: !!t.received,
+          listed: !!t.listing, listingLine: t.listing ? L.xListed.replace('{p}', this.money(t.listing.price)) : '',
+          canMove: !!t.transferable && !t.listing && !t.checked,
+          gift: () => this.setState({ xfer: { ticketId: t.ticketId, mode:'gift', phone:'', err:'' } }),
+          sell: () => this.setState({ xfer: { ticketId: t.ticketId, mode:'sell', price: String(t.faceValue || ''), face: t.faceValue, err:'', bankBin:'970436' } }),
+          unlist: () => this.unlist(t.ticketId),
           liveShow: !!t.checked,
           openLive: () => { clearTimeout(this._bt); this.openLive(t.eventId); },
           openRecap: () => { clearTimeout(this._bt); this.openRecap(t.eventId); },
@@ -2310,25 +2431,109 @@ class Component extends DCLogic {
         };
       }),
 
+      xferOpen: !!st.xfer,
+      xferGift: !!st.xfer && st.xfer.mode === 'gift', xferSell: !!st.xfer && st.xfer.mode === 'sell',
+      xferTitle: st.xfer ? (st.xfer.mode === 'gift' ? L.xGiftTitle : L.xSellTitle) : '',
+      xferPhone: st.xfer ? st.xfer.phone || '' : '', onXferPhone: (e) => this.setState({ xfer: Object.assign({}, st.xfer, { phone: e.target.value, err:'' }) }),
+      xferPrice: st.xfer ? st.xfer.price || '' : '', onXferPrice: (e) => this.setState({ xfer: Object.assign({}, st.xfer, { price: e.target.value, err:'' }) }),
+      xferCap: st.xfer && st.xfer.face ? L.xCap.replace('{p}', this.money(st.xfer.face)) : '',
+      xferNeedsBank: !!st.xfer && st.xfer.mode === 'sell' && !st.payee,
+      xferPayee: st.payee ? L.xPayee.replace('{b}', (st.payee.bankName || '') + ' ' + st.payee.accountMasked) : '',
+      xferHasPayee: !!st.payee && !!st.xfer && st.xfer.mode === 'sell',
+      xferBanks: [['970436','Vietcombank'],['970407','Techcombank'],['970422','MB Bank'],['970415','VietinBank'],['970418','BIDV'],['970416','ACB'],['970432','VPBank'],['970423','TPBank']].map(b => {
+        const on = st.xfer && (st.xfer.bankBin || '970436') === b[0];
+        return { label: b[1], bg: on ? 'rgba(171,255,132,.14)' : 'transparent', bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: on ? '#FFFCE1' : '#A5A493',
+          pick: () => this.setState({ xfer: Object.assign({}, st.xfer, { bankBin: b[0] }) }) };
+      }),
+      xferAccount: st.xfer ? st.xfer.accountNo || '' : '', onXferAccount: (e) => this.setState({ xfer: Object.assign({}, st.xfer, { accountNo: e.target.value, err:'' }) }),
+      xferAccountName: st.xfer ? st.xfer.accountName || '' : '', onXferAccountName: (e) => this.setState({ xfer: Object.assign({}, st.xfer, { accountName: e.target.value, err:'' }) }),
+      xferErr: st.xfer ? st.xfer.err || '' : '', xferHasErr: !!(st.xfer && st.xfer.err),
+      xferCta: st.xfer ? (st.xfer.busy ? '…' : st.xfer.mode === 'gift' ? L.xSendGift : L.xSendSell) : '',
+      sendXfer: () => this.sendXfer(),
+      closeXfer: () => this.setState({ xfer:null }),
+      resoldShow: (st.resold || []).length > 0,
+      resoldList: (st.resold || []).map(r => ({
+        title: r.event.title, price: this.money(r.price),
+        when: r.paidOutAt ? L.resoldPaid : L.resoldDue.replace('{d}', FF.dayLabel(FF.vnDate(new Date(r.payoutDueAt)), g)),
+        fg: r.paidOutAt ? '#ABFF84' : '#A5A493'
+      })),
+      rs: (() => {
+        const R = st.detailResale, d = detail;
+        if (!R || !d || !(R.enabled || R.count)) return { show:false, items:[] };
+        return {
+          show: true, empty: R.count === 0,
+          items: R.items.map(it => ({
+            price: this.money(it.price), tier: it.tier ? it.tier[g] : 'GA', seller: it.seller.name, mine: it.mine,
+            buy: () => it.mine ? this.say(L.rsCap) : this.startResaleCheckout(it.id, d.id)
+          })),
+          watchLabel: R.watching ? L.rsWatching : L.rsWatch, watchIcon: R.watching ? 'ph-fill ph-bell-ringing' : 'ph-bold ph-bell',
+          watch: async () => {
+            if (!st.user) return this.openAuth('signup', null, L.gateSave);
+            try { const out = await (R.watching ? FF.del : FF.put)('/events/' + d.id + '/resale/watch'); this.say(FF.text(out.message, g)); this.loadDetailResale(d.id); } catch (e) { this.fail(e); }
+          }
+        };
+      })(),
+      openDiscussion: () => { if (detail) window.location.href = '/e/' + encodeURIComponent(slugOf(detail.id)) + '#thao-luan'; },
+      dd: (() => {
+        const d = st.detailData, D = st.dsc;
+        if (!detail || !d) return { faq: [], hasFaq:false, show:false, tabs: [], items: [] };
+        const author = (a) => a ? { name: a.name || L.discMember, initials: a.initials, color: a.photoUrl ? 'url("' + a.photoUrl + '") center/cover no-repeat' : FF.colorFor(a.name || 'ff'),
+          badges: (a.badges || []).map(b => ({ label: b.label[g], fg: b.key === 'team' || b.key === 'ff' ? '#0E100F' : '#ABFF84', bg: b.key === 'team' || b.key === 'ff' ? '#ABFF84' : 'rgba(171,255,132,.12)' })) }
+          : { name: L.discRemoved, initials: '–', color: '#1E1F1C', badges: [] };
+        const post = (p, isReply) => Object.assign(author(p.author), {
+          body: p.removed ? L.discRemoved : p.body, bodyFg: p.removed ? '#8C8B7D' : '#E6E3C8', ago: this.ago(p.createdAt),
+          official: !!p.official,
+          helpful: p.helpfulCount ? String(p.helpfulCount) : '', helpFg: p.me && p.me.helped ? '#ABFF84' : '#8C8B7D', helpIcon: p.me && p.me.helped ? 'ph-fill ph-thumbs-up' : 'ph-bold ph-thumbs-up',
+          help: () => {
+            if (!st.user) return this.openAuth('signup', null, L.discSignin);
+            if (p.me && p.me.mine) return;
+            FF.fire(((p.me && p.me.helped) ? FF.del : FF.put)('/posts/' + p.id + '/helpful').then(() => this.loadDsc(detail.id, st.dscKind)), (e) => this.fail(e));
+          },
+          canReply: !isReply && !p.removed && !!D && D.me.canWrite !== false,
+          reply: () => { if (!st.user) return this.openAuth('signup', null, L.discSignin); this.setState({ dscReplyTo: { id: p.id, name: (p.author && p.author.name) || L.discMember } }); },
+          replies: isReply ? [] : (p.replies || []).slice(0, 3).map(r => post(r, true))
+        });
+        const tab = D && D.kinds.find(k => k.kind === D.kind);
+        return {
+          faq: (d.faq || []).map((f, i) => ({ q: f.question, a: f.answer, open: !!st.faqOpen[i], icon: st.faqOpen[i] ? 'ph-bold ph-minus' : 'ph-bold ph-plus',
+            toggle: () => { const o = Object.assign({}, st.faqOpen); o[i] = !o[i]; this.setState({ faqOpen: o }); } })),
+          hasFaq: (d.faq || []).length > 0,
+          show: !!D, count: D ? String(D.total) : '',
+          tabs: D ? D.kinds.map(k => ({ label: k.label[g] + (k.count ? ' · ' + k.count : ''), bg: D.kind === k.kind ? 'rgba(171,255,132,.14)' : 'transparent', bd: D.kind === k.kind ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: D.kind === k.kind ? '#FFFCE1' : '#A5A493',
+            pick: () => { this.setState({ dscKind: k.kind, dscReplyTo:null }); this.loadDsc(detail.id, k.kind); } })) : [],
+          items: D ? D.items.map(p => post(p, false)) : [],
+          empty: !!D && D.items.length === 0,
+          composer: !!tab && tab.open,
+          draft: st.dscDraft, onDraft: (ev) => this.setState({ dscDraft: ev.target.value }),
+          placeholder: st.dscReplyTo ? L.discReplyTo.replace('{n}', st.dscReplyTo.name) : L['discPh_' + (D ? D.kind : 'talk')] || '',
+          replying: !!st.dscReplyTo, replyLine: st.dscReplyTo ? L.discReplyTo.replace('{n}', st.dscReplyTo.name) : '', cancelReply: () => this.setState({ dscReplyTo:null }),
+          send: () => this.postDsc(), sendOp: st.dscDraft.trim() && !st.dscBusy ? '1' : '.5', sendLabel: st.dscBusy ? '…' : L.discPost
+        };
+      })(),
+
       checkoutOpen: !!st.checkout,
-      closeCheckout: () => this.setState({ checkout:null, qty:1 }),
+      closeCheckout: () => this.setState({ checkout:null, coListing:null, qty:1 }),
       coTitle: coEv ? coEv.title : '', coArt: coEv ? coEv.art : 'linear-gradient(135deg,#ABFF84,#0AE448)',
       coWhen: coEv ? this.fmtWhen(coEv) + ' · ' + this.fmtTime(coEv) : '',
       coVenue: coEv ? coEv.venue : '',
-      coQty: String(st.qty),
-      coUnit: st.quote ? this.money(st.quote.unitPrice) : (coEv ? this.money(coEv.price) : ''),
-      coFee: st.quote ? this.money(st.quote.fee) : (coEv ? this.money(Math.round(coEv.price * st.qty * 0.05)) : ''),
-      coTotal: st.quote ? this.money(st.quote.total) : (coEv ? this.money(Math.round(coEv.price * st.qty * 1.05)) : ''),
+      coQty: String(st.coListing ? 1 : st.qty),
+      coIsResale: !!st.coListing, coNotResale: !st.coListing,
+      coResaleLine: st.coListing ? L.coResale + ' · ' + (st.coListing.tier ? st.coListing.tier[g] : 'GA') : '',
+      coUnit: st.coListing ? this.money(st.coListing.price) : st.quote ? this.money(st.quote.unitPrice) : (coEv ? this.money(coEv.price) : ''),
+      coFee: st.coListing ? this.money(st.coListing.fee) : st.quote ? this.money(st.quote.fee) : (coEv ? this.money(Math.round(coEv.price * st.qty * 0.05)) : ''),
+      coTotal: st.coListing ? this.money(st.coListing.total) : st.quote ? this.money(st.quote.total) : (coEv ? this.money(Math.round(coEv.price * st.qty * 1.05)) : ''),
       qtyMinus: () => { const q = Math.max(1, st.qty - 1); this.setState({ qty:q }); this.quoteSoon(q); },
       qtyPlus: () => { const q = Math.min(6, st.qty + 1); this.setState({ qty:q }); this.quoteSoon(q); },
       confirmCheckout: async () => {
-        if (!coEv || !st.tierId) return;
+        if (!coEv || (!st.tierId && !st.coListing)) return;
         try {
-          const out = await FF.post('/orders', { eventId: coEv.id, tierId: st.tierId, qty: st.qty, paymentMethod: 'vietqr' });
+          const out = st.coListing
+            ? await FF.post('/resale/' + st.coListing.id + '/orders', { paymentMethod: 'vietqr' })
+            : await FF.post('/orders', { eventId: coEv.id, tierId: st.tierId, qty: st.qty, paymentMethod: 'vietqr' });
           const tickets = await FF.get('/me/tickets');
           this.setState({
-            tickets: tickets.items.map(FF.appTicket),
-            checkout:null, qty:1, quote:null, ticketsOpen:true, detail:null
+            tickets: FF.appTicketsFrom(tickets), resold: tickets.resold || [], payee: tickets.payee || null,
+            checkout:null, coListing:null, qty:1, quote:null, ticketsOpen:true, detail:null
           });
           await this.flag('going', coEv.id, true);
           this.say(FF.text(out.message, g) || L.ticketDone);

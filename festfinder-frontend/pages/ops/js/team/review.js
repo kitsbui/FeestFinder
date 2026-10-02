@@ -105,6 +105,9 @@ function ReviewPanel({ id, onDecided, onReject }) {
           h('a', { href: href('organizers', ev.organizer.id), onClick: (e) => { e.preventDefault(); navigate(href('organizers', ev.organizer.id)); } }, ev.organizer.name),
           ev.organizer.verified ? h(Pill, { tone: 'ok', icon: 'seal-check' }, t('Đã xác minh', 'Verified')) : ev.organizer.state === 'flagged' ? h(Pill, { tone: 'danger', icon: 'flag' }, t('NTC bị gắn cờ', 'Flagged organizer')) : h(Pill, { tone: 'warn', icon: 'seal-warning' }, t('Chưa xác minh', 'Unverified')),
           ev.organizer.strikes ? h(Pill, { tone: 'danger' }, t(`${ev.organizer.strikes} cảnh cáo`, `${ev.organizer.strikes} strike${ev.organizer.strikes > 1 ? 's' : ''}`)) : null,
+          // Sent in by someone in the community: who, how many of theirs went live, and where they saw it.
+          ev.submittedBy ? h(Pill, { tone: 'info', icon: 'users-three' }, t(`Cộng đồng gửi · ${ev.submittedBy.name || ev.submittedBy.phone || '—'} · ${ev.submittedBy.published} tin đã duyệt`, `Community · ${ev.submittedBy.name || ev.submittedBy.phone || '—'} · ${ev.submittedBy.published} approved`)) : null,
+          ev.sourceUrl ? h(External, { href: ev.sourceUrl }, t('Nguồn', 'Source')) : null,
           h('span', { className: 'op-rv-sub' }, t(`gửi ${ago(ev.submittedAt)}`, `submitted ${ago(ev.submittedAt)}`))),
         h('div', { className: 'op-rv-tools' },
           h(Button, { size: 'sm', icon: 'eye', href: ev.publicUrl, target: '_blank' }, t('Xem trang', 'Preview')),
@@ -273,7 +276,7 @@ export function Review({ rest }) {
         h(Thumb, { src: i.coverUrl, art: i.art, title: i.title, w: 64 }),
         h('div', { className: 'op-qitem-text' },
           h('div', { className: 'op-qitem-title' }, i.title),
-          h('div', { className: 'op-qitem-sub' }, i.organizer.name, i.organizer.verified ? Icon('seal-check', true, 'op-verified') : null, i.organizer.newOrganizer ? h('span', { className: 'op-new' }, t('mới', 'new')) : null),
+          h('div', { className: 'op-qitem-sub' }, i.submittedBy ? t(`Cộng đồng · ${i.submittedBy.name || '—'}`, `Community · ${i.submittedBy.name || '—'}`) : i.organizer.name, i.organizer.verified ? Icon('seal-check', true, 'op-verified') : null, i.organizer.newOrganizer && !i.submittedBy ? h('span', { className: 'op-new' }, t('mới', 'new')) : null),
           h('div', { className: 'op-qitem-sub' }, [i.startsOn ? day(i.startsOn) : null, i.venueName, i.genre].filter(Boolean).join(' · ')),
           h('div', { className: 'op-flags' },
             h(Pill, { tone: SLA_TONE[i.sla.state], icon: 'clock' }, duration(i.waitingMinutes)),

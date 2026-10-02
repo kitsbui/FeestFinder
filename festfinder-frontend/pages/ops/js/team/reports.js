@@ -2,7 +2,7 @@
  * Team mode: what users reported (grouped by listing and category) and organisers'
  * appeals against a send-back. Each row carries the decision buttons it needs.
  */
-import { h, Fragment, useState, useMemo, t, tx, cx, post, href, navigate, useFetch, useQueryState, toast, errorText, emit, duration, stamp, num } from '../core.js';
+import { h, Fragment, useState, useMemo, t, tx, cx, post, patch, del, href, navigate, useFetch, useQueryState, toast, errorText, emit, duration, stamp, num } from '../core.js';
 import { PageHeader, Button, Icon, Pill, Thumb, Spinner, ErrorBox, Empty, FilterBar, FilterSelect, DataTable, Tabs, StatusPill, Card, confirm, Select } from '../ui.js';
 import { rejectOptions } from '../opts.js';
 
@@ -86,6 +86,39 @@ function AppealsTab() {
       h(Button, { size: 'sm', variant: 'ok', icon: 'check', busy: busy === a.id + 'overturn', onClick: () => decide(a, 'overturn') }, t('Lật lại & đăng', 'Overturn & publish'))))));
 }
 
+const POST_CODE = { spam: ['Spam', 'Spam'], scalping: ['Phe vé', 'Scalping'], abuse: ['Xúc phạm', 'Abuse'], drugs: ['Chất cấm', 'Drugs'], personal: ['Thông tin cá nhân', 'Personal data'], other: ['Khác', 'Other'] };
+
+/** Discussion posts people reported, across every event page. Three reports hide a post until someone decides. */
+function PostsTab() {
+  const { data, error, loading, reload } = useFetch('/admin/posts/reported');
+  const [busy, setBusy] = useState(null);
+  const act = async (p, kind) => {
+    if (kind === 'remove' && !(await confirm({ title: t('Xoá bài này?', 'Delete this post?'), body: p.body.slice(0, 160), confirm: t('Xoá', 'Delete'), tone: 'danger' }))) return;
+    setBusy(p.id + kind);
+    try {
+      const out = kind === 'dismiss' ? await post(`/admin/posts/${p.id}/dismiss`)
+        : kind === 'remove' ? await del(`/posts/${p.id}`)
+        : await patch(`/posts/${p.id}`, { hidden: kind === 'hide' });
+      toast(tx(out.message));
+      reload(true);
+    } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(null); }
+  };
+  if (loading && !data) return h(Spinner);
+  if (error) return h(ErrorBox, { error, onRetry: reload });
+  const columns = [
+    { key: 'body', label: t('Bài viết', 'Post'), render: (p) => h('div', null, h('div', { className: 'op-quote-inline' }, `“${p.body}”`), h('div', { className: 'op-cell-sub' }, p.author.name, ' · ', tx(p.kindLabel), ' · ', stamp(p.createdAt))) },
+    { key: 'event', label: t('Sự kiện', 'Event'), width: 220, render: (p) => h('a', { href: `/e/${p.event.slug}#thao-luan`, target: '_blank', rel: 'noopener' }, p.event.title) },
+    { key: 'why', label: t('Lý do', 'Why'), width: 190, render: (p) => h('div', { className: 'op-flags' }, p.codes.map((c) => h(Pill, { key: c, tone: c === 'scalping' || c === 'drugs' ? 'danger' : 'warn' }, t(...(POST_CODE[c] ?? [c, c]))))) },
+    { key: 'n', label: t('Lượt báo', 'Reports'), width: 90, align: 'right', render: (p) => h('strong', { className: 'op-cell-num' }, p.reports) },
+    { key: 'status', label: t('Trạng thái', 'Status'), width: 110, render: (p) => p.status === 'hidden' ? h(Pill, { tone: 'danger', icon: 'eye-slash' }, t('Đang ẩn', 'Hidden')) : h(Pill, { tone: 'ok' }, t('Đang hiện', 'Visible')) },
+    { key: 'act', label: '', width: 290, align: 'right', render: (p) => h('div', { className: 'op-row-actions' },
+      h(Button, { size: 'sm', busy: busy === p.id + 'dismiss', onClick: () => act(p, 'dismiss') }, t('Giữ bài', 'Keep')),
+      p.status === 'hidden' ? null : h(Button, { size: 'sm', busy: busy === p.id + 'hide', onClick: () => act(p, 'hide') }, t('Ẩn', 'Hide')),
+      h(Button, { size: 'sm', variant: 'danger', busy: busy === p.id + 'remove', onClick: () => act(p, 'remove') }, t('Xoá', 'Delete'))) },
+  ];
+  return h(DataTable, { columns, rows: data.items, minWidth: 1000, empty: h(Empty, { icon: 'check-circle', title: t('Không có bài bị báo cáo', 'No reported posts') }) });
+}
+
 export function Reports({ counts }) {
   const [tab, setTab] = useQueryState('tab', 'reports');
   return h(Fragment, null,
@@ -93,6 +126,7 @@ export function Reports({ counts }) {
     h(Tabs, { value: tab, onChange: setTab, items: [
       { value: 'reports', icon: 'flag', label: t('Báo cáo người dùng', 'User reports'), count: counts.reports, alert: true },
       { value: 'appeals', icon: 'gavel', label: t('Kháng nghị', 'Appeals'), count: counts.appeals, alert: true },
+      { value: 'posts', icon: 'chats-circle', label: t('Bài thảo luận', 'Discussion posts') },
     ] }),
-    tab === 'appeals' ? h(AppealsTab) : h(ReportsTab));
+    tab === 'appeals' ? h(AppealsTab) : tab === 'posts' ? h(PostsTab) : h(ReportsTab));
 }

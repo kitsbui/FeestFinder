@@ -33,6 +33,10 @@ import adminPlatformRoutes from './routes/admin/platform.ts';
 import adminOpsRoutes from './routes/admin/ops.ts';
 import devConsoleRoutes from './routes/dev-console.ts';
 import internalRoutes from './routes/internal.ts';
+import discussionRoutes from './routes/discussion.ts';
+import communityRoutes from './routes/community.ts';
+import resaleRoutes from './routes/resale.ts';
+import seoRoutes from './routes/seo.ts';
 import frontendRoutes from './routes/frontend.ts';
 
 declare module 'fastify' {
@@ -220,6 +224,10 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(adminOpsRoutes);
   await app.register(devConsoleRoutes);
   await app.register(internalRoutes);
+  await app.register(discussionRoutes);
+  await app.register(communityRoutes);
+  await app.register(resaleRoutes);
+  await app.register(seoRoutes);
   if (ctx.config.env !== 'test') await app.register(frontendRoutes);
 
   return app;

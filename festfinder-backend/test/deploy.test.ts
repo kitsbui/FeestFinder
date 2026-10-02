@@ -217,7 +217,7 @@ describe('deployment', () => {
     const env = await setup();
     try {
       const everyJob = await runDueJobs(env.ctx, new Date(60_000 * 60 * 1000));
-      assert.equal(Object.keys(everyJob).length, 7);
+      assert.equal(Object.keys(everyJob).length, 8);
       const minuteJobs = await runDueJobs(env.ctx, new Date(60_000 * (60 * 1000 + 1)));
       assert.deepEqual(Object.keys(minuteJobs).sort(), ['deliverOutbox', 'expireOrders', 'sendScheduledAnnouncements']);
     } finally { await env.close(); }

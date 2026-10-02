@@ -9,6 +9,8 @@ import { ConsoleTransport, RoutingTransport, SmtpTransport, WebhookTransport, We
 import { NoopReporter, SentryReporter } from './services/errors.ts';
 import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
 import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
+import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
+import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
 
@@ -77,6 +79,8 @@ export async function createContext(config: Config): Promise<Ctx> {
     storage,
     errors,
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
+    prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
+    fetchPage: (url: string) => fetchPublicPage(url),
     oauth: { fb: oauthFor('fb'), ig: oauthFor('ig') },
     checkLink,
     log,

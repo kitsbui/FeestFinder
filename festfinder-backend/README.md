@@ -5,7 +5,7 @@ The backend for all four FeestFinder surfaces in `design_handoff_festfinder/`: t
 - **Node 24 + TypeScript**, run directly (Node strips types, so there is no build step)
 - **Fastify 5**, **zod** validation
 - **PostgreSQL** with plain SQL migrations, on **Supabase**, in two projects: **production**, used by the production deployment only, and **staging**, shared by laptops and Vercel previews. Each database is labelled with the environment it serves, and a deployment on the other one's refuses to start before it migrates or writes anything. The automated tests use **PGlite** (Postgres compiled to WebAssembly, in-process) instead, with the demo data from `test/fixtures`.
-- **Claude** (`@anthropic-ai/sdk`) for the App's AI local guide
+- **Claude** (`@anthropic-ai/sdk`) for the App's AI local guide and for filling in a sent-in event from its link or poster
 
 ## Quick start
 
@@ -72,7 +72,7 @@ The back offices sit on `/studio`, `/console` and `/ops` because `/organizer/*` 
 Two notes:
 
 - **Live mode and check-in** open on the day of an event: before then the API answers "Live mode opens on the day of the event".
-- **The AI local guide** needs `ANTHROPIC_API_KEY`. Without one the guide panel shows its own "taking a break" state.
+- **The AI local guide and the form fill-in** need `ANTHROPIC_API_KEY`. Without one the guide panel shows its own "taking a break" state, and a pasted link still fills the form when the page carries schema.org Event data; posters need the key.
 
 ## How clients talk to it
 
@@ -154,7 +154,11 @@ The wired screens live next door, one folder per surface:
 
 **Notifications.** Every alert writes an in-app notification, then queues one outbox row per channel the person has switched on (the topic × Push/Zalo/Email matrix). A worker delivers with retries and backoff. Nothing is sent between 23:00 and 08:00 unless it concerns an event starting that day. Announcements count reach as the union of people each chosen channel actually reaches, and are limited to one per event per 24 hours.
 
-**AI local guide.** `GET /events/:id/guide` asks Claude (`claude-opus-5`, structured JSON output, low effort, server-side refusal fallback) for where to eat before, where to go after and what to wear. The result is cached per event and language for 24 hours, and each user is limited to 20 generations an hour.
+**AI local guide.** `GET /events/:id/guide` asks Claude (`claude-opus-5-5`, structured JSON output, low effort, server-side refusal fallback) for where to eat before, where to go after and what to wear. The result is cached per event and language for 24 hours, and each user is limited to 20 generations an hour.
+
+**Filling in a sent-in event.** `POST /community/prefill` fetches the pasted page (public addresses only, every redirect checked, 2 MB, 8 s) and reads its schema.org Event data first; only a page without one goes to Claude, which also reads posters (`/community/prefill/poster`). The person checks the form before sending. Each person gets 30 pages and 10 AI reads an hour, logged in `ai_calls`.
+
+**Taking over a community event.** An organiser presses "I organise this" on an event the community sent in, with a note and a proof link; a moderator approves it in `/ops/claims`, which moves the event to their account and tells the person who sent it in.
 
 ## Running it in production
 
@@ -169,7 +173,12 @@ Every outside service is switched on by its environment variables and logged ins
 | Browser push | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Sent straight to the browser's push service; a subscription the service reports gone is deleted and not retried. Make keys with `npx web-push generate-vapid-keys` |
 | Native push, Zalo ZNS, SMS | `MESSAGING_WEBHOOK_URL`, `MESSAGING_WEBHOOK_SECRET` | Each message is POSTed to one endpoint with an `x-ff-signature` HMAC-SHA256 header, which fans out to FCM/APNs, Zalo and the SMS gateway. A non-2xx answer is retried with backoff |
 | Errors | `SENTRY_DSN`, `RELEASE` | Unhandled errors go to Sentry (or anything that speaks its envelope API) with the route, user and request id |
+| Search engines | `INDEXNOW_KEY`, `ALLOW_AI_TRAINING` | With a key (8–128 letters, digits or dashes), approved and changed event pages are announced to IndexNow every five minutes (Bing, and the assistants that search its index); the key is served at `/<key>.txt`. `robots.txt` lets AI search and answer crawlers (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot…) read every public page; training crawlers (GPTBot, ClaudeBot, Google-Extended, CCBot…) are turned away unless `ALLOW_AI_TRAINING=true`. Neither changes Google Search or its AI Overviews |
 | Abuse | `RATE_LIMIT_PER_MINUTE`, `TRUST_PROXY` | Per-client limit on the API (default 300/min), answered with `429` and `Retry-After`. Static files are exempt, and so are calls from our own network that carry no forwarding headers — the Next.js app rendering pages on the server. A browser's call through the Next.js proxy is always counted, whatever address it claims. The client address comes from `X-Forwarded-For` only when the peer is a trusted proxy (default: loopback and private networks), so a client talking to the API directly cannot fake it. Next.js passes on an `X-Forwarded-For` the client sent and never adds the client's own address, so in production put a load balancer or CDN in front of Next that appends or sets it; without one, every browser shares one limit and the API logs a warning |
+
+**Event pages for crawlers.** The design runtime draws pages with JavaScript, which most AI crawlers never run. So `/e/:slug` arrives with its title, description, canonical and link-preview tags, `MusicEvent`/`FAQPage`/`BreadcrumbList` structured data, and the event's facts as plain HTML inside `<x-dc>`, which the screen replaces when it mounts. `/robots.txt` and `/sitemap.xml` are served by the API too.
+
+**Community, discussion and resale (migration `010`).** Anyone whose phone number is proven by a code can post on an event page, or send an event in; it waits in the review queue like any listing, owned by the "Cộng đồng FeestFinder" organiser. A number typed into a profile is unproven, and never signs anyone in to that account. Tickets move between attendees as gifts or resold at no more than face value, until the event ends: each move gives the ticket a new QR version, and scanners refresh what changed every 20 seconds. FeestFinder holds a resale buyer's money and pays the seller two days after the event, from `/ops/orders → Pass vé`.
 
 **Security headers.** Every response carries helmet's headers. JSON answers have a strict Content-Security-Policy. The design-runtime shells get one that also allows `'unsafe-eval'`, because the prototype runtime evaluates the screens' logic from strings. The Next.js app does not need that.
 

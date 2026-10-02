@@ -697,6 +697,94 @@
           <div style="font-size:13.5px;font-weight:500;line-height:1.7;color:#E6E3C8;text-wrap:pretty">{{ detail.description }}</div>
         </div>
 
+        <sc-if value="{{ rs.show }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:26px 20px 0">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.rsTitle }}</div>
+            <div style="padding:3px 9px;border-radius:999px;background:rgba(171,255,132,.12);font-size:10.5px;font-weight:600;color:#ABFF84">{{ L.rsCap }}</div>
+            <div style="flex:1"></div>
+            <div onClick="{{ rs.watch }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:#E6E3C8"><i class="{{ rs.watchIcon }}" style="font-size:13px;color:#ABFF84"></i>{{ rs.watchLabel }}</div>
+          </div>
+          <sc-for list="{{ rs.items }}" as="r" hint-placeholder-count="1">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;border-radius:8px;background:rgba(25,25,25,.6);border:1px solid rgba(255,252,225,.19)">
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ r.tier }}</div><div style="font-size:11.5px;font-weight:500;color:#8C8B7D;margin-top:3px">{{ r.seller }}</div></div>
+              <div style="font-size:14px;font-weight:600;white-space:nowrap">{{ r.price }}</div>
+              <div onClick="{{ r.buy }}" style="cursor:pointer;padding:9px 15px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12px;font-weight:600">{{ L.rsBuy }}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ rs.empty }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px;font-weight:500;color:#8C8B7D">{{ L.rsNone }}</div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ dd.hasFaq }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:26px 20px 0">
+          <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:10px">{{ L.faqTitle }}</div>
+          <sc-for list="{{ dd.faq }}" as="f" hint-placeholder-count="2">
+            <div onClick="{{ f.toggle }}" style="cursor:pointer;padding:12px 0;border-bottom:1px solid #1E1F1C">
+              <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font-size:13.5px;font-weight:600;line-height:1.4">{{ f.q }}</div><i class="{{ f.icon }}" style="font-size:12px;color:#8C8B7D;flex:none"></i></div>
+              <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;font-weight:500;color:#A5A493;line-height:1.6;margin-top:8px">{{ f.a }}</div></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ dd.show }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:26px 20px 0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.discOpen }}</div>
+            <div style="font-size:11.5px;font-weight:600;color:#ABFF84">{{ dd.count }}</div>
+          </div>
+          <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 -20px 12px;padding:0 20px">
+            <sc-for list="{{ dd.tabs }}" as="t" hint-placeholder-count="3">
+              <div onClick="{{ t.pick }}" style="cursor:pointer;flex:none;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ t.bg }};border:1px solid {{ t.bd }};color:{{ t.fg }}">{{ t.label }}</div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ dd.composer }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:12px">
+              <sc-if value="{{ dd.replying }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px;font-weight:600;color:#ABFF84">{{ dd.replyLine }}<i onClick="{{ dd.cancelReply }}" class="ph-bold ph-x" style="cursor:pointer;font-size:11px;color:#A5A493"></i></div>
+              </sc-if>
+              <textarea aria-label="{{ L.discOpen }}" value="{{ dd.draft }}" onChange="{{ dd.onDraft }}" rows="2" maxLength="1000" placeholder="{{ dd.placeholder }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;resize:vertical;line-height:1.5"></textarea>
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px">
+                <div onClick="{{ dd.send }}" style="cursor:pointer;opacity:{{ dd.sendOp }};padding:9px 18px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12.5px;font-weight:600">{{ dd.sendLabel }}</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-for list="{{ dd.items }}" as="p" hint-placeholder-count="2">
+            <div style="display:flex;gap:10px;padding:12px 0;border-top:1px solid #1E1F1C">
+              <div style="width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;color:#0E100F;background:{{ p.color }}">{{ p.initials }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <div style="font-size:12.5px;font-weight:600">{{ p.name }}</div>
+                  <sc-for list="{{ p.badges }}" as="b" hint-placeholder-count="1"><div style="padding:2px 7px;border-radius:999px;font-size:9.5px;font-weight:600;background:{{ b.bg }};color:{{ b.fg }}">{{ b.label }}</div></sc-for>
+                  <div style="font-size:10.5px;font-weight:500;color:#8C8B7D">{{ p.ago }}</div>
+                </div>
+                <div style="font-size:13px;font-weight:400;color:{{ p.bodyFg }};line-height:1.55;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere">{{ p.body }}</div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:7px;font-size:11.5px;font-weight:600;color:#8C8B7D">
+                  <div onClick="{{ p.help }}" style="cursor:pointer;display:flex;align-items:center;gap:5px;color:{{ p.helpFg }}"><i class="{{ p.helpIcon }}" style="font-size:13px"></i>{{ p.helpful }}</div>
+                  <sc-if value="{{ p.canReply }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.reply }}" style="cursor:pointer">{{ L.discReply }}</div></sc-if>
+                </div>
+                <sc-for list="{{ p.replies }}" as="r" hint-placeholder-count="1">
+                  <div style="display:flex;gap:8px;margin-top:10px;padding:10px 11px;border-radius:8px;background:rgba(14,16,15,.5);border:1px solid #1E1F1C">
+                    <div style="width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#0E100F;background:{{ r.color }}">{{ r.initials }}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><div style="font-size:12px;font-weight:600">{{ r.name }}</div><sc-for list="{{ r.badges }}" as="b" hint-placeholder-count="1"><div style="padding:2px 7px;border-radius:999px;font-size:9.5px;font-weight:600;background:{{ b.bg }};color:{{ b.fg }}">{{ b.label }}</div></sc-for></div>
+                      <div style="font-size:12.5px;font-weight:400;color:{{ r.bodyFg }};line-height:1.5;margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere">{{ r.body }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ dd.empty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:12px 0;border-top:1px solid #1E1F1C;font-size:12.5px;font-weight:500;color:#8C8B7D">{{ L.discEmpty }}</div>
+          </sc-if>
+          <div onClick="{{ openDiscussion }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;font-weight:600;color:#ABFF84">{{ L.discAll }}<i class="ph-bold ph-arrow-up-right" style="font-size:11px"></i></div>
+        </div>
+        </sc-if>
+
         <div style="padding:26px 20px 0">
           <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin-bottom:10px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.organizer }}</div>
           <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:8px;background:rgba(25,25,25,.6);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
@@ -1543,6 +1631,42 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{ xferOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeXfer }}" style="position:absolute;inset:0;z-index:45;background:rgba(14,16,15,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:ffFade .2s ease both"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;z-index:46;max-height:88%;overflow-y:auto;padding:20px 20px 26px;border-radius:8px 26px 0 0;background:rgba(25,25,25,.97);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-top:1px solid rgba(255,252,225,.1);animation:ffSheet .3s cubic-bezier(.2,.8,.2,1) both">
+      <div style="width:38px;height:4px;border-radius:2px;background:rgba(255,252,225,.29);margin:0 auto 18px"></div>
+      <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:17px;margin-bottom:16px">{{ xferTitle }}</div>
+      <sc-if value="{{ xferGift }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:8px">{{ L.xPhone }}</div>
+        <input value="{{ xferPhone }}" onChange="{{ onXferPhone }}" type="tel" inputMode="tel" placeholder="0903 118 224" style="width:100%;box-sizing:border-box;padding:13px 14px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:14px;font-weight:500">
+      </sc-if>
+      <sc-if value="{{ xferSell }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:8px">{{ L.xPrice }}</div>
+        <input value="{{ xferPrice }}" onChange="{{ onXferPrice }}" inputMode="numeric" style="width:100%;box-sizing:border-box;padding:13px 14px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:14px;font-weight:500">
+        <div style="font-size:11.5px;font-weight:500;color:#8C8B7D;margin-top:7px">{{ xferCap }}</div>
+        <sc-if value="{{ xferHasPayee }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;font-weight:600;color:#E6E3C8"><i class="ph-bold ph-bank" style="font-size:14px;color:#ABFF84"></i>{{ xferPayee }}</div>
+        </sc-if>
+        <sc-if value="{{ xferNeedsBank }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin:16px 0 8px">{{ L.xBank }}</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <sc-for list="{{ xferBanks }}" as="b" hint-placeholder-count="4">
+              <div onClick="{{ b.pick }}" style="cursor:pointer;padding:7px 11px;border-radius:999px;font-size:11.5px;font-weight:600;background:{{ b.bg }};border:1px solid {{ b.bd }};color:{{ b.fg }}">{{ b.label }}</div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-top:11px">
+            <input value="{{ xferAccount }}" onChange="{{ onXferAccount }}" inputMode="numeric" placeholder="{{ L.xAccount }}" aria-label="{{ L.xAccount }}" style="width:100%;box-sizing:border-box;padding:13px 14px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:14px;font-weight:500">
+            <input value="{{ xferAccountName }}" onChange="{{ onXferAccountName }}" placeholder="{{ L.xAccountName }}" aria-label="{{ L.xAccountName }}" style="width:100%;box-sizing:border-box;padding:13px 14px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:14px;font-weight:500">
+          </div>
+        </sc-if>
+      </sc-if>
+      <sc-if value="{{ xferHasErr }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:12px;font-size:12px;font-weight:600;color:#FF8709">{{ xferErr }}</div>
+      </sc-if>
+      <div class="ff-cta" onClick="{{ sendXfer }}" style="cursor:pointer;margin-top:18px;padding:16px;border-radius:999px;background:#ABFF84;color:#141514;font-size:15px;font-weight:600;text-align:center">{{ xferCta }}</div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ checkoutOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeCheckout }}" style="position:absolute;inset:0;z-index:35;background:rgba(14,16,15,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:ffFade .2s ease both"></div>
     <div style="position:absolute;left:0;right:0;bottom:0;z-index:36;padding:20px 20px 26px;border-radius:8px 26px 0 0;background:rgba(25,25,25,.95);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-top:1px solid rgba(255,252,225,.1);animation:ffSheet .3s cubic-bezier(.2,.8,.2,1) both">
@@ -1556,6 +1680,10 @@
           <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:2px">{{ coVenue }}</div>
         </div>
       </div>
+      <sc-if value="{{ coIsResale }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;font-weight:600;color:#ABFF84"><i class="ph-fill ph-tag" style="font-size:14px"></i>{{ coResaleLine }}</div>
+      </sc-if>
+      <sc-if value="{{ coNotResale }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px">
         <div style="font-size:13px;font-weight:500">{{ L.qtyLabel }}</div>
         <div style="display:flex;align-items:center;gap:14px">
@@ -1564,6 +1692,7 @@
           <div onClick="{{ qtyPlus }}" style="cursor:pointer;width:34px;height:34px;border-radius:999px;background:rgba(28,29,27,.8);border:1px solid rgba(255,252,225,.19);display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-plus" style="font-size:13px;color:#FFFCE1"></i></div>
         </div>
       </div>
+      </sc-if>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,252,225,.19);font-size:12.5px;font-weight:500;color:#A5A493">
         <div style="display:flex;justify-content:space-between;gap:10px">{{ L.qtyLabel }}<span style="color:#FFFCE1;font-weight:500">{{ coQty }} × {{ coUnit }}</span></div>
         <div style="display:flex;justify-content:space-between;gap:10px">{{ L.feeLabel }}<span style="color:#FFFCE1;font-weight:500">{{ coFee }}</span></div>
@@ -1571,10 +1700,12 @@
       </div>
       <div class="ff-cta" onClick="{{ confirmCheckout }}" style="cursor:pointer;margin-top:18px;padding:16px;border-radius:8px;background:#ABFF84;color:#141514;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 34px rgba(171,255,132,.26)"><i class="ph-fill ph-lock-simple" style="font-size:16px"></i>{{ L.payNow }}</div>
       <div style="text-align:center;font-size:11px;font-weight:500;color:#8C8B7D;margin-top:10px">{{ L.payNote }}</div>
+      <sc-if value="{{ coNotResale }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;align-items:flex-start;gap:9px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,252,225,.19)">
         <i class="ph-bold ph-arrow-u-up-left" style="font-size:14px;color:#8C8B7D;flex:none;margin-top:2px"></i>
         <div style="font-size:11px;font-weight:500;color:#8C8B7D;line-height:1.6;text-wrap:pretty">{{ L.refundPolicy }}</div>
       </div>
+      </sc-if>
     </div>
   </sc-if>
 
@@ -1634,6 +1765,22 @@
                   <div style="font-size:11.5px;font-weight:500;color:#55564E;margin-top:8px">{{ t.qtyLine }}</div>
                 </div>
               </div>
+              <sc-if value="{{ t.receivedShow }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px;margin:-4px 18px 12px;font-size:11.5px;font-weight:600;color:#ABFF84"><i class="ph-fill ph-gift" style="font-size:13px"></i>{{ L.xReceived }}</div>
+              </sc-if>
+              <sc-if value="{{ t.listed }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;margin:0 18px 12px;padding:11px 14px;border-radius:8px;background:rgba(171,255,132,.08);border:1px solid rgba(171,255,132,.32)">
+                  <i class="ph-fill ph-tag" style="font-size:15px;color:#ABFF84;flex:none"></i>
+                  <div style="flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#FFFCE1">{{ t.listingLine }}</div>
+                  <div onClick="{{ t.unlist }}" style="cursor:pointer;flex:none;font-size:12px;font-weight:600;color:#A5A493">{{ L.xUnlist }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ t.canMove }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:9px;margin:0 18px 12px">
+                  <div onClick="{{ t.gift }}" style="cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;border-radius:999px;border:1px solid rgba(255,252,225,.32);color:#E6E3C8;font-size:12.5px;font-weight:600"><i class="ph-bold ph-gift" style="font-size:14px"></i>{{ L.xGift }}</div>
+                  <div onClick="{{ t.sell }}" style="cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;border-radius:999px;border:1px solid rgba(255,252,225,.32);color:#E6E3C8;font-size:12.5px;font-weight:600"><i class="ph-bold ph-tag" style="font-size:14px"></i>{{ L.xSell }}</div>
+                </div>
+              </sc-if>
               <div onClick="{{ t.check }}" style="cursor:pointer;margin:0 18px 14px;padding:13px;border-radius:999px;border:1px solid #ABFF84;color:#ABFF84;font-size:13px;font-weight:600;text-align:center;opacity:{{ t.checkOp }}">{{ t.checkLabel }}</div>
               <div style="display:flex;gap:9px;margin:0 18px 12px">
                 <div onClick="{{ walletApple }}" style="cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 0;border-radius:999px;background:#FFFCE1;color:#0E100F;font-size:11.5px;font-weight:600"><i class="ph-fill ph-apple-logo" style="font-size:14px"></i>{{ L.walletApple }}</div>
@@ -1660,6 +1807,20 @@
               </sc-if>
             </div>
           </sc-for>
+          <sc-if value="{{ resoldShow }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px 18px;border-radius:8px;background:rgba(25,25,25,.75);border:1px solid rgba(255,252,225,.19)">
+              <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;margin-bottom:10px">{{ L.resoldTitle }}</div>
+              <sc-for list="{{ resoldList }}" as="r" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #1E1F1C">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:#FFFCE1">{{ r.title }}</div>
+                    <div style="font-size:11.5px;font-weight:500;color:{{ r.fg }};margin-top:3px">{{ r.when }}</div>
+                  </div>
+                  <div style="font-size:13.5px;font-weight:600;color:#FFFCE1;white-space:nowrap">{{ r.price }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
         </div>
         <div style="height:40px"></div>
       </div>

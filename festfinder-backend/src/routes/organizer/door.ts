@@ -50,6 +50,7 @@ function describe(result: ScanResult['result'], reason: string | null, extra: { 
   const detail = {
     refunded: L('Refunded ticket — do not admit', 'Vé đã hoàn tiền — không cho vào'),
     void: L('Cancelled ticket — do not admit', 'Vé đã huỷ — không cho vào'),
+    transferred: L('This QR was replaced when the ticket changed hands — ask for the new one', 'Vé đã chuyển nhượng, QR này hết hiệu lực — yêu cầu mã mới'),
     wrong_event: L('Code not from this event', 'Mã không thuộc sự kiện này'),
     unknown: L('Code not from this event', 'Mã không thuộc sự kiện này'),
     bad_signature: L('QR code is not genuine', 'Mã QR không hợp lệ'),
@@ -75,7 +76,7 @@ async function processScan(ctx: Ctx, q: Queryable, ev: any, input: ScanInput, ac
   const now = ctx.clock.now();
   const scannedAt = input.scannedAt ? new Date(input.scannedAt) : now;
   const gate = input.gate ?? access.gate ?? 'main';
-  const { code, sig } = readQrToken(input.token);
+  const { code, version, payload, sig } = readQrToken(input.token);
   await q.query('select pg_advisory_xact_lock(hashtext($1))', [code]);
   const ticket = await one<any>(q,
     `select t.*, tt.name as tier_name, tt.key as tier_key from tickets t left join ticket_tiers tt on tt.id = t.tier_id where t.code = $1 for update of t`, [code]);
@@ -83,17 +84,21 @@ async function processScan(ctx: Ctx, q: Queryable, ev: any, input: ScanInput, ac
   let result: ScanResult['result'] = 'valid';
   let reason: string | null = null;
   if (!sig && !(input.manual && access.lead)) { result = 'invalid'; reason = 'bad_signature'; }
-  else if (sig && !verifyQrSignature(eventScanKey(ctx.config.ticketSigningSecret, ev.id), code, sig)) {
+  else if (sig && !verifyQrSignature(eventScanKey(ctx.config.ticketSigningSecret, ev.id), payload, sig)) {
     result = 'invalid';
     reason = ticket && ticket.event_id !== ev.id ? 'wrong_event' : 'bad_signature';
   }
   else if (!ticket) { result = 'invalid'; reason = 'unknown'; }
   else if (ticket.event_id !== ev.id) { result = 'invalid'; reason = 'wrong_event'; }
   else if (ticket.status === 'refunded' || ticket.status === 'void') { result = 'invalid'; reason = ticket.status; }
+  // The ticket has changed hands since this QR was issued: only the new holder's QR opens the door.
+  else if (sig && version < ticket.qr_version) { result = 'invalid'; reason = 'transferred'; }
   else if (ticket.status === 'used') { result = 'duplicate'; reason = offline ? 'conflict' : 'already_used'; }
 
   if (result === 'valid') {
     await q.query(`update tickets set status = 'used', checked_in_at = $2, checked_in_gate = $3, checked_in_by = $4 where id = $1`, [ticket.id, scannedAt, gate, access.staffId]);
+    // Inside now, so it is no longer for sale.
+    await q.query(`update ticket_listings set status = 'cancelled', closed_at = $2 where ticket_id = $1 and status = 'active'`, [ticket.id, now]);
   }
   await q.query(
     `insert into scans (event_id, ticket_id, code, staff_id, gate, device_id, client_scan_id, result, reason, scanned_at, received_at, was_offline)
@@ -225,20 +230,31 @@ export default async function doorRoutes(app: FastifyInstance) {
    * Everything a scanner needs to keep working with no signal: the event's scan key
    * (verifies QR signatures locally) and the status of every ticket code.
    */
+  /**
+   * With `?since=<cursor>` only the tickets that changed after that download come back, so
+   * a scanner refreshes every few seconds while it has signal and a ticket resold at the
+   * last minute reaches the door straight away.
+   */
   app.get<{ Params: { id: string } }>('/door/events/:id/manifest', async (req) => {
     const ev = await eventFor(req.params.id);
     const access = await requireDoorAccess(ctx, req, ev.id);
+    const { since } = parse(z.object({ since: z.coerce.number().int().min(0).optional() }), req.query);
     const now = ctx.clock.now();
     if (access.staffId) await ctx.db.query('update event_staff set last_seen_at = $2 where id = $1', [access.staffId, now]);
     const tickets = await many<any>(ctx.db,
-      `select t.code, t.status, t.holder_name, tt.key as tier from tickets t left join ticket_tiers tt on tt.id = t.tier_id where t.event_id = $1`, [ev.id]);
+      `select t.code, t.status, t.holder_name, t.qr_version, t.change_seq, tt.key as tier
+         from tickets t left join ticket_tiers tt on tt.id = t.tier_id where t.event_id = $1 ${since !== undefined ? 'and t.change_seq > $2' : ''}`,
+      since !== undefined ? [ev.id, since] : [ev.id]);
+    const cursor = tickets.reduce((m, t) => Math.max(m, Number(t.change_seq)), since ?? 0);
     return {
       event: { id: ev.id, title: ev.title, startsOn: ev.starts_on, startTime: ev.start_time, endTime: ev.end_time, venueName: ev.venue_name },
       scanKey: eventScanKey(ctx.config.ticketSigningSecret, ev.id),
-      signature: 'HMAC-SHA256(scanKey, code), base64url, first 22 chars; QR = "<code>.<signature>"',
+      signature: 'HMAC-SHA256(scanKey, payload), base64url, first 22 chars; payload = "<code>" or "<code>~<v>"; QR = "<payload>.<signature>"',
       generatedAt: now,
+      partial: since !== undefined,
+      cursor,
       tickets: tickets.map((t) => ({
-        code: t.code, status: t.status, tier: t.tier,
+        code: t.code, status: t.status, tier: t.tier, v: t.qr_version,
         // Scanners only need a first name to greet someone; leads get the full name.
         name: access.lead ? t.holder_name : String(t.holder_name).split(' ').slice(-1)[0],
       })),

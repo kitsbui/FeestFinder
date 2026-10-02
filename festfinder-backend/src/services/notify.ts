@@ -89,7 +89,7 @@ export async function loadOrgPrefs(q: Queryable, organizerId: string): Promise<R
 export interface OrgNotice {
   organizerId: string;
   topic: OrgTopic;
-  kind: 'reject' | 'tickets' | 'payout' | 'live' | 'crew';
+  kind: 'reject' | 'tickets' | 'payout' | 'live' | 'crew' | 'question' | 'hype';
   title: Localized;
   body: Localized;
   cta?: Localized;

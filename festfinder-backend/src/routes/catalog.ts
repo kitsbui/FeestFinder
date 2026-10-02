@@ -10,6 +10,9 @@ import { bool, csv, dateStr, limit, parse } from '../lib/validate.ts';
 import { decodeCursor, isUuid, page, SqlParams } from '../http/sql.ts';
 import { CARD_COLUMNS, loadViewer, ORG_COLUMNS, presentCard, presentTiers } from '../presenters/event.ts';
 import { findClashes, loadTimetable } from '../presenters/timetable.ts';
+import { SHARE_CHANNELS } from '../services/community.ts';
+import { eventExtras } from '../services/eventpage.ts';
+import { recordShareVisit } from './community.ts';
 
 const PRICE_BANDS = ['free', 'under', 'over'] as const;
 const TIME_FILTERS = ['tonight', 'weekend', '7days', 'month', 'all'] as const;
@@ -83,10 +86,10 @@ function orderBy(sql: SqlParams, sort: string, now: Date, userId: string | null)
   }
 }
 
-async function canPreview(ctx: Ctx, req: FastifyRequest, organizerId: string): Promise<boolean> {
+async function canPreview(ctx: Ctx, req: FastifyRequest, organizerId: string, submittedBy: string | null = null): Promise<boolean> {
   const user = req.session?.user;
   if (!user) return false;
-  if (user.role === 'admin') return true;
+  if (user.role === 'admin' || user.id === submittedBy) return true;
   return !!(await one(ctx.db, 'select 1 from organizer_members where user_id = $1 and organizer_id = $2', [user.id, organizerId]));
 }
 
@@ -178,7 +181,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const ev = await findEvent(ctx, req.params.idOrSlug);
     const visible = ev && ev.status === 'live' && !ev.held_for_reports;
-    if (!ev || (!visible && !(await canPreview(ctx, req, ev.organizer_id)))) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
+    if (!ev || (!visible && !(await canPreview(ctx, req, ev.organizer_id, ev.submitted_by)))) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
     const userId = req.session?.user?.id ?? null;
 
     const [viewer, tierRows, timetable, org, similarRows] = await Promise.all([
@@ -227,6 +230,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const card = presentCard(ev, { now, viewer });
     return {
       ...card,
+      ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,
       capacity: ev.capacity,
@@ -354,11 +358,18 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const body = parse(z.object({
       type: z.enum(['view', 'ticket_click']),
       source: z.enum(['feed', 'shelf', 'shared', 'search', 'own', 'ads', 'map', 'list']).default('feed'),
+      // A view that arrived on a share link: where it was shared, and who shared it.
+      channel: z.enum(SHARE_CHANNELS).optional(),
+      ref: z.string().regex(/^[2-9A-HJ-NP-Z]{6}$/).optional(),
     }), req.body);
     if (!isUuid(req.params.id)) throw notFound();
     const now = ctx.clock.now();
     const key = `${req.ip}|${req.session?.user?.id ?? ''}|${req.params.id}|${body.type}`;
     const last = seen.get(key);
+    if (body.type === 'view' && body.ref) {
+      const visitor = req.session?.user?.id ?? `${req.ip}|${req.headers['user-agent'] ?? ''}`;
+      await recordShareVisit(app, req.params.id, body.ref, body.channel ?? 'copy', visitor).catch(() => false);
+    }
     if (last && now.getTime() - last < 30 * 60_000) return reply.code(202).send({ counted: false });
     seen.set(key, now.getTime());
     if (seen.size > 50_000) seen.clear();
@@ -371,7 +382,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
          sources = case when $4 then jsonb_set(event_metrics_daily.sources, array[$3::text],
            to_jsonb(coalesce((event_metrics_daily.sources->>$3::text)::int, 0) + 1)) else event_metrics_daily.sources end
        returning 1`,
-      [req.params.id, vnDate(now), body.source, body.type === 'view']);
+      [req.params.id, vnDate(now), body.source === 'shared' && body.channel ? `shared:${body.channel}` : body.source, body.type === 'view']);
     if (!res) throw notFound();
     return reply.code(202).send({ counted: true });
   });

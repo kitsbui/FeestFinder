@@ -60,6 +60,19 @@ export function EventSummary({ e, lang = 'vi' }: { e: EventDetail; lang?: Lang }
             </ul>
           </>
         ) : null}
+        {e.faq?.length ? (
+          <>
+            <h2>{lang === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked'}</h2>
+            <dl>
+              {e.faq.map((f) => (
+                <div key={f.question}>
+                  <dt>{f.question}</dt>
+                  <dd>{f.answer}</dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        ) : null}
         <p className="meta">
           {lang === 'vi' ? 'Tổ chức bởi ' : 'Organised by '}
           <a href={`/o/${e.organizer.slug}`}>{e.organizer.name}</a>

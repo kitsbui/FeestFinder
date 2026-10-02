@@ -3,7 +3,7 @@
  * status means for editing is said at the top, with the moderator's note when it was sent back.
  */
 import { h, Fragment, useState, t, tx, get, post, patch, put, del, href, navigate, useFetch, toast, errorText, stamp, emit } from '../core.js';
-import { PageHeader, Button, Spinner, ErrorBox, Icon, StatusPill, confirm, TextArea, Field, Menu } from '../ui.js';
+import { PageHeader, Button, Spinner, ErrorBox, Icon, StatusPill, confirm, TextArea, Field, Menu, Card, Input, Pill } from '../ui.js';
 import { EventForm } from '../event-form.js';
 
 const MISSING = {
@@ -41,6 +41,38 @@ function StatusBanner({ draft, onAppealed }) {
     default:
       return null;
   }
+}
+
+/**
+ * Milestones the event page shows under its hype count: "500 hype → 200 more early-bird
+ * tickets". Reaching one notifies the team, who then deliver what was promised.
+ */
+function HypeGoals({ eventId }) {
+  const { data, reload } = useFetch(`/organizer/events/${eventId}/hype-goals`, [eventId]);
+  const [rows, setRows] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const list = rows ?? (data ? data.goals.map((g) => ({ threshold: String(g.threshold), vi: g.reward.vi, en: g.reward.en === g.reward.vi ? '' : g.reward.en, reached: g.reached })) : []);
+  const edit = (i, k, v) => setRows(list.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const save = async () => {
+    setBusy(true);
+    try {
+      const goals = list.filter((r) => r.threshold && r.vi.trim()).map((r) => ({ threshold: parseInt(r.threshold.replace(/\D/g, ''), 10), reward: { vi: r.vi.trim(), en: r.en.trim() } }));
+      const out = await put(`/organizer/events/${eventId}/hype-goals`, { goals });
+      toast(tx(out.message));
+      setRows(null);
+      reload(true);
+    } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(false); }
+  };
+  if (!data) return null;
+  return h(Card, { title: t('Mốc hype', 'Hype goals'), icon: 'fire', sub: t(`${data.hypeCount.toLocaleString('vi-VN')} hype hiện tại`, `${data.hypeCount.toLocaleString('en-US')} hype now`),
+    actions: h(Button, { size: 'sm', variant: 'cta', busy, disabled: rows === null, onClick: save }, t('Lưu', 'Save')) },
+  h('div', { className: 'op-goals' },
+    list.map((r, i) => h('div', { key: i, className: 'op-goal-row', style: { display: 'grid', gridTemplateColumns: '120px 1fr 1fr auto', gap: 10, alignItems: 'center', marginBottom: 10 } },
+      h(Input, { value: r.threshold, onChange: (v) => edit(i, 'threshold', v), inputMode: 'numeric', placeholder: '500', 'aria-label': t('Số hype', 'Hype count') }),
+      h(Input, { value: r.vi, onChange: (v) => edit(i, 'vi', v), maxLength: 140, placeholder: t('Mở thêm 200 vé early bird', 'Mở thêm 200 vé early bird'), 'aria-label': t('Phần thưởng (tiếng Việt)', 'Reward (Vietnamese)') }),
+      h(Input, { value: r.en, onChange: (v) => edit(i, 'en', v), maxLength: 140, placeholder: '200 more early-bird tickets', 'aria-label': t('Phần thưởng (tiếng Anh)', 'Reward (English)') }),
+      r.reached ? h(Pill, { tone: 'ok', icon: 'check' }, t('Đã đạt', 'Reached')) : h(Button, { size: 'sm', variant: 'quiet', icon: 'x', title: t('Xoá mốc', 'Remove'), onClick: () => setRows(list.filter((_, j) => j !== i)) }))),
+    list.length < 5 ? h(Button, { size: 'sm', icon: 'plus', onClick: () => setRows([...list, { threshold: '', vi: '', en: '', reached: false }]) }, t('Thêm mốc', 'Add a goal')) : null));
 }
 
 export function OrgEditor({ rest }) {
@@ -100,5 +132,6 @@ export function OrgEditor({ rest }) {
         if (created && out?.id) navigate(href('org', 'events', out.id), { replace: true, force: true });
         else if (out?.status && draft && out.status !== draft.status) reload(true);
       },
-    }));
+    }),
+    draft && !readOnly ? h('div', { style: { marginTop: 20 } }, h(HypeGoals, { eventId: draft.id })) : null);
 }

@@ -66,6 +66,28 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | GET / POST | `/events/:id/recap`, `/events/:id/recaps` 🔒 | Post-event stats and rating (`stars`, `aspects`, `photoUrls`). Only after it starts, only for people who went. |
 | POST | `/uploads?purpose=cover\|logo\|avatar\|recap` 🔒 | Multipart image, 8 MB. Covers must be 16:9 at 1600×900+. Returns `url`, dimensions, sha256. |
 
+## Event page community (Web + App)
+
+📱 = needs a phone number proven by a code (`403 phone_unverified` otherwise; `/me/connections/zalo/start` + `/verify` proves one).
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/events/:idOrSlug` | Also: `phase` (before/live/after), `hype` (count, last 24 h, goals, next goal and progress), `discussion` counts, `faq` (the organiser's answers), `resale` summary, `ambassadors` (top sharers), `community` (sent in by, `claimable` while the community still holds it), `mine` (ref code, people brought, watching resale, tickets held, `claim` for an organiser: `canClaim`, `pending`). |
+| GET | `/events/:idOrSlug/discussion` | `?kind=qa\|talk\|crew\|trackid\|memory&sort=top\|new&cursor`. Threads with their first three replies (the official answer first), author badges (`team`, `ff`, `ticket`, `submitter`), the tabs the phase opens, `me.canWrite` (`ok`, `signin`, `verify_phone`). GET `/posts/:id/replies` for the rest. |
+| POST | `/events/:id/posts` 🔒📱 | `{kind, body, parentId?, setId?, heardAt?}`. No phone numbers or links (except the organiser's), and ticket trading is sent to resale (`use_resale`). Six posts per 10 minutes. The organiser's reply to a question is its official answer and joins the FAQ. |
+| PUT / DELETE | `/posts/:id/helpful` 🔒 | Once per person, never your own. |
+| POST | `/posts/:id/reports` 🔒 | `{code: spam\|scalping\|abuse\|drugs\|personal\|other}`. Three open reports hide the post until the team decides. |
+| PATCH | `/posts/:id` 🔒 | The event's team or FeestFinder: `{pinned?, hidden?, official?}`. DELETE `/posts/:id`: the author, or the team. |
+| POST | `/events/:id/shares` | `{channel}` → the share URL, tagged `?ref=<code>&ch=<channel>` when signed in. `POST /events/:id/track` with `{source:'shared', ref, channel}` credits the sharer once per visitor. |
+| POST | `/community/events` 🔒📱 | Anyone sends an event in (title, genre, date, `endsOn?`, times, venue, `city`, entry, `sourceUrl`…). Five a day. It joins the review queue; the sender hears the decision. GET `/me/submissions`. |
+| POST | `/community/prefill` 🔒📱 | `{url}` → `{fields, source: structured\|ai, sourceUrl}` to fill the form in. The page's schema.org Event data first (free); otherwise Claude reads the page text. Public pages only (private addresses are refused at every redirect), 2 MB, 8 s. 30 pages and 10 AI reads per person per hour (`429 prefill_limit`); `503 prefill_unavailable` when AI is off. |
+| POST | `/community/prefill/poster` 🔒📱 | Multipart `file` (JPEG/PNG/WebP, 5 MB) → `{fields}` read from a poster by Claude. Same hourly cap. |
+| POST | `/events/:id/claims` 🏢 | `{note (10+ chars), proofUrl?}`: an organiser asks to take over an event the community sent in. One open request per organiser per event (`409 claim_pending`); `409 not_claimable` once an organiser runs it. |
+| GET / PUT | `/organizer/events/:id/hype-goals` 🏢 | Up to five `{threshold, reward:{vi,en}}`. Reaching one tells the team. |
+| GET | `/robots.txt`, `/sitemap.xml` | See README → Running it in production. |
+
+---
+
 ## Friends, chat, group plans (App)
 
 | Method | Path | Notes |
@@ -91,7 +113,11 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | POST | `/orders` 🔒 | Same + `paymentMethod`. Holds seats 15 min. Mock provider → `payment.status: paid` with tickets; VietQR → `awaiting_transfer` with QR, bank, reference. |
 | GET | `/orders/:id` 🔒, POST `/orders/:id/cancel` 🔒 | |
 | POST | `/payments/bank-transfer/webhook` | `x-signature: base64url(HMAC-SHA256(PAYMENT_WEBHOOK_SECRET, raw body))`; `{transactionId, amount, description}`. Idempotent. |
-| GET | `/me/tickets` 🔒 | One card per order with ticket codes and signed `qr` tokens (valid offline). |
+| GET | `/me/tickets` 🔒 | One card per order the caller still holds tickets from (bought, or passed on to them: `received`), each ticket with its signed `qr` of the current version, `transferable`, `faceValue` and any open `listing`; plus `resold` (the caller's resales and payout dates) and `payee`. |
+| POST | `/me/tickets/:id/transfer` 🔒 | `{phone}` gives the ticket to the FeestFinder account with that number. New QR version; the old one stops scanning. |
+| POST / DELETE | `/me/tickets/:id/listing` 🔒📱 | `{price, payee?}` puts it up for resale at 10.000₫ up to face value; needs a bank account (`payee` saves one). DELETE takes it down unless someone is paying. |
+| GET | `/events/:idOrSlug/resale` | Active listings, cheapest first, `watching`, `feePct`. PUT / DELETE `/events/:id/resale/watch` 🔒 asks to be told when one comes up. |
+| POST | `/resale/:listingId/quote` 🔒, `/resale/:listingId/orders` 🔒 | Price + fee; then a 10-minute hold and payment (mock → paid at once; VietQR → `FR…` reference, matched by the bank webhook). GET `/resale/orders/:id`, POST `/resale/orders/:id/cancel`. |
 | POST | `/me/tickets/:id/wallet` 🔒 | `{platform: apple\|google}`. |
 | GET | `/events/:id/live` 🔒 | Per stage: now playing (minutes left, progress), next, set list with states `played\|now\|next\|later` and your reminders; site zones; friends on site. |
 | PUT / DELETE | `/events/:id/presence` 🔒 | "Check in" on the day, optional `{zoneId}`. |
@@ -140,7 +166,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | Method | Path | Notes |
 | --- | --- | --- |
 | POST | `/door/auth/start` → `/door/auth/verify` | Scanner signs in with the invited phone number (SMS code). Several events → `{next: 'pick_event', events}`; send `eventId`. |
-| GET | `/door/events/:id/manifest` | `scanKey` + every ticket code and status for offline checking. |
+| GET | `/door/events/:id/manifest` | `scanKey` + every ticket's code, status and QR version `v` for offline checking, and a `cursor`. `?since=<cursor>` returns only what changed. QR is `<code>.<sig>`, or `<code>~<v>.<sig>` once a ticket has changed hands; an older version scans `invalid` / `transferred`. |
 | POST | `/door/events/:id/scans` | `{token (QR content), deviceId, clientScanId, gate?, scannedAt?, manual?}` → `valid` / `duplicate` ("Already scanned 19:42 at the main gate") / `invalid` (refunded, wrong event, forged). |
 | POST | `/door/events/:id/scans/sync` | `{deviceId, scans: [...]}` offline queue, processed in time order, idempotent. |
 | GET | `/door/events/:id/summary` | Inside vs capacity, throughput per hour, recent scans, staff, last sync. |
@@ -167,6 +193,16 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | GET | `/admin/audit?actor=all\|admin\|system\|organizer`, `/admin/audit.csv`, `/admin/audit/verify` | Audit log with diffs and hash; chain verification. |
 | GET | `/admin/impersonation/options`; POST / DELETE `/admin/impersonation` | "View as": `{targetType: user\|organizer, targetId}` → read-only token and banner. |
 | POST | `/admin/payouts/:eventId/:kind` | `{reference}` — record a transfer; the organiser's ledger row shows paid. |
+
+---
+
+## Community moderation and resale payouts 🛡
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/admin/posts/reported` | Discussion posts with open reports, across every event. POST `/admin/posts/:id/dismiss` keeps one; PATCH / DELETE `/posts/:id` hides or removes it. |
+| GET | `/admin/claims?status=pending\|approved\|rejected` | Organisers asking to take over community events, with their note, proof link and verification. POST `/admin/claims/:id/approve` moves the event to them, turns down the other requests and tells the sender; POST `/admin/claims/:id/reject` `{note?}`. `/admin/counts` carries `claims`. |
+| GET | `/admin/resale` | `?state=due\|upcoming\|paid_out\|failed`: resales with the seller's bank account. POST `/admin/resale/:id/payout` `{reference}` records the bank transfer; POST `/admin/resale/:id/refund` for a failed sale or a cancelled event. |
 
 ---
 

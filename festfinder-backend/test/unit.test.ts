@@ -119,6 +119,18 @@ describe('tickets & listings', () => {
     assert.equal(verifyQrSignature(eventScanKey('secret', 'event-2'), code, sig!), false);
   });
 
+  it('gives a ticket a new QR each time it changes hands, signed over its version', () => {
+    const key = eventScanKey('secret', 'event-1');
+    const v2 = qrToken('secret', 'event-1', 'FF-RAVO-7K2Q', 2);
+    const read = readQrToken(v2);
+    assert.deepEqual([read.code, read.version, read.payload], ['FF-RAVO-7K2Q', 2, 'FF-RAVO-7K2Q~2']);
+    assert.equal(verifyQrSignature(key, read.payload, read.sig!), true);
+    // Changing the version by hand breaks the signature.
+    const forged = readQrToken(v2.replace('~2.', '~3.'));
+    assert.equal(verifyQrSignature(key, forged.payload, forged.sig!), false);
+    assert.equal(readQrToken(qrToken('secret', 'event-1', 'FF-RAVO-7K2Q')).version, 0);
+  });
+
   it('scores listing quality out of 100', () => {
     const full = qualityScore({
       title: 'Ravolution Music Festival 2026', genre: 'EDM', description: { en: 'x'.repeat(90), vi: '' }, logoUrl: 'https://a/l.png',

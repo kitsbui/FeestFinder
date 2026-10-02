@@ -8,19 +8,31 @@ import { hmac, randomCode, safeEqual } from '../lib/crypto.ts';
  */
 export const eventScanKey = (secret: string, eventId: string) => hmac(secret, `scan:${eventId}`);
 
-const sign = (key: string, code: string) => hmac(key, code).slice(0, 22);
+const sign = (key: string, payload: string) => hmac(key, payload).slice(0, 22);
 
-/** What the QR encodes: `<ticket code>.<signature>`. */
-export const qrToken = (secret: string, eventId: string, code: string) => `${code}.${sign(eventScanKey(secret, eventId), code)}`;
+/**
+ * What a ticket's QR carries. A ticket that never changed hands is `<code>.<signature>`;
+ * each time it moves to someone else its version goes up and the QR becomes
+ * `<code>~<version>.<signature>`, signed over both. The holder's QR is always the latest
+ * version, and the door turns away any older one.
+ */
+const qrPayload = (code: string, version: number) => (version > 0 ? `${code}~${version}` : code);
 
-export function readQrToken(token: string): { code: string; sig: string | null } {
+export const qrToken = (secret: string, eventId: string, code: string, version = 0) =>
+  `${qrPayload(code, version)}.${sign(eventScanKey(secret, eventId), qrPayload(code, version))}`;
+
+export function readQrToken(token: string): { code: string; version: number; payload: string; sig: string | null } {
   const t = token.trim();
   const dot = t.lastIndexOf('.');
-  return dot > 0 ? { code: t.slice(0, dot), sig: t.slice(dot + 1) } : { code: t, sig: null };
+  const payload = dot > 0 ? t.slice(0, dot) : t;
+  const tilde = payload.lastIndexOf('~');
+  const version = tilde > 0 && /^\d{1,6}$/.test(payload.slice(tilde + 1)) ? Number(payload.slice(tilde + 1)) : 0;
+  return { code: version ? payload.slice(0, tilde) : payload, version, payload, sig: dot > 0 ? t.slice(dot + 1) : null };
 }
 
-export function verifyQrSignature(scanKey: string, code: string, sig: string): boolean {
-  return safeEqual(sign(scanKey, code), sig);
+/** Checks the signature over what the QR says, version included. */
+export function verifyQrSignature(scanKey: string, payload: string, sig: string): boolean {
+  return safeEqual(sign(scanKey, payload), sig);
 }
 
 /** FF-RAVO-7K2Q: event prefix so gate staff can spot a wrong-event ticket by eye. */

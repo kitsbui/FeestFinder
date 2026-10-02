@@ -93,7 +93,7 @@ export async function checkOtp(ctx: Ctx, challengeId: string, code: string, purp
 
 export function publicUser(u: any) {
   return {
-    id: u.id, name: u.name, email: u.email, phone: u.phone, city: u.city, photoUrl: u.photo_url,
+    id: u.id, name: u.name, email: u.email, phone: u.phone, phoneVerified: !!u.phone_verified_at, city: u.city, photoUrl: u.photo_url,
     locale: u.locale, role: u.role, signupMethod: u.signup_method, interests: u.interests, hasPassword: !!u.password_hash,
   };
 }
@@ -153,9 +153,13 @@ export default async function authRoutes(app: FastifyInstance) {
     }
     const method = ch.channel === 'wa' ? 'wa' : 'zalo';
     const user = await ctx.db.tx(async (q) => {
-      const found = await one<any>(q, 'select id from users where phone = $1', [ch.identifier]);
-      if (found) return { id: found.id, created: false };
-      const created = await one<any>(q, `insert into users (phone, signup_method, created_at) values ($1, $2, $3) returning id`, [ch.identifier, method, now]);
+      const found = await one<any>(q, 'select id, phone_verified_at from users where phone = $1', [ch.identifier]);
+      if (found?.phone_verified_at) return { id: found.id, created: false };
+      // A number typed into someone's profile proves nothing, so it never signs anyone in to
+      // that account: the person who just proved it gets the number, on an account of their own.
+      if (found) await q.query('update users set phone = null where id = $1', [found.id]);
+      const created = await one<any>(q,
+        `insert into users (phone, phone_verified_at, signup_method, created_at) values ($1, $3, $2, $3) returning id`, [ch.identifier, method, now]);
       if (method === 'zalo') {
         await q.query(`insert into social_connections (user_id, provider, external_id) values ($1, 'zalo', $2) on conflict do nothing`, [created!.id, ch.identifier]);
       }

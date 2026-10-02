@@ -13,7 +13,7 @@ export interface SessionInfo {
   kind: 'user' | 'staff';
   readOnly: boolean;
   impersonatorId: string | null;
-  user: { id: string; name: string; email: string | null; phone: string | null; role: 'user' | 'admin'; locale: 'en' | 'vi' } | null;
+  user: { id: string; name: string; email: string | null; phone: string | null; phoneVerified: boolean; role: 'user' | 'admin'; locale: 'en' | 'vi' } | null;
   staff: { id: string; eventId: string; name: string; gate: string; role: 'scanner' | 'lead' } | null;
 }
 
@@ -47,7 +47,7 @@ export async function resolveSession(ctx: Ctx, req: FastifyRequest): Promise<Ses
   if (!token) return null;
   const row = await one<any>(ctx.db,
     `select s.token_hash, s.kind, s.read_only, s.impersonator_id, s.expires_at,
-            u.id as u_id, u.name as u_name, u.email as u_email, u.phone as u_phone, u.role as u_role, u.locale as u_locale,
+            u.id as u_id, u.name as u_name, u.email as u_email, u.phone as u_phone, u.phone_verified_at as u_phone_verified_at, u.role as u_role, u.locale as u_locale,
             st.id as st_id, st.event_id as st_event, st.name as st_name, st.gate as st_gate, st.role as st_role, st.active as st_active
        from sessions s
        left join users u on u.id = s.user_id
@@ -60,7 +60,7 @@ export async function resolveSession(ctx: Ctx, req: FastifyRequest): Promise<Ses
     kind: row.kind,
     readOnly: row.read_only,
     impersonatorId: row.impersonator_id,
-    user: row.u_id ? { id: row.u_id, name: row.u_name, email: row.u_email, phone: row.u_phone, role: row.u_role, locale: row.u_locale } : null,
+    user: row.u_id ? { id: row.u_id, name: row.u_name, email: row.u_email, phone: row.u_phone, phoneVerified: !!row.u_phone_verified_at, role: row.u_role, locale: row.u_locale } : null,
     staff: row.st_id ? { id: row.st_id, eventId: row.st_event, name: row.st_name, gate: row.st_gate, role: row.st_role } : null,
   };
 }

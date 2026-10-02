@@ -6,6 +6,8 @@ import { deliverDue } from './services/messaging.ts';
 import { notifyOrganizer, notifyUser } from './services/notify.ts';
 import { dispatchAnnouncement } from './routes/organizer/audience.ts';
 import { checkTicketLink } from './routes/organizer/events.ts';
+import { expireResaleHolds } from './services/resale.ts';
+import { pingIndexNow } from './services/seo.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
 export const jobs = {
@@ -23,7 +25,14 @@ export const jobs = {
   /** Unpaid holds release their seats after 15 minutes. */
   async expireOrders(ctx: Ctx) {
     const rows = await many(ctx.db, `update orders set status = 'expired' where status = 'pending' and expires_at < $1 returning 1`, [ctx.clock.now()]);
-    return rows.length;
+    // Resale holds nobody paid for put the ticket back on the list.
+    const resale = await ctx.db.tx((q) => expireResaleHolds(q, ctx.clock.now()));
+    return rows.length + resale;
+  },
+
+  /** Tells IndexNow about event pages that went live or changed. */
+  async pingIndexNow(ctx: Ctx) {
+    return pingIndexNow(ctx);
   },
 
   async expireAppeals(ctx: Ctx) {
@@ -116,6 +125,7 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['lowTicketAlerts', 10 * 60_000],
   ['expireAppeals', 10 * 60_000],
   ['checkTicketLinks', 15 * 60_000],
+  ['pingIndexNow', 5 * 60_000],
 ];
 
 /**

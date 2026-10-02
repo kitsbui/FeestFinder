@@ -5,7 +5,7 @@ import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
 import { BADGES, GENRES, L, REJECT_REASONS, REPORT_CATEGORY, REPORT_CODES, TIER_NAMES, type Localized } from '../../lib/i18n.ts';
-import { initialsOf, isEmail, normalizeEmail, searchNormalize, slugify } from '../../lib/contact.ts';
+import { formatVnPhone, initialsOf, isEmail, normalizeEmail, searchNormalize, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { toCsv } from '../../lib/csv.ts';
 import { addDays, atVn, monthEnd, vnDate, weekendRange } from '../../lib/time.ts';
@@ -346,7 +346,9 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     const ev = await one<any>(ctx.db, 'select * from events where id = $1', [id]);
     if (!ev) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
     const [org, tiers, stages, decisions, appeal, reports, metrics, sales, thread, history, shelves] = await Promise.all([
-      one<any>(ctx.db, 'select * from organizers where id = $1', [ev.organizer_id]),
+      one<any>(ctx.db, `select o.*, u.name as submitter_name, u.phone as submitter_phone,
+                               (select count(*)::int from events x where x.submitted_by = u.id and x.published_at is not null) as submitter_published
+                          from organizers o left join users u on u.id = $2 where o.id = $1`, [ev.organizer_id, ev.submitted_by]),
       many<any>(ctx.db, 'select * from ticket_tiers where event_id = $1 order by sort, price', [id]),
       many<any>(ctx.db, `select s.id, s.name, (select count(*)::int from sets x where x.stage_id = s.id) as sets from stages s where s.event_id = $1 order by s.sort`, [id]),
       many<any>(ctx.db, `select d.*, u.name as by_name from moderation_decisions d left join users u on u.id = d.decided_by where d.event_id = $1 order by d.decided_at desc`, [id]),
@@ -372,7 +374,11 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       organizer: org && {
         id: org.id, slug: org.slug, name: org.name, initials: org.initials, type: org.type, verified: org.verification_state === 'verified',
         state: org.verification_state, strikes: org.strikes, suspended: !!org.suspended_at, logoUrl: org.logo_url, email: org.email, hotline: org.hotline,
+        community: org.is_community,
       },
+      // Sent in by someone in the community: who, and how many of theirs went live before.
+      submittedBy: ev.submitted_by ? { id: ev.submitted_by, name: org?.submitter_name || null, phone: org?.submitter_phone ? formatVnPhone(org.submitter_phone) : null, published: org?.submitter_published ?? 0 } : null,
+      sourceUrl: ev.submitted_by ? ev.event_url : null,
       tiers: tiers.map((t) => ({ id: t.id, key: t.key, name: t.name, note: t.note, price: Number(t.price), capacity: t.capacity, sold: t.sold, isLast: t.is_last, salesOpenAt: t.sales_open_at, priceRiseOn: t.price_rise_on, priceRiseTo: t.price_rise_to ? Number(t.price_rise_to) : null })),
       stages: stages.map((st) => ({ id: st.id, name: st.name, sets: st.sets })),
       decisions: decisions.map((d) => ({

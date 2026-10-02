@@ -12,6 +12,7 @@ import { buildVietQr, BANKS } from '../lib/vietqr.ts';
 import { requireUser } from '../http/guards.ts';
 import { REFUND_POLICY, tierState } from '../presenters/event.ts';
 import { fulfilOrder, qrToken } from '../services/tickets.ts';
+import { fulfilResale } from '../services/resale.ts';
 import { notifyUser } from '../services/notify.ts';
 
 export const SERVICE_FEE_PCT = Number(process.env.SERVICE_FEE_PCT ?? 5);
@@ -75,20 +76,38 @@ async function quote(ctx: Ctx, q: Queryable, input: z.infer<typeof CheckoutInput
   };
 }
 
-async function presentOrder(ctx: Ctx, orderId: string) {
+/**
+ * One wallet card: an order's tickets that `holderId` still holds (by default whoever
+ * bought them). Each carries the QR of its current version, and its resale listing if any.
+ */
+async function presentOrder(ctx: Ctx, orderId: string, holderId?: string) {
   const o = await one<any>(ctx.db,
-    `select o.*, e.slug, e.title, e.art, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, t.name as tier_name, t.key as tier_key
+    `select o.*, e.slug, e.title, e.art, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, e.status as event_status, e.ends_at, e.resale_enabled,
+            t.name as tier_name, t.key as tier_key
        from orders o join events e on e.id = o.event_id join ticket_tiers t on t.id = o.tier_id where o.id = $1`, [orderId]);
-  const tickets = await many<any>(ctx.db, 'select id, code, status, checked_in_at, wallet_apple_at, wallet_google_at from tickets where order_id = $1 order by code', [orderId]);
+  const holder = holderId ?? o.user_id;
+  const tickets = await many<any>(ctx.db,
+    `select t.id, t.code, t.status, t.kind, t.checked_in_at, t.wallet_apple_at, t.wallet_google_at, t.qr_version,
+            l.id as listing_id, l.price as listing_price, l.status as listing_status
+       from tickets t left join ticket_listings l on l.ticket_id = t.id and l.status in ('active', 'reserved')
+      where t.order_id = $1 and t.user_id = $2 order by t.code`, [orderId, holder]);
+  const now = ctx.clock.now();
+  const movable = o.event_status === 'live' && o.resale_enabled && (!o.ends_at || new Date(o.ends_at) > now);
   return {
-    id: o.id, code: o.code, status: o.status, qty: o.qty, unitPrice: o.unit_price, subtotal: o.subtotal, discount: o.discount, fee: o.fee, total: o.total,
+    id: o.id, code: o.code, status: o.status, qty: o.status === 'refunded' ? o.qty : tickets.length,
+    unitPrice: o.unit_price, subtotal: o.subtotal, discount: o.discount, fee: o.fee, total: o.total,
     paymentMethod: o.payment_method, createdAt: o.created_at, paidAt: o.paid_at, expiresAt: o.status === 'pending' ? o.expires_at : null,
+    // Tickets someone passed on to this holder: the order and its money are the buyer's, not theirs.
+    received: holder !== o.user_id,
     event: { id: o.event_id, slug: o.slug, title: o.title, art: o.art, startsOn: o.starts_on, endsOn: o.ends_on, startTime: o.start_time, endTime: o.end_time, venueName: o.venue_name, area: o.area },
     tier: { key: o.tier_key, name: o.tier_name },
     tickets: tickets.map((t) => ({
       id: t.id, code: t.code, status: t.status, checkedInAt: t.checked_in_at,
-      qr: qrToken(ctx.config.ticketSigningSecret, o.event_id, t.code),
+      qr: qrToken(ctx.config.ticketSigningSecret, o.event_id, t.code, t.qr_version),
       wallet: { apple: !!t.wallet_apple_at, google: !!t.wallet_google_at },
+      faceValue: o.unit_price,
+      transferable: movable && t.status === 'valid' && t.kind !== 'guest',
+      listing: t.listing_id ? { id: t.listing_id, price: t.listing_price, status: t.listing_status } : null,
     })),
   };
 }
@@ -184,10 +203,26 @@ export default async function commerceRoutes(app: FastifyInstance) {
     const expected = hmac(ctx.config.paymentWebhookSecret, req.rawBody ?? '');
     if (!sig || !safeEqual(sig, expected)) throw unauthorized(L('Bad signature', 'Chữ ký không hợp lệ'));
     const body = parse(z.object({ transactionId: z.string(), amount: z.number().int().positive(), description: z.string() }), req.body);
-    const code = /FF[23456789A-HJ-NP-Z]{6}/.exec(body.description.toUpperCase())?.[0];
+    // The note is free text: take the first code in it that names an order of ours.
+    const codes = [...new Set(body.description.toUpperCase().match(/F[FR][23456789A-HJ-NP-Z]{6}/g) ?? [])];
+    let code: string | null = null;
+    for (const c of codes) {
+      const table = c.startsWith('FR') ? 'resale_orders' : 'orders';
+      if (await one(ctx.db, `select 1 from ${table} where code = $1`, [c])) { code = c; break; }
+    }
     if (!code) return reply.code(202).send({ matched: false });
+    if (code.startsWith('FR')) {
+      // A resale: the ticket moves to the buyer when the transfer lands.
+      const r = await one<any>(ctx.db, 'select id, total, status from resale_orders where code = $1', [code]);
+      if (r.status === 'paid') return { matched: true, alreadyPaid: true };
+      if (body.amount < r.total) return reply.code(202).send({ matched: true, underpaid: true });
+      const out = await ctx.db.tx(async (q) => {
+        await q.query('update resale_orders set provider_ref = $2 where id = $1', [r.id, body.transactionId]);
+        return fulfilResale(q, r.id, ctx.clock.now());
+      });
+      return { matched: true, ...(out.failed ? { refundDue: true } : {}) };
+    }
     const order = await one<any>(ctx.db, 'select id, total, status from orders where code = $1', [code]);
-    if (!order) return reply.code(202).send({ matched: false });
     if (order.status === 'paid') return { matched: true, alreadyPaid: true };
     if (body.amount < order.total) return reply.code(202).send({ matched: true, underpaid: true });
     await ctx.db.tx(async (q) => {
@@ -200,16 +235,32 @@ export default async function commerceRoutes(app: FastifyInstance) {
     return { matched: true };
   });
 
-  /** My tickets, one card per order, with signed QR tokens that verify offline at the gate. */
+  /**
+   * My tickets: one card per order I still hold tickets from, whether I bought them or
+   * someone passed them on to me, with signed QR tokens that verify offline at the gate.
+   * Below them, the tickets I resold and when the money reaches me.
+   */
   app.get('/me/tickets', async (req) => {
     const s = requireUser(req);
     const orders = await many<any>(ctx.db,
-      `select o.id from orders o join events e on e.id = o.event_id
-        where o.user_id = $1 and o.status in ('paid', 'refunded') order by e.starts_at`, [s.user.id]);
+      `select o.id, (o.user_id <> $1) as received from orders o join events e on e.id = o.event_id
+        where o.status in ('paid', 'refunded')
+          and (o.user_id = $1 and (o.status = 'refunded' or exists (select 1 from tickets t where t.order_id = o.id and t.user_id = $1))
+               or o.user_id <> $1 and exists (select 1 from tickets t where t.order_id = o.id and t.user_id = $1))
+        order by e.starts_at`, [s.user.id]);
     const items = [];
-    for (const o of orders) items.push(await presentOrder(ctx, o.id));
+    for (const o of orders) items.push(await presentOrder(ctx, o.id, s.user.id));
+    const sold = await many<any>(ctx.db,
+      `select r.id, r.code, r.price, r.status, r.paid_at, r.payout_due_at, r.paid_out_at, e.title, e.slug
+         from resale_orders r join events e on e.id = r.event_id where r.seller_id = $1 and r.status = 'paid' order by r.paid_at desc limit 20`, [s.user.id]);
+    const payee = await one<any>(ctx.db, 'select payee_bank_name, payee_account_no from users where id = $1', [s.user.id]);
     return {
       items,
+      resold: sold.map((r) => ({
+        id: r.id, code: r.code, price: r.price, soldAt: r.paid_at, payoutDueAt: r.payout_due_at, paidOutAt: r.paid_out_at,
+        event: { title: r.title, slug: r.slug },
+      })),
+      payee: payee?.payee_account_no ? { bankName: payee.payee_bank_name, accountMasked: `•••• ${String(payee.payee_account_no).slice(-4)}` } : null,
       offlineNote: L('Stored on this device · scans with no signal', 'Đã lưu trên máy · quét được khi không có sóng'),
     };
   });
@@ -223,7 +274,7 @@ export default async function commerceRoutes(app: FastifyInstance) {
     const id = parse(uuid, req.params.id);
     const { platform } = parse(z.object({ platform: z.enum(['apple', 'google']) }), req.body);
     const t = await one<any>(ctx.db,
-      `select t.id, t.code, t.event_id, t.holder_name, e.title, e.starts_at, e.venue_name, e.lat, e.lng, tt.name as tier_name
+      `select t.id, t.code, t.event_id, t.holder_name, t.qr_version, e.title, e.starts_at, e.venue_name, e.lat, e.lng, tt.name as tier_name
          from tickets t join events e on e.id = t.event_id left join ticket_tiers tt on tt.id = t.tier_id
         where t.id = $1 and t.user_id = $2`, [id, s.user.id]);
     if (!t) throw notFound();
@@ -233,7 +284,7 @@ export default async function commerceRoutes(app: FastifyInstance) {
       passUrl: null,
       pass: {
         serial: t.code, title: t.title, startsAt: t.starts_at, venue: t.venue_name, tier: t.tier_name, holder: t.holder_name,
-        barcode: { format: 'QR', message: qrToken(ctx.config.ticketSigningSecret, t.event_id, t.code) },
+        barcode: { format: 'QR', message: qrToken(ctx.config.ticketSigningSecret, t.event_id, t.code, t.qr_version) },
         location: t.lat !== null ? { lat: t.lat, lng: t.lng } : null,
       },
       message: L('Pass added · it opens from the lock screen at the gate', 'Đã thêm vé · mở ngay từ màn hình khoá khi tới cổng'),

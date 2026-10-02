@@ -10,6 +10,8 @@ import { ConsoleTransport } from '../src/services/messaging.ts';
 import { MemoryStorage } from '../src/services/storage.ts';
 import { DisabledGuide, type GuideGenerator } from '../src/services/guide.ts';
 import { MockOAuth } from '../src/services/oauth.ts';
+import { DisabledPrefill, type PrefillGenerator } from '../src/services/prefill.ts';
+import type { PageFetcher } from '../src/services/fetchpage.ts';
 
 /** Monday 14 September 2026, 10:00 in Ho Chi Minh City — "today" in the design prototypes. */
 export const PROTOTYPE_NOW = '2026-09-14T10:00:00+07:00';
@@ -38,7 +40,7 @@ async function freshDatabaseUrl(): Promise<string | null> {
  * A test API on a fresh database. With `seed: false` the database has the migrations only,
  * the way production starts; otherwise it holds the demo data from fixtures/seed.ts.
  */
-export async function setup(opts: { now?: string; guide?: GuideGenerator; checkLink?: Ctx['checkLink']; config?: Partial<Config>; seed?: boolean } = {}) {
+export async function setup(opts: { now?: string; guide?: GuideGenerator; prefill?: PrefillGenerator; fetchPage?: PageFetcher; checkLink?: Ctx['checkLink']; config?: Partial<Config>; seed?: boolean } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
@@ -54,6 +56,9 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; checkL
     config, db, clock, transport, storage: new MemoryStorage(),
     errors: new NoopReporter(),
     guide: opts.guide ?? new DisabledGuide(),
+    prefill: opts.prefill ?? new DisabledPrefill(),
+    // The tests never reach the internet.
+    fetchPage: opts.fetchPage ?? (async () => { throw new Error('no network in tests'); }),
     oauth: { fb: new MockOAuth('fb'), ig: new MockOAuth('ig') },
     checkLink: opts.checkLink ?? (async () => 'ok'),
     log: () => {},

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import WebScreen from '@/surfaces/web';
 import { EventSummary } from '@/components/summaries';
-import { api, eventJsonLd, jsonLdHtml, price, SITE_URL, text, when, type EventDetail } from '@/lib/api';
+import { api, eventJsonLd, faqJsonLd, jsonLdHtml, price, SITE_URL, text, when, type EventDetail } from '@/lib/api';
 
 export const revalidate = 60;
 
@@ -34,9 +34,11 @@ export default async function EventPage({ params }: Params) {
   const { slug } = await params;
   const e = await load(slug);
   if (!e) notFound();
+  const faq = faqJsonLd(e);
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(eventJsonLd(e, `${SITE_URL}/e/${e.slug}`)) }} />
+      {faq ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(faq) }} /> : null}
       <WebScreen>
         <EventSummary e={e} />
       </WebScreen>

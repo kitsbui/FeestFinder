@@ -87,6 +87,9 @@ export interface EventDetail extends EventCard {
   artists: string[];
   links: { event?: string | null; brand?: string | null; tickets?: string | null } | null;
   tickets: { tiers: { id: string; name: Localized; price: number; state: string }[] } | null;
+  /** The organiser's answers to questions on the page: shown as its FAQ. */
+  faq?: { question: string; answer: string }[];
+  hypeCount?: number;
 }
 
 export interface Organizer {
@@ -156,12 +159,15 @@ export function eventJsonLd(e: EventDetail, url: string) {
   }));
   return {
     '@context': 'https://schema.org',
-    '@type': 'Event',
+    // schema.org's closest type per genre, the same as the API's own event pages.
+    '@type': ({ Food: 'FoodEvent', Culture: 'Festival' } as Record<string, string>)[e.genre ?? ''] ?? (e.genre ? 'MusicEvent' : 'Event'),
     name: e.title,
     description: text(e.description, 'vi') || undefined,
     startDate: e.startsAt ?? `${e.startsOn}T${e.startTime ?? '00:00'}:00+07:00`,
     endDate: e.endsAt ?? undefined,
-    eventStatus: 'https://schema.org/EventScheduled',
+    inLanguage: 'vi',
+    typicalAgeRange: e.age === '18+' ? '18-' : e.age === '16+' ? '16-' : undefined,
+    eventStatus: e.status === 'cancelled' ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     // Images kept in the API's database have a path on this site, not a full URL.
     image: e.coverUrl ? [new URL(e.coverUrl, SITE_URL).href] : undefined,
@@ -184,6 +190,19 @@ export function eventJsonLd(e: EventDetail, url: string) {
     offers: offers.length ? offers : e.entryMode === 'free'
       ? [{ '@type': 'Offer', price: 0, priceCurrency: 'VND', availability: 'https://schema.org/InStock', url }]
       : undefined,
+    interactionStatistic: e.hypeCount !== undefined
+      ? { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: e.hypeCount }
+      : undefined,
+  };
+}
+
+/** The page's questions and the organiser's answers, as FAQPage data for search and AI answers. */
+export function faqJsonLd(e: EventDetail) {
+  if (!e.faq?.length) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: e.faq.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })),
   };
 }
 

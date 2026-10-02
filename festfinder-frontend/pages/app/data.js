@@ -1,12 +1,13 @@
-/** One paid order from /me/tickets, in the shape the wallet screen reads. */
-FF.appTicket = function (o) {
-  const first = o.tickets[0] || {};
+/** One ticket from /me/tickets, in the shape the wallet screen reads: each ticket is its own card. */
+FF.appTicket = function (o, t) {
   return {
-    id: first.code || o.code, ticketId: first.id, orderId: o.id, eventId: o.event.id,
-    qty: o.qty, checked: o.tickets.every(t => t.status === 'used'),
-    qr: first.qr || '', wallet: first.wallet || { apple:false, google:false }
+    id: t.code, ticketId: t.id, orderId: o.id, eventId: o.event.id,
+    qty: 1, checked: t.status === 'used', qr: t.qr || '', wallet: t.wallet || { apple:false, google:false },
+    received: !!o.received, transferable: !!t.transferable, listing: t.listing || null, faceValue: t.faceValue || o.unitPrice
   };
 };
+/** Every ticket in a /me/tickets answer, as wallet cards. */
+FF.appTicketsFrom = (out) => out.items.reduce((all, o) => all.concat(o.tickets.map(t => FF.appTicket(o, t))), []);
 
 /*
  * The feed screen and the chrome around it. Tickets, plans, chats, notifications and
@@ -78,8 +79,8 @@ const signedIn = () => !!(FF.session && FF.session.user);
 
 /** Wallet: the paid orders behind My tickets. */
 FF.appTickets = (cmp) => signedIn() && FF.once('tickets', async () => {
-  const out = await FF.maybe(FF.get('/me/tickets'), { items: [] });
-  cmp.setState({ tickets: out.items.map(FF.appTicket) });
+  const out = await FF.maybe(FF.get('/me/tickets'), { items: [], resold: [], payee: null });
+  cmp.setState({ tickets: FF.appTicketsFrom(out), resold: out.resold || [], payee: out.payee || null });
   return out;
 });
 

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
+import { eventHead, eventSsr, loadEventPage } from '../services/seo.ts';
 
 /**
  * The four Claude Design surfaces, wired to this API and served from the same origin, and
@@ -110,9 +111,35 @@ export default async function frontendRoutes(app: FastifyInstance) {
     return reply.send(entry.body);
   }
 
+  /**
+   * An event page arrives with its facts already in it: title, description and link-preview
+   * tags, structured data, and the details as plain HTML inside <x-dc>, which the screen
+   * replaces when it mounts. Search engines and AI assistants that run no script read that.
+   */
+  app.get<{ Params: { slug: string } }>('/e/:slug', async (req, reply) => {
+    const entry = await load(join(dir, 'pages/web/shell.html'));
+    if (!entry) throw notFound();
+    reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
+    const page = await loadEventPage(app.ctx, req.params.slug).catch((e) => { app.ctx.log(`event page ${req.params.slug}: ${e}`); return null; });
+    if (!page) return serve(req, reply.code(404), entry, 0);
+    const lang = req.query && (req.query as Record<string, string>).lang === 'en' ? 'en' : 'vi';
+    const { title, head } = eventHead(app.ctx, page, lang);
+    const html = entry.body.toString('utf8')
+      .replace(/<title>[^<]*<\/title>/, `<title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`)
+      .replace('</head>', `${head}\n</head>`)
+      .replace('<x-dc></x-dc>', `<x-dc>${eventSsr(page, lang)}</x-dc>`);
+    const body = Buffer.from(html);
+    return serve(req, reply, {
+      type: MIME['.html'], body,
+      etag: '"' + createHash('sha256').update(body).digest('base64url').slice(0, 20) + '"',
+      gzip: gzipSync(body, { level: 6 }),
+    }, 0);
+  });
+
   for (const surface of SURFACES) {
     const shell = join(dir, surface.shell);
     for (const route of surface.routes) {
+      if (route === '/e/:slug') continue;
       app.get(route, async (req, reply) => {
         const entry = await load(shell);
         if (!entry) throw notFound();

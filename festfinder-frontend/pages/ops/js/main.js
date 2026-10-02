@@ -20,6 +20,7 @@ import { Icon, Button, Field, Input, Toaster, ConfirmHost, Spinner, Menu, ErrorB
 const TEAM = [
   { key: '', icon: 'squares-four', label: () => t('Tổng quan', 'Overview'), load: () => import('./team/overview.js'), view: 'Overview' },
   { key: 'review', icon: 'stack', label: () => t('Duyệt tin', 'Review queue'), load: () => import('./team/review.js'), view: 'Review', count: 'queue', alert: true },
+  { key: 'claims', icon: 'seal-check', label: () => t('Nhận quản lý', 'Event claims'), load: () => import('./team/claims.js'), view: 'Claims', count: 'claims', alert: true },
   { key: 'events', icon: 'calendar-dots', label: () => t('Sự kiện', 'Events'), load: () => import('./team/events.js'), view: 'Events' },
   { key: 'reports', icon: 'flag', label: () => t('Báo cáo & kháng nghị', 'Reports & appeals'), load: () => import('./team/reports.js'), view: 'Reports', count: 'reportsAppeals', alert: true },
   { section: () => t('Đối tác', 'Partners') },

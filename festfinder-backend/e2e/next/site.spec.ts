@@ -14,12 +14,21 @@ test.describe('pages for search engines', () => {
     expect(html).toContain('<title>Ravolution Music Festival · FeestFinder</title>');
     expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
     expect(html).toMatch(/<h1>Ravolution Music Festival<\/h1>/);
-    const ld = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/)?.[1];
-    expect(ld, 'Event structured data').toBeTruthy();
-    const event = JSON.parse(ld!);
-    expect(event['@type']).toBe('Event');
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+    const event = blocks.find((b) => b['@type'] === 'MusicEvent');
+    expect(event, 'MusicEvent structured data').toBeTruthy();
     expect(event.location.address.addressCountry).toBe('VN');
     expect(event.offers.length).toBeGreaterThan(0);
+    // The organiser's answers on the page are its FAQ, for search engines and AI answers.
+    const faq = blocks.find((b) => b['@type'] === 'FAQPage');
+    expect(faq?.mainEntity.length).toBeGreaterThan(0);
+    expect(html).toContain('Câu hỏi thường gặp');
+  });
+
+  test('robots.txt welcomes AI search crawlers and turns training crawlers away', async ({ request }) => {
+    const robots = await (await request.get('/robots.txt')).text();
+    expect(robots).toMatch(/User-Agent: GPTBot[\s\S]*Disallow: \//i);
+    expect(robots).not.toMatch(/OAI-SearchBot/);
   });
 
   test('landing pages exist in both languages and point at each other', async ({ request }) => {
