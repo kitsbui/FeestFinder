@@ -3,7 +3,7 @@ FF.webEvent = function (c) {
   return {
     id: c.id, slug: c.slug, title: c.title, genre: c.genre, ds: c.startsOn, de: c.endsOn,
     time: (c.startTime || '') + ' – ' + (c.endTime || ''),
-    venue: c.venue.name || '', area: c.venue.area || '', lat: c.venue.lat, lng: c.venue.lng,
+    venue: c.venue.name || '', area: c.venue.area || '', lat: c.venue.lat, lng: c.venue.lng, city: c.city || 'ho-chi-minh',
     price: c.priceFrom, hype: c.hypeCount, featured: c.featured, soldOut: c.soldOut, past: c.past, dist: c.distanceKm,
     badge: c.badge ? c.badge.label : undefined,
     art: FF.artOf(c),

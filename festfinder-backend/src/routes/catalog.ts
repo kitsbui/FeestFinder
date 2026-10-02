@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Ctx } from '../context.ts';
 import { many, one } from '../db/index.ts';
 import { notFound } from '../lib/errors.ts';
-import { GENRES, L } from '../lib/i18n.ts';
+import { CITY_SLUGS, GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
 import { TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
 import { bool, csv, dateStr, limit, parse } from '../lib/validate.ts';
@@ -23,6 +23,7 @@ const ExploreQuery = z.object({
   artist: z.string().max(100).optional(),
   price: csv(z.enum(PRICE_BANDS)).optional(),
   area: z.string().max(60).optional(),
+  city: z.enum(CITY_SLUGS).optional(),
   organizer: z.string().max(80).optional(),
   friendsOnly: bool.optional(),
   sort: z.enum(['date', 'hype', 'price', 'relevance']).default('date'),
@@ -46,6 +47,7 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
   if (opts.genre && f.genre) where.push(`e.genre = ${sql.p(f.genre)}`);
   if (f.artist) where.push(`${sql.p(f.artist)} = any(e.artists)`);
   if (f.area) where.push(`e.area = ${sql.p(f.area)}`);
+  if (f.city) where.push(`e.city = ${sql.p(f.city)}`);
   if (f.organizer) where.push(`o.slug = ${sql.p(f.organizer)}`);
   if (f.price?.length) {
     const bands = f.price.map((b: (typeof PRICE_BANDS)[number]) => ({
@@ -351,7 +353,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
   app.post<{ Params: { id: string } }>('/events/:id/track', async (req, reply) => {
     const body = parse(z.object({
       type: z.enum(['view', 'ticket_click']),
-      source: z.enum(['feed', 'shelf', 'shared', 'search', 'own', 'ads', 'map']).default('feed'),
+      source: z.enum(['feed', 'shelf', 'shared', 'search', 'own', 'ads', 'map', 'list']).default('feed'),
     }), req.body);
     if (!isUuid(req.params.id)) throw notFound();
     const now = ctx.clock.now();

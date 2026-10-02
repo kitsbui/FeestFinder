@@ -20,7 +20,7 @@ async function signIn(page: Page, who: Account) {
 test.describe('Web', () => {
   const routes: [string, RegExp][] = [
     ['/', /Explore/],
-    ['/map', /EVENTS NEAR YOU/i],
+    ['/list', /EVERY EVENT/i],
     ['/about', /ABOUT FEESTFINDER/i],
     ['/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i],
     ['/vi/ho-chi-minh/this-weekend', /SỰ KIỆN EDM & LỄ HỘI Ở TP\.HCM/i],
@@ -33,11 +33,26 @@ test.describe('Web', () => {
   test('tabs change the URL and back returns to the previous screen', async ({ page }) => {
     await page.goto('/about');
     await expect.poll(() => page.locator('body').innerText()).toMatch(/ABOUT FEESTFINDER/i);
-    await page.getByText('Map', { exact: true }).first().click();
-    await expect(page).toHaveURL(/\/map$/);
+    await page.getByText('List', { exact: true }).first().click();
+    await expect(page).toHaveURL(/\/list$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/about$/);
     await expect.poll(() => page.locator('body').innerText()).toMatch(/ABOUT FEESTFINDER/i);
+  });
+
+  test('the old map address lands on the list', async ({ page }) => {
+    await page.goto('/map');
+    await expect(page).toHaveURL(/\/list$/);
+  });
+
+  test('the list shows every event as a table or a grid, by city', async ({ page }) => {
+    await expectScreen(page, '/list', /EVERY EVENT/i);
+    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await page.getByText('Grid', { exact: true }).click();
+    await expect(page.getByRole('row')).toHaveCount(0);
+    await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
+    await page.getByText('Hanoi · 0', { exact: true }).click();
+    await expect(page.getByText('Nothing matches')).toBeVisible();
   });
 
   test('the logo and every icon the page links to load', async ({ page, request }) => {
@@ -67,6 +82,7 @@ test.describe('App', () => {
       ['/app/profile', /YOU'RE INTO/i],
       ['/app/tickets', /MY TICKETS/i],
       ['/app/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i],
+      ['/app/list', /EVERY EVENT/i],
     ];
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectScreen(page, path, shows));

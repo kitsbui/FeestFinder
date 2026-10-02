@@ -26,6 +26,16 @@ export function langFrom(query: unknown, headers: Record<string, string | string
 }
 
 export const GENRES = ['EDM', 'Festival', 'Indie', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture'] as const;
+
+/** The cities FeestFinder lists events in. */
+export const CITIES = {
+  'ho-chi-minh': L('Ho Chi Minh City', 'TP.HCM'),
+  'ha-noi': L('Hanoi', 'Hà Nội'),
+  'da-nang': L('Da Nang', 'Đà Nẵng'),
+  'nha-trang': L('Nha Trang', 'Nha Trang'),
+} as const;
+export const CITY_SLUGS = Object.keys(CITIES) as [keyof typeof CITIES, ...(keyof typeof CITIES)[]];
+export type City = keyof typeof CITIES;
 export type Genre = (typeof GENRES)[number];
 
 export const BADGES: Record<string, Localized> = {

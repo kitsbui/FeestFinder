@@ -16,7 +16,7 @@ import { notFound } from '../lib/errors.ts';
  * the logic and the runtime.
  */
 const SURFACES = [
-  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/e/:slug', '/o/:slug', '/about', '/advertise', '/map', '/saved', '/stats/:key', '/city/:city/:when', '/vi/:city/:when', '/en/:city/:when'] },
+  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/e/:slug', '/o/:slug', '/about', '/advertise', '/list', '/saved', '/stats/:key', '/city/:city/:when', '/vi/:city/:when', '/en/:city/:when'] },
   { base: '/app', shell: 'pages/app/shell.html', routes: ['/app', '/app/:screen', '/app/:screen/:param'] },
   // The back offices sit on their own namespaces: /organizer/* and /admin/* are API paths,
   // and a screen URL must never shadow an endpoint.
@@ -131,6 +131,10 @@ export default async function frontendRoutes(app: FastifyInstance) {
       return reply.redirect(to, 302);
     });
   }
+
+  // The map became the list; old links and bookmarks land on it.
+  app.get('/map', async (_req, reply) => reply.redirect('/list', 301));
+  app.get('/app/map', async (_req, reply) => reply.redirect('/app/list', 301));
 
   // The template, logic and data chunks a shell pulls in, plus the shared runtime.
   for (const folder of ['pages', 'ui']) {

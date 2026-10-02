@@ -12,7 +12,7 @@ test.use({ baseURL: `http://localhost:${Number(process.env.EMPTY_PORT ?? 4101)}`
 test.describe('Web, empty', () => {
   const routes: [string, RegExp][] = [
     ['/', /Explore/],
-    ['/map', /EVENTS NEAR YOU/i],
+    ['/list', /EVERY EVENT/i],
     ['/about', /ABOUT FEESTFINDER/i],
     ['/vi/ho-chi-minh/this-weekend', /Cuối tuần này chưa có sự kiện nào/],
     ['/en/ho-chi-minh/this-weekend', /Nothing is on this weekend yet/],

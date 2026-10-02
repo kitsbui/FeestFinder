@@ -2,7 +2,7 @@ import type { Queryable } from '../db/index.ts';
 import { many } from '../db/index.ts';
 import { initialsOf } from '../lib/contact.ts';
 import { haversineKm, HCMC_CENTRE, round1 } from '../lib/geo.ts';
-import { BADGES, L, TIER_NAMES, type Localized } from '../lib/i18n.ts';
+import { BADGES, CITIES, L, TIER_NAMES, type City, type Localized } from '../lib/i18n.ts';
 
 /** Organiser columns a card shows. Alias the organizers table as `o`. */
 export const ORG_COLUMNS = `
@@ -13,7 +13,7 @@ export const ORG_COLUMNS = `
 export const CARD_COLUMNS = `
   e.id, e.slug, e.title, e.genre, e.art, e.cover_url, e.logo_url, e.badge, e.featured, e.sold_out, e.status,
   e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at,
-  e.venue_id, e.venue_name, e.area, e.address, e.lat, e.lng,
+  e.venue_id, e.venue_name, e.area, e.address, e.lat, e.lng, e.city,
   e.entry_mode, e.price_from, e.hype_count, e.save_count, e.lineup, e.artists, e.organizer_id, ${ORG_COLUMNS}`;
 
 export interface FriendFace { id: string; name: string; initials: string; photoUrl: string | null; source: string }
@@ -95,6 +95,8 @@ export function presentCard(r: any, o: PresentOpts) {
     startsAt: r.starts_at as Date | null,
     endsAt: r.ends_at as Date | null,
     venue: { id: r.venue_id, name: r.venue_name, area: r.area, address: r.address, lat: r.lat, lng: r.lng },
+    city: (r.city ?? 'ho-chi-minh') as string,
+    cityLabel: CITIES[(r.city ?? 'ho-chi-minh') as City] ?? null,
     distanceKm: hasPin ? round1(haversineKm(origin.lat, origin.lng, r.lat, r.lng)) : null,
     entryMode: r.entry_mode as 'free' | 'paid' | 'donation',
     priceFrom: r.price_from as number,

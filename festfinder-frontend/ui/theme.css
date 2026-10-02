@@ -771,7 +771,6 @@ select:focus {
   }
   .ff-l-explore,
   .ff-l-detail,
-  .ff-l-map,
   .ff-l-featured {
     grid-template-columns: minmax(0, 1fr) !important;
   }
@@ -801,11 +800,18 @@ select:focus {
   .ff-l-aside {
     position: static !important;
   }
-  .ff-l-mappanel {
-    position: relative !important;
-    top: 0 !important;
-    height: 420px !important;
-    order: -1;
+  /* The table keeps date, event and price; the rest folds under the title. */
+  .ff-l-lrow {
+    grid-template-columns: 76px minmax(0, 1fr) auto !important;
+  }
+  .ff-l-lrow > .ff-l-lwide {
+    display: none !important;
+  }
+  .ff-l-lrow .ff-l-lsub {
+    display: block !important;
+  }
+  .ff-l-lhead {
+    display: none !important;
   }
   /* The hero shapes shrink and drop below the wrapped header, behind the headline. */
   .ff-l-heroart {

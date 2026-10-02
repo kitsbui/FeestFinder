@@ -21,7 +21,7 @@ function toEvent(c) {
     id: c.id, slug: c.slug, title: c.title, genre: c.genre,
     dateStart: c.startsOn, dateEnd: c.endsOn !== c.startsOn ? c.endsOn : undefined,
     startTime: c.startTime, endTime: c.endTime,
-    venue: c.venue.name || '', area: c.venue.area || '', address: c.venue.address || '',
+    venue: c.venue.name || '', area: c.venue.area || '', address: c.venue.address || '', city: c.city || 'ho-chi-minh',
     lat: c.venue.lat, lng: c.venue.lng, km: c.distanceKm,
     price: c.priceFrom || 0, age: c.age || 'All ages', hype: c.hypeCount || 0,
     badge: c.badge ? c.badge.key : null, badgeLabel: c.badge ? c.badge.label : null,
@@ -130,7 +130,7 @@ const S = {
   alertNone:{en:'Nothing picked yet',vi:'Chưa chọn gì'},
   language:{en:'Language',vi:'Ngôn ngữ'}, languageSub:{en:'Interface language',vi:'Ngôn ngữ giao diện'},
   hyped:{en:'Hyped events',vi:'Sự kiện bạn đã hype'}, following:{en:'Following',vi:'Đang theo dõi'}, listEvent:{en:'List your event',vi:'Đăng sự kiện của bạn'},
-  explore:{en:'Explore',vi:'Khám phá'}, saved:{en:'Saved',vi:'Đã lưu'}, map:{en:'Map',vi:'Bản đồ'}, profile:{en:'Profile',vi:'Cá nhân'},
+  explore:{en:'Explore',vi:'Khám phá'}, saved:{en:'Saved',vi:'Đã lưu'}, list:{en:'List',vi:'Danh sách'}, profile:{en:'Profile',vi:'Cá nhân'},
   hype:{en:'Hype',vi:'Hype'}, save:{en:'Save',vi:'Lưu'}, calendar:{en:'Calendar',vi:'Lịch'}, share:{en:'Share',vi:'Chia sẻ'},
   lineup:{en:'Lineup',vi:'Dàn nghệ sĩ'}, about:{en:'About',vi:'Giới thiệu'}, organizer:{en:'Organizer',vi:'Nhà tổ chức'},
   verified:{en:'Verified organizer',vi:'Nhà tổ chức đã xác minh'}, follow:{en:'Follow',vi:'Theo dõi'},
@@ -168,7 +168,9 @@ const S = {
   linkBrand:{en:'Organizer page',vi:'Trang thương hiệu'},
   linkTickets:{en:'Ticket page',vi:'Trang bán vé'},
   linkOpening:{en:'Opening',vi:'Đang mở'},
-  mapAll:{en:'All events near you',vi:'Tất cả sự kiện quanh bạn'},
+  listTitle:{en:'Every event',vi:'Tất cả sự kiện'}, listAll:{en:'All',vi:'Tất cả'},
+  listRows:{en:'List',vi:'Danh sách'}, listGrid:{en:'Grid',vi:'Lưới'},
+  listUpdated:{en:'Updated {t}',vi:'Cập nhật {t}'}, listEmpty:{en:'Nothing in this city yet',vi:'Chưa có sự kiện ở thành phố này'},
   account:{en:'Account',vi:'Tài khoản'}, signOut:{en:'Sign out',vi:'Đăng xuất'},
   logIn:{en:'Log in',vi:'Đăng nhập'}, signUp:{en:'Sign up',vi:'Đăng ký'},
   authGateTitle:{en:'Log in to unlock',vi:'Đăng nhập để mở khoá'},
@@ -489,7 +491,7 @@ function normalize(ev) {
     ds, de, tags, past: de < TODAY,
     distance: ev.km !== undefined && ev.km !== null
       ? ev.km
-      : Math.round(haversine(USER.lat, USER.lng, ev.lat, ev.lng) * 10) / 10
+      : ev.lat != null ? Math.round(haversine(USER.lat, USER.lng, ev.lat, ev.lng) * 10) / 10 : null
   });
 }
 const EVENTS = [];
@@ -498,7 +500,7 @@ applyApp(APP);
 /* ---- routes ------------------------------------------------------------------
  * /app                 explore          /app/e/<slug>        an event
  * /app/saved           saved            /app/live/<slug>     live mode
- * /app/map             map              /app/recap/<slug>    post-event recap
+ * /app/list            every event      /app/recap/<slug>    post-event recap
  * /app/profile         profile          /app/plan/<slug>     group plan
  * /app/tickets         wallet           /app/guide/<slug>    local guide
  * /app/notifications   notifications    /app/chat/<id>       a friend thread
@@ -506,7 +508,8 @@ applyApp(APP);
  * /app/hyped           hyped events     /app/following       organisers followed
  * /app/settings        notification settings
  */
-const TABS = ['explore', 'saved', 'map', 'profile'];
+const TABS = ['explore', 'saved', 'list', 'profile'];
+const CITY_LIST = [{ k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM' }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội' }, { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng' }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang' }];
 const eventBy = (key) => EVENTS.filter(e => e.slug === key || e.id === key)[0] || null;
 const slugOf = (id) => { const e = EVENTS.filter(x => x.id === id)[0]; return e ? (e.slug || e.id) : id; };
 
@@ -521,6 +524,7 @@ function routeState(r) {
   const name = r.name, param = r.param;
   const ev = param ? eventBy(param) : null;
   if (TABS.indexOf(name) >= 0) return Object.assign(clear, { tab: name });
+  if (name === 'map') return Object.assign(clear, { tab: 'list' });
   if (name === 'tickets') return Object.assign(clear, { ticketsOpen: true });
   if (name === 'notifications') return Object.assign(clear, { notifOpen: true });
   if (name === 'alerts') return Object.assign(clear, { tab:'profile', alertPanel: true });
@@ -564,7 +568,7 @@ class Component extends DCLogic {
     calMonth: TODAY.getMonth(), calYear: TODAY.getFullYear(),
     range:[null,null], saved: APP.saved || {}, hyped: APP.hyped || {},
     interests: APP.interests || { EDM:true, Indie:true, Nightlife:true },
-    detail:null, sheet:null, toast:null, loading:true, limit:4, loadingMore:false, mapSel:null,
+    detail:null, sheet:null, toast:null, loading:true, limit:4, loadingMore:false, listCity:'all', listView:'rows', listAt: new Date(),
     user: APP.user || null,
     edit:false, pName:'', pEmail:'', pZalo:'', pCity:'', pPhoto:'', pErr:'',
     going: APP.going || {}, friendsOnly:false, friendSheet:null, chatWith:null, chats: APP.chats || {}, chatDraft:'',
@@ -663,6 +667,7 @@ class Component extends DCLogic {
     if (r.name === 'profile' || r.name === 'alerts' || r.name === 'settings' || r.name === 'following') await FF.appRest(this);
   }
   componentWillUnmount() {
+    clearInterval(this._lt);
     clearTimeout(this._t); clearTimeout(this._tt); clearTimeout(this._lm); clearTimeout(this._pa); clearTimeout(this._pm); clearTimeout(this._bt);
     if (this._net) { window.removeEventListener('online', this._net); window.removeEventListener('offline', this._net); }
   }
@@ -819,6 +824,22 @@ class Component extends DCLogic {
     }
     // One place keeps the URL honest, whichever handler changed the screen.
     if (this.state.stage === 'app') FF.navigate(routePath(this.state));
+    const onList = this.state.stage === 'app' && this.state.tab === 'list';
+    if (onList !== !!this._lt) this.syncList(onList);
+  }
+
+  /** While the list is open, new and changed events come in every minute. */
+  syncList(on) {
+    clearInterval(this._lt); this._lt = null;
+    if (!on) return;
+    const pull = async () => {
+      const out = await FF.maybe(FF.get('/events?time=all&limit=60'), null);
+      if (!out || !this._lt) return;
+      RAW.length = 0; out.items.forEach(c => RAW.push(toEvent(c)));
+      EVENTS.length = 0; RAW.map(normalize).forEach(e => EVENTS.push(e));
+      this.setState({ listAt: new Date() });
+    };
+    this._lt = setInterval(pull, 60000);
   }
 
   L() { const g = this.state.lang; const o = {}; for (const k in S) o[k] = S[k][g]; return o; }
@@ -1169,7 +1190,7 @@ class Component extends DCLogic {
   async openDetail(id, opts) {
     this.setState({ detail: id, detailData: null });
     if (!(opts && opts.silent)) {
-      FF.fire(FF.post('/events/' + id + '/track', { type: 'view', source: this.state.tab === 'map' ? 'map' : this.state.q ? 'search' : 'feed' }));
+      FF.fire(FF.post('/events/' + id + '/track', { type: 'view', source: this.state.tab === 'list' ? 'list' : this.state.q ? 'search' : 'feed' }));
     }
     FF.appPlans(this);
     const d = await FF.maybe(FF.get('/events/' + id), null);
@@ -1189,7 +1210,7 @@ class Component extends DCLogic {
       unavailable, unavailLabel: ev.soldOut ? L.soldOut : L.ended,
       unavailBd: ev.soldOut ? '#FF8709' : 'rgba(255,252,225,.38)', unavailFg: ev.soldOut ? '#FF8709' : '#A5A493',
       whenLine: this.fmtWhen(ev) + ' · ' + this.fmtTime(ev),
-      whereLine: ev.venue + ' · ' + ev.distance + ' km',
+      whereLine: ev.venue + (ev.distance != null ? ' · ' + ev.distance + ' km' : ev.area ? ' · ' + ev.area : ''),
       priceLine: ev.price === 0 ? L.free : L.from + ' ' + this.short(ev.price),
       priceColor: ev.price === 0 ? '#0AE448' : '#FFFCE1',
       proofShow: this.proof(ev.id).show, proofLine: this.proof(ev.id).line, proofFaces: this.proof(ev.id).faces,
@@ -1290,13 +1311,11 @@ class Component extends DCLogic {
       this.say(g === 'vi' ? 'Đã chia sẻ qua ' + s.label : 'Shared to ' + s.label);
     } }));
 
-    const mapList = list.filter(e => !e.past).filter(e => !(st.friendsOnly && st.user && st.user.social) || this.fGoing(e.id).length > 0);
-    const mapSel = st.mapSel ? EVENTS.find(e => e.id === st.mapSel) : null;
 
     const navDefs = [
       { k:'explore', label:L.explore, icon:'ph-fill ph-compass' },
       { k:'saved', label:L.saved, icon:'ph-fill ph-heart' },
-      { k:'map', label:L.map, icon:'ph-fill ph-map-trifold' },
+      { k:'list', label:L.list, icon:'ph-fill ph-list-bullets' },
       { k:'profile', label:L.profile, icon:'ph-fill ph-user' }
     ];
 
@@ -1304,7 +1323,7 @@ class Component extends DCLogic {
       art: detail.art, title: detail.title,
       kicker: detail.genre.toUpperCase() + (detail.badgeLabel ? ' · ' + detail.badgeLabel[g].toUpperCase() : ''),
       whenFull: this.fmtWhen(detail), timeFull: this.fmtTime(detail),
-      venue: detail.venue, areaLine: detail.area + ' · ' + detail.distance + ' km' + (g === 'vi' ? '' : ' away'),
+      venue: detail.venue, areaLine: detail.area + (detail.distance != null ? ' · ' + detail.distance + ' km' + (g === 'vi' ? '' : ' away') : ''),
       age: (() => {
         const a = st.detailData ? st.detailData.age : detail.age;
         return a === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : a;
@@ -1545,7 +1564,7 @@ class Component extends DCLogic {
       friendsFilterBg: st.friendsOnly ? '#ABFF84' : 'rgba(28,29,27,.7)',
       friendsFilterBd: st.friendsOnly ? '#ABFF84' : 'rgba(255,252,225,.19)',
       friendsFilterFg: st.friendsOnly ? '#141514' : '#A5A493',
-      toggleFriendsOnly: () => this.setState({ friendsOnly: !st.friendsOnly, mapSel:null }),
+      toggleFriendsOnly: () => this.setState({ friendsOnly: !st.friendsOnly }),
       showFriendsFilter: connected,
 
       friendRowShow: friendEvents.length > 0,
@@ -1835,10 +1854,10 @@ class Component extends DCLogic {
       enBg: g === 'en' ? '#ABFF84' : 'transparent', enFg: g === 'en' ? '#141514' : '#A5A493',
       onLogoTap: () => this.say(g === 'vi' ? 'Chế độ quản trị ở vòng sau' : 'Admin mode lands in the next round'),
 
-      tabExplore: st.tab === 'explore', tabSaved: st.tab === 'saved', tabMap: st.tab === 'map', tabProfile: st.tab === 'profile',
+      tabExplore: st.tab === 'explore', tabSaved: st.tab === 'saved', tabList: st.tab === 'list', tabProfile: st.tab === 'profile',
       navItems: navDefs.map(n => ({
         label:n.label, icon:n.icon, color: st.tab === n.k ? '#ABFF84' : '#8C8B7D',
-        go: () => { this.setState({ tab:n.k, mapSel:null }); if (n.k === 'profile') FF.appRest(this); }
+        go: () => { this.setState({ tab:n.k }); if (n.k === 'profile') FF.appRest(this); }
       })),
 
       query: st.q, hasQuery: !!st.q,
@@ -2432,36 +2451,27 @@ class Component extends DCLogic {
         { icon:'ph-bold ph-megaphone', iconColor:'#ABFF84', label:L.listEvent, value:'', go: () => { window.location.assign('/organizer'); } }
       ],
 
-      mapFilterLine: st.genre !== 'All' ? st.genre + ' · ' + timeDefs.find(t => t.k === st.time).label : L.mapAll,
-      mapCount: mapList.length + (g === 'vi' ? ' pin' : ' pins'),
-      mapPins: mapList.map(e => {
-        const fr = connected ? this.fGoing(e.id) : [];
+      board: (() => {
+        const on = (x) => ({ bg: x ? 'rgba(171,255,132,.14)' : 'rgba(25,25,25,.6)', bd: x ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: x ? '#FFFCE1' : '#A5A493' });
+        const upcoming = EVENTS.filter(e => !e.past);
+        const inCity = (c) => upcoming.filter(e => c === 'all' || e.city === c);
+        const cityName = (c) => { const x = CITY_LIST.find(y => y.k === c); return x ? x[g] : ''; };
+        const rows = inCity(st.listCity).sort((a, b) => a.ds - b.ds || String(a.startTime).localeCompare(String(b.startTime)));
+        const hh = (t) => (t.getHours() < 10 ? '0' : '') + t.getHours() + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes();
         return {
-        faces: fr.slice(0, 2).map(f => ({ initials: initialsOf(f.name), color: f.color })),
-        moreShow: fr.length > 2, more: '+' + (fr.length - 2),
-        hasFriends: fr.length > 0,
-        op: st.friendsOnly && !fr.length ? '.25' : '1',
-        x: (12 + ((e.lng - 106.64) / 0.21) * 78) + '%',
-        y: (88 - ((e.lat - 10.71) / 0.15) * 62) + '%',
-        price: e.price === 0 ? L.free : this.short(e.price),
-        z: st.mapSel === e.id ? 6 : 4,
-        bg: st.mapSel === e.id ? '#ABFF84' : 'rgba(14,16,15,.82)',
-        bd: st.mapSel === e.id ? '#ABFF84' : e.badge === 'live' ? '#0AE448' : '#ABFF84',
-        fg: st.mapSel === e.id ? '#141514' : '#FFFCE1',
-        glow: st.mapSel === e.id ? '0 6px 20px rgba(171,255,132,.5)' : '0 4px 14px rgba(0,0,0,.5)',
-        pick: () => this.setState({ mapSel:e.id })
-      }; }),
-      mapPreviewFriends: mapSel && connected ? this.fGoing(mapSel.id).map(f => this.fView(f)) : [],
-      mapPreviewHasFriends: !!(mapSel && connected && this.fGoing(mapSel.id).length),
-      mapPreviewFriendsLine: mapSel && connected ? this.fGoing(mapSel.id).length + ' ' + L.friendsGoing : '',
-      mapPreview: mapSel ? {
-        art: mapSel.art, title: mapSel.title,
-        whenLine: this.fmtWhen(mapSel) + ' · ' + this.fmtTime(mapSel),
-        whereLine: mapSel.venue + ' · ' + mapSel.distance + ' km',
-        priceShort: mapSel.price === 0 ? L.free : this.short(mapSel.price)
-      } : null,
-      openMapPreview: () => this.openDetail(st.mapSel),
-      closeMapPreview: (e) => { e.stopPropagation(); this.setState({ mapSel:null }); },
+          rows: st.listView === 'rows', grid: st.listView === 'grid', empty: rows.length === 0,
+          updated: L.listUpdated.replace('{t}', hh(st.listAt)) + ' · ' + rows.length,
+          views: [{ k:'rows', label:L.listRows, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }]
+            .map(v => Object.assign({ label: v.label, icon: v.icon, pick: () => this.setState({ listView: v.k }) }, on(st.listView === v.k))),
+          cities: [{ k:'all', label:L.listAll }].concat(CITY_LIST.map(c => ({ k:c.k, label:c[g] })))
+            .map(c => Object.assign({ label: c.label + ' · ' + inCity(c.k).length, pick: () => this.setState({ listCity: c.k }) }, on(st.listCity === c.k))),
+          items: rows.map(e => Object.assign(this.cardView(e, L), {
+            day: String(e.ds.getDate()), mon: (g === 'vi' ? 'Th' + (e.ds.getMonth() + 1) : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][e.ds.getMonth()]),
+            sub: (e.startTime || '') + ' · ' + e.venue + ' · ' + cityName(e.city),
+            genreFg: FF.genreHue(e.genre)
+          }))
+        };
+      })(),
 
       detail: detailV,
       closeDetail: () => this.setState({ detail:null, detailData:null }),

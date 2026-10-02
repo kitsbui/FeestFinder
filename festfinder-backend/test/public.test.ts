@@ -100,6 +100,14 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.ok(free.body.items.every((e: any) => e.isFree));
   });
 
+  it('lists events by city', async () => {
+    const all = await env.as().get('/events?time=all&limit=60');
+    assert.ok(all.body.items.every((e: any) => e.city === 'ho-chi-minh' && e.cityLabel.vi === 'TP.HCM'));
+    const hanoi = await env.as().get('/events?time=all&city=ha-noi');
+    assert.equal(hanoi.body.items.length, 0);
+    assert.equal((await env.as().get('/events?city=da-lat')).status, 400);
+  });
+
   it('builds the SEO landing page with metadata, answers, FAQ and JSON-LD', async () => {
     const r = await env.as().get('/seo/landing/en/ho-chi-minh/free/this-weekend');
     assert.equal(r.status, 200);

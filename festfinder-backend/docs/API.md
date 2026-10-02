@@ -24,19 +24,19 @@ The four screens in `../festfinder-frontend/` call these endpoints directly. Eac
 
 Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_session` cookie.
 
-## Explore, detail, map, SEO (Web + App)
+## Explore, detail, list, SEO (Web + App)
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre`; `artist`; `price=free,under,over`; `area`; `organizer`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` counts, `window`. Ended events sort last. |
-| GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat` ("Search this area"), `genre`, `free`, `friendsOnly`, `time`. Upcoming only. |
+| GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre`; `artist`; `price=free,under,over`; `area`; `organizer`; `city=ho-chi-minh\|ha-noi\|da-nang\|nha-trang`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` counts, `window`. Ended events sort last. |
+| GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat`, `genre`, `free`, `friendsOnly`, `time`. Upcoming only. The screens no longer use it: the List tab (`/list`, `/app/list`; `/map` redirects there) reads `/events?time=all` and refreshes it every minute while open. |
 | GET | `/events/:idOrSlug` | Detail: facts, description, `tickets` (tier ladder with state `onsale\|last\|soldout\|soon`, `left`, price-rise note, `urgency`, `refundPolicy`), `timetable` (days → stages → sets with minute offsets), organiser card, `similar`, and for a signed-in viewer `me` (following, artist follows, set plan with `clashes`, reported, group plan). Organisers and admins can preview non-live listings. |
 | GET | `/explore/stats?view=free\|weekend\|venues` | Hero stat cards and their drill-downs; takes the same filters as `/events`. |
 | GET | `/organizers/:slug` | Profile with stats, upcoming and past events, `me.following`. |
 | GET | `/shelves` | Featured rows that are on and inside their date window. |
 | GET | `/genres`, `/artists?q=`, `/venues?q=` | Filter sheets and wizard venue autocomplete. |
 | GET | `/seo/landing/:locale/:city/*` | Programmatic landing page, e.g. `/seo/landing/vi/ho-chi-minh/edm/this-weekend`. Facets: genre (`edm`, `night-market`, `live-music`…), district (`quan-1`, `thao-dien`…), `free`, timeframe (`tonight`, `this-weekend`, `next-7-days`, `this-month`, `2026-09`). Returns `meta` (title, description, canonical, hreflang alternates), `h1`, answers, events, FAQ, related links, JSON-LD (ItemList + FAQPage + BreadcrumbList), `revalidateSeconds: 900`. |
-| POST | `/events/:id/track` | `{type: view\|ticket_click, source: feed\|shelf\|shared\|search\|own\|ads\|map}`. Counted once per visitor per 30 min. |
+| POST | `/events/:id/track` | `{type: view\|ticket_click, source: feed\|shelf\|shared\|search\|own\|ads\|map\|list}`. Counted once per visitor per 30 min. |
 | GET | `/events/:id/calendar.ics` | Add to calendar (with a 24 h alarm). |
 | GET | `/ads?placement=feed\|banner\|live&genre&area` | One sponsored card. Alcohol only reaches accounts known to be 18+. |
 | POST | `/ads/:id/impression`, `/ads/:id/click`, `/ads/:id/hide` 🔒 | |

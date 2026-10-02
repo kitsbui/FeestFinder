@@ -35,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'hourly', priority: 1 },
-    { url: `${SITE_URL}/map`, lastModified: now, changeFrequency: 'hourly', priority: 0.6 },
+    { url: `${SITE_URL}/list`, lastModified: now, changeFrequency: 'hourly', priority: 0.6 },
     { url: `${SITE_URL}/about`, changeFrequency: 'monthly', priority: 0.3 },
     ...[...landingPaths].map((p) => ({ url: SITE_URL + p, lastModified: now, changeFrequency: 'daily' as const, priority: 0.8 })),
     ...events.filter((e) => !e.past).map((e) => ({ url: `${SITE_URL}/e/${e.slug}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.9 })),

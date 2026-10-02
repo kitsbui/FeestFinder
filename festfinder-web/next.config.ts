@@ -67,6 +67,9 @@ const config: NextConfig = {
     return [
       { source: '/organizer', destination: '/studio', permanent: false },
       { source: '/admin', destination: '/console', permanent: false },
+      // The map became the list.
+      { source: '/map', destination: '/list', permanent: true },
+      { source: '/app/map', destination: '/app/list', permanent: true },
     ];
   },
 };

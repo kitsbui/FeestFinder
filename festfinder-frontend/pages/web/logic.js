@@ -47,7 +47,7 @@ const S = {
     vi:'Một email, cho cuối tuần sắp tới, chỉ những thể loại và khu vực bạn chọn. Không spam vé.'},
   ctaPrimary:{en:'Open FeestFinder',vi:'Mở FeestFinder'}, ctaSecondary:{en:'Get the weekly email',vi:'Nhận email hàng tuần'},
   events:{en:'events',vi:'sự kiện'}, hypedPeople:{en:'people hyped',vi:'người đang hype'},
-  tabExplore:{en:'Explore',vi:'Khám phá'}, tabMap:{en:'Map',vi:'Bản đồ'}, tabLanding:{en:'SEO page',vi:'Trang SEO'},
+  tabExplore:{en:'Explore',vi:'Khám phá'}, tabMap:{en:'List',vi:'Danh sách'}, tabLanding:{en:'SEO page',vi:'Trang SEO'},
   tabAbout:{en:'About',vi:'Giới thiệu'},
   statKicker:{en:'Filtered list',vi:'Danh sách đã lọc'},
   statHeadFree:{en:'Free entry, no ticket needed',vi:'Vào cửa miễn phí, không cần vé'},
@@ -55,10 +55,10 @@ const S = {
   statHeadVenues:{en:'Venues with something on',vi:'Địa điểm đang có sự kiện'},
   statSubFree:{en:'Everything free in your current filters. Open an event for doors, lineup and directions.',vi:'Tất cả sự kiện miễn phí theo bộ lọc hiện tại. Mở một sự kiện để xem giờ mở cửa, đội hình và đường đi.'},
   statSubWeekend:{en:'Friday to Sunday, matching your current filters. Open an event for doors, lineup and directions.',vi:'Từ thứ Sáu đến Chủ nhật, khớp bộ lọc hiện tại. Mở một sự kiện để xem giờ mở cửa, đội hình và đường đi.'},
-  statSubVenues:{en:'Grouped by venue. Open one to see it on the map with the route from where you are.',vi:'Nhóm theo địa điểm. Mở một địa điểm để xem trên bản đồ kèm đường đi từ chỗ bạn.'},
+  statSubVenues:{en:'Grouped by venue.',vi:'Nhóm theo địa điểm.'},
   statEmptyNote:{en:'Nothing matches the filters you have set. Widen the date range or clear the price filter.',vi:'Không có gì khớp bộ lọc hiện tại. Mở rộng khoảng ngày hoặc bỏ lọc giá.'},
   statOpenEvent:{en:'Event page',vi:'Trang sự kiện'},
-  statOpenMap:{en:'See on map',vi:'Xem trên bản đồ'},
+  statOpenMap:{en:'Open event',vi:'Mở sự kiện'},
   statHype:{en:'hyped',vi:'đang hype'},
   statEventsOn:{en:'events on',vi:'sự kiện'},
   statCardHint:{en:'Open the full list',vi:'Mở danh sách đầy đủ'},
@@ -282,7 +282,7 @@ const S = {
   andOthers:{en:'and {n} others',vi:'và {n} người khác'},
   friendsSaved:{en:'{n} friends saved events since yesterday',vi:'{n} người bạn đã lưu sự kiện từ hôm qua'},
   imGoing:{en:'I\u2019m going',vi:'Tôi sẽ đi'}, youreGoing:{en:'You\u2019re going',vi:'Bạn sẽ đi'},
-  goingPrivacy:{en:'Marking yourself going shows you to friends on the map.',vi:'Đánh dấu sẽ đi sẽ hiện bạn cho bạn bè trên bản đồ.'},
+  goingPrivacy:{en:'Friends can see you are going.',vi:'Bạn bè sẽ thấy bạn sẽ đi.'},
   chat:{en:'Chat',vi:'Nhắn tin'}, follow:{en:'Follow',vi:'Theo dõi'}, followingLabel:{en:'Following',vi:'Đang theo dõi'},
   inviteFriends:{en:'Invite friends',vi:'Mời bạn bè'},
   inviteTitle:{en:'Invite friends',vi:'Mời bạn bè'},
@@ -295,8 +295,23 @@ const S = {
   chatStart:{en:'Say hi — messages stay between the two of you.',vi:'Chào một câu — tin nhắn chỉ hai người thấy.'},
   mutual:{en:'events in common',vi:'sự kiện chung'},
   noFriendsBody:{en:'Connect Facebook, Instagram or Zalo and we\u2019ll show which of your friends are going.',
-    vi:'Liên kết Facebook, Instagram hoặc Zalo để xem bạn bè nào đang đi.'}
+    vi:'Liên kết Facebook, Instagram hoặc Zalo để xem bạn bè nào đang đi.'},
+
+  /* ---- the list of every event: a table or a grid ---- */
+  listTitle:{en:'Every event',vi:'Tất cả sự kiện'}, listAll:{en:'All',vi:'Tất cả'}, listAllTime:{en:'Any time',vi:'Mọi lúc'},
+  listTable:{en:'Table',vi:'Bảng'}, listGrid:{en:'Grid',vi:'Lưới'},
+  listUpdated:{en:'Updated {t}',vi:'Cập nhật {t}'}, listNew:{en:'{n} new',vi:'{n} sự kiện mới'},
+  listEmpty:{en:'Nothing matches',vi:'Không có sự kiện nào khớp'},
+  colDate:{en:'Date',vi:'Ngày'}, colTime:{en:'Time',vi:'Giờ'}, colEvent:{en:'Event',vi:'Sự kiện'}, colVenue:{en:'Venue',vi:'Địa điểm'},
+  colCity:{en:'City',vi:'Thành phố'}, colPrice:{en:'Price',vi:'Giá'}, colHype:{en:'Hype',vi:'Hype'}, colStatus:{en:'Status',vi:'Trạng thái'},
+  stSold:{en:'Sold out',vi:'Hết vé'}, stTonight:{en:'Tonight',vi:'Tối nay'}, stFree:{en:'Free',vi:'Miễn phí'}, stOn:{en:'On sale',vi:'Còn vé'}
 };
+
+/** The cities FeestFinder lists events in, the same slugs as the API. */
+const CITY_LIST = [
+  { k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM' }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội' },
+  { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng' }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang' }
+];
 
 const DOW = { en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], vi:['CN','T2','T3','T4','T5','T6','T7'] };
 const MON = { en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -359,7 +374,7 @@ function toEvent(e) {
   if (ds <= in7 && de >= TODAY) tags.push('7days');
   if (ds <= eom && de >= TODAY) tags.push('month');
   return Object.assign({}, e, { dsD:ds, deD:de, tags, past: !!e.past,
-    dist: e.dist != null ? e.dist : Math.round(hav(USER.lat, USER.lng, e.lat, e.lng) * 10) / 10 });
+    dist: e.dist != null ? e.dist : e.lat != null ? Math.round(hav(USER.lat, USER.lng, e.lat, e.lng) * 10) / 10 : null });
 }
 
 const EVENTS = [];
@@ -381,7 +396,7 @@ function ttFromApi(t) {
 
 /* ---- routes ------------------------------------------------------------------
  * /                 explore            /e/<slug>        an event
- * /map              map                /o/<slug>        an organiser
+ * /list             every event        /o/<slug>        an organiser
  * /about            about FeestFinder   /saved           saved events
  * /advertise        advertise with us  /stats/<key>     one explore stat
  * /vi/ho-chi-minh/this-weekend, /en/…   the city landing page (/city/… still opens it)
@@ -396,7 +411,7 @@ function routeState(r) {
   const clear = { screen:'explore', detailId:null, orgId:null, statView:null, savedView:false, adsOpen:false, notifOpen:false, edit:false };
   if (!r) return clear;
   const name = r.name, param = r.param;
-  if (name === 'map') return Object.assign(clear, { screen:'map' });
+  if (name === 'list' || name === 'map') return Object.assign(clear, { screen:'list' });
   if (name === 'about') return Object.assign(clear, { screen:'about' });
   if (name === 'city') return Object.assign(clear, { screen:'landing' });
   if ((name === 'vi' || name === 'en') && r.parts.slice(1).join('/') === LANDING.join('/')) return Object.assign(clear, { screen:'landing', lang:name });
@@ -413,7 +428,7 @@ function routePath(st) {
   if (st.screen === 'detail' && st.detailId) return FF.href('e', slugOf(st.detailId));
   if (st.screen === 'org' && st.orgId) return FF.href('o', (ORGS[st.orgId] || {}).slug || st.orgId);
   if (st.screen === 'stat' && st.statView) return FF.href('stats', st.statView);
-  if (st.screen === 'map') return FF.href('map');
+  if (st.screen === 'list') return FF.href('list');
   if (st.screen === 'about') return FF.href('about');
   if (st.screen === 'landing') return FF.href(st.lang === 'en' ? 'en' : 'vi', ...LANDING);
   if (st.adsOpen) return FF.href('advertise');
@@ -432,7 +447,6 @@ class Component extends DCLogic {
     going: WEB.going || {}, friendsOnly:false, friendSheet:null, chatWith:null, chats:{}, chatDraft:'',
     invite:null, inviteSel:{}, following: WEB.following || {}, tipHidden:false,
     plan:{}, ttDay:0,
-    mapCx:50, mapCy:50, mapZoom:1, mapLock:null, mapMoved:false, mapGenre:'All', mapFree:false,
     reportFor:null, reportCode:'wrong', reportNote:'',
     notifOpen:false,
     notifM: WEB.notifM || { saved:{ push:true, zalo:true, email:false }, tickets:{ push:true, zalo:false, email:false },
@@ -443,7 +457,8 @@ class Component extends DCLogic {
     adPlaces:{ feed:true, banner:true }, adMsg:'', adErr:'',
     adHidden:{},
     acct:false, savedView:false, auth:null, authMode:'signup', authMethod:'email', authId:'', authOtp:'',
-    authPass:'', authPass2:'', authErr:'', authNote:'', authNext:null, authShowPass:false
+    authPass:'', authPass2:'', authErr:'', authNote:'', authNext:null, authShowPass:false,
+    listView:'table', listCity:'all', listTime:'all', listGenre:'All', listSort:'date', listDesc:false, listAt: LOADED_AT, listAdded:0,
   };
 
   componentDidMount() {
@@ -459,9 +474,31 @@ class Component extends DCLogic {
 
   /** The answers under the landing page, once they arrive. */
   applyFaqs(rows) { FAQ = rows; this.forceUpdate(); }
-  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._tt); }
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._tt); clearInterval(this._lt); }
+
+  /** The list re-reads what is on every minute while it is on screen. */
+  syncList(on) {
+    clearInterval(this._lt);
+    this._lt = null;
+    if (!on) return;
+    this._lt = setInterval(() => {
+      FF.get('/events?time=all&limit=60').then(out => {
+        const known = {}; EVENTS.forEach(e => { known[e.id] = true; });
+        const fresh = out.items.map(c => toEvent(FF.webEvent(c)));
+        out.items.forEach(c => {
+          ORG_OF[c.id] = c.organizer.id;
+          if (!ORGS[c.organizer.id]) ORGS[c.organizer.id] = { id: c.organizer.id, slug: c.organizer.slug, name: c.organizer.name, initials: c.organizer.initials,
+            verified: c.organizer.verified, art: c.organizer.art || c.art, followers: 0, since: '', bio: { en:'', vi:'' } };
+        });
+        EVENTS.splice(0, EVENTS.length, ...fresh);
+        this.setState({ listAt: FF.now(), listAdded: fresh.filter(e => !known[e.id]).length });
+      }, () => {});
+    }, 60000);
+  }
 
   componentDidUpdate(prev) {
+    // The runtime passes no previous state: whether the timer runs says if the list was open.
+    if ((this.state.screen === 'list') !== !!this._lt) this.syncList(this.state.screen === 'list');
     FF.navigate(routePath(this.state));
     if (prev.language !== this.props.language) {
       this.setState({ lang: this.props.language === 'Tiếng Việt' ? 'vi' : 'en' });
@@ -709,7 +746,7 @@ class Component extends DCLogic {
   openEvent(id) { this.setState({ screen:'detail', detailId:id, ttDay:0 }); this.loadDetail(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   openOrg(id) { this.setState({ screen:'org', orgId:id }); this.loadOrg(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   openStat(k) { this.setState({ screen:'stat', statView:k }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
-  openOnMap(id) { this.setState({ screen:'map', mapSel:id }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
+  openOnMap(id) { this.openEvent(id); }
   goBack() { this.setState({ screen:'explore' }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   priceOk(e) {
     const p = this.state.prices, keys = Object.keys(p).filter(k => p[k]);
@@ -744,7 +781,7 @@ class Component extends DCLogic {
       badgeBg: e.featured ? '#0AE448' : '#ABFF84',
       unavailable: un, unavailLabel: e.soldOut ? L.soldOut : L.ended,
       unavailBd: e.soldOut ? '#FF8709' : 'rgba(255,252,225,.38)', unavailFg: e.soldOut ? '#FF8709' : '#A5A493',
-      whenLine: this.when(e), whereLine: e.venue + ' · ' + e.dist + ' km',
+      whenLine: this.when(e), whereLine: e.venue + (e.dist != null ? ' · ' + e.dist + ' km' : e.area ? ' · ' + e.area : ''),
       priceLine: e.price === 0 ? L.free : L.from + ' ' + this.short(e.price),
       priceColor: e.price === 0 ? '#0AE448' : '#FFFCE1',
       proofShow: this.proof(e.id).show, proofLine: this.proof(e.id).line, proofFaces: this.proof(e.id).faces,
@@ -755,13 +792,6 @@ class Component extends DCLogic {
       open: () => this.openEvent(e.id),
       save: (ev) => { ev.stopPropagation(); if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateSave); this.toggleFlag('saved', '/me/saves/', e.id); }
     };
-  }
-
-  mapXY(e) { return { x: 12 + ((e.lng - 106.64) / 0.21) * 76, y: 86 - ((e.lat - 10.71) / 0.15) * 60 }; }
-  inFrame(e, v) {
-    const p = this.mapXY(e);
-    const x = 50 + (p.x - v.mapCx) * v.mapZoom, y = 50 + (p.y - v.mapCy) * v.mapZoom;
-    return x > 2 && x < 98 && y > 6 && y < 98;
   }
 
   renderVals() {
@@ -775,12 +805,6 @@ class Component extends DCLogic {
       ? (vi1 ? nWeekend + ' sự kiện ở TP.HCM cuối tuần này, kèm giờ bắt đầu, địa điểm, giá vé và những show đã hết vé.'
         : nWeekend + (nWeekend === 1 ? ' event' : ' events') + ' in Ho Chi Minh City this weekend, with start times, venues, ticket prices and what is already sold out.')
       : (vi1 ? 'Cuối tuần này chưa có sự kiện nào.' : 'Nothing is on this weekend yet.');
-    const mapList = EVENTS.filter(e => !e.past)
-      .filter(e => !(st.friendsOnly && st.user && st.user.social) || this.fGoing(e.id).length > 0)
-      .filter(e => st.mapGenre === 'All' || e.genre === st.mapGenre)
-      .filter(e => !st.mapFree || e.price === 0)
-      .filter(e => !st.mapLock || this.inFrame(e, st.mapLock))
-      .slice(0, 7);
     const sel = st.mapSel ? EVENTS.find(e => e.id === st.mapSel) : null;
     const venues = {}; EVENTS.forEach(e => { if (!e.past) venues[e.venue] = 1; });
     const statLive = full.filter(e => !e.past);
@@ -799,7 +823,7 @@ class Component extends DCLogic {
     ];
     const priceDefs = [{ k:'free', label:L.free }, { k:'under', label:L.under500 }, { k:'over', label:L.over500 }];
     const sortDefs = [{ k:'date', label:L.sortDate }, { k:'hype', label:L.sortHype }, { k:'price', label:L.sortPrice }];
-    const tabDefs = [{ k:'explore', label:L.tabExplore }, { k:'map', label:L.tabMap }, { k:'landing', label:L.tabLanding }, { k:'about', label:L.tabAbout }];
+    const tabDefs = [{ k:'explore', label:L.tabExplore }, { k:'list', label:L.tabMap }, { k:'landing', label:L.tabLanding }, { k:'about', label:L.tabAbout }];
 
     const step = st.auth, isLogin = st.authMode === 'login';
     const idStep = step === 'id' || step === 'loginId', passStep = step === 'pass' || step === 'loginPass';
@@ -1062,7 +1086,7 @@ class Component extends DCLogic {
 
       cityLabel: g === 'vi' ? 'TP.HCM' : 'Ho Chi Minh City',
       toggleLang: () => this.setState({ lang: g === 'vi' ? 'en' : 'vi' }),
-      isExplore: st.screen === 'explore', isMap: st.screen === 'map', isLanding: st.screen === 'landing',
+      isExplore: st.screen === 'explore', isList: st.screen === 'list', isLanding: st.screen === 'landing',
       isDetail: st.screen === 'detail', isOrg: st.screen === 'org',
       isStat: st.screen === 'stat', isAbout: st.screen === 'about',
       /* ---- advertising ---- */
@@ -1159,7 +1183,7 @@ class Component extends DCLogic {
             { label:L.factDate, value: DOW[g][e.dsD.getDay()] + ', ' + e.dsD.getDate() + ' ' + MON[g][e.dsD.getMonth()] + ' ' + e.dsD.getFullYear(), icon:'ph-bold ph-calendar-dots' },
             { label:L.factDoors, value:e.time, icon:'ph-bold ph-clock' },
             { label:L.factVenue, value:e.venue, icon:'ph-bold ph-map-pin' },
-            { label:L.factDist, value: e.dist + ' km · ' + e.area, icon:'ph-bold ph-navigation-arrow' },
+            { label:L.factDist, value: (e.dist != null ? e.dist + ' km · ' : '') + e.area, icon:'ph-bold ph-navigation-arrow' },
             { label:L.factPrice, value: isFree ? L.free : this.short(e.price) + ' ' + (g === 'vi' ? 'trở lên' : 'and up'), icon:'ph-bold ph-ticket' },
             { label:L.factAge, value: det ? (det.age === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : det.age) : (isFree ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : '18+'), icon:'ph-bold ph-user-circle' }
           ],
@@ -1191,7 +1215,7 @@ class Component extends DCLogic {
           friendsShow: fr.length > 0,
           friendsLine: fr.length + ' ' + L.friendsGoing,
           friendFaces: fr.slice(0, 5).map(f => ({ initials: initialsOf(f.name), color: f.color })),
-          mapPin: e.area, openMaps: () => this.say(L.openInMaps + ' · ' + e.venue),
+          mapPin: e.area, openMaps: () => window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(e.lat != null ? e.lat + ',' + e.lng : e.venue + ', ' + e.area), '_blank', 'noopener'),
           orgName: org.name, orgInitials: org.initials, orgArt: org.art,
           orgVerified: org.verified, orgVerifiedLabel: L.orgVerified,
           orgMeta: this.short0(org.followers) + ' ' + L.orgFollowers,
@@ -1428,7 +1452,7 @@ class Component extends DCLogic {
           hasPast: past.length > 0,
           upcoming: up.map(x => ({
             title:x.title, art:x.art, genre:x.genre, whenLine: this.when(x),
-            whereLine: x.venue + ' · ' + x.dist + ' km',
+            whereLine: x.venue + (x.dist != null ? ' · ' + x.dist + ' km' : ''),
             priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price),
             priceColor: x.price === 0 ? '#0AE448' : '#FFFCE1',
             open: () => this.openEvent(x.id)
@@ -1473,17 +1497,17 @@ class Component extends DCLogic {
             const list = statVenues[v], first = list[0];
             return {
               title: v, art: first.art, icon:'ph-fill ph-map-pin',
-              meta: first.dist + ' km · ' + list.map(e => e.title).slice(0, 2).join(' · '),
+              meta: (first.dist != null ? first.dist + ' km · ' : '') + list.map(e => e.title).slice(0, 2).join(' · '),
               hasTag: false, tag:'', tagBg:'transparent', tagBd:'transparent', tagFg:'#A5A493',
               stat: String(list.length), statFg:'#DFFFD1', statLabel: L.statEventsOn,
-              cta: L.statOpenMap, ctaIcon:'ph-bold ph-map-trifold',
+              cta: L.statOpenMap, ctaIcon:'ph-bold ph-arrow-right',
               open: () => this.openOnMap(first.id)
             };
           });
         }
         return (statK === 'free' ? statFree : statWeekend).map(e => ({
           title: e.title, art: e.art, icon: e.price === 0 ? 'ph-fill ph-ticket' : 'ph-fill ph-music-notes',
-          meta: this.when(e) + ' · ' + e.venue + ' · ' + e.dist + ' km',
+          meta: this.when(e) + ' · ' + e.venue + (e.dist != null ? ' · ' + e.dist + ' km' : ''),
           hasTag: e.price === 0 || e.soldOut,
           tag: e.soldOut ? L.soldOut : L.free,
           tagBg: e.soldOut ? 'rgba(255,135,9,.14)' : 'rgba(10,228,72,.14)',
@@ -1578,73 +1602,58 @@ class Component extends DCLogic {
       loadMoreDisplay: full.length > st.limit ? 'block' : 'none',
       loadMore: () => this.setState({ limit: st.limit + 6 }),
 
-      mapCount: mapList.length + ' ' + L.events,
-      mapLocked: !!st.mapLock,
-      mapMoved: st.mapMoved,
-      mapZoomLabel: (Math.round(st.mapZoom * 10) / 10) + '×',
-      searchThisArea: () => this.setState({ mapLock:{ mapCx:st.mapCx, mapCy:st.mapCy, mapZoom:st.mapZoom }, mapMoved:false, mapSel:null }),
-      clearMapArea: () => this.setState({ mapLock:null, mapMoved:false }),
-      mapZoomIn: () => this.setState({ mapZoom: Math.min(2.6, Math.round(st.mapZoom * 1.35 * 10) / 10), mapMoved:true }),
-      mapZoomOut: () => this.setState({ mapZoom: Math.max(0.8, Math.round(st.mapZoom / 1.35 * 10) / 10), mapMoved:true }),
-      mapRecenter: () => this.setState({ mapCx:50, mapCy:50, mapZoom:1, mapLock:null, mapMoved:false }),
-      mapPanUp: () => this.setState({ mapCy: st.mapCy - 8 / st.mapZoom, mapMoved:true }),
-      mapPanDown: () => this.setState({ mapCy: st.mapCy + 8 / st.mapZoom, mapMoved:true }),
-      mapPanLeft: () => this.setState({ mapCx: st.mapCx - 8 / st.mapZoom, mapMoved:true }),
-      mapPanRight: () => this.setState({ mapCx: st.mapCx + 8 / st.mapZoom, mapMoved:true }),
-      mapFilters: [
-        { k:'All', label: vi1 ? 'Tất cả' : 'All', icon:'ph-bold ph-squares-four' },
-        { k:'EDM', label:'EDM', icon:'ph-bold ph-waveform' },
-        { k:'Festival', label: vi1 ? 'Lễ hội' : 'Festival', icon:'ph-bold ph-confetti' },
-        { k:'Indie', label:'Indie', icon:'ph-bold ph-guitar' },
-        { k:'Food', label: vi1 ? 'Ăn uống' : 'Food', icon:'ph-bold ph-fork-knife' }
-      ].map(f => {
-        const on = st.mapGenre === f.k;
-        return { label:f.label, icon:f.icon,
-          bg: on ? 'rgba(171,255,132,.14)' : 'rgba(25,25,25,.6)',
-          bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)',
-          fg: on ? '#FFFCE1' : '#A5A493',
-          pick: () => this.setState({ mapGenre:f.k, mapSel:null }) };
-      }).concat([{
-        label: L.mapFree, icon:'ph-bold ph-gift',
-        bg: st.mapFree ? 'rgba(10,228,72,.16)' : 'rgba(25,25,25,.6)',
-        bd: st.mapFree ? '#0AE448' : 'rgba(255,252,225,.19)',
-        fg: st.mapFree ? '#0AE448' : '#A5A493',
-        pick: () => this.setState({ mapFree: !st.mapFree, mapSel:null })
-      }]),
-      mapCards: mapList.map(e => Object.assign({}, this.card(e, L), {
-        rowBg: st.mapSel === e.id ? 'rgba(171,255,132,.1)' : 'rgba(25,25,25,.6)',
-        rowBd: st.mapSel === e.id ? '#ABFF84' : 'rgba(255,252,225,.19)',
-        select: () => this.setState({ mapSel:e.id })
-      })),
-      mapPins: (() => {
-        const placed = [];
-        mapList.forEach(e => {
-          let x = 12 + ((e.lng - 106.64) / 0.21) * 76, y = 86 - ((e.lat - 10.71) / 0.15) * 60;
-          for (let i = 0; i < 12; i++) {
-            const hit = placed.some(p => Math.abs(p.x - x) < 9 && Math.abs(p.y - y) < 7);
-            if (!hit) break;
-            x += 5.5; y -= 4.5;
-          }
-          placed.push({ id:e.id, x, y });
-        });
-        const pinPos = {}; placed.forEach(p => { pinPos[p.id] = { x: Math.round((50 + (p.x - st.mapCx) * st.mapZoom) * 10) / 10, y: Math.round((50 + (p.y - st.mapCy) * st.mapZoom) * 10) / 10 }; });
-        return mapList.map(e => {
-        const fr = connected ? this.fGoing(e.id) : [];
+      /* ---- every event, as a table or a grid ---- */
+      board: (() => {
+        const on = (x) => ({ bg: x ? 'rgba(171,255,132,.14)' : 'rgba(25,25,25,.6)', bd: x ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: x ? '#FFFCE1' : '#A5A493' });
+        const upcoming = EVENTS.filter(e => !e.past);
+        const inCity = (c) => upcoming.filter(e => c === 'all' || (e.city || 'ho-chi-minh') === c);
+        const rows = inCity(st.listCity)
+          .filter(e => st.listTime === 'all' || e.tags.includes(st.listTime))
+          .filter(e => st.listGenre === 'All' || e.genre === st.listGenre);
+        const key = { date: (e) => +e.dsD * 1e4 + (parseInt(e.time, 10) || 0), price: (e) => e.price, hype: (e) => e.hype }[st.listSort];
+        rows.sort((a, b) => (key(a) - key(b)) * (st.listDesc ? -1 : 1));
+        const cityName = (c) => { const x = CITY_LIST.find(y => y.k === (c || 'ho-chi-minh')); return x ? x[g] : ''; };
+        const sortBy = (k) => () => this.setState(st.listSort === k ? { listDesc: !st.listDesc } : { listSort: k, listDesc: k !== 'date' });
+        const arrow = (k) => st.listSort === k ? (st.listDesc ? ' ↓' : ' ↑') : '';
+        const status = (e) => e.soldOut ? { label: L.stSold, fg:'#FF8709', bg:'rgba(255,135,9,.12)' }
+          : e.tags.includes('tonight') ? { label: L.stTonight, fg:'#0E100F', bg:'#ABFF84' }
+          : e.badge ? { label: e.badge[g], fg:'#FFFCE1', bg:'rgba(255,252,225,.1)' }
+          : e.price === 0 ? { label: L.stFree, fg:'#0AE448', bg:'rgba(10,228,72,.12)' }
+          : { label: L.stOn, fg:'#A5A493', bg:'transparent' };
         return {
-        faces: fr.slice(0, 2).map(f => ({ initials: initialsOf(f.name), color: f.color })),
-        moreShow: fr.length > 2, more: '+' + (fr.length - 2), hasFriends: fr.length > 0,
-        op: st.friendsOnly && !fr.length ? '.25' : '1',
-        x: pinPos[e.id].x + '%',
-        y: pinPos[e.id].y + '%',
-        price: e.price === 0 ? L.free : this.short(e.price),
-        z: st.mapSel === e.id ? 6 : 4,
-        bg: st.mapSel === e.id ? '#ABFF84' : 'rgba(14,16,15,.82)',
-        bd: st.mapSel === e.id ? '#ABFF84' : e.featured ? '#0AE448' : '#ABFF84',
-        fg: st.mapSel === e.id ? '#141514' : '#FFFCE1',
-        glow: st.mapSel === e.id ? '0 6px 22px rgba(171,255,132,.5)' : '0 4px 14px rgba(0,0,0,.5)',
-        pick: () => this.setState({ mapSel:e.id })
-      }; });
+          table: st.listView === 'table', grid: st.listView === 'grid', empty: rows.length === 0,
+          count: rows.length + ' ' + L.events,
+          updated: L.listUpdated.replace('{t}', FF.hhmm(st.listAt)),
+          added: st.listAdded ? L.listNew.replace('{n}', String(st.listAdded)) : '', hasAdded: st.listAdded > 0,
+          views: [{ k:'table', label:L.listTable, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }]
+            .map(v => Object.assign({ label: v.label, icon: v.icon, pick: () => this.setState({ listView: v.k }) }, on(st.listView === v.k))),
+          cities: [{ k:'all', label: L.listAll }].concat(CITY_LIST.map(c => ({ k: c.k, label: c[g] })))
+            .map(c => Object.assign({ label: c.label + ' · ' + inCity(c.k).length, pick: () => this.setState({ listCity: c.k, listAdded: 0 }) }, on(st.listCity === c.k))),
+          times: [{ k:'all', label: L.listAllTime }, { k:'tonight', label: L.tonight }, { k:'weekend', label: L.weekend }, { k:'7days', label: L.next7 }, { k:'month', label: L.month }]
+            .map(t => Object.assign({ label: t.label, pick: () => this.setState({ listTime: t.k }) }, on(st.listTime === t.k))),
+          genres: GENRES.map(x => Object.assign({ label: x === 'All' ? L.listAll : x, pick: () => this.setState({ listGenre: x }) }, on(st.listGenre === x))),
+          heads: [
+            { label: L.colDate + arrow('date'), sort: sortBy('date'), cursor:'pointer' }, { label: L.colTime, sort: () => {}, cursor:'default' },
+            { label: L.colEvent, sort: () => {}, cursor:'default' }, { label: L.colVenue, sort: () => {}, cursor:'default' },
+            { label: L.colCity, sort: () => {}, cursor:'default' }, { label: L.colPrice + arrow('price'), sort: sortBy('price'), cursor:'pointer' },
+            { label: L.colHype + arrow('hype'), sort: sortBy('hype'), cursor:'pointer' }, { label: L.colStatus, sort: () => {}, cursor:'default' }
+          ],
+          rows: rows.map(e => {
+            const sx = status(e);
+            return {
+              date: DOW[g][e.dsD.getDay()] + ' ' + e.dsD.getDate() + '/' + (e.dsD.getMonth() + 1) + (+e.deD !== +e.dsD ? ' – ' + e.deD.getDate() + '/' + (e.deD.getMonth() + 1) : ''),
+              time: e.time, title: e.title, genre: e.genre, genreFg: FF.genreHue(e.genre),
+              venue: e.venue, area: e.area, city: cityName(e.city),
+              price: e.price === 0 ? L.free : this.short(e.price), priceFg: e.price === 0 ? '#0AE448' : '#FFFCE1',
+              hype: e.hype >= 1000 ? (e.hype / 1000).toFixed(1) + 'K' : String(e.hype),
+              status: sx.label, stFg: sx.fg, stBg: sx.bg,
+              open: () => this.openEvent(e.id)
+            };
+          }),
+          cards: rows.map(e => Object.assign({}, this.card(e, L), { cityLine: cityName(e.city) + ' · ' + e.area }))
+        };
       })(),
+
       mapSelFriends: sel && connected ? this.fGoing(sel.id).map(f => this.fView(f)) : [],
       mapSelHasFriends: !!(sel && connected && this.fGoing(sel.id).length),
       mapSelFriendsLine: sel && connected ? this.fGoing(sel.id).length + ' ' + L.friendsGoing : '',
@@ -1658,13 +1667,6 @@ class Component extends DCLogic {
         const on = this.toggleFlag('going', '/me/going/', sel.id);
         this.say(on ? L.youreGoing + ' · ' + L.goingPrivacy : L.imGoing);
       },
-      mapSel: sel ? {
-        art: sel.art, title: sel.title, whenLine: this.when(sel),
-        whereLine: sel.venue + ' · ' + sel.area + ' · ' + sel.dist + ' km',
-        cta: sel.price === 0 ? L.freeEntry : L.getTickets,
-        buy: (ev) => { ev.stopPropagation(); buy(sel.price); }
-      } : null,
-      clearMapSel: () => this.setState({ mapSel:null }),
 
       landingCount: weekend.length + ' ' + L.events,
       answerRows: (() => {
