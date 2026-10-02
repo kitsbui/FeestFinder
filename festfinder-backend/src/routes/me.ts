@@ -446,7 +446,7 @@ export default async function meRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { provider: string } }>('/me/connections/:provider', async (req) => {
     const s = requireUser(req);
-    const provider = parse(z.enum(['fb', 'ig', 'zalo', 'wa']), req.params.provider);
+    const provider = parse(z.enum(['google', 'fb', 'ig', 'zalo', 'wa']), req.params.provider);
     const user = await one<any>(ctx.db, 'select signup_method from users where id = $1', [s.user.id]);
     const others = await one<any>(ctx.db, 'select count(*)::int as n from social_connections where user_id = $1 and provider <> $2', [s.user.id, provider]);
     if (user.signup_method === provider && others.n === 0) {

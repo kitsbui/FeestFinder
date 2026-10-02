@@ -1,8 +1,18 @@
 /**
- * Facebook and Instagram sign-in / connect. Each provider exchanges an authorization
+ * Google, Facebook and Instagram sign-in / connect. Each provider exchanges an authorization
  * code for a profile. Without app credentials, development uses MockOAuth.
  */
-export interface OAuthProfile { externalId: string; name: string; email: string | null; accessToken: string }
+export type OAuthKind = 'google' | 'fb' | 'ig';
+
+export interface OAuthProfile {
+  externalId: string;
+  name: string;
+  email: string | null;
+  /** The provider has confirmed the person controls this address: only then may it match an account. */
+  emailVerified?: boolean;
+  photoUrl?: string | null;
+  accessToken: string;
+}
 
 export interface OAuthProvider {
   authorizeUrl(state: string, redirectUri: string): string;
@@ -16,6 +26,43 @@ async function getJson(url: string, init?: RequestInit): Promise<any> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`oauth ${res.status}: ${JSON.stringify(body).slice(0, 200)}`);
   return body;
+}
+
+/**
+ * Sign in with Google (OpenID Connect, authorization code flow). The code is exchanged
+ * server-to-server over TLS, so the profile comes straight from Google's userinfo endpoint.
+ */
+export class GoogleOAuth implements OAuthProvider {
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+
+  constructor(clientId: string, clientSecret: string) {
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+  }
+
+  authorizeUrl(state: string, redirectUri: string) {
+    const p = new URLSearchParams({
+      client_id: this.clientId, redirect_uri: redirectUri, response_type: 'code', state,
+      scope: 'openid email profile', prompt: 'select_account', access_type: 'online', include_granted_scopes: 'true',
+    });
+    return `https://accounts.google.com/o/oauth2/v2/auth?${p}`;
+  }
+
+  async exchange(code: string, redirectUri: string): Promise<OAuthProfile> {
+    const body = new URLSearchParams({ client_id: this.clientId, client_secret: this.clientSecret, redirect_uri: redirectUri, grant_type: 'authorization_code', code });
+    const token = await getJson('https://oauth2.googleapis.com/token', { method: 'POST', body });
+    const me = await getJson('https://openidconnect.googleapis.com/v1/userinfo', { headers: { authorization: `Bearer ${token.access_token}` } });
+    return {
+      externalId: String(me.sub), name: me.name ?? me.given_name ?? '', email: me.email ?? null,
+      emailVerified: me.email_verified === true, photoUrl: me.picture ?? null, accessToken: token.access_token,
+    };
+  }
+
+  /** Google exposes no friend graph. */
+  async friendIds(): Promise<string[]> {
+    return [];
+  }
 }
 
 export class FacebookOAuth implements OAuthProvider {
@@ -84,9 +131,9 @@ export class InstagramOAuth implements OAuthProvider {
  * `mock:<externalId>:<name>`; friends are whatever `mock:` ids were passed as the token.
  */
 export class MockOAuth implements OAuthProvider {
-  private readonly provider: 'fb' | 'ig';
+  private readonly provider: OAuthKind;
 
-  constructor(provider: 'fb' | 'ig') {
+  constructor(provider: OAuthKind) {
     this.provider = provider;
   }
 
@@ -100,7 +147,9 @@ export class MockOAuth implements OAuthProvider {
   async exchange(code: string): Promise<OAuthProfile> {
     const m = /^mock:([^:]+):(.*)$/.exec(code);
     if (!m) throw new Error('invalid mock code');
-    return { externalId: m[1], name: m[2] || 'Minh Anh', email: null, accessToken: `mock-token:${m[1]}` };
+    // A Google account always comes with a confirmed Gmail address.
+    const email = this.provider === 'google' ? `${m[1].replace(/[^a-z0-9.]/gi, '.')}@gmail.com` : null;
+    return { externalId: m[1], name: m[2] || 'Minh Anh', email, emailVerified: !!email, photoUrl: null, accessToken: `mock-token:${m[1]}` };
   }
 
   async friendIds(): Promise<string[]> {

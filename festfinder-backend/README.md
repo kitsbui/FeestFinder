@@ -231,6 +231,7 @@ These are interfaces with development stand-ins, or providers that need contract
 | Native push, Zalo ZNS, SMS providers | behind `MESSAGING_WEBHOOK_URL` | The API signs and sends; the endpoint that talks to FCM/APNs, Zalo and the SMS gateway is yours to run |
 | Card, Momo and ZaloPay checkout | `routes/commerce.ts` | `mock` confirms instantly; `vietqr` bank transfer is real |
 | Apple / Google Wallet | `POST /me/tickets/:id/wallet` | Returns pass fields; signing needs issuer certificates |
+| Google sign-in | `services/oauth.ts` | Real OpenID Connect adapter; needs `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` and the return URL registered |
 | Facebook / Instagram | `services/oauth.ts` | Real Graph API adapters; verify scopes and friend access in app review |
 | Zalo / WhatsApp friend graph | `services/friends.ts` | Only Facebook exposes friends; contact matching is not built |
 | Geocoding free-typed venues | wizard `venueName` | Venues from the list have pins; others stay unresolved |

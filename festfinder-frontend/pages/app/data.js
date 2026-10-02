@@ -42,7 +42,7 @@ FF.loadApp = async function () {
   }));
 
   const u = me && me.user;
-  const socials = me ? me.connections.map(c => c.provider === 'whatsapp' ? 'wa' : c.provider) : [];
+  const socials = me ? me.connections.map(c => c.provider) : [];
   const orgFollow = {};
   if (follows) follows.organizers.following.forEach(o => { orgFollow[o.id] = true; });
 
@@ -63,7 +63,8 @@ FF.loadApp = async function () {
     user: u ? {
       handle: u.email || u.phone || u.name, method: u.signupMethod === 'email' ? 'email' : u.signupMethod === 'wa' ? 'wa' : 'zalo',
       name: u.name || '', email: u.email || '', zalo: u.phone || '', city: u.city || '', photo: u.photoUrl || '',
-      socials, social: socials[0] || ''
+      // `social` is where friends come from; Google brings none.
+      socials, social: socials.filter(x => x !== 'google')[0] || ''
     } : null,
     saved: flags(saves.items), hyped: flags(hypes.items), going: flags(going.items),
     interests: on(u ? u.interests : []),
@@ -143,7 +144,9 @@ FF.appRest = (cmp) => Promise.all([FF.appSettings(cmp), FF.appTickets(cmp), FF.a
 
 FF.preload = (async () => {
   try {
-    FF.data.app = await FF.loadApp();
+    const [app, ways] = await Promise.all([FF.loadApp(), FF.authProviders()]);
+    FF.data.app = app;
+    FF.data.ways = ways;
   } catch (e) {
     FF.data.appError = e;
     FF.data.app = {};

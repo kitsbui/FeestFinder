@@ -17,8 +17,9 @@ The four screens in `../festfinder-frontend/` call these endpoints directly. Eac
 | POST | `/auth/password` | `{token, password, passwordConfirm?}` — finish email sign-up or a reset. 8+ characters. |
 | POST | `/auth/login` | `{identifier: email or phone, password}`. 10 failures / 15 min per identifier or IP. |
 | POST | `/auth/password/reset` → `/auth/password/reset/verify` | Email code → `{resetToken}` for `/auth/password`. |
-| GET | `/auth/oauth/:provider/start?redirectUri=` | `fb` or `ig`. `redirectUri` must be on an allowed origin. Signed in → connects instead of signing in. |
-| POST | `/auth/oauth/:provider/callback` | `{code, state}` from the provider redirect. |
+| GET | `/auth/providers` | Which ways in this server offers: `{google, fb, ig, zalo, wa, email, password}`. |
+| GET | `/auth/oauth/:provider/start?redirectUri=` | `google`, `fb` or `ig` → `{url, state}`; send the browser to `url`. `redirectUri` is the page to come back to and must be on an allowed origin. Signed in → links the account instead of signing in. Sets the `ff_oauth` cookie. |
+| GET | `/auth/oauth/:provider/return` | Where the provider sends the browser (register `<PUBLIC_BASE_URL>/auth/oauth/<provider>/return` with it). Checks the state against the `ff_oauth` cookie, signs in or links, sets `ff_session`, and redirects to the page with `?auth=<provider>&via=signin\|signup\|connect`, or `?auth_error=cancelled\|oauth_state_invalid\|connection_taken\|oauth_failed\|…`. A confirmed Gmail address signs into the account that already has it. |
 | GET | `/auth/session` 🔒 | Current user, organiser memberships, `readOnly`, `impersonatedBy`. |
 | DELETE | `/auth/session` 🔒 | Sign out (also ends an impersonated session). |
 

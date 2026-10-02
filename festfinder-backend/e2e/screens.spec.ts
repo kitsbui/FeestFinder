@@ -153,6 +153,18 @@ test.describe('Event page community', () => {
     expect((await download).suggestedFilename()).toBe('ravo.png');
   });
 
+  test('signs up with Google first, and comes back to the same page', async ({ page }) => {
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByText('Đăng nhập để đăng bài', { exact: true }).click();
+    // The test API's Google stand-in answers at once; the real one asks which account.
+    await page.getByText('Tiếp tục với Google', { exact: true }).click();
+    await expect(page.getByText(/Đã tạo tài khoản|Đã đăng nhập/).first()).toBeVisible();
+    const back = new URL(page.url());
+    expect(back.pathname + back.search, 'back where it started, with the sign-in result taken out').toBe('/e/ravo');
+    const who = await (await page.request.get('/auth/session')).json();
+    expect(who.user.signupMethod).toBe('google');
+  });
+
   test('a signed-in attendee posts a question', async ({ page }) => {
     await signIn(page, 'attendee');
     await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
@@ -165,6 +177,19 @@ test.describe('Event page community', () => {
 
 test.describe('App', () => {
   test('/app signed out opens on onboarding', async ({ page }) => expectScreen(page, '/app', /AROUND YOU/i));
+
+  test('/app signs in with Google from the sign-in card', async ({ page }) => {
+    await expectScreen(page, '/app/saved', /AROUND YOU/i);
+    await page.getByText('Pick a city instead', { exact: true }).click();
+    await page.getByText('Skip for now', { exact: true }).click();
+    await page.getByText('Log in', { exact: true }).first().click();
+    await page.getByText('Continue with Google', { exact: true }).click();
+    await expect(page.getByText(/Logged in|Account created/).first()).toBeVisible();
+    const back = new URL(page.url());
+    expect(back.pathname + back.search).toBe('/app/saved');
+    const who = await (await page.request.get('/auth/session')).json();
+    expect(who.user.signupMethod).toBe('google');
+  });
 
   test.describe('signed in', () => {
     test.beforeEach(async ({ page }) => signIn(page, 'attendee'));

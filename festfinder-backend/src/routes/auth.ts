@@ -14,6 +14,7 @@ import { inBackground } from '../lib/background.ts';
 import { syncFriends } from '../services/friends.ts';
 import type { Ctx } from '../context.ts';
 import type { Queryable } from '../db/index.ts';
+import type { OAuthKind } from '../services/oauth.ts';
 
 const OTP_TTL_MS = 10 * 60_000;
 const OTP_RESEND_MS = 30_000;
@@ -236,9 +237,30 @@ export default async function authRoutes(app: FastifyInstance) {
     return { resetToken: token };
   });
 
-  /** Facebook / Instagram: get the provider URL to send the browser to. */
-  app.get<{ Params: { provider: string } }>('/auth/oauth/:provider/start', async (req) => {
-    const provider = parse(z.enum(['fb', 'ig']), req.params.provider);
+  // ---- Google, Facebook, Instagram ----------------------------------------------------------
+
+  /**
+   * Which ways in work here, so a sign-in screen offers only those. Google is the main one;
+   * Facebook and Instagram are linked accounts; Zalo and WhatsApp prove a phone number with a
+   * code; the password is for accounts that set one (organisers, the team).
+   */
+  app.get('/auth/providers', async (_req, reply) => {
+    const codes = ctx.config.exposeDevCodes;
+    return reply.header('cache-control', 'public, max-age=60').send({
+      google: !!ctx.oauth.google, fb: !!ctx.oauth.fb, ig: !!ctx.oauth.ig,
+      zalo: !!ctx.config.messagingWebhook || codes, wa: !!ctx.config.messagingWebhook || codes,
+      email: !!ctx.config.smtp || codes, password: true,
+    });
+  });
+
+  const OAUTH_COOKIE = 'ff_oauth';
+  const providerOf = (raw: string) => parse(z.enum(['google', 'fb', 'ig']), raw);
+  /** Where each provider sends the browser back: one fixed address per provider, as Google requires. */
+  const callbackUrl = (provider: OAuthKind) => `${ctx.config.publicBaseUrl}/auth/oauth/${provider}/return`;
+
+  /** Get the provider's sign-in page; it comes back to /auth/oauth/:provider/return, then to `redirectUri`. */
+  app.get<{ Params: { provider: string } }>('/auth/oauth/:provider/start', async (req, reply) => {
+    const provider = providerOf(req.params.provider);
     const { redirectUri } = parse(z.object({ redirectUri: z.string().url() }), req.query);
     if (!allowedRedirect(redirectUri)) throw badRequest('redirect_not_allowed', L('That return address is not allowed', 'Địa chỉ quay lại không được phép'));
     const impl = ctx.oauth[provider];
@@ -247,56 +269,91 @@ export default async function authRoutes(app: FastifyInstance) {
     await ctx.db.query(
       'insert into oauth_states (state, provider, user_id, redirect_uri, expires_at) values ($1,$2,$3,$4,$5)',
       [state, provider, req.session?.user?.id ?? null, redirectUri, new Date(ctx.clock.now().getTime() + 10 * 60_000)]);
-    return { url: impl.authorizeUrl(state, redirectUri), state };
+    // The same browser must finish what it started: the state also rides in a cookie.
+    reply.setCookie(OAUTH_COOKIE, state, { httpOnly: true, sameSite: 'lax', secure: ctx.config.cookieSecure, path: '/auth/oauth', maxAge: 600 });
+    return { url: impl.authorizeUrl(state, callbackUrl(provider)), state };
   });
 
   /**
-   * The provider redirected back with `code` and `state`. Without a session this signs in
-   * (creating the account); with the session that started it, it connects the provider.
+   * The provider sends the browser back here. Without a session this signs in (creating the
+   * account on first use); with the session that started it, it links the account. Either way
+   * the browser goes on to the page it came from, with ?auth=<provider>&via=signin|signup|connect,
+   * or ?auth_error=<code> when something went wrong.
    */
-  app.post<{ Params: { provider: string } }>('/auth/oauth/:provider/callback', async (req, reply) => {
-    const provider = parse(z.enum(['fb', 'ig']), req.params.provider);
-    const body = parse(z.object({ code: z.string().min(1), state: z.string().min(1) }), req.body);
+  app.get<{ Params: { provider: string }; Querystring: Record<string, string> }>('/auth/oauth/:provider/return', async (req, reply) => {
+    const provider = providerOf(req.params.provider);
+    const q = req.query;
+    const fallback = `${ctx.config.publicBaseUrl}/`;
+    const back = (target: string, params: Record<string, string>) => {
+      const u = new URL(allowedRedirect(target) ? target : fallback);
+      for (const k of ['auth', 'via', 'auth_error']) u.searchParams.delete(k);
+      for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+      reply.clearCookie(OAUTH_COOKIE, { path: '/auth/oauth' });
+      return reply.redirect(u.toString(), 302);
+    };
+    const st = q.state ? await one<any>(ctx.db, 'delete from oauth_states where state = $1 and provider = $2 returning *', [q.state, provider]) : null;
+    const target = st?.redirect_uri ?? fallback;
+    if (q.error) return back(target, { auth_error: q.error === 'access_denied' ? 'cancelled' : 'oauth_failed' });
+    if (!st || new Date(st.expires_at) <= ctx.clock.now() || !q.code) return back(target, { auth_error: 'oauth_state_invalid' });
+    if (req.cookies?.[OAUTH_COOKIE] !== q.state) return back(target, { auth_error: 'oauth_state_invalid' });
+    try {
+      const done = await completeOAuth(provider, q.code, st);
+      if (done.userId) {
+        const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId: done.userId });
+        setSessionCookie(ctx, reply, token, expiresAt);
+      }
+      return back(target, { auth: provider, via: done.via });
+    } catch (e) {
+      return back(target, { auth_error: e instanceof AppError ? e.code : 'oauth_failed' });
+    }
+  });
+
+  /** Exchange the code, then sign in, create the account, or link it to the signed-in one. */
+  const completeOAuth = async (provider: OAuthKind, code: string, st: any): Promise<{ via: 'signin' | 'signup' | 'connect'; userId: string | null }> => {
     const impl = ctx.oauth[provider];
     if (!impl) throw badRequest('provider_unavailable', L('This sign-in option is not available right now', 'Cách đăng nhập này tạm thời chưa dùng được'));
     const now = ctx.clock.now();
-    const st = await one<any>(ctx.db, 'delete from oauth_states where state = $1 and provider = $2 returning *', [body.state, provider]);
-    if (!st || new Date(st.expires_at) <= now) throw badRequest('oauth_state_invalid', L('Sign-in took too long. Try again.', 'Đăng nhập quá lâu. Hãy thử lại.'));
     let profile;
     try {
-      profile = await impl.exchange(body.code, st.redirect_uri);
+      profile = await impl.exchange(code, callbackUrl(provider));
     } catch (e) {
       ctx.log(`oauth exchange failed: ${e}`);
       throw badRequest('oauth_failed', L('We could not confirm that account. Try again.', 'Chưa xác nhận được tài khoản. Hãy thử lại.'));
     }
+    // An address the provider has confirmed may find an existing account; Google always confirms Gmail.
+    const email = profile.email && (profile.emailVerified || provider === 'fb') ? normalizeEmail(profile.email) : null;
     const holder = await one<any>(ctx.db, 'select user_id from social_connections where provider = $1 and external_id = $2', [provider, profile.externalId]);
+    const link = async (q: Queryable, userId: string) => {
+      await q.query(
+        `insert into social_connections (user_id, provider, external_id, display_name) values ($1,$2,$3,$4)
+         on conflict (user_id, provider) do update set external_id = excluded.external_id, display_name = excluded.display_name, connected_at = now()`,
+        [userId, provider, profile.externalId, profile.name]);
+      await q.query(`update users set name = case when name = '' then $2 else name end, photo_url = coalesce(photo_url, $3) where id = $1`,
+        [userId, profile.name, profile.photoUrl ?? null]);
+      if (email) await q.query('update users set email = $2 where id = $1 and email is null and not exists (select 1 from users where email = $2)', [userId, email]);
+    };
 
     if (st.user_id) {
       if (holder && holder.user_id !== st.user_id) {
         throw conflict('connection_taken', L('That account is already linked to another FeestFinder user', 'Tài khoản này đã liên kết với người dùng khác'));
       }
-      await ctx.db.query(
-        `insert into social_connections (user_id, provider, external_id, display_name) values ($1,$2,$3,$4)
-         on conflict (user_id, provider) do update set external_id = excluded.external_id, display_name = excluded.display_name, connected_at = now()`,
-        [st.user_id, provider, profile.externalId, profile.name]);
-      await ctx.db.query(`update users set name = $2 where id = $1 and name = ''`, [st.user_id, profile.name]);
-      await syncFriends(ctx, st.user_id, provider, profile.accessToken);
-      return { connected: provider };
+      await ctx.db.tx((q) => link(q, st.user_id));
+      if (provider !== 'google') await syncFriends(ctx, st.user_id, provider, profile.accessToken);
+      return { via: 'connect', userId: null };
     }
 
     const user = await ctx.db.tx(async (q) => {
-      if (holder) return { id: holder.user_id, created: false };
-      const byEmail = profile.email ? await one<any>(q, 'select id from users where email = $1', [normalizeEmail(profile.email)]) : null;
+      if (holder) return { id: holder.user_id as string, created: false };
+      const byEmail = email ? await one<any>(q, 'select id from users where email = $1', [email]) : null;
       const u = byEmail ?? await one<any>(q,
-        `insert into users (name, email, signup_method, created_at) values ($1,$2,$3,$4) returning id`,
-        [profile.name, profile.email ? normalizeEmail(profile.email) : null, provider, now]);
-      await q.query(`insert into social_connections (user_id, provider, external_id, display_name) values ($1,$2,$3,$4)`,
-        [u!.id, provider, profile.externalId, profile.name]);
-      return { id: u!.id, created: !byEmail };
+        `insert into users (name, email, photo_url, signup_method, created_at) values ($1,$2,$3,$4,$5) returning id`,
+        [profile.name, email, profile.photoUrl ?? null, provider, now]);
+      await link(q, u!.id);
+      return { id: u!.id as string, created: !byEmail };
     });
-    await syncFriends(ctx, user.id, provider, profile.accessToken);
-    return issue(reply, user.id, user.created);
-  });
+    if (provider !== 'google') await syncFriends(ctx, user.id, provider, profile.accessToken);
+    return { via: user.created ? 'signup' : 'signin', userId: user.id };
+  };
 
   /** Log out; for an impersonated session this also ends impersonation. */
   app.delete('/auth/session', async (req, reply) => {

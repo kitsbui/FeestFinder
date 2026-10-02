@@ -59,7 +59,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; prefil
     prefill: opts.prefill ?? new DisabledPrefill(),
     // The tests never reach the internet.
     fetchPage: opts.fetchPage ?? (async () => { throw new Error('no network in tests'); }),
-    oauth: { fb: new MockOAuth('fb'), ig: new MockOAuth('ig') },
+    oauth: { google: new MockOAuth('google'), fb: new MockOAuth('fb'), ig: new MockOAuth('ig') },
     checkLink: opts.checkLink ?? (async () => 'ok'),
     log: () => {},
   };

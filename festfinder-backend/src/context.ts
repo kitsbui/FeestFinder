@@ -23,7 +23,7 @@ export interface Ctx {
   prefill: PrefillGenerator;
   /** Fetches a public page someone pasted, never one on a private network. */
   fetchPage: PageFetcher;
-  oauth: { fb: OAuthProvider | null; ig: OAuthProvider | null };
+  oauth: { google: OAuthProvider | null; fb: OAuthProvider | null; ig: OAuthProvider | null };
   checkLink: (url: string) => Promise<'ok' | 'broken'>;
   log: (msg: string) => void;
 }

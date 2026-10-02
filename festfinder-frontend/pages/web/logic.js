@@ -63,12 +63,13 @@ const S = {
   gateOrganizer:{en:'Log in to list your event',vi:'Đăng nhập để đăng sự kiện'},
   gateAds:{en:'Log in to book advertising',vi:'Đăng nhập để đặt quảng cáo'},
   joinTitle:{en:'Create your account',vi:'Tạo tài khoản'},
-  joinSub:{en:'Continue with a social account, or verify an email or WhatsApp number.',vi:'Tiếp tục bằng tài khoản mạng xã hội, hoặc xác minh email / số WhatsApp.'},
+  withGoogle:{en:'Continue with Google',vi:'Tiếp tục với Google'},
+  withPassword:{en:'Log in with a password',vi:'Đăng nhập bằng mật khẩu'},
+  viaGoogle:{en:'Signed in with Google',vi:'Đăng nhập bằng Google'},
   withEmail:{en:'Continue with email',vi:'Tiếp tục với email'},
   withZalo:{en:'Continue with Zalo number',vi:'Tiếp tục với số Zalo'},
   idTitleEmail:{en:'WHAT\u2019S YOUR EMAIL?',vi:'EMAIL CỦA BẠN?'},
   idTitleZalo:{en:'WHAT\u2019S YOUR ZALO NUMBER?',vi:'SỐ ZALO CỦA BẠN?'},
-  withWa:{en:'Continue with WhatsApp',vi:'Tiếp tục với WhatsApp'},
   idTitleWa:{en:'WHAT\u2019S YOUR WHATSAPP NUMBER?',vi:'SỐ WHATSAPP CỦA BẠN?'},
   waLabel:{en:'WhatsApp number',vi:'Số WhatsApp'}, waPh:{en:'+84 9xx xxx xxx',vi:'+84 9xx xxx xxx'},
   otpSentWa:{en:'Sent on WhatsApp to',vi:'Đã gửi qua WhatsApp tới'},
@@ -122,10 +123,8 @@ const S = {
   uploadPhoto:{en:'Upload profile picture',vi:'Tải ảnh đại diện'},
   changePhoto:{en:'Change picture',vi:'Đổi ảnh'}, removePhoto:{en:'Remove',vi:'Xoá ảnh'},
   photoHint:{en:'A photo or your brand logo. JPG or PNG, square works best.',vi:'Ảnh cá nhân hoặc logo thương hiệu. JPG hoặc PNG, ảnh vuông đẹp nhất.'},
-  socialOr:{en:'or use email / WhatsApp number',vi:'hoặc dùng email / số WhatsApp'},
+  socialOr:{en:'or',vi:'hoặc'},
   socialWith:{en:'Continue with',vi:'Tiếp tục với'},
-  socialWhy:{en:'We read your name, picture and friend list to find who else is going. Nothing is posted.',
-    vi:'Chúng tôi chỉ đọc tên, ảnh và danh sách bạn bè để tìm ai cũng đi. Không đăng gì lên trang của bạn.'},
   connected:{en:'Connected accounts',vi:'Tài khoản đã liên kết'},
   connect:{en:'Connect',vi:'Liên kết'}, connectedToast:{en:'Connected',vi:'Đã liên kết'},
   disconnectedToast:{en:'Disconnected',vi:'Đã bỏ liên kết'},
@@ -365,11 +364,14 @@ const NOTIF_ROWS = [
 ];
 
 const SRC = {
+  google: { label:'Google', icon:'ph-bold ph-google-logo', color:'#FFFCE1' },
   wa: { label:'WhatsApp', icon:'ph-fill ph-whatsapp-logo', color:'#25D366' },
   fb: { label:'Facebook', icon:'ph-fill ph-facebook-logo', color:'#00BAE2' },
   ig: { label:'Instagram', icon:'ph-fill ph-instagram-logo', color:'#FEC5FB' },
   zalo: { label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#ABFF84' }
 };
+// The ways in this server offers (GET /auth/providers).
+const WAYS = FF.data.ways || { google:true, email:true, password:true };
 // Live containers, refilled in place by applyWeb() after sign-in and sign-out.
 const FRIENDS = [];
 const ORGS = {};
@@ -514,7 +516,9 @@ class Component extends DCLogic {
   componentDidMount() {
     document.documentElement.lang = this.state.lang;
     this._t = setTimeout(() => this.setState({ loading:false }), 800);
-    if (FF.data.oauthJustConnected) this.say(this.L().connectedToast + ' · ' + SRC[FF.data.oauthJustConnected].label);
+    const back = FF.data.oauth;
+    FF.data.oauth = null;
+    if (back) this.oauthBack(back);
     ADS.slice(0, 1).forEach(a => FF.fire(FF.post('/ads/' + a.id + '/impression')));
     const r = FF.route;
     this.setState(routeState(r));
@@ -567,16 +571,16 @@ class Component extends DCLogic {
     if (method === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
     return /^(0|\+84)\d{8,10}$/.test(s.replace(/[\s.-]/g, ''));
   }
-  openAuth(mode, next, note) {
+  openAuth(mode, next, note, err) {
     this.setState({
-      auth: mode === 'login' ? 'loginId' : 'method', authMode: mode, authMethod:'email',
-      authId:'', authOtp:'', authPass:'', authPass2:'', authErr:'', authShowPass:false,
+      auth:'method', authMode: mode, authMethod:'email', authBusy:false,
+      authId:'', authOtp:'', authPass:'', authPass2:'', authErr: err || '', authShowPass:false,
       authNote: note || '', authNext: next || null, acct:false
     });
   }
   authBack() {
     const s = this.state.auth;
-    if (s === 'id') return this.setState({ auth:'method', authErr:'' });
+    if (s === 'id' || s === 'loginId') return this.setState({ auth:'method', authErr:'' });
     if (s === 'otp') return this.setState({ auth:'id', authErr:'' });
     if (s === 'pass') return this.setState({ auth:'otp', authErr:'' });
     if (s === 'loginPass') return this.setState({ auth:'loginId', authErr:'' });
@@ -634,23 +638,37 @@ class Component extends DCLogic {
     return { user: d.user, saved: d.saved, going: d.going, following: d.following, notifM: d.notifM || this.state.notifM };
   }
   async finishAuth() {
-    const st = this.state, L = this.L(), next = st.authNext;
-    const patch = Object.assign(await this.reloadWeb(), {
+    const st = this.state, L = this.L();
+    this.setState(Object.assign(await this.reloadWeb(), {
       auth:null, authErr:'', authOtp:'', authPass:'', authPass2:'', authNote:'', authNext:null, authBusy:false
-    });
-    if (next && next.indexOf('save:') === 0) {
-      const id = next.slice(5);
-      FF.fire(FF.put('/me/saves/' + id));
-      patch.saved = Object.assign({}, patch.saved, { [id]: true });
-    }
-    if (next === 'ads') patch.adsOpen = true;
-    if (next === 'organizer') setTimeout(() => { window.location.href = '/organizer'; }, 500);
-    if (next === 'submit') Object.assign(patch, { submitOpen:true, submitTab:'new', submitErr:'' });
-    this.setState(patch);
+    }));
     this.say(st.authMode === 'login' ? L.loggedInToast : L.welcomeToast);
-    if (next === 'submit') this.loadSubmissions();
+    this.afterAuth(st.authNext);
     // Signed in on an event page: its discussion now knows who is reading.
     if (this.state.detailId) { this.loadDiscussion(this.state.detailId); this.loadDetail(this.state.detailId); }
+  }
+  /** What the visitor was doing when sign-in got in the way. */
+  afterAuth(next) {
+    if (!next) return;
+    if (next.indexOf('save:') === 0) {
+      const id = next.slice(5);
+      FF.fire(FF.put('/me/saves/' + id));
+      this.setState(s => ({ saved: Object.assign({}, s.saved, { [id]: true }) }));
+    }
+    if (next === 'ads') this.setState({ adsOpen:true });
+    if (next === 'organizer') setTimeout(() => { window.location.href = '/organizer'; }, 500);
+    if (next === 'submit') { this.setState({ submitOpen:true, submitTab:'new', submitErr:'' }); this.loadSubmissions(); }
+  }
+  /** Back from Google, Facebook or Instagram: the API has already signed in or linked. */
+  oauthBack(r) {
+    const L = this.L();
+    if (r.error) {
+      const text = FF.oauthErrorText(r.error, this.state.lang);
+      return this.state.user ? this.say(text) : this.openAuth('signup', r.next, '', text);
+    }
+    if (r.via === 'connect') return this.say(L.connectedToast + ' · ' + (SRC[r.provider] || SRC.google).label);
+    this.say(r.via === 'signup' ? L.welcomeToast : L.loggedInToast);
+    this.afterAuth(r.next);
   }
 
   readPhoto(e) {
@@ -660,10 +678,12 @@ class Component extends DCLogic {
   }
 
   socialLogin(src) {
-    FF.fire(FF.oauthStart(src), (e) => this.setState({ authErr: FF.errorText(e, this.state.lang) }));
+    if (this.state.authBusy) return;
+    this.setState({ authBusy:true, authErr:'' });
+    FF.oauthStart(src, this.state.authNext).catch((e) => this.authFail(e));
   }
   startConnect(src) {
-    if (src === 'fb' || src === 'ig') return FF.fire(FF.oauthStart(src), (e) => this.say(FF.errorText(e, this.state.lang)));
+    if (src === 'google' || src === 'fb' || src === 'ig') return FF.fire(FF.oauthStart(src), (e) => this.say(FF.errorText(e, this.state.lang)));
     this.setState({ cx: { src, step:'phone', id:'', otp:'', err:'' } });
   }
   cxSet(patch) { this.setState({ cx: Object.assign({}, this.state.cx, patch) }); }
@@ -1071,9 +1091,9 @@ class Component extends DCLogic {
 
     const step = st.auth, isLogin = st.authMode === 'login';
     const idStep = step === 'id' || step === 'loginId', passStep = step === 'pass' || step === 'loginPass';
-    const authTitles = { method:L.joinTitle, id: st.authMethod === 'email' ? L.idTitleEmail : st.authMethod === 'wa' ? L.idTitleWa : L.idTitleZalo,
+    const authTitles = { method: isLogin ? L.loginTitle : L.joinTitle, id: st.authMethod === 'email' ? L.idTitleEmail : st.authMethod === 'wa' ? L.idTitleWa : L.idTitleZalo,
       otp:L.otpTitle, pass:L.passTitle, loginId:L.loginTitle, loginPass:L.loginPassTitle };
-    const authSubs = { method:L.joinSub, id:L.idSub,
+    const authSubs = { method:'', id:L.idSub,
       otp: (st.authMethod === 'email' ? L.otpSentEmail : st.authMethod === 'wa' ? L.otpSentWa : L.otpSentZalo) + ' ' + st.authId.trim(),
       pass:L.passSub, loginId:L.loginSub, loginPass:L.loginPassSub };
     const authCtas = { id:L.sendCode, otp:L.verify, pass:L.createAccount, loginId:L.continueCta, loginPass:L.logIn };
@@ -1096,7 +1116,7 @@ class Component extends DCLogic {
       signedIn: !!st.user, signedOut: !st.user,
       userHandle: st.user ? st.user.handle : '',
       userInitial: st.user ? (st.user.handle.trim().charAt(0) || '?').toUpperCase() : '',
-      userVia: st.user ? (st.user.social ? (g === 'vi' ? 'Liên kết với ' : 'Connected with ') + SRC[st.user.social].label : st.user.method === 'email' ? L.viaEmail : st.user.method === 'wa' ? L.viaWa : L.viaZalo) : '',
+      userVia: st.user ? (st.user.method === 'google' ? L.viaGoogle : st.user.social ? (g === 'vi' ? 'Liên kết với ' : 'Connected with ') + SRC[st.user.social].label : st.user.method === 'email' ? L.viaEmail : st.user.method === 'wa' ? L.viaWa : L.viaZalo) : '',
       savedCount: String(Object.keys(st.saved).filter(k => st.saved[k]).length),
       acctOpen: st.acct, toggleAcct: () => this.setState({ acct: !st.acct }),
       savedView: st.savedView,
@@ -1151,11 +1171,11 @@ class Component extends DCLogic {
       signOutNow: () => { FF.del('/auth/session').catch(() => {}).then(() => this.reloadWeb()).then(patch => { this.setState(Object.assign(patch, { acct:false })); this.say(L.signedOutToast); }); },
 
       authOpen: !!step,
-      authTitle: authTitles[step] || '', authSub: authSubs[step] || '', authCta: authCtas[step] || '',
+      authTitle: authTitles[step] || '', authSub: authSubs[step] || '', authSubShow: !!authSubs[step], authCta: authCtas[step] || '',
       authStepMethod: step === 'method', authStepIdAny: idStep, authStepOtp: step === 'otp',
       authStepPassAny: passStep, authStepPass: step === 'pass', authStepLoginPass: step === 'loginPass',
       authFormShow: !!step && step !== 'method',
-      authSwitchShow: step === 'method' || step === 'loginId',
+      authSwitchShow: step === 'method' && WAYS.password !== false,
       authNote: st.authNote, authNoteShow: !!st.authNote,
       authBarShow: barStep > 0,
       authBar1: barStep >= 1 ? '#0AE448' : 'rgba(255,252,225,.19)',
@@ -1184,20 +1204,24 @@ class Component extends DCLogic {
       authBack: () => this.authBack(),
       authClose: () => this.setState({ auth:null, authErr:'' }),
       stopProp: (e) => e.stopPropagation(),
-      authBackShow: step !== 'method' && step !== 'loginId',
-      authBackIcon: step !== 'method' && step !== 'loginId' ? 'ph-bold ph-arrow-left' : 'ph-bold ph-x',
+      authBackShow: step !== 'method',
+      authBackIcon: step !== 'method' ? 'ph-bold ph-arrow-left' : 'ph-bold ph-x',
       pickEmail: () => this.setState({ auth:'id', authMethod:'email', authId:'', authErr:'' }),
-      pickWa: () => this.setState({ auth:'id', authMethod:'wa', authId:'', authErr:'', authOtp:'' }),
       authResend: () => this.say(L.otpResent),
       authForgot: () => this.say(L.forgotToast),
-      authSwitchQ: isLogin ? L.noAccount : L.haveAccount,
-      authSwitchLabel: isLogin ? L.signUp : L.logIn,
-      authSwitch: () => this.openAuth(isLogin ? 'signup' : 'login', st.authNext, st.authNote),
+      authSwitchQ: '',
+      authSwitchLabel: L.withPassword,
+      authSwitch: () => this.setState({ auth:'loginId', authMode:'login', authMethod:'email', authId:'', authPass:'', authErr:'' }),
 
-      socialBtns: ['fb','ig','zalo'].map(k => ({
+      // Google is the way in; the social networks a visitor can link come after it.
+      authGoogleShow: !!WAYS.google,
+      authGoogle: () => this.socialLogin('google'),
+      authEmailShow: !WAYS.google && !!WAYS.email,
+      authOrShow: !!WAYS.google && ['fb','ig','zalo','wa'].some(k => WAYS[k]),
+      socialBtns: ['fb','ig','zalo','wa'].filter(k => WAYS[k]).map(k => ({
         label: L.socialWith + ' ' + SRC[k].label, icon: SRC[k].icon, color: SRC[k].color,
-        go: k === 'zalo'
-          ? () => this.setState({ auth:'id', authMethod:'zalo', authId:'', authErr:'', authOtp:'' })
+        go: k === 'zalo' || k === 'wa'
+          ? () => this.setState({ auth:'id', authMethod:k, authId:'', authErr:'', authOtp:'' })
           : () => this.socialLogin(k)
       })),
       cxOpen: !!st.cx,
@@ -1232,15 +1256,15 @@ class Component extends DCLogic {
       cxSubmit: () => this.cxStep(),
       cxClose: () => this.setState({ cx:null }),
       connected, notConnected: !!st.user && !connected,
-      connectRows: ['fb','ig','zalo','wa'].map(k => {
+      connectRows: ['google','fb','ig','zalo','wa'].map(k => {
         const on = !!st.user && (st.user.socials || (st.user.social ? [st.user.social] : [])).indexOf(k) >= 0;
-        return {
+        return (on || WAYS[k]) && {
           label: SRC[k].label, icon: SRC[k].icon, color: SRC[k].color,
           state: on ? L.connectedToast : L.connect,
           stateColor: on ? '#0AE448' : '#ABFF84',
           go: () => this.connectSocial(k)
         };
-      }),
+      }).filter(Boolean),
       friendsAll: connected ? FRIENDS.map(f => this.fView(f)) : [],
       friendsOnly: st.friendsOnly, showFriendsFilter: connected,
       friendsFilterBg: st.friendsOnly ? 'rgba(171,255,132,.14)' : 'transparent',

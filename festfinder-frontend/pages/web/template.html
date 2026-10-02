@@ -1288,24 +1288,32 @@
       </sc-if>
 
       <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:26px;line-height:1.06;letter-spacing:-.02em;text-wrap:pretty">{{ authTitle }}</div>
-      <div style="color:#A5A493;font-size:13px;font-weight:500;line-height:1.6;margin-top:10px;overflow-wrap:anywhere">{{ authSub }}</div>
+      <sc-if value="{{ authSubShow }}" hint-placeholder-val="{{ true }}">
+        <div style="color:#A5A493;font-size:13px;font-weight:500;line-height:1.6;margin-top:10px;overflow-wrap:anywhere">{{ authSub }}</div>
+      </sc-if>
 
       <sc-if value="{{ authStepMethod }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;flex-direction:column;gap:9px;margin-top:22px">
+          <sc-if value="{{ authGoogleShow }}" hint-placeholder-val="{{ true }}">
+            <div class="ff-cta" onClick="{{ authGoogle }}" role="button" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;padding:15px;border-radius:8px;background:#FFFCE1;color:#141514;font-size:14.5px;font-weight:600;box-shadow:0 14px 32px rgba(255,252,225,.12);transition:transform .15s" style-active="transform:translateY(1px)"><i class="ph-bold ph-google-logo" style="font-size:18px;flex:none"></i>{{ L.withGoogle }}</div>
+          </sc-if>
+          <sc-if value="{{ authOrShow }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:12px;margin:8px 0 2px">
+              <div style="height:1px;flex:1;background:rgba(255,252,225,.19)"></div>
+              <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;white-space:nowrap;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.socialOr }}</div>
+              <div style="height:1px;flex:1;background:rgba(255,252,225,.19)"></div>
+            </div>
+          </sc-if>
           <sc-for list="{{ socialBtns }}" as="s" hint-placeholder-count="3">
-            <div onClick="{{ s.go }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:14px 15px;border-radius:8px;background:rgba(28,29,27,.6);border:1px solid rgba(255,252,225,.19);font-size:13.5px;font-weight:600;transition:border-color .15s;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)" style-hover="border-color:#ABFF84"><i class="{{ s.icon }}" style="font-size:18px;flex:none;color:{{ s.color }}"></i>{{ s.label }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:12px;color:#8C8B7D;flex:none"></i></div>
+            <div onClick="{{ s.go }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:14px 15px;border-radius:8px;background:rgba(28,29,27,.6);border:1px solid rgba(255,252,225,.19);font-size:13.5px;font-weight:600;transition:border-color .15s;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)" style-hover="border-color:#ABFF84"><i class="{{ s.icon }}" style="font-size:18px;flex:none;color:{{ s.color }}"></i>{{ s.label }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:12px;color:#8C8B7D;flex:none"></i></div>
           </sc-for>
+          <sc-if value="{{ authEmailShow }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ pickEmail }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:15px;border-radius:8px;background:rgba(28,29,27,.6);border:1px solid rgba(255,252,225,.19);font-size:14px;font-weight:600;transition:border-color .15s;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)" style-hover="border-color:#ABFF84"><i class="ph-bold ph-envelope-simple" style="font-size:18px;color:#ABFF84;flex:none"></i>{{ L.withEmail }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:13px;color:#8C8B7D;flex:none"></i></div>
+          </sc-if>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:7px;margin-top:10px"><i class="ph-bold ph-shield-check" style="font-size:13px;color:#8C8B7D;flex:none;margin-top:1px"></i><div style="font-size:11px;font-weight:500;color:#8C8B7D;line-height:1.5">{{ L.socialWhy }}</div></div>
-        <div style="display:flex;align-items:center;gap:12px;margin:18px 0 4px">
-          <div style="height:1px;flex:1;background:rgba(255,252,225,.19)"></div>
-          <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;white-space:nowrap;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.socialOr }}</div>
-          <div style="height:1px;flex:1;background:rgba(255,252,225,.19)"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
-          <div onClick="{{ pickEmail }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:15px;border-radius:8px;background:rgba(28,29,27,.6);border:1px solid rgba(255,252,225,.19);font-size:14px;font-weight:600;transition:border-color .15s;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)" style-hover="border-color:#ABFF84"><i class="ph-bold ph-envelope-simple" style="font-size:18px;color:#ABFF84;flex:none"></i>{{ L.withEmail }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:13px;color:#8C8B7D;flex:none"></i></div>
-          <div onClick="{{ pickWa }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:15px;border-radius:8px;background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.4);font-size:14px;font-weight:600;transition:border-color .15s" style-hover="border-color:#25D366"><i class="ph-bold ph-whatsapp-logo" style="font-size:18px;color:#25D366;flex:none"></i>{{ L.withWa }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:13px;color:#8C8B7D;flex:none"></i></div>
-        </div>
+        <sc-if value="{{ authErrShow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:7px;margin-top:12px;color:#FF8709;font-size:12px;font-weight:500"><i class="ph-fill ph-warning-circle" style="font-size:14px;flex:none"></i>{{ authErr }}</div>
+        </sc-if>
       </sc-if>
 
       <sc-if value="{{ authStepIdAny }}" hint-placeholder-val="{{ false }}">

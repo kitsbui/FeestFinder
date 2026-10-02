@@ -1,6 +1,7 @@
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
+import { emailUser } from './people.ts';
 
 describe('sign-up and sign-in', () => {
   let env: TestEnv;
@@ -101,17 +102,77 @@ describe('sign-up and sign-in', () => {
     assert.equal(unknown.status, 200, 'does not reveal whether an account exists');
   });
 
-  it('signs in with Facebook through the OAuth round trip', async () => {
-    const start = await env.as().get('/auth/oauth/fb/start?redirectUri=http://localhost:3000/auth/callback');
-    assert.equal(start.status, 200);
-    const url = new URL(start.body.url);
-    const cb = await env.as().post('/auth/oauth/fb/callback', { code: url.searchParams.get('code'), state: url.searchParams.get('state') });
-    assert.equal(cb.status, 200);
-    assert.equal(cb.body.user.signupMethod, 'fb');
-    const replay = await env.as().post('/auth/oauth/fb/callback', { code: url.searchParams.get('code'), state: url.searchParams.get('state') });
-    assert.equal(replay.body.error.code, 'oauth_state_invalid');
+  /** Start a provider's sign-in, follow it back to /return, and say where the browser lands. */
+  const roundTrip = async (e: TestEnv, provider: string, opts: { token?: string; from?: string; cookie?: boolean; error?: string; code?: string } = {}) => {
+    const start = await e.as(opts.token).get(`/auth/oauth/${provider}/start?redirectUri=${encodeURIComponent(opts.from ?? 'http://localhost:3000/e/ravo?lang=en')}`);
+    assert.equal(start.status, 200, JSON.stringify(start.body));
+    const stateCookie = String(start.headers['set-cookie']).match(/ff_oauth=([^;]+)/)?.[1];
+    // The mock provider sends the browser straight back with a code; a real one asks first.
+    const ret = new URL(start.body.url);
+    const qs = new URLSearchParams({ state: ret.searchParams.get('state')!, ...(opts.error ? { error: opts.error } : { code: opts.code ?? ret.searchParams.get('code')! }) });
+    const res = await e.app.inject({
+      method: 'GET', url: `${ret.pathname}?${qs}`,
+      headers: { ...(opts.cookie === false ? {} : { cookie: `ff_oauth=${stateCookie}` }), ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}) },
+    });
+    const session = String(res.headers['set-cookie'] ?? '').match(/ff_session=([^;]+)/)?.[1] ?? null;
+    return { start, status: res.statusCode, location: new URL(String(res.headers.location)), session, qs };
+  };
+  const whoIs = async (e: TestEnv, session: string | null) =>
+    (await e.app.inject({ method: 'GET', url: '/auth/session', headers: { cookie: `ff_session=${session}` } })).json().user;
+
+  it('lists the ways in that work here, Google first', async () => {
+    const r = await env.as().get('/auth/providers');
+    assert.deepEqual(Object.keys(r.body), ['google', 'fb', 'ig', 'zalo', 'wa', 'email', 'password']);
+    assert.equal(r.body.google, true);
+  });
+
+  it('signs in with Google: one fixed return address, and the Gmail account becomes the FeestFinder account', async () => {
+    const fresh = await setup();
+    try {
+      const first = await roundTrip(fresh, 'google');
+      assert.equal(first.status, 302);
+      assert.equal(new URL(first.start.body.url).pathname, '/auth/oauth/google/return', 'the provider returns to the API, not to the page');
+      assert.equal(first.location.toString(), 'http://localhost:3000/e/ravo?lang=en&auth=google&via=signup', 'back to the page, in its language');
+      const user = await whoIs(fresh, first.session);
+      assert.deepEqual([user.signupMethod, user.email, user.name], ['google', 'google.demo@gmail.com', 'Minh Anh']);
+      const again = await roundTrip(fresh, 'google');
+      assert.equal(again.location.searchParams.get('via'), 'signin');
+      assert.equal((await whoIs(fresh, again.session)).id, user.id, 'the same Google account signs in again');
+    } finally { await fresh.close(); }
+  });
+
+  it('finds the account that already has the confirmed Gmail address', async () => {
+    const existing = await emailUser(env, 'google.demo@gmail.com');
+    const owner = (await env.as(existing).get('/me')).body.user.id;
+    const viaGoogle = await roundTrip(env, 'google', { from: 'http://localhost:3000/' });
+    assert.equal(viaGoogle.location.toString(), 'http://localhost:3000/?auth=google&via=signin');
+    assert.equal((await whoIs(env, viaGoogle.session)).id, owner);
+  });
+
+  it('refuses a return it did not start, a replay, and a cancelled sign-in, and says so', async () => {
+    const noCookie = await roundTrip(env, 'fb', { cookie: false });
+    assert.equal(noCookie.location.searchParams.get('auth_error'), 'oauth_state_invalid', 'a link from someone else cannot sign this browser in');
+    assert.equal(noCookie.session, null);
+    const ok = await roundTrip(env, 'fb');
+    assert.equal(ok.location.searchParams.get('via'), 'signup');
+    const replay = await env.app.inject({ method: 'GET', url: `/auth/oauth/fb/return?${ok.qs}`, headers: { cookie: `ff_oauth=${ok.qs.get('state')}` } });
+    assert.equal(new URL(String(replay.headers.location)).searchParams.get('auth_error'), 'oauth_state_invalid');
+    const cancelled = await roundTrip(env, 'google', { error: 'access_denied' });
+    assert.equal(cancelled.location.searchParams.get('auth_error'), 'cancelled');
     const evil = await env.as().get('/auth/oauth/fb/start?redirectUri=https://evil.example/steal');
     assert.equal(evil.body.error.code, 'redirect_not_allowed');
+  });
+
+  it('links Google to the account that is signed in', async () => {
+    const minh = await emailUser(env, 'linker@example.com');
+    const linked = await roundTrip(env, 'google', { token: minh, code: 'mock:minh.linked:Minh' });
+    assert.equal(linked.location.searchParams.get('via'), 'connect');
+    assert.equal(linked.session, null, 'the session stays the one that started it');
+    const me = await env.as(minh).get('/me');
+    assert.ok(me.body.connections.some((c: any) => c.provider === 'google'));
+    // Another FeestFinder account cannot take the same Google account.
+    const other = await roundTrip(env, 'google', { token: await emailUser(env, 'someone.else@example.com'), code: 'mock:minh.linked:Minh' });
+    assert.equal(other.location.searchParams.get('auth_error'), 'connection_taken');
   });
 
   it('slows down password guessing', async () => {

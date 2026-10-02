@@ -75,7 +75,7 @@ const ORDER_STATUS: Record<string, Localized> = {
   expired: L('Expired', 'Hết hạn'), refunded: L('Refunded', 'Đã hoàn tiền'),
 };
 const PAY_METHOD: Record<string, string> = { card: 'Card', momo: 'MoMo', zalopay: 'ZaloPay', vietqr: 'VietQR', mock: 'Demo' };
-const SIGNUP: Record<string, string> = { email: 'Email', zalo: 'Zalo', wa: 'WhatsApp', fb: 'Facebook', ig: 'Instagram', staff: 'Staff' };
+const SIGNUP: Record<string, string> = { email: 'Email', google: 'Google', zalo: 'Zalo', wa: 'WhatsApp', fb: 'Facebook', ig: 'Instagram', staff: 'Staff' };
 
 const ARTS = ['linear-gradient(135deg,#8C6BFF,#2AC4E8)', 'linear-gradient(135deg,#1B6BD6,#8C6BFF)', 'linear-gradient(135deg,#FFB35C,#FF8A3D)',
   'linear-gradient(135deg,#2AC4E8,#2E9E5B)', 'linear-gradient(135deg,#FF8A3D,#8A2BE2)', 'linear-gradient(135deg,#2E9E5B,#FFD35C)'];
@@ -824,7 +824,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     const f = parse(z.object({
       q: z.string().max(80).optional(),
       kind: z.enum(['all', 'attendee', 'organizer', 'admin']).default('all'),
-      method: csv(z.enum(['email', 'zalo', 'wa', 'fb', 'ig', 'staff'])).optional(),
+      method: csv(z.enum(['email', 'google', 'zalo', 'wa', 'fb', 'ig', 'staff'])).optional(),
       city: z.string().max(60).optional(),
       active: z.enum(['all', '7d', '30d', 'dormant']).default('all'),
       sort: z.enum(['new', 'active', 'tickets', 'name']).default('new'),

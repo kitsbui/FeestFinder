@@ -313,28 +313,44 @@ FF.shareStory = async function (spec: StorySpec, name?: string) {
   return 'saved';
 };
 
-// ---- sign-in with Facebook / Instagram ------------------------------------------------
+// ---- sign-in with Google, and with a linked Facebook / Instagram -----------------------
 
-FF.oauthStart = async function oauthStart(provider: string) {
-  const redirectUri = location.origin + location.pathname;
-  const out = await FF.get('/auth/oauth/' + provider + '/start?redirectUri=' + encodeURIComponent(redirectUri));
-  sessionStorage.setItem('ff_oauth', provider);
+/**
+ * Leave for the provider. The API takes the answer and sends the browser back to this
+ * address with ?auth=<provider>&via=signin|signup|connect, or ?auth_error=<code>.
+ * `next` is what the page was about to do, done once the browser is back.
+ */
+FF.oauthStart = async function oauthStart(provider: string, next?: string | null) {
+  const out = await FF.get('/auth/oauth/' + provider + '/start?redirectUri=' + encodeURIComponent(location.href.split('#')[0]));
+  try { if (next) sessionStorage.setItem('ff_auth_next', next); else sessionStorage.removeItem('ff_auth_next'); } catch { /* storage blocked */ }
   location.href = out.url;
 };
 
-async function finishOAuth() {
-  const q = new URLSearchParams(location.search);
-  const provider = sessionStorage.getItem('ff_oauth');
-  if (!provider || !q.get('code') || !q.get('state')) return;
-  sessionStorage.removeItem('ff_oauth');
-  try {
-    await FF.post('/auth/oauth/' + provider + '/callback', { code: q.get('code'), state: q.get('state') });
-    FF.data.oauthJustConnected = provider;
-  } catch (e) {
-    console.warn('[ff] oauth', e);
-  }
-  history.replaceState(null, '', location.pathname);
+/** What the provider's return left in the address: read once, then taken out of it. */
+function takeOAuthResult() {
+  const u = new URL(location.href);
+  const provider = u.searchParams.get('auth'), error = u.searchParams.get('auth_error');
+  if (!provider && !error) return;
+  let next: string | null = null;
+  try { next = sessionStorage.getItem('ff_auth_next'); sessionStorage.removeItem('ff_auth_next'); } catch { /* storage blocked */ }
+  FF.data.oauth = error ? { error, next } : { provider, via: u.searchParams.get('via') || 'signin', next };
+  ['auth', 'via', 'auth_error'].forEach((k) => u.searchParams.delete(k));
+  history.replaceState(history.state, '', u.pathname + u.search + u.hash);
 }
+
+const OAUTH_ERRORS: Record<string, { en: string; vi: string }> = {
+  cancelled: { en: 'Sign-in cancelled', vi: 'Đã huỷ đăng nhập' },
+  connection_taken: { en: 'That account is linked to another FeestFinder account', vi: 'Tài khoản này đã liên kết với một tài khoản FeestFinder khác' },
+  provider_unavailable: { en: 'This sign-in is not available yet', vi: 'Cách đăng nhập này chưa mở' },
+  email_taken: { en: 'That email already has an account', vi: 'Email này đã có tài khoản' },
+};
+FF.oauthErrorText = (code: string, lang: string) => {
+  const t = OAUTH_ERRORS[code] || { en: 'Sign-in failed, try again', vi: 'Đăng nhập không thành công, thử lại' };
+  return lang === 'vi' ? t.vi : t.en;
+};
+
+/** Which ways in work on this server: { google, fb, ig, zalo, wa, email, password }. */
+FF.authProviders = () => FF.maybe(FF.get('/auth/providers'), { google: true, fb: false, ig: false, zalo: false, wa: false, email: true, password: true });
 
 /**
  * A minimal sign-in card for a screen the designs ship without one (the admin console).
@@ -482,10 +498,10 @@ function lastOffset(): number {
 }
 
 FF.boot = async function boot(base: string) {
+  takeOAuthResult();
   readRoute(base);
   listen();
   try {
-    await finishOAuth();
     // With no signal the clock check fails; the last offset still holds (it is the
     // difference between two clocks, not a time), and the loaders answer from the cache.
     const [health] = await Promise.all([FF.maybe(FF.get('/health'), null), FF.refreshSession()]);

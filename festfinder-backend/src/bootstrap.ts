@@ -11,7 +11,7 @@ import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
 import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
 import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
-import { FacebookOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
+import { FacebookOAuth, GoogleOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
 
 /** Wires real dependencies from configuration. Tests build their own Ctx instead. */
@@ -38,6 +38,10 @@ export async function createContext(config: Config): Promise<Ctx> {
       .catch((e) => log(`pg_cron not scheduled: ${(e as Error).message}`));
   }
   const hasAnthropic = !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_PROFILE);
+  const googleOAuth = () => {
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) return new GoogleOAuth(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+    return db.kind === 'pglite' ? new MockOAuth('google') : null;
+  };
   const oauthFor = (provider: 'fb' | 'ig') => {
     const id = process.env[provider === 'fb' ? 'FACEBOOK_APP_ID' : 'INSTAGRAM_APP_ID'];
     const secret = process.env[provider === 'fb' ? 'FACEBOOK_APP_SECRET' : 'INSTAGRAM_APP_SECRET'];
@@ -70,6 +74,9 @@ export async function createContext(config: Config): Promise<Ctx> {
   for (const [what, on] of [['email', !!config.smtp], ['push/Zalo/SMS', !!config.messagingWebhook], ['browser push', !!config.webPush], ['error reporting', !!config.sentryDsn]] as const) {
     if (!on && config.env === 'production') log(`warning: no ${what} provider configured`);
   }
+  if (config.env === 'production' && !(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)) {
+    log('warning: Google sign-in is off: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET');
+  }
 
   return {
     config,
@@ -81,7 +88,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),
-    oauth: { fb: oauthFor('fb'), ig: oauthFor('ig') },
+    oauth: { google: googleOAuth(), fb: oauthFor('fb'), ig: oauthFor('ig') },
     checkLink,
     log,
   };
