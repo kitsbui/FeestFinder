@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { latestUpdates } from './night.ts';
 import { z } from 'zod';
 import { json, many, one } from '../db/index.ts';
 import { badRequest, notFound, tooMany } from '../lib/errors.ts';
@@ -82,6 +83,8 @@ export default async function liveRoutes(app: FastifyInstance) {
         zoneId: f.zone_id, zoneLabel: f.zone_label, updatedAt: f.updated_at,
       })),
       friendsLine: fill(L('{n} friends on the site', '{n} bạn đang ở đây'), { n: friends.length }),
+      // What the organiser has said tonight, newest first.
+      updates: await latestUpdates(ctx.db, ev.id, 10),
       offline: {
         online: L('Set times and the site map are saved on this device.', 'Giờ diễn và bản đồ đã lưu trên máy.'),
         offline: L('No signal. Set times and the site map are cached; friend positions resume when you reconnect.',

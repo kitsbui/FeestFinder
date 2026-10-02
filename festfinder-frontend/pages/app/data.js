@@ -131,8 +131,15 @@ FF.appLiveAd = () => FF.once('liveAd', async () => {
   return out.ad;
 });
 
+/** The raver passport: a stamp for each night the door scanned you in, and the badges they earn. */
+FF.appPassport = (cmp) => signedIn() && FF.once('passport', async () => {
+  const out = await FF.maybe(FF.get('/me/passport'), null);
+  cmp.setState({ passport: out });
+  return out;
+});
+
 /** Everything a tab other than the feed needs — warmed while the feed is read. */
-FF.appRest = (cmp) => Promise.all([FF.appSettings(cmp), FF.appTickets(cmp), FF.appPlans(cmp), FF.appNotifs(cmp)]);
+FF.appRest = (cmp) => Promise.all([FF.appSettings(cmp), FF.appTickets(cmp), FF.appPlans(cmp), FF.appNotifs(cmp), FF.appPassport(cmp)]);
 
 FF.preload = (async () => {
   try {

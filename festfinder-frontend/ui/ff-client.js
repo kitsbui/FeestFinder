@@ -189,6 +189,86 @@
   FF.text = (loc, lang) => (loc && typeof loc === 'object' ? loc[lang] || loc.en || '' : loc || '');
   FF.errorText = (e, lang) => (e && e.message) || (lang === 'vi' ? 'Đã có lỗi xảy ra' : 'Something went wrong');
 
+  // ---- story images ---------------------------------------------------------------
+
+  // The genre art as canvas stops: the body's three hues and the lit sphere's three.
+  const STORY_TONES = {
+    fest: { body: ['#FFD29C', '#FF8709', '#E8388A'], ball: ['#FFF1FE', '#FEC5FB', '#F100CB'] },
+    edm: { body: ['#BFF3FF', '#00BAE2', '#5A62E0'], ball: ['#FFFCE1', '#FEC5FB', '#9D95FF'] },
+    live: { body: ['#E4E1FF', '#9D95FF', '#C22FCF'], ball: ['#E9FCFF', '#7FE3F5', '#00BAE2'] },
+    culture: { body: ['#FFF1FE', '#FEC5FB', '#E86FD8'], ball: ['#FFF3DF', '#FFB35C', '#FF8709'] },
+    brand: { body: ['#DFFFD1', '#ABFF84', '#0AE448'], ball: ['#FFFCE1', '#DFFFD1', '#00BAE2'] },
+  };
+  const wrapLines = (x, text, width, max) => {
+    const words = String(text || '').split(/\s+/), out = [];
+    let line = '';
+    for (const w of words) {
+      const next = line ? line + ' ' + w : w;
+      if (x.measureText(next).width > width && line) { out.push(line); line = w; } else line = next;
+    }
+    if (line) out.push(line);
+    if (out.length > max) { out.length = max; out[max - 1] = out[max - 1].replace(/\s*\S*$/, '') + '…'; }
+    return out;
+  };
+  /**
+   * A 1080×1920 image for an Instagram or Zalo story, drawn on a canvas: the genre's art, a
+   * kicker, the title, a few lines (or big numbers), and the link. Resolves to a PNG blob.
+   */
+  FF.storyPng = async function (spec) {
+    const W = 1080, H = 1920, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d'), t = STORY_TONES[FF.tone(spec.genre)] || STORY_TONES.brand;
+    const font = (w, px) => w + ' ' + px + 'px "Be Vietnam Pro", system-ui, sans-serif';
+    try { await Promise.all([document.fonts.load(font(600, 96)), document.fonts.load(font(500, 44))]); } catch (e) { /* the system font will do */ }
+    x.fillStyle = '#0E100F'; x.fillRect(0, 0, W, H);
+    const ax = 72, ay = 140, aw = W - 144, ah = spec.stats ? 640 : 860;
+    x.save();
+    x.beginPath(); x.roundRect(ax, ay, aw, ah, 40); x.clip();
+    const body = x.createLinearGradient(ax, ay, ax + aw * 0.7, ay + ah);
+    body.addColorStop(0, t.body[0]); body.addColorStop(0.48, t.body[1]); body.addColorStop(1, t.body[2]);
+    x.fillStyle = body; x.fillRect(ax, ay, aw, ah);
+    const bx = ax + aw * 0.76, by = ay + ah * 0.72, br = Math.max(aw, ah) * 0.42;
+    const ball = x.createRadialGradient(bx, by, 0, bx, by, br);
+    ball.addColorStop(0, t.ball[0]); ball.addColorStop(0.4, t.ball[1]); ball.addColorStop(1, t.ball[2]);
+    x.fillStyle = ball; x.beginPath(); x.arc(bx, by, br, 0, Math.PI * 2); x.fill();
+    x.restore();
+    let y = ay + ah + 110;
+    x.textBaseline = 'alphabetic';
+    if (spec.kicker) { x.font = font(600, 40); x.fillStyle = FF.genreHue(spec.genre); x.fillText(String(spec.kicker).toUpperCase(), ax, y); y += 96; }
+    x.font = font(600, 92); x.fillStyle = '#FFFCE1';
+    for (const l of wrapLines(x, spec.title, aw, 3)) { x.fillText(l, ax, y); y += 104; }
+    y += 18;
+    if (spec.stats) {
+      const col = aw / 2;
+      spec.stats.slice(0, 4).forEach((s, i) => {
+        const sx = ax + (i % 2) * col, sy = y + Math.floor(i / 2) * 190;
+        x.font = font(600, 84); x.fillStyle = '#ABFF84'; x.fillText(String(s.value), sx, sy + 60);
+        x.font = font(500, 36); x.fillStyle = '#A5A493';
+        x.fillText(wrapLines(x, s.label, col - 30, 1)[0] || '', sx, sy + 116);
+      });
+      y += Math.ceil(Math.min(4, spec.stats.length) / 2) * 190;
+    }
+    x.font = font(500, 44); x.fillStyle = '#E6E3C8';
+    for (const l of spec.lines || []) for (const w of wrapLines(x, l, aw, 2)) { if (y > H - 260) break; x.fillText(w, ax, y); y += 62; }
+    x.fillStyle = 'rgba(255,252,225,.19)'; x.fillRect(ax, H - 210, aw, 2);
+    x.font = font(600, 48); x.fillStyle = '#FFFCE1'; x.fillText('FeestFinder', ax, H - 120);
+    if (spec.url) { x.font = font(500, 34); x.fillStyle = '#ABFF84'; x.textAlign = 'right'; x.fillText(String(spec.url).replace(/^https?:\/\//, ''), ax + aw, H - 122); x.textAlign = 'left'; }
+    return new Promise((ok, fail) => c.toBlob((b) => (b ? ok(b) : fail(new Error('canvas'))), 'image/png'));
+  };
+  /** Hands the story image to the phone's share sheet, or saves it where sharing files is not possible. */
+  FF.shareStory = async function (spec, name) {
+    const blob = await FF.storyPng(spec);
+    const file = new File([blob], (name || 'feestfinder-story') + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: spec.title }); return 'shared'; } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return 'saved';
+  };
+
   // ---- sign-in with Facebook / Instagram ------------------------------------------
 
   FF.oauthStart = async function (provider) {

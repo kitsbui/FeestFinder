@@ -158,6 +158,8 @@ The wired screens live next door, one folder per surface:
 
 **Filling in a sent-in event.** `POST /community/prefill` fetches the pasted page (public addresses only, every redirect checked, 2 MB, 8 s) and reads its schema.org Event data first; only a page without one goes to Claude, which also reads posters (`/community/prefill/poster`). The person checks the form before sending. Each person gets 30 pages and 10 AI reads an hour, logged in `ai_calls`.
 
+**The night itself.** Organisers post updates (a set running late, a quieter gate) from the event editor in `/ops`; with "notify" on, ticket holders and people going get them at once, at most ten a day. Attendees' memory and talk posts can carry a photo, which also lands on the event's photo wall. Each night the door scanned, or the person checked in, is a stamp in their raver passport (`/me/passport`), and `/me/wrapped` sums up their year; the App turns both into story images for Instagram.
+
 **Taking over a community event.** An organiser presses "I organise this" on an event the community sent in, with a note and a proof link; a moderator approves it in `/ops/claims`, which moves the event to their account and tells the person who sent it in.
 
 ## Running it in production

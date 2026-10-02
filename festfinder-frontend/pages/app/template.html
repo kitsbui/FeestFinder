@@ -443,6 +443,40 @@
           <div onClick="{{ signOutNow }}" style="cursor:pointer;flex:none;padding:8px 13px;border-radius:999px;border:1px solid rgba(255,252,225,.19);font-size:11.5px;font-weight:600;color:#A5A493;transition:all .15s" style-hover="border-color:#FF8709;color:#FF8709">{{ L.signOut }}</div>
         </div>
 
+        <sc-if value="{{ pp.show }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:24px;padding:16px;border-radius:8px;background:rgba(25,25,25,.66);border:1px solid rgba(255,252,225,.19)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <i class="ph-fill ph-passport" style="font-size:20px;color:#ABFF84;flex:none"></i>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:16px">{{ L.ppTitle }}</div>
+              <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:2px">{{ pp.stats }}</div>
+            </div>
+            <div onClick="{{ pp.openWrapped }}" style="cursor:pointer;flex:none;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12px;font-weight:600"><i class="ph-fill ph-sparkle" style="font-size:13px"></i>{{ pp.wrLabel }}</div>
+          </div>
+          <sc-if value="{{ pp.empty }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;font-size:12.5px;font-weight:500;color:#8C8B7D">{{ L.ppEmpty }}</div>
+          </sc-if>
+          <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:14px -16px 0;padding:0 16px">
+            <sc-for list="{{ pp.stamps }}" as="x" hint-placeholder-count="4">
+              <div onClick="{{ x.open }}" style="cursor:pointer;flex:none;width:76px;text-align:center">
+                <div class="ff-art ff-art--flat" style="width:64px;height:64px;margin:0 auto;border-radius:50%;border:2px dashed rgba(255,252,225,.45);background:{{ x.art }}"></div>
+                <div style="font-size:10.5px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ x.title }}</div>
+                <div style="font-size:10px;font-weight:500;color:#8C8B7D;margin-top:1px">{{ x.date }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:14px">
+            <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:12px">{{ L.ppBadges }}</div>
+            <div style="font-size:11px;font-weight:600;color:#ABFF84">{{ pp.earned }}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <sc-for list="{{ pp.badges }}" as="b" hint-placeholder-count="8">
+              <div onClick="{{ b.tap }}" title="{{ b.need }}" aria-label="{{ b.label }}" style="cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ b.bg }};border:1px solid {{ b.bd }};color:{{ b.fg }}"><i class="{{ b.icon }}" style="font-size:16px"></i></div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
         <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:24px;letter-spacing:-.02em">{{ L.youreInto }}</div>
         <div style="color:#A5A493;font-size:13px;font-weight:500;margin-top:6px;line-height:1.55;max-width:280px">{{ L.youreIntoSub }}</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
@@ -692,6 +726,20 @@
           </div>
         </div>
 
+        <sc-if value="{{ dd.hasUpdates }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:22px 20px 0">
+          <div style="padding:14px;border-radius:8px;background:rgba(14,16,15,.7);border:1px solid rgba(171,255,132,.35)">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;font-size:12.5px;font-weight:600;color:#ABFF84"><span style="width:6px;height:6px;border-radius:50%;background:#0AE448"></span>{{ L.updTitle }}</div>
+            <sc-for list="{{ dd.updates }}" as="u" hint-placeholder-count="1">
+              <div style="display:flex;gap:10px;align-items:flex-start;margin-top:8px">
+                <i class="{{ u.icon }}" style="font-size:15px;color:{{ u.fg }};flex:none;margin-top:2px"></i>
+                <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;color:{{ u.fg }}">{{ u.kind }}</div><div style="font-size:13px;font-weight:500;line-height:1.5;margin-top:2px;overflow-wrap:anywhere">{{ u.body }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
         <div style="padding:26px 20px 0">
           <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin-bottom:10px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.about }}</div>
           <div style="font-size:13.5px;font-weight:500;line-height:1.7;color:#E6E3C8;text-wrap:pretty">{{ detail.description }}</div>
@@ -747,7 +795,17 @@
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px;font-weight:600;color:#ABFF84">{{ dd.replyLine }}<i onClick="{{ dd.cancelReply }}" class="ph-bold ph-x" style="cursor:pointer;font-size:11px;color:#A5A493"></i></div>
               </sc-if>
               <textarea aria-label="{{ L.discOpen }}" value="{{ dd.draft }}" onChange="{{ dd.onDraft }}" rows="2" maxLength="1000" placeholder="{{ dd.placeholder }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;resize:vertical;line-height:1.5"></textarea>
+              <sc-if value="{{ dd.hasPhoto }}" hint-placeholder-val="{{ false }}">
+                <div style="position:relative;width:76px;height:76px;margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,252,225,.19)">
+                  <img src="{{ dd.photoPreview }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+                  <div onClick="{{ dd.dropPhoto }}" style="cursor:pointer;position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(14,16,15,.8);display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-x" style="font-size:9px;color:#FFFCE1"></i></div>
+                </div>
+              </sc-if>
               <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px">
+                <sc-if value="{{ dd.photoOk }}" hint-placeholder-val="{{ false }}">
+                  <label for="ffAppDscPhoto" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid rgba(255,252,225,.32);color:#E6E3C8;font-size:12px;font-weight:600"><i class="ph-bold ph-image" style="font-size:13px"></i>{{ L.discPhoto }}</label>
+                  <input id="ffAppDscPhoto" type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ dd.onPhoto }}" style="display:none">
+                </sc-if>
                 <div onClick="{{ dd.send }}" style="cursor:pointer;opacity:{{ dd.sendOp }};padding:9px 18px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12.5px;font-weight:600">{{ dd.sendLabel }}</div>
               </div>
             </div>
@@ -762,6 +820,7 @@
                   <div style="font-size:10.5px;font-weight:500;color:#8C8B7D">{{ p.ago }}</div>
                 </div>
                 <div style="font-size:13px;font-weight:400;color:{{ p.bodyFg }};line-height:1.55;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere">{{ p.body }}</div>
+                <sc-if value="{{ p.hasPhoto }}" hint-placeholder-val="{{ false }}"><img src="{{ p.photo }}" alt="" loading="lazy" style="display:block;margin-top:8px;max-width:100%;max-height:280px;border-radius:8px;object-fit:cover"></sc-if>
                 <div style="display:flex;align-items:center;gap:14px;margin-top:7px;font-size:11.5px;font-weight:600;color:#8C8B7D">
                   <div onClick="{{ p.help }}" style="cursor:pointer;display:flex;align-items:center;gap:5px;color:{{ p.helpFg }}"><i class="{{ p.helpIcon }}" style="font-size:13px"></i>{{ p.helpful }}</div>
                   <sc-if value="{{ p.canReply }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.reply }}" style="cursor:pointer">{{ L.discReply }}</div></sc-if>
@@ -1843,6 +1902,21 @@
 
       <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;padding:16px 20px 34px;display:flex;flex-direction:column;gap:14px">
 
+        <sc-if value="{{ live.hasUpdates }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:13px 14px;border-radius:8px;background:rgba(14,16,15,.75);border:1px solid rgba(171,255,132,.35)">
+            <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#ABFF84"><span style="width:6px;height:6px;border-radius:50%;background:#0AE448"></span>{{ L.updTitle }}</div>
+            <sc-for list="{{ live.updates }}" as="u" hint-placeholder-count="1">
+              <div style="display:flex;gap:10px;align-items:flex-start;margin-top:9px">
+                <i class="{{ u.icon }}" style="font-size:15px;color:{{ u.fg }};flex:none;margin-top:2px"></i>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;gap:7px;font-size:11px;font-weight:600;color:{{ u.fg }}">{{ u.kind }}<span style="color:#8C8B7D;font-weight:500">{{ u.ago }}</span></div>
+                  <div style="font-size:13px;font-weight:500;line-height:1.5;margin-top:2px;overflow-wrap:anywhere">{{ u.body }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
         <div style="padding:18px;border-radius:8px;background:linear-gradient(135deg,rgba(171,255,132,.16),rgba(10,228,72,.16));border:1px solid rgba(255,252,225,.32)">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
             <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.liveNow }}</div>
@@ -2171,6 +2245,51 @@
       <div class="ff-cta" onClick="{{ payReq.send }}" style="cursor:pointer;margin-top:16px;padding:15px;border-radius:8px;background:#ABFF84;color:#141514;font-size:14px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:9px"><i class="ph-fill ph-paper-plane-right" style="font-size:16px"></i>{{ payReq.sendLabel }}</div>
       <div onClick="{{ payReq.copy }}" style="cursor:pointer;margin-top:9px;padding:13px;border-radius:999px;border:1px solid rgba(255,252,225,.32);color:#E6E3C8;font-size:12.5px;font-weight:600;text-align:center">{{ payReq.copyLabel }}</div>
       <div style="text-align:center;font-size:11px;font-weight:500;color:#8C8B7D;margin-top:12px;line-height:1.55;text-wrap:pretty">{{ payReq.note }}</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ wr.open }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;background:{{ wr.cur.bg }};color:{{ wr.cur.fg }};animation:ffUp .3s cubic-bezier(.2,.8,.2,1) both">
+      <div style="display:flex;gap:4px;padding:16px 16px 0">
+        <sc-for list="{{ wr.bars }}" as="b" hint-placeholder-count="5">
+          <div style="flex:1;height:3px;border-radius:2px;background:{{ b.bg }}"></div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding:12px 16px 0">
+        <div onClick="{{ wr.close }}" aria-label="Close" style="cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(14,16,15,.5);color:#FFFCE1"><i class="ph-bold ph-x" style="font-size:14px"></i></div>
+      </div>
+      <div style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:0 28px 40px">
+        <div onClick="{{ wr.prev }}" style="position:absolute;left:0;top:0;bottom:0;width:35%"></div>
+        <div onClick="{{ wr.next }}" style="position:absolute;right:0;top:0;bottom:0;width:65%"></div>
+        <div style="position:relative;pointer-events:none">
+          <div style="font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8">{{ wr.cur.kicker }}</div>
+          <sc-if value="{{ wr.hasBig }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:56px;line-height:1.02;letter-spacing:-.03em;margin-top:14px;overflow-wrap:anywhere">{{ wr.cur.big }}</div>
+          </sc-if>
+          <div style="font-size:16px;font-weight:500;margin-top:12px;opacity:.85">{{ wr.cur.sub }}</div>
+          <sc-if value="{{ wr.hasStats }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px 16px;margin-top:22px">
+              <sc-for list="{{ wr.cur.stats }}" as="x" hint-placeholder-count="4">
+                <div><div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:42px;line-height:1;color:#ABFF84">{{ x.v }}</div><div style="font-size:13px;font-weight:500;margin-top:6px;opacity:.8">{{ x.l }}</div></div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ wr.hasChips }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:20px">
+              <sc-for list="{{ wr.cur.chips }}" as="c" hint-placeholder-count="3">
+                <div style="padding:7px 12px;border-radius:999px;background:rgba(14,16,15,.45);border:1px solid rgba(255,252,225,.25);color:#FFFCE1;font-size:12.5px;font-weight:600">{{ c.t }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <sc-if value="{{ wr.isLast }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ wr.ready }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 24px 34px">
+            <div onClick="{{ wr.share }}" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border-radius:999px;background:#FFFCE1;color:#0E100F;font-size:14px;font-weight:600"><i class="ph-fill ph-instagram-logo" style="font-size:17px"></i>{{ L.wrShare }}</div>
+          </div>
+        </sc-if>
+      </sc-if>
     </div>
   </sc-if>
 

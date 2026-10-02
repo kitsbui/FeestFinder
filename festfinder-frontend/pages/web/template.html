@@ -488,6 +488,23 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{ comm.hasUpdates }}" hint-placeholder-val="{{ false }}">
+    <div style="margin:-6px 0 18px;padding:16px 18px;border-radius:8px;background:rgba(14,16,15,.7);border:1px solid rgba(171,255,132,.35)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:600;color:#ABFF84"><span style="width:7px;height:7px;border-radius:50%;background:#0AE448"></span>{{ L.updTitle }}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ comm.updates }}" as="u" hint-placeholder-count="2">
+          <div style="display:flex;gap:11px;align-items:flex-start">
+            <i class="{{ u.icon }}" style="font-size:16px;color:{{ u.fg }};flex:none;margin-top:2px"></i>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;color:{{ u.fg }}">{{ u.kind }}<span style="font-weight:500;color:#8C8B7D">{{ u.ago }}</span></div>
+              <div style="font-size:13.5px;font-weight:500;color:#FFFCE1;line-height:1.55;margin-top:2px;overflow-wrap:anywhere">{{ u.body }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
   <div class="ff-l-detail" style="display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:24px;align-items:start">
     <div style="display:flex;flex-direction:column;gap:18px">
 
@@ -710,7 +727,17 @@
               </div>
             </sc-if>
             <textarea aria-label="{{ L.discTitle }}" value="{{ comm.disc.draft }}" onChange="{{ comm.disc.onDraft }}" rows="3" maxLength="1000" placeholder="{{ comm.disc.placeholder }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;background:#141514;border:1px solid rgba(255,252,225,.19);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500;resize:vertical;line-height:1.6;padding:13px 15px"></textarea>
-            <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <sc-if value="{{ comm.disc.hasPhoto }}" hint-placeholder-val="{{ false }}">
+              <div style="position:relative;width:96px;height:96px;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,252,225,.19)">
+                <img src="{{ comm.disc.photoPreview }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+                <div onClick="{{ comm.disc.dropPhoto }}" aria-label="{{ L.discDelete }}" style="cursor:pointer;position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(14,16,15,.8);display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-x" style="font-size:10px;color:#FFFCE1"></i></div>
+              </div>
+            </sc-if>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:10px">
+              <sc-if value="{{ comm.disc.photoOk }}" hint-placeholder-val="{{ false }}">
+                <label for="ffDiscPhoto" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:999px;border:1px solid rgba(255,252,225,.32);color:#E6E3C8;font-size:12px;font-weight:600" style-hover="border-color:#ABFF84"><i class="ph-bold ph-image" style="font-size:14px"></i>{{ L.discPhoto }}</label>
+                <input id="ffDiscPhoto" type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ comm.disc.onPhoto }}" style="display:none">
+              </sc-if>
               <div onClick="{{ comm.disc.send }}" style="cursor:pointer;opacity:{{ comm.disc.sendOp }};padding:11px 20px;border-radius:999px;background:#ABFF84;color:#0E100F;font-size:12.5px;font-weight:600">{{ L.discPost }}</div>
             </div>
           </div>
@@ -739,6 +766,9 @@
                 <div style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:4px 10px;border-radius:999px;background:rgba(0,186,226,.12);border:1px solid rgba(0,186,226,.4);font-size:11px;font-weight:600;color:#BFF3FF"><i class="ph-fill ph-music-notes" style="font-size:12px"></i>{{ p.setLine }}</div>
               </sc-if>
               <div style="font-size:13.5px;font-weight:400;color:{{ p.bodyFg }};line-height:1.6;margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere">{{ p.body }}</div>
+              <sc-if value="{{ p.hasPhoto }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ p.photo }}" alt="" loading="lazy" style="display:block;margin-top:10px;max-width:100%;max-height:360px;border-radius:8px;border:1px solid #1E1F1C;object-fit:cover">
+              </sc-if>
               <sc-if value="{{ p.canAct }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;font-weight:600;color:#A5A493">
                   <div onClick="{{ p.help }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;color:{{ p.helpedFg }}" style-hover="color:#FFFCE1"><i class="{{ p.helpedIcon }}" style="font-size:14px"></i>{{ L.discHelpful }} {{ p.helpful }}</div>
@@ -789,6 +819,19 @@
         <sc-if value="{{ comm.disc.empty }}" hint-placeholder-val="{{ false }}">
           <div style="padding:18px 0 4px;border-top:1px solid #1E1F1C;font-size:13px;font-weight:500;color:#8C8B7D">{{ L.discEmpty }}</div>
         </sc-if>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ comm.hasPhotos }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:24px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0 0 15px">{{ L.photoTitle }}</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
+          <sc-for list="{{ comm.photos }}" as="ph" hint-placeholder-count="4">
+            <a href="{{ ph.url }}" target="_blank" rel="noopener" title="{{ ph.caption }}" style="position:relative;display:block;aspect-ratio:1;border-radius:8px;overflow:hidden;background:{{ ph.bg }};border:1px solid #1E1F1C">
+              <div style="position:absolute;left:0;right:0;bottom:0;padding:16px 8px 6px;background:linear-gradient(to top,rgba(14,16,15,.85),transparent);font-size:10.5px;font-weight:600;color:#FFFCE1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ph.by }}</div>
+            </a>
+          </sc-for>
+        </div>
       </div>
       </sc-if>
 

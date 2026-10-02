@@ -32,7 +32,7 @@ async function eventFor(ctx: Ctx, idOrSlug: string) {
 
 const POST_COLUMNS = `
   p.id, p.event_id, p.user_id, p.parent_id, p.kind, p.body, p.set_id, p.heard_at, p.status, p.pinned, p.official,
-  p.helpful_count, p.reply_count, p.report_count, p.created_at, p.edited_at,
+  p.helpful_count, p.reply_count, p.report_count, p.created_at, p.edited_at, p.photo_url,
   u.name as author_name, u.photo_url as author_photo, st.artist as set_artist, st.starts_at as set_starts_at`;
 const POST_FROM = `from event_posts p join users u on u.id = p.user_id left join sets st on st.id = p.set_id`;
 
@@ -60,6 +60,7 @@ function present(r: any, o: { badges: Map<string, Badge[]>; helped: Set<string>;
     },
     set: r.set_artist ? { id: r.set_id, artist: r.set_artist as string, startsAt: r.set_starts_at } : null,
     heardAt: r.heard_at as string | null,
+    photoUrl: removed ? null : (r.photo_url as string | null),
     pinned: r.pinned as boolean,
     official: r.official as boolean,
     helpfulCount: r.helpful_count as number,
@@ -193,6 +194,7 @@ export default async function discussionRoutes(app: FastifyInstance) {
       parentId: uuid.optional(),
       setId: uuid.optional(),
       heardAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+      photoUrl: z.string().max(2048).optional(),
     }), req.body);
     const now = ctx.clock.now();
     const team = await isEventTeam(ctx.db, ev.id, s.user);
@@ -221,12 +223,20 @@ export default async function discussionRoutes(app: FastifyInstance) {
       setId = set.id;
     }
     const official = !!parent && parent.kind === 'qa' && team;
+    // A photo for the wall: one this person uploaded, on a memory or a talk post.
+    let photoUrl: string | null = null;
+    if (body.photoUrl) {
+      if (parent || !['memory', 'talk'].includes(kind)) throw badRequest('photo_kind', L('Photos go with memories', 'Ảnh đi kèm mục Kỷ niệm'));
+      const up = await one<{ url: string }>(ctx.db, 'select url from uploads where url = $1 and owner_id = $2', [body.photoUrl, s.user.id]);
+      if (!up) throw badRequest('photo_unknown', L('Upload the photo first', 'Hãy tải ảnh lên trước'));
+      photoUrl = up.url;
+    }
 
     const row = await ctx.db.tx(async (q) => {
       const p = await one<any>(q,
-        `insert into event_posts (event_id, user_id, parent_id, kind, body, set_id, heard_at, official, created_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id`,
-        [ev.id, s.user.id, parent?.id ?? null, kind, text, setId, kind === 'trackid' ? body.heardAt ?? null : null, official, now]);
+        `insert into event_posts (event_id, user_id, parent_id, kind, body, set_id, heard_at, official, photo_url, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
+        [ev.id, s.user.id, parent?.id ?? null, kind, text, setId, kind === 'trackid' ? body.heardAt ?? null : null, official, photoUrl, now]);
       if (parent) {
         await q.query('update event_posts set reply_count = reply_count + 1 where id = $1', [parent.id]);
         if (parent.user_id !== s.user.id) {

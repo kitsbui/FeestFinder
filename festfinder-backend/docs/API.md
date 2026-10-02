@@ -72,9 +72,9 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/events/:idOrSlug` | Also: `phase` (before/live/after), `hype` (count, last 24 h, goals, next goal and progress), `discussion` counts, `faq` (the organiser's answers), `resale` summary, `ambassadors` (top sharers), `community` (sent in by, `claimable` while the community still holds it), `mine` (ref code, people brought, watching resale, tickets held, `claim` for an organiser: `canClaim`, `pending`). |
+| GET | `/events/:idOrSlug` | Also: `phase` (before/live/after), `hype` (count, last 24 h, goals, next goal and progress), `discussion` counts, `faq` (the organiser's answers), `resale` summary, `ambassadors` (top sharers), `community` (sent in by, `claimable` while the community still holds it), `updates` (the organiser's latest five), `mine` (ref code, people brought, watching resale, tickets held, `claim` for an organiser: `canClaim`, `pending`). |
 | GET | `/events/:idOrSlug/discussion` | `?kind=qa\|talk\|crew\|trackid\|memory&sort=top\|new&cursor`. Threads with their first three replies (the official answer first), author badges (`team`, `ff`, `ticket`, `submitter`), the tabs the phase opens, `me.canWrite` (`ok`, `signin`, `verify_phone`). GET `/posts/:id/replies` for the rest. |
-| POST | `/events/:id/posts` 🔒📱 | `{kind, body, parentId?, setId?, heardAt?}`. No phone numbers or links (except the organiser's), and ticket trading is sent to resale (`use_resale`). Six posts per 10 minutes. The organiser's reply to a question is its official answer and joins the FAQ. |
+| POST | `/events/:id/posts` 🔒📱 | `{kind, body, parentId?, setId?, heardAt?, photoUrl?}`. `photoUrl` is one of your own uploads (`POST /uploads?purpose=recap`), on memory and talk threads only. No phone numbers or links (except the organiser's), and ticket trading is sent to resale (`use_resale`). Six posts per 10 minutes. The organiser's reply to a question is its official answer and joins the FAQ. |
 | PUT / DELETE | `/posts/:id/helpful` 🔒 | Once per person, never your own. |
 | POST | `/posts/:id/reports` 🔒 | `{code: spam\|scalping\|abuse\|drugs\|personal\|other}`. Three open reports hide the post until the team decides. |
 | PATCH | `/posts/:id` 🔒 | The event's team or FeestFinder: `{pinned?, hidden?, official?}`. DELETE `/posts/:id`: the author, or the team. |
@@ -83,7 +83,10 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | POST | `/community/prefill` 🔒📱 | `{url}` → `{fields, source: structured\|ai, sourceUrl}` to fill the form in. The page's schema.org Event data first (free); otherwise Claude reads the page text. Public pages only (private addresses are refused at every redirect), 2 MB, 8 s. 30 pages and 10 AI reads per person per hour (`429 prefill_limit`); `503 prefill_unavailable` when AI is off. |
 | POST | `/community/prefill/poster` 🔒📱 | Multipart `file` (JPEG/PNG/WebP, 5 MB) → `{fields}` read from a poster by Claude. Same hourly cap. |
 | POST | `/events/:id/claims` 🏢 | `{note (10+ chars), proofUrl?}`: an organiser asks to take over an event the community sent in. One open request per organiser per event (`409 claim_pending`); `409 not_claimable` once an organiser runs it. |
+| GET | `/events/:idOrSlug/updates` | The organiser's updates on the night, newest first. |
+| GET | `/events/:idOrSlug/photos` | The photo wall: photos from visible posts, newest first. |
 | GET / PUT | `/organizer/events/:id/hype-goals` 🏢 | Up to five `{threshold, reward:{vi,en}}`. Reaching one tells the team. |
+| POST | `/organizer/events/:id/updates` 🏢 | `{kind: info\|delay\|gate\|safety\|lineup, body (≤500), notify=true}` on a live listing. With `notify`, ticket holders and people going get it at once (ten notified updates a day, `429 updates_limit`). GET lists them; DELETE `/organizer/events/:id/updates/:updateId` takes one down. |
 | GET | `/robots.txt`, `/sitemap.xml` | See README → Running it in production. |
 
 ---
@@ -119,8 +122,10 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | GET | `/events/:idOrSlug/resale` | Active listings, cheapest first, `watching`, `feePct`. PUT / DELETE `/events/:id/resale/watch` 🔒 asks to be told when one comes up. |
 | POST | `/resale/:listingId/quote` 🔒, `/resale/:listingId/orders` 🔒 | Price + fee; then a 10-minute hold and payment (mock → paid at once; VietQR → `FR…` reference, matched by the bank webhook). GET `/resale/orders/:id`, POST `/resale/orders/:id/cancel`. |
 | POST | `/me/tickets/:id/wallet` 🔒 | `{platform: apple\|google}`. |
-| GET | `/events/:id/live` 🔒 | Per stage: now playing (minutes left, progress), next, set list with states `played\|now\|next\|later` and your reminders; site zones; friends on site. |
+| GET | `/events/:id/live` 🔒 | The organiser's `updates`; per stage: now playing (minutes left, progress), next, set list with states `played\|now\|next\|later` and your reminders; site zones; friends on site. |
 | PUT / DELETE | `/events/:id/presence` 🔒 | "Check in" on the day, optional `{zoneId}`. |
+| GET | `/me/passport` 🔒 | Raver passport: a stamp per night the door scanned you or you checked in, `stats` (nights, genres, venues, cities) and eight `badges` with `earned`. |
+| GET | `/me/wrapped?year=` 🔒 | The year in review: nights, top genre, artist and venue, first and last night, latest night, friends who were there, posts, helpful votes, people brought, tickets passed on, cities. |
 | POST | `/events/:id/waves/:friendId` 🔒 | Once a minute. |
 | POST | `/events/:id/share-location` 🔒 | `{zoneId}` to your group plan. |
 

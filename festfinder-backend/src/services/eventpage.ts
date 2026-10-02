@@ -5,6 +5,7 @@ import type { Localized } from '../lib/i18n.ts';
 import { discussionCounts, faqFor } from '../routes/discussion.ts';
 import { kindsShown, nameOf, phaseOf, type Phase } from './community.ts';
 import { RESALE_FEE_PCT } from './resale.ts';
+import { latestUpdates } from '../routes/night.ts';
 
 const firstName = (name: string | null) => nameOf(name).split(/\s+/).slice(-1)[0];
 
@@ -15,7 +16,7 @@ const firstName = (name: string | null) => nameOf(name).split(/\s+/).slice(-1)[0
  */
 export async function eventExtras(q: Queryable, ev: any, viewerId: string | null, now: Date) {
   const phase: Phase = phaseOf(ev, now);
-  const [submitter, goals, hype24, counts, faq, resale, ambassadors, mine, claim] = await Promise.all([
+  const [submitter, goals, hype24, counts, faq, resale, ambassadors, mine, updates, claim] = await Promise.all([
     ev.submitted_by ? one<any>(q, 'select name from users where id = $1', [ev.submitted_by]) : null,
     many<any>(q, 'select threshold, reward, reached_at from hype_goals where event_id = $1 order by threshold', [ev.id]),
     one<{ n: number }>(q, 'select count(*)::int as n from hypes where event_id = $1 and created_at > $2', [ev.id, new Date(now.getTime() - 86400_000)]),
@@ -33,6 +34,7 @@ export async function eventExtras(q: Queryable, ev: any, viewerId: string | null
       one(q, 'select 1 from resale_watchers where user_id = $1 and event_id = $2', [viewerId, ev.id]),
       one<{ n: number }>(q, `select count(*)::int as n from tickets where event_id = $1 and user_id = $2 and status = 'valid'`, [ev.id, viewerId]),
     ]) : null,
+    latestUpdates(q, ev.id, 5),
     // Whether the community still holds the event, and whether this viewer can ask to take it over.
     one<any>(q,
       `select o.is_community as community,
@@ -67,6 +69,7 @@ export async function eventExtras(q: Queryable, ev: any, viewerId: string | null
     faq,
     resale: { enabled: resaleOpen, count: resaleOpen ? resale!.n : 0, fromPrice: resaleOpen ? resale!.from_price : null, feePct: RESALE_FEE_PCT },
     ambassadors: ambassadors.map((a) => ({ name: firstName(a.name), initials: initialsOf(nameOf(a.name)), visits: a.visits })),
+    updates,
     mine: mine ? {
       refCode: mine[0]?.ref_code ?? null,
       broughtVisits: mine[1]!.n,

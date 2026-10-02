@@ -308,6 +308,8 @@ const S = {
   claimTitle:{en:'Take over this event',vi:'Nhận quản lý sự kiện'}, claimNote:{en:'Who you are, and how we can check',vi:'Bạn là ai, và cách chúng tôi xác minh'},
   claimProof:{en:'Proof link (page or post)',vi:'Link chứng minh (fanpage, bài đăng)'}, claimSend:{en:'Send request',vi:'Gửi yêu cầu'},
   claimShort:{en:'At least 10 characters',vi:'Ít nhất 10 ký tự'},
+  updTitle:{en:'From the organiser',vi:'Tin từ BTC'}, photoTitle:{en:'Photo wall',vi:'Tường ảnh'}, discPhoto:{en:'Photo',vi:'Ảnh'},
+  storyLabel:{en:'Story',vi:'Story'}, storySaved:{en:'Story image saved',vi:'Đã lưu ảnh story'},
   faqEvent:{en:'Asked & answered',vi:'Hỏi & đáp'},
   resaleTitle:{en:'Resale',vi:'Pass vé'}, resaleCap:{en:'At most face value',vi:'Không quá giá gốc'},
   resaleNone:{en:'No tickets up right now',vi:'Chưa có vé pass'},
@@ -513,7 +515,7 @@ class Component extends DCLogic {
     authPass:'', authPass2:'', authErr:'', authNote:'', authNext:null, authShowPass:false,
     // The event page's community: discussion, resale, hype, sharing, and sending events in.
     disc:null, discKind:null, discSort:'top', discDraft:'', discSet:'', discHeard:'', discReplyTo:null, discReplyDraft:'', discMore:{}, discBusy:false,
-    resale:null, hyped:{}, shareOpen:false, claimOpen:false, claimNote:'', claimProof:'', claimBusy:false,
+    resale:null, hyped:{}, shareOpen:false, photos:null, discPhoto:null, discPhotoUrl:'', claimOpen:false, claimNote:'', claimProof:'', claimBusy:false,
     listView:'table', listCity:'all', listTime:'all', listGenre:'All', listSort:'date', listDesc:false, listAt: LOADED_AT, listAdded:0,
     submitOpen:false, submitTab:'new', submitForm:{ genre:'EDM', entry:'paid', city:'ho-chi-minh' }, submitErr:'', submitBusy:false, prefillBusy:false, prefillErr:'', submissions:null
   };
@@ -735,9 +737,10 @@ class Component extends DCLogic {
     } else {
       FF.fire(FF.post('/events/' + id + '/track', { type:'view', source:'feed' }));
     }
-    if (this._discFor !== id) { this._discFor = id; this.setState({ disc:null, discKind:null, discMore:{}, discReplyTo:null, resale:null }); }
+    if (this._discFor !== id) { this._discFor = id; this.setState({ disc:null, discKind:null, discMore:{}, discReplyTo:null, resale:null, photos:null, discPhoto:null, discPhotoUrl:'' }); }
     this.loadDiscussion(id);
     this.loadResale(id);
+    this.loadPhotos(id);
     FF.get('/events/' + id).then(d => {
       ABOUT[id] = d.description;
       if (d.organizer) {
@@ -770,6 +773,9 @@ class Component extends DCLogic {
       if (this._discKey !== key) return;
       this.setState({ disc: d, discKind: d.kind, discMore:{} });
     }, e => console.warn('[ff] discussion', e));
+  }
+  loadPhotos(id) {
+    FF.get('/events/' + id + '/photos').then(r => { if (this.state.detailId === id) this.setState({ photos: r.items }); }, e => console.warn('[ff] photos', e));
   }
   /** An organiser asks the moderators to move a community event to their account. */
   sendClaim() {
@@ -813,11 +819,18 @@ class Component extends DCLogic {
       if (/^([01]\d|2[0-3]):[0-5]\d$/.test(st.discHeard)) payload.heardAt = st.discHeard;
     }
     this.setState({ discBusy:true });
-    this.write(() => FF.post('/events/' + id + '/posts', payload), () => this.postToDiscussion(parentId)).then(out => {
-      this.setState(parentId ? { discReplyDraft:'', discReplyTo:null, discBusy:false } : { discDraft:'', discHeard:'', discBusy:false });
+    const photo = !parentId && st.discPhoto && (st.discKind === 'memory' || st.discKind === 'talk') ? st.discPhoto : null;
+    const send = async () => {
+      if (photo) { const form = new FormData(); form.append('file', photo); payload.photoUrl = (await FF.api('POST', '/uploads?purpose=recap', form)).url; }
+      return FF.post('/events/' + id + '/posts', payload);
+    };
+    this.write(send, () => this.postToDiscussion(parentId)).then(out => {
+      if (st.discPhotoUrl) URL.revokeObjectURL(st.discPhotoUrl);
+      this.setState(parentId ? { discReplyDraft:'', discReplyTo:null, discBusy:false } : { discDraft:'', discHeard:'', discBusy:false, discPhoto:null, discPhotoUrl:'' });
       this.say(FF.text(out.message, st.lang) || L.discPost);
       this.loadDiscussion(id);
       this.loadDetail(id);
+      if (photo) this.loadPhotos(id);
     }, () => this.setState({ discBusy:false }));
   }
   /** More replies to one thread than the first three. */
@@ -856,7 +869,17 @@ class Component extends DCLogic {
       if ((channel === 'native' || channel === 'zalo') && navigator.share) return navigator.share({ title: e.title, text, url }).catch(() => {});
       return copy(channel === 'zalo' ? L.shareCopiedZalo : L.shareCopied);
     };
+    if (channel === 'story') return this.shareStory(e);
     FF.post('/events/' + e.id + '/shares', { channel }).then(out => go(out.url), () => go(location.origin + FF.href('e', e.slug || e.id)));
+  }
+  /** The event as a story image, straight to the share sheet while the tap still counts. */
+  shareStory(e) {
+    const st = this.state, L = this.L(), det = st.details[e.id] || {};
+    FF.fire(FF.post('/events/' + e.id + '/shares', { channel:'story' }));
+    const kicker = e.genre + (det.hype && det.hype.count ? ' · ' + det.hype.count.toLocaleString(st.lang === 'vi' ? 'vi-VN' : 'en-US') + ' hype' : '');
+    const price = e.price === 0 ? L.free : L.from + ' ' + this.short(e.price);
+    FF.shareStory({ genre: e.genre, kicker, title: e.title, lines: [this.when(e), e.venue + (e.area ? ' · ' + e.area : ''), price], url: location.host + '/e/' + (e.slug || e.id) }, e.slug || 'feestfinder')
+      .then(how => { if (how === 'saved') this.say(L.storySaved); }, err => this.say(FF.errorText(err, st.lang)));
   }
   /** Send in an event for the moderators to check. */
   sendSubmission() {
@@ -1658,6 +1681,7 @@ class Component extends DCLogic {
           const replies = !isReply ? (moreList || p.replies || []) : [];
           return {
             id: p.id, a: author(p.author), body: p.removed ? L.discRemoved : p.body, bodyFg: p.removed ? '#8C8B7D' : '#E6E3C8',
+            hasPhoto: !!p.photoUrl, photo: p.photoUrl || '',
             ago: this.ago(p.createdAt),
             pinned: p.pinned, official: p.official, hidden: p.hidden,
             setLine: p.set ? p.set.artist + (p.heardAt ? ' · ' + p.heardAt : '') : (p.heardAt || ''),
@@ -1727,6 +1751,15 @@ class Component extends DCLogic {
           })),
           heard: st.discHeard, onHeard: (ev) => this.setState({ discHeard: ev.target.value }),
           send: () => this.postToDiscussion(null), sendOp: st.discDraft.trim() && !st.discBusy ? '1' : '.5',
+          photoOk: !!D && (D.kind === 'memory' || D.kind === 'talk'),
+          hasPhoto: !!st.discPhotoUrl, photoPreview: st.discPhotoUrl,
+          onPhoto: (ev) => {
+            const file = ev.target.files && ev.target.files[0]; ev.target.value = '';
+            if (!file) return;
+            if (st.discPhotoUrl) URL.revokeObjectURL(st.discPhotoUrl);
+            this.setState({ discPhoto: file, discPhotoUrl: URL.createObjectURL(file) });
+          },
+          dropPhoto: () => { if (st.discPhotoUrl) URL.revokeObjectURL(st.discPhotoUrl); this.setState({ discPhoto:null, discPhotoUrl:'' }); },
           replyDraft: st.discReplyDraft, onReplyDraft: (ev) => this.setState({ discReplyDraft: ev.target.value }),
           sendReply: () => this.postToDiscussion(st.discReplyTo),
           count: D ? String(D.total) : ''
@@ -1747,6 +1780,14 @@ class Component extends DCLogic {
               }
             };
           })(),
+          updates: (det.updates || []).map(u => ({
+            kind: u.kindLabel ? u.kindLabel[g] : '', body: u.body, ago: this.ago(u.createdAt),
+            icon: { delay:'ph-fill ph-clock-countdown', gate:'ph-fill ph-door-open', safety:'ph-fill ph-first-aid-kit', lineup:'ph-fill ph-microphone-stage' }[u.kind] || 'ph-fill ph-megaphone',
+            fg: u.kind === 'safety' || u.kind === 'delay' ? '#FF8709' : '#ABFF84'
+          })),
+          hasUpdates: (det.updates || []).length > 0,
+          photos: (st.photos || []).map(x => ({ url: x.url, bg: 'url("' + x.url + '") center/cover no-repeat', caption: x.caption, by: x.author.name || L.discMember })),
+          hasPhotos: !!(st.photos && st.photos.length),
           hype: {
             count: H.count.toLocaleString(vi1 ? 'vi-VN' : 'en-US'),
             recent: H.last24h ? L.hype24.replace('{n}', String(H.last24h)) : '',
@@ -1785,6 +1826,7 @@ class Component extends DCLogic {
         { k:'threads', label:'Threads', icon:'ph-bold ph-threads-logo', color:'#FFFCE1' },
         { k:'x', label:'X', icon:'ph-bold ph-x-logo', color:'#FFFCE1' },
         { k:'telegram', label:'Telegram', icon:'ph-fill ph-telegram-logo', color:'#2AABEE' },
+        { k:'story', label:L.storyLabel, icon:'ph-fill ph-instagram-logo', color:'#FEC5FB' },
         { k:'copy', label:L.shareCopy, icon:'ph-bold ph-link', color:'#ABFF84' },
         { k:'native', label:L.shareMore, icon:'ph-bold ph-share-network', color:'#ABFF84' }
       ].map(t => Object.assign({}, t, { go: () => { this.share(t.k); if (t.k !== 'copy') this.setState({ shareOpen:false }); } })),

@@ -97,6 +97,16 @@ test.describe('Event page community', () => {
     expect(text).toMatch(/Questions · 3/);
     expect(text).toMatch(/Reveal the secret closing act/);
     expect(text).toMatch(/Ambassadors/);
+    expect(text).toMatch(/From the organiser/);
+    expect(text).toMatch(/Cổng số 3 mở sớm/);
+  });
+
+  test('the share sheet saves a story image', async ({ page }) => {
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByText('Share', { exact: true }).first().click();
+    const download = page.waitForEvent('download');
+    await page.getByText('Story', { exact: true }).click();
+    expect((await download).suggestedFilename()).toBe('ravo.png');
   });
 
   test('a signed-in attendee posts a question', async ({ page }) => {
@@ -134,10 +144,26 @@ test.describe('App', () => {
       await expect(page.getByText(/At most 1\.200\.000₫/)).toBeVisible();
     });
 
-    test('the event sheet carries the FAQ and the discussion', async ({ page }) => {
+    test('the event sheet carries the organiser’s updates, the FAQ and the discussion', async ({ page }) => {
       await expectScreen(page, '/app/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+      await expect(page.getByText('From the organiser')).toBeVisible();
       await expect(page.getByText('Frequently asked')).toBeVisible();
       await expect(page.getByText(/^Questions · \d+$/)).toBeVisible();
+    });
+
+    test('IG Stories in the share sheet saves a story image', async ({ page }) => {
+      await expectScreen(page, '/app/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+      await page.getByText('Share', { exact: true }).first().click();
+      const download = page.waitForEvent('download');
+      await page.getByText('IG Stories', { exact: true }).click();
+      expect((await download).suggestedFilename()).toBe('ravo.png');
+    });
+
+    test('the profile shows the raver passport and opens Wrapped', async ({ page }) => {
+      await expectScreen(page, '/app/profile', /RAVER PASSPORT/i);
+      await expect(page.getByText('5 nights · 3 genres · 1 cities')).toBeVisible();
+      await page.getByText(/^Wrapped 20\d\d$/).first().click();
+      await expect(page.getByText(/nights out/)).toBeVisible();
     });
 
     test('a resale ticket opens its own checkout', async ({ page }) => {

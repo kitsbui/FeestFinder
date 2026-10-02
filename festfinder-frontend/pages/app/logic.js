@@ -449,14 +449,24 @@ const S = {
   rsTitle:{en:'Resale',vi:'Pass vé'}, rsCap:{en:'At most face value',vi:'Không quá giá gốc'}, rsNone:{en:'None right now',vi:'Chưa có vé pass'},
   rsWatch:{en:'Tell me',vi:'Báo tôi'}, rsWatching:{en:'Alert on',vi:'Đang chờ báo'}, rsBuy:{en:'Buy',vi:'Mua'},
   coResale:{en:'Resale ticket',vi:'Vé pass'},
-  discOpen:{en:'Discussion',vi:'Thảo luận'}, faqTitle:{en:'Frequently asked',vi:'Câu hỏi thường gặp'},
+  discOpen:{en:'Discussion',vi:'Thảo luận'}, faqTitle:{en:'Frequently asked',vi:'Câu hỏi thường gặp'}, updTitle:{en:'From the organiser',vi:'Tin từ BTC'},
   discPh_qa:{en:'Ask the organiser and everyone…',vi:'Hỏi BTC và mọi người…'}, discPh_talk:{en:'Say something…',vi:'Nói gì đó…'},
   discPh_crew:{en:'Where from, what time?',vi:'Bạn đi từ đâu, mấy giờ?'}, discPh_trackid:{en:'Describe the track…',vi:'Tả đoạn nhạc…'},
   discPh_memory:{en:'How was the night?',vi:'Đêm đó thế nào?'},
   discPost:{en:'Post',vi:'Đăng'}, discReply:{en:'Reply',vi:'Trả lời'}, discReplyTo:{en:'Replying to {n}',vi:'Trả lời {n}'},
   discEmpty:{en:'Nothing here yet',vi:'Chưa có bài nào'}, discMember:{en:'FeestFinder member',vi:'Thành viên FeestFinder'},
-  discRemoved:{en:'Deleted',vi:'Đã xoá'}, discSignin:{en:'Log in to join the discussion',vi:'Đăng nhập để tham gia thảo luận'},
+  discRemoved:{en:'Deleted',vi:'Đã xoá'}, discPhoto:{en:'Photo',vi:'Ảnh'}, discSignin:{en:'Log in to join the discussion',vi:'Đăng nhập để tham gia thảo luận'},
   discAll:{en:'See all on the event page',vi:'Xem tất cả trên trang sự kiện'},
+  ppTitle:{en:'Raver passport',vi:'Hộ chiếu raver'}, ppStats:{en:'{n} nights · {g} genres · {c} cities',vi:'{n} đêm · {g} thể loại · {c} thành phố'},
+  ppEmpty:{en:'No stamps yet',vi:'Chưa có con dấu'}, ppBadges:{en:'Badges',vi:'Huy hiệu'},
+  wrOpen:{en:'Wrapped {y}',vi:'Wrapped {y}'}, wrNights:{en:'nights out',vi:'đêm đi chơi'}, wrEvents:{en:'{n} events',vi:'{n} sự kiện'},
+  wrGenre:{en:'Your sound',vi:'Thể loại của bạn'}, wrTimesN:{en:'{n} nights',vi:'{n} đêm'},
+  wrArtist:{en:'Seen most',vi:'Gặp nhiều nhất'}, wrTimes:{en:'{n} times',vi:'{n} lần'},
+  wrVenue:{en:'Your spot',vi:'Chỗ quen'}, wrLate:{en:'Latest night',vi:'Đêm muộn nhất'}, wrUntil:{en:'until {t}',vi:'tới {t}'},
+  wrCrew:{en:'Your crew',vi:'Hội đi cùng'}, wrFriends:{en:'{n} friends',vi:'{n} người bạn'},
+  wrGave:{en:'You gave back',vi:'Bạn đã góp'}, wrPosts:{en:'posts',vi:'bài viết'}, wrHelpful:{en:'helpful votes',vi:'lượt hữu ích'},
+  wrBrought:{en:'people brought',vi:'người tới qua link'}, wrPassed:{en:'tickets passed on',vi:'vé đã nhường'}, wrCities:{en:'cities',vi:'thành phố'},
+  wrShare:{en:'Share story',vi:'Chia sẻ story'}, wrEmpty:{en:'No nights in {y} yet',vi:'Chưa có đêm nào trong {y}'}, storySaved:{en:'Story image saved',vi:'Đã lưu ảnh story'},
   ago0:{en:'just now',vi:'vừa xong'}, agoM:{en:'{n}m',vi:'{n} phút'}, agoH:{en:'{n}h',vi:'{n} giờ'}, agoD:{en:'{n}d',vi:'{n} ngày'},
   checkoutTitle:{en:'Confirm your order',vi:'Xác nhận đơn hàng'},
   qtyLabel:{en:'Tickets',vi:'Số lượng vé'},
@@ -615,7 +625,7 @@ class Component extends DCLogic {
     notifOpen:false, notifRead:{}, notifs: APP.notifs || [],
     auth:null, authMode:'signup', authMethod:'email', authId:'', authOtp:'', authPass:'', authPass2:'',
     authErr:'', authNote:'', authNext:null, authShowPass:false, authBusy:false, authChallenge:null, authSignupToken:null,
-    liveData:null, detailData:null, dsc:null, dscKind:null, dscDraft:'', dscBusy:false, dscReplyTo:null, faqOpen:{},
+    liveData:null, detailData:null, dsc:null, dscKind:null, dscDraft:'', dscBusy:false, dscPhoto:null, dscPhotoUrl:'', dscReplyTo:null, faqOpen:{}, passport:null, wrapped:null, wrOpen:false, wrIdx:0,
     // Tickets changing hands: the sheet on a wallet card, what was resold, and buying a resale ticket.
     xfer:null, resold:[], payee:null, coListing:null, detailResale:null
   }, routeState(FF.route));
@@ -695,7 +705,7 @@ class Component extends DCLogic {
     if (r.name === 'profile' || r.name === 'alerts' || r.name === 'settings' || r.name === 'following') await FF.appRest(this);
   }
   componentWillUnmount() {
-    clearInterval(this._lt);
+    clearInterval(this._lt); clearInterval(this._lv);
     clearTimeout(this._t); clearTimeout(this._tt); clearTimeout(this._lm); clearTimeout(this._pa); clearTimeout(this._pm); clearTimeout(this._bt);
     if (this._net) { window.removeEventListener('online', this._net); window.removeEventListener('offline', this._net); }
   }
@@ -1056,6 +1066,13 @@ class Component extends DCLogic {
     const [d, ad] = await Promise.all([FF.maybe(FF.get('/events/' + eventId + '/live'), null), FF.appLiveAd()]);
     if (ad) LIVE_AD = ad;
     if (d && this.state.liveOpen === eventId) this.setState({ liveData: d });
+    // The organiser's updates and the running order move on the night: look again every minute.
+    clearInterval(this._lv);
+    this._lv = setInterval(async () => {
+      if (this.state.liveOpen !== eventId) { clearInterval(this._lv); this._lv = null; return; }
+      const fresh = await FF.maybe(FF.get('/events/' + eventId + '/live'), null);
+      if (fresh && this.state.liveOpen === eventId) this.setState({ liveData: fresh });
+    }, 60000);
   }
   async openRecap(eventId) {
     this.setState({ recapOpen: eventId, ticketsOpen:false, bestieSplash:null, recap:null, recapStars:0, recapAspects:{}, recapPhotos:[] });
@@ -1274,6 +1291,12 @@ class Component extends DCLogic {
     if (m < 60 * 24) return L.agoH.replace('{n}', String(Math.round(m / 60)));
     return L.agoD.replace('{n}', String(Math.round(m / 1440)));
   }
+  openWrapped() {
+    const year = FF.now().getFullYear();
+    this.setState({ wrOpen:true, wrIdx:0 });
+    if (this.state.wrapped && this.state.wrapped.year === year) return;
+    FF.get('/me/wrapped?year=' + year).then(w => this.setState({ wrapped: w }), e => { this.setState({ wrOpen:false }); this.fail(e); });
+  }
   /** One tab of the event's discussion, inside the detail sheet. */
   loadDsc(id, kind) {
     const key = id + '|' + (kind || '');
@@ -1289,8 +1312,13 @@ class Component extends DCLogic {
     this.setState({ dscBusy:true });
     try {
       const payload = st.dscReplyTo ? { parentId: st.dscReplyTo.id, body } : { kind: st.dscKind, body };
+      if (!st.dscReplyTo && st.dscPhoto && (st.dscKind === 'memory' || st.dscKind === 'talk')) {
+        const form = new FormData(); form.append('file', st.dscPhoto);
+        payload.photoUrl = (await FF.api('POST', '/uploads?purpose=recap', form)).url;
+      }
       const out = await FF.post('/events/' + id + '/posts', payload);
-      this.setState({ dscBusy:false, dscDraft:'', dscReplyTo:null });
+      if (st.dscPhotoUrl) URL.revokeObjectURL(st.dscPhotoUrl);
+      this.setState({ dscBusy:false, dscDraft:'', dscPhoto:null, dscPhotoUrl:'', dscReplyTo:null });
       this.say(FF.text(out.message, st.lang) || L.discPost);
       this.loadDsc(id, st.dscKind);
     } catch (e) {
@@ -1301,7 +1329,8 @@ class Component extends DCLogic {
   }
 
   async openDetail(id, opts) {
-    this.setState({ detail: id, detailData: null, detailResale: null, dsc:null, dscKind:null, dscDraft:'', dscReplyTo:null, faqOpen:{} });
+    if (this.state.dscPhotoUrl) URL.revokeObjectURL(this.state.dscPhotoUrl);
+    this.setState({ detail: id, detailData: null, detailResale: null, dsc:null, dscKind:null, dscDraft:'', dscPhoto:null, dscPhotoUrl:'', dscReplyTo:null, faqOpen:{} });
     this.loadDsc(id, null);
     this.loadDetailResale(id);
     if (!(opts && opts.silent)) {
@@ -1418,12 +1447,25 @@ class Component extends DCLogic {
       { k:'more', label: g === 'vi' ? 'Khác' : 'More', icon:'ph-bold ph-dots-three', bg:'rgba(28,29,27,.9)', fg:'#A5A493' }
     ].map(s => Object.assign({}, s, { go: () => {
       this.setState({ sheet:null });
-      const url = detail ? location.origin + '/e/' + (detail.slug || detail.id) : location.origin;
-      if (s.k === 'copy' && navigator.clipboard) {
-        navigator.clipboard.writeText(url).catch(() => {});
-        return this.say(g === 'vi' ? 'Đã sao chép link' : 'Link copied');
+      if (!detail) return;
+      const channel = { zalo:'zalo', ig:'story', fb:'facebook', tg:'telegram', messenger:'messenger', copy:'copy' }[s.k] || 'native';
+      // The story image goes to the share sheet straight from the tap, before anything is awaited.
+      if (s.k === 'ig') {
+        FF.fire(FF.post('/events/' + detail.id + '/shares', { channel }));
+        const price = detail.price === 0 ? L.free : L.from + ' ' + this.short(detail.price);
+        return FF.shareStory({ genre: detail.genre, kicker: detail.genre + ' · ' + detail.hype.toLocaleString(g === 'vi' ? 'vi-VN' : 'en-US') + ' hype', title: detail.title,
+          lines: [this.fmtWhen(detail) + ' · ' + this.fmtTime(detail), detail.venue + (detail.area ? ' · ' + detail.area : ''), price], url: location.host + '/e/' + (detail.slug || detail.id) }, detail.slug || 'feestfinder')
+          .then(how => { if (how === 'saved') this.say(L.storySaved); }, e => this.fail(e));
       }
-      this.say(g === 'vi' ? 'Đã chia sẻ qua ' + s.label : 'Shared to ' + s.label);
+      const go = (url) => {
+        const u = encodeURIComponent(url), t = encodeURIComponent(detail.title);
+        if (s.k === 'fb') return window.open('https://www.facebook.com/sharer/sharer.php?u=' + u, '_blank', 'noopener');
+        if (s.k === 'tg') return window.open('https://t.me/share/url?url=' + u + '&text=' + t, '_blank', 'noopener');
+        if (s.k !== 'copy' && navigator.share) return navigator.share({ title: detail.title, url }).catch(() => {});
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+        this.say(g === 'vi' ? 'Đã sao chép link' : 'Link copied');
+      };
+      FF.post('/events/' + detail.id + '/shares', { channel }).then(out => go(out.url), () => go(location.origin + '/e/' + (detail.slug || detail.id)));
     } }));
 
 
@@ -2214,6 +2256,12 @@ class Component extends DCLogic {
         const minsLeft = now && now.endsAt ? Math.max(0, Math.round((new Date(now.endsAt).getTime() - FF.now().getTime()) / 60000)) : 0;
         const zoneOf = (id) => d.zones.filter(z => z.id === id)[0];
         return {
+          updates: (d.updates || []).slice(0, 3).map(u => ({
+            kind: u.kindLabel ? u.kindLabel[g] : '', body: u.body, ago: this.ago(u.createdAt),
+            icon: { delay:'ph-fill ph-clock-countdown', gate:'ph-fill ph-door-open', safety:'ph-fill ph-first-aid-kit', lineup:'ph-fill ph-microphone-stage' }[u.kind] || 'ph-fill ph-megaphone',
+            fg: u.kind === 'safety' || u.kind === 'delay' ? '#FF8709' : '#ABFF84'
+          })),
+          hasUpdates: (d.updates || []).length > 0,
           title: d.event.title, art: d.event.art, venue: d.event.venueName,
           nowStage: FF.text(stage.name, g),
           nowArtist: now ? now.artist : '—', nowTime: now ? now.time : '',
@@ -2474,15 +2522,69 @@ class Component extends DCLogic {
         };
       })(),
       openDiscussion: () => { if (detail) window.location.href = '/e/' + encodeURIComponent(slugOf(detail.id)) + '#thao-luan'; },
+      pp: (() => {
+        const P = st.passport;
+        if (!P) return { show:false, stamps: [], badges: [] };
+        return {
+          show: true, empty: P.stamps.length === 0,
+          stats: L.ppStats.replace('{n}', String(P.stats.nights)).replace('{g}', String(P.stats.genres)).replace('{c}', String(P.stats.cities)),
+          stamps: P.stamps.slice(0, 8).map(x => ({
+            art: FF.artOf(x), title: x.title, date: FF.dayLabel(x.date, g),
+            open: () => { const ev = eventBy(x.slug); if (ev) this.openDetail(ev.id); }
+          })),
+          badges: P.badges.map(b => ({ icon: b.icon, label: b.label[g], need: b.need[g], fg: b.earned ? '#0E100F' : '#8C8B7D', bg: b.earned ? '#ABFF84' : 'rgba(255,252,225,.06)', bd: b.earned ? '#ABFF84' : 'rgba(255,252,225,.19)',
+            tap: () => this.say(b.label[g] + ' · ' + b.need[g]) })),
+          earned: P.badges.filter(b => b.earned).length + '/' + P.badges.length,
+          wrLabel: L.wrOpen.replace('{y}', String(FF.now().getFullYear())),
+          openWrapped: () => this.openWrapped()
+        };
+      })(),
+      wr: (() => {
+        const W = st.wrapped;
+        const base = { open: st.wrOpen, ready: false, bars: [], isLast: false, hasBig: true, hasStats: false, hasChips: false,
+          cur: { bg: '#0E100F', fg: '#FFFCE1', kicker: 'Wrapped', big: '…', sub: '', stats: [], chips: [] }, close: () => this.setState({ wrOpen:false, wrIdx:0 }), next: () => {}, prev: () => {}, share: () => {} };
+        if (!st.wrOpen || !W) return base;
+        const tone = (genre) => FF.genreArt(genre || 'All');
+        const dark = 'radial-gradient(120% 70% at 80% 10%, rgba(171,255,132,.22), transparent 60%), #0E100F';
+        const slides = W.empty ? [{ kicker: 'Wrapped ' + W.year, big: L.wrEmpty.replace('{y}', String(W.year)), sub: '', bg: dark, fg: '#FFFCE1', chips: [] }] : [
+          { kicker: 'Wrapped ' + W.year, big: String(W.nights), sub: L.wrNights + ' · ' + L.wrEvents.replace('{n}', String(W.events)), bg: dark, fg: '#ABFF84', chips: (W.cities || []).map(c => ({ t: c[g] })) },
+          W.topGenre && { kicker: L.wrGenre, big: W.topGenre.genre, sub: L.wrTimesN.replace('{n}', String(W.topGenre.nights)), bg: tone(W.topGenre.genre), fg: '#0E100F', chips: [] },
+          W.topArtist && { kicker: L.wrArtist, big: W.topArtist.name, sub: L.wrTimes.replace('{n}', String(W.topArtist.times)), bg: dark, fg: '#FFFCE1', chips: [] },
+          W.topVenue && { kicker: L.wrVenue, big: W.topVenue.name, sub: L.wrTimes.replace('{n}', String(W.topVenue.times)), bg: dark, fg: '#FFFCE1', chips: [] },
+          W.latestNight && { kicker: L.wrLate, big: W.latestNight.title, sub: L.wrUntil.replace('{t}', W.latestNight.until) + ' · ' + FF.dayLabel(W.latestNight.date, g), bg: tone(W.latestNight.genre), fg: '#0E100F', chips: [] },
+          W.friendsCount && { kicker: L.wrCrew, big: L.wrFriends.replace('{n}', String(W.friendsCount)), sub: '', bg: dark, fg: '#FFFCE1', chips: W.friends.map(f => ({ t: f.name })) },
+          (W.posts || W.helpful || W.brought || W.passedOn) && { kicker: L.wrGave, big: '', sub: '', bg: dark, fg: '#FFFCE1', chips: [],
+            stats: [[W.posts, L.wrPosts], [W.helpful, L.wrHelpful], [W.brought, L.wrBrought], [W.passedOn, L.wrPassed]].filter(x => x[0]).map(x => ({ v: String(x[0]), l: x[1] })) }
+        ].filter(Boolean);
+        const idx = Math.min(st.wrIdx, slides.length - 1);
+        const cur = Object.assign({ stats: [] }, slides[idx]);
+        return {
+          open: true, ready: true, cur, hasStats: cur.stats.length > 0, hasChips: cur.chips.length > 0, hasBig: !!cur.big,
+          bars: slides.map((_, i) => ({ bg: i <= idx ? '#FFFCE1' : 'rgba(255,252,225,.25)' })),
+          isLast: idx === slides.length - 1, empty: !!W.empty,
+          next: () => this.setState({ wrIdx: Math.min(idx + 1, slides.length - 1) }),
+          prev: () => this.setState({ wrIdx: Math.max(idx - 1, 0) }),
+          close: () => this.setState({ wrOpen:false, wrIdx:0 }),
+          share: (ev) => {
+            if (ev) ev.stopPropagation();
+            const stats = [[W.nights, L.wrNights], [W.topGenre && W.topGenre.genre, L.wrGenre], [W.topArtist && W.topArtist.name, L.wrArtist], [(W.cities || []).length, L.wrCities]]
+              .filter(x => x[0]).map(x => ({ value: String(x[0]), label: x[1] }));
+            FF.shareStory({ genre: W.topGenre ? W.topGenre.genre : 'All', kicker: 'Wrapped ' + W.year, title: (st.user && st.user.name ? st.user.name.split(' ').slice(-1)[0] + ' · ' : '') + W.year, stats,
+              lines: [W.topVenue ? L.wrVenue + ': ' + W.topVenue.name : '', W.latestNight ? L.wrLate + ': ' + W.latestNight.title + ' (' + L.wrUntil.replace('{t}', W.latestNight.until) + ')' : ''].filter(Boolean),
+              url: location.host }, 'feestfinder-wrapped-' + W.year)
+              .then(how => { if (how === 'saved') this.say(L.storySaved); }, e => this.fail(e));
+          }
+        };
+      })(),
       dd: (() => {
         const d = st.detailData, D = st.dsc;
-        if (!detail || !d) return { faq: [], hasFaq:false, show:false, tabs: [], items: [] };
+        if (!detail || !d) return { updates: [], hasUpdates:false, faq: [], hasFaq:false, show:false, tabs: [], items: [] };
         const author = (a) => a ? { name: a.name || L.discMember, initials: a.initials, color: a.photoUrl ? 'url("' + a.photoUrl + '") center/cover no-repeat' : FF.colorFor(a.name || 'ff'),
           badges: (a.badges || []).map(b => ({ label: b.label[g], fg: b.key === 'team' || b.key === 'ff' ? '#0E100F' : '#ABFF84', bg: b.key === 'team' || b.key === 'ff' ? '#ABFF84' : 'rgba(171,255,132,.12)' })) }
           : { name: L.discRemoved, initials: '–', color: '#1E1F1C', badges: [] };
         const post = (p, isReply) => Object.assign(author(p.author), {
           body: p.removed ? L.discRemoved : p.body, bodyFg: p.removed ? '#8C8B7D' : '#E6E3C8', ago: this.ago(p.createdAt),
-          official: !!p.official,
+          official: !!p.official, hasPhoto: !!p.photoUrl, photo: p.photoUrl || '',
           helpful: p.helpfulCount ? String(p.helpfulCount) : '', helpFg: p.me && p.me.helped ? '#ABFF84' : '#8C8B7D', helpIcon: p.me && p.me.helped ? 'ph-fill ph-thumbs-up' : 'ph-bold ph-thumbs-up',
           help: () => {
             if (!st.user) return this.openAuth('signup', null, L.discSignin);
@@ -2495,6 +2597,12 @@ class Component extends DCLogic {
         });
         const tab = D && D.kinds.find(k => k.kind === D.kind);
         return {
+          updates: (d.updates || []).map(u => ({
+            kind: u.kindLabel ? u.kindLabel[g] : '', body: u.body,
+            icon: { delay:'ph-fill ph-clock-countdown', gate:'ph-fill ph-door-open', safety:'ph-fill ph-first-aid-kit', lineup:'ph-fill ph-microphone-stage' }[u.kind] || 'ph-fill ph-megaphone',
+            fg: u.kind === 'safety' || u.kind === 'delay' ? '#FF8709' : '#ABFF84'
+          })),
+          hasUpdates: (d.updates || []).length > 0,
           faq: (d.faq || []).map((f, i) => ({ q: f.question, a: f.answer, open: !!st.faqOpen[i], icon: st.faqOpen[i] ? 'ph-bold ph-minus' : 'ph-bold ph-plus',
             toggle: () => { const o = Object.assign({}, st.faqOpen); o[i] = !o[i]; this.setState({ faqOpen: o }); } })),
           hasFaq: (d.faq || []).length > 0,
@@ -2507,7 +2615,16 @@ class Component extends DCLogic {
           draft: st.dscDraft, onDraft: (ev) => this.setState({ dscDraft: ev.target.value }),
           placeholder: st.dscReplyTo ? L.discReplyTo.replace('{n}', st.dscReplyTo.name) : L['discPh_' + (D ? D.kind : 'talk')] || '',
           replying: !!st.dscReplyTo, replyLine: st.dscReplyTo ? L.discReplyTo.replace('{n}', st.dscReplyTo.name) : '', cancelReply: () => this.setState({ dscReplyTo:null }),
-          send: () => this.postDsc(), sendOp: st.dscDraft.trim() && !st.dscBusy ? '1' : '.5', sendLabel: st.dscBusy ? '…' : L.discPost
+          send: () => this.postDsc(), sendOp: st.dscDraft.trim() && !st.dscBusy ? '1' : '.5', sendLabel: st.dscBusy ? '…' : L.discPost,
+          photoOk: !!D && !st.dscReplyTo && (D.kind === 'memory' || D.kind === 'talk'),
+          hasPhoto: !!st.dscPhotoUrl, photoPreview: st.dscPhotoUrl,
+          onPhoto: (ev) => {
+            const file = ev.target.files && ev.target.files[0]; ev.target.value = '';
+            if (!file) return;
+            if (st.dscPhotoUrl) URL.revokeObjectURL(st.dscPhotoUrl);
+            this.setState({ dscPhoto: file, dscPhotoUrl: URL.createObjectURL(file) });
+          },
+          dropPhoto: () => { if (st.dscPhotoUrl) URL.revokeObjectURL(st.dscPhotoUrl); this.setState({ dscPhoto:null, dscPhotoUrl:'' }); }
         };
       })(),
 

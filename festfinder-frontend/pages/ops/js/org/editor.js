@@ -3,7 +3,7 @@
  * status means for editing is said at the top, with the moderator's note when it was sent back.
  */
 import { h, Fragment, useState, t, tx, get, post, patch, put, del, href, navigate, useFetch, toast, errorText, stamp, emit } from '../core.js';
-import { PageHeader, Button, Spinner, ErrorBox, Icon, StatusPill, confirm, TextArea, Field, Menu, Card, Input, Pill } from '../ui.js';
+import { PageHeader, Button, Spinner, ErrorBox, Icon, StatusPill, confirm, TextArea, Field, Menu, Card, Input, Pill, Select, Switch } from '../ui.js';
 import { EventForm } from '../event-form.js';
 
 const MISSING = {
@@ -75,6 +75,47 @@ function HypeGoals({ eventId }) {
     list.length < 5 ? h(Button, { size: 'sm', icon: 'plus', onClick: () => setRows([...list, { threshold: '', vi: '', en: '', reached: false }]) }, t('Thêm mốc', 'Add a goal')) : null));
 }
 
+const UPDATE_KINDS = [
+  { value: 'info', label: () => t('Cập nhật', 'Update') }, { value: 'delay', label: () => t('Đổi giờ', 'Schedule change') },
+  { value: 'gate', label: () => t('Cổng vào', 'Entry') }, { value: 'safety', label: () => t('An toàn', 'Safety') }, { value: 'lineup', label: () => t('Đội hình', 'Lineup') },
+];
+
+/** What the organiser tells everyone on the night; ticket holders and people going get it as a notification. */
+function LiveUpdates({ eventId }) {
+  const { data, reload } = useFetch(`/organizer/events/${eventId}/updates`, [eventId]);
+  const [kind, setKind] = useState('info');
+  const [body, setBody] = useState('');
+  const [notify, setNotify] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const send = async () => {
+    setBusy(true);
+    try {
+      const out = await post(`/organizer/events/${eventId}/updates`, { kind, body: body.trim(), notify });
+      toast(tx(out.message));
+      setBody('');
+      reload(true);
+    } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(false); }
+  };
+  const remove = async (u) => {
+    if (!(await confirm({ title: t('Gỡ bảng tin này?', 'Remove this update?'), body: u.body, confirm: t('Gỡ', 'Remove'), tone: 'danger' }))) return;
+    try { const out = await del(`/organizer/events/${eventId}/updates/${u.id}`); toast(tx(out.message)); reload(true); } catch (e) { toast(errorText(e), 'error'); }
+  };
+  if (!data) return null;
+  return h(Card, { title: t('Bảng tin trực tiếp', 'Live updates'), icon: 'broadcast' },
+    h('div', { style: { display: 'grid', gridTemplateColumns: '170px 1fr', gap: 10, alignItems: 'start' } },
+      h(Select, { value: kind, onChange: setKind, options: UPDATE_KINDS.map((k) => ({ value: k.value, label: k.label() })) }),
+      h(TextArea, { rows: 2, value: body, onChange: setBody, maxLength: 500, placeholder: t('Cổng 3 mở sớm từ 15:30…', 'Gate 3 opens early at 15:30…') })),
+    h('div', { style: { display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0 16px' } },
+      h(Switch, { checked: notify, onChange: setNotify, label: t('Gửi thông báo cho người có vé và người sẽ đi', 'Notify ticket holders and people going') }),
+      h('span', { className: 'op-spacer' }),
+      h(Button, { size: 'sm', variant: 'cta', icon: 'paper-plane-right', busy, disabled: body.trim().length < 2, onClick: send }, t('Đăng', 'Post'))),
+    data.items.map((u) => h('div', { key: u.id, style: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderTop: '1px solid var(--ff-line, rgba(255,252,225,.12))' } },
+      h(Pill, { tone: u.kind === 'safety' || u.kind === 'delay' ? 'warn' : 'info' }, tx(u.kindLabel)),
+      h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { style: { whiteSpace: 'pre-wrap' } }, u.body),
+        h('div', { className: 'op-cell-sub' }, stamp(u.createdAt), u.notified ? ' · ' + t('đã gửi thông báo', 'notified') : '')),
+      h(Button, { size: 'sm', variant: 'quiet', icon: 'trash', title: t('Gỡ', 'Remove'), onClick: () => remove(u) }))));
+}
+
 export function OrgEditor({ rest }) {
   const id = rest[1] && rest[1] !== 'new' ? rest[1] : null;
   const { data, error, loading, reload } = useFetch(id ? `/organizer/events/${id}` : null, [id]);
@@ -133,5 +174,6 @@ export function OrgEditor({ rest }) {
         else if (out?.status && draft && out.status !== draft.status) reload(true);
       },
     }),
-    draft && !readOnly ? h('div', { style: { marginTop: 20 } }, h(HypeGoals, { eventId: draft.id })) : null);
+    draft && !readOnly ? h('div', { style: { marginTop: 20 } }, h(HypeGoals, { eventId: draft.id })) : null,
+    draft && draft.status === 'live' ? h('div', { style: { marginTop: 20 } }, h(LiveUpdates, { eventId: draft.id })) : null);
 }

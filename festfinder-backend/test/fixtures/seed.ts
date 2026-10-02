@@ -678,6 +678,13 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query(`insert into ticket_listings (ticket_id, event_id, seller_id, price, face_value, created_at) values ($1,$2,$3,1050000,1200000,$4)`,
       [ravoSeller.id, ids.event.ravo, ravoSeller.user_id, hours(2)]);
 
+    // Minh Anh's past nights (checked in on the site), for the raver passport and the year in review.
+    for (const slug of ['ravo-2025', 'momang-2025', '8wonder-winter', 'bside-acoustic-1', 'bside-acoustic-2']) {
+      await q.query('insert into presence (user_id, event_id, updated_at) values ($1,$2,$3) on conflict do nothing', [demo.id, ids.event[slug], hours(24 * 30)]);
+    }
+    await q.query(`insert into event_updates (event_id, author_id, kind, body, created_at) values ($1,$2,'gate',$3,$4)`,
+      [ids.event.ravo, orgUser.id, 'Cổng số 3 mở sớm từ 15:30 cho khách có vé. Mang theo CCCD để đổi vòng tay.', hours(4)]);
+
     const counts = await one<any>(q,
       `select (select count(*)::int from users) as users, (select count(*)::int from events) as events, (select count(*)::int from orders) as orders,
               (select count(*)::int from tickets) as tickets, (select count(*)::int from saves) as saves`);
