@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser, phoneUser } from './people.ts';
 import { many, one } from '../src/db/index.ts';
-import { eventHead, eventSsr, loadEventPage, pingIndexNow, queueIndexNow } from '../src/services/seo.ts';
+import { buildEventSeo, eventSsr, pingIndexNow, queueIndexNow, seoHead } from '../src/services/seo.ts';
 
 describe('community event pages', () => {
   let env: TestEnv;
@@ -107,13 +107,13 @@ describe('community event pages', () => {
     const detail = await env.as().get('/events/ravo');
     assert.ok(detail.body.faq.some((f: any) => f.question === 'Có được mang nước vào không ạ?'));
 
-    const page = await loadEventPage(env.ctx, 'ravo');
-    const { head } = eventHead(env.ctx, page!);
+    const seo = await buildEventSeo(env.ctx, 'ravo');
+    const { head } = seoHead(seo!);
     assert.match(head, /"@type":"MusicEvent"/);
     assert.match(head, /"@type":"FAQPage"/);
     assert.match(head, /Được mang chai nhựa rỗng/);
     assert.match(head, /<link rel="canonical" href="http:\/\/test.local\/e\/ravo">/);
-    assert.match(eventSsr(page!), /<h2>Câu hỏi thường gặp<\/h2>/);
+    assert.match(eventSsr(seo!), /<h2>Câu hỏi thường gặp<\/h2>/);
   });
 
   it('counts helpful votes once per person, never on your own post', async () => {
@@ -248,15 +248,22 @@ describe('community event pages', () => {
     assert.match(map.body, /<loc>http:\/\/test\.local\/e\/ravo<\/loc>/);
   });
 
-  it('announces approved event pages to IndexNow when a key is set', async () => {
+  it('announces event and organiser pages to IndexNow once, in both languages, and again only when they change', async () => {
     const keyed = await setup({ config: { indexNowKey: 'ff-indexnow-key-1' } });
     try {
-      await queueIndexNow(keyed.ctx.db, keyed.ctx, 'ravo');
       const sent: any[] = [];
-      const n = await pingIndexNow(keyed.ctx, (async (_url: string, init: any) => { sent.push(JSON.parse(init.body)); return new Response(null, { status: 202 }); }) as any);
-      assert.equal(n, 1);
-      assert.deepEqual(sent[0].urlList, ['http://test.local/e/ravo']);
+      const send = (async (_url: string, init: any) => { sent.push(JSON.parse(init.body)); return new Response(null, { status: 202 }); }) as any;
+      assert.ok(await pingIndexNow(keyed.ctx, send) > 1, 'every public page goes out the first time');
+      assert.ok(sent[0].urlList.includes('http://test.local/e/ravo'));
       assert.equal(sent[0].keyLocation, 'http://test.local/ff-indexnow-key-1.txt');
+      assert.equal(await pingIndexNow(keyed.ctx, send), 0, 'nothing changed since');
+      await keyed.ctx.db.query(`update events set hype_count = hype_count + 1, save_count = save_count + 1 where slug = 'ravo'`);
+      assert.equal(await pingIndexNow(keyed.ctx, send), 0, 'a counter is not a change to the page');
+      await keyed.ctx.db.query(`update events set title = 'Ravolution Music Festival 2026' where slug = 'ravo'`);
+      assert.equal(await pingIndexNow(keyed.ctx, send), 2, 'the event, and its organiser page that lists it');
+      assert.deepEqual(sent.at(-1).urlList.sort(), ['http://test.local/e/ravo', 'http://test.local/e/ravo?lang=en', 'http://test.local/o/ravoent', 'http://test.local/o/ravoent?lang=en']);
+      await queueIndexNow(keyed.ctx.db, keyed.ctx, 'hozo');
+      assert.equal(await pingIndexNow(keyed.ctx, send), 1, 'a page queued by hand goes out too');
       assert.equal((await keyed.as().get('/ff-indexnow-key-1.txt')).body, 'ff-indexnow-key-1');
       assert.equal((await many(keyed.ctx.db, 'select * from indexnow_queue')).length, 0);
     } finally { await keyed.close(); }

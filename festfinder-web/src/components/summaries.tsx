@@ -3,7 +3,8 @@
  * real content as plain, crawlable HTML. People on a fast connection barely see it; search
  * engines, link previews and slow phones get the facts straight away.
  */
-import { price, text, when, type EventCard, type EventDetail, type Lang, type Landing, type Organizer } from '@/lib/api';
+import type { ReactNode } from 'react';
+import { price, when, type EventCard, type EventSeo, type Lang, type OrganizerSeo, type PageSeo } from '@/lib/api';
 
 export function EventList({ title, intro, events, lang = 'vi' }: { title: string; intro?: string; events: EventCard[]; lang?: Lang }) {
   return (
@@ -25,145 +26,106 @@ export function EventList({ title, intro, events, lang = 'vi' }: { title: string
   );
 }
 
-export function EventSummary({ e, lang = 'vi' }: { e: EventDetail; lang?: Lang }) {
-  const tiers = e.tickets?.tiers ?? [];
+/**
+ * The event page's facts, from the same EventSeo the API's own event pages render: an answer
+ * first, then the details, the organiser's updates and answers, and where to go next.
+ */
+export function EventSummary({ seo }: { seo: EventSeo }) {
+  const p = seo.page, h = seo.headings;
   return (
-    <main className="ff-ssr">
+    <PageFrame seo={seo} facts={h.facts} about={h.about} updated={h.updated}>
+      {p.lineup.length ? (<section><h2>{h.lineup}</h2><ul>{p.lineup.map((a) => <li key={a}>{a}</li>)}</ul></section>) : null}
+      {p.timetable.length ? (
+        <section>
+          <h2>{h.timetable}</h2>
+          {p.timetable.map((d) => (
+            <div key={d.day}>
+              <h3>{d.day}</h3>
+              <ul>{d.sets.map((x) => <li key={x.time + x.artist}>{x.time} · {x.artist}{x.stage ? ` · ${x.stage}` : ''}</li>)}</ul>
+            </div>
+          ))}
+        </section>
+      ) : null}
+      {p.tickets.length ? (<section><h2>{h.tickets}</h2><ul>{p.tickets.map((x) => <li key={x.name}>{x.name}: {x.price} · {x.state}</li>)}</ul></section>) : null}
+      {p.updates.length ? (
+        <section>
+          <h2>{h.updates}</h2>
+          <ul>{p.updates.map((u) => <li key={u.at + u.body}><time dateTime={u.at}>{u.atLabel}</time> · {u.kind}: {u.body}</li>)}</ul>
+        </section>
+      ) : null}
+      {p.faq.length ? (
+        <section>
+          <h2>{h.faq}</h2>
+          <dl>{p.faq.map((f) => (<div key={f.question}><dt>{f.question}</dt><dd>{f.answer}</dd></div>))}</dl>
+        </section>
+      ) : null}
+      {p.editions.length ? (
+        <section>
+          <h2>{h.editions}</h2>
+          <ul>{p.editions.map((x) => <li key={x.path}>{x.label}: <a href={x.path}>{x.title}</a> · {x.line}</li>)}</ul>
+        </section>
+      ) : null}
+      {p.related.length ? (
+        <section>
+          <h2>{h.related}</h2>
+          <ul>{p.related.map((x) => <li key={x.path}><a href={x.path}>{x.title}</a> · {x.line}</li>)}</ul>
+        </section>
+      ) : null}
+    </PageFrame>
+  );
+}
+
+/** An organiser page's facts, from the same OrganizerSeo the API's own pages render. */
+export function OrganizerSummary({ seo }: { seo: OrganizerSeo }) {
+  const p = seo.page, h = seo.headings;
+  const list = (items: OrganizerSeo['page']['upcoming']) => (
+    <ul>{items.map((x) => <li key={x.path}><a href={x.path}>{x.title}</a> · {x.line}</li>)}</ul>
+  );
+  return (
+    <PageFrame seo={seo} facts={h.facts} about={h.about} updated={h.updated}>
+      {p.upcoming.length ? (<section><h2>{h.upcoming}</h2>{list(p.upcoming)}</section>) : null}
+      {p.past.length ? (<section><h2>{h.past}</h2>{list(p.past)}</section>) : null}
+    </PageFrame>
+  );
+}
+
+/** What every page shares: breadcrumbs, the answer first, the key facts, what it is about, when it changed. */
+function PageFrame({ seo, facts, about, updated, children }: { seo: PageSeo; facts: string; about: string; updated: string; children: ReactNode }) {
+  const p = seo.page;
+  const ext = (href: string) => (/^https?:/.test(href) ? { rel: 'noopener' } : {});
+  return (
+    <main className="ff-ssr" lang={seo.lang}>
+      <nav aria-label="Breadcrumb">
+        {p.crumbs.slice(0, -1).map((c, i) => (
+          <span key={c.path}>
+            {i ? ' › ' : ''}
+            <a href={c.path}>{c.name}</a>
+          </span>
+        ))}
+      </nav>
       <article>
-        <p className="meta">{[e.genre, e.badge ? text(e.badge.label, lang) : null].filter(Boolean).join(' · ')}</p>
-        <h1>{e.title}</h1>
-        <p>
-          <time dateTime={e.startsAt ?? e.startsOn}>{when(e, lang)}</time>
-        </p>
-        <p>
-          {e.venue.name}
-          {e.venue.address ? `, ${e.venue.address}` : ''}
-          {e.venue.area ? `, ${e.venue.area}` : ''}
-        </p>
-        <p>{price(e, lang)}</p>
-        {e.description ? <p>{text(e.description, lang)}</p> : null}
-        {e.lineup?.length ? (
-          <>
-            <h2>{lang === 'vi' ? 'Đội hình' : 'Lineup'}</h2>
-            <p>{e.lineup.join(' · ')}</p>
-          </>
-        ) : null}
-        {tiers.length ? (
-          <>
-            <h2>{lang === 'vi' ? 'Vé' : 'Tickets'}</h2>
-            <ul>
-              {tiers.map((t) => (
-                <li key={t.id}>
-                  {text(t.name, lang)} — {t.price.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}₫
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : null}
-        {e.faq?.length ? (
-          <>
-            <h2>{lang === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked'}</h2>
-            <dl>
-              {e.faq.map((f) => (
-                <div key={f.question}>
-                  <dt>{f.question}</dt>
-                  <dd>{f.answer}</dd>
-                </div>
-              ))}
-            </dl>
-          </>
-        ) : null}
+        <p className="meta">{p.kicker}</p>
+        <h1>{p.h1}</h1>
+        <p className="lede">{p.summary}</p>
+        <section>
+          <h2>{facts}</h2>
+          <dl>
+            {p.facts.map((f) => (
+              <div key={f.label}>
+                <dt>{f.label}</dt>
+                <dd>{f.datetime ? <time dateTime={f.datetime}>{f.value}</time> : f.href ? <a href={f.href} {...ext(f.href)}>{f.value}</a> : f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+        {p.about ? (<section><h2>{about}</h2><p>{p.about}</p></section>) : null}
+        {children}
         <p className="meta">
-          {lang === 'vi' ? 'Tổ chức bởi ' : 'Organised by '}
-          <a href={`/o/${e.organizer.slug}`}>{e.organizer.name}</a>
+          {updated} <time dateTime={seo.updatedAt}>{`${seo.updatedAt.slice(11, 16)} ${seo.updatedAt.slice(8, 10)}/${Number(seo.updatedAt.slice(5, 7))}/${seo.updatedAt.slice(0, 4)}`}</time>
+          {' · '}
+          <a href={p.otherLang.path}>{p.otherLang.label}</a>
         </p>
       </article>
-    </main>
-  );
-}
-
-export function OrganizerSummary({ o, lang = 'vi' }: { o: Organizer; lang?: Lang }) {
-  return (
-    <main className="ff-ssr">
-      <h1>{o.name}</h1>
-      {o.bio ? <p>{text(o.bio, lang)}</p> : null}
-      <p className="meta">
-        {o.stats.events} {lang === 'vi' ? 'sự kiện' : 'events'} · {o.stats.followers.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}{' '}
-        {lang === 'vi' ? 'người theo dõi' : 'followers'}
-      </p>
-      {o.upcoming.length ? (
-        <>
-          <h2>{lang === 'vi' ? 'Sắp diễn ra' : 'Coming up'}</h2>
-          <ul>
-            {o.upcoming.map((e) => (
-              <li key={e.id}>
-                <a href={`/e/${e.slug}`}>{e.title}</a>
-                <div className="meta">{when(e, lang)} · {e.venue.name}</div>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-    </main>
-  );
-}
-
-export function LandingSummary({ l, standalone = false }: { l: Landing; standalone?: boolean }) {
-  return (
-    <main className="ff-ssr">
-      {standalone ? (
-        <nav className="ff-crumbs">
-          <a href="/">FeestFinder</a> · <a href={`/${l.locale}/ho-chi-minh/this-weekend`}>{l.locale === 'vi' ? 'Cuối tuần này' : 'This weekend'}</a>
-          {' · '}
-          <a href={l.meta.alternates[l.locale === 'vi' ? 'en' : 'vi']?.replace(/^https?:\/\/[^/]+/, '') ?? '/'}>{l.locale === 'vi' ? 'English' : 'Tiếng Việt'}</a>
-        </nav>
-      ) : null}
-      <p className="meta">{l.kicker}</p>
-      <h1>{l.h1}</h1>
-      <p>{l.intro}</p>
-      <ul>
-        {l.events.map((e) => (
-          <li key={e.id}>
-            <a href={`/e/${e.slug}`}>{e.title}</a>
-            <div className="meta">
-              {when(e, l.locale)} · {e.venue.name} · {price(e, l.locale)}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {l.answers.length ? (
-        <dl className="ff-answers">
-          {l.answers.map((a) => (
-            <div key={a.label}>
-              <dt>{a.label}</dt>
-              <dd>{a.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-      {l.faqs.length ? (
-        <>
-          <h2>{l.locale === 'vi' ? 'Câu hỏi thường gặp' : 'Questions people ask'}</h2>
-          {l.faqs.map((f) => (
-            <section key={f.q}>
-              <h3>{f.q}</h3>
-              <p>{f.a}</p>
-            </section>
-          ))}
-        </>
-      ) : null}
-      {l.related.length ? (
-        <nav>
-          <h2>{l.locale === 'vi' ? 'Xem thêm' : 'More'}</h2>
-          <ul>
-            {l.related.map((r) => (
-              <li key={r.href}>
-                <a href={r.href}>{r.label}</a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      ) : null}
     </main>
   );
 }

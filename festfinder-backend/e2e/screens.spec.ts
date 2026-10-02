@@ -19,12 +19,11 @@ async function signIn(page: Page, who: Account) {
 
 test.describe('Web', () => {
   const routes: [string, RegExp][] = [
-    ['/', /Explore/],
-    ['/list', /EVERY EVENT/i],
-    ['/about', /ABOUT FEESTFINDER/i],
+    ['/', /Khám phá/],
+    ['/list', /TẤT CẢ SỰ KIỆN/i],
+    ['/about', /VỀ FEESTFINDER/i],
     ['/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i],
-    ['/vi/ho-chi-minh/this-weekend', /SỰ KIỆN EDM & LỄ HỘI Ở TP\.HCM/i],
-    ['/en/ho-chi-minh/this-weekend', /EDM & FESTIVAL EVENTS IN HO CHI MINH CITY/i],
+    ['/o/ravoent', /RAVOLUTION ENTERTAINMENT/i],
   ];
   for (const [path, shows] of routes) {
     test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
@@ -32,12 +31,27 @@ test.describe('Web', () => {
 
   test('tabs change the URL and back returns to the previous screen', async ({ page }) => {
     await page.goto('/about');
-    await expect.poll(() => page.locator('body').innerText()).toMatch(/ABOUT FEESTFINDER/i);
-    await page.getByText('List', { exact: true }).first().click();
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/VỀ FEESTFINDER/i);
+    await page.getByText('Danh sách', { exact: true }).first().click();
     await expect(page).toHaveURL(/\/list$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/about$/);
-    await expect.poll(() => page.locator('body').innerText()).toMatch(/ABOUT FEESTFINDER/i);
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/VỀ FEESTFINDER/i);
+  });
+
+  test('opens in Vietnamese, switches to English and remembers it', async ({ page }) => {
+    await expectScreen(page, '/list', /TẤT CẢ SỰ KIỆN/i);
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('vi');
+    await page.getByRole('button', { name: 'English' }).click();
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/EVERY EVENT/i);
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('en');
+    // An event page has an English address of its own.
+    await page.goto('/e/ravo');
+    await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/Asked & answered/i);
+    await page.getByRole('button', { name: 'Tiếng Việt' }).click();
+    await expect(page).toHaveURL(/\/e\/ravo$/);
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/Hỏi & đáp/i);
   });
 
   test('the old map address lands on the list', async ({ page }) => {
@@ -45,14 +59,20 @@ test.describe('Web', () => {
     await expect(page).toHaveURL(/\/list$/);
   });
 
+  test('the old city landing pages land on the list with their filters', async ({ page }) => {
+    await page.goto('/vi/ho-chi-minh/edm/this-weekend');
+    await expect(page).toHaveURL(/\/list\?city=ho-chi-minh&genre=EDM&time=weekend$/);
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/TẤT CẢ SỰ KIỆN/i);
+  });
+
   test('the list shows every event as a table or a grid, by city', async ({ page }) => {
-    await expectScreen(page, '/list', /EVERY EVENT/i);
+    await expectScreen(page, '/list', /TẤT CẢ SỰ KIỆN/i);
     await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await page.getByText('Grid', { exact: true }).click();
+    await page.getByText('Lưới', { exact: true }).click();
     await expect(page.getByRole('row')).toHaveCount(0);
     await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
-    await page.getByText('Hanoi · 0', { exact: true }).click();
-    await expect(page.getByText('Nothing matches')).toBeVisible();
+    await page.getByText('Hà Nội · 0', { exact: true }).click();
+    await expect(page.getByText('Không có sự kiện nào khớp')).toBeVisible();
   });
 
   test('the logo and every icon the page links to load', async ({ page, request }) => {
@@ -79,31 +99,55 @@ test.describe('Event page community', () => {
     // Both fronts: the API's shell and the Next.js page.
     expect(html).toMatch(/<title>Ravolution Music Festival[^<]*<\/title>/);
     expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
+    expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"|<link rel="alternate" hreflang="en" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"/);
+    expect(html).toMatch(/<meta property="og:image" content="http:\/\/localhost:\d+\/og\/v1\/edm\.png"/);
+    // One schema.org graph: the site, the page, the event, its breadcrumbs and the organiser's FAQ.
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
-    const types = blocks.map((b) => b['@type']);
-    expect(types).toContain('MusicEvent');
-    expect(types).toContain('FAQPage');
-    expect(html).toMatch(/<main class="ff-ssr">[\s\S]*<h1>Ravolution Music Festival<\/h1>[\s\S]*Câu hỏi thường gặp/);
+    const types = blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']));
+    for (const t of ['MusicEvent', 'FAQPage', 'WebPage', 'BreadcrumbList']) expect(types).toContain(t);
+    expect(html).toMatch(/<main class="ff-ssr" lang="vi">[\s\S]*<h1>Ravolution Music Festival<\/h1>[\s\S]*Ravolution Music Festival là sự kiện EDM[\s\S]*Câu hỏi thường gặp/);
+    const og = await request.get('/og/v1/edm.png');
+    expect(og.headers()['content-type']).toBe('image/png');
     expect((await request.get('/e/no-such-event')).status()).toBe(404);
   });
 
-  test('shows hype goals, resale, the discussion and the FAQ', async ({ page }) => {
+  test('organiser pages, Markdown versions and llms.txt are there for search engines and AI agents', async ({ request }) => {
+    const html = await (await request.get('/o/ravoent')).text();
+    expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/o\/ravoent"/);
+    expect(html).toContain('Ravolution Entertainment là đơn vị tổ chức sự kiện');
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+    expect(blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']))).toContain('ProfilePage');
+    const md = await request.get('/e/ravo.md');
+    expect(md.headers()['content-type']).toMatch(/^text\/markdown/);
+    expect(await md.text()).toMatch(/^# Ravolution Music Festival/);
+    expect(await (await request.get('/o/ravoent.md?lang=en')).text()).toMatch(/^# Ravolution Entertainment\n\n> Ravolution Entertainment is an event promoter/);
+    expect(await (await request.get('/llms.txt')).text()).toMatch(/^# FeestFinder[\s\S]*\/e\/ravo\.md\)/);
+  });
+
+  test('opens in Vietnamese, the language search engines index it in, with hype goals, resale, the discussion and the FAQ', async ({ page }) => {
     await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
     const text = await page.locator('body').innerText();
-    expect(text).toMatch(/Asked & answered/i);
-    expect(text).toMatch(/Resale/);
-    expect(text).toMatch(/1,050,000₫/);
-    expect(text).toMatch(/Discussion/);
-    expect(text).toMatch(/Questions · 3/);
-    expect(text).toMatch(/Reveal the secret closing act/);
-    expect(text).toMatch(/Ambassadors/);
-    expect(text).toMatch(/From the organiser/);
+    expect(text).toMatch(/Hỏi & đáp/i);
+    expect(text).toMatch(/Pass vé/);
+    expect(text).toMatch(/1\.050\.000₫/);
+    expect(text).toMatch(/Thảo luận/);
+    expect(text).toMatch(/Hỏi đáp · 3/);
+    expect(text).toMatch(/Công bố nghệ sĩ bí mật/);
+    expect(text).toMatch(/Đại sứ/);
+    expect(text).toMatch(/Tin từ BTC/);
     expect(text).toMatch(/Cổng số 3 mở sớm/);
+  });
+
+  test('opens in English at ?lang=en, and keeps it in the address', async ({ page }) => {
+    await page.goto('/e/ravo?lang=en');
+    await expect.poll(() => page.locator('body').innerText()).toMatch(/Asked & answered/i);
+    expect(await page.locator('body').innerText()).toMatch(/Questions · 3/);
+    await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
   });
 
   test('the share sheet saves a story image', async ({ page }) => {
     await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
-    await page.getByText('Share', { exact: true }).first().click();
+    await page.getByText('Chia sẻ', { exact: true }).first().click();
     const download = page.waitForEvent('download');
     await page.getByText('Story', { exact: true }).click();
     expect((await download).suggestedFilename()).toBe('ravo.png');
@@ -112,10 +156,10 @@ test.describe('Event page community', () => {
   test('a signed-in attendee posts a question', async ({ page }) => {
     await signIn(page, 'attendee');
     await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
-    await page.getByPlaceholder('Ask the organiser and everyone…').fill('Có tủ gửi đồ cho balo không ạ?');
-    await page.getByText('Post', { exact: true }).click();
+    await page.getByPlaceholder('Hỏi BTC và mọi người…').fill('Có tủ gửi đồ cho balo không ạ?');
+    await page.getByText('Đăng', { exact: true }).click();
     await expect(page.getByText('Có tủ gửi đồ cho balo không ạ?').first()).toBeVisible();
-    await expect(page.getByText('Questions · 4')).toBeVisible();
+    await expect(page.getByText('Hỏi đáp · 4')).toBeVisible();
   });
 });
 

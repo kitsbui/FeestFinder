@@ -35,7 +35,11 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | GET | `/organizers/:slug` | Profile with stats, upcoming and past events, `me.following`. |
 | GET | `/shelves` | Featured rows that are on and inside their date window. |
 | GET | `/genres`, `/artists?q=`, `/venues?q=` | Filter sheets and wizard venue autocomplete. |
-| GET | `/seo/landing/:locale/:city/*` | Programmatic landing page, e.g. `/seo/landing/vi/ho-chi-minh/edm/this-weekend`. Facets: genre (`edm`, `night-market`, `live-music`…), district (`quan-1`, `thao-dien`…), `free`, timeframe (`tonight`, `this-weekend`, `next-7-days`, `this-month`, `2026-09`). Returns `meta` (title, description, canonical, hreflang alternates), `h1`, answers, events, FAQ, related links, JSON-LD (ItemList + FAQPage + BreadcrumbList), `revalidateSeconds: 900`. |
+| GET | `/seo/events/:slug?lang=vi\|en` | What an event page says to search engines and AI assistants: `title`, `description`, `robots`, `canonical`, `alternates` (vi, en, x-default), preview `image`, `publishedAt`/`updatedAt`, the server-rendered `page` (crumbs, kicker, h1, the answer-first `summary`, `facts`, about, lineup, timetable, tickets, organiser `updates`, `faq`, other `editions`, `related` events, the other language) with its `headings`, and `jsonLd` (one schema.org `@graph`). 404 unless the event is public. The API's own `/e/:slug` pages render the same. |
+| GET | `/seo/organizers/:slug?lang=vi\|en` | The same for an organiser page: head, `page` (summary, facts, `upcoming` and `past` events) and a `ProfilePage` graph. |
+| GET | `/e/:slug.md`, `/o/:slug.md` | The page as Markdown for AI agents (`?lang=en` for English), with `Link: <…>; rel="canonical"` to the HTML page. |
+| GET | `/llms.txt` | What FeestFinder is, every upcoming event and organiser with its Markdown address (llmstxt.org). |
+| GET | `/og/v1/:tone.png` | Genre art as a 1200×630 PNG (`fest`, `edm`, `live`, `culture`, `brand`): the link preview of an event without a cover. Cached for good. |
 | POST | `/events/:id/track` | `{type: view\|ticket_click, source: feed\|shelf\|shared\|search\|own\|ads\|map\|list}`. Counted once per visitor per 30 min. |
 | GET | `/events/:id/calendar.ics` | Add to calendar (with a 24 h alarm). |
 | GET | `/ads?placement=feed\|banner\|live&genre&area` | One sponsored card. Alcohol only reaches accounts known to be 18+. |

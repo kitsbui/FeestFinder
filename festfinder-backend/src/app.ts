@@ -230,7 +230,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(resaleRoutes);
   await app.register(seoRoutes);
   await app.register(nightRoutes);
-  if (ctx.config.env !== 'test') await app.register(frontendRoutes);
+  if (ctx.config.serveFrontend) await app.register(frontendRoutes);
 
   return app;
 }

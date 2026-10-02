@@ -1,22 +1,5 @@
 const WEB = FF.data.web || {};
 const TODAY = FF.today();
-// The landing page's questions come from the API (GET /seo/landing → seo_faqs).
-let FAQ = (WEB.faqs && WEB.faqs.length) ? WEB.faqs : [];
-
-const RELATED = [
-  { label:{en:'EDM events in Ho Chi Minh City',vi:'Sự kiện EDM ở TP.HCM'}, href:'/vi/ho-chi-minh/edm' },
-  { label:{en:'Free events this weekend',vi:'Sự kiện miễn phí cuối tuần này'}, href:'/vi/ho-chi-minh/free/this-weekend' },
-  { label:{en:'Live music in District 1',vi:'Nhạc sống ở Quận 1'}, href:'/vi/ho-chi-minh/quan-1/live-music' },
-  { label:{en:'Festivals this month',vi:'Lễ hội tháng này'}, href:'/vi/ho-chi-minh/festival/' + FF.vnDate(FF.now()).slice(0, 7) },
-  { label:{en:'Indie gigs in Ho Chi Minh City',vi:'Show indie ở TP.HCM'}, href:'/vi/ho-chi-minh/indie' },
-  { label:{en:'Night markets in Thảo Điền',vi:'Chợ đêm ở Thảo Điền'}, href:'/vi/ho-chi-minh/thao-dien/night-market' },
-  { label:{en:'Hip-hop shows near you',vi:'Show hip-hop quanh bạn'}, href:'/vi/ho-chi-minh/hip-hop' },
-  { label:{en:'Events in Thủ Đức',vi:'Sự kiện ở Thủ Đức'}, href:'/vi/ho-chi-minh/thu-duc' }
-];
-
-// Events come from GET /events (see FF.loadWeb at the end of this page).
-const RAW = [];
-
 const S = {
   searchPh:{en:'Search events, artists, venues…',vi:'Tìm sự kiện, nghệ sĩ, địa điểm…'},
   listEvent:{en:'List your event',vi:'Đăng sự kiện'},
@@ -34,20 +17,8 @@ const S = {
   emptyBody:{en:'Try a wider date range, or clear the price filter.',vi:'Thử mở rộng khoảng ngày, hoặc bỏ bộ lọc giá.'},
   getTickets:{en:'Get tickets',vi:'Mua vé'}, freeEntry:{en:'Free entry',vi:'Vào cửa miễn phí'},
   mapTitle:{en:'Events near you',vi:'Sự kiện quanh bạn'},
-  bcCity:{en:'Ho Chi Minh City',vi:'TP. Hồ Chí Minh'}, bcWeekend:{en:'This weekend',vi:'Cuối tuần này'},
-  landingH1:{en:'EDM & festival events in ho chi minh city this weekend',vi:'Sự kiện EDM & lễ hội ở TP.HCM cuối tuần này'},
-  verifiedSources:{en:'Organizer-verified listings',vi:'Đã xác minh với nhà tổ chức'},
-  quickAnswer:{en:'The short answer',vi:'Trả lời nhanh'},
-  landingListTitle:{en:'Every event, Friday to Sunday',vi:'Toàn bộ sự kiện, thứ Sáu đến Chủ nhật'},
-  viewEvent:{en:'View event',vi:'Xem chi tiết'},
-  faqTitle:{en:'Frequently asked',vi:'Câu hỏi thường gặp'},
-  relatedTitle:{en:'Related searches',vi:'Tìm kiếm liên quan'},
-  ctaTitle:{en:'Get this list every Thursday',vi:'Nhận danh sách này mỗi Thứ Năm'},
-  ctaBody:{en:'One email, the weekend ahead, only the genres and districts you pick. No ticket spam.',
-    vi:'Một email, cho cuối tuần sắp tới, chỉ những thể loại và khu vực bạn chọn. Không spam vé.'},
-  ctaPrimary:{en:'Open FeestFinder',vi:'Mở FeestFinder'}, ctaSecondary:{en:'Get the weekly email',vi:'Nhận email hàng tuần'},
   events:{en:'events',vi:'sự kiện'}, hypedPeople:{en:'people hyped',vi:'người đang hype'},
-  tabExplore:{en:'Explore',vi:'Khám phá'}, tabMap:{en:'List',vi:'Danh sách'}, tabLanding:{en:'SEO page',vi:'Trang SEO'},
+  tabExplore:{en:'Explore',vi:'Khám phá'}, tabMap:{en:'List',vi:'Danh sách'},
   tabAbout:{en:'About',vi:'Giới thiệu'},
   statKicker:{en:'Filtered list',vi:'Danh sách đã lọc'},
   statHeadFree:{en:'Free entry, no ticket needed',vi:'Vào cửa miễn phí, không cần vé'},
@@ -79,8 +50,6 @@ const S = {
   abHours:{en:'Support hours',vi:'Giờ hỗ trợ'},
   statFree:{en:'free events',vi:'sự kiện miễn phí'}, statWeekend:{en:'this weekend',vi:'cuối tuần này'},
   statVenues:{en:'venues nearby',vi:'địa điểm quanh bạn'},
-  ansFree:{en:'Free this weekend',vi:'Miễn phí cuối tuần này'},
-  ansBiggest:{en:'Biggest event',vi:'Sự kiện lớn nhất'}, ansSoldOut:{en:'Already sold out',vi:'Đã hết vé'},
   logIn:{en:'Log in',vi:'Đăng nhập'}, signUp:{en:'Sign up',vi:'Đăng ký'}, signOut:{en:'Sign out',vi:'Đăng xuất'},
   membersOnly:{en:'Members only',vi:'Dành cho thành viên'},
   savedCount:{en:'Saved events',vi:'Sự kiện đã lưu'},
@@ -454,9 +423,8 @@ function ttFromApi(t) {
  * /list             every event        /o/<slug>        an organiser
  * /about            about FeestFinder   /saved           saved events
  * /advertise        advertise with us  /stats/<key>     one explore stat
- * /vi/ho-chi-minh/this-weekend, /en/…   the city landing page (/city/… still opens it)
+ * /e/<slug>?lang=en, /list?city=…&genre=…&time=…   an event in English; the list, filtered
  */
-const LANDING = ['ho-chi-minh', 'this-weekend'];
 const eventBy = (key) => EVENTS.filter(e => e.slug === key || e.id === key)[0] || null;
 const orgBy = (key) => { for (const id in ORGS) if (ORGS[id].slug === key || id === key) return ORGS[id]; return null; };
 const slugOf = (id) => { const e = EVENTS.filter(x => x.id === id)[0]; return e ? (e.slug || e.id) : id; };
@@ -466,10 +434,15 @@ function routeState(r) {
   const clear = { screen:'explore', detailId:null, orgId:null, statView:null, savedView:false, adsOpen:false, notifOpen:false, edit:false };
   if (!r) return clear;
   const name = r.name, param = r.param;
-  if (name === 'list' || name === 'map') return Object.assign(clear, { screen:'list' });
+  if (name === 'list' || name === 'map') {
+    // A shared or redirected list keeps its filters: /list?city=ha-noi&genre=EDM&time=weekend
+    const q = r.query, city = q && q.get('city'), genre = q && q.get('genre'), time = q && q.get('time');
+    return Object.assign(clear, { screen:'list' },
+      CITY_LIST.some(c => c.k === city) ? { listCity: city } : {},
+      GENRES.indexOf(genre) > 0 ? { listGenre: genre } : {},
+      LIST_TIMES.indexOf(time) >= 0 ? { listTime: time } : {});
+  }
   if (name === 'about') return Object.assign(clear, { screen:'about' });
-  if (name === 'city') return Object.assign(clear, { screen:'landing' });
-  if ((name === 'vi' || name === 'en') && r.parts.slice(1).join('/') === LANDING.join('/')) return Object.assign(clear, { screen:'landing', lang:name });
   if (name === 'saved') return Object.assign(clear, { savedView:true });
   if (name === 'advertise') return Object.assign(clear, { adsOpen:true });
   if (name === 'stats' && param) return Object.assign(clear, { screen:'stat', statView:param });
@@ -478,14 +451,32 @@ function routeState(r) {
   return clear;
 }
 
+/**
+ * The language a page opens in: Vietnamese, unless the address says ?lang=en or the viewer
+ * picked English before on this device. Event and organiser pages carry ?lang=en in their
+ * address when in English, so each language has one address that search engines index.
+ */
+const LANG_KEY = 'ff_lang';
+function firstLang() {
+  const r = FF.route, q = r && r.query ? r.query.get('lang') : null;
+  if (q === 'vi' || q === 'en') return q;
+  try { const saved = localStorage.getItem(LANG_KEY); if (saved === 'vi' || saved === 'en') return saved; } catch (e) { /* storage blocked: the default stands */ }
+  return 'vi';
+}
+
+
+const LIST_TIMES = ['tonight', 'weekend', '7days', 'month'];
+
 /** The URL for what is on screen. */
 function routePath(st) {
-  if (st.screen === 'detail' && st.detailId) return FF.href('e', slugOf(st.detailId));
-  if (st.screen === 'org' && st.orgId) return FF.href('o', (ORGS[st.orgId] || {}).slug || st.orgId);
+  if (st.screen === 'detail' && st.detailId) return FF.href('e', slugOf(st.detailId)) + (st.lang === 'en' ? '?lang=en' : '');
+  if (st.screen === 'org' && st.orgId) return FF.href('o', (ORGS[st.orgId] || {}).slug || st.orgId) + (st.lang === 'en' ? '?lang=en' : '');
   if (st.screen === 'stat' && st.statView) return FF.href('stats', st.statView);
-  if (st.screen === 'list') return FF.href('list');
+  if (st.screen === 'list') {
+    const q = [st.listCity !== 'all' ? 'city=' + st.listCity : '', st.listGenre !== 'All' ? 'genre=' + encodeURIComponent(st.listGenre) : '', st.listTime !== 'all' ? 'time=' + st.listTime : ''].filter(Boolean).join('&');
+    return FF.href('list') + (q ? '?' + q : '');
+  }
   if (st.screen === 'about') return FF.href('about');
-  if (st.screen === 'landing') return FF.href(st.lang === 'en' ? 'en' : 'vi', ...LANDING);
   if (st.adsOpen) return FF.href('advertise');
   if (st.savedView) return FF.href('saved');
   return FF.href('');
@@ -493,10 +484,10 @@ function routePath(st) {
 
 class Component extends DCLogic {
   state = {
-    lang: this.props.language === 'Tiếng Việt' ? 'vi' : 'en',
+    lang: firstLang(),
     screen: 'explore',
     time:'weekend', genre:'All', prices:{}, sort:'date', q:'', limit:6,
-    saved: WEB.saved || {}, mapSel: WEB.mapSel || null, faqOpen:{ 0:true }, loading:true, toast:null,
+    saved: WEB.saved || {}, mapSel: WEB.mapSel || null, loading:true, toast:null,
     user: WEB.user || null, details:{}, pPhotoFile:null,
     edit:false, pName:'', pEmail:'', pZalo:'', pCity:'', pPhoto:'', pErr:'',
     going: WEB.going || {}, friendsOnly:false, friendSheet:null, chatWith:null, chats:{}, chatDraft:'',
@@ -521,6 +512,7 @@ class Component extends DCLogic {
   };
 
   componentDidMount() {
+    document.documentElement.lang = this.state.lang;
     this._t = setTimeout(() => this.setState({ loading:false }), 800);
     if (FF.data.oauthJustConnected) this.say(this.L().connectedToast + ' · ' + SRC[FF.data.oauthJustConnected].label);
     ADS.slice(0, 1).forEach(a => FF.fire(FF.post('/ads/' + a.id + '/impression')));
@@ -528,11 +520,8 @@ class Component extends DCLogic {
     this.setState(routeState(r));
     this.openRoute(r);
     FF.onRoute = (x) => { this.setState(routeState(x)); this.openRoute(x); };
-    FF.prefetch(() => FF.webLanding(this));
   }
 
-  /** The answers under the landing page, once they arrive. */
-  applyFaqs(rows) { FAQ = rows; this.forceUpdate(); }
   componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._tt); clearInterval(this._lt); }
 
   /** The list re-reads what is on every minute while it is on screen. */
@@ -558,10 +547,19 @@ class Component extends DCLogic {
   componentDidUpdate(prev) {
     // The runtime passes no previous state: whether the timer runs says if the list was open.
     if ((this.state.screen === 'list') !== !!this._lt) this.syncList(this.state.screen === 'list');
-    FF.navigate(routePath(this.state));
+    // Filters and the language change the query, not the page: they replace the history entry.
+    const path = routePath(this.state);
+    FF.navigate(path, { replace: path.split('?')[0] === location.pathname });
+    if (document.documentElement.lang !== this.state.lang) document.documentElement.lang = this.state.lang;
     if (prev.language !== this.props.language) {
       this.setState({ lang: this.props.language === 'Tiếng Việt' ? 'vi' : 'en' });
     }
+  }
+
+  /** The viewer's language: kept on this device, and in the address of pages that have an English version. */
+  setLang(lang) {
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* storage blocked: it lasts this visit */ }
+    this.setState({ lang });
   }
 
   validId(v, method) {
@@ -977,8 +975,6 @@ class Component extends DCLogic {
     // Dated copy follows the clock, not the day the design was drawn.
     const today = FF.vnDate(FF.now()).split('-'), m = +today[1];
     o.kicker = g === 'vi' ? 'TP. Hồ Chí Minh · Tháng ' + m + '/' + today[0] : 'Ho Chi Minh City · ' + MONTH_EN[m - 1] + ' ' + today[0];
-    const read = FF.vnDate(LOADED_AT).split('-');
-    o.updated = (g === 'vi' ? 'Cập nhật ' + read[2] + '/' + read[1] + '/' + read[0] : 'Updated ' + (+read[2]) + ' ' + MON.en[+read[1] - 1] + ' ' + read[0]) + ', ' + FF.hhmm(LOADED_AT);
     return o;
   }
   say(m) { clearTimeout(this._tt); this.setState({ toast:m }); this._tt = setTimeout(() => this.setState({ toast:null }), 2000); }
@@ -995,7 +991,6 @@ class Component extends DCLogic {
     if (!r) return;
     if (r.name === 'e' && r.param) { const e = eventBy(r.param); if (e) this.loadDetail(e.id); }
     if (r.name === 'o' && r.param) { const o = orgBy(r.param); if (o) this.loadOrg(o.id); }
-    if (r.name === 'city' || r.name === 'vi' || r.name === 'en' || r.name === 'about') await FF.webLanding(this);
   }
 
   openEvent(id) { this.setState({ screen:'detail', detailId:id, ttDay:0 }); this.loadDetail(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
@@ -1054,12 +1049,6 @@ class Component extends DCLogic {
     FF.lang = g;
     const full = this.list(), grid = full.slice(0, st.limit);
     const heroEv = full.find(e => e.featured && !e.past && !e.soldOut) || full[0];
-    const weekend = EVENTS.filter(e => e.tags.includes('weekend'));
-    const nWeekend = weekend.length;
-    L.landingLede = nWeekend
-      ? (vi1 ? nWeekend + ' sự kiện ở TP.HCM cuối tuần này, kèm giờ bắt đầu, địa điểm, giá vé và những show đã hết vé.'
-        : nWeekend + (nWeekend === 1 ? ' event' : ' events') + ' in Ho Chi Minh City this weekend, with start times, venues, ticket prices and what is already sold out.')
-      : (vi1 ? 'Cuối tuần này chưa có sự kiện nào.' : 'Nothing is on this weekend yet.');
     const sel = st.mapSel ? EVENTS.find(e => e.id === st.mapSel) : null;
     const venues = {}; EVENTS.forEach(e => { if (!e.past) venues[e.venue] = 1; });
     const statLive = full.filter(e => !e.past);
@@ -1078,7 +1067,7 @@ class Component extends DCLogic {
     ];
     const priceDefs = [{ k:'free', label:L.free }, { k:'under', label:L.under500 }, { k:'over', label:L.over500 }];
     const sortDefs = [{ k:'date', label:L.sortDate }, { k:'hype', label:L.sortHype }, { k:'price', label:L.sortPrice }];
-    const tabDefs = [{ k:'explore', label:L.tabExplore }, { k:'list', label:L.tabMap }, { k:'landing', label:L.tabLanding }, { k:'about', label:L.tabAbout }];
+    const tabDefs = [{ k:'explore', label:L.tabExplore }, { k:'list', label:L.tabMap }, { k:'about', label:L.tabAbout }];
 
     const step = st.auth, isLogin = st.authMode === 'login';
     const idStep = step === 'id' || step === 'loginId', passStep = step === 'pass' || step === 'loginPass';
@@ -1340,8 +1329,13 @@ class Component extends DCLogic {
       },
 
       cityLabel: g === 'vi' ? 'TP.HCM' : 'Ho Chi Minh City',
-      toggleLang: () => this.setState({ lang: g === 'vi' ? 'en' : 'vi' }),
-      isExplore: st.screen === 'explore', isList: st.screen === 'list', isLanding: st.screen === 'landing',
+      toggleLang: () => this.setLang(g === 'vi' ? 'en' : 'vi'),
+      langTabs: [{ k:'vi', label:'VI', name:'Tiếng Việt' }, { k:'en', label:'EN', name:'English' }].map(x => ({
+        label: x.label, name: x.name, code: x.k, on: g === x.k,
+        bg: g === x.k ? 'rgba(255,252,225,.14)' : 'transparent', fg: g === x.k ? '#FFFCE1' : '#8C8B7D',
+        go: () => this.setLang(x.k)
+      })),
+      isExplore: st.screen === 'explore', isList: st.screen === 'list',
       isDetail: st.screen === 'detail', isOrg: st.screen === 'org',
       isStat: st.screen === 'stat', isAbout: st.screen === 'about',
       /* ---- advertising ---- */
@@ -1984,7 +1978,7 @@ class Component extends DCLogic {
         label:t.label,
         bg: st.screen === t.k ? '#ABFF84' : 'transparent',
         fg: st.screen === t.k ? '#141514' : '#A5A493',
-        go: () => { this.setState({ screen:t.k }); if (t.k === 'landing' || t.k === 'about') FF.webLanding(this); }
+        go: () => { this.setState({ screen:t.k }); }
       })),
       query: st.q, onQuery: (e) => this.refilter({ q: e.target.value }),
 
@@ -2185,35 +2179,6 @@ class Component extends DCLogic {
         this.say(on ? L.youreGoing + ' · ' + L.goingPrivacy : L.imGoing);
       },
 
-      landingCount: weekend.length + ' ' + L.events,
-      answerRows: (() => {
-        const wk = weekend.filter(e => !e.past);
-        const big = wk.slice().sort((a, b) => b.hype - a.hype)[0];
-        const dm = (d) => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
-        return [
-          { label: L.ansFree, value: wk.filter(e => e.price === 0).map(e => e.title).join(', ') || '—' },
-          { label: L.ansBiggest, value: big ? big.title + ' · ' + big.hype.toLocaleString(vi1 ? 'vi-VN' : 'en-US') + ' ' + L.hypedPeople : '—' },
-          { label: L.ansSoldOut, value: wk.filter(e => e.soldOut).map(e => e.title + ' (' + dm(e.dsD) + ')').join(', ') || '—' }
-        ];
-      })(),
-
-      landingList: weekend.slice().sort((a, b) => a.dsD - b.dsD).map(e => {
-        const c = this.card(e, L);
-        return Object.assign({}, c, {
-          dowShort: DOW[g][e.dsD.getDay()], dayNum: String(e.dsD.getDate()), monShort: MON[g][e.dsD.getMonth()],
-          metaLine: e.time + ' · ' + e.venue + ' · ' + e.area,
-          lineupLine: e.lineup.slice(0, 4).join(' · ')
-        });
-      }),
-      hasFaqs: FAQ.length > 0,
-      faqs: FAQ.map((f, i) => ({
-        q: f.q[g], a: f.a[g],
-        display: st.faqOpen[i] ? 'block' : 'none',
-        icon: st.faqOpen[i] ? 'ph-bold ph-minus' : 'ph-bold ph-plus',
-        bd: st.faqOpen[i] ? 'rgba(255,252,225,.32)' : 'rgba(255,252,225,.19)',
-        toggle: () => { const o = Object.assign({}, st.faqOpen); o[i] = !o[i]; this.setState({ faqOpen:o }); }
-      })),
-      relatedLinks: RELATED.map(r => ({ label: r.label[g], href: r.href })),
       toast: st.toast
     };
   }

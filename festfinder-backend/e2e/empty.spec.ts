@@ -11,11 +11,9 @@ test.use({ baseURL: `http://localhost:${Number(process.env.EMPTY_PORT ?? 4101)}`
 
 test.describe('Web, empty', () => {
   const routes: [string, RegExp][] = [
-    ['/', /Explore/],
-    ['/list', /EVERY EVENT/i],
-    ['/about', /ABOUT FEESTFINDER/i],
-    ['/vi/ho-chi-minh/this-weekend', /Cuối tuần này chưa có sự kiện nào/],
-    ['/en/ho-chi-minh/this-weekend', /Nothing is on this weekend yet/],
+    ['/', /Khám phá/],
+    ['/list', /TẤT CẢ SỰ KIỆN/i],
+    ['/about', /VỀ FEESTFINDER/i],
   ];
   for (const [path, shows] of routes) {
     test(`${path}`, async ({ page }) => expectScreen(page, path, shows));

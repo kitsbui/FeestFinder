@@ -108,22 +108,6 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal((await env.as().get('/events?city=da-lat')).status, 400);
   });
 
-  it('builds the SEO landing page with metadata, answers, FAQ and JSON-LD', async () => {
-    const r = await env.as().get('/seo/landing/en/ho-chi-minh/free/this-weekend');
-    assert.equal(r.status, 200);
-    assert.equal(r.body.h1, 'Free events in Ho Chi Minh City this weekend');
-    assert.equal(r.body.meta.canonical, 'http://test.local/en/ho-chi-minh/free/this-weekend');
-    assert.equal(r.body.meta.alternates.vi, 'http://test.local/vi/ho-chi-minh/free/this-weekend');
-    assert.equal(r.body.revalidateSeconds, 900);
-    assert.deepEqual(r.body.events.map((e: any) => e.slug).sort(), ['hozo', 'outcast']);
-    assert.equal(r.body.faqs.length, 4);
-    assert.deepEqual(r.body.jsonLd.map((x: any) => x['@type']), ['ItemList', 'FAQPage', 'BreadcrumbList']);
-    const vi = await env.as().get('/seo/landing/vi/ho-chi-minh/edm');
-    assert.equal(vi.body.h1, 'Sự kiện EDM ở TP.HCM');
-    assert.equal((await env.as().get('/seo/landing/vi/ho-chi-minh/not-a-facet')).status, 404);
-    assert.equal((await env.as().get('/seo/landing/vi/ha-noi/edm')).status, 404);
-  });
-
   it('powers the hero stat cards and drill-downs', async () => {
     const r = await env.as().get('/explore/stats?view=venues');
     assert.ok(r.body.counts.free >= 2);

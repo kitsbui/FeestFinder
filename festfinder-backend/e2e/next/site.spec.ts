@@ -11,18 +11,26 @@ test.describe('pages for search engines', () => {
     const res = await request.get('/e/ravo');
     expect(res.status()).toBe(200);
     const html = await res.text();
-    expect(html).toContain('<title>Ravolution Music Festival · FeestFinder</title>');
+    // The same head, graph and facts the API's own event pages carry (GET /seo/events/ravo).
+    expect(html).toMatch(/<title>Ravolution Music Festival – 19\/9 · SECC[^<]*\| FeestFinder<\/title>/);
     expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
+    expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"/);
+    expect(html).toMatch(/<meta name="robots" content="index, follow, max-image-preview:large/);
     expect(html).toMatch(/<h1>Ravolution Music Festival<\/h1>/);
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
-    const event = blocks.find((b) => b['@type'] === 'MusicEvent');
+    const nodes = blocks.flatMap((b) => b['@graph'] ?? [b]);
+    const event = nodes.find((b) => b['@type'] === 'MusicEvent');
     expect(event, 'MusicEvent structured data').toBeTruthy();
     expect(event.location.address.addressCountry).toBe('VN');
-    expect(event.offers.length).toBeGreaterThan(0);
+    expect(event.offers['@type']).toBe('AggregateOffer');
     // The organiser's answers on the page are its FAQ, for search engines and AI answers.
-    const faq = blocks.find((b) => b['@type'] === 'FAQPage');
+    const faq = nodes.find((b) => b['@type'] === 'FAQPage');
     expect(faq?.mainEntity.length).toBeGreaterThan(0);
     expect(html).toContain('Câu hỏi thường gặp');
+    expect(html).toContain('Ravolution Music Festival là sự kiện EDM');
+    const en = await (await request.get('/e/ravo?lang=en')).text();
+    expect(en).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"/);
+    expect(en).toContain('Ravolution Music Festival is an EDM event');
   });
 
   test('robots.txt welcomes AI search crawlers and turns training crawlers away', async ({ request }) => {
@@ -31,12 +39,12 @@ test.describe('pages for search engines', () => {
     expect(robots).not.toMatch(/OAI-SearchBot/);
   });
 
-  test('landing pages exist in both languages and point at each other', async ({ request }) => {
-    const vi = await (await request.get('/vi/ho-chi-minh/free/this-weekend')).text();
-    expect(vi).toMatch(/<link rel="alternate" hrefLang="en" href="[^"]+\/en\/ho-chi-minh\/free\/this-weekend"/);
-    expect(vi).toContain('<html lang="vi"');
-    expect((await request.get('/en/ho-chi-minh/edm')).status()).toBe(200);
-    expect((await request.get('/vi/ho-chi-minh/nowhere')).status()).toBe(404);
+  test('the old landing pages redirect to the list with their filters', async ({ request }) => {
+    const vi = await request.get('/vi/ho-chi-minh/free/this-weekend', { maxRedirects: 0 });
+    expect(vi.status()).toBe(301);
+    expect(vi.headers().location).toMatch(/\/list\?city=ho-chi-minh&time=weekend&lang=vi$/);
+    const en = await request.get('/en/ho-chi-minh/edm', { maxRedirects: 0 });
+    expect(en.headers().location).toMatch(/\/list\?city=ho-chi-minh&genre=EDM&lang=en$/);
     expect((await request.get('/e/not-a-real-event')).status()).toBe(404);
   });
 
@@ -44,7 +52,8 @@ test.describe('pages for search engines', () => {
     const sitemap = await (await request.get('/sitemap.xml')).text();
     expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo<\/loc>/);
     expect(sitemap).toMatch(/<loc>[^<]+\/o\/ravoent<\/loc>/);
-    expect(sitemap).toMatch(/<loc>[^<]+\/en\/ho-chi-minh\/this-weekend<\/loc>/);
+    expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo\?lang=en<\/loc>/);
+    expect(sitemap).not.toMatch(/\/vi\/ho-chi-minh/);
     const robots = await (await request.get('/robots.txt')).text();
     for (const path of ['/app', '/studio', '/console']) expect(robots).toContain(`Disallow: ${path}`);
   });
@@ -130,7 +139,7 @@ test('browser extensions adding <div>s to <body> do not break hydration', async 
       document.body.append(last);
     }).observe(document, { childList: true, subtree: true });
   });
-  for (const path of ['/', '/e/ravo', '/vi/ho-chi-minh/this-weekend', '/vi/ho-chi-minh/edm', '/app']) {
+  for (const path of ['/', '/e/ravo', '/list', '/app']) {
     await page.goto(path);
     // Once the page has hydrated, the extension's elements are back where it put them.
     await expect.poll(() => page.evaluate(() => ({

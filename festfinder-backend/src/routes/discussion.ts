@@ -239,6 +239,8 @@ export default async function discussionRoutes(app: FastifyInstance) {
         [ev.id, s.user.id, parent?.id ?? null, kind, text, setId, kind === 'trackid' ? body.heardAt ?? null : null, official, photoUrl, now]);
       if (parent) {
         await q.query('update event_posts set reply_count = reply_count + 1 where id = $1', [parent.id]);
+        // The organiser's answer joins the page's FAQ: the page has changed for search engines.
+        if (official) await q.query('update events set updated_at = now() where id = $1', [ev.id]);
         if (parent.user_id !== s.user.id) {
           await notifyUser(q, now, {
             userId: parent.user_id, topic: null, kind: official ? 'post_answered' : 'post_reply',

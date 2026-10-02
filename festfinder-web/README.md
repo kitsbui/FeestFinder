@@ -52,8 +52,8 @@ Behind this app, set the API's `PUBLIC_BASE_URL` to this app's address too, so t
 scripts/compile-screens.ts   design template → TSX, one pass per surface
 src/
   app/                       one Next route per screen URL; metadata, sitemap, robots, manifest
-  components/                server-rendered summaries (what crawlers read), the landing page, the extension guard
-  lib/api.ts                 server-side reads from the API, types, JSON-LD
+  components/                server-rendered summaries (what crawlers read), the event page, the extension guard
+  lib/api.ts                 server-side reads from the API and their types
   runtime/
     view.ts                  the helpers the compiled views call (interpolation, loops, styles)
     dc.tsx                   the base class the screens' logic extends, and its host component
@@ -128,14 +128,14 @@ Public pages render their real content on the server before any script runs. The
 | Page | Server-rendered | Structured data | Caching |
 | --- | --- | --- | --- |
 | `/` | this weekend's events | — | static, refreshed every minute |
-| `/e/:slug` | title, dates, venue, prices, lineup, tiers, organiser | `Event` with offers, place and performers | built on first visit, refreshed every minute |
-| `/o/:slug` | name, bio, upcoming events | `Organization` | refreshed every 5 minutes |
-| `/vi/…`, `/en/…` | the API's landing copy, answers, FAQs, related links | from the API: `ItemList`, `BreadcrumbList`, and `FAQPage` where the page has questions | refreshed every 15 minutes |
+| `/e/:slug`, `/e/:slug?lang=en` | from the API (`GET /seo/events/:slug`): an answer first, then key facts, set times, tickets, the organiser's updates and FAQ, other editions, related events | from the API: one `@graph` of the site, the page, the event, its breadcrumbs and FAQ | built on first visit, refreshed every minute; `?lang=en` is rewritten to `/e/:slug/en`, a cached page of its own |
+| `/o/:slug`, `/o/:slug?lang=en` | from the API (`GET /seo/organizers/:slug`): an answer first, key facts, upcoming and past events | from the API: a `ProfilePage` graph with the organiser and its upcoming events | refreshed every 5 minutes; `?lang=en` rewritten to `/o/:slug/en` |
 
-- **Metadata.** Each page has its own title, description, canonical URL and Open Graph tags. Landing pages also link their other language with `hreflang`.
-- **Unknown pages.** A missing event, organiser or landing page answers 404, with a bilingual page.
-- **The landing screen.** The design has one landing screen, this weekend in the city. `/vi/ho-chi-minh/this-weekend` and `/en/ho-chi-minh/this-weekend` open it. Every other facet (a genre, a district, `free`, a month) is served as its server-rendered page.
-- **Crawling.** `/sitemap.xml` lists live events, organisers and landing pages. `/robots.txt` keeps `/app`, `/studio` and `/console` out.
+- **Metadata.** Each page has its own title, description, canonical URL and Open Graph tags; event pages take theirs from the API, the same as its own pages, and link their other language with `hreflang`.
+- **For AI agents.** `/e/<slug>.md`, `/o/<slug>.md` and `/llms.txt` come straight from the API (rewrites in `next.config.ts`).
+- **No landing pages.** Each event page answers search engines itself. `/vi/…` and `/en/…` redirect (301) to `/list` with the same filters (`lib/legacy.ts`).
+- **Unknown pages.** A missing event or organiser answers 404, with a bilingual page.
+- **Crawling.** `/sitemap.xml` lists live events in both languages and organisers. `/robots.txt` keeps `/app`, `/studio` and `/console` out.
 
 ## The installed app
 

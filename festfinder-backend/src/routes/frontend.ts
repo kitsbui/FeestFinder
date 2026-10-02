@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
-import { eventHead, eventSsr, loadEventPage } from '../services/seo.ts';
+import { CITY_SLUGS, GENRES } from '../lib/i18n.ts';
+import { slugify } from '../lib/contact.ts';
+import { buildEventSeo, buildOrganizerSeo, eventSsr, organizerSsr, seoHead, type PageSeo } from '../services/seo.ts';
 
 /**
  * The four Claude Design surfaces, wired to this API and served from the same origin, and
@@ -17,7 +19,7 @@ import { eventHead, eventSsr, loadEventPage } from '../services/seo.ts';
  * the logic and the runtime.
  */
 const SURFACES = [
-  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/e/:slug', '/o/:slug', '/about', '/advertise', '/list', '/saved', '/stats/:key', '/city/:city/:when', '/vi/:city/:when', '/en/:city/:when'] },
+  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/about', '/advertise', '/list', '/saved', '/stats/:key'] },
   { base: '/app', shell: 'pages/app/shell.html', routes: ['/app', '/app/:screen', '/app/:screen/:param'] },
   // The back offices sit on their own namespaces: /organizer/* and /admin/* are API paths,
   // and a screen URL must never shadow an endpoint.
@@ -64,6 +66,21 @@ const MIME: Record<string, string> = {
   '.woff': 'font/woff',
   '.ico': 'image/x-icon',
 };
+/** Where an old landing page's filters point on the list. */
+export function legacyListPath(prefix: string, city: string, facets: string): string {
+  const q = new URLSearchParams();
+  if ((CITY_SLUGS as readonly string[]).includes(city)) q.set('city', city);
+  const time: Record<string, string> = { tonight: 'tonight', 'this-weekend': 'weekend', 'next-7-days': '7days', 'this-month': 'month' };
+  for (const f of facets.split('/').map((x) => x.toLowerCase()).filter(Boolean)) {
+    const genre = f === 'night-market' ? 'Food' : GENRES.find((g) => slugify(g) === f);
+    if (genre && !q.has('genre')) q.set('genre', genre);
+    if (time[f] && !q.has('time')) q.set('time', time[f]);
+  }
+  if (prefix === 'en' || prefix === 'vi') q.set('lang', prefix);
+  const qs = q.toString();
+  return '/list' + (qs ? `?${qs}` : '');
+}
+
 const COMPRESS = new Set(['.html', '.js', '.css', '.json', '.svg', '.md']);
 
 type Cached = { etag: string; body: Buffer; gzip?: Buffer; type: string };
@@ -112,34 +129,39 @@ export default async function frontendRoutes(app: FastifyInstance) {
   }
 
   /**
-   * An event page arrives with its facts already in it: title, description and link-preview
-   * tags, structured data, and the details as plain HTML inside <x-dc>, which the screen
-   * replaces when it mounts. Search engines and AI assistants that run no script read that.
+   * Event and organiser pages arrive with their facts already in them: title, description,
+   * language versions and link-preview tags, structured data, and the details as plain HTML
+   * inside <x-dc>, which the screen replaces when it mounts. Search engines and AI assistants
+   * that run no script read that. Vietnamese at /e/:slug, English at /e/:slug?lang=en.
    */
-  app.get<{ Params: { slug: string } }>('/e/:slug', async (req, reply) => {
-    const entry = await load(join(dir, 'pages/web/shell.html'));
-    if (!entry) throw notFound();
-    reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
-    const page = await loadEventPage(app.ctx, req.params.slug).catch((e) => { app.ctx.log(`event page ${req.params.slug}: ${e}`); return null; });
-    if (!page) return serve(req, reply.code(404), entry, 0);
-    const lang = req.query && (req.query as Record<string, string>).lang === 'en' ? 'en' : 'vi';
-    const { title, head } = eventHead(app.ctx, page, lang);
-    const html = entry.body.toString('utf8')
-      .replace(/<title>[^<]*<\/title>/, `<title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`)
-      .replace('</head>', `${head}\n</head>`)
-      .replace('<x-dc></x-dc>', `<x-dc>${eventSsr(page, lang)}</x-dc>`);
-    const body = Buffer.from(html);
-    return serve(req, reply, {
-      type: MIME['.html'], body,
-      etag: '"' + createHash('sha256').update(body).digest('base64url').slice(0, 20) + '"',
-      gzip: gzipSync(body, { level: 6 }),
-    }, 0);
-  });
+  const page = <S extends PageSeo>(route: string, build: (slug: string, lang: 'vi' | 'en') => Promise<S | null>, ssr: (seo: S) => string) =>
+    app.get<{ Params: { slug: string }; Querystring: { lang?: string } }>(route, async (req, reply) => {
+      const entry = await load(join(dir, 'pages/web/shell.html'));
+      if (!entry) throw notFound();
+      reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
+      const lang = req.query?.lang === 'en' ? 'en' : 'vi';
+      const seo = await build(req.params.slug, lang).catch((e) => { app.ctx.log(`${route} ${req.params.slug}: ${e}`); return null; });
+      if (!seo) return serve(req, reply.code(404), entry, 0);
+      const { title, head } = seoHead(seo);
+      const html = entry.body.toString('utf8')
+        .replace('<html lang="vi">', `<html lang="${lang}">`)
+        .replace(/<title>[^<]*<\/title>/, `<title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`)
+        .replace('</head>', `${head}\n</head>`)
+        .replace('<x-dc></x-dc>', `<x-dc>${ssr(seo)}</x-dc>`);
+      reply.header('content-language', lang);
+      const body = Buffer.from(html);
+      return serve(req, reply, {
+        type: MIME['.html'], body,
+        etag: '"' + createHash('sha256').update(body).digest('base64url').slice(0, 20) + '"',
+        gzip: gzipSync(body, { level: 6 }),
+      }, 0);
+    });
+  page('/e/:slug', (slug, lang) => buildEventSeo(app.ctx, slug, lang), eventSsr);
+  page('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
 
   for (const surface of SURFACES) {
     const shell = join(dir, surface.shell);
     for (const route of surface.routes) {
-      if (route === '/e/:slug') continue;
       app.get(route, async (req, reply) => {
         const entry = await load(shell);
         if (!entry) throw notFound();
@@ -162,6 +184,12 @@ export default async function frontendRoutes(app: FastifyInstance) {
   // The map became the list; old links and bookmarks land on it.
   app.get('/map', async (_req, reply) => reply.redirect('/list', 301));
   app.get('/app/map', async (_req, reply) => reply.redirect('/app/list', 301));
+
+  // The city landing pages (/vi/ho-chi-minh/edm/this-weekend…) are gone: each event page now
+  // answers search engines itself. Their links land on the list with the same filters.
+  for (const route of ['/vi/:city', '/en/:city', '/city/:city', '/vi/:city/*', '/en/:city/*', '/city/:city/*']) {
+    app.get<{ Params: { city: string; '*'?: string } }>(route, async (req, reply) => reply.redirect(legacyListPath(req.url.split('/')[1], req.params.city, req.params['*'] ?? ''), 301));
+  }
 
   // The template, logic and data chunks a shell pulls in, plus the shared runtime.
   for (const folder of ['pages', 'ui']) {

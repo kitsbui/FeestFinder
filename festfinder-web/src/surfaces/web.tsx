@@ -1,5 +1,5 @@
 'use client';
-/** The public site: discovery, event pages, the map and the city landing pages. */
+/** The public site: discovery, the list of every event, and the event pages. */
 import type { ReactNode } from 'react';
 import View from '@/screens/web/view';
 import Head from '@/screens/web/head';

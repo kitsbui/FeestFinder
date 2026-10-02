@@ -97,6 +97,8 @@ export default async function nightRoutes(app: FastifyInstance) {
       const u = await one<any>(q,
         `insert into event_updates (event_id, author_id, kind, body, notified, created_at) values ($1,$2,$3,$4,$5,$6) returning *`,
         [ev.id, org.userId, body.kind, body.body, notify, now]);
+      // The update shows on the event page, so search engines hear the page changed.
+      await q.query('update events set updated_at = now() where id = $1', [ev.id]);
       let reached = 0;
       if (notify) {
         const people = await many<{ user_id: string }>(q,

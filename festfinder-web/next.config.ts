@@ -46,7 +46,14 @@ const config: NextConfig = {
 
   async rewrites() {
     return {
-      beforeFiles: [],
+      beforeFiles: [
+        // The Markdown versions for AI agents come straight from the API (first: they take ?lang=en too).
+        { source: '/e/:file([^/]+\\.md)', destination: `${API}/e/:file` },
+        { source: '/o/:file([^/]+\\.md)', destination: `${API}/o/:file` },
+        // An event or organiser page in English is /e/<slug>?lang=en: a cached page of its own.
+        { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/e/:slug/en' },
+        { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/o/:slug/en' },
+      ],
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
       // browser, so the session cookie and every relative fetch in the screens just work.
@@ -67,6 +74,9 @@ const config: NextConfig = {
     return [
       { source: '/organizer', destination: '/studio', permanent: false },
       { source: '/admin', destination: '/console', permanent: false },
+      // The English event and organiser pages' one address is ?lang=en.
+      { source: '/e/:slug/en', destination: '/e/:slug?lang=en', permanent: true },
+      { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
       // The map became the list.
       { source: '/map', destination: '/list', permanent: true },
       { source: '/app/map', destination: '/app/list', permanent: true },

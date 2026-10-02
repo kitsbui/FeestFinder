@@ -1,10 +1,10 @@
 import type { MetadataRoute } from 'next';
-import { apiOr, SITE_URL, type EventCard, type Landing } from '@/lib/api';
+import { apiOr, SITE_URL, type EventCard } from '@/lib/api';
 
 // Rebuilt at most every 15 minutes: new listings reach search engines the same hour.
 export const revalidate = 900;
 
-/** Every live listing, every organiser with one, and the city landing pages. */
+/** Every live listing, and every organiser with one, in both languages. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const events: EventCard[] = [];
   let cursor: string | null = null;
@@ -23,22 +23,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const organizers = new Map<string, EventCard['organizer']>();
   for (const e of events) organizers.set(e.organizer.slug, e.organizer);
 
-  // The landing pages link to each other; one of them lists the rest.
-  const landing = await apiOr<Landing | null>('/seo/landing/vi/ho-chi-minh/this-weekend', null, { revalidate: 900 });
-  const landingPaths = new Set(['/vi/ho-chi-minh/this-weekend', '/en/ho-chi-minh/this-weekend']);
-  for (const r of landing?.related ?? []) {
-    if (!r.href.startsWith('/vi/')) continue;
-    landingPaths.add(r.href);
-    landingPaths.add(r.href.replace(/^\/vi\//, '/en/')); // every landing page exists in both languages
-  }
-
   const now = new Date();
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'hourly', priority: 1 },
     { url: `${SITE_URL}/list`, lastModified: now, changeFrequency: 'hourly', priority: 0.6 },
     { url: `${SITE_URL}/about`, changeFrequency: 'monthly', priority: 0.3 },
-    ...[...landingPaths].map((p) => ({ url: SITE_URL + p, lastModified: now, changeFrequency: 'daily' as const, priority: 0.8 })),
-    ...events.filter((e) => !e.past).map((e) => ({ url: `${SITE_URL}/e/${e.slug}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.9 })),
-    ...[...organizers.values()].map((o) => ({ url: `${SITE_URL}/o/${o.slug}`, changeFrequency: 'weekly' as const, priority: 0.5 })),
+    ...events.filter((e) => !e.past).flatMap((e) => {
+      const vi = `${SITE_URL}/e/${e.slug}`, en = `${vi}?lang=en`;
+      const alternates = { languages: { vi, en, 'x-default': vi } };
+      return [
+        { url: vi, lastModified: now, changeFrequency: 'daily' as const, priority: 0.9, alternates },
+        { url: en, lastModified: now, changeFrequency: 'daily' as const, priority: 0.7, alternates },
+      ];
+    }),
+    ...[...organizers.values()].flatMap((o) => {
+      const vi = `${SITE_URL}/o/${o.slug}`, en = `${vi}?lang=en`;
+      const alternates = { languages: { vi, en, 'x-default': vi } };
+      return [
+        { url: vi, changeFrequency: 'weekly' as const, priority: 0.6, alternates },
+        { url: en, changeFrequency: 'weekly' as const, priority: 0.4, alternates },
+      ];
+    }),
   ];
 }

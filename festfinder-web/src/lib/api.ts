@@ -79,45 +79,56 @@ export interface EventCard {
   lineup?: string[];
 }
 
-export interface EventDetail extends EventCard {
-  description: Localized | null;
-  age: string | null;
-  capacity: number | null;
-  lineup: string[];
-  artists: string[];
-  links: { event?: string | null; brand?: string | null; tickets?: string | null } | null;
-  tickets: { tiers: { id: string; name: Localized; price: number; state: string }[] } | null;
-  /** The organiser's answers to questions on the page: shown as its FAQ. */
-  faq?: { question: string; answer: string }[];
-  hypeCount?: number;
+type Fact = { label: string; value: string; href?: string; datetime?: string };
+type PageLink = { title: string; path: string; line: string };
+
+/**
+ * What a public page says to search engines and AI assistants: GET /seo/events/:slug and
+ * GET /seo/organizers/:slug (festfinder-backend/src/services/seo.ts).
+ */
+export interface PageSeo {
+  kind: 'event' | 'organizer';
+  lang: Lang;
+  url: string;
+  canonical: string;
+  alternates: { vi: string; en: string; 'x-default': string };
+  markdown: string;
+  title: string;
+  description: string;
+  robots: string;
+  image: { url: string; width: number; height: number; alt: string; type: string };
+  publishedAt: string | null;
+  updatedAt: string;
+  page: {
+    crumbs: { name: string; path: string }[];
+    kicker: string;
+    h1: string;
+    summary: string;
+    facts: Fact[];
+    about: string;
+    otherLang: { label: string; path: string };
+  };
+  jsonLd: unknown;
 }
 
-export interface Organizer {
-  id: string;
-  slug: string;
-  name: string;
-  bio: Localized | null;
-  website: string | null;
-  logoUrl: string | null;
-  verified: boolean;
-  stats: { events: number; followers: number; since: number };
-  upcoming: EventCard[];
-  past: EventCard[];
+export interface EventSeo extends PageSeo {
+  kind: 'event';
+  headings: Record<'facts' | 'about' | 'lineup' | 'timetable' | 'tickets' | 'updates' | 'faq' | 'editions' | 'related' | 'updated', string>;
+  page: PageSeo['page'] & {
+    lineup: string[];
+    timetable: { day: string; sets: { time: string; artist: string; stage: string }[] }[];
+    tickets: { name: string; price: string; state: string }[];
+    updates: { kind: string; body: string; at: string; atLabel: string }[];
+    faq: { question: string; answer: string }[];
+    editions: (PageLink & { label: string })[];
+    related: PageLink[];
+  };
 }
 
-export interface Landing {
-  locale: Lang;
-  path: string;
-  meta: { title: string; description: string; canonical: string; alternates: Record<string, string> };
-  kicker: string;
-  h1: string;
-  intro: string;
-  count: number;
-  answers: { label: string; value: string }[];
-  events: EventCard[];
-  faqs: { q: string; a: string }[];
-  related: { label: string; href: string }[];
-  jsonLd: unknown[];
+export interface OrganizerSeo extends PageSeo {
+  kind: 'organizer';
+  headings: Record<'facts' | 'about' | 'upcoming' | 'past' | 'updated', string>;
+  page: PageSeo['page'] & { upcoming: PageLink[]; past: PageLink[] };
 }
 
 // ---- formatting the server-rendered summaries ---------------------------------------
@@ -145,65 +156,6 @@ export function price(e: Pick<EventCard, 'entryMode' | 'priceFrom'>, lang: Lang)
   if (e.entryMode === 'free') return lang === 'vi' ? 'Miễn phí' : 'Free';
   if (e.entryMode === 'donation') return lang === 'vi' ? 'Tuỳ tâm' : 'Pay what you like';
   return (lang === 'vi' ? 'Từ ' : 'From ') + vnd(e.priceFrom, lang);
-}
-
-/** The schema.org Event Google reads for event rich results. */
-export function eventJsonLd(e: EventDetail, url: string) {
-  const offers = (e.tickets?.tiers ?? []).map((t) => ({
-    '@type': 'Offer',
-    name: t.name.vi || t.name.en,
-    price: t.price,
-    priceCurrency: 'VND',
-    availability: t.state === 'soldout' ? 'https://schema.org/SoldOut' : t.state === 'soon' ? 'https://schema.org/PreOrder' : 'https://schema.org/InStock',
-    url: e.links?.tickets || url,
-  }));
-  return {
-    '@context': 'https://schema.org',
-    // schema.org's closest type per genre, the same as the API's own event pages.
-    '@type': ({ Food: 'FoodEvent', Culture: 'Festival' } as Record<string, string>)[e.genre ?? ''] ?? (e.genre ? 'MusicEvent' : 'Event'),
-    name: e.title,
-    description: text(e.description, 'vi') || undefined,
-    startDate: e.startsAt ?? `${e.startsOn}T${e.startTime ?? '00:00'}:00+07:00`,
-    endDate: e.endsAt ?? undefined,
-    inLanguage: 'vi',
-    typicalAgeRange: e.age === '18+' ? '18-' : e.age === '16+' ? '16-' : undefined,
-    eventStatus: e.status === 'cancelled' ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    // Images kept in the API's database have a path on this site, not a full URL.
-    image: e.coverUrl ? [new URL(e.coverUrl, SITE_URL).href] : undefined,
-    url,
-    isAccessibleForFree: e.entryMode === 'free',
-    location: {
-      '@type': 'Place',
-      name: e.venue.name,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: e.venue.address ?? undefined,
-        addressLocality: e.venue.area ?? 'Hồ Chí Minh',
-        addressRegion: 'Hồ Chí Minh',
-        addressCountry: 'VN',
-      },
-      geo: e.venue.lat !== null && e.venue.lng !== null ? { '@type': 'GeoCoordinates', latitude: e.venue.lat, longitude: e.venue.lng } : undefined,
-    },
-    organizer: { '@type': 'Organization', name: e.organizer.name, url: `${SITE_URL}/o/${e.organizer.slug}` },
-    performer: (e.lineup ?? []).slice(0, 12).map((name) => ({ '@type': 'PerformingGroup', name })),
-    offers: offers.length ? offers : e.entryMode === 'free'
-      ? [{ '@type': 'Offer', price: 0, priceCurrency: 'VND', availability: 'https://schema.org/InStock', url }]
-      : undefined,
-    interactionStatistic: e.hypeCount !== undefined
-      ? { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: e.hypeCount }
-      : undefined,
-  };
-}
-
-/** The page's questions and the organiser's answers, as FAQPage data for search and AI answers. */
-export function faqJsonLd(e: EventDetail) {
-  if (!e.faq?.length) return null;
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: e.faq.map((f) => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })),
-  };
 }
 
 /** Structured data goes in as a JSON data block, never as script the browser runs. */

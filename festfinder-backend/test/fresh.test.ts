@@ -68,8 +68,7 @@ describe('a new, empty database', () => {
       '/health', '/events', '/events?time=all', '/events?time=tonight', '/events?time=month&price=free', '/events?q=nhac',
       '/events/map?bbox=106.6,10.7,106.8,10.9', '/explore/stats', '/explore/stats?view=venues', '/explore/stats?view=free',
       '/genres', '/artists', '/venues', '/shelves', '/ads?placement=feed', '/ads?placement=banner', '/ads?placement=live',
-      '/seo/landing/vi/ho-chi-minh/this-weekend', '/seo/landing/en/ho-chi-minh/free/this-weekend', '/seo/landing/vi/ho-chi-minh/edm',
-      '/seo/landing/vi/ho-chi-minh/2026-10', '/meta/form-options', '/push/public-key', `/events/${randomUUID()}`, '/organizers/nobody',
+      '/sitemap.xml', '/robots.txt', '/seo/events/nothing-yet', '/og/v1/brand.png', '/meta/form-options', '/push/public-key', `/events/${randomUUID()}`, '/organizers/nobody',
     ]);
     await readsAll(attendee, [
       '/auth/session', '/me', '/me/tickets', '/me/saves', '/me/hypes', '/me/going', '/me/friends', '/me/plans',

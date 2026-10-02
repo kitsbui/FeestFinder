@@ -91,6 +91,8 @@ export interface Config {
   /** Return OTP codes in API responses: never in production; on staging only when asked for. */
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
+  /** The screens and event pages from festfinder-frontend; off in unit tests unless one asks. */
+  serveFrontend: boolean;
   /**
    * IndexNow key (8–128 letters, digits or dashes). With it, new and changed event pages are
    * announced to Bing, and so to the assistants that search its index. It is served at
@@ -173,6 +175,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     // real accounts; on staging only with EXPOSE_DEV_CODES. The server log has the codes too.
     exposeDevCodes: environment === 'staging' && bool('EXPOSE_DEV_CODES', !databaseUrl),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
+    serveFrontend: env !== 'test',
     indexNowKey: /^[A-Za-z0-9-]{8,128}$/.test(process.env.INDEXNOW_KEY ?? '') ? process.env.INDEXNOW_KEY! : null,
     allowAiTraining: bool('ALLOW_AI_TRAINING', false),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),

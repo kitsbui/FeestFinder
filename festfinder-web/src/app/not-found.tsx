@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Không tìm thấy trang', robots: { index: false } };
 
-/** An unknown listing, organiser or landing page: say so in both languages and point home. */
+/** An unknown listing or organiser: say so in both languages and point home. */
 export default function NotFound() {
   return (
     <>

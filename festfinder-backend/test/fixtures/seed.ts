@@ -203,21 +203,6 @@ const FRIENDS: { key: string; name: string; source: 'fb' | 'ig' | 'zalo'; going:
   { key: 'f6', name: 'Ngọc Anh', source: 'zalo', going: ['ravo', 'momang'], interested: [] },
 ];
 
-const FAQ: [Localized, Localized][] = [
-  [L('Which events this weekend are free?', 'Cuối tuần này sự kiện nào miễn phí?'),
-    L('Two. HOZO Super Fest runs on the Saigon riverside park from 18 to 20 September, 17:00–23:00, and the Saigon Outcast Night Market in Thảo Điền runs 19–20 September, 16:00–22:00. Both are open to all ages and need no ticket.',
-      'Hai sự kiện. HOZO Super Fest tại công viên bờ sông Sài Gòn từ 18 đến 20/9, 17:00–23:00, và Saigon Outcast Night Market ở Thảo Điền ngày 19–20/9, 16:00–22:00. Cả hai mở cho mọi lứa tuổi và không cần vé.')],
-  [L('How much are Ravolution tickets?', 'Vé Ravolution giá bao nhiêu?'),
-    L('From 1.200.000₫ for general admission at SECC in District 7. Doors open at 16:00 and the ticket includes re-entry until 22:00. Tickets are marked low, so the price tier may move before Saturday.',
-      'Từ 1.200.000₫ cho vé thường tại SECC, Quận 7. Mở cửa 16:00 và vé bao gồm ra vào lại đến 22:00. Vé đang còn ít nên mức giá có thể thay đổi trước thứ Bảy.')],
-  [L('Is anything already sold out?', 'Có show nào đã hết vé chưa?'),
-    L('Rap Việt Live Stage at Nhà thi đấu Phú Thọ on Sunday 20 September is sold out. Resale is handled by the ticketing partner, not by FeestFinder — we mark a listing sold out within minutes of the organizer updating it.',
-      'Rap Việt Live Stage tại Nhà thi đấu Phú Thọ ngày Chủ nhật 20/9 đã hết vé. Việc sang nhượng do đối tác bán vé xử lý, không phải FeestFinder — chúng tôi đánh dấu hết vé trong vài phút sau khi nhà tổ chức cập nhật.')],
-  [L('How do I get to the riverside park for HOZO?', 'Đi tới công viên bờ sông dự HOZO thế nào?'),
-    L('The entrance is on Nguyễn Thiện Thành in Thủ Đức, about 4 km from District 1. Parking near the gates fills before 18:00, so arriving early or by ride-hail is the safer plan on festival nights.',
-      'Cổng vào nằm trên đường Nguyễn Thiện Thành, Thủ Đức, cách Quận 1 khoảng 4 km. Bãi xe gần cổng thường đầy trước 18:00, nên đến sớm hoặc đi xe công nghệ sẽ chắc chắn hơn trong các đêm lễ hội.')],
-];
-
 export interface SeedOptions { volume: 'full' | 'small'; log?: (m: string) => void }
 
 export async function seed(db: Db, now: Date, opts: SeedOptions) {
@@ -580,11 +565,6 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await shelf('trending', L('Trending this week', 'Đang hot tuần này'), L('Sits at the top of Explore in the app and on the web.', 'Hiện đầu trang Khám phá trong app và trên web.'), true, '2026-09-15', '2026-09-22', ['ravo', 'hozo', 'momang'], 0);
     await shelf('quiet-nights', L('Quiet nights', 'Đêm nhạc nhẹ'), L('For people browsing away from EDM.', 'Dành cho người tìm sự kiện không phải EDM.'), true, '2026-10-01', '2026-10-31', ['blues', 'nhacvien'], 1);
     await shelf('food-culture', L('Food & culture', 'Ăn uống & văn hoá'), L('Off until five approved events fill it.', 'Tắt cho tới khi có đủ 5 sự kiện đã duyệt.'), false, '2026-09-28', '2026-10-12', ['outcast', 'duongsach'], 2);
-
-    // ---- SEO FAQ ----
-    for (const path of ['ho-chi-minh/this-weekend', 'ho-chi-minh/free/this-weekend']) {
-      for (const [i, [qn, an]] of FAQ.entries()) await q.query('insert into seo_faqs (path, question, answer, sort) values ($1,$2,$3,$4)', [path, json(qn), json(an), i]);
-    }
 
     // ---- advertising ----
     const campaign = (brand: string, cat: string, logo: string, art: string, placement: string, active: boolean, head: Localized, body: Localized, cta: Localized, imp: number, clicks: number, spend: number, budget: number, alcohol = false) =>

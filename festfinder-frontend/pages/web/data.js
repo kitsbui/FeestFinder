@@ -49,18 +49,7 @@ FF.loadWeb = async function () {
       city: u.city || '', photo: u.photoUrl || '', socials, social: socials[0] || '' } : null,
     saved: flags(saves.items), going: flags(going.items), following,
     notifM: prefs ? prefs.matrix : null,
-    faqs: [],
     mapSel: cards[0] ? cards[0].id : null
   };
 };
-/** The city landing page: the questions people ask, in both languages. */
-FF.webLanding = (cmp) => FF.once('landing', async () => {
-  const [en, vi] = await Promise.all([
-    FF.maybe(FF.get('/seo/landing/en/ho-chi-minh/this-weekend'), null),
-    FF.maybe(FF.get('/seo/landing/vi/ho-chi-minh/this-weekend'), null)
-  ]);
-  if (en && vi) cmp.applyFaqs(en.faqs.map((f, i) => ({ q: { en: f.q, vi: (vi.faqs[i] || f).q }, a: { en: f.a, vi: (vi.faqs[i] || f).a } })));
-  return true;
-});
-
 FF.preload = (async () => { FF.data.web = await FF.loadWeb(); });
