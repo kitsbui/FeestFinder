@@ -48,9 +48,9 @@ describe('a new, empty database', () => {
     env = await setup({ seed: false });
     // What a deployment without object storage uses: the database itself.
     env.ctx.storage = new DbStorage(env.ctx.db);
-    await ensureAdmin(env.ctx.db, 'owner@feestfinder.vn', () => {});
-    await setPassword('owner@feestfinder.vn');
-    admin = await env.login('owner@feestfinder.vn', password);
+    await ensureAdmin(env.ctx.db, 'owner@feestfinder.com', () => {});
+    await setPassword('owner@feestfinder.com');
+    admin = await env.login('owner@feestfinder.com', password);
     await env.ctx.db.query(`insert into users (name, email, signup_method) values ('Lan', 'lan@example.vn', 'email')`);
     await setPassword('lan@example.vn');
     attendee = await env.login('lan@example.vn', password);

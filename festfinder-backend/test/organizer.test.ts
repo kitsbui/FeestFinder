@@ -124,7 +124,7 @@ describe('organizer back office (Ravolution)', () => {
       title: 'Ravolution Closing Party 2026', startsOn: '2026-10-10', startTime: '20:00', endTime: '02:00', venueId: venues.body.items[0].id,
       description: { en: 'A closing party for the season with both stages open late and the full production crew back at SECC.', vi: '' },
       entryMode: 'paid', priceFrom: 600000, ticketUrl: 'https://ticketbox.vn/ravo-closing', eventUrl: 'https://ravolution.vn/closing',
-      logoUrl: 'https://assets.festfinder.vn/logos/ravoent.png', lineup: ['Hoaprox', 'DJ Mie', 'Wukong'], age: '18+',
+      logoUrl: 'https://assets.feestfinder.com/logos/ravoent.png', lineup: ['Hoaprox', 'DJ Mie', 'Wukong'], age: '18+',
     });
     assert.equal(filled.status, 200);
     assert.equal(filled.body.venue.resolved, true);

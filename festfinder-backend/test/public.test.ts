@@ -170,7 +170,7 @@ describe('rate limit', () => {
     headers: {
       'x-lang': 'en',
       ...(forwardedFor ? { 'x-forwarded-for': forwardedFor } : {}),
-      ...(proxied ? { 'x-forwarded-host': 'festfinder.vn' } : {}),
+      ...(proxied ? { 'x-forwarded-host': 'feestfinder.com' } : {}),
     },
   });
 

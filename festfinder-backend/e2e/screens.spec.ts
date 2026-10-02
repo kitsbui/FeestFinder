@@ -10,7 +10,7 @@ type Account = 'attendee' | 'organizer' | 'admin';
 const ACCOUNTS: Record<Account, { identifier: string; password: string }> = {
   attendee: { identifier: 'minh@example.com', password: 'festfinder123' },
   organizer: { identifier: 'team@ravolution.vn', password: 'ravolution2026' },
-  admin: { identifier: 'admin@festfinder.vn', password: 'festfinder-admin' },
+  admin: { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' },
 };
 
 async function signIn(page: Page, who: Account) {

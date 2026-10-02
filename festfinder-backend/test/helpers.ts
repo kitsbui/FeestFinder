@@ -95,7 +95,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; prefil
     call, as, login,
     attendee: () => login('minh@example.com', 'festfinder123'),
     organizer: () => login('team@ravolution.vn', 'ravolution2026'),
-    admin: () => login('admin@festfinder.vn', 'festfinder-admin'),
+    admin: () => login('admin@feestfinder.com', 'festfinder-admin'),
     close: async () => { await app.close(); await db.close(); },
   };
 }

@@ -187,7 +187,7 @@ function SignIn({ mode }) {
     h('form', { className: 'op-gate-card ff-deep ff-in', onSubmit: submit },
       h('h1', { className: 'op-gate-title ff-skywash' }, title),
       step === 'code' ? h('p', { className: 'op-gate-note' }, t(`Mã 6 số đã gửi tới ${f.id}.`, `6-digit code sent to ${f.id}.`)) : null,
-      step === 'login' || step === 'forgot' ? h(Field, { label: 'Email', id: 'g-id' }, h(Input, { id: 'g-id', value: f.id, onChange: set('id'), autoComplete: 'username', type: step === 'forgot' ? 'email' : 'text', placeholder: team ? 'you@festfinder.vn' : 'team@yourbrand.vn', autoFocus: true, required: true })) : null,
+      step === 'login' || step === 'forgot' ? h(Field, { label: 'Email', id: 'g-id' }, h(Input, { id: 'g-id', value: f.id, onChange: set('id'), autoComplete: 'username', type: step === 'forgot' ? 'email' : 'text', placeholder: team ? 'you@feestfinder.com' : 'team@yourbrand.vn', autoFocus: true, required: true })) : null,
       step === 'login' ? h(Field, { label: t('Mật khẩu', 'Password'), id: 'g-pw' }, h(Input, { id: 'g-pw', type: 'password', value: f.pw, onChange: set('pw'), autoComplete: 'current-password', required: true })) : null,
       step === 'code' ? h(Field, { label: t('Mã xác nhận', 'Code'), id: 'g-code' }, h(Input, { id: 'g-code', value: f.code, onChange: set('code'), inputMode: 'numeric', autoComplete: 'one-time-code', maxLength: 6, autoFocus: true, required: true })) : null,
       step === 'password' ? h(Fragment, null,

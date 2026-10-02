@@ -135,7 +135,7 @@ describe('tickets & listings', () => {
     const full = qualityScore({
       title: 'Ravolution Music Festival 2026', genre: 'EDM', description: { en: 'x'.repeat(90), vi: '' }, logoUrl: 'https://a/l.png',
       coverUrl: 'https://a/c.jpg', venueResolved: true, entryMode: 'paid', priceFrom: 1200000, ticketUrl: 'https://ticketbox.vn/r',
-      lineup: ['a', 'b', 'c'], eventUrl: 'https://festfinder.vn/e/r',
+      lineup: ['a', 'b', 'c'], eventUrl: 'https://feestfinder.com/e/r',
     });
     assert.equal(full.score, 100);
     assert.equal(full.band, 'strong');

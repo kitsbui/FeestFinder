@@ -4,7 +4,7 @@
  * It is loaded into throwaway test databases only — never into Supabase. Accounts:
  *   attendee   minh@example.com     / festfinder123
  *   organiser  team@ravolution.vn   / ravolution2026
- *   admin      admin@festfinder.vn  / festfinder-admin
+ *   admin      admin@feestfinder.com  / festfinder-admin
  */
 import type { Db, Queryable } from '../../src/db/index.ts';
 import { json, many, one } from '../../src/db/index.ts';
@@ -93,7 +93,7 @@ const EVENTS: Record<string, EventSeed> = {
       'Ba đêm bên bờ sông Sài Gòn với bốn sân khấu chạy song song, từ dàn ca sĩ pop Việt tới sân khấu dân gian và lều điện tử về khuya. Vào cửa miễn phí, không cần vé; khu vực mở từ 17:00 và sân khấu chính diễn đến 23:00.') },
   ravo: { org: 'ravoent', title: 'Ravolution Music Festival', genre: 'EDM', starts: '2026-09-19', time: ['16:00', '02:00'], venue: 'secc', price: 1_200_000,
     hype: 2140, featured: true, badge: 'low_tickets', art: ART.violetCyan, age: '18+', capacity: 4800, lineup: ['Hoaprox', 'DJ Mie', 'Wukong'], logo: true,
-    ticketUrl: 'https://ticketbox.vn/ravolution-2026', eventUrl: 'https://festfinder.vn/e/ravolution-2026', brandUrl: 'https://ravolution.vn',
+    ticketUrl: 'https://ticketbox.vn/ravolution-2026', eventUrl: 'https://feestfinder.com/e/ravolution-2026', brandUrl: 'https://ravolution.vn',
     description: L('An indoor electronic festival at SECC with two stages and full production. Doors at 16:00, last set at 02:00. The ticket includes re-entry until 22:00, so you can step out for food and come back.',
       'Lễ hội điện tử trong nhà tại SECC với hai sân khấu và sản xuất đầy đủ. Mở cửa 16:00, set cuối 02:00. Vé cho phép ra vào lại đến 22:00, bạn có thể ra ngoài ăn rồi quay lại.') },
   outcast: { org: 'outcastco', title: 'Saigon Outcast Night Market', genre: 'Food', starts: '2026-09-19', ends: '2026-09-20', time: ['16:00', '22:00'], venue: 'outcast',
@@ -223,7 +223,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     const ids = { org: {} as Record<string, string>, venue: {} as Record<string, string>, event: {} as Record<string, string>, friend: {} as Record<string, string> };
 
     // ---- people ----
-    const admin = await one<any>(q, `insert into users (name, email, password_hash, signup_method, role, city, locale, created_at) values ('FeestFinder Admin','admin@festfinder.vn',$1,'email','admin','TP.HCM','en',$2) returning id`, [adminHash, hours(24 * 400)]);
+    const admin = await one<any>(q, `insert into users (name, email, password_hash, signup_method, role, city, locale, created_at) values ('FeestFinder Admin','admin@feestfinder.com',$1,'email','admin','TP.HCM','en',$2) returning id`, [adminHash, hours(24 * 400)]);
     const demo = await one<any>(q,
       `insert into users (name, email, phone, password_hash, signup_method, city, locale, interests, birth_year, payee_bank_bin, payee_bank_name, payee_account_no, payee_account_name, created_at)
        values ('Minh Anh','minh@example.com','+84901234567',$1,'email','TP.HCM','en','{EDM,Indie,Nightlife}',1998,'970436','Vietcombank','0071008842','NGUYEN MINH ANH',$2) returning id`, [demoHash, hours(24 * 300)]);
@@ -294,8 +294,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
           e.venue ? ids.venue[e.venue] : null, v ? v[0] : e.unresolved?.name ?? null, v ? v[1] : e.unresolved?.address ?? null, v ? v[2] : e.unresolved?.area ?? null,
           v ? v[3] : null, v ? v[4] : null, e.starts, e.ends ?? e.starts, e.time[0], e.time[1],
           paid ? 'paid' : e.status === 'draft' ? 'paid' : 'free', e.price ?? 0, e.capacity ?? null, e.age ?? 'All ages', e.lineup ?? [], e.artists ?? e.lineup ?? [], e.art ?? ART.violetCyan,
-          e.logo ? `https://assets.festfinder.vn/logos/${e.org}.png` : null,
-          e.cover ? `https://assets.festfinder.vn/covers/${slug}.jpg` : null, e.cover ? sha256(e.cover) : null,
+          e.logo ? `https://assets.feestfinder.com/logos/${e.org}.png` : null,
+          e.cover ? `https://assets.feestfinder.com/covers/${slug}.jpg` : null, e.cover ? sha256(e.cover) : null,
           e.ticketUrl ?? null, e.eventUrl ?? null, e.brandUrl ?? null, e.badge ?? null, !!e.featured, !!e.soldOut, e.hype ?? 0, status,
           status === 'live' ? hours(24 * 30) : null, null, null,
           slug === 'edm-beach-bus' ? 'broken' : e.ticketUrl && status === 'in_review' ? 'ok' : null, hours(24 * 40)]);
@@ -669,6 +669,6 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
       `select (select count(*)::int from users) as users, (select count(*)::int from events) as events, (select count(*)::int from orders) as orders,
               (select count(*)::int from tickets) as tickets, (select count(*)::int from saves) as saves`);
     log(`seed complete: ${JSON.stringify(counts)}`);
-    return { ...counts, accounts: { attendee: 'minh@example.com', organizer: 'team@ravolution.vn', admin: 'admin@festfinder.vn' }, ids };
+    return { ...counts, accounts: { attendee: 'minh@example.com', organizer: 'team@ravolution.vn', admin: 'admin@feestfinder.com' }, ids };
   });
 }

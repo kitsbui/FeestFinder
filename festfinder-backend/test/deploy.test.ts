@@ -230,18 +230,18 @@ describe('deployment', () => {
     const admins = async () => (await db.query<{ email: string }>(`select email from users where role = 'admin' order by email`)).rows.map((r) => r.email);
 
     it('is created once per listed email, without a password', async () => {
-      await ensureAdmin(db, 'owner@feestfinder.vn', () => {});
-      await ensureAdmin(db, 'owner@feestfinder.vn', () => {});
-      await ensureAdmin(db, 'second@feestfinder.vn', () => {});
-      assert.deepEqual(await admins(), ['owner@feestfinder.vn', 'second@feestfinder.vn']);
-      const row = (await db.query<{ password_hash: string | null }>(`select password_hash from users where email = 'owner@feestfinder.vn'`)).rows[0];
+      await ensureAdmin(db, 'owner@feestfinder.com', () => {});
+      await ensureAdmin(db, 'owner@feestfinder.com', () => {});
+      await ensureAdmin(db, 'second@feestfinder.com', () => {});
+      assert.deepEqual(await admins(), ['owner@feestfinder.com', 'second@feestfinder.com']);
+      const row = (await db.query<{ password_hash: string | null }>(`select password_hash from users where email = 'owner@feestfinder.com'`)).rows[0];
       assert.equal(row.password_hash, null);
     });
 
     it('never promotes an existing account', async () => {
       await db.query(`delete from users`);
-      await db.query(`insert into users (email, signup_method) values ('taken@feestfinder.vn', 'email')`);
-      await ensureAdmin(db, 'taken@feestfinder.vn', () => {});
+      await db.query(`insert into users (email, signup_method) values ('taken@feestfinder.com', 'email')`);
+      await ensureAdmin(db, 'taken@feestfinder.com', () => {});
       assert.deepEqual(await admins(), []);
     });
   });
