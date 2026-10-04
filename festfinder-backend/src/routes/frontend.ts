@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -85,6 +85,47 @@ const COMPRESS = new Set(['.html', '.js', '.css', '.json', '.svg', '.md']);
 
 type Cached = { etag: string; body: Buffer; gzip?: Buffer; type: string };
 
+/**
+ * How long a response may be kept. Vercel's CDN starts a fresh cache with every deployment,
+ * so `s-maxage` lets the edge near the visitor answer instead of the function in Tokyo.
+ * - asset: a file named with this deployment's version (?v=…), kept for good;
+ * - file: the same file without it (an old tab, a hand-typed URL);
+ * - shell: a screen's empty shell; the browser checks back, the edge keeps it;
+ * - page: an event or organiser page with its facts, edited from Ops now and then.
+ */
+type Policy = 'asset' | 'file' | 'shell' | 'page' | 'none';
+const POLICY: Record<Policy, string> = {
+  asset: 'public, max-age=31536000, immutable',
+  file: 'public, max-age=3600, s-maxage=86400',
+  shell: 'public, max-age=0, s-maxage=86400',
+  page: 'public, max-age=0, s-maxage=60, stale-while-revalidate=600',
+  none: 'public, max-age=0',
+};
+
+/** A short hash of every file the screens load, so a deployment's URLs change with its content. */
+async function versionOf(dir: string): Promise<string> {
+  const hash = createHash('sha256');
+  const walk = async (d: string) => {
+    for (const e of (await readdir(d, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+      const f = join(d, e.name);
+      if (e.isDirectory()) await walk(f);
+      else hash.update(f.slice(dir.length)).update(await readFile(f));
+    }
+  };
+  for (const folder of ['pages', 'ui']) await walk(join(dir, folder));
+  return hash.digest('base64url').slice(0, 10);
+}
+
+/**
+ * Adds the version to the /ui and /pages URLs an HTML or CSS file names, and to the fonts a
+ * stylesheet loads next to it. ff-client.js adds it to what it fetches itself.
+ */
+export function stampUrls(text: string, version: string): string {
+  return text
+    .replace(/(["'(])(\/(?:ui|pages)\/[^"'()?#\s]+)(?=["')])/g, `$1$2?v=${version}`)
+    .replace(/url\((["']?)(\.\/[^"')?#]+)\1\)/g, `url($1$2?v=${version}$1)`);
+}
+
 export default async function frontendRoutes(app: FastifyInstance) {
   // This repo's festfinder-frontend, wherever the process was started from. Written as a
   // URL literal so Vercel's file tracing ships the folder with the function.
@@ -95,6 +136,8 @@ export default async function frontendRoutes(app: FastifyInstance) {
   }
   const dev = app.ctx.config.env !== 'production';
   const cache = new Map<string, Cached & { mtime: number }>();
+  // Outside development every file is fetched with the deployment's version and kept for good.
+  const version = dev ? '' : await versionOf(dir);
 
   /**
    * Static files are read once and kept with their ETag and gzip form. In development
@@ -106,7 +149,9 @@ export default async function frontendRoutes(app: FastifyInstance) {
     const mtime = (await stat(file)).mtimeMs;
     const hit = cache.get(file);
     if (hit && hit.mtime === mtime) return hit;
-    const body = await readFile(file);
+    const ext = extname(file);
+    let body = await readFile(file);
+    if (version && (ext === '.html' || ext === '.css')) body = Buffer.from(stampUrls(body.toString('utf8'), version));
     const entry = {
       mtime,
       type,
@@ -118,9 +163,9 @@ export default async function frontendRoutes(app: FastifyInstance) {
     return entry;
   }
 
-  function serve(req: FastifyRequest, reply: FastifyReply, entry: Cached, maxAge: number) {
+  function serve(req: FastifyRequest, reply: FastifyReply, entry: Cached, policy: Policy) {
     reply.type(entry.type).header('etag', entry.etag)
-      .header('cache-control', dev ? 'no-cache' : `public, max-age=${maxAge}`)
+      .header('cache-control', dev ? 'no-cache' : POLICY[policy])
       .header('vary', 'accept-encoding');
     if (req.headers['if-none-match'] === entry.etag) return reply.code(304).send();
     const accepts = String(req.headers['accept-encoding'] ?? '').includes('gzip');
@@ -141,7 +186,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
       reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
       const lang = req.query?.lang === 'en' ? 'en' : 'vi';
       const seo = await build(req.params.slug, lang).catch((e) => { app.ctx.log(`${route} ${req.params.slug}: ${e}`); return null; });
-      if (!seo) return serve(req, reply.code(404), entry, 0);
+      if (!seo) return serve(req, reply.code(404), entry, 'none');
       const { title, head } = seoHead(seo);
       const html = entry.body.toString('utf8')
         .replace('<html lang="vi">', `<html lang="${lang}">`)
@@ -154,7 +199,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
         type: MIME['.html'], body,
         etag: '"' + createHash('sha256').update(body).digest('base64url').slice(0, 20) + '"',
         gzip: gzipSync(body, { level: 6 }),
-      }, 0);
+      }, 'page');
     });
   page('/e/:slug', (slug, lang) => buildEventSeo(app.ctx, slug, lang), eventSsr);
   page('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
@@ -166,8 +211,8 @@ export default async function frontendRoutes(app: FastifyInstance) {
         const entry = await load(shell);
         if (!entry) throw notFound();
         if (!('strict' in surface)) reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
-        // The shell carries no data of its own, so it may be revalidated cheaply.
-        return serve(req, reply, entry, 0);
+        // The shell carries no data of its own, so the edge may keep it for the deployment.
+        return serve(req, reply, entry, 'shell');
       });
     }
   }
@@ -199,7 +244,8 @@ export default async function frontendRoutes(app: FastifyInstance) {
       if (!file.startsWith(join(dir, folder))) throw notFound();
       const entry = await load(file);
       if (!entry) throw notFound();
-      return serve(req, reply, entry, 3600);
+      const q = req.query as { v?: string };
+      return serve(req, reply, entry, version && q.v === version ? 'asset' : 'file');
     });
   }
 
@@ -207,6 +253,6 @@ export default async function frontendRoutes(app: FastifyInstance) {
   app.get('/favicon.ico', async (req, reply) => {
     const entry = await load(join(dir, 'ui/assets/favicon.ico'));
     if (!entry) throw notFound();
-    return serve(req, reply, entry, 86400);
+    return serve(req, reply, entry, 'file');
   });
 }

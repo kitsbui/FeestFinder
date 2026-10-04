@@ -25,13 +25,12 @@ const S = {
   fCoverHint:{en:'Landscape 1600×900 JPG or PNG. This is the art on every card in the app, on the web and on your event page.',vi:'Ảnh ngang 1600×900, JPG hoặc PNG. Đây là ảnh hiện trên mọi thẻ sự kiện trong app, trên web và trang sự kiện.'},
   fCoverDrop:{en:'Drop the event image or click to upload',vi:'Kéo ảnh sự kiện vào đây hoặc bấm để tải lên'},
   fLogoHint:{en:'PNG or SVG on a transparent background, at least 512px. Shown on your listing and next to your name.',vi:'PNG hoặc SVG nền trong suốt, tối thiểu 512px. Hiện trên sự kiện và cạnh tên bạn.'},
-  fLogoDrop:{en:'Drop a file or click to upload',vi:'Kéo tệp vào đây hoặc bấm để tải lên'},
-  fLogoChange:{en:'Replace',vi:'Đổi ảnh'}, fLogoRemove:{en:'Remove',vi:'Xoá'},
+  fLogoDrop:{en:'Drop a file or click to upload',vi:'Kéo tệp vào đây hoặc bấm để tải lên'}, fLogoRemove:{en:'Remove',vi:'Xoá'},
   fLinks:{en:'Links',vi:'Liên kết'},
   fEventUrl:{en:'Event page',vi:'Trang sự kiện'},
   fBrandUrl:{en:'Brand or website',vi:'Trang thương hiệu'},
   fLinksHint:{en:'The event page and ticket link are opened straight from the listing. Add the brand page if you want a follow button.',vi:'Trang sự kiện và link vé được mở trực tiếp từ sự kiện. Thêm trang thương hiệu nếu bạn muốn có nút theo dõi.'},
-  required:{en:'Required',vi:'Bắt buộc'}, optional:{en:'Optional',vi:'Không bắt buộc'},
+  required:{en:'Required',vi:'Bắt buộc'},
   logoUploaded:{en:'Uploaded',vi:'Đã tải lên'}, logoMissing:{en:'Not uploaded yet',vi:'Chưa tải lên'},
   reviewMissing:{en:'Some required fields are still empty',vi:'Vẫn còn thông tin bắt buộc chưa điền'},
   reviewMissingSub:{en:'Add a brand logo and the event page link before submitting.',vi:'Hãy thêm logo thương hiệu và link trang sự kiện trước khi gửi.'},
@@ -70,7 +69,6 @@ const S = {
   bizGroupBrand:{en:'Brand',vi:'Thương hiệu'},
   bizGroupLegal:{en:'Legal entity',vi:'Pháp nhân'},
   bizGroupContact:{en:'Contact',vi:'Liên hệ'},
-  bizLogo:{en:'Logo',vi:'Logo'},
   bizLogoUpload:{en:'Upload logo',vi:'Tải logo lên'}, bizLogoChange:{en:'Change logo',vi:'Đổi logo'},
   bizLogoRemove:{en:'Remove',vi:'Xoá'},
   bizLogoHint:{en:'PNG or SVG on a transparent background, at least 512px square.',vi:'PNG hoặc SVG nền trong suốt, tối thiểu 512px vuông.'},
@@ -90,23 +88,13 @@ const S = {
   bizLoginNote:{en:'You log in with this',vi:'Bạn đăng nhập bằng email này'},
   bizInternal:{en:'Moderation only',vi:'Chỉ dùng cho kiểm duyệt'},
   bizSave:{en:'Save changes',vi:'Lưu thay đổi'}, bizCancel:{en:'Cancel',vi:'Huỷ'},
-  bizSaved:{en:'Business profile updated',vi:'Đã cập nhật thông tin doanh nghiệp'},
   bizErrName:{en:'A brand name is required',vi:'Cần tên thương hiệu'},
   bizErrEmail:{en:'That email doesn\u2019t look right',vi:'Email chưa đúng định dạng'},
   bizErrTax:{en:'A tax code is 10 to 14 digits',vi:'Mã số thuế gồm 10 đến 14 số'},
   soonReset:{en:'Reset link sent to your email',vi:'Đã gửi liên kết đặt lại qua email'},
   soonSignup:{en:'Organizer sign-up opens in the next round',vi:'Phần tạo tài khoản sẽ có ở vòng sau'},
   welcome:{en:'Signed in',vi:'Đã đăng nhập'},
-  adminKicker:{en:'Admin · Moderation',vi:'Quản trị · Kiểm duyệt'},
-  adminTitle:{en:'Submission queue',vi:'Hàng chờ kiểm duyệt'},
-  approve:{en:'Approve',vi:'Duyệt'},
-  checks:{en:'Automated checks',vi:'Kiểm tra tự động'},
-  queueClear:{en:'Queue is clear',vi:'Đã xử lý hết'},
-  queueClearSub:{en:'Nothing waiting on moderation right now.',vi:'Hiện không còn gì chờ kiểm duyệt.'},
-  rlsNote:{en:'Row-level security',vi:'Bảo mật theo dòng'},
-  rlsBody:{en:'organizers see only rows where organizer_id = auth.uid(); admins hold the moderator role and read the full queue.',vi:'nhà tổ chức chỉ thấy dòng có organizer_id = auth.uid(); admin có role moderator và đọc toàn bộ hàng chờ.'},
-  statPending:{en:'pending',vi:'đang chờ'}, statToday:{en:'approved today',vi:'đã duyệt hôm nay'}, statFlagged:{en:'flagged',vi:'bị gắn cờ'}
-};
+  adminKicker:{en:'Admin · Moderation',vi:'Quản trị · Kiểm duyệt'},};
 
 const S2 = {
   exportCsv:{en:'Export CSV',vi:'Tải CSV'},
@@ -120,8 +108,6 @@ const S2 = {
   perfNeed:{en:'Needed per day to sell out',vi:'Cần bán mỗi ngày để hết vé'},
   perfPace:{en:'Selling per day now',vi:'Đang bán mỗi ngày'},
   perfProj:{en:'At this pace you finish at',vi:'Giữ nhịp này sẽ bán được'},
-  perfOnPace:{en:'On pace',vi:'Đúng nhịp'},
-  perfBehind:{en:'Behind pace',vi:'Chậm nhịp'},
   perfFunnel:{en:'Conversion funnel',vi:'Phễu chuyển đổi'},
   perfFunnelNote:{en:'Percentages on the right are step-to-step; the muted figure is share of all views.',vi:'Phần trăm bên phải là so với bước trước; số mờ là so với tổng lượt xem.'},
   perfTrend:{en:'Views · last 14 days',vi:'Lượt xem · 14 ngày'},
@@ -140,15 +126,12 @@ const S2 = {
   inboxKicker:{en:'From FeestFinder',vi:'FeestFinder gửi bạn'},
   inboxTitle:{en:'Inbox',vi:'Tin nhắn'},
   inboxSub:{en:'Moderation and partnerships write here. Answering fast is what moves a listing out of review.',vi:'Kiểm duyệt và đối tác nhắn ở đây. Trả lời nhanh giúp tin đăng sớm ra khỏi hàng chờ.'},
-  inboxAbout:{en:'About',vi:'Về tin đăng'},
   inboxQuick:{en:'Quick replies',vi:'Trả lời nhanh'},
   inboxPh:{en:'Write a reply…',vi:'Viết trả lời…'},
   inboxNote:{en:'FeestFinder moderation answers within two working hours.',vi:'Kiểm duyệt FeestFinder trả lời trong 2 giờ làm việc.'},
-  inboxUnread:{en:'Unread',vi:'Chưa đọc'},
   toastCopied:{en:'Event link copied',vi:'Đã chép liên kết sự kiện'},
   toastBoost:{en:'Boost request sent to FeestFinder',vi:'Đã gửi yêu cầu đẩy tin cho FeestFinder'},
   toastExport:{en:'CSV is on its way to your email',vi:'CSV đang được gửi vào email của bạn'},
-  toastReply:{en:'Reply sent to FeestFinder',vi:'Đã gửi trả lời cho FeestFinder'},
   noData:{en:'Nothing to measure until the listing is live.',vi:'Tin chưa lên sóng nên chưa có số liệu.'},
   notifTitle:{en:'Notifications',vi:'Thông báo'},
   notifMarkAll:{en:'Mark all read',vi:'Đánh dấu đã đọc'},
@@ -573,14 +556,6 @@ class Component extends DCLogic {
     return o;
   }
 
-  /** The venue list backs the wizard's autocomplete and its "resolves to a pin" check. */
-  async loadVenues() {
-    if (this._venues) return;
-    this._venues = true;
-    const v = await FF.maybe(FF.get('/venues?limit=60'), null);
-    if (v) { v.items.forEach(x => VENUES.push({ id:x.id, name:x.name, addr:(x.address || '') + (x.area ? ', ' + x.area : '') })); this.forceUpdate(); }
-  }
-
   /** Attendee search and filters run on the server, so they cover all 2,847 rows. */
   searchAttendees(filter) {
     clearTimeout(this._at);
@@ -784,7 +759,6 @@ class Component extends DCLogic {
     const rateOf = (k) => { const c = (est ? est.channels : []).filter(x => x.channel === k)[0]; return c ? c.rate : 0; };
     const rangeWord = { '7d': vi ? '7 ngày' : '7 days', '30d': vi ? '30 ngày' : '30 days', 'all': vi ? 'toàn thời gian' : 'all time' }[st.range];
     const P = (st.perf === null || st.perf === undefined) ? null : EVENTS[st.perf];
-    if (!VENUES.length && st.screen === 'wizard') this.loadVenues();
     const p = P ? P.perf : null;
     const thread = st.threads.filter(t => t.id === st.inboxSel)[0] || st.threads[0];
     const vq = f.venue.trim().toLowerCase();
@@ -928,13 +902,11 @@ class Component extends DCLogic {
           go: () => this.go(n.k) };
       }),
       isDoor: st.authed && st.screen === 'door', isPromos: st.authed && st.screen === 'promos', isMoney: st.authed && st.screen === 'money',
-      unreadCount: st.threads.filter(t => t.unread).length,
 
       notifOpen: st.notifOpen,
       toggleNotif: () => { this.setState(s => ({ notifOpen: !s.notifOpen, push:null })); FF.orgBell(this); },
       closeNotif: () => this.setState({ notifOpen:false }),
       notifUnread: st.notifs.filter(n => n.unread).length,
-      loadNotifs: () => this.refreshNotifs(),
       notifHasUnread: st.notifs.some(n => n.unread),
       bellBg: st.notifs.some(n => n.unread) ? 'rgba(255,135,9,.12)' : 'transparent',
       bellBd: st.notifs.some(n => n.unread) ? 'rgba(255,135,9,.5)' : 'rgba(255,252,225,.19)',
@@ -1080,10 +1052,6 @@ class Component extends DCLogic {
           this.patch('lineup', f.lineup.concat([st.artistDraft.trim()]));
         }
       },
-      setLogoFile: (file) => {
-        if (!file || !/^image\//.test(file.type)) return;
-        this.patch('logo', URL.createObjectURL(file));
-      },
       onLogoPick: async (e) => {
         const fl = e.target.files && e.target.files[0];
         if (!fl) return;
@@ -1132,8 +1100,7 @@ class Component extends DCLogic {
       coverZoneBg: st.coverOver ? 'rgba(171,255,132,.08)' : 'rgba(14,16,15,.6)',
       coverBadge: f.cover ? L.logoUploaded : L.required,
       coverBadgeBg: f.cover ? 'rgba(10,228,72,.16)' : 'rgba(255,135,9,.14)',
-      coverBadgeFg: f.cover ? '#0AE448' : '#FF8709',
-      logo: f.logo, hasLogo: !!f.logo, noLogo: !f.logo,
+      coverBadgeFg: f.cover ? '#0AE448' : '#FF8709', hasLogo: !!f.logo, noLogo: !f.logo,
       logoImg: f.logo ? 'url("' + f.logo + '")' : 'none',
       logoZoneBd: st.logoOver ? '#ABFF84' : (f.logo ? 'rgba(255,252,225,.32)' : 'rgba(255,252,225,.38)'),
       logoZoneBg: st.logoOver ? 'rgba(171,255,132,.08)' : 'rgba(14,16,15,.6)',
@@ -1213,7 +1180,6 @@ class Component extends DCLogic {
       ].map(r => Object.assign({}, r, { edit: () => this.setState({ step:r.step }) })),
 
       previewBrandHost: (f.brandUrl || f.eventUrl || '').replace(/^https?:\/\//,'').replace(/\/$/,'') || (g === 'vi' ? 'Chưa có liên kết' : 'No link yet'),
-      previewEventHost: (f.eventUrl || '').replace(/^https?:\/\//,'').replace(/\/$/,''),
       previewArt: f.cover ? 'url("' + f.cover + '") center/cover no-repeat' : FF.genreArt(f.genre),
       previewName: f.name || (g === 'vi' ? 'Tên sự kiện' : 'Event name'),
       previewGenre: f.genre,
@@ -1312,7 +1278,6 @@ class Component extends DCLogic {
       inboxWho: thread ? FF.text(thread.who, g) : '',
       inboxSubj: thread ? FF.text(thread.subj, g) : '',
       inboxAboutLine: thread ? thread.about : '',
-      inboxNote: ORG.inboxNote ? FF.text(ORG.inboxNote, g) : '',
       inboxMsgs: thread ? thread.msgs.map(m => m.from === 'me' ? {
         text: FF.text(m.text, g), stamp:(vi ? 'Bạn · ' : 'You · ') + m.stamp,
         align:'flex-end', tAlign:'right', radius:'14px 14px 4px 14px',

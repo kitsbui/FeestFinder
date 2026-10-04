@@ -116,7 +116,6 @@ const TRADE_ACCENTED = new RegExp(
 // Typed without accents, "ve" is too common a syllable to search loosely: only right after the
 // verb, and only in text with no accents at all (with accents, "về" is not "vé").
 const TRADE_PLAIN = new RegExp(`${B}(?:ban|pass|nhuong|thanh ly|can mua|mua lai)(?: lai)? ve${E}`, 'iu');
-const stripAccents = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd');
 
 /**
  * Keeps phone numbers out (personal data, and how off-platform ticket deals start), keeps
@@ -141,8 +140,6 @@ export function checkPostText(body: string, team: boolean): string {
 // ---- share links ------------------------------------------------------------------------
 
 export const SHARE_CHANNELS = ['zalo', 'facebook', 'messenger', 'threads', 'x', 'telegram', 'copy', 'native', 'story'] as const;
-export type ShareChannel = (typeof SHARE_CHANNELS)[number];
-
 /** The code a person's share links carry, made the first time they share. */
 export async function refCodeFor(q: Queryable, userId: string): Promise<string> {
   const row = await one<{ ref_code: string | null }>(q, 'select ref_code from users where id = $1', [userId]);

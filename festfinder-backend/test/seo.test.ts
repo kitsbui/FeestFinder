@@ -192,3 +192,30 @@ describe('event pages for search engines and AI assistants', () => {
     assert.doesNotMatch(map, /\/vi\/ho-chi-minh/);
   });
 });
+
+describe('the screens behind a CDN', () => {
+  let env: TestEnv;
+  before(async () => { env = await setup({ config: { serveFrontend: true, env: 'production' } }); });
+  after(async () => { await env.close(); });
+  const get = (url: string) => env.app.inject({ method: 'GET', url });
+
+  it('names every file with the deployment version and keeps those for good', async () => {
+    const shell = await get('/list');
+    assert.equal(shell.headers['cache-control'], 'public, max-age=0, s-maxage=86400', 'the edge keeps the empty shell for the deployment');
+    const v = shell.body.match(/\/ui\/ff-client\.js\?v=([\w-]+)/)?.[1];
+    assert.ok(v, 'the shell loads the client with the version');
+    assert.match(shell.body, new RegExp(`/ui/support\\.js\\?v=${v}" as="script"`), 'the runtime is fetched at once, next to the data');
+    assert.equal((await get(`/pages/web/template.html?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
+    assert.equal((await get('/pages/web/template.html')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
+    assert.equal((await get('/pages/web/template.html?v=old')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
+    assert.match((await get(`/pages/web/template.html?v=${v}`)).body, new RegExp(`/ui/theme\\.css\\?v=${v}`), 'stylesheets in the template carry it too');
+    assert.match((await get('/ui/vendor/phosphor/bold/style.css')).body, new RegExp(`Phosphor-Bold\\.woff2\\?v=${v}`), 'and the fonts they load');
+  });
+
+  it('lets the edge answer for an event page for a minute', async () => {
+    const page = await get('/e/ravo');
+    assert.equal(page.statusCode, 200);
+    assert.equal(page.headers['cache-control'], 'public, max-age=0, s-maxage=60, stale-while-revalidate=600');
+    assert.equal((await get('/e/no-such-event')).headers['cache-control'], 'public, max-age=0', 'a missing page is not kept');
+  });
+});

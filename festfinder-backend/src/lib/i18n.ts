@@ -120,7 +120,6 @@ export const TIER_NAMES: Record<string, Localized> = {
 export const NOTIFICATION_TOPICS = ['saved', 'tickets', 'artists', 'orgs', 'friends', 'weekly', 'sets'] as const;
 export type NotificationTopic = (typeof NOTIFICATION_TOPICS)[number];
 
-export const QUIET_HOURS = { start: '23:00', end: '08:00' };
 export const QUIET_HOURS_RULE = L(
   'Nothing between 23:00 and 08:00 except changes to an event starting today.',
   'Không gửi gì từ 23:00 đến 08:00, trừ thay đổi của sự kiện diễn ra trong ngày.');

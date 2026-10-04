@@ -165,6 +165,12 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
     }
   });
 
+  // Whatever answers a signed-in person, or signs one in, is theirs alone: no shared cache keeps it.
+  app.addHook('onSend', async (req, reply, payload) => {
+    if (!reply.hasHeader('cache-control') && (req.session || reply.hasHeader('set-cookie'))) reply.header('cache-control', 'private, no-store');
+    return payload;
+  });
+
   // Impersonated sessions are read-only, and so is the admin who opened one until they end it.
   app.addHook('preHandler', async (req) => {
     if (!WRITE_METHODS.has(req.method) || !req.session) return;

@@ -20,8 +20,6 @@ const TONES: Record<string, { body: Stop[]; ball: Stop[] }> = {
   culture: { body: [['#FFF1FE', 0], ['#FEC5FB', 0.45], ['#E86FD8', 1.2]], ball: [['#FFF3DF', 0], ['#FFB35C', 0.12], ['#FF8709', 0.3]] },
   brand: { body: [['#DFFFD1', 0], ['#ABFF84', 0.35], ['#0AE448', 0.75], ['#00BAE2', 1.3]], ball: [['#FFFCE1', 0], ['#DFFFD1', 0.12], ['#00BAE2', 0.3]] },
 };
-export const OG_TONES = Object.keys(TONES);
-
 const GENRE_TONE: Record<string, string> = { Festival: 'fest', EDM: 'edm', Indie: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
 export const toneOf = (genre: string | null | undefined) => GENRE_TONE[genre ?? ''] ?? 'brand';
 

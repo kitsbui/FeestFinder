@@ -170,12 +170,6 @@ export async function withJobLock(ctx: Ctx, name: string, fn: () => Promise<unkn
   });
 }
 
-export async function runAllJobsOnce(ctx: Ctx) {
-  const out: Record<string, unknown> = {};
-  for (const [name] of SCHEDULE) out[name] = await jobs[name](ctx);
-  return out;
-}
-
 /**
  * One call of POST /internal/jobs, made every minute by a scheduler outside the process
  * (pg_cron on Supabase). Each job keeps roughly its interval: those under a minute run on

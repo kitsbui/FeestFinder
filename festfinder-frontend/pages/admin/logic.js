@@ -60,7 +60,6 @@ const ISO = (dm, year) => {
   const m = /^(\d{1,2})\D(\d{1,2})$/.exec((dm || '').trim());
   return m ? year + '-' + String(+m[2]).padStart(2, '0') + '-' + String(+m[1]).padStart(2, '0') : null;
 };
-const TABS = { 'Moderation queue':'queue', 'Organizer verification':'verify', 'User reports':'reports', 'Featured shelves':'featured', 'Ads & partners':'ads', 'Insights':'insights', 'Audit log':'audit', 'Appeals':'appeals' };
 
 /* ---- routes ------------------------------------------------------------------
  * /console            moderation queue    /console/ads        ads & partners
@@ -223,8 +222,6 @@ class Component extends DCLogic {
       : s === 'risk' ? b.riskScore - a.riskScore
       : a.waitingMinutes - b.waitingMinutes);
   }
-
-  slaOf(q) { return q && q.sla ? q.sla.state : 'ok'; }
 
   blocked() {
     if (!this.state.imp) return false;

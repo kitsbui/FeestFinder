@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { many, one } from '../db/index.ts';
-import { forbidden, notFound } from '../lib/errors.ts';
+import { forbidden } from '../lib/errors.ts';
 import { fill, L } from '../lib/i18n.ts';
 import { initialsOf } from '../lib/contact.ts';
 import { limit, parse, uuid } from '../lib/validate.ts';

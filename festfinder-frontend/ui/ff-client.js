@@ -7,11 +7,16 @@
  * first frame and every screen, tab and panel has a URL of its own.
  */
 (function () {
+  // The API names this script with its deployment's version (?v=…); everything fetched
+  // below carries the same one, so browsers and the CDN can keep those files for good.
+  const V = document.currentScript ? new URL(document.currentScript.src).searchParams.get('v') : null;
+  const vq = (url) => (V ? url + (url.includes('?') ? '&' : '?') + 'v=' + V : url);
+
   // Keep the raw template hidden and the ground dark while data loads.
   const style = document.createElement('style');
   style.textContent = 'x-dc{display:none!important}html,body{background:#0E100F;margin:0}';
   document.head.appendChild(style);
-  for (const href of ['https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', '/ui/theme.css']) {
+  for (const href of ['https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', vq('/ui/theme.css')]) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
@@ -22,8 +27,8 @@
   // We serve our own copies, so the screens have no third-party dependency at runtime
   // and a strict Content-Security-Policy can stay strict.
   window.__resources = Object.assign({
-    'https://unpkg.com/react@18.3.1/umd/react.production.min.js': '/ui/vendor/react.production.min.js',
-    'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js': '/ui/vendor/react-dom.production.min.js',
+    'https://unpkg.com/react@18.3.1/umd/react.production.min.js': vq('/ui/vendor/react.production.min.js'),
+    'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js': vq('/ui/vendor/react-dom.production.min.js'),
   }, window.__resources);
 
   const FF = (window.FF = { data: {}, session: null, lang: 'en', clockOffset: 0, route: null });
@@ -356,7 +361,8 @@
   };
 
   FF.refreshSession = async function () {
-    FF.session = await FF.maybe(FF.get('/auth/session'), null);
+    const s = await FF.maybe(FF.get('/auth/session?optional=1'), null);
+    FF.session = s && s.user ? s : null;
     return FF.session;
   };
 
@@ -442,9 +448,9 @@
     takeOAuthResult();
     readRoute(opts.base);
 
-    const template = text(dir + 'template.html');
-    const logic = text(dir + 'logic.js');
-    const data = FF.loadScript(dir + 'data.js');
+    const template = text(vq(dir + 'template.html'));
+    const logic = text(vq(dir + 'logic.js'));
+    const data = FF.loadScript(vq(dir + 'data.js'));
 
     try {
       const [health] = await Promise.all([FF.get('/health'), FF.refreshSession(), data]);
@@ -457,7 +463,9 @@
 
     try {
       const [tpl, js] = await Promise.all([template, logic]);
-      document.querySelector('x-dc').innerHTML = tpl;
+      // The runtime reads the template as text. Parsed into the page, its unfilled
+      // {{ bindings }} would be fetched as images and rejected as SVG lengths.
+      Object.defineProperty(document.querySelector('x-dc'), 'innerHTML', { configurable: true, get: () => tpl });
       document.querySelector('script[data-dc-script]').textContent = js;
     } catch (e) {
       console.error('[ff] could not load the screen', e);
@@ -465,7 +473,7 @@
         + 'This screen could not load. Reload the page to try again.</p>';
       return;
     }
-    await FF.loadScript('/ui/support.js');
+    await FF.loadScript(vq('/ui/support.js'));
   };
 
   // Glass that answers the pointer: cards with .ff-spot get --mx/--my where it is, and

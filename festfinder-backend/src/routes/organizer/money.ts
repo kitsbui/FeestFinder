@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
-import { fill, L } from '../../lib/i18n.ts';
+import { L } from '../../lib/i18n.ts';
 import { toCsv } from '../../lib/csv.ts';
 import { addDays, vnDate } from '../../lib/time.ts';
 import { localized, parse, uuid } from '../../lib/validate.ts';

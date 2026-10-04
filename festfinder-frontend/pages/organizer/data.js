@@ -96,7 +96,7 @@ FF.orgDash = (cmp) => FF.once('dash', async () => {
 /** The wizard: venues for the autocomplete, and the draft it edits. */
 FF.orgWizard = (cmp) => FF.once('wizard', async () => {
   const [venues, draft] = await Promise.all([
-    FF.maybe(FF.get('/venues?limit=60'), { items: [] }),
+    FF.maybe(FF.get('/venues?limit=200'), { items: [] }),
     cmp.state.draftId ? FF.maybe(FF.get('/organizer/events/' + cmp.state.draftId), null) : null
   ]);
   cmp.applyVenues(venues.items);

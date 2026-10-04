@@ -6,8 +6,8 @@
  *   organiser  team@ravolution.vn   / ravolution2026
  *   admin      admin@feestfinder.com  / festfinder-admin
  */
-import type { Db, Queryable } from '../../src/db/index.ts';
-import { json, many, one } from '../../src/db/index.ts';
+import type { Db } from '../../src/db/index.ts';
+import { json, one } from '../../src/db/index.ts';
 import { hashPassword } from '../../src/lib/crypto.ts';
 import { L, type Localized } from '../../src/lib/i18n.ts';
 import { addDays, atVn } from '../../src/lib/time.ts';

@@ -80,4 +80,3 @@ export async function eventExtras(q: Queryable, ev: any, viewerId: string | null
   };
 }
 
-export type EventExtras = Awaited<ReturnType<typeof eventExtras>>;

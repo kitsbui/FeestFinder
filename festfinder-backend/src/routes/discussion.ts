@@ -73,8 +73,6 @@ function present(r: any, o: { badges: Map<string, Badge[]>; helped: Set<string>;
   };
 }
 
-export type PresentedPost = ReturnType<typeof present>;
-
 /** Posts with their authors' badges and the viewer's own votes, in a fixed number of queries. */
 async function decorate(q: Queryable, ev: any, rows: any[], viewer: Viewer) {
   const ids = rows.map((r) => r.id);

@@ -304,7 +304,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
   });
 
   app.get('/venues', async (req) => {
-    const { q, limit: max } = parse(z.object({ q: z.string().max(100).optional(), limit: z.coerce.number().int().min(1).max(50).default(5) }), req.query);
+    // The organiser wizard takes the whole verified list for its autocomplete.
+    const { q, limit: max } = parse(z.object({ q: z.string().max(100).optional(), limit: limit(200, 5) }), req.query);
     // Only venues the team has verified are offered; anything else is typed as a new venue and checked in review.
     const rows = await many<any>(ctx.db, 'select id, name, address, area, lat, lng, verified from venues where verified order by name');
     const needle = q ? searchNormalize(q) : '';
@@ -342,14 +343,16 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const today = vnDate(now);
     const shelves = await many<any>(ctx.db,
       `select * from shelves where enabled and (starts_on is null or starts_on <= $1) and (ends_on is null or ends_on >= $1) order by sort`, [today]);
-    const out = [];
-    for (const s of shelves) {
-      const rows = await many<any>(ctx.db,
-        `select ${CARD_COLUMNS} from shelf_items si join events e on e.id = si.event_id join organizers o on o.id = e.organizer_id
-          where si.shelf_id = $1 and e.status = 'live' and not e.held_for_reports and e.ends_at >= $2 order by si.sort`, [s.id, now]);
-      if (rows.length) out.push({ id: s.id, slug: s.slug, name: s.name, items: rows.map((r) => presentCard(r, { now, viewer: null })) });
-    }
-    return { items: out };
+    // Every shelf's events in one query.
+    const rows = shelves.length ? await many<any>(ctx.db,
+      `select si.shelf_id, ${CARD_COLUMNS} from shelf_items si join events e on e.id = si.event_id join organizers o on o.id = e.organizer_id
+        where si.shelf_id = any($1::uuid[]) and e.status = 'live' and not e.held_for_reports and e.ends_at >= $2 order by si.sort`,
+      [shelves.map((s) => s.id), now]) : [];
+    return {
+      items: shelves
+        .map((s) => ({ id: s.id, slug: s.slug, name: s.name, items: rows.filter((r) => r.shelf_id === s.id).map((r) => presentCard(r, { now, viewer: null })) }))
+        .filter((s) => s.items.length),
+    };
   });
 
   /** Anonymous view / ticket-click counters that feed the organiser dashboard. */

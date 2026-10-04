@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 
 function str(name: string, fallback?: string): string {
   const v = process.env[name];
@@ -236,6 +236,3 @@ function deploymentEnvironment(prod: boolean): Config['environment'] {
   return prod ? 'production' : 'staging';
 }
 
-export function randomSecret(): string {
-  return randomBytes(32).toString('base64url');
-}

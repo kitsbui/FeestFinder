@@ -16,7 +16,6 @@ const S = {
   emptyTitle:{en:'Nothing matches yet',vi:'Chưa có gì phù hợp'},
   emptyBody:{en:'Try a wider date range, or clear the price filter.',vi:'Thử mở rộng khoảng ngày, hoặc bỏ bộ lọc giá.'},
   getTickets:{en:'Get tickets',vi:'Mua vé'}, freeEntry:{en:'Free entry',vi:'Vào cửa miễn phí'},
-  mapTitle:{en:'Events near you',vi:'Sự kiện quanh bạn'},
   events:{en:'events',vi:'sự kiện'}, hypedPeople:{en:'people hyped',vi:'người đang hype'},
   tabExplore:{en:'Explore',vi:'Khám phá'}, tabMap:{en:'List',vi:'Danh sách'},
   tabAbout:{en:'About',vi:'Giới thiệu'},
@@ -51,13 +50,10 @@ const S = {
   statFree:{en:'free events',vi:'sự kiện miễn phí'}, statWeekend:{en:'this weekend',vi:'cuối tuần này'},
   statVenues:{en:'venues nearby',vi:'địa điểm quanh bạn'},
   logIn:{en:'Log in',vi:'Đăng nhập'}, signUp:{en:'Sign up',vi:'Đăng ký'}, signOut:{en:'Sign out',vi:'Đăng xuất'},
-  membersOnly:{en:'Members only',vi:'Dành cho thành viên'},
   savedCount:{en:'Saved events',vi:'Sự kiện đã lưu'},
   savedTitle:{en:'Your saved events',vi:'Sự kiện bạn đã lưu'},
   savedExit:{en:'Back to all events',vi:'Xem tất cả sự kiện'},
   savedNone:{en:'Nothing saved yet — tap the heart on any event.',vi:'Chưa lưu sự kiện nào — bấm trái tim trên thẻ sự kiện.'},
-  authGateBody:{en:'Saved events, recommendations picked for your taste and ticket checkout all need an account.',
-    vi:'Sự kiện đã lưu, gợi ý theo gu của bạn và mua vé đều cần có tài khoản.'},
   gateSave:{en:'Log in to save events',vi:'Đăng nhập để lưu sự kiện'},
   gateTickets:{en:'Log in to buy tickets',vi:'Đăng nhập để mua vé'},
   gateOrganizer:{en:'Log in to list your event',vi:'Đăng nhập để đăng sự kiện'},
@@ -67,7 +63,6 @@ const S = {
   withPassword:{en:'Log in with a password',vi:'Đăng nhập bằng mật khẩu'},
   viaGoogle:{en:'Signed in with Google',vi:'Đăng nhập bằng Google'},
   withEmail:{en:'Continue with email',vi:'Tiếp tục với email'},
-  withZalo:{en:'Continue with Zalo number',vi:'Tiếp tục với số Zalo'},
   idTitleEmail:{en:'WHAT\u2019S YOUR EMAIL?',vi:'EMAIL CỦA BẠN?'},
   idTitleZalo:{en:'WHAT\u2019S YOUR ZALO NUMBER?',vi:'SỐ ZALO CỦA BẠN?'},
   idTitleWa:{en:'WHAT\u2019S YOUR WHATSAPP NUMBER?',vi:'SỐ WHATSAPP CỦA BẠN?'},
@@ -98,8 +93,6 @@ const S = {
   loginPassSub:{en:'The password you set when you registered.',vi:'Mật khẩu bạn đã đặt khi đăng ký.'},
   continueCta:{en:'Continue',vi:'Tiếp tục'},
   forgot:{en:'Forgot password?',vi:'Quên mật khẩu?'}, forgotToast:{en:'Reset code sent',vi:'Đã gửi mã đặt lại'},
-  haveAccount:{en:'Already have an account?',vi:'Đã có tài khoản?'},
-  noAccount:{en:'New to FeestFinder?',vi:'Chưa có tài khoản?'},
   viaEmail:{en:'Verified by email',vi:'Đã xác minh qua email'}, viaZalo:{en:'Verified on Zalo',vi:'Đã xác minh qua Zalo'},
   errEmail:{en:'That email doesn\u2019t look right',vi:'Email chưa đúng định dạng'},
   errZalo:{en:'Enter a valid Vietnamese number',vi:'Số điện thoại chưa hợp lệ'},
@@ -177,7 +170,6 @@ const S = {
   lineupTitle:{en:'Lineup',vi:'Dàn nghệ sĩ'},
   gettingThere:{en:'Getting there',vi:'Đường đến'},
   organisedBy:{en:'Organised by',vi:'Tổ chức bởi'},
-  viewOrganiser:{en:'View organiser',vi:'Xem nhà tổ chức'},
   similarTitle:{en:'You might also like',vi:'Có thể bạn cũng thích'},
   factDate:{en:'Date',vi:'Ngày'}, factDoors:{en:'Doors',vi:'Giờ mở cửa'},
   factVenue:{en:'Venue',vi:'Địa điểm'}, factAge:{en:'Age',vi:'Độ tuổi'},
@@ -235,16 +227,9 @@ const S = {
   notifQuiet:{en:'Nothing between 23:00 and 08:00 except changes to an event starting today.',vi:'Không nhắn từ 23:00 đến 08:00, trừ thay đổi của sự kiện diễn ra trong ngày.'},
   notifSaved:{en:'Notification settings saved',vi:'Đã lưu cài đặt thông báo'},
   notifOnLine:{en:'{n} on',vi:'{n} bật'},
-  mapSearchArea:{en:'Search this area',vi:'Tìm trong khu này'},
-  mapClearArea:{en:'Whole city',vi:'Toàn thành phố'},
-  mapZoomIn:{en:'Zoom in',vi:'Phóng to'}, mapZoomOut:{en:'Zoom out',vi:'Thu nhỏ'},
-  mapRecenter:{en:'Back to me',vi:'Về vị trí của tôi'},
-  mapFree:{en:'Free only',vi:'Chỉ miễn phí'},
   done:{en:'Done',vi:'Xong'},
-  unfollowedToast:{en:'Unfollowed {n}',vi:'Đã bỏ theo dõi {n}'},
-  friendsTitle:{en:'Friends',vi:'Bạn bè'}, friendsGoing:{en:'going',vi:'sẽ đi'},
+  unfollowedToast:{en:'Unfollowed {n}',vi:'Đã bỏ theo dõi {n}'}, friendsGoing:{en:'going',vi:'sẽ đi'},
   friendsGoingTitle:{en:'Friends going',vi:'Bạn bè sẽ đi'},
-  friendsFilter:{en:'Friends going',vi:'Có bạn đi'},
   becauseFriends:{en:'Because your friends are going',vi:'Vì bạn bè của bạn sẽ đi'},
   alsoInterested:{en:'is also interested',vi:'cũng đang quan tâm'},
   andOthers:{en:'and {n} others',vi:'và {n} người khác'},
@@ -252,7 +237,6 @@ const S = {
   imGoing:{en:'I\u2019m going',vi:'Tôi sẽ đi'}, youreGoing:{en:'You\u2019re going',vi:'Bạn sẽ đi'},
   goingPrivacy:{en:'Friends can see you are going.',vi:'Bạn bè sẽ thấy bạn sẽ đi.'},
   chat:{en:'Chat',vi:'Nhắn tin'}, follow:{en:'Follow',vi:'Theo dõi'}, followingLabel:{en:'Following',vi:'Đang theo dõi'},
-  inviteFriends:{en:'Invite friends',vi:'Mời bạn bè'},
   inviteTitle:{en:'Invite friends',vi:'Mời bạn bè'},
   inviteSub:{en:'They get the event card in chat with your name on it.',vi:'Họ sẽ nhận thẻ sự kiện trong tin nhắn kèm tên bạn.'},
   inviteSend:{en:'Send invites',vi:'Gửi lời mời'},
@@ -297,8 +281,7 @@ const S = {
   discPinned:{en:'Pinned',vi:'Đã ghim'}, discOfficial:{en:'Organiser’s answer',vi:'BTC trả lời'}, discHidden:{en:'Hidden',vi:'Đang ẩn'},
   discRemoved:{en:'Deleted',vi:'Đã xoá'}, discMore:{en:'{n} more replies',vi:'Thêm {n} trả lời'},
   discEmpty:{en:'Nothing here yet',vi:'Chưa có bài nào'}, discClosed:{en:'Closed for new posts',vi:'Đang đóng'},
-  discSignin:{en:'Sign in to post',vi:'Đăng nhập để đăng bài'}, discVerify:{en:'Confirm your phone to post',vi:'Xác thực SĐT để đăng bài'},
-  discAnySet:{en:'Which set?',vi:'Set nào?'}, discAt:{en:'HH:MM',vi:'HH:MM'},
+  discSignin:{en:'Sign in to post',vi:'Đăng nhập để đăng bài'}, discVerify:{en:'Confirm your phone to post',vi:'Xác thực SĐT để đăng bài'}, discAt:{en:'HH:MM',vi:'HH:MM'},
   discMember:{en:'FeestFinder member',vi:'Thành viên FeestFinder'}, discReported:{en:'Reported · thanks',vi:'Đã báo cáo · cảm ơn bạn'},
   ago0:{en:'just now',vi:'vừa xong'}, agoM:{en:'{n}m',vi:'{n} phút'}, agoH:{en:'{n}h',vi:'{n} giờ'}, agoD:{en:'{n}d',vi:'{n} ngày'},
   shareTitle:{en:'Share',vi:'Chia sẻ'}, shareCopy:{en:'Copy link',vi:'Copy link'}, shareMore:{en:'More',vi:'Khác'},
@@ -971,11 +954,6 @@ class Component extends DCLogic {
   }
   fGoing(id) { return FRIENDS.filter(f => f.going.indexOf(id) >= 0); }
   fInterested(id) { return FRIENDS.filter(f => f.interested.indexOf(id) >= 0); }
-  fView(f) {
-    return { id:f.id, name:f.name, initials: initialsOf(f.name), color:f.color,
-      icon: SRC[f.src].icon, iconColor: SRC[f.src].color, srcLabel: SRC[f.src].label,
-      open: () => this.setState({ friendSheet: f.id }) };
-  }
   proof(id) {
     const g = this.state.lang, L = this.L();
     if (!(this.state.user && this.state.user.social)) return { show:false, faces:[], line:'' };
@@ -1111,10 +1089,9 @@ class Component extends DCLogic {
     };
 
     return {
-      L, langLabel: g === 'vi' ? 'VI' : 'EN',
+      L,
 
       signedIn: !!st.user, signedOut: !st.user,
-      userHandle: st.user ? st.user.handle : '',
       userInitial: st.user ? (st.user.handle.trim().charAt(0) || '?').toUpperCase() : '',
       userVia: st.user ? (st.user.method === 'google' ? L.viaGoogle : st.user.social ? (g === 'vi' ? 'Liên kết với ' : 'Connected with ') + SRC[st.user.social].label : st.user.method === 'email' ? L.viaEmail : st.user.method === 'wa' ? L.viaWa : L.viaZalo) : '',
       savedCount: String(Object.keys(st.saved).filter(k => st.saved[k]).length),
@@ -1128,13 +1105,10 @@ class Component extends DCLogic {
       },
       exitSaved: () => this.refilter({}),
       userName: st.user ? (st.user.name || st.user.handle) : '',
-      userCity: st.user ? st.user.city : '',
       editOpen: st.edit,
       hasPhoto: !!(st.user && st.user.photo), noPhoto: !(st.user && st.user.photo),
-      userPhoto: st.user ? st.user.photo : '',
       photoBg: st.user && st.user.photo ? 'url("' + st.user.photo + '") center/cover no-repeat' : 'rgba(28,29,27,.7)',
-      pPhotoBg: st.pPhoto ? 'url("' + st.pPhoto + '") center/cover no-repeat' : 'rgba(28,29,27,.7)',
-      pPhoto: st.pPhoto, pHasPhoto: !!st.pPhoto, pNoPhoto: !st.pPhoto,
+      pPhotoBg: st.pPhoto ? 'url("' + st.pPhoto + '") center/cover no-repeat' : 'rgba(28,29,27,.7)', pHasPhoto: !!st.pPhoto, pNoPhoto: !st.pPhoto,
       onPhoto: (e) => this.readPhoto(e),
       clearPhoto: () => this.setState({ pPhoto:'', pPhotoFile:null }),
       photoCta: st.pPhoto ? L.changePhoto : L.uploadPhoto,
@@ -1204,7 +1178,6 @@ class Component extends DCLogic {
       authBack: () => this.authBack(),
       authClose: () => this.setState({ auth:null, authErr:'' }),
       stopProp: (e) => e.stopPropagation(),
-      authBackShow: step !== 'method',
       authBackIcon: step !== 'method' ? 'ph-bold ph-arrow-left' : 'ph-bold ph-x',
       pickEmail: () => this.setState({ auth:'id', authMethod:'email', authId:'', authErr:'' }),
       authResend: () => this.say(L.otpResent),
@@ -1255,7 +1228,6 @@ class Component extends DCLogic {
       cxErr: st.cx ? st.cx.err : '', cxErrShow: !!(st.cx && st.cx.err),
       cxSubmit: () => this.cxStep(),
       cxClose: () => this.setState({ cx:null }),
-      connected, notConnected: !!st.user && !connected,
       connectRows: ['google','fb','ig','zalo','wa'].map(k => {
         const on = !!st.user && (st.user.socials || (st.user.social ? [st.user.social] : [])).indexOf(k) >= 0;
         return (on || WAYS[k]) && {
@@ -1265,12 +1237,6 @@ class Component extends DCLogic {
           go: () => this.connectSocial(k)
         };
       }).filter(Boolean),
-      friendsAll: connected ? FRIENDS.map(f => this.fView(f)) : [],
-      friendsOnly: st.friendsOnly, showFriendsFilter: connected,
-      friendsFilterBg: st.friendsOnly ? 'rgba(171,255,132,.14)' : 'transparent',
-      friendsFilterBd: st.friendsOnly ? '#ABFF84' : 'rgba(255,252,225,.19)',
-      friendsFilterFg: st.friendsOnly ? '#FFFCE1' : '#A5A493',
-      toggleFriendsOnly: () => this.setState({ friendsOnly: !st.friendsOnly, mapSel:null }),
       friendRowShow: friendEvents.length > 0,
       friendRow: friendEvents.slice(0, 4).map(e => {
         const fr = this.fGoing(e.id);
@@ -1327,7 +1293,6 @@ class Component extends DCLogic {
       closeChat: () => this.setState({ chatWith:null, chatDraft:'' }),
 
       inviteOpen: !!st.invite,
-      openInvite: () => { if (!connected) return this.say(L.noFriendsBody); this.setState({ invite: st.mapSel || 'x', inviteSel:{} }); },
       closeInvite: () => this.setState({ invite:null, inviteSel:{} }),
       inviteList: FRIENDS.map(f => ({
         name:f.name, initials: initialsOf(f.name), color:f.color,
@@ -1353,7 +1318,6 @@ class Component extends DCLogic {
       },
 
       cityLabel: g === 'vi' ? 'TP.HCM' : 'Ho Chi Minh City',
-      toggleLang: () => this.setLang(g === 'vi' ? 'en' : 'vi'),
       langTabs: [{ k:'vi', label:'VI', name:'Tiếng Việt' }, { k:'en', label:'EN', name:'English' }].map(x => ({
         label: x.label, name: x.name, code: x.k, on: g === x.k,
         bg: g === x.k ? 'rgba(255,252,225,.14)' : 'transparent', fg: g === x.k ? '#FFFCE1' : '#8C8B7D',
@@ -1836,7 +1800,6 @@ class Component extends DCLogic {
         close: () => this.setState({ claimOpen:false })
       },
       shareOpen: st.shareOpen,
-      openShare: () => this.setState({ shareOpen:true }),
       closeShare: () => this.setState({ shareOpen:false }),
       shareTargets: [
         { k:'zalo', label:'Zalo', icon:'ph-fill ph-chat-circle-dots', color:'#2AC4E8' },
@@ -1850,11 +1813,6 @@ class Component extends DCLogic {
       ].map(t => Object.assign({}, t, { go: () => { this.share(t.k); if (t.k !== 'copy') this.setState({ shareOpen:false }); } })),
 
       submitOpen: st.submitOpen,
-      openSubmit: () => {
-        if (!st.user) return this.openAuth('signup', null, L.gateOrganizer);
-        this.setState({ submitOpen:true, submitTab:'new', submitErr:'' });
-        this.loadSubmissions();
-      },
       closeSubmit: () => this.setState({ submitOpen:false }),
       submitTabNew: st.submitTab === 'new', submitTabMine: st.submitTab === 'mine',
       submitTabs: [{ k:'new', label:L.submitNew }, { k:'mine', label:L.submitMine + (st.submissions && st.submissions.length ? ' · ' + st.submissions.length : '') }].map(t => ({
@@ -2188,20 +2146,6 @@ class Component extends DCLogic {
           cards: rows.map(e => Object.assign({}, this.card(e, L), { cityLine: cityName(e.city) + ' · ' + e.area }))
         };
       })(),
-
-      mapSelFriends: sel && connected ? this.fGoing(sel.id).map(f => this.fView(f)) : [],
-      mapSelHasFriends: !!(sel && connected && this.fGoing(sel.id).length),
-      mapSelFriendsLine: sel && connected ? this.fGoing(sel.id).length + ' ' + L.friendsGoing : '',
-      imGoingLabel: sel && st.going[sel.id] ? L.youreGoing : L.imGoing,
-      imGoingBg: sel && st.going[sel.id] ? 'rgba(10,228,72,.16)' : 'transparent',
-      imGoingBd: sel && st.going[sel.id] ? '#0AE448' : 'rgba(255,252,225,.38)',
-      imGoingFg: sel && st.going[sel.id] ? '#0AE448' : '#A5A493',
-      toggleGoing: () => {
-        if (!sel) return;
-        if (!st.user) return this.openAuth('signup', null, L.gateSave);
-        const on = this.toggleFlag('going', '/me/going/', sel.id);
-        this.say(on ? L.youreGoing + ' · ' + L.goingPrivacy : L.imGoing);
-      },
 
       toast: st.toast
     };

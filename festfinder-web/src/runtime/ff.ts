@@ -402,7 +402,8 @@ FF.gate = function gate(opts: GateOptions = {}) {
 };
 
 FF.refreshSession = async function refreshSession() {
-  FF.session = await FF.maybe(FF.get('/auth/session'), null);
+  const s = await FF.maybe(FF.get('/auth/session?optional=1'), null);
+  FF.session = s && s.user ? s : null;
   return FF.session;
 };
 

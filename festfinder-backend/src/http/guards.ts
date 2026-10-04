@@ -26,10 +26,6 @@ export function requireWriter(req: FastifyRequest): UserSession {
   return s;
 }
 
-export function optionalUserId(req: FastifyRequest): string | null {
-  return req.session?.user?.id ?? null;
-}
-
 export function requireAdmin(req: FastifyRequest): UserSession {
   const s = requireUser(req);
   if (s.user.role !== 'admin' || s.impersonatorId) throw forbidden('admin_only', L('Admin account only', 'Chỉ tài khoản admin'));

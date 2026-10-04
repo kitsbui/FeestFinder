@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { Ctx } from '../../context.ts';
 import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
@@ -116,7 +115,7 @@ function missingForPublish(ev: any): string[] {
   return missingForSubmit(ev).filter((m) => m !== 'logo' && m !== 'eventUrl');
 }
 
-async function publishByTeam(ctx: Ctx, q: Queryable, s: UserSession, ev: any, now: Date) {
+async function publishByTeam(q: Queryable, s: UserSession, ev: any, now: Date) {
   await q.query(`update events set status = 'live', published_at = coalesce(published_at, $2), decided_at = $2 where id = $1`, [ev.id, now]);
   await q.query(`insert into moderation_decisions (event_id, decision, decided_by, decided_at) values ($1,'approved',$2,$3)`, [ev.id, s.user.id, now]);
   await appendAudit(q, {
@@ -416,7 +415,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       const ev = await one<any>(q,
         `insert into events (slug, organizer_id, title, status, art, featured, badge) values ($1,$2,$3,'draft',$4,$5,$6) returning id`,
         [`${slugify(title) || 'event'}-${randomCode(4).toLowerCase()}`, org.id, title, org.art ?? ARTS[0], body.featured ?? false, body.badge ?? null]);
-      await applyDraft(ctx, q, ev.id, body);
+      await applyDraft(q, ev.id, body);
       await appendAudit(q, {
         at: now, ...actorOf(s), action: 'listing.created_by_team', targetType: 'event', targetId: ev.id, targetLabel: title,
         diff: [{ f: 'organizer', a: '—', b: org.name }, { f: 'status', a: '—', b: body.publish ? 'live' : 'draft' }],
@@ -425,7 +424,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
         const row = await one<any>(q, 'select * from events where id = $1', [ev.id]);
         const missing = missingForPublish(row);
         if (missing.length) throw badRequest('not_ready', L('Fill in the required fields before publishing', 'Điền đủ thông tin bắt buộc trước khi đăng'), { missing });
-        await publishByTeam(ctx, q, s, row, now);
+        await publishByTeam(q, s, row, now);
       }
       return ev.id as string;
     });
@@ -440,7 +439,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     const changed = await ctx.db.tx(async (q) => {
       const before = await one<any>(q, 'select * from events where id = $1 for update', [id]);
       if (!before) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
-      await applyDraft(ctx, q, id, body);
+      await applyDraft(q, id, body);
       if (body.featured !== undefined || body.badge !== undefined) {
         await q.query('update events set featured = coalesce($2, featured), badge = case when $3::boolean then $4 else badge end where id = $1',
           [id, body.featured ?? null, body.badge !== undefined, body.badge ?? null]);
@@ -516,7 +515,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
         const missing = missingForPublish(ev);
         if (missing.length) throw badRequest('not_ready', L('Fill in the required fields before publishing', 'Điền đủ thông tin bắt buộc trước khi đăng'), { missing });
         if (ev.status === 'in_review') await approveListing(ctx, q, s, id, 'listing.approved');
-        else await publishByTeam(ctx, q, s, ev, now);
+        else await publishByTeam(q, s, ev, now);
         return L('Published', 'Đã đăng');
       }
       if (body.action === 'take_down') {

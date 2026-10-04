@@ -364,7 +364,10 @@ export default async function authRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get('/auth/session', async (req) => {
+  // ?optional=1 answers a visitor who is not signed in with {user: null} instead of a 401,
+  // so a page that only wants to know does not log an error on every load.
+  app.get<{ Querystring: { optional?: string } }>('/auth/session', async (req) => {
+    if (!req.session && req.query.optional === '1') return { user: null };
     const s = requireUser(req);
     const user = await one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]);
     const orgs = await ctx.db.query<any>(

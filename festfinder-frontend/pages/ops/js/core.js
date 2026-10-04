@@ -130,7 +130,8 @@ export function useFetch(path, deps = []) {
 
 export async function refreshSession() {
   try {
-    state.session = await get('/auth/session');
+    const s = await get('/auth/session?optional=1');
+    state.session = s.user ? s : null;
   } catch {
     state.session = null;
   }

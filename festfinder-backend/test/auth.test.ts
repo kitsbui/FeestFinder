@@ -175,6 +175,17 @@ describe('sign-up and sign-in', () => {
     assert.equal(other.location.searchParams.get('auth_error'), 'connection_taken');
   });
 
+  it('tells a page who is signed in without an error for a visitor, and keeps answers private', async () => {
+    const visitor = await env.as().get('/auth/session?optional=1');
+    assert.deepEqual([visitor.status, visitor.body], [200, { user: null }]);
+    assert.equal((await env.as().get('/auth/session')).status, 401, 'without ?optional=1 it still says who is missing');
+    const token = await emailUser(env, 'private.answers@example.com');
+    const mine = await env.as(token).get('/auth/session?optional=1');
+    assert.equal(mine.body.user.email, 'private.answers@example.com');
+    assert.equal(mine.headers['cache-control'], 'private, no-store');
+    assert.equal((await env.as(token).get('/me')).headers['cache-control'], 'private, no-store');
+  });
+
   it('slows down password guessing', async () => {
     for (let i = 0; i < 10; i++) await env.as().post('/auth/login', { identifier: 'team@ravolution.vn', password: `guess-${i}` });
     const blocked = await env.as().post('/auth/login', { identifier: 'team@ravolution.vn', password: 'ravolution2026' });

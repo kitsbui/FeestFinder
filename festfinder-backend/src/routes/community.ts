@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { json, many, one } from '../db/index.ts';
-import { AppError, badRequest, conflict, forbidden, notFound, tooMany } from '../lib/errors.ts';
+import { AppError, badRequest, conflict, notFound, tooMany } from '../lib/errors.ts';
 import { CITY_SLUGS, GENRES, L, REJECT_REASONS, type Localized } from '../lib/i18n.ts';
 import { searchNormalize, slugify } from '../lib/contact.ts';
 import { randomCode, sha256 } from '../lib/crypto.ts';

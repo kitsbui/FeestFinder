@@ -117,8 +117,6 @@ export function presentCard(r: any, o: PresentOpts) {
   };
 }
 
-export type EventCard = ReturnType<typeof presentCard>;
-
 export type TierState = 'onsale' | 'last' | 'soldout' | 'soon';
 
 export const TIER_NOTES: Record<string, Localized> = {

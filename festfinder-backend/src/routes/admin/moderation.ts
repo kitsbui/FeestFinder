@@ -33,7 +33,7 @@ const QUEUE_SQL = `
     from events e join organizers o on o.id = e.organizer_id left join users su on su.id = e.submitted_by
    where e.status = 'in_review'`;
 
-async function actor(q: Queryable, s: UserSession) {
+function actor(s: UserSession) {
   return { actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin' };
 }
 
@@ -47,7 +47,7 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
     [ev.id, action === 'appeal.overturned' ? 'overturned' : 'approved', s.user.id, now]);
   const minutes = ev.submitted_at ? Math.round((now.getTime() - new Date(ev.submitted_at).getTime()) / 60000) : 0;
   await appendAudit(q, {
-    at: now, ...(await actor(q, s)), action, targetType: 'event', targetId: ev.id, targetLabel: ev.title,
+    at: now, ...actor(s), action, targetType: 'event', targetId: ev.id, targetLabel: ev.title,
     diff: [{ f: 'status', a: from, b: 'live' }, ...(action === 'appeal.overturned' ? [] : [{ f: 'decision_time', a: '—', b: `${minutes}m` }]), { f: 'visible_in', a: '—', b: 'Explore · TP.HCM' }, ...extraDiff],
   });
   const hours = Math.max(1, Math.round(minutes / 60));
@@ -196,7 +196,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         });
         await notifySubmitter(q, ev, now, 'rejected', { en: `${reason.label.en}. ${message.en}`, vi: `${reason.label.vi}. ${message.vi}` });
         await appendAudit(q, {
-          at: now, ...(await actor(q, s)), action: 'listing.rejected', targetType: 'event', targetId: id, targetLabel: ev.title,
+          at: now, ...actor(s), action: 'listing.rejected', targetType: 'event', targetId: id, targetLabel: ev.title,
           diff: [{ f: 'status', a: 'in_review', b: 'rejected' }, { f: 'reason_code', a: '—', b: body.code }, { f: 'appeal', a: '—', b: allowAppeal ? 'open 7 days' : 'none' }],
         });
         rejected.push(id);
@@ -247,7 +247,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         title: L('Message from moderation', 'Tin nhắn từ kiểm duyệt'), body: { en: body.slice(0, 140), vi: body.slice(0, 140) },
         cta: L('Open moderation thread', 'Mở thư kiểm duyệt'), link: { screen: 'inbox', threadId },
       });
-      await appendAudit(q, { at: now, ...(await actor(q, s)), action: 'organizer.messaged', targetType: 'event', targetId: ev.id, targetLabel: `${ev.org_name} · ${ev.title}`, diff: null });
+      await appendAudit(q, { at: now, ...actor(s), action: 'organizer.messaged', targetType: 'event', targetId: ev.id, targetLabel: `${ev.org_name} · ${ev.title}`, diff: null });
       return { threadId, id: m.id, createdAt: m.created_at };
     });
     return reply.code(201).send({ ...out, fromAdmin: true, body: { en: body, vi: body } });
@@ -286,7 +286,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
       } else {
         await q.query(`insert into moderation_decisions (event_id, decision, reason_code, decided_by, decided_at) values ($1,'upheld',$2,$3,$4)`, [a.event_id, a.reason_code, s.user.id, now]);
         await appendAudit(q, {
-          at: now, ...(await actor(q, s)), action: 'appeal.upheld', targetType: 'event', targetId: a.event_id, targetLabel: a.title,
+          at: now, ...actor(s), action: 'appeal.upheld', targetType: 'event', targetId: a.event_id, targetLabel: a.title,
           diff: [{ f: 'appeal', a: a.state, b: 'closed_upheld' }, { f: 'reason_code', a: a.reason_code, b: a.reason_code }],
         });
       }
@@ -361,7 +361,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         cta: L('Open moderation thread', 'Mở thư kiểm duyệt'), link: { screen: 'inbox' },
       });
       await appendAudit(q, {
-        at: now, ...(await actor(q, s)), action: 'listing.taken_down', targetType: 'event', targetId: eventId, targetLabel: ev.title,
+        at: now, ...actor(s), action: 'listing.taken_down', targetType: 'event', targetId: eventId, targetLabel: ev.title,
         diff: [{ f: 'status', a: ev.status, b: 'removed' }, ...(code ? [{ f: 'reason_code', a: '—', b: code }] : []), { f: 'reports_open', a: String(open.n), b: '0' }],
       });
       return ev.title;
@@ -387,7 +387,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         link: { screen: 'inbox' },
       });
       await appendAudit(q, {
-        at: now, ...(await actor(q, s)), action: 'organizer.warned', targetType: 'organizer', targetId: ev.organizer_id, targetLabel: ev.org_name,
+        at: now, ...actor(s), action: 'organizer.warned', targetType: 'organizer', targetId: ev.organizer_id, targetLabel: ev.org_name,
         diff: [{ f: 'strikes', a: String(ev.strikes), b: String(next) }, { f: 'next_step', a: '—', b: next >= 3 ? 'suspended' : 'suspension at 3' }],
       });
       return next;
@@ -406,7 +406,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
       const r = await resolveReports(q, eventId, category ?? null, 'dismissed', now);
       if (!r.resolved) throw badRequest('no_open_reports', L('No open reports to dismiss', 'Không có báo cáo nào để bỏ qua'));
       await appendAudit(q, {
-        at: now, ...(await actor(q, s)), action: 'report.dismissed', targetType: 'event', targetId: eventId, targetLabel: ev.title,
+        at: now, ...actor(s), action: 'report.dismissed', targetType: 'event', targetId: eventId, targetLabel: ev.title,
         diff: [{ f: 'reports_open', a: String(r.resolved + r.stillOpen), b: String(r.stillOpen) }],
       });
       return r;

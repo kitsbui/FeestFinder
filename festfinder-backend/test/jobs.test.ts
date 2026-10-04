@@ -64,7 +64,7 @@ describe('background jobs', () => {
     const push = new WebPushTransport(
       { publicKey: 'pub', privateKey: 'priv', subject: 'mailto:t@example.com' },
       async (t) => { await env.ctx.db.query('delete from devices where token = $1', [t]); },
-      { sendNotification: async (sub: any, body: any) => { calls.push(body); throw Object.assign(new Error('Gone'), { statusCode: 410 }); } } as any,
+      { sendNotification: async (_sub: any, body: any) => { calls.push(body); throw Object.assign(new Error('Gone'), { statusCode: 410 }); } } as any,
     );
     const fallback = new ConsoleTransport(() => {});
     const transport = new RoutingTransport({ webPush: push, fallback });

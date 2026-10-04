@@ -84,7 +84,7 @@ export const DraftInput = z.object({
 /** Edits to these on a live listing send it back to review. */
 export const REVIEWED_FIELDS = ['title', 'startsOn', 'endsOn', 'startTime', 'endTime', 'venueId', 'venueName', 'entryMode', 'priceFrom', 'coverUrl'];
 
-export async function applyDraft(ctx: Ctx, q: Queryable, id: string, body: z.infer<typeof DraftInput>) {
+export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof DraftInput>) {
   const set: Record<string, unknown> = {};
   const map: Record<string, string> = {
     title: 'title', genre: 'genre', logoUrl: 'logo_url', coverUrl: 'cover_url', startsOn: 'starts_on', endsOn: 'ends_on',
@@ -231,7 +231,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       const ev = await one<any>(q,
         `insert into events (slug, organizer_id, title, status, art) values ($1,$2,$3,'draft',$4) returning id`,
         [slug, org.organizerId, title, 'linear-gradient(135deg,#8C6BFF,#2AC4E8)']);
-      await applyDraft(ctx, q, ev.id, body);
+      await applyDraft(q, ev.id, body);
       return ev.id as string;
     });
     const ev = await one<any>(ctx.db, 'select * from events where id = $1', [id]);
@@ -266,7 +266,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     if (['removed', 'cancelled'].includes(ev.status)) throw conflict('not_editable', L('This listing can no longer be edited', 'Tin này không còn sửa được'));
     const sendsBack = ev.status === 'live' && REVIEWED_FIELDS.some((f) => (body as any)[f] !== undefined);
     await ctx.db.tx(async (q) => {
-      await applyDraft(ctx, q, ev.id, body);
+      await applyDraft(q, ev.id, body);
       if (sendsBack) {
         await q.query(`update events set status = 'in_review', submitted_at = $2 where id = $1`, [ev.id, ctx.clock.now()]);
         const risk = await assessRisk(q, ev.id, ctx.clock.now());
