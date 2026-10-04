@@ -1341,7 +1341,7 @@ class Component extends DCLogic {
       adEmail: st.adEmail, setAdEmail: (e) => this.setState({ adEmail: e.target.value }),
       adMsg: st.adMsg, setAdMsg: (e) => this.setState({ adMsg: e.target.value }),
       adCats: [
-        { k:'F&B', label:L.adCatFB, icon:'ph-bold ph-cup-hot' },
+        { k:'F&B', label:L.adCatFB, icon:'ph-bold ph-coffee' },
         { k:'Fashion', label:L.adCatFashion, icon:'ph-bold ph-t-shirt' },
         { k:'Healthcare', label:L.adCatHealth, icon:'ph-bold ph-heartbeat' }
       ].map(c => {

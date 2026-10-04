@@ -11,3 +11,6 @@
 # Not part of this deployment.
 festfinder-web
 design_handoff_festfinder
+# The full icon fonts and the script that cuts them; the cut lives in ui/vendor/phosphor.
+festfinder-frontend/vendor-src
+festfinder-frontend/scripts
