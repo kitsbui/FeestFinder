@@ -56,8 +56,8 @@ TEST_DATABASE_URL=postgres://user:pass@localhost:5432/postgres npm test
 
 | Surface | Routes | Sign-in |
 | --- | --- | --- |
-| Web | `/` · `/map` · `/saved` · `/about` · `/advertise` · `/e/:slug` · `/o/:slug` · `/stats/:key` · `/vi/ho-chi-minh/this-weekend` · `/en/ho-chi-minh/this-weekend` (`/city/…` still works) | optional (sign-up sheet in place) |
-| App | `/app` · `/app/saved` · `/app/map` · `/app/profile` · `/app/tickets` · `/app/notifications` · `/app/alerts` · `/app/settings` · `/app/hyped` · `/app/following` · `/app/e/:slug` · `/app/live/:slug` · `/app/plan/:slug` · `/app/recap/:slug` · `/app/guide/:slug` · `/app/checkout/:slug` · `/app/chat/:friendId` | optional |
+| Web | `/` · `/list` · `/saved` · `/about` · `/advertise` · `/e/:slug` · `/o/:slug` · `/stats/:key` (old `/map`, `/vi/…`, `/en/…` and `/city/…` links redirect to `/list`) | optional (Google first) |
+| App | `/app` · `/app/saved` · `/app/list` · `/app/profile` · `/app/tickets` · `/app/notifications` · `/app/alerts` · `/app/settings` · `/app/hyped` · `/app/following` · `/app/e/:slug` · `/app/live/:slug` · `/app/plan/:slug` · `/app/recap/:slug` · `/app/guide/:slug` · `/app/checkout/:slug` · `/app/chat/:friendId` | optional |
 | Organizer | `/studio` · `/studio/new` · `/studio/attendees` · `/studio/announce` · `/studio/door` · `/studio/promos` · `/studio/revenue` · `/studio/inbox` · `/studio/profile` | the design's own sign-in gate |
 | Admin | `/console` · `/console/verification` · `/console/reports` · `/console/featured` · `/console/ads` · `/console/insights` · `/console/audit` · `/console/appeals` | a small sign-in card (the design ships no admin gate) |
 | Ops | Team: `/ops` · `/ops/review/:id?` · `/ops/events` · `/ops/events/new` · `/ops/events/:id` · `/ops/reports` · `/ops/organizers/:id?` · `/ops/venues` · `/ops/featured` · `/ops/users/:id?` · `/ops/orders/:id?` · `/ops/audit` — Organizer: `/ops/org` · `/ops/org/events` · `/ops/org/events/new` · `/ops/org/events/:id` · `/ops/org/inbox/:threadId?` · `/ops/org/profile` | its own sign-in, with "forgot password" for accounts the team opened |

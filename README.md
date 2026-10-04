@@ -23,7 +23,7 @@ npm run dev --prefix festfinder-backend
 
 Then open http://localhost:4000. There are two Supabase projects: **production**, used by the production deployment only, and **staging**, shared by laptops and Vercel previews. Each database is labelled with the environment it serves and the API refuses to start on the other one's, so nothing done while developing reaches real accounts. There is no demo data outside the automated tests: the team signs in on `/ops` with an `ADMIN_EMAIL` account (password set with "Forgot password") and adds organisers, venues and events there.
 
-For the Next.js front — server-rendered event and landing pages, sitemap, the installable app — keep the API running and start it next to it:
+For the Next.js front — server-rendered event and organiser pages, sitemap, the installable app — keep the API running and start it next to it:
 
 ```bash
 npm install --prefix festfinder-web
@@ -37,7 +37,7 @@ Then open http://localhost:3000. It has the same screens and URLs; everything th
 
 | Screen | URL |
 | --- | --- |
-| Web — discovery, event pages, city landings | `/` · `/e/:slug` · `/vi/ho-chi-minh/this-weekend` |
+| Web — discovery, the list, event and organiser pages | `/` · `/list` · `/e/:slug` · `/o/:slug` |
 | App — feed, tickets, group plans, live mode | `/app` |
 | Organizer — listings, attendees, door, revenue | `/studio` |
 | Admin — moderation queue, verification, audit log | `/console` |
