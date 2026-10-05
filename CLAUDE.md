@@ -50,7 +50,7 @@ For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. 
 - **Production data:** there is no demo data and no seed in production, and there must never be a fallback database. Production and staging Supabase projects refuse each other's labels.
 - **Places, time and money:** never hard-code a city, a UTC offset or `₫`. A city comes from `lib/places.ts` (add one there; it is synced to the `cities` table); an event's instants use its city's timezone (`atZone`, `isoIn`); prices are whole units of `events.currency`, shown with `formatMoney` / `FF.money`. FeestFinder checkout and ticket tiers are VND only.
 - **Sources:** ingestion is one more source next to organisers and the community, never a publisher. No adapter for Resident Advisor or Facebook (their terms forbid it); their links are kept as provenance only. New adapters go in `services/ingest/adapters/` and `ADAPTERS`, with fixture tests in `test/ingest.test.ts` (no live requests).
-- **Map:** the map view asks `/events/map` when it opens and on "search this area" only, never on pan. The basemap is a self-hosted PMTiles archive (`MAP_TILES_URL`, optional `MAP_GLYPHS_URL`); without it the map draws the board and the events.
+- **Map:** the map view asks `/events/map` when it opens and on "search this area" only, never on pan. The basemap is two self-hosted PMTiles archives, cut by `festfinder-backend/scripts/build-tiles.sh`: `MAP_OVERVIEW_URL` (the region, zoom 0–7) and `MAP_TILES_URL` (the listed cities, zoom 0–14), plus optional `MAP_GLYPHS_URL`. Without them the map draws the board and the events. Rebuild the tiles after adding a city.
 - **Commits:** commit, push or deploy only when the user asks. A push to `main` is a production deploy.
 
 ## Caching (frontend.ts)

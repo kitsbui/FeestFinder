@@ -6,6 +6,7 @@ import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import type { Ctx } from './context.ts';
 import { loadPlaces } from './lib/places.ts';
+import { mapOrigins } from './routes/frontend.ts';
 import { one } from './db/index.ts';
 import { AppError, readOnlySession } from './lib/errors.ts';
 import { langFrom, type Lang } from './lib/i18n.ts';
@@ -91,7 +92,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
         'font-src': ["'self'", 'data:'],
         'img-src': ["'self'", 'data:', 'blob:', 'https:'],
         // The map's tiles come from wherever the PMTiles archive is kept.
-        'connect-src': ["'self'", ...[ctx.config.map.tilesUrl, ctx.config.map.glyphsUrl].filter((u): u is string => !!u).map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin)],
+        'connect-src': ["'self'", ...mapOrigins(ctx.config.map)],
         'frame-ancestors': ["'none'"],
         'base-uri': ["'self'"],
         'form-action': ["'self'"],

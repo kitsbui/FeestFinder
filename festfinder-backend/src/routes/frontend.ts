@@ -4,6 +4,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import type { Config } from '../config.ts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
 import { GENRES } from '../lib/i18n.ts';
@@ -37,18 +38,25 @@ const SURFACES = [
  * inline, which is what keeps an injected script out. Every other response keeps the
  * strict policy set in app.ts.
  */
-export const DESIGN_RUNTIME_CSP = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-eval'",
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self' data:",
-  "img-src 'self' data: blob: https:",
-  "connect-src 'self'",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "object-src 'none'",
-].join('; ');
+export function designRuntimeCsp(map: Config['map']): string {
+  return [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
+    "img-src 'self' data: blob: https:",
+    ['connect-src', "'self'", ...mapOrigins(map)].join(' '),
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+  ].join('; ');
+}
+
+/** The hosts the map's tiles and glyphs come from, for connect-src. */
+export function mapOrigins(map: Config['map']): string[] {
+  return [...new Set([map.tilesUrl, map.overviewUrl, map.glyphsUrl].filter((u): u is string => !!u).map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin))];
+}
 
 /** Where the old entry points went. */
 const MOVED: Record<string, string> = { '/organizer': '/studio', '/admin': '/console' };
@@ -137,6 +145,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
     return;
   }
   const dev = app.ctx.config.env !== 'production';
+  const csp = designRuntimeCsp(app.ctx.config.map);
   const cache = new Map<string, Cached & { mtime: number }>();
   // Outside development every file is fetched with the deployment's version and kept for good.
   const version = dev ? '' : await versionOf(dir);
@@ -185,7 +194,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
     app.get<{ Params: { slug: string }; Querystring: { lang?: string } }>(route, async (req, reply) => {
       const entry = await load(join(dir, 'pages/web/shell.html'));
       if (!entry) throw notFound();
-      reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
+      reply.header('content-security-policy', csp);
       const lang = req.query?.lang === 'en' ? 'en' : 'vi';
       const seo = await build(req.params.slug, lang).catch((e) => { app.ctx.log(`${route} ${req.params.slug}: ${e}`); return null; });
       if (!seo) return serve(req, reply.code(404), entry, 'none');
@@ -213,7 +222,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
       app.get(route, async (req, reply) => {
         const entry = await load(shell);
         if (!entry) throw notFound();
-        if (!('strict' in surface)) reply.header('content-security-policy', DESIGN_RUNTIME_CSP);
+        if (!('strict' in surface)) reply.header('content-security-policy', csp);
         // The shell carries no data of its own, so the edge may keep it for the deployment.
         return serve(req, reply, entry, 'shell');
       });

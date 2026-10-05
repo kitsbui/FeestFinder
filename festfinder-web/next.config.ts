@@ -6,9 +6,9 @@ const API = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
 const dev = process.env.NODE_ENV !== 'production';
 
 /** Where the map's PMTiles archive and glyphs live (the API's MAP_TILES_URL / MAP_GLYPHS_URL). */
-const MAP_ORIGINS = [process.env.MAP_TILES_URL, process.env.MAP_GLYPHS_URL]
-  .filter((u): u is string => !!u && /^https:\/\//.test(u))
-  .map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin);
+const MAP_ORIGINS = [...new Set([process.env.MAP_TILES_URL, process.env.MAP_OVERVIEW_URL, process.env.MAP_GLYPHS_URL]
+  .filter((u): u is string => !!u && /^https?:\/\//.test(u))
+  .map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin))];
 
 /**
  * The screens are compiled to React, so unlike the design runtime nothing is evaluated

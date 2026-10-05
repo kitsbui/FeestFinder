@@ -462,36 +462,44 @@ export default async function catalogRoutes(app: FastifyInstance) {
 
 const CHALK = 'rgba(255,252,225,';
 
-/** A MapLibre style for a Protomaps basemap, or the plain board when there is none. */
-export function mapStyle(map: { tilesUrl: string | null; glyphsUrl: string | null }) {
+/**
+ * A MapLibre style for Protomaps basemaps, or the plain board when there is none. The
+ * overview archive (the region at low zoom) draws underneath up to zoom 8; the detail
+ * archive (the listed cities) draws on top at every zoom. The two are styled the same,
+ * so where both have a tile nobody can tell.
+ */
+export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | null; glyphsUrl: string | null }) {
   const layers: Record<string, unknown>[] = [{ id: 'board', type: 'background', paint: { 'background-color': '#0E100F' } }];
-  if (!map.tilesUrl) return { version: 8, name: 'FeestFinder board', sources: {}, layers };
-  const src = 'basemap';
-  const line = (id: string, filter: unknown[], color: string, width: unknown[], minzoom = 0, extra: Record<string, unknown> = {}) =>
-    ({ id, type: 'line', source: src, 'source-layer': 'roads', minzoom, filter, paint: { 'line-color': color, 'line-width': width, ...extra } });
-  layers.push(
-    { id: 'earth', type: 'fill', source: src, 'source-layer': 'earth', paint: { 'fill-color': '#151714' } },
-    { id: 'parks', type: 'fill', source: src, 'source-layer': 'landuse', filter: ['in', ['get', 'kind'], ['literal', ['park', 'nature_reserve', 'forest', 'wood', 'golf_course']]], paint: { 'fill-color': '#181b17' } },
-    { id: 'water', type: 'fill', source: src, 'source-layer': 'water', paint: { 'fill-color': '#0A0F10' } },
-    { id: 'buildings', type: 'fill', source: src, 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': `${CHALK}0.035)` } },
-    line('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${CHALK}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12),
-    line('roads-major', ['==', ['get', 'kind'], 'major_road'], `${CHALK}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 7),
-    line('roads-highway', ['==', ['get', 'kind'], 'highway'], `${CHALK}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 5),
-    { id: 'borders', type: 'line', source: src, 'source-layer': 'boundaries', filter: ['<=', ['get', 'kind_detail'], 2],
-      paint: { 'line-color': `${CHALK}0.28)`, 'line-width': 0.8, 'line-dasharray': [3, 2] } },
-  );
+  const sources: Record<string, unknown> = {};
+  const attribution = '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>';
+  const archives = [map.overviewUrl ? { src: 'overview', url: map.overviewUrl, maxzoom: map.tilesUrl ? 8 : undefined } : null,
+    map.tilesUrl ? { src: 'detail', url: map.tilesUrl, maxzoom: undefined } : null].filter((a): a is NonNullable<typeof a> => !!a);
+  if (!archives.length) return { version: 8, name: 'FeestFinder board', sources, layers };
+  for (const a of archives) {
+    sources[a.src] = { type: 'vector', url: `pmtiles://${a.url}`, attribution };
+    const z = a.maxzoom ? { maxzoom: a.maxzoom } : {};
+    const layer = (id: string, def: Record<string, unknown>) => layers.push({ id: `${a.src}-${id}`, source: a.src, ...z, ...def });
+    const road = (id: string, filter: unknown[], color: string, width: unknown[], minzoom: number) =>
+      layer(id, { type: 'line', 'source-layer': 'roads', minzoom, filter, paint: { 'line-color': color, 'line-width': width } });
+    layer('earth', { type: 'fill', 'source-layer': 'earth', paint: { 'fill-color': '#151714' } });
+    layer('parks', { type: 'fill', 'source-layer': 'landuse', filter: ['in', ['get', 'kind'], ['literal', ['park', 'nature_reserve', 'forest', 'wood', 'golf_course']]], paint: { 'fill-color': '#181b17' } });
+    layer('water', { type: 'fill', 'source-layer': 'water', paint: { 'fill-color': '#0A0F10' } });
+    layer('buildings', { type: 'fill', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': `${CHALK}0.035)` } });
+    road('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${CHALK}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12);
+    road('roads-major', ['==', ['get', 'kind'], 'major_road'], `${CHALK}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 7);
+    road('roads-highway', ['==', ['get', 'kind'], 'highway'], `${CHALK}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 5);
+    layer('borders', { type: 'line', 'source-layer': 'boundaries', filter: ['<=', ['get', 'kind_detail'], 2],
+      paint: { 'line-color': `${CHALK}0.28)`, 'line-width': 0.8, 'line-dasharray': [3, 2] } });
+  }
   if (map.glyphsUrl) {
+    // Place names from the most detailed archive, in Vietnamese or English where the map has them.
+    const src = archives[archives.length - 1].src;
     layers.push({
       id: 'places', type: 'symbol', source: src, 'source-layer': 'places',
       filter: ['in', ['get', 'kind'], ['literal', ['country', 'region', 'locality']]],
-      layout: { 'text-field': ['coalesce', ['get', 'name:vi'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 10, 14], 'symbol-sort-key': ['get', 'min_zoom'] },
+      layout: { 'text-field': ['coalesce', ['get', 'name:vi'], ['get', 'name:en'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 10, 14], 'symbol-sort-key': ['get', 'min_zoom'] },
       paint: { 'text-color': '#A5A493', 'text-halo-color': '#0E100F', 'text-halo-width': 1.4 },
     });
   }
-  return {
-    version: 8, name: 'FeestFinder Bảng phấn',
-    ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}),
-    sources: { [src]: { type: 'vector', url: `pmtiles://${map.tilesUrl}`, attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>' } },
-    layers,
-  };
+  return { version: 8, name: 'FeestFinder Bảng phấn', ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}), sources, layers };
 }
