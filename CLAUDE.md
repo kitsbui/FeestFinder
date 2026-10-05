@@ -1,6 +1,6 @@
 # FeestFinder: notes for coding agents
 
-Event discovery for Ho Chi Minh City. Vietnamese first, bilingual everywhere. Live at https://feestfinder.com. The brand is spelled FeestFinder; code names, packages and folders keep `festfinder`.
+Event discovery for Vietnam and Asia (HCMC, Hà Nội, Đà Nẵng, Nha Trang, Bangkok, Tokyo, Singapore, Bali). Vietnamese first, bilingual everywhere. Live at https://feestfinder.com. The brand is spelled FeestFinder; code names, packages and folders keep `festfinder`.
 
 ## Where things are
 
@@ -9,16 +9,18 @@ Event discovery for Ho Chi Minh City. Vietnamese first, bilingual everywhere. Li
 | `festfinder-backend/` | The API and the production server: Node 24, TypeScript run directly (no build step), Fastify, Postgres on Supabase. It also serves the screens below. |
 | `festfinder-backend/src/routes/` | One file per area. `admin/*` serves the team, `organizer/*` the organisers' back office, `frontend.ts` serves the screens and their caching, `seo.ts` serves robots, the sitemap, llms.txt and OG images. |
 | `festfinder-backend/src/services/` | Logic shared by routes: `seo.ts` (one builder for every page's SEO/AIO), `oauth.ts`, `notify.ts`, `messaging.ts`, `tickets.ts`, `resale.ts`… |
-| `festfinder-backend/src/lib/` | `i18n.ts` (`L(en, vi)`, genres, cities), `errors.ts` (`badRequest`, `conflict`, `notFound`…), `validate.ts` (`parse`, `limit`, `csv`), `time.ts`, `format.ts`. |
-| `festfinder-backend/src/db/migrations/` | Numbered SQL files, applied on boot. The next one is `015_*.sql`. Never edit a migration that has shipped. |
+| `festfinder-backend/src/services/ingest/` | Event intelligence: `adapters/` (website JSON-LD, ICS, Ticketmaster), `normalize.ts`, `resolve.ts` (deterministic dedupe), `confidence.ts` (rules + freshness), `run.ts` (the pipeline), `fetch.ts` (robots.txt, per-host spacing). Imports never publish: they merge into an event or wait in the review queue. |
+| `festfinder-backend/src/lib/` | `i18n.ts` (`L(en, vi)`, genres), `places.ts` (countries and cities with timezone, currency, bounds; synced to the tables after every migration), `styles.ts` (music styles, event types, classifier), `money.ts`, `errors.ts`, `validate.ts` (`parse`, `limit`, `csv`), `time.ts` (`atZone`, `dateIn`, `isoIn` for event times; the `vn*` helpers for back-office dates), `format.ts`. |
+| `festfinder-backend/src/db/migrations/` | Numbered SQL files, applied on boot. The next one is `017_*.sql`. Never edit a migration that has shipped. |
 | `festfinder-backend/test/` | `node --test` on PGlite in memory. `helpers.ts` has `setup()`, `people.ts` has `emailUser()`, and `fixtures/seed.ts` is the demo data. Demo data exists only in the tests. |
 | `festfinder-backend/e2e/` | Playwright. `screens.spec.ts` runs against both fronts; `next/` holds checks that only apply to Next. |
 | `festfinder-frontend/pages/<surface>/` | The four screens built from the Claude Design handoff: `web`, `app`, `organizer` (URL `/studio`), `admin` (URL `/console`). Each has `template.html` (markup with `{{ bindings }}`), `logic.js` (one class with a `renderVals()` that returns every binding), `data.js` (API loaders) and `shell.html`. |
 | `festfinder-frontend/pages/ops/` | `/ops`, the working back office: plain ES modules on vendored React (`js/core.js`, `js/ui.js`, `js/team/*`, `js/org/*`). It does not use the design runtime. |
-| `festfinder-frontend/ui/` | `ff-client.js` (the `FF` runtime: API calls, routing, session, OAuth return, mount), `theme.css` (the "Bảng phấn" Chalkboard look), `support.js` (**generated** design runtime; do not edit), `fonts/` (Be Vietnam Pro, served from this site; no Google Fonts request, and the CSP allows none), and `vendor/` (React, and the Phosphor icons cut to the ones in use). |
+| `festfinder-frontend/ui/` | `ff-client.js` (the `FF` runtime: API calls, routing, session, OAuth return, mount), `theme.css` (the "Bảng phấn" Chalkboard look), `support.js` (**generated** design runtime; do not edit), `fonts/` (Be Vietnam Pro, served from this site; no Google Fonts request, and the CSP allows none), `map/ff-map.js` (the map, shared by both fronts, loaded by `FF.loadMap()`), and `vendor/` (React, MapLibre + pmtiles, and the Phosphor icons cut to the ones in use). |
 | `festfinder-frontend/vendor-src/`, `scripts/` | The full Phosphor fonts and `subset-icons.py`, which cuts them. Neither is deployed. |
 | `festfinder-web/` | The same screens on Next.js 16. `scripts/compile-screens.ts` turns each `template.html` into `src/screens/*/view.tsx` (generated, gitignored); `logic.js` and `data.js` are shared as they are. `src/runtime/ff.ts` mirrors `ui/ff-client.js`. Production does not run this front; keep it working and tested anyway. |
 | `design_handoff_festfinder/` | The original handoff. Reference only; never edit it. |
+| `docs/` | `CURRENT_ARCHITECTURE.md`, `TECH_DEBT.md`, `FEESTFINDER_IMPLEMENTATION_PLAN.md` (the event-intelligence plan and the decisions behind it) and `FEESTFINDER_ROADMAP.md`. Update the roadmap with the work. |
 
 ## Commands
 
@@ -46,6 +48,9 @@ For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. 
 - **Validation:** validate input with zod through `parse()`. Throw `AppError` helpers so the error reaches the client as `{error: {code, message}}`. Build SQL only with positional parameters (`$1` or `SqlParams.p()`). Interpolate column names only from fixed lists.
 - **Sign-in:** Google first. OAuth comes back through `/auth/oauth/:provider/return`, which redirects with `?auth=…&via=…` or `?auth_error=…`. `GET /auth/providers` says which ways in are configured, and the sign-in card shows only those. `GET /auth/session?optional=1` answers `{user: null}` instead of a 401.
 - **Production data:** there is no demo data and no seed in production, and there must never be a fallback database. Production and staging Supabase projects refuse each other's labels.
+- **Places, time and money:** never hard-code a city, a UTC offset or `₫`. A city comes from `lib/places.ts` (add one there; it is synced to the `cities` table); an event's instants use its city's timezone (`atZone`, `isoIn`); prices are whole units of `events.currency`, shown with `formatMoney` / `FF.money`. FeestFinder checkout and ticket tiers are VND only.
+- **Sources:** ingestion is one more source next to organisers and the community, never a publisher. No adapter for Resident Advisor or Facebook (their terms forbid it); their links are kept as provenance only. New adapters go in `services/ingest/adapters/` and `ADAPTERS`, with fixture tests in `test/ingest.test.ts` (no live requests).
+- **Map:** the map view asks `/events/map` when it opens and on "search this area" only, never on pan. The basemap is a self-hosted PMTiles archive (`MAP_TILES_URL`, optional `MAP_GLYPHS_URL`); without it the map draws the board and the events.
 - **Commits:** commit, push or deploy only when the user asks. A push to `main` is a production deploy.
 
 ## Caching (frontend.ts)
