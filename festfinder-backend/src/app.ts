@@ -5,6 +5,7 @@ import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import type { Ctx } from './context.ts';
+import { loadPlaces } from './lib/places.ts';
 import { one } from './db/index.ts';
 import { AppError, readOnlySession } from './lib/errors.ts';
 import { langFrom, type Lang } from './lib/i18n.ts';
@@ -31,6 +32,7 @@ import adminModerationRoutes from './routes/admin/moderation.ts';
 import adminCatalogRoutes from './routes/admin/catalog.ts';
 import adminPlatformRoutes from './routes/admin/platform.ts';
 import adminOpsRoutes from './routes/admin/ops.ts';
+import adminIngestRoutes from './routes/admin/ingest.ts';
 import devConsoleRoutes from './routes/dev-console.ts';
 import internalRoutes from './routes/internal.ts';
 import discussionRoutes from './routes/discussion.ts';
@@ -65,6 +67,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
     bodyLimit: 1024 * 1024,
   });
 
+  // Cities, their timezones and currencies, read once from the database.
+  await loadPlaces(ctx.db);
   app.decorate('ctx', ctx);
   app.decorateRequest('session', null);
   app.decorateRequest('lang', 'vi');
@@ -86,7 +90,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
         'style-src': ["'self'", "'unsafe-inline'"],
         'font-src': ["'self'", 'data:'],
         'img-src': ["'self'", 'data:', 'blob:', 'https:'],
-        'connect-src': ["'self'"],
+        // The map's tiles come from wherever the PMTiles archive is kept.
+        'connect-src': ["'self'", ...[ctx.config.map.tilesUrl, ctx.config.map.glyphsUrl].filter((u): u is string => !!u).map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin)],
         'frame-ancestors': ["'none'"],
         'base-uri': ["'self'"],
         'form-action': ["'self'"],
@@ -230,6 +235,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(adminCatalogRoutes);
   await app.register(adminPlatformRoutes);
   await app.register(adminOpsRoutes);
+  await app.register(adminIngestRoutes);
   await app.register(devConsoleRoutes);
   await app.register(internalRoutes);
   await app.register(discussionRoutes);

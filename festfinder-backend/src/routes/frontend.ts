@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
-import { CITY_SLUGS, GENRES } from '../lib/i18n.ts';
+import { GENRES } from '../lib/i18n.ts';
+import { isCity } from '../lib/places.ts';
 import { slugify } from '../lib/contact.ts';
 import { buildCollectionSeo, buildEventSeo, buildOrganizerSeo, collectionSsr, eventSsr, organizerSsr, seoHead, type PageSeo } from '../services/seo.ts';
 
@@ -55,6 +56,7 @@ const MOVED: Record<string, string> = { '/organizer': '/studio', '/admin': '/con
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -69,7 +71,7 @@ const MIME: Record<string, string> = {
 /** Where an old landing page's filters point on the list. */
 export function legacyListPath(prefix: string, city: string, facets: string): string {
   const q = new URLSearchParams();
-  if ((CITY_SLUGS as readonly string[]).includes(city)) q.set('city', city);
+  if (isCity(city)) q.set('city', city);
   const time: Record<string, string> = { tonight: 'tonight', 'this-weekend': 'weekend', 'next-7-days': '7days', 'this-month': 'month' };
   for (const f of facets.split('/').map((x) => x.toLowerCase()).filter(Boolean)) {
     const genre = f === 'night-market' ? 'Food' : GENRES.find((g) => slugify(g) === f);
@@ -81,7 +83,7 @@ export function legacyListPath(prefix: string, city: string, facets: string): st
   return '/list' + (qs ? `?${qs}` : '');
 }
 
-const COMPRESS = new Set(['.html', '.js', '.css', '.json', '.svg', '.md']);
+const COMPRESS = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.md']);
 
 type Cached = { etag: string; body: Buffer; gzip?: Buffer; type: string };
 
@@ -228,7 +230,8 @@ export default async function frontendRoutes(app: FastifyInstance) {
   }
 
   // The map became the list; old links and bookmarks land on it.
-  app.get('/map', async (_req, reply) => reply.redirect('/list', 301));
+  // The map is a view of the list.
+  app.get('/map', async (_req, reply) => reply.redirect('/list?view=map', 302));
   app.get('/app/map', async (_req, reply) => reply.redirect('/app/list', 301));
 
   // The city landing pages (/vi/ho-chi-minh/edm/this-weekend…) are gone: each event page now

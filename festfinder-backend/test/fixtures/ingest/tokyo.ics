@@ -1,0 +1,30 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Contact Tokyo//EN
+X-WR-TIMEZONE:Asia/Tokyo
+BEGIN:VEVENT
+UID:contact-2026-10-24@contact-tokyo.example
+DTSTART;TZID=Asia/Tokyo:20261024T230000
+DTEND;TZID=Asia/Tokyo:20261025T050000
+SUMMARY:Contact All Night Long: Techno & House
+LOCATION:Contact Tokyo\, 2-10-12 Dogenzaka\, Shibuya\, Tokyo
+GEO:35.6580;139.6960
+URL:https://contact-tokyo.example/events/1024
+CATEGORIES:Techno,House
+DESCRIPTION:An all night long set with a description long enough that the cale
+ ndar folded it.\nDoors 23:00.
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:contact-2026-10-31@contact-tokyo.example
+DTSTART:20261031T130000Z
+DTEND:20261031T200000Z
+SUMMARY:Halloween Rave
+LOCATION:Contact Tokyo\, Shibuya\, Tokyo
+STATUS:CANCELLED
+END:VEVENT
+END:VCALENDAR

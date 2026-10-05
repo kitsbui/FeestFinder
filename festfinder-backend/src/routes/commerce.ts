@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { CHECKOUT_CURRENCY } from '../lib/money.ts';
 import type { Ctx } from '../context.ts';
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
@@ -28,8 +29,10 @@ const CheckoutInput = z.object({
 /** Prices a basket. Throws the same errors checkout would, so the sheet can show them early. */
 async function quote(ctx: Ctx, q: Queryable, input: z.infer<typeof CheckoutInput>) {
   const now = ctx.clock.now();
-  const ev = await one<any>(q, `select id, slug, title, status, entry_mode, ends_at, starts_on, start_time, end_time, venue_name from events where id = $1`, [input.eventId]);
+  const ev = await one<any>(q, `select id, slug, title, status, entry_mode, ends_at, starts_on, start_time, end_time, venue_name, currency from events where id = $1`, [input.eventId]);
   if (!ev || ev.status !== 'live') throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
+  // FeestFinder takes payment in đồng only; elsewhere the event links to its own ticket seller.
+  if (ev.currency !== CHECKOUT_CURRENCY) throw badRequest('checkout_unavailable', L('Tickets for this event are sold on its own site', 'Vé sự kiện này được bán trên trang của sự kiện'));
   if (new Date(ev.ends_at) < now) throw badRequest('event_ended', L('This event has ended', 'Sự kiện đã kết thúc'));
   if (ev.entry_mode !== 'paid') throw badRequest('no_tickets_needed', L('No ticket needed — entry is free', 'Không cần vé — vào cửa miễn phí'));
   const tier = await one<any>(q, 'select * from ticket_tiers where id = $1 and event_id = $2', [input.tierId, input.eventId]);

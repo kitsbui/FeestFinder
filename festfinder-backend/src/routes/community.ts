@@ -2,14 +2,16 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { json, many, one } from '../db/index.ts';
 import { AppError, badRequest, conflict, notFound, tooMany } from '../lib/errors.ts';
-import { CITY_SLUGS, GENRES, L, REJECT_REASONS, type Localized } from '../lib/i18n.ts';
-import { searchNormalize, slugify } from '../lib/contact.ts';
+import { GENRES, L, REJECT_REASONS, type Localized } from '../lib/i18n.ts';
+import { DEFAULT_CITY, launchedCity } from '../lib/places.ts';
+import { slugify } from '../lib/contact.ts';
 import { randomCode, sha256 } from '../lib/crypto.ts';
 import { dateStr, imageUrl, parse, timeStr, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireOrganizer, requireOwnEvent, requireUser, requireWriter } from '../http/guards.ts';
 import { appendAudit } from '../services/audit.ts';
 import { refreshDerived } from '../services/events.ts';
 import { assessRisk } from '../services/risk.ts';
+import { findSimilar } from '../services/ingest/resolve.ts';
 import { communityOrganizerId, nameOf, refCodeFor, SHARE_CHANNELS } from '../services/community.ts';
 import { imageInfo } from '../lib/image.ts';
 import { vnDate } from '../lib/time.ts';
@@ -33,7 +35,7 @@ const SubmissionInput = z.object({
   venueName: z.string().trim().min(2).max(160),
   address: z.string().trim().max(240).default(''),
   area: z.string().trim().max(60).default(''),
-  city: z.enum(CITY_SLUGS).default('ho-chi-minh'),
+  city: launchedCity.default(DEFAULT_CITY),
   entryMode: z.enum(['free', 'paid']),
   priceFrom: z.number().int().min(0).max(100_000_000).default(0),
   ticketUrl: z.string().url().max(500).optional(),
@@ -80,13 +82,14 @@ export default async function communityRoutes(app: FastifyInstance) {
           b.startsOn, b.endsOn ?? b.startsOn, b.startTime, b.endTime, b.entryMode, b.entryMode === 'free' ? 0 : b.priceFrom,
           b.ticketUrl ?? null, b.sourceUrl, b.lineup, b.coverUrl ?? null, 'linear-gradient(135deg,#0AE448,#ABFF84)', now, b.city]);
       await q.query(`update events set ticket_link_status = case when ticket_url is null then null else 'unchecked' end where id = $1`, [ev.id]);
-      await refreshDerived(q, ev.id);
+      await refreshDerived(q, ev.id, now);
       const risk = await assessRisk(q, ev.id, now);
-      // Something with the same name on the same day is probably already listed.
-      const dup = await one<any>(q,
-        `select id, title from events where id <> $1 and status in ('live', 'in_review') and starts_on = $2 and search_text like '%' || $3 || '%' limit 1`,
-        [ev.id, b.startsOn, searchNormalize(b.title).split(' ').slice(0, 3).join(' ')]);
-      const signals = [...risk.signals, ...(dup ? [{ ok: false, label: L(`Maybe a duplicate of “${dup.title}”`, `Có thể trùng “${dup.title}”`) }] : [])];
+      // The same matching rules as imported events: title, venue, date, time, artists, pin.
+      const dup = await findSimilar(q, {
+        title: b.title, startsOn: b.startsOn, startTime: b.startTime, city: b.city, venueId: venue?.id ?? null,
+        venueName: venue?.name ?? b.venueName, lat: venue?.lat ?? null, lng: venue?.lng ?? null, lineup: b.lineup,
+      }, { excludeId: ev.id });
+      const signals = [...(dup ? [{ ok: false, label: L(`Maybe a duplicate of “${dup.title}” (${dup.reason})`, `Có thể trùng “${dup.title}” (${dup.reason})`) }] : []), ...risk.signals];
       await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
         [ev.id, risk.score, json(risk.factors), json(signals.slice(0, 3)), dup ? 'duplicate' : risk.flag]);
       await appendAudit(q, {

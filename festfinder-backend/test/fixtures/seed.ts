@@ -300,7 +300,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
           status === 'live' ? hours(24 * 30) : null, null, null,
           slug === 'edm-beach-bus' ? 'broken' : e.ticketUrl && status === 'in_review' ? 'ok' : null, hours(24 * 40)]);
       ids.event[slug] = row.id;
-      await refreshDerived(q, row.id);
+      await refreshDerived(q, row.id, now);
     }
     await q.query('update events set previous_edition_id = $1 where id = $2', [ids.event['ravo-2025'], ids.event.ravo]);
     const submitted: Record<string, number> = { 'neon-rooftop-session': 2.6, 'underground-techno-w12': 3.7, 'acoustic-sunset-bside': 1.1, 'edm-beach-bus': 5.3, 'ravo-after-hours': 2 };

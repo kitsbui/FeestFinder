@@ -10,6 +10,8 @@ import { parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { appendAudit, type DiffRow } from '../../services/audit.ts';
 import { announceNewListing } from '../../services/listing.ts';
+import { cityOf } from '../../lib/places.ts';
+import { refreshConfidence } from '../../services/ingest/confidence.ts';
 import { notifyOrganizer } from '../../services/notify.ts';
 import { assessRisk, riskBand, SLA_HOURS } from '../../services/risk.ts';
 import { moderationThread } from '../organizer/inbox.ts';
@@ -48,16 +50,17 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
   const minutes = ev.submitted_at ? Math.round((now.getTime() - new Date(ev.submitted_at).getTime()) / 60000) : 0;
   await appendAudit(q, {
     at: now, ...actor(s), action, targetType: 'event', targetId: ev.id, targetLabel: ev.title,
-    diff: [{ f: 'status', a: from, b: 'live' }, ...(action === 'appeal.overturned' ? [] : [{ f: 'decision_time', a: '—', b: `${minutes}m` }]), { f: 'visible_in', a: '—', b: 'Explore · TP.HCM' }, ...extraDiff],
+    diff: [{ f: 'status', a: from, b: 'live' }, ...(action === 'appeal.overturned' ? [] : [{ f: 'decision_time', a: '—', b: `${minutes}m` }]), { f: 'visible_in', a: '—', b: `Explore · ${cityOf(ev.city).name.vi}` }, ...extraDiff],
   });
   const hours = Math.max(1, Math.round(minutes / 60));
   await notifyOrganizer(q, now, {
     organizerId: ev.organizer_id, topic: 'moderation', kind: 'live',
     title: L(`${ev.title} is live`, `${ev.title} đã lên sóng`),
-    body: L(`Approved ${hours} ${hours === 1 ? 'hour' : 'hours'} after review and now showing in Ho Chi Minh City.`, `Được duyệt sau ${hours} giờ và đang hiển thị tại TP.HCM.`),
+    body: L(`Approved ${hours} ${hours === 1 ? 'hour' : 'hours'} after review and now showing in ${cityOf(ev.city).name.en}.`, `Được duyệt sau ${hours} giờ và đang hiển thị tại ${cityOf(ev.city).name.vi}.`),
     cta: L('View dashboard', 'Xem dashboard'), link: { screen: 'dash', eventId: ev.id },
   });
   if (!ev.published_at) await announceNewListing(q, ev.id, now);
+  await refreshConfidence(q, now, [ev.id]);
   await notifySubmitter(q, ev, now, 'live');
   await queueIndexNow(q, ctx, ev.slug);
   return ev;

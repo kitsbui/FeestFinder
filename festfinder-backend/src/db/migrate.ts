@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Db } from './index.ts';
+import { syncPlaces } from '../lib/places.ts';
 
 // A URL literal, so Vercel's file tracing ships the .sql files with the function.
 const MIGRATIONS_DIR = fileURLToPath(new URL('./migrations', import.meta.url));
@@ -35,6 +36,8 @@ export async function migrate(db: Db, log: (msg: string) => void = () => {}): Pr
     log(`applied ${file}`);
     applied.push(file);
   }
+  // Reference data that lives in code: the countries and cities the site knows.
+  await db.tx((q) => syncPlaces(q));
   return applied;
 }
 

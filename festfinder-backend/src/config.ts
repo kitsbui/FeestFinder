@@ -91,6 +91,12 @@ export interface Config {
   /** Return OTP codes in API responses: never in production; on staging only when asked for. */
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
+  /**
+   * The map's basemap: a PMTiles archive (Protomaps schema) served with range requests from
+   * storage FeestFinder controls, so there is no per-request fee. Without it the map draws
+   * the events on a plain board. Glyphs (for place names) are optional.
+   */
+  map: { tilesUrl: string | null; glyphsUrl: string | null };
   /** The screens and event pages from festfinder-frontend; off in unit tests unless one asks. */
   serveFrontend: boolean;
   /**
@@ -175,6 +181,10 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     // real accounts; on staging only with EXPOSE_DEV_CODES. The server log has the codes too.
     exposeDevCodes: environment === 'staging' && bool('EXPOSE_DEV_CODES', !databaseUrl),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
+    map: {
+      tilesUrl: /^https:\/\/\S+\.pmtiles$/.test(process.env.MAP_TILES_URL ?? '') ? process.env.MAP_TILES_URL! : null,
+      glyphsUrl: /^https:\/\/\S+\{fontstack\}\S*\{range\}/.test(process.env.MAP_GLYPHS_URL ?? '') ? process.env.MAP_GLYPHS_URL! : null,
+    },
     serveFrontend: env !== 'test',
     indexNowKey: /^[A-Za-z0-9-]{8,128}$/.test(process.env.INDEXNOW_KEY ?? '') ? process.env.INDEXNOW_KEY! : null,
     allowAiTraining: bool('ALLOW_AI_TRAINING', false),

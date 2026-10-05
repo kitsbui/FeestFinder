@@ -32,11 +32,18 @@ async function assertPublicHost(hostname: string) {
   if (addresses.some(isPrivateAddress)) throw new PageUnavailable('private_address');
 }
 
+export const BOT_USER_AGENT = 'Mozilla/5.0 (compatible; FeestFinderBot/1.0; +https://feestfinder.com)';
+
+export interface PublicResponse { status: number; url: string; text: string; contentType: string; etag: string | null; lastModified: string | null }
+
 /**
- * Fetches a public web page someone pasted, as a browser would, but never anything on a
- * private network: every hop of a redirect is checked, and the page is capped at 2 MB.
+ * GETs a public URL, never one on a private network: every hop of a redirect is checked, the
+ * body is capped, and only the content types asked for are read. A 304 comes back as a
+ * response with an empty body, so a caller with an ETag can skip unchanged sources.
  */
-export async function fetchPublicPage(raw: string, opts: { maxBytes?: number; timeoutMs?: number } = {}): Promise<FetchedPage> {
+export async function fetchPublic(raw: string, opts: {
+  maxBytes?: number; timeoutMs?: number; accept?: string; types?: RegExp; headers?: Record<string, string>;
+} = {}): Promise<PublicResponse> {
   const maxBytes = opts.maxBytes ?? 2_000_000;
   let current: URL;
   try { current = new URL(raw); } catch { throw new PageUnavailable('bad_url'); }
@@ -48,19 +55,21 @@ export async function fetchPublicPage(raw: string, opts: { maxBytes?: number; ti
     try {
       res = await fetch(current, {
         redirect: 'manual',
-        headers: { 'user-agent': 'Mozilla/5.0 (compatible; FeestFinderBot/1.0; +https://feestfinder.com)', accept: 'text/html,application/xhtml+xml', 'accept-language': 'vi,en;q=0.8' },
+        headers: { 'user-agent': BOT_USER_AGENT, accept: opts.accept ?? 'text/html,application/xhtml+xml', 'accept-language': 'vi,en;q=0.8', ...opts.headers },
         signal: AbortSignal.timeout(opts.timeoutMs ?? 8000),
       });
     } catch (e) {
       throw new PageUnavailable('upstream', (e as Error).message);
     }
     const location = res.headers.get('location');
-    if (res.status >= 300 && res.status < 400 && location) {
+    if (res.status >= 300 && res.status < 400 && res.status !== 304 && location) {
       current = new URL(location, current);
       continue;
     }
+    const meta = { url: current.toString(), contentType: res.headers.get('content-type') ?? '', etag: res.headers.get('etag'), lastModified: res.headers.get('last-modified') };
+    if (res.status === 304) return { status: 304, text: '', ...meta };
     if (!res.ok) throw new PageUnavailable('upstream', `status ${res.status}`);
-    if (!/text\/html|application\/xhtml\+xml/i.test(res.headers.get('content-type') ?? '')) throw new PageUnavailable('not_html');
+    if (opts.types && !opts.types.test(meta.contentType)) throw new PageUnavailable('not_html');
     const reader = res.body?.getReader();
     if (!reader) throw new PageUnavailable('upstream', 'empty body');
     const chunks: Uint8Array[] = [];
@@ -72,7 +81,16 @@ export async function fetchPublicPage(raw: string, opts: { maxBytes?: number; ti
       if (size > maxBytes) { await reader.cancel(); throw new PageUnavailable('too_large'); }
       chunks.push(value);
     }
-    return { url: current.toString(), html: Buffer.concat(chunks).toString('utf8') };
+    return { status: res.status, text: Buffer.concat(chunks).toString('utf8'), ...meta };
   }
   throw new PageUnavailable('upstream', 'too many redirects');
+}
+
+/**
+ * Fetches a public web page someone pasted, as a browser would, but never anything on a
+ * private network: every hop of a redirect is checked, and the page is capped at 2 MB.
+ */
+export async function fetchPublicPage(raw: string, opts: { maxBytes?: number; timeoutMs?: number } = {}): Promise<FetchedPage> {
+  const res = await fetchPublic(raw, { ...opts, types: /text\/html|application\/xhtml\+xml/i });
+  return { url: res.url, html: res.text };
 }

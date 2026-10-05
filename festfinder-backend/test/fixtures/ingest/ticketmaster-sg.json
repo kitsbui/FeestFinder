@@ -1,0 +1,13 @@
+{"_embedded":{"events":[
+ {"id":"G5vYZ9pQ1","name":"ZOUK presents: Techno Marathon","url":"https://www.ticketmaster.sg/event/G5vYZ9pQ1",
+  "dates":{"start":{"localDate":"2026-11-07","localTime":"22:00:00","dateTime":"2026-11-07T14:00:00Z"},"timezone":"Asia/Singapore","status":{"code":"onsale"}},
+  "classifications":[{"segment":{"name":"Music"},"genre":{"name":"Dance/Electronic"},"subGenre":{"name":"Techno"}}],
+  "priceRanges":[{"type":"standard","currency":"SGD","min":48,"max":88}],
+  "images":[{"ratio":"3_2","url":"https://img.example/a.jpg","width":640},{"ratio":"16_9","url":"https://img.example/b.jpg","width":1024}],
+  "_embedded":{"venues":[{"name":"Zouk Singapore","city":{"name":"Singapore"},"country":{"countryCode":"SG"},"address":{"line1":"3C River Valley Rd"},"location":{"latitude":"1.2906","longitude":"103.8450"}}],
+   "attractions":[{"name":"Charlotte de Witte"},{"name":"Amelie Lens"}]}},
+ {"id":"G5vYZ9pQ2","name":"Pop Night","url":"https://www.ticketmaster.sg/event/G5vYZ9pQ2",
+  "dates":{"start":{"localDate":"2026-11-08","localTime":"20:00:00"},"status":{"code":"cancelled"}},
+  "classifications":[{"segment":{"name":"Music"},"genre":{"name":"Pop"}}],
+  "_embedded":{"venues":[{"name":"Esplanade","city":{"name":"Singapore"},"location":{"latitude":"1.2897","longitude":"103.8555"}}]}}
+]},"page":{"size":100,"totalElements":2,"totalPages":1,"number":0}}
