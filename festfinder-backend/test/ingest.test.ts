@@ -181,6 +181,39 @@ describe('reading sources', () => {
   });
 });
 
+describe('what real sources send', () => {
+  it('drops a city put in front of the title, and a venue that is only the city', () => {
+    const n = finalize({ title: 'TP.HỒ CHÍ MINH | Musique de salon 22', start: '2026-10-10T20:15:00+07:00', venueName: 'TP.HỒ CHÍ MINH',
+      address: 'Nhà Hát Hòa Bình, 240 Đường Ba Tháng Hai, Hồ Chí Minh' }, { now: NOW }) as NormalizedEvent;
+    assert.deepEqual([n.title, n.venueName, n.city], ['Musique de salon 22', 'Nhà Hát Hòa Bình', 'ho-chi-minh']);
+    const keep = finalize({ title: 'Saigon Soul Pool Party | Vol. 3', start: '2026-10-10', address: 'Quận 1, Hồ Chí Minh' }, { now: NOW }) as NormalizedEvent;
+    assert.equal(keep.title, 'Saigon Soul Pool Party | Vol. 3');
+  });
+
+  it('counts one ticket seller once, whatever country site lists the event', async () => {
+    const { brandOf, independentSources } = await import('../src/services/ingest/confidence.ts');
+    assert.deepEqual(['megatix.com.sg', 'megatix.vn', 'megatix.in.th', 'www.womb.co.jp', 'ticketbox.vn'].map(brandOf), ['megatix', 'megatix', 'megatix', 'womb', 'ticketbox']);
+    assert.equal(independentSources([{ provider: 'website', host: 'megatix.com.sg' }, { provider: 'website', host: 'megatix.vn' }, { provider: 'organizer', host: null }]), 2);
+  });
+
+  it('finds event links in embedded page data, without tracking parameters', () => {
+    const html = '<a href="/events/one?source=home">1</a><script>{"path":"/events/two","asset":"/_nuxt/x.css"}</script>';
+    assert.deepEqual(eventLinks(html, 'https://tix.example/', '^/events/[^/]+$', 10), ['https://tix.example/events/one', 'https://tix.example/events/two']);
+  });
+
+  it('reads pages never seen first, and stops when the run is out of time', async () => {
+    const page = (n: number) => `<script type="application/ld+json">{"@type":"Event","name":"Night ${n}","startDate":"2026-10-1${n}T22:00:00+07:00","location":{"@type":"Place","name":"Club","address":"Bangkok"}}</script>`;
+    const pages: Record<string, string> = { 'https://club.example/': '<a href="/events/1">1</a><a href="/events/2">2</a><a href="/events/3">3</a>' };
+    for (const n of [1, 2, 3]) pages[`https://club.example/events/${n}`] = page(n);
+    const io = fakeIO(pages);
+    io.lastFetched = async () => new Map([['https://club.example/events/1', 1000], ['https://club.example/events/2', 2000]]);
+    const out = await websiteAdapter.discover(source({ url: 'https://club.example/', config: { follow: '^/events/', maxPages: 2 } }), io);
+    assert.deepEqual(out.records.map((r) => r.externalId), ['https://club.example/events/3', 'https://club.example/events/1'], 'the new page, then the oldest');
+    const late = await websiteAdapter.discover(source({ url: 'https://club.example/', config: { follow: '^/events/' } }), { ...fakeIO(pages), deadline: Date.now() });
+    assert.deepEqual([late.records.length, late.errors], [0, ['time budget spent; more pages next run']]);
+  });
+});
+
 describe('matching and confidence', () => {
   it('scores two listings of one event above the merge line, and explains why', () => {
     assert.equal(titleLikeness('Boiler Room Bangkok', 'Boiler Room Bangkok: Sara Landry'), 1);
@@ -376,11 +409,38 @@ describe('ingestion runs (API)', () => {
     assert.ok(Array.isArray(res.body.cancelledBySource));
   });
 
+  it('skips what a source marks as not a night out, and takes the kind of night from the source', async () => {
+    const id = await addSource({ adapter: 'website', name: 'Warehouse (club nights)', url: 'https://warehouse-bkk.example/events/dnb-sunday', city: 'bangkok', authority: 'official', config: { eventType: 'club' } });
+    const run = await env.as(admin).post(`/admin/sources/${id}/run`);
+    assert.equal(run.body.summary.merged + run.body.summary.created, 1, JSON.stringify(run.body.summary));
+    const dnb = (await env.ctx.db.query<any>(`select event_type from events where title = 'DnB Sunday'`)).rows[0];
+    assert.equal(dnb.event_type, 'club');
+    const skipping = await addSource({ adapter: 'website', name: 'Warehouse (no DnB)', url: 'https://warehouse-bkk.example/events/dnb-sunday', city: 'bangkok', config: { skip: 'dnb' } });
+    const skipped = await env.as(admin).post(`/admin/sources/${skipping}/run`);
+    assert.equal(skipped.body.summary.rejected, 1);
+    const raw = await env.as(admin).get(`/admin/sources/${skipping}/raw?status=rejected`);
+    assert.match(raw.body.items[0].error, /^skipped/);
+  });
+
   it('reprocesses stored records without fetching again', async () => {
     const res = await env.as(admin).post(`/admin/sources/${venueSource}/reprocess`);
     assert.equal(res.status, 200);
     assert.deepEqual([res.body.summary.created, res.body.summary.rejected], [0, 2]);
     assert.equal(res.body.summary.merged, 2);
+  });
+
+  it('adds the suggested sources once, enabling Ticketmaster only with its key', async () => {
+    const { STARTER_SOURCES } = await import('../src/services/ingest/starter.ts');
+    delete process.env.TICKETMASTER_API_KEY;
+    const first = await env.as(admin).post('/admin/sources/starter');
+    // The Ticketmaster SG source added earlier in this file is already there.
+    assert.equal(first.body.added, STARTER_SOURCES.length - 1, JSON.stringify(first.body));
+    assert.equal((await env.as(admin).post('/admin/sources/starter')).body.added, 0);
+    const list = (await env.as(admin).get('/admin/sources')).body.items;
+    const megatix = list.find((x: any) => x.name === 'Megatix Thailand');
+    assert.deepEqual([megatix.enabled, megatix.config.wallClock, megatix.intervalMinutes], [true, true, 360]);
+    // Not due to the scheduled job in this test: they would try the network.
+    await env.ctx.db.query(`update ingest_sources set next_run_at = now() + interval '1 day'`);
   });
 
   it('runs due sources from the scheduled job and skips the ones not due', async () => {

@@ -56,8 +56,11 @@ const CITY_SEEDS: CitySeed[] = [
   ['ha-noi', 'VN', 'Hanoi', 'Hà Nội', 21.0285, 105.8542, [105.28, 20.56, 106.02, 21.39], ['ha noi', 'hanoi'], true],
   ['da-nang', 'VN', 'Da Nang', 'Đà Nẵng', 16.0544, 108.2022, [107.2, 14.9, 108.75, 16.35], ['da nang', 'danang', 'hoi an', 'quang nam', 'tam ky'], true],
   ['nha-trang', 'VN', 'Nha Trang', 'Nha Trang', 12.2388, 109.1967, [108.55, 11.25, 109.48, 12.88], ['nha trang', 'khanh hoa', 'cam ranh', 'phan rang', 'ninh thuan'], true],
-  ['bangkok', 'TH', 'Bangkok', 'Bangkok', 13.7563, 100.5018, [100.3, 13.45, 100.95, 14.1], ['bangkok', 'krung thep', 'bkk', 'กรุงเทพ'], true],
-  ['tokyo', 'JP', 'Tokyo', 'Tokyo', 35.6762, 139.6503, [139.45, 35.45, 139.95, 35.85], ['tokyo', '東京'], true],
+  // Districts people write instead of the city, where the name belongs to that city alone.
+  ['bangkok', 'TH', 'Bangkok', 'Bangkok', 13.7563, 100.5018, [100.3, 13.45, 100.95, 14.1],
+    ['bangkok', 'krung thep', 'bkk', 'กรุงเทพ', 'pathumwan', 'pathum wan', 'sukhumvit', 'silom', 'sathorn', 'sathon', 'thonglor', 'thong lo', 'ekkamai', 'watthana', 'khlong toei', 'bang rak', 'chatuchak', 'ratchathewi', 'huai khwang', 'phra nakhon'], true],
+  ['tokyo', 'JP', 'Tokyo', 'Tokyo', 35.6762, 139.6503, [139.45, 35.45, 139.95, 35.85],
+    ['tokyo', '東京', 'shibuya', 'shinjuku', 'roppongi', 'minato ku', 'shinagawa', 'setagaya', 'ebisu', 'harajuku', 'ikebukuro', 'meguro', 'koto ku', '渋谷', '新宿'], true],
   ['singapore', 'SG', 'Singapore', 'Singapore', 1.3521, 103.8198, [103.6, 1.2, 104.05, 1.48], ['singapore', '新加坡'], true],
   ['bali', 'ID', 'Bali', 'Bali', -8.4095, 115.1889, [114.43, -8.85, 115.71, -8.06],
     ['bali', 'denpasar', 'canggu', 'seminyak', 'kuta', 'ubud', 'uluwatu', 'badung', 'gianyar'], true, 'Asia/Makassar'],

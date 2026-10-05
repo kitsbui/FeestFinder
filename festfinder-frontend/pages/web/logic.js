@@ -324,6 +324,9 @@ const S = {
   mapSearch:{en:'Search this area',vi:'Tìm trong khu vực này'}, mapMore:{en:'{n} of {t} · zoom in',vi:'{n}/{t} · phóng to thêm'},
   mapEmpty:{en:'No events in this area',vi:'Không có sự kiện trong khu vực này'}, mapOpen:{en:'Open event',vi:'Mở sự kiện'},
   mapFailed:{en:'The map could not load',vi:'Không tải được bản đồ'}, mapClose:{en:'Close',vi:'Đóng'},
+  artistKicker:{en:'Artist',vi:'Nghệ sĩ'}, artistUpcoming:{en:'Upcoming shows',vi:'Show sắp tới'}, artistPast:{en:'Played before',vi:'Đã diễn'},
+  artistNone:{en:'No shows coming up',vi:'Chưa có show sắp tới'}, artistFollowers:{en:'followers',vi:'người theo dõi'}, artistShows:{en:'upcoming',vi:'sắp tới'},
+  artistOpen:{en:'Artist page',vi:'Trang nghệ sĩ'},
   listUpdated:{en:'Updated {t}',vi:'Cập nhật {t}'}, listNew:{en:'{n} new',vi:'{n} sự kiện mới'},
   listEmpty:{en:'Nothing matches',vi:'Không có sự kiện nào khớp'},
   colDate:{en:'Date',vi:'Ngày'}, colTime:{en:'Time',vi:'Giờ'}, colEvent:{en:'Event',vi:'Sự kiện'}, colVenue:{en:'Venue',vi:'Địa điểm'},
@@ -443,7 +446,7 @@ const slugOf = (id) => { const e = EVENTS.filter(x => x.id === id)[0]; return e 
 
 /** The screen a URL asks for, as a state patch. */
 function routeState(r) {
-  const clear = { screen:'explore', detailId:null, orgId:null, statView:null, savedView:false, colView:null, pubColSlug:null, adsOpen:false, notifOpen:false, edit:false };
+  const clear = { screen:'explore', detailId:null, orgId:null, artistSlug:null, statView:null, savedView:false, colView:null, pubColSlug:null, adsOpen:false, notifOpen:false, edit:false };
   if (!r) return clear;
   const name = r.name, param = r.param;
   if (name === 'list' || name === 'map') {
@@ -463,6 +466,7 @@ function routeState(r) {
   if (name === 'about') return Object.assign(clear, { screen:'about' });
   if (name === 'saved') return Object.assign(clear, { savedView:true, colView: (r.query && r.query.get('c')) || null });
   if (name === 'c' && param) return Object.assign(clear, { pubColSlug: param });
+  if (name === 'a' && param) return Object.assign(clear, { screen:'artist', artistSlug: param });
   if (name === 'advertise') return Object.assign(clear, { adsOpen:true });
   if (name === 'stats' && param) return Object.assign(clear, { screen:'stat', statView:param });
   if (name === 'e' && param) { const e = eventBy(param); if (e) return Object.assign(clear, { screen:'detail', detailId:e.id }); }
@@ -496,6 +500,7 @@ function listQuery(st) {
 function routePath(st) {
   if (st.screen === 'detail' && st.detailId) return FF.href('e', slugOf(st.detailId)) + (st.lang === 'en' ? '?lang=en' : '');
   if (st.screen === 'org' && st.orgId) return FF.href('o', (ORGS[st.orgId] || {}).slug || st.orgId) + (st.lang === 'en' ? '?lang=en' : '');
+  if (st.screen === 'artist' && st.artistSlug) return FF.href('a', st.artistSlug) + (st.lang === 'en' ? '?lang=en' : '');
   if (st.screen === 'stat' && st.statView) return FF.href('stats', st.statView);
   if (st.screen === 'list') {
     const q = [listQuery(st), st.listView !== 'table' ? 'view=' + st.listView : '',
@@ -536,6 +541,7 @@ class Component extends DCLogic {
     // The event page's community: discussion, resale, hype, sharing, and sending events in.
     disc:null, discKind:null, discSort:'top', discDraft:'', discSet:'', discHeard:'', discReplyTo:null, discReplyDraft:'', discMore:{}, discBusy:false,
     resale:null, hyped:{}, shareOpen:false, photos:null, discPhoto:null, discPhotoUrl:'', claimOpen:false, claimNote:'', claimProof:'', claimBusy:false,
+    artistSlug:null, artists:{},
     listView:'table', listCity:'all', listTime:'all', listGenre:'All', listStyle:'', listType:'', listSort:'date', listDesc:false, listAt: LOADED_AT, listAdded:0,
     // The list as the API answered for these filters (null until it has), and the map's events in view.
     board:null, boardTotal:0, boardCursor:null, boardFacets:null, boardBusy:false,
@@ -604,30 +610,31 @@ class Component extends DCLogic {
     const st = this.state, want = st.screen === 'list' && st.listView === 'map';
     const el = want && typeof document !== 'undefined' ? document.getElementById('ff-map') : null;
     if (!el) { this.dropMap(); return; }
+    // The map's filters are the list's, without the city: the box is the place.
+    const key = listQuery(Object.assign({}, st, { listCity: 'all' }));
     if (this._mapEl === el) {
-      // A filter changed: the same box, asked again.
-      const key = listQuery(Object.assign({}, st, { listCity: 'all' }));
-      if (this._map && this._mapKey !== key) { this._mapKey = key; this.mapSearch(); }
-      if (this._map && this._mapCity !== st.listCity) { this._mapCity = st.listCity; this.fitCity(st.listCity); }
+      if (this._map && this._mapCity !== st.listCity) { this._mapCity = st.listCity; this._mapKey = key; this._map.fit(this.cityBox(st.listCity)); }
+      else if (this._map && this._mapKey !== key) { this._mapKey = key; this._map.refresh(); }
       return;
     }
     this.dropMap();
     this._mapEl = el;
     this._mapCity = st.listCity;
-    this._mapKey = listQuery(Object.assign({}, st, { listCity: 'all' }));
+    this._mapKey = key;
     const g = st.lang;
     FF.loadMap().then(FFMap => {
       if (this._mapEl !== el) return;
-      const city = CITY_LIST.find(c => c.k === st.listCity);
-      const ctrl = FFMap.create(el, {
-        bounds: st.mapBbox || (city ? city.bbox : ALL_BOUNDS),
+      this._map = FFMap.session(el, {
+        bounds: st.mapBbox || this.cityBox(st.listCity),
         hue: (genre) => FF.genreHue(genre),
         cities: CITY_LIST.filter(c => c.center).map(c => ({ name: c[g], center: c.center })),
-        onSelect: (id) => { this.setState({ mapSel: id }); ctrl.select(id); },
-        onMove: () => this.setState({ mapDirty: true }),
+        fetch: (bbox) => {
+          const q = listQuery(Object.assign({}, this.state, { listCity: 'all' }));
+          return FF.get('/events/map?bbox=' + bbox.join(',') + (q ? '&' + q : '') + '&limit=500');
+        },
+        onChange: (m) => this.setState({ mapReady: m.ready, mapBusy: m.busy, mapDirty: m.dirty, mapItems: m.items, mapTotal: m.total,
+          mapTruncated: m.truncated, mapSel: m.sel, mapBbox: m.bbox }),
       });
-      this._map = ctrl;
-      ctrl.ready.then(() => { if (this._map === ctrl) { this.setState({ mapReady:true }); this.mapSearch(); } });
     }, () => this.setState({ mapFailed:true }));
   }
 
@@ -637,29 +644,9 @@ class Component extends DCLogic {
     this._mapEl = null;
   }
 
-  /** A city chip on the map: go there and show its events. */
-  fitCity(slug) {
-    const city = CITY_LIST.find(c => c.k === slug), box = city ? city.bbox : ALL_BOUNDS;
-    this._map.fit(box, false);
-    this.mapSearch(box);
-  }
+  cityBox(slug) { const city = CITY_LIST.find(c => c.k === slug); return city ? city.bbox : ALL_BOUNDS; }
 
-  /** The events with a pin in the box on screen (or the one given), under the list's filters. */
-  mapSearch(box) {
-    const ctrl = this._map;
-    if (!ctrl) return;
-    const bbox = box || ctrl.bounds(), st = this.state;
-    const key = listQuery(Object.assign({}, st, { listCity: 'all' }));
-    const n = (this._mapSeq = (this._mapSeq || 0) + 1);
-    this.setState({ mapBusy:true, mapDirty:false, mapBbox: bbox });
-    FF.get('/events/map?bbox=' + bbox.join(',') + (key ? '&' + key : '') + '&limit=500').then(out => {
-      if (n !== this._mapSeq || this._map !== ctrl) return;
-      ctrl.setEvents(out.items);
-      const sel = this.state.mapSel && out.items.some(x => x.id === this.state.mapSel) ? this.state.mapSel : null;
-      ctrl.select(sel);
-      this.setState({ mapItems: out.items, mapTotal: out.total, mapTruncated: out.truncated, mapBusy:false, mapSel: sel });
-    }, () => { if (n === this._mapSeq) this.setState({ mapBusy:false }); });
-  }
+  mapSearch() { if (this._map) this._map.search(); }
 
   /** Opens an event from the map, reading it first when this page has not seen it yet. */
   openFromMap(id) {
@@ -1316,11 +1303,20 @@ class Component extends DCLogic {
     if (r.name === 'e' && r.param) { const e = eventBy(r.param); if (e) this.loadDetail(e.id); }
     if (r.name === 'o' && r.param) { const o = orgBy(r.param); if (o) this.loadOrg(o.id); }
     if (r.name === 'c' && r.param) this.loadPubCol(r.param);
+    if (r.name === 'a' && r.param) this.loadArtist(r.param);
     if (r.name === 'saved' && r.query && r.query.get('c')) this.loadCol(r.query.get('c'));
   }
 
   openEvent(id) { this.setState({ screen:'detail', detailId:id, ttDay:0 }); this.loadDetail(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   openOrg(id) { this.setState({ screen:'org', orgId:id }); this.loadOrg(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
+  openArtist(slug) { this.setState({ screen:'artist', artistSlug:slug }); this.loadArtist(slug); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
+  /** An artist's page: their shows join the events this page knows. */
+  loadArtist(slug) {
+    FF.get('/artists/' + encodeURIComponent(slug)).then(out => {
+      const up = this.remember(out.upcoming);
+      this.setState(s => ({ artists: Object.assign({}, s.artists, { [slug]: Object.assign({}, out.artist, { upcomingIds: up.map(e => e.id), past: out.past }) }) }));
+    }, e => this.say(FF.errorText(e, this.state.lang)));
+  }
   openStat(k) { this.setState({ screen:'stat', statView:k }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   openOnMap(id) { this.openEvent(id); }
   goBack() { this.setState({ screen:'explore' }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
@@ -1655,7 +1651,7 @@ class Component extends DCLogic {
         go: () => this.setLang(x.k)
       })),
       isExplore: st.screen === 'explore', isList: st.screen === 'list',
-      isDetail: st.screen === 'detail', isOrg: st.screen === 'org',
+      isDetail: st.screen === 'detail', isOrg: st.screen === 'org', isArtist: st.screen === 'artist',
       isStat: st.screen === 'stat', isAbout: st.screen === 'about',
       /* ---- advertising ---- */
       openAds: () => st.user ? this.setState({ adsOpen:true, adErr:'' }) : this.openAuth('signup', 'ads', L.gateAds),
@@ -1738,6 +1734,7 @@ class Component extends DCLogic {
           about: about,
           lineup: e.lineup.map(a => {
             const on = !!st.following['art:' + a];
+            const link = det && (det.artistLinks || []).find(x => x.name === a);
             return { name:a,
               hint: on ? (vi1 ? 'Bỏ theo dõi ' + a : 'Unfollow ' + a) : (vi1 ? 'Theo dõi ' + a : 'Follow ' + a),
               bg: on ? 'rgba(171,255,132,.12)' : 'rgba(14,16,15,.6)',
@@ -1749,7 +1746,9 @@ class Component extends DCLogic {
                 if (!st.user) return this.openAuth('signup', null, L.gateSave);
                 this.toggleFollow('art', a);
                 this.say((on ? L.unfollowedToast : L.followedToast).replace('{n}', a));
-              } };
+              },
+              hasPage: !!link, pageLabel: L.artistOpen + ' · ' + a,
+              open: (ev) => { if (ev) ev.stopPropagation(); if (link) this.openArtist(link.slug); } };
           }),
           followingAny: e.lineup.some(a => !!st.following['art:' + a]),
           followingLine: L.followingArtists.replace('{n}', String(e.lineup.filter(a => !!st.following['art:' + a]).length)),
@@ -2299,6 +2298,44 @@ class Component extends DCLogic {
           pastRows: past
         };
       })(),
+      artist: (() => {
+        const a = st.artists[st.artistSlug];
+        if (!a) return { name: st.artistSlug || '', kicker: L.artistKicker, stats: [], upcoming: [], upEmpty: false, hasPast: false, pastRows: [], followLabel: L.follow,
+          followBg:'#ABFF84', followFg:'#0E100F', followBd:'#ABFF84', follow: () => {}, upTitle: L.artistUpcoming, pastTitle: L.artistPast, noUpcoming: L.artistNone, art: FF.genreArt('EDM'), initials: '' };
+        const following = st.following['art:' + a.name] !== undefined ? !!st.following['art:' + a.name] : a.following;
+        const ups = (a.upcomingIds || []).map(id => EVENTS.find(e => e.id === id)).filter(Boolean);
+        const style = (k) => { const x = STYLE_LABEL[k]; return x ? x[g] || x.en : k; };
+        return {
+          name: a.name, initials: FF.initials(a.name), art: a.imageUrl ? 'url("' + a.imageUrl + '") center/cover no-repeat' : FF.genreArt(ups[0] ? ups[0].genre : 'EDM'),
+          kicker: [L.artistKicker].concat(a.styles.slice(0, 3).map(style)).join(' · '),
+          stats: [
+            { value: String(ups.length), label: L.artistShows },
+            { value: this.short0(a.followers + (following && !a.following ? 1 : !following && a.following ? -1 : 0)), label: L.artistFollowers },
+            { value: a.cities.map(c => (c.label || {})[g] || c.slug).join(', ') || '—', label: L.colCity }
+          ],
+          followLabel: following ? L.followingLabel : L.follow,
+          followBg: following ? 'transparent' : '#ABFF84', followFg: following ? '#FFFCE1' : '#0E100F', followBd: '#ABFF84',
+          follow: () => {
+            if (!st.user) return this.openAuth('signup', null, L.gateSave);
+            this.toggleFollow('art', a.name);
+            this.say((following ? L.unfollowedToast : L.followedToast).replace('{n}', a.name));
+          },
+          upTitle: L.artistUpcoming, pastTitle: L.artistPast, noUpcoming: L.artistNone,
+          upEmpty: ups.length === 0, hasPast: (a.past || []).length > 0,
+          upcoming: ups.map(x => ({
+            title:x.title, art:x.art, genre: (x.styles || []).length ? style(x.styles[0]) : x.genre, whenLine: this.when(x),
+            whereLine: x.venue + ' · ' + ((CITY_LIST.find(c => c.k === x.city) || {})[g] || ''),
+            priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price, x.currency),
+            priceColor: x.price === 0 ? '#0AE448' : '#FFFCE1',
+            open: () => this.openEvent(x.id)
+          })),
+          pastRows: (a.past || []).map(p => ({
+            title: p.title, art: FF.genreArt('EDM'),
+            whenLine: p.startsOn.split('-').reverse().join('/') + ' · ' + [p.venue, (p.cityLabel || {})[g]].filter(Boolean).join(' · '),
+            open: () => (EVENTS.some(e => e.id === p.id) ? this.openEvent(p.id) : (window.location.href = FF.href('e', p.slug)))
+          }))
+        };
+      })(),
       goBack: () => this.goBack(),
       backLabel: L.back,
 
@@ -2526,7 +2563,7 @@ class Component extends DCLogic {
               hasConf: !!(conf && (conf.sourcesLine || conf.label === 'verified' || conf.label === 'highly_verified')),
               price: sel.isFree ? L.free : L.from + ' ' + this.short(sel.priceFrom, sel.currency), priceFg: sel.isFree ? '#0AE448' : '#FFFCE1',
               open: () => this.openFromMap(sel.id), openLabel: L.mapOpen,
-              close: () => { this.setState({ mapSel: null }); if (this._map) this._map.select(null); }
+              close: () => { if (this._map) this._map.select(null); else this.setState({ mapSel: null }); }
             } : { art:'', title:'', when:'', where:'', styles:[], conf:'', hasConf:false, price:'', priceFg:'', open: () => {}, openLabel:'', close: () => {} }
           }
         };

@@ -86,6 +86,6 @@ export const ticketmasterAdapter: SourceAdapter = {
       currency: price?.currency ?? null,
       cancelled: ev.dates?.status?.code === 'cancelled',
       organizerName: ev.promoter?.name ?? null,
-    }, { now: ctx.now, fallbackCity: ctx.source.city });
+    }, { now: ctx.now, fallbackCity: ctx.source.city, wallClock: ctx.source.config.wallClock === true });
   },
 };

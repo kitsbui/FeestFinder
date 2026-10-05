@@ -68,6 +68,23 @@
         "cd festfinder-backend && export DATABASE_URL= DATABASE_URL_FROM= PGLITE_DIR=./.data/pglite-demo UPLOAD_DIR=./.data/uploads-demo FF_NOW=2026-09-14T10:00:00+07:00 JOBS_ENABLED=false LINK_CHECKS_ENABLED=false RATE_LIMIT_PER_MINUTE=10000 EXPOSE_DEV_CODES=true PAYMENT_PROVIDER=mock PORT=4200 PUBLIC_BASE_URL=http://localhost:4200 SEED_VOLUME=small && node test/fixtures/reset.ts && exec node src/server.ts"
       ],
       "port": 4200
+    },
+    {
+      "name": "festfinder-intel",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd festfinder-backend && export DATABASE_URL= DATABASE_URL_FROM= PGLITE_DIR=./.data/pglite-intel UPLOAD_DIR=./.data/uploads-intel FF_NOW=2026-09-14T10:00:00+07:00 JOBS_ENABLED=false LINK_CHECKS_ENABLED=false RATE_LIMIT_PER_MINUTE=10000 EXPOSE_DEV_CODES=true PAYMENT_PROVIDER=mock PORT=4210 MAP_TILES_URL=http://localhost:8790/feestfinder-cities.pmtiles MAP_OVERVIEW_URL=http://localhost:8790/feestfinder-overview.pmtiles PUBLIC_BASE_URL=http://localhost:4210 SEED_VOLUME=small && node test/fixtures/reset.ts && exec node src/server.ts"
+      ],
+      "port": 4210
+    },
+    {
+      "name": "festfinder-tiles",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "/tmp/claude-1000/-home-patrickstar-Downloads-FestFinder-FrontEnd/d08780ec-a5c2-4f0b-bbe9-23479cac58d3/scratchpad/tiles/serve.mjs"
+      ],
+      "port": 8790
     }
   ]
 }

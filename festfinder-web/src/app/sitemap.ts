@@ -4,7 +4,7 @@ import { apiOr, SITE_URL, type EventCard } from '@/lib/api';
 // Rebuilt at most every 15 minutes: new listings reach search engines the same hour.
 export const revalidate = 900;
 
-/** Every live listing, and every organiser with one, in both languages. */
+/** Every live listing, every organiser and artist with one, in both languages. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const events: EventCard[] = [];
   let cursor: string | null = null;
@@ -23,6 +23,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const organizers = new Map<string, EventCard['organizer']>();
   for (const e of events) organizers.set(e.organizer.slug, e.organizer);
 
+  // Artists with a show still to come.
+  const artists = (await apiOr<{ items: { slug: string }[] } | null>('/meta/artists', null, { revalidate: 900 }))?.items ?? [];
+
   const now = new Date();
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'hourly', priority: 1 },
@@ -38,6 +41,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
     ...[...organizers.values()].flatMap((o) => {
       const vi = `${SITE_URL}/o/${o.slug}`, en = `${vi}?lang=en`;
+      const alternates = { languages: { vi, en, 'x-default': vi } };
+      return [
+        { url: vi, changeFrequency: 'weekly' as const, priority: 0.6, alternates },
+        { url: en, changeFrequency: 'weekly' as const, priority: 0.4, alternates },
+      ];
+    }),
+    ...artists.flatMap((a) => {
+      const vi = `${SITE_URL}/a/${a.slug}`, en = `${vi}?lang=en`;
       const alternates = { languages: { vi, en, 'x-default': vi } };
       return [
         { url: vi, changeFrequency: 'weekly' as const, priority: 0.6, alternates },

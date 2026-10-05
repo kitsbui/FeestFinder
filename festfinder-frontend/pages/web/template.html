@@ -651,6 +651,9 @@
           <sc-for list="{{ detail.lineup }}" as="a" hint-placeholder-count="4">
             <div onClick="{{ a.follow }}" title="{{ a.hint }}" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 14px 10px 16px;border-radius:999px;transition:all .15s;background:{{ a.bg }};border:1px solid {{ a.bd }};color:{{ a.fg }};font-size:13px;font-weight:500" style-hover="border-color:#ABFF84">
               {{ a.name }}<i class="{{ a.icon }}" style="font-size:14px;color:{{ a.iconFg }};flex:none"></i>
+              <sc-if value="{{ a.hasPage }}" hint-placeholder-val="{{ false }}">
+                <span onClick="{{ a.open }}" role="link" aria-label="{{ a.pageLabel }}" title="{{ a.pageLabel }}" style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:-6px;border-radius:50%;background:rgba(255,252,225,.08);flex:none" style-hover="background:rgba(171,255,132,.2)"><i class="ph-bold ph-arrow-up-right" style="font-size:11px"></i></span>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -1125,6 +1128,70 @@
     <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0 0 15px;margin-top:34px">{{ org.pastTitle }}</h2>
     <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:6px 20px 12px;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
       <sc-for list="{{ org.pastRows }}" as="p" hint-placeholder-count="2">
+        <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #191919;opacity:.66;transition:opacity .15s" style-hover="opacity:1">
+          <div class="ff-art ff-art--flat" style="width:52px;height:38px;border-radius:8px;flex:none;background:{{ p.art }}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:600;text-wrap:pretty">{{ p.title }}</div>
+            <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:4px">{{ p.whenLine }}</div>
+          </div>
+          <i class="ph-bold ph-caret-right" style="font-size:12px;color:#8C8B7D;flex:none"></i>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isArtist }}" hint-placeholder-val="{{ false }}">
+<div class="ff-l-page" style="position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 28px 90px">
+  <div onClick="{{ goBack }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#A5A493;margin-bottom:18px;transition:color .15s" style-hover="color:#ABFF84"><i class="ph-bold ph-arrow-left" style="font-size:14px"></i>{{ backLabel }}</div>
+
+  <div style="padding:28px;border-radius:8px;background:rgba(25,25,25,.66);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border:1px solid rgba(255,252,225,.19);margin-bottom:22px;animation:ffRise .35s ease both;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start">
+      <div class="ff-art ff-art--flat" style="width:84px;height:84px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:29px;font-weight:600;color:#0E100F;background:{{ artist.art }};letter-spacing:-.02em">{{ artist.initials }}</div>
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h1 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:clamp(24px,3.2vw,34px);line-height:1.06;margin:0;letter-spacing:-.02em">{{ artist.name }}</h1>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#ABFF84;margin-top:10px">{{ artist.kicker }}</div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:19px">
+          <sc-for list="{{ artist.stats }}" as="s" hint-placeholder-count="3">
+            <div>
+              <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:21px;line-height:1;color:#ABFF84;letter-spacing:-.02em">{{ s.value }}</div>
+              <div style="font-size:11px;font-weight:500;color:#A5A493;margin-top:6px">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div onClick="{{ artist.follow }}" style="cursor:pointer;flex:none;padding:14px 26px;border-radius:8px;background:{{ artist.followBg }};border:1px solid {{ artist.followBd }};color:{{ artist.followFg }};font-size:13px;font-weight:600;transition:all .15s" style-hover="transform:translateY(-1px)">{{ artist.followLabel }}</div>
+    </div>
+  </div>
+
+  <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0 0 15px">{{ artist.upTitle }}</h2>
+  <sc-if value="{{ artist.upEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:34px;border-radius:8px;background:rgba(25,25,25,.5);border:1px dashed rgba(255,252,225,.32);font-size:13px;font-weight:500;color:#A5A493;text-align:center">{{ artist.noUpcoming }}</div>
+  </sc-if>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:18px">
+    <sc-for list="{{ artist.upcoming }}" as="e" hint-placeholder-count="3">
+      <div onClick="{{ e.open }}" style="cursor:pointer;border-radius:8px;overflow:hidden;background:rgba(25,25,25,.66);border:1px solid rgba(255,252,225,.19);transition:all .18s;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)" style-hover="border-color:rgba(255,252,225,.45);transform:translateY(-4px)">
+        <div class="ff-art" style="height:132px;position:relative;background:{{ e.art }}">
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(25,25,25,.9),transparent 62%)"></div>
+          <div style="position:absolute;bottom:11px;left:13px;padding:5px 10px;border-radius:999px;background:rgba(14,16,15,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:10.5px;font-weight:500">{{ e.genre }}</div>
+        </div>
+        <div style="padding:16px">
+          <div style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:15.5px;line-height:1.18;text-wrap:pretty">{{ e.title }}</div>
+          <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:9px">{{ e.whenLine }}</div>
+          <div style="font-size:11.5px;font-weight:500;color:#8C8B7D;margin-top:5px">{{ e.whereLine }}</div>
+          <div style="font-size:13px;font-weight:600;margin-top:12px;color:{{ e.priceColor }}">{{ e.priceLine }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ artist.hasPast }}" hint-placeholder-val="{{ false }}">
+    <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:0 0 15px;margin-top:34px">{{ artist.pastTitle }}</h2>
+    <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:6px 20px 12px;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)">
+      <sc-for list="{{ artist.pastRows }}" as="p" hint-placeholder-count="2">
         <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #191919;opacity:.66;transition:opacity .15s" style-hover="opacity:1">
           <div class="ff-art ff-art--flat" style="width:52px;height:38px;border-radius:8px;flex:none;background:{{ p.art }}"></div>
           <div style="flex:1;min-width:0">

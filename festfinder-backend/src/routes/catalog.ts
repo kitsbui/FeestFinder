@@ -5,7 +5,8 @@ import { many, one } from '../db/index.ts';
 import { notFound } from '../lib/errors.ts';
 import { GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
-import { cityBySlug, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
+import { cityBySlug, cityLabel, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
+import { artistLinks } from '../services/artists.ts';
 import { EVENT_TYPE_LABEL, EVENT_TYPES, isStyle, STYLES } from '../lib/styles.ts';
 import { dateIn, TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
 import { bool, csv, dateStr, limit, parse, uuid } from '../lib/validate.ts';
@@ -278,6 +279,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     return {
       ...card,
       sources: await loadPublicSources(ctx.db, ev.id),
+      artistLinks: await artistLinks(ctx.db, ev.id),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,
@@ -370,6 +372,48 @@ export default async function catalogRoutes(app: FastifyInstance) {
         group by a order by a`, [ctx.clock.now()]);
     const needle = q ? searchNormalize(q) : '';
     return { items: rows.filter((r) => !needle || searchNormalize(r.name).includes(needle)) };
+  });
+
+  /** An artist's page: where they play next, where they have played, and who follows them. */
+  app.get<{ Params: { slug: string } }>('/artists/:slug', async (req) => {
+    const a = await one<any>(ctx.db, 'select * from artists where slug = $1', [req.params.slug]);
+    if (!a) throw notFound(L('Artist not found', 'Không tìm thấy nghệ sĩ'));
+    const now = ctx.clock.now();
+    const userId = req.session?.user?.id ?? null;
+    const visible = `e.status = 'live' and not e.held_for_reports`;
+    const [rows, past, follows] = await Promise.all([
+      many<any>(ctx.db,
+        `select ${CARD_COLUMNS} from event_artists ea join events e on e.id = ea.event_id join organizers o on o.id = e.organizer_id
+          where ea.artist_id = $1 and ${visible} and (e.ends_at is null or e.ends_at >= $2) order by e.starts_at limit 60`, [a.id, now]),
+      many<any>(ctx.db,
+        `select e.id, e.slug, e.title, e.starts_on::text as starts_on, e.city, e.venue_name from event_artists ea join events e on e.id = ea.event_id
+          where ea.artist_id = $1 and ${visible} and e.ends_at < $2 order by e.starts_at desc limit 20`, [a.id, now]),
+      // A follow is of a name; any spelling of this artist counts.
+      many<{ user_id: string; artist: string }>(ctx.db, 'select user_id, artist from artist_follows where artist = any($1::text[])',
+        [[a.name, ...(a.aliases ?? [])]]),
+    ]);
+    const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
+    const cards = rows.map((r) => presentCard(r, { now, viewer }));
+    const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((x, y) => y[1] - x[1]).map(([x]) => x);
+    return {
+      artist: {
+        id: a.id, slug: a.slug, name: a.name, bio: a.bio, imageUrl: a.image_url, website: a.website,
+        styles: rank(cards.flatMap((c) => c.styles)).slice(0, 5),
+        cities: rank(cards.map((c) => c.city)).map((slug) => ({ slug, label: cityLabel(slug) })),
+        followers: new Set(follows.map((f) => f.user_id)).size,
+        following: !!userId && follows.some((f) => f.user_id === userId),
+      },
+      upcoming: cards,
+      past: past.map((e) => ({ id: e.id, slug: e.slug, title: e.title, startsOn: e.starts_on, city: e.city, cityLabel: cityLabel(e.city), venue: e.venue_name })),
+    };
+  });
+
+  /** Artists with a show still to come, for sitemaps. */
+  app.get('/meta/artists', async () => {
+    const rows = await many<{ slug: string; name: string }>(ctx.db,
+      `select distinct a.slug, a.name from artists a join event_artists ea on ea.artist_id = a.id join events e on e.id = ea.event_id
+        where e.status = 'live' and not e.held_for_reports and e.published_at is not null and e.ends_at >= $1 order by a.slug limit 20000`, [ctx.clock.now()]);
+    return { items: rows };
   });
 
   app.get('/venues', async (req) => {

@@ -10,7 +10,10 @@ import { notFound } from '../lib/errors.ts';
 import { GENRES } from '../lib/i18n.ts';
 import { isCity } from '../lib/places.ts';
 import { slugify } from '../lib/contact.ts';
-import { buildCollectionSeo, buildEventSeo, buildOrganizerSeo, collectionSsr, eventSsr, organizerSsr, seoHead, type PageSeo } from '../services/seo.ts';
+import {
+  artistSsr, buildArtistSeo, buildCollectionSeo, buildEventSeo, buildOrganizerSeo, collectionSsr, eventSsr, organizerSsr, seoHead,
+  type ArtistSeo, type CollectionSeo, type OrganizerSeo, type PageSeo,
+} from '../services/seo.ts';
 
 /**
  * The four Claude Design surfaces, wired to this API and served from the same origin, and
@@ -213,8 +216,9 @@ export default async function frontendRoutes(app: FastifyInstance) {
       }, 'page');
     });
   page('/e/:slug', (slug, lang) => buildEventSeo(app.ctx, slug, lang), eventSsr);
-  page('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
-  page('/c/:slug', (slug, lang) => buildCollectionSeo(app.ctx, slug, lang), collectionSsr);
+  page<OrganizerSeo>('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
+  page<CollectionSeo>('/c/:slug', (slug, lang) => buildCollectionSeo(app.ctx, slug, lang), collectionSsr);
+  page<ArtistSeo>('/a/:slug', (slug, lang) => buildArtistSeo(app.ctx, slug, lang), artistSsr);
 
   for (const surface of SURFACES) {
     const shell = join(dir, surface.shell);

@@ -117,7 +117,7 @@ FF.appSettings = (cmp) => signedIn() && FF.once('settings', async () => {
   const patch = {};
   if (alert) Object.assign(patch, {
     alertOn: alert.enabled, alGenres: flagsOf(alert.genres), alArtists: flagsOf(alert.artists),
-    alOrgs: flagsOf(alert.organizerIds), alAreas: flagsOf(alert.areas),
+    alOrgs: flagsOf(alert.organizerIds), alAreas: flagsOf(alert.areas), alCities: flagsOf(alert.cities), alStyles: flagsOf(alert.styles),
     alCap: alert.priceCap === null ? 9e9 : alert.priceCap, alMatches: alert.matches
   });
   if (prefs) patch.notifM = prefs.matrix;

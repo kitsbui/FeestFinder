@@ -132,7 +132,9 @@
       }
       for (const [id, mk] of clusterLabels) if (!seen.has(id)) { mk.remove(); clusterLabels.delete(id); }
     };
-    map.on('idle', syncClusters);
+    // After the last frame of a move or a re-cluster, whichever comes later.
+    let syncTimer = null;
+    map.on('render', () => { clearTimeout(syncTimer); syncTimer = setTimeout(syncClusters, 120); });
 
     // City names help on a bare board, and get in the way once zoomed into a city.
     const syncCities = () => { const show = map.getZoom() < 7; cityLabels.forEach((c) => { c.getElement().style.display = show ? '' : 'none'; }); };
@@ -185,8 +187,49 @@
       },
       fit(bounds, animate) { map.fitBounds(bounds, { padding: 32, animate: animate !== false, duration: 700 }); },
       resize() { map.resize(); },
-      destroy() { clusterLabels.forEach((mk) => mk.remove()); map.remove(); },
+      destroy() { clearTimeout(syncTimer); clusterLabels.forEach((mk) => mk.remove()); map.remove(); },
       get selected() { return selected; },
+    };
+  };
+
+  /**
+   * A map that finds events: what both screens use. It searches when it opens, after a city
+   * jump and when asked (search), never on its own after a pan; the visitor's moves only set
+   * `dirty`, which shows "search this area". Every change of state goes to onChange.
+   *
+   *   fetch(bbox) → Promise<{ items, total, truncated }>   the screen's own query, filters included
+   *   onChange({ ready, busy, dirty, items, total, truncated, sel, bbox })
+   */
+  FFMap.session = function (el, opts) {
+    let seq = 0;
+    const state = { ready: false, busy: false, dirty: false, items: [], total: 0, truncated: false, sel: null, bbox: null };
+    const emit = (patch) => { Object.assign(state, patch); opts.onChange(Object.assign({}, state)); };
+    const ctrl = FFMap.create(el, {
+      bounds: opts.bounds, hue: opts.hue, cities: opts.cities,
+      onSelect: (id) => { ctrl.select(id); emit({ sel: id }); },
+      onMove: () => emit({ dirty: true }),
+    });
+    const search = (box) => {
+      const bbox = box || ctrl.bounds();
+      const n = ++seq;
+      emit({ busy: true, dirty: false, bbox });
+      return opts.fetch(bbox).then((out) => {
+        if (n !== seq) return;
+        ctrl.setEvents(out.items);
+        const sel = state.sel && out.items.some((x) => x.id === state.sel) ? state.sel : null;
+        ctrl.select(sel);
+        emit({ items: out.items, total: out.total, truncated: out.truncated, busy: false, sel });
+      }, () => { if (n === seq) emit({ busy: false }); });
+    };
+    ctrl.ready.then(() => { emit({ ready: true }); search(); });
+    return {
+      search: () => search(),
+      /** What is on screen again, for new filters. */
+      refresh: () => (state.ready ? search() : undefined),
+      /** Go to a box (a city) and show its events. */
+      fit: (box) => { ctrl.fit(box, false); if (state.ready) search(box); },
+      select: (id) => { ctrl.select(id); emit({ sel: id || null }); },
+      destroy: () => { seq++; ctrl.destroy(); },
     };
   };
 })();

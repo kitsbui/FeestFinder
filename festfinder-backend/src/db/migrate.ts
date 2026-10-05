@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Db } from './index.ts';
 import { syncPlaces } from '../lib/places.ts';
+import { backfillArtists } from '../services/artists.ts';
 
 // A URL literal, so Vercel's file tracing ships the .sql files with the function.
 const MIGRATIONS_DIR = fileURLToPath(new URL('./migrations', import.meta.url));
@@ -38,6 +39,8 @@ export async function migrate(db: Db, log: (msg: string) => void = () => {}): Pr
   }
   // Reference data that lives in code: the countries and cities the site knows.
   await db.tx((q) => syncPlaces(q));
+  // Events listed before artists had records of their own get linked to them, once.
+  await db.tx((q) => backfillArtists(q));
   return applied;
 }
 
