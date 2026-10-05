@@ -13,6 +13,7 @@ import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
+import { addStarterSources } from './services/ingest/starter.ts';
 
 /** Wires real dependencies from configuration. Tests build their own Ctx instead. */
 export async function createContext(config: Config): Promise<Ctx> {
@@ -23,6 +24,11 @@ export async function createContext(config: Config): Promise<Ctx> {
   const unlabelled = db.kind === 'postgres' && await checkEnvironment(db, config.environment);
   await migrate(db, log);
   if (unlabelled) await claimEnvironment(db, config.environment, log);
+  // Production reads the starter sources from its first start; the team can turn any off in /ops/sources.
+  if (config.env === 'production' && db.kind === 'postgres') {
+    const added = await addStarterSources(db, new Date());
+    if (added) log(`added ${added} starter event sources`);
+  }
   if (db.kind === 'postgres') log(`environment: ${config.environment}`);
   // The pinned clock exists for the demo data in the tests. On a shared database it would
   // stamp real orders, sessions and audit entries with a made-up date.

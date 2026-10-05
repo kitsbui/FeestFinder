@@ -45,8 +45,10 @@ export async function announceNewListing(q: Queryable, eventId: string, now: Dat
         and (cardinality(artists) = 0 or artists && $2::text[])
         and (cardinality(organizer_ids) = 0 or $3 = any(organizer_ids))
         and (cardinality(areas) = 0 or $4 = any(areas))
-        and (price_cap is null or (price_cap = 0 and ($5 = 'free' or $6 = 0)) or (price_cap > 0 and $6 <= price_cap))`,
-    [ev.genre, ev.artists, ev.organizer_id, ev.area, ev.entry_mode, ev.price_from]);
+        and (price_cap is null or (price_cap = 0 and ($5 = 'free' or $6 = 0)) or (price_cap > 0 and $6 <= price_cap))
+        and (cardinality(cities) = 0 or $7 = any(cities))
+        and (cardinality(styles) = 0 or styles && $8::text[])`,
+    [ev.genre, ev.artists, ev.organizer_id, ev.area, ev.entry_mode, ev.price_from, ev.city, ev.styles ?? []]);
   for (const a of alerts) {
     if (told.has(a.user_id)) continue;
     told.add(a.user_id);

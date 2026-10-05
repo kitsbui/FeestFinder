@@ -4,6 +4,7 @@ import { searchNormalize } from '../lib/contact.ts';
 import { cityOf } from '../lib/places.ts';
 import { addDays, atZone, eventBounds } from '../lib/time.ts';
 import { qualityScore, type DraftFacts } from './quality.ts';
+import { syncEventArtists } from './artists.ts';
 import { refreshConfidence } from './ingest/confidence.ts';
 import { hostOf } from './ingest/normalize.ts';
 
@@ -45,6 +46,7 @@ export async function refreshDerived(q: Queryable, id: string, now = new Date())
   await q.query(
     `update events set starts_at = $2, ends_at = $3, search_text = $4, quality_score = $5, currency = $6, updated_at = now() where id = $1`,
     [id, bounds?.startsAt ?? null, bounds?.endsAt ?? null, search, qualityScore(draftFacts(ev)).score, city.currency]);
+  await syncEventArtists(q, id, ev.artists ?? []);
   await ensureOrigin(q, ev, now);
   await refreshConfidence(q, now, [id]);
 }

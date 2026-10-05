@@ -13,8 +13,12 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
   - Adapters: website JSON-LD (single page or list page with a link pattern), ICS, Ticketmaster Discovery (needs `TICKETMASTER_API_KEY`).
   - RA/Facebook links are kept as provenance only, never fetched.
   - `/ops/sources` adds sources, runs them, shows runs and raw records.
-  - [ ] Configure real sources per city in production (team task; see below).
+  - Starter sources (`services/ingest/starter.ts`): Megatix SG/ID/TH/VN, WOMB Tokyo, Savaya Bali, TicketGo (âm nhạc), Ticketmaster SG (enabled only with its key). Production adds the missing ones on boot; elsewhere "Add suggested sources" in `/ops/sources`. Once added, a source is the team's.
+  - Website adapter reads unseen pages first, then the oldest, within the run's time budget; finds links in embedded Next/Nuxt data; drops tracking parameters. Per-source `skip` (not a night out), `eventType` and `wallClock` (sources that stamp one offset on every city).
+  - Normaliser: English dates ("Oct 10, 2026 10 PM"), a city name in front of the title or as the venue, Bangkok/Tokyo district names.
+  - [ ] Configure more sources per city in production (team task; see below).
 - [x] Phase 4: Deduplication
+  - One voice per brand: megatix.com.sg and megatix.vn count as one source (`brandOf`).
   - Exact provenance first, then the deterministic score (title, venue, date, time, artist, 500 m).
   - Merge at 70 or more; 45–69 becomes a flagged candidate. Reason stored.
   - Community submissions use the same resolver.
@@ -25,13 +29,14 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
 - [x] Phase 6: Map discovery (web)
   - MapLibre view in `/list` next to Table and Grid, with "search this area" (no fetch on pan), clusters, drawer card and URL state (`view=map&bbox=…`).
   - `/events/map` takes every list filter and caps at 500.
-  - [ ] Host the PMTiles basemap and set `MAP_TILES_URL` (until then the map draws the board, city names and events).
-  - [ ] Map view in the app (`/app/list`).
-- [~] Phase 7: Music intelligence
+  - Basemap from two self-hosted PMTiles archives (`scripts/build-tiles.sh`): `MAP_OVERVIEW_URL` and `MAP_TILES_URL`.
+  - [ ] Upload the archives and set the variables in production (until then the map draws the board, city names and events).
+  - [x] Map view in the app (`/app/list`), sharing `FFMap.session` with the web (search on open, on a city chip and on "search this area" only).
+- [x] Phase 7: Music intelligence
   - [x] Style taxonomy, event types, deterministic classifier.
   - [x] Style and type chips in the list and map; styles and type in the ops event form.
-  - [ ] Smart Alerts by city and style.
-  - [ ] Phase 7b: artist entity and pages.
+  - [x] Smart Alerts by city and style (migration `017_artists_alerts.sql`; `/me/alert` takes `cities`, `styles`; app settings chips).
+  - [x] Phase 7b: artists as records (`artists`, `event_artists`, kept in step on every save, backfilled once), `/artists/:slug`, the `/a/<slug>` page on both fronts with `MusicGroup` structured data, Markdown copy and sitemap entries; lineup chips link to it.
 - [x] Phase 8: Asia expansion
   - Bangkok, Tokyo, Singapore, Bali launched next to the four Vietnamese cities.
   - City chips from `/meta/discovery`; prices in local currency.
@@ -50,10 +55,11 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
 - Resident Advisor and Facebook adapters: terms forbid scraping. Their links are kept as provenance only.
 - Eventbrite and Bandsintown adapters, Playwright scraping.
 - EventSignal / early warning, AI duplicate fallback, AI style classifier, semantic search, recommendations.
-- Artist entity and pages (phase 7b), "festival within 500 km" alerts.
+- "Festival within 500 km" alerts; artist bios and photos (the columns exist, nothing fills them yet).
 - FeestFinder checkout in currencies other than VND.
 
 ## Log
 
 - 2026-10-05: Phase 0 audit written. Decisions taken: hybrid ingestion, no RA/FB crawling, map back now, five cities now.
 - 2026-10-05: Phases 1–6 and 8 built, phase 7 in part. API suite 224 tests (223 pass, 1 skipped as before); new `test/ingest.test.ts` (26 tests, fixtures only).
+- 2026-10-05: Phase 7 finished (Smart Alerts by city and style, artist pages), the map in the app, starter sources and fixes from reading real sources.
