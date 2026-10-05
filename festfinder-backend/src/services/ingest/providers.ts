@@ -19,6 +19,7 @@ export const PROVIDER_LABEL: Record<string, Localized> = {
   organizer: L('Organiser', 'Nhà tổ chức'),
   community: L('Community', 'Cộng đồng'),
   team: L('FeestFinder team', 'Đội FeestFinder'),
+  artist: L('Artist', 'Nghệ sĩ'),
   website: L('Website', 'Trang web'),
   ics: L('Calendar feed', 'Lịch ICS'),
   ticketmaster: L('Ticketmaster', 'Ticketmaster'),

@@ -8,11 +8,12 @@ import { isStyle } from '../lib/styles.ts';
 import {
   ARTIST_LINK, ARTIST_ROLE, BOOKING_STATUS, cleanLink, GIG_TYPE, SET_LENGTH, TRAVEL_SCOPE, type ArtistLink,
 } from '../lib/network.ts';
-import { bool, csv, imageUrl, limit, localized, parse, uuid } from '../lib/validate.ts';
+import { bool, csv, dateStr, imageUrl, limit, localized, parse, timeStr, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireUser } from '../http/guards.ts';
 import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
 import { artistKey, presentLinks, searchArtists } from '../services/artists.ts';
 import { directoryPages } from '../services/seo.ts';
+import { reportGig, reportsOf } from '../services/ingest/report.ts';
 import { appendAudit } from '../services/audit.ts';
 import { artistOrganizers, artistStyles, artistVenues, sharedLineups, similarArtists } from '../services/network.ts';
 
@@ -219,6 +220,39 @@ export default async function artistRoutes(app: FastifyInstance) {
     const row = await one<any>(ctx.db,
       `update artists set ${keys.map((k, i) => `${k} = $${i + 2}`).join(', ')}, updated_at = now() where id = $1 returning *`, [a.id, ...keys.map((k) => set[k])]);
     return { profile: editable(row), message: L('Profile saved', 'Đã lưu hồ sơ') };
+  });
+
+  // ---- gigs the artist reports ----------------------------------------------------------------
+
+  const GigReport = z.object({
+    title: z.string().trim().min(3).max(160),
+    startsOn: dateStr,
+    startTime: timeStr.nullable().default(null),
+    city: citySlug,
+    venueName: z.string().trim().min(2).max(160),
+    address: z.string().trim().max(240).nullable().default(null),
+    ticketUrl: z.string().url().max(500).nullable().default(null),
+    eventUrl: z.string().url().max(500).nullable().default(null),
+    with: z.array(z.string().trim().min(1).max(100)).max(30).default([]),
+  });
+
+  /** "I'm playing here": matched like an import, never published by itself (services/ingest/report.ts). */
+  app.post('/me/artist/gigs', async (req) => {
+    const s = requireUser(req);
+    const a = await owned(s.user.id);
+    const out = await reportGig(ctx, { id: a.id, name: a.name }, s.user.id, parse(GigReport, req.body));
+    if (out.outcome === 'rejected') {
+      throw badRequest(`gig_${out.reason}`, out.reason === 'past' ? L('That date has passed', 'Ngày này đã qua')
+        : out.reason === 'out_of_area' ? L('FeestFinder does not list that city yet', 'FeestFinder chưa có thành phố này')
+        : L('That gig could not be read', 'Không đọc được lịch diễn này'));
+    }
+    return { ...out, message: out.outcome === 'merged' ? L('Added to the event already listed', 'Đã gắn vào sự kiện đang có') : L('Sent for review', 'Đã gửi để kiểm duyệt') };
+  });
+
+  app.get('/me/artist/gigs', async (req) => {
+    const s = requireUser(req);
+    const a = await owned(s.user.id);
+    return { items: await reportsOf(ctx, a.id) };
   });
 
   // ---- the team -----------------------------------------------------------------------------

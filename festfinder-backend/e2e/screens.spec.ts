@@ -141,6 +141,11 @@ test.describe('Web', () => {
     expect(who.artist.name).toBe(name);
     await expectOps(page, '/ops/artist', /Nghệ danh/);
     expect((await page.request.get('/admin/counts')).status()).toBe(403);
+    // A gig they report waits for a moderator.
+    await expectOps(page, '/ops/artist/gigs', /Báo lịch diễn/);
+    await page.request.post('/me/artist/gigs', { data: { title: 'Owl warehouse', startsOn: '2027-03-06', city: 'ho-chi-minh', venueName: 'Lot 9' } });
+    await page.reload();
+    await expect(page.getByRole('row').filter({ hasText: 'Owl warehouse' })).toContainText('Có tên bạn');
   });
 
   test('ticket buttons go to the checkout here, or out to the seller, and count the press', async ({ page }) => {
