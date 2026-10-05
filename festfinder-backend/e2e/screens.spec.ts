@@ -145,11 +145,11 @@ test.describe('Event page community', () => {
     await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
   });
 
-  test('the share sheet saves a story image', async ({ page }) => {
+  test('the share sheet saves a story image for Instagram', async ({ page }) => {
     await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
     await page.getByText('Chia sẻ', { exact: true }).first().click();
     const download = page.waitForEvent('download');
-    await page.getByText('Story', { exact: true }).click();
+    await page.getByText('Instagram', { exact: true }).click();
     expect((await download).suggestedFilename()).toBe('ravo.png');
   });
 
@@ -163,6 +163,41 @@ test.describe('Event page community', () => {
     expect(back.pathname + back.search, 'back where it started, with the sign-in result taken out').toBe('/e/ravo');
     const who = await (await page.request.get('/auth/session')).json();
     expect(who.user.signupMethod).toBe('google');
+  });
+
+  test('collects an event, makes the collection public, and anyone can open it', async ({ page, browser }) => {
+    await signIn(page, 'attendee');
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByText('Thêm vào bộ sưu tập', { exact: true }).click();
+    await page.getByPlaceholder('Tên bộ sưu tập').fill('Cuối tuần của Minh');
+    await page.getByText('Tạo', { exact: true }).click();
+    await expect(page.getByText('Đã thêm vào Cuối tuần của Minh')).toBeVisible();
+    await page.getByLabel('Close').click();
+
+    await page.goto('/saved');
+    await page.getByText('Cuối tuần của Minh', { exact: true }).click();
+    await expect(page).toHaveURL(/\/saved\?c=/);
+    await page.getByRole('switch').click();
+    await expect(page.getByText('Đã bật link công khai')).toBeVisible();
+    await page.getByText('Chia sẻ', { exact: true }).first().click();
+    for (const name of ['Messenger', 'Instagram', 'TikTok', 'Zalo']) await expect(page.getByText(name, { exact: true })).toBeVisible();
+
+    const mine = await (await page.request.get('/me/collections')).json();
+    const url = new URL(mine.items.find((c: any) => c.name === 'Cuối tuần của Minh').url);
+    const visitor = await (await browser.newContext()).newPage();
+    await expectScreen(visitor, url.pathname, /Cuối tuần của Minh/);
+    await expect(visitor.getByText(/RAVOLUTION MUSIC FESTIVAL/i).first()).toBeVisible();
+    await visitor.context().close();
+  });
+
+  test('makes a vertical clip for TikTok', async ({ page }) => {
+    test.setTimeout(60_000);
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByText('Chia sẻ', { exact: true }).first().click();
+    const download = page.waitForEvent('download', { timeout: 30_000 });
+    await page.getByText('TikTok', { exact: true }).click();
+    await expect(page.getByText('Đang tạo video…')).toBeVisible();
+    expect((await download).suggestedFilename()).toMatch(/^ravo\.(mp4|webm)$/);
   });
 
   test('a signed-in attendee posts a question', async ({ page }) => {
@@ -226,6 +261,27 @@ test.describe('App', () => {
       const download = page.waitForEvent('download');
       await page.getByText('IG Stories', { exact: true }).click();
       expect((await download).suggestedFilename()).toBe('ravo.png');
+    });
+
+    test('collects an event into a new collection and finds it on Saved', async ({ page }) => {
+      await expectScreen(page, '/app/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+      await page.getByText('Collect', { exact: true }).click();
+      await page.getByPlaceholder('Collection name').fill('Rave nights');
+      await page.getByText('Create', { exact: true }).click();
+      await expect(page.getByText('Added to Rave nights')).toBeVisible();
+      await expectScreen(page, '/app/saved', /SAVED/i);
+      await page.getByText('Rave nights', { exact: true }).click();
+      await expect(page.getByRole('switch')).toBeVisible();
+      await expect(page.getByText(/RAVOLUTION MUSIC FESTIVAL/i).first()).toBeVisible();
+    });
+
+    test('TikTok in the share sheet makes a vertical clip', async ({ page }) => {
+      test.setTimeout(60_000);
+      await expectScreen(page, '/app/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+      await page.getByText('Share', { exact: true }).first().click();
+      const download = page.waitForEvent('download', { timeout: 30_000 });
+      await page.getByText('TikTok', { exact: true }).click();
+      expect((await download).suggestedFilename()).toMatch(/^ravo\.(mp4|webm)$/);
     });
 
     test('the profile shows the raver passport and opens Wrapped', async ({ page }) => {

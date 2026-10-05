@@ -16,7 +16,7 @@ FF.appTicketsFrom = (out) => out.items.reduce((all, o) => all.concat(o.tickets.m
 FF.loadApp = async function () {
   const signed = !!(FF.session && FF.session.user);
   const none = { items: [] };
-  const [events, genres, feedAd, me, friends, saves, hypes, going, follows] = await Promise.all([
+  const [events, genres, feedAd, me, friends, saves, hypes, going, follows, cols] = await Promise.all([
     FF.get('/events?time=all&limit=60'),
     FF.maybe(FF.get('/genres'), none),
     FF.maybe(FF.get('/ads?placement=feed'), { ad: null }),
@@ -25,7 +25,8 @@ FF.loadApp = async function () {
     signed ? FF.maybe(FF.get('/me/saves?limit=100'), none) : none,
     signed ? FF.maybe(FF.get('/me/hypes?limit=100'), none) : none,
     signed ? FF.maybe(FF.get('/me/going?limit=100'), none) : none,
-    signed ? FF.maybe(FF.get('/me/follows'), null) : null
+    signed ? FF.maybe(FF.get('/me/follows'), null) : null,
+    signed ? FF.maybe(FF.get('/me/collections'), none) : none
   ]);
 
   const cards = events.items;
@@ -61,12 +62,13 @@ FF.loadApp = async function () {
     ads: feedAd.ad ? [feedAd.ad] : [],
     friends: people,
     user: u ? {
-      handle: u.email || u.phone || u.name, method: u.signupMethod === 'email' ? 'email' : u.signupMethod === 'wa' ? 'wa' : 'zalo',
+      handle: u.email || u.phone || u.name, method: ['email', 'wa', 'google'].indexOf(u.signupMethod) >= 0 ? u.signupMethod : 'zalo',
       name: u.name || '', email: u.email || '', zalo: u.phone || '', city: u.city || '', photo: u.photoUrl || '',
       // `social` is where friends come from; Google brings none.
       socials, social: socials.filter(x => x !== 'google')[0] || ''
     } : null,
     saved: flags(saves.items), hyped: flags(hypes.items), going: flags(going.items),
+    collections: cols.items,
     interests: on(u ? u.interests : []),
     orgFollow,
     here: null

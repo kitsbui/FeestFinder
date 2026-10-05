@@ -4,7 +4,7 @@ import { L } from '../lib/i18n.ts';
 import { notFound } from '../lib/errors.ts';
 import { parse } from '../lib/validate.ts';
 import { genreArtPng } from '../services/ogimage.ts';
-import { buildEventSeo, buildOrganizerSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
+import { buildCollectionSeo, buildEventSeo, buildOrganizerSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
 
 /** robots.txt, the sitemap, llms.txt, the IndexNow key file, link-preview art, and what each public page says to search engines and AI agents. */
 export default async function seoRoutes(app: FastifyInstance) {
@@ -25,7 +25,7 @@ export default async function seoRoutes(app: FastifyInstance) {
   }
 
   /**
-   * An event or organiser page's head, structured data and server-rendered facts, for a front
+   * An event, organiser or public collection page's head, structured data and server-rendered facts, for a front
    * that renders its own HTML (the Next.js app). The API's own pages build the same thing
    * in-process.
    */
@@ -33,6 +33,7 @@ export default async function seoRoutes(app: FastifyInstance) {
   const kinds = [
     { prefix: 'e', api: 'events', build: buildEventSeo, missing: L('Event not found', 'Không tìm thấy sự kiện') },
     { prefix: 'o', api: 'organizers', build: buildOrganizerSeo, missing: L('Organiser not found', 'Không tìm thấy nhà tổ chức') },
+    { prefix: 'c', api: 'collections', build: buildCollectionSeo, missing: L('Collection not found', 'Không tìm thấy bộ sưu tập') },
   ] as const;
   for (const k of kinds) {
     app.get<{ Params: { slug: string } }>(`/seo/${k.api}/:slug`, async (req, reply) => {

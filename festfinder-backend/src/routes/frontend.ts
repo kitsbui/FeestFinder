@@ -8,7 +8,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { notFound } from '../lib/errors.ts';
 import { CITY_SLUGS, GENRES } from '../lib/i18n.ts';
 import { slugify } from '../lib/contact.ts';
-import { buildEventSeo, buildOrganizerSeo, eventSsr, organizerSsr, seoHead, type PageSeo } from '../services/seo.ts';
+import { buildCollectionSeo, buildEventSeo, buildOrganizerSeo, collectionSsr, eventSsr, organizerSsr, seoHead, type PageSeo } from '../services/seo.ts';
 
 /**
  * The four Claude Design surfaces, wired to this API and served from the same origin, and
@@ -203,6 +203,7 @@ export default async function frontendRoutes(app: FastifyInstance) {
     });
   page('/e/:slug', (slug, lang) => buildEventSeo(app.ctx, slug, lang), eventSsr);
   page('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
+  page('/c/:slug', (slug, lang) => buildCollectionSeo(app.ctx, slug, lang), collectionSsr);
 
   for (const surface of SURFACES) {
     const shell = join(dir, surface.shell);

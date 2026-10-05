@@ -38,6 +38,7 @@ import communityRoutes from './routes/community.ts';
 import resaleRoutes from './routes/resale.ts';
 import seoRoutes from './routes/seo.ts';
 import nightRoutes from './routes/night.ts';
+import collectionRoutes from './routes/collections.ts';
 import frontendRoutes from './routes/frontend.ts';
 
 declare module 'fastify' {
@@ -236,6 +237,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(resaleRoutes);
   await app.register(seoRoutes);
   await app.register(nightRoutes);
+  await app.register(collectionRoutes);
   if (ctx.config.serveFrontend) await app.register(frontendRoutes);
 
   return app;

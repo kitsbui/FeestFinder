@@ -50,9 +50,11 @@ const config: NextConfig = {
         // The Markdown versions for AI agents come straight from the API (first: they take ?lang=en too).
         { source: '/e/:file([^/]+\\.md)', destination: `${API}/e/:file` },
         { source: '/o/:file([^/]+\\.md)', destination: `${API}/o/:file` },
+        { source: '/c/:file([^/]+\\.md)', destination: `${API}/c/:file` },
         // An event or organiser page in English is /e/<slug>?lang=en: a cached page of its own.
         { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/e/:slug/en' },
         { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/o/:slug/en' },
+        { source: '/c/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/c/:slug/en' },
       ],
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
@@ -77,6 +79,7 @@ const config: NextConfig = {
       // The English event and organiser pages' one address is ?lang=en.
       { source: '/e/:slug/en', destination: '/e/:slug?lang=en', permanent: true },
       { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
+      { source: '/c/:slug/en', destination: '/c/:slug?lang=en', permanent: true },
       // The map became the list.
       { source: '/map', destination: '/list', permanent: true },
       { source: '/app/map', destination: '/app/list', permanent: true },

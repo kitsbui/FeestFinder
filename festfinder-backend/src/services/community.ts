@@ -139,7 +139,7 @@ export function checkPostText(body: string, team: boolean): string {
 
 // ---- share links ------------------------------------------------------------------------
 
-export const SHARE_CHANNELS = ['zalo', 'facebook', 'messenger', 'threads', 'x', 'telegram', 'copy', 'native', 'story'] as const;
+export const SHARE_CHANNELS = ['zalo', 'facebook', 'messenger', 'threads', 'x', 'telegram', 'copy', 'native', 'story', 'instagram', 'tiktok'] as const;
 /** The code a person's share links carry, made the first time they share. */
 export async function refCodeFor(q: Queryable, userId: string): Promise<string> {
   const row = await one<{ ref_code: string | null }>(q, 'select ref_code from users where id = $1', [userId]);

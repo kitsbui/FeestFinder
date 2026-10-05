@@ -2,24 +2,25 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import WebScreen from '@/surfaces/web';
 import { EventSummary, OrganizerSummary } from '@/components/summaries';
-import { api, jsonLdHtml, type EventSeo, type Lang, type OrganizerSeo } from '@/lib/api';
+import { api, jsonLdHtml, type CollectionSeo, type EventSeo, type Lang, type OrganizerSeo } from '@/lib/api';
 
 /*
- * An event or organiser page in one language: Vietnamese at /e/<slug>, English at
+ * An event, organiser or public collection page in one language: Vietnamese at /e/<slug>, English at
  * /e/<slug>?lang=en (which next.config.ts rewrites to /e/<slug>/en, so both stay cached pages);
- * the same for /o/<slug>. The API builds the head, the structured data and the facts, the same
+ * the same for /o/<slug> and /c/<slug>. The API builds the head, the structured data and the facts, the same
  * as for its own pages.
  */
 
-type Kind = 'events' | 'organizers';
+type Kind = 'events' | 'organizers' | 'collections';
 type Props = { params: Promise<{ slug: string }> };
 
 const load = async (kind: Kind, slug: string, lang: Lang) =>
-  api<EventSeo | OrganizerSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'en' ? '?lang=en' : ''}`);
+  api<EventSeo | OrganizerSeo | CollectionSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'en' ? '?lang=en' : ''}`);
 
 const MISSING = {
   events: { vi: 'Không tìm thấy sự kiện', en: 'Event not found' },
   organizers: { vi: 'Không tìm thấy nhà tổ chức', en: 'Organiser not found' },
+  collections: { vi: 'Không tìm thấy bộ sưu tập', en: 'Collection not found' },
 };
 
 export const seoMetadata = (kind: Kind, lang: Lang) => async ({ params }: Props): Promise<Metadata> => {

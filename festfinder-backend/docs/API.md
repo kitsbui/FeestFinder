@@ -55,6 +55,11 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | PUT | `/me/payee` 🔒 | Bank account for group-plan VietQR requests. |
 | PUT / DELETE | `/me/saves/:eventId`, `/me/hypes/:eventId`, `/me/going/:eventId` 🔒 | Idempotent toggles; counters stay in step. |
 | GET | `/me/saves`, `/me/hypes`, `/me/going` 🔒 | `past=include\|only\|exclude`. |
+| GET | `/me/collections?event=` 🔒 | My collections (`{id, name, isPublic, url, slug, count, cover}`), newest change first; with `event`, each says `has`. |
+| POST | `/me/collections` 🔒 | `{name, eventId?}` → 201. Up to 50 collections of 300 events. Collecting an event also saves it. |
+| GET / PATCH / DELETE | `/me/collections/:id` 🔒 | Its events as cards; `{name?, isPublic?}` (the public slug is made once and kept through renames); delete leaves the events saved. |
+| PUT / DELETE | `/me/collections/:id/events/:eventId` 🔒 | Add or remove one event. |
+| GET | `/collections/:slug` | A public collection: `{name, url, owner: {name, initials}, mine, count, items}`; 404 when private. Its page is `/c/:slug` (SEO: `GET /seo/collections/:slug`, Markdown at `/c/:slug.md`, listed in the sitemap). |
 | PUT / DELETE | `/me/follows/organizers/:id`, `/me/follows/artists/:name` 🔒 | |
 | GET | `/me/follows` 🔒 | Organisers panel: followed + discover, each with next event. |
 | PUT / DELETE | `/me/plan/sets/:setId` 🔒 | Clash-finder picks; body `{remind}`. Returns `setIds`, `remindSetIds`, `clashes` with "{a} and {b} overlap by {m} minutes". |
@@ -83,7 +88,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | PUT / DELETE | `/posts/:id/helpful` 🔒 | Once per person, never your own. |
 | POST | `/posts/:id/reports` 🔒 | `{code: spam\|scalping\|abuse\|drugs\|personal\|other}`. Three open reports hide the post until the team decides. |
 | PATCH | `/posts/:id` 🔒 | The event's team or FeestFinder: `{pinned?, hidden?, official?}`. DELETE `/posts/:id`: the author, or the team. |
-| POST | `/events/:id/shares` | `{channel}` → the share URL, tagged `?ref=<code>&ch=<channel>` when signed in. `POST /events/:id/track` with `{source:'shared', ref, channel}` credits the sharer once per visitor. |
+| POST | `/events/:id/shares` | `{channel}` (`zalo`, `messenger`, `facebook`, `instagram`, `tiktok`, `threads`, `x`, `telegram`, `copy`, `native`, `story`) → the share URL, tagged `?ref=<code>&ch=<channel>` when signed in. `POST /events/:id/track` with `{source:'shared', ref, channel}` credits the sharer once per visitor. |
 | POST | `/community/events` 🔒📱 | Anyone sends an event in (title, genre, date, `endsOn?`, times, venue, `city`, entry, `sourceUrl`…). Five a day. It joins the review queue; the sender hears the decision. GET `/me/submissions`. |
 | POST | `/community/prefill` 🔒📱 | `{url}` → `{fields, source: structured\|ai, sourceUrl}` to fill the form in. The page's schema.org Event data first (free); otherwise Claude reads the page text. Public pages only (private addresses are refused at every redirect), 2 MB, 8 s. 30 pages and 10 AI reads per person per hour (`429 prefill_limit`); `503 prefill_unavailable` when AI is off. |
 | POST | `/community/prefill/poster` 🔒📱 | Multipart `file` (JPEG/PNG/WebP, 5 MB) → `{fields}` read from a poster by Claude. Same hourly cap. |

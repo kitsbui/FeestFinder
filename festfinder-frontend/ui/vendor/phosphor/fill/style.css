@@ -1,4 +1,4 @@
-/* Phosphor fill, cut to the 228 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
+/* Phosphor fill, cut to the 233 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
 @font-face {
   font-family: "Phosphor-Fill";
   src: url("./Phosphor-Fill.woff2") format("woff2"), url("./Phosphor-Fill.woff") format("woff");
@@ -287,6 +287,15 @@
 .ph-fill.ph-floppy-disk:before {
   content: "\e248";
 }
+.ph-fill.ph-folder-plus:before {
+  content: "\e258";
+}
+.ph-fill.ph-folder-simple:before {
+  content: "\e25a";
+}
+.ph-fill.ph-folder-simple-star:before {
+  content: "\ec2e";
+}
 .ph-fill.ph-footprints:before {
   content: "\ea88";
 }
@@ -313,6 +322,9 @@
 }
 .ph-fill.ph-globe:before {
   content: "\e288";
+}
+.ph-fill.ph-globe-hemisphere-west:before {
+  content: "\e28c";
 }
 .ph-fill.ph-globe-simple:before {
   content: "\e28e";
@@ -592,6 +604,9 @@
 }
 .ph-fill.ph-speaker-high:before {
   content: "\e44a";
+}
+.ph-fill.ph-spinner-gap:before {
+  content: "\e66c";
 }
 .ph-fill.ph-square:before {
   content: "\e45e";

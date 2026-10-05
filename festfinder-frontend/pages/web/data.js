@@ -13,7 +13,7 @@ FF.webEvent = function (c) {
 FF.loadWeb = async function () {
   const signed = !!(FF.session && FF.session.user);
   const empty = { items: [] };
-  const [events, ad, me, friends, saves, going, follows, prefs] = await Promise.all([
+  const [events, ad, me, friends, saves, going, follows, prefs, cols] = await Promise.all([
     FF.get('/events?time=all&limit=60'),
     FF.maybe(FF.get('/ads?placement=banner'), { ad: null }),
     signed ? FF.maybe(FF.get('/me'), null) : null,
@@ -21,7 +21,8 @@ FF.loadWeb = async function () {
     signed ? FF.maybe(FF.get('/me/saves?limit=100'), empty) : empty,
     signed ? FF.maybe(FF.get('/me/going?limit=100'), empty) : empty,
     signed ? FF.maybe(FF.get('/me/follows'), null) : null,
-    signed ? FF.maybe(FF.get('/me/notification-preferences'), null) : null
+    signed ? FF.maybe(FF.get('/me/notification-preferences'), null) : null,
+    signed ? FF.maybe(FF.get('/me/collections'), empty) : empty
   ]);
   const cards = events.items;
   const orgs = {}, orgOf = {};
@@ -50,6 +51,7 @@ FF.loadWeb = async function () {
       city: u.city || '', photo: u.photoUrl || '', socials, social: socials.filter(x => x !== 'google')[0] || '' } : null,
     saved: flags(saves.items), going: flags(going.items), following,
     notifM: prefs ? prefs.matrix : null,
+    collections: cols.items,
     mapSel: cards[0] ? cards[0].id : null
   };
 };

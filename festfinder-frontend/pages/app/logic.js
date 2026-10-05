@@ -132,6 +132,19 @@ const S = {
   hyped:{en:'Hyped events',vi:'Sự kiện bạn đã hype'}, following:{en:'Following',vi:'Đang theo dõi'}, listEvent:{en:'List your event',vi:'Đăng sự kiện của bạn'},
   explore:{en:'Explore',vi:'Khám phá'}, saved:{en:'Saved',vi:'Đã lưu'}, list:{en:'List',vi:'Danh sách'}, profile:{en:'Profile',vi:'Cá nhân'},
   hype:{en:'Hype',vi:'Hype'}, save:{en:'Save',vi:'Lưu'}, calendar:{en:'Calendar',vi:'Lịch'}, share:{en:'Share',vi:'Chia sẻ'},
+  collect:{en:'Collect',vi:'Sưu tập'}, gateCollect:{en:'Log in to collect events',vi:'Đăng nhập để lưu bộ sưu tập'},
+  colPickTitle:{en:'Save to a collection',vi:'Lưu vào bộ sưu tập'}, colNewTitle:{en:'New collection',vi:'Bộ sưu tập mới'},
+  colNewPh:{en:'Collection name',vi:'Tên bộ sưu tập'}, colCreate:{en:'Create',vi:'Tạo'},
+  colAll:{en:'All saved',vi:'Tất cả'}, colNew:{en:'New',vi:'Mới'}, colPublic:{en:'Public link',vi:'Link công khai'},
+  colDelete:{en:'Delete',vi:'Xoá'}, colDeleteArm:{en:'Tap again to delete',vi:'Bấm lần nữa để xoá'},
+  colAdded:{en:'Added to {n}',vi:'Đã thêm vào {n}'}, colRemoved:{en:'Removed from {n}',vi:'Đã bỏ khỏi {n}'},
+  colCreated:{en:'{n} created',vi:'Đã tạo {n}'}, colDeleted:{en:'Collection deleted',vi:'Đã xoá bộ sưu tập'},
+  colPublicOn:{en:'Public link on',vi:'Đã bật link công khai'}, colPublicOff:{en:'Public link off',vi:'Đã tắt link công khai'},
+  colEmpty:{en:'Nothing in this collection yet',vi:'Bộ sưu tập chưa có sự kiện'}, colEvents:{en:'{n} events',vi:'{n} sự kiện'},
+  videoMaking:{en:'Making the video…',vi:'Đang tạo video…'}, videoReady:{en:'Share the video',vi:'Chia sẻ video'},
+  videoSaved:{en:'Video saved — post it on TikTok',vi:'Đã lưu video — đăng lên TikTok'},
+  videoNone:{en:'This browser can’t make videos — here is the picture',vi:'Trình duyệt không tạo được video — dùng ảnh thay'},
+  shareCopiedMessenger:{en:'Link copied — paste it into Messenger',vi:'Đã copy — dán vào Messenger'},
   lineup:{en:'Lineup',vi:'Dàn nghệ sĩ'}, about:{en:'About',vi:'Giới thiệu'}, organizer:{en:'Organizer',vi:'Nhà tổ chức'},
   verified:{en:'Verified organizer',vi:'Nhà tổ chức đã xác minh'}, follow:{en:'Follow',vi:'Theo dõi'},
   refundPolicy:{en:'Refunds up to 7 days before the event, minus the payment fee. After that the organizer decides case by case.',vi:'Hoàn tiền tới trước sự kiện 7 ngày, trừ phí thanh toán. Sau đó nhà tổ chức xét từng trường hợp.'},
@@ -562,6 +575,8 @@ class Component extends DCLogic {
     tab:'explore', time:'weekend', genre:'All', artist:null,
     q:'', artistQ:'', datePanel:false, artistPanel:false,
     calMonth: TODAY.getMonth(), calYear: TODAY.getFullYear(),
+    collections: APP.collections || [], colPick:null, colPickList:null, colName:'', colBusy:false, colView:null, colItems:{}, colArm:null,
+    shareWhat:null, shareVideo:null,
     range:[null,null], saved: APP.saved || {}, hyped: APP.hyped || {},
     interests: APP.interests || { EDM:true, Indie:true, Nightlife:true },
     detail:null, sheet:null, toast:null, loading:true, limit:4, loadingMore:false, listCity:'all', listView:'rows', listAt: new Date(),
@@ -601,7 +616,7 @@ class Component extends DCLogic {
     applyApp(d);
     this._orgs = null;
     this.setState({
-      user: d.user || null, saved: d.saved || {}, hyped: d.hyped || {}, going: d.going || {},
+      user: d.user || null, saved: d.saved || {}, hyped: d.hyped || {}, going: d.going || {}, collections: d.collections || [],
       interests: d.interests || {}, tickets: d.tickets || [], plans: d.plans || {}, planIds: d.planIds || {},
       chats: d.chats || {}, orgFollow: d.orgFollow || {}, notifs: d.notifs || [],
       notifM: d.notifM || this.state.notifM,
@@ -849,6 +864,149 @@ class Component extends DCLogic {
   }
 
   L() { const g = this.state.lang; const o = {}; for (const k in S) o[k] = S[k][g]; return o; }
+  /** The bindings for collections: the picker sheet, and the chips and actions on Saved. */
+  collectionVals(st, L) {
+    const pick = st.colPick, creating = pick === 'new';
+    const active = st.colView ? st.collections.find(c => c.id === st.colView) : null;
+    const chip = (on) => ({ bg: on ? '#ABFF84' : 'rgba(28,29,27,.6)', bd: on ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: on ? '#141514' : '#E6E3C8' });
+    return {
+      sheetCollect: st.sheet === 'collect',
+      colPickTitle: creating ? L.colNewTitle : L.colPickTitle,
+      colPickRows: (st.colPickList || []).map(c => ({
+        name: c.name, count: String(c.count),
+        icon: creating ? 'ph-bold ph-folder-simple' : c.has ? 'ph-fill ph-check-circle' : 'ph-bold ph-circle',
+        iconColor: !creating && c.has ? '#ABFF84' : '#8C8B7D',
+        pubIcon: c.isPublic ? 'ph-bold ph-globe-hemisphere-west' : 'ph-bold ph-lock-simple',
+        go: creating ? () => this.openCol(c.id) : () => this.toggleCollect(c)
+      })),
+      colName: st.colName,
+      onColName: (e) => this.setState({ colName: e.target.value }),
+      onColKey: (e) => { if (e.key === 'Enter') this.createCollection(); },
+      colCreate: () => this.createCollection(),
+      colCreateBg: st.colName.trim() ? '#ABFF84' : 'rgba(171,255,132,.25)',
+      colChipsShow: !!st.user,
+      colChips: [{ id:null, name: L.colAll, count: Object.keys(st.saved).filter(k => st.saved[k]).length }]
+        .concat(st.collections.map(c => ({ id: c.id, name: c.name, count: c.count, pub: c.isPublic })))
+        .map(c => Object.assign({ name: c.name, count: String(c.count), lock: !!c.id && !c.pub, go: () => (c.id ? this.openCol(c.id) : this.setState({ colView:null, colArm:null })) }, chip((st.colView || null) === c.id))),
+      colNewChip: () => this.openCollect('new'),
+      colActive: !!active,
+      colPublicOn: !!(active && active.isPublic),
+      colPublicTrack: active && active.isPublic ? '#0AE448' : 'rgba(255,252,225,.19)',
+      colPublicKnob: active && active.isPublic ? '18px' : '2px',
+      colPublicToggle: () => active && this.patchCol(active, { isPublic: !active.isPublic }, active.isPublic ? L.colPublicOff : L.colPublicOn),
+      colShareGo: () => active && active.url && this.setState({ sheet:'share', shareWhat: { name: active.name, url: active.url, ids: st.colItems[active.id] || [] }, shareVideo:null }),
+      colDeleteGo: () => active && this.deleteCol(active),
+      colDeleteLabel: active && st.colArm === active.id ? L.colDeleteArm : L.colDelete,
+      colDeleteFg: active && st.colArm === active.id ? '#FF8709' : '#A5A493',
+      colEmptyShow: !!(active && st.colItems[active.id] && !st.colItems[active.id].length)
+    };
+  }
+
+  // ---- collections ------------------------------------------------------------------
+
+  async loadCollections(eventId) {
+    const out = await FF.maybe(FF.get('/me/collections' + (eventId ? '?event=' + eventId : '')), null);
+    if (!out) return null;
+    this.setState({ collections: out.items });
+    return out.items;
+  }
+  /** The picker for one event, or with `id` 'new' just the form for a new collection. */
+  openCollect(id) {
+    const L = this.L();
+    if (!this.state.user) return this.openAuth('signup', id === 'new' ? null : 'save:' + id, L.gateCollect);
+    this.setState({ sheet:'collect', colPick: id, colPickList: id === 'new' ? this.state.collections : null, colName:'' });
+    if (id !== 'new') this.loadCollections(id).then(items => { if (items && this.state.colPick === id) this.setState({ colPickList: items }); });
+  }
+  async toggleCollect(c) {
+    const st = this.state, L = this.L(), id = st.colPick;
+    if (!id || id === 'new' || st.colBusy) return;
+    const on = !c.has;
+    this.setState({ colBusy:true, colPickList: (st.colPickList || []).map(x => x.id === c.id ? Object.assign({}, x, { has:on, count: x.count + (on ? 1 : -1) }) : x) });
+    try {
+      if (on) await FF.put('/me/collections/' + c.id + '/events/' + id); else await FF.del('/me/collections/' + c.id + '/events/' + id);
+      this.setState(s => { const ci = Object.assign({}, s.colItems); delete ci[c.id]; return { colItems: ci, saved: on ? Object.assign({}, s.saved, { [id]: true }) : s.saved }; });
+      this.say(L[on ? 'colAdded' : 'colRemoved'].replace('{n}', c.name));
+      this.loadCollections();
+    } catch (e) {
+      this.fail(e);
+      this.loadCollections(id).then(items => { if (items) this.setState({ colPickList: items }); });
+    }
+    this.setState({ colBusy:false });
+  }
+  async createCollection() {
+    const st = this.state, L = this.L(), name = st.colName.trim(), eventId = st.colPick && st.colPick !== 'new' ? st.colPick : null;
+    if (!name || st.colBusy) return;
+    this.setState({ colBusy:true });
+    try {
+      const c = await FF.post('/me/collections', eventId ? { name, eventId } : { name });
+      if (eventId) this.setState(s => ({ saved: Object.assign({}, s.saved, { [eventId]: true }) }));
+      this.setState({ colName:'', colPickList: [c].concat(st.colPickList || []) });
+      this.say(eventId ? L.colAdded.replace('{n}', c.name) : L.colCreated.replace('{n}', c.name));
+      await this.loadCollections();
+      if (!eventId) this.openCol(c.id);
+    } catch (e) { this.fail(e); }
+    this.setState({ colBusy:false });
+  }
+  openCol(id) {
+    this.setState({ tab:'saved', sheet:null, colPick:null, colPickList:null, colView:id, colArm:null });
+    if (id) this.loadCol(id);
+  }
+  async loadCol(id) {
+    const out = await FF.maybe(FF.get('/me/collections/' + id), null);
+    if (!out) return this.setState({ colView:null });
+    out.items.forEach(c => { if (!RAW.some(x => x.id === c.id)) { const ev = toEvent(c); RAW.push(ev); EVENTS.push(normalize(ev)); } });
+    this.setState(s => ({ colItems: Object.assign({}, s.colItems, { [id]: out.items.map(c => c.id) }), collections: s.collections.map(x => x.id === id ? out.collection : x) }));
+  }
+  async patchCol(c, body, msg) {
+    try {
+      const out = await FF.patch('/me/collections/' + c.id, body);
+      this.setState(s => ({ collections: s.collections.map(x => x.id === c.id ? out : x) }));
+      if (msg) this.say(msg);
+    } catch (e) { this.fail(e); }
+  }
+  async deleteCol(c) {
+    const L = this.L();
+    if (this.state.colArm !== c.id) { this.setState({ colArm: c.id }); return this.say(L.colDeleteArm); }
+    try {
+      await FF.del('/me/collections/' + c.id);
+      this.setState(s => ({ collections: s.collections.filter(x => x.id !== c.id), colView:null, colArm:null }));
+      this.say(L.colDeleted);
+    } catch (e) { this.fail(e); }
+  }
+  /** What the share sheet shares: the open event, or a collection. */
+  shareTarget(detail) {
+    const st = this.state, L = this.L(), g = st.lang, w = st.shareWhat;
+    if (w) {
+      const evs = (w.ids || []).map(id => EVENTS.find(e => e.id === id)).filter(Boolean);
+      return { kind:'collection', title: w.name, url: w.url, file: 'feestfinder-' + (w.url.split('/c/')[1] || 'collection'),
+        story: { genre: (evs[0] && evs[0].genre) || 'All', kicker: L.colEvents.replace('{n}', evs.length), title: w.name,
+          lines: evs.slice(0, 3).map(e => e.title + ' · ' + this.fmtWhen(e)), url: w.url.replace(/^https?:\/\//, '') } };
+    }
+    if (!detail) return null;
+    const price = detail.price === 0 ? L.free : L.from + ' ' + this.short(detail.price);
+    return { kind:'event', id: detail.id, title: detail.title, url: location.origin + '/e/' + (detail.slug || detail.id), file: detail.slug || 'feestfinder',
+      story: { genre: detail.genre, kicker: detail.genre + ' · ' + detail.hype.toLocaleString(g === 'vi' ? 'vi-VN' : 'en-US') + ' hype', title: detail.title,
+        lines: [this.fmtWhen(detail) + ' · ' + this.fmtTime(detail), detail.venue + (detail.area ? ' · ' + detail.area : ''), price], url: location.host + '/e/' + (detail.slug || detail.id) } };
+  }
+  /** A short vertical clip for TikTok, offered with a fresh tap once made (phones want one). */
+  async shareVideo(w) {
+    const L = this.L();
+    if (this.state.shareVideo && this.state.shareVideo.making) return;
+    if (w.kind === 'event') FF.fire(FF.post('/events/' + w.id + '/shares', { channel:'tiktok' }));
+    this.setState({ shareVideo: { making:true } });
+    let blob = null;
+    try { blob = await FF.storyVideo(w.story); } catch (e) { blob = null; }
+    if (!blob) {
+      this.setState({ shareVideo:null, sheet:null });
+      this.say(L.videoNone);
+      return FF.shareStory(w.story, w.file).then(how => { if (how === 'saved') this.say(L.storySaved); }, () => {});
+    }
+    const file = new File([blob], w.file + (blob.type === 'video/mp4' ? '.mp4' : '.webm'), { type: blob.type });
+    if (FF.canShareFile(file)) return this.setState({ shareVideo: { file, title: w.title } });
+    this.setState({ shareVideo:null, sheet:null });
+    await FF.shareFile(file, w.title);
+    this.say(L.videoSaved);
+  }
   say(msg) { clearTimeout(this._tt); this.setState({ toast: msg }); this._tt = setTimeout(() => this.setState({ toast:null }), 2100); }
 
   validId(v, method) {
@@ -1373,7 +1531,9 @@ class Component extends DCLogic {
     const shown = list.slice(0, st.limit);
     const detail = st.detail ? EVENTS.find(e => e.id === st.detail) : null;
     const savedIds = Object.keys(st.saved).filter(k => st.saved[k]);
-    const savedEvents = EVENTS.filter(e => st.saved[e.id]);
+    const savedEvents = st.colView
+      ? (st.colItems[st.colView] || []).map(id => EVENTS.find(e => e.id === id)).filter(Boolean)
+      : EVENTS.filter(e => st.saved[e.id]);
 
     const artistCounts = {};
     EVENTS.forEach(e => (e.artists || []).forEach(a => { artistCounts[a] = (artistCounts[a] || 0) + 1; }));
@@ -1432,26 +1592,27 @@ class Component extends DCLogic {
       { k:'copy', label: g === 'vi' ? 'Sao chép link' : 'Copy link', icon:'ph-bold ph-link-simple', bg:'rgba(28,29,27,.9)', fg:'#FFFCE1' },
       { k:'more', label: g === 'vi' ? 'Khác' : 'More', icon:'ph-bold ph-dots-three', bg:'rgba(28,29,27,.9)', fg:'#A5A493' }
     ].map(s => Object.assign({}, s, { go: () => {
-      this.setState({ sheet:null });
-      if (!detail) return;
-      const channel = { zalo:'zalo', ig:'story', fb:'facebook', tg:'telegram', messenger:'messenger', copy:'copy' }[s.k] || 'native';
+      const w = this.shareTarget(detail);
+      if (!w) return;
+      if (s.k === 'tiktok') return this.shareVideo(w);
+      this.setState({ sheet:null, shareWhat:null });
+      const channel = { zalo:'zalo', ig:'instagram', fb:'facebook', tg:'telegram', messenger:'messenger', copy:'copy' }[s.k] || 'native';
       // The story image goes to the share sheet straight from the tap, before anything is awaited.
       if (s.k === 'ig') {
-        FF.fire(FF.post('/events/' + detail.id + '/shares', { channel }));
-        const price = detail.price === 0 ? L.free : L.from + ' ' + this.short(detail.price);
-        return FF.shareStory({ genre: detail.genre, kicker: detail.genre + ' · ' + detail.hype.toLocaleString(g === 'vi' ? 'vi-VN' : 'en-US') + ' hype', title: detail.title,
-          lines: [this.fmtWhen(detail) + ' · ' + this.fmtTime(detail), detail.venue + (detail.area ? ' · ' + detail.area : ''), price], url: location.host + '/e/' + (detail.slug || detail.id) }, detail.slug || 'feestfinder')
-          .then(how => { if (how === 'saved') this.say(L.storySaved); }, e => this.fail(e));
+        if (w.kind === 'event') FF.fire(FF.post('/events/' + w.id + '/shares', { channel }));
+        return FF.shareStory(w.story, w.file).then(how => { if (how === 'saved') this.say(L.storySaved); }, e => this.fail(e));
       }
       const go = (url) => {
-        const u = encodeURIComponent(url), t = encodeURIComponent(detail.title);
+        const u = encodeURIComponent(url), t = encodeURIComponent(w.title);
         if (s.k === 'fb') return window.open('https://www.facebook.com/sharer/sharer.php?u=' + u, '_blank', 'noopener');
         if (s.k === 'tg') return window.open('https://t.me/share/url?url=' + u + '&text=' + t, '_blank', 'noopener');
-        if (s.k !== 'copy' && navigator.share) return navigator.share({ title: detail.title, url }).catch(() => {});
+        if (s.k === 'messenger' && FF.isPhone()) { window.location.href = 'fb-messenger://share/?link=' + u; return; }
+        if (s.k !== 'copy' && navigator.share) return navigator.share({ title: w.title, url }).catch(() => {});
         if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
-        this.say(g === 'vi' ? 'Đã sao chép link' : 'Link copied');
+        this.say(s.k === 'messenger' ? L.shareCopiedMessenger : g === 'vi' ? 'Đã sao chép link' : 'Link copied');
       };
-      FF.post('/events/' + detail.id + '/shares', { channel }).then(out => go(out.url), () => go(location.origin + '/e/' + (detail.slug || detail.id)));
+      if (w.kind !== 'event') return go(w.url);
+      FF.post('/events/' + w.id + '/shares', { channel }).then(out => go(out.url), () => go(w.url));
     } }));
 
 
@@ -2721,7 +2882,7 @@ class Component extends DCLogic {
       },
 
       savedList: savedEvents.map(e => this.cardView(e, L)),
-      savedEmpty: savedEvents.length === 0,
+      savedEmpty: savedEvents.length === 0 && !st.colView,
       savedSub: savedEvents.length ? savedIds.length + (g === 'vi' ? ' sự kiện đã lưu' : ' saved events') : L.savedSubEmpty,
 
       interestChips: INTERESTS.map(n => ({
@@ -2779,7 +2940,8 @@ class Component extends DCLogic {
         { label:L.save, icon:'ph-fill ph-heart', bg: st.saved[detail.id] ? '#191919' : 'rgba(28,29,27,.6)', bd: st.saved[detail.id] ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: st.saved[detail.id] ? '#FFFCE1' : '#A5A493',
           go: () => { if (!st.user) return this.openAuth('signup', 'save:' + detail.id, L.gateSave); this.flag('saves', detail.id, !st.saved[detail.id]); } },
         { label:L.calendar, icon:'ph-bold ph-calendar-plus', bg:'rgba(28,29,27,.6)', bd:'rgba(255,252,225,.19)', fg:'#A5A493', go: () => this.setState({ sheet:'cal' }) },
-        { label:L.share, icon:'ph-bold ph-share-network', bg:'rgba(28,29,27,.6)', bd:'rgba(255,252,225,.19)', fg:'#A5A493', go: () => this.setState({ sheet:'share' }) }
+        { label:L.collect, icon:'ph-bold ph-folder-plus', bg:'rgba(28,29,27,.6)', bd:'rgba(255,252,225,.19)', fg:'#A5A493', go: () => this.openCollect(detail.id) },
+        { label:L.share, icon:'ph-bold ph-share-network', bg:'rgba(28,29,27,.6)', bd:'rgba(255,252,225,.19)', fg:'#A5A493', go: () => this.setState({ sheet:'share', shareWhat:null, shareVideo:null }) }
       ] : [],
       ctaLabel: !detail ? '' : detail.soldOut ? L.soldOutCta : detail.past ? L.endedCta : detail.price === 0 ? L.freeEntry : L.getTickets + ' · ' + L.from + ' ' + this.money(detail.price),
       ctaClass: !detail || detail.soldOut || detail.past ? '' : 'ff-cta',
@@ -2806,11 +2968,19 @@ class Component extends DCLogic {
       },
 
       sheetShare: st.sheet === 'share', sheetCal: st.sheet === 'cal',
-      closeSheet: () => this.setState({ sheet:null }),
+      closeSheet: () => this.setState({ sheet:null, shareWhat:null, shareVideo:null, colPick:null, colPickList:null }),
+      shareVideoMaking: !!(st.shareVideo && st.shareVideo.making),
+      shareVideoReady: !!(st.shareVideo && st.shareVideo.file),
+      shareVideoGo: () => {
+        const v = st.shareVideo;
+        if (!v || !v.file) return;
+        FF.shareFile(v.file, v.title).then(how => { if (how === 'saved') this.say(L.videoSaved); if (how !== 'cancelled') this.setState({ sheet:null, shareWhat:null, shareVideo:null }); });
+      },
+      ...this.collectionVals(st, L),
       shareTargets,
-      shareArt: detail ? detail.art : 'linear-gradient(135deg,#ABFF84,#0AE448)',
-      shareTitleText: detail ? detail.title : '',
-      shareMeta: detail ? this.fmtWhen(detail) + ' · ' + detail.area : '',
+      shareArt: st.shareWhat ? 'linear-gradient(135deg,#ABFF84,#0AE448)' : detail ? detail.art : 'linear-gradient(135deg,#ABFF84,#0AE448)',
+      shareTitleText: st.shareWhat ? st.shareWhat.name : detail ? detail.title : '',
+      shareMeta: st.shareWhat ? L.colEvents.replace('{n}', (st.shareWhat.ids || []).length) : detail ? this.fmtWhen(detail) + ' · ' + detail.area : '',
       calEventLine: detail ? detail.title + ' · ' + this.fmtWhen(detail) : '',
       calTargets: [
         { label:'Google Calendar', icon:'ph-bold ph-google-logo' },

@@ -84,10 +84,10 @@ type PageLink = { title: string; path: string; line: string };
 
 /**
  * What a public page says to search engines and AI assistants: GET /seo/events/:slug and
- * GET /seo/organizers/:slug (festfinder-backend/src/services/seo.ts).
+ * GET /seo/organizers/:slug and GET /seo/collections/:slug (festfinder-backend/src/services/seo.ts).
  */
 export interface PageSeo {
-  kind: 'event' | 'organizer';
+  kind: 'event' | 'organizer' | 'collection';
   lang: Lang;
   url: string;
   canonical: string;
@@ -129,6 +129,11 @@ export interface OrganizerSeo extends PageSeo {
   kind: 'organizer';
   headings: Record<'facts' | 'about' | 'upcoming' | 'past' | 'updated', string>;
   page: PageSeo['page'] & { upcoming: PageLink[]; past: PageLink[] };
+}
+
+/** A collection someone made public: the same lists as an organiser page. */
+export interface CollectionSeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'collection';
 }
 
 // ---- formatting the server-rendered summaries ---------------------------------------

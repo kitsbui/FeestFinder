@@ -64,6 +64,8 @@ const T = {
   since: { vi: 'Hoạt động từ', en: 'Active since' }, followers: { vi: 'Người theo dõi', en: 'Followers' },
   verified: { vi: 'Xác minh', en: 'Verified' }, yes: { vi: 'Đã xác minh với FeestFinder', en: 'Verified by FeestFinder' },
   no: { vi: 'Chưa xác minh', en: 'Not verified yet' }, source: { vi: 'Nguồn', en: 'Source' }, verifiedShort: { vi: 'Đã xác minh', en: 'Verified' },
+  collection: { vi: 'Bộ sưu tập', en: 'Collection' }, madeBy: { vi: 'Người tạo', en: 'Made by' }, eventCount: { vi: 'Số sự kiện', en: 'Events' },
+  member: { vi: 'Thành viên FeestFinder', en: 'A FeestFinder member' },
 };
 const ORG_TYPE: Record<string, Localized> = {
   promoter: { vi: 'đơn vị tổ chức sự kiện', en: 'event promoter' }, venue: { vi: 'địa điểm tổ chức', en: 'venue' },
@@ -109,7 +111,7 @@ type Link = { title: string; path: string; line: string };
 
 /** What every public page says to search engines and AI assistants: its head, its graph, its facts. */
 export interface PageSeo {
-  kind: 'event' | 'organizer';
+  kind: 'event' | 'organizer' | 'collection';
   lang: Lang;
   url: string;
   canonical: string;
@@ -153,6 +155,11 @@ export interface OrganizerSeo extends PageSeo {
   kind: 'organizer';
   headings: Record<'facts' | 'about' | 'upcoming' | 'past' | 'updated', string>;
   page: PageSeo['page'] & { upcoming: Link[]; past: Link[] };
+}
+
+/** A collection someone made public: the same lists as an organiser page. */
+export interface CollectionSeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'collection';
 }
 
 const ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -461,8 +468,8 @@ export function eventSsr(seo: EventSeo): string {
   ].join('');
 }
 
-/** An organiser page's facts as readable HTML. */
-export function organizerSsr(seo: OrganizerSeo): string {
+/** An organiser or collection page's facts as readable HTML. */
+export function organizerSsr(seo: OrganizerSeo | CollectionSeo): string {
   const p = seo.page, h = seo.headings;
   const list = (items: Link[]) => (items.length ? `<ul>${items.map((x) => `<li>${link(x.path, x.title)} · ${esc(x.line)}</li>`).join('')}</ul>` : '');
   return [...ssrTop(seo, h), section(h.upcoming, list(p.upcoming)), section(h.past, list(p.past)), ...ssrBottom(seo, h.updated)].join('');
@@ -590,10 +597,96 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
   };
 }
 
+// ---- collection pages --------------------------------------------------------------------
+
+export const collectionSsr = organizerSsr;
+
+/** Everything a public collection's page says to search engines and AI assistants, or null. */
+export async function buildCollectionSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<CollectionSeo | null> {
+  const c = await one<any>(ctx.db,
+    `select c.*, u.name as owner_name from collections c join users u on u.id = c.user_id where c.slug = $1 and c.is_public`, [slug]);
+  if (!c) return null;
+  const now = ctx.clock.now();
+  const events = await many<any>(ctx.db,
+    `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at, e.status, e.venue_name, e.address,
+            e.area, e.city, e.entry_mode, e.price_from, e.cover_url, e.updated_at
+       from collection_items i join events e on e.id = i.event_id
+      where i.collection_id = $1 and ${PUBLIC_EVENT} order by e.starts_at`, [c.id]);
+  const upcoming = events.filter((e) => new Date(e.ends_at) >= now && e.status === 'live');
+  const past = events.filter((e) => new Date(e.ends_at) < now).reverse().slice(0, 12);
+  const vi = lang === 'vi';
+  const base = baseOf(ctx);
+  const path = `/c/${c.slug}`;
+  const alternates = { vi: `${base}${path}`, en: `${base}${path}?lang=en`, 'x-default': `${base}${path}` };
+  const url = alternates[lang];
+  const owner = (c.owner_name as string | null)?.trim() || t('member', lang);
+  const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((a, b) => b[1] - a[1]).map(([x]) => x);
+  const genres = rank(events.map((e) => e.genre).filter(Boolean)).slice(0, 4);
+  const cities = rank(events.map((e) => e.city ?? 'ho-chi-minh')).map((k) => text(CITIES[k as City], lang));
+  const next = upcoming[0];
+  const updatedAt = [c.updated_at, ...events.map((e) => e.updated_at)].map((d) => new Date(d)).sort((a, b) => b.getTime() - a.getTime())[0];
+
+  const summary = [
+    vi
+      ? `“${c.name}” là bộ sưu tập ${events.length} sự kiện do ${owner} tạo trên FeestFinder${genres.length ? `: ${genres.join(', ')}` : ''}${cities.length ? ` ở ${cities.join(', ')}` : ''}.`
+      : `“${c.name}” is a collection of ${events.length} ${events.length === 1 ? 'event' : 'events'} made by ${owner} on FeestFinder${genres.length ? `: ${genres.join(', ')}` : ''}${cities.length ? ` in ${cities.join(', ')}` : ''}.`,
+    next ? (vi ? `Gần nhất là ${next.title} (${eventLine(next, lang)}).` : `Next up is ${next.title} (${eventLine(next, lang)}).`) : '',
+  ].filter(Boolean).join(' ');
+  const description = clip(`${c.name}: ${upcoming.length ? upcoming.slice(0, 3).map((e) => `${e.title} (${shortDay(e.starts_on, lang)})`).join(', ') : summary}.`, 160);
+  const title = [`${c.name} – ${t('collection', lang).toLowerCase()}`, c.name].find((x) => x.length <= 62) ?? clip(c.name, 62);
+  const cover = upcoming.find((e) => e.cover_url) ?? events.find((e) => e.cover_url);
+  const image = cover
+    ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
+    : { url: `${base}/og/v1/${toneOf(genres[0])}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+  const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: c.name, path: inLang(path, lang) }];
+  const facts: Fact[] = [
+    { label: t('madeBy', lang), value: owner },
+    { label: t('eventCount', lang), value: String(events.length) },
+    { label: t('upcoming', lang), value: String(upcoming.length) },
+    { label: t('genres', lang), value: genres.join(', ') },
+    { label: t('cities', lang), value: cities.join(', ') },
+  ].filter((f) => f.value);
+
+  const ids = { page: url, list: `${url}#list`, crumbs: `${url}#breadcrumb` };
+  const graph = [
+    ...siteNodes(base),
+    {
+      '@type': 'CollectionPage', '@id': ids.page, url, name: `${title} | FeestFinder`, description, inLanguage: lang,
+      isPartOf: { '@id': `${base}/#website` }, breadcrumb: { '@id': ids.crumbs }, mainEntity: { '@id': ids.list },
+      primaryImageOfPage: { '@type': 'ImageObject', url: image.url, width: image.width, height: image.height },
+      dateCreated: vnIso(c.created_at), dateModified: vnIso(updatedAt),
+    },
+    {
+      '@type': 'ItemList', '@id': ids.list, name: c.name, numberOfItems: events.length,
+      itemListElement: [...upcoming, ...past].slice(0, 50).map((e, i) => ({
+        '@type': 'ListItem', position: i + 1, url: `${base}/e/${e.slug}${vi ? '' : '?lang=en'}`, name: e.title,
+      })),
+    },
+    crumbList(base, ids.crumbs, crumbs),
+  ];
+  const links = (xs: any[]) => xs.map((e) => ({ title: e.title, path: inLang(`/e/${e.slug}`, lang), line: eventLine(e, lang) }));
+  return {
+    kind: 'collection', lang, url, canonical: url, alternates, markdown: `${path}.md${vi ? '' : '?lang=en'}`,
+    title: `${title} | FeestFinder`, description,
+    // An empty list has nothing for a search engine to show.
+    robots: events.length ? ROBOTS : 'noindex, follow',
+    image: { ...image, alt: c.name },
+    publishedAt: vnIso(c.created_at) ?? null,
+    updatedAt: vnIso(updatedAt)!,
+    headings: { facts: t('facts', lang), about: t('about', lang), upcoming: t('upcoming', lang), past: t('pastEvents', lang), updated: t('updated', lang) },
+    page: {
+      crumbs, kicker: [t('collection', lang), owner].join(' · '), h1: c.name, summary, facts, about: '',
+      upcoming: links(upcoming), past: links(past),
+      otherLang: { label: t('otherLang', lang), path: vi ? `${path}?lang=en` : path },
+    },
+    jsonLd: { '@context': 'https://schema.org', '@graph': JSON.parse(JSON.stringify(graph)) },
+  };
+}
+
 // ---- Markdown and llms.txt, for AI agents that read text ---------------------------------
 
 /** A page as Markdown: the same answer, facts and lists as its HTML, with links made absolute. */
-export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo): string {
+export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo): string {
   const base = baseOf(ctx);
   const absUrl = (href: string) => (/^https?:/.test(href) ? href : base + href);
   const md = (s: string) => s.replace(/([\\`*_[\]])/g, '\\$1');
@@ -692,13 +785,18 @@ export function robotsTxt(ctx: Ctx): string {
 export async function sitemapXml(ctx: Ctx): Promise<string> {
   const now = ctx.clock.now();
   const since = new Date(now.getTime() - 183 * 86400_000);
-  const [events, orgs] = await Promise.all([
+  const [events, orgs, collections] = await Promise.all([
     many<any>(ctx.db,
       `select slug, updated_at from events where status in ('live', 'cancelled') and not held_for_reports and published_at is not null and ends_at >= $1
         order by starts_at limit 20000`, [since]),
     many<any>(ctx.db,
       `select o.slug, max(e.updated_at) as updated_at from organizers o join events e on e.organizer_id = o.id
         where e.status = 'live' and not e.held_for_reports and e.ends_at >= $1 group by o.slug`, [now]),
+    // Public collections with something still on.
+    many<any>(ctx.db,
+      `select c.slug, greatest(c.updated_at, max(e.updated_at)) as updated_at
+         from collections c join collection_items i on i.collection_id = c.id join events e on e.id = i.event_id
+        where c.is_public and ${PUBLIC_EVENT} and e.ends_at >= $1 group by c.slug, c.updated_at limit 5000`, [now]),
   ]);
   const base = baseOf(ctx);
   const day = (d: Date | string | null) => (d ? new Date(d).toISOString().slice(0, 10) : now.toISOString().slice(0, 10));
@@ -714,6 +812,10 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
     ...orgs.flatMap((o) => {
       const vi = `${base}/o/${o.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
       return [{ loc: vi, lastmod: day(o.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(o.updated_at), priority: '0.4', alternates: links }];
+    }),
+    ...collections.flatMap((c) => {
+      const vi = `${base}/c/${c.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
+      return [{ loc: vi, lastmod: day(c.updated_at), priority: '0.5', alternates: links }, { loc: en, lastmod: day(c.updated_at), priority: '0.3', alternates: links }];
     }),
     { loc: `${base}/about`, priority: '0.3' },
   ];

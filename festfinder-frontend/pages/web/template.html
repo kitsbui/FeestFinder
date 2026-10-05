@@ -111,7 +111,7 @@
         </div>
       </sc-if>
     </div>
-  </div><div style="position:relative;z-index:1;min-width:0">
+  </div><sc-if value="{{ headlineShow }}" hint-placeholder-val="{{ true }}"><div style="position:relative;z-index:1;min-width:0">
       <div class="ff-eyebrow ff-eyebrow--lead ff-in-soft" style="margin-bottom:22px">{{ L.kicker }}</div>
       <h1 class="ff-headline" style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:clamp(52px,8.6vw,136px);line-height:.94;margin:0;letter-spacing:-.03em;max-width:1000px"><span style="display:block">{{ L.h1a }}</span><span class="ff-skywash" style="display:block;padding-bottom:.06em">{{ L.h1b }}</span></h1>
     </div>
@@ -126,8 +126,19 @@
         </div>
       </sc-for>
     </div>
+    </sc-if>
+    <sc-if value="{{ pubColShow }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative;z-index:1;min-width:0;max-width:880px">
+        <div class="ff-eyebrow ff-eyebrow--lead ff-in-soft" style="margin-bottom:18px">{{ pubColLine }}</div>
+        <h1 class="ff-headline" style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:clamp(40px,6vw,92px);line-height:.98;margin:0;letter-spacing:-.03em;overflow-wrap:anywhere">{{ pubColName }}</h1>
+        <sc-if value="{{ pubColCanShare }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ pubColShare }}" role="button" class="ff-cta" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:12px 20px;border-radius:999px;background:#ABFF84;color:#141514;font-size:13px;font-weight:600"><i class="ph-bold ph-share-network" style="font-size:15px"></i>{{ L.colShare }}</div>
+        </sc-if>
+      </div>
+    </sc-if>
   </div>
 
+  <sc-if value="{{ headlineShow }}" hint-placeholder-val="{{ true }}">
   <div aria-hidden="true" style="display:flex;flex-direction:column;gap:4px;margin:0 -28px 34px;padding:18px 0;border-top:1px solid #42433D;border-bottom:1px solid #42433D">
     <div class="ff-marquee"><div class="ff-marquee__track" style="--ff-dur:38s;gap:34px;padding-right:34px">
       <sc-for list="{{ marquee }}" as="m" hint-placeholder-count="10">
@@ -142,6 +153,7 @@
       </sc-for>
     </div></div>
   </div>
+  </sc-if>
 
   <div class="ff-l-explore" style="display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;align-items:start">
 
@@ -247,6 +259,45 @@
           <div style="flex:1"></div>
           <div onClick="{{ exitSaved }}" style="cursor:pointer;padding:10px 15px;border-radius:999px;border:1px solid #245C31;color:#DFFFD1;font-size:11.5px;font-weight:600;white-space:nowrap;transition:all .15s" style-hover="border-color:#0AE448;color:#FFFCE1">{{ L.savedExit }}</div>
         </div>
+      </sc-if>
+      <sc-if value="{{ colChipsShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 16px">
+          <sc-for list="{{ colChips }}" as="c" hint-placeholder-count="3">
+            <div onClick="{{ c.go }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;transition:all .15s;background:{{ c.bg }};border:1px solid {{ c.bd }};color:{{ c.fg }}">
+              <sc-if value="{{ c.lock }}" hint-placeholder-val="{{ false }}"><i class="ph-bold ph-lock-simple" style="font-size:12px"></i></sc-if>{{ c.name }}<span style="opacity:.6">{{ c.count }}</span>
+            </div>
+          </sc-for>
+          <div onClick="{{ colNewChip }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;border:1px dashed rgba(255,252,225,.32);color:#ABFF84;transition:all .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-plus" style="font-size:12px"></i>{{ L.colNew }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ colActive }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:8px;background:rgba(25,25,25,.66);border:1px solid rgba(255,252,225,.19);margin-bottom:16px">
+          <i class="ph-fill ph-folder-simple" style="font-size:18px;color:#ABFF84;flex:none"></i>
+          <sc-if value="{{ colEditing }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1 1 220px;display:flex;gap:8px;min-width:0">
+              <input value="{{ colEditName }}" onChange="{{ onColEdit }}" onKeyDown="{{ onColEditKey }}" maxLength="60" style="flex:1;min-width:0;padding:9px 12px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.32);color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13.5px;font-weight:600;outline:none">
+              <div onClick="{{ colEditSave }}" role="button" style="cursor:pointer;padding:9px 14px;border-radius:999px;background:#ABFF84;color:#141514;font-size:12px;font-weight:600;white-space:nowrap">{{ L.colSaveName }}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ colNotEditing }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1 1 160px;min-width:0">
+              <div style="font-size:14px;font-weight:600;overflow-wrap:anywhere">{{ colActiveName }}</div>
+              <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:3px">{{ colActiveLine }}</div>
+            </div>
+          </sc-if>
+          <div onClick="{{ colPublicToggle }}" role="switch" aria-checked="{{ colPublicOn }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#E6E3C8">
+            <span style="position:relative;width:38px;height:22px;border-radius:999px;background:{{ colPublicTrack }};transition:background .15s;flex:none"><span style="position:absolute;top:2px;left:{{ colPublicKnob }};width:18px;height:18px;border-radius:50%;background:#FFFCE1;transition:left .15s"></span></span>{{ L.colPublic }}
+          </div>
+          <sc-if value="{{ colPublicOn }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ colShareGo }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid #ABFF84;color:#ABFF84;font-size:12px;font-weight:600"><i class="ph-bold ph-share-network" style="font-size:13px"></i>{{ L.colShare }}</div>
+          </sc-if>
+          <div onClick="{{ colRenameGo }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#A5A493"><i class="ph-bold ph-pencil-simple" style="font-size:13px"></i>{{ L.colRename }}</div>
+          <div onClick="{{ colDeleteGo }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:{{ colDeleteFg }}"><i class="ph-bold ph-trash" style="font-size:13px"></i>{{ colDeleteLabel }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ colEmptyShow }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12.5px;font-weight:500;color:#A5A493;margin-bottom:16px">{{ L.colEmpty }}</div>
       </sc-if>
 
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px">
@@ -877,6 +928,7 @@
           <div onClick="{{ detail.save }}" style="cursor:pointer;flex:1;padding:12px 0;border-radius:999px;text-align:center;background:{{ detail.saveBg }};border:1px solid {{ detail.saveBd }};color:{{ detail.saveFg }};font-size:12px;font-weight:600;transition:all .15s">{{ detail.saveLabel }}</div>
           <div onClick="{{ detail.share }}" style="cursor:pointer;flex:1;padding:12px 0;border-radius:999px;text-align:center;border:1px solid rgba(255,252,225,.19);color:#E6E3C8;font-size:12px;font-weight:600;transition:all .15s" style-hover="border-color:#ABFF84;color:#FFFCE1">{{ L.shareEvent }}</div>
         </div>
+        <div onClick="{{ detail.collect }}" role="button" style="cursor:pointer;margin-top:9px;padding:12px 0;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid rgba(255,252,225,.19);color:#E6E3C8;font-size:12px;font-weight:600;transition:all .15s" style-hover="border-color:#ABFF84;color:#FFFCE1"><i class="ph-bold ph-folder-plus" style="font-size:15px"></i>{{ L.collectCta }}</div>
         <div style="font-size:11px;font-weight:500;color:#8C8B7D;line-height:1.6;margin-top:14px">{{ detail.ticketNote }}</div>
       </div>
 
@@ -1621,7 +1673,7 @@
     <div onClick="{{ closeShare }}" style="position:absolute;inset:0"></div>
     <div style="position:relative;width:min(440px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:26px;border-radius:8px;background:#191919;border:1px solid rgba(255,252,225,.32);box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
       <div style="display:flex;align-items:center;gap:14px">
-        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:21px;margin:0;letter-spacing:-.02em">{{ L.shareTitle }}</h2>
+        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:21px;margin:0;letter-spacing:-.02em;overflow-wrap:anywhere">{{ shareTitle }}</h2>
         <div onClick="{{ closeShare }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(28,29,27,.8);border:1px solid rgba(255,252,225,.19);transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-x" style="font-size:13px;color:#E6E3C8"></i></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px">
@@ -1632,9 +1684,44 @@
           </div>
         </sc-for>
       </div>
+      <sc-if value="{{ shareVideoMaking }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:9px;margin-top:16px;font-size:12.5px;font-weight:600;color:#E6E3C8"><i class="ph-bold ph-spinner-gap" style="font-size:16px;color:#ABFF84;animation:ffSpin 1s linear infinite"></i>{{ L.videoMaking }}</div>
+      </sc-if>
+      <sc-if value="{{ shareVideoReady }}" hint-placeholder-val="{{ false }}">
+        <div class="ff-cta" onClick="{{ shareVideoGo }}" role="button" style="cursor:pointer;margin-top:16px;padding:14px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:9px;background:#ABFF84;color:#141514;font-size:13.5px;font-weight:600"><i class="ph-fill ph-tiktok-logo" style="font-size:17px"></i>{{ L.videoReady }}</div>
+      </sc-if>
       <sc-if value="{{ comm.hasBrought }}" hint-placeholder-val="{{ false }}">
         <div style="margin-top:16px;font-size:12px;font-weight:600;color:#ABFF84">{{ comm.brought }}</div>
       </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ colPickOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;background:rgba(14,16,15,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box">
+    <div onClick="{{ colPickClose }}" style="position:absolute;inset:0"></div>
+    <div style="position:relative;width:min(420px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:26px;border-radius:8px;background:#191919;border:1px solid rgba(255,252,225,.32);box-shadow:0 30px 70px rgba(0,0,0,.6);animation:ffRise .22s ease both">
+      <div style="display:flex;align-items:center;gap:14px">
+        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:21px;margin:0;letter-spacing:-.02em">{{ colPickTitle }}</h2>
+        <div onClick="{{ colPickClose }}" role="button" aria-label="Close" style="cursor:pointer;width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(28,29,27,.8);border:1px solid rgba(255,252,225,.19);transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-x" style="font-size:13px;color:#FFFCE1"></i></div>
+      </div>
+      <sc-if value="{{ colPickLoading }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:18px;height:46px;border-radius:8px;background:rgba(255,252,225,.06)"></div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px">
+        <sc-for list="{{ colPickRows }}" as="c" hint-placeholder-count="2">
+          <div onClick="{{ c.go }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);transition:border-color .15s" style-hover="border-color:#ABFF84">
+            <i class="{{ c.icon }}" style="font-size:19px;color:{{ c.iconColor }};flex:none"></i>
+            <div style="flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow-wrap:anywhere">{{ c.name }}</div>
+            <span style="font-size:11.5px;font-weight:500;color:#8C8B7D">{{ c.count }}</span>
+            <i class="{{ c.pubIcon }}" style="font-size:13px;color:#8C8B7D;flex:none"></i>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <input value="{{ colName }}" onChange="{{ onColName }}" onKeyDown="{{ onColKey }}" maxLength="60" placeholder="{{ L.colNewPh }}" style="flex:1;min-width:0;padding:12px 14px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13.5px;font-weight:500;outline:none">
+        <div onClick="{{ colCreate }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:12px 16px;border-radius:8px;background:{{ colCreateBg }};color:#141514;font-size:13px;font-weight:600;white-space:nowrap"><i class="ph-bold ph-plus" style="font-size:13px"></i>{{ L.colCreate }}</div>
+      </div>
     </div>
   </div>
 </sc-if>

@@ -1,4 +1,4 @@
-/* Phosphor bold, cut to the 228 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
+/* Phosphor bold, cut to the 233 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
 @font-face {
   font-family: "Phosphor-Bold";
   src: url("./Phosphor-Bold.woff2") format("woff2"), url("./Phosphor-Bold.woff") format("woff");
@@ -287,6 +287,15 @@
 .ph-bold.ph-floppy-disk:before {
   content: "\e248";
 }
+.ph-bold.ph-folder-plus:before {
+  content: "\e258";
+}
+.ph-bold.ph-folder-simple:before {
+  content: "\e25a";
+}
+.ph-bold.ph-folder-simple-star:before {
+  content: "\ec2e";
+}
 .ph-bold.ph-footprints:before {
   content: "\ea88";
 }
@@ -313,6 +322,9 @@
 }
 .ph-bold.ph-globe:before {
   content: "\e288";
+}
+.ph-bold.ph-globe-hemisphere-west:before {
+  content: "\e28c";
 }
 .ph-bold.ph-globe-simple:before {
   content: "\e28e";
@@ -592,6 +604,9 @@
 }
 .ph-bold.ph-speaker-high:before {
   content: "\e44a";
+}
+.ph-bold.ph-spinner-gap:before {
+  content: "\e66c";
 }
 .ph-bold.ph-square:before {
   content: "\e45e";
