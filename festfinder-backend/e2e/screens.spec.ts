@@ -17,6 +17,18 @@ async function signIn(page: Page, who: Account) {
   await signInWith(page, ACCOUNTS[who]);
 }
 
+/** What a click hands to window.open, without leaving for another site. */
+async function opened(page: Page, click: () => Promise<void>): Promise<string> {
+  await page.evaluate(() => {
+    const w = window as unknown as { __opened: string[]; open: (u?: string | URL) => null };
+    w.__opened = [];
+    w.open = (u) => { w.__opened.push(String(u)); return null; };
+  });
+  await click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __opened: string[] }).__opened.length)).toBeGreaterThan(0);
+  return page.evaluate(() => (window as unknown as { __opened: string[] }).__opened[0]);
+}
+
 test.describe('Web', () => {
   const routes: [string, RegExp][] = [
     ['/', /Khám phá/],
@@ -108,23 +120,19 @@ test.describe('Web', () => {
     const patched = await page.request.patch(`/admin/events/${ev.id}`, { data: { entryMode: 'paid', priceFrom: 250000, ticketUrl: 'https://tickets.example/nhacvien' } });
     expect(patched.status()).toBe(200);
     await page.request.delete('/auth/session');
-    await page.context().route('https://tickets.example/**', (route) => route.fulfill({ body: 'tickets' }));
     await expectScreen(page, '/e/nhacvien', /HÒA NHẠC NHẠC VIỆN/i);
-    const popup = page.waitForEvent('popup');
-    await page.getByText('Mua vé', { exact: true }).first().click();
-    await (await popup).waitForURL('https://tickets.example/nhacvien');
+    const url = await opened(page, () => page.getByText('Mua vé', { exact: true }).first().click());
+    expect(url).toBe('/go/nhacvien?src=detail');
+    const hop = await page.request.get(url, { maxRedirects: 0 });
+    expect([hop.status(), hop.headers().location]).toEqual([302, 'https://tickets.example/nhacvien']);
     // The app does the same, where it used to say no tier was on sale.
     await expectScreen(page, '/app/e/nhacvien', /HÒA NHẠC NHẠC VIỆN/i);
-    const appPopup = page.waitForEvent('popup');
-    await page.getByText(/^Get tickets · from/).first().click();
-    await (await appPopup).waitForURL('https://tickets.example/nhacvien');
+    expect(await opened(page, () => page.getByText(/^Get tickets · from/).first().click())).toBe('/go/nhacvien?src=app');
 
     // A free night opens the map.
-    await page.context().route('https://www.google.com/maps/**', (route) => route.fulfill({ body: 'map' }));
     await expectScreen(page, '/e/outcast', /SAIGON OUTCAST NIGHT MARKET/i);
-    const map = page.waitForEvent('popup');
-    await page.getByText('Vào cửa miễn phí', { exact: true }).first().click();
-    expect((await map).url()).toMatch(/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=10\.8065%2C106\.7411$/);
+    expect(await opened(page, () => page.getByText('Vào cửa miễn phí', { exact: true }).first().click()))
+      .toBe('https://www.google.com/maps/search/?api=1&query=10.8065%2C106.7411');
   });
 
   test('the list filters by city, style and kind of night, and the API answers each', async ({ page }) => {
