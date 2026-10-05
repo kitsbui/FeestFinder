@@ -590,7 +590,7 @@
           </div>
           <div style="display:flex;gap:6px;flex:none">
             <sc-for list="{{ board.views }}" as="v" hint-placeholder-count="2">
-              <div onClick="{{ v.pick }}" aria-label="{{ v.label }}" style="cursor:pointer;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ v.bg }};border:1px solid {{ v.bd }};color:{{ v.fg }}"><i class="{{ v.icon }}" style="font-size:15px"></i></div>
+              <div onClick="{{ v.pick }}" role="button" aria-label="{{ v.label }}" style="cursor:pointer;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ v.bg }};border:1px solid {{ v.bd }};color:{{ v.fg }}"><i class="{{ v.icon }}" style="font-size:15px"></i></div>
             </sc-for>
           </div>
         </div>
@@ -638,6 +638,35 @@
                 </div>
               </div>
             </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ board.mapView }}" hint-placeholder-val="{{ false }}">
+          <div class="ff-l-map" style="position:relative;height:calc(100dvh - 300px);min-height:360px;margin:0 -20px;overflow:hidden;border-top:1px solid rgba(255,252,225,.12);border-bottom:1px solid rgba(255,252,225,.12);background:#0E100F">
+            <div id="ff-app-map" style="position:absolute;inset:0"></div>
+            <sc-if value="{{ board.map.searchShow }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ board.map.search }}" role="button" style="cursor:pointer;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:999px;background:#0E100F;border:1px solid #ABFF84;color:#FFFCE1;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.45)"><i class="ph-bold ph-magnifying-glass" style="font-size:13px;color:#ABFF84"></i>{{ board.map.searchLabel }}</div>
+            </sc-if>
+            <sc-if value="{{ board.map.hasNote }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;left:12px;bottom:12px;z-index:2;padding:6px 11px;border-radius:999px;background:rgba(14,16,15,.86);border:1px solid rgba(255,252,225,.19);font-size:11.5px;font-weight:600;color:#A5A493">{{ board.map.note }}</div>
+            </sc-if>
+            <sc-if value="{{ board.map.failed }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:#A5A493"><i class="ph-bold ph-map-trifold" style="font-size:18px"></i>{{ board.map.failedLabel }}</div>
+            </sc-if>
+            <sc-if value="{{ board.map.hasSel }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;left:10px;right:10px;bottom:10px;z-index:4;display:flex;gap:12px;align-items:center;padding:10px;border-radius:8px;background:rgba(20,21,20,.96);border:1px solid rgba(255,252,225,.24);box-shadow:0 14px 34px rgba(0,0,0,.5)">
+                <div class="ff-art ff-art--flat" style="width:64px;height:64px;border-radius:8px;flex:none;background:{{ board.map.sel.art }}"></div>
+                <div onClick="{{ board.map.sel.open }}" role="button" style="cursor:pointer;flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ board.map.sel.title }}</div>
+                  <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ board.map.sel.when }} · {{ board.map.sel.where }}</div>
+                  <sc-if value="{{ board.map.sel.hasConf }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#ABFF84;margin-top:3px"><i class="ph-fill ph-seal-check" style="font-size:12px"></i>{{ board.map.sel.conf }}</div>
+                  </sc-if>
+                  <div style="font-size:12px;font-weight:600;margin-top:4px;color:{{ board.map.sel.priceFg }}">{{ board.map.sel.price }} · <span style="color:#ABFF84">{{ board.map.sel.openLabel }}</span></div>
+                </div>
+                <div onClick="{{ board.map.sel.close }}" role="button" style="cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,252,225,.08);flex:none;align-self:flex-start"><i class="ph-bold ph-x" style="font-size:12px"></i></div>
+              </div>
+            </sc-if>
           </div>
         </sc-if>
 
@@ -1426,6 +1455,20 @@
         <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin:24px 0 10px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.alertOrgs }}</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           <sc-for list="{{ alertOrgChips }}" as="c" hint-placeholder-count="5">
+            <div onClick="{{ c.pick }}" style="cursor:pointer;padding:9px 14px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }}">{{ c.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin:24px 0 10px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.alertCities }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ alertCityChips }}" as="c" hint-placeholder-count="8">
+            <div onClick="{{ c.pick }}" style="cursor:pointer;padding:9px 14px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }}">{{ c.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin:24px 0 10px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.alertStyles }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ alertStyleChips }}" as="c" hint-placeholder-count="10">
             <div onClick="{{ c.pick }}" style="cursor:pointer;padding:9px 14px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }}">{{ c.label }}</div>
           </sc-for>
         </div>

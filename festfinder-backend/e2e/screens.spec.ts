@@ -24,6 +24,7 @@ test.describe('Web', () => {
     ['/about', /VỀ FEESTFINDER/i],
     ['/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i],
     ['/o/ravoent', /RAVOLUTION ENTERTAINMENT/i],
+    ['/a/hoaprox', /HOAPROX/i],
   ];
   for (const [path, shows] of routes) {
     test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
@@ -79,6 +80,18 @@ test.describe('Web', () => {
     await expect(page.getByText('Tìm trong khu vực này')).toHaveCount(0);
     await expect(page).toHaveURL(/view=map&bbox=/);
     expect(problems).toEqual([]);
+  });
+
+  test('a lineup name opens the artist page, with their shows and its own HTML for search engines', async ({ page, request }) => {
+    const html = await (await request.get('/a/hoaprox')).text();
+    expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/a\/hoaprox"/);
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+    expect(blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']))).toContain('MusicGroup');
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByRole('link', { name: 'Trang nghệ sĩ · Hoaprox' }).click();
+    await expect(page).toHaveURL(/\/a\/hoaprox$/);
+    await expect(page.getByText('Show sắp tới')).toBeVisible();
+    await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
   });
 
   test('the list filters by city, style and kind of night, and the API answers each', async ({ page }) => {
@@ -272,6 +285,31 @@ test.describe('App', () => {
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
     }
+
+    test('the list opens as a map that asks for events once, and again only on "search this area"', async ({ page }) => {
+      const asked: string[] = [];
+      page.on('request', (r) => { if (r.url().includes('/events/map?')) asked.push(r.url()); });
+      await expectScreen(page, '/app/list', /EVERY EVENT/i);
+      await page.getByRole('button', { name: 'Map', exact: true }).click();
+      await expect(page.locator('#ff-app-map canvas')).toBeVisible();
+      await expect.poll(() => asked.length).toBe(1);
+      const box = (await page.locator('#ff-app-map').boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 40, { steps: 10 });
+      await page.mouse.up();
+      await expect(page.getByText('Search this area')).toBeVisible();
+      expect(asked).toHaveLength(1);
+      await page.getByText('Search this area').click();
+      await expect.poll(() => asked.length).toBe(2);
+    });
+
+    test('Smart Alerts take cities and music styles', async ({ page }) => {
+      await expectScreen(page, '/app/alerts', /ALERT SETTINGS/i);
+      await expect(page.getByText('Music styles', { exact: true })).toBeVisible();
+      await page.getByText('Bangkok', { exact: true }).click();
+      await expect.poll(async () => (await (await page.request.get('/me/alert')).json()).cities).toEqual(['bangkok']);
+    });
 
     test('each ticket can be given away or resold from the wallet', async ({ page }) => {
       await expectScreen(page, '/app/tickets', /MY TICKETS/i);

@@ -5,6 +5,7 @@ import type { Lang, Localized } from '../lib/i18n.ts';
 import { formatMoney } from '../lib/money.ts';
 import { cityLabel, cityOf, launchedCities } from '../lib/places.ts';
 import { isoIn, timeIn } from '../lib/time.ts';
+import { styleByKey } from '../lib/styles.ts';
 import { presentTiers } from '../presenters/event.ts';
 import { loadTimetable } from '../presenters/timetable.ts';
 import { faqFor } from '../routes/discussion.ts';
@@ -73,6 +74,8 @@ const T = {
   no: { vi: 'Chưa xác minh', en: 'Not verified yet' }, source: { vi: 'Nguồn', en: 'Source' }, verifiedShort: { vi: 'Đã xác minh', en: 'Verified' },
   collection: { vi: 'Bộ sưu tập', en: 'Collection' }, madeBy: { vi: 'Người tạo', en: 'Made by' }, eventCount: { vi: 'Số sự kiện', en: 'Events' },
   member: { vi: 'Thành viên FeestFinder', en: 'A FeestFinder member' },
+  artist: { vi: 'Nghệ sĩ', en: 'Artist' }, styles: { vi: 'Phong cách', en: 'Styles' }, playsIn: { vi: 'Diễn ở', en: 'Plays in' },
+  nextShow: { vi: 'Show gần nhất', en: 'Next show' },
 };
 const ORG_TYPE: Record<string, Localized> = {
   promoter: { vi: 'đơn vị tổ chức sự kiện', en: 'event promoter' }, venue: { vi: 'địa điểm tổ chức', en: 'venue' },
@@ -116,7 +119,7 @@ type Link = { title: string; path: string; line: string };
 
 /** What every public page says to search engines and AI assistants: its head, its graph, its facts. */
 export interface PageSeo {
-  kind: 'event' | 'organizer' | 'collection';
+  kind: 'event' | 'organizer' | 'collection' | 'artist';
   lang: Lang;
   url: string;
   canonical: string;
@@ -165,6 +168,11 @@ export interface OrganizerSeo extends PageSeo {
 /** A collection someone made public: the same lists as an organiser page. */
 export interface CollectionSeo extends Omit<OrganizerSeo, 'kind'> {
   kind: 'collection';
+}
+
+/** An artist: where they play next and where they have played, the same lists again. */
+export interface ArtistSeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'artist';
 }
 
 const ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -411,7 +419,7 @@ export function seoHead(seo: PageSeo): { title: string; head: string } {
     `<link rel="canonical" href="${esc(seo.canonical)}">`,
     ...(['vi', 'en', 'x-default'] as const).map((l) => `<link rel="alternate" hreflang="${l}" href="${esc(seo.alternates[l])}">`),
     `<link rel="alternate" type="text/markdown" href="${esc(seo.markdown)}">`,
-    `<meta property="og:type" content="${seo.kind === 'organizer' ? 'profile' : 'website'}">`,
+    `<meta property="og:type" content="${seo.kind === 'organizer' || seo.kind === 'artist' ? 'profile' : 'website'}">`,
     `<meta property="og:site_name" content="FeestFinder">`,
     `<meta property="og:locale" content="${seo.lang === 'vi' ? 'vi_VN' : 'en_US'}">`,
     `<meta property="og:locale:alternate" content="${seo.lang === 'vi' ? 'en_US' : 'vi_VN'}">`,
@@ -476,7 +484,7 @@ export function eventSsr(seo: EventSeo): string {
 }
 
 /** An organiser or collection page's facts as readable HTML. */
-export function organizerSsr(seo: OrganizerSeo | CollectionSeo): string {
+export function organizerSsr(seo: OrganizerSeo | CollectionSeo | ArtistSeo): string {
   const p = seo.page, h = seo.headings;
   const list = (items: Link[]) => (items.length ? `<ul>${items.map((x) => `<li>${link(x.path, x.title)} · ${esc(x.line)}</li>`).join('')}</ul>` : '');
   return [...ssrTop(seo, h), section(h.upcoming, list(p.upcoming)), section(h.past, list(p.past)), ...ssrBottom(seo, h.updated)].join('');
@@ -690,10 +698,110 @@ export async function buildCollectionSeo(ctx: Ctx, slug: string, lang: Lang = 'v
   };
 }
 
+// ---- artist pages ------------------------------------------------------------------------
+
+export const artistSsr = organizerSsr;
+
+/** Everything an artist page says to search engines and AI assistants, or null when no public event lists them. */
+export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<ArtistSeo | null> {
+  const a = await one<any>(ctx.db, 'select * from artists where slug = $1', [slug]);
+  if (!a) return null;
+  const now = ctx.clock.now();
+  const events = await many<any>(ctx.db,
+    `select e.slug, e.title, e.genre, e.styles, e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at, e.status, e.venue_name,
+            e.address, e.area, e.city, e.entry_mode, e.price_from, e.currency, e.cover_url, e.updated_at
+       from event_artists ea join events e on e.id = ea.event_id
+      where ea.artist_id = $1 and ${PUBLIC_EVENT} order by e.starts_at`, [a.id]);
+  if (!events.length) return null;
+  const upcoming = events.filter((e) => new Date(e.ends_at) >= now && e.status === 'live');
+  const past = events.filter((e) => new Date(e.ends_at) < now).reverse().slice(0, 12);
+  const vi = lang === 'vi';
+  const base = baseOf(ctx);
+  const path = `/a/${a.slug}`;
+  const alternates = { vi: `${base}${path}`, en: `${base}${path}?lang=en`, 'x-default': `${base}${path}` };
+  const url = alternates[lang];
+  const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((x, y) => y[1] - x[1]).map(([x]) => x);
+  const styles = rank(events.flatMap((e) => e.styles ?? [])).slice(0, 4).map((k) => text(styleByKey(k)?.label, lang) || k);
+  const genres = rank(events.map((e) => e.genre).filter(Boolean)).slice(0, 3);
+  const cities = rank(upcoming.map((e) => cityOf(e.city).slug)).map((k) => text(cityLabel(k), lang));
+  const next = upcoming[0];
+  const updatedAt = [a.created_at, ...events.map((e) => e.updated_at)].map((d) => new Date(d)).sort((x, y) => y.getTime() - x.getTime())[0];
+  const what = styles.length ? styles.join(', ') : genres.join(', ');
+  const bio = text(a.bio, lang);
+
+  const summary = [
+    vi
+      ? `${a.name}${what ? ` (${what})` : ''} có ${upcoming.length} show sắp diễn ra trên FeestFinder${cities.length ? ` ở ${cities.join(', ')}` : ''}.`
+      : `${a.name}${what ? ` (${what})` : ''} has ${upcoming.length} upcoming ${upcoming.length === 1 ? 'show' : 'shows'} on FeestFinder${cities.length ? ` in ${cities.join(', ')}` : ''}.`,
+    next ? (vi ? `Gần nhất là ${next.title} (${eventLine(next, lang)}).` : `Next is ${next.title} (${eventLine(next, lang)}).`) : '',
+  ].filter(Boolean).join(' ');
+  const description = clip(`${a.name}: ${upcoming.length ? upcoming.slice(0, 3).map((e) => `${e.title} (${shortDay(e.starts_on, lang)}${cityOf(e.city) ? `, ${text(cityLabel(e.city), lang)}` : ''})`).join('; ') : summary}`, 160);
+  const title = [`${a.name} – ${vi ? 'lịch diễn' : 'upcoming shows'}${cities[0] ? ` · ${cities[0]}` : ''}`, a.name].find((x) => x.length <= 62) ?? clip(a.name, 62);
+  const cover = a.image_url ? { cover_url: a.image_url } : upcoming.find((e) => e.cover_url) ?? events.find((e) => e.cover_url);
+  const image = cover
+    ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
+    : { url: `${base}/og/v1/${toneOf(genres[0])}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+  const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: a.name, path: inLang(path, lang) }];
+  const facts: Fact[] = [
+    { label: t('styles', lang), value: what },
+    { label: t('upcoming', lang), value: String(upcoming.length) },
+    { label: t('playsIn', lang), value: cities.join(', ') },
+    ...(next ? [{ label: t('nextShow', lang), value: `${next.title} · ${eventLine(next, lang)}`, href: inLang(`/e/${next.slug}`, lang) }] : []),
+    ...(a.website ? [{ label: t('site', lang), value: hostOf(a.website), href: a.website }] : []),
+  ].filter((f) => f.value);
+
+  const ids = { page: url, artist: `${url}#artist`, crumbs: `${url}#breadcrumb` };
+  const place = (e: any) => {
+    const ad = addressOf(e.city);
+    return { '@type': 'Place', name: e.venue_name ?? undefined,
+      address: { '@type': 'PostalAddress', streetAddress: [e.address, e.area].filter(Boolean).join(', ') || undefined, addressLocality: ad.locality, addressRegion: ad.region, addressCountry: ad.country } };
+  };
+  const graph = [
+    ...siteNodes(base),
+    {
+      '@type': 'ProfilePage', '@id': ids.page, url, name: `${title} | FeestFinder`, description, inLanguage: lang,
+      isPartOf: { '@id': `${base}/#website` }, breadcrumb: { '@id': ids.crumbs }, mainEntity: { '@id': ids.artist },
+      primaryImageOfPage: { '@type': 'ImageObject', url: image.url, width: image.width, height: image.height },
+      dateModified: vnIso(updatedAt),
+    },
+    {
+      '@type': 'MusicGroup', '@id': ids.artist, name: a.name, url, description: bio || summary,
+      genre: [...styles, ...genres].slice(0, 5), sameAs: a.website ? [a.website] : undefined,
+      image: a.image_url ? abs(ctx, a.image_url) : undefined,
+      event: upcoming.slice(0, 30).map((e) => ({
+        '@type': SCHEMA_TYPE[e.genre] ?? 'Event', name: e.title, url: `${base}/e/${e.slug}${vi ? '' : '?lang=en'}`,
+        startDate: e.starts_at ? isoIn(new Date(e.starts_at), cityOf(e.city).timezone) : undefined,
+        endDate: e.ends_at ? isoIn(new Date(e.ends_at), cityOf(e.city).timezone) : undefined,
+        eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : `${base}/og/v1/${toneOf(e.genre)}.png`],
+        performer: { '@id': ids.artist },
+      })),
+    },
+    crumbList(base, ids.crumbs, crumbs),
+  ];
+  const links = (xs: any[]) => xs.map((e) => ({ title: e.title, path: inLang(`/e/${e.slug}`, lang), line: eventLine(e, lang) }));
+  return {
+    kind: 'artist', lang, url, canonical: url, alternates, markdown: `${path}.md${vi ? '' : '?lang=en'}`,
+    title: `${title} | FeestFinder`, description,
+    // An artist with nothing coming up is a thin page: kept, but not offered to search results.
+    robots: upcoming.length ? ROBOTS : 'noindex, follow',
+    image: { ...image, alt: a.name },
+    publishedAt: vnIso(a.created_at) ?? null,
+    updatedAt: vnIso(updatedAt)!,
+    headings: { facts: t('facts', lang), about: t('about', lang), upcoming: t('upcoming', lang), past: t('pastEvents', lang), updated: t('updated', lang) },
+    page: {
+      crumbs, kicker: [t('artist', lang), what].filter(Boolean).join(' · '), h1: a.name, summary, facts, about: bio,
+      upcoming: links(upcoming), past: links(past),
+      otherLang: { label: t('otherLang', lang), path: vi ? `${path}?lang=en` : path },
+    },
+    jsonLd: { '@context': 'https://schema.org', '@graph': JSON.parse(JSON.stringify(graph)) },
+  };
+}
+
 // ---- Markdown and llms.txt, for AI agents that read text ---------------------------------
 
 /** A page as Markdown: the same answer, facts and lists as its HTML, with links made absolute. */
-export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo): string {
+export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo): string {
   const base = baseOf(ctx);
   const absUrl = (href: string) => (/^https?:/.test(href) ? href : base + href);
   const md = (s: string) => s.replace(/([\\`*_[\]])/g, '\\$1');
@@ -792,13 +900,17 @@ export function robotsTxt(ctx: Ctx): string {
 export async function sitemapXml(ctx: Ctx): Promise<string> {
   const now = ctx.clock.now();
   const since = new Date(now.getTime() - 183 * 86400_000);
-  const [events, orgs, collections] = await Promise.all([
+  const [events, orgs, artists, collections] = await Promise.all([
     many<any>(ctx.db,
       `select slug, updated_at from events where status in ('live', 'cancelled') and not held_for_reports and published_at is not null and ends_at >= $1
         order by starts_at limit 20000`, [since]),
     many<any>(ctx.db,
       `select o.slug, max(e.updated_at) as updated_at from organizers o join events e on e.organizer_id = o.id
         where e.status = 'live' and not e.held_for_reports and e.ends_at >= $1 group by o.slug`, [now]),
+    // Artists with a show still to come.
+    many<any>(ctx.db,
+      `select a.slug, max(e.updated_at) as updated_at from artists a join event_artists ea on ea.artist_id = a.id join events e on e.id = ea.event_id
+        where e.status = 'live' and not e.held_for_reports and e.published_at is not null and e.ends_at >= $1 group by a.slug limit 20000`, [now]),
     // Public collections with something still on.
     many<any>(ctx.db,
       `select c.slug, greatest(c.updated_at, max(e.updated_at)) as updated_at
@@ -819,6 +931,10 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
     ...orgs.flatMap((o) => {
       const vi = `${base}/o/${o.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
       return [{ loc: vi, lastmod: day(o.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(o.updated_at), priority: '0.4', alternates: links }];
+    }),
+    ...artists.flatMap((a) => {
+      const vi = `${base}/a/${a.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
+      return [{ loc: vi, lastmod: day(a.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(a.updated_at), priority: '0.4', alternates: links }];
     }),
     ...collections.flatMap((c) => {
       const vi = `${base}/c/${c.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);

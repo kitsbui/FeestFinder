@@ -68,9 +68,20 @@ export interface ConfidenceFacts {
 
 export interface ConfidenceLine { rule: string; points: number; label: Localized }
 
-/** One source per site: a venue's page and its calendar feed are the same voice. */
+/** Endings that name a kind of site or a country, not who runs it. */
+const SUFFIX = new Set(['com', 'net', 'org', 'co', 'io', 'info', 'biz', 'app', 'events', 'asia', 'in', 'gov', 'edu', 'ac', 'or', 'ne', 'example', 'test', 'local']);
+
+/** Who runs a site: megatix.com.sg, megatix.vn and megatix.in.th are all "megatix". */
+export function brandOf(host: string | null | undefined): string | null {
+  if (!host) return null;
+  const labels = host.replace(/^www\./, '').toLowerCase().split('.');
+  while (labels.length > 1 && (SUFFIX.has(labels[labels.length - 1]) || /^[a-z]{2}$/.test(labels[labels.length - 1]))) labels.pop();
+  return labels[labels.length - 1] || host;
+}
+
+/** One source per brand: a venue's page and its calendar feed, or one ticket seller's country sites, are the same voice. */
 export function independentSources(sources: { provider: string; host: string | null }[]): number {
-  return new Set(sources.map((s) => s.host ?? s.provider)).size;
+  return new Set(sources.map((s) => brandOf(s.host) ?? s.provider)).size;
 }
 
 export function scoreConfidence(f: ConfidenceFacts): { score: number; label: ConfidenceLabel; breakdown: ConfidenceLine[] } {
