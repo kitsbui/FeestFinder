@@ -14,6 +14,7 @@ import {
 import { genreOptions, areaOptions, statusOptions, entryOptions, rejectOptions, genreLabel } from '../opts.js';
 import { EventForm } from '../event-form.js';
 import { actionText } from './overview.js';
+import { Provenance } from './sources.js';
 
 const WHEN = () => [
   { value: 'upcoming', label: t('Sắp diễn ra', 'Upcoming') }, { value: 'today', label: t('Hôm nay', 'Today') }, { value: 'weekend', label: t('Cuối tuần này', 'This weekend') },
@@ -223,8 +224,9 @@ function EventDetail({ id }) {
     h(Tabs, { value: tab, onChange: setTab, items: [
       { value: 'edit', icon: 'pencil-simple', label: t('Nội dung tin', 'Listing') },
       { value: 'history', icon: 'clock-counter-clockwise', label: t('Kiểm duyệt & lịch sử', 'Moderation & history'), count: ev.history.length },
+      { value: 'sources', icon: 'link', label: t('Nguồn & độ tin cậy', 'Sources & confidence') },
     ] }),
-    tab === 'history' ? h(History, { ev }) : h(EventForm, {
+    tab === 'sources' ? h(Provenance, { eventId: ev.id }) : tab === 'history' ? h(History, { ev }) : h(EventForm, {
       key: `${ev.id}:${ev.status}:${ev.updatedAt}`, mode: 'team', draft: ev, actions, readOnly: false, orgName: ev.organizer.name,
       banner: ev.status === 'rejected' ? h('div', { className: 'op-banner op-banner--danger' }, Icon('arrow-u-up-left', true), h('div', null, h('strong', null, t('Đã trả lại', 'Sent back')), ev.decisions[0]?.reason ? ` · ${tx(ev.decisions[0].reason)}` : '')) : null,
       onSaved: (out) => out && setData(out),
