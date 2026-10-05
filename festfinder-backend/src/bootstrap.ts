@@ -6,6 +6,7 @@ import { migrate } from './db/migrate.ts';
 import { scheduleSupabaseCron } from './jobs.ts';
 import { fixedClock, systemClock } from './lib/time.ts';
 import { ConsoleTransport, RoutingTransport, SmtpTransport, WebhookTransport, WebPushTransport } from './services/messaging.ts';
+import { NoopAnalytics, PostHogAnalytics } from './services/analytics.ts';
 import { NoopReporter, SentryReporter } from './services/errors.ts';
 import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
 import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
@@ -78,6 +79,7 @@ export async function createContext(config: Config): Promise<Ctx> {
   const errors = config.sentryDsn
     ? new SentryReporter(config.sentryDsn, { release: config.release, environment: config.env, log })
     : new NoopReporter();
+  const analytics = config.posthog ? new PostHogAnalytics(config.posthog.key, config.posthog.host, log) : new NoopAnalytics();
   for (const [what, on] of [['email', !!config.smtp], ['push/Zalo/SMS', !!config.messagingWebhook], ['browser push', !!config.webPush], ['error reporting', !!config.sentryDsn]] as const) {
     if (!on && config.env === 'production') log(`warning: no ${what} provider configured`);
   }
@@ -92,6 +94,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     transport,
     storage,
     errors,
+    analytics,
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),

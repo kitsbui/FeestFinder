@@ -9,6 +9,7 @@ import { GIG_TYPE, SET_LENGTH, ARTIST_ROLE } from '../lib/network.ts';
 import { dateStr, limit, parse, uuid } from '../lib/validate.ts';
 import { requireOrganizer, requireUser } from '../http/guards.ts';
 import { notifyOrganizer, notifyUser } from '../services/notify.ts';
+import { personId } from '../services/analytics.ts';
 import { artistForMatch, matchScore } from '../services/gigs.ts';
 import { label, styleItem } from '../services/artists.ts';
 
@@ -110,6 +111,7 @@ export default async function gigRoutes(app: FastifyInstance) {
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id`,
       [org.organizerId, b.eventId, b.title, b.description, b.city, b.startsOn, b.styles, b.gigType, b.setLength, b.feeMin, b.feeMax,
         cityBySlug(b.city)!.currency, b.travelCovered, b.closesOn, org.userId]);
+    void ctx.analytics.capture('gig_posted', personId(org.userId), { city: b.city, kind: b.gigType ?? undefined });
     return reply.code(201).send(presentGig(await one<any>(ctx.db, `${GIG} where g.id = $1`, [row!.id])));
   });
 
@@ -209,6 +211,7 @@ export default async function gigRoutes(app: FastifyInstance) {
       });
       return row!.id;
     });
+    void ctx.analytics.capture('booking_requested', personId(org.userId), { city: b.city });
     return reply.code(201).send({ id, message: L('Request sent', 'Đã gửi lời mời') });
   });
 
@@ -261,6 +264,7 @@ export default async function gigRoutes(app: FastifyInstance) {
       }
       return r!;
     });
+    if (row.created) void ctx.analytics.capture('gig_applied', personId(s.user.id), { city: g.city });
     return reply.code(row.created ? 201 : 200).send({ id: row.id, match, message: L('Application sent', 'Đã gửi hồ sơ') });
   });
 

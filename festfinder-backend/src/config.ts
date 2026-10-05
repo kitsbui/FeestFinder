@@ -138,6 +138,8 @@ export interface Config {
   webPush: { publicKey: string; privateKey: string; subject: string } | null;
   /** Sentry-compatible DSN for unhandled errors. */
   sentryDsn: string | null;
+  /** PostHog project key and host. Without a key, analytics events go nowhere. */
+  posthog: { key: string; host: string } | null;
   /** Release name reported alongside errors. */
   release: string;
 }
@@ -230,6 +232,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
       ? { publicKey: str('VAPID_PUBLIC_KEY'), privateKey: str('VAPID_PRIVATE_KEY'), subject: str('VAPID_SUBJECT', 'mailto:hello@feestfinder.com') }
       : null,
     sentryDsn: process.env.SENTRY_DSN || null,
+    posthog: process.env.POSTHOG_KEY ? { key: process.env.POSTHOG_KEY, host: process.env.POSTHOG_HOST || 'https://eu.i.posthog.com' } : null,
     release: str('RELEASE', 'dev'),
     ...overrides,
   };

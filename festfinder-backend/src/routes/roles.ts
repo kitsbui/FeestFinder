@@ -9,6 +9,7 @@ import { ARTIST_ROLE, ORGANIZER_TYPE } from '../lib/network.ts';
 import { limit, parse, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireUser } from '../http/guards.ts';
 import { appendAudit } from '../services/audit.ts';
+import { personId } from '../services/analytics.ts';
 import { notifyUser } from '../services/notify.ts';
 import {
   activateRole, claimArtist, claimOrganizer, claimSuggestions, personasOf, setRole, startArtistProfile, startOrganizer, type Persona,
@@ -78,6 +79,7 @@ export default async function roleRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     if ('claimArtistId' in body) {
       const claim = await ctx.db.tx((q) => claimArtist(q, s.user.id, body.claimArtistId, body.note, body.proofUrl ?? null, now));
+      void ctx.analytics.capture('profile_claimed', personId(s.user.id), { role: 'artist' });
       return reply.code(202).send({ ...(await answer(s.user.id)), claimId: claim.id,
         message: L('Claim sent. The team checks it, usually within a day.', 'Đã gửi yêu cầu. Đội ngũ sẽ kiểm tra, thường trong một ngày.') });
     }
@@ -85,6 +87,7 @@ export default async function roleRoutes(app: FastifyInstance) {
       stageName: body.stageName, roles: body.roles, basedCity: body.basedCity ?? null, styles: body.styles,
     }, now));
     await ctx.db.query('update users set onboarded_at = coalesce(onboarded_at, $2) where id = $1', [s.user.id, now]);
+    void ctx.analytics.capture('role_chosen', personId(s.user.id), { role: 'artist' });
     return reply.code(201).send({ ...(await answer(s.user.id)), slug: artist.slug, message: L('Artist profile ready', 'Đã tạo hồ sơ nghệ sĩ') });
   });
 
@@ -94,11 +97,13 @@ export default async function roleRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     if ('claimOrganizerId' in body) {
       const claim = await ctx.db.tx((q) => claimOrganizer(q, s.user.id, body.claimOrganizerId, body.note, body.proofUrl ?? null, now));
+      void ctx.analytics.capture('profile_claimed', personId(s.user.id), { role: 'organizer' });
       return reply.code(202).send({ ...(await answer(s.user.id)), claimId: claim.id,
         message: L('Claim sent. The team checks it, usually within a day.', 'Đã gửi yêu cầu. Đội ngũ sẽ kiểm tra, thường trong một ngày.') });
     }
     const org = await ctx.db.tx((q) => startOrganizer(q, s.user.id, { name: body.name, type: body.type as any, city: body.city ?? null }, now));
     await ctx.db.query('update users set onboarded_at = coalesce(onboarded_at, $2) where id = $1', [s.user.id, now]);
+    void ctx.analytics.capture('role_chosen', personId(s.user.id), { role: 'organizer' });
     return reply.code(201).send({ ...(await answer(s.user.id)), slug: org.slug,
       message: L('Organiser created. The team verifies it before its events go live.', 'Đã tạo nhà tổ chức. Đội ngũ xác minh trước khi sự kiện được đăng.') });
   });

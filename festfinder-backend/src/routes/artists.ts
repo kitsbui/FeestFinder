@@ -16,6 +16,7 @@ import { directoryPages } from '../services/seo.ts';
 import { reportGig, reportsOf } from '../services/ingest/report.ts';
 import { gearOf, presentGear } from '../services/gear.ts';
 import { appendAudit } from '../services/audit.ts';
+import { personId } from '../services/analytics.ts';
 import { artistOrganizers, artistStyles, artistVenues, sharedLineups, similarArtists } from '../services/network.ts';
 
 /*
@@ -250,6 +251,7 @@ export default async function artistRoutes(app: FastifyInstance) {
         : out.reason === 'out_of_area' ? L('FeestFinder does not list that city yet', 'FeestFinder chưa có thành phố này')
         : L('That gig could not be read', 'Không đọc được lịch diễn này'));
     }
+    void ctx.analytics.capture('gig_reported', personId(s.user.id), { outcome: out.outcome });
     return { ...out, message: out.outcome === 'merged' ? L('Added to the event already listed', 'Đã gắn vào sự kiện đang có') : L('Sent for review', 'Đã gửi để kiểm duyệt') };
   });
 
