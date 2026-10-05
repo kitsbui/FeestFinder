@@ -72,20 +72,21 @@ export interface ConversionInput {
 /** Keeps a sale a partner reported. The same order again updates it; a paid one stays paid. */
 export async function recordConversion(q: Queryable, partner: Partner, c: ConversionInput, now: Date): Promise<{ id: string; created: boolean; matched: boolean }> {
   const click = c.clickId
-    ? await one<{ id: string; event_id: string }>(q, 'select id, event_id from outbound_clicks where id = $1 and partner_id = $2', [c.clickId, partner.id])
+    ? await one<{ id: string; event_id: string | null; link_id: string | null }>(q, 'select id, event_id, link_id from outbound_clicks where id = $1 and partner_id = $2', [c.clickId, partner.id])
     : null;
   const commission = c.commission ?? Math.round((c.amount * Number(partner.commission_pct)) / 100);
   const row = await one<{ id: string; created: boolean }>(q,
-    `insert into partner_conversions (partner_id, click_id, event_id, order_ref, amount, currency, commission, status, occurred_at, received_at, payload)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+    `insert into partner_conversions (partner_id, click_id, event_id, order_ref, amount, currency, commission, status, occurred_at, received_at, payload, link_id)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
      on conflict (partner_id, order_ref) do update set
        amount = excluded.amount, currency = excluded.currency, commission = excluded.commission,
        status = case when partner_conversions.status = 'paid' then 'paid' else excluded.status end,
        click_id = coalesce(partner_conversions.click_id, excluded.click_id),
        event_id = coalesce(partner_conversions.event_id, excluded.event_id),
+       link_id = coalesce(partner_conversions.link_id, excluded.link_id),
        received_at = excluded.received_at, payload = excluded.payload
      returning id, (xmax = 0) as created`,
-    [partner.id, click?.id ?? null, click?.event_id ?? null, c.orderRef, c.amount, c.currency, commission, c.status, c.occurredAt, now, json(c.payload)]);
+    [partner.id, click?.id ?? null, click?.event_id ?? null, c.orderRef, c.amount, c.currency, commission, c.status, c.occurredAt, now, json(c.payload), click?.link_id ?? null]);
   return { id: row!.id, created: row!.created, matched: !!click };
 }
 
@@ -103,3 +104,36 @@ export async function countEventMetric(q: Queryable, eventId: string, kind: 'vie
     [eventId, vnDate(now), source, bySource]);
   return !!res;
 }
+
+// ---- what a click says about where it came from ----------------------------------------------
+
+export type Device = 'mobile' | 'tablet' | 'desktop';
+
+/** Crawlers and link previews follow /go links too; they are not people choosing tickets. */
+const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|whatsapp|telegram|zalo|headless|lighthouse|curl|wget|python-requests|node-fetch/i;
+
+/** The kind of device from its user agent, or null for a robot. The user agent itself is not kept. */
+export function deviceOf(userAgent: string | undefined): Device | null {
+  const ua = userAgent ?? '';
+  if (!ua || BOT.test(ua)) return null;
+  if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) return 'tablet';
+  if (/mobi|iphone|ipod|android/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+/** The visitor's country as the CDN in front reports it (Vercel, then Cloudflare). */
+export function countryOf(headers: Record<string, string | string[] | undefined>): string | null {
+  const raw = headers['x-vercel-ip-country'] ?? headers['cf-ipcountry'];
+  const c = String(Array.isArray(raw) ? raw[0] : raw ?? '').toUpperCase();
+  return /^[A-Z]{2}$/.test(c) && c !== 'XX' && c !== 'T1' ? c : null;
+}
+
+/** The site a click came from, when it was another one. */
+export function referrerHostOf(headers: Record<string, string | string[] | undefined>, ownHost: string | null): string | null {
+  const raw = headers.referer;
+  const host = hostOf(Array.isArray(raw) ? raw[0] : raw);
+  return host && host !== ownHost ? host : null;
+}
+
+/** Placements a click can come from: where on FeestFinder the button or link was. */
+export const PLACEMENTS = ['detail', 'tier', 'hero', 'card', 'map', 'list', 'app', 'link', 'artist', 'organizer', 'email', 'external'] as const;
