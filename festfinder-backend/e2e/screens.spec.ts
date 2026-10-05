@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectOps, expectScreen, signInWith } from './checks.ts';
+import { expectOps, expectScreen, signInWith, watch } from './checks.ts';
 
 /*
  * Every route of the four screens and Ops, on the demo data (test/fixtures/seed.ts): it
@@ -54,9 +54,42 @@ test.describe('Web', () => {
     await expect.poll(() => page.locator('body').innerText()).toMatch(/Hỏi & đáp/i);
   });
 
-  test('the old map address lands on the list', async ({ page }) => {
+  test('the old map address lands on the list as a map', async ({ page }) => {
     await page.goto('/map');
-    await expect(page).toHaveURL(/\/list$/);
+    await expect(page).toHaveURL(/\/list\?view=map/);
+  });
+
+  test('the map asks for the events in view once, and again only on "search this area"', async ({ page }) => {
+    const problems = watch(page);
+    const asked: string[] = [];
+    page.on('request', (r) => { if (r.url().includes('/events/map?')) asked.push(r.url()); });
+    await page.goto('/list?city=ho-chi-minh&view=map');
+    await expect(page.locator('#ff-map canvas')).toBeVisible();
+    await expect.poll(() => asked.length).toBe(1);
+    // Moving the map asks nothing until the visitor says so.
+    const box = (await page.locator('#ff-map').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 140, box.y + box.height / 2 - 50, { steps: 10 });
+    await page.mouse.up();
+    await expect(page.getByText('Tìm trong khu vực này')).toBeVisible();
+    expect(asked).toHaveLength(1);
+    await page.getByText('Tìm trong khu vực này').click();
+    await expect.poll(() => asked.length).toBe(2);
+    await expect(page.getByText('Tìm trong khu vực này')).toHaveCount(0);
+    await expect(page).toHaveURL(/view=map&bbox=/);
+    expect(problems).toEqual([]);
+  });
+
+  test('the list filters by city, style and kind of night, and the API answers each', async ({ page }) => {
+    await expectScreen(page, '/list', /TẤT CẢ SỰ KIỆN/i);
+    await expect(page.getByText('Bangkok · 0', { exact: true })).toBeVisible();
+    await page.getByText('Techno', { exact: true }).click();
+    await expect(page).toHaveURL(/style=techno/);
+    await expect(page.getByText('Không có sự kiện nào khớp')).toBeVisible();
+    // The same chip again turns it off.
+    await page.getByText('Techno', { exact: true }).click();
+    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
   });
 
   test('the old city landing pages land on the list with their filters', async ({ page }) => {
@@ -364,6 +397,7 @@ test.describe('Ops', () => {
       ['/ops/reports', /Báo cáo người dùng/],
       ['/ops/organizers', /Thêm nhà tổ chức/],
       ['/ops/venues', /Thêm địa điểm/],
+      ['/ops/sources', /Thêm nguồn/],
       ['/ops/featured', /Thêm dãy/],
       ['/ops/users', /Đăng ký qua/],
       ['/ops/orders', /Chờ thanh toán/i],

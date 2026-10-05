@@ -16,7 +16,7 @@ FF.appTicketsFrom = (out) => out.items.reduce((all, o) => all.concat(o.tickets.m
 FF.loadApp = async function () {
   const signed = !!(FF.session && FF.session.user);
   const none = { items: [] };
-  const [events, genres, feedAd, me, friends, saves, hypes, going, follows, cols] = await Promise.all([
+  const [events, genres, feedAd, me, friends, saves, hypes, going, follows, cols, discovery] = await Promise.all([
     FF.get('/events?time=all&limit=60'),
     FF.maybe(FF.get('/genres'), none),
     FF.maybe(FF.get('/ads?placement=feed'), { ad: null }),
@@ -26,7 +26,8 @@ FF.loadApp = async function () {
     signed ? FF.maybe(FF.get('/me/hypes?limit=100'), none) : none,
     signed ? FF.maybe(FF.get('/me/going?limit=100'), none) : none,
     signed ? FF.maybe(FF.get('/me/follows'), null) : null,
-    signed ? FF.maybe(FF.get('/me/collections'), none) : none
+    signed ? FF.maybe(FF.get('/me/collections'), none) : none,
+    FF.maybe(FF.get('/meta/discovery'), null)
   ]);
 
   const cards = events.items;
@@ -71,6 +72,7 @@ FF.loadApp = async function () {
     collections: cols.items,
     interests: on(u ? u.interests : []),
     orgFollow,
+    discovery,
     here: null
   };
 };

@@ -193,6 +193,22 @@
   FF.initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   FF.text = (loc, lang) => (loc && typeof loc === 'object' ? loc[lang] || loc.en || '' : loc || '');
   FF.errorText = (e, lang) => (e && e.message) || (lang === 'vi' ? 'Đã có lỗi xảy ra' : 'Something went wrong');
+  /** A price in whole units of its currency: 1.200.000₫, ¥5,000, THB 800 (the API's formatMoney). */
+  FF.money = (n, currency, lang) => (!currency || currency === 'VND'
+    ? Number(n || 0).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') + '₫'
+    : new Intl.NumberFormat(lang === 'vi' ? 'vi-VN' : 'en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0));
+  /** A /ui or /pages file with this deployment's version. */
+  FF.asset = vq;
+  /** The map module (ui/map/ff-map.js) and MapLibre, loaded the first time a map opens. */
+  let mapLoad = null;
+  FF.loadMap = function () {
+    if (!mapLoad) {
+      mapLoad = (window.FFMap ? Promise.resolve() : FF.loadScript(vq('/ui/map/ff-map.js')))
+        .then(() => window.FFMap.load(vq).then(() => window.FFMap));
+      mapLoad.catch(() => { mapLoad = null; });
+    }
+    return mapLoad;
+  };
 
   // ---- story images ---------------------------------------------------------------
 

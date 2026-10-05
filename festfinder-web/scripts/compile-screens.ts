@@ -419,9 +419,10 @@ for (const surface of Object.keys(SURFACES) as Surface[]) {
   console.log(`${surface.padEnd(10)} view ${(r.bytes / 1024).toFixed(0)} KB, ${r.pseudo} hover/active rules`);
 }
 
-// The icon and text fonts, the design-system sheet and the brand images the templates point at.
+// The icon and text fonts, the design-system sheet, the brand images the templates point at,
+// and the map (MapLibre in vendor, FeestFinder's layer on it in map).
 const PUBLIC_UI = join(ROOT, 'public/ui');
-for (const folder of ['vendor', 'fonts', '_ds', 'assets']) {
+for (const folder of ['vendor', 'fonts', '_ds', 'assets', 'map']) {
   const from = join(SOURCE, 'ui', folder);
   // A mirror: an image removed from the designs must stop being served here too.
   rmSync(join(PUBLIC_UI, folder), { recursive: true, force: true });
