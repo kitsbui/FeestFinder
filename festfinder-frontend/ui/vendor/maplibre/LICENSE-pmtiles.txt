@@ -1,0 +1,3 @@
+pmtiles 4.5.0, BSD-3-Clause, Copyright (c) Protomaps LLC.
+Source and full licence: https://github.com/protomaps/PMTiles
+Bundles fflate (MIT), https://github.com/101arrowz/fflate

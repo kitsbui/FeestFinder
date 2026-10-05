@@ -5,6 +5,11 @@ const API = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
 
 const dev = process.env.NODE_ENV !== 'production';
 
+/** Where the map's PMTiles archive and glyphs live (the API's MAP_TILES_URL / MAP_GLYPHS_URL). */
+const MAP_ORIGINS = [process.env.MAP_TILES_URL, process.env.MAP_GLYPHS_URL]
+  .filter((u): u is string => !!u && /^https:\/\//.test(u))
+  .map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin);
+
 /**
  * The screens are compiled to React, so unlike the design runtime nothing is evaluated
  * from strings: no 'unsafe-eval' outside development (React's dev tools need it there).
@@ -20,7 +25,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self'${dev ? ' ws: wss:' : ''}`,
+  `connect-src 'self'${MAP_ORIGINS.map((o) => ` ${o}`).join('')}${dev ? ' ws: wss:' : ''}`,
   "worker-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -80,8 +85,8 @@ const config: NextConfig = {
       { source: '/e/:slug/en', destination: '/e/:slug?lang=en', permanent: true },
       { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
       { source: '/c/:slug/en', destination: '/c/:slug?lang=en', permanent: true },
-      // The map became the list.
-      { source: '/map', destination: '/list', permanent: true },
+      // The map is a view of the list.
+      { source: '/map', destination: '/list?view=map', permanent: false },
       { source: '/app/map', destination: '/app/list', permanent: true },
     ];
   },

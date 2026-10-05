@@ -4,7 +4,8 @@ FF.webEvent = function (c) {
     id: c.id, slug: c.slug, title: c.title, genre: c.genre, ds: c.startsOn, de: c.endsOn,
     time: (c.startTime || '') + ' – ' + (c.endTime || ''),
     venue: c.venue.name || '', area: c.venue.area || '', lat: c.venue.lat, lng: c.venue.lng, city: c.city || 'ho-chi-minh',
-    price: c.priceFrom, hype: c.hypeCount, featured: c.featured, soldOut: c.soldOut, past: c.past, dist: c.distanceKm,
+    price: c.priceFrom, currency: c.currency || 'VND', hype: c.hypeCount, featured: c.featured, soldOut: c.soldOut, past: c.past, dist: c.distanceKm,
+    styles: c.styles || [], eventType: c.eventType || null, confidence: c.confidence || null, coverUrl: c.coverUrl || null,
     badge: c.badge ? c.badge.label : undefined,
     art: FF.artOf(c),
     lineup: c.lineup || []
@@ -13,7 +14,9 @@ FF.webEvent = function (c) {
 FF.loadWeb = async function () {
   const signed = !!(FF.session && FF.session.user);
   const empty = { items: [] };
-  const [events, ad, me, friends, saves, going, follows, prefs, cols] = await Promise.all([
+  // A shared event link opens that event even when it is not among the first page of listings.
+  const r = FF.route, linked = r && r.name === 'e' && r.param ? r.param : null;
+  const [events, ad, me, friends, saves, going, follows, prefs, cols, discovery, one] = await Promise.all([
     FF.get('/events?time=all&limit=60'),
     FF.maybe(FF.get('/ads?placement=banner'), { ad: null }),
     signed ? FF.maybe(FF.get('/me'), null) : null,
@@ -22,9 +25,12 @@ FF.loadWeb = async function () {
     signed ? FF.maybe(FF.get('/me/going?limit=100'), empty) : empty,
     signed ? FF.maybe(FF.get('/me/follows'), null) : null,
     signed ? FF.maybe(FF.get('/me/notification-preferences'), null) : null,
-    signed ? FF.maybe(FF.get('/me/collections'), empty) : empty
+    signed ? FF.maybe(FF.get('/me/collections'), empty) : empty,
+    FF.maybe(FF.get('/meta/discovery'), null),
+    linked ? FF.maybe(FF.get('/events/' + encodeURIComponent(linked)), null) : null
   ]);
-  const cards = events.items;
+  const cards = events.items.slice();
+  if (one && one.id && !cards.some(c => c.id === one.id)) cards.push(one);
   const orgs = {}, orgOf = {};
   cards.forEach(c => {
     orgOf[c.id] = c.organizer.id;
@@ -52,6 +58,7 @@ FF.loadWeb = async function () {
     saved: flags(saves.items), going: flags(going.items), following,
     notifM: prefs ? prefs.matrix : null,
     collections: cols.items,
+    discovery,
     mapSel: cards[0] ? cards[0].id : null
   };
 };

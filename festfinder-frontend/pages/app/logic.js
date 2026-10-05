@@ -20,7 +20,7 @@ function toEvent(c) {
     startTime: c.startTime, endTime: c.endTime,
     venue: c.venue.name || '', area: c.venue.area || '', address: c.venue.address || '', city: c.city || 'ho-chi-minh',
     lat: c.venue.lat, lng: c.venue.lng, km: c.distanceKm,
-    price: c.priceFrom || 0, age: c.age || 'All ages', hype: c.hypeCount || 0,
+    price: c.priceFrom || 0, currency: c.currency || 'VND', styles: c.styles || [], age: c.age || 'All ages', hype: c.hypeCount || 0,
     badge: c.badge ? c.badge.key : null, badgeLabel: c.badge ? c.badge.label : null,
     featured: !!c.featured, soldOut: !!c.soldOut,
     artists: c.artists || [], lineup: c.lineup || [],
@@ -518,7 +518,9 @@ applyApp(APP);
  * /app/settings        notification settings
  */
 const TABS = ['explore', 'saved', 'list', 'profile'];
-const CITY_LIST = [{ k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM' }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội' }, { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng' }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang' }];
+/** The cities FeestFinder lists, from GET /meta/discovery (four Vietnamese ones if it did not answer). */
+const CITY_LIST = APP.discovery ? APP.discovery.cities.map(c => ({ k: c.slug, en: c.name.en, vi: c.name.vi }))
+  : [{ k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM' }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội' }, { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng' }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang' }];
 const eventBy = (key) => EVENTS.filter(e => e.slug === key || e.id === key)[0] || null;
 const slugOf = (id) => { const e = EVENTS.filter(x => x.id === id)[0]; return e ? (e.slug || e.id) : id; };
 
@@ -579,7 +581,7 @@ class Component extends DCLogic {
     shareWhat:null, shareVideo:null,
     range:[null,null], saved: APP.saved || {}, hyped: APP.hyped || {},
     interests: APP.interests || { EDM:true, Indie:true, Nightlife:true },
-    detail:null, sheet:null, toast:null, loading:true, limit:4, loadingMore:false, listCity:'all', listView:'rows', listAt: new Date(),
+    detail:null, sheet:null, toast:null, loading:true, limit:4, loadingMore:false, listCity:'all', listView:'rows', listAt: new Date(), listFacets:null,
     user: APP.user || null,
     edit:false, pName:'', pEmail:'', pZalo:'', pCity:'', pPhoto:'', pErr:'',
     going: APP.going || {}, friendsOnly:false, friendSheet:null, chatWith:null, chats: APP.chats || {}, chatDraft:'',
@@ -847,20 +849,26 @@ class Component extends DCLogic {
     if (this.state.stage === 'app') FF.navigate(routePath(this.state));
     const onList = this.state.stage === 'app' && this.state.tab === 'list';
     if (onList !== !!this._lt) this.syncList(onList);
+    if (onList && this._listCity !== this.state.listCity) { this._listCity = this.state.listCity; this.pullList(); }
+  }
+
+  /** The list's city from the API: its events join the ones this screen knows, and every city's count comes back. */
+  async pullList() {
+    const city = this.state.listCity;
+    const out = await FF.maybe(FF.get('/events?time=all&upcoming=true&limit=60' + (city !== 'all' ? '&city=' + city : '')), null);
+    if (!out || this._listCity !== city) return;
+    out.items.forEach(c => {
+      const ev = toEvent(c), i = RAW.findIndex(x => x.id === ev.id);
+      if (i >= 0) { RAW[i] = ev; EVENTS[EVENTS.findIndex(x => x.id === ev.id)] = normalize(ev); } else { RAW.push(ev); EVENTS.push(normalize(ev)); }
+    });
+    this.setState({ listAt: new Date(), listFacets: out.facets.city || null });
   }
 
   /** While the list is open, new and changed events come in every minute. */
   syncList(on) {
     clearInterval(this._lt); this._lt = null;
     if (!on) return;
-    const pull = async () => {
-      const out = await FF.maybe(FF.get('/events?time=all&limit=60'), null);
-      if (!out || !this._lt) return;
-      RAW.length = 0; out.items.forEach(c => RAW.push(toEvent(c)));
-      EVENTS.length = 0; RAW.map(normalize).forEach(e => EVENTS.push(e));
-      this.setState({ listAt: new Date() });
-    };
-    this._lt = setInterval(pull, 60000);
+    this._lt = setInterval(() => this.pullList(), 60000);
   }
 
   L() { const g = this.state.lang; const o = {}; for (const k in S) o[k] = S[k][g]; return o; }
@@ -983,7 +991,7 @@ class Component extends DCLogic {
           lines: evs.slice(0, 3).map(e => e.title + ' · ' + this.fmtWhen(e)), url: w.url.replace(/^https?:\/\//, '') } };
     }
     if (!detail) return null;
-    const price = detail.price === 0 ? L.free : L.from + ' ' + this.short(detail.price);
+    const price = detail.price === 0 ? L.free : L.from + ' ' + this.short(detail.price, detail.currency);
     return { kind:'event', id: detail.id, title: detail.title, url: location.origin + '/e/' + (detail.slug || detail.id), file: detail.slug || 'feestfinder',
       story: { genre: detail.genre, kicker: detail.genre + ' · ' + detail.hype.toLocaleString(g === 'vi' ? 'vi-VN' : 'en-US') + ' hype', title: detail.title,
         lines: [this.fmtWhen(detail) + ' · ' + this.fmtTime(detail), detail.venue + (detail.area ? ' · ' + detail.area : ''), price], url: location.host + '/e/' + (detail.slug || detail.id) } };
@@ -1388,8 +1396,11 @@ class Component extends DCLogic {
     let x = p[0] * 60 + (p[1] || 0) - m; if (x < 0) x += 1440;
     return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0');
   }
-  money(n) { return n.toLocaleString('vi-VN') + '₫'; }
-  short(n) { return n >= 1000000 ? (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + 'tr₫' : Math.round(n / 1000) + 'K₫'; }
+  money(n, currency) { return currency && currency !== 'VND' ? FF.money(n, currency, this.state.lang) : n.toLocaleString('vi-VN') + '₫'; }
+  short(n, currency) {
+    if (currency && currency !== 'VND') return FF.money(n, currency, this.state.lang);
+    return n >= 1000000 ? (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + 'tr₫' : Math.round(n / 1000) + 'K₫';
+  }
   fmtWhen(ev) {
     const g = this.state.lang, ds = ev.ds, de = ev.de;
     const one = DAY_SHORT[g][ds.getDay()] + ', ' + ds.getDate() + ' ' + MON_SHORT[g][ds.getMonth()];
@@ -1499,10 +1510,10 @@ class Component extends DCLogic {
       unavailBd: ev.soldOut ? '#FF8709' : 'rgba(255,252,225,.38)', unavailFg: ev.soldOut ? '#FF8709' : '#A5A493',
       whenLine: this.fmtWhen(ev) + ' · ' + this.fmtTime(ev),
       whereLine: ev.venue + (ev.distance != null ? ' · ' + ev.distance + ' km' : ev.area ? ' · ' + ev.area : ''),
-      priceLine: ev.price === 0 ? L.free : L.from + ' ' + this.short(ev.price),
+      priceLine: ev.price === 0 ? L.free : L.from + ' ' + this.short(ev.price, ev.currency),
       priceColor: ev.price === 0 ? '#0AE448' : '#FFFCE1',
       proofShow: this.proof(ev.id).show, proofLine: this.proof(ev.id).line, proofFaces: this.proof(ev.id).faces,
-      priceShort: ev.price === 0 ? L.free : this.short(ev.price),
+      priceShort: ev.price === 0 ? L.free : this.short(ev.price, ev.currency),
       hypeBg: st.hyped[ev.id] ? '#0AE448' : '#191919', hypeBd: st.hyped[ev.id] ? '#0AE448' : 'rgba(255,252,225,.19)',
       hypeFg: st.hyped[ev.id] ? '#141514' : '#8C8B7D',
       saveBg: st.saved[ev.id] ? '#ABFF84' : '#191919', saveBd: st.saved[ev.id] ? '#ABFF84' : 'rgba(255,252,225,.19)',
@@ -2914,6 +2925,8 @@ class Component extends DCLogic {
         const upcoming = EVENTS.filter(e => !e.past);
         const inCity = (c) => upcoming.filter(e => c === 'all' || e.city === c);
         const cityName = (c) => { const x = CITY_LIST.find(y => y.k === c); return x ? x[g] : ''; };
+        const facets = st.listFacets;
+        const cityCount = (k) => (facets ? (k === 'all' ? Object.keys(facets).reduce((n, c) => n + facets[c], 0) : facets[k] || 0) : inCity(k).length);
         const rows = inCity(st.listCity).sort((a, b) => a.ds - b.ds || String(a.startTime).localeCompare(String(b.startTime)));
         const hh = (t) => (t.getHours() < 10 ? '0' : '') + t.getHours() + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes();
         return {
@@ -2922,7 +2935,7 @@ class Component extends DCLogic {
           views: [{ k:'rows', label:L.listRows, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }]
             .map(v => Object.assign({ label: v.label, icon: v.icon, pick: () => this.setState({ listView: v.k }) }, on(st.listView === v.k))),
           cities: [{ k:'all', label:L.listAll }].concat(CITY_LIST.map(c => ({ k:c.k, label:c[g] })))
-            .map(c => Object.assign({ label: c.label + ' · ' + inCity(c.k).length, pick: () => this.setState({ listCity: c.k }) }, on(st.listCity === c.k))),
+            .map(c => Object.assign({ label: c.label + ' · ' + cityCount(c.k), pick: () => this.setState({ listCity: c.k }) }, on(st.listCity === c.k))),
           items: rows.map(e => Object.assign(this.cardView(e, L), {
             day: String(e.ds.getDate()), mon: (g === 'vi' ? 'Th' + (e.ds.getMonth() + 1) : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][e.ds.getMonth()]),
             sub: (e.startTime || '') + ' · ' + e.venue + ' · ' + cityName(e.city),
@@ -2943,7 +2956,7 @@ class Component extends DCLogic {
         { label:L.collect, icon:'ph-bold ph-folder-plus', bg:'rgba(28,29,27,.6)', bd:'rgba(255,252,225,.19)', fg:'#A5A493', go: () => this.openCollect(detail.id) },
         { label:L.share, icon:'ph-bold ph-share-network', bg:'rgba(28,29,27,.6)', bd:'rgba(255,252,225,.19)', fg:'#A5A493', go: () => this.setState({ sheet:'share', shareWhat:null, shareVideo:null }) }
       ] : [],
-      ctaLabel: !detail ? '' : detail.soldOut ? L.soldOutCta : detail.past ? L.endedCta : detail.price === 0 ? L.freeEntry : L.getTickets + ' · ' + L.from + ' ' + this.money(detail.price),
+      ctaLabel: !detail ? '' : detail.soldOut ? L.soldOutCta : detail.past ? L.endedCta : detail.price === 0 ? L.freeEntry : L.getTickets + ' · ' + L.from + ' ' + this.money(detail.price, detail.currency),
       ctaClass: !detail || detail.soldOut || detail.past ? '' : 'ff-cta',
       ctaBg: !detail ? '#ABFF84' : detail.soldOut || detail.past ? '#191919' : '#ABFF84',
       ctaFg: !detail ? '#141514' : detail.soldOut || detail.past ? '#8C8B7D' : '#141514',

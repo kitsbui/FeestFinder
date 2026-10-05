@@ -1032,3 +1032,19 @@ body[data-surface='app'] {
     transform: none;
   }
 }
+
+/* ---- the map view (ui/map/ff-map.js) ------------------------------------------------ */
+.ff-map-city { pointer-events: none; padding: 3px 8px; border-radius: 999px; background: rgba(14, 16, 15, .78); border: 1px solid rgba(255, 252, 225, .16);
+  color: #A5A493; font: 600 11px/1.2 'Be Vietnam Pro', system-ui, sans-serif; white-space: nowrap; }
+.ff-map-count { pointer-events: none; color: #FFFCE1; font: 700 12px/1 'Be Vietnam Pro', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.ff-l-map .maplibregl-ctrl-group { background: rgba(14, 16, 15, .9); border: 1px solid rgba(255, 252, 225, .19); box-shadow: none; border-radius: 999px; overflow: hidden; }
+.ff-l-map .maplibregl-ctrl-group button { width: 34px; height: 34px; }
+.ff-l-map .maplibregl-ctrl-group button + button { border-top: 1px solid rgba(255, 252, 225, .12); }
+.ff-l-map .maplibregl-ctrl-icon { filter: invert(1) sepia(.15) brightness(.95); }
+.ff-l-map .maplibregl-ctrl-attrib { background: rgba(14, 16, 15, .7); color: #858577; font-size: 10.5px; }
+.ff-l-map .maplibregl-ctrl-attrib a { color: #A5A493; }
+.ff-l-map .maplibregl-ctrl-attrib-button { filter: invert(1); }
+@media (max-width: 640px) {
+  .ff-l-map { height: 64vh !important; min-height: 360px !important; }
+  .ff-l-mapcard { left: 8px !important; right: 8px; bottom: 8px !important; width: auto !important; }
+}

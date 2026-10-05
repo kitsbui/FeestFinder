@@ -173,7 +173,7 @@ const S = {
   similarTitle:{en:'You might also like',vi:'Có thể bạn cũng thích'},
   factDate:{en:'Date',vi:'Ngày'}, factDoors:{en:'Doors',vi:'Giờ mở cửa'},
   factVenue:{en:'Venue',vi:'Địa điểm'}, factAge:{en:'Age',vi:'Độ tuổi'},
-  factPrice:{en:'Entry',vi:'Vào cửa'}, factDist:{en:'Distance',vi:'Khoảng cách'},
+  factPrice:{en:'Entry',vi:'Vào cửa'}, factDist:{en:'Distance',vi:'Khoảng cách'}, factSources:{en:'Sources',vi:'Nguồn'},
   saveEvent:{en:'Save',vi:'Lưu'}, savedEvent:{en:'Saved',vi:'Đã lưu'},
   shareEvent:{en:'Share',vi:'Chia sẻ'}, shareCopied:{en:'Link copied',vi:'Đã copy liên kết'},
   ticketNote:{en:'Tickets are sold by the organiser. FeestFinder does not add a booking fee.',vi:'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'},
@@ -320,7 +320,10 @@ const S = {
 
   /* ---- the list of every event: a table or a grid ---- */
   listTitle:{en:'Every event',vi:'Tất cả sự kiện'}, listAll:{en:'All',vi:'Tất cả'}, listAllTime:{en:'Any time',vi:'Mọi lúc'},
-  listTable:{en:'Table',vi:'Bảng'}, listGrid:{en:'Grid',vi:'Lưới'},
+  listTable:{en:'Table',vi:'Bảng'}, listGrid:{en:'Grid',vi:'Lưới'}, listMap:{en:'Map',vi:'Bản đồ'},
+  mapSearch:{en:'Search this area',vi:'Tìm trong khu vực này'}, mapMore:{en:'{n} of {t} · zoom in',vi:'{n}/{t} · phóng to thêm'},
+  mapEmpty:{en:'No events in this area',vi:'Không có sự kiện trong khu vực này'}, mapOpen:{en:'Open event',vi:'Mở sự kiện'},
+  mapFailed:{en:'The map could not load',vi:'Không tải được bản đồ'}, mapClose:{en:'Close',vi:'Đóng'},
   listUpdated:{en:'Updated {t}',vi:'Cập nhật {t}'}, listNew:{en:'{n} new',vi:'{n} sự kiện mới'},
   listEmpty:{en:'Nothing matches',vi:'Không có sự kiện nào khớp'},
   colDate:{en:'Date',vi:'Ngày'}, colTime:{en:'Time',vi:'Giờ'}, colEvent:{en:'Event',vi:'Sự kiện'}, colVenue:{en:'Venue',vi:'Địa điểm'},
@@ -328,11 +331,20 @@ const S = {
   stSold:{en:'Sold out',vi:'Hết vé'}, stTonight:{en:'Tonight',vi:'Tối nay'}, stFree:{en:'Free',vi:'Miễn phí'}, stOn:{en:'On sale',vi:'Còn vé'}
 };
 
-/** The cities FeestFinder lists events in, the same slugs as the API. */
-const CITY_LIST = [
-  { k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM' }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội' },
-  { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng' }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang' }
+/** The cities FeestFinder lists events in, from GET /meta/discovery (four Vietnamese ones if it did not answer). */
+const DISCOVERY = WEB.discovery || null;
+const CITY_LIST = DISCOVERY ? DISCOVERY.cities.map(c => ({ k: c.slug, en: c.name.en, vi: c.name.vi, bbox: c.bbox, center: c.center, currency: c.currency })) : [
+  { k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM', bbox:[106.33,10.3,107.6,11.52] }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội', bbox:[105.28,20.56,106.02,21.39] },
+  { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng', bbox:[107.2,14.9,108.75,16.35] }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang', bbox:[108.55,11.25,109.48,12.88] }
 ];
+/** Music styles and kinds of night for the list's chips: the ones people filter by most. */
+const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass', 'hip-hop'];
+const TYPE_CHIPS = ['club', 'festival', 'concert'];
+const STYLE_LABEL = {}, TYPE_LABEL = {};
+((DISCOVERY && DISCOVERY.styles) || []).forEach(x => { STYLE_LABEL[x.key] = x.label; });
+((DISCOVERY && DISCOVERY.eventTypes) || []).forEach(x => { TYPE_LABEL[x.key] = x.label; });
+/** The box that holds every listed city, for a map with no city chosen. */
+const ALL_BOUNDS = CITY_LIST.reduce((b, c) => [Math.min(b[0], c.bbox[0]), Math.min(b[1], c.bbox[1]), Math.max(b[2], c.bbox[2]), Math.max(b[3], c.bbox[3])], [180, 90, -180, -90]);
 
 const DOW = { en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], vi:['CN','T2','T3','T4','T5','T6','T7'] };
 const MON = { en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -435,12 +447,18 @@ function routeState(r) {
   if (!r) return clear;
   const name = r.name, param = r.param;
   if (name === 'list' || name === 'map') {
-    // A shared or redirected list keeps its filters: /list?city=ha-noi&genre=EDM&time=weekend
-    const q = r.query, city = q && q.get('city'), genre = q && q.get('genre'), time = q && q.get('time');
+    // A shared or redirected list keeps its filters: /list?city=ha-noi&genre=EDM&time=weekend&view=map
+    const q = r.query, get = (k) => (q && q.get(k)) || '';
+    const city = get('city'), genre = get('genre'), time = get('time'), view = get('view'), style = get('style'), type = get('type');
+    const bbox = get('bbox').split(',').map(Number);
     return Object.assign(clear, { screen:'list' },
       CITY_LIST.some(c => c.k === city) ? { listCity: city } : {},
       GENRES.indexOf(genre) > 0 ? { listGenre: genre } : {},
-      LIST_TIMES.indexOf(time) >= 0 ? { listTime: time } : {});
+      LIST_TIMES.indexOf(time) >= 0 ? { listTime: time } : {},
+      ['grid', 'map'].indexOf(view) >= 0 || name === 'map' ? { listView: view || 'map' } : {},
+      /^[a-z-]{2,30}$/.test(style) ? { listStyle: style } : {},
+      /^[a-z]{2,20}$/.test(type) ? { listType: type } : {},
+      bbox.length === 4 && bbox.every(n => Number.isFinite(n)) ? { mapBbox: bbox } : {});
   }
   if (name === 'about') return Object.assign(clear, { screen:'about' });
   if (name === 'saved') return Object.assign(clear, { savedView:true, colView: (r.query && r.query.get('c')) || null });
@@ -468,13 +486,20 @@ function firstLang() {
 
 const LIST_TIMES = ['tonight', 'weekend', '7days', 'month'];
 
+/** The list's filters as the API and the address both write them. */
+function listQuery(st) {
+  return [st.listCity !== 'all' ? 'city=' + st.listCity : '', st.listGenre !== 'All' ? 'genre=' + encodeURIComponent(st.listGenre) : '',
+    st.listTime !== 'all' ? 'time=' + st.listTime : '', st.listStyle ? 'style=' + st.listStyle : '', st.listType ? 'type=' + st.listType : ''].filter(Boolean).join('&');
+}
+
 /** The URL for what is on screen. */
 function routePath(st) {
   if (st.screen === 'detail' && st.detailId) return FF.href('e', slugOf(st.detailId)) + (st.lang === 'en' ? '?lang=en' : '');
   if (st.screen === 'org' && st.orgId) return FF.href('o', (ORGS[st.orgId] || {}).slug || st.orgId) + (st.lang === 'en' ? '?lang=en' : '');
   if (st.screen === 'stat' && st.statView) return FF.href('stats', st.statView);
   if (st.screen === 'list') {
-    const q = [st.listCity !== 'all' ? 'city=' + st.listCity : '', st.listGenre !== 'All' ? 'genre=' + encodeURIComponent(st.listGenre) : '', st.listTime !== 'all' ? 'time=' + st.listTime : ''].filter(Boolean).join('&');
+    const q = [listQuery(st), st.listView !== 'table' ? 'view=' + st.listView : '',
+      st.listView === 'map' && st.mapBbox ? 'bbox=' + st.mapBbox.join(',') : ''].filter(Boolean).join('&');
     return FF.href('list') + (q ? '?' + q : '');
   }
   if (st.screen === 'about') return FF.href('about');
@@ -489,7 +514,7 @@ class Component extends DCLogic {
     lang: firstLang(),
     screen: 'explore',
     time:'weekend', genre:'All', prices:{}, sort:'date', q:'', limit:6,
-    saved: WEB.saved || {}, mapSel: WEB.mapSel || null, loading:true, toast:null,
+    saved: WEB.saved || {}, mapSel: null, loading:true, toast:null,
     user: WEB.user || null, details:{}, pPhotoFile:null,
     edit:false, pName:'', pEmail:'', pZalo:'', pCity:'', pPhoto:'', pErr:'',
     going: WEB.going || {}, friendsOnly:false, friendSheet:null, chatWith:null, chats:{}, chatDraft:'',
@@ -511,7 +536,10 @@ class Component extends DCLogic {
     // The event page's community: discussion, resale, hype, sharing, and sending events in.
     disc:null, discKind:null, discSort:'top', discDraft:'', discSet:'', discHeard:'', discReplyTo:null, discReplyDraft:'', discMore:{}, discBusy:false,
     resale:null, hyped:{}, shareOpen:false, photos:null, discPhoto:null, discPhotoUrl:'', claimOpen:false, claimNote:'', claimProof:'', claimBusy:false,
-    listView:'table', listCity:'all', listTime:'all', listGenre:'All', listSort:'date', listDesc:false, listAt: LOADED_AT, listAdded:0,
+    listView:'table', listCity:'all', listTime:'all', listGenre:'All', listStyle:'', listType:'', listSort:'date', listDesc:false, listAt: LOADED_AT, listAdded:0,
+    // The list as the API answered for these filters (null until it has), and the map's events in view.
+    board:null, boardTotal:0, boardCursor:null, boardFacets:null, boardBusy:false,
+    mapItems:[], mapTotal:0, mapTruncated:false, mapDirty:false, mapBusy:false, mapBbox:null, mapReady:false, mapFailed:false,
     submitOpen:false, submitTab:'new', submitForm:{ genre:'EDM', entry:'paid', city:'ho-chi-minh' }, submitErr:'', submitBusy:false, prefillBusy:false, prefillErr:'', submissions:null
   };
 
@@ -528,31 +556,123 @@ class Component extends DCLogic {
     FF.onRoute = (x) => { this.setState(routeState(x)); this.openRoute(x); };
   }
 
-  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._tt); clearInterval(this._lt); }
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._tt); clearInterval(this._lt); this.dropMap(); }
+
+  /** Cards from the API join the events this page knows, so any of them can open. */
+  remember(cards) {
+    const out = [];
+    cards.forEach(c => {
+      ORG_OF[c.id] = c.organizer.id;
+      if (!ORGS[c.organizer.id]) ORGS[c.organizer.id] = { id: c.organizer.id, slug: c.organizer.slug, name: c.organizer.name, initials: c.organizer.initials,
+        verified: c.organizer.verified, art: c.organizer.art || c.art, followers: 0, since: '', bio: { en:'', vi:'' } };
+      const e = toEvent(FF.webEvent(c)), i = EVENTS.findIndex(x => x.id === e.id);
+      if (i >= 0) EVENTS[i] = e; else EVENTS.push(e);
+      out.push(e);
+    });
+    return out;
+  }
+
+  /** The list for the chosen filters, from the API: a page at a time, so every city fits. */
+  loadBoard(more) {
+    const st = this.state, key = listQuery(st);
+    const cursor = more && st.boardCursor ? '&cursor=' + encodeURIComponent(st.boardCursor) : '';
+    this._boardKey = key;
+    this.setState({ boardBusy:true });
+    return FF.get('/events?' + (key ? key + '&' : '') + (st.listTime === 'all' ? 'time=all&' : '') + 'upcoming=true&limit=60' + cursor).then(out => {
+      if (this._boardKey !== key) return;
+      const rows = this.remember(out.items);
+      const known = {}; (this.state.board || []).forEach(e => { known[e.id] = true; });
+      this.setState(s => ({
+        board: more ? (s.board || []).concat(rows) : rows, boardTotal: out.total, boardCursor: out.nextCursor, boardFacets: out.facets.city || null, boardBusy:false,
+        listAt: FF.now(), listAdded: more || !s.board ? s.listAdded : rows.filter(e => !known[e.id]).length,
+      }));
+    }, () => this.setState({ boardBusy:false }));
+  }
 
   /** The list re-reads what is on every minute while it is on screen. */
   syncList(on) {
     clearInterval(this._lt);
     this._lt = null;
     if (!on) return;
-    this._lt = setInterval(() => {
-      FF.get('/events?time=all&limit=60').then(out => {
-        const known = {}; EVENTS.forEach(e => { known[e.id] = true; });
-        const fresh = out.items.map(c => toEvent(FF.webEvent(c)));
-        out.items.forEach(c => {
-          ORG_OF[c.id] = c.organizer.id;
-          if (!ORGS[c.organizer.id]) ORGS[c.organizer.id] = { id: c.organizer.id, slug: c.organizer.slug, name: c.organizer.name, initials: c.organizer.initials,
-            verified: c.organizer.verified, art: c.organizer.art || c.art, followers: 0, since: '', bio: { en:'', vi:'' } };
-        });
-        EVENTS.splice(0, EVENTS.length, ...fresh);
-        this.setState({ listAt: FF.now(), listAdded: fresh.filter(e => !known[e.id]).length });
-      }, () => {});
-    }, 60000);
+    this._lt = setInterval(() => { if (!this.state.boardCursor || (this.state.board || []).length <= 60) this.loadBoard(false); }, 60000);
+  }
+
+  // ---- the map view: MapLibre, asked for events only when it opens or on "search this area" ----
+
+  /** Opens, keeps or closes the map with the view. */
+  syncMap() {
+    const st = this.state, want = st.screen === 'list' && st.listView === 'map';
+    const el = want && typeof document !== 'undefined' ? document.getElementById('ff-map') : null;
+    if (!el) { this.dropMap(); return; }
+    if (this._mapEl === el) {
+      // A filter changed: the same box, asked again.
+      const key = listQuery(Object.assign({}, st, { listCity: 'all' }));
+      if (this._map && this._mapKey !== key) { this._mapKey = key; this.mapSearch(); }
+      if (this._map && this._mapCity !== st.listCity) { this._mapCity = st.listCity; this.fitCity(st.listCity); }
+      return;
+    }
+    this.dropMap();
+    this._mapEl = el;
+    this._mapCity = st.listCity;
+    this._mapKey = listQuery(Object.assign({}, st, { listCity: 'all' }));
+    const g = st.lang;
+    FF.loadMap().then(FFMap => {
+      if (this._mapEl !== el) return;
+      const city = CITY_LIST.find(c => c.k === st.listCity);
+      const ctrl = FFMap.create(el, {
+        bounds: st.mapBbox || (city ? city.bbox : ALL_BOUNDS),
+        hue: (genre) => FF.genreHue(genre),
+        cities: CITY_LIST.filter(c => c.center).map(c => ({ name: c[g], center: c.center })),
+        onSelect: (id) => { this.setState({ mapSel: id }); ctrl.select(id); },
+        onMove: () => this.setState({ mapDirty: true }),
+      });
+      this._map = ctrl;
+      ctrl.ready.then(() => { if (this._map === ctrl) { this.setState({ mapReady:true }); this.mapSearch(); } });
+    }, () => this.setState({ mapFailed:true }));
+  }
+
+  dropMap() {
+    if (this._map) { try { this._map.destroy(); } catch (e) { /* already gone with its element */ } }
+    this._map = null;
+    this._mapEl = null;
+  }
+
+  /** A city chip on the map: go there and show its events. */
+  fitCity(slug) {
+    const city = CITY_LIST.find(c => c.k === slug), box = city ? city.bbox : ALL_BOUNDS;
+    this._map.fit(box, false);
+    this.mapSearch(box);
+  }
+
+  /** The events with a pin in the box on screen (or the one given), under the list's filters. */
+  mapSearch(box) {
+    const ctrl = this._map;
+    if (!ctrl) return;
+    const bbox = box || ctrl.bounds(), st = this.state;
+    const key = listQuery(Object.assign({}, st, { listCity: 'all' }));
+    const n = (this._mapSeq = (this._mapSeq || 0) + 1);
+    this.setState({ mapBusy:true, mapDirty:false, mapBbox: bbox });
+    FF.get('/events/map?bbox=' + bbox.join(',') + (key ? '&' + key : '') + '&limit=500').then(out => {
+      if (n !== this._mapSeq || this._map !== ctrl) return;
+      ctrl.setEvents(out.items);
+      const sel = this.state.mapSel && out.items.some(x => x.id === this.state.mapSel) ? this.state.mapSel : null;
+      ctrl.select(sel);
+      this.setState({ mapItems: out.items, mapTotal: out.total, mapTruncated: out.truncated, mapBusy:false, mapSel: sel });
+    }, () => { if (n === this._mapSeq) this.setState({ mapBusy:false }); });
+  }
+
+  /** Opens an event from the map, reading it first when this page has not seen it yet. */
+  openFromMap(id) {
+    if (EVENTS.some(e => e.id === id)) return this.openEvent(id);
+    FF.get('/events/' + id).then(d => { this.remember([d]); this.openEvent(id); }, e => this.say(FF.errorText(e, this.state.lang)));
   }
 
   componentDidUpdate(prev) {
     // The runtime passes no previous state: whether the timer runs says if the list was open.
     if ((this.state.screen === 'list') !== !!this._lt) this.syncList(this.state.screen === 'list');
+    // The list asks the API whenever its filters change, and the map follows the view.
+    if (this.state.screen === 'list' && this._boardKey !== listQuery(this.state)) this.loadBoard(false);
+    this.syncMap();
     // Filters and the language change the query, not the page: they replace the history entry.
     const path = routePath(this.state);
     FF.navigate(path, { replace: path.split('?')[0] === location.pathname });
@@ -943,7 +1063,7 @@ class Component extends DCLogic {
     if (!e) return null;
     const det = st.details[e.id] || {};
     const kicker = e.genre + (det.hype && det.hype.count ? ' · ' + det.hype.count.toLocaleString(st.lang === 'vi' ? 'vi-VN' : 'en-US') + ' hype' : '');
-    const price = e.price === 0 ? L.free : L.from + ' ' + this.short(e.price);
+    const price = e.price === 0 ? L.free : L.from + ' ' + this.short(e.price, e.currency);
     return { kind:'event', id: e.id, title: e.title, text: e.title + ' · ' + this.when(e), url: location.origin + FF.href('e', e.slug || e.id),
       file: e.slug || 'feestfinder',
       story: { genre: e.genre, kicker, title: e.title, lines: [this.when(e), e.venue + (e.area ? ' · ' + e.area : ''), price], url: location.host + '/e/' + (e.slug || e.id) } };
@@ -1180,7 +1300,10 @@ class Component extends DCLogic {
   }
   say(m) { clearTimeout(this._tt); this.setState({ toast:m }); this._tt = setTimeout(() => this.setState({ toast:null }), 2000); }
   refilter(p) { clearTimeout(this._t); this.setState(Object.assign({ loading:true, limit:6, savedView:false, colView:null, pubColSlug:null }, p)); this._t = setTimeout(() => this.setState({ loading:false }), 380); }
-  short(n) { return n >= 1000000 ? (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + 'tr₫' : Math.round(n / 1000) + 'K₫'; }
+  short(n, currency) {
+    if (currency && currency !== 'VND') return FF.money(n, currency, this.state.lang);
+    return n >= 1000000 ? (n / 1000000).toFixed(n % 1000000 ? 1 : 0) + 'tr₫' : Math.round(n / 1000) + 'K₫';
+  }
   when(e) {
     const g = this.state.lang;
     if (+e.dsD === +e.deD) return DOW[g][e.dsD.getDay()] + ', ' + e.dsD.getDate() + ' ' + MON[g][e.dsD.getMonth()] + ' · ' + e.time;
@@ -1238,7 +1361,7 @@ class Component extends DCLogic {
       unavailable: un, unavailLabel: e.soldOut ? L.soldOut : L.ended,
       unavailBd: e.soldOut ? '#FF8709' : 'rgba(255,252,225,.38)', unavailFg: e.soldOut ? '#FF8709' : '#A5A493',
       whenLine: this.when(e), whereLine: e.venue + (e.dist != null ? ' · ' + e.dist + ' km' : e.area ? ' · ' + e.area : ''),
-      priceLine: e.price === 0 ? L.free : L.from + ' ' + this.short(e.price),
+      priceLine: e.price === 0 ? L.free : L.from + ' ' + this.short(e.price, e.currency),
       priceColor: e.price === 0 ? '#0AE448' : '#FFFCE1',
       proofShow: this.proof(e.id).show, proofLine: this.proof(e.id).line, proofFaces: this.proof(e.id).faces,
       hypeShort: e.hype >= 1000 ? (e.hype / 1000).toFixed(1) + 'K' : String(e.hype),
@@ -1255,7 +1378,6 @@ class Component extends DCLogic {
     FF.lang = g;
     const full = this.list(), grid = full.slice(0, st.limit);
     const heroEv = full.find(e => e.featured && !e.past && !e.soldOut) || full[0];
-    const sel = st.mapSel ? EVENTS.find(e => e.id === st.mapSel) : null;
     const venues = {}; EVENTS.forEach(e => { if (!e.past) venues[e.venue] = 1; });
     const statLive = full.filter(e => !e.past);
     const statFree = statLive.filter(e => e.price === 0);
@@ -1636,10 +1758,14 @@ class Component extends DCLogic {
             { label:L.factDoors, value:e.time, icon:'ph-bold ph-clock' },
             { label:L.factVenue, value:e.venue, icon:'ph-bold ph-map-pin' },
             { label:L.factDist, value: (e.dist != null ? e.dist + ' km · ' : '') + e.area, icon:'ph-bold ph-navigation-arrow' },
-            { label:L.factPrice, value: isFree ? L.free : this.short(e.price) + ' ' + (g === 'vi' ? 'trở lên' : 'and up'), icon:'ph-bold ph-ticket' },
+            { label:L.factPrice, value: isFree ? L.free : this.short(e.price, e.currency) + ' ' + (g === 'vi' ? 'trở lên' : 'and up'), icon:'ph-bold ph-ticket' },
             { label:L.factAge, value: det ? (det.age === 'All ages' ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : det.age) : (isFree ? (g === 'vi' ? 'Mọi lứa tuổi' : 'All ages') : '18+'), icon:'ph-bold ph-user-circle' }
-          ],
-          priceBig: isFree ? L.free : this.short(e.price),
+          ].concat(det && det.confidence && det.confidence.sourcesLine ? [{
+            // Where the event was confirmed, when more than one place says so.
+            label: L.factSources, icon:'ph-fill ph-seal-check',
+            value: det.confidence.sourcesLine[g] + ((det.sources || []).some(x => x.host) ? ' · ' + det.sources.filter(x => x.host).slice(0, 3).map(x => x.host).join(', ') : '')
+          }] : []),
+          priceBig: isFree ? L.free : this.short(e.price, e.currency),
           priceColor: isFree ? '#0AE448' : '#FFFCE1',
           priceSub: isFree ? (g === 'vi' ? 'Không cần vé' : 'No ticket needed') : (g === 'vi' ? 'Giá thấp nhất, chưa gồm phí cổng' : 'Lowest tier, before gateway fees'),
           soldOut: !!e.soldOut,
@@ -1691,7 +1817,7 @@ class Component extends DCLogic {
             return near.concat(rest).slice(0, 3);
           })().map(x => ({
             title:x.title, art:x.art, whenLine: this.when(x),
-            priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price),
+            priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price, x.currency),
             open: () => this.openEvent(x.id)
           }))
         };
@@ -2166,7 +2292,7 @@ class Component extends DCLogic {
           upcoming: up.map(x => ({
             title:x.title, art:x.art, genre:x.genre, whenLine: this.when(x),
             whereLine: x.venue + (x.dist != null ? ' · ' + x.dist + ' km' : ''),
-            priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price),
+            priceLine: x.price === 0 ? L.free : L.from + ' ' + this.short(x.price, x.currency),
             priceColor: x.price === 0 ? '#0AE448' : '#FFFCE1',
             open: () => this.openEvent(x.id)
           })),
@@ -2315,16 +2441,22 @@ class Component extends DCLogic {
       loadMoreDisplay: full.length > st.limit ? 'block' : 'none',
       loadMore: () => this.setState({ limit: st.limit + 6 }),
 
-      /* ---- every event, as a table or a grid ---- */
+      /* ---- every event, as a table, a grid or a map ---- */
       board: (() => {
         const on = (x) => ({ bg: x ? 'rgba(171,255,132,.14)' : 'rgba(25,25,25,.6)', bd: x ? '#ABFF84' : 'rgba(255,252,225,.19)', fg: x ? '#FFFCE1' : '#A5A493' });
         const upcoming = EVENTS.filter(e => !e.past);
         const inCity = (c) => upcoming.filter(e => c === 'all' || (e.city || 'ho-chi-minh') === c);
-        const rows = inCity(st.listCity)
+        // The API's answer for these filters; until it arrives, the listings the page opened with.
+        const fromApi = !!st.board && this._boardKey === listQuery(st);
+        const rows = fromApi ? st.board.filter(e => !e.past) : inCity(st.listCity)
           .filter(e => st.listTime === 'all' || e.tags.includes(st.listTime))
-          .filter(e => st.listGenre === 'All' || e.genre === st.listGenre);
+          .filter(e => st.listGenre === 'All' || e.genre === st.listGenre)
+          .filter(e => !st.listStyle || (e.styles || []).includes(st.listStyle))
+          .filter(e => !st.listType || e.eventType === st.listType);
         const key = { date: (e) => +e.dsD * 1e4 + (parseInt(e.time, 10) || 0), price: (e) => e.price, hype: (e) => e.hype }[st.listSort];
         rows.sort((a, b) => (key(a) - key(b)) * (st.listDesc ? -1 : 1));
+        const facets = st.boardFacets;
+        const cityCount = (k) => (facets ? (k === 'all' ? Object.keys(facets).reduce((n, c) => n + facets[c], 0) : facets[k] || 0) : inCity(k).length);
         const cityName = (c) => { const x = CITY_LIST.find(y => y.k === (c || 'ho-chi-minh')); return x ? x[g] : ''; };
         const sortBy = (k) => () => this.setState(st.listSort === k ? { listDesc: !st.listDesc } : { listSort: k, listDesc: k !== 'date' });
         const arrow = (k) => st.listSort === k ? (st.listDesc ? ' ↓' : ' ↑') : '';
@@ -2333,37 +2465,70 @@ class Component extends DCLogic {
           : e.badge ? { label: e.badge[g], fg:'#FFFCE1', bg:'rgba(255,252,225,.1)' }
           : e.price === 0 ? { label: L.stFree, fg:'#0AE448', bg:'rgba(10,228,72,.12)' }
           : { label: L.stOn, fg:'#A5A493', bg:'transparent' };
+        const isMap = st.listView === 'map';
+        const text = (loc, fallback) => (loc && (loc[g] || loc.vi || loc.en)) || fallback;
+        // The drawer for the dot someone tapped.
+        const sel = isMap && st.mapSel ? st.mapItems.find(x => x.id === st.mapSel) : null;
+        const day = (iso) => { const p = String(iso || '').split('-').map(Number); const d = new Date(p[0], p[1] - 1, p[2]); return DOW[g][d.getDay()] + ' ' + p[2] + '/' + p[1]; };
+        const conf = sel && sel.confidence;
+        const note = st.mapTruncated ? L.mapMore.replace('{n}', String(st.mapItems.length)).replace('{t}', String(st.mapTotal))
+          : st.mapReady && !st.mapBusy && !st.mapItems.length ? L.mapEmpty : '';
         return {
-          table: st.listView === 'table', grid: st.listView === 'grid', empty: rows.length === 0,
-          count: rows.length + ' ' + L.events,
+          table: st.listView === 'table', grid: st.listView === 'grid', mapView: isMap, empty: rows.length === 0 && !isMap,
+          count: (fromApi && st.boardCursor ? st.boardTotal : rows.length) + ' ' + L.events,
           updated: L.listUpdated.replace('{t}', FF.hhmm(st.listAt)),
           added: st.listAdded ? L.listNew.replace('{n}', String(st.listAdded)) : '', hasAdded: st.listAdded > 0,
-          views: [{ k:'table', label:L.listTable, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }]
+          more: !isMap && fromApi && !!st.boardCursor, moreLabel: L.loadMore, loadMore: () => this.loadBoard(true),
+          views: [{ k:'table', label:L.listTable, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }, { k:'map', label:L.listMap, icon:'ph-bold ph-map-trifold' }]
             .map(v => Object.assign({ label: v.label, icon: v.icon, pick: () => this.setState({ listView: v.k }) }, on(st.listView === v.k))),
           cities: [{ k:'all', label: L.listAll }].concat(CITY_LIST.map(c => ({ k: c.k, label: c[g] })))
-            .map(c => Object.assign({ label: c.label + ' · ' + inCity(c.k).length, pick: () => this.setState({ listCity: c.k, listAdded: 0 }) }, on(st.listCity === c.k))),
+            .map(c => Object.assign({ label: c.label + ' · ' + cityCount(c.k), pick: () => this.setState({ listCity: c.k, listAdded: 0, mapSel: null }) }, on(st.listCity === c.k))),
           times: [{ k:'all', label: L.listAllTime }, { k:'tonight', label: L.tonight }, { k:'weekend', label: L.weekend }, { k:'7days', label: L.next7 }, { k:'month', label: L.month }]
             .map(t => Object.assign({ label: t.label, pick: () => this.setState({ listTime: t.k }) }, on(st.listTime === t.k))),
           genres: GENRES.map(x => Object.assign({ label: x === 'All' ? L.listAll : x, pick: () => this.setState({ listGenre: x }) }, on(st.listGenre === x))),
+          // Kinds of night and music styles: one of each can be on at once.
+          styles: [{ kind:'', k:'', label: L.listAll }]
+            .concat(TYPE_CHIPS.map(k => ({ kind:'type', k, label: text(TYPE_LABEL[k], k) })))
+            .concat(STYLE_CHIPS.map(k => ({ kind:'style', k, label: text(STYLE_LABEL[k], k) })))
+            .map(c => Object.assign({ label: c.label,
+              pick: () => this.setState(c.kind === 'type' ? { listType: st.listType === c.k ? '' : c.k } : c.kind === 'style' ? { listStyle: st.listStyle === c.k ? '' : c.k } : { listType:'', listStyle:'' }) },
+            on(c.kind === 'type' ? st.listType === c.k : c.kind === 'style' ? st.listStyle === c.k : !st.listType && !st.listStyle))),
           heads: [
             { label: L.colDate + arrow('date'), sort: sortBy('date'), cursor:'pointer' }, { label: L.colTime, sort: () => {}, cursor:'default' },
             { label: L.colEvent, sort: () => {}, cursor:'default' }, { label: L.colVenue, sort: () => {}, cursor:'default' },
             { label: L.colCity, sort: () => {}, cursor:'default' }, { label: L.colPrice + arrow('price'), sort: sortBy('price'), cursor:'pointer' },
             { label: L.colHype + arrow('hype'), sort: sortBy('hype'), cursor:'pointer' }, { label: L.colStatus, sort: () => {}, cursor:'default' }
           ],
-          rows: rows.map(e => {
+          rows: isMap ? [] : rows.map(e => {
             const sx = status(e);
             return {
               date: DOW[g][e.dsD.getDay()] + ' ' + e.dsD.getDate() + '/' + (e.dsD.getMonth() + 1) + (+e.deD !== +e.dsD ? ' – ' + e.deD.getDate() + '/' + (e.deD.getMonth() + 1) : ''),
-              time: e.time, title: e.title, genre: e.genre, genreFg: FF.genreHue(e.genre),
+              time: e.time, title: e.title, genre: (e.styles || []).length ? text(STYLE_LABEL[e.styles[0]], e.genre) : e.genre, genreFg: FF.genreHue(e.genre),
               venue: e.venue, area: e.area, city: cityName(e.city),
-              price: e.price === 0 ? L.free : this.short(e.price), priceFg: e.price === 0 ? '#0AE448' : '#FFFCE1',
+              price: e.price === 0 ? L.free : this.short(e.price, e.currency), priceFg: e.price === 0 ? '#0AE448' : '#FFFCE1',
               hype: e.hype >= 1000 ? (e.hype / 1000).toFixed(1) + 'K' : String(e.hype),
               status: sx.label, stFg: sx.fg, stBg: sx.bg,
               open: () => this.openEvent(e.id)
             };
           }),
-          cards: rows.map(e => Object.assign({}, this.card(e, L), { cityLine: cityName(e.city) + ' · ' + e.area }))
+          cards: isMap ? [] : rows.map(e => Object.assign({}, this.card(e, L), { cityLine: cityName(e.city) + ' · ' + e.area })),
+          map: {
+            searchShow: st.mapDirty && st.mapReady && !st.mapBusy, search: () => this.mapSearch(), searchLabel: L.mapSearch,
+            note, hasNote: !!note, failed: st.mapFailed, failedLabel: L.mapFailed,
+            hasSel: !!sel,
+            sel: sel ? {
+              art: FF.artOf({ coverUrl: sel.coverUrl, genre: sel.genre, art: sel.art }),
+              title: sel.title,
+              when: day(sel.startsOn) + (sel.endsOn && sel.endsOn !== sel.startsOn ? ' – ' + day(sel.endsOn) : '') + (sel.startTime ? ' · ' + sel.startTime : ''),
+              where: [sel.venue, text(sel.cityLabel, '')].filter(Boolean).join(' · '),
+              styles: (sel.styles || []).slice(0, 3).map(k => ({ label: text(STYLE_LABEL[k], k), fg: FF.genreHue(sel.genre) })),
+              conf: conf ? (conf.sourcesLine ? text(conf.sourcesLine, '') : conf.label === 'verified' || conf.label === 'highly_verified' ? text(conf.labelText, '') : '') : '',
+              hasConf: !!(conf && (conf.sourcesLine || conf.label === 'verified' || conf.label === 'highly_verified')),
+              price: sel.isFree ? L.free : L.from + ' ' + this.short(sel.priceFrom, sel.currency), priceFg: sel.isFree ? '#0AE448' : '#FFFCE1',
+              open: () => this.openFromMap(sel.id), openLabel: L.mapOpen,
+              close: () => { this.setState({ mapSel: null }); if (this._map) this._map.select(null); }
+            } : { art:'', title:'', when:'', where:'', styles:[], conf:'', hasConf:false, price:'', priceFg:'', open: () => {}, openLabel:'', close: () => {} }
+          }
         };
       })(),
 

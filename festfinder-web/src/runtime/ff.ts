@@ -230,6 +230,23 @@ FF.artOf = (x: any) => (x && x.coverUrl ? 'url("' + x.coverUrl + '") center/cove
 FF.initials = (n: unknown) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
 FF.text = (loc: unknown, lang: Lang) => (loc && typeof loc === 'object' ? (loc as any)[lang] || (loc as any).en || '' : loc || '');
 FF.errorText = (e: any, lang: Lang) => (e && e.message) || (lang === 'vi' ? 'Đã có lỗi xảy ra' : 'Something went wrong');
+/** A price in whole units of its currency: 1.200.000₫, ¥5,000, THB 800 (the API's formatMoney). */
+FF.money = (n: number, currency?: string | null, lang?: Lang) => (!currency || currency === 'VND'
+  ? Number(n || 0).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') + '₫'
+  : new Intl.NumberFormat(lang === 'vi' ? 'vi-VN' : 'en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0));
+/** A /ui file. Next serves public/ui as it is, without the API's version stamp. */
+FF.asset = (url: string) => url;
+/** The map module (ui/map/ff-map.js) and MapLibre, loaded the first time a map opens. */
+let mapLoad: Promise<any> | null = null;
+FF.loadMap = function loadMap() {
+  if (!mapLoad) {
+    const loading: Promise<any> = ((window as any).FFMap ? Promise.resolve() : FF.loadScript('/ui/map/ff-map.js'))
+      .then(() => (window as any).FFMap.load(FF.asset).then(() => (window as any).FFMap));
+    loading.catch(() => { mapLoad = null; });
+    mapLoad = loading;
+  }
+  return mapLoad;
+};
 
 // ---- story images ---------------------------------------------------------------------
 

@@ -438,7 +438,52 @@
       <div onClick="{{ c.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;background:{{ c.bg }};border:1px solid {{ c.bd }};color:{{ c.fg }}" style-hover="border-color:rgba(255,252,225,.45)">{{ c.label }}</div>
     </sc-for>
     </div>
+    <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none">
+    <sc-for list="{{ board.styles }}" as="c" hint-placeholder-count="8">
+      <div onClick="{{ c.pick }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;transition:all .15s;background:{{ c.bg }};border:1px solid {{ c.bd }};color:{{ c.fg }}" style-hover="border-color:rgba(255,252,225,.45)">{{ c.label }}</div>
+    </sc-for>
+    </div>
   </div>
+
+  <sc-if value="{{ board.mapView }}" hint-placeholder-val="{{ false }}">
+    <div class="ff-l-map" style="position:relative;height:min(72vh,720px);min-height:420px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,252,225,.19);background:#0E100F">
+      <div id="ff-map" style="position:absolute;inset:0"></div>
+      <sc-if value="{{ board.map.searchShow }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ board.map.search }}" role="button" class="ff-press" style="cursor:pointer;position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;background:#0E100F;border:1px solid #ABFF84;color:#FFFCE1;font-size:12.5px;font-weight:600;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.45)"><i class="ph-bold ph-magnifying-glass" style="font-size:14px;color:#ABFF84"></i>{{ board.map.searchLabel }}</div>
+      </sc-if>
+      <sc-if value="{{ board.map.hasNote }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:14px;bottom:14px;z-index:2;padding:7px 12px;border-radius:999px;background:rgba(14,16,15,.86);border:1px solid rgba(255,252,225,.19);font-size:12px;font-weight:600;color:#A5A493">{{ board.map.note }}</div>
+      </sc-if>
+      <sc-if value="{{ board.map.failed }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:#A5A493"><i class="ph-bold ph-map-trifold" style="font-size:18px"></i>{{ board.map.failedLabel }}</div>
+      </sc-if>
+      <sc-if value="{{ board.map.hasSel }}" hint-placeholder-val="{{ false }}">
+        <div class="ff-l-mapcard" style="position:absolute;left:14px;bottom:14px;z-index:4;width:min(360px,calc(100% - 28px));border-radius:8px;overflow:hidden;background:rgba(20,21,20,.96);border:1px solid rgba(255,252,225,.24);box-shadow:0 18px 40px rgba(0,0,0,.5)">
+          <div class="ff-art" style="height:120px;position:relative;background:{{ board.map.sel.art }}">
+            <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(20,21,20,.95),transparent 65%)"></div>
+            <div onClick="{{ board.map.sel.close }}" aria-label="{{ L.mapClose }}" role="button" style="cursor:pointer;position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(14,16,15,.7);color:#FFFCE1"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+          </div>
+          <div style="padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px">
+            <div style="font-weight:600;font-size:15px;line-height:1.2">{{ board.map.sel.title }}</div>
+            <div style="font-size:12px;font-weight:500;color:#A5A493">{{ board.map.sel.when }}</div>
+            <div style="font-size:12px;font-weight:500;color:#A5A493">{{ board.map.sel.where }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ board.map.sel.styles }}" as="x" hint-placeholder-count="2">
+                <span style="padding:3px 9px;border-radius:999px;border:1px solid rgba(255,252,225,.19);font-size:11px;font-weight:600;color:{{ x.fg }}">{{ x.label }}</span>
+              </sc-for>
+            </div>
+            <sc-if value="{{ board.map.sel.hasConf }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#ABFF84"><i class="ph-fill ph-seal-check" style="font-size:14px"></i>{{ board.map.sel.conf }}</div>
+            </sc-if>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;margin-top:4px;border-top:1px solid #1E1F1C">
+              <div style="font-size:13px;font-weight:600;color:{{ board.map.sel.priceFg }}">{{ board.map.sel.price }}</div>
+              <div onClick="{{ board.map.sel.open }}" role="button" class="ff-cta ff-press" style="cursor:pointer;padding:8px 14px;border-radius:999px;background:#ABFF84;color:#141514;font-size:12px;font-weight:600;white-space:nowrap">{{ board.map.sel.openLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
 
   <sc-if value="{{ board.table }}" hint-placeholder-val="{{ true }}">
     <div role="table" style="border-radius:8px;overflow:hidden;border:1px solid rgba(255,252,225,.19);background:rgba(14,16,15,.6)">
@@ -493,6 +538,12 @@
           </div>
         </div>
       </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ board.more }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;justify-content:center;margin-top:22px">
+      <div onClick="{{ board.loadMore }}" role="button" class="ff-ghost ff-press" style="cursor:pointer;padding:10px 18px;border-radius:999px;border:1px solid rgba(255,252,225,.24);font-size:12.5px;font-weight:600">{{ board.moreLabel }}</div>
     </div>
   </sc-if>
 
