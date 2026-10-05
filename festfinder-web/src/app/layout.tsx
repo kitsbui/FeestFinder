@@ -4,9 +4,8 @@ import { SITE_URL } from '@/lib/api';
 import { ExtensionGuardRelease, ExtensionGuardScript } from '@/components/extension-guard';
 import './globals.css';
 
-/** Be Vietnam Pro: the design system's one face, drawn for Vietnamese. */
-const FONTS =
-  'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
+/** Be Vietnam Pro, the design system's one face, served from this site (public/ui/fonts). */
+const FONTS = '/ui/fonts/be-vietnam-pro.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -37,9 +36,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="vi">
       <head>
         <ExtensionGuardScript />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link rel="stylesheet" href={FONTS} precedence="ff-base" />
         <link rel="stylesheet" href="/ui/theme.css" precedence="ff-base" />
       </head>

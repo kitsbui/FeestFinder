@@ -16,7 +16,7 @@
   const style = document.createElement('style');
   style.textContent = 'x-dc{display:none!important}html,body{background:#0E100F;margin:0}';
   document.head.appendChild(style);
-  for (const href of ['https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap', vq('/ui/theme.css')]) {
+  for (const href of [vq('/ui/fonts/be-vietnam-pro.css'), vq('/ui/theme.css')]) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
