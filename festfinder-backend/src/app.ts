@@ -48,6 +48,7 @@ import artistRoutes from './routes/artists.ts';
 import adminPartnerRoutes from './routes/admin/partners.ts';
 import adminAffiliateRoutes from './routes/admin/affiliate.ts';
 import gearRoutes from './routes/gear.ts';
+import gigRoutes from './routes/gigs.ts';
 import frontendRoutes from './routes/frontend.ts';
 
 declare module 'fastify' {
@@ -246,6 +247,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(adminPartnerRoutes);
   await app.register(adminAffiliateRoutes);
   await app.register(gearRoutes);
+  await app.register(gigRoutes);
   await app.register(devConsoleRoutes);
   await app.register(internalRoutes);
   await app.register(discussionRoutes);

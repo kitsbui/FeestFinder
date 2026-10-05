@@ -147,6 +147,8 @@ test.describe('Web', () => {
     await page.reload();
     await expect(page.getByRole('row').filter({ hasText: 'Owl warehouse' })).toContainText('Có tên bạn');
     await expectOps(page, '/ops/artist/gear', /Thêm từ danh mục/);
+    await expectOps(page, '/ops/artist/opportunities', /Gig đang mở/);
+    await expectOps(page, '/ops/artist/opportunities?tab=dates', /Thêm khoảng/, '/ops/artist/opportunities');
   });
 
   test('ticket buttons go to the checkout here, or out to the seller, and count the press', async ({ page }) => {
@@ -558,9 +560,11 @@ test.describe('Ops', () => {
       ['/ops/org/events/new', /Thông tin cơ bản/],
       ['/ops/org/inbox', /Hộp thư kiểm duyệt/],
       ['/ops/org/profile', /Hồ sơ doanh nghiệp/],
+      ['/ops/org/gigs', /Gig đã đăng/],
+      ['/ops/org/gigs?tab=inquiries', /Mời nghệ sĩ/],
     ];
     for (const [path, shows] of routes) {
-      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/org/inbox' ? /^\/ops\/org\/inbox(\/[0-9a-f-]{36})?$/ : path));
+      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/org/inbox' ? /^\/ops\/org\/inbox(\/[0-9a-f-]{36})?$/ : path.split('?')[0]));
     }
     test('/ops sends an organizer account to organizer mode', async ({ page }) => expectOps(page, '/ops', /Cần bạn xử lý/, '/ops/org'));
   });

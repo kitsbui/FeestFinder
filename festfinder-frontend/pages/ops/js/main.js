@@ -40,6 +40,7 @@ const TEAM = [
 const ARTIST = [
   { key: '', icon: 'microphone-stage', label: () => t('Hồ sơ nghệ sĩ', 'Artist profile'), load: () => import('./artist/profile.js'), view: 'ArtistProfile' },
   { key: 'gigs', icon: 'calendar-plus', label: () => t('Lịch diễn', 'Gigs'), load: () => import('./artist/gigs.js'), view: 'ArtistGigs' },
+  { key: 'opportunities', icon: 'megaphone', label: () => t('Cơ hội diễn', 'Opportunities'), load: () => import('./artist/opportunities.js'), view: 'ArtistOpportunities' },
   { key: 'gear', icon: 'headphones', label: () => t('Thiết bị', 'Gear'), load: () => import('./artist/gear.js'), view: 'ArtistGear' },
 ];
 
@@ -48,6 +49,7 @@ const ORG = [
   { key: 'events', icon: 'calendar-dots', label: () => t('Sự kiện của tôi', 'My events'), load: () => import('./org/events.js'), view: 'OrgEvents' },
   { key: 'new', icon: 'plus-circle', label: () => t('Tạo sự kiện mới', 'New event'), load: () => import('./org/editor.js'), view: 'OrgEditor', accent: true },
   { key: 'inbox', icon: 'chat-circle-text', label: () => t('Hộp thư kiểm duyệt', 'Moderation inbox'), load: () => import('./org/inbox.js'), view: 'OrgInbox', count: 'unread', alert: true },
+  { key: 'gigs', icon: 'megaphone', label: () => 'Gigs', load: () => import('./org/gigs.js'), view: 'OrgGigs' },
   { key: 'profile', icon: 'identification-card', label: () => t('Hồ sơ doanh nghiệp', 'Business profile'), load: () => import('./org/profile.js'), view: 'OrgProfile' },
 ];
 
