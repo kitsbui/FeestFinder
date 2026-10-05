@@ -6,7 +6,9 @@ import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict } from '../../lib/errors.ts';
 import { GENRES, L, REJECT_REASONS, type Localized } from '../../lib/i18n.ts';
-import { launchedCity } from '../../lib/places.ts';
+import { citySlug, launchedCity } from '../../lib/places.ts';
+import { ARTIST_LINK, ORGANIZER_TYPE, type OrganizerType } from '../../lib/network.ts';
+import { cleanOrgLinks } from '../../services/organizers.ts';
 import { EVENT_TYPES, isStyle } from '../../lib/styles.ts';
 import { isEmail, normalizeEmail, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
@@ -147,6 +149,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       id: o.id, slug: o.slug, name: o.name, initials: o.initials, type: o.type, bio: o.bio, logoUrl: o.logo_url, website: o.website,
       legalName: o.legal_name, taxCode: o.tax_code, address: o.address, email: o.email, hotline: o.hotline, zalo: o.zalo,
       contactName: o.contact_name, contactRole: o.contact_role, verified: o.verification_state === 'verified', verificationState: o.verification_state,
+      markets: o.markets, styles: o.styles, openForSubmissions: o.open_for_submissions, coverUrl: o.cover_url, links: o.links,
       bank: o.bank_account_no ? { bankName: o.bank_name, accountMasked: `•••• ${o.bank_account_no.slice(-4)}`, accountName: o.bank_account_name, verified: o.bank_verified } : null,
       members, myRole: org.role,
     };
@@ -155,7 +158,9 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
   app.patch('/organizer/profile', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const body = parse(z.object({
-      name: z.string().max(80), type: z.enum(['promoter', 'venue', 'company', 'agency', 'public']), bio: localized,
+      name: z.string().max(80), type: z.enum(ORGANIZER_TYPE.keys as [OrganizerType, ...OrganizerType[]]), bio: localized,
+      markets: z.array(citySlug).max(12), styles: z.array(z.string().refine(isStyle, 'unknown style')).max(8), openForSubmissions: z.boolean(),
+      coverUrl: imageUrl.nullable(), links: z.record(z.string(), z.string().max(500).nullable()),
       logoUrl: imageUrl.nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
       taxCode: z.string().max(20), address: z.string().max(240), email: z.string().max(200), hotline: z.string().max(30),
       zalo: z.string().max(80), contactName: z.string().max(80), contactRole: z.string().max(80),
@@ -167,7 +172,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     }
     const map: Record<string, string> = {
       name: 'name', type: 'type', logoUrl: 'logo_url', website: 'website', legalName: 'legal_name', taxCode: 'tax_code', address: 'address',
-      email: 'email', hotline: 'hotline', zalo: 'zalo', contactName: 'contact_name', contactRole: 'contact_role',
+      email: 'email', hotline: 'hotline', zalo: 'zalo', contactName: 'contact_name', contactRole: 'contact_role', coverUrl: 'cover_url',
     };
     const set: Record<string, unknown> = {};
     for (const [k, col] of Object.entries(map)) if ((body as any)[k] !== undefined) set[col] = typeof (body as any)[k] === 'string' ? (body as any)[k].trim() || null : (body as any)[k];
@@ -175,6 +180,15 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     if (body.email) set.email = normalizeEmail(body.email);
     if (body.taxCode) set.tax_code = body.taxCode.replace(/[\s-]/g, '');
     if (body.bio) set.bio = json(body.bio);
+    if (body.markets) set.markets = [...new Set(body.markets)];
+    if (body.styles) set.styles = [...new Set(body.styles)];
+    if (body.openForSubmissions !== undefined) set.open_for_submissions = body.openForSubmissions;
+    if (body.links) {
+      const current = await one<{ links: Record<string, string> }>(ctx.db, 'select links from organizers where id = $1', [org.organizerId]);
+      const out = cleanOrgLinks(current?.links ?? {}, body.links);
+      if ('bad' in out) throw badRequest('invalid_link', L(`That is not a ${ARTIST_LINK.label[out.bad].en} link`, `Đây không phải link ${ARTIST_LINK.label[out.bad].vi}`), { kind: out.bad });
+      set.links = json(out.links);
+    }
     const keys = Object.keys(set);
     if (keys.length) await ctx.db.query(`update organizers set ${keys.map((k, i) => `${k} = $${i + 2}`).join(', ')} where id = $1`, [org.organizerId, ...keys.map((k) => set[k])]);
     return { ok: true, message: L('Business profile saved', 'Đã lưu hồ sơ doanh nghiệp') };

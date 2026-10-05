@@ -55,7 +55,7 @@ const GRADIENTS = [
 // Colour is genre: Lễ hội orange, EDM blue, Nhạc sống lilac (indie, hip-hop, pop, jazz),
 // Văn hoá pink (food, culture), and FeestFinder green for anything else. An event without
 // a cover wears its genre's art: a two-hue body with a lit sphere of the neighbouring hue.
-const GENRE_TONE: Record<string, string> = { Festival: 'fest', EDM: 'edm', Indie: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
+const GENRE_TONE: Record<string, string> = { Festival: 'fest', EDM: 'edm', Indie: 'live', Rock: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
 const TONES: Record<string, { hue: string; art: string }> = {
   fest: { hue: '#FF8709', art: 'radial-gradient(circle at 76% 72%,#FFF1FE 0,#FEC5FB 12%,#F100CB 30%,rgba(241,0,203,0) 30.5%),linear-gradient(150deg,#FFD29C 0%,#FF8709 48%,#E8388A 118%)' },
   edm: { hue: '#00BAE2', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#FEC5FB 12%,#9D95FF 30%,rgba(157,149,255,0) 30.5%),linear-gradient(150deg,#BFF3FF 0%,#00BAE2 48%,#5A62E0 120%)' },

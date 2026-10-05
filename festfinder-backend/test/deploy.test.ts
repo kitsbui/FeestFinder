@@ -5,7 +5,7 @@ import { seed } from './fixtures/seed.ts';
 import { loadConfig } from '../src/config.ts';
 import { openDb, poolConfig, type Db } from '../src/db/index.ts';
 import { migrate } from '../src/db/migrate.ts';
-import { ensureAdmin } from '../src/bootstrap.ts';
+import { ensureAdmin, syncAdmins } from '../src/bootstrap.ts';
 import { checkEnvironment, claimEnvironment, readEnvironment } from '../src/db/environment.ts';
 import { runDueJobs } from '../src/jobs.ts';
 import { DbStorage } from '../src/services/storage.ts';
@@ -238,11 +238,24 @@ describe('deployment', () => {
       assert.equal(row.password_hash, null);
     });
 
-    it('never promotes an existing account', async () => {
+    it('never promotes an account that has not proven its email', async () => {
       await db.query(`delete from users`);
-      await db.query(`insert into users (email, signup_method) values ('taken@feestfinder.com', 'email')`);
+      await db.query(`insert into users (email, signup_method) values ('taken@feestfinder.com', 'zalo')`);
       await ensureAdmin(db, 'taken@feestfinder.com', () => {});
       assert.deepEqual(await admins(), []);
+    });
+
+    it('promotes a listed account whose email is proven, and takes admin away from anyone not listed', async () => {
+      await db.query(`delete from users`);
+      await db.query(`insert into users (email, signup_method, email_verified_at) values ('kieu@feestfinder.com', 'google', now())`);
+      await db.query(`insert into users (email, signup_method, role) values ('old@feestfinder.com', 'email', 'admin')`);
+      const log: string[] = [];
+      await syncAdmins(db, ['kieu@feestfinder.com', 'new@feestfinder.com'], (m) => log.push(m));
+      assert.deepEqual(await admins(), ['kieu@feestfinder.com', 'new@feestfinder.com']);
+      assert.ok(log.some((m) => m.includes('removed from old@feestfinder.com')));
+      // No list, no change: a deployment without ADMIN_EMAIL keeps its admins.
+      await syncAdmins(db, [], () => {});
+      assert.deepEqual(await admins(), ['kieu@feestfinder.com', 'new@feestfinder.com']);
     });
   });
 });

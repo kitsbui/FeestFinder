@@ -6,7 +6,8 @@ import { L } from '../lib/i18n.ts';
 import { hashPassword, randomToken, sha256, sixDigitCode, verifyPassword } from '../lib/crypto.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
 import { parse } from '../lib/validate.ts';
-import { createSession, SESSION_COOKIE, setSessionCookie } from '../http/session.ts';
+import { adminMethodOk, createSession, SESSION_COOKIE, setSessionCookie, type SignInMethod } from '../http/session.ts';
+import { appendAudit } from '../services/audit.ts';
 import { requireUser } from '../http/guards.ts';
 import { enqueue } from '../services/notify.ts';
 import { deliverDue } from '../services/messaging.ts';
@@ -15,6 +16,7 @@ import { syncFriends } from '../services/friends.ts';
 import type { Ctx } from '../context.ts';
 import type { Queryable } from '../db/index.ts';
 import type { OAuthKind } from '../services/oauth.ts';
+import { personasOf } from '../services/roles.ts';
 
 const OTP_TTL_MS = 10 * 60_000;
 const OTP_RESEND_MS = 30_000;
@@ -92,21 +94,35 @@ export async function checkOtp(ctx: Ctx, challengeId: string, code: string, purp
   return ch as { identifier: string; channel: OtpChannel; user_id: string | null };
 }
 
-export function publicUser(u: any) {
+/** A user as the signed-in person sees themselves. `role` is what this session may do (see adminMethodOk). */
+export function publicUser(u: any, method?: string | null, ctx?: Ctx) {
+  const adminNeedsGoogle = u.role === 'admin' && !!ctx && !adminMethodOk(ctx, method ?? null);
   return {
     id: u.id, name: u.name, email: u.email, phone: u.phone, phoneVerified: !!u.phone_verified_at, city: u.city, photoUrl: u.photo_url,
-    locale: u.locale, role: u.role, signupMethod: u.signup_method, interests: u.interests, hasPassword: !!u.password_hash,
+    locale: u.locale, role: adminNeedsGoogle ? 'user' : u.role, adminNeedsGoogle, signupMethod: u.signup_method, interests: u.interests,
+    hasPassword: !!u.password_hash, onboarded: !!u.onboarded_at,
   };
+}
+
+/** Admin rights for an allowlisted address its owner just proved with Google. */
+export async function grantAllowlistedAdmin(ctx: Ctx, userId: string, email: string) {
+  const row = await one<{ id: string; name: string }>(ctx.db, `update users set role = 'admin' where id = $1 and role <> 'admin' returning id, name`, [userId]);
+  if (!row) return;
+  ctx.log(`admin rights granted to ${email} (ADMIN_EMAIL, signed in with Google)`);
+  await appendAudit(ctx.db, {
+    at: ctx.clock.now(), actorType: 'system', actorId: null, actorLabel: 'ADMIN_EMAIL', action: 'admin.granted',
+    targetType: 'user', targetId: userId, targetLabel: email, diff: [{ f: 'role', a: 'user', b: 'admin' }],
+  });
 }
 
 export default async function authRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
 
-  const issue = async (reply: any, userId: string, created: boolean) => {
-    const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId });
+  const issue = async (reply: any, userId: string, created: boolean, method: SignInMethod) => {
+    const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId, method });
     setSessionCookie(ctx, reply, token, expiresAt);
     const user = await one<any>(ctx.db, 'select * from users where id = $1', [userId]);
-    return { token, expiresAt, created, user: publicUser(user) };
+    return { token, expiresAt, created, user: publicUser(user, method, ctx) };
   };
 
   const kick = () => inBackground(deliverDue(ctx.db, ctx.clock, ctx.transport), (e) => ctx.log(`otp delivery failed: ${e}`));
@@ -144,8 +160,14 @@ export default async function authRoutes(app: FastifyInstance) {
     const ch = await checkOtp(ctx, body.challengeId, body.code, 'auth');
     const now = ctx.clock.now();
     if (ch.channel === 'email') {
-      const existing = await one<any>(ctx.db, 'select id, password_hash from users where email = $1', [ch.identifier]);
-      if (existing?.password_hash) return issue(reply, existing.id, false);
+      let existing = await one<any>(ctx.db, 'select id, password_hash, email_verified_at from users where email = $1', [ch.identifier]);
+      // An address typed into someone's profile proves nothing: the person who just proved it
+      // gets it, on an account of their own.
+      if (existing && !existing.email_verified_at) {
+        await ctx.db.query('update users set email = null where id = $1', [existing.id]);
+        existing = null;
+      }
+      if (existing?.password_hash) return issue(reply, existing.id, false, 'email');
       const token = randomToken();
       await ctx.db.query(
         `insert into password_tokens (token_hash, purpose, email, user_id, expires_at) values ($1, 'signup', $2, $3, $4)`,
@@ -166,7 +188,7 @@ export default async function authRoutes(app: FastifyInstance) {
       }
       return { id: created!.id, created: true };
     });
-    return issue(reply, user.id, user.created);
+    return issue(reply, user.id, user.created, 'phone');
   });
 
   /** Step 3 for email sign-up (and password reset): set a password of 8+ characters. */
@@ -185,15 +207,15 @@ export default async function authRoutes(app: FastifyInstance) {
       }
       await q.query('update password_tokens set used_at = $2 where token_hash = $1', [t.token_hash, now]);
       if (t.user_id) {
-        await q.query('update users set password_hash = $2 where id = $1', [t.user_id, hash]);
+        await q.query('update users set password_hash = $2, email_verified_at = coalesce(email_verified_at, $3) where id = $1', [t.user_id, hash, now]);
         return { id: t.user_id, created: false };
       }
       const clash = await one(q, 'select 1 from users where email = $1', [t.email]);
       if (clash) throw conflict('email_taken', L('An account with this email already exists', 'Email này đã có tài khoản'));
-      const u = await one<any>(q, `insert into users (email, password_hash, signup_method, created_at) values ($1,$2,'email',$3) returning id`, [t.email, hash, now]);
+      const u = await one<any>(q, `insert into users (email, password_hash, signup_method, created_at, email_verified_at) values ($1,$2,'email',$3,$3) returning id`, [t.email, hash, now]);
       return { id: u!.id, created: true };
     });
-    return issue(reply, result.id, result.created);
+    return issue(reply, result.id, result.created, 'email');
   });
 
   /** Log in with an email or phone number and a password. */
@@ -212,7 +234,7 @@ export default async function authRoutes(app: FastifyInstance) {
       throw new AppError(401, 'invalid_credentials', L('Email or password is wrong', 'Email hoặc mật khẩu chưa đúng'));
     }
     failures.delete(`id:${id}`);
-    return issue(reply, user.id, false);
+    return issue(reply, user.id, false, 'password');
   });
 
   /** Forgot password: email a code, then exchange it for a reset token used with POST /auth/password. */
@@ -299,7 +321,7 @@ export default async function authRoutes(app: FastifyInstance) {
     try {
       const done = await completeOAuth(provider, q.code, st);
       if (done.userId) {
-        const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId: done.userId });
+        const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId: done.userId, method: provider });
         setSessionCookie(ctx, reply, token, expiresAt);
       }
       return back(target, { auth: provider, via: done.via });
@@ -330,7 +352,10 @@ export default async function authRoutes(app: FastifyInstance) {
         [userId, provider, profile.externalId, profile.name]);
       await q.query(`update users set name = case when name = '' then $2 else name end, photo_url = coalesce(photo_url, $3) where id = $1`,
         [userId, profile.name, profile.photoUrl ?? null]);
-      if (email) await q.query('update users set email = $2 where id = $1 and email is null and not exists (select 1 from users where email = $2)', [userId, email]);
+      if (email) {
+        await q.query(`update users set email = $2, email_verified_at = $3 where id = $1 and email is null and not exists (select 1 from users where email = $2)`, [userId, email, now]);
+        await q.query('update users set email_verified_at = $3 where id = $1 and email = $2 and email_verified_at is null', [userId, email, now]);
+      }
     };
 
     if (st.user_id) {
@@ -344,14 +369,18 @@ export default async function authRoutes(app: FastifyInstance) {
 
     const user = await ctx.db.tx(async (q) => {
       if (holder) return { id: holder.user_id as string, created: false };
-      const byEmail = email ? await one<any>(q, 'select id from users where email = $1', [email]) : null;
+      // Only a proven address finds an account; one typed into a profile gives way to its owner.
+      const byEmail = email ? await one<any>(q, 'select id from users where email = $1 and email_verified_at is not null', [email]) : null;
+      if (email && !byEmail) await q.query('update users set email = null where email = $1 and email_verified_at is null', [email]);
       const u = byEmail ?? await one<any>(q,
-        `insert into users (name, email, photo_url, signup_method, created_at) values ($1,$2,$3,$4,$5) returning id`,
-        [profile.name, email, profile.photoUrl ?? null, provider, now]);
+        `insert into users (name, email, photo_url, signup_method, created_at, email_verified_at) values ($1,$2,$3,$4,$5,$6) returning id`,
+        [profile.name, email, profile.photoUrl ?? null, provider, now, email ? now : null]);
       await link(q, u!.id);
       return { id: u!.id as string, created: !byEmail };
     });
     if (provider !== 'google') await syncFriends(ctx, user.id, provider, profile.accessToken);
+    // The admin allowlist: an address Google has confirmed, on the list, gets admin rights.
+    if (provider === 'google' && email && ctx.config.adminEmails.includes(email)) await grantAllowlistedAdmin(ctx, user.id, email);
     return { via: user.created ? 'signup' : 'signin', userId: user.id };
   };
 
@@ -372,6 +401,6 @@ export default async function authRoutes(app: FastifyInstance) {
     const user = await one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]);
     const orgs = await ctx.db.query<any>(
       `select o.id, o.slug, o.name, m.role from organizer_members m join organizers o on o.id = m.organizer_id where m.user_id = $1`, [s.user.id]);
-    return { user: publicUser(user), organizers: orgs.rows, readOnly: s.readOnly, impersonatedBy: s.impersonatorId };
+    return { user: publicUser(user, s.method, ctx), organizers: orgs.rows, readOnly: s.readOnly, impersonatedBy: s.impersonatorId, ...(await personasOf(ctx.db, s.user.id)) };
   });
 }

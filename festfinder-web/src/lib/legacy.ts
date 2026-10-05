@@ -5,7 +5,7 @@
  */
 const CITIES = ['ho-chi-minh', 'ha-noi', 'da-nang', 'nha-trang'];
 const GENRES: Record<string, string> = {
-  edm: 'EDM', festival: 'Festival', indie: 'Indie', 'hip-hop': 'Hip-Hop', pop: 'Pop', jazz: 'Jazz', food: 'Food', culture: 'Culture', 'night-market': 'Food',
+  edm: 'EDM', festival: 'Festival', indie: 'Indie', rock: 'Rock', 'hip-hop': 'Hip-Hop', pop: 'Pop', jazz: 'Jazz', food: 'Food', culture: 'Culture', 'night-market': 'Food',
 };
 const TIMES: Record<string, string> = { tonight: 'tonight', 'this-weekend': 'weekend', 'next-7-days': '7days', 'this-month': 'month' };
 

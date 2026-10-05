@@ -75,8 +75,17 @@ export interface Config {
    * with the embedded test database only: on Supabase it would stamp real rows with a fake date.
    */
   fixedNow: string | null;
-  /** Admin accounts made at startup for listed emails that have no account yet; no password. */
+  /**
+   * The admin allowlist (ADMIN_EMAIL). A listed email gets admin rights when its owner signs
+   * in with Google; an account not on the list loses them at startup. Listed emails with no
+   * account yet get one with no password.
+   */
   adminEmails: string[];
+  /**
+   * How a session must be signed in to use admin rights: 'google' (production with Google
+   * sign-in configured, the default there) or 'any'. ADMIN_SIGN_IN overrides.
+   */
+  adminSignIn: 'google' | 'any';
   /**
    * Bearer secret for POST /internal/jobs, the serverless stand-in for the job timers. On
    * Supabase the production deployment schedules pg_cron to call it every minute.
@@ -174,6 +183,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     jobsEnabled: bool('JOBS_ENABLED', !onVercel),
     fixedNow: process.env.FF_NOW || null,
     adminEmails: (process.env.ADMIN_EMAIL ?? '').split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => e.includes('@')),
+    adminSignIn: process.env.ADMIN_SIGN_IN === 'any' || process.env.ADMIN_SIGN_IN === 'google' ? process.env.ADMIN_SIGN_IN
+      : prod && !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ? 'google' : 'any',
     // In production, a key of its own derived from the ticket secret when none is set, so
     // the scheduler works without one more secret to manage. Neither key reveals the other.
     cronSecret: process.env.CRON_SECRET || (live ? createHmac('sha256', ticketSigningSecret).update('feestfinder:internal-jobs').digest('base64url') : null),

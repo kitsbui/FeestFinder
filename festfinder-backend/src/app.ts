@@ -43,6 +43,8 @@ import seoRoutes from './routes/seo.ts';
 import nightRoutes from './routes/night.ts';
 import collectionRoutes from './routes/collections.ts';
 import outboundRoutes from './routes/outbound.ts';
+import roleRoutes from './routes/roles.ts';
+import artistRoutes from './routes/artists.ts';
 import adminPartnerRoutes from './routes/admin/partners.ts';
 import frontendRoutes from './routes/frontend.ts';
 
@@ -249,6 +251,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(nightRoutes);
   await app.register(collectionRoutes);
   await app.register(outboundRoutes);
+  await app.register(roleRoutes);
+  await app.register(artistRoutes);
   if (ctx.config.serveFrontend) await app.register(frontendRoutes);
 
   return app;

@@ -146,7 +146,7 @@ const S2 = {
   notifChanOff:{en:'Off',vi:'Đang tắt'}
 };
 
-const GENRES = ['EDM','Festival','Indie','Hip-Hop','Pop','Jazz','Food','Culture'];
+const GENRES = ['EDM','Festival','Rock','Indie','Hip-Hop','Pop','Jazz','Food','Culture'];
 const ORG = (FF.data.org || { authed:false });
 const VENUES = (ORG.venues || []).map(v => ({ id:v.id, name:v.name, addr:(v.address || '') + (v.area ? ', ' + v.area : '') }));
 

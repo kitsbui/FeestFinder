@@ -203,7 +203,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
         userId = o.user_id;
         label = o.name;
       }
-      const { token, expiresAt } = await createSession(q, now, { kind: 'user', userId, readOnly: true, impersonatorId: s.user.id, ttlMs: IMPERSONATION_TTL_MS });
+      const { token, expiresAt } = await createSession(q, now, { kind: 'user', userId, method: 'impersonation', readOnly: true, impersonatorId: s.user.id, ttlMs: IMPERSONATION_TTL_MS });
       await appendAudit(q, {
         at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'impersonation.started',
         targetType: body.targetType, targetId: body.targetId, targetLabel: label,

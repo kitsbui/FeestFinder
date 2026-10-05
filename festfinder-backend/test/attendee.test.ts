@@ -165,7 +165,7 @@ describe('attendee (Web + App, signed in)', () => {
     assert.equal(invite.body.id, planId, 'adds to the existing plan');
     const friendToken = (await env.ctx.db.tx(async (q) => {
       const { createSession } = await import('../src/http/session.ts');
-      return createSession(q, env.clock.now(), { kind: 'user', userId: env.ids.friend.f3 });
+      return createSession(q, env.clock.now(), { kind: 'user', userId: env.ids.friend.f3, method: 'password' });
     })).token;
     const accepted = await env.as(friendToken).post(`/plans/${planId}/respond`, { status: 'going' });
     assert.equal(accepted.body.members.find((m: any) => m.name === 'Đức Nguyễn').status, 'going');
@@ -204,7 +204,7 @@ describe('attendee (Web + App, signed in)', () => {
   it('switches to live mode on the night', async () => {
     env.clock.set('2026-09-19T20:15:00+07:00');
     const zones = await many<any>(env.ctx.db, `select id, label from site_zones where event_id = $1`, [env.ids.event.ravo]);
-    const friend = (await env.ctx.db.tx(async (q) => (await import('../src/http/session.ts')).createSession(q, env.clock.now(), { kind: 'user', userId: env.ids.friend.f1 }))).token;
+    const friend = (await env.ctx.db.tx(async (q) => (await import('../src/http/session.ts')).createSession(q, env.clock.now(), { kind: 'user', userId: env.ids.friend.f1, method: 'password' }))).token;
     await env.as(friend).put(`/events/${env.ids.event.ravo}/presence`, { zoneId: zones.find((z) => z.label === 'Mainstage').id });
 
     const live = await env.as(token).get(`/events/${env.ids.event.ravo}/live`);
