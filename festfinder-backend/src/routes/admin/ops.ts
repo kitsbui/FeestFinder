@@ -51,13 +51,7 @@ const GENRE_LABEL: Record<string, { label: Localized; hint: Localized }> = {
   Culture: { label: L('Culture & arts', 'Văn hoá & nghệ thuật'), hint: L('Book fairs, exhibitions, classical', 'Hội sách, triển lãm, nhạc cổ điển') },
 };
 
-const ORG_TYPES: Record<string, Localized> = {
-  promoter: L('Promoter', 'Đơn vị tổ chức'),
-  venue: L('Venue (bar, club, space)', 'Địa điểm (bar, club, không gian)'),
-  company: L('Company or brand', 'Doanh nghiệp / thương hiệu'),
-  agency: L('Agency or travel', 'Agency / lữ hành'),
-  public: L('Public body or non-profit', 'Cơ quan / tổ chức công'),
-};
+const ORG_TYPES: Record<string, Localized> = ORGANIZER_TYPE.label;
 
 /** Districts grouped the way people in the city think about them. Areas already in the data are added under "Other". */
 const AREA_GROUPS: { key: string; label: Localized; areas: string[] }[] = [

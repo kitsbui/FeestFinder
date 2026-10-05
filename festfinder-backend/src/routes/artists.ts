@@ -12,6 +12,7 @@ import { bool, csv, imageUrl, limit, localized, parse, uuid } from '../lib/valid
 import { requireAdmin, requireUser } from '../http/guards.ts';
 import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
 import { artistKey, presentLinks, searchArtists } from '../services/artists.ts';
+import { directoryPages } from '../services/seo.ts';
 import { appendAudit } from '../services/audit.ts';
 import { artistOrganizers, artistStyles, artistVenues, sharedLineups, similarArtists } from '../services/network.ts';
 
@@ -118,7 +119,8 @@ export default async function artistRoutes(app: FastifyInstance) {
     const rows = await many<{ slug: string; name: string }>(ctx.db,
       `select distinct a.slug, a.name from artists a join event_artists ea on ea.artist_id = a.id join events e on e.id = ea.event_id
         where ${LIVE} and e.ends_at >= $1 order by a.slug limit 20000`, [ctx.clock.now()]);
-    return { items: rows };
+    // The directory pages listing enough artists to be indexed.
+    return { items: rows, directories: await directoryPages(ctx.db) };
   });
 
   // ---- the owner's profile ------------------------------------------------------------------

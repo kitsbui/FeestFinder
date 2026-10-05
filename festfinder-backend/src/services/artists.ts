@@ -13,7 +13,7 @@ import { styleByKey } from '../lib/styles.ts';
 
 export const artistKey = (name: string) => plainText(name);
 
-const RESERVED_SLUGS = new Set(['style', 'city']);
+const RESERVED_SLUGS = new Set(['style', 'city', 'en']);
 
 /** The artist records for these names, made when missing. Returns name key → id. */
 export async function ensureArtists(q: Queryable, names: string[]): Promise<Map<string, string>> {

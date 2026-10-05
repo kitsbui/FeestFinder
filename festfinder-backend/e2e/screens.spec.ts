@@ -37,6 +37,7 @@ test.describe('Web', () => {
     ['/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i],
     ['/o/ravoent', /RAVOLUTION ENTERTAINMENT/i],
     ['/a/hoaprox', /HOAPROX/i],
+    ['/a', /NGHỆ SĨ/],
   ];
   for (const [path, shows] of routes) {
     test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
@@ -104,6 +105,42 @@ test.describe('Web', () => {
     await expect(page).toHaveURL(/\/a\/hoaprox$/);
     await expect(page.getByText('Show sắp tới')).toBeVisible();
     await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
+  });
+
+  test('the artist directory filters by style, and one style alone has its own address', async ({ page, request }) => {
+    await expectScreen(page, '/a', /NGHỆ SĨ/);
+    await expect(page.getByText('Hoaprox').first()).toBeVisible();
+    const style = (await (await request.get('/meta/discovery')).json()).styles[0];
+    await page.getByRole('button', { name: style.label.vi, exact: true }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/a/style/${style.key}$`));
+    await page.getByRole('button', { name: /Nhận booking$/ }).click();
+    await expect(page).toHaveURL(/\/a$/);
+    const html = await (await request.get(`/a/style/${style.key}`)).text();
+    expect(html).toMatch(new RegExp(`<link rel="canonical" href="http://localhost:\\d+/a/style/${style.key}"`));
+  });
+
+  test('an organiser page lists the artists it has worked with', async ({ page }) => {
+    await expectScreen(page, '/o/ravoent', /RAVOLUTION ENTERTAINMENT/i);
+    await expect(page.getByText('Nghệ sĩ đã hợp tác')).toBeVisible();
+    await expect(page.getByText('Hoaprox').first()).toBeVisible();
+  });
+
+  test('a new Google account picks a role: an artist gets a profile and the artist workspace, never admin', async ({ page }) => {
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByText('Đăng nhập để đăng bài', { exact: true }).click();
+    await page.getByText('Tiếp tục với Google', { exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Bạn đến với âm nhạc thế nào?' })).toBeVisible();
+    await page.getByText('Biểu diễn', { exact: true }).click();
+    const name = `Night Owl ${Date.now() % 100000}`;
+    await page.getByLabel('Nghệ danh').fill(name);
+    await page.getByText('Tạo hồ sơ', { exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const who = await (await page.request.get('/auth/session')).json();
+    expect(who.user.role).toBe('user');
+    expect(who.roles.artist).toBe('active');
+    expect(who.artist.name).toBe(name);
+    await expectOps(page, '/ops/artist', /Nghệ danh/);
+    expect((await page.request.get('/admin/counts')).status()).toBe(403);
   });
 
   test('ticket buttons go to the checkout here, or out to the seller, and count the press', async ({ page }) => {
@@ -470,7 +507,9 @@ test.describe('Ops', () => {
     const routes: [string, RegExp][] = [
       ['/ops', /Việc cần làm/],
       ['/ops/review', /Duyệt tin đăng/],
-      ['/ops/claims', /Nhận quản lý sự kiện/],
+      ['/ops/claims', /Hồ sơ nghệ sĩ & BTC/],
+      ['/ops/claims?what=profiles', /Không có yêu cầu nào|Duyệt/],
+      ['/ops/artists', /Hoaprox/],
       ['/ops/events', /Đặc điểm/],
       ['/ops/events/new', /Đăng ngay sau khi tạo/],
       ['/ops/reports', /Báo cáo người dùng/],
@@ -484,7 +523,7 @@ test.describe('Ops', () => {
       ['/ops/audit', /Chuỗi hash hợp lệ/i],
     ];
     for (const [path, shows] of routes) {
-      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/review' ? /^\/ops\/review(\/[0-9a-f-]{36})?$/ : path));
+      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/review' ? /^\/ops\/review(\/[0-9a-f-]{36})?$/ : path.split('?')[0]));
     }
     test('adds a ticket partner and shows its report token once', async ({ page }) => {
       await expectOps(page, '/ops/partners', /Đối tác bán vé/);

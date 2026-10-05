@@ -80,6 +80,18 @@
               <div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ userName }}</div>
               <div style="font-size:11px;font-weight:500;color:#A5A493;margin-top:5px;display:flex;align-items:center;gap:5px"><i class="ph-fill ph-check-circle" style="font-size:12px;color:#0AE448;flex:none"></i>{{ userVia }}</div>
               <div onClick="{{ openEdit }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:13px;padding:10px 11px;border-radius:999px;background:rgba(28,29,27,.7);border:1px solid rgba(255,252,225,.19);font-size:12px;font-weight:600;color:#FFFCE1;transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-user-gear" style="font-size:14px;color:#ABFF84;flex:none"></i>{{ L.editProfile }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:11px;color:#8C8B7D;flex:none"></i></div>
+              <sc-if value="{{ role.artistLink }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ role.goArtist }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:8px;padding:10px 11px;border-radius:999px;background:rgba(28,29,27,.7);border:1px solid rgba(255,252,225,.19);font-size:12px;font-weight:600;color:#FFFCE1;transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-microphone-stage" style="font-size:14px;color:#ABFF84;flex:none"></i>{{ role.artistLabel }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:11px;color:#8C8B7D;flex:none"></i></div>
+              </sc-if>
+              <sc-if value="{{ role.orgLink }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ role.goOrg }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:8px;padding:10px 11px;border-radius:999px;background:rgba(28,29,27,.7);border:1px solid rgba(255,252,225,.19);font-size:12px;font-weight:600;color:#FFFCE1;transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-storefront" style="font-size:14px;color:#ABFF84;flex:none"></i>{{ role.orgLabel }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:11px;color:#8C8B7D;flex:none"></i></div>
+              </sc-if>
+              <sc-if value="{{ role.offer }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ role.reopen }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:8px;padding:10px 11px;border-radius:999px;background:rgba(28,29,27,.7);border:1px solid rgba(255,252,225,.19);font-size:12px;font-weight:600;color:#FFFCE1;transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="ph-bold ph-sparkle" style="font-size:14px;color:#ABFF84;flex:none"></i>{{ role.offerLabel }}<div style="flex:1"></div><i class="ph-bold ph-caret-right" style="font-size:11px;color:#8C8B7D;flex:none"></i></div>
+              </sc-if>
+              <sc-if value="{{ role.pending }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:7px;margin-top:8px;font-size:11px;font-weight:500;color:#FF8709"><i class="ph-bold ph-clock" style="font-size:12px;flex:none"></i>{{ role.pendingLabel }}</div>
+              </sc-if>
               <div style="height:1px;background:rgba(255,252,225,.19);margin:13px 0"></div>
               <div style="font-size:13px;font-weight:500;letter-spacing:0;color:#8C8B7D;margin-bottom:9px;font-family:'Be Vietnam Pro', system-ui, sans-serif">{{ L.connected }}</div>
               <div style="display:flex;align-items:center;gap:7px;margin:-2px 0 9px"><i class="ph-bold ph-users-three" style="font-size:13px;color:#ABFF84;flex:none"></i><div style="font-size:11px;font-weight:500;color:#E6E3C8">{{ L.connectFriends }}</div></div>
@@ -1089,7 +1101,27 @@
             </div>
           </sc-if>
         </div>
+        <sc-if value="{{ org.hasTypeLine }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13px;font-weight:600;color:#ABFF84;margin-top:10px">{{ org.typeLine }}</div>
+        </sc-if>
+        <sc-if value="{{ org.openShow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 12px;border-radius:999px;border:1px solid rgba(10,228,72,.45);font-size:11px;font-weight:600;color:#0AE448"><i class="ph-fill ph-microphone-stage" style="font-size:13px"></i>{{ org.openLabel }}</div>
+        </sc-if>
         <div style="font-size:14px;font-weight:400;color:#E6E3C8;line-height:1.68;margin-top:13px;max-width:640px;text-wrap:pretty">{{ org.bio }}</div>
+        <sc-if value="{{ org.hasStyles }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:13px">
+            <sc-for list="{{ org.styleChips }}" as="c" hint-placeholder-count="3">
+              <div style="padding:6px 11px;border-radius:999px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);font-size:11.5px;font-weight:600">{{ c.label }}</div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ org.hasLinks }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:13px">
+            <sc-for list="{{ org.links }}" as="l" hint-placeholder-count="2">
+              <a href="{{ l.url }}" target="_blank" rel="noopener nofollow" style="display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);color:#FFFCE1;font-size:12px;font-weight:600" style-hover="border-color:#ABFF84"><i class="{{ l.icon }}" style="font-size:14px;color:#ABFF84"></i>{{ l.label }}</a>
+            </sc-for>
+          </div>
+        </sc-if>
         <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:19px">
           <sc-for list="{{ org.stats }}" as="s" hint-placeholder-count="3">
             <div>
@@ -1139,6 +1171,95 @@
       </sc-for>
     </div>
   </sc-if>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:34px">
+    <sc-if value="{{ org.hasArtists }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:18px 20px">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:16px;margin:0 0 12px">{{ org.artistsTitle }}</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ org.artistRows }}" as="a" hint-placeholder-count="3">
+            <div onClick="{{ a.open }}" title="{{ a.line }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);font-size:12.5px;font-weight:600" style-hover="border-color:#ABFF84">{{ a.name }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ org.hasVenues }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:18px 20px">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:16px;margin:0 0 12px">{{ org.venuesTitle }}</h2>
+        <sc-for list="{{ org.venueRows }}" as="v" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #191919">
+            <i class="ph-bold ph-map-pin" style="font-size:16px;color:#ABFF84;flex:none"></i>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600">{{ v.name }}</div><div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:3px">{{ v.line }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isArtists }}" hint-placeholder-val="{{ false }}">
+<div class="ff-l-page" style="position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:26px 28px 90px">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px">
+    <div>
+      <h1 class="ff-headline" style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:clamp(34px,5vw,64px);line-height:.98;margin:0;letter-spacing:-.03em;text-transform:uppercase">{{ dir.title }}</h1>
+      <div style="font-size:12.5px;font-weight:500;color:#A5A493;margin-top:10px">{{ dir.countLine }}</div>
+    </div>
+    <div style="flex:0 1 340px;min-width:220px;display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:8px;background:rgba(25,25,25,.7);border:1px solid rgba(255,252,225,.19)">
+      <i class="ph-bold ph-magnifying-glass" style="font-size:15px;color:#A5A493;flex:none"></i>
+      <input value="{{ dir.q }}" onChange="{{ dir.onSearch }}" placeholder="{{ dir.searchPh }}" aria-label="{{ dir.searchPh }}" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:13px;font-weight:500">
+    </div>
+  </div>
+  <div style="padding:14px 16px;border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.13);margin-bottom:22px">
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+      <sc-for list="{{ dir.roles }}" as="r" hint-placeholder-count="5">
+        <div onClick="{{ r.pick }}" role="button" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ r.bg }};color:{{ r.fg }};border:1px solid {{ r.bd }};transition:all .15s">{{ r.label }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+      <sc-for list="{{ dir.styles }}" as="x" hint-placeholder-count="5">
+        <div onClick="{{ x.pick }}" role="button" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ x.bg }};color:{{ x.fg }};border:1px solid {{ x.bd }};transition:all .15s">{{ x.label }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+      <sc-for list="{{ dir.cities }}" as="c" hint-placeholder-count="5">
+        <div onClick="{{ c.pick }}" role="button" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }};transition:all .15s">{{ c.label }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+      <sc-for list="{{ dir.toggles }}" as="t" hint-placeholder-count="2">
+        <div onClick="{{ t.pick }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }}"><i class="{{ t.icon }}" style="font-size:13px"></i>{{ t.label }}</div>
+      </sc-for>
+    </div>
+  </div>
+  <sc-if value="{{ dir.empty }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:50px 10px;text-align:center;font-size:14px;font-weight:600;color:#A5A493">{{ dir.emptyLabel }}</div>
+  </sc-if>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px">
+    <sc-for list="{{ dir.cards }}" as="a" hint-placeholder-count="6">
+      <div onClick="{{ a.open }}" role="link" style="cursor:pointer;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:8px;background:rgba(25,25,25,.66);border:1px solid rgba(255,252,225,.19);transition:all .18s;box-shadow:inset 0 1px 1px rgba(255,252,225,.09),inset 0 24px 48px rgba(255,252,225,.03)" style-hover="border-color:rgba(255,252,225,.45);transform:translateY(-3px)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="ff-art ff-art--flat" style="width:52px;height:52px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:#0E100F;background:{{ a.art }}">{{ a.initials }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px"><div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.name }}</div>
+              <sc-if value="{{ a.verified }}" hint-placeholder-val="{{ false }}"><i class="ph-fill ph-seal-check" style="font-size:14px;color:#ABFF84;flex:none"></i></sc-if>
+            </div>
+            <div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.line }}</div>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:#ABFF84;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.styles }}</div>
+        <sc-if value="{{ a.hasNext }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:#E6E3C8"><i class="ph-bold ph-calendar-check" style="font-size:13px;color:#ABFF84;flex:none"></i><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.next }}</span></div>
+        </sc-if>
+        <sc-if value="{{ a.hasBooking }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11px;font-weight:600;color:{{ a.bookingFg }}">{{ a.booking }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <sc-if value="{{ dir.moreShow }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ dir.more }}" role="button" style="cursor:pointer;margin:22px auto 0;width:max-content;padding:11px 20px;border-radius:999px;border:1px solid rgba(255,252,225,.32);font-size:12.5px;font-weight:600" style-hover="border-color:#ABFF84">{{ dir.moreLabel }}</div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -1152,8 +1273,27 @@
       <div style="flex:1;min-width:220px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <h1 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:clamp(24px,3.2vw,34px);line-height:1.06;margin:0;letter-spacing:-.02em">{{ artist.name }}</h1>
+          <sc-if value="{{ artist.verified }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(171,255,132,.12);border:1px solid rgba(171,255,132,.45);font-size:11px;font-weight:600;color:#FFFCE1;white-space:nowrap"><i class="ph-fill ph-seal-check" style="font-size:13px"></i>{{ artist.verifiedLabel }}</div>
+          </sc-if>
+          <sc-if value="{{ artist.hasBooking }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,252,225,.19);font-size:11px;font-weight:600;color:{{ artist.bookingFg }};white-space:nowrap"><i class="ph-fill ph-calendar-check" style="font-size:13px"></i>{{ artist.bookingLabel }}</div>
+          </sc-if>
         </div>
         <div style="font-size:13px;font-weight:600;color:#ABFF84;margin-top:10px">{{ artist.kicker }}</div>
+        <sc-if value="{{ artist.hasMeta }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:#A5A493;margin-top:8px"><i class="ph-bold ph-map-pin" style="font-size:13px;flex:none"></i>{{ artist.meta }}</div>
+        </sc-if>
+        <sc-if value="{{ artist.hasBio }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:14px;font-weight:400;color:#E6E3C8;line-height:1.68;margin-top:13px;max-width:640px;text-wrap:pretty;white-space:pre-line">{{ artist.bio }}</div>
+        </sc-if>
+        <sc-if value="{{ artist.hasLinks }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:15px">
+            <sc-for list="{{ artist.links }}" as="l" hint-placeholder-count="3">
+              <a href="{{ l.url }}" target="_blank" rel="noopener nofollow" style="display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);color:#FFFCE1;font-size:12px;font-weight:600;transition:border-color .15s" style-hover="border-color:#ABFF84"><i class="{{ l.icon }}" style="font-size:14px;color:#ABFF84"></i>{{ l.label }}</a>
+            </sc-for>
+          </div>
+        </sc-if>
         <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:19px">
           <sc-for list="{{ artist.stats }}" as="s" hint-placeholder-count="3">
             <div>
@@ -1163,7 +1303,12 @@
           </sc-for>
         </div>
       </div>
-      <div onClick="{{ artist.follow }}" style="cursor:pointer;flex:none;padding:14px 26px;border-radius:8px;background:{{ artist.followBg }};border:1px solid {{ artist.followBd }};color:{{ artist.followFg }};font-size:13px;font-weight:600;transition:all .15s" style-hover="transform:translateY(-1px)">{{ artist.followLabel }}</div>
+      <div style="display:flex;flex-direction:column;gap:9px;flex:none">
+        <div onClick="{{ artist.follow }}" style="cursor:pointer;flex:none;padding:14px 26px;border-radius:8px;background:{{ artist.followBg }};border:1px solid {{ artist.followBd }};color:{{ artist.followFg }};font-size:13px;font-weight:600;text-align:center;transition:all .15s" style-hover="transform:translateY(-1px)">{{ artist.followLabel }}</div>
+        <sc-if value="{{ artist.editShow }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ artist.edit }}" role="button" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 18px;border-radius:8px;border:1px solid rgba(255,252,225,.32);color:#FFFCE1;font-size:12.5px;font-weight:600" style-hover="border-color:#ABFF84"><i class="ph-bold ph-pencil-simple" style="font-size:13px"></i>{{ artist.editLabel }}</div>
+        </sc-if>
+      </div>
     </div>
   </div>
 
@@ -1203,9 +1348,122 @@
       </sc-for>
     </div>
   </sc-if>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:34px">
+    <sc-if value="{{ artist.hasOrgs }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:18px 20px">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:16px;margin:0 0 12px">{{ artist.orgsTitle }}</h2>
+        <sc-for list="{{ artist.orgs }}" as="o" hint-placeholder-count="2">
+          <div onClick="{{ o.open }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #191919" style-hover="color:#ABFF84">
+            <div class="ff-art ff-art--flat" style="width:34px;height:34px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0E100F;background:{{ o.art }}">{{ o.initials }}</div>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600">{{ o.name }}</div><div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:3px">{{ o.line }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ artist.hasVenues }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:18px 20px">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:16px;margin:0 0 12px">{{ artist.venuesTitle }}</h2>
+        <sc-for list="{{ artist.venues }}" as="v" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #191919">
+            <i class="ph-bold ph-map-pin" style="font-size:16px;color:#ABFF84;flex:none"></i>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600">{{ v.name }}</div><div style="font-size:11.5px;font-weight:500;color:#A5A493;margin-top:3px">{{ v.line }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ artist.hasLineups }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:8px;background:rgba(25,25,25,.5);border:1px solid rgba(255,252,225,.19);padding:18px 20px">
+        <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:16px;margin:0 0 12px">{{ artist.lineupsTitle }}</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ artist.lineups }}" as="x" hint-placeholder-count="3">
+            <div onClick="{{ x.open }}" title="{{ x.line }}" style="cursor:pointer;padding:8px 13px;border-radius:999px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);font-size:12.5px;font-weight:600" style-hover="border-color:#ABFF84">{{ x.name }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ artist.hasSimilar }}" hint-placeholder-val="{{ false }}">
+    <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:34px 0 15px">{{ artist.similarTitle }}</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+      <sc-for list="{{ artist.similar }}" as="x" hint-placeholder-count="3">
+        <div onClick="{{ x.open }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px;border-radius:8px;background:rgba(25,25,25,.66);border:1px solid rgba(255,252,225,.19);transition:all .15s" style-hover="border-color:rgba(255,252,225,.45);transform:translateY(-2px)">
+          <div class="ff-art ff-art--flat" style="width:42px;height:42px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#0E100F;background:{{ x.art }}">{{ x.initials }}</div>
+          <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ x.name }}</div><div style="font-size:11px;font-weight:500;color:#A5A493;margin-top:3px">{{ x.line }}</div></div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
 </div>
 </sc-if>
 
+
+<sc-if value="{{ role.open }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-modal="true" aria-label="{{ role.title }}" style="position:fixed;inset:0;z-index:75;background:rgba(14,16,15,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-start;justify-content:center;padding:44px 20px;overflow-y:auto">
+    <div style="width:min(560px,100%);padding:26px;border-radius:8px;background:rgba(25,25,25,.97);border:1px solid rgba(255,252,225,.32);box-shadow:0 30px 70px rgba(0,0,0,.65);animation:ffRise .2s ease both">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <h2 style="flex:1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:24px;line-height:1.15;margin:0;letter-spacing:-.02em">{{ role.title }}</h2>
+        <div onClick="{{ role.close }}" role="button" aria-label="×" style="cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,252,225,.08);flex:none"><i class="ph-bold ph-x" style="font-size:13px"></i></div>
+      </div>
+      <sc-if value="{{ role.menu }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+          <sc-for list="{{ role.cards }}" as="c" hint-placeholder-count="3">
+            <div onClick="{{ c.go }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:8px;background:rgba(14,16,15,.6);border:1px solid rgba(255,252,225,.19);transition:all .15s" style-hover="border-color:#ABFF84;transform:translateY(-1px)">
+              <i class="{{ c.icon }}" style="font-size:24px;color:#ABFF84;flex:none"></i>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">{{ c.label }}</div><div style="font-size:12px;font-weight:500;color:#A5A493;margin-top:3px">{{ c.sub }}</div></div>
+              <i class="ph-bold ph-caret-right" style="font-size:13px;color:#8C8B7D;flex:none"></i>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:11.5px;font-weight:500;color:#8C8B7D;margin-top:14px">{{ role.later }}</div>
+      </sc-if>
+      <sc-if value="{{ role.form }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ role.back }}" role="button" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-size:12px;font-weight:600;color:#A5A493" style-hover="color:#ABFF84"><i class="ph-bold ph-arrow-left" style="font-size:13px"></i>{{ role.backLabel }}</div>
+        <div style="font-size:12px;font-weight:500;color:#8C8B7D;margin:16px 0 7px">{{ role.nameLabel }}</div>
+        <input value="{{ role.name }}" onChange="{{ role.onName }}" aria-label="{{ role.nameLabel }}" style="width:100%;box-sizing:border-box;padding:12px 13px;border-radius:8px;background:rgba(14,16,15,.7);border:1px solid rgba(255,252,225,.32);outline:none;color:#FFFCE1;font-family:'Be Vietnam Pro', system-ui, sans-serif;font-size:14px;font-weight:500">
+        <sc-if value="{{ role.hasSug }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:10px;padding:10px 12px;border-radius:8px;border:1px dashed rgba(255,252,225,.32)">
+            <div style="font-size:11.5px;font-weight:600;color:#A5A493;margin-bottom:6px">{{ role.sugTitle }}</div>
+            <sc-for list="{{ role.sug }}" as="x" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;padding:7px 0">
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ x.name }}</div><div style="font-size:11px;font-weight:500;color:#A5A493">{{ x.line }}</div></div>
+                <div onClick="{{ x.claim }}" role="button" style="cursor:pointer;padding:6px 12px;border-radius:999px;border:1px solid #ABFF84;color:#ABFF84;font-size:11.5px;font-weight:600">{{ x.claimLabel }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ role.isArtist }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+          <sc-for list="{{ role.roleChips }}" as="r" hint-placeholder-count="4">
+            <div onClick="{{ r.pick }}" role="button" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ r.bg }};color:{{ r.fg }};border:1px solid {{ r.bd }}">{{ r.label }}</div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ role.isOrganizer }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+          <sc-for list="{{ role.typeChips }}" as="t" hint-placeholder-count="4">
+            <div onClick="{{ t.pick }}" role="button" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }}">{{ t.label }}</div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <div style="font-size:12px;font-weight:500;color:#8C8B7D;margin:16px 0 0">{{ role.cityLabel }}</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+          <sc-for list="{{ role.cityChips }}" as="c" hint-placeholder-count="4">
+            <div onClick="{{ c.pick }}" role="button" style="cursor:pointer;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }}">{{ c.label }}</div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ role.hasErr }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="margin-top:14px;font-size:12.5px;font-weight:600;color:#FF8709">{{ role.err }}</div>
+        </sc-if>
+        <sc-if value="{{ role.hasClash }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ role.clashClaim }}" role="button" style="cursor:pointer;display:inline-block;margin-top:10px;padding:9px 14px;border-radius:999px;border:1px solid #ABFF84;color:#ABFF84;font-size:12px;font-weight:600">{{ role.clashLabel }}</div>
+        </sc-if>
+        <div onClick="{{ role.create }}" role="button" class="ff-cta" style="cursor:pointer;margin-top:20px;padding:13px;border-radius:8px;background:#ABFF84;color:#0E100F;text-align:center;font-size:13.5px;font-weight:600">{{ role.createLabel }}</div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
 
 <sc-if value="{{ adsOpen }}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed;inset:0;z-index:72;background:rgba(14,16,15,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-start;justify-content:center;padding:34px 24px;overflow-y:auto">

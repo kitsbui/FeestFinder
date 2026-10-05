@@ -1,4 +1,4 @@
-/* Phosphor bold, cut to the 233 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
+/* Phosphor bold, cut to the 239 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
 @font-face {
   font-family: "Phosphor-Bold";
   src: url("./Phosphor-Bold.woff2") format("woff2"), url("./Phosphor-Bold.woff") format("woff");
@@ -293,9 +293,6 @@
 .ph-bold.ph-folder-simple:before {
   content: "\e25a";
 }
-.ph-bold.ph-folder-simple-star:before {
-  content: "\ec2e";
-}
 .ph-bold.ph-footprints:before {
   content: "\ea88";
 }
@@ -346,6 +343,9 @@
 }
 .ph-bold.ph-hash:before {
   content: "\e2a2";
+}
+.ph-bold.ph-headphones:before {
+  content: "\e2a6";
 }
 .ph-bold.ph-heart:before {
   content: "\e2a8";
@@ -599,6 +599,9 @@
 .ph-bold.ph-sort-descending:before {
   content: "\e446";
 }
+.ph-bold.ph-soundcloud-logo:before {
+  content: "\e8de";
+}
 .ph-bold.ph-sparkle:before {
   content: "\e6a2";
 }
@@ -607,6 +610,9 @@
 }
 .ph-bold.ph-spinner-gap:before {
   content: "\e66c";
+}
+.ph-bold.ph-spotify-logo:before {
+  content: "\e66e";
 }
 .ph-bold.ph-square:before {
   content: "\e45e";
@@ -634,6 +640,9 @@
 }
 .ph-bold.ph-tag:before {
   content: "\e478";
+}
+.ph-bold.ph-target:before {
+  content: "\e47c";
 }
 .ph-bold.ph-telegram-logo:before {
   content: "\e5bc";
@@ -704,6 +713,9 @@
 .ph-bold.ph-users-three:before {
   content: "\e68e";
 }
+.ph-bold.ph-vinyl-record:before {
+  content: "\ecac";
+}
 .ph-bold.ph-wallet:before {
   content: "\e68a";
 }
@@ -719,6 +731,9 @@
 .ph-bold.ph-warning-octagon:before {
   content: "\e4e4";
 }
+.ph-bold.ph-waveform:before {
+  content: "\e802";
+}
 .ph-bold.ph-whatsapp-logo:before {
   content: "\e5d0";
 }
@@ -730,4 +745,7 @@
 }
 .ph-bold.ph-x-logo:before {
   content: "\e4bc";
+}
+.ph-bold.ph-youtube-logo:before {
+  content: "\e4fc";
 }

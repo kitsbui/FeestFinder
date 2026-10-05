@@ -2,9 +2,17 @@
  * Organizer mode: the business profile moderation verifies against, and the payout account.
  * Type and bank are picked from lists; the tax code is checked as it is typed.
  */
-import { h, Fragment, useState, useEffect, t, tx, useFetch, patch, put, toast, errorText, store, useLeaveGuard, options } from '../core.js';
-import { PageHeader, Button, Card, Field, Input, TextArea, Select, Combobox, Uploader, Pill, Spinner, ErrorBox, Icon, KV } from '../ui.js';
-import { orgTypeOptions, bankOptions } from '../opts.js';
+import { h, Fragment, useState, useEffect, t, tx, cx, useFetch, patch, put, toast, errorText, store, useLeaveGuard, options } from '../core.js';
+import { PageHeader, Button, Card, Field, Input, TextArea, Select, Combobox, Uploader, Pill, Spinner, ErrorBox, Icon, KV, Switch } from '../ui.js';
+import { orgTypeOptions, bankOptions, cityOptions, styleOptions } from '../opts.js';
+
+/** The channels an organiser can list on its public page. */
+const ORG_LINKS = [['instagram', 'Instagram'], ['facebook', 'Facebook'], ['tiktok', 'TikTok'], ['youtube', 'YouTube'], ['soundcloud', 'SoundCloud'], ['spotify', 'Spotify'], ['x', 'X']];
+const pick = (list, value, set, max) => h('div', { className: 'op-quick' }, list.map((o) => {
+  const on = value.includes(o.value);
+  return h('button', { key: o.value, type: 'button', className: cx('op-chip', on && 'is-on'), disabled: !on && max && value.length >= max,
+    onClick: () => set(on ? value.filter((x) => x !== o.value) : [...value, o.value]) }, o.label);
+}));
 
 const FIELDS = ['name', 'type', 'website', 'legalName', 'taxCode', 'address', 'email', 'hotline', 'zalo', 'contactName', 'contactRole', 'logoUrl'];
 
@@ -21,6 +29,11 @@ export function OrgProfile() {
     const next = Object.fromEntries(FIELDS.map((k) => [k, data[k] ?? '']));
     next.bioVi = data.bio?.vi ?? '';
     next.bioEn = data.bio?.en ?? '';
+    next.markets = data.markets ?? [];
+    next.styles = data.styles ?? [];
+    next.openForSubmissions = !!data.openForSubmissions;
+    next.coverUrl = data.coverUrl ?? '';
+    next.links = { ...(data.links ?? {}) };
     setF(next);
     setBase(JSON.stringify(next));
   }, [data]);
@@ -47,6 +60,8 @@ export function OrgProfile() {
       body.logoUrl = f.logoUrl || null;
       body.website = f.website.trim() || '';
       body.bio = { vi: f.bioVi, en: f.bioEn };
+      Object.assign(body, { markets: f.markets, styles: f.styles, openForSubmissions: f.openForSubmissions, coverUrl: f.coverUrl || null,
+        links: Object.fromEntries(ORG_LINKS.map(([k]) => [k, (f.links[k] || '').trim() || null])) });
       const out = await patch('/organizer/profile', body);
       toast(tx(out.message));
       setBase(JSON.stringify(f));
@@ -73,6 +88,13 @@ export function OrgProfile() {
             h(Field, { label: t('Giới thiệu (tiếng Anh)', 'About (English)'), optional: true, className: 'is-wide' }, h(TextArea, { rows: 2, value: f.bioEn, onChange: set('bioEn'), maxLength: 400 })),
             h(Field, { label: 'Website', optional: true, error: errors.website }, h(Input, { value: f.website, onChange: set('website'), icon: 'globe', placeholder: 'https://', invalid: !!errors.website })),
             h(Field, { label: t('Logo', 'Logo'), optional: true }, h(Uploader, { purpose: 'logo', value: f.logoUrl || null, onChange: set('logoUrl'), compact: true })))),
+        h(Card, { title: t('Mạng lưới', 'Network'), icon: 'users-three', sub: t('Hiện công khai', 'Public') },
+          h('div', { className: 'op-form-grid' },
+            h(Field, { label: t('Thành phố tổ chức sự kiện', 'Cities you run events in'), className: 'is-wide' }, pick(cityOptions(), f.markets, (v) => setF((x) => ({ ...x, markets: v })), 12)),
+            h(Field, { label: t('Phong cách nhạc', 'Music styles'), className: 'is-wide', hint: t('Tối đa 8', 'Up to 8') }, pick(styleOptions(), f.styles, (v) => setF((x) => ({ ...x, styles: v })), 8)),
+            h(Switch, { checked: f.openForSubmissions, onChange: (v) => setF((x) => ({ ...x, openForSubmissions: v })), label: t('Nhận hồ sơ nghệ sĩ', 'Open for artist submissions') }),
+            h(Field, { label: t('Ảnh bìa', 'Cover'), optional: true }, h(Uploader, { purpose: 'cover', value: f.coverUrl || null, onChange: (v) => setF((x) => ({ ...x, coverUrl: v ?? '' })), compact: true })),
+            ...ORG_LINKS.map(([k, label]) => h(Field, { key: k, label, optional: true }, h(Input, { value: f.links[k] ?? '', icon: 'link', placeholder: 'https://', onChange: (v) => setF((x) => ({ ...x, links: { ...x.links, [k]: v } })) }))))),
         h(Card, { title: t('Pháp nhân', 'Legal entity'), icon: 'buildings', sub: t('Chỉ dùng cho kiểm duyệt', 'Moderation only') },
           h('div', { className: 'op-form-grid' },
             h(Field, { label: t('Tên đăng ký kinh doanh', 'Registered name'), className: 'is-wide' }, h(Input, { value: f.legalName, onChange: set('legalName'), placeholder: t('vd: Công ty TNHH …', 'e.g. Công ty TNHH …') })),
