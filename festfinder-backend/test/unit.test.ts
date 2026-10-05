@@ -185,3 +185,22 @@ describe('notification links', () => {
     }
   });
 });
+
+describe('map style', () => {
+  it('is the bare board without tiles, and layers the city detail over the overview', async () => {
+    const { mapStyle } = await import('../src/routes/catalog.ts');
+    const bare = mapStyle({ tilesUrl: null, overviewUrl: null, glyphsUrl: null });
+    assert.deepEqual([Object.keys(bare.sources), bare.layers.length], [[], 1]);
+    const both: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: null });
+    assert.deepEqual(Object.keys(both.sources), ['overview', 'detail']);
+    assert.equal(both.sources.detail.url, 'pmtiles://https://cdn.example/cities.pmtiles');
+    const overview = both.layers.filter((l: any) => l.source === 'overview');
+    const detail = both.layers.filter((l: any) => l.source === 'detail');
+    assert.ok(overview.every((l: any) => l.maxzoom === 8), 'the overview hands over to the detail at zoom 8');
+    assert.ok(detail.every((l: any) => l.maxzoom === undefined));
+    assert.ok(both.layers.findIndex((l: any) => l.source === 'detail') > both.layers.findIndex((l: any) => l.source === 'overview'), 'detail draws on top');
+    assert.equal(both.glyphs, undefined);
+    const one: any = mapStyle({ tilesUrl: null, overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: null });
+    assert.ok(one.layers.filter((l: any) => l.source === 'overview').every((l: any) => l.maxzoom === undefined), 'alone, the overview serves every zoom');
+  });
+});

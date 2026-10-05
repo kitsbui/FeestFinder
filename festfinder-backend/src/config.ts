@@ -92,11 +92,12 @@ export interface Config {
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
   /**
-   * The map's basemap: a PMTiles archive (Protomaps schema) served with range requests from
-   * storage FeestFinder controls, so there is no per-request fee. Without it the map draws
-   * the events on a plain board. Glyphs (for place names) are optional.
+   * The map's basemap: PMTiles archives (Protomaps schema) served with range requests from
+   * storage FeestFinder controls, so there is no per-request fee. `tilesUrl` holds the
+   * listed cities in detail, `overviewUrl` the region at low zoom; either works alone.
+   * Without them the map draws the events on a plain board. Glyphs (place names) are optional.
    */
-  map: { tilesUrl: string | null; glyphsUrl: string | null };
+  map: { tilesUrl: string | null; overviewUrl: string | null; glyphsUrl: string | null };
   /** The screens and event pages from festfinder-frontend; off in unit tests unless one asks. */
   serveFrontend: boolean;
   /**
@@ -182,7 +183,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     exposeDevCodes: environment === 'staging' && bool('EXPOSE_DEV_CODES', !databaseUrl),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
     map: {
-      tilesUrl: /^https:\/\/\S+\.pmtiles$/.test(process.env.MAP_TILES_URL ?? '') ? process.env.MAP_TILES_URL! : null,
+      tilesUrl: tilesUrl(process.env.MAP_TILES_URL, prod),
+      overviewUrl: tilesUrl(process.env.MAP_OVERVIEW_URL, prod),
       glyphsUrl: /^https:\/\/\S+\{fontstack\}\S*\{range\}/.test(process.env.MAP_GLYPHS_URL ?? '') ? process.env.MAP_GLYPHS_URL! : null,
     },
     serveFrontend: env !== 'test',
@@ -246,3 +248,9 @@ function deploymentEnvironment(prod: boolean): Config['environment'] {
   return prod ? 'production' : 'staging';
 }
 
+/** A PMTiles archive's address: https, or a laptop's own http server while developing. */
+function tilesUrl(raw: string | undefined, prod: boolean): string | null {
+  if (!raw || !/\.pmtiles$/.test(raw)) return null;
+  if (/^https:\/\/\S+$/.test(raw)) return raw;
+  return !prod && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(raw) ? raw : null;
+}
