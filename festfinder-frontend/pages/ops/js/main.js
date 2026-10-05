@@ -27,6 +27,7 @@ const TEAM = [
   { key: 'organizers', icon: 'buildings', label: () => t('Nhà tổ chức', 'Organizers'), load: () => import('./team/organizers.js'), view: 'Organizers', count: 'verification' },
   { key: 'venues', icon: 'map-pin', label: () => t('Địa điểm', 'Venues'), load: () => import('./team/venues.js'), view: 'Venues', count: 'unresolvedVenues' },
   { key: 'sources', icon: 'broadcast', label: () => t('Nguồn dữ liệu', 'Sources'), load: () => import('./team/sources.js'), view: 'Sources' },
+  { key: 'partners', icon: 'handshake', label: () => t('Đối tác bán vé', 'Ticket partners'), load: () => import('./team/partners.js'), view: 'Partners' },
   { section: () => t('Nền tảng', 'Platform') },
   { key: 'featured', icon: 'star', label: () => t('Mục nổi bật', 'Featured shelves'), load: () => import('./team/featured.js'), view: 'Featured' },
   { key: 'users', icon: 'users-three', label: () => t('Người dùng', 'Accounts'), load: () => import('./team/users.js'), view: 'Users' },

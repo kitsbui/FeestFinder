@@ -1309,6 +1309,31 @@ class Component extends DCLogic {
 
   openEvent(id) { this.setState({ screen:'detail', detailId:id, ttDay:0 }); this.loadDetail(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   openOrg(id) { this.setState({ screen:'org', orgId:id }); this.loadOrg(id); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
+  /**
+   * A ticket button. Everything goes through /go/<event>, which counts the press and sends it
+   * on: to FeestFinder's checkout when one of its tiers is on sale (same tab), otherwise to the
+   * seller's page (a new tab, with the partner's tracking when there is one). A free night opens
+   * the map. No sign-in for leaving to a seller: that is the seller's to ask.
+   */
+  buyTickets(e, det, src, tierId) {
+    const g = this.state.lang;
+    if (e.past) return this.say(g === 'vi' ? 'Sự kiện đã kết thúc' : 'This event has ended');
+    if (e.price === 0) {
+      const q = e.lat != null && e.lng != null ? e.lat + ',' + e.lng : [e.venue, e.area, (CITY_LIST.find(c => c.k === e.city) || {}).en].filter(Boolean).join(', ');
+      window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q), '_blank', 'noopener');
+      return this.say(g === 'vi' ? 'Mở Google Maps…' : 'Opening Google Maps…');
+    }
+    if (e.soldOut) return this.say(g === 'vi' ? 'Đêm này đã hết vé' : 'This date is sold out');
+    const go = '/go/' + encodeURIComponent(e.slug || e.id) + '?src=' + src + (tierId ? '&tier=' + encodeURIComponent(tierId) : '');
+    if (det) {
+      const open = det.tickets && det.tickets.tiers.some(t => t.state === 'onsale' || t.state === 'last');
+      if (open) { window.location.href = go; return; }
+      if (!det.links || !det.links.go) return this.say(g === 'vi' ? 'Nhà tổ chức chưa đăng link bán vé' : 'The organiser has not posted a ticket link yet');
+    }
+    window.open(go, '_blank', 'noopener');
+    const host = det && det.links && det.links.tickets ? String(det.links.tickets).replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '';
+    this.say((g === 'vi' ? 'Đang mở trang bán vé' : 'Opening the ticket page') + (host ? ' · ' + host : ''));
+  }
   openArtist(slug) { this.setState({ screen:'artist', artistSlug:slug }); this.loadArtist(slug); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
   /** An artist's page: their shows join the events this page knows. */
   loadArtist(slug) {
@@ -1408,11 +1433,6 @@ class Component extends DCLogic {
     const chatF = st.chatWith ? FRIENDS.find(f => f.id === st.chatWith) : null;
     const chatLog = chatF ? (st.chats[chatF.id] || []) : [];
     const inviteN = Object.keys(st.inviteSel).filter(k => st.inviteSel[k]).length;
-    const buy = (price) => {
-      if (price === 0) return this.say(g === 'vi' ? 'Mở Google Maps…' : 'Opening Google Maps…');
-      if (!st.user) return this.openAuth('signup', null, L.gateTickets);
-      this.say(g === 'vi' ? 'Chuyển sang đối tác bán vé…' : 'Redirecting to ticketing partner…');
-    };
 
     return {
       L,
@@ -1772,12 +1792,7 @@ class Component extends DCLogic {
           ctaClass: e.soldOut ? '' : 'ff-cta',
           ctaBg: e.soldOut ? '#191919' : isFree ? '#0AE448' : '#ABFF84',
           ctaFg: e.soldOut ? '#8C8B7D' : '#0E100F',
-          buy: () => {
-            if (e.soldOut) return this.say(g === 'vi' ? 'Đêm này đã hết vé' : 'This date is sold out');
-            if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateTickets);
-            FF.fire(FF.post('/events/' + e.id + '/track', { type:'ticket_click', source:'feed' }));
-            this.say(g === 'vi' ? 'Đang chuyển tới trang bán vé của nhà tổ chức' : 'Sending you to the organiser checkout');
-          },
+          buy: () => this.buyTickets(e, det, 'detail'),
           ticketNote:L.ticketNote,
           saved: !!st.saved[e.id],
           saveLabel: st.saved[e.id] ? L.savedEvent : L.saveEvent,
@@ -1935,8 +1950,8 @@ class Component extends DCLogic {
                 if (out) return this.say(L.tierSoldToast);
                 if (!st.user) return this.openAuth('signup', 'save:' + e.id, L.gateTickets);
                 if (soon) { FF.fire(FF.put('/events/' + e.id + '/tiers/' + t.id + '/watch')); return this.say(L.tierNotifyToast); }
-                FF.fire(FF.post('/events/' + e.id + '/track', { type:'ticket_click', source:'feed' }));
-                this.say(g === 'vi' ? 'Đang chuyển tới trang bán vé · ' + t.name[g] : 'Sending you to checkout · ' + t.name[g]);
+                // A tier on sale here: FeestFinder's checkout, with this tier picked.
+                this.buyTickets(e, st.details[e.id] || { tickets: set, links: {} }, 'tier', t.id);
               }
             };
           })
@@ -2468,7 +2483,7 @@ class Component extends DCLogic {
         badge: heroEv.badge ? heroEv.badge[g] : L.free,
         hypeLine: heroEv.hype.toLocaleString(vi1 ? 'vi-VN' : 'en-US') + ' ' + L.hypedPeople,
         cta: heroEv.price === 0 ? L.freeEntry : L.getTickets,
-        buy: (ev) => { ev.stopPropagation(); buy(heroEv.price); }
+        buy: (ev) => { ev.stopPropagation(); this.buyTickets(heroEv, st.details[heroEv.id] || null, 'hero'); }
       }) : null,
       countLine: full.length + ' ' + (full.length === 1 && !vi1 ? 'event' : L.events) + (st.q ? ' · "' + st.q + '"' : ''),
       loading: st.loading, skeletons: [{}, {}, {}, {}, {}, {}],

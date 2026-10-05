@@ -886,7 +886,7 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
 export const AI_TRAINING_BOTS = ['GPTBot', 'ClaudeBot', 'anthropic-ai', 'Google-Extended', 'CCBot', 'Applebot-Extended', 'meta-externalagent', 'Bytespider', 'cohere-training-data-crawler'];
 
 export function robotsTxt(ctx: Ctx): string {
-  const privatePaths = ['/app', '/studio', '/console', '/ops', '/door', '/admin/', '/organizer/', '/internal/', '/me/', '/auth/', '/orders', '/resale/', '/payments/', '/checkout/'];
+  const privatePaths = ['/app', '/studio', '/console', '/ops', '/door', '/admin/', '/organizer/', '/internal/', '/me/', '/auth/', '/orders', '/resale/', '/payments/', '/checkout/', '/go/', '/partners/'];
   const lines = ['User-agent: *', 'Allow: /', ...privatePaths.map((p) => `Disallow: ${p}`), ''];
   if (!ctx.config.allowAiTraining) {
     for (const bot of AI_TRAINING_BOTS) lines.push(`User-agent: ${bot}`);

@@ -132,16 +132,34 @@ export interface Draft {
 
 export const MAX_DAYS = 14;
 
-/** True when a piece of text is only a city's name ("TP.HỒ CHÍ MINH", "Bangkok"). */
+/** True when a piece of text is only a city's name ("TP.HỒ CHÍ MINH", "Bangkok"), with a year at most ("Singapore 2026"). */
 const isCityName = (text: string | null | undefined, city: { name: { en: string; vi: string }; aliases: string[] }) => {
-  const t = plainText(text ?? '').replace(/^(tp|thanh pho|city of)\s+/, '');
+  const t = plainText(text ?? '').replace(/^(tp|thanh pho|city of)\s+/, '').replace(/\s+20\d\d$/, '');
   return !!t && [city.name.en, city.name.vi, ...city.aliases].some((n) => plainText(n).replace(/^(tp|thanh pho)\s+/, '') === t);
 };
 
-/** "TP.HỒ CHÍ MINH | Musique de salon 22" → "Musique de salon 22": ticket sites put the city in front. */
+/**
+ * "TP.HỒ CHÍ MINH | Musique de salon 22" and "Có Một Hà Nội Trong Nỗi Nhớ | TP.HỒ CHÍ MINH" →
+ * the title alone: ticket sites put the city in front of it or after it. The page says the city.
+ */
 function dropCityPrefix(title: string, city: { name: { en: string; vi: string }; aliases: string[] }): string {
-  const m = /^\s*([^|:–—-]{2,40}?)\s*[|:–—-]\s*(.{3,})$/.exec(title);
-  return m && isCityName(m[1], city) ? m[2].trim() : title;
+  const front = /^\s*([^|:–—-]{2,40}?)\s*[|:–—-]\s*(.{3,})$/.exec(title);
+  if (front && isCityName(front[1], city)) return front[2].trim();
+  const back = /^(.{3,}?)\s*[|–—-]\s*([^|:–—-]{2,40})\s*$/.exec(title);
+  return back && isCityName(back[2], city) ? back[1].trim() : title;
+}
+
+/**
+ * "Nhà hát Quân Đội KVPN,140 Cộng Hòa, Tân Sơn Nhất,Tân Bình,Hồ Chí Minh": a place's name that
+ * carries its address, next to an address that says less. The name is the first part.
+ */
+function splitVenue(name: string | null, address: string | null): { venue: string | null; address: string | null } {
+  if (!name || !name.includes(',')) return { venue: name, address };
+  const [first, ...rest] = name.split(',').map((x) => x.trim()).filter(Boolean);
+  const tail = rest.join(', ');
+  const looksLikeAddress = rest.length >= 2 || /\d/.test(tail);
+  if (!first || first.length < 2 || !looksLikeAddress) return { venue: name, address };
+  return { venue: first, address: !address || tail.length > address.length ? tail : address };
 }
 
 /** Checks a draft and puts it in FeestFinder's terms, or says why it cannot be listed. */
@@ -167,14 +185,16 @@ export function finalize(d: Draft, opts: { now: Date; fallbackCity?: string | nu
 
   const lineup = [...new Set((d.lineup ?? []).map((a) => cleanText(a, 100)).filter((a): a is string => !!a))].slice(0, 60);
   // A venue that is only the city's name says nothing: the address's first part is the place.
-  const venueName = isCityName(d.venueName, city) ? cleanText(d.address?.split(',')[0], 160) : cleanText(d.venueName, 160);
+  const place = splitVenue(cleanText(d.venueName, 240), cleanText(d.address, 240));
+  const venueName = isCityName(place.venue, city) ? cleanText(place.address?.split(',')[0], 160) : cleanText(place.venue, 160);
   const description = cleanText(d.description, 3000);
   const styles = classifyStyles({ tags: d.tags, title, description, lineup });
   const declared = (GENRES as readonly string[]).find((g) => g.toLowerCase() === String(d.genre ?? '').toLowerCase()) as Genre | undefined;
   const sameCurrency = !d.currency || d.currency.toUpperCase() === city.currency;
   const price = d.price !== null && d.price !== undefined && Number.isFinite(d.price) && d.price >= 0 && sameCurrency ? Math.round(d.price) : null;
   return {
-    title: dropCityPrefix(title, city),
+    // A separator left hanging at the end ("GUSTAV MAHLER |") goes too.
+    title: dropCityPrefix(title, city).replace(/[\s|:–—-]+$/, '') || title,
     description,
     startsOn: start.date,
     endsOn,
@@ -182,7 +202,7 @@ export function finalize(d: Draft, opts: { now: Date; fallbackCity?: string | nu
     endTime: end?.time ?? null,
     city: city.slug,
     venueName,
-    address: cleanText(d.address, 240),
+    address: cleanText(place.address, 240),
     area: cleanText(d.area, 60),
     lat: lat !== null && lng !== null ? lat : null,
     lng: lat !== null && lng !== null ? lng : null,

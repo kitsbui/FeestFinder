@@ -991,6 +991,7 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 /* Sources: raw records, provenance and confidence. */
 .op-mb { margin-bottom: 16px; }
 .op-json { margin: 0; max-height: 60vh; overflow: auto; padding: 14px; border-radius: 8px; background: rgba(255, 252, 225, .04); border: 1px solid var(--ff-line, rgba(255, 252, 225, .12)); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ff-text-3, #e6e3c8); white-space: pre-wrap; word-break: break-word; }
+.op-code-inline { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ff-text-3, #e6e3c8); word-break: break-all; }
 .op-inline-form { display: flex; gap: 8px; align-items: center; }
 .op-inline-form > :first-child { flex: 1; min-width: 0; }
 .op-conf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }

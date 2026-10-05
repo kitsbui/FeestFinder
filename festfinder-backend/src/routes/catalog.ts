@@ -7,6 +7,7 @@ import { GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
 import { cityBySlug, cityLabel, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
 import { artistLinks } from '../services/artists.ts';
+import { countEventMetric } from '../services/partners.ts';
 import { EVENT_TYPE_LABEL, EVENT_TYPES, isStyle, STYLES } from '../lib/styles.ts';
 import { dateIn, TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
 import { bool, csv, dateStr, limit, parse, uuid } from '../lib/validate.ts';
@@ -288,6 +289,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
         event: ev.event_url ?? `${ctx.config.publicBaseUrl.replace(/\/$/, '')}/e/${ev.slug}`,
         brand: ev.brand_url,
         tickets: ev.entry_mode === 'paid' ? ev.ticket_url : null,
+        // Every ticket button goes through here: counted, then to the checkout or the seller.
+        go: ev.entry_mode === 'paid' && (tierRows.length || ev.ticket_url) ? `/go/${ev.slug}` : null,
       },
       ticketNote: L('Tickets are sold by the organiser. FeestFinder does not add a booking fee.', 'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'),
       tickets: ev.entry_mode === 'paid' && tierRows.length ? presentTiers(tierRows, now) : null,
@@ -489,17 +492,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
     if (last && now.getTime() - last < 30 * 60_000) return reply.code(202).send({ counted: false });
     seen.set(key, now.getTime());
     if (seen.size > 50_000) seen.clear();
-    const col = body.type === 'view' ? 'views' : 'ticket_clicks';
-    const res = await one(ctx.db,
-      `insert into event_metrics_daily (event_id, day, ${col}, sources)
-       select id, $2, 1, case when $4 then jsonb_build_object($3::text, 1) else '{}'::jsonb end from events where id = $1
-       on conflict (event_id, day) do update set
-         ${col} = event_metrics_daily.${col} + 1,
-         sources = case when $4 then jsonb_set(event_metrics_daily.sources, array[$3::text],
-           to_jsonb(coalesce((event_metrics_daily.sources->>$3::text)::int, 0) + 1)) else event_metrics_daily.sources end
-       returning 1`,
-      [req.params.id, vnDate(now), body.source === 'shared' && body.channel ? `shared:${body.channel}` : body.source, body.type === 'view']);
-    if (!res) throw notFound();
+    const counted = await countEventMetric(ctx.db, req.params.id, body.type === 'view' ? 'views' : 'ticket_clicks',
+      body.source === 'shared' && body.channel ? `shared:${body.channel}` : body.source, now);
+    if (!counted) throw notFound();
     return reply.code(202).send({ counted: true });
   });
 }

@@ -680,11 +680,12 @@ class Component extends DCLogic {
       const ev = eventBy(r.param);
       // Read before anything awaits: the URL is rewritten to the screen's own path meanwhile.
       const listing = r.query && r.query.get('listing');
+      const tier = r.query && r.query.get('tier');
       if (ev) await this.openDetail(ev.id, { silent: true });
       if (r.name === 'guide' && ev) this.loadGuide(ev);
       if (r.name === 'checkout' && ev) {
         if (listing) this.startResaleCheckout(listing, ev.id);
-        else this.startCheckout(ev.id);
+        else this.startCheckout(ev.id, tier);
       }
     }
     if (r.name === 'live') { const ev = eventBy(r.param); if (ev) await this.openLive(ev.id); }
@@ -1335,25 +1336,25 @@ class Component extends DCLogic {
     } catch (e) { this.fail(e); }
   }
 
-  /** Open the checkout sheet for an event, pricing the cheapest tier on sale. */
-  async startCheckout(id) {
+  /** Open the checkout sheet for an event, pricing the tier asked for or else the cheapest on sale. */
+  async startCheckout(id, tierId) {
     if (!this.state.detailData || this.state.detailData.id !== id) {
       const d = await FF.maybe(FF.get('/events/' + id), null);
       if (!d) return;
       this.setState({ detailData: d });
     }
-    const tier = this.onSaleTier();
+    const tier = this.onSaleTier(tierId);
     if (!tier) return this.say(this.state.lang === 'vi' ? 'Chưa mở bán vé' : 'No tier is on sale yet');
     this.setState({ checkout: id, qty:1, tierId: tier.id, quote:null });
     this.quoteSoon(1, tier.id, id);
   }
 
   /** The cheapest tier actually on sale — what "from X₫" on the card means. */
-  onSaleTier() {
+  onSaleTier(tierId) {
     const d = this.state.detailData;
     if (!d || !d.tickets) return null;
     const open = d.tickets.tiers.filter(t => t.state === 'onsale' || t.state === 'last');
-    return open.sort((a, b) => a.price - b.price)[0] || null;
+    return open.find(t => t.id === tierId) || open.sort((a, b) => a.price - b.price)[0] || null;
   }
   /** The server prices the basket: fees, promos and sold-out tiers all come from it. */
   quoteSoon(qty, tierId, eventId) {
@@ -1765,8 +1766,7 @@ class Component extends DCLogic {
       return defs.filter(d => links[d.k]).map(d => ({
         icon: d.icon, color: d.color, label: d.label, host: host(links[d.k]),
         go: () => {
-          if (d.k === 'tickets') FF.fire(FF.post('/events/' + detail.id + '/track', { type: 'ticket_click', source: 'feed' }));
-          window.open(links[d.k], '_blank', 'noopener');
+          window.open(d.k === 'tickets' && links.go ? links.go + '?src=link' : links[d.k], '_blank', 'noopener');
           this.say(L.linkOpening + ' ' + host(links[d.k]));
         }
       }));
@@ -3048,6 +3048,12 @@ class Component extends DCLogic {
           const v = st.detailData && st.detailData.venue;
           if (v && v.lat) window.open('https://www.google.com/maps/search/?api=1&query=' + v.lat + ',' + v.lng, '_blank', 'noopener');
           return this.say(g === 'vi' ? 'Mở Google Maps…' : 'Opening Google Maps…');
+        }
+        // Nothing on sale here: the seller's page, through /go, which counts the press. No sign-in for that.
+        const d = st.detailData && st.detailData.id === detail.id ? st.detailData : null;
+        if (d && !this.onSaleTier() && d.links && d.links.go) {
+          window.open(d.links.go + '?src=app', '_blank', 'noopener');
+          return this.say(L.linkOpening + ' ' + String(d.links.tickets || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0]);
         }
         if (!st.user) return this.openAuth('signup', null, L.gateTickets);
         FF.fire(FF.post('/events/' + detail.id + '/track', { type: 'ticket_click', source: 'feed' }));

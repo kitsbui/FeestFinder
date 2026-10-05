@@ -190,6 +190,19 @@ describe('what real sources send', () => {
     assert.equal(keep.title, 'Saigon Soul Pool Party | Vol. 3');
   });
 
+  it('takes the venue out of a place name that carries its address, and the city off the end of a title', () => {
+    const n = finalize({
+      title: 'Đêm Nhạc Đoàn Chuẩn - Trịnh Công Sơn: Có Một Hà Nội Trong Nỗi Nhớ | TP.HỒ CHÍ MINH', start: '2026-10-17T20:00:00+07:00',
+      venueName: 'Nhà hát Quân Đội KVPN,140 Cộng Hòa, Tân Sơn Nhất,Tân Bình,Hồ Chí Minh', address: 'Hồ Chí Minh',
+    }, { now: NOW }) as NormalizedEvent;
+    assert.deepEqual([n.title, n.venueName, n.address, n.city],
+      ['Đêm Nhạc Đoàn Chuẩn - Trịnh Công Sơn: Có Một Hà Nội Trong Nỗi Nhớ', 'Nhà hát Quân Đội KVPN', '140 Cộng Hòa, Tân Sơn Nhất, Tân Bình, Hồ Chí Minh', 'ho-chi-minh']);
+    const sg = finalize({ title: 'ARTBAT | Singapore 2026', start: '2026-10-17T22:00:00+08:00', venueName: 'Lounge, Rooftop', address: '27 Pasir Panjang, Singapore' }, { now: NOW }) as NormalizedEvent;
+    assert.deepEqual([sg.title, sg.venueName, sg.address], ['ARTBAT', 'Lounge, Rooftop', '27 Pasir Panjang, Singapore']);
+    const tail = finalize({ title: 'Subscription Concert Vol 188: GUSTAV MAHLER |', start: '2026-11-25T20:00:00+07:00', address: 'Hà Nội' }, { now: NOW }) as NormalizedEvent;
+    assert.equal(tail.title, 'Subscription Concert Vol 188: GUSTAV MAHLER');
+  });
+
   it('counts one ticket seller once, whatever country site lists the event', async () => {
     const { brandOf, independentSources } = await import('../src/services/ingest/confidence.ts');
     assert.deepEqual(['megatix.com.sg', 'megatix.vn', 'megatix.in.th', 'www.womb.co.jp', 'ticketbox.vn'].map(brandOf), ['megatix', 'megatix', 'megatix', 'womb', 'ticketbox']);

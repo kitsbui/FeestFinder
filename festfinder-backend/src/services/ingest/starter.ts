@@ -10,6 +10,13 @@ import { json, one } from '../../db/index.ts';
  * Not here, and why: Ticketbox, Ticketmelon and Zaiko draw their listings in the browser
  * (nothing to read without their private APIs); Clubberia has no structured data; Bali
  * Buddies and The Observatory disallow crawlers; Resident Advisor and Facebook forbid it.
+ *
+ * Hà Nội, Đà Nẵng and Nha Trang (checked 2026-10-05): TicketGo's music list is the one public
+ * source with event data, and most of it is Hà Nội. Hanoi Grapevine lists long exhibitions
+ * with no calendar feed; Hanoi Rock City, Minh's Jazz, Sky36, Skylight, Nhà hát Hồ Gươm and
+ * Nhà hát Trưng Vương publish no event data (or draw it in the browser); Danang Fantasticity's
+ * festival calendar is an article. Bandsintown and Eventbrite wait for their own adapters.
+ * Those cities' nights come from organisers and the community until a venue publishes data.
  */
 
 /** What a ticket seller also sells that is not a night out. */

@@ -94,6 +94,39 @@ test.describe('Web', () => {
     await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
   });
 
+  test('ticket buttons go to the checkout here, or out to the seller, and count the press', async ({ page }) => {
+    // FeestFinder sells Ravolution: the button goes to its checkout, in the same tab.
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    const go = page.waitForResponse((r) => r.url().includes('/go/ravo?src=detail'));
+    await page.getByText('Mua vé', { exact: true }).first().click();
+    expect((await go).headers().location).toBe('/app/checkout/ravo');
+    await expect(page).toHaveURL(/\/app\//);
+
+    // A night sold elsewhere: the seller's page opens in a new tab, no sign-in asked for it.
+    await signIn(page, 'admin');
+    const ev = await (await page.request.get('/events/nhacvien')).json();
+    const patched = await page.request.patch(`/admin/events/${ev.id}`, { data: { entryMode: 'paid', priceFrom: 250000, ticketUrl: 'https://tickets.example/nhacvien' } });
+    expect(patched.status()).toBe(200);
+    await page.request.delete('/auth/session');
+    await page.context().route('https://tickets.example/**', (route) => route.fulfill({ body: 'tickets' }));
+    await expectScreen(page, '/e/nhacvien', /HÒA NHẠC NHẠC VIỆN/i);
+    const popup = page.waitForEvent('popup');
+    await page.getByText('Mua vé', { exact: true }).first().click();
+    await (await popup).waitForURL('https://tickets.example/nhacvien');
+    // The app does the same, where it used to say no tier was on sale.
+    await expectScreen(page, '/app/e/nhacvien', /HÒA NHẠC NHẠC VIỆN/i);
+    const appPopup = page.waitForEvent('popup');
+    await page.getByText(/^Get tickets · from/).first().click();
+    await (await appPopup).waitForURL('https://tickets.example/nhacvien');
+
+    // A free night opens the map.
+    await page.context().route('https://www.google.com/maps/**', (route) => route.fulfill({ body: 'map' }));
+    await expectScreen(page, '/e/outcast', /SAIGON OUTCAST NIGHT MARKET/i);
+    const map = page.waitForEvent('popup');
+    await page.getByText('Vào cửa miễn phí', { exact: true }).first().click();
+    expect((await map).url()).toMatch(/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=10\.8065%2C106\.7411$/);
+  });
+
   test('the list filters by city, style and kind of night, and the API answers each', async ({ page }) => {
     await expectScreen(page, '/list', /TẤT CẢ SỰ KIỆN/i);
     await expect(page.getByText('Bangkok · 0', { exact: true })).toBeVisible();
@@ -436,6 +469,7 @@ test.describe('Ops', () => {
       ['/ops/organizers', /Thêm nhà tổ chức/],
       ['/ops/venues', /Thêm địa điểm/],
       ['/ops/sources', /Thêm nguồn/],
+      ['/ops/partners', /Đối tác bán vé/],
       ['/ops/featured', /Thêm dãy/],
       ['/ops/users', /Đăng ký qua/],
       ['/ops/orders', /Chờ thanh toán/i],
@@ -444,6 +478,17 @@ test.describe('Ops', () => {
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/review' ? /^\/ops\/review(\/[0-9a-f-]{36})?$/ : path));
     }
+    test('adds a ticket partner and shows its report token once', async ({ page }) => {
+      await expectOps(page, '/ops/partners', /Đối tác bán vé/);
+      await page.getByRole('button', { name: 'Thêm đối tác' }).first().click();
+      await page.getByPlaceholder('Ticketbox', { exact: true }).fill('Megatix');
+      await page.getByPlaceholder('ticketbox.vn', { exact: true }).fill('megatix.vn');
+      await page.getByPlaceholder('ticketbox.vn', { exact: true }).press('Enter');
+      await page.locator('.op-drawer').getByRole('button', { name: 'Thêm đối tác' }).click();
+      await expect(page.getByText('Mã chỉ hiện một lần.')).toBeVisible();
+      await page.getByRole('button', { name: 'Đã lưu mã' }).click();
+      await expect(page.getByRole('row').filter({ hasText: 'megatix.vn' })).toHaveCount(1);
+    });
     test('organizer mode explains an admin account has no organizer team', async ({ page }) =>
       expectOps(page, '/ops/org', /chưa thuộc nhà tổ chức nào/));
   });
