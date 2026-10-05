@@ -1,10 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { CHECKOUT_CURRENCY } from '../../lib/money.ts';
 import type { Ctx } from '../../context.ts';
 import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict } from '../../lib/errors.ts';
 import { GENRES, L, REJECT_REASONS, type Localized } from '../../lib/i18n.ts';
+import { launchedCity } from '../../lib/places.ts';
+import { EVENT_TYPES, isStyle } from '../../lib/styles.ts';
 import { isEmail, normalizeEmail, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { vnd } from '../../lib/format.ts';
@@ -34,6 +37,7 @@ export function presentDraft(ev: any) {
   return {
     id: ev.id, slug: ev.slug, status: ev.status, statusLabel: STATUS_LABEL[ev.status],
     title: ev.title, genre: ev.genre, description: ev.description,
+    city: ev.city, currency: ev.currency, styles: ev.styles ?? [], eventType: ev.event_type ?? null,
     logoUrl: ev.logo_url, coverUrl: ev.cover_url,
     startsOn: ev.starts_on, endsOn: ev.ends_on, startTime: ev.start_time, endTime: ev.end_time,
     venue: { id: ev.venue_id, name: ev.venue_name, address: ev.address, area: ev.area, lat: ev.lat, lng: ev.lng, resolved: !!ev.venue_id || ev.lat !== null },
@@ -79,6 +83,9 @@ export const DraftInput = z.object({
   ticketUrl: z.string().url().nullable(),
   eventUrl: z.string().url().nullable(),
   brandUrl: z.string().url().nullable(),
+  city: launchedCity,
+  styles: z.array(z.string().refine(isStyle, 'unknown style')).max(5),
+  eventType: z.enum(EVENT_TYPES).nullable(),
 }).partial();
 
 /** Edits to these on a live listing send it back to review. */
@@ -90,10 +97,12 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
     title: 'title', genre: 'genre', logoUrl: 'logo_url', coverUrl: 'cover_url', startsOn: 'starts_on', endsOn: 'ends_on',
     startTime: 'start_time', endTime: 'end_time', entryMode: 'entry_mode', priceFrom: 'price_from', capacity: 'capacity',
     age: 'age', ticketUrl: 'ticket_url', eventUrl: 'event_url', brandUrl: 'brand_url', address: 'address', area: 'area', venueName: 'venue_name',
+    city: 'city', eventType: 'event_type',
   };
   for (const [k, col] of Object.entries(map)) if ((body as any)[k] !== undefined) set[col] = (body as any)[k];
   if (body.description) set.description = json(body.description);
   if (body.lineup) { set.lineup = body.lineup; set.artists = body.lineup; }
+  if (body.styles) set.styles = [...new Set(body.styles)];
   if (body.entryMode === 'free') set.price_from = 0;
   if (body.startsOn && body.endsOn === undefined) set.ends_on = body.startsOn;
   if (body.endsOn && body.startsOn && body.endsOn < body.startsOn) throw badRequest('dates_order', L('The end date is before the start date', 'Ngày kết thúc trước ngày bắt đầu'));
@@ -101,7 +110,8 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
     if (body.venueId) {
       const v = await one<any>(q, 'select * from venues where id = $1', [body.venueId]);
       if (!v) throw badRequest('venue_unknown', L('Pick a venue from the list', 'Chọn địa điểm trong danh sách'));
-      Object.assign(set, { venue_id: v.id, venue_name: v.name, address: v.address, area: v.area, lat: v.lat, lng: v.lng });
+      // A venue from the registry also says which city the event is in.
+      Object.assign(set, { venue_id: v.id, venue_name: v.name, address: v.address, area: v.area, lat: v.lat, lng: v.lng, city: v.city });
     } else {
       // Free-typed venue: no pin until we geocode it or a moderator places it.
       Object.assign(set, { venue_id: null, lat: null, lng: null });
@@ -112,6 +122,13 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
     set.cover_sha256 = up?.sha256 ?? null;
   }
   if (body.ticketUrl !== undefined) set.ticket_link_status = body.ticketUrl ? 'unchecked' : null;
+  if (set.city !== undefined) {
+    const tiers = await one<{ n: number }>(q, 'select count(*)::int as n from ticket_tiers where event_id = $1', [id]);
+    const city = await one<{ currency: string }>(q, 'select currency from cities where slug = $1', [set.city]);
+    if (tiers!.n && city?.currency !== CHECKOUT_CURRENCY) {
+      throw badRequest('tiers_unavailable', L('Remove the ticket tiers first: FeestFinder sells tickets for events in Vietnam only', 'Hãy xoá các loại vé trước: FeestFinder chỉ bán vé sự kiện ở Việt Nam'));
+    }
+  }
   const keys = Object.keys(set);
   if (keys.length) await q.query(`update events set ${keys.map((k, i) => `${k} = $${i + 2}`).join(', ')} where id = $1`, [id, ...keys.map((k) => set[k])]);
   await refreshDerived(q, id);
@@ -413,6 +430,11 @@ export const TiersInput = z.object({
 /** Replaces an event's tiers, keeping sales: a tier with sales can't go and can't shrink below what it sold. */
 export async function replaceTiers(q: Queryable, eventId: string, tiers: z.infer<typeof TiersInput>['tiers']): Promise<void> {
   if (new Set(tiers.map((t) => t.key)).size !== tiers.length) throw badRequest('duplicate_tier', L('Each tier needs its own key', 'Mỗi loại vé cần mã riêng'));
+  // FeestFinder sells tickets in đồng only: an event elsewhere links to its own ticket seller.
+  const ev = await one<{ currency: string }>(q, 'select currency from events where id = $1', [eventId]);
+  if (tiers.length && ev && ev.currency !== CHECKOUT_CURRENCY) {
+    throw badRequest('tiers_unavailable', L('FeestFinder sells tickets for events in Vietnam only; add the ticket link instead', 'FeestFinder chỉ bán vé sự kiện ở Việt Nam; hãy thêm link mua vé'));
+  }
   const existing = await many<any>(q, 'select id, key, sold from ticket_tiers where event_id = $1', [eventId]);
   for (const old of existing) {
     const next = tiers.find((t) => t.key === old.key);

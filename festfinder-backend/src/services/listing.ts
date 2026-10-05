@@ -1,6 +1,7 @@
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
 import { L } from '../lib/i18n.ts';
+import { cityOf } from '../lib/places.ts';
 import { notifyUser } from './notify.ts';
 
 /**
@@ -9,7 +10,7 @@ import { notifyUser } from './notify.ts';
  */
 export async function announceNewListing(q: Queryable, eventId: string, now: Date): Promise<number> {
   const ev = await one<any>(q,
-    `select e.id, e.title, e.genre, e.area, e.artists, e.price_from, e.entry_mode, e.organizer_id, o.name as org_name
+    `select e.id, e.title, e.genre, e.area, e.city, e.styles, e.artists, e.price_from, e.entry_mode, e.organizer_id, o.name as org_name
        from events e join organizers o on o.id = e.organizer_id where e.id = $1`, [eventId]);
   if (!ev) return 0;
   const told = new Set<string>();
@@ -21,7 +22,7 @@ export async function announceNewListing(q: Queryable, eventId: string, now: Dat
     told.add(f.user_id);
     await notifyUser(q, now, {
       userId: f.user_id, topic: 'artists', kind: 'artist_show', link, dedupeKey: `new-listing:${ev.id}`,
-      title: L(`${f.artist} announced a show in Ho Chi Minh City`, `${f.artist} có show ở TP.HCM`),
+      title: L(`${f.artist} announced a show in ${cityOf(ev.city).name.en}`, `${f.artist} có show ở ${cityOf(ev.city).name.vi}`),
       body: { en: ev.title, vi: ev.title },
     });
   }

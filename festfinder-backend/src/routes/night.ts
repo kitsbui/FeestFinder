@@ -3,7 +3,8 @@ import { z } from 'zod';
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
 import { forbidden, notFound, tooMany } from '../lib/errors.ts';
-import { CITIES, L, type City, type Localized } from '../lib/i18n.ts';
+import { L, type Localized } from '../lib/i18n.ts';
+import { cityOf } from '../lib/places.ts';
 import { initialsOf } from '../lib/contact.ts';
 import { vnDate } from '../lib/time.ts';
 import { parse, uuid } from '../lib/validate.ts';
@@ -161,7 +162,7 @@ export default async function nightRoutes(app: FastifyInstance) {
     ]);
     const nights = new Set(rows.map((r) => r.starts_on)).size;
     const genres = new Set(rows.map((r) => r.genre).filter(Boolean));
-    const cities = new Set(rows.map((r) => r.city ?? 'ho-chi-minh'));
+    const cities = new Set(rows.map((r) => cityOf(r.city).slug));
     const venues = new Set(rows.map((r) => r.venue_name).filter(Boolean));
     const earned: Record<string, boolean> = {
       first: nights >= 1, five: nights >= 5, ten: nights >= 10, hopper: genres.size >= 3, afterdark: rows.some(overnight),
@@ -171,7 +172,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       stats: { nights, events: rows.length, genres: genres.size, venues: venues.size, cities: cities.size },
       stamps: rows.map((r) => ({
         eventId: r.id, slug: r.slug, title: r.title, genre: r.genre, art: r.art, coverUrl: r.cover_url, date: r.starts_on,
-        venue: r.venue_name, area: r.area, city: CITIES[(r.city ?? 'ho-chi-minh') as City], via: r.by_door ? 'door' : 'checkin',
+        venue: r.venue_name, area: r.area, city: cityOf(r.city).name, via: r.by_door ? 'door' : 'checkin',
       })),
       badges: BADGES.map((b) => ({ key: b.key, icon: b.icon, label: b.label, need: b.need, earned: !!earned[b.key] })),
     };
@@ -224,7 +225,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       friends: friends.map((f) => ({ name: nameOf(f.name), initials: initialsOf(nameOf(f.name)) })).slice(0, 8),
       friendsCount: friends.length,
       hypes: hypes!.n, posts: posts!.n, helpful: helpful!.n, brought: brought!.n, passedOn: passed!.n,
-      cities: [...new Set(rows.map((r) => r.city ?? 'ho-chi-minh'))].map((c) => CITIES[c as City]),
+      cities: [...new Set(rows.map((r) => cityOf(r.city).slug))].map((c) => cityOf(c).name),
     };
   });
 }

@@ -1,7 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
-import { CITY_SLUGS, GENRES, type City } from '../lib/i18n.ts';
+import { GENRES } from '../lib/i18n.ts';
+import { cityFromText, isLaunched, launchedCities, timezoneOf } from '../lib/places.ts';
+import { addDays, toMinutes } from '../lib/time.ts';
+import { draftFromJsonLd, jsonLdEvents } from './ingest/jsonld.ts';
+import { decodeEntities, localParts, resolveCity } from './ingest/normalize.ts';
 
 /*
  * "Let AI fill it in": someone sending an event in pastes the link where they saw it, or a
@@ -15,14 +19,14 @@ export const PrefillSchema = z.object({
   genre: z.enum(GENRES).nullable(),
   startsOn: z.string().nullable().describe('YYYY-MM-DD'),
   endsOn: z.string().nullable().describe('YYYY-MM-DD, the last day for a multi-day event'),
-  startTime: z.string().nullable().describe('HH:MM, 24-hour, Vietnam time'),
-  endTime: z.string().nullable().describe('HH:MM, 24-hour, Vietnam time'),
+  startTime: z.string().nullable().describe("HH:MM, 24-hour, the event city's local time"),
+  endTime: z.string().nullable().describe("HH:MM, 24-hour, the event city's local time"),
   venueName: z.string().nullable(),
   address: z.string().nullable(),
   area: z.string().nullable().describe('ward or district, as written'),
-  city: z.enum(CITY_SLUGS).nullable(),
+  city: z.string().nullable().describe(`one of: ${launchedCities().map((c) => c.slug).join(', ')}`),
   entryMode: z.enum(['free', 'paid']).nullable(),
-  priceFrom: z.number().int().nullable().describe('lowest ticket price in VND'),
+  priceFrom: z.number().int().nullable().describe('lowest ticket price, a whole number in the local currency'),
   lineup: z.array(z.string()),
   description: z.string().nullable().describe('two or three plain sentences, in the language of the source'),
   ticketUrl: z.string().nullable(),
@@ -75,7 +79,7 @@ export function sanitizePrefill(p: Partial<Prefill>): Prefill {
     venueName: clean(p.venueName, 160),
     address: clean(p.address, 240),
     area: clean(p.area, 60),
-    city: p.city && (CITY_SLUGS as readonly string[]).includes(p.city) ? p.city : null,
+    city: p.city && isLaunched(p.city) ? p.city : null,
     entryMode: p.entryMode === 'free' || p.entryMode === 'paid' ? p.entryMode : null,
     priceFrom: typeof p.priceFrom === 'number' && Number.isFinite(p.priceFrom) && p.priceFrom >= 0 && p.priceFrom <= 100_000_000 ? Math.round(p.priceFrom) : null,
     lineup: (p.lineup ?? []).map((a) => clean(a, 100)).filter((a): a is string => !!a).slice(0, 40),
@@ -84,89 +88,46 @@ export function sanitizePrefill(p: Partial<Prefill>): Prefill {
   };
 }
 
-/** Which of our cities an address is in, from the way Vietnamese and English write them. */
-export function cityFrom(text: string | null | undefined): City | null {
-  if (!text) return null;
-  const t = text.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
-  if (/ha noi|hanoi/.test(t)) return 'ha-noi';
-  if (/da nang|danang|hoi an/.test(t)) return 'da-nang';
-  if (/nha trang|khanh hoa|cam ranh/.test(t)) return 'nha-trang';
-  if (/ho chi minh|hcm|sai gon|saigon|thu duc/.test(t)) return 'ho-chi-minh';
-  return null;
+/** Which listed city an address is in, from the way Vietnamese and English write it. */
+export function cityFrom(text: string | null | undefined): string | null {
+  return cityFromText(text, { launchedOnly: true });
 }
 
 // ---- schema.org Event data, read directly ----------------------------------------------
 
-const decode = (s: string) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-
-/** An instant as it reads on a wall clock in Ho Chi Minh City. */
-function vnParts(iso: string): { date: string; time: string } | null {
-  const m = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}))?/.exec(iso);
-  if (!m) return null;
-  const zoned = /([zZ]|[+-]\d{2}:?\d{2})$/.test(iso);
-  if (!zoned || !m[2]) return { date: m[1], time: m[2] ? `${m[2]}:${m[3]}` : '' };
-  const d = new Date(new Date(iso).getTime() + 7 * 3600_000);
-  if (Number.isNaN(d.getTime())) return null;
-  return { date: d.toISOString().slice(0, 10), time: d.toISOString().slice(11, 16) };
-}
-
-function eventNodes(data: unknown): any[] {
-  const out: any[] = [];
-  const walk = (n: any) => {
-    if (!n || typeof n !== 'object') return;
-    if (Array.isArray(n)) return n.forEach(walk);
-    const type = ([] as string[]).concat(n['@type'] ?? []);
-    if (type.some((t) => /Event$|^Festival$/.test(String(t)))) out.push(n);
-    if (n['@graph']) walk(n['@graph']);
-  };
-  walk(data);
-  return out;
-}
-
-/** The first schema.org Event a page declares, as form fields; null when there is none. */
+/** The first schema.org Event a page declares, as form fields in its city's time; null when there is none. */
 export function prefillFromJsonLd(html: string, pageUrl?: string): Prefill | null {
-  for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
-    let data: unknown;
-    try { data = JSON.parse(m[1].trim()); } catch { continue; }
-    const ev = eventNodes(data)[0];
-    if (!ev) continue;
-    const start = ev.startDate ? vnParts(String(ev.startDate)) : null;
-    const end = ev.endDate ? vnParts(String(ev.endDate)) : null;
-    const loc = Array.isArray(ev.location) ? ev.location[0] : ev.location;
-    const addr = loc && typeof loc.address === 'object' ? loc.address : null;
-    const street = typeof loc?.address === 'string' ? loc.address : addr?.streetAddress ?? null;
-    const offers = ([] as any[]).concat(ev.offers ?? []).flatMap((o) => (o?.['@type'] === 'AggregateOffer' ? [{ price: o.lowPrice }] : [o]));
-    const prices = offers.map((o) => Number(o?.price)).filter((n) => Number.isFinite(n) && n >= 0);
-    const performers = ([] as any[]).concat(ev.performer ?? []).map((p) => (typeof p === 'string' ? p : p?.name)).filter(Boolean);
-    const free = ev.isAccessibleForFree === true || ev.isAccessibleForFree === 'true' || (prices.length > 0 && Math.max(...prices) === 0);
-    const lowest = prices.filter((n) => n > 0);
-    // Ticket sites put their own name in front of the event's.
-    const title = String(ev.name ?? '').replace(/^\s*(ticketbox|ticketgo|vé)\s*[|:–-]\s*/i, '');
-    const url = typeof ev.url === 'string' ? new URL(ev.url, pageUrl ?? 'https://example.invalid').toString() : pageUrl ?? null;
-    return sanitizePrefill({
-      title: decode(title),
-      startsOn: start?.date ?? null, startTime: start?.time || null,
-      endsOn: end && end.date !== start?.date ? end.date : null,
-      endTime: end?.time || null,
-      venueName: loc?.name ? decode(String(loc.name)) : null,
-      address: street ? decode(String(street)) : null,
-      // The street address wins over the locality: some ticket sites put the wrong city there.
-      city: cityFrom(street) ?? cityFrom(addr?.addressLocality) ?? cityFrom(addr?.addressRegion),
-      entryMode: free ? 'free' : lowest.length ? 'paid' : null,
-      priceFrom: free ? 0 : lowest.length ? Math.min(...lowest) : null,
-      lineup: performers.map((p: unknown) => decode(String(p))),
-      description: ev.description ? decode(String(ev.description)).replace(/<[^>]+>/g, ' ') : null,
-      ticketUrl: url && pageUrl && !/example\.invalid/.test(url) ? url : null,
-    });
-  }
-  return null;
+  const node = jsonLdEvents(html)[0];
+  if (!node) return null;
+  const d = draftFromJsonLd(node, pageUrl);
+  const city = resolveCity({ lat: d.lat, lng: d.lng, texts: [d.address, ...(d.cityTexts ?? []), d.venueName] });
+  const listed = city && isLaunched(city) ? city : null;
+  const tz = timezoneOf(listed);
+  const start = localParts(d.start, tz);
+  const end = localParts(d.end, tz);
+  // A night that closes after midnight is one date with an earlier end time.
+  const overnight = !!(start?.time && end?.time && end.date === addDays(start.date, 1) && toMinutes(end.time) <= toMinutes(start.time));
+  return sanitizePrefill({
+    title: d.title ?? null,
+    startsOn: start?.date ?? null, startTime: start?.time ?? null,
+    endsOn: end && start && end.date !== start.date && !overnight ? end.date : null,
+    endTime: end?.time ?? null,
+    venueName: d.venueName ?? null,
+    address: d.address ?? null,
+    city: listed,
+    entryMode: d.free ? 'free' : d.price ? 'paid' : null,
+    priceFrom: d.free ? 0 : d.price ?? null,
+    lineup: d.lineup ?? [],
+    description: d.description ? decodeEntities(d.description).replace(/<[^>]+>/g, ' ') : null,
+    ticketUrl: pageUrl ? d.ticketUrl ?? null : null,
+  });
 }
 
 /** A page's readable text for the model: its title, preview tags and visible words, capped. */
 export function pageText(html: string, max = 12_000): string {
-  const meta = (name: string) => decode(new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i').exec(html)?.[1] ?? '');
-  const title = decode(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '').trim();
-  const body = decode(html
+  const meta = (name: string) => decodeEntities(new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i').exec(html)?.[1] ?? '');
+  const title = decodeEntities(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? '').trim();
+  const body = decodeEntities(html
     .replace(/<(script|style|noscript|svg|template)[\s\S]*?<\/\1>/gi, ' ')
     .replace(/<br\s*\/?>|<\/(p|div|li|h\d|tr)>/gi, '\n')
     .replace(/<[^>]+>/g, ' '))
@@ -178,9 +139,9 @@ export function pageText(html: string, max = 12_000): string {
 // ---- Claude, for posters and pages without structured data --------------------------------
 
 const SYSTEM = [
-  "You read event announcements for FeestFinder, a Vietnamese event-discovery site, and fill in the submission form.",
+  "You read event announcements for FeestFinder, an event-discovery site for Vietnam and Asia, and fill in the submission form.",
   'Only state what the announcement says or shows. Leave a field null when it is not there; never guess a date, a time or a price.',
-  'Times are 24-hour Vietnam time. Prices are VND numbers (500k = 500000). City must be one of the four slugs, or null.',
+  `Times are 24-hour local time in the event's city. Prices are whole numbers in the local currency (500k = 500000). City must be one of ${launchedCities().map((c) => c.slug).join(', ')}, or null.`,
   'Genre: EDM for electronic/techno/house/rave; Festival for multi-act festivals; Indie, Hip-Hop, Pop or Jazz for live music; Food or Culture otherwise.',
 ].join(' ');
 

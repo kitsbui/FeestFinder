@@ -1,7 +1,10 @@
 import type { Ctx } from '../context.ts';
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
-import { CITIES, type City, type Lang, type Localized } from '../lib/i18n.ts';
+import type { Lang, Localized } from '../lib/i18n.ts';
+import { formatMoney } from '../lib/money.ts';
+import { cityLabel, cityOf, launchedCities } from '../lib/places.ts';
+import { isoIn, timeIn } from '../lib/time.ts';
 import { presentTiers } from '../presenters/event.ts';
 import { loadTimetable } from '../presenters/timetable.ts';
 import { faqFor } from '../routes/discussion.ts';
@@ -31,13 +34,17 @@ const SCHEMA_TYPE: Record<string, string> = {
   Food: 'FoodEvent', Culture: 'Festival',
 };
 
-/** Where each city sits in a Vietnamese postal address. */
-const ADDRESS: Record<City, { locality: string; region: string }> = {
+/** Where each Vietnamese city sits in a postal address; elsewhere the city's English name serves. */
+const VN_ADDRESS: Record<string, { locality: string; region: string }> = {
   'ho-chi-minh': { locality: 'Thành phố Hồ Chí Minh', region: 'Thành phố Hồ Chí Minh' },
   'ha-noi': { locality: 'Hà Nội', region: 'Hà Nội' },
   'da-nang': { locality: 'Đà Nẵng', region: 'Đà Nẵng' },
   'nha-trang': { locality: 'Nha Trang', region: 'Khánh Hòa' },
 };
+function addressOf(slug: string | null | undefined) {
+  const c = cityOf(slug);
+  return { ...(VN_ADDRESS[c.slug] ?? { locality: c.name.en, region: c.name.en }), country: c.countryCode };
+}
 
 const WEEKDAY = {
   vi: ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'],
@@ -84,10 +91,8 @@ const shortDay = (date: string, lang: Lang) => {
   const [, m, d] = date.split('-').map(Number);
   return lang === 'vi' ? `${d}/${m}` : `${d} ${MONTH_EN[m - 1].slice(0, 3)}`;
 };
-const money = (n: number, lang: Lang) => `${Number(n).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}₫`;
 const text = (l: Localized | null | undefined, lang: Lang) => (l ? (l[lang] || l.vi || l.en || '').trim() : '');
 const hostOf = (u: string) => { try { return new URL(u).host.replace(/^www\./, ''); } catch { return ''; } };
-const vnTime = (ts: Date | string) => new Date(new Date(ts).getTime() + 7 * 3600_000).toISOString().slice(11, 16);
 const vnIso = (ts: Date | string | null | undefined) =>
   (ts ? new Date(new Date(ts).getTime() + 7 * 3600_000).toISOString().replace(/\.\d{3}Z$/, '+07:00') : undefined);
 /** Cut at a word, under the length search results show. */
@@ -103,7 +108,7 @@ function whenLine(ev: any, lang: Lang) {
 function priceLine(ev: any, lang: Lang) {
   if (ev.entry_mode === 'donation') return t('donation', lang);
   if (ev.entry_mode === 'free' || !ev.price_from) return t('free', lang);
-  return `${t('from', lang)} ${money(ev.price_from, lang)}`;
+  return `${t('from', lang)} ${formatMoney(ev.price_from, ev.currency, lang)}`;
 }
 
 type Fact = { label: string; value: string; href?: string; datetime?: string };
@@ -180,7 +185,7 @@ const inLang = (path: string, lang: Lang) => (lang === 'vi' ? path : `${path}${p
 
 /** "19/9 20:00 · SECC, TP.HCM · Từ 1.200.000₫": one line about an event in a list. */
 const eventLine = (r: any, lang: Lang) => [shortDay(r.starts_on, lang) + (r.start_time ? ` ${r.start_time}` : ''),
-  [r.venue_name, text(CITIES[(r.city ?? 'ho-chi-minh') as City], lang)].filter(Boolean).join(', '), priceLine(r, lang)].join(' · ');
+  [r.venue_name, text(cityLabel(r.city), lang)].filter(Boolean).join(', '), priceLine(r, lang)].join(' · ');
 
 /** Everything an event page says to search engines and AI assistants, or null if it is not public. */
 export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<EventSeo | null> {
@@ -188,7 +193,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     `select e.* from events e where e.slug = $1 and e.status in ('live', 'cancelled') and not e.held_for_reports and e.published_at is not null`, [slug]);
   if (!ev) return null;
   const now = ctx.clock.now();
-  const relatedSql = `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.entry_mode, e.price_from
+  const relatedSql = `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.entry_mode, e.price_from, e.currency
       from events e where e.status = 'live' and not e.held_for_reports and e.published_at is not null`;
   const [org, tierRows, faq, updates, timetable, related, nextEdition, prevEdition] = await Promise.all([
     one<any>(ctx.db, 'select slug, name, website from organizers where id = $1', [ev.organizer_id]),
@@ -211,9 +216,11 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const path = `/e/${ev.slug}`;
   const alternates = { vi: `${base}${path}`, en: `${base}${path}?lang=en`, 'x-default': `${base}${path}` };
   const url = alternates[lang];
-  const city = (ev.city ?? 'ho-chi-minh') as City;
-  const cityName = text(CITIES[city], lang);
-  const cityFull = ADDRESS[city] ?? ADDRESS['ho-chi-minh'];
+  const cityName = text(cityOf(ev.city).name, lang);
+  const cityFull = addressOf(ev.city);
+  // The event's own instants are written in its city's time.
+  const tz = cityOf(ev.city).timezone;
+  const zoned = (ts: Date | string | null | undefined) => (ts ? isoIn(new Date(ts), tz) : undefined);
   const cancelled = ev.status === 'cancelled';
   const past = !cancelled && ev.ends_at && new Date(ev.ends_at) < now;
   const soldOut = !!ev.sold_out || (tiers.length > 0 && tiers.every((x) => x.state === 'soldout'));
@@ -226,7 +233,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const street = [ev.address, ev.address && ev.area && ev.address.includes(ev.area) ? null : ev.area].filter(Boolean).join(', ');
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.lat != null && ev.lng != null ? `${ev.lat},${ev.lng}` : [ev.venue_name, ev.address, ev.area, cityName].filter(Boolean).join(', '))}`;
   const ageLabel = ev.age === 'All ages' ? t('allAges', lang) : ev.age;
-  const startIso = vnIso(ev.starts_at) ?? `${ev.starts_on}T${ev.start_time ?? '00:00'}:00+07:00`;
+  const startIso = zoned(ev.starts_at) ?? `${ev.starts_on}T${ev.start_time ?? '00:00'}:00`;
   const updatedAt = [ev.updated_at, ...updates.map((u) => u.createdAt)].map((d) => new Date(d)).sort((a, b) => b.getTime() - a.getTime())[0];
   const vi = lang === 'vi';
 
@@ -238,7 +245,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
         ? `${ev.title} là sự kiện ${ev.genre ?? ''} ${past ? 'đã diễn ra' : 'diễn ra'} vào ${whenLine(ev, lang).replace(' · ', ', từ ')} tại ${[ev.venue_name, street, cityName].filter(Boolean).join(', ')}.`.replace(/\s+/g, ' ')
         : `${ev.title} is ${/^[aeiou]/i.test(ev.genre ?? '') ? 'an' : 'a'} ${ev.genre ?? ''} event ${past ? 'that took place' : 'taking place'} on ${whenLine(ev, lang).replace(' · ', ', ')} at ${[ev.venue_name, street, cityName].filter(Boolean).join(', ')}.`.replace(/\s+/g, ' '),
     ev.entry_mode === 'paid' && ev.price_from
-      ? (vi ? `Vé từ ${money(ev.price_from, lang)}${tiers.length > 1 ? ` (${tiers.length} hạng vé)` : ''}, ${statusLabel.toLowerCase()}.` : `Tickets from ${money(ev.price_from, lang)}${tiers.length > 1 ? ` (${tiers.length} tiers)` : ''}, ${statusLabel.toLowerCase()}.`)
+      ? (vi ? `Vé từ ${formatMoney(ev.price_from, ev.currency, lang)}${tiers.length > 1 ? ` (${tiers.length} hạng vé)` : ''}, ${statusLabel.toLowerCase()}.` : `Tickets from ${formatMoney(ev.price_from, ev.currency, lang)}${tiers.length > 1 ? ` (${tiers.length} tiers)` : ''}, ${statusLabel.toLowerCase()}.`)
       : ev.entry_mode === 'donation' ? (vi ? 'Vào cửa tuỳ tâm.' : 'Pay what you like.') : (vi ? 'Vào cửa miễn phí.' : 'Free entry.'),
     ev.age !== 'All ages' ? (vi ? `Dành cho khách ${ev.age}.` : `Ages ${ev.age}.`) : '',
     lineup.length ? `${vi ? 'Đội hình' : 'Lineup'}: ${lineup.slice(0, 8).join(', ')}${lineup.length > 8 ? '…' : ''}.` : '',
@@ -265,7 +272,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     : { url: `${base}/og/v1/${toneOf(ev.genre)}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const imageAlt = `${ev.title} · ${venueLine}`;
 
-  const listPath = `/list?city=${city}`;
+  const listPath = `/list?city=${cityOf(ev.city).slug}`;
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
     { name: `${t('eventsIn', lang)} ${cityName}`, path: inLang(listPath, lang) },
@@ -300,11 +307,11 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     lineup,
     timetable: (timetable?.days ?? []).map((d) => ({
       day: longDate(d.date, lang),
-      sets: d.stages.flatMap((st) => st.sets.map((x) => ({ time: vnTime(x.startsAt), artist: x.artist, stage: text(st.name, lang), at: new Date(x.startsAt).getTime() })))
+      sets: d.stages.flatMap((st) => st.sets.map((x) => ({ time: timeIn(new Date(x.startsAt), tz), artist: x.artist, stage: text(st.name, lang), at: new Date(x.startsAt).getTime() })))
         .sort((a, b) => a.at - b.at).map(({ time, artist, stage }) => ({ time, artist, stage })),
     })),
-    tickets: tiers.map((x) => ({ name: text(x.name, lang), price: money(x.price, lang), state: tierState(x.state) })),
-    updates: updates.map((u) => ({ kind: text(u.kindLabel, lang), body: u.body, at: vnIso(u.createdAt)!, atLabel: `${vnTime(u.createdAt)} ${shortDay(vnIso(u.createdAt)!.slice(0, 10), lang)}` })),
+    tickets: tiers.map((x) => ({ name: text(x.name, lang), price: formatMoney(x.price, ev.currency, lang), state: tierState(x.state) })),
+    updates: updates.map((u) => ({ kind: text(u.kindLabel, lang), body: u.body, at: zoned(u.createdAt)!, atLabel: `${timeIn(new Date(u.createdAt), tz)} ${shortDay(zoned(u.createdAt)!.slice(0, 10), lang)}` })),
     faq: faq.map((f) => ({ question: f.question, answer: f.answer })),
     editions: [
       ...(prevEdition ? [{ label: t('previous', lang), title: prevEdition.title, path: inLang(`/e/${prevEdition.slug}`, lang), line: line(prevEdition) }] : []),
@@ -319,7 +326,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     '@type': 'Offer',
     name: text(x.name, 'vi'),
     price: x.price,
-    priceCurrency: 'VND',
+    priceCurrency: ev.currency,
     availability: x.state === 'soldout' ? 'https://schema.org/SoldOut' : x.state === 'soon' ? 'https://schema.org/PreOrder'
       : x.state === 'last' ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock',
     url: ev.ticket_url || url,
@@ -336,7 +343,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     mainEntityOfPage: { '@id': ids.page },
     image: [image.url],
     startDate: startIso,
-    endDate: vnIso(ev.ends_at),
+    endDate: zoned(ev.ends_at),
     eventStatus: cancelled ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     inLanguage: lang,
@@ -351,7 +358,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
         streetAddress: street || undefined,
         addressLocality: cityFull.locality,
         addressRegion: cityFull.region,
-        addressCountry: 'VN',
+        addressCountry: cityFull.country,
       },
       geo: ev.lat != null && ev.lng != null ? { '@type': 'GeoCoordinates', latitude: ev.lat, longitude: ev.lng } : undefined,
       hasMap: mapsUrl,
@@ -359,12 +366,12 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     organizer: org ? { '@type': 'Organization', name: org.name, url: base + inLang(`/o/${org.slug}`, lang), sameAs: org.website ? [org.website] : undefined } : undefined,
     performer: lineup.length ? lineup.slice(0, 30).map((name) => ({ '@type': 'PerformingGroup', name })) : undefined,
     offers: offers.length > 1
-      ? { '@type': 'AggregateOffer', priceCurrency: 'VND', lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: offers.length, offers, url: ev.ticket_url || url,
+      ? { '@type': 'AggregateOffer', priceCurrency: ev.currency, lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: offers.length, offers, url: ev.ticket_url || url,
           availability: soldOut ? 'https://schema.org/SoldOut' : low ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock' }
       : offers.length ? offers[0]
       : ev.entry_mode !== 'paid' || !ev.price_from
-        ? { '@type': 'Offer', price: 0, priceCurrency: 'VND', availability: 'https://schema.org/InStock', url }
-        : { '@type': 'Offer', price: ev.price_from, priceCurrency: 'VND', availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url: ev.ticket_url || url },
+        ? { '@type': 'Offer', price: 0, priceCurrency: ev.currency, availability: 'https://schema.org/InStock', url }
+        : { '@type': 'Offer', price: ev.price_from, priceCurrency: ev.currency, availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url: ev.ticket_url || url },
     interactionStatistic: { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: ev.hype_count },
   };
   const graph = [
@@ -486,7 +493,7 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
   const now = ctx.clock.now();
   const events = await many<any>(ctx.db,
     `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at, e.status, e.venue_name, e.address,
-            e.area, e.city, e.lat, e.lng, e.entry_mode, e.price_from, e.cover_url, e.updated_at, e.published_at
+            e.area, e.city, e.lat, e.lng, e.entry_mode, e.price_from, e.currency, e.cover_url, e.updated_at, e.published_at
        from events e where e.organizer_id = $1 and ${PUBLIC_EVENT} order by e.starts_at`, [org.id]);
   const upcoming = events.filter((e) => new Date(e.ends_at) >= now && e.status === 'live');
   const past = events.filter((e) => new Date(e.ends_at) < now).reverse().slice(0, 12);
@@ -499,9 +506,9 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
   // What they put on, most first, and where.
   const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((a, b) => b[1] - a[1]).map(([x]) => x);
   const genres = rank(events.map((e) => e.genre).filter(Boolean)).slice(0, 4);
-  const cityKeys = rank(events.map((e) => e.city ?? 'ho-chi-minh')) as City[];
-  const cities = cityKeys.map((c) => text(CITIES[c], lang));
-  const mainCity = cityKeys[0] ?? 'ho-chi-minh';
+  const cityKeys = rank(events.map((e) => cityOf(e.city).slug));
+  const cities = cityKeys.map((c) => text(cityLabel(c), lang));
+  const mainCity = cityKeys[0] ?? cityOf(null).slug;
   const verified = org.verification_state === 'verified';
   const kind = org.is_community ? (vi ? 'trang cộng đồng' : 'community page') : text(ORG_TYPE[org.type] ?? ORG_TYPE.promoter, lang);
   const about = text(org.bio, lang);
@@ -533,7 +540,7 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
 
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
-    { name: `${t('eventsIn', lang)} ${text(CITIES[mainCity], lang)}`, path: inLang(`/list?city=${mainCity}`, lang) },
+    { name: `${t('eventsIn', lang)} ${text(cityLabel(mainCity), lang)}`, path: inLang(`/list?city=${mainCity}`, lang) },
     { name: org.name, path: inLang(path, lang) },
   ];
   const facts: Fact[] = [
@@ -549,9 +556,9 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
 
   const ids = { page: url, org: `${url}#organization`, crumbs: `${url}#breadcrumb` };
   const place = (e: any) => {
-    const a = ADDRESS[(e.city ?? 'ho-chi-minh') as City] ?? ADDRESS['ho-chi-minh'];
+    const a = addressOf(e.city);
     return { '@type': 'Place', name: e.venue_name ?? undefined,
-      address: { '@type': 'PostalAddress', streetAddress: [e.address, e.area].filter(Boolean).join(', ') || undefined, addressLocality: a.locality, addressRegion: a.region, addressCountry: 'VN' } };
+      address: { '@type': 'PostalAddress', streetAddress: [e.address, e.area].filter(Boolean).join(', ') || undefined, addressLocality: a.locality, addressRegion: a.region, addressCountry: a.country } };
   };
   const graph = [
     ...siteNodes(base),
@@ -566,12 +573,12 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
       logo: org.logo_url ? abs(ctx, org.logo_url) : undefined,
       sameAs: org.website ? [org.website] : undefined,
       foundingDate: org.since_year ? String(org.since_year) : undefined,
-      areaServed: cities.length ? cityKeys.map((c) => ({ '@type': 'City', name: (ADDRESS[c] ?? ADDRESS['ho-chi-minh']).locality })) : undefined,
+      areaServed: cities.length ? cityKeys.map((c) => ({ '@type': 'City', name: addressOf(c).locality })) : undefined,
       interactionStatistic: { '@type': 'InteractionCounter', interactionType: 'https://schema.org/FollowAction', userInteractionCount: org.followers_count },
       // Their upcoming events, each with its own page.
       event: upcoming.slice(0, 30).map((e) => ({
         '@type': SCHEMA_TYPE[e.genre] ?? 'Event', name: e.title, url: `${base}/e/${e.slug}${vi ? '' : '?lang=en'}`,
-        startDate: vnIso(e.starts_at), endDate: vnIso(e.ends_at),
+        startDate: e.starts_at ? isoIn(new Date(e.starts_at), cityOf(e.city).timezone) : undefined, endDate: e.ends_at ? isoIn(new Date(e.ends_at), cityOf(e.city).timezone) : undefined,
         eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : `${base}/og/v1/${toneOf(e.genre)}.png`],
         organizer: { '@id': ids.org },
@@ -609,7 +616,7 @@ export async function buildCollectionSeo(ctx: Ctx, slug: string, lang: Lang = 'v
   const now = ctx.clock.now();
   const events = await many<any>(ctx.db,
     `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at, e.status, e.venue_name, e.address,
-            e.area, e.city, e.entry_mode, e.price_from, e.cover_url, e.updated_at
+            e.area, e.city, e.entry_mode, e.price_from, e.currency, e.cover_url, e.updated_at
        from collection_items i join events e on e.id = i.event_id
       where i.collection_id = $1 and ${PUBLIC_EVENT} order by e.starts_at`, [c.id]);
   const upcoming = events.filter((e) => new Date(e.ends_at) >= now && e.status === 'live');
@@ -622,7 +629,7 @@ export async function buildCollectionSeo(ctx: Ctx, slug: string, lang: Lang = 'v
   const owner = (c.owner_name as string | null)?.trim() || t('member', lang);
   const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((a, b) => b[1] - a[1]).map(([x]) => x);
   const genres = rank(events.map((e) => e.genre).filter(Boolean)).slice(0, 4);
-  const cities = rank(events.map((e) => e.city ?? 'ho-chi-minh')).map((k) => text(CITIES[k as City], lang));
+  const cities = rank(events.map((e) => cityOf(e.city).slug)).map((k) => text(cityLabel(k), lang));
   const next = upcoming[0];
   const updatedAt = [c.updated_at, ...events.map((e) => e.updated_at)].map((d) => new Date(d)).sort((a, b) => b.getTime() - a.getTime())[0];
 
@@ -725,7 +732,7 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
   const base = baseOf(ctx);
   const [events, orgs] = await Promise.all([
     many<any>(ctx.db,
-      `select e.slug, e.title, e.genre, e.starts_on, e.start_time, e.venue_name, e.city, e.entry_mode, e.price_from
+      `select e.slug, e.title, e.genre, e.starts_on, e.start_time, e.venue_name, e.city, e.entry_mode, e.price_from, e.currency
          from events e where ${PUBLIC_EVENT} and e.status = 'live' and e.ends_at >= $1 order by e.starts_at limit 300`, [now]),
     many<any>(ctx.db,
       `select o.slug, o.name, count(*)::int as n, array_agg(distinct e.genre) filter (where e.genre is not null) as genres
@@ -737,9 +744,9 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
   return [
     '# FeestFinder',
     '',
-    '> FeestFinder lists festivals, club nights, gigs, night markets and cultural events in Vietnam (Ho Chi Minh City, Hanoi, Da Nang, Nha Trang): dates, venues, ticket prices, lineups and organisers. Organisers and the community send events in; moderators check each one before it goes live.',
+    `> FeestFinder lists festivals, club nights, gigs, night markets and cultural events in Asia (${launchedCities().map((c) => c.name.en).join(', ')}): dates, venues, ticket prices, lineups, organisers and the sources each event was confirmed from. Organisers, the community and public event pages feed it; moderators check each event before it goes live.`,
     '',
-    'Every event and organiser page exists in Vietnamese (`/e/<slug>`, `/o/<slug>`) and English (add `?lang=en`), carries schema.org data in its HTML, and has a Markdown version at the same address plus `.md`. Prices are in Vietnamese đồng (₫); dates and times are Vietnam time (UTC+7). Ticket links go to the organiser\'s own ticket seller.',
+    'Every event and organiser page exists in Vietnamese (`/e/<slug>`, `/o/<slug>`) and English (add `?lang=en`), carries schema.org data in its HTML, and has a Markdown version at the same address plus `.md`. Prices are in the event\'s local currency (₫ in Vietnam); dates and times are local to the event\'s city. Ticket links go to the organiser\'s own ticket seller.',
     '',
     '## Upcoming events',
     '',

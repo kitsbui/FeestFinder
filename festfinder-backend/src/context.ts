@@ -8,6 +8,7 @@ import type { GuideGenerator } from './services/guide.ts';
 import type { OAuthProvider } from './services/oauth.ts';
 import type { PrefillGenerator } from './services/prefill.ts';
 import type { PageFetcher } from './services/fetchpage.ts';
+import type { IngestIO } from './services/ingest/types.ts';
 
 /** Everything a route or job needs. Built once in server.ts, or per test. */
 export interface Ctx {
@@ -25,5 +26,7 @@ export interface Ctx {
   fetchPage: PageFetcher;
   oauth: { google: OAuthProvider | null; fb: OAuthProvider | null; ig: OAuthProvider | null };
   checkLink: (url: string) => Promise<'ok' | 'broken'>;
+  /** The network an ingestion run reads through. Tests hand in fixtures; otherwise the polite fetcher. */
+  ingestIO?: () => IngestIO;
   log: (msg: string) => void;
 }

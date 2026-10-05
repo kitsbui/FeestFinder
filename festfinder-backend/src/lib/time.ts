@@ -1,6 +1,9 @@
 /**
  * Ho Chi Minh City is UTC+7 all year (no DST), so local wall-clock maths is a fixed offset.
  * Calendar dates travel as 'YYYY-MM-DD' strings and times as 'HH:MM'.
+ *
+ * Events in other cities use their city's IANA timezone through the *In / atZone helpers
+ * below. The Vietnam helpers stay for the back office, whose team works in Vietnam.
  */
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -24,6 +27,61 @@ export function fixedClock(start: string | Date): ControllableClock {
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+// ---- any timezone -----------------------------------------------------------------------
+
+export const VN_ZONE = 'Asia/Ho_Chi_Minh';
+
+const zoneFormats = new Map<string, Intl.DateTimeFormat>();
+function zoneFormat(timezone: string): Intl.DateTimeFormat {
+  let f = zoneFormats.get(timezone);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', { timeZone: timezone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    zoneFormats.set(timezone, f);
+  }
+  return f;
+}
+
+/** How far a timezone's wall clock is ahead of UTC at an instant, in ms. */
+export function zoneOffsetMs(timezone: string, at: Date): number {
+  if (timezone === VN_ZONE) return VN_OFFSET_MS;
+  const p = Object.fromEntries(zoneFormat(timezone).formatToParts(at).map((x) => [x.type, x.value]));
+  const wall = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  return wall - Math.floor(at.getTime() / 1000) * 1000;
+}
+
+/** The instant a wall-clock date + time in a timezone refers to. */
+export function atZone(date: string, time = '00:00', timezone = VN_ZONE): Date {
+  const [y, m, d] = date.split('-').map(Number);
+  const [hh, mm] = time.split(':').map(Number);
+  const wall = Date.UTC(y, m - 1, d, hh, mm);
+  // Twice, so a wall clock on the far side of a daylight-saving change still lands right.
+  const first = wall - zoneOffsetMs(timezone, new Date(wall));
+  return new Date(wall - zoneOffsetMs(timezone, new Date(first)));
+}
+
+/** Calendar date in a timezone for an instant. */
+export function dateIn(d: Date, timezone = VN_ZONE): string {
+  const v = new Date(d.getTime() + zoneOffsetMs(timezone, d));
+  return `${v.getUTCFullYear()}-${pad(v.getUTCMonth() + 1)}-${pad(v.getUTCDate())}`;
+}
+
+/** Wall-clock HH:MM in a timezone for an instant. */
+export function timeIn(d: Date, timezone = VN_ZONE): string {
+  const v = new Date(d.getTime() + zoneOffsetMs(timezone, d));
+  return `${pad(v.getUTCHours())}:${pad(v.getUTCMinutes())}`;
+}
+
+/** An instant written with the timezone's own offset: 2026-10-10T20:00:00+09:00. */
+export function isoIn(d: Date, timezone = VN_ZONE): string {
+  const off = zoneOffsetMs(timezone, d);
+  const v = new Date(d.getTime() + off);
+  const sign = off < 0 ? '-' : '+';
+  const abs = Math.abs(off) / 60_000;
+  return `${v.toISOString().slice(0, 19)}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+
+// ---- Vietnam --------------------------------------------------------------------------------
 
 /** Calendar date in Vietnam for an instant. */
 export function vnDate(d: Date): string {
@@ -107,10 +165,10 @@ export function timeWindow(key: TimeKey, today: string): { from: string; to: str
  * First door-open and last close of an event. A close at or before the opening
  * time (16:00 – 02:00) runs past midnight into the next day.
  */
-export function eventBounds(startsOn: string, endsOn: string, startTime: string, endTime: string) {
-  const startsAt = atVn(startsOn, startTime);
+export function eventBounds(startsOn: string, endsOn: string, startTime: string, endTime: string, timezone = VN_ZONE) {
+  const startsAt = atZone(startsOn, startTime, timezone);
   const overnight = toMinutes(endTime) <= toMinutes(startTime);
-  const endsAt = atVn(overnight ? addDays(endsOn, 1) : endsOn, endTime);
+  const endsAt = atZone(overnight ? addDays(endsOn, 1) : endsOn, endTime, timezone);
   return { startsAt, endsAt };
 }
 

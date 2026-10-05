@@ -8,6 +8,8 @@ import { dispatchAnnouncement } from './routes/organizer/audience.ts';
 import { checkTicketLink } from './routes/organizer/events.ts';
 import { expireResaleHolds } from './services/resale.ts';
 import { pingIndexNow } from './services/seo.ts';
+import { refreshConfidence } from './services/ingest/confidence.ts';
+import { runDueSources } from './services/ingest/run.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
 export const jobs = {
@@ -108,6 +110,17 @@ export const jobs = {
     return sent;
   },
 
+  /** Sources whose interval has come round, within a time budget per call. */
+  async ingest(ctx: Ctx) {
+    const runs = await runDueSources(ctx, { budgetMs: 35_000 });
+    return runs.map((r) => ({ source: r.name, created: r.created, merged: r.merged, rejected: r.rejected, failed: r.failed }));
+  },
+
+  /** Confidence decays when sources stop listing an event, so it is recomputed for every upcoming one. */
+  async refreshConfidence(ctx: Ctx) {
+    return refreshConfidence(ctx.db, ctx.clock.now());
+  },
+
   async checkTicketLinks(ctx: Ctx) {
     if (!ctx.config.linkChecksEnabled) return 0;
     const rows = await many<any>(ctx.db,
@@ -126,6 +139,9 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['expireAppeals', 10 * 60_000],
   ['checkTicketLinks', 15 * 60_000],
   ['pingIndexNow', 5 * 60_000],
+  ['refreshConfidence', 60 * 60_000],
+  // Last: it spends whatever time the call has left.
+  ['ingest', 5 * 60_000],
 ];
 
 /**

@@ -3,19 +3,35 @@ import { z } from 'zod';
 import type { Ctx } from '../context.ts';
 import { many, one } from '../db/index.ts';
 import { notFound } from '../lib/errors.ts';
-import { CITY_SLUGS, GENRES, L } from '../lib/i18n.ts';
+import { GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
-import { TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
-import { bool, csv, dateStr, limit, parse } from '../lib/validate.ts';
+import { cityBySlug, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
+import { EVENT_TYPE_LABEL, EVENT_TYPES, isStyle, STYLES } from '../lib/styles.ts';
+import { dateIn, TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
+import { bool, csv, dateStr, limit, parse, uuid } from '../lib/validate.ts';
 import { decodeCursor, isUuid, page, SqlParams } from '../http/sql.ts';
-import { CARD_COLUMNS, loadViewer, ORG_COLUMNS, presentCard, presentTiers } from '../presenters/event.ts';
+import { CARD_COLUMNS, loadPublicSources, loadViewer, ORG_COLUMNS, presentCard, presentTiers } from '../presenters/event.ts';
 import { findClashes, loadTimetable } from '../presenters/timetable.ts';
 import { SHARE_CHANNELS } from '../services/community.ts';
 import { eventExtras } from '../services/eventpage.ts';
 import { recordShareVisit } from './community.ts';
 
 const PRICE_BANDS = ['free', 'under', 'over'] as const;
+const BBOX = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$/;
+
+/** "Today" for a time filter: the chosen city's, else the chosen country's, else Vietnam's. */
+export function todayFor(f: { city?: string; country?: string }, now: Date): string {
+  const tz = cityBySlug(f.city)?.timezone ?? countryByCode(f.country)?.timezone;
+  return tz ? dateIn(now, tz) : vnDate(now);
+}
+
+/** The four corners of a map box, west to east even across the antimeridian. */
+export function parseBbox(s: string): { minLng: number; minLat: number; maxLng: number; maxLat: number } {
+  const [minLng, minLat, maxLng, maxLat] = s.split(',').map(Number);
+  return { minLng, minLat: Math.min(minLat, maxLat), maxLng, maxLat: Math.max(minLat, maxLat) };
+}
 const TIME_FILTERS = ['tonight', 'weekend', '7days', 'month', 'all'] as const;
+const MAP_LIMIT = 500;
 
 const ExploreQuery = z.object({
   time: z.enum(TIME_FILTERS).default('weekend'),
@@ -26,7 +42,16 @@ const ExploreQuery = z.object({
   artist: z.string().max(100).optional(),
   price: csv(z.enum(PRICE_BANDS)).optional(),
   area: z.string().max(60).optional(),
-  city: z.enum(CITY_SLUGS).optional(),
+  city: launchedCity.optional(),
+  country: countryCode.optional(),
+  style: csv(z.string().refine(isStyle, 'unknown style')).optional(),
+  type: csv(z.enum(EVENT_TYPES)).optional(),
+  venue: uuid.optional(),
+  confidenceMin: z.coerce.number().int().min(0).max(100).optional(),
+  source: z.string().regex(/^[a-z_]{2,30}$/).optional(),
+  bbox: z.string().regex(BBOX, 'minLng,minLat,maxLng,maxLat').optional(),
+  /** Only events that have not ended. */
+  upcoming: bool.optional(),
   organizer: z.string().max(80).optional(),
   friendsOnly: bool.optional(),
   sort: z.enum(['date', 'hype', 'price', 'relevance']).default('date'),
@@ -37,7 +62,7 @@ const ExploreQuery = z.object({
 });
 
 /** Filters shared by the Explore feed, the stat drill-downs and the facet counts. */
-function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; genre: boolean }) {
+function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; genre: boolean; city?: boolean }) {
   const where = [`e.status = 'live'`, 'not e.held_for_reports'];
   const q = f.q?.trim();
   if (q) {
@@ -50,7 +75,22 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
   if (opts.genre && f.genre) where.push(`e.genre = ${sql.p(f.genre)}`);
   if (f.artist) where.push(`${sql.p(f.artist)} = any(e.artists)`);
   if (f.area) where.push(`e.area = ${sql.p(f.area)}`);
-  if (f.city) where.push(`e.city = ${sql.p(f.city)}`);
+  if (opts.city !== false && f.city) where.push(`e.city = ${sql.p(f.city)}`);
+  // Only listed cities appear in discovery, whatever the country filter says.
+  where.push(`e.city = any(${sql.p(launchedCities().map((c) => c.slug))}::text[])`);
+  if (f.country) where.push(`e.city in (select slug from cities where country_code = ${sql.p(f.country)})`);
+  if (f.style?.length) where.push(`e.styles && ${sql.p(f.style)}::text[]`);
+  if (f.type?.length) where.push(`e.event_type = any(${sql.p(f.type)}::text[])`);
+  if (f.venue) where.push(`e.venue_id = ${sql.p(f.venue)}`);
+  if (f.confidenceMin !== undefined) where.push(`coalesce(e.confidence_score, 0) >= ${sql.p(f.confidenceMin)}`);
+  if (f.source) where.push(`exists (select 1 from event_sources s where s.event_id = e.id and s.provider = ${sql.p(f.source)})`);
+  if (f.bbox) {
+    const b = parseBbox(f.bbox);
+    const lng = b.minLng <= b.maxLng
+      ? `e.lng between ${sql.p(b.minLng)} and ${sql.p(b.maxLng)}`
+      : `(e.lng >= ${sql.p(b.minLng)} or e.lng <= ${sql.p(b.maxLng)})`;
+    where.push(`e.lat between ${sql.p(b.minLat)} and ${sql.p(b.maxLat)} and ${lng}`);
+  }
   if (f.organizer) where.push(`o.slug = ${sql.p(f.organizer)}`);
   if (f.price?.length) {
     const bands = f.price.map((b: (typeof PRICE_BANDS)[number]) => ({
@@ -106,12 +146,13 @@ export default async function catalogRoutes(app: FastifyInstance) {
   app.get('/events', async (req) => {
     const f = parse(ExploreQuery, req.query);
     const now = ctx.clock.now();
-    const today = vnDate(now);
+    const today = todayFor(f, now);
     const userId = req.session?.user?.id ?? null;
     const offset = decodeCursor(f.cursor);
 
     const sql = new SqlParams();
     const where = feedFilters(sql, f, today, userId, { time: true, genre: true });
+    if (f.upcoming) where.push(`(e.ends_at is null or e.ends_at >= ${sql.p(now)})`);
     const rows = await many<any>(ctx.db,
       `select ${CARD_COLUMNS}, count(*) over () as total
          from events e join organizers o on o.id = e.organizer_id
@@ -128,6 +169,12 @@ export default async function catalogRoutes(app: FastifyInstance) {
     });
     const facetTime = await one<any>(ctx.db,
       `select ${counts.join(', ')} from events e join organizers o on o.id = e.organizer_id where ${fwhere.join(' and ')}`, fsql.values);
+    // City chips count upcoming events in each city under every other filter.
+    const csql = new SqlParams();
+    const cwhere = feedFilters(csql, f, today, userId, { time: true, genre: true, city: false });
+    cwhere.push(`(e.ends_at is null or e.ends_at >= ${csql.p(now)})`);
+    const facetCity = await many<{ city: string; n: number }>(ctx.db,
+      `select e.city, count(*)::int as n from events e join organizers o on o.id = e.organizer_id where ${cwhere.join(' and ')} group by e.city`, csql.values);
 
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const origin = f.lat !== undefined && f.lng !== undefined ? { lat: f.lat, lng: f.lng } : undefined;
@@ -139,42 +186,42 @@ export default async function catalogRoutes(app: FastifyInstance) {
       total: rows[0]?.total ?? 0,
       nextCursor,
       hero,
-      facets: { time: facetTime },
+      facets: { time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])) },
       window: f.q ? null : f.from ? { from: f.from, to: f.to ?? f.from } : f.time !== 'all' ? timeWindow(f.time as TimeKey, today) : null,
     };
   });
 
+  /**
+   * The map: events with a pin inside a box, under the same filters as the list. The map asks
+   * once when it opens and again only when someone presses "search this area", never on every
+   * pan. Pins are light; the drawer opens the full page.
+   */
   app.get('/events/map', async (req) => {
-    const f = parse(z.object({
-      bbox: z.string().regex(/^-?[\d.]+,-?[\d.]+,-?[\d.]+,-?[\d.]+$/, 'minLng,minLat,maxLng,maxLat').optional(),
-      genre: z.enum(GENRES).optional(),
-      free: bool.optional(),
-      friendsOnly: bool.optional(),
-      time: z.enum(TIME_FILTERS).default('all'),
-      limit: limit(100, 50),
-    }), req.query);
+    const f = parse(ExploreQuery.extend({ time: z.enum(TIME_FILTERS).default('all'), limit: limit(MAP_LIMIT, 300), free: bool.optional() }), req.query);
+    if (f.free) f.price = ['free'];
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
     const sql = new SqlParams();
-    const where = [`e.status = 'live'`, 'not e.held_for_reports', `e.ends_at >= ${sql.p(now)}`, 'e.lat is not null'];
-    if (f.bbox) {
-      const [minLng, minLat, maxLng, maxLat] = f.bbox.split(',').map(Number);
-      where.push(`e.lng between ${sql.p(minLng)} and ${sql.p(maxLng)} and e.lat between ${sql.p(minLat)} and ${sql.p(maxLat)}`);
-    }
-    if (f.genre) where.push(`e.genre = ${sql.p(f.genre)}`);
-    if (f.free) where.push(`(e.entry_mode = 'free' or e.price_from = 0)`);
-    if (f.time !== 'all') {
-      const w = timeWindow(f.time as TimeKey, vnDate(now));
-      where.push(`e.starts_on <= ${sql.p(w.to)} and e.ends_on >= ${sql.p(w.from)}`);
-    }
-    if (f.friendsOnly && userId) {
-      where.push(`exists (select 1 from going g join friendships fr on fr.friend_id = g.user_id where fr.user_id = ${sql.p(userId)} and g.event_id = e.id)`);
-    }
+    const where = feedFilters(sql, f, todayFor(f, now), userId, { time: true, genre: true });
+    where.push(`(e.ends_at is null or e.ends_at >= ${sql.p(now)})`, 'e.lat is not null', 'e.lng is not null');
     const rows = await many<any>(ctx.db,
-      `select ${CARD_COLUMNS} from events e join organizers o on o.id = e.organizer_id
-        where ${where.join(' and ')} order by e.starts_at limit ${sql.p(f.limit)}`, sql.values);
-    const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
-    return { items: rows.map((r) => presentCard(r, { now, viewer })) };
+      `select ${CARD_COLUMNS}, count(*) over () as total from events e join organizers o on o.id = e.organizer_id
+        where ${where.join(' and ')} order by e.starts_at, e.id limit ${sql.p(f.limit)}`, sql.values);
+    const total = rows[0]?.total ?? 0;
+    return {
+      items: rows.map((r) => {
+        const c = presentCard(r, { now, viewer: null });
+        return {
+          id: c.id, slug: c.slug, title: c.title, genre: c.genre, styles: c.styles, eventType: c.eventType,
+          lat: c.venue.lat, lng: c.venue.lng, venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel,
+          startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime,
+          art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, soldOut: c.soldOut,
+          lineup: c.lineup.slice(0, 6), confidence: c.confidence,
+        };
+      }),
+      total,
+      truncated: total > rows.length,
+    };
   });
 
   app.get<{ Params: { idOrSlug: string } }>('/events/:idOrSlug', async (req) => {
@@ -214,8 +261,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
         followingOrganizer: !!followsOrg,
         followingArtists: [...followedArtists],
         followingArtistsLine: followedArtists.size
-          ? L(`Following ${followedArtists.size} of this lineup. We will tell you when any of them announce a show in Ho Chi Minh City.`,
-            `Đang theo dõi ${followedArtists.size} nghệ sĩ trong đội hình này. Khi họ có show ở TP.HCM, chúng tôi sẽ nhắn bạn.`)
+          ? L(`Following ${followedArtists.size} of this lineup. We will tell you when any of them announce a show.`,
+            `Đang theo dõi ${followedArtists.size} nghệ sĩ trong đội hình này. Khi họ có show mới, chúng tôi sẽ nhắn bạn.`)
           : null,
         plan: {
           setIds: picks.map((p) => p.id),
@@ -230,6 +277,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const card = presentCard(ev, { now, viewer });
     return {
       ...card,
+      sources: await loadPublicSources(ctx.db, ev.id),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,
@@ -283,6 +331,27 @@ export default async function catalogRoutes(app: FastifyInstance) {
       }));
     }
     return out;
+  });
+
+  /**
+   * The basemap in Bảng phấn colours: board-dark land, darker water, roads as faint chalk
+   * lines. Built from the Protomaps schema of the configured PMTiles archive; without one,
+   * the board alone, and the map shows the events on it.
+   */
+  app.get('/map/style.json', async (_req, reply) => {
+    reply.header('cache-control', 'public, max-age=300, s-maxage=3600');
+    return mapStyle(ctx.config.map);
+  });
+
+  /** What the discovery screens build their chips from: listed cities, music styles, event types. */
+  app.get('/meta/discovery', async (_req, reply) => {
+    reply.header('cache-control', 'public, max-age=300');
+    return {
+      ...placesForClient(),
+      genres: GENRES,
+      styles: STYLES.map((x) => ({ key: x.key, label: x.label, genre: x.genre })),
+      eventTypes: EVENT_TYPES.map((key) => ({ key, label: EVENT_TYPE_LABEL[key] })),
+    };
   });
 
   app.get('/genres', async () => {
@@ -389,4 +458,40 @@ export default async function catalogRoutes(app: FastifyInstance) {
     if (!res) throw notFound();
     return reply.code(202).send({ counted: true });
   });
+}
+
+const CHALK = 'rgba(255,252,225,';
+
+/** A MapLibre style for a Protomaps basemap, or the plain board when there is none. */
+export function mapStyle(map: { tilesUrl: string | null; glyphsUrl: string | null }) {
+  const layers: Record<string, unknown>[] = [{ id: 'board', type: 'background', paint: { 'background-color': '#0E100F' } }];
+  if (!map.tilesUrl) return { version: 8, name: 'FeestFinder board', sources: {}, layers };
+  const src = 'basemap';
+  const line = (id: string, filter: unknown[], color: string, width: unknown[], minzoom = 0, extra: Record<string, unknown> = {}) =>
+    ({ id, type: 'line', source: src, 'source-layer': 'roads', minzoom, filter, paint: { 'line-color': color, 'line-width': width, ...extra } });
+  layers.push(
+    { id: 'earth', type: 'fill', source: src, 'source-layer': 'earth', paint: { 'fill-color': '#151714' } },
+    { id: 'parks', type: 'fill', source: src, 'source-layer': 'landuse', filter: ['in', ['get', 'kind'], ['literal', ['park', 'nature_reserve', 'forest', 'wood', 'golf_course']]], paint: { 'fill-color': '#181b17' } },
+    { id: 'water', type: 'fill', source: src, 'source-layer': 'water', paint: { 'fill-color': '#0A0F10' } },
+    { id: 'buildings', type: 'fill', source: src, 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': `${CHALK}0.035)` } },
+    line('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${CHALK}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12),
+    line('roads-major', ['==', ['get', 'kind'], 'major_road'], `${CHALK}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 7),
+    line('roads-highway', ['==', ['get', 'kind'], 'highway'], `${CHALK}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 5),
+    { id: 'borders', type: 'line', source: src, 'source-layer': 'boundaries', filter: ['<=', ['get', 'kind_detail'], 2],
+      paint: { 'line-color': `${CHALK}0.28)`, 'line-width': 0.8, 'line-dasharray': [3, 2] } },
+  );
+  if (map.glyphsUrl) {
+    layers.push({
+      id: 'places', type: 'symbol', source: src, 'source-layer': 'places',
+      filter: ['in', ['get', 'kind'], ['literal', ['country', 'region', 'locality']]],
+      layout: { 'text-field': ['coalesce', ['get', 'name:vi'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 10, 14], 'symbol-sort-key': ['get', 'min_zoom'] },
+      paint: { 'text-color': '#A5A493', 'text-halo-color': '#0E100F', 'text-halo-width': 1.4 },
+    });
+  }
+  return {
+    version: 8, name: 'FeestFinder Bảng phấn',
+    ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}),
+    sources: { [src]: { type: 'vector', url: `pmtiles://${map.tilesUrl}`, attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>' } },
+    layers,
+  };
 }
