@@ -40,6 +40,7 @@ const TEAM = [
 const ARTIST = [
   { key: '', icon: 'microphone-stage', label: () => t('Hồ sơ nghệ sĩ', 'Artist profile'), load: () => import('./artist/profile.js'), view: 'ArtistProfile' },
   { key: 'gigs', icon: 'calendar-plus', label: () => t('Lịch diễn', 'Gigs'), load: () => import('./artist/gigs.js'), view: 'ArtistGigs' },
+  { key: 'gear', icon: 'headphones', label: () => t('Thiết bị', 'Gear'), load: () => import('./artist/gear.js'), view: 'ArtistGear' },
 ];
 
 const ORG = [

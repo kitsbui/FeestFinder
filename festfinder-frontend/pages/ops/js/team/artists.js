@@ -1,10 +1,11 @@
 /*
  * Team mode: the artist catalogue. What only the team sets lives here: the verified tick, the
  * other names an artist goes by, and the identity anchors (MusicBrainz, Wikidata, Spotify)
- * that beat a name match when sources are merged.
+ * that beat a name match when sources are merged. And the gear catalogue: what artists name
+ * that it lacks waits here for approval, and an item can carry an affiliate link.
  */
-import { h, Fragment, useState, t, patch, useFetch, useQueryState, toast, errorText, num } from '../core.js';
-import { PageHeader, Button, Pill, Spinner, ErrorBox, Empty, FilterBar, DataTable, Drawer, Field, Input, Switch } from '../ui.js';
+import { h, Fragment, useState, t, tx, get, patch, useFetch, useQueryState, toast, errorText, num } from '../core.js';
+import { PageHeader, Button, Pill, Spinner, ErrorBox, Empty, FilterBar, DataTable, Drawer, Field, Input, Switch, Tabs, Combobox } from '../ui.js';
 
 function ArtistDrawer({ artist, onClose, onSaved }) {
   const [f, setF] = useState(() => ({
@@ -37,7 +38,39 @@ function ArtistDrawer({ artist, onClose, onSaved }) {
     h(Field, { label: 'Spotify ID', optional: true }, h(Input, { value: f.spotifyId, onChange: set('spotifyId'), placeholder: '22 ký tự / characters' }))));
 }
 
+function Gear() {
+  const [pending, setPending] = useQueryState('pending', '1');
+  const { data, error, loading, reload } = useFetch(`/admin/gear?pending=${pending}`, [pending]);
+  const [busy, setBusy] = useState(null);
+  const change = async (g, body) => {
+    setBusy(g.id);
+    try { await patch(`/admin/gear/${g.id}`, body); toast(t('Đã lưu', 'Saved')); reload(true); } catch (e) { toast(errorText(e), 'error'); } finally { setBusy(null); }
+  };
+  const columns = [
+    { key: 'name', label: t('Thiết bị', 'Item'), width: 260, render: (g) => h('div', null, h('strong', null, [g.brand, g.name].filter(Boolean).join(' ')),
+      h('div', { className: 'op-cell-sub' }, tx(g.categoryLabel), g.suggestedBy ? ` · ${g.suggestedBy}` : '')) },
+    { key: 'artists', label: t('Nghệ sĩ', 'Artists'), width: 90, align: 'right', render: (g) => num(g.artists) },
+    { key: 'link', label: t('Link affiliate', 'Affiliate link'), width: 240, render: (g) => h(Combobox, { value: g.affiliateLinkId, valueLabel: g.linkCode, placeholder: t('Chọn liên kết…', 'Pick a link…'), icon: 'link',
+      load: async () => (await get('/admin/affiliate/links')).items.map((l) => ({ value: l.id, label: l.code, sub: l.label })), onChange: (v) => change(g, { affiliateLinkId: v ?? null }) }) },
+    { key: 'act', label: '', width: 150, align: 'right', render: (g) => g.approved
+      ? h(Pill, { tone: 'ok', icon: 'check' }, t('Đã duyệt', 'Approved'))
+      : h(Button, { size: 'sm', variant: 'ok', icon: 'check', busy: busy === g.id, onClick: () => change(g, { approved: true }) }, t('Duyệt', 'Approve')) },
+  ];
+  return h(Fragment, null,
+    h(Tabs, { value: pending, onChange: setPending, items: [{ value: '1', icon: 'hourglass', label: t('Chờ duyệt', 'Waiting') }, { value: '0', icon: 'list', label: t('Tất cả', 'All') }] }),
+    error ? h(ErrorBox, { error, onRetry: reload }) : loading && !data ? h(Spinner)
+      : h(DataTable, { columns, rows: data.items, minWidth: 800, empty: h(Empty, { icon: 'headphones', title: t('Không có gì chờ duyệt', 'Nothing waiting') }) }));
+}
+
 export function Artists() {
+  const [tab, setTab] = useQueryState('tab', 'artists');
+  return h(Fragment, null,
+    h(PageHeader, { title: t('Nghệ sĩ', 'Artists') }),
+    h(Tabs, { value: tab, onChange: setTab, items: [{ value: 'artists', icon: 'microphone-stage', label: t('Nghệ sĩ', 'Artists') }, { value: 'gear', icon: 'headphones', label: t('Thiết bị', 'Gear') }] }),
+    tab === 'gear' ? h(Gear) : h(Catalogue));
+}
+
+function Catalogue() {
   const [q, setQ] = useQueryState('q', '');
   const { data, error, loading, reload } = useFetch(`/admin/artists?limit=200${q ? `&q=${encodeURIComponent(q)}` : ''}`, [q]);
   const [open, setOpen] = useState(null);
@@ -52,7 +85,6 @@ export function Artists() {
     { key: 'act', label: '', width: 110, align: 'right', render: (a) => h(Button, { size: 'sm', icon: 'pencil-simple', onClick: () => setOpen(a) }, t('Sửa', 'Edit')) },
   ];
   return h(Fragment, null,
-    h(PageHeader, { title: t('Nghệ sĩ', 'Artists') }),
     h(FilterBar, { search: q, onSearch: setQ, placeholder: t('Tìm theo tên…', 'Search by name…') }),
     error ? h(ErrorBox, { error, onRetry: reload }) : loading && !data ? h(Spinner)
       : h(DataTable, { columns, rows: data.items, minWidth: 900, empty: h(Empty, { icon: 'microphone-stage', title: t('Chưa có nghệ sĩ', 'No artists') }) }),

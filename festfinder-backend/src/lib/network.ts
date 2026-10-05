@@ -63,6 +63,18 @@ export const ORGANIZER_TYPE = list([
 ]);
 export type OrganizerType = (typeof ORGANIZER_TYPE.keys)[number];
 
+/** What an artist plays and produces with (gear_items.category). */
+export const GEAR_CATEGORY = list([
+  ['daw', 'DAW', 'Phần mềm DAW'], ['plugin', 'Plugin', 'Plugin'], ['controller', 'Controller', 'Controller'], ['mixer', 'Mixer', 'Mixer'],
+  ['cdj', 'Media player', 'Đầu CDJ'], ['turntable', 'Turntable', 'Bàn xoay đĩa'], ['synth', 'Synth', 'Synth'], ['drum_machine', 'Drum machine', 'Drum machine'],
+  ['sampler', 'Sampler', 'Sampler'], ['interface', 'Audio interface', 'Sound card'], ['headphones', 'Headphones', 'Tai nghe'],
+  ['monitors', 'Monitors', 'Loa kiểm âm'], ['microphone', 'Microphone', 'Micro'], ['other', 'Other', 'Khác'],
+]);
+export type GearCategory = (typeof GEAR_CATEGORY.keys)[number];
+
+export const GEAR_USE = list([['studio', 'Studio', 'Phòng thu'], ['live', 'Live', 'Biểu diễn'], ['both', 'Studio and live', 'Phòng thu & biểu diễn']]);
+export type GearUse = (typeof GEAR_USE.keys)[number];
+
 /** A link's address, when it is on one of that kind's sites; otherwise null. */
 export function cleanLink(kind: ArtistLink, value: string): string | null {
   try {

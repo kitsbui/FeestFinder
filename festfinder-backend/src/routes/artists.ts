@@ -14,6 +14,7 @@ import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
 import { artistKey, presentLinks, searchArtists } from '../services/artists.ts';
 import { directoryPages } from '../services/seo.ts';
 import { reportGig, reportsOf } from '../services/ingest/report.ts';
+import { gearOf, presentGear } from '../services/gear.ts';
 import { appendAudit } from '../services/audit.ts';
 import { artistOrganizers, artistStyles, artistVenues, sharedLineups, similarArtists } from '../services/network.ts';
 
@@ -37,6 +38,7 @@ const DirectoryQuery = z.object({
   booking: csv(z.enum(keysOf(BOOKING_STATUS))).optional(),
   travel: z.enum(keysOf(TRAVEL_SCOPE)).optional(),
   gig: csv(z.enum(keysOf(GIG_TYPE))).optional(),
+  gear: z.string().regex(/^[a-z0-9-]{2,80}$/).optional(),
   verified: bool.optional(),
   upcoming: bool.optional(),
   sort: z.enum(['next', 'name', 'active']).default('next'),
@@ -90,6 +92,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
     ]);
+    const gear = await gearOf(ctx.db, a.id, { includePending: false });
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const cards = rows.map((r) => presentCard(r, { now, viewer }));
     const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((x, y) => y[1] - x[1]).map(([x]) => x);
@@ -112,6 +115,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       upcoming: cards,
       past: past.map((e) => ({ id: e.id, slug: e.slug, title: e.title, startsOn: e.starts_on, city: e.city, cityLabel: cityLabel(e.city), venue: e.venue_name })),
       relationships: { organizers, venues, sharedLineups: lineups, similar },
+      gear: gear.map((g) => presentGear(g, ctx.config.publicBaseUrl.replace(/\/$/, ''))),
     };
   });
 

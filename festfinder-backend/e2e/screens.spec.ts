@@ -146,6 +146,7 @@ test.describe('Web', () => {
     await page.request.post('/me/artist/gigs', { data: { title: 'Owl warehouse', startsOn: '2027-03-06', city: 'ho-chi-minh', venueName: 'Lot 9' } });
     await page.reload();
     await expect(page.getByRole('row').filter({ hasText: 'Owl warehouse' })).toContainText('Có tên bạn');
+    await expectOps(page, '/ops/artist/gear', /Thêm từ danh mục/);
   });
 
   test('ticket buttons go to the checkout here, or out to the seller, and count the press', async ({ page }) => {
@@ -515,6 +516,7 @@ test.describe('Ops', () => {
       ['/ops/claims', /Hồ sơ nghệ sĩ & BTC/],
       ['/ops/claims?what=profiles', /Không có yêu cầu nào|Duyệt/],
       ['/ops/artists', /Hoaprox/],
+      ['/ops/artists?tab=gear', /Không có gì chờ duyệt|Duyệt/],
       ['/ops/events', /Đặc điểm/],
       ['/ops/events/new', /Đăng ngay sau khi tạo/],
       ['/ops/reports', /Báo cáo người dùng/],

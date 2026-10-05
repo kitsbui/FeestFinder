@@ -328,7 +328,7 @@ const S = {
   artistNone:{en:'No shows coming up',vi:'Chưa có show sắp tới'}, artistFollowers:{en:'followers',vi:'người theo dõi'}, artistShows:{en:'upcoming',vi:'sắp tới'},
   artistOpen:{en:'Artist page',vi:'Trang nghệ sĩ'},
   artistOrgs:{en:'Worked with',vi:'Đã hợp tác'}, artistVenues:{en:'Played at',vi:'Đã diễn tại'}, artistLineups:{en:'Shared lineups',vi:'Từng diễn chung'},
-  artistSimilar:{en:'Similar artists',vi:'Nghệ sĩ tương tự'}, artistEdit:{en:'Edit profile',vi:'Chỉnh hồ sơ'}, artistBasedIn:{en:'Based in {c}',vi:'Hoạt động tại {c}'},
+  artistSimilar:{en:'Similar artists',vi:'Nghệ sĩ tương tự'}, artistGear:{en:'Gear & software',vi:'Thiết bị & phần mềm'}, artistEdit:{en:'Edit profile',vi:'Chỉnh hồ sơ'}, artistBasedIn:{en:'Based in {c}',vi:'Hoạt động tại {c}'},
   artistSince:{en:'since {y}',vi:'từ {y}'}, artistEvents:{en:'{n} events',vi:'{n} sự kiện'}, artistVerified:{en:'Verified',vi:'Đã xác minh'},
   artistTravel:{en:'Travels: {t}',vi:'Đi diễn: {t}'},
   dirTitle:{en:'Artists',vi:'Nghệ sĩ'}, dirSearch:{en:'Search artists',vi:'Tìm nghệ sĩ'}, dirAll:{en:'All',vi:'Tất cả'},
@@ -1447,7 +1447,7 @@ class Component extends DCLogic {
   loadArtist(slug) {
     FF.get('/artists/' + encodeURIComponent(slug)).then(out => {
       const up = this.remember(out.upcoming);
-      this.setState(s => ({ artists: Object.assign({}, s.artists, { [slug]: Object.assign({}, out.artist, { upcomingIds: up.map(e => e.id), past: out.past, rel: out.relationships || {} }) }) }));
+      this.setState(s => ({ artists: Object.assign({}, s.artists, { [slug]: Object.assign({}, out.artist, { upcomingIds: up.map(e => e.id), past: out.past, rel: out.relationships || {}, gear: out.gear || [] }) }) }));
     }, e => this.say(FF.errorText(e, this.state.lang)));
   }
   openStat(k) { this.setState({ screen:'stat', statView:k }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
@@ -2441,7 +2441,7 @@ class Component extends DCLogic {
         const a = st.artists[st.artistSlug];
         const none = { hasMeta:false, meta:'', verified:false, verifiedLabel:'', hasBooking:false, bookingLabel:'', bookingFg:'', hasBio:false, bio:'', hasLinks:false, links:[],
           editShow:false, editLabel:'', edit: () => {}, hasOrgs:false, orgs:[], orgsTitle:'', hasVenues:false, venues:[], venuesTitle:'', hasLineups:false, lineups:[], lineupsTitle:'',
-          hasSimilar:false, similar:[], similarTitle:'' };
+          hasSimilar:false, similar:[], similarTitle:'', hasGear:false, gear:[], gearTitle:'' };
         if (!a) return Object.assign(none, { name: st.artistSlug || '', kicker: L.artistKicker, stats: [], upcoming: [], upEmpty: false, hasPast: false, pastRows: [], followLabel: L.follow,
           followBg:'#ABFF84', followFg:'#0E100F', followBd:'#ABFF84', follow: () => {}, upTitle: L.artistUpcoming, pastTitle: L.artistPast, noUpcoming: L.artistNone, art: FF.genreArt('EDM'), initials: '' });
         const rel = a.rel || {};
@@ -2471,6 +2471,8 @@ class Component extends DCLogic {
           lineups: (rel.sharedLineups || []).map(x => ({ name: x.name, line: lineDays(x), open: () => this.openArtist(x.slug) })),
           similarTitle: L.artistSimilar, hasSimilar: (rel.similar || []).length > 0,
           similar: (rel.similar || []).map(x => ({ name: x.name, initials: FF.initials(x.name), art: FF.genreArt('EDM'), line: x.score + '/100', open: () => this.openArtist(x.slug) })),
+          gearTitle: L.artistGear, hasGear: (a.gear || []).length > 0,
+          gear: (a.gear || []).map(x => ({ name: [x.brand, x.name].filter(Boolean).join(' '), line: (x.categoryLabel || {})[g] || x.category, hasUrl: !!x.url, url: x.url || '' })),
           stats: [
             { value: String(ups.length), label: L.artistShows },
             { value: this.short0(a.followers + (following && !a.following ? 1 : !following && a.following ? -1 : 0)), label: L.artistFollowers },
