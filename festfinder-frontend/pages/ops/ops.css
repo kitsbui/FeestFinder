@@ -987,3 +987,14 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
   .op-views { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .op-view { flex: none; }
 }
+
+/* Sources: raw records, provenance and confidence. */
+.op-mb { margin-bottom: 16px; }
+.op-json { margin: 0; max-height: 60vh; overflow: auto; padding: 14px; border-radius: 8px; background: rgba(255, 252, 225, .04); border: 1px solid var(--ff-line, rgba(255, 252, 225, .12)); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ff-text-3, #e6e3c8); white-space: pre-wrap; word-break: break-word; }
+.op-inline-form { display: flex; gap: 8px; align-items: center; }
+.op-inline-form > :first-child { flex: 1; min-width: 0; }
+.op-conf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.op-conf-score { font-size: 34px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; }
+.op-conf-lines { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.op-conf-lines li { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ff-text-3, #e6e3c8); }
+.op-conf-lines li.is-bad { color: var(--op-danger, #ff6b5e); }

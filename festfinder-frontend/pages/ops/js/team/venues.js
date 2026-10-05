@@ -4,8 +4,8 @@
  * coordinates, checked on a small map before saving.
  */
 import { h, Fragment, useState, useEffect, useMemo, useRef, useLayoutEffect, t, tx, cx, fold, get, post, patch, href, navigate, useFetch, useQueryState, useRoute, setQuery, toast, errorText, emit, day, num } from '../core.js';
-import { PageHeader, Button, Icon, Pill, Spinner, ErrorBox, Empty, FilterBar, FilterSelect, DataTable, Drawer, Field, Input, Combobox, Switch, Tabs, StatusPill, Card, Stat } from '../ui.js';
-import { areaOptions } from '../opts.js';
+import { PageHeader, Button, Icon, Pill, Spinner, ErrorBox, Empty, FilterBar, FilterSelect, DataTable, Drawer, Field, Input, Select, Combobox, Switch, Tabs, StatusPill, Card, Stat } from '../ui.js';
+import { areaOptions, cityOptions, cityOf } from '../opts.js';
 
 /** Coordinates from a Google Maps / Apple Maps / OSM link, or from "10.77, 106.70". */
 export function parseCoords(text) {
@@ -17,7 +17,9 @@ export function parseCoords(text) {
   }
   return null;
 }
-const inVietnam = (lat, lng) => lat >= 8 && lat <= 24 && lng >= 102 && lng <= 110;
+const onEarth = (lat, lng) => Math.abs(lat) <= 85 && Math.abs(lng) <= 180;
+/** Inside the city's box, the same check the API makes. */
+const inCity = (lat, lng, slug) => { const c = cityOf(slug); if (!c) return onEarth(lat, lng); const [w, so, e, n] = c.bbox; return lat >= so && lat <= n && lng >= w && lng <= e; };
 
 /** OpenStreetMap tiles around the pin, to check it lands on the right building before saving. */
 export function MiniMap({ lat, lng, zoom = 16 }) {
@@ -32,7 +34,7 @@ export function MiniMap({ lat, lng, zoom = 16 }) {
     return () => ro.disconnect();
   }, []);
   const hgt = Math.round(Math.min(w, 600) * 0.6);
-  if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng) || !inVietnam(lat, lng)) {
+  if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng) || !onEarth(lat, lng)) {
     return h('div', { ref: box, className: 'op-minimap is-empty', style: { height: hgt } }, Icon('map-pin'), t('Chưa có toạ độ', 'No coordinates yet'));
   }
   const n = 2 ** zoom;
@@ -51,14 +53,14 @@ export function MiniMap({ lat, lng, zoom = 16 }) {
 function VenueDrawer({ venue, preset, onClose, onSaved }) {
   const editing = !!venue?.id;
   const [f, setF] = useState(() => ({
-    name: venue?.name ?? preset?.name ?? '', address: venue?.address ?? preset?.address ?? '', area: venue?.area ?? preset?.area ?? '',
+    name: venue?.name ?? preset?.name ?? '', address: venue?.address ?? preset?.address ?? '', area: venue?.area ?? preset?.area ?? '', city: venue?.city ?? preset?.city ?? 'ho-chi-minh',
     lat: venue?.lat ?? '', lng: venue?.lng ?? '', verified: venue?.verified ?? true, permitOnFile: venue?.permitOnFile ?? false,
   }));
   const [paste, setPaste] = useState('');
   const [busy, setBusy] = useState(false);
   const set = (k) => (v) => setF((x) => ({ ...x, [k]: v }));
   const lat = f.lat === '' ? null : Number(f.lat), lng = f.lng === '' ? null : Number(f.lng);
-  const coordsOk = lat !== null && lng !== null && inVietnam(lat, lng);
+  const coordsOk = lat !== null && lng !== null && inCity(lat, lng, f.city);
   const ok = f.name.trim().length >= 2 && f.address.trim().length >= 3 && f.area && coordsOk;
   const takePaste = (v) => {
     setPaste(v);
@@ -68,7 +70,7 @@ function VenueDrawer({ venue, preset, onClose, onSaved }) {
   const save = async () => {
     setBusy(true);
     try {
-      const body = { name: f.name.trim(), address: f.address.trim(), area: f.area, lat, lng, verified: f.verified, permitOnFile: f.permitOnFile };
+      const body = { name: f.name.trim(), address: f.address.trim(), area: f.area, city: f.city, lat, lng, verified: f.verified, permitOnFile: f.permitOnFile };
       const out = editing ? await patch(`/admin/venues/${venue.id}`, body) : await post('/admin/venues', body);
       toast(tx(out.message));
       onSaved(out);
@@ -83,10 +85,11 @@ function VenueDrawer({ venue, preset, onClose, onSaved }) {
   h('div', { className: 'op-form-grid' },
     h(Field, { label: t('Tên địa điểm', 'Venue name'), required: true, className: 'is-wide' }, h(Input, { value: f.name, onChange: set('name'), placeholder: t('vd: Nhà thi đấu Phú Thọ', 'e.g. Phú Thọ Arena'), autoFocus: !editing })),
     h(Field, { label: t('Địa chỉ', 'Address'), required: true, className: 'is-wide' }, h(Input, { value: f.address, onChange: set('address'), placeholder: t('Số nhà, đường, phường', 'Number, street, ward') })),
-    h(Field, { label: t('Khu vực', 'District'), required: true }, h(Combobox, { value: f.area, options: areaOptions(), icon: 'map-trifold', placeholder: t('Chọn quận / khu vực', 'Pick a district'), onChange: (v) => set('area')(v ?? ''), onCreate: (v) => set('area')(v) })),
+    h(Field, { label: t('Thành phố', 'City'), required: true }, h(Select, { value: f.city, onChange: (v) => set('city')(v || 'ho-chi-minh'), options: cityOptions() })),
+    h(Field, { label: t('Khu vực', 'District'), required: true }, h(Combobox, { value: f.area, options: f.city === 'ho-chi-minh' ? areaOptions() : [], icon: 'map-trifold', placeholder: t('Chọn hoặc nhập khu vực', 'Pick or type a district'), onChange: (v) => set('area')(v ?? ''), onCreate: (v) => set('area')(v) })),
     h(Field, { label: t('Dán link bản đồ hoặc toạ độ', 'Paste a map link or coordinates'), error: paste && !parseCoords(paste) ? t('Không đọc được toạ độ', 'No coordinates found') : null },
       h(Input, { value: paste, onChange: takePaste, icon: 'link', placeholder: 'https://maps.google.com/…@10.77,106.70' })),
-    h(Field, { label: t('Vĩ độ', 'Latitude'), required: true }, h(Input, { value: f.lat, onChange: set('lat'), inputMode: 'decimal', placeholder: '10.7714', invalid: f.lat !== '' && !coordsOk })),
+    h(Field, { label: t('Vĩ độ', 'Latitude'), required: true, error: f.lat !== '' && f.lng !== '' && !coordsOk ? t('Ghim nằm ngoài thành phố đã chọn', 'The pin is outside the chosen city') : null }, h(Input, { value: f.lat, onChange: set('lat'), inputMode: 'decimal', placeholder: '10.7714', invalid: f.lat !== '' && !coordsOk })),
     h(Field, { label: t('Kinh độ', 'Longitude'), required: true }, h(Input, { value: f.lng, onChange: set('lng'), inputMode: 'decimal', placeholder: '106.6570', invalid: f.lng !== '' && !coordsOk })),
     h('div', { className: 'is-wide' },
       h(MiniMap, { lat, lng }),
@@ -145,7 +148,7 @@ export function Venues() {
   };
   const columns = [
     { key: 'name', label: t('Địa điểm', 'Venue'), render: (v) => h('div', null, h('div', { className: 'op-cell-title' }, v.name), h('div', { className: 'op-cell-sub' }, v.address)) },
-    { key: 'area', label: t('Khu vực', 'District'), width: 130, render: (v) => v.area },
+    { key: 'area', label: t('Khu vực', 'District'), width: 160, render: (v) => h('div', null, h('div', null, v.area), h('div', { className: 'op-cell-sub' }, cityOf(v.city) ? tx(cityOf(v.city).label) : v.city)) },
     { key: 'state', label: t('Trạng thái', 'Status'), width: 220, render: (v) => h('div', { className: 'op-flags' }, v.verified ? h(Pill, { tone: 'ok', icon: 'seal-check' }, t('Đã xác minh', 'Verified')) : h(Pill, { tone: 'warn' }, t('Chưa xác minh', 'Unverified')), v.permitOnFile ? h(Pill, { tone: 'info', icon: 'certificate' }, t('Có giấy phép', 'Permit')) : null) },
     { key: 'events', label: t('Sắp tới · tổng', 'Upcoming · total'), width: 140, align: 'right', render: (v) => h('span', { className: 'op-cell-num' }, h('strong', null, v.upcoming), ` · ${v.events}`) },
     { key: 'pin', label: t('Ghim', 'Pin'), width: 190, render: (v) => h('a', { className: 'op-ext op-mono', href: `https://www.google.com/maps?q=${v.lat},${v.lng}`, target: '_blank', rel: 'noopener noreferrer' }, `${Number(v.lat).toFixed(4)}, ${Number(v.lng).toFixed(4)}`, Icon('arrow-square-out')) },

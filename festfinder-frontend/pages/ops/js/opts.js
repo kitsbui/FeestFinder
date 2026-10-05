@@ -17,6 +17,12 @@ export const orderStatusOptions = () => options().orderStatuses.map((s) => ({ va
 export const payMethodOptions = () => options().paymentMethods.map((m) => ({ value: m.value, label: m.label }));
 export const signupOptions = () => options().signupMethods.filter((m) => m.value !== 'staff').map((m) => ({ value: m.value, label: m.label }));
 
+/** Listed cities, music styles and kinds of night. */
+export const cityOptions = () => (options().cities ?? []).map((c) => ({ value: c.value, label: tx(c.label), sub: c.currency }));
+export const cityOf = (slug) => (options().cities ?? []).find((c) => c.value === slug) ?? null;
+export const styleOptions = () => (options().styles ?? []).map((s) => ({ value: s.value, label: tx(s.label), group: s.genre }));
+export const eventTypeOptions = () => (options().eventTypes ?? []).map((e) => ({ value: e.value, label: tx(e.label) }));
+
 /** Districts, grouped (Central, East, South…), for filters and comboboxes alike. */
 export const areaOptions = () => options().areaGroups.flatMap((g) => g.areas.map((a) => ({ value: a, label: a, group: tx(g.label) })));
 

@@ -13,7 +13,7 @@ import {
   Icon, Button, Field, Input, TextArea, Select, Segmented, RadioCards, Combobox, ChipsInput, MoneyInput, TimeSelect, DateInput,
   Uploader, QualityRing, Pill, Card, Switch, confirm, Avatar, Img,
 } from './ui.js';
-import { genreOptions, ageOptions, areaOptions, loadVenues, suggestArtists, loadOrganizers, genreLabel, badgeOptions } from './opts.js';
+import { genreOptions, ageOptions, areaOptions, loadVenues, suggestArtists, loadOrganizers, genreLabel, badgeOptions, cityOptions, cityOf, styleOptions, eventTypeOptions } from './opts.js';
 
 export const SECTIONS = [
   { id: 'basics', icon: 'text-aa', vi: 'Thông tin cơ bản', en: 'Basics' },
@@ -64,6 +64,9 @@ function fromDraft(d) {
   return {
     title: d?.title && d.title !== 'Untitled event' ? d.title : '',
     genre: d?.genre ?? '',
+    styles: d?.styles ?? [],
+    eventType: d?.eventType ?? '',
+    city: d?.city ?? 'ho-chi-minh',
     age: d?.age ?? 'All ages',
     descVi: d?.description?.vi ?? '',
     descEn: d?.description?.en ?? '',
@@ -100,6 +103,8 @@ function toPayload(f, mode) {
   const p = {
     title: f.title.trim(),
     genre: f.genre || null,
+    styles: f.styles,
+    eventType: f.eventType || null,
     age: f.age,
     description: { vi: f.descVi, en: f.descEn },
     startsOn: f.startsOn || null,
@@ -117,7 +122,7 @@ function toPayload(f, mode) {
     brandUrl: f.brandUrl.trim() || null,
   };
   if (saved) Object.assign(p, { venueId: f.venueId || null, ...(f.venueId ? {} : { venueName: null, address: null, area: null }) });
-  else Object.assign(p, { venueId: null, venueName: f.venueName.trim() || null, address: f.address.trim() || null, area: f.area || null });
+  else Object.assign(p, { venueId: null, venueName: f.venueName.trim() || null, address: f.address.trim() || null, area: f.area || null, city: f.city });
   if (mode === 'team') Object.assign(p, { featured: f.featured, badge: f.badge || null });
   return p;
 }
@@ -402,6 +407,15 @@ export function EventForm({ mode, draft, actions, onSaved, banner, readOnly, aut
               h(Select, { id: 'f-genre', value: f.genre, onChange: (v) => set({ genre: v }), placeholder: t('— Chọn thể loại —', '— Pick a genre —'), options: genreOptions() })),
             h(Field, { label: t('Độ tuổi', 'Age policy'), id: 'f-age' },
               h(Segmented, { value: f.age, onChange: (v) => set({ age: v }), options: ageOptions().map((a) => ({ value: a.value, label: a.value === 'All ages' ? t('Mọi lứa tuổi', 'All ages') : a.value })) }))),
+          h('div', { className: 'op-row-2' },
+            h(Field, { label: t('Phong cách nhạc', 'Music styles'), optional: true, id: 'f-styles', hint: t('Tối đa 5', 'Up to 5') },
+              h('div', { className: 'op-quick' }, styleOptions().filter((s) => !f.genre || s.group === f.genre || f.styles.includes(s.value)).map((s) => {
+                const on = f.styles.includes(s.value);
+                return h('button', { key: s.value, type: 'button', className: cx('op-chip', on && 'is-on'), disabled: !on && f.styles.length >= 5,
+                  onClick: () => set({ styles: on ? f.styles.filter((x) => x !== s.value) : [...f.styles, s.value] }) }, s.label);
+              }))),
+            h(Field, { label: t('Loại sự kiện', 'Kind of event'), optional: true, id: 'f-type' },
+              h(Select, { id: 'f-type', value: f.eventType, onChange: (v) => set({ eventType: v }), placeholder: t('— Chọn loại —', '— Pick a kind —'), options: eventTypeOptions() }))),
           h(Field, { label: t('Mô tả (tiếng Việt)', 'Description (Vietnamese)'), id: 'f-desc', counter: [f.descVi.length, 4000] },
             h(TextArea, { id: 'f-desc', rows: 5, value: f.descVi, onChange: (v) => set({ descVi: v }), maxLength: 4000, placeholder: t('Có gì diễn ra, ai biểu diễn, mở cửa khi nào, cần mang theo gì…', 'What happens, who is playing, when doors open, what to bring…') })),
           showEn
@@ -434,6 +448,8 @@ export function EventForm({ mode, draft, actions, onSaved, banner, readOnly, aut
                 h(Combobox, { id: 'f-venue', value: f.venueId, valueLabel: f.venueLabel, load: loadVenues, placeholder: t('Tìm tên địa điểm, đường, quận…', 'Search venue, street, district…'), icon: 'map-pin', onChange: (v, o) => set({ venueId: v, venueLabel: o?.label ?? null, venueSub: o?.sub ?? '', venueArea: o?.raw?.area ?? '' }), emptyText: t('Không có địa điểm này — hãy chọn "Địa điểm mới"', 'Not found — choose "New venue"') })),
               f.venueId ? h('div', { className: 'op-venue-card' }, Icon('map-pin', true), h('div', null, h('div', { className: 'op-venue-name' }, f.venueLabel), h('div', { className: 'op-venue-sub' }, f.venueSub)), h(Pill, { tone: 'ok', icon: 'check-circle' }, t('Có định vị', 'Pinned'))) : null)
             : h(Fragment, null,
+              h(Field, { label: t('Thành phố', 'City'), required: true, id: 'f-city', hint: cityOf(f.city) && cityOf(f.city).currency !== 'VND' ? t(`Giá theo ${cityOf(f.city).currency}`, `Prices in ${cityOf(f.city).currency}`) : null },
+                h(Select, { id: 'f-city', value: f.city, onChange: (v) => set({ city: v || 'ho-chi-minh' }), options: cityOptions() })),
               h('div', { className: 'op-row-2' },
                 h(Field, { label: t('Tên địa điểm', 'Venue name'), required: true, id: 'f-vname' }, h(Input, { id: 'f-vname', value: f.venueName, onChange: (v) => set({ venueName: v }), placeholder: t('vd: Warehouse 12', 'e.g. Warehouse 12') })),
                 h(Field, { label: t('Khu vực', 'District'), required: true, id: 'f-area' },
