@@ -46,7 +46,7 @@ For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. 
 - **Validation:** validate input with zod through `parse()`. Throw `AppError` helpers so the error reaches the client as `{error: {code, message}}`. Build SQL only with positional parameters (`$1` or `SqlParams.p()`). Interpolate column names only from fixed lists.
 - **Sign-in:** Google first. OAuth comes back through `/auth/oauth/:provider/return`, which redirects with `?auth=…&via=…` or `?auth_error=…`. `GET /auth/providers` says which ways in are configured, and the sign-in card shows only those. `GET /auth/session?optional=1` answers `{user: null}` instead of a 401.
 - **Production data:** there is no demo data and no seed in production, and there must never be a fallback database. Production and staging Supabase projects refuse each other's labels.
-- **Commits:** commit, push or deploy only when the user asks.
+- **Commits:** commit, push or deploy only when the user asks. A push to `main` is a production deploy.
 
 ## Caching (frontend.ts)
 
@@ -59,7 +59,9 @@ Outside development, every `/ui` and `/pages` URL carries `?v=<content hash>`:
 ## Deploying
 
 - Vercel project `feestfinder`, root directory `festfinder-backend`. Functions run in `hnd1` (Tokyo), next to the Supabase database.
-- Deploy from the repo root with `vercel deploy --prod --yes`. Migrations run on boot.
+- Pushing to `main` deploys production: the project is linked to GitHub with `main` as its production branch. Other branches get preview deployments on the staging database. Migrations run on boot.
+- Work happens on a branch and reaches `main` by merge. CI (`.github/workflows/ci.yml`) runs on pushes to `main` and on pull requests.
+- To ship a branch without merging it, run `vercel deploy --prod --yes` from the repo root.
 - pg_cron calls `POST https://feestfinder.com/internal/jobs` every minute.
 - Secrets, such as `GOOGLE_CLIENT_SECRET`, are entered by the user in Vercel.
 
