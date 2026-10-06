@@ -61,6 +61,8 @@ export default defineConfig({
         FF_API_ORIGIN: API,
         SITE_URL: WEB,
         NEXT_TELEMETRY_DISABLED: '1',
+        // The Kính đêm component kit (/kit) answers 404 in production builds without it.
+        FF_KIT: '1',
       },
     },
   ],

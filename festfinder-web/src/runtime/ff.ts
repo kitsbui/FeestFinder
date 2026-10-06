@@ -7,6 +7,8 @@
  * loaded templates and the runtime by hand — Next.js and the compiled views do that now.
  */
 
+import { isCutOver } from '@/kd/cutover';
+
 export type Lang = 'en' | 'vi';
 export type Localized = { en: string; vi: string };
 
@@ -405,6 +407,7 @@ FF.oauthStart = async function oauthStart(provider: string, next?: string | null
 };
 
 /** What the provider's return left in the address: read once, then taken out of it. */
+FF.takeOAuthResult = takeOAuthResult;
 function takeOAuthResult() {
   const u = new URL(location.href);
   const provider = u.searchParams.get('auth'), error = u.searchParams.get('auth_error');
@@ -511,6 +514,12 @@ function readRoute(base: string): Route {
  */
 FF.navigate = function navigate(path: string, opts?: { replace?: boolean }) {
   if (path === location.pathname + location.search) return;
+  // A path rebuilt in Kính đêm is a page of its own (src/kd/cutover.ts): load it.
+  if (isCutOver(path)) {
+    if (opts?.replace) location.replace(path);
+    else location.assign(path);
+    return;
+  }
   history[opts?.replace ? 'replaceState' : 'pushState']({ ff: true }, '', path);
   readRoute(FF.route ? FF.route.base : '/');  FF.track('page_view');
 };
@@ -551,6 +560,11 @@ function listen() {
   if (listening) return;
   listening = true;
   window.addEventListener('popstate', () => {
+    // Back or forward onto a rebuilt path: that page, not this screen's drawing of it.
+    if (isCutOver(location.pathname)) {
+      location.reload();
+      return;
+    }
     const r = readRoute(FF.route ? FF.route.base : '/');
     if (FF.onRoute) FF.onRoute(r);
     FF.track('page_view');
