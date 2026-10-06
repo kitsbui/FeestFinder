@@ -258,7 +258,7 @@ export default async function gigRoutes(app: FastifyInstance) {
         [g.id, a.id, s.user.id, b.message, match.score, now]);
       if (r!.created) {
         await notifyOrganizer(q, now, {
-          organizerId: g.organizer_id, topic: 'moderation', kind: 'gig', title: L('A new application', 'Hồ sơ ứng tuyển mới'),
+          organizerId: g.organizer_id, topic: 'bookings', kind: 'gig', title: L('A new application', 'Hồ sơ ứng tuyển mới'),
           body: L(`${a.name} · ${g.title}`, `${a.name} · ${g.title}`), link: { screen: 'gigs', id: g.id }, dedupeKey: `gig_apply:${r!.id}`,
         });
       }
@@ -307,7 +307,7 @@ export default async function gigRoutes(app: FastifyInstance) {
     await ctx.db.tx(async (q) => {
       await q.query('update booking_inquiries set status = $2, reply = $3, answered_at = $4 where id = $1', [i.id, status, b.reply, now]);
       await notifyOrganizer(q, now, {
-        organizerId: i.organizer_id, topic: 'moderation', kind: 'gig',
+        organizerId: i.organizer_id, topic: 'bookings', kind: 'gig',
         title: b.accept ? L(`${a.name} is interested`, `${a.name} đồng ý trao đổi`) : L(`${a.name} declined`, `${a.name} đã từ chối`),
         body: L(b.reply || 'No message', b.reply || 'Không có lời nhắn'), link: { screen: 'gigs' }, dedupeKey: `inquiry_answer:${i.id}`,
       });

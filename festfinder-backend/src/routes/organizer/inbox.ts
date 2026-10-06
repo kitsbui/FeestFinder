@@ -145,7 +145,7 @@ export default async function organizerInboxRoutes(app: FastifyInstance) {
 
   app.put('/organizer/notification-preferences', async (req) => {
     const org = await requireOrganizer(ctx, req);
-    const body = parse(z.object({ moderation: z.boolean(), tickets: z.boolean(), payouts: z.boolean(), crew: z.boolean() }).partial(), req.body);
+    const body = parse(z.object({ moderation: z.boolean(), tickets: z.boolean(), payouts: z.boolean(), crew: z.boolean(), bookings: z.boolean() }).partial(), req.body);
     for (const [topic, enabled] of Object.entries(body)) {
       await ctx.db.query(
         `insert into organizer_notification_prefs (organizer_id, topic, enabled) values ($1,$2,$3)

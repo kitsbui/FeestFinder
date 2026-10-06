@@ -315,7 +315,8 @@ const NK = {
   tickets: { icon:'ph-fill ph-ticket',         color:'#FF8709', tint:'rgba(255,135,9,.14)' },
   payout:  { icon:'ph-fill ph-bank',           color:'#00BAE2', tint:'rgba(0,186,226,.14)' },
   live:    { icon:'ph-fill ph-check-circle',   color:'#ABFF84', tint:'rgba(171,255,132,.13)' },
-  crew:    { icon:'ph-fill ph-users-three',    color:'#ABFF84', tint:'rgba(10,228,72,.14)' }
+  crew:    { icon:'ph-fill ph-users-three',    color:'#ABFF84', tint:'rgba(10,228,72,.14)' },
+  gig:     { icon:'ph-fill ph-microphone-stage', color:'#ABFF84', tint:'rgba(171,255,132,.13)' }
 };
 
 class Component extends DCLogic {
@@ -352,7 +353,7 @@ class Component extends DCLogic {
     annSubject:'', annBody:'',
     annSent: ORG.announcements || [], annSizes: ORG.annSizes || {}, annEst: ORG.annEst || null,
     notifOpen:false, push:null,
-    notifPrefs: ORG.notifPrefs || { moderation:true, tickets:true, payouts:true, crew:false },
+    notifPrefs: ORG.notifPrefs || { moderation:true, tickets:true, payouts:true, crew:false, bookings:true },
     notifs: ORG.notifs || [],
     revenue: ORG.revenue || null,
     promoDraft:'', promoPct:'',
@@ -928,7 +929,8 @@ class Component extends DCLogic {
         { k:'moderation', icon:'ph-bold ph-shield-check', sms:true, label: vi ? 'Quyết định kiểm duyệt' : 'Moderation decisions' },
         { k:'tickets', icon:'ph-bold ph-ticket', sms:true, label: vi ? 'Cảnh báo vé sắp hết' : 'Low-ticket alerts' },
         { k:'payouts', icon:'ph-bold ph-bank', sms:false, label: vi ? 'Chi trả & hoàn tiền' : 'Payouts & refunds' },
-        { k:'crew', icon:'ph-bold ph-users-three', sms:false, label: vi ? 'Hoạt động của crew cổng' : 'Gate crew activity' }
+        { k:'crew', icon:'ph-bold ph-users-three', sms:false, label: vi ? 'Hoạt động của crew cổng' : 'Gate crew activity' },
+        { k:'bookings', icon:'ph-bold ph-microphone-stage', sms:false, label: vi ? 'Ứng tuyển & booking nghệ sĩ' : 'Artist applications & bookings' }
       ].map(p => ({
         label: p.label, icon: p.icon,
         channel: !st.notifPrefs[p.k] ? L.notifChanOff : (p.sms ? L.notifChanOn : L.notifChanPush),

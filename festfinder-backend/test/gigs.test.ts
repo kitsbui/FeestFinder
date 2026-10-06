@@ -92,6 +92,18 @@ describe('the gig marketplace', () => {
     assert.equal((await env.as(org).get('/organizer/inquiries')).body.items[0].reply, 'Yes, let us talk.');
   });
 
+  it('sends gig alerts under their own topic, which the organiser can switch off alone', async () => {
+    const prefs = (await env.as(org).get('/organizer/notification-preferences')).body.topics;
+    assert.equal(prefs.find((t: any) => t.key === 'bookings').enabled, true);
+    assert.equal((await env.as(org).put('/organizer/notification-preferences', { bookings: false })).status, 200);
+    const g3 = (await env.as(org).post('/organizer/gigs', { title: 'Third slot', city: 'ho-chi-minh', startsOn: future(50) })).body;
+    const before = (await env.ctx.db.query<any>(`select count(*)::int as n from notifications where kind = 'gig'`)).rows[0].n;
+    await env.as(far).post(`/gigs/${g3.id}/apply`, {});
+    assert.equal((await env.ctx.db.query<any>(`select count(*)::int as n from notifications where kind = 'gig'`)).rows[0].n, before);
+    assert.equal((await env.as(org).get('/organizer/notification-preferences')).body.topics.find((t: any) => t.key === 'moderation').enabled, true);
+    await env.as(org).put('/organizer/notification-preferences', { bookings: true });
+  });
+
   it('keeps availability windows, and a busy date lowers the fit', async () => {
     const g2 = (await env.as(org).post('/organizer/gigs', { title: 'Second slot', city: 'ho-chi-minh', startsOn: future(40), styles: ['hard-techno'], gigType: 'club' })).body;
     const before = (await env.as(fit).get('/gigs')).body.items.find((g: any) => g.id === g2.id).match.score;
