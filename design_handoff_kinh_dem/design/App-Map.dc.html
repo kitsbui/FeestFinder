@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bản đồ</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone">
+<div class="map" aria-label="Bản đồ sự kiện quanh bạn">
+<svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-hidden="true">
+<path d="M410 110 C 330 170, 250 260, 238 340 S 292 470, 300 560 S 246 700, 410 800" fill="none" stroke="#0aa5b8" stroke-opacity=".13" stroke-width="30" stroke-linecap="round"></path>
+<g fill="none" stroke="#1b1d21" stroke-width="2">
+<path d="M-10 432 L400 472"></path>
+<path d="M118 -10 L178 860"></path>
+<path d="M-10 300 C 120 320, 220 380, 400 336"></path>
+<path d="M-10 712 L400 616"></path>
+<path d="M40 860 C 90 640, 150 520, 240 330 S 330 120, 360 -10"></path>
+</g>
+<g fill="none" stroke="#15171a" stroke-width="1">
+<path d="M-10 560 L400 540"></path>
+<path d="M-10 200 L400 230"></path>
+<path d="M60 -10 L30 860"></path>
+<path d="M260 -10 L340 860"></path>
+<path d="M-10 640 C 100 600, 200 610, 400 700"></path>
+</g>
+</svg>
+<span class="area" style="left: 268px; top: 206px">Thủ Đức</span>
+<span class="area" style="left: 304px; top: 372px">Thảo Điền</span>
+<span class="area" style="left: 214px; top: 378px">Quận 1</span>
+<span class="area" style="left: 146px; top: 646px">Quận 7</span>
+<span class="area" style="left: 44px; top: 522px">Quận 11</span>
+<span class="me" style="left: 178px; top: 476px" aria-label="Vị trí của bạn"></span>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="8">
+<button class="{{p.cls}}" style="left: {{p.x}}px; top: {{p.y}}px" onClick="{{p.pick}}" aria-label="{{p.title}}, {{p.price}}" aria-pressed="{{p.on}}"><span class="mk"></span>{{p.label}}</button>
+</sc-for>
+</div>
+
+<div style="position: absolute; left: 12px; right: 12px; top: 10px; display: flex; flex-direction: column; gap: 8px; z-index: 4">
+<label class="field glass" style="height: 48px; border-radius: 12px">
+<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input placeholder="Tìm địa điểm, khu vực…" aria-label="Tìm địa điểm">
+<span class="m num" style="padding-right: 8px">{{count}} sự kiện</span>
+</label>
+<div class="hscroll">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+<button class="{{c.cls}}" onClick="{{c.pick}}" aria-pressed="{{c.on}}"><span class="mk"></span>{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<button class="ib glass" aria-label="Về vị trí của tôi" style="position: absolute; right: 12px; bottom: 214px; z-index: 4; color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="7.5"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"></path></svg></button>
+
+<a class="glass g-{{sel.g}}" href="App-Event.dc.html" style="position: absolute; left: 12px; right: 12px; bottom: 88px; z-index: 4; display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px; border-radius: 14px">
+<div class="art g-{{sel.g}}" style="width: 84px; height: 84px; border-radius: 8px"></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span class="m" style="display: flex; align-items: center; gap: 6px; color: #d0d6e0"><span class="mk"></span>{{sel.gl}}</span>
+<span class="hs ell">{{sel.title}}</span>
+<span class="s ell" style="color: #d0d6e0">{{sel.when}} · {{sel.km}}</span>
+<span class="{{sel.priceCls}}">{{sel.price}}</span>
+</div>
+<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98; margin-right: 4px"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+
+<nav class="tabbar glass" aria-label="Điều hướng chính">
+<a class="tb" href="Main.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Khám phá</a>
+<a class="tb on" href="App-Map.dc.html" aria-current="page"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>Bản đồ</a>
+<a class="tb" href="#"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>Đã lưu</a>
+<a class="tb" href="App-Ticket.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"></path><path d="M14 6v12"></path></svg>Vé</a>
+<a class="tb" href="Profile-Fan-App.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg>Tôi</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'warmup', free: false, near: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const EV = [
+      { id: 'warmup', g: 'edm', gl: 'EDM', title: 'Ravolution Warm-up · Rooftop', when: 'T6 18.09 · 19:00', km: '0.8 km', d: 0.8, price: 'từ 350.000₫', label: '350K', x: 204, y: 424 },
+      { id: 'hozo', g: 'fest', gl: 'Lễ hội', title: 'HOZO Super Fest', when: '18–20.09 · 17:00', km: '2.4 km', d: 2.4, price: 'Miễn phí', label: 'Miễn phí', free: true, x: 300, y: 252 },
+      { id: 'outcast', g: 'cult', gl: 'Văn hoá', title: 'Saigon Outcast Night Market', when: '19–20.09 · 16:00', km: '3.0 km', d: 3.0, price: 'Miễn phí', label: 'Miễn phí', free: true, x: 282, y: 330 },
+      { id: 'duongsach', g: 'cult', gl: 'Văn hoá', title: 'Đường sách Book Fest', when: 'T7 19.09 · 08:00', km: '0.5 km', d: 0.5, price: 'Miễn phí', label: 'Miễn phí', free: true, x: 128, y: 334 },
+      { id: 'ravo', g: 'edm', gl: 'EDM', title: 'Ravolution Music Festival', when: 'T7 19.09 · 16:00', km: '6.1 km', d: 6.1, price: 'từ 1.200.000₫', label: '1,2tr', x: 214, y: 596 },
+      { id: 'rapviet', g: 'live', gl: 'Nhạc sống', title: 'Rap Việt Live Stage', when: 'CN 20.09 · 19:00', km: '5.2 km', d: 5.2, price: 'Hết vé', label: 'Hết vé', out: true, x: 78, y: 472 },
+      { id: 'momang', g: 'fest', gl: 'Lễ hội', title: 'Những Thành Phố Mơ Màng', when: 'T7 26.09 · 15:00', km: '5.6 km', d: 5.6, price: 'từ 890.000₫', label: '890K', x: 74, y: 392 },
+      { id: '8wonder', g: 'live', gl: 'Nhạc sống', title: '8Wonder Concert', when: 'T7 03.10 · 18:00', km: '17 km', d: 17, price: 'từ 1.500.000₫', label: '1,5tr', x: 318, y: 164 }
+    ];
+    const list = EV.filter((e) => (!s.free || e.free) && (!s.near || e.d < 5));
+    const sel = list.find((e) => e.id === s.sel) || list[0] || EV[0];
+    return {
+      count: list.length,
+      chips: [
+        { label: 'Cuối tuần', on: true, cls: 'chip glass on', pick: () => {} },
+        { label: 'Miễn phí', on: s.free, cls: 'chip glass g-free' + (s.free ? ' on' : ''), pick: () => this.setState({ free: !s.free }) },
+        { label: 'Dưới 5 km', on: s.near, cls: 'chip glass' + (s.near ? ' on' : ''), pick: () => this.setState({ near: !s.near }) }
+      ],
+      pins: list.map((p) => ({
+        title: p.title, price: p.price, label: p.label, x: p.x, y: p.y,
+        on: p.id === sel.id,
+        cls: 'ppin glass g-' + p.g + (p.id === sel.id ? ' on' : ''),
+        pick: () => this.setState({ sel: p.id })
+      })),
+      sel: Object.assign({}, sel, { priceCls: sel.free ? 'mb acc-t' : (sel.out ? 'mb fog' : 'mb') })
+    };
+  }
+}
+</script>
+</body>
+</html>

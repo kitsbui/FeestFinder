@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Studio · Bảng điều khiển</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+.erow{width:100%;border:0;border-bottom:1px solid #23252a;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.erow:hover{background:rgba(255,255,255,.03)}
+.erow.on{background:rgba(255,255,255,.05);box-shadow:inset 2px 0 0 #e4f222}
+</style>
+</helmet>
+<div class="ff shell" style="min-height: 100vh">
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}"><button class="scrim" onClick="{{closeMenu}}" aria-label="Đóng menu"></button></sc-if>
+<aside class="side-nav" aria-label="Studio">
+<div class="sn-hide" style="display: flex; align-items: center; gap: 10px; padding: 6px 10px 14px">
+<img src="assets/ff-wordmark.svg" alt="FeestFinder" style="width: 104px; height: 18px">
+<span class="m">Studio</span>
+</div>
+<a class="sn-hide lrow" href="Profile-Org-Web.dc.html" style="min-height: 52px; padding: 0 10px; margin-bottom: 8px; border-radius: 8px; border-bottom: 0; box-shadow: inset 0 0 0 1px #23252a">
+<span class="av sq" style="width: 30px; height: 30px; font-size: 11px; border-radius: 8px">ĐT</span>
+<span style="display: flex; flex-direction: column; min-width: 0; flex: 1"><span class="hs ell" style="font-size: 14px">Đêm Trắng Collective</span><span class="s" style="font-size: 12px">Xem hồ sơ công khai</span></span>
+</a>
+<a class="btn acc sm" href="Studio-Wizard.dc.html" style="margin-bottom: 12px; flex-shrink: 0"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Sự kiện mới</a>
+<a class="sn on" href="Studio-Dashboard.dc.html" aria-current="page"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="4" rx="1.5"></rect><rect x="13" y="10" width="7" height="10" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect></svg>Bảng điều khiển</a>
+<a class="sn" href="#"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"></path></svg>Người tham dự</a>
+<a class="sn" href="Studio-Checkin.dc.html"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"></path></svg>Check-in</a>
+<a class="sn" href="#"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M7 15V9M12 15V5M17 15v-4"></path></svg>Doanh thu</a>
+<a class="sn" href="#"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>Hộp thư<span class="count">3</span></a>
+<div class="sn-hide" style="margin-top: auto; padding-top: 16px; border-top: 1px solid #23252a; display: flex; flex-direction: column; gap: 2px">
+<a class="sn" href="#">Thông tin doanh nghiệp</a>
+<a class="sn" href="#">Đăng xuất</a>
+</div>
+</aside>
+
+<main class="content" style="padding: clamp(20px, 3vw, 32px); display: flex; flex-direction: column; gap: 12px">
+<div class="sec" style="padding-bottom: 8px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<span class="m">Bảng điều khiển</span>
+<div style="position: relative; z-index: 27">
+<h1 class="d2"><button class="dd" onClick="{{toggleMenu}}" aria-expanded="{{menuOpen}}" aria-haspopup="true">{{ev.title}}<svg class="{{chev}}" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M6 9l6 6 6-6"></path></svg></button></h1>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}">
+<div class="menu" role="menu" style="left: 0; top: 48px; min-width: 300px">
+<sc-for list="{{evMenu}}" as="o" hint-placeholder-count="4">
+<button class="{{o.cls}}" role="menuitemradio" aria-checked="{{o.on}}" onClick="{{o.pick}}"><span class="mk"></span>{{o.title}}<span class="aside num">{{o.date}}</span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+<span class="s" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px"><span class="num">{{ev.when}} · {{ev.venue}}</span><span class="{{ev.stCls}}">{{ev.st}}</span></span>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<div class="seg" role="group" aria-label="Khoảng thời gian">
+<sc-for list="{{ranges}}" as="r" hint-placeholder-count="3"><button class="{{r.cls}}" onClick="{{r.pick}}" aria-pressed="{{r.on}}">{{r.label}}</button></sc-for>
+</div>
+<a class="btn sm" href="Web-Event.dc.html">Xem trang<svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 12px">
+<div class="card kpi"><span class="m">Lượt xem</span><span class="d2 num">{{k.views}}</span><span class="s" style="display: flex; align-items: center; gap: 6px"><svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="color: #46c37b"><path d="M7 17L17 7M9 7h8v8"></path></svg>{{k.delta}} so với kỳ trước</span></div>
+<div class="card kpi"><span class="m">Lượt lưu</span><span class="d2 num">{{k.saves}}</span><span class="s num">11,7% lượt xem</span></div>
+<div class="card kpi"><span class="m">{{k.clickLabel}}</span><span class="d2 num">{{k.clicks}}</span><span class="s num">7,2% lượt xem</span></div>
+<div class="bonecard kpi"><span class="m">{{k.soldLabel}}</span><span style="display: flex; align-items: baseline; gap: 6px"><span class="d2 num">{{k.sold}}</span><span class="s num">/ {{k.cap}}</span></span><div style="display: flex; align-items: center; gap: 10px"><div style="flex: 1; height: 8px; border-radius: 4px; background: #d4d4d4; overflow: hidden"><div style="{{k.bar}}; height: 100%; border-radius: 0 4px 4px 0; background: #101010"></div></div><span class="mb num" style="color: #101010">{{k.pct}}</span></div></div>
+</div>
+
+<div class="split" style="gap: 12px">
+<section class="card main" style="padding: 20px; display: flex; flex-direction: column; gap: 16px" aria-label="Lượt xem theo ngày">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<span class="h">Lượt xem mỗi ngày</span>
+<span class="m num">{{rangeLabel}}</span>
+</div>
+<div style="display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px">
+<div class="m num" style="display: flex; flex-direction: column; justify-content: space-between; height: 200px; text-align: right; transform: translateY(-5px)"><span>{{y3}}</span><span>{{y2}}</span><span>{{y1}}</span><span>0</span></div>
+<div style="position: relative; height: 200px" onMouseLeave="{{leave}}">
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between"><i style="height: 1px; background: #1c1d20"></i><i style="height: 1px; background: #1c1d20"></i><i style="height: 1px; background: #1c1d20"></i><i style="height: 1px; background: #383b3f"></i></div>
+<svg viewBox="0 0 1000 200" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible" aria-hidden="true">
+<path d="{{area}}" fill="#d0d6e0" fill-opacity=".08"></path>
+<path d="{{line}}" fill="none" stroke="#d0d6e0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+</svg>
+<i style="position: absolute; top: 0; bottom: 0; left: {{hv.x}}%; width: 1px; background: #383b3f"></i>
+<i style="position: absolute; left: {{hv.x}}%; top: {{hv.y}}%; width: 10px; height: 10px; border-radius: 50%; background: #f7f8f8; box-shadow: 0 0 0 2px #0f1011; transform: translate(-50%, -50%)"></i>
+<div class="tip glass" style="{{hv.tip}}">
+<span class="m num" style="display: block; color: #d0d6e0">{{hv.date}}</span>
+<span class="hs num">{{hv.v}} lượt xem</span>
+</div>
+<div style="position: absolute; inset: 0; display: flex">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="14"><i style="flex: 1; height: 100%" onMouseEnter="{{c.enter}}"></i></sc-for>
+</div>
+</div>
+<span></span>
+<div class="m num" style="display: flex; justify-content: space-between"><span>{{x0}}</span><span>{{x1}}</span><span>{{x2}}</span></div>
+</div>
+</section>
+
+<section class="card side" style="padding: 20px; display: flex; flex-direction: column; gap: 16px" aria-label="Nhịp bán">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span class="h">{{pace.title}}</span>
+<span class="{{pace.stCls}}">{{pace.st}}</span>
+</div>
+<div style="display: flex; align-items: baseline; gap: 10px"><span class="d1 num">{{pace.days}}</span><span class="t fog">ngày tới giờ mở cửa</span></div>
+<div style="display: flex; flex-direction: column; gap: 14px; margin-top: auto">
+<div style="display: flex; flex-direction: column; gap: 6px"><div class="s" style="display: flex; justify-content: space-between"><span>Cần mỗi ngày</span><span class="mb num">{{pace.need}}</span></div><div class="bar-track"><div class="bar-fill" style="{{pace.needBar}}; background: #62666d"></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><div class="s" style="display: flex; justify-content: space-between"><span>Đang đạt mỗi ngày</span><span class="mb num">{{pace.rate}}</span></div><div class="bar-track"><div class="bar-fill" style="{{pace.rateBar}}"></div></div></div>
+</div>
+<sc-if value="{{pace.slow}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid #23252a"><span class="s">Đẩy tin lên mục Đang hot để kéo lượt xem.</span><button class="btn sm">Đẩy tin</button></div>
+</sc-if>
+</section>
+</div>
+
+<div class="split" style="gap: 12px">
+<section class="card main" aria-label="Sự kiện của bạn" style="overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 12px">
+<span class="h">Sự kiện của bạn</span>
+<span class="m num">Bấm một dòng để xem số liệu</span>
+</div>
+<div class="tbl">
+<div class="tr head m" style="grid-template-columns: minmax(200px, 2fr) 72px 110px 120px 32px; border-top: 1px solid #23252a"><span>Sự kiện</span><span>Ngày</span><span>Trạng thái</span><span style="text-align: right">Vé · chỗ</span><span></span></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<sc-if value="{{r.live}}" hint-placeholder-val="{{true}}">
+<button class="{{r.cls}}" onClick="{{r.pick}}" aria-pressed="{{r.on}}" style="grid-template-columns: minmax(200px, 2fr) 72px 110px 120px 32px">
+<span class="hs ell" style="display: flex; align-items: center; gap: 10px"><span class="mk"></span>{{r.title}}</span>
+<span class="s num">{{r.date}}</span>
+<span class="{{r.stCls}}">{{r.st}}</span>
+<span class="mb num" style="text-align: right">{{r.fill}}</span>
+<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98; justify-self: end"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+</sc-if>
+<sc-if value="{{r.draft}}" hint-placeholder-val="{{false}}">
+<div class="tr g-{{r.g}}" style="grid-template-columns: minmax(200px, 2fr) 72px 110px 120px 32px">
+<span class="hs ell" style="display: flex; align-items: center; gap: 10px; color: #8a8f98"><span class="mk"></span>{{r.title}}</span>
+<span class="s num">{{r.date}}</span>
+<span class="st">Nháp</span>
+<a class="btn ghost sm" href="Studio-Wizard.dc.html" style="justify-self: end; margin-right: -12px">Tiếp tục</a>
+<span></span>
+</div>
+</sc-if>
+</sc-for>
+</div>
+</section>
+<section class="card side" style="padding: 20px; display: flex; flex-direction: column; gap: 14px" aria-label="Nguồn lượt xem">
+<span class="h">Lượt xem đến từ đâu</span>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 90px 36px; gap: 12px; align-items: center">
+<span class="s ell">Nguồn cấp FeestFinder</span><div class="bar-track"><div class="bar-fill" style="width: 100%"></div></div><span class="mb num" style="text-align: right">42%</span>
+<span class="s ell">Mục Đang hot</span><div class="bar-track"><div class="bar-fill" style="width: 57%"></div></div><span class="mb num" style="text-align: right">24%</span>
+<span class="s ell">Liên kết chia sẻ</span><div class="bar-track"><div class="bar-fill" style="width: 38%"></div></div><span class="mb num" style="text-align: right">16%</span>
+<span class="s ell">Tìm kiếm</span><div class="bar-track"><div class="bar-fill" style="width: 26%"></div></div><span class="mb num" style="text-align: right">11%</span>
+<span class="s ell">Hồ sơ nghệ sĩ</span><div class="bar-track"><div class="bar-fill" style="width: 17%"></div></div><span class="mb num" style="text-align: right">7%</span>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { ev: 'dto', range: 1, hover: null, menu: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const EV = [
+      { id: 'dto', g: 'edm', title: 'Đêm Trắng Open Air', date: '10.10', when: 'T7 10.10 · 17:00', venue: 'Công viên Gia Định', f: 1, cap: 3000, sold: 2250, days: 22, rate: 41, delta: '12%' },
+      { id: 'r9', g: 'edm', title: 'Rooftop Session Vol. 9', date: '16.10', when: 'T6 16.10 · 20:00', venue: 'Sân thượng Lê Lợi', f: 0.22, cap: 400, sold: 184, days: 28, rate: 9, delta: '9%' },
+      { id: 'bs', g: 'live', title: 'Bờ Sông Acoustic', date: '18.10', when: 'CN 18.10 · 18:00', venue: 'Bờ sông Thủ Thiêm', f: 0.3, cap: 800, sold: 212, days: 30, rate: 14, delta: '4%' },
+      { id: 'cd', g: 'cult', title: 'Chợ Đêm Trắng', date: '24.10', when: '24–25.10 · 16:00', venue: 'Thảo Điền', f: 0.4, cap: 2000, sold: 1020, days: 36, rate: 31, delta: '18%', free: true }
+    ];
+    const ev = EV.find((e) => e.id === s.ev) || EV[0];
+    const ALL = [610, 650, 700, 760, 720, 690, 740, 820, 860, 800, 830, 880, 900, 860, 600, 640, 620, 700, 760, 820, 900, 980, 1050, 1120, 1240, 1380, 1520, 1690, 2510, 2950];
+    const N = [7, 14, 30][s.range];
+    const data = ALL.slice(ALL.length - N).map((v) => Math.round(v * ev.f));
+    const total = data.reduce((a, b) => a + b, 0);
+    const fmt = (n) => Math.round(n).toLocaleString('vi-VN').replace(/,/g, '.');
+    const peak = Math.max.apply(null, data);
+    const MAX = [150, 300, 600, 900, 1500, 3000, 6000].find((m) => m >= peak) || 6000;
+    const H = 200;
+    const pts = data.map((v, i) => [(i / (N - 1)) * 1000, H - (v / MAX) * H]);
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const end = new Date(2026, 8, 18);
+    const dateOf = (i) => { const d = new Date(end); d.setDate(end.getDate() - (N - 1 - i)); return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2); };
+    const h = s.hover === null || s.hover >= N ? N - 1 : s.hover;
+    const x = (h / (N - 1)) * 100;
+    const need = Math.ceil((ev.cap - ev.sold) / ev.days);
+    const slow = ev.rate < need;
+    const top = Math.max(need, ev.rate) * 1.1;
+    const pct = Math.round(ev.sold / ev.cap * 100);
+    return {
+      menuOpen: s.menu,
+      closeMenu: () => this.setState({ menu: false }),
+      toggleMenu: () => this.setState({ menu: !s.menu }),
+      chev: 'i chev' + (s.menu ? ' up' : ''),
+      evMenu: EV.map((e) => ({ title: e.title, date: e.date, on: e.id === ev.id, cls: 'mi g-' + e.g + (e.id === ev.id ? ' on' : ''), pick: () => this.setState({ ev: e.id, menu: false, hover: null }) })),
+      ev: { title: ev.title, when: ev.when, venue: ev.venue, st: ev.free ? 'Đang nhận đăng ký' : 'Đang bán', stCls: 'st ok' },
+      k: {
+        views: fmt(total), saves: fmt(total * 0.117), clicks: fmt(total * 0.072), delta: ev.delta,
+        clickLabel: ev.free ? 'Bấm đăng ký' : 'Bấm mua vé',
+        soldLabel: ev.free ? 'Đã đăng ký' : 'Vé đã bán',
+        sold: fmt(ev.sold), cap: fmt(ev.cap) + ' chỗ', pct: pct + '%', bar: 'width: ' + pct + '%'
+      },
+      pace: {
+        title: ev.free ? 'Nhịp đăng ký' : 'Nhịp bán vé',
+        days: ev.days, need: fmt(need), rate: fmt(ev.rate), slow,
+        st: slow ? 'Chậm nhịp' : 'Đúng nhịp', stCls: slow ? 'st warn' : 'st ok',
+        needBar: 'width: ' + Math.round(need / top * 100) + '%', rateBar: 'width: ' + Math.round(ev.rate / top * 100) + '%'
+      },
+      rangeLabel: dateOf(0) + ' – ' + dateOf(N - 1),
+      ranges: ['7 ngày', '14 ngày', '30 ngày'].map((label, i) => ({ label, on: s.range === i, cls: s.range === i ? 'on' : '', pick: () => this.setState({ range: i, hover: null }) })),
+      y3: fmt(MAX), y2: fmt(MAX * 2 / 3), y1: fmt(MAX / 3),
+      line, area: line + ' L1000 ' + H + ' L0 ' + H + ' Z',
+      cols: data.map((v, i) => ({ enter: () => this.setState({ hover: i }) })),
+      leave: () => this.setState({ hover: null }),
+      hv: (() => {
+        const y = (pts[h][1] / H) * 100;
+        const tx = Math.min(Math.max(x, 12), 88).toFixed(2);
+        const tip = y < 40
+          ? 'left: ' + tx + '%; top: calc(' + y.toFixed(2) + '% + 14px); transform: translate(-50%, 0)'
+          : 'left: ' + tx + '%; top: calc(' + y.toFixed(2) + '% - 14px); transform: translate(-50%, -100%)';
+        return { x: x.toFixed(2), y: y.toFixed(2), tip, v: fmt(data[h]), date: dateOf(h) };
+      })(),
+      x0: dateOf(0), x1: dateOf(Math.floor((N - 1) / 2)), x2: dateOf(N - 1),
+      rows: EV.map((e) => ({
+        live: true, draft: false, g: e.g, title: e.title, date: e.date, on: e.id === ev.id,
+        cls: 'tr erow g-' + e.g + (e.id === ev.id ? ' on' : ''),
+        st: e.free ? 'Đăng ký' : 'Đang bán', stCls: 'st ok',
+        fill: fmt(e.sold) + ' / ' + fmt(e.cap),
+        pick: () => this.setState({ ev: e.id, hover: null })
+      })).concat([{ live: false, draft: true, g: 'fest', title: 'Đêm Trắng NYE 2026', date: '31.12' }])
+    };
+  }
+}
+</script>
+</body>
+</html>

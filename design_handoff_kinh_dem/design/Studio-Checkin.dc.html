@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Check-in tại cổng</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone">
+<header class="bar" style="padding-left: 4px; gap: 8px">
+<a class="ib" href="Studio-Dashboard.dc.html" aria-label="Về Studio"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+<div style="display: flex; flex-direction: column; min-width: 0">
+<span class="hs">Check-in</span>
+<span class="m ell">Đêm Trắng Open Air · 10.10</span>
+</div>
+<span class="st ok" style="margin-left: auto; padding-right: 8px">Trực tuyến</span>
+</header>
+
+<div style="padding: 6px 16px 0; display: flex; flex-direction: column; gap: 12px">
+<div class="seg full" role="group" aria-label="Cổng">
+<sc-for list="{{gates}}" as="g" hint-placeholder-count="3">
+<button class="{{g.cls}}" onClick="{{g.pick}}" aria-pressed="{{g.on}}">{{g.label}}</button>
+</sc-for>
+</div>
+
+<div style="position: relative; height: 184px; border-radius: 12px; background: #0f1011; box-shadow: inset 0 0 0 1px #23252a; overflow: hidden" aria-label="Khung quét mã QR">
+<span style="position: absolute; left: 92px; top: 24px; width: 28px; height: 28px; border-left: 3px solid #f7f8f8; border-top: 3px solid #f7f8f8; border-radius: 6px 0 0 0"></span>
+<span style="position: absolute; right: 92px; top: 24px; width: 28px; height: 28px; border-right: 3px solid #f7f8f8; border-top: 3px solid #f7f8f8; border-radius: 0 6px 0 0"></span>
+<span style="position: absolute; left: 92px; bottom: 24px; width: 28px; height: 28px; border-left: 3px solid #f7f8f8; border-bottom: 3px solid #f7f8f8; border-radius: 0 0 0 6px"></span>
+<span style="position: absolute; right: 92px; bottom: 24px; width: 28px; height: 28px; border-right: 3px solid #f7f8f8; border-bottom: 3px solid #f7f8f8; border-radius: 0 0 6px 0"></span>
+<span style="position: absolute; left: 100px; right: 100px; height: 2px; border-radius: 2px; background: #e4f222; box-shadow: 0 0 12px rgba(228, 242, 34, .6); animation: ffScan 2.4s cubic-bezier(.4, 0, .2, 1) infinite"></span>
+<span class="m" style="position: absolute; left: 0; right: 0; bottom: 6px; text-align: center">Đưa mã QR vào khung</span>
+</div>
+
+<form onSubmit="{{check}}" style="display: flex; gap: 8px">
+<label class="field" style="flex: 1">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Mã vé</span>
+<input class="num" value="{{code}}" onChange="{{onCode}}" placeholder="Nhập mã vé" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 14px; letter-spacing: .04em">
+</label>
+<button class="btn acc" type="submit">Kiểm tra</button>
+</form>
+
+<div style="{{r.box}}" role="status" aria-live="polite">
+<span style="width: 52px; height: 52px; border-radius: {{r.radius}}; background: #08090a; color: {{r.color}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg class="i" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2"><path d="{{r.icon}}"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span class="num" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; color: #101010">{{r.time}} · {{gate}}</span>
+<span style="font-size: 26px; line-height: 1.1; letter-spacing: -.03em; font-weight: 500; color: #101010">{{r.title}}</span>
+<span style="font-size: 13px; color: #101010">{{r.line}}</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<span style="display: flex; align-items: baseline; gap: 6px"><span class="d3 num">{{inCount}}</span><span class="s num">/ 2.250 đã vào</span></span>
+<span class="m num">24 người / phút</span>
+</div>
+<div class="bar-track"><div class="bar-fill" style="width: {{pct}}%"></div></div>
+</div>
+
+<div style="display: flex; flex-direction: column; border-top: 1px solid #23252a">
+<span class="m" style="padding: 12px 0 4px">Vừa quét</span>
+<sc-for list="{{recent}}" as="x" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid #23252a">
+<div style="display: flex; flex-direction: column; min-width: 0">
+<span class="hs ell">{{x.who}}</span>
+<span class="m num">{{x.code}}</span>
+</div>
+<span class="{{x.cls}}">{{x.st}} · {{x.time}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"result":{"editor":"enum","options":["Hợp lệ","Đã dùng","Không hợp lệ"],"default":"Hợp lệ","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { code: 'DTO-26-4F8K-2Q', n: 1512, pick: null, gate: 1 };
+  }
+  renderVals() {
+    const s = this.state;
+    const R = {
+      'Hợp lệ': { bg: '#46c37b', color: '#46c37b', radius: '50%', icon: 'M5 12.5l4.5 4.5L19 7', title: 'Hợp lệ', line: 'Phổ thông · Nguyễn Minh · vé 1 / 2' },
+      'Đã dùng': { bg: '#f0b429', color: '#f0b429', radius: '6px', icon: 'M12 7v5l3 2M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18z', title: 'Đã dùng', line: 'Đã vào lúc 18:48 qua Cổng A' },
+      'Không hợp lệ': { bg: '#eb5757', color: '#eb5757', radius: '6px', icon: 'M6 6l12 12M18 6L6 18', title: 'Không hợp lệ', line: 'Mã không thuộc sự kiện này' }
+    };
+    const order = ['Hợp lệ', 'Đã dùng', 'Không hợp lệ'];
+    const key = s.pick || this.props.result || 'Hợp lệ';
+    const r = R[key] || R['Hợp lệ'];
+    const GATES = ['Cổng A', 'Cổng B', 'VIP'];
+    const REC = [
+      ['ok', 'Hợp lệ', 'Linh Phạm', 'DTO-26-9A2C-7M', '19:12'],
+      ['bad', 'Sai sự kiện', 'Không rõ', 'RVL-26-11B0-0X', '19:11'],
+      ['warn', 'Đã dùng', 'Thu Hà', 'DTO-26-6F1A-8P', '19:10']
+    ];
+    return {
+      code: s.code,
+      onCode: (e) => this.setState({ code: e.target.value.toUpperCase() }),
+      check: (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const next = order[(order.indexOf(key) + 1) % 3];
+        this.setState({ pick: next, n: s.n + (next === 'Hợp lệ' ? 1 : 0) });
+      },
+      gate: GATES[s.gate],
+      gates: GATES.map((label, i) => ({ label, on: s.gate === i, cls: s.gate === i ? 'on' : '', pick: () => this.setState({ gate: i }) })),
+      r: Object.assign({}, r, {
+        time: '19:12',
+        box: 'display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 12px; background: ' + r.bg
+      }),
+      inCount: s.n.toLocaleString('vi-VN').replace(/,/g, '.'),
+      pct: Math.round(s.n / 2250 * 100),
+      recent: REC.map(([k, st, who, code, time]) => ({ who, code, time, st, cls: 'st ' + k }))
+    };
+  }
+}
+</script>
+</body>
+</html>

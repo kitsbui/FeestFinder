@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Đêm Trắng Open Air · FeestFinder</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+html{scroll-behavior:smooth}
+.anchor{scroll-margin-top:124px}
+.slot{position:absolute;top:0;bottom:0;display:flex;align-items:center;padding:0 10px;border-radius:6px;background:#161718;box-shadow:inset 0 0 0 1px #23252a;color:#d0d6e0;font-size:13px;white-space:nowrap;overflow:hidden;text-decoration:none}
+.slot.hl{justify-content:space-between;background:#eeeeee;box-shadow:none;color:#101010;font-weight:500}
+.qty{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:10px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px #23252a}
+.qty button{width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:#f7f8f8;font-size:18px;cursor:pointer}
+.qty button:hover{background:rgba(255,255,255,.07)}
+.qty button:disabled{color:#383b3f;cursor:default;background:transparent}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+</style>
+</helmet>
+<div class="ff g-edm" style="min-height: 100vh; display: flex; flex-direction: column">
+<sc-if value="{{nav.any}}" hint-placeholder-val="{{false}}"><button class="scrim" onClick="{{nav.close}}" aria-label="Đóng menu"></button></sc-if>
+<header class="nav glass">
+<div class="wrap" style="display: flex; align-items: center; gap: 12px; height: 64px">
+<a href="Web-Home.dc.html" aria-label="FeestFinder, trang chủ" style="display: flex; align-items: center; height: 44px"><img src="assets/ff-wordmark.svg" alt="FeestFinder" style="width: 127px; height: 22px"></a>
+<nav class="hide-sm" aria-label="Chính" style="display: flex; align-items: center; gap: 2px; margin-left: 12px">
+<a class="nl" href="Web-Home.dc.html">Khám phá</a>
+<a class="nl" href="Web-Map.dc.html">Bản đồ</a>
+<div style="position: relative">
+<button class="nl" onClick="{{nav.toggleGenre}}" aria-expanded="{{nav.genre}}" aria-haspopup="true" style="gap: 6px; border: 0; background: transparent; cursor: pointer">Thể loại<svg class="{{nav.genreChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{nav.genre}}" hint-placeholder-val="{{false}}">
+<div class="menu" role="menu" style="left: 0; top: 50px">
+<a class="mi g-fest" role="menuitem" href="Web-Home.dc.html"><span class="mk"></span>Lễ hội<span class="aside num">6</span></a>
+<a class="mi g-live" role="menuitem" href="Web-Home.dc.html"><span class="mk"></span>Nhạc sống<span class="aside num">7</span></a>
+<a class="mi g-edm" role="menuitem" href="Web-Home.dc.html"><span class="mk"></span>EDM<span class="aside num">5</span></a>
+<a class="mi g-cult" role="menuitem" href="Web-Home.dc.html"><span class="mk"></span>Văn hoá<span class="aside num">4</span></a>
+<a class="mi g-free" role="menuitem" href="Web-Home.dc.html"><span class="mk"></span>Miễn phí<span class="aside num">9</span></a>
+</div>
+</sc-if>
+</div>
+</nav>
+<div style="display: flex; align-items: center; gap: 6px; margin-left: auto">
+<button class="ib" aria-label="Tìm kiếm"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg></button>
+<a class="btn light sm pill hide-sm" href="Studio-Wizard.dc.html">Đăng sự kiện</a>
+<div style="position: relative">
+<button onClick="{{nav.toggleAcct}}" aria-expanded="{{nav.acct}}" aria-haspopup="true" aria-label="Tài khoản" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer"><span class="av" style="width: 32px; height: 32px; font-size: 12px; background: #e4f222; color: #08090a">NM</span></button>
+<sc-if value="{{nav.acct}}" hint-placeholder-val="{{false}}">
+<div class="menu" role="menu" style="right: 0; top: 50px">
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid #23252a"><span class="hs">Nguyễn Minh</span><span class="m">@minh.ng</span></div>
+<a class="mi" role="menuitem" href="Profile-Fan-Web.dc.html">Hồ sơ của tôi</a>
+<a class="mi" role="menuitem" href="App-Ticket.dc.html">Vé của tôi<span class="aside num">2</span></a>
+<a class="mi" role="menuitem" href="#">Đã lưu<span class="aside num">6</span></a>
+<button class="mi" role="menuitem" style="color: #8a8f98">Đăng xuất</button>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+</header>
+
+<nav class="wrap s" aria-label="Đường dẫn" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 48px">
+<a href="Web-Home.dc.html" style="color: #8a8f98">Khám phá</a><span aria-hidden="true">/</span><a href="Web-Home.dc.html" style="color: #8a8f98">EDM</a><span aria-hidden="true">/</span><span class="mist">Đêm Trắng Open Air</span>
+</nav>
+
+<section class="wrap">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: clamp(24px, 4vw, 56px); align-items: start">
+<div class="art g-edm" style="height: clamp(260px, 32vw, 440px)">
+<div class="over" style="left: 14px; top: 14px; display: flex; gap: 6px"><span class="tag glass" style="color: #f7f8f8">18+</span><span class="tag glass" style="color: #f7f8f8"><span style="width: 7px; height: 7px; border-radius: 50%; background: #f0b429"></span>Sắp hết vé</span></div>
+<span class="tag glass num over" style="left: 14px; bottom: 14px; height: 32px; padding: 0 12px; color: #f7f8f8">Còn 22 ngày</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 18px; min-width: 0">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="m" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>EDM · Ngoài trời · Lần thứ 6</span>
+<h1 class="d1">Đêm Trắng Open Air</h1>
+</div>
+<div style="border-top: 1px solid #23252a">
+<div class="lrow" style="min-height: 60px">
+<a href="Profile-Org-Web.dc.html" style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-decoration: none">
+<span class="av sq" style="width: 36px; height: 36px; font-size: 13px; border-radius: 9px">ĐT</span>
+<span class="hs ell">Đêm Trắng Collective</span>
+<svg class="i" width="16" height="16" viewBox="0 0 24 24" role="img" aria-label="Đã xác minh" style="color: #e4f222"><path d="M12 3l2.4 1.8 3-.2.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.2L12 21l-2.4-1.8-3 .2-.9-2.9-2.4-1.8 1-2.8-1-2.8 2.4-1.8.9-2.9 3 .2z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>
+</a>
+<button class="{{followCls}}" onClick="{{toggleFollow}}" aria-pressed="{{following}}">{{followLabel}}</button>
+</div>
+<div class="lrow" style="min-height: 52px">
+<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg>
+<span class="t num" style="color: #f7f8f8; flex: 1">Thứ Bảy 10.10 · 17:00 – 01:00 <span class="fog">· ra vào lại đến 21:00</span></span>
+<button class="btn ghost sm" style="margin-right: -12px">Thêm lịch</button>
+</div>
+<div class="lrow" style="min-height: 52px">
+<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>
+<span class="t" style="color: #f7f8f8; flex: 1">Công viên Gia Định <span class="fog">· Phú Nhuận</span></span>
+<a class="btn ghost sm" href="#venue" style="margin-right: -12px">Chỉ đường</a>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+<a class="btn acc lg" href="#tickets" onClick="{{goTickets}}">Chọn vé · từ 450.000₫</a>
+<button class="{{heartCls}}" onClick="{{toggleSave}}" aria-label="Lưu sự kiện" aria-pressed="{{saved}}"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path class="fillable" d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></button>
+<button class="ib line" aria-label="Chia sẻ"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"></path></svg></button>
+<span class="m num" style="margin-left: 6px">{{hype}} quan tâm</span>
+</div>
+</div>
+</div>
+</section>
+
+<div style="position: sticky; top: 64px; z-index: 20; margin-top: clamp(32px, 4vw, 52px); background: rgba(8, 9, 10, .9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px)">
+<div class="wrap" style="display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #23252a">
+<nav class="tabs" aria-label="Mục trên trang" style="flex: 1; min-width: 0; border-bottom: 0">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<a class="{{t.cls}}" href="{{t.href}}" onClick="{{t.pick}}" aria-current="{{t.cur}}">{{t.label}}</a>
+</sc-for>
+</nav>
+<a class="btn acc sm hide-sm" href="#tickets" onClick="{{goTickets}}">Mua vé</a>
+</div>
+</div>
+
+<section class="wrap" style="padding-top: 36px">
+<div class="split" style="gap: clamp(28px, 4vw, 56px)">
+<div class="main" style="display: flex; flex-direction: column; gap: 44px">
+<div id="about" class="anchor" style="display: flex; flex-direction: column; gap: 12px">
+<span class="m">Giới thiệu</span>
+<p class="{{aboutCls}}" style="max-width: 680px; color: #f7f8f8; font-size: 17px">Đêm nhạc ngoài trời thường niên của Đêm Trắng Collective, năm nay là lần thứ 6. Hai sân khấu trên bãi cỏ: sân khấu chính cho EDM và lều Bờ Cỏ cho acoustic, vinyl. Saola khép đêm với set hai tiếng. Có khu ăn uống, nước uống miễn phí và đội y tế trực suốt đêm. Không mang đồ uống từ ngoài vào.</p>
+<button class="more" onClick="{{toggleAbout}}" aria-expanded="{{aboutOpen}}">{{aboutLabel}}<svg class="{{aboutChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><span class="tag line">18+</span><span class="tag line">Ngoài trời</span><span class="tag line num">3.000 chỗ</span><span class="tag line">Ra vào lại</span><span class="tag line">Nước miễn phí</span></div>
+</div>
+
+<div id="lineup" class="anchor" style="display: flex; flex-direction: column">
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 6px"><span class="m">Line-up · 5 nghệ sĩ</span><span class="m num">2 sân khấu</span></div>
+<a class="lrow g-edm" href="Profile-Artist-Web.dc.html" style="min-height: 68px; border-top: 1px solid #23252a">
+<span class="av" style="width: 44px; height: 44px; font-size: 18px">S</span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0"><span class="hs">Saola</span><span class="s num">Khép đêm · 23:30 · Sân khấu chính</span></span>
+<span class="tag bone">Headline</span>
+<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<sc-for list="{{acts}}" as="a" hint-placeholder-count="4">
+<div class="lrow g-{{a.g}}" style="min-height: 52px">
+<span class="mb num" style="width: 52px">{{a.t}}</span>
+<span class="hs" style="flex: 1">{{a.name}}</span>
+<span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>{{a.stage}}</span>
+</div>
+</sc-for>
+<details class="acc sm">
+<summary>Lịch theo sân khấu<svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="overflow-x: auto">
+<div style="min-width: 640px">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px">
+<span></span>
+<div class="m num" style="display: flex; justify-content: space-between"><span>17:00</span><span>19:00</span><span>21:00</span><span>23:00</span><span>01:00</span></div>
+</div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; margin-top: 12px">
+<span class="hs g-edm" style="display: flex; align-items: center; gap: 8px"><span class="mk"></span>Chính</span>
+<div style="position: relative; height: 44px">
+<span class="slot" style="left: 0; width: calc(25% - 3px)">Warm-up</span>
+<span class="slot" style="left: 25%; width: calc(18.75% - 3px)">Tre Xanh</span>
+<span class="slot" style="left: 43.75%; width: calc(18.75% - 3px)">Nam Phong</span>
+<span class="slot" style="left: 62.5%; width: calc(18.75% - 3px)">Kira</span>
+<a class="slot hl" href="Profile-Artist-Web.dc.html" style="left: 81.25%; right: 0">Saola<span class="mk" style="width: 13px; height: 12px"></span></a>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; margin-top: 8px">
+<span class="hs g-live" style="display: flex; align-items: center; gap: 8px"><span class="mk"></span>Bờ Cỏ</span>
+<div style="position: relative; height: 44px">
+<span class="slot" style="left: 12.5%; width: calc(18.75% - 3px)">Mây Lam</span>
+<span class="slot" style="left: 37.5%; width: calc(31.25% - 3px)">Vinyl set</span>
+<span class="slot" style="left: 68.75%; width: calc(25% - 3px)">Closing b2b</span>
+</div>
+</div>
+</div>
+</div>
+</details>
+</div>
+</div>
+
+<aside class="side" style="align-self: flex-start; position: sticky; top: 128px">
+<div id="tickets" class="anchor card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between"><span class="h">Vé</span><span class="st warn">Còn ít</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px" role="radiogroup" aria-label="Hạng vé">
+<sc-for list="{{tiers}}" as="t" hint-placeholder-count="3">
+<button class="{{t.cls}}" onClick="{{t.pick}}" disabled="{{t.out}}" role="radio" aria-checked="{{t.on}}">
+<span class="hs">{{t.name}}</span>
+<span class="mb num">{{t.price}}</span>
+<span class="s">{{t.note}}</span>
+<span class="{{t.stCls}}">{{t.st}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 4px">
+<span class="s">Số lượng</span>
+<span class="qty" role="group" aria-label="Số lượng vé"><button onClick="{{dec}}" disabled="{{qtyMin}}" aria-label="Bớt một vé">−</button><span class="mb num" style="min-width: 24px; text-align: center" aria-live="polite">{{qty}}</span><button onClick="{{inc}}" disabled="{{qtyMax}}" aria-label="Thêm một vé">+</button></span>
+</div>
+<a class="btn acc lg block" href="#">Mua {{qty}} vé {{tierName}} · {{total}}<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+<span class="s">Bán qua Ticketbox · tối đa 6 vé · FeestFinder không thu phí đặt vé</span>
+</div>
+</aside>
+</div>
+</section>
+
+<section id="venue" class="wrap anchor" style="padding-top: clamp(56px, 7vw, 88px)">
+<div class="split" style="align-items: stretch; gap: clamp(28px, 4vw, 56px)">
+<div class="side" style="display: flex; flex-direction: column; gap: 12px">
+<span class="m">Địa điểm</span>
+<h2 class="d2">Công viên Gia Định</h2>
+<p class="t">Đường Hoàng Minh Giám, Phú Nhuận, TP.HCM</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px">
+<a class="btn" href="Web-Map.dc.html">Chỉ đường<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+<button class="btn ghost" onClick="{{copy}}">{{copyLabel}}</button>
+</div>
+<div style="border-top: 1px solid #23252a; margin-top: 8px">
+<details class="acc sm">
+<summary>Đi lại &amp; gửi xe<svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<p class="t acc-b" style="color: #8a8f98">Gửi xe máy ở cổng Hoàng Minh Giám. Điểm đón xe công nghệ ở cổng phụ, đi bộ 5 phút tới sân khấu. Sau 23:00 nên đặt xe trước 15 phút.</p>
+</details>
+<details class="acc sm">
+<summary>Quy định vào cổng<svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<p class="t acc-b" style="color: #8a8f98">18+, có kiểm tra giấy tờ tuỳ thân. Không mang đồ uống, vật sắc nhọn. Vé điện tử quét một lần, ra vào lại đến 21:00 bằng vòng tay.</p>
+</details>
+</div>
+</div>
+<a class="main card" href="Web-Map.dc.html" aria-label="Xem trên bản đồ" style="position: relative; min-height: 320px; overflow: hidden">
+<div class="map">
+<svg viewBox="0 0 800 320" preserveAspectRatio="none" aria-hidden="true">
+<path d="M-10 250 C 180 230, 300 280, 520 240 S 760 200, 820 220" fill="none" stroke="#0aa5b8" stroke-opacity=".13" stroke-width="30" stroke-linecap="round"></path>
+<g fill="none" stroke="#1b1d21" stroke-width="2"><path d="M-10 130 L810 110"></path><path d="M380 -10 L360 330"></path><path d="M-10 60 C 200 80, 420 40, 810 70"></path></g>
+<g fill="none" stroke="#15171a" stroke-width="1"><path d="M-10 200 L810 180"></path><path d="M180 -10 L160 330"></path><path d="M600 -10 L620 330"></path></g>
+</svg>
+<span class="area" style="left: 30%; top: 22%">Phú Nhuận</span>
+<span class="area" style="left: 66%; top: 70%">Quận 1</span>
+<span class="me" style="left: 62%; top: 58%"></span>
+<span class="ppin glass g-edm on" style="left: 44%; top: 34%"><span class="mk"></span>Đêm Trắng</span>
+</div>
+</a>
+</div>
+</section>
+
+<section class="wrap" style="padding-top: clamp(56px, 7vw, 88px); display: flex; flex-direction: column; gap: 20px">
+<div class="sec">
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="m">Cũng của Đêm Trắng Collective</span><h2 class="d2">Sắp tới</h2></div>
+<a class="btn sm" href="Profile-Org-Web.dc.html">Xem hồ sơ</a>
+</div>
+<div class="cards">
+<a class="ev g-edm" href="#"><div class="art g-edm b"></div><div style="display: flex; flex-direction: column; gap: 4px"><span class="h">Rooftop Session Vol. 9</span><span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>T6 16.10 · Sân thượng Lê Lợi</span><span class="mb num">từ 300.000₫</span></div></a>
+<a class="ev g-live" href="#"><div class="art g-live"></div><div style="display: flex; flex-direction: column; gap: 4px"><span class="h">Bờ Sông Acoustic</span><span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>CN 18.10 · Bờ sông Thủ Thiêm</span><span class="mb num">từ 200.000₫</span></div></a>
+<a class="ev g-cult" href="#"><div class="art g-cult b"></div><div style="display: flex; flex-direction: column; gap: 4px"><span class="h">Chợ Đêm Trắng</span><span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>24–25.10 · Thảo Điền</span><span class="mb acc-t">Miễn phí</span></div></a>
+</div>
+</section>
+
+<footer style="margin-top: clamp(56px, 7vw, 96px); border-top: 1px solid #23252a">
+<div class="wrap" style="padding-top: 24px; padding-bottom: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px">
+<img src="assets/ff-wordmark.svg" alt="FeestFinder" style="width: 104px; height: 18px">
+<nav aria-label="Chân trang" style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px"><a class="nl" href="#">demtrang.vn</a><a class="nl" href="#">Báo cáo tin này</a><a class="nl" href="#">Điều khoản</a></nav>
+<span class="m">© 2026 Công ty TNHH FestFinder</span>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 0, tier: 0, qty: 2, saved: false, following: false, about: false, copied: false, menu: null };
+  }
+  renderVals() {
+    const s = this.state;
+    const TABS = [['Giới thiệu', '#about'], ['Line-up', '#lineup'], ['Vé', '#tickets'], ['Địa điểm', '#venue']];
+    const T = [
+      { name: 'Phổ thông', p: 450000, note: 'Ra vào lại đến 21:00', st: 'Còn ít', stCls: 'st warn' },
+      { name: 'VIP', p: 950000, note: 'Khu sát sân khấu, quầy riêng', st: 'Còn vé', stCls: 'st ok' },
+      { name: 'Early bird', p: 350000, note: 'Đã đóng 15.09', st: 'Hết vé', stCls: 'st', out: true }
+    ];
+    const vnd = (n) => n.toLocaleString('vi-VN').replace(/,/g, '.') + '₫';
+    const cur = T[s.tier] || T[0];
+    return {
+      nav: this.navVals(),
+      saved: s.saved,
+      hype: s.saved ? '2.601' : '2.600',
+      heartCls: 'ib line' + (s.saved ? ' on' : ''),
+      toggleSave: () => this.setState({ saved: !s.saved }),
+      following: s.following,
+      followLabel: s.following ? 'Đang theo dõi' : 'Theo dõi',
+      followCls: 'btn sm pill' + (s.following ? '' : ' light'),
+      toggleFollow: () => this.setState({ following: !s.following }),
+      aboutOpen: s.about,
+      aboutCls: 'tl' + (s.about ? '' : ' clamp3'),
+      aboutLabel: s.about ? 'Thu gọn' : 'Xem thêm',
+      aboutChev: 'i chev' + (s.about ? ' up' : ''),
+      toggleAbout: () => this.setState({ about: !s.about }),
+      goTickets: () => this.setState({ tab: 2 }),
+      tabs: TABS.map(([label, href], i) => ({ label, href, cur: s.tab === i ? 'true' : 'false', cls: 'tab' + (s.tab === i ? ' on' : ''), pick: () => this.setState({ tab: i }) })),
+      acts: [
+        { t: '22:00', name: 'Kira', stage: 'Chính', g: 'edm' },
+        { t: '20:30', name: 'Nam Phong', stage: 'Chính', g: 'edm' },
+        { t: '19:00', name: 'Tre Xanh', stage: 'Chính', g: 'edm' },
+        { t: '18:00', name: 'Mây Lam', stage: 'Bờ Cỏ', g: 'live' }
+      ],
+      tierName: cur.name,
+      qty: s.qty,
+      qtyMin: s.qty <= 1,
+      qtyMax: s.qty >= 6,
+      dec: () => this.setState({ qty: Math.max(1, this.state.qty - 1) }),
+      inc: () => this.setState({ qty: Math.min(6, this.state.qty + 1) }),
+      total: vnd(cur.p * s.qty),
+      tiers: T.map((t, i) => Object.assign({}, t, {
+        price: vnd(t.p),
+        out: !!t.out,
+        on: s.tier === i,
+        cls: 'opt' + (s.tier === i ? ' on' : ''),
+        pick: () => { if (!t.out) this.setState({ tier: i }); }
+      })),
+      copyLabel: s.copied ? 'Đã chép' : 'Chép địa chỉ',
+      copy: () => this.setState({ copied: true })
+    };
+  }
+  navVals() {
+    const m = this.state.menu;
+    const t = (k) => () => this.setState({ menu: this.state.menu === k ? null : k });
+    return { any: !!m, close: () => this.setState({ menu: null }), genre: m === 'genre', acct: m === 'acct', genreChev: 'i chev' + (m === 'genre' ? ' up' : ''), toggleGenre: t('genre'), toggleAcct: t('acct') };
+  }
+}
+</script>
+</body>
+</html>

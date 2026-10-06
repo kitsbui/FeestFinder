@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bắt đầu</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone">
+<header class="bar" style="padding-right: 6px">
+<img src="assets/ff-mark.svg" alt="FeestFinder" style="width: 16px; height: 28px">
+<a class="btn ghost sm" href="Main.dc.html" style="margin-left: auto">Bỏ qua</a>
+</header>
+
+<div style="position: relative; margin: 8px 16px 0">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px" aria-hidden="true">
+<sc-for list="{{tiles}}" as="x" hint-placeholder-count="12">
+<div class="{{x.cls}}" style="aspect-ratio: 1; border-radius: 10px"></div>
+</sc-for>
+</div>
+<span class="tag glass num" style="position: absolute; left: 10px; bottom: 10px; height: 28px; padding: 0 10px; color: #f7f8f8">{{count}} sự kiện hợp gu tuần này</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 24px 16px 0">
+<h1 class="d2" style="font-size: 42px; letter-spacing: -.04em; line-height: 1">Có gì quanh bạn?</h1>
+<p class="t" style="color: #8a8f98">Chọn gu của bạn, FeestFinder lọc sẵn sự kiện gần nhất.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 22px 16px 0">
+<span class="m">Bạn thích gì? · chọn nhiều</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{genres}}" as="g" hint-placeholder-count="5">
+<button class="{{g.cls}}" onClick="{{g.pick}}" aria-pressed="{{g.on}}" style="height: 44px; padding: 0 16px; font-size: 15px"><span class="mk"></span>{{g.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="position: absolute; left: 16px; right: 16px; bottom: 20px; display: flex; flex-direction: column; gap: 8px">
+<a class="btn acc lg block" href="Main.dc.html"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>Dùng vị trí của tôi</a>
+<button class="btn ghost block">Chọn thành phố khác</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { on: { fest: true, live: true } };
+  }
+  renderVals() {
+    const on = this.state.on;
+    const T = [['fest', 0], ['edm', 1], ['live', 0], ['cult', 1], ['cult', 0], ['free', 0], ['fest', 1], ['edm', 0], ['live', 1], ['edm', 0], ['free', 1], ['live', 0]];
+    const G = [['fest', 'Lễ hội'], ['live', 'Nhạc sống'], ['edm', 'EDM'], ['cult', 'Văn hoá'], ['free', 'Miễn phí']];
+    const N = { fest: 6, live: 7, edm: 5, cult: 4, free: 9 };
+    const any = Object.keys(on).some((k) => on[k]);
+    const count = Object.keys(N).reduce((sum, k) => sum + (on[k] ? N[k] : 0), 0);
+    return {
+      tiles: T.map(([g, b]) => ({ cls: 'art g-' + g + (b ? ' b' : '') + (any && !on[g] ? ' off' : '') })),
+      count: any ? Math.min(count, 28) : 28,
+      genres: G.map(([k, label]) => ({
+        label,
+        on: !!on[k],
+        cls: 'chip g-' + k + (on[k] ? ' on' : ''),
+        pick: () => this.setState({ on: Object.assign({}, on, { [k]: !on[k] }) })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

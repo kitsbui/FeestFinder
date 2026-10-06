@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Vé của tôi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone">
+<header style="height: 60px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between">
+<h1 class="d3">Vé của tôi</h1>
+<div class="seg" role="group" aria-label="Lọc vé"><button class="on" aria-pressed="true">Sắp tới</button><button aria-pressed="false">Đã qua</button></div>
+</header>
+
+<article class="bonecard g-edm" style="position: absolute; left: 16px; right: 16px; top: 64px; overflow: hidden">
+<div class="art g-edm" style="height: 132px; border-radius: 0">
+<span class="tag glass num over" style="left: 12px; bottom: 12px; height: 28px; color: #f7f8f8"><span class="pulse" style="background: #e4f222; animation: none"></span>Mở cửa sau 04:12:40</span>
+</div>
+<div style="padding: 16px 18px 0; display: flex; flex-direction: column; gap: 6px">
+<span class="m" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>EDM · Vé {{idx}} / 2</span>
+<h2 class="d3">Ravolution Music Festival</h2>
+<span class="s num">T7 19.09 · SECC · Quận 7</span>
+</div>
+<div style="position: relative; height: 24px; margin-top: 10px" aria-hidden="true">
+<span style="position: absolute; left: -12px; top: 0; width: 24px; height: 24px; border-radius: 50%; background: #08090a"></span>
+<span style="position: absolute; right: -12px; top: 0; width: 24px; height: 24px; border-radius: 50%; background: #08090a"></span>
+<span style="position: absolute; left: 18px; right: 18px; top: 12px; border-top: 1.5px dashed #c4c4c4"></span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 6px 18px 0">
+<div class="kv"><span class="m">Hạng vé</span><span class="h">{{t.tier}}</span></div>
+<div class="kv"><span class="m">Cổng</span><span class="h">{{t.gate}}</span></div>
+<div class="kv"><span class="m">Mở cửa</span><span class="h num">16:00</span></div>
+</div>
+<div style="display: flex; justify-content: center; padding-top: 16px">
+<svg viewBox="0 0 25 25" width="164" height="164" shape-rendering="crispEdges" role="img" aria-label="Mã QR vé"><path fill="#101010" d="M0 0h7v1h-7zM8 0h2v1h-2zM11 0h1v1h-1zM13 0h2v1h-2zM16 0h1v1h-1zM18 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h4v1h-4zM13 1h2v1h-2zM18 1h1v1h-1zM24 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM9 2h1v1h-1zM11 2h1v1h-1zM13 2h4v1h-4zM18 2h1v1h-1zM20 2h3v1h-3zM24 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM14 3h3v1h-3zM18 3h1v1h-1zM20 3h3v1h-3zM24 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h2v1h-2zM12 4h2v1h-2zM16 4h1v1h-1zM18 4h1v1h-1zM20 4h3v1h-3zM24 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM12 5h1v1h-1zM14 5h2v1h-2zM18 5h1v1h-1zM24 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h7v1h-7zM8 7h1v1h-1zM10 7h1v1h-1zM15 7h1v1h-1zM2 8h1v1h-1zM5 8h2v1h-2zM8 8h1v1h-1zM13 8h2v1h-2zM16 8h5v1h-5zM22 8h3v1h-3zM1 9h2v1h-2zM8 9h3v1h-3zM13 9h4v1h-4zM19 9h4v1h-4zM4 10h1v1h-1zM6 10h1v1h-1zM10 10h3v1h-3zM14 10h11v1h-11zM2 11h4v1h-4zM7 11h1v1h-1zM10 11h1v1h-1zM12 11h4v1h-4zM17 11h2v1h-2zM21 11h1v1h-1zM23 11h1v1h-1zM3 12h4v1h-4zM10 12h2v1h-2zM18 12h1v1h-1zM20 12h5v1h-5zM2 13h1v1h-1zM7 13h5v1h-5zM15 13h1v1h-1zM18 13h1v1h-1zM23 13h2v1h-2zM1 14h1v1h-1zM4 14h3v1h-3zM9 14h3v1h-3zM14 14h1v1h-1zM18 14h1v1h-1zM20 14h2v1h-2zM1 15h1v1h-1zM4 15h2v1h-2zM7 15h2v1h-2zM10 15h3v1h-3zM14 15h2v1h-2zM18 15h1v1h-1zM23 15h2v1h-2zM0 16h2v1h-2zM3 16h2v1h-2zM6 16h1v1h-1zM8 16h1v1h-1zM12 16h1v1h-1zM14 16h8v1h-8zM9 17h1v1h-1zM11 17h1v1h-1zM16 17h1v1h-1zM20 17h5v1h-5zM0 18h7v1h-7zM8 18h1v1h-1zM12 18h1v1h-1zM15 18h2v1h-2zM18 18h1v1h-1zM20 18h1v1h-1zM24 18h1v1h-1zM0 19h1v1h-1zM6 19h1v1h-1zM8 19h1v1h-1zM10 19h3v1h-3zM14 19h1v1h-1zM16 19h1v1h-1zM20 19h2v1h-2zM0 20h1v1h-1zM2 20h3v1h-3zM6 20h1v1h-1zM8 20h3v1h-3zM12 20h3v1h-3zM16 20h5v1h-5zM22 20h2v1h-2zM0 21h1v1h-1zM2 21h3v1h-3zM6 21h1v1h-1zM8 21h2v1h-2zM13 21h1v1h-1zM15 21h1v1h-1zM17 21h2v1h-2zM21 21h2v1h-2zM24 21h1v1h-1zM0 22h1v1h-1zM2 22h3v1h-3zM6 22h1v1h-1zM8 22h6v1h-6zM15 22h1v1h-1zM17 22h5v1h-5zM24 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM10 23h1v1h-1zM12 23h1v1h-1zM15 23h1v1h-1zM19 23h1v1h-1zM23 23h2v1h-2zM0 24h7v1h-7zM8 24h3v1h-3zM12 24h3v1h-3zM18 24h7v1h-7z"></path></svg>
+</div>
+<div class="num" style="text-align: center; padding-top: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 15px; font-weight: 500; letter-spacing: .12em; color: #101010">{{t.code}}</div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px 18px">
+<span class="s">{{t.who}}</span>
+<div style="display: flex; align-items: center">
+<sc-for list="{{dots}}" as="d" hint-placeholder-count="2">
+<button onClick="{{d.pick}}" aria-label="{{d.label}}" aria-pressed="{{d.on}}" style="width: 32px; height: 44px; border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><span style="{{d.style}}"></span></button>
+</sc-for>
+</div>
+</div>
+</article>
+
+<div style="position: absolute; left: 16px; right: 16px; top: 690px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button class="btn"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg>Thêm vào lịch</button>
+<a class="btn" href="App-Map.dc.html"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>Chỉ đường</a>
+</div>
+
+<nav class="tabbar glass" aria-label="Điều hướng chính">
+<a class="tb" href="Main.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Khám phá</a>
+<a class="tb" href="App-Map.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>Bản đồ</a>
+<a class="tb" href="#"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>Đã lưu</a>
+<a class="tb on" href="App-Ticket.dc.html" aria-current="page"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"></path><path d="M14 6v12"></path></svg>Vé</a>
+<a class="tb" href="Profile-Fan-App.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg>Tôi</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { idx: 1 };
+  }
+  renderVals() {
+    const i = this.state.idx;
+    const T = {
+      1: { who: 'Nguyễn Minh', code: 'RVL-26-4F8K-2Q', tier: 'Phổ thông', gate: 'B' },
+      2: { who: 'Linh Phạm', code: 'RVL-26-9A2C-7M', tier: 'Phổ thông', gate: 'B' }
+    };
+    return {
+      idx: i,
+      t: T[i],
+      dots: [1, 2].map((k) => ({
+        on: k === i,
+        label: 'Vé ' + k,
+        style: k === i ? 'width: 20px; height: 8px; border-radius: 9999px; background: #101010' : 'width: 8px; height: 8px; border-radius: 50%; background: #b5b5b5',
+        pick: () => this.setState({ idx: k })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

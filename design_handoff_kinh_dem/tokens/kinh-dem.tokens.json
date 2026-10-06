@@ -1,0 +1,93 @@
+{
+  "$description": "FeestFinder — Kính đêm (Night Glass). Design tokens in W3C DTCG format. Source of truth for tailwind-theme.css. Contrast ratios are against void #08090a.",
+  "color": {
+    "$type": "color",
+    "void":     { "$value": "#08090a", "$description": "Page ground" },
+    "carbon":   { "$value": "#0f1011", "$description": "Cards, side nav, wells" },
+    "obsidian": { "$value": "#161718", "$description": "Raised card, selected badge, dimmed art" },
+    "slate":    { "$value": "#1c1d20", "$description": "Chart grid lines" },
+    "line":     { "$value": "#23252a", "$description": "Hairline borders and row rules (always as inset 1px shadow or 1px border)" },
+    "line2":    { "$value": "#383b3f", "$description": "Hover border, dashed outlines, disabled marks" },
+    "ash":      { "$value": "#62666d", "$description": "Decorative icons only, 3.45:1 — never text" },
+    "fog":      { "$value": "#8a8f98", "$description": "Secondary text, labels, meta (6.1:1)" },
+    "mist":     { "$value": "#d0d6e0", "$description": "Body text (13.6:1)" },
+    "paper":    { "$value": "#f7f8f8", "$description": "Headings, values, primary text (18.7:1)" },
+    "bone":     { "$value": "#eeeeee", "$description": "Light figure on dark: bone cards, headline tag, highlighted date block, light button" },
+    "ink":      { "$value": "#101010", "$description": "Text on bone (16.4:1)" },
+    "ink2":     { "$value": "#57534f", "$description": "Secondary text on bone (6.6:1)" },
+    "acc":      { "$value": "#e4f222", "$description": "Lime. The one primary action per screen, 'Miễn phí', the current user, active marks" },
+    "acc-hi":   { "$value": "#eef75c", "$description": "Lime hover" },
+    "acc-ink":  { "$value": "#08090a", "$description": "Text on lime (16.2:1)" },
+    "hot":      { "$value": "#eb5757", "$description": "Live dot, errors, reject, 'Sắp hết vé' (5.7:1)" },
+    "ok":       { "$value": "#46c37b", "$description": "Valid, verified, on track (8.9:1)" },
+    "warn":     { "$value": "#f0b429", "$description": "Needs review, slow pace, few left (10.7:1)" }
+  },
+  "genre": {
+    "$description": "Colour + shape is the taxonomy. Shapes and markers only: genre colours are not text colours (edm is 4.7:1 on void, 4.2:1 on obsidian).",
+    "fest": { "color": { "$type": "color", "$value": "#ee6018" }, "shape": "circle",    "label": { "vi": "Lễ hội",    "en": "Festival" }, "apiGenres": ["Festival"] },
+    "live": { "color": { "$type": "color", "$value": "#0aa5b8" }, "shape": "square",    "label": { "vi": "Nhạc sống", "en": "Live music" }, "apiGenres": ["Indie", "Hip-Hop", "Pop", "Jazz"] },
+    "edm":  { "color": { "$type": "color", "$value": "#8b5cf6" }, "shape": "triangle",  "label": { "vi": "EDM",       "en": "EDM" }, "apiGenres": ["EDM"] },
+    "cult": { "color": { "$type": "color", "$value": "#d6589e" }, "shape": "half-disc", "label": { "vi": "Văn hoá",   "en": "Culture" }, "apiGenres": ["Food", "Culture"] },
+    "free": { "color": { "$type": "color", "$value": "#e4f222" }, "shape": "ring",      "label": { "vi": "Miễn phí",  "en": "Free" }, "apiGenres": [], "note": "Not a genre: price 0. Also the fallback art for an event with no genre (old 'brand' tone)." },
+    "chartOrder": ["fest", "live", "edm", "cult"]
+  },
+  "font": {
+    "sans": { "$type": "fontFamily", "$value": ["Be Vietnam Pro", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"], "$description": "Weights 400 and 500 only. Self-hosted (already in festfinder-frontend/ui/fonts)." },
+    "mono": { "$type": "fontFamily", "$value": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"], "$description": "Weights 400 and 500. Labels, numbers, codes, tags. Must be self-hosted (CSP allows no font CDN)." }
+  },
+  "type": {
+    "$description": "size / line-height / letter-spacing / weight / colour. Root body: 15px, 1.5, -0.01em, mist.",
+    "d0":  { "size": "clamp(44px, 6.6vw, 92px)", "lineHeight": 0.96, "tracking": "-0.045em", "weight": 500, "color": "paper", "use": "Web hero" },
+    "d1":  { "size": "clamp(36px, 4.6vw, 56px)", "lineHeight": 1,    "tracking": "-0.04em",  "weight": 500, "color": "paper", "use": "Page title (web)" },
+    "d2":  { "size": "32px", "lineHeight": 1.06, "tracking": "-0.035em", "weight": 500, "color": "paper", "use": "Section / mobile title" },
+    "d3":  { "size": "24px", "lineHeight": 1.15, "tracking": "-0.025em", "weight": 500, "color": "paper", "use": "Sub-section" },
+    "h":   { "size": "17px", "lineHeight": 1.3,  "tracking": "-0.015em", "weight": 500, "color": "paper", "use": "Card title" },
+    "hs":  { "size": "15px", "lineHeight": 1.35, "tracking": "-0.01em",  "weight": 500, "color": "paper", "use": "Row title" },
+    "tl":  { "size": "17px", "lineHeight": 1.55, "tracking": "-0.01em",  "weight": 400, "color": "mist",  "use": "Lead paragraph" },
+    "t":   { "size": "15px", "lineHeight": 1.55, "tracking": "-0.01em",  "weight": 400, "color": "mist",  "use": "Body" },
+    "s":   { "size": "13px", "lineHeight": 1.4,  "tracking": "-0.01em",  "weight": 400, "color": "fog",   "use": "Meta" },
+    "m":   { "size": "11px", "lineHeight": 1.2,  "tracking": "0.03em",   "weight": 400, "color": "fog",   "family": "mono", "transform": "uppercase", "use": "Labels, eyebrows, status" },
+    "mb":  { "size": "13px", "lineHeight": 1.4,  "tracking": "0",        "weight": 500, "color": "paper", "family": "mono", "use": "Prices, counts" },
+    "num": { "fontVariantNumeric": "tabular-nums", "use": "Every changing number" }
+  },
+  "radius": {
+    "$type": "dimension",
+    "tag":    { "$value": "4px",  "$description": "Tags, moment tiles" },
+    "btn":    { "$value": "6px",  "$description": "Buttons, fields, nav links" },
+    "seg":    { "$value": "8px",  "$description": "Segmented control track, date block, small art" },
+    "opt":    { "$value": "10px", "$description": "Selectable option (ticket tier), stamps" },
+    "card":   { "$value": "12px", "$description": "Cards, art tiles, menus, badges" },
+    "org":    { "$value": "14px", "$description": "Organiser avatar (rounded square). People avatars are circles." },
+    "sheet":  { "$value": "20px", "$description": "Mobile tab bar, bottom sheets" },
+    "pill":   { "$value": "9999px", "$description": "Chips, icon buttons, map pins, switches" }
+  },
+  "size": {
+    "$type": "dimension",
+    "control":    { "$value": "44px", "$description": "Default button / field / icon button / tab height. Minimum hit target." },
+    "control-sm": { "$value": "36px", "$description": "Small button, chip, small icon button (hit area padded back to 44 with ::after)" },
+    "control-lg": { "$value": "52px", "$description": "Primary CTA in docks and ticket panels" },
+    "nav":        { "$value": "64px", "$description": "Web header height" },
+    "bar":        { "$value": "56px", "$description": "Mobile top bar" },
+    "tabbar":     { "$value": "64px", "$description": "Mobile floating tab bar (inset 12px, radius 20, glass)" },
+    "wrap":       { "$value": "1200px", "$description": "Web max width; gutters 16px, 32px from 760px" }
+  },
+  "breakpoint": {
+    "tab":  { "$value": "760px", "$description": "Wrap gutters 16 → 32" },
+    "desk": { "$value": "900px", "$description": "hide-sm / show-sm switch; side nav becomes a column" }
+  },
+  "effect": {
+    "glass":    { "background": "rgba(15,16,17,.5)", "backdropFilter": "blur(22px) saturate(170%)", "shadow": "inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 rgba(255,255,255,.07)", "use": "Only over colour or a moving page: nav, tab bar, dock, pins, controls over art, tooltips" },
+    "glass-hi": { "background": "rgba(255,255,255,.16)", "backdropFilter": "blur(22px) saturate(170%)", "shadow": "inset 0 0 0 1px rgba(255,255,255,.22), inset 0 1px 0 rgba(255,255,255,.2)" },
+    "menu":     { "background": "rgba(22,23,24,.97)", "shadow": "inset 0 0 0 1px #383b3f", "use": "Dropdown menus. Near-opaque on purpose: a blur inside a blurred bar does not reach the page." },
+    "hairline": { "shadow": "inset 0 0 0 1px #23252a" },
+    "noShadows": "There are no drop shadows. Depth = surface step + hairline."
+  },
+  "motion": {
+    "ease":     { "$type": "cubicBezier", "$value": [0.4, 0, 0.2, 1] },
+    "fast":     { "$type": "duration", "$value": "150ms", "$description": "Hover, press, chevrons" },
+    "art":      { "$type": "duration", "$value": "200ms", "$description": "Art tile dim / undim" },
+    "pulse":    "ff-pulse 1.8s — live dot only",
+    "scan":     "ff-scan 2.4s — QR scan line only",
+    "reduced":  "prefers-reduced-motion: every animation and transition off"
+  }
+}

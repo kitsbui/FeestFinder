@@ -1,0 +1,328 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "App-Event.dc.html": {
+      "h": 1360,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "03 · Sự kiện",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "App-Live.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "06 · Tại sự kiện",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "App-Map.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "04 · Bản đồ",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "App-Onboarding.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "01 · Bắt đầu",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "App-Ticket.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "05 · Vé của tôi",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "Console-Insights.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "console",
+      "title": "Console · Số liệu",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Console-Moderation.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "console",
+      "title": "Console · Kiểm duyệt",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "02 · Khám phá",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "Profile-Artist-App.dc.html": {
+      "h": 2200,
+      "is_interactive": true,
+      "page": "profiles",
+      "title": "Nghệ sĩ · mobile",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Profile-Artist-Web.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "is_interactive": true,
+      "page": "profiles",
+      "title": "Nghệ sĩ · web",
+      "w": 1440,
+      "x": 470,
+      "y": 0
+    },
+    "Profile-Fan-App.dc.html": {
+      "h": 2210,
+      "is_interactive": true,
+      "page": "profiles",
+      "title": "Fan · mobile (tab Tôi)",
+      "w": 390,
+      "x": 0,
+      "y": 2620
+    },
+    "Profile-Fan-Web.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "profiles",
+      "title": "Fan · web",
+      "w": 1440,
+      "x": 470,
+      "y": 2620
+    },
+    "Profile-Org-App.dc.html": {
+      "h": 2310,
+      "is_interactive": true,
+      "page": "profiles",
+      "title": "Nhà tổ chức · mobile",
+      "w": 390,
+      "x": 0,
+      "y": 5250
+    },
+    "Profile-Org-Web.dc.html": {
+      "expand": "fill",
+      "h": 1920,
+      "is_interactive": true,
+      "page": "profiles",
+      "title": "Nhà tổ chức · web",
+      "w": 1440,
+      "x": 470,
+      "y": 5250
+    },
+    "Studio-Checkin.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "studio",
+      "title": "Studio · Check-in tại cổng",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Studio-Dashboard.dc.html": {
+      "expand": "fill",
+      "h": 1040,
+      "is_interactive": true,
+      "page": "studio",
+      "title": "Studio · Bảng điều khiển",
+      "w": 1440,
+      "x": 470,
+      "y": 0
+    },
+    "Studio-Wizard.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "studio",
+      "title": "Studio · Đăng sự kiện",
+      "w": 1440,
+      "x": 1990,
+      "y": 0
+    },
+    "System.dc.html": {
+      "h": 3200,
+      "page": "system",
+      "title": "Hệ thống · Kính đêm",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Web-Event.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "is_interactive": true,
+      "page": "web",
+      "title": "Web · Trang sự kiện",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Web-Home.dc.html": {
+      "expand": "fill",
+      "h": 2560,
+      "is_interactive": true,
+      "page": "web",
+      "title": "Web · Trang chủ",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Web-Map.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "web",
+      "title": "Web · Bản đồ",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-06T03:30:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "mobile",
+    "view": "canvas"
+  },
+  "notes": {
+    "artistTitle": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "profiles",
+      "text": "Hồ sơ nghệ sĩ",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "consoleTitle": {
+      "kind": "title1",
+      "maxW": 2960,
+      "page": "console",
+      "text": "Console — kiểm duyệt nội bộ",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "fanTitle": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "profiles",
+      "text": "Hồ sơ fan",
+      "w": 240,
+      "x": 0,
+      "y": 2320
+    },
+    "mobileTitle": {
+      "kind": "title1",
+      "maxW": 2740,
+      "page": "mobile",
+      "text": "Mobile — sáu màn chính",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "orgTitle": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "profiles",
+      "text": "Hồ sơ nhà tổ chức",
+      "w": 240,
+      "x": 0,
+      "y": 4950
+    },
+    "studioTitle": {
+      "kind": "title1",
+      "maxW": 3430,
+      "page": "studio",
+      "text": "Studio — nhà tổ chức",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "webTitle": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "web",
+      "text": "Web — co giãn từ điện thoại lên desktop",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "App-Onboarding.dc.html",
+    "App-Event.dc.html",
+    "App-Map.dc.html",
+    "App-Ticket.dc.html",
+    "App-Live.dc.html",
+    "Web-Home.dc.html",
+    "Web-Event.dc.html",
+    "Web-Map.dc.html",
+    "Studio-Checkin.dc.html",
+    "Studio-Dashboard.dc.html",
+    "Studio-Wizard.dc.html",
+    "Console-Moderation.dc.html",
+    "Console-Insights.dc.html",
+    "System.dc.html",
+    "Profile-Artist-App.dc.html",
+    "Profile-Artist-Web.dc.html",
+    "Profile-Fan-App.dc.html",
+    "Profile-Fan-Web.dc.html",
+    "Profile-Org-App.dc.html",
+    "Profile-Org-Web.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "mobile",
+      "name": "Mobile"
+    },
+    {
+      "id": "profiles",
+      "name": "Hồ sơ"
+    },
+    {
+      "id": "web",
+      "name": "Web"
+    },
+    {
+      "id": "studio",
+      "name": "Studio"
+    },
+    {
+      "id": "console",
+      "name": "Console"
+    },
+    {
+      "id": "system",
+      "name": "Hệ thống"
+    }
+  ],
+  "title": "FeestFinder — Kính đêm"
+}

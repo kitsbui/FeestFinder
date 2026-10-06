@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Saola · Nghệ sĩ</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone g-edm" style="height: 2200px">
+<div style="position: relative; height: 200px">
+<div class="art g-edm" style="position: absolute; inset: 0; border-radius: 0"></div>
+<div style="position: absolute; left: 12px; right: 12px; top: 10px; display: flex; gap: 8px">
+<a class="ib glass" href="App-Event.dc.html" aria-label="Quay lại" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+<button class="ib glass" aria-label="Chia sẻ hồ sơ" style="margin-left: auto; color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"></path></svg></button>
+</div>
+</div>
+
+<div style="padding: 0 16px; margin-top: -42px; position: relative; display: flex; flex-direction: column; gap: 14px">
+<span class="av ring" style="width: 84px; height: 84px; font-size: 36px" aria-hidden="true">S</span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 class="d2" style="display: flex; align-items: center; gap: 8px">Saola<svg class="i" width="22" height="22" viewBox="0 0 24 24" role="img" aria-label="Nghệ sĩ đã xác minh" style="color: #e4f222"><path d="M12 3l2.4 1.8 3-.2.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.2L12 21l-2.4-1.8-3 .2-.9-2.9-2.4-1.8 1-2.8-1-2.8 2.4-1.8.9-2.9 3 .2z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg></h1>
+<span class="m">DJ · Producer · Melodic techno · TP.HCM</span>
+</div>
+<div style="display: flex; gap: 6px"><span class="tag g-edm"><span class="mk"></span>EDM</span><span class="tag g-fest"><span class="mk"></span>Lễ hội</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 14px 0; border-top: 1px solid #23252a; border-bottom: 1px solid #23252a">
+<div class="stat"><span class="v">{{followers}}</span><span class="m">Theo dõi</span></div>
+<div class="stat"><span class="v">27</span><span class="m">Show 2026</span></div>
+<div class="stat"><span class="v">6</span><span class="m">Thành phố</span></div>
+</div>
+<div style="display: flex; gap: 8px">
+<button class="{{followCls}}" onClick="{{toggleFollow}}" aria-pressed="{{following}}" style="flex: 1">{{followLabel}}</button>
+<button class="{{bellCls}}" onClick="{{toggleBell}}" aria-pressed="{{bell}}" aria-label="Báo khi có show mới"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path class="fillable" d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg></button>
+</div>
+</div>
+
+<section style="padding: 28px 16px 0; display: flex; flex-direction: column; gap: 6px" aria-label="Giới thiệu">
+<p class="{{bioCls}}">DJ và nhà sản xuất sống tại TP.HCM. Chơi melodic techno, pha tiếng đàn bầu và cồng chiêng đã qua xử lý. Set thường dài hai tiếng và hay khép lại đêm ở các sự kiện ngoài trời. Booking: booking@saola.vn</p>
+<button class="more" onClick="{{toggleBio}}" aria-expanded="{{bioOpen}}">{{bioLabel}}<svg class="{{bioChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div class="hscroll" style="padding-top: 4px">
+<a class="btn sm" href="#">Spotify<svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+<a class="btn sm" href="#">SoundCloud<svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+<a class="btn sm" href="#">YouTube<svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+</div>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column" aria-label="Sắp diễn">
+<div style="display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px"><h2 class="h">Sắp diễn</h2><span class="m num">4</span></div>
+<sc-for list="{{shows}}" as="x" hint-placeholder-count="4">
+<a class="g-{{x.g}}" href="App-Event.dc.html" style="display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 76px; border-top: 1px solid #23252a">
+<span class="{{x.dCls}}"><span class="mm">{{x.wd}}</span><span class="dd">{{x.d}}</span><span class="mm">Th{{x.mo}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span class="hs ell">{{x.title}}</span><span class="s ell" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>{{x.where}}</span></span>
+<span class="{{x.pCls}}" style="text-align: right">{{x.price}}</span>
+</a>
+</sc-for>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 12px" aria-label="Moments">
+<div style="display: flex; align-items: baseline; gap: 10px"><h2 class="h">Moments</h2><span class="m num">{{mo.count}} / 9</span></div>
+<sc-if value="{{mo.adding}}" hint-placeholder-val="{{false}}">
+<form onSubmit="{{mo.add}}" style="display: flex; gap: 8px">
+<label class="field" style="flex: 1; min-width: 0"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg><input type="text" inputmode="url" autocomplete="off" value="{{mo.url}}" onChange="{{mo.onUrl}}" placeholder="Dán link ảnh https://…" aria-label="Link ảnh moment" style="font-size: 14px"></label>
+<button class="btn" type="submit">Thêm</button>
+</form>
+</sc-if>
+<sc-if value="{{mo.showNote}}" hint-placeholder-val="{{false}}"><span class="s" role="status" style="color: {{mo.noteColor}}">{{mo.note}}</span></sc-if>
+<div class="mgrid">
+<sc-for list="{{mo.tiles}}" as="t" hint-placeholder-count="6">
+<button class="mtile" onClick="{{t.open}}" aria-label="Xem ảnh: {{t.caption}}">
+<sc-if value="{{t.isImg}}" hint-placeholder-val="{{false}}"><img src="{{t.src}}" alt="" onError="{{t.fail}}"></sc-if>
+<sc-if value="{{t.isArt}}" hint-placeholder-val="{{true}}"><span class="{{t.artCls}}"></span></sc-if>
+<sc-if value="{{t.isBroken}}" hint-placeholder-val="{{false}}"><span class="m" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center">Lỗi ảnh</span></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{mo.plus}}" hint-placeholder-val="{{true}}"><button class="{{mo.plusCls}}" onClick="{{mo.toggleAdd}}" aria-expanded="{{mo.adding}}" aria-label="Thêm ảnh moment"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span class="m">Thêm</span></button></sc-if>
+</div>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 12px" aria-label="Huy hiệu">
+<div style="display: flex; align-items: baseline; gap: 10px"><h2 class="h">Huy hiệu</h2><span class="m num">{{bd.earned}} / {{bd.total}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{bd.got}}" as="b" hint-placeholder-count="6">
+<button class="{{b.cls}}" onClick="{{b.pick}}" aria-pressed="{{b.on}}">
+<span class="{{b.emb}}"><sc-if value="{{b.isShape}}" hint-placeholder-val="{{true}}"><span class="mk"></span></sc-if><sc-if value="{{b.isNum}}" hint-placeholder-val="{{false}}"><span class="n">{{b.n}}</span></sc-if></span>
+<span class="hs" style="font-size: 13px; line-height: 1.25">{{b.name}}</span>
+<span class="m num" style="font-size: 10px">{{b.meta}}</span>
+<sc-if value="{{b.isNew}}" hint-placeholder-val="{{false}}"><span class="tag acc" style="position: absolute; top: 6px; right: 6px; height: 18px; padding: 0 5px; font-size: 10px">Mới</span></sc-if>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{bd.open}}" hint-placeholder-val="{{false}}">
+<div class="card" role="status" style="padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: start">
+<span class="h">{{bd.cur.name}}</span>
+<button class="ib sm" onClick="{{bd.cur.close}}" aria-label="Đóng" style="margin: -8px -8px 0 0"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+<span class="m num" style="grid-column: 1 / -1">{{bd.cur.status}} · {{bd.cur.rare}}</span>
+<p class="s" style="grid-column: 1 / -1; color: #d0d6e0; padding-top: 4px">{{bd.cur.desc}}</p>
+</div>
+</sc-if>
+<details class="acc sm" style="border-top: 1px solid #23252a">
+<summary>Đang làm<span class="m num">{{bd.lockedN}}</span><svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="display: flex; flex-direction: column; gap: 16px">
+<sc-for list="{{bd.locked}}" as="b" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start">
+<span class="{{b.emb}}"><sc-if value="{{b.isShape}}" hint-placeholder-val="{{true}}"><span class="mk"></span></sc-if><sc-if value="{{b.isNum}}" hint-placeholder-val="{{false}}"><span class="n">{{b.n}}</span></sc-if></span>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px"><span class="hs" style="font-size: 14px">{{b.name}}</span><span class="m num">{{b.prog}}</span></div>
+<span class="bar-track" style="display: block; height: 4px"><span class="bar-fill" style="display: block; {{b.bar}}"></span></span>
+<span class="s" style="font-size: 12px">{{b.desc}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</details>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 14px" aria-label="Thường diễn cùng">
+<h2 class="h">Thường diễn cùng</h2>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="av" style="width: 60px; height: 60px; font-size: 22px; background: #8b5cf6; color: #08090a">K</span><span class="s ell" style="color: #d0d6e0">Kira</span></a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="av" style="width: 60px; height: 60px; font-size: 20px; background: #0aa5b8; color: #08090a">TX</span><span class="s ell" style="color: #d0d6e0">Tre Xanh</span></a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="av" style="width: 60px; height: 60px; font-size: 20px">NP</span><span class="s ell" style="color: #d0d6e0">Nam Phong</span></a>
+<a href="Profile-Org-App.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="av sq" style="width: 60px; height: 60px; font-size: 20px">ĐT</span><span class="s ell" style="color: #d0d6e0">Đêm Trắng</span></a>
+</div>
+</section>
+
+<div style="padding: 24px 16px 0">
+<details class="acc" style="border-top: 1px solid #23252a">
+<summary>Đã diễn<span class="m num">41 show</span><svg class="i chev" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="display: flex; flex-direction: column">
+<div class="lrow g-edm" style="min-height: 48px"><span class="m num" style="width: 44px">22.08</span><span class="hs ell" style="flex: 1">Rooftop Session Vol. 8</span><span class="s">Quận 1</span></div>
+<div class="lrow g-live" style="min-height: 48px"><span class="m num" style="width: 44px">12.07</span><span class="hs ell" style="flex: 1">Bờ Sông Acoustic</span><span class="s">Thủ Thiêm</span></div>
+<div class="lrow g-edm" style="min-height: 48px"><span class="m num" style="width: 44px">30.05</span><span class="hs ell" style="flex: 1">Warehouse 12 Techno</span><span class="s">Quận 4</span></div>
+<div class="lrow g-edm" style="min-height: 48px"><span class="m num" style="width: 44px">04.04</span><span class="hs ell" style="flex: 1">Đêm Trắng Open Air</span><span class="s">Gia Định</span></div>
+<a class="more" href="Profile-Artist-Web.dc.html" style="margin-top: 10px">Xem tất cả 41 show<svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
+</details>
+</div>
+
+<nav class="tabbar glass" aria-label="Điều hướng chính">
+<a class="tb on" href="Main.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Khám phá</a>
+<a class="tb" href="App-Map.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>Bản đồ</a>
+<a class="tb" href="#"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>Đã lưu</a>
+<a class="tb" href="App-Ticket.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"></path><path d="M14 6v12"></path></svg>Vé</a>
+<a class="tb" href="Profile-Fan-App.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg>Tôi</a>
+</nav>
+
+<sc-if value="{{lb.open}}" hint-placeholder-val="{{false}}">
+<div role="dialog" aria-modal="true" aria-label="Moments" style="position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 16px">
+<button onClick="{{lb.close}}" aria-label="Đóng khung xem ảnh" style="position: absolute; inset: 0; padding: 0; border: 0; background: rgba(8, 9, 10, .84); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); cursor: zoom-out"></button>
+<div style="position: relative; display: flex; align-items: center; justify-content: space-between">
+<span class="m num" style="color: #d0d6e0">Moments · {{lb.pos}}</span>
+<button class="ib glass" onClick="{{lb.close}}" aria-label="Đóng" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<figure style="position: relative; margin: 0; display: flex; flex-direction: column; gap: 12px">
+<sc-if value="{{lb.isImg}}" hint-placeholder-val="{{false}}"><img src="{{lb.src}}" alt="{{lb.caption}}" style="width: 100%; max-height: 64vh; object-fit: contain; border-radius: 12px; background: #0f1011"></sc-if>
+<sc-if value="{{lb.isArt}}" hint-placeholder-val="{{true}}"><div class="{{lb.artCls}}" style="width: 100%; aspect-ratio: 4 / 5"></div></sc-if>
+<sc-if value="{{lb.isBroken}}" hint-placeholder-val="{{false}}"><div class="card" style="aspect-ratio: 4 / 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8a8f98"><svg class="i" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 16l5-5 4 4M14 13l2-2 5 5M4 4l16 16"></path></svg><span class="s">Không tải được ảnh từ link này</span></div></sc-if>
+<figcaption style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span class="hs">{{lb.caption}}</span><span class="m num">{{lb.date}}</span></figcaption>
+</figure>
+<div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<button class="ib glass" onClick="{{lb.prev}}" aria-label="Ảnh trước" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+<sc-if value="{{mo.owner}}" hint-placeholder-val="{{true}}"><button class="btn ghost sm" onClick="{{lb.remove}}" style="color: #eb5757">Xoá ảnh</button></sc-if>
+<button class="ib glass" onClick="{{lb.next}}" aria-label="Ảnh sau" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"ownerView":{"editor":"boolean","default":true,"section":"Moments"},"$preview":{"width":390,"height":2200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      following: false, bell: false, bio: false,
+      url: '', note: null, lb: -1, broken: {}, adding: false, badge: -1,
+      moments: [
+        { id: 'a1', g: 'edm', caption: 'Rooftop Session Vol. 8 · set mở màn', date: '22.08' },
+        { id: 'a2', g: 'edm', b: 1, caption: 'Đêm Trắng Open Air · khép đêm', date: '04.04' },
+        { id: 'a3', g: 'live', caption: 'Bờ Sông Acoustic · khách mời', date: '12.07' },
+        { id: 'a4', g: 'edm', caption: 'Warehouse 12 Techno', date: '30.05' },
+        { id: 'a5', g: 'fest', b: 1, caption: 'Ngày hội Âm nhạc Mùa xuân', date: '01.03' },
+        { id: 'a6', g: 'edm', b: 1, caption: 'Phòng thu · làm bản mới', date: '02.2026' }
+      ]
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const SHOWS = [
+      { g: 'edm', wd: 'T7', d: '10', mo: '10', title: 'Đêm Trắng Open Air', where: 'Gia Định · khép đêm 23:30', price: 'từ 450K', next: true },
+      { g: 'edm', wd: 'T6', d: '16', mo: '10', title: 'Rooftop Session Vol. 9', where: 'Quận 1 · 22:00', price: 'từ 300K' },
+      { g: 'edm', wd: 'T7', d: '31', mo: '10', title: 'Halloween Rave', where: 'Warehouse 12 · Quận 4', price: 'từ 250K' },
+      { g: 'fest', wd: 'T7', d: '15', mo: '11', title: 'Lễ hội Thông Đà Lạt', where: 'Đồi Robin · Đà Lạt', price: 'Sắp mở bán', soon: true }
+    ];
+    const B = [
+      { k: 'shape', g: 'free', name: 'Ra mắt', got: 1, when: '03.2024', desc: 'Đăng show đầu tiên trên FeestFinder.', rare: '71%' },
+      { k: 'num', g: 'edm', n: '10K', name: '10K theo dõi', got: 1, when: '05.2026', desc: 'Có 10.000 người theo dõi trên FeestFinder.', rare: '6%' },
+      { k: 'num', g: 'fest', n: '25', name: '25 show', got: 1, when: '06.2026', desc: 'Diễn 25 show được đăng trên FeestFinder.', rare: '11%' },
+      { k: 'shape', g: 'live', name: 'Lưu diễn', got: 1, when: '08.2026', desc: 'Diễn ở 5 thành phố khác nhau.', rare: '9%' },
+      { k: 'shape', g: 'edm', name: 'Khép đêm', got: 1, when: '08.2026', desc: 'Chơi set cuối đêm ở 10 sự kiện.', rare: '4%' },
+      { k: 'shape', g: 'fest', name: 'Cháy vé', got: 1, when: '14.09.2026', desc: 'Một show có tên bạn trong line-up bán hết vé.', rare: '8%', isNew: 1 },
+      { k: 'num', g: 'edm', n: '50', name: '50 show', prog: [41, 50], progLabel: '41 / 50', desc: 'Diễn 50 show được đăng trên FeestFinder.' },
+      { k: 'num', g: 'free', n: '50K', name: '50K theo dõi', prog: [18642, 50000], progLabel: '18,6K / 50K', desc: 'Có 50.000 người theo dõi.' },
+      { k: 'shape', g: 'cult', name: 'Được fan chọn', prog: [10, 14], progLabel: 'Hạng 14', desc: 'Lọt top 10 nghệ sĩ được lưu nhiều nhất trong tháng.' }
+    ];
+    return {
+      mo: this.mo(),
+      lb: this.lbv(),
+      bd: this.badgeVals(B, 'nghệ sĩ'),
+      following: s.following,
+      followers: s.following ? '18.643' : '18.642',
+      followLabel: s.following ? 'Đang theo dõi' : 'Theo dõi',
+      followCls: s.following ? 'btn' : 'btn acc',
+      toggleFollow: () => this.setState({ following: !s.following, bell: !s.following ? true : s.bell }),
+      bell: s.bell,
+      bellCls: 'ib line' + (s.bell ? ' on' : ''),
+      toggleBell: () => this.setState({ bell: !s.bell }),
+      bioOpen: s.bio,
+      bioCls: 't' + (s.bio ? '' : ' clamp2'),
+      bioLabel: s.bio ? 'Thu gọn' : 'Xem thêm',
+      bioChev: 'i chev' + (s.bio ? ' up' : ''),
+      toggleBio: () => this.setState({ bio: !s.bio }),
+      shows: SHOWS.map((x) => Object.assign({}, x, { dCls: 'dblk' + (x.next ? ' hi' : ''), pCls: x.soon ? 's' : 'mb num' }))
+    };
+  }
+  mo() {
+    const s = this.state;
+    const owner = this.props.ownerView ?? true;
+    const M = s.moments;
+    const NOTES = {
+      hint: ['Dán link ảnh công khai, ảnh vuông đẹp nhất.', '#8a8f98'],
+      bad: ['Link cần bắt đầu bằng http:// hoặc https://', '#eb5757'],
+      ok: ['Đã thêm. Bấm vào ảnh để xem lớn.', '#46c37b'],
+      full: ['Đã đủ 9 ảnh. Mở một ảnh và chọn Xoá để thay.', '#f0b429']
+    };
+    const n = NOTES[s.note || 'hint'];
+    return {
+      owner,
+      count: M.length,
+      tiles: M.map((m, i) => {
+        const broken = !!s.broken[m.id];
+        return {
+          isImg: !!m.src && !broken, isArt: !m.src, isBroken: !!m.src && broken,
+          src: m.src || '', artCls: 'art g-' + (m.g || 'edm') + (m.b ? ' b' : ''), caption: m.caption,
+          open: () => this.setState({ lb: i, adding: false }),
+          fail: () => this.setState({ broken: Object.assign({}, this.state.broken, { [m.id]: true }) })
+        };
+      }),
+      plus: owner && M.length < 9,
+      plusCls: 'mplus' + (s.adding ? ' on' : ''),
+      adding: owner && s.adding,
+      showNote: owner && (s.adding || s.note === 'ok'),
+      toggleAdd: () => this.setState({ adding: !this.state.adding, note: null }),
+      url: s.url,
+      note: n[0], noteColor: n[1],
+      onUrl: (e) => this.setState({ url: e.target.value, note: null }),
+      add: (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const u = (this.state.url || '').trim();
+        if (this.state.moments.length >= 9) { this.setState({ note: 'full' }); return; }
+        if (!/^https?:\/\/\S+$/i.test(u)) { this.setState({ note: 'bad' }); return; }
+        this.setState({ moments: this.state.moments.concat([{ id: 'u' + Date.now(), src: u, caption: 'Moment mới', date: 'Vừa thêm' }]), url: '', note: 'ok', adding: false });
+      }
+    };
+  }
+  badgeVals(B, who) {
+    const s = this.state;
+    const G = B.filter((b) => b.got);
+    const L = B.filter((b) => !b.got);
+    const emb = (b, sm) => ({ emb: 'emb g-' + b.g + (b.got ? '' : ' off') + (sm ? ' sm' : ''), n: b.n || '', isNum: b.k === 'num', isShape: b.k !== 'num' });
+    const cur = s.badge >= 0 ? G[s.badge] : null;
+    return {
+      earned: G.length, total: B.length, lockedN: L.length,
+      got: G.map((b, i) => Object.assign(emb(b), {
+        name: b.name, meta: b.when, isNew: !!b.isNew, on: s.badge === i,
+        cls: 'bdg' + (s.badge === i ? ' on' : ''),
+        pick: () => this.setState({ badge: this.state.badge === i ? -1 : i })
+      })),
+      locked: L.map((b) => Object.assign(emb(b, true), { name: b.name, desc: b.desc, prog: b.progLabel, bar: 'width: ' + Math.round(b.prog[0] / b.prog[1] * 100) + '%' })),
+      open: !!cur,
+      cur: cur
+        ? { name: cur.name, status: 'Đạt ' + cur.when, desc: cur.desc, rare: cur.rare + ' ' + who + ' có', close: () => this.setState({ badge: -1 }) }
+        : { name: '', status: '', desc: '', rare: '', close: () => {} }
+    };
+  }
+  lbv() {
+    const s = this.state;
+    const M = s.moments;
+    const i = s.lb;
+    const m = i >= 0 ? M[i] : null;
+    if (!m) return { open: false };
+    const broken = !!s.broken[m.id];
+    const go = (d) => () => this.setState({ lb: (i + d + M.length) % M.length });
+    return {
+      open: true,
+      pos: (i + 1) + ' / ' + M.length,
+      isImg: !!m.src && !broken, isArt: !m.src, isBroken: !!m.src && broken,
+      src: m.src || '', artCls: 'art g-' + (m.g || 'edm') + (m.b ? ' b' : ''),
+      caption: m.caption, date: m.date,
+      close: () => this.setState({ lb: -1 }),
+      prev: go(-1), next: go(1),
+      remove: () => {
+        const rest = M.filter((x, k) => k !== i);
+        this.setState({ moments: rest, lb: rest.length ? Math.min(i, rest.length - 1) : -1, note: null });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

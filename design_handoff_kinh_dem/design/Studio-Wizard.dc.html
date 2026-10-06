@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Studio · Đăng sự kiện</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+.wstep{border-bottom:1px solid #23252a}
+.wsh{display:flex;align-items:center;gap:14px;width:100%;min-height:72px;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.wsh:hover .chev{color:#f7f8f8}
+.wdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;box-shadow:inset 0 0 0 1px #383b3f;color:#8a8f98}
+.wdot.cur{background:#f7f8f8;color:#08090a;box-shadow:none}
+.wdot.ok{background:#46c37b;color:#08090a;box-shadow:none}
+.wbody{padding:0 0 28px 42px;display:flex;flex-direction:column;gap:20px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) 150px 44px;gap:8px;align-items:center}
+@media (max-width:640px){.wbody{padding-left:0}}
+</style>
+</helmet>
+<div class="ff" style="min-height: 100vh; display: flex; flex-direction: column">
+<header style="border-bottom: 1px solid #23252a">
+<div class="wrap" style="display: flex; align-items: center; gap: 14px; height: 64px">
+<a href="Studio-Dashboard.dc.html" aria-label="Về Studio" style="display: flex; align-items: center; height: 44px"><img src="assets/ff-mark.svg" alt="FeestFinder" style="width: 14px; height: 24px"></a>
+<span class="hs">Đăng sự kiện</span>
+<span class="m hide-sm">Nháp · tự lưu</span>
+<a class="ib line" href="Studio-Dashboard.dc.html" aria-label="Đóng, nháp đã được lưu" style="margin-left: auto"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+</div>
+</header>
+
+<div class="wrap" style="padding-top: 28px; padding-bottom: 48px">
+<div class="split" style="gap: clamp(24px, 4vw, 56px)">
+<form class="main" onSubmit="{{noop}}" style="display: flex; flex-direction: column; max-width: 720px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid #23252a">
+<h1 class="d2">Sự kiện mới</h1>
+<span class="m num">{{doneN}} / 3 phần bắt buộc</span>
+</div>
+
+<section class="wstep">
+<button type="button" class="wsh" onClick="{{s0.open}}" aria-expanded="{{s0.on}}">
+<span class="{{s0.dot}}"><sc-if value="{{s0.ok}}" hint-placeholder-val="{{true}}"><svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.6"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if><sc-if value="{{s0.num}}" hint-placeholder-val="{{false}}">1</sc-if></span>
+<span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0"><span class="h">Cơ bản</span><sc-if value="{{s0.showSum}}" hint-placeholder-val="{{true}}"><span class="s ell">{{s0.sum}}</span></sc-if></span>
+<svg class="{{s0.chev}}" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+<sc-if value="{{s0.on}}" hint-placeholder-val="{{false}}">
+<div class="wbody">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label class="flabel" for="evName">Tên sự kiện</label>
+<div class="field"><input id="evName" value="{{title}}" onChange="{{onTitle}}" placeholder="vd: Đêm Trắng Open Air"><span class="m num" style="padding-right: 8px">{{count}} / 60</span></div>
+</div>
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<legend class="flabel" style="padding: 0; margin-bottom: 8px">Thể loại</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{genres}}" as="g" hint-placeholder-count="4">
+<button type="button" class="{{g.cls}}" onClick="{{g.pick}}" aria-pressed="{{g.on}}"><span class="mk"></span>{{g.label}}</button>
+</sc-for>
+</div>
+</fieldset>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label class="flabel" for="evDesc">Mô tả <span class="fog" style="font-weight: 400">· không bắt buộc</span></label>
+<div class="field tall"><textarea id="evDesc" rows="3" placeholder="Line-up, giờ mở cửa, lưu ý khi đến">Đêm giao thừa ngoài trời của Đêm Trắng Collective. Đếm ngược lúc 00:00 trên sân khấu chính.</textarea></div>
+</div>
+<button type="button" style="display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 16px; border: 1px dashed #383b3f; border-radius: 10px; background: transparent; color: #d0d6e0; text-align: left; cursor: pointer">
+<svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"></path></svg>
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="hs">Ảnh bìa <span class="fog" style="font-weight: 400">· không bắt buộc</span></span><span class="s">1600 × 900. Bỏ trống thì dùng bìa hình khối theo thể loại.</span></span>
+</button>
+<button type="button" class="btn acc" onClick="{{s0.next}}" style="align-self: flex-start">Tiếp tục</button>
+</div>
+</sc-if>
+</section>
+
+<section class="wstep">
+<button type="button" class="wsh" onClick="{{s1.open}}" aria-expanded="{{s1.on}}">
+<span class="{{s1.dot}}"><sc-if value="{{s1.ok}}" hint-placeholder-val="{{false}}"><svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.6"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if><sc-if value="{{s1.num}}" hint-placeholder-val="{{true}}">2</sc-if></span>
+<span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0"><span class="h">Thời gian &amp; địa điểm</span><sc-if value="{{s1.showSum}}" hint-placeholder-val="{{false}}"><span class="s ell">{{s1.sum}}</span></sc-if></span>
+<svg class="{{s1.chev}}" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+<sc-if value="{{s1.on}}" hint-placeholder-val="{{true}}">
+<div class="wbody">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 8px"><label class="flabel" for="evDate">Ngày</label><div class="field"><input id="evDate" class="num" value="{{date}}" onChange="{{onDate}}" placeholder="dd.mm.yyyy"></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label class="flabel" for="evStart">Mở cửa</label><div class="field"><input id="evStart" class="num" value="{{start}}" onChange="{{onStart}}" placeholder="17:00"></div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label class="flabel" for="evEnd">Kết thúc</label><div class="field"><input id="evEnd" class="num" value="{{end}}" onChange="{{onEnd}}" placeholder="01:00"></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label class="flabel" for="evVenue">Địa điểm</label>
+<div class="field"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg><input id="evVenue" value="{{venue}}" onChange="{{onVenue}}" placeholder="Tên địa điểm hoặc địa chỉ"></div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center"><span class="s">Gần đây:</span>
+<sc-for list="{{recent}}" as="v" hint-placeholder-count="3"><button type="button" class="chip" onClick="{{v.pick}}">{{v.name}}</button></sc-for>
+</div>
+</div>
+<button type="button" class="btn acc" onClick="{{s1.next}}" style="align-self: flex-start">Tiếp tục</button>
+</div>
+</sc-if>
+</section>
+
+<section class="wstep">
+<button type="button" class="wsh" onClick="{{s2.open}}" aria-expanded="{{s2.on}}">
+<span class="{{s2.dot}}"><sc-if value="{{s2.ok}}" hint-placeholder-val="{{false}}"><svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.6"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></sc-if><sc-if value="{{s2.num}}" hint-placeholder-val="{{true}}">3</sc-if></span>
+<span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0"><span class="h">Vé</span><sc-if value="{{s2.showSum}}" hint-placeholder-val="{{false}}"><span class="s ell">{{s2.sum}}</span></sc-if></span>
+<svg class="{{s2.chev}}" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+<sc-if value="{{s2.on}}" hint-placeholder-val="{{false}}">
+<div class="wbody">
+<div class="seg full" role="group" aria-label="Hình thức" style="max-width: 360px">
+<button type="button" class="{{paidCls}}" onClick="{{setPaid}}" aria-pressed="{{isPaid}}">Bán vé</button>
+<button type="button" class="{{freeCls}}" onClick="{{setFree}}" aria-pressed="{{isFree}}">Miễn phí</button>
+</div>
+<sc-if value="{{isPaid}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div class="trow m"><span>Hạng vé</span><span>Giá (₫)</span><span></span></div>
+<sc-for list="{{tiers}}" as="t" hint-placeholder-count="2">
+<div class="trow">
+<div class="field"><input value="{{t.name}}" onChange="{{t.onName}}" placeholder="vd: Phổ thông" aria-label="Tên hạng vé"></div>
+<div class="field"><input class="num" inputmode="numeric" value="{{t.price}}" onChange="{{t.onPrice}}" placeholder="450000" aria-label="Giá vé"></div>
+<button type="button" class="ib" onClick="{{t.remove}}" aria-label="Xoá hạng vé"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+</sc-for>
+<button type="button" class="btn ghost sm" onClick="{{addTier}}" style="align-self: flex-start; margin-left: -12px"><svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Thêm hạng vé</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label class="flabel" for="evLink">Link bán vé</label>
+<div class="field"><input id="evLink" value="{{link}}" onChange="{{onLink}}" placeholder="https://ticketbox.vn/…"></div>
+<span class="s">Người mua được chuyển sang đơn vị bán vé. FeestFinder không thu phí đặt vé.</span>
+</div>
+</sc-if>
+<sc-if value="{{isFree}}" hint-placeholder-val="{{false}}">
+<div class="lrow" style="border-top: 1px solid #23252a"><span style="display: flex; flex-direction: column; flex: 1"><span class="hs">Cần đăng ký trước</span><span class="s">Khách nhận vé miễn phí để check-in ở cổng</span></span><button type="button" class="{{rsvpCls}}" onClick="{{toggleRsvp}}" role="switch" aria-checked="{{rsvp}}" aria-label="Cần đăng ký trước"></button></div>
+</sc-if>
+<button type="button" class="btn acc" onClick="{{s2.next}}" style="align-self: flex-start">Tiếp tục</button>
+</div>
+</sc-if>
+</section>
+
+<section class="wstep">
+<button type="button" class="wsh" onClick="{{s3.open}}" aria-expanded="{{s3.on}}">
+<span class="{{s3.dot}}">4</span>
+<span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0"><span class="h">Xem lại &amp; gửi duyệt</span><sc-if value="{{s3.showSum}}" hint-placeholder-val="{{false}}"><span class="s ell">{{s3.sum}}</span></sc-if></span>
+<svg class="{{s3.chev}}" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+<sc-if value="{{s3.on}}" hint-placeholder-val="{{false}}">
+<div class="wbody">
+<sc-if value="{{notSent}}" hint-placeholder-val="{{true}}">
+<sc-if value="{{hasMissing}}" hint-placeholder-val="{{false}}">
+<div class="card" role="status" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 8px"><span class="hs" style="display: flex; align-items: center; gap: 8px"><span class="st warn"></span>Còn thiếu trước khi gửi</span>
+<sc-for list="{{missing}}" as="x" hint-placeholder-count="1"><button type="button" class="more" onClick="{{x.go}}">{{x.label}}<svg class="i" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-for>
+</div>
+</sc-if>
+<label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer">
+<input type="checkbox" checked="{{agree}}" onChange="{{toggleAgree}}" style="width: 20px; height: 20px; margin: 2px 0 0; accent-color: #e4f222">
+<span class="t">Thông tin chính xác và tôi có quyền tổ chức sự kiện này.</span>
+</label>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<button type="button" class="btn acc lg" onClick="{{submit}}" disabled="{{cantSend}}">Gửi duyệt</button>
+<span class="s">Thường được duyệt trong khoảng 2 giờ.</span>
+</div>
+</sc-if>
+<sc-if value="{{sent}}" hint-placeholder-val="{{false}}">
+<div class="card" role="status" style="padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<span class="st ok">Đã gửi duyệt</span>
+<span class="h">{{previewTitle}} sẽ lên FeestFinder sau khi được duyệt.</span>
+<span class="s">Bạn sẽ nhận email và thông báo trong Hộp thư.</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><a class="btn light" href="Studio-Dashboard.dc.html">Về bảng điều khiển</a><a class="btn" href="Web-Event.dc.html">Xem trang mẫu</a></div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</section>
+</form>
+
+<aside class="side" style="display: flex; flex-direction: column; gap: 12px; max-width: 400px; align-self: flex-start; position: sticky; top: 24px">
+<span class="m">Xem trước trong feed</span>
+<article class="ev g-{{g}}">
+<div style="position: relative">
+<div class="art g-{{g}}"></div>
+<span class="tag glass over" style="left: 10px; top: 10px; color: #f7f8f8">Mới đăng</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span class="h">{{previewTitle}}</span>
+<span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>{{previewWhen}}</span>
+<span class="{{previewPriceCls}}">{{previewPrice}}</span>
+</div>
+</article>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      step: 1, title: 'Đêm Trắng NYE 2026', genre: 'fest',
+      date: '31.12.2026', start: '20:00', end: '02:00', venue: '',
+      mode: 'paid', tiers: [{ name: 'Phổ thông', price: '550000' }, { name: 'VIP', price: '1200000' }], link: '',
+      rsvp: true, agree: false, sent: false
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const G = [['fest', 'Lễ hội'], ['live', 'Nhạc sống'], ['edm', 'EDM'], ['cult', 'Văn hoá']];
+    const cur = G.find((g) => g[0] === s.genre) || G[0];
+    const vnd = (n) => Number(n).toLocaleString('vi-VN').replace(/,/g, '.') + '₫';
+    const prices = s.tiers.map((t) => parseInt(String(t.price).replace(/\D/g, ''), 10)).filter((n) => n > 0);
+    const ok = [
+      !!s.title.trim() && !!s.genre,
+      !!s.date.trim() && !!s.venue.trim(),
+      s.mode === 'free' || (prices.length > 0 && prices.length === s.tiers.length && /^https?:\/\/\S+/.test(s.link.trim()))
+    ];
+    const LABELS = ['Tên và thể loại', 'Ngày và địa điểm', s.mode === 'free' ? 'Vé miễn phí' : 'Giá vé và link bán vé'];
+    const go = (i) => () => this.setState({ step: this.state.step === i ? -1 : i });
+    const nextOf = (i) => () => this.setState({ step: i + 1 });
+    const sums = [
+      s.title.trim() ? s.title.trim() + ' · ' + cur[1] : 'Chưa có tên',
+      (s.date || 'Chưa chọn ngày') + ' · ' + s.start + '–' + s.end + ' · ' + (s.venue.trim() || 'chưa có địa điểm'),
+      s.mode === 'free' ? 'Miễn phí' + (s.rsvp ? ' · cần đăng ký' : '') : s.tiers.length + ' hạng vé' + (prices.length ? ' · từ ' + vnd(Math.min.apply(null, prices)) : '') + (ok[2] ? '' : ' · thiếu link bán vé'),
+      s.sent ? 'Đã gửi duyệt' : 'Kiểm tra lần cuối và gửi'
+    ];
+    const step = (i) => {
+      const on = s.step === i;
+      const done = i < 3 ? ok[i] : s.sent;
+      return {
+        on, ok: done, num: !done, showSum: !on,
+        sum: sums[i],
+        dot: 'wdot' + (done ? ' ok' : (on ? ' cur' : '')),
+        chev: 'i chev' + (on ? ' up' : ''),
+        open: go(i), next: nextOf(i)
+      };
+    };
+    const setTier = (i, k) => (e) => {
+      const tiers = this.state.tiers.map((t, j) => (j === i ? Object.assign({}, t, { [k]: e.target.value }) : t));
+      this.setState({ tiers });
+    };
+    const missing = [0, 1, 2].filter((i) => !ok[i]);
+    const allOk = missing.length === 0;
+    return {
+      noop: (e) => e.preventDefault(),
+      doneN: ok.filter(Boolean).length,
+      s0: step(0), s1: step(1), s2: step(2), s3: step(3),
+      title: s.title,
+      count: s.title.length,
+      onTitle: (e) => this.setState({ title: e.target.value.slice(0, 60) }),
+      genres: G.map(([k, label]) => ({ label, on: s.genre === k, cls: 'chip g-' + k + (s.genre === k ? ' on' : ''), pick: () => this.setState({ genre: k }) })),
+      date: s.date, start: s.start, end: s.end, venue: s.venue,
+      onDate: (e) => this.setState({ date: e.target.value }),
+      onStart: (e) => this.setState({ start: e.target.value }),
+      onEnd: (e) => this.setState({ end: e.target.value }),
+      onVenue: (e) => this.setState({ venue: e.target.value }),
+      recent: ['Công viên Gia Định', 'Sân thượng Lê Lợi', 'Bờ sông Thủ Thiêm'].map((name) => ({ name, pick: () => this.setState({ venue: name }) })),
+      isPaid: s.mode === 'paid', isFree: s.mode === 'free',
+      paidCls: s.mode === 'paid' ? 'on' : '', freeCls: s.mode === 'free' ? 'on' : '',
+      setPaid: () => this.setState({ mode: 'paid' }),
+      setFree: () => this.setState({ mode: 'free' }),
+      tiers: s.tiers.map((t, i) => ({
+        name: t.name, price: t.price,
+        onName: setTier(i, 'name'), onPrice: setTier(i, 'price'),
+        remove: () => this.setState({ tiers: this.state.tiers.filter((x, j) => j !== i) })
+      })),
+      addTier: () => this.setState({ tiers: this.state.tiers.concat([{ name: '', price: '' }]) }),
+      link: s.link,
+      onLink: (e) => this.setState({ link: e.target.value }),
+      rsvp: s.rsvp,
+      rsvpCls: 'switch' + (s.rsvp ? ' on' : ''),
+      toggleRsvp: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ rsvp: !this.state.rsvp }); },
+      hasMissing: !allOk,
+      missing: missing.map((i) => ({ label: LABELS[i], go: () => this.setState({ step: i }) })),
+      agree: s.agree,
+      toggleAgree: () => this.setState({ agree: !this.state.agree }),
+      cantSend: !(allOk && s.agree),
+      submit: () => { if (allOk && this.state.agree) this.setState({ sent: true }); },
+      sent: s.sent, notSent: !s.sent,
+      g: cur[0],
+      previewTitle: s.title.trim() || 'Tên sự kiện',
+      previewWhen: (s.date ? s.date.slice(0, 5) : 'Chưa chọn ngày') + ' · ' + (s.venue.trim() || 'Chưa chọn địa điểm'),
+      previewPrice: s.mode === 'free' ? 'Miễn phí' : (prices.length ? 'từ ' + vnd(Math.min.apply(null, prices)) : 'Chưa có giá'),
+      previewPriceCls: s.mode === 'free' ? 'mb acc-t' : 'mb num'
+    };
+  }
+}
+</script>
+</body>
+</html>

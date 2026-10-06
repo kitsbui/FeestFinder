@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Tôi · Nguyễn Minh</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone" style="height: 2210px">
+<header class="bar" style="padding-right: 6px">
+<span class="m">Hồ sơ của tôi</span>
+<button class="ib" aria-label="Chia sẻ hồ sơ" style="margin-left: auto"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"></path></svg></button>
+<a class="ib" href="#settings" aria-label="Cài đặt"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg></a>
+</header>
+
+<section style="padding: 4px 16px 0; display: flex; flex-direction: column; gap: 16px" aria-label="Thông tin">
+<div style="display: flex; align-items: center; gap: 14px">
+<span class="av" style="width: 72px; height: 72px; font-size: 26px; background: #e4f222; color: #08090a" aria-hidden="true">NM</span>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1">
+<h1 class="d3">Nguyễn Minh</h1>
+<span class="m ell">@minh.ng · TP.HCM · từ 03.2026</span>
+</div>
+<button class="btn sm">Sửa</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 14px 0; border-top: 1px solid #23252a; border-bottom: 1px solid #23252a">
+<div class="stat"><span class="v">14</span><span class="m">Đã đi</span></div>
+<div class="stat"><span class="v">2</span><span class="m">Sắp đi</span></div>
+<div class="stat"><span class="v">{{bd.earned}}</span><span class="m">Huy hiệu</span></div>
+</div>
+</section>
+
+<section style="padding: 28px 16px 0; display: flex; flex-direction: column; gap: 10px" aria-label="Sắp đi">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><h2 class="h">Sắp đi</h2><a class="s" href="App-Ticket.dc.html" style="color: #d0d6e0">Tất cả vé</a></div>
+<a class="bonecard g-edm" href="App-Ticket.dc.html" style="display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 6px 14px 6px 6px; color: #101010">
+<div class="art g-edm" style="height: 76px; border-radius: 8px"></div>
+<div style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span class="m">Ngày mai · T7 19.09</span><span class="hs ell">Ravolution Music Festival</span><span class="s ell">SECC · Quận 7 · mở cửa 16:00</span></div>
+<span class="tag" style="background: #101010; color: #eeeeee">2 vé</span>
+</a>
+<a class="bonecard g-edm" href="App-Event.dc.html" style="display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 6px 14px 6px 6px; color: #101010">
+<div class="art g-edm b" style="height: 76px; border-radius: 8px; box-shadow: inset 0 0 0 1px #d4d4d4"></div>
+<div style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span class="m">T7 10.10 · còn 22 ngày</span><span class="hs ell">Đêm Trắng Open Air</span><span class="s ell">Công viên Gia Định</span></div>
+<span class="tag" style="background: #101010; color: #eeeeee">1 vé</span>
+</a>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 12px" aria-label="Moments">
+<div style="display: flex; align-items: baseline; gap: 10px"><h2 class="h">Moments</h2><span class="m num">{{mo.count}} / 9</span></div>
+<sc-if value="{{mo.adding}}" hint-placeholder-val="{{false}}">
+<form onSubmit="{{mo.add}}" style="display: flex; gap: 8px">
+<label class="field" style="flex: 1; min-width: 0"><svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg><input type="text" inputmode="url" autocomplete="off" value="{{mo.url}}" onChange="{{mo.onUrl}}" placeholder="Dán link ảnh https://…" aria-label="Link ảnh moment" style="font-size: 14px"></label>
+<button class="btn" type="submit">Thêm</button>
+</form>
+</sc-if>
+<sc-if value="{{mo.showNote}}" hint-placeholder-val="{{false}}"><span class="s" role="status" style="color: {{mo.noteColor}}">{{mo.note}}</span></sc-if>
+<div class="mgrid">
+<sc-for list="{{mo.tiles}}" as="t" hint-placeholder-count="5">
+<button class="mtile" onClick="{{t.open}}" aria-label="Xem ảnh: {{t.caption}}">
+<sc-if value="{{t.isImg}}" hint-placeholder-val="{{false}}"><img src="{{t.src}}" alt="" onError="{{t.fail}}"></sc-if>
+<sc-if value="{{t.isArt}}" hint-placeholder-val="{{true}}"><span class="{{t.artCls}}"></span></sc-if>
+<sc-if value="{{t.isBroken}}" hint-placeholder-val="{{false}}"><span class="m" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center">Lỗi ảnh</span></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{mo.plus}}" hint-placeholder-val="{{true}}"><button class="{{mo.plusCls}}" onClick="{{mo.toggleAdd}}" aria-expanded="{{mo.adding}}" aria-label="Thêm ảnh moment"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span class="m">Thêm</span></button></sc-if>
+</div>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 12px" aria-label="Hộ chiếu lễ hội">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><h2 class="h">Hộ chiếu lễ hội</h2><span class="m num">{{shown}} dấu · 2026</span></div>
+<div class="hscroll">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+<button class="{{f.cls}}" onClick="{{f.pick}}" aria-pressed="{{f.on}}"><span class="mk"></span>{{f.label}}</button>
+</sc-for>
+</div>
+<ul style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 8px; margin-top: 4px">
+<sc-for list="{{stamps}}" as="p" hint-placeholder-count="8">
+<li class="{{p.cls}}" title="{{p.name}}">
+<span class="tile"><span class="mk"></span></span>
+<span class="m num" style="color: #d0d6e0">{{p.date}}</span>
+<span class="s ell" style="font-size: 12px; margin-top: -4px">{{p.name}}</span>
+</li>
+</sc-for>
+</ul>
+<sc-if value="{{passMore}}" hint-placeholder-val="{{true}}"><button class="more" onClick="{{togglePass}}" aria-expanded="{{passAll}}">{{passLabel}}<svg class="{{passChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button></sc-if>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 12px" aria-label="Huy hiệu">
+<div style="display: flex; align-items: baseline; gap: 10px"><h2 class="h">Huy hiệu</h2><span class="m num">{{bd.earned}} / {{bd.total}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{bd.got}}" as="b" hint-placeholder-count="6">
+<button class="{{b.cls}}" onClick="{{b.pick}}" aria-pressed="{{b.on}}">
+<span class="{{b.emb}}"><sc-if value="{{b.isShape}}" hint-placeholder-val="{{true}}"><span class="mk"></span></sc-if><sc-if value="{{b.isNum}}" hint-placeholder-val="{{false}}"><span class="n">{{b.n}}</span></sc-if></span>
+<span class="hs" style="font-size: 13px; line-height: 1.25">{{b.name}}</span>
+<span class="m num" style="font-size: 10px">{{b.meta}}</span>
+<sc-if value="{{b.isNew}}" hint-placeholder-val="{{false}}"><span class="tag acc" style="position: absolute; top: 6px; right: 6px; height: 18px; padding: 0 5px; font-size: 10px">Mới</span></sc-if>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{bd.open}}" hint-placeholder-val="{{false}}">
+<div class="card" role="status" style="padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: start">
+<span class="h">{{bd.cur.name}}</span>
+<button class="ib sm" onClick="{{bd.cur.close}}" aria-label="Đóng" style="margin: -8px -8px 0 0"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+<span class="m num" style="grid-column: 1 / -1">{{bd.cur.status}} · {{bd.cur.rare}}</span>
+<p class="s" style="grid-column: 1 / -1; color: #d0d6e0; padding-top: 4px">{{bd.cur.desc}}</p>
+</div>
+</sc-if>
+<details class="acc sm" style="border-top: 1px solid #23252a">
+<summary>Đang làm<span class="m num">{{bd.lockedN}}</span><svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="display: flex; flex-direction: column; gap: 16px">
+<sc-for list="{{bd.locked}}" as="b" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start">
+<span class="{{b.emb}}"><sc-if value="{{b.isShape}}" hint-placeholder-val="{{true}}"><span class="mk"></span></sc-if><sc-if value="{{b.isNum}}" hint-placeholder-val="{{false}}"><span class="n">{{b.n}}</span></sc-if></span>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px"><span class="hs" style="font-size: 14px">{{b.name}}</span><span class="m num">{{b.prog}}</span></div>
+<span class="bar-track" style="display: block; height: 4px"><span class="bar-fill" style="display: block; {{b.bar}}"></span></span>
+<span class="s" style="font-size: 12px">{{b.desc}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</details>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column; gap: 14px" aria-label="Gu của bạn">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><h2 class="h">Gu của bạn</h2><span class="m">theo sự kiện đã đi</span></div>
+<div style="display: flex; gap: 2px; height: 12px" role="img" aria-label="Lễ hội 4, Nhạc sống 4, EDM 4, Văn hoá 2">
+<i style="flex: 4 1 0; background: #ee6018; border-radius: 4px 0 0 4px"></i><i style="flex: 4 1 0; background: #0aa5b8"></i><i style="flex: 4 1 0; background: #8b5cf6"></i><i style="flex: 2 1 0; background: #d6589e; border-radius: 0 4px 4px 0"></i>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px">
+<span class="s g-fest" style="display: flex; align-items: center; gap: 8px; color: #d0d6e0"><span class="mk"></span>Lễ hội<span class="mb num" style="margin-left: auto">4</span></span>
+<span class="s g-live" style="display: flex; align-items: center; gap: 8px; color: #d0d6e0"><span class="mk"></span>Nhạc sống<span class="mb num" style="margin-left: auto">4</span></span>
+<span class="s g-edm" style="display: flex; align-items: center; gap: 8px; color: #d0d6e0"><span class="mk"></span>EDM<span class="mb num" style="margin-left: auto">4</span></span>
+<span class="s g-cult" style="display: flex; align-items: center; gap: 8px; color: #d0d6e0"><span class="mk"></span>Văn hoá<span class="mb num" style="margin-left: auto">2</span></span>
+</div>
+</section>
+
+<section style="padding: 32px 16px 0; display: flex; flex-direction: column" aria-label="Đang theo dõi">
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 6px"><h2 class="h">Đang theo dõi</h2><a class="s" href="#" style="color: #d0d6e0">Tất cả 9</a></div>
+<a class="lrow" href="Profile-Artist-App.dc.html" style="min-height: 64px"><span class="av" style="width: 44px; height: 44px; font-size: 18px">S</span><span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span class="hs">Saola</span><span class="s ell">Nghệ sĩ · diễn T7 10.10</span></span><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="lrow" href="Profile-Org-App.dc.html" style="min-height: 64px"><span class="av sq" style="width: 44px; height: 44px; font-size: 15px; border-radius: 10px">ĐT</span><span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span class="hs">Đêm Trắng Collective</span><span class="s ell">Nhà tổ chức · 4 sự kiện sắp tới</span></span><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="lrow" href="#" style="min-height: 64px"><span class="av" style="width: 44px; height: 44px; font-size: 17px; background: #8b5cf6; color: #08090a">K</span><span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span class="hs">Kira</span><span class="s ell">Nghệ sĩ · chưa có lịch mới</span></span><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M9 6l6 6-6 6"></path></svg></a>
+</section>
+
+<div id="settings" style="padding: 24px 16px 0">
+<details class="acc" style="border-top: 1px solid #23252a">
+<summary>Cài đặt<svg class="i chev" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="display: flex; flex-direction: column">
+<div class="lrow"><span style="display: flex; flex-direction: column; flex: 1"><span class="hs">Thông báo show mới</span><span class="s">Từ nghệ sĩ, nhà tổ chức bạn theo dõi</span></span><button class="{{notifCls}}" onClick="{{toggleNotif}}" aria-pressed="{{notif}}" aria-label="Thông báo show mới"></button></div>
+<div class="lrow"><span style="display: flex; flex-direction: column; flex: 1"><span class="hs">Hồ sơ công khai</span><span class="s">Hiện hộ chiếu, huy hiệu, Moments</span></span><button class="{{publicCls}}" onClick="{{togglePublic}}" aria-pressed="{{pub}}" aria-label="Hồ sơ công khai"></button></div>
+<a class="lrow" href="#"><span class="hs" style="flex: 1">Thành phố</span><span class="s">TP. Hồ Chí Minh</span></a>
+<button class="lrow" style="width: 100%; border: 0; background: transparent; color: #8a8f98; font-size: 15px; cursor: pointer; text-align: left; padding: 0">Đăng xuất</button>
+</div>
+</details>
+</div>
+
+<nav class="tabbar glass" aria-label="Điều hướng chính">
+<a class="tb" href="Main.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Khám phá</a>
+<a class="tb" href="App-Map.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>Bản đồ</a>
+<a class="tb" href="#"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>Đã lưu</a>
+<a class="tb" href="App-Ticket.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"></path><path d="M14 6v12"></path></svg>Vé</a>
+<a class="tb on" href="Profile-Fan-App.dc.html" aria-current="page"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg>Tôi</a>
+</nav>
+
+<sc-if value="{{lb.open}}" hint-placeholder-val="{{false}}">
+<div role="dialog" aria-modal="true" aria-label="Moments" style="position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 16px">
+<button onClick="{{lb.close}}" aria-label="Đóng khung xem ảnh" style="position: absolute; inset: 0; padding: 0; border: 0; background: rgba(8, 9, 10, .84); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); cursor: zoom-out"></button>
+<div style="position: relative; display: flex; align-items: center; justify-content: space-between">
+<span class="m num" style="color: #d0d6e0">Moments · {{lb.pos}}</span>
+<button class="ib glass" onClick="{{lb.close}}" aria-label="Đóng" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<figure style="position: relative; margin: 0; display: flex; flex-direction: column; gap: 12px">
+<sc-if value="{{lb.isImg}}" hint-placeholder-val="{{false}}"><img src="{{lb.src}}" alt="{{lb.caption}}" style="width: 100%; max-height: 64vh; object-fit: contain; border-radius: 12px; background: #0f1011"></sc-if>
+<sc-if value="{{lb.isArt}}" hint-placeholder-val="{{true}}"><div class="{{lb.artCls}}" style="width: 100%; aspect-ratio: 4 / 5"></div></sc-if>
+<sc-if value="{{lb.isBroken}}" hint-placeholder-val="{{false}}"><div class="card" style="aspect-ratio: 4 / 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8a8f98"><svg class="i" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 16l5-5 4 4M14 13l2-2 5 5M4 4l16 16"></path></svg><span class="s">Không tải được ảnh từ link này</span></div></sc-if>
+<figcaption style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px"><span class="hs">{{lb.caption}}</span><span class="m num">{{lb.date}}</span></figcaption>
+</figure>
+<div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<button class="ib glass" onClick="{{lb.prev}}" aria-label="Ảnh trước" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+<sc-if value="{{mo.owner}}" hint-placeholder-val="{{true}}"><button class="btn ghost sm" onClick="{{lb.remove}}" style="color: #eb5757">Xoá ảnh</button></sc-if>
+<button class="ib glass" onClick="{{lb.next}}" aria-label="Ảnh sau" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2210}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      f: 'all', passAll: false, notif: true, pub: false,
+      url: '', note: null, lb: -1, broken: {}, adding: false, badge: -1,
+      moments: [
+        { id: 'f1', g: 'live', caption: 'Vietnam Blues Experience', date: '14.09' },
+        { id: 'f2', g: 'cult', b: 1, caption: 'Đường sách Book Fest', date: '12.09' },
+        { id: 'f3', g: 'fest', caption: 'Lễ hội Đèn Lồng Chợ Lớn', date: '06.09' },
+        { id: 'f4', g: 'edm', b: 1, caption: 'Rooftop Session Vol. 8', date: '22.08' },
+        { id: 'f5', g: 'fest', b: 1, caption: 'Summer Splash', date: '01.08' }
+      ]
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const P = [
+      ['live', '14.09', 'Vietnam Blues Experience'], ['cult', '12.09', 'Đường sách Book Fest'], ['fest', '06.09', 'Lễ hội Đèn Lồng Chợ Lớn'], ['edm', '22.08', 'Rooftop Session Vol. 8'],
+      ['fest', '01.08', 'Summer Splash'], ['live', '12.07', 'Bờ Sông Acoustic'], ['cult', '27.06', 'Saigon Outcast Night Market'], ['live', '13.06', 'Jazz Night Thảo Điền'],
+      ['edm', '30.05', 'Warehouse 12 Techno'], ['fest', '01.05', 'Lễ hội Âm nhạc Biển'], ['edm', '04.04', 'Đêm Trắng Open Air'], ['live', '15.03', 'Acoustic Đà Lạt'],
+      ['fest', '01.03', 'Ngày hội Âm nhạc Mùa xuân'], ['edm', '14.02', 'Valentine Rave']
+    ];
+    const F = [['all', 'Tất cả'], ['fest', 'Lễ hội'], ['live', 'Nhạc sống'], ['edm', 'EDM'], ['cult', 'Văn hoá']];
+    const B = [
+      { k: 'shape', g: 'free', name: 'Lần đầu', got: 1, when: '14.02.2026', desc: 'Tham dự sự kiện đầu tiên qua FeestFinder.', rare: '62%' },
+      { k: 'num', g: 'free', n: '4', name: 'Đủ 4 gu', got: 1, when: '12.09.2026', desc: 'Đi đủ 4 thể loại: Lễ hội, Nhạc sống, EDM và Văn hoá.', rare: '18%', isNew: 1 },
+      { k: 'num', g: 'fest', n: '10', name: 'Hộ chiếu 10', got: 1, when: '06.09.2026', desc: 'Tham dự 10 sự kiện đăng trên FeestFinder.', rare: '9%' },
+      { k: 'shape', g: 'edm', name: 'Cú đêm', got: 1, when: '22.08.2026', desc: 'Đi 5 sự kiện kết thúc sau nửa đêm.', rare: '21%' },
+      { k: 'shape', g: 'live', name: 'Mở cửa', got: 1, when: '12.07.2026', desc: 'Check-in trong giờ đầu tiên ở 3 sự kiện.', rare: '27%' },
+      { k: 'shape', g: 'cult', name: 'Thổ địa', got: 1, when: '27.06.2026', desc: 'Đi sự kiện ở 5 quận khác nhau.', rare: '15%' },
+      { k: 'num', g: 'fest', n: '25', name: 'Hộ chiếu 25', prog: [14, 25], progLabel: '14 / 25', desc: 'Tham dự 25 sự kiện đăng trên FeestFinder.' },
+      { k: 'shape', g: 'edm', name: 'Fan cứng', prog: [2, 3], progLabel: '2 / 3', desc: 'Xem 3 show của cùng một nghệ sĩ bạn theo dõi.' },
+      { k: 'shape', g: 'live', name: 'Lan toả', prog: [6, 10], progLabel: '6 / 10', desc: 'Chia sẻ 10 sự kiện và có người mở link.' }
+    ];
+    const match = (g) => s.f === 'all' || s.f === g;
+    const list = P.filter((p) => match(p[0]));
+    const cut = s.f === 'all' && !s.passAll ? 8 : list.length;
+    return {
+      mo: this.mo(),
+      lb: this.lbv(),
+      bd: this.badgeVals(B, 'người dùng'),
+      shown: list.length,
+      filters: F.map(([k, label]) => ({ label, on: s.f === k, cls: 'chip' + (k === 'all' ? '' : ' g-' + k) + (s.f === k ? ' on' : ''), pick: () => this.setState({ f: k }) })),
+      stamps: list.slice(0, cut).map(([g, date, name]) => ({ date, name, cls: 'stamp g-' + g })),
+      passMore: s.f === 'all',
+      passAll: s.passAll,
+      passLabel: s.passAll ? 'Thu gọn' : 'Xem thêm ' + (P.length - 8) + ' dấu',
+      passChev: 'i chev' + (s.passAll ? ' up' : ''),
+      togglePass: () => this.setState({ passAll: !s.passAll }),
+      notif: s.notif,
+      notifCls: 'switch' + (s.notif ? ' on' : ''),
+      toggleNotif: () => this.setState({ notif: !s.notif }),
+      pub: s.pub,
+      publicCls: 'switch' + (s.pub ? ' on' : ''),
+      togglePublic: () => this.setState({ pub: !s.pub })
+    };
+  }
+  mo() {
+    const s = this.state;
+    const owner = true;
+    const M = s.moments;
+    const NOTES = {
+      hint: ['Dán link ảnh công khai, ảnh vuông đẹp nhất.', '#8a8f98'],
+      bad: ['Link cần bắt đầu bằng http:// hoặc https://', '#eb5757'],
+      ok: ['Đã thêm. Bấm vào ảnh để xem lớn.', '#46c37b'],
+      full: ['Đã đủ 9 ảnh. Mở một ảnh và chọn Xoá để thay.', '#f0b429']
+    };
+    const n = NOTES[s.note || 'hint'];
+    return {
+      owner,
+      count: M.length,
+      tiles: M.map((m, i) => {
+        const broken = !!s.broken[m.id];
+        return {
+          isImg: !!m.src && !broken, isArt: !m.src, isBroken: !!m.src && broken,
+          src: m.src || '', artCls: 'art g-' + (m.g || 'edm') + (m.b ? ' b' : ''), caption: m.caption,
+          open: () => this.setState({ lb: i, adding: false }),
+          fail: () => this.setState({ broken: Object.assign({}, this.state.broken, { [m.id]: true }) })
+        };
+      }),
+      plus: M.length < 9,
+      plusCls: 'mplus' + (s.adding ? ' on' : ''),
+      adding: s.adding,
+      showNote: s.adding || s.note === 'ok',
+      toggleAdd: () => this.setState({ adding: !this.state.adding, note: null }),
+      url: s.url,
+      note: n[0], noteColor: n[1],
+      onUrl: (e) => this.setState({ url: e.target.value, note: null }),
+      add: (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const u = (this.state.url || '').trim();
+        if (this.state.moments.length >= 9) { this.setState({ note: 'full' }); return; }
+        if (!/^https?:\/\/\S+$/i.test(u)) { this.setState({ note: 'bad' }); return; }
+        this.setState({ moments: this.state.moments.concat([{ id: 'u' + Date.now(), src: u, caption: 'Moment mới', date: 'Vừa thêm' }]), url: '', note: 'ok', adding: false });
+      }
+    };
+  }
+  badgeVals(B, who) {
+    const s = this.state;
+    const G = B.filter((b) => b.got);
+    const L = B.filter((b) => !b.got);
+    const emb = (b, sm) => ({ emb: 'emb g-' + b.g + (b.got ? '' : ' off') + (sm ? ' sm' : ''), n: b.n || '', isNum: b.k === 'num', isShape: b.k !== 'num' });
+    const cur = s.badge >= 0 ? G[s.badge] : null;
+    return {
+      earned: G.length, total: B.length, lockedN: L.length,
+      got: G.map((b, i) => Object.assign(emb(b), {
+        name: b.name, meta: b.when, isNew: !!b.isNew, on: s.badge === i,
+        cls: 'bdg' + (s.badge === i ? ' on' : ''),
+        pick: () => this.setState({ badge: this.state.badge === i ? -1 : i })
+      })),
+      locked: L.map((b) => Object.assign(emb(b, true), { name: b.name, desc: b.desc, prog: b.progLabel, bar: 'width: ' + Math.round(b.prog[0] / b.prog[1] * 100) + '%' })),
+      open: !!cur,
+      cur: cur
+        ? { name: cur.name, status: 'Đạt ' + cur.when, desc: cur.desc, rare: cur.rare + ' ' + who + ' có', close: () => this.setState({ badge: -1 }) }
+        : { name: '', status: '', desc: '', rare: '', close: () => {} }
+    };
+  }
+  lbv() {
+    const s = this.state;
+    const M = s.moments;
+    const i = s.lb;
+    const m = i >= 0 ? M[i] : null;
+    if (!m) return { open: false };
+    const broken = !!s.broken[m.id];
+    const go = (d) => () => this.setState({ lb: (i + d + M.length) % M.length });
+    return {
+      open: true,
+      pos: (i + 1) + ' / ' + M.length,
+      isImg: !!m.src && !broken, isArt: !m.src, isBroken: !!m.src && broken,
+      src: m.src || '', artCls: 'art g-' + (m.g || 'edm') + (m.b ? ' b' : ''),
+      caption: m.caption, date: m.date,
+      close: () => this.setState({ lb: -1 }),
+      prev: go(-1), next: go(1),
+      remove: () => {
+        const rest = M.filter((x, k) => k !== i);
+        this.setState({ moments: rest, lb: rest.length ? Math.min(i, rest.length - 1) : -1, note: null });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

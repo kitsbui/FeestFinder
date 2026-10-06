@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Đêm Trắng Open Air</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone g-edm" style="height: 1360px">
+<div class="art g-edm" style="position: absolute; left: 0; top: 0; width: 390px; height: 300px; border-radius: 0"></div>
+
+<div style="position: absolute; left: 12px; right: 12px; top: 10px; display: flex; gap: 8px; z-index: 3">
+<a class="ib glass" href="Main.dc.html" aria-label="Quay lại" style="color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+<button class="ib glass" aria-label="Chia sẻ" style="margin-left: auto; color: #f7f8f8"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"></path></svg></button>
+<button class="{{heartCls}}" onClick="{{toggle}}" aria-label="Lưu sự kiện" aria-pressed="{{saved}}" style="color: {{heartColor}}"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path class="fillable" d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></button>
+</div>
+<div style="position: absolute; left: 16px; top: 236px; display: flex; gap: 6px; z-index: 3">
+<span class="tag glass" style="color: #f7f8f8">18+</span>
+<span class="tag glass" style="color: #f7f8f8"><span style="width: 7px; height: 7px; border-radius: 50%; background: #f0b429"></span>Sắp hết vé</span>
+<span class="tag glass num" style="color: #f7f8f8">Còn 22 ngày</span>
+</div>
+
+<section style="position: absolute; left: 0; right: 0; top: 280px; bottom: 0; padding: 20px 16px 0; background: #08090a; border-radius: 20px 20px 0 0; display: flex; flex-direction: column">
+<span class="m" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>EDM · Ngoài trời · Lần thứ 6</span>
+<h1 class="d2" style="margin-top: 8px">Đêm Trắng Open Air</h1>
+
+<a class="lrow" href="Profile-Org-App.dc.html" style="margin-top: 10px; min-height: 64px; border-top: 1px solid #23252a">
+<span class="av sq" style="width: 40px; height: 40px; font-size: 14px; border-radius: 10px">ĐT</span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0"><span class="hs">Đêm Trắng Collective</span><span class="st ok">Nhà tổ chức đã xác minh</span></span>
+<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<div class="lrow" style="min-height: 52px">
+<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg>
+<span class="t num" style="color: #f7f8f8; flex: 1">T7 10.10 · 17:00 – 01:00</span>
+<button class="btn ghost sm" style="margin-right: -12px">Thêm lịch</button>
+</div>
+<div class="lrow" style="min-height: 52px">
+<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>
+<span class="t" style="color: #f7f8f8; flex: 1">Công viên Gia Định <span class="fog num">· 3.5 km</span></span>
+<a class="btn ghost sm" href="App-Map.dc.html" style="margin-right: -12px">Chỉ đường</a>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 18px">
+<p class="{{aboutCls}}" style="color: #d0d6e0">Đêm nhạc ngoài trời thường niên của Đêm Trắng Collective. Hai sân khấu trên bãi cỏ, set cuối do Saola khép đêm. Vé cho phép ra vào lại đến 21:00. Có khu ăn uống và gửi xe máy ở cổng Hoàng Minh Giám; không mang đồ uống từ ngoài vào.</p>
+<button class="more" onClick="{{toggleAbout}}" aria-expanded="{{aboutOpen}}">{{aboutLabel}}<svg class="{{aboutChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+</div>
+
+<div style="display: flex; flex-direction: column; padding-top: 22px">
+<span class="m" style="padding-bottom: 6px">Line-up · 5 nghệ sĩ</span>
+<a class="lrow" href="Profile-Artist-App.dc.html" style="min-height: 64px; border-top: 1px solid #23252a">
+<span class="av" style="width: 44px; height: 44px; font-size: 18px">S</span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0"><span class="hs">Saola</span><span class="s num">Khép đêm · 23:30</span></span>
+<span class="tag bone">Headline</span>
+<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #8a8f98"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<details class="acc sm">
+<summary><span style="display: flex"><span class="av" style="width: 26px; height: 26px; font-size: 11px; background: #8b5cf6; color: #08090a; box-shadow: 0 0 0 2px #08090a">K</span><span class="av" style="width: 26px; height: 26px; font-size: 10px; margin-left: -6px; box-shadow: 0 0 0 2px #08090a">NP</span><span class="av" style="width: 26px; height: 26px; font-size: 10px; margin-left: -6px; background: #0aa5b8; color: #08090a; box-shadow: 0 0 0 2px #08090a">TX</span><span class="av" style="width: 26px; height: 26px; font-size: 10px; margin-left: -6px; background: #ee6018; color: #08090a; box-shadow: 0 0 0 2px #08090a">ML</span></span><span style="font-size: 14px; font-weight: 400; color: #d0d6e0">Lịch diễn đầy đủ</span><svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="display: flex; flex-direction: column; padding-bottom: 8px">
+<div class="lrow g-edm" style="min-height: 44px"><span class="mb num" style="width: 52px">22:00</span><span class="hs" style="flex: 1">Kira</span><span class="s">Sân khấu chính</span></div>
+<div class="lrow g-edm" style="min-height: 44px"><span class="mb num" style="width: 52px">20:30</span><span class="hs" style="flex: 1">Nam Phong</span><span class="s">Sân khấu chính</span></div>
+<div class="lrow g-live" style="min-height: 44px"><span class="mb num" style="width: 52px">19:00</span><span class="hs" style="flex: 1">Tre Xanh</span><span class="s">Sân khấu chính</span></div>
+<div class="lrow g-live" style="min-height: 44px; border-bottom: 0"><span class="mb num" style="width: 52px">18:00</span><span class="hs" style="flex: 1">Mây Lam</span><span class="s">Lều Bờ Cỏ</span></div>
+</div>
+</details>
+</div>
+
+<span class="m" style="padding-top: 24px">Chọn vé</span>
+<div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px" role="radiogroup" aria-label="Hạng vé">
+<sc-for list="{{tiers}}" as="t" hint-placeholder-count="3">
+<button class="{{t.cls}}" onClick="{{t.pick}}" disabled="{{t.out}}" role="radio" aria-checked="{{t.on}}">
+<span class="hs">{{t.name}}</span>
+<span class="mb num">{{t.price}}</span>
+<span class="s">{{t.note}}</span>
+<span class="{{t.stCls}}">{{t.st}}</span>
+</button>
+</sc-for>
+</div>
+<span class="s" style="padding-top: 10px">Bán qua Ticketbox · FeestFinder không thu phí đặt vé</span>
+</section>
+
+<div class="dock glass" style="border-radius: 20px 20px 0 0">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span class="h num">{{price}}</span>
+<span class="s">{{tierName}} · 1 vé</span>
+</div>
+<a class="btn acc lg" href="#" style="margin-left: auto">Mua vé<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1360}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { saved: false, tier: 0, about: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const T = [
+      { name: 'Phổ thông', price: '450.000₫', note: 'Ra vào lại đến 21:00', st: 'Còn ít', stCls: 'st warn' },
+      { name: 'VIP', price: '950.000₫', note: 'Khu sát sân khấu, quầy riêng', st: 'Còn vé', stCls: 'st ok' },
+      { name: 'Early bird', price: '350.000₫', note: 'Đã đóng 15.09', st: 'Hết vé', stCls: 'st', out: true }
+    ];
+    const cur = T[s.tier] || T[0];
+    return {
+      saved: s.saved,
+      heartCls: 'ib glass' + (s.saved ? ' on' : ''),
+      heartColor: s.saved ? '#e4f222' : '#f7f8f8',
+      toggle: () => this.setState({ saved: !s.saved }),
+      aboutOpen: s.about,
+      aboutCls: 't' + (s.about ? '' : ' clamp3'),
+      aboutLabel: s.about ? 'Thu gọn' : 'Xem thêm',
+      aboutChev: 'i chev' + (s.about ? ' up' : ''),
+      toggleAbout: () => this.setState({ about: !s.about }),
+      price: cur.price,
+      tierName: cur.name,
+      tiers: T.map((t, i) => Object.assign({}, t, {
+        out: !!t.out,
+        on: s.tier === i,
+        cls: 'opt' + (s.tier === i ? ' on' : ''),
+        pick: () => { if (!t.out) this.setState({ tier: i }); }
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

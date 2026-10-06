@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Console · Kiểm duyệt</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+.qrow{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:8px;border:0;border-radius:10px;background:transparent;cursor:pointer;color:inherit;text-align:left;font:inherit}
+.qrow:hover{background:rgba(255,255,255,.04)}
+.qrow.on{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px #383b3f}
+.ck{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid #23252a}
+</style>
+</helmet>
+<div class="ff" style="min-height: 100vh; display: flex; flex-direction: column">
+<sc-if value="{{menuAny}}" hint-placeholder-val="{{false}}"><button class="scrim" onClick="{{closeMenu}}" aria-label="Đóng menu"></button></sc-if>
+<header style="display: flex; align-items: center; gap: 14px; height: 60px; padding: 0 16px; background: #0f1011">
+<img src="assets/ff-mark.svg" alt="FeestFinder" style="width: 14px; height: 24px">
+<span class="m" style="color: #f7f8f8">Console</span>
+<label class="field" style="flex: 0 1 420px; height: 38px; margin-left: auto">
+<svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input placeholder="Tìm tin, nhà tổ chức, mã…" aria-label="Tìm trong Console" style="font-size: 14px">
+</label>
+<span class="mb" style="width: 32px; height: 32px; border-radius: 50%; background: #e4f222; color: #08090a; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0" aria-label="FeestFinder Admin">FA</span>
+</header>
+<nav class="tabs" aria-label="Console" style="padding: 0 8px; background: #0f1011">
+<a class="tab on" href="Console-Moderation.dc.html" aria-current="page">Kiểm duyệt<span class="c num">{{left}}</span></a>
+<a class="tab" href="#">Xác minh nhà tổ chức<span class="c">4</span></a>
+<a class="tab" href="#">Báo cáo<span class="c">7</span></a>
+<a class="tab" href="#">Kệ nổi bật</a>
+<a class="tab" href="Console-Insights.dc.html">Số liệu</a>
+<a class="tab" href="#">Nhật ký</a>
+</nav>
+
+<div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+<aside style="flex: 1 1 340px; max-width: 100%; border-right: 1px solid #23252a; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px"><span class="hs">Hàng chờ</span><span class="m num">{{left}} chờ · {{approved}} đã xử lý hôm nay</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button class="{{f.cls}}" onClick="{{f.pick}}" aria-pressed="{{f.on}}">{{f.label}}<span class="num" style="opacity: .6">{{f.n}}</span></button></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{queue}}" as="q" hint-placeholder-count="6">
+<button class="{{q.cls}}" onClick="{{q.pick}}" aria-pressed="{{q.on}}">
+<span class="art g-{{q.g}}" style="width: 48px; height: 48px; border-radius: 8px"></span>
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span class="hs ell">{{q.title}}</span>
+<span class="s ell">{{q.org}} · {{q.ago}}</span>
+</span>
+<span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px"><span class="{{q.slaCls}}">{{q.sla}}</span><sc-if value="{{q.flagged}}" hint-placeholder-val="{{false}}"><span class="st bad">Gắn cờ</span></sc-if></span>
+</button>
+</sc-for>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="padding: 20px 8px; display: flex; flex-direction: column; gap: 4px"><span class="hs">Không còn tin trong mục này</span><span class="s">Chọn Tất cả để xem cả hàng chờ.</span></div></sc-if>
+</div>
+</aside>
+
+<section class="g-{{sel.g}}" style="flex: 999 1 560px; min-width: 0; padding: clamp(16px, 3vw, 32px); display: flex; flex-direction: column; gap: 24px" aria-label="Chi tiết tin">
+<sc-if value="{{hasLast}}" hint-placeholder-val="{{false}}">
+<div class="card" role="status" aria-live="polite" style="padding: 10px 10px 10px 16px; display: flex; align-items: center; gap: 12px">
+<span class="{{last.cls}}">{{last.verb}}</span>
+<span class="s ell" style="flex: 1; color: #d0d6e0">{{last.title}} · {{last.reason}}</span>
+<button class="btn ghost sm" onClick="{{undo}}">Hoàn tác</button>
+</div>
+</sc-if>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+<div class="sec">
+<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0">
+<span class="m" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>{{sel.gl}} · gửi {{sel.ago}} trước</span>
+<h1 class="d2">{{sel.title}}</h1>
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap"><span class="t">{{sel.org}}</span><span class="{{sel.orgCls}}">{{sel.orgSt}}</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 27">
+<div style="position: relative">
+<button class="btn" onClick="{{toggleReject}}" aria-expanded="{{rejectOpen}}" aria-haspopup="true">Từ chối<svg class="{{rejectChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{rejectOpen}}" hint-placeholder-val="{{false}}">
+<div class="menu" role="menu" style="right: 0; top: 48px">
+<span class="m" style="padding: 8px 10px 6px">Lý do từ chối</span>
+<sc-for list="{{rejectReasons}}" as="r" hint-placeholder-count="4"><button class="mi" role="menuitem" onClick="{{r.pick}}">{{r.label}}</button></sc-for>
+</div>
+</sc-if>
+</div>
+<div style="position: relative">
+<button class="btn" onClick="{{toggleFix}}" aria-expanded="{{fixOpen}}" aria-haspopup="true">Yêu cầu sửa<svg class="{{fixChev}}" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{fixOpen}}" hint-placeholder-val="{{false}}">
+<div class="menu" role="menu" style="right: 0; top: 48px">
+<span class="m" style="padding: 8px 10px 6px">Gửi nhà tổ chức</span>
+<sc-for list="{{fixReasons}}" as="r" hint-placeholder-count="4"><button class="mi" role="menuitem" onClick="{{r.pick}}">{{r.label}}</button></sc-for>
+</div>
+</sc-if>
+</div>
+<button class="btn acc" onClick="{{approve}}"><svg class="i" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Duyệt</button>
+</div>
+</div>
+
+<sc-if value="{{sel.flagged}}" hint-placeholder-val="{{false}}">
+<div class="card" style="padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: inset 0 0 0 1px rgba(235, 87, 87, .45)"><span class="st bad">Gắn cờ</span><span class="t" style="color: #f7f8f8">{{sel.flag}}</span></div>
+</sc-if>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span class="m">Hiện trong feed</span>
+<article class="ev g-{{sel.g}}">
+<div class="art g-{{sel.g}}"></div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span class="h">{{sel.title}}</span>
+<span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>{{sel.when}} · {{sel.venue}}</span>
+<span class="mb num">{{sel.price}}</span>
+</div>
+</article>
+</div>
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column">
+<span class="m" style="padding-bottom: 8px">Kiểm tra tự động · {{sel.passN}} / 4 đạt</span>
+<div style="border-top: 1px solid #23252a">
+<sc-for list="{{sel.warns}}" as="c" hint-placeholder-count="1"><div class="ck"><span class="t" style="color: #f7f8f8">{{c.t}}</span><span class="st warn">Xem lại</span></div></sc-for>
+<details class="acc sm">
+<summary><span class="s">{{sel.passN}} mục đạt</span><svg class="i chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="acc-b" style="padding-bottom: 4px">
+<sc-for list="{{sel.passes}}" as="c" hint-placeholder-count="3"><div class="ck" style="border-bottom: 0; min-height: 36px"><span class="s">{{c.t}}</span><span class="st ok">Đạt</span></div></sc-for>
+</div>
+</details>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div class="kv"><span class="m">Ngày</span><span class="hs num">{{sel.when}}</span></div>
+<div class="kv"><span class="m">Địa điểm</span><span class="hs">{{sel.venue}}</span></div>
+<div class="kv"><span class="m">Giá</span><span class="hs num">{{sel.price}}</span></div>
+<div class="kv"><span class="m">Độ tuổi</span><span class="hs">{{sel.age}}</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'nye', filter: 'all', done: {}, last: null, menu: null };
+  }
+  renderVals() {
+    const s = this.state;
+    const CHECKS = ['Ảnh đúng tỉ lệ, ít chữ', 'Link bán vé hoạt động', 'Giờ kết thúc hợp lệ', 'Không trùng tin đang đăng'];
+    const Q = [
+      { id: 'nye', g: 'fest', gl: 'Lễ hội', title: 'Đêm Trắng NYE 2026', org: 'Đêm Trắng Collective', verified: true, ago: '2 phút', sla: 'Dưới 1 giờ', slaCls: 'st ok', when: 'T5 31.12 · 20:00', venue: 'Công viên Gia Định', price: 'từ 550.000₫', age: '18+', warn: [] },
+      { id: 'after', g: 'edm', gl: 'EDM', title: 'Ravolution After Hours', org: 'Ravolution Ent.', verified: true, ago: '38 phút', sla: 'Dưới 1 giờ', slaCls: 'st ok', when: 'CN 20.09 · 02:00', venue: 'Warehouse 12 · Quận 4', price: 'từ 250.000₫', age: '18+', warn: [2] },
+      { id: 'ug', g: 'edm', gl: 'EDM', title: 'Underground Techno — Warehouse 12', org: 'W12 Collective', verified: false, ago: '1 giờ 20 phút', sla: '1–2 giờ', slaCls: 'st warn', when: 'T6 25.09 · 22:00', venue: 'Warehouse 12 · Quận 4', price: 'từ 200.000₫', age: '18+', warn: [3], flag: 'Trùng giờ và địa điểm với một tin đang đăng' },
+      { id: 'bside', g: 'live', gl: 'Nhạc sống', title: 'Bside Acoustic Night · Vol. 2', org: 'Bside Cafe', verified: false, ago: '2 giờ 10 phút', sla: 'Quá mốc', slaCls: 'st bad', when: 'T7 26.09 · 18:00', venue: 'Bside Cafe · Thảo Điền', price: 'từ 80.000₫', age: 'Mọi lứa tuổi', warn: [0] },
+      { id: 'pool', g: 'fest', gl: 'Lễ hội', title: 'Pool Party · Quận 2', org: 'Sunside Club', verified: false, ago: '12 phút', sla: 'Dưới 1 giờ', slaCls: 'st ok', when: 'CN 27.09 · 14:00', venue: 'Thảo Điền', price: 'từ 400.000₫', age: '18+', warn: [], flag: '3 người dùng báo cáo ảnh bìa' },
+      { id: 'bus', g: 'fest', gl: 'Lễ hội', title: 'EDM Beach Bus — Mũi Né', org: 'Tripside Travel', verified: false, ago: '48 phút', sla: 'Dưới 1 giờ', slaCls: 'st ok', when: 'T7 03.10 · 05:30', venue: 'Khởi hành Quận 1', price: 'từ 1.100.000₫', age: 'Mọi lứa tuổi', warn: [1] }
+    ];
+    const FILTERS = [['all', 'Tất cả', () => true], ['sla', 'Sắp quá mốc', (q) => q.slaCls !== 'st ok'], ['flag', 'Bị gắn cờ', (q) => !!q.flag]];
+    const open = Q.filter((q) => !s.done[q.id]);
+    const F = FILTERS.find((f) => f[0] === s.filter) || FILTERS[0];
+    const list = open.filter(F[2]);
+    const cur = list.find((q) => q.id === s.sel) || list[0] || null;
+    const doneCount = Object.keys(s.done).length;
+    const act = (verb, cls, reason) => () => {
+      if (!cur) return;
+      const rest = list.filter((q) => q.id !== cur.id);
+      const nxt = rest[0] ? rest[0].id : null;
+      this.setState({ done: Object.assign({}, this.state.done, { [cur.id]: true }), sel: nxt, menu: null, last: { id: cur.id, title: cur.title, verb, cls, reason } });
+    };
+    const menu = (k) => () => this.setState({ menu: this.state.menu === k ? null : k });
+    const REJ = ['Trùng tin đã đăng', 'Không phải sự kiện', 'Nội dung không phù hợp', 'Nghi lừa đảo'];
+    const FIX = ['Ảnh bìa nhiều chữ', 'Thiếu hoặc sai link bán vé', 'Giờ kết thúc chưa rõ', 'Địa chỉ chưa đầy đủ'];
+    return {
+      menuAny: !!s.menu,
+      closeMenu: () => this.setState({ menu: null }),
+      left: open.length,
+      approved: 38 + doneCount,
+      filters: FILTERS.map(([k, label, fn]) => ({ label, n: open.filter(fn).length, on: s.filter === k, cls: 'chip' + (s.filter === k ? ' on' : ''), pick: () => this.setState({ filter: k }) })),
+      empty: list.length === 0,
+      queue: list.map((q) => Object.assign({}, q, {
+        on: !!cur && q.id === cur.id,
+        flagged: !!q.flag,
+        cls: 'qrow g-' + q.g + (cur && q.id === cur.id ? ' on' : ''),
+        pick: () => this.setState({ sel: q.id, menu: null })
+      })),
+      hasSel: !!cur,
+      sel: cur ? Object.assign({}, cur, {
+        orgSt: cur.verified ? 'Đã xác minh' : 'Chưa xác minh',
+        orgCls: cur.verified ? 'st ok' : 'st',
+        flag: cur.flag || '',
+        flagged: !!cur.flag,
+        warns: cur.warn.map((i) => ({ t: CHECKS[i] })),
+        passes: CHECKS.filter((c, i) => cur.warn.indexOf(i) < 0).map((t) => ({ t })),
+        passN: 4 - cur.warn.length
+      }) : { g: 'edm', warns: [], passes: [], flagged: false },
+      rejectOpen: s.menu === 'reject',
+      rejectChev: 'i chev' + (s.menu === 'reject' ? ' up' : ''),
+      toggleReject: menu('reject'),
+      fixOpen: s.menu === 'fix',
+      fixChev: 'i chev' + (s.menu === 'fix' ? ' up' : ''),
+      toggleFix: menu('fix'),
+      rejectReasons: REJ.map((label) => ({ label, pick: act('Đã từ chối', 'st bad', label) })),
+      fixReasons: FIX.map((label) => ({ label, pick: act('Đã yêu cầu sửa', 'st warn', label) })),
+      approve: act('Đã duyệt', 'st ok', 'lên feed ngay'),
+      hasLast: !!s.last,
+      last: s.last || { cls: '', verb: '', title: '', reason: '' },
+      undo: () => {
+        const l = this.state.last;
+        if (!l) return;
+        const done = Object.assign({}, this.state.done);
+        delete done[l.id];
+        this.setState({ done, sel: l.id, last: null });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Tại sự kiện</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ff.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#08090a}
+a{color:#f7f8f8}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div class="ff phone">
+<header class="bar" style="gap: 12px; padding-right: 6px">
+<span class="st live">Trực tiếp</span>
+<span class="hs">HOZO Super Fest · Đêm 2</span>
+<a class="ib" href="App-Ticket.dc.html" aria-label="Thoát chế độ tại sự kiện" style="margin-left: auto"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+</header>
+
+<section class="g-fest" style="position: absolute; left: 16px; right: 16px; top: 60px; height: 240px" aria-label="Đang diễn">
+<div class="art g-fest" style="position: absolute; inset: 0"></div>
+<div class="glass" style="position: absolute; left: 10px; right: 10px; bottom: 10px; padding: 14px; border-radius: 10px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span class="m" style="color: #d0d6e0">Đang diễn · Sân khấu chính</span>
+<span class="d3">Hoàng Thùy Linh</span>
+</div>
+<div style="height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .14); overflow: hidden"><div style="width: 62%; height: 100%; border-radius: 4px; background: #f7f8f8"></div></div>
+<div class="m num" style="display: flex; justify-content: space-between; color: #d0d6e0"><span>20:45</span><span>còn 17 phút</span><span>21:30</span></div>
+</div>
+</section>
+
+<div style="position: absolute; left: 16px; right: 16px; top: 316px; display: flex; flex-direction: column">
+<span class="m" style="padding-bottom: 6px">Tiếp theo · nhắc trước 10 phút</span>
+<sc-for list="{{next}}" as="n" hint-placeholder-count="3">
+<div class="g-{{n.g}}" style="display: grid; grid-template-columns: 56px minmax(0, 1fr) 44px; align-items: center; gap: 10px; min-height: 60px; border-bottom: 1px solid #23252a">
+<span class="mb num" style="font-size: 15px">{{n.time}}</span>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span class="hs ell">{{n.who}}</span>
+<span class="s" style="display: flex; align-items: center; gap: 6px"><span class="mk"></span>{{n.stage}}</span>
+</div>
+<button class="{{n.cls}}" onClick="{{n.pick}}" aria-label="Nhắc tôi: {{n.who}}" aria-pressed="{{n.on}}"><svg class="i" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path class="fillable" d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg></button>
+</div>
+</sc-for>
+</div>
+
+<section class="card" style="position: absolute; left: 16px; right: 16px; top: 540px; height: 168px; overflow: hidden" aria-label="Sơ đồ khu lễ hội">
+<svg viewBox="0 0 358 168" width="358" height="168" style="position: absolute; inset: 0" aria-hidden="true">
+<path d="M-10 26 C 80 8, 160 52, 240 30 S 330 6, 370 20" fill="none" stroke="#0aa5b8" stroke-opacity=".14" stroke-width="22" stroke-linecap="round"></path>
+<path d="M112 128 C 130 108, 154 90, 176 72" fill="none" stroke="#e4f222" stroke-width="2" stroke-dasharray="3 6" stroke-linecap="round"></path>
+</svg>
+<span class="mk g-fest" style="position: absolute; left: 166px; top: 44px; width: 28px; height: 28px"></span>
+<span class="m" style="position: absolute; left: 132px; top: 80px; color: #d0d6e0">Sân khấu chính</span>
+<span class="mk g-cult" style="position: absolute; left: 34px; top: 58px; width: 34px; height: 17px"></span>
+<span class="m" style="position: absolute; left: 24px; top: 80px">Dân gian</span>
+<span class="mk g-edm" style="position: absolute; left: 292px; top: 50px; width: 24px; height: 22px"></span>
+<span class="m" style="position: absolute; left: 262px; top: 80px">Lều điện tử</span>
+<span class="me" style="left: 110px; top: 130px; width: 12px; height: 12px"></span>
+<span class="m" style="position: absolute; left: 126px; top: 124px; color: #e4f222">Bạn</span>
+<span class="tag glass num" style="position: absolute; right: 10px; bottom: 10px; color: #f7f8f8">4 phút đi bộ</span>
+</section>
+
+<nav class="tabbar glass" aria-label="Điều hướng chính">
+<a class="tb" href="Main.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Khám phá</a>
+<a class="tb" href="App-Map.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>Bản đồ</a>
+<a class="tb" href="#"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>Đã lưu</a>
+<a class="tb on" href="App-Ticket.dc.html" aria-current="page"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"></path><path d="M14 6v12"></path></svg>Vé</a>
+<a class="tb" href="Profile-Fan-App.dc.html"><svg class="i" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg>Tôi</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { on: { 0: true } };
+  }
+  renderVals() {
+    const on = this.state.on;
+    const N = [
+      { time: '21:30', who: 'Trúc Nhân', stage: 'Sân khấu chính', g: 'fest' },
+      { time: '21:45', who: 'DJ set về khuya', stage: 'Lều điện tử', g: 'edm' },
+      { time: '22:15', who: 'Phương Mỹ Chi', stage: 'Dân gian', g: 'cult' }
+    ];
+    return {
+      next: N.map((n, k) => Object.assign({}, n, {
+        on: !!on[k],
+        cls: 'ib' + (on[k] ? ' on' : ''),
+        pick: () => this.setState({ on: Object.assign({}, on, { [k]: !on[k] }) })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
