@@ -40,6 +40,7 @@ const DirectoryQuery = z.object({
   travel: z.enum(keysOf(TRAVEL_SCOPE)).optional(),
   gig: csv(z.enum(keysOf(GIG_TYPE))).optional(),
   gear: z.string().regex(/^[a-z0-9-]{2,80}$/).optional(),
+  brands: bool.optional(),
   verified: bool.optional(),
   upcoming: bool.optional(),
   sort: z.enum(['next', 'name', 'active']).default('next'),

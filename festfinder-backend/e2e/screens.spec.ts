@@ -149,6 +149,7 @@ test.describe('Web', () => {
     await expectOps(page, '/ops/artist/gear', /Thêm từ danh mục/);
     await expectOps(page, '/ops/artist/opportunities', /Gig đang mở/);
     await expectOps(page, '/ops/artist/opportunities?tab=dates', /Thêm khoảng/, '/ops/artist/opportunities');
+    await expectOps(page, '/ops/artist/opportunities?tab=brands', /Nhận hợp tác thương hiệu/, '/ops/artist/opportunities');
     // Dates they set show on their public page, without the note.
     await page.request.put('/me/artist/availability', { data: { items: [{ from: '2027-03-01', to: '2027-03-03', kind: 'available', note: 'private note' }] } });
     await expectScreen(page, `/a/${who.artist.slug}`, new RegExp(name, 'i'));
@@ -531,6 +532,7 @@ test.describe('Ops', () => {
       ['/ops/venues', /Thêm địa điểm/],
       ['/ops/sources', /Thêm nguồn/],
       ['/ops/partners', /Đối tác bán vé/],
+      ['/ops/brands', /Chiến dịch thương hiệu/],
       ['/ops/affiliate', /Vị trí bấm/],
       ['/ops/affiliate?tab=links', /Thêm liên kết/],
       ['/ops/affiliate?tab=payouts', /Chốt kỳ thanh toán/],

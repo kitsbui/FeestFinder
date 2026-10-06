@@ -29,6 +29,7 @@ const TEAM = [
   { key: 'venues', icon: 'map-pin', label: () => t('Địa điểm', 'Venues'), load: () => import('./team/venues.js'), view: 'Venues', count: 'unresolvedVenues' },
   { key: 'sources', icon: 'broadcast', label: () => t('Nguồn dữ liệu', 'Sources'), load: () => import('./team/sources.js'), view: 'Sources' },
   { key: 'partners', icon: 'handshake', label: () => t('Đối tác bán vé', 'Ticket partners'), load: () => import('./team/partners.js'), view: 'Partners' },
+  { key: 'brands', icon: 'sparkle', label: () => t('Thương hiệu', 'Brands'), load: () => import('./team/brands.js'), view: 'Brands' },
   { key: 'affiliate', icon: 'link', label: () => t('Affiliate', 'Affiliate'), load: () => import('./team/affiliate.js'), view: 'Affiliate' },
   { section: () => t('Nền tảng', 'Platform') },
   { key: 'featured', icon: 'star', label: () => t('Mục nổi bật', 'Featured shelves'), load: () => import('./team/featured.js'), view: 'Featured' },

@@ -104,7 +104,7 @@ describe('affiliate links, click context and payouts', () => {
     assert.equal(csv.status, 200);
     assert.match(csv.headers['content-type'], /text\/csv/);
     assert.match(csv.headers['content-disposition'], /payout-ticketbox-2020-01-01-/);
-    const lines = String(csv.text ?? csv.body).replace(/^\uFEFF/, '').trim().split('\r\n');
+    const lines = String(csv.body).replace(/^\uFEFF/, '').trim().split('\r\n');
     assert.equal(lines.length, 2, 'a header and the one settled sale');
     assert.match(lines[1], /^Ticketbox,2020-01-01,.*,L1,.*,500000,50000,VND,approved,/);
     assert.equal((await env.as(await emailUser(env, 'csv.peek@example.com')).get(`/admin/affiliate/payouts/${pay.body.id}/export.csv`)).status, 403);

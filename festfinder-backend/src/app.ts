@@ -50,6 +50,7 @@ import adminAffiliateRoutes from './routes/admin/affiliate.ts';
 import gearRoutes from './routes/gear.ts';
 import gigRoutes from './routes/gigs.ts';
 import analyticsRoutes from './routes/analytics.ts';
+import brandRoutes from './routes/brands.ts';
 import frontendRoutes from './routes/frontend.ts';
 
 declare module 'fastify' {
@@ -250,6 +251,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(gearRoutes);
   await app.register(gigRoutes);
   await app.register(analyticsRoutes);
+  await app.register(brandRoutes);
   await app.register(devConsoleRoutes);
   await app.register(internalRoutes);
   await app.register(discussionRoutes);

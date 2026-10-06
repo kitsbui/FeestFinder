@@ -69,6 +69,35 @@ function Requests() {
       h(Field, { label: t('Trả lời', 'Reply'), optional: true }, h(TextArea, { value: reply, onChange: setReply, rows: 4 }))) : null);
 }
 
+function Brands() {
+  const { data, error, loading, reload } = useFetch('/brand-campaigns');
+  const mine = useFetch('/me/artist/brand-interests');
+  const [writing, setWriting] = useState(null);
+  const [msg, setMsg] = useState('');
+  const send = async () => {
+    try { const out = await post(`/brand-campaigns/${writing.id}/interest`, { message: msg.trim() }); toast(tx(out.message)); setWriting(null); setMsg(''); reload(true); mine.reload(true); }
+    catch (e) { toast(errorText(e), 'error'); }
+  };
+  if (error) return h(ErrorBox, { error, onRetry: reload });
+  if (loading && !data) return h(Spinner);
+  if (!data.openToBrands) return h(Empty, { icon: 'sparkle', title: t('Bật "Nhận hợp tác thương hiệu" trong hồ sơ để xem chiến dịch', 'Turn on "Open to brand collaborations" in your profile to see campaigns') });
+  const BSTATUS = { ...STATUS, selected: ['ok', () => t('Được chọn', 'Selected')] };
+  return h(Fragment, null,
+    h(DataTable, { columns: [
+      { key: 'c', label: t('Chiến dịch', 'Campaign'), width: 300, render: (c) => h('div', null, h('div', { className: 'op-cell-title' }, `${c.brandName} · ${c.title}`),
+        h('div', { className: 'op-cell-sub' }, [c.cities.map((x) => tx(x.label)).join(', '), c.closesOn ? t(`hạn ${day(c.closesOn)}`, `closes ${day(c.closesOn)}`) : ''].filter(Boolean).join(' · ')),
+        c.brief ? h('div', { className: 'op-cell-sub', style: { whiteSpace: 'pre-wrap' } }, c.brief) : null) },
+      { key: 'fee', label: t('Phí', 'Fee'), width: 180, align: 'right', render: (c) => fee(c.feeMin, c.feeMax, c.currency) },
+      { key: 'act', label: '', width: 150, align: 'right', render: (c) => (c.interest ? h(Pill, { tone: BSTATUS[c.interest]?.[0] ?? 'neutral' }, BSTATUS[c.interest]?.[1]() ?? c.interest)
+        : h(Button, { size: 'sm', variant: 'cta', onClick: () => setWriting(c) }, t('Quan tâm', 'Interested'))) },
+    ], rows: data.items, minWidth: 700, empty: h(Empty, { icon: 'sparkle', title: t('Chưa có chiến dịch nào đang mở', 'No open campaigns') }) }),
+    mine.data?.items.some((i) => i.status === 'selected') ? h(Card, { title: t('Thương hiệu đã chọn bạn', 'Brands that picked you'), icon: 'seal-check' },
+      mine.data.items.filter((i) => i.status === 'selected').map((i) => h('div', { key: i.id, className: 'op-feed-line' }, `${i.campaign.brandName} · ${i.campaign.title}`))) : null,
+    writing ? h(Modal, { open: true, onClose: () => setWriting(null), title: `${writing.brandName} · ${writing.title}`,
+      footer: h(Fragment, null, h(Button, { onClick: () => setWriting(null) }, t('Huỷ', 'Cancel')), h(Button, { variant: 'cta', onClick: send }, t('Gửi', 'Send'))) },
+      h(Field, { label: t('Lời nhắn', 'Message'), optional: true }, h(TextArea, { value: msg, onChange: setMsg, rows: 4 }))) : null);
+}
+
 function Availability() {
   const { data, error, loading, reload } = useFetch('/me/artist/availability');
   const [rows, setRows] = useState(null);
@@ -103,6 +132,7 @@ export function ArtistOpportunities() {
       { value: 'mine', icon: 'paper-plane-tilt', label: t('Đã ứng tuyển', 'Applied') },
       { value: 'requests', icon: 'envelope-simple', label: t('Lời mời', 'Requests') },
       { value: 'dates', icon: 'calendar-check', label: t('Lịch trống', 'Availability') },
+      { value: 'brands', icon: 'sparkle', label: t('Thương hiệu', 'Brands') },
     ] }),
-    tab === 'mine' ? h(Mine) : tab === 'requests' ? h(Requests) : tab === 'dates' ? h(Availability) : h(Open));
+    tab === 'mine' ? h(Mine) : tab === 'requests' ? h(Requests) : tab === 'dates' ? h(Availability) : tab === 'brands' ? h(Brands) : h(Open));
 }

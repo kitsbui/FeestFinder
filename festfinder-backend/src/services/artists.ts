@@ -85,7 +85,7 @@ export const styleItem = (k: string) => ({ key: k, label: styleByKey(k)?.label ?
 
 export interface ArtistFilters {
   q?: string; role?: string[]; style?: string[]; city?: string; country?: string; booking?: string[]; travel?: string;
-  gig?: string[]; gear?: string; verified?: boolean; upcoming?: boolean; sort?: 'next' | 'name' | 'active'; limit: number; offset: number;
+  gig?: string[]; gear?: string; brands?: boolean; verified?: boolean; upcoming?: boolean; sort?: 'next' | 'name' | 'active'; limit: number; offset: number;
 }
 
 /** How much of a profile is filled in, 0–6: it breaks ties in the directory, never follower counts. */
@@ -132,6 +132,7 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   if (f.travel) where.push(`a.travel_scope = any(${p(TRAVEL_ORDER.slice(TRAVEL_ORDER.indexOf(f.travel as TravelScope)))}::text[])`);
   if (f.gig?.length) where.push(`a.gig_types && ${p(f.gig)}::text[]`);
   if (f.gear) where.push(`exists (select 1 from artist_gear ag join gear_items g on g.id = ag.gear_id where ag.artist_id = a.id and g.approved and g.slug = ${p(f.gear)})`);
+  if (f.brands) where.push('a.open_to_brands');
   if (f.verified) where.push('a.verified');
   if (f.upcoming) where.push('coalesce(up.upcoming, 0) > 0');
   const order = f.sort === 'name' ? 'a.name'
