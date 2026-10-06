@@ -58,6 +58,10 @@ describe('attendee (Web + App, signed in)', () => {
     assert.match(detail.body.me.followingArtistsLine.en, /^Following 2 of this lineup/);
     const panel = await env.as(token).get('/me/follows');
     assert.ok(panel.body.organizers.following.some((o: any) => o.slug === 'vinwonder'));
+    // Each followed name with the page of the artist listed under it.
+    assert.deepEqual(panel.body.artistPages.find((a: any) => a.name === 'Wukong'), { name: 'Wukong', slug: 'wukong' });
+    await env.as(token).put(`/me/follows/artists/${encodeURIComponent('Nobody Listed')}`);
+    assert.equal((await env.as(token).get('/me/follows')).body.artistPages.find((a: any) => a.name === 'Nobody Listed').slug, null);
   });
 
   it('builds a set-time plan and reports clashes', async () => {
@@ -137,6 +141,11 @@ describe('attendee (Web + App, signed in)', () => {
     assert.equal(after.body.tickets.tiers.find((t: any) => t.key === 'vip').left, vip.left - 2);
     const mine = await env.as(token).get('/me/tickets');
     assert.equal(mine.body.items.length, 2, 'seeded GA order plus this one');
+    // What the wallet needs for the doors countdown, the colour and directions.
+    const e = mine.body.items[0].event;
+    assert.equal(e.timezone, 'Asia/Ho_Chi_Minh');
+    assert.equal(e.genre, 'EDM');
+    assert.ok(e.startsAt && typeof e.lat === 'number');
     const wallet = await env.as(token).post(`/me/tickets/${order.body.order.tickets[0].id}/wallet`, { platform: 'apple' });
     assert.equal(wallet.body.message.en, 'Pass added · it opens from the lock screen at the gate');
     const notes = await env.as(token).get('/me/notifications');

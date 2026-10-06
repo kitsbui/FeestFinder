@@ -78,7 +78,7 @@ export function ShareButton({ lang }: { lang: Lang }) {
 
 type Channel = 'copy' | 'native' | 'zalo' | 'messenger' | 'facebook' | 'threads' | 'x' | 'telegram' | 'instagram' | 'tiktok';
 
-function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
   const { ev, personal } = useEvent();
   const kd = useKd();
   const t = T(lang);
@@ -425,7 +425,7 @@ export function SectionBar({ lang, sections, buy }: { lang: Lang; sections: { id
  * "Còn 5 ngày" / "Ngày mai" / "Đang diễn ra", counted in the browser against the API's clock,
  * so a cached page never shows yesterday's count.
  */
-export function Countdown({ lang }: { lang: Lang }) {
+export function Countdown({ lang, inline }: { lang: Lang; inline?: boolean }) {
   const { ev } = useEvent();
   const { clockReady } = useKd();
   const t = T(lang);
@@ -446,5 +446,6 @@ export function Countdown({ lang }: { lang: Lang }) {
     return () => clearInterval(id);
   }, [ev, clockReady, t.onNow, t.daysLeft, t.tomorrow, t.today]);
   if (!text) return null;
+  if (inline) return <span className="kd-tag kd-tag-glass kd-num text-paper">{text}</span>;
   return <span className="kd-tag kd-tag-glass kd-num absolute bottom-3.5 left-3.5 z-[1] h-8 px-3 text-paper">{text}</span>;
 }

@@ -78,6 +78,9 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
   - [x] `/o/[slug]` (+ `?lang=en`): cover, organiser, numbers, upcoming cards and past events by year, what it runs, the artists it books, venues, business details. No rating or response time (no source). A listing that is not verified offers its people the role picker with its name filled in.
   - [x] `/a/[slug]` (+ `?lang=en`): cover, artist, numbers, upcoming shows as dated rows (tickets through `/go/<slug>?src=artist`) and past shows, bio and links, who they play with most, free dates, venues, similar artists, gear, booking details. The directory (`/a`, `/a/style/…`, `/a/city/…`) stays compiled until Phase 6.
 - [ ] Phase 3: App
+  - [x] The app root (`src/kd/app/root.tsx`): Vietnamese unless the device chose English, the service worker, the tab bar (Khám phá · Bản đồ · Đã lưu · Vé · Tôi). `/app` itself moved, so the legacy catch-all is `[...path]`.
+  - [x] `/app` Explore and first-visit onboarding (genres, "Dùng vị trí của tôi" or a city; kept on the device only), `/app/e/[slug]` (the web event parts, a glass dock), `/app/list` (map, and the same events as rows; `?q=` search), `/app/saved` (saves and collections with the public link), `/app/tickets` (a real, scannable QR per ticket: `qrcode-generator`; the doors countdown; give or resell at face value), `/app/profile` (passport, Wrapped, your sound, following, settings), `/app/checkout/[slug]` (tier and quantity from `/go`, promo codes, VietQR transfer with polling, resale listings).
+  - [ ] Live, recap, plan and chat, guide, notifications, alerts, notification settings, hyped, following.
 - [ ] Phase 4: Studio, then Console
 - [ ] Phase 5: Moments, badges, passport, fan profile, Studio metrics, moderation reasons and undo
 - [ ] Phase 6: Undrawn routes, clean-up, docs
@@ -112,3 +115,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-06: Kính đêm Phase 1: foundation, components and `/kit`. The Next Playwright run passes as before (114 tests, 5 of them new).
 - 2026-10-06: Kính đêm Phase 2, first half: the event page, home and list in React + Tailwind (`e2e/next/event.spec.ts`, `home.spec.ts`, `list.spec.ts`). Checkout takes at most 6 tickets from `/go`, as the panel offers. The Next run: 122 passed, 19 shared tests skipped on rebuilt paths.
 - 2026-10-06: Kính đêm Phase 2 done: organiser and artist pages (`e2e/next/org.spec.ts`, `artist.spec.ts`). Links on the rebuilt pages keep the reader's language (`inLang`). The Next run: 131 passed, 22 shared tests skipped on rebuilt paths.
+- 2026-10-06: Kính đêm Phase 3, first part: the app root and eight app screens (`e2e/next/app.spec.ts`, 10 tests). The wallet's event carries its instant, timezone, genre and position; `/me/follows` gives each followed artist's page (`artistPages`). The rebuilt runtime keeps the last server-clock offset, so tickets stay "upcoming" offline.

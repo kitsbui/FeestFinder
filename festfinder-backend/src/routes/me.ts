@@ -8,6 +8,7 @@ import { isStyle } from '../lib/styles.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
 import { imageUrl, limit, parse, uuid } from '../lib/validate.ts';
 import { BANKS } from '../lib/vietqr.ts';
+import { artistKey } from '../services/artists.ts';
 import { requireUser } from '../http/guards.ts';
 import { decodeCursor, page } from '../http/sql.ts';
 import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
@@ -232,9 +233,15 @@ export default async function meRoutes(app: FastifyInstance) {
       verified: o.verification_state === 'verified', followersCount: o.followers_count,
       eventCount: o.events, genres: (o.genres ?? []).slice(0, 2), next: o.next,
     });
+    // A follow is of a name; the page of the artist listed under it (or an alias of it), if any.
+    const keys = artists.map((a) => artistKey(a.artist));
+    const listed = keys.length ? await many<{ slug: string; normalized_name: string; alias_keys: string[] }>(ctx.db,
+      'select slug, normalized_name, alias_keys from artists where normalized_name = any($1::text[]) or alias_keys && $1::text[]', [keys]) : [];
+    const slugOf = (k: string) => listed.find((a) => a.normalized_name === k || (a.alias_keys ?? []).includes(k))?.slug ?? null;
     return {
       organizers: { following: orgs.filter((o) => o.following).map(shape), discover: orgs.filter((o) => !o.following).map(shape) },
       artists: artists.map((a) => a.artist),
+      artistPages: artists.map((a, i) => ({ name: a.artist, slug: slugOf(keys[i]) })),
     };
   });
 

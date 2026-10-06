@@ -208,6 +208,14 @@
   .kd-tb[aria-current='page'] { color: var(--color-paper); }
   .kd-tb[aria-current='page']::before { content: ''; position: absolute; top: 6px; width: 18px; height: 3px; border-radius: 2px; background: var(--color-acc); }
   .kd-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
+  /* The app: a phone column, centred on wider screens; the bars stay over it. */
+  .kd-app { position: relative; width: 100%; max-width: 560px; min-height: 100dvh; margin: 0 auto; padding-top: env(safe-area-inset-top); }
+  .kd-app-tabs { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .kd-app ~ .kd-tabbar, .kd-app .kd-tabbar { left: max(12px, calc(50% - 268px)); right: max(12px, calc(50% - 268px)); }
+  .kd-app .kd-dock { left: max(0px, calc(50% - 280px)); right: max(0px, calc(50% - 280px)); }
+  @media (min-width: 560px) { .kd-app .kd-dock { border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; } }
+  /* Over the menu scrim (25), like the web nav: their menus open above it. */
+  .kd-app .kd-bar { position: relative; z-index: 27; }
 
   /* ---- web ---- */
   .kd-wrap { width: 100%; max-width: var(--container-wrap); margin: 0 auto; padding: 0 16px; }

@@ -10,6 +10,7 @@ import { hmac, randomCode, safeEqual } from '../lib/crypto.ts';
 import { vnd } from '../lib/format.ts';
 import { parse, uuid } from '../lib/validate.ts';
 import { buildVietQr, BANKS } from '../lib/vietqr.ts';
+import { cityBySlug } from '../lib/places.ts';
 import { requireUser } from '../http/guards.ts';
 import { REFUND_POLICY, tierState } from '../presenters/event.ts';
 import { fulfilOrder, qrToken } from '../services/tickets.ts';
@@ -86,6 +87,7 @@ async function quote(ctx: Ctx, q: Queryable, input: z.infer<typeof CheckoutInput
 async function presentOrder(ctx: Ctx, orderId: string, holderId?: string) {
   const o = await one<any>(ctx.db,
     `select o.*, e.slug, e.title, e.art, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, e.status as event_status, e.ends_at, e.resale_enabled,
+            e.starts_at, e.genre, e.city, e.lat as venue_lat, e.lng as venue_lng,
             t.name as tier_name, t.key as tier_key
        from orders o join events e on e.id = o.event_id join ticket_tiers t on t.id = o.tier_id where o.id = $1`, [orderId]);
   const holder = holderId ?? o.user_id;
@@ -102,7 +104,11 @@ async function presentOrder(ctx: Ctx, orderId: string, holderId?: string) {
     paymentMethod: o.payment_method, createdAt: o.created_at, paidAt: o.paid_at, expiresAt: o.status === 'pending' ? o.expires_at : null,
     // Tickets someone passed on to this holder: the order and its money are the buyer's, not theirs.
     received: holder !== o.user_id,
-    event: { id: o.event_id, slug: o.slug, title: o.title, art: o.art, startsOn: o.starts_on, endsOn: o.ends_on, startTime: o.start_time, endTime: o.end_time, venueName: o.venue_name, area: o.area },
+    event: {
+      id: o.event_id, slug: o.slug, title: o.title, art: o.art, startsOn: o.starts_on, endsOn: o.ends_on, startTime: o.start_time, endTime: o.end_time, venueName: o.venue_name, area: o.area,
+      // For the doors countdown, the genre colour and directions on the ticket.
+      startsAt: o.starts_at, endsAt: o.ends_at, genre: o.genre, city: o.city, timezone: cityBySlug(o.city)?.timezone ?? null, lat: o.venue_lat, lng: o.venue_lng,
+    },
     tier: { key: o.tier_key, name: o.tier_name },
     tickets: tickets.map((t) => ({
       id: t.id, code: t.code, status: t.status, checkedInAt: t.checked_in_at,

@@ -60,6 +60,9 @@ interface Kd {
   toast: (text: string, action?: ToastMsg['action']) => void;
 }
 
+/** Where the last server-clock offset is kept (the compiled screens' key too). */
+const CLOCK_KEY = 'ff:clock-offset';
+
 const Ctx = createContext<Kd | null>(null);
 
 export function useKd(): Kd {
@@ -137,9 +140,16 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   }, [toast, C.saved]);
 
   // The server's clock: "n minutes ago" and countdowns follow it (it is pinned in the tests).
+  // With no signal the check fails and the last offset holds, as in the compiled screens
+  // (ff-client.js keeps it under the same key): a ticket stays "upcoming" offline.
   useEffect(() => {
     FF.once('kd:clock', () => FF.maybe(FF.get('/health'), null)).then((h: { time?: string } | null) => {
-      if (h?.time) FF.clockOffset = new Date(h.time).getTime() - Date.now();
+      if (h?.time) {
+        FF.clockOffset = new Date(h.time).getTime() - Date.now();
+        try { localStorage.setItem(CLOCK_KEY, String(FF.clockOffset)); } catch { /* storage blocked */ }
+      } else {
+        try { FF.clockOffset = Number(localStorage.getItem(CLOCK_KEY)) || 0; } catch { /* storage blocked */ }
+      }
       setClockReady(true);
     });
   }, []);

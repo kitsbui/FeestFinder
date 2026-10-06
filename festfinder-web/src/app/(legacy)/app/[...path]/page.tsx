@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import AppScreen from '@/surfaces/app';
 
-// The same shell for every path: the screen reads the URL in the browser.
+// The same shell for every app path not yet rebuilt (/app itself is in (kd)): the screen reads the URL in the browser.
 export const dynamic = 'force-static';
 
 // Signed-in screens: nothing here for a search engine.

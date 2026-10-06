@@ -94,7 +94,7 @@ test('tickets still open with no signal', async ({ page, context }) => {
 
   await context.setOffline(true);
   await page.reload();
-  await expect.poll(() => page.locator('body').innerText()).toMatch(/MY TICKETS/i);
+  await expect.poll(() => page.locator('body').innerText()).toMatch(/Vé của tôi/);
   await expect.poll(() => page.locator('body').innerText()).toMatch(/FF-RAVO-/);
   await context.setOffline(false);
 });
