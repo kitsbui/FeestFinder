@@ -1384,6 +1384,17 @@
     </sc-if>
   </div>
 
+  <sc-if value="{{ artist.hasDates }}" hint-placeholder-val="{{ false }}">
+    <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:34px 0 15px">{{ artist.datesTitle }}</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ artist.dates }}" as="x" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:rgba(14,16,15,.6);border:1px solid {{ x.bd }};font-size:12.5px;font-weight:600">
+          <span style="color:{{ x.fg }}">{{ x.state }}</span><span>{{ x.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ artist.hasGear }}" hint-placeholder-val="{{ false }}">
     <h2 style="font-family:'Be Vietnam Pro', system-ui, sans-serif;font-weight:600;font-size:19px;margin:34px 0 15px">{{ artist.gearTitle }}</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap">

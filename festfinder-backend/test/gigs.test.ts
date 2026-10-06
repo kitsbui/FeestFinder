@@ -111,6 +111,9 @@ describe('the gig marketplace', () => {
     const after = (await env.as(fit).get('/gigs')).body.items.find((g: any) => g.id === g2.id).match;
     assert.ok(after.score < before && after.unavailable);
     assert.equal((await env.as(fit).get('/me/artist/availability')).body.items.length, 1);
+    const page = (await env.as().get('/artists/fit-dj')).body;
+    assert.deepEqual(page.availability.map((w: any) => [w.from, w.kind]), [[future(39), 'unavailable']], 'the artist page shows dates to come');
+    assert.ok(!('note' in page.availability[0]), 'notes stay private');
     assert.equal((await env.as(fit).put('/me/artist/availability', { items: [{ from: future(5), to: future(1), kind: 'available' }] })).body.error.code, 'bad_window');
   });
 });

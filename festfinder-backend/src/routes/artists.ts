@@ -94,6 +94,10 @@ export default async function artistRoutes(app: FastifyInstance) {
       similarArtists(ctx.db, a.id),
     ]);
     const gear = await gearOf(ctx.db, a.id, { includePending: false });
+    // Free and busy dates still to come, as the artist set them. Their notes are for them alone.
+    const windows = await many<any>(ctx.db,
+      `select from_on::text, to_on::text, kind, city from artist_availability where artist_id = $1 and to_on >= $2 order by from_on limit 12`,
+      [a.id, now.toISOString().slice(0, 10)]);
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const cards = rows.map((r) => presentCard(r, { now, viewer }));
     const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((x, y) => y[1] - x[1]).map(([x]) => x);
@@ -117,6 +121,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       past: past.map((e) => ({ id: e.id, slug: e.slug, title: e.title, startsOn: e.starts_on, city: e.city, cityLabel: cityLabel(e.city), venue: e.venue_name })),
       relationships: { organizers, venues, sharedLineups: lineups, similar },
       gear: gear.map((g) => presentGear(g, ctx.config.publicBaseUrl.replace(/\/$/, ''))),
+      availability: windows.map((w) => ({ from: w.from_on, to: w.to_on, kind: w.kind, city: w.city, cityLabel: w.city ? cityLabel(w.city) : null })),
     };
   });
 
