@@ -72,7 +72,8 @@ export function FollowButton({ lang, kind, id, name, source, className }: {
     if (out != null) kd.toast(fill(out ? T.followed : T.unfollowed, { n: name }));
   };
   return (
-    <button type="button" aria-pressed={on} onClick={toggle} className={buttonClass({ tone: on ? 'default' : 'acc' }, cx('min-w-[148px]', className))}>
+    // Until the page's own answer is in, whether this person follows is not known yet.
+    <button type="button" aria-pressed={on} onClick={toggle} disabled={!v} aria-busy={!v} className={buttonClass({ tone: on ? 'default' : 'acc' }, cx('min-w-[148px]', className))}>
       {on ? T.following : T.follow}
     </button>
   );

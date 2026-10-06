@@ -53,6 +53,8 @@ test.describe('the organiser page', () => {
     const n = async () => Number((await followers.innerText()).replace(/\D/g, ''));
     const follow = page.getByRole('button', { name: 'Theo dõi', exact: true });
     await expect(follow).toHaveAttribute('aria-pressed', 'false');
+    // The count is read once the page's own answer is in (the button waits for it too).
+    await expect(page.getByRole('button', { name: 'Theo dõi', exact: true })).toBeEnabled();
     const before = await n();
     await follow.click();
     await expect(page.getByRole('button', { name: 'Đang theo dõi' })).toHaveAttribute('aria-pressed', 'true');

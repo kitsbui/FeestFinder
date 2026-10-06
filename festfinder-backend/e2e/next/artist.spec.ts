@@ -68,6 +68,8 @@ test.describe('the artist page', () => {
     const followers = page.locator('.kd-stat').filter({ hasText: 'Người theo dõi' }).locator('.kd-v');
     const n = async () => Number((await followers.innerText()).replace(/\D/g, ''));
     await expect(page.getByRole('button', { name: 'Theo dõi', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    // The count is read once the page's own answer is in (the button waits for it too).
+    await expect(page.getByRole('button', { name: 'Theo dõi', exact: true })).toBeEnabled();
     const before = await n();
     await page.getByRole('button', { name: 'Theo dõi', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Đang theo dõi' })).toHaveAttribute('aria-pressed', 'true');
