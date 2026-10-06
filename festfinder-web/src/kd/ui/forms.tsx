@@ -2,7 +2,7 @@
  * Form parts: fields, the segmented control, ticket-tier options, the quantity stepper and
  * the switch. None of them holds state: the screen that uses them does.
  */
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { ComponentProps, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { MinusIcon, PlusIcon } from '@phosphor-icons/react/ssr';
 import { cx } from '../cx';
 
@@ -23,7 +23,7 @@ interface FieldLook {
   boxClass?: string;
 }
 
-export function Input({ icon, end, glass, invalid, boxClass, className, ...rest }: FieldLook & InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ icon, end, glass, invalid, boxClass, className, ...rest }: FieldLook & ComponentProps<'input'>) {
   return (
     <div className={cx('kd-field', glass && 'kd-field-glass', boxClass)} data-invalid={invalid || undefined}>
       {icon}

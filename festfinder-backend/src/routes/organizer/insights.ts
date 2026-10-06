@@ -4,7 +4,9 @@ import { many, one } from '../../db/index.ts';
 import { L, type Localized } from '../../lib/i18n.ts';
 import { addDays, daysBetween, vnDate } from '../../lib/time.ts';
 import { parse } from '../../lib/validate.ts';
+import { badRequest } from '../../lib/errors.ts';
 import { requireOrganizer, requireOwnEvent } from '../../http/guards.ts';
+import { appendAudit } from '../../services/audit.ts';
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(Math.round(n))}%`;
@@ -107,8 +109,32 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/organizer/events/:id/performance', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
+    const { range } = parse(z.object({ range: z.enum(['7d', '14d', '30d']).default('14d') }), req.query);
     const now = ctx.clock.now();
     const today = vnDate(now);
+    // Day by day over the range (the studio's "Lượt xem mỗi ngày"), and the range before it.
+    const span = Number(range.slice(0, -1));
+    const from = addDays(today, -(span - 1));
+    const startOf = (day: string) => new Date(`${day}T00:00:00+07:00`);
+    const [dayMetrics, daySaves, daySold, before] = await Promise.all([
+      many<any>(ctx.db, `select day::text as day, views, ticket_clicks as clicks from event_metrics_daily where event_id = $1 and day >= $2 and day <= $3`, [ev.id, from, today]),
+      many<any>(ctx.db,
+        `select to_char(created_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') as day, count(*)::int as n
+           from saves where event_id = $1 and created_at >= $2 group by 1`, [ev.id, startOf(from)]),
+      many<any>(ctx.db,
+        `select to_char(paid_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') as day, sum(qty)::int as n
+           from orders where event_id = $1 and status = 'paid' and paid_at >= $2 group by 1`, [ev.id, startOf(from)]),
+      one<any>(ctx.db, `select coalesce(sum(views),0)::int as views from event_metrics_daily where event_id = $1 and day >= $2 and day < $3`,
+        [ev.id, addDays(from, -span), from]),
+    ]);
+    const at = <T extends { day: string }>(rows: T[]) => new Map(rows.map((r) => [r.day, r]));
+    const m = at(dayMetrics), sv = at(daySaves), so = at(daySold);
+    const series = Array.from({ length: span }, (_, i) => {
+      const d = addDays(from, i);
+      return { day: d, views: m.get(d)?.views ?? 0, clicks: m.get(d)?.clicks ?? 0, saves: sv.get(d)?.n ?? 0, sold: so.get(d)?.n ?? 0 };
+    });
+    const sum = (k: 'views' | 'clicks' | 'saves' | 'sold') => series.reduce((n, d) => n + d[k], 0);
+    const boost = await one<any>(ctx.db, 'select status, created_at from boost_requests where event_id = $1 order by created_at desc limit 1', [ev.id]);
     const [tiers, metrics, daily, prevEv] = await Promise.all([
       many<any>(ctx.db, 'select name, capacity, sold from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
       one<any>(ctx.db, `select coalesce(sum(views),0)::int as views, coalesce(sum(ticket_clicks),0)::int as clicks from event_metrics_daily where event_id = $1`, [ev.id]),
@@ -163,9 +189,33 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
         stepConversion: i === 0 ? null : pct(v, funnel[i - 1]),
       })),
       trend,
+      range,
+      daily: series,
+      period: { views: sum('views'), clicks: sum('clicks'), saves: sum('saves'), sold: sum('sold'), viewsBefore: before.views },
+      boost: boost ? { status: boost.status, requestedAt: boost.created_at } : null,
       sources: sources.map((s) => ({ key: s.key, pct: Math.round((s.n / Math.max(totalSources, 1)) * 100) })),
       tiers: tiers.map((t) => ({ name: t.name, sold: t.sold, capacity: t.capacity, pct: pct(t.sold, t.capacity), soldOut: t.sold >= t.capacity })),
       vsPrevious,
     };
+  });
+
+  /** "Đẩy tin": ask the team to feature a listing that is live or in review. One open request per event. */
+  app.post<{ Params: { id: string } }>('/organizer/events/:id/boost', async (req, reply) => {
+    const org = await requireOrganizer(ctx, req);
+    const ev = await requireOwnEvent(ctx, org, req.params.id);
+    // Live, or just sent for review (the wizard's success card offers it); never a draft.
+    if (!['live', 'in_review'].includes(ev.status)) throw badRequest('not_live', L('Only a submitted or live listing can be featured', 'Chỉ tin đã gửi duyệt hoặc đang đăng mới được đẩy'));
+    const now = ctx.clock.now();
+    const made = await ctx.db.tx(async (q) => {
+      const row = await one<{ id: string }>(q,
+        `insert into boost_requests (event_id, organizer_id, requested_by, created_at) values ($1,$2,$3,$4)
+         on conflict (event_id) where status = 'open' do nothing returning id`, [ev.id, org.organizerId, org.userId, now]);
+      if (row) {
+        const who = await one<{ name: string | null }>(q, 'select name from users where id = $1', [org.userId]);
+        await appendAudit(q, { at: now, actorType: 'organizer', actorId: org.userId, actorLabel: who?.name || 'Organiser', action: 'boost.requested', targetType: 'event', targetId: ev.id, targetLabel: ev.title });
+      }
+      return !!row;
+    });
+    return reply.code(made ? 201 : 200).send({ status: 'open', message: L('Boost request sent to FeestFinder', 'Đã gửi yêu cầu đẩy tin cho FeestFinder') });
   });
 }

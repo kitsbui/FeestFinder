@@ -113,13 +113,14 @@ export function Avatar({ name, src, size = 40, org, ring, acc, className }: {
 // ---- disclosure ---------------------------------------------------------------------
 
 /** A native <details> accordion. Give a group the same `name` to make it exclusive. */
-export function Accordion({ summary, aside, children, open, name, small, className, id }: {
+export function Accordion({ summary, aside, children, open, name, small, className, id, onToggle }: {
   summary: ReactNode; aside?: ReactNode; children: ReactNode; open?: boolean; name?: string; small?: boolean; className?: string; id?: string;
+  onToggle?: (open: boolean) => void;
 }) {
   return (
-    <details className={cx('kd-acc', small && 'kd-sm', className)} open={open} name={name} id={id}>
+    <details className={cx('kd-acc', small && 'kd-sm', className)} open={open} name={name} id={id} onToggle={onToggle ? (e) => onToggle(e.currentTarget.open) : undefined}>
       <summary>
-        <span className="min-w-0">{summary}</span>
+        <span className="min-w-0 flex-1">{summary}</span>
         {aside != null ? <span className="kd-m kd-num">{aside}</span> : null}
         <CaretDownIcon size={18} className="kd-chev" aria-hidden="true" />
       </summary>

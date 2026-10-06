@@ -79,7 +79,7 @@ test('each look keeps its own stylesheet', async ({ page }) => {
   expect((await sheets()).some((h) => h.includes('/ui/theme.css'))).toBe(false);
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(8, 9, 10)');
   // A screen that is still the compiled one.
-  await page.goto('/studio');
+  await page.goto('/console');
   expect((await sheets()).some((h) => h.includes('/ui/theme.css'))).toBe(true);
   // Tailwind's preflight would zero this margin; the legacy screens rely on the browser's.
   expect(await page.evaluate(() => [...document.styleSheets].some((s) => {

@@ -56,6 +56,45 @@ describe('organizer back office (Ravolution)', () => {
     assert.ok(['on_pace', 'behind'].includes(r.body.verdict.key));
   });
 
+  it('gives the studio its views, saves, clicks and sales day by day over a range', async () => {
+    const r = await env.as(token).get(`/organizer/events/${ravo}/performance?range=7d`);
+    assert.equal(r.body.range, '7d');
+    assert.equal(r.body.daily.length, 7);
+    assert.deepEqual(Object.keys(r.body.daily[0]).sort(), ['clicks', 'day', 'saves', 'sold', 'views']);
+    assert.equal(r.body.daily[6].day, '2026-09-14', 'ends today, by the pinned clock');
+    assert.equal(r.body.period.views, r.body.daily.reduce((n: number, d: any) => n + d.views, 0));
+    assert.equal(typeof r.body.period.viewsBefore, 'number');
+    assert.equal(r.body.boost, null);
+    assert.equal((await env.as(token).get(`/organizer/events/${ravo}/performance?range=30d`)).body.daily.length, 30);
+    assert.equal((await env.as(token).get(`/organizer/events/${ravo}/performance?range=99d`)).status, 400);
+  });
+
+  it('asks the team to feature a live listing, once, and hears the answer', async () => {
+    const asked = await env.as(token).post(`/organizer/events/${ravo}/boost`);
+    assert.equal(asked.status, 201);
+    assert.equal(asked.body.message.en, 'Boost request sent to FeestFinder');
+    assert.equal((await env.as(token).post(`/organizer/events/${ravo}/boost`)).status, 200, 'asking again keeps the one open request');
+    assert.equal((await env.as(token).get(`/organizer/events/${ravo}/performance`)).body.boost.status, 'open');
+    const draft = (await env.as(token).get('/organizer/events')).body.items.find((e: any) => e.status === 'draft');
+    assert.equal((await env.as(token).post(`/organizer/events/${draft.id}/boost`)).body.error.code, 'not_live');
+
+    assert.equal((await env.as(token).get('/admin/boosts')).status, 403, 'organisers do not see the queue');
+    const admin = await env.admin();
+    const list = await env.as(admin).get('/admin/boosts');
+    const mine = list.body.items.find((b: any) => b.event.id === ravo && b.status === 'open');
+    assert.equal(mine.organizer, 'Ravolution Entertainment');
+    const done = await env.as(admin).post(`/admin/boosts/${mine.id}`, { status: 'done' });
+    assert.equal(done.body.status, 'done');
+    assert.equal((await env.as(admin).post(`/admin/boosts/${mine.id}`, { status: 'declined' })).body.error.code, 'already_answered');
+    assert.equal((await env.as(token).get(`/organizer/events/${ravo}/performance`)).body.boost.status, 'done');
+    const notes = await env.as(token).get('/organizer/notifications');
+    const note = notes.body.items.find((n: any) => n.kind === 'boost');
+    assert.ok(note && note.unread);
+    await env.as(token).post(`/organizer/notifications/${note.id}/read`);
+    const audit = await env.as(admin).get('/admin/audit?limit=5');
+    assert.ok(audit.body.items.some((a: any) => a.action === 'boost.done'));
+  });
+
   it('searches attendees by phone, filters, exports and resends', async () => {
     const all = await env.as(token).get(`/organizer/events/${ravo}/attendees?limit=100`);
     assert.equal(all.body.kpis.sold, all.body.filters.out + all.body.filters.in);

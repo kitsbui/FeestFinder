@@ -21,6 +21,7 @@ import { QrCode } from '../ui/qr';
 import { Sheet } from '../ui/sheet';
 import { APP } from './copy';
 import { SignInCard } from './row';
+import { BANKS } from '../banks';
 
 interface Ticket {
   id: string; code: string; status: 'valid' | 'used' | 'void' | string; checkedInAt: string | null; qr: string;
@@ -37,12 +38,6 @@ interface Order {
   tickets: Ticket[];
 }
 interface Wallet { items: Order[]; resold: { id: string; price: number; soldAt: string; payoutDueAt: string | null; paidOutAt: string | null; event: { title: string; slug: string } }[]; payee: { bankName: string | null; accountMasked: string } | null }
-
-/** lib/vietqr.ts BANKS: where a resale's money can go. */
-const BANKS: [string, string][] = [
-  ['970436', 'Vietcombank'], ['970415', 'VietinBank'], ['970418', 'BIDV'], ['970405', 'Agribank'], ['970407', 'Techcombank'],
-  ['970422', 'MB Bank'], ['970432', 'VPBank'], ['970416', 'ACB'], ['970403', 'Sacombank'], ['970423', 'TPBank'],
-];
 
 export function Tickets({ lang }: { lang: Lang }) {
   const T = pick(APP, lang);

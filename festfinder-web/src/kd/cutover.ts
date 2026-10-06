@@ -20,6 +20,8 @@ export const CUTOVER: readonly RegExp[] = [
   /^\/a\/(?!(en|style|city)(\/|$))[^/]+(\/en)?$/,
   // The app: every screen of it.
   /^\/app(\/.*)?$/,
+  // Studio, the organisers' back office: every screen of it.
+  /^\/studio(\/.*)?$/,
 ];
 
 /** Whether a path (with or without its query) is served by a rebuilt page. */

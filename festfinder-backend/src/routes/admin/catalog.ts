@@ -9,6 +9,7 @@ import { dateStr, localized, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { CARD_COLUMNS, presentCard } from '../../presenters/event.ts';
 import { appendAudit } from '../../services/audit.ts';
+import { notifyOrganizer } from '../../services/notify.ts';
 
 const AD_ART: Record<string, string> = {
   'F&B': 'linear-gradient(135deg,#FFB35C,#FF5C5C)',
@@ -312,5 +313,45 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
         diff: (['feed', 'banner', 'live'] as const).filter((k) => old.rates[k] !== rates[k]).map((k) => ({ f: `cpm_${k}`, a: String(old.rates[k]), b: String(rates[k]) })) });
     });
     return { rates };
+  });
+
+  /** Organisers' requests to feature a listing, open ones first. */
+  app.get('/admin/boosts', async (req) => {
+    requireAdmin(req);
+    const rows = await many<any>(ctx.db,
+      `select b.id, b.status, b.created_at, b.answered_at, e.id as event_id, e.slug, e.title, e.starts_on::text as starts_on, e.genre, o.name as organizer
+         from boost_requests b join events e on e.id = b.event_id join organizers o on o.id = b.organizer_id
+        order by (b.status = 'open') desc, b.created_at desc limit 60`);
+    return {
+      items: rows.map((r) => ({
+        id: r.id, status: r.status, requestedAt: r.created_at, answeredAt: r.answered_at,
+        event: { id: r.event_id, slug: r.slug, title: r.title, startsOn: r.starts_on, genre: r.genre }, organizer: r.organizer,
+      })),
+    };
+  });
+
+  app.post<{ Params: { id: string } }>('/admin/boosts/:id', async (req) => {
+    const s = requireAdmin(req);
+    const { status } = parse(z.object({ status: z.enum(['done', 'declined']) }), req.body);
+    const now = ctx.clock.now();
+    return ctx.db.tx(async (q) => {
+      const b = await one<any>(q,
+        `select b.*, e.title from boost_requests b join events e on e.id = b.event_id where b.id = $1 for update`, [parse(uuid, req.params.id)]);
+      if (!b) throw notFound();
+      if (b.status !== 'open') throw conflict('already_answered', L('This request was already answered', 'Yêu cầu này đã được trả lời'));
+      await q.query('update boost_requests set status = $2, answered_at = $3, answered_by = $4 where id = $1', [b.id, status, now, s.user.id]);
+      await appendAudit(q, {
+        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin',
+        action: status === 'done' ? 'boost.done' : 'boost.declined', targetType: 'event', targetId: b.event_id, targetLabel: b.title,
+        diff: [{ f: 'boost', a: 'open', b: status }],
+      });
+      await notifyOrganizer(q, now, {
+        organizerId: b.organizer_id, topic: 'moderation', kind: 'boost',
+        title: status === 'done' ? L(`${b.title} is featured`, `${b.title} đã được đẩy lên Nổi bật`) : L(`${b.title} was not featured this time`, `${b.title} chưa được đẩy lần này`),
+        body: status === 'done' ? L('It now shows on a featured shelf.', 'Sự kiện đang hiện trên một kệ nổi bật.') : L('The shelves are full for those dates. Ask again closer to the event.', 'Các kệ đã kín cho những ngày này. Hãy gửi lại gần ngày diễn hơn.'),
+        link: { screen: 'dash', eventId: b.event_id }, dedupeKey: `boost:${b.id}`,
+      });
+      return { id: b.id, status, message: status === 'done' ? L('Marked featured', 'Đã đánh dấu đẩy tin') : L('Declined', 'Đã từ chối') };
+    });
   });
 }
