@@ -483,10 +483,22 @@ test.describe('Organizer', () => {
       ['/studio/promos', /PROMOS & GUEST LIST/i],
       ['/studio/revenue', /REVENUE & PAYOUTS/i],
       ['/studio/inbox', /MESSAGES FROM FEESTFINDER/i],
+      ['/studio/gigs', /GIGS & BOOKINGS/i],
     ];
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
     }
+    test('posts a gig from the studio and lists it', async ({ page }) => {
+      await expectScreen(page, '/studio/gigs', /GIGS & BOOKINGS/i);
+      const title = `Studio slot ${Date.now() % 100000}`;
+      await page.getByLabel('e.g. Saturday warm-up').fill(title);
+      await page.getByLabel('date').fill('2027-04-10');
+      await page.getByLabel('Fee from').fill('2000000');
+      await page.getByRole('button', { name: 'Post', exact: true }).click();
+      await expect(page.getByText(title)).toBeVisible();
+      await page.getByText(title).click();
+      await expect(page.getByText('No applications yet')).toBeVisible();
+    });
   });
 });
 
