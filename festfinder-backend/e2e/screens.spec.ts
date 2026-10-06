@@ -460,6 +460,7 @@ test.describe('App', () => {
     });
 
     test('a resale ticket opens its own checkout', async ({ page }) => {
+      skipRebuilt('/app/checkout/rapviet');
       const listing = (await (await page.request.get('/events/rapviet/resale')).json()).items[0];
       await page.goto(`/app/checkout/rapviet?listing=${listing.id}`);
       await expect(page.getByText(/Resale ticket · General admission/)).toBeVisible();

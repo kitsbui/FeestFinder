@@ -7,7 +7,7 @@
  * reading the same live copy of the event.
  */
 import { useEffect, useState } from 'react';
-import { ArrowLeftIcon, ArrowUpRightIcon, CalendarBlankIcon, CaretRightIcon, HeartIcon, MapPinIcon, ShareNetworkIcon } from '@phosphor-icons/react/ssr';
+import { ArrowLeftIcon, ArrowUpRightIcon, CalendarBlankIcon, CaretRightIcon, HeartIcon, MapPinIcon, ShareNetworkIcon, UsersThreeIcon, CompassIcon } from '@phosphor-icons/react/ssr';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { km, money, timeRange, whenLong } from '../format';
@@ -108,6 +108,20 @@ function EventBody({ lang }: { lang: Lang }) {
             <span className="kd-t flex-1 text-paper">{ev.venue.name}{d != null ? <span className="kd-num text-fog"> · {km(d, lang)}</span> : ev.venue.area ? <span className="text-fog"> · {ev.venue.area}</span> : null}</span>
             <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>
           </div>
+          {!ev.past ? (
+            <a className="kd-lrow min-h-13" href={'/app/plan/' + ev.slug}>
+              <UsersThreeIcon size={18} className="text-fog" aria-hidden="true" />
+              <span className="kd-t flex-1 text-paper">{T.goTogether}</span>
+              <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+            </a>
+          ) : null}
+          {!ev.past ? (
+            <a className="kd-lrow min-h-13" href={'/app/guide/' + ev.slug}>
+              <CompassIcon size={18} className="text-fog" aria-hidden="true" />
+              <span className="kd-t flex-1 text-paper">{T.guideRow}</span>
+              <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+            </a>
+          ) : null}
         </div>
 
         {description ? (

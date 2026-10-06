@@ -18,10 +18,8 @@ export const CUTOVER: readonly RegExp[] = [
   /^\/o\/[^/]+(\/en)?$/,
   // The artist pages, both languages; not the directory (/a, /a/en, /a/style/…, /a/city/…).
   /^\/a\/(?!(en|style|city)(\/|$))[^/]+(\/en)?$/,
-  // The app, screen by screen; the rest of /app is still the compiled app.
-  /^\/app$/,
-  /^\/app\/(e|checkout)\/[^/]+$/,
-  /^\/app\/(list|saved|tickets|profile)$/,
+  // The app: every screen of it.
+  /^\/app(\/.*)?$/,
 ];
 
 /** Whether a path (with or without its query) is served by a rebuilt page. */

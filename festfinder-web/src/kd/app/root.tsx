@@ -7,7 +7,8 @@
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { CompassIcon, HeartIcon, MapTrifoldIcon, TicketIcon, UserIcon } from '@phosphor-icons/react/ssr';
-import { registerServiceWorker } from '@/runtime/pwa';
+import { FF } from '@/runtime/ff';
+import { enablePush, forgetDevice, registerServiceWorker } from '@/runtime/pwa';
 import { pick, type Lang } from '../copy';
 import { KdProvider } from '../runtime';
 import { TabBar } from '../ui/shell';
@@ -28,6 +29,9 @@ export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang)
     const saved = place.lang();
     if (saved) setLangState(saved);
     registerServiceWorker();
+    // As the compiled app does: push from Settings, and signing out stops this browser's notifications.
+    FF.enablePush = enablePush;
+    FF.beforeSignOut = forgetDevice;
   }, []);
   const setLang = (l: Lang) => { place.setLang(l); setLangState(l); };
   return (
