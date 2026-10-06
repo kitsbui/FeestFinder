@@ -11,8 +11,8 @@ import { GENRES } from '../lib/i18n.ts';
 import { isCity } from '../lib/places.ts';
 import { slugify } from '../lib/contact.ts';
 import {
-  artistSsr, buildArtistSeo, buildCollectionSeo, buildEventSeo, buildOrganizerSeo, collectionSsr, eventSsr, organizerSsr, seoHead,
-  type ArtistSeo, type CollectionSeo, type OrganizerSeo, type PageSeo,
+  artistSsr, buildArtistSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, collectionSsr, directorySsr, eventSsr, organizerSsr, seoHead,
+  type ArtistSeo, type CollectionSeo, type DirectorySeo, type OrganizerSeo, type PageSeo,
 } from '../services/seo.ts';
 
 /**
@@ -193,13 +193,15 @@ export default async function frontendRoutes(app: FastifyInstance) {
    * inside <x-dc>, which the screen replaces when it mounts. Search engines and AI assistants
    * that run no script read that. Vietnamese at /e/:slug, English at /e/:slug?lang=en.
    */
-  const page = <S extends PageSeo>(route: string, build: (slug: string, lang: 'vi' | 'en') => Promise<S | null>, ssr: (seo: S) => string) =>
+  const page = <S extends PageSeo>(route: string, build: (slug: string, lang: 'vi' | 'en') => Promise<S | null>, ssr: (seo: S) => string,
+    keyOf: (params: { slug: string }) => string = (params) => params.slug) =>
     app.get<{ Params: { slug: string }; Querystring: { lang?: string } }>(route, async (req, reply) => {
       const entry = await load(join(dir, 'pages/web/shell.html'));
       if (!entry) throw notFound();
       reply.header('content-security-policy', csp);
       const lang = req.query?.lang === 'en' ? 'en' : 'vi';
-      const seo = await build(req.params.slug, lang).catch((e) => { app.ctx.log(`${route} ${req.params.slug}: ${e}`); return null; });
+      const key = keyOf(req.params);
+      const seo = await build(key, lang).catch((e) => { app.ctx.log(`${route} ${key}: ${e}`); return null; });
       if (!seo) return serve(req, reply.code(404), entry, 'none');
       const { title, head } = seoHead(seo);
       const html = entry.body.toString('utf8')
@@ -219,6 +221,10 @@ export default async function frontendRoutes(app: FastifyInstance) {
   page<OrganizerSeo>('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
   page<CollectionSeo>('/c/:slug', (slug, lang) => buildCollectionSeo(app.ctx, slug, lang), collectionSsr);
   page<ArtistSeo>('/a/:slug', (slug, lang) => buildArtistSeo(app.ctx, slug, lang), artistSsr);
+  // The artist directory, and one style's or one city's artists.
+  page<DirectorySeo>('/a', (key, lang) => buildDirectorySeo(app.ctx, key, lang), directorySsr, () => 'all');
+  page<DirectorySeo>('/a/style/:slug', (key, lang) => buildDirectorySeo(app.ctx, key, lang), directorySsr, (p) => `style:${p.slug}`);
+  page<DirectorySeo>('/a/city/:slug', (key, lang) => buildDirectorySeo(app.ctx, key, lang), directorySsr, (p) => `city:${p.slug}`);
 
   for (const surface of SURFACES) {
     const shell = join(dir, surface.shell);

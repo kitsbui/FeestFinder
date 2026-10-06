@@ -234,7 +234,7 @@ export async function matchVenue(q: Queryable, n: { city: string; venueName: str
 }
 
 /** Facts the source states differently from the event: they cost confidence and tell the moderator to look. */
-async function conflictsWith(q: Queryable, eventId: string, n: NormalizedEvent) {
+export async function conflictsWith(q: Queryable, eventId: string, n: NormalizedEvent) {
   const ev = await one<any>(q, 'select starts_on::text as starts_on, venue_name, lat, lng from events where id = $1', [eventId]);
   const out: { field: string; source: string; event: string }[] = [];
   if (!ev) return out;
@@ -264,7 +264,7 @@ async function attachSource(q: Queryable, eventId: string, source: IngestSource,
  * Fills what the event is missing from what the source says. Never overwrites: an organiser's
  * or moderator's words stand, and a disagreement is recorded as a conflict instead.
  */
-async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Date) {
+export async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Date) {
   const ev = await one<any>(q, `select e.*, o.is_community from events e join organizers o on o.id = e.organizer_id where e.id = $1`, [eventId]);
   if (!ev) return;
   const set: Record<string, unknown> = {};
@@ -286,7 +286,7 @@ async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Da
 }
 
 /** A new event in the review queue, held by the community organiser until someone claims it. */
-async function createCandidate(q: Queryable, source: IngestSource, n: NormalizedEvent, venue: any, match: Match | null, now: Date): Promise<string> {
+export async function createCandidate(q: Queryable, source: Pick<IngestSource, 'name' | 'url'>, n: NormalizedEvent, venue: any, match: Match | null, now: Date): Promise<string> {
   const organizerId = await communityOrganizerId(q);
   const slug = `${slugify(n.title) || 'event'}-${randomCode(4).toLowerCase()}`;
   const paid = !n.free;
@@ -311,7 +311,7 @@ async function createCandidate(q: Queryable, source: IngestSource, n: Normalized
 }
 
 /** The moderator's advice for an imported candidate, with a possible duplicate first. */
-async function flagRisk(q: Queryable, eventId: string, match: Match | null, now: Date) {
+export async function flagRisk(q: Queryable, eventId: string, match: Match | null, now: Date) {
   const risk = await assessRisk(q, eventId, now);
   const dup = match ? [{ ok: false, label: L(`Maybe a duplicate of “${match.title}” (${match.reason})`, `Có thể trùng “${match.title}” (${match.reason})`) }] : [];
   const ev = await one<{ entry_mode: string; price_from: number }>(q, 'select entry_mode, price_from from events where id = $1', [eventId]);

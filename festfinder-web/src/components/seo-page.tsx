@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import WebScreen from '@/surfaces/web';
 import { EventSummary, OrganizerSummary } from '@/components/summaries';
-import { api, jsonLdHtml, type ArtistSeo, type CollectionSeo, type EventSeo, type Lang, type OrganizerSeo } from '@/lib/api';
+import { api, jsonLdHtml, type ArtistSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo } from '@/lib/api';
 
 /*
  * An event, organiser, artist or public collection page in one language: Vietnamese at /e/<slug>, English at
@@ -53,6 +53,46 @@ export const SeoPage = (kind: Kind, lang: Lang) => async function Page({ params 
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <WebScreen>{seo.kind === 'event' ? <EventSummary seo={seo} /> : <OrganizerSummary seo={seo} />}</WebScreen>
+    </>
+  );
+};
+
+/*
+ * The artist directory: /a, /a/style/<style> and /a/city/<city>, each with ?lang=en rewritten
+ * to an /en page of its own. The key names the list the API builds (/seo/directory/:key).
+ */
+type DirProps = { params: Promise<{ slug?: string }> };
+type DirKey = (slug?: string) => string;
+
+const loadDir = (key: string, lang: Lang) => api<DirectorySeo>(`/seo/directory/${encodeURIComponent(key)}${lang === 'en' ? '?lang=en' : ''}`);
+
+export const directoryMetadata = (keyOf: DirKey, lang: Lang) => async ({ params }: DirProps): Promise<Metadata> => {
+  const seo = await loadDir(keyOf((await params).slug), lang);
+  if (!seo) return { title: lang === 'vi' ? 'Không tìm thấy danh sách nghệ sĩ' : 'No such artist list' };
+  return {
+    title: { absolute: seo.title },
+    description: seo.description,
+    robots: seo.robots,
+    alternates: {
+      canonical: seo.canonical,
+      languages: { vi: seo.alternates.vi, en: seo.alternates.en, 'x-default': seo.alternates['x-default'] },
+      types: { 'text/markdown': seo.markdown },
+    },
+    openGraph: {
+      type: 'website', url: seo.url, siteName: 'FeestFinder', title: seo.page.h1, description: seo.description,
+      locale: seo.lang === 'vi' ? 'vi_VN' : 'en_US', alternateLocale: [seo.lang === 'vi' ? 'en_US' : 'vi_VN'],
+      images: [{ url: seo.image.url, width: seo.image.width, height: seo.image.height, alt: seo.image.alt, type: seo.image.type }],
+    },
+  };
+};
+
+export const DirectoryPage = (keyOf: DirKey, lang: Lang) => async function Page({ params }: DirProps) {
+  const seo = await loadDir(keyOf((await params).slug), lang);
+  if (!seo) notFound();
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
+      <WebScreen><OrganizerSummary seo={seo} /></WebScreen>
     </>
   );
 };

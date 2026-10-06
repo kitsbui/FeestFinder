@@ -146,7 +146,7 @@ const S2 = {
   notifChanOff:{en:'Off',vi:'Đang tắt'}
 };
 
-const GENRES = ['EDM','Festival','Indie','Hip-Hop','Pop','Jazz','Food','Culture'];
+const GENRES = ['EDM','Festival','Rock','Indie','Hip-Hop','Pop','Jazz','Food','Culture'];
 const ORG = (FF.data.org || { authed:false });
 const VENUES = (ORG.venues || []).map(v => ({ id:v.id, name:v.name, addr:(v.address || '') + (v.area ? ', ' + v.area : '') }));
 
@@ -302,20 +302,22 @@ function draftBody(k, f) {
  * /studio/attendees    attendees        /studio/revenue    revenue & payouts
  * /studio/announce     announcements    /studio/inbox      messages
  * /studio/profile      business profile /studio/event/<id> one event's performance
+ * /studio/gigs         gigs & bookings
  */
 const ROUTE_SCREEN = {
   '': 'dash', 'new': 'wizard', 'attendees': 'guests', 'announce': 'announce',
-  'door': 'door', 'promos': 'promos', 'revenue': 'money', 'inbox': 'inbox'
+  'door': 'door', 'promos': 'promos', 'revenue': 'money', 'inbox': 'inbox', 'gigs': 'gigs'
 };
 const SCREEN_ROUTE = { dash: '', wizard: 'new', guests: 'attendees', announce: 'announce',
-  door: 'door', promos: 'promos', money: 'revenue', inbox: 'inbox' };
+  door: 'door', promos: 'promos', money: 'revenue', inbox: 'inbox', gigs: 'gigs' };
 
 const NK = {
   reject:  { icon:'ph-fill ph-warning-circle', color:'#FF8709', tint:'rgba(255,135,9,.14)' },
   tickets: { icon:'ph-fill ph-ticket',         color:'#FF8709', tint:'rgba(255,135,9,.14)' },
   payout:  { icon:'ph-fill ph-bank',           color:'#00BAE2', tint:'rgba(0,186,226,.14)' },
   live:    { icon:'ph-fill ph-check-circle',   color:'#ABFF84', tint:'rgba(171,255,132,.13)' },
-  crew:    { icon:'ph-fill ph-users-three',    color:'#ABFF84', tint:'rgba(10,228,72,.14)' }
+  crew:    { icon:'ph-fill ph-users-three',    color:'#ABFF84', tint:'rgba(10,228,72,.14)' },
+  gig:     { icon:'ph-fill ph-microphone-stage', color:'#ABFF84', tint:'rgba(171,255,132,.13)' }
 };
 
 class Component extends DCLogic {
@@ -352,12 +354,13 @@ class Component extends DCLogic {
     annSubject:'', annBody:'',
     annSent: ORG.announcements || [], annSizes: ORG.annSizes || {}, annEst: ORG.annEst || null,
     notifOpen:false, push:null,
-    notifPrefs: ORG.notifPrefs || { moderation:true, tickets:true, payouts:true, crew:false },
+    notifPrefs: ORG.notifPrefs || { moderation:true, tickets:true, payouts:true, crew:false, bookings:true },
     notifs: ORG.notifs || [],
     revenue: ORG.revenue || null,
     promoDraft:'', promoPct:'',
     promos: ORG.promos ? ORG.promos.items : [], promoStats: ORG.promos ? ORG.promos.stats : null,
-    guests: ORG.guests ? ORG.guests.items : [], guestLine: ORG.guests ? ORG.guests.countLine : null
+    guests: ORG.guests ? ORG.guests.items : [], guestLine: ORG.guests ? ORG.guests.countLine : null,
+    gigs: [], inquiries: [], gigCities: [], gigSel: null, gigApps: [], gfTitle:'', gfDate:'', gfCity:'ho-chi-minh', gfFeeMin:'', gfFeeMax:'', gfErr:''
   };
 
   /** Everything this screen needs after a sign-in or a switch of event. */
@@ -452,6 +455,17 @@ class Component extends DCLogic {
     if (screen === 'promos') return FF.orgPromos(this, id);
     if (screen === 'money') return FF.orgMoney(this, id);
     if (screen === 'inbox') return FF.orgInbox(this);
+    if (screen === 'gigs') return FF.orgGigs(this);
+  }
+
+  /** One gig's applications, best fit first. */
+  async openGig(id) {
+    if (this.state.gigSel === id) { this.setState({ gigSel:null, gigApps:[] }); return; }
+    this.setState({ gigSel:id, gigApps:[] });
+    try {
+      const out = await FF.get('/organizer/gigs/' + id + '/applications');
+      if (this.state.gigSel === id) this.setState({ gigApps: out.items });
+    } catch (e) { this.fail(e); }
   }
 
   /** Pull the bell again after something that can create a notification. */
@@ -839,6 +853,7 @@ class Component extends DCLogic {
         promos: vi ? 'Bán vé · ưu đãi & khách mời' : 'Ticketing · promos & guests',
         money: vi ? 'Doanh thu & chi trả' : 'Revenue & payouts',
         inbox: vi ? 'Tin nhắn từ FeestFinder' : 'Messages from FeestFinder',
+        gigs: vi ? 'Gig & booking nghệ sĩ' : 'Gigs & artist bookings',
         admin: L.adminKicker
       })[st.screen] || L.wizardKicker,
       modeBg: st.screen === 'admin' ? 'rgba(255,135,9,.14)' : 'rgba(171,255,132,.12)',
@@ -891,7 +906,8 @@ class Component extends DCLogic {
         { k:'door', label: vi ? 'Soát vé' : 'Check-in', icon:'ph-bold ph-qr-code' },
         { k:'promos', label: vi ? 'Ưu đãi' : 'Promos', icon:'ph-bold ph-tag' },
         { k:'money', label: vi ? 'Doanh thu' : 'Revenue', icon:'ph-bold ph-chart-line-up' },
-        { k:'inbox', label: vi ? 'Hộp thư' : 'Inbox', icon:'ph-bold ph-chat-circle-text' }
+        { k:'inbox', label: vi ? 'Hộp thư' : 'Inbox', icon:'ph-bold ph-chat-circle-text' },
+        { k:'gigs', label: 'Gigs', icon:'ph-bold ph-microphone-stage' }
       ].map(n => {
         const on = st.screen === n.k;
         return { label:n.label, icon:n.icon,
@@ -902,6 +918,7 @@ class Component extends DCLogic {
           go: () => this.go(n.k) };
       }),
       isDoor: st.authed && st.screen === 'door', isPromos: st.authed && st.screen === 'promos', isMoney: st.authed && st.screen === 'money',
+      isGigs: st.authed && st.screen === 'gigs',
 
       notifOpen: st.notifOpen,
       toggleNotif: () => { this.setState(s => ({ notifOpen: !s.notifOpen, push:null })); FF.orgBell(this); },
@@ -928,7 +945,8 @@ class Component extends DCLogic {
         { k:'moderation', icon:'ph-bold ph-shield-check', sms:true, label: vi ? 'Quyết định kiểm duyệt' : 'Moderation decisions' },
         { k:'tickets', icon:'ph-bold ph-ticket', sms:true, label: vi ? 'Cảnh báo vé sắp hết' : 'Low-ticket alerts' },
         { k:'payouts', icon:'ph-bold ph-bank', sms:false, label: vi ? 'Chi trả & hoàn tiền' : 'Payouts & refunds' },
-        { k:'crew', icon:'ph-bold ph-users-three', sms:false, label: vi ? 'Hoạt động của crew cổng' : 'Gate crew activity' }
+        { k:'crew', icon:'ph-bold ph-users-three', sms:false, label: vi ? 'Hoạt động của crew cổng' : 'Gate crew activity' },
+        { k:'bookings', icon:'ph-bold ph-microphone-stage', sms:false, label: vi ? 'Ứng tuyển & booking nghệ sĩ' : 'Artist applications & bookings' }
       ].map(p => ({
         label: p.label, icon: p.icon,
         channel: !st.notifPrefs[p.k] ? L.notifChanOff : (p.sms ? L.notifChanOn : L.notifChanPush),
@@ -1697,6 +1715,77 @@ class Component extends DCLogic {
         { k:'scanner', label: vi ? 'Soát vé' : 'Scan only' },
         { k:'lead', label: vi ? 'Trưởng cửa' : 'Gate lead' }
       ].map(o => ({ label:o.label, bg: st.sRole === o.k ? '#ABFF84' : 'transparent', fg: st.sRole === o.k ? '#141514' : '#A5A493', pick: () => this.setState({ sRole:o.k }) })),
+
+      /* ---- gigs & bookings ---- */
+      gT: {
+        kicker: vi ? 'Nghệ sĩ' : 'Artists',
+        title: vi ? 'Gig & booking' : 'Gigs & bookings',
+        posted: vi ? 'Gig đã đăng' : 'Posted gigs',
+        none: vi ? 'Chưa đăng gig nào' : 'No gigs yet',
+        noApps: vi ? 'Chưa có hồ sơ' : 'No applications yet',
+        newTitle: vi ? 'Đăng gig' : 'Post a gig',
+        titlePh: vi ? 'vd: Warm-up thứ Bảy' : 'e.g. Saturday warm-up',
+        feeMinPh: vi ? 'Phí từ' : 'Fee from', feeMaxPh: vi ? 'Phí đến' : 'Fee up to',
+        post: vi ? 'Đăng' : 'Post',
+        requests: vi ? 'Lời mời đã gửi' : 'Requests sent',
+        noRequests: vi ? 'Chưa gửi lời mời nào' : 'No requests sent',
+        more: vi ? 'Mời nghệ sĩ, xem chi tiết' : 'Ask an artist, see details'
+      },
+      noGigs: st.gigs.length === 0,
+      gigRows: st.gigs.map(x => {
+        const open = st.gigSel === x.id;
+        const fee = x.feeMin == null && x.feeMax == null ? '' : [x.feeMin, x.feeMax].filter(v => v != null).map(nf).join(' – ') + ' ' + x.currency;
+        const status = { open: vi ? 'Đang mở' : 'Open', closed: vi ? 'Đã đóng' : 'Closed', filled: vi ? 'Đã chốt' : 'Filled' }[x.status] || x.status;
+        return {
+          title: x.title, line: [FF.dayLabel(x.startsOn, g), FF.text(x.cityLabel, g), fee].filter(Boolean).join(' · '),
+          apps: nf(x.applications) + (vi ? ' hồ sơ' : (x.applications === 1 ? ' application' : ' applications')),
+          status, stFg: x.status === 'open' ? '#ABFF84' : '#A5A493', stBd: x.status === 'open' ? 'rgba(171,255,132,.5)' : 'rgba(255,252,225,.19)',
+          caret: open ? 'ph-bold ph-caret-up' : 'ph-bold ph-caret-down', open: () => this.openGig(x.id), isOpen: open,
+          noApps: open && st.gigApps.length === 0,
+          appRows: open ? st.gigApps.map(a => {
+            const decide = async (status) => {
+              try {
+                await FF.post('/organizer/gigs/' + x.id + '/applications/' + a.id, { status });
+                this.setState(s => ({ gigApps: s.gigApps.map(y => y.id === a.id ? Object.assign({}, y, { status }) : y) }));
+                if (status === 'booked') FF.orgGigs(this, true);
+              } catch (e) { this.fail(e); }
+            };
+            const done = a.status === 'booked' || a.status === 'declined';
+            return {
+              name: a.artist.name, href: '/a/' + a.artist.slug, fit: a.matchScore + '/100', msg: a.message,
+              hasMsg: !!a.message, done, live: !done,
+              doneLabel: a.status === 'booked' ? (vi ? 'Đã chốt' : 'Booked') : (vi ? 'Đã từ chối' : 'Declined'),
+              shortLabel: a.status === 'shortlisted' ? (vi ? 'Đã chọn' : 'Shortlisted') : (vi ? 'Chọn' : 'Shortlist'),
+              bookLabel: vi ? 'Chốt' : 'Book', declineLabel: vi ? 'Từ chối' : 'Decline',
+              shortlist: () => decide('shortlisted'), book: () => decide('booked'), decline: () => decide('declined')
+            };
+          }) : []
+        };
+      }),
+      gfTitle: st.gfTitle, gfDate: st.gfDate, gfFeeMin: st.gfFeeMin, gfFeeMax: st.gfFeeMax, gfErr: st.gfErr, gfHasErr: !!st.gfErr,
+      setGfTitle: (e) => this.setState({ gfTitle: e.target.value, gfErr:'' }),
+      setGfDate: (e) => this.setState({ gfDate: e.target.value, gfErr:'' }),
+      setGfFeeMin: (e) => this.setState({ gfFeeMin: e.target.value.replace(/\D/g, '') }),
+      setGfFeeMax: (e) => this.setState({ gfFeeMax: e.target.value.replace(/\D/g, '') }),
+      gfCities: st.gigCities.map(c => ({ label: FF.text(c.name, g), bg: st.gfCity === c.slug ? '#ABFF84' : 'transparent', fg: st.gfCity === c.slug ? '#141514' : '#A5A493',
+        pick: () => this.setState({ gfCity: c.slug }) })),
+      postGig: async () => {
+        if (st.gfTitle.trim().length < 3 || !st.gfDate) { this.setState({ gfErr: vi ? 'Cần tiêu đề và ngày diễn' : 'A title and a date are needed' }); return; }
+        try {
+          await FF.post('/organizer/gigs', { title: st.gfTitle.trim(), startsOn: st.gfDate, city: st.gfCity,
+            feeMin: st.gfFeeMin === '' ? null : Number(st.gfFeeMin), feeMax: st.gfFeeMax === '' ? null : Number(st.gfFeeMax) });
+          this.setState({ gfTitle:'', gfDate:'', gfFeeMin:'', gfFeeMax:'' });
+          await FF.orgGigs(this, true);
+          this.say(vi ? 'Đã đăng gig' : 'Gig posted');
+        } catch (e) { this.setState({ gfErr: FF.errorText(e, g) }); }
+      },
+      noRequests: st.inquiries.length === 0,
+      requestRows: st.inquiries.slice(0, 8).map(i => ({
+        name: i.artist ? i.artist.name : '', line: [FF.dayLabel(i.eventOn, g), FF.text(i.cityLabel, g)].filter(Boolean).join(' · '),
+        status: { sent: vi ? 'Đã gửi' : 'Sent', accepted: vi ? 'Đồng ý trao đổi' : 'Interested', declined: vi ? 'Từ chối' : 'Declined', withdrawn: vi ? 'Đã rút' : 'Withdrawn' }[i.status] || i.status,
+        stFg: i.status === 'accepted' ? '#ABFF84' : i.status === 'declined' ? '#FF8709' : '#A5A493'
+      })),
+      gigsMore: () => { window.location.href = '/ops/org/gigs'; },
 
       /* ---- promos + guest list ---- */
       pT: {

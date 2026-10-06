@@ -143,6 +143,10 @@ export async function refreshSession() {
 }
 export const isAdmin = () => state.session?.user?.role === 'admin';
 export const isOrganizer = () => (state.session?.organizers ?? []).length > 0;
+/** An artist profile of one's own, with the persona switched on. */
+export const isArtist = () => !!state.session?.artist && state.session?.roles?.artist === 'active';
+/** An admin account signed in another way than Google, where admin rights need Google. */
+export const adminNeedsGoogle = () => !!state.session?.user?.adminNeedsGoogle;
 export const currentOrg = () => (state.session?.organizers ?? []).find((o) => o.id === state.orgId) ?? null;
 export function setOrg(id) {
   state.orgId = id;

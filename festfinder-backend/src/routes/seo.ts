@@ -4,7 +4,7 @@ import { L } from '../lib/i18n.ts';
 import { notFound } from '../lib/errors.ts';
 import { parse } from '../lib/validate.ts';
 import { genreArtPng } from '../services/ogimage.ts';
-import { buildArtistSeo, buildCollectionSeo, buildEventSeo, buildOrganizerSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
+import { buildArtistSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
 
 /** robots.txt, the sitemap, llms.txt, the IndexNow key file, link-preview art, and what each public page says to search engines and AI agents. */
 export default async function seoRoutes(app: FastifyInstance) {
@@ -54,6 +54,22 @@ export default async function seoRoutes(app: FastifyInstance) {
         .send(pageMarkdown(ctx, seo));
     });
   }
+
+  // The artist directory: /seo/directory/all, /seo/directory/style:hard-techno, /seo/directory/city:tokyo.
+  app.get<{ Params: { key: string } }>('/seo/directory/:key', async (req, reply) => {
+    const seo = await buildDirectorySeo(ctx, req.params.key, langOf(req.query));
+    if (!seo) throw notFound(L('No such artist list', 'Không có danh sách nghệ sĩ này'));
+    return reply.header('cache-control', 'public, max-age=300').send(seo);
+  });
+  const directoryMd = (key: (p: { slug: string }) => string) => async (req: any, reply: any) => {
+    const seo = await buildDirectorySeo(ctx, key(req.params), langOf(req.query));
+    if (!seo) throw notFound(L('No such artist list', 'Không có danh sách nghệ sĩ này'));
+    return reply.type('text/markdown; charset=utf-8').header('cache-control', 'public, max-age=300').header('content-language', seo.lang)
+      .header('link', `<${seo.canonical}>; rel="canonical"`).send(pageMarkdown(ctx, seo));
+  };
+  app.get('/a.md', directoryMd(() => 'all'));
+  app.get('/a/style/:slug.md', directoryMd((p) => `style:${p.slug}`));
+  app.get('/a/city/:slug.md', directoryMd((p) => `city:${p.slug}`));
 
   // What FeestFinder is, and where its pages are as Markdown (llmstxt.org).
   app.get('/llms.txt', { config: { rateLimit: false } }, async (_req, reply) => {

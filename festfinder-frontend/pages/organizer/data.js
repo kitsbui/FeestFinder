@@ -177,6 +177,20 @@ FF.orgInbox = (cmp) => FF.once('inbox', async () => {
   return inbox;
 });
 
+/** Gigs: the slots posted, booking requests sent, and the cities a slot can be in. Again after a change. */
+FF.orgGigs = (cmp, again) => {
+  const load = async () => {
+    const [gigs, inquiries, places] = await Promise.all([
+      FF.maybe(FF.get('/organizer/gigs'), { items: [] }),
+      FF.maybe(FF.get('/organizer/inquiries'), { items: [] }),
+      FF.maybe(FF.get('/meta/discovery'), { cities: [] })
+    ]);
+    cmp.setState({ gigs: gigs.items, inquiries: inquiries.items, gigCities: places.cities || [] });
+    return true;
+  };
+  return again ? load() : FF.once('gigs', load);
+};
+
 /** The bell: notifications and which topics are switched on. */
 FF.orgBell = (cmp) => FF.once('bell', async () => {
   const [notifs, prefs] = await Promise.all([

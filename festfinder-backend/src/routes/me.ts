@@ -39,7 +39,7 @@ export default async function meRoutes(app: FastifyInstance) {
     const prefs = await loadPrefs(ctx.db, s.user.id);
     const channelsOn = Object.values(prefs).reduce((n, p) => n + (p.push ? 1 : 0) + (p.zalo ? 1 : 0) + (p.email ? 1 : 0), 0);
     return {
-      user: publicUser(user),
+      user: publicUser(user, s.method, ctx),
       connections: connections.map((c) => ({ provider: c.provider, displayName: c.display_name, connectedAt: c.connected_at })),
       counts: { ...counts, notificationChannelsOn: channelsOn },
       payee: user.payee_account_no ? {
@@ -76,6 +76,8 @@ export default async function meRoutes(app: FastifyInstance) {
         throw badRequest('login_email_locked', L('This is the email you sign in with', 'Đây là email bạn dùng để đăng nhập'));
       }
       patch.email = email ? normalizeEmail(email) : null;
+      // A new address is unproven until its owner shows it (an email code or Google).
+      if (patch.email !== current.email) patch.email_verified_at = null;
     }
     if (body.zalo !== undefined) {
       const raw = body.zalo.trim();
@@ -98,7 +100,7 @@ export default async function meRoutes(app: FastifyInstance) {
       }
     }
     const user = await one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]);
-    return { user: publicUser(user), message: L('Profile saved', 'Đã lưu hồ sơ') };
+    return { user: publicUser(user, s.method, ctx), message: L('Profile saved', 'Đã lưu hồ sơ') };
   });
 
   /** Bank account used as the payee on group-plan VietQR requests. */

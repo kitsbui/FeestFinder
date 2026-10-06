@@ -45,7 +45,7 @@ export function confidenceLabel(score: number): ConfidenceLabel {
 }
 
 /** Sources that live inside FeestFinder rather than on another site. */
-export const ORIGIN_PROVIDERS = ['organizer', 'community', 'team'];
+export const ORIGIN_PROVIDERS = ['organizer', 'community', 'team', 'artist'];
 
 export interface SourceFact {
   provider: string;

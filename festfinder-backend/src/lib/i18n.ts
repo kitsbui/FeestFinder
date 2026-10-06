@@ -25,7 +25,7 @@ export function langFrom(query: unknown, headers: Record<string, string | string
   return 'vi';
 }
 
-export const GENRES = ['EDM', 'Festival', 'Indie', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture'] as const;
+export const GENRES = ['EDM', 'Festival', 'Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture'] as const;
 // Cities, countries, timezones and currencies are in places.ts.
 export type Genre = (typeof GENRES)[number];
 
