@@ -29,6 +29,19 @@ export const GENRES = ['EDM', 'Festival', 'Indie', 'Rock', 'Hip-Hop', 'Pop', 'Ja
 // Cities, countries, timezones and currencies are in places.ts.
 export type Genre = (typeof GENRES)[number];
 
+/**
+ * Genre families: four groups of genres, each one colour and one shape on screen (the same
+ * grouping as GENRE_TONE in ui/ff-client.js and familyOf in festfinder-web/src/kd/genre.ts).
+ */
+export const GENRE_FAMILIES = {
+  fest: ['Festival'],
+  live: ['Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz'],
+  edm: ['EDM'],
+  cult: ['Food', 'Culture'],
+} as const satisfies Record<string, readonly Genre[]>;
+export type GenreFamily = keyof typeof GENRE_FAMILIES;
+export const FAMILY_KEYS = Object.keys(GENRE_FAMILIES) as GenreFamily[];
+
 export const BADGES: Record<string, Localized> = {
   trending: L('Trending', 'Đang hot'),
   low_tickets: L('Low Tickets', 'Còn ít vé'),

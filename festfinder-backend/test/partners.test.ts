@@ -27,8 +27,10 @@ describe('the way out to tickets', () => {
     assert.equal(res.headers['x-robots-tag'], 'noindex, nofollow');
     const tier = (await env.ctx.db.query<{ id: string }>(`select t.id from ticket_tiers t join events e on e.id = t.event_id where e.slug = 'ravo' and t.key = 'vip'`)).rows[0].id;
     assert.equal((await env.as().get(`/go/ravo?src=tier&tier=${tier}`)).headers.location, `/app/checkout/ravo?tier=${tier}`);
+    // The quantity chosen on the event page rides along to the checkout.
+    assert.equal((await env.as().get(`/go/ravo?src=tier&tier=${tier}&qty=3`)).headers.location, `/app/checkout/ravo?tier=${tier}&qty=3`);
     const rows = await clicks('ravo');
-    assert.deepEqual(rows.map((r) => [r.target, r.source]), [['checkout', 'detail'], ['checkout', 'tier']]);
+    assert.deepEqual(rows.map((r) => [r.target, r.source]), [['checkout', 'detail'], ['checkout', 'tier'], ['checkout', 'tier']]);
     assert.equal(await counted(), before + 1, 'one person, one counted click');
     const detail = (await env.as().get('/events/ravo')).body;
     assert.equal(detail.links.go, '/go/ravo');

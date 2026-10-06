@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Ctx } from '../context.ts';
 import { many, one } from '../db/index.ts';
 import { notFound } from '../lib/errors.ts';
-import { GENRES, L } from '../lib/i18n.ts';
+import { FAMILY_KEYS, GENRE_FAMILIES, GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
 import { cityBySlug, cityLabel, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
 import { artistLinks } from '../services/artists.ts';
@@ -44,6 +44,8 @@ const ExploreQuery = z.object({
   to: dateStr.optional(),
   q: z.string().max(100).optional(),
   genre: z.enum(GENRES).optional(),
+  /** A genre family: every genre in it (lib/i18n.ts GENRE_FAMILIES). */
+  family: z.enum(FAMILY_KEYS as [string, ...string[]]).optional(),
   artist: z.string().max(100).optional(),
   price: csv(z.enum(PRICE_BANDS)).optional(),
   area: z.string().max(60).optional(),
@@ -78,6 +80,7 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
     if (w) where.push(`e.starts_on <= ${sql.p(w.to)} and e.ends_on >= ${sql.p(w.from)}`);
   }
   if (opts.genre && f.genre) where.push(`e.genre = ${sql.p(f.genre)}`);
+  if (opts.genre && f.family) where.push(`e.genre = any(${sql.p([...GENRE_FAMILIES[f.family as keyof typeof GENRE_FAMILIES]])}::text[])`);
   if (f.artist) where.push(`${sql.p(f.artist)} = any(e.artists)`);
   if (f.area) where.push(`e.area = ${sql.p(f.area)}`);
   if (opts.city !== false && f.city) where.push(`e.city = ${sql.p(f.city)}`);
@@ -180,6 +183,14 @@ export default async function catalogRoutes(app: FastifyInstance) {
     cwhere.push(`(e.ends_at is null or e.ends_at >= ${csql.p(now)})`);
     const facetCity = await many<{ city: string; n: number }>(ctx.db,
       `select e.city, count(*)::int as n from events e join organizers o on o.id = e.organizer_id where ${cwhere.join(' and ')} group by e.city`, csql.values);
+    // Family chips count each family (and what is free) under every filter but the genre.
+    const gsql = new SqlParams();
+    const gwhere = feedFilters(gsql, f, today, userId, { time: true, genre: false });
+    if (f.upcoming) gwhere.push(`(e.ends_at is null or e.ends_at >= ${gsql.p(now)})`);
+    const familyCounts = FAMILY_KEYS.map((k) => `count(*) filter (where e.genre = any(${gsql.p([...GENRE_FAMILIES[k]])}::text[]))::int as "${k}"`);
+    const facetFamily = await one<Record<string, number>>(ctx.db,
+      `select ${familyCounts.join(', ')}, count(*) filter (where e.entry_mode = 'free' or e.price_from = 0)::int as "free"
+         from events e join organizers o on o.id = e.organizer_id where ${gwhere.join(' and ')}`, gsql.values);
 
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const origin = f.lat !== undefined && f.lng !== undefined ? { lat: f.lat, lng: f.lng } : undefined;
@@ -191,7 +202,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       total: rows[0]?.total ?? 0,
       nextCursor,
       hero,
-      facets: { time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])) },
+      facets: { time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])), family: facetFamily },
       window: f.q ? null : f.from ? { from: f.from, to: f.to ?? f.from } : f.time !== 'all' ? timeWindow(f.time as TimeKey, today) : null,
     };
   });

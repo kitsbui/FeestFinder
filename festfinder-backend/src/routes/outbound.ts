@@ -23,6 +23,8 @@ export const GO_SOURCES = PLACEMENTS;
 const GoQuery = z.object({
   src: z.enum(GO_SOURCES).catch('detail'),
   tier: z.string().uuid().optional().catch(undefined),
+  /** How many tickets the button was for: the checkout opens with that many. */
+  qty: z.coerce.number().int().min(1).max(10).optional().catch(undefined),
 });
 
 const pick = (o: Record<string, unknown>, ...keys: string[]) => {
@@ -72,8 +74,10 @@ export default async function outboundRoutes(app: FastifyInstance) {
     const ticketUrl = ev.entry_mode === 'paid' && /^https?:\/\//i.test(ev.ticket_url ?? '') ? String(ev.ticket_url) : null;
     if (open.length) {
       target = 'checkout';
-      const tier = q.tier && open.some((t) => t.id === q.tier) ? `?tier=${q.tier}` : '';
-      location = `/app/checkout/${encodeURIComponent(ev.slug)}${tier}`;
+      const params = new URLSearchParams();
+      if (q.tier && open.some((t) => t.id === q.tier)) params.set('tier', q.tier);
+      if (q.qty && q.qty > 1) params.set('qty', String(q.qty));
+      location = `/app/checkout/${encodeURIComponent(ev.slug)}${params.size ? '?' + params : ''}`;
     } else if (ticketUrl) {
       partner = await partnerForUrl(ctx.db, ticketUrl);
       target = partner ? 'partner' : 'organizer';
