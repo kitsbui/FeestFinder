@@ -8,6 +8,12 @@
  */
 export const CUTOVER: readonly RegExp[] = [
   /^\/kit$/,
+  // The home page, both languages.
+  /^\/(en)?$/,
+  // Every event as a table, a grid or a map.
+  /^\/list(\/en)?$/,
+  // The event pages, both languages (/e/<slug>/en is where ?lang=en is rewritten to).
+  /^\/e\/[^/]+(\/en)?$/,
 ];
 
 /** Whether a path (with or without its query) is served by a rebuilt page. */

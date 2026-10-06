@@ -8,6 +8,9 @@ import { defineConfig, devices } from '@playwright/test';
  * FF_API_ORIGIN is read when the app is built (it becomes a rewrite), so the build runs
  * here with the test API's address.
  */
+// The shared specs ask which front they run against: rebuilt routes belong to e2e/next.
+process.env.FF_FRONT = 'next';
+
 const API_PORT = Number(process.env.SCREENS_PORT ?? 4100);
 const WEB_PORT = Number(process.env.WEB_PORT ?? 3100);
 const API = `http://localhost:${API_PORT}`;

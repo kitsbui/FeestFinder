@@ -203,4 +203,13 @@ describe('map style', () => {
     const one: any = mapStyle({ tilesUrl: null, overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: null });
     assert.ok(one.layers.filter((l: any) => l.source === 'overview').every((l: any) => l.maxzoom === undefined), 'alone, the overview serves every zoom');
   });
+
+  it('comes in the Kính đêm colours for the rebuilt screens', async () => {
+    const { mapStyle } = await import('../src/routes/catalog.ts');
+    const kd: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', glyphsUrl: null }, 'kd');
+    assert.equal(kd.layers[0].paint['background-color'], '#08090a');
+    assert.ok(!JSON.stringify(kd).includes('255,252,225'), 'no chalk in the Kính đêm style');
+    const chalk: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', glyphsUrl: null });
+    assert.equal(chalk.layers[0].paint['background-color'], '#0E100F');
+  });
 });

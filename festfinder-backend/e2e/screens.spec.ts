@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectOps, expectScreen, signInWith, watch } from './checks.ts';
+import { expectOps, expectScreen, signInWith, skipRebuilt, watch } from './checks.ts';
 
 /*
  * Every route of the four screens and Ops, on the demo data (test/fixtures/seed.ts): it
@@ -54,6 +54,7 @@ test.describe('Web', () => {
   });
 
   test('opens in Vietnamese, switches to English and remembers it', async ({ page }) => {
+    skipRebuilt('/e/ravo');
     await expectScreen(page, '/list', /TẤT CẢ SỰ KIỆN/i);
     expect(await page.evaluate(() => document.documentElement.lang)).toBe('vi');
     await page.getByRole('button', { name: 'English' }).click();
@@ -74,6 +75,7 @@ test.describe('Web', () => {
   });
 
   test('the map asks for the events in view once, and again only on "search this area"', async ({ page }) => {
+    skipRebuilt('/list');
     const problems = watch(page);
     const asked: string[] = [];
     page.on('request', (r) => { if (r.url().includes('/events/map?')) asked.push(r.url()); });
@@ -214,6 +216,7 @@ test.describe('Web', () => {
   });
 
   test('the logo and every icon the page links to load', async ({ page, request }) => {
+    skipRebuilt('/');
     await page.goto('/');
     const logo = page.locator('img[src="/ui/assets/ff-logo.svg"]').first();
     await expect(logo).toBeVisible();
@@ -231,6 +234,7 @@ test.describe('Web', () => {
 
 test.describe('Event page community', () => {
   test('the event page arrives as HTML with its facts, FAQ and structured data', async ({ request }) => {
+    skipRebuilt('/e/ravo');
     const res = await request.get('/e/ravo');
     expect(res.status()).toBe(200);
     const html = await res.text();
@@ -277,6 +281,7 @@ test.describe('Event page community', () => {
   });
 
   test('opens in English at ?lang=en, and keeps it in the address', async ({ page }) => {
+    skipRebuilt('/e/ravo/en');
     await page.goto('/e/ravo?lang=en');
     await expect.poll(() => page.locator('body').innerText()).toMatch(/Asked & answered/i);
     expect(await page.locator('body').innerText()).toMatch(/Questions · 3/);

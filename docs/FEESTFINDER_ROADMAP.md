@@ -71,6 +71,10 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
   - Two root layouts: `src/app/(legacy)` (every compiled screen, unchanged) and `src/app/(kd)`. `src/kd/cutover.ts` lists the rebuilt paths; the legacy router loads them as pages.
   - Components in `src/kd/ui`, the browser runtime (session, saves, follows, sign-in sheet, toast) in `src/kd/runtime.tsx`, and `/kit` (404 in production builds unless `FF_KIT=1`), checked by `e2e/next/kit.spec.ts`.
 - [ ] Phase 2: Web: nav, `/e/[slug]`, `/`, `/list` + map, `/o/[slug]`, `/a/[slug]`
+  - [x] Nav, footer (remembers the language), search, the role picker, `KdLink` (a link to a compiled screen is a plain link, never prefetched).
+  - [x] `/e/[slug]` (+ `?lang=en`): hero, section bar, about with the SEO facts, line-up with plan picks and clashes, hype, FAQ, discussion, photos, ambassadors, the tickets panel (tier and quantity through `/go`, up to 6), resale, venue map, the organiser's other events. JSON-LD kept.
+  - [x] `/` (+ `?lang=en`): city and inline time headline, featured card, sort and family chips, "Gần đây, tối nay" with the map teaser, FAQ. `/events?family=` filters by genre family.
+  - [x] `/list` (+ `?lang=en`): table, grid and map with the legacy filters in the address; the map asks `/events/map` on open and on "search this area" only, in the Kính đêm map style (`/map/style.json?theme=kd`).
 - [ ] Phase 3: App
 - [ ] Phase 4: Studio, then Console
 - [ ] Phase 5: Moments, badges, passport, fan profile, Studio metrics, moderation reasons and undo
@@ -104,3 +108,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-06: Phase 10 follow-ups: bookings notification topic, public availability, payout CSV, brand campaigns, gigs in the studio (migrations 025–026).
 - 2026-10-06: Kính đêm Phase 0: plan written, all of the owner's decisions taken (production stays on the API front until after Phase 4, fan profile private at `/profile`, moments uploaded, no follower-count badges, no organiser rating, client-side undo, Phosphor Regular, featured placement on the success card).
 - 2026-10-06: Kính đêm Phase 1: foundation, components and `/kit`. The Next Playwright run passes as before (114 tests, 5 of them new).
+- 2026-10-06: Kính đêm Phase 2, first half: the event page, home and list in React + Tailwind (`e2e/next/event.spec.ts`, `home.spec.ts`, `list.spec.ts`). Checkout takes at most 6 tickets from `/go`, as the panel offers. The Next run: 122 passed, 19 shared tests skipped on rebuilt paths.

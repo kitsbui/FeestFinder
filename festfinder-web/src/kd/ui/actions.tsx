@@ -2,7 +2,7 @@
  * Actions: buttons, icon buttons, chips. A button with `href` is a link styled as a button.
  * Lime (`acc`) is the one action a screen exists for; there is at most one per screen.
  */
-import Link from 'next/link';
+import { KdLink as Link } from '../link';
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
 import { cx } from '../cx';
 import { g, type Family } from '../genre';

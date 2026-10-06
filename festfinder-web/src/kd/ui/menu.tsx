@@ -4,7 +4,7 @@
  * outside (a transparent scrim at the root of the page) or by choosing; arrow keys move
  * between items. The trigger carries aria-expanded.
  */
-import Link from 'next/link';
+import { KdLink as Link } from '../link';
 import {
   createContext, useCallback, useContext, useEffect, useId, useRef, useState,
   type KeyboardEvent, type ReactNode,
@@ -35,7 +35,7 @@ function rootOf(): Element | null {
 const items = (menu: HTMLElement | null) =>
   menu ? Array.from(menu.querySelectorAll<HTMLElement>('[role^="menuitem"]:not([aria-disabled="true"]):not(:disabled)')) : [];
 
-export function Menu({ trigger, children, align = 'start', label, width, className, up }: {
+export function Menu({ trigger, children, align = 'start', label, width, className, up, inline }: {
   trigger: (p: TriggerProps, open: boolean) => ReactNode;
   children: ReactNode;
   align?: 'start' | 'end';
@@ -44,6 +44,8 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
   className?: string;
   /** Open above the trigger (for controls at the bottom of the screen). */
   up?: boolean;
+  /** The trigger flows inside a line of text (a heading word). */
+  inline?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -110,7 +112,7 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
 
   const root = open ? rootOf() : null;
   return (
-    <div className={cx('relative inline-flex', className)}>
+    <div className={cx(inline ? 'relative inline' : 'relative inline-flex', className)}>
       {trigger({
         id: id + '-t',
         'aria-haspopup': 'menu',
@@ -204,6 +206,7 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
       label={label}
       align={align}
       width={width}
+      inline={tone === 'inline'}
       trigger={(p, open) => (
         <button
           type="button"
@@ -213,7 +216,7 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
           className={cx(
             tone === 'chip' && 'kd-chip',
             tone === 'button' && 'kd-btn',
-            tone === 'inline' && 'kd-dd',
+            tone === 'inline' && 'kd-dd kd-dd-inline',
             tone === 'nav' && 'kd-nl',
             open && tone === 'chip' && 'kd-chip-on',
           )}

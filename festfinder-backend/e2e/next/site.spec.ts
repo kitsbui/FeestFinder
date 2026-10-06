@@ -16,7 +16,7 @@ test.describe('pages for search engines', () => {
     expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
     expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"/);
     expect(html).toMatch(/<meta name="robots" content="index, follow, max-image-preview:large/);
-    expect(html).toMatch(/<h1>Ravolution Music Festival<\/h1>/);
+    expect(html).toMatch(/<h1[^>]*>Ravolution Music Festival<\/h1>/);
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
     const nodes = blocks.flatMap((b) => b['@graph'] ?? [b]);
     const event = nodes.find((b) => b['@type'] === 'MusicEvent');

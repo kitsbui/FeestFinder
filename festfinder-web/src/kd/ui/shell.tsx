@@ -2,7 +2,7 @@
  * Frames: tabs, the app's top bar, floating tab bar and dock, and the back offices' shell
  * with its side nav and tables. Server-safe; current state is aria-current / aria-selected.
  */
-import Link from 'next/link';
+import { KdLink as Link } from '../link';
 import type { ReactNode } from 'react';
 import { cx } from '../cx';
 

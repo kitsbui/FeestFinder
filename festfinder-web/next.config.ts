@@ -59,6 +59,9 @@ const config: NextConfig = {
         { source: '/a/:file([^/]+\\.md)', destination: `${API}/a/:file` },
         { source: '/a.md', destination: `${API}/a.md` },
         { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
+        // The home page in English is /?lang=en: a cached page of its own.
+        { source: '/', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/en' },
+        { source: '/list', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/list/en' },
         // An event or organiser page in English is /e/<slug>?lang=en: a cached page of its own.
         { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/e/:slug/en' },
         { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/o/:slug/en' },
@@ -87,7 +90,9 @@ const config: NextConfig = {
     return [
       { source: '/organizer', destination: '/studio', permanent: false },
       { source: '/admin', destination: '/console', permanent: false },
-      // The English event and organiser pages' one address is ?lang=en.
+      // The English pages' one address is ?lang=en.
+      { source: '/en', destination: '/?lang=en', permanent: true },
+      { source: '/list/en', destination: '/list?lang=en', permanent: true },
       { source: '/e/:slug/en', destination: '/e/:slug?lang=en', permanent: true },
       { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
       { source: '/c/:slug/en', destination: '/c/:slug?lang=en', permanent: true },

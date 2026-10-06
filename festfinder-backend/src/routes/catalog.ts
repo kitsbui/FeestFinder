@@ -357,9 +357,10 @@ export default async function catalogRoutes(app: FastifyInstance) {
    * lines. Built from the Protomaps schema of the configured PMTiles archive; without one,
    * the board alone, and the map shows the events on it.
    */
-  app.get('/map/style.json', async (_req, reply) => {
+  app.get('/map/style.json', async (req, reply) => {
+    const { theme } = parse(z.object({ theme: z.enum(['chalk', 'kd']).catch('chalk').default('chalk') }), req.query);
     reply.header('cache-control', 'public, max-age=300, s-maxage=3600');
-    return mapStyle(ctx.config.map);
+    return mapStyle(ctx.config.map, theme);
   });
 
   /** What the discovery screens build their chips from: listed cities, music styles, event types. */
@@ -479,13 +480,24 @@ export default async function catalogRoutes(app: FastifyInstance) {
 const CHALK = 'rgba(255,252,225,';
 
 /**
+ * The basemap's colours: Bảng phấn (the API-served screens) and Kính đêm (the Next front's
+ * rebuilt screens: a void ground, hairline roads, the river in the live family's teal).
+ */
+const MAP_PALETTES = {
+  chalk: { board: '#0E100F', earth: '#151714', park: '#181b17', water: '#0A0F10', line: CHALK, label: '#A5A493', halo: '#0E100F' },
+  kd: { board: '#08090a', earth: '#0b0c0d', park: '#0d0f0f', water: '#0a1517', line: 'rgba(208,214,224,', label: '#62666d', halo: '#08090a' },
+} as const;
+export type MapTheme = keyof typeof MAP_PALETTES;
+
+/**
  * A MapLibre style for Protomaps basemaps, or the plain board when there is none. The
  * overview archive (the region at low zoom) draws underneath up to zoom 8; the detail
  * archive (the listed cities) draws on top at every zoom. The two are styled the same,
  * so where both have a tile nobody can tell.
  */
-export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | null; glyphsUrl: string | null }) {
-  const layers: Record<string, unknown>[] = [{ id: 'board', type: 'background', paint: { 'background-color': '#0E100F' } }];
+export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | null; glyphsUrl: string | null }, theme: MapTheme = 'chalk') {
+  const P = MAP_PALETTES[theme];
+  const layers: Record<string, unknown>[] = [{ id: 'board', type: 'background', paint: { 'background-color': P.board } }];
   const sources: Record<string, unknown> = {};
   const attribution = '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>';
   const archives = [map.overviewUrl ? { src: 'overview', url: map.overviewUrl, maxzoom: map.tilesUrl ? 8 : undefined } : null,
@@ -497,15 +509,15 @@ export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | 
     const layer = (id: string, def: Record<string, unknown>) => layers.push({ id: `${a.src}-${id}`, source: a.src, ...z, ...def });
     const road = (id: string, filter: unknown[], color: string, width: unknown[], minzoom: number) =>
       layer(id, { type: 'line', 'source-layer': 'roads', minzoom, filter, paint: { 'line-color': color, 'line-width': width } });
-    layer('earth', { type: 'fill', 'source-layer': 'earth', paint: { 'fill-color': '#151714' } });
-    layer('parks', { type: 'fill', 'source-layer': 'landuse', filter: ['in', ['get', 'kind'], ['literal', ['park', 'nature_reserve', 'forest', 'wood', 'golf_course']]], paint: { 'fill-color': '#181b17' } });
-    layer('water', { type: 'fill', 'source-layer': 'water', paint: { 'fill-color': '#0A0F10' } });
-    layer('buildings', { type: 'fill', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': `${CHALK}0.035)` } });
-    road('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${CHALK}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12);
-    road('roads-major', ['==', ['get', 'kind'], 'major_road'], `${CHALK}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 7);
-    road('roads-highway', ['==', ['get', 'kind'], 'highway'], `${CHALK}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 5);
+    layer('earth', { type: 'fill', 'source-layer': 'earth', paint: { 'fill-color': P.earth } });
+    layer('parks', { type: 'fill', 'source-layer': 'landuse', filter: ['in', ['get', 'kind'], ['literal', ['park', 'nature_reserve', 'forest', 'wood', 'golf_course']]], paint: { 'fill-color': P.park } });
+    layer('water', { type: 'fill', 'source-layer': 'water', paint: { 'fill-color': P.water } });
+    layer('buildings', { type: 'fill', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': `${P.line}0.035)` } });
+    road('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${P.line}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12);
+    road('roads-major', ['==', ['get', 'kind'], 'major_road'], `${P.line}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 7);
+    road('roads-highway', ['==', ['get', 'kind'], 'highway'], `${P.line}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 5);
     layer('borders', { type: 'line', 'source-layer': 'boundaries', filter: ['<=', ['get', 'kind_detail'], 2],
-      paint: { 'line-color': `${CHALK}0.28)`, 'line-width': 0.8, 'line-dasharray': [3, 2] } });
+      paint: { 'line-color': `${P.line}0.28)`, 'line-width': 0.8, 'line-dasharray': [3, 2] } });
   }
   if (map.glyphsUrl) {
     // Place names from the most detailed archive, in Vietnamese or English where the map has them.
@@ -514,7 +526,7 @@ export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | 
       id: 'places', type: 'symbol', source: src, 'source-layer': 'places',
       filter: ['in', ['get', 'kind'], ['literal', ['country', 'region', 'locality']]],
       layout: { 'text-field': ['coalesce', ['get', 'name:vi'], ['get', 'name:en'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 10, 14], 'symbol-sort-key': ['get', 'min_zoom'] },
-      paint: { 'text-color': '#A5A493', 'text-halo-color': '#0E100F', 'text-halo-width': 1.4 },
+      paint: { 'text-color': P.label, 'text-halo-color': P.halo, 'text-halo-width': 1.4 },
     });
   }
   return { version: 8, name: 'FeestFinder Bảng phấn', ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}), sources, layers };

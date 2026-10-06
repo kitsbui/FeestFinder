@@ -85,6 +85,9 @@
   .kd-ib-sm::after { inset: -4px; }
   .kd-ib[aria-pressed='true'], .kd-ib-on { color: var(--color-acc); }
   .kd-ib:disabled { opacity: 0.38; cursor: default; }
+  /* Over art or a map: the glass, not the transparent default. */
+  .kd-ib.kd-glass { background: rgba(15, 16, 17, 0.5); }
+  .kd-ib.kd-glass:hover { background: rgba(15, 16, 17, 0.72); }
 
   /* ---- chips, tags ---- */
   .kd-chip {
@@ -107,6 +110,14 @@
   .kd-tag-bone { background: var(--color-bone); color: var(--color-ink); }
   .kd-tag-line { background: transparent; box-shadow: inset 0 0 0 1px var(--color-line2); }
   .kd-tag-hot { background: rgba(235, 87, 87, 0.16); color: #ff9a9a; }
+
+  /* A marker with its own family (Marker's data-f) beats the family of any ancestor. */
+  .kd-mk[data-f] { width: 10px; height: 10px; border-radius: 0; clip-path: none; background: var(--g); }
+  .kd-mk[data-f='fest'] { --g: var(--color-fest); border-radius: 50%; }
+  .kd-mk[data-f='free'] { --g: var(--color-acc); border-radius: 50%; }
+  .kd-mk[data-f='live'] { --g: var(--color-live); width: 9px; height: 9px; border-radius: 1px; }
+  .kd-mk[data-f='edm'] { --g: var(--color-edm); width: 11px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .kd-mk[data-f='cult'] { --g: var(--color-cult); width: 12px; height: 6px; border-radius: 12px 12px 0 0; }
 
   .kd-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--color-hot); flex-shrink: 0; animation: var(--animate-kd-pulse); }
   .kd-st.kd-st-plain::before { display: none; }
@@ -287,6 +298,9 @@
   .kd-scrim { position: fixed; inset: 0; z-index: 25; padding: 0; border: 0; background: transparent; cursor: default; }
   .kd-dd { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line2); text-decoration-thickness: 2px; text-underline-offset: 6px; transition: text-decoration-color 0.15s var(--ease-ff); }
   .kd-dd:hover, .kd-dd[aria-expanded='true'] { text-decoration-color: var(--color-acc); }
+  /* In a heading the word flows with the sentence, chevron and all. */
+  .kd-dd-inline { display: inline; text-align: inherit; }
+  .kd-dd-inline > .kd-chev { display: inline-block; vertical-align: middle; margin-left: 0.12em; }
   .kd-chev { transition: transform 0.15s var(--ease-ff); }
   [aria-expanded='true'] > .kd-chev { transform: rotate(180deg); }
   .kd-acc > summary:hover .kd-chev { color: var(--color-paper); }

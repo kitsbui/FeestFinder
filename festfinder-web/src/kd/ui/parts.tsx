@@ -31,7 +31,8 @@ export function Status({ tone = 'none', className, children }: { tone?: StatusTo
 
 /** The genre's shape at text size. */
 export function Marker({ family, className, style }: { family?: Family; className?: string; style?: CSSProperties }) {
-  return <span aria-hidden="true" className={cx('kd-mk', family && g(family), className)} style={style} />;
+  // data-f wins over a family set on an ancestor (kd.css), so a marker can differ from its row.
+  return <span aria-hidden="true" data-f={family} className={cx('kd-mk', className)} style={style} />;
 }
 
 // ---- surfaces -----------------------------------------------------------------------

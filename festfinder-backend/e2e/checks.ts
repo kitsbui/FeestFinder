@@ -1,4 +1,18 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+import { isCutOver } from '../../festfinder-web/src/kd/cutover.ts';
+
+/**
+ * Whether this run is the Next front and the path is one Kính đêm rebuilt
+ * (festfinder-web/src/kd/cutover.ts): the shared checks below are for the compiled screens,
+ * so such a path is tested in e2e/next instead.
+ */
+export const rebuilt = (path: string) => process.env.FF_FRONT === 'next' && isCutOver(path);
+
+/** Skip a shared test on the Next front once a path it drives is rebuilt. */
+export function skipRebuilt(...paths: string[]) {
+  const hit = paths.find(rebuilt);
+  test.skip(!!hit, `${hit} is rebuilt in Kính đêm: see e2e/next`);
+}
 
 /*
  * What every screen test checks: the route boots, shows the screen it names, and breaks
@@ -28,6 +42,7 @@ export async function signInWith(page: Page, account: { identifier: string; pass
 
 /** Opens a route and waits for the screen that should be there. */
 export async function expectScreen(page: Page, path: string, shows: RegExp) {
+  skipRebuilt(path);
   const problems = watch(page);
   await page.goto(path);
   // The screen itself (or the sign-in card that stands in for it), not the

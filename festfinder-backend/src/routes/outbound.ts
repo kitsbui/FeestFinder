@@ -24,7 +24,7 @@ const GoQuery = z.object({
   src: z.enum(GO_SOURCES).catch('detail'),
   tier: z.string().uuid().optional().catch(undefined),
   /** How many tickets the button was for: the checkout opens with that many. */
-  qty: z.coerce.number().int().min(1).max(10).optional().catch(undefined),
+  qty: z.coerce.number().int().min(1).max(6).optional().catch(undefined),
 });
 
 const pick = (o: Record<string, unknown>, ...keys: string[]) => {

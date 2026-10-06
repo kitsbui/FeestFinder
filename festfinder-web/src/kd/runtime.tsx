@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { FF, type Session } from '@/runtime/ff';
 import { COMMON, pick, type Lang } from './copy';
+import { RolePicker, type RoleStep } from './role-picker';
 import { SignInSheet } from './sign-in';
 import { Toast } from './ui/toast';
 
@@ -39,6 +40,8 @@ export interface ToastMsg { text: string; action?: { label: string; run: () => v
 
 interface Kd {
   lang: Lang;
+  /** Flips once the API's clock is known (FF.now() follows it from then on). */
+  clockReady: boolean;
   /** undefined while the session is being read. */
   session: Session | null | undefined;
   user: Session['user'] | null;
@@ -50,6 +53,8 @@ interface Kd {
   /** True when signed in; otherwise opens the sign-in sheet and returns false. */
   requireSignIn: (intent?: Intent, note?: string) => boolean;
   openSignIn: (note?: string) => void;
+  /** The fan / artist / organiser picker (also opened by ?role=artist|organizer). */
+  openRolePicker: (start?: RoleStep) => void;
   signOut: () => Promise<void>;
   refresh: () => Promise<Session | null>;
   toast: (text: string, action?: ToastMsg['action']) => void;
@@ -72,7 +77,16 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   const [follows, setFollows] = useState<Map<string, boolean>>(() => new Map());
   const [sheet, setSheet] = useState<{ note?: string; intent?: Intent } | null>(null);
   const [toastMsg, setToast] = useState<ToastMsg | null>(null);
+  const [role, setRole] = useState<RoleStep | null>(null);
+  const [clockReady, setClockReady] = useState(false);
   const toastId = useRef(0);
+  // Settles once the first session read is back: what a click made while it loads waits for.
+  const ready = useRef<{ promise: Promise<Session | null>; resolve: (s: Session | null) => void } | null>(null);
+  if (!ready.current) {
+    let resolve!: (s: Session | null) => void;
+    const promise = new Promise<Session | null>((r) => { resolve = r; });
+    ready.current = { promise, resolve };
+  }
   const C = pick(COMMON, lang);
 
   FF.lang = lang;
@@ -93,6 +107,15 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     const s = await FF.once('kd:session', () => FF.refreshSession());
     setSession(s);
     await loadPersonal(s);
+    ready.current!.resolve(s);
+    // For the tests: the page has hydrated and knows who is there.
+    document.documentElement.dataset.kdSession = s?.user ? 'user' : 'none';
+    // A new account says what it is first; ?role= opens the picker at that step.
+    if (s?.user) {
+      const asked = new URLSearchParams(location.search).get('role');
+      if (asked === 'artist' || asked === 'organizer') setRole(asked);
+      else if (s.user.onboarded === false) setRole('menu');
+    }
     return s;
   }, [loadPersonal]);
 
@@ -112,6 +135,14 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
       location.assign(i.href);
     }
   }, [toast, C.saved]);
+
+  // The server's clock: "n minutes ago" and countdowns follow it (it is pinned in the tests).
+  useEffect(() => {
+    FF.once('kd:clock', () => FF.maybe(FF.get('/health'), null)).then((h: { time?: string } | null) => {
+      if (h?.time) FF.clockOffset = new Date(h.time).getTime() - Date.now();
+      setClockReady(true);
+    });
+  }, []);
 
   // The session, and the hand-back from Google if this page is where the browser came back to.
   useEffect(() => {
@@ -134,9 +165,17 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
 
   const requireSignIn = useCallback((intent?: Intent, note?: string) => {
     if (session?.user) return true;
+    if (session === undefined) {
+      // Still reading the session: decide once it is known.
+      ready.current!.promise.then((s) => {
+        if (!s?.user) setSheet({ note, intent });
+        else if (intent) runIntent(intent);
+      });
+      return false;
+    }
     setSheet({ note, intent });
     return false;
-  }, [session]);
+  }, [session, runIntent]);
 
   const toggleSave = useCallback(async (id: string) => {
     if (!requireSignIn({ kind: 'save', id }, C.gateSave)) return null;
@@ -178,10 +217,11 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   }, [toast, C.signedOut]);
 
   const value = useMemo<Kd>(() => ({
-    lang, session, user: session?.user ?? null, saved, follows,
+    lang, clockReady, session, user: session?.user ?? null, saved, follows,
     toggleSave, setFollow, requireSignIn, signOut, refresh, toast,
     openSignIn: (note?: string) => setSheet({ note }),
-  }), [lang, session, saved, follows, toggleSave, setFollow, requireSignIn, signOut, refresh, toast]);
+    openRolePicker: (start: RoleStep = 'menu') => setRole(start),
+  }), [lang, clockReady, session, saved, follows, toggleSave, setFollow, requireSignIn, signOut, refresh, toast]);
 
   return (
     <Ctx.Provider value={value}>
@@ -200,6 +240,9 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
             runIntent(intent);
           }}
         />
+      ) : null}
+      {role && session?.user && !sheet ? (
+        <RolePicker lang={lang} start={role} onClose={() => { setRole(null); refresh(); }} />
       ) : null}
       <Toast msg={toastMsg} onDone={() => setToast(null)} closeLabel={C.close} />
     </Ctx.Provider>
