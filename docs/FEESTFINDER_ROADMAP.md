@@ -61,6 +61,18 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
   - Follow-ups: gig alerts under their own "bookings" notification topic (migration `025`); free and busy dates on public artist pages; payout CSV export; brand campaigns for artists open to brands (migration `026`, `/ops/brands`, the Brands tab in artist opportunities, `?brands=1` in the directory); gigs in `/studio/gigs`.
   - [ ] Set `ADMIN_EMAIL` (and `POSTHOG_KEY` if wanted) in Vercel; rotate the admin password that was shared in chat (team task).
 
+## Kính đêm (the Next front in React + Tailwind)
+
+The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `feat/kinh-dem` branch. Production keeps the API-served front. Plan and decisions: [KINH_DEM_PLAN.md](KINH_DEM_PLAN.md).
+
+- [x] Phase 0: Plan, and the owner's answers to the handoff's questions
+- [ ] Phase 1: Tailwind, tokens, fonts, icons, the `(legacy)`/`(kd)` split, the `kd` components, `/kit`
+- [ ] Phase 2: Web: nav, `/e/[slug]`, `/`, `/list` + map, `/o/[slug]`, `/a/[slug]`
+- [ ] Phase 3: App
+- [ ] Phase 4: Studio, then Console
+- [ ] Phase 5: Moments, badges, passport, fan profile, Studio metrics, moderation reasons and undo
+- [ ] Phase 6: Undrawn routes, clean-up, docs
+
 ## What the team does next in production
 
 1. Set `TICKETMASTER_API_KEY` in Vercel if Ticketmaster is wanted (Singapore has the most coverage).
@@ -87,3 +99,4 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
 - 2026-10-05: Ticket buttons fixed on the web (they only showed a message) and in the app (imported events said no tier was on sale); phase 9, ticket partners; normaliser splits a venue from its address and drops a city after the title. No new source for Đà Nẵng or Nha Trang: none publishes event data.
 - 2026-10-05: Phase 10, the Night Build: personas and the admin allowlist, the artist directory and network, organiser network, artist gig reports, affiliate links and payouts, gear, the gig marketplace and first-party analytics (migrations 019–024). Fixed on the way: an unproven email could take over an account by signing in with it.
 - 2026-10-06: Phase 10 follow-ups: bookings notification topic, public availability, payout CSV, brand campaigns, gigs in the studio (migrations 025–026).
+- 2026-10-06: Kính đêm Phase 0: plan written, all of the owner's decisions taken (production stays on the API front until after Phase 4, fan profile private at `/profile`, moments uploaded, no follower-count badges, no organiser rating, client-side undo, Phosphor Regular, featured placement on the success card).
