@@ -100,6 +100,14 @@ describe('affiliate links, click context and payouts', () => {
     assert.deepEqual([pay.body.conversions, pay.body.commission, pay.body.status], [1, 50000, 'open'], 'pending sales stay out');
     const again = await env.as(admin).post('/admin/affiliate/payouts', { partnerId: partner.id, from: '2020-01-01', to: today });
     assert.equal(again.body.error.code, 'nothing_to_settle', 'a sale is never settled twice');
+    const csv = await env.as(admin).get(`/admin/affiliate/payouts/${pay.body.id}/export.csv`);
+    assert.equal(csv.status, 200);
+    assert.match(csv.headers['content-type'], /text\/csv/);
+    assert.match(csv.headers['content-disposition'], /payout-ticketbox-2020-01-01-/);
+    const lines = String(csv.text ?? csv.body).replace(/^\uFEFF/, '').trim().split('\r\n');
+    assert.equal(lines.length, 2, 'a header and the one settled sale');
+    assert.match(lines[1], /^Ticketbox,2020-01-01,.*,L1,.*,500000,50000,VND,approved,/);
+    assert.equal((await env.as(await emailUser(env, 'csv.peek@example.com')).get(`/admin/affiliate/payouts/${pay.body.id}/export.csv`)).status, 403);
     const paid = await env.as(admin).post(`/admin/affiliate/payouts/${pay.body.id}/paid`);
     assert.equal(paid.body.status, 'paid');
     assert.equal((await env.ctx.db.query<any>(`select status from partner_conversions where order_ref = 'L1'`)).rows[0].status, 'paid');

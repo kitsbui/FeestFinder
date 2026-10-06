@@ -4,6 +4,7 @@ import { many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
 import { L } from '../../lib/i18n.ts';
 import { slugify } from '../../lib/contact.ts';
+import { toCsv } from '../../lib/csv.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { dateStr, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, requireOrganizer, requireUser } from '../../http/guards.ts';
@@ -185,6 +186,25 @@ export default async function adminAffiliateRoutes(app: FastifyInstance) {
     });
     await audit(s, 'affiliate_payout.created', { type: 'ticket_partner', id: partner.id, label: partner.name }, [{ f: 'period', a: '—', b: `${b.from} → ${b.to}` }]);
     return reply.code(201).send(presentPayout(await one<any>(ctx.db, `${PAYOUTS} where y.id = $1`, [out])));
+  });
+
+  /** One line per sale a payout settles: what to send the partner or the accountant. */
+  app.get<{ Params: { id: string } }>('/admin/affiliate/payouts/:id/export.csv', async (req, reply) => {
+    requireAdmin(req);
+    const id = parse(uuid, req.params.id);
+    const y = await one<any>(ctx.db, `${PAYOUTS} where y.id = $1`, [id]);
+    if (!y) throw notFound();
+    const rows = await many<any>(ctx.db,
+      `select c.order_ref, c.occurred_at, c.amount, c.commission, c.currency, c.status, c.click_id, e.slug as event_slug, l.code as link_code
+         from partner_conversions c left join events e on e.id = c.event_id left join affiliate_links l on l.id = c.link_id
+        where c.payout_id = $1 order by c.occurred_at`, [id]);
+    const base = ctx.config.publicBaseUrl.replace(/\/$/, '');
+    const out = toCsv(
+      ['partner', 'period_from', 'period_to', 'order', 'occurred_at', 'amount', 'commission', 'currency', 'status', 'click', 'event', 'link'],
+      rows.map((c) => [y.partner_name, y.period_from, y.period_to, c.order_ref, new Date(c.occurred_at).toISOString(), Number(c.amount), Number(c.commission),
+        c.currency, c.status, c.click_id ?? '', c.event_slug ? `${base}/e/${c.event_slug}` : '', c.link_code ? `${base}/go/link/${c.link_code}` : '']));
+    const name = `payout-${slugify(y.partner_name) || 'partner'}-${y.period_from}-${y.period_to}.csv`;
+    return reply.type('text/csv; charset=utf-8').header('content-disposition', `attachment; filename="${name}"`).send(out);
   });
 
   app.post<{ Params: { id: string } }>('/admin/affiliate/payouts/:id/paid', async (req) => {

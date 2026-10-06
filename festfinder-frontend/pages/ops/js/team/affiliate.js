@@ -114,6 +114,7 @@ function Payouts() {
     { key: 'period', label: t('Kỳ', 'Period'), width: 200, render: (p) => `${day(p.from)} → ${day(p.to)}` },
     { key: 'n', label: t('Đơn', 'Orders'), width: 90, align: 'right', render: (p) => num(p.conversions) },
     { key: 'c', label: t('Hoa hồng', 'Commission'), width: 160, align: 'right', render: (p) => `${num(p.commission)} ${p.currency}` },
+    { key: 'csv', label: '', width: 90, align: 'right', render: (p) => h(Button, { size: 'sm', icon: 'download-simple', href: `/admin/affiliate/payouts/${p.id}/export.csv` }, 'CSV') },
     { key: 'state', label: '', width: 200, align: 'right', render: (p) => p.status === 'paid'
       ? h(Pill, { tone: 'ok' }, t('Đã nhận tiền', 'Paid'), p.paidAt ? ` · ${stamp(p.paidAt)}` : '')
       : h(Button, { size: 'sm', variant: 'ok', icon: 'check', busy: busy === p.id, onClick: () => paid(p) }, t('Đã nhận tiền', 'Mark paid')) },
@@ -126,7 +127,7 @@ function Payouts() {
         h(Field, { label: t('Đến ngày', 'To'), required: true }, h(DateInput, { value: f.to, onChange: (v) => setF((x) => ({ ...x, to: v })) }))),
       h('div', { className: 'op-row-actions', style: { marginTop: 12 } }, h(Button, { variant: 'cta', icon: 'check', busy: busy === 'new', disabled: !f.partnerId || !f.from || !f.to, onClick: make }, t('Chốt kỳ', 'Settle')))),
     error ? h(ErrorBox, { error, onRetry: reload }) : loading && !data ? h(Spinner)
-      : h(DataTable, { columns, rows: data.items, minWidth: 840, empty: h(Empty, { icon: 'receipt', title: t('Chưa chốt kỳ nào', 'No payouts yet') }) }));
+      : h(DataTable, { columns, rows: data.items, minWidth: 930, empty: h(Empty, { icon: 'receipt', title: t('Chưa chốt kỳ nào', 'No payouts yet') }) }));
 }
 
 export function Affiliate() {
