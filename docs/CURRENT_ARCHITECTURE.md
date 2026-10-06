@@ -137,7 +137,7 @@ Read in `src/config.ts`. Secrets are entered by the user in Vercel. Groups:
 
 ## Since the audit: the artist and organiser network
 
-Everything above describes the code at Phase 0. Phase 10 (migrations 019–024) added a layer on top of the canonical events, without a graph database:
+Everything above describes the code at Phase 0. Phase 10 (migrations 019–026) added a layer on top of the canonical events, without a graph database:
 
 | Area | Tables | Code |
 | --- | --- | --- |
@@ -149,5 +149,6 @@ Everything above describes the code at Phase 0. Phase 10 (migrations 019–024) 
 | Gear | `gear_items`, `artist_gear` | `services/gear.ts`, `routes/gear.ts` |
 | Gigs | `gig_opportunities`, `gig_applications`, `booking_inquiries`, `artist_availability` | `services/gigs.ts`, `routes/gigs.ts` |
 | Analytics | none stored | `services/analytics.ts`, `routes/analytics.ts`, `FF.track` |
+| Brand campaigns | `brand_campaigns`, `brand_campaign_interests` | `routes/brands.ts` |
 
 Rules that hold across it: admin comes only from `ADMIN_EMAIL`; follower counts never rank an artist or a gig applicant; nothing an artist reports publishes an event or edits an organiser's lineup; fees in the marketplace are not payments.
