@@ -22,6 +22,8 @@ export const CUTOVER: readonly RegExp[] = [
   /^\/app(\/.*)?$/,
   // Studio, the organisers' back office: every screen of it.
   /^\/studio(\/.*)?$/,
+  // The Console, the team's back office: every tab of it.
+  /^\/console(\/.*)?$/,
 ];
 
 /** Whether a path (with or without its query) is served by a rebuilt page. */

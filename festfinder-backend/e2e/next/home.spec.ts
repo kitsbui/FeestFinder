@@ -38,9 +38,11 @@ test.describe('the home page', () => {
     await page.getByRole('button', { name: /Tháng này/ }).first().click();
     await page.getByRole('group', { name: 'Thể loại' }).getByRole('button', { name: /EDM/ }).click();
     await expect(page).toHaveURL(/time=month&family=edm/);
-    const titles = await page.locator('.kd-ev .kd-h').allInnerTexts();
-    expect(titles.length).toBeGreaterThan(0);
-    for (const t of titles) expect(t).toMatch(/Ravolution|Warm-up|Rave|EDM|Wonder|8Wonder/i);
+    // Every card left is of the family (cards wear their family's class), whichever events are live.
+    await expect.poll(async () => {
+      const classes = await page.locator('.kd-ev').evaluateAll((els) => els.map((e) => e.className));
+      return classes.length > 0 && classes.every((c) => c.includes('kd-g-edm'));
+    }).toBe(true);
 
     await page.getByRole('button', { name: 'Sắp xếp' }).click();
     await page.getByRole('menuitemradio', { name: 'Giá thấp trước' }).click();

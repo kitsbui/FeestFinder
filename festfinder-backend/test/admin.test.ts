@@ -27,6 +27,10 @@ describe('internal admin', () => {
     assert.equal(bus.sla.state, 'breach');
     assert.equal(bus.sla.label.en, 'past SLA · 5h 18m');
     assert.equal(bus.flag.code, 'ticket');
+    // What the Console's detail shows as key facts.
+    assert.equal(bus.currency, 'VND');
+    assert.equal(bus.startsOn, '2026-10-03');
+    assert.ok('age' in bus && 'endTime' in bus);
     assert.equal(q.body.counts.breach, 1);
     assert.equal(q.body.counts.new, 1);
     assert.deepEqual(q.body.ageBuckets.map((b: any) => b.count), [0, 1, 3, 1]);
@@ -177,6 +181,14 @@ describe('internal admin', () => {
     assert.ok(r.body.organizers.some((o: any) => o.name === 'Ravolution Entertainment' && o.gmv > 0));
     const counts = await env.as(admin).get('/admin/counts');
     assert.ok(counts.body.queue >= 1);
+    // The Console's numbers board.
+    const b = r.body.board;
+    assert.ok(b.live.n > 0);
+    assert.equal(b.weekly.length, 8);
+    assert.ok(b.weekly[0].startsOn < b.weekly[7].startsOn, 'oldest week first');
+    assert.ok(b.withinPromise.hours > 0);
+    assert.ok(b.areas.length > 0 && b.areas.every((a: any) => a.n > 0 && a.area));
+    assert.ok(b.areas[0].n >= b.areas[b.areas.length - 1].n);
   });
 
   it('impersonates read-only and blocks the admin’s own writes until it ends', async () => {

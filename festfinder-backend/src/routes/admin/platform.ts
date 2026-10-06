@@ -11,6 +11,7 @@ import { createSession } from '../../http/session.ts';
 import { decodeCursor, page } from '../../http/sql.ts';
 import { actionLabel, appendAudit, verifyAuditChain } from '../../services/audit.ts';
 import { payoutLedger } from '../../services/payouts.ts';
+import { SLA_HOURS } from '../../services/risk.ts';
 
 const IMPERSONATION_TTL_MS = 60 * 60_000;
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
@@ -32,6 +33,55 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
               (select count(*)::int from appeals where state in ('open','replied') and closes_at > $1) as appeals`, [ctx.clock.now()]);
     return { ...r, allClaims: r.claims + r.profileClaims };
   });
+
+  /**
+   * The Console's numbers board: live listings, new accounts, ticket clicks and decisions inside
+   * the review promise, each this week against the week before; new listings per genre for each
+   * of the last eight weeks (oldest first); and the areas with the most live listings.
+   */
+  const boardNumbers = async (now: Date) => {
+    const week = 7 * 86400_000;
+    const at = (weeksAgo: number) => new Date(now.getTime() - weeksAgo * week);
+    const [live, users, clicks, sla, weekly, areas] = await Promise.all([
+      one<any>(ctx.db,
+        `select count(*)::int as n, count(*) filter (where published_at > $2)::int as new7
+           from events where status = 'live' and not held_for_reports and ends_at >= $1`, [now, at(1)]),
+      one<any>(ctx.db,
+        `select count(*) filter (where created_at > $1)::int as n7, count(*) filter (where created_at > $2 and created_at <= $1)::int as prev7
+           from users where role = 'user' and created_at > $2`, [at(1), at(2)]),
+      one<any>(ctx.db,
+        `select count(*) filter (where created_at > $1)::int as n7, count(*) filter (where created_at > $2 and created_at <= $1)::int as prev7
+           from outbound_clicks where created_at > $2`, [at(1), at(2)]),
+      one<any>(ctx.db,
+        `select count(*) filter (where d.decided_at > $1)::int as n7,
+                count(*) filter (where d.decided_at > $1 and d.decided_at - e.submitted_at <= $3 * interval '1 hour')::int as in7,
+                count(*) filter (where d.decided_at <= $1)::int as prev7,
+                count(*) filter (where d.decided_at <= $1 and d.decided_at - e.submitted_at <= $3 * interval '1 hour')::int as inprev7
+           from moderation_decisions d join events e on e.id = d.event_id
+          where d.decision in ('approved', 'rejected') and d.decided_at > $2 and e.submitted_at is not null`, [at(1), at(2), SLA_HOURS]),
+      many<any>(ctx.db,
+        `select genre, floor(extract(epoch from ($1::timestamptz - published_at)) / 604800)::int as wk, count(*)::int as n
+           from events where published_at > $2 and published_at <= $1 and genre is not null group by 1, 2`, [now, at(8)]),
+      many<any>(ctx.db,
+        `select area, count(*)::int as n from events
+          where status = 'live' and not held_for_reports and ends_at >= $1 and coalesce(area, '') <> ''
+          group by area order by n desc, area limit 6`, [now]),
+    ]);
+    return {
+      live: { n: live.n, new7: live.new7 },
+      newUsers: { n7: users.n7, prev7: users.prev7 },
+      ticketClicks: { n7: clicks.n7, prev7: clicks.prev7 },
+      withinPromise: { hours: SLA_HOURS, pct7: sla.n7 ? pct(sla.in7, sla.n7) : null, prevPct7: sla.prev7 ? pct(sla.inprev7, sla.prev7) : null },
+      weekly: Array.from({ length: 8 }, (_, i) => {
+        const wk = 7 - i;
+        return {
+          startsOn: vnDate(new Date(at(wk + 1).getTime() + 1)),
+          genres: Object.fromEntries(weekly.filter((r) => r.wk === wk).map((r) => [r.genre, r.n])) as Record<string, number>,
+        };
+      }),
+      areas: areas.map((a) => ({ area: a.area, n: a.n })),
+    };
+  };
 
   app.get('/admin/insights', async (req) => {
     requireAdmin(req);
@@ -74,6 +124,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
                 (select count(*)::int from tickets where user_id = u.id) as tickets
            from users u where u.role = 'user' order by u.created_at desc limit 5`),
     ]);
+    const board = await boardNumbers(now);
     const oldestMin = queue.oldest ? Math.round((now.getTime() - new Date(queue.oldest).getTime()) / 60000) : 0;
     const totalCity = cities.reduce((n, c) => n + c.n, 0);
     const totalGenre = genres.reduce((n, g) => n + g.n, 0);
@@ -103,6 +154,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
       recentAccounts: accounts.map((a) => ({
         id: a.id, handle: a.name || a.email || a.phone, city: a.city, joined: a.created_at, saved: a.saved, hyped: a.hyped, tickets: a.tickets,
       })),
+      board,
       privacy: L('The admin sees aggregate numbers and on-platform activity. Private messages, contacts and location history stay out of reach.',
         'Admin xem được số liệu tổng hợp và hoạt động trên nền tảng. Không xem được tin nhắn riêng, danh bạ hay lịch sử vị trí của người dùng.'),
     };

@@ -27,8 +27,8 @@ function sla(minutes: number): { state: 'ok' | 'soon' | 'breach'; label: Localiz
 }
 
 const QUEUE_SQL = `
-  select e.id, e.slug, e.title, e.art, e.cover_url, e.starts_on, e.start_time, e.venue_name, e.flag, e.risk_score, e.signals, e.submitted_at,
-         e.genre, e.area, e.entry_mode, e.price_from, e.quality_score, e.logo_url, (e.venue_id is not null or e.lat is not null) as venue_resolved,
+  select e.id, e.slug, e.title, e.art, e.cover_url, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.flag, e.risk_score, e.signals, e.submitted_at,
+         e.genre, e.area, e.currency, e.age, e.entry_mode, e.price_from, e.quality_score, e.logo_url, (e.venue_id is not null or e.lat is not null) as venue_resolved,
          e.organizer_id, o.name as org_name, o.verification_state, o.is_community, e.submitted_by, su.name as submitter_name,
          not exists (select 1 from events e2 where e2.organizer_id = e.organizer_id and e2.published_at is not null and e2.id <> e.id) as new_org,
          (select count(*)::int from inbox_messages m join inbox_threads t on t.id = m.thread_id where t.event_id = e.id and t.topic = 'moderation') as thread_messages
@@ -80,7 +80,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         id: r.id, slug: r.slug, title: r.title, art: r.art, coverUrl: r.cover_url,
         organizer: { id: r.organizer_id, name: r.org_name, initials: initialsOf(r.org_name), verified: r.verification_state === 'verified', newOrganizer: r.new_org, community: r.is_community },
         submittedBy: r.submitted_by ? { id: r.submitted_by, name: r.submitter_name || null } : null,
-        startsOn: r.starts_on, startTime: r.start_time, venueName: r.venue_name,
+        startsOn: r.starts_on, endsOn: r.ends_on, startTime: r.start_time, endTime: r.end_time, venueName: r.venue_name, currency: r.currency, age: r.age,
         flagged: !!r.flag, flag: r.flag ? { code: r.flag, label: REJECT_REASONS[r.flag].label } : null,
         waitingMinutes: waiting, sla: sla(waiting),
         riskScore: r.risk_score ?? 0, riskBand: riskBand(r.risk_score ?? 0),
