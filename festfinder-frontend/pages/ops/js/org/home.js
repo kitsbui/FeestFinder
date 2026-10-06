@@ -12,6 +12,7 @@ export function OrgHome() {
   const inbox = useFetch('/organizer/inbox', [store.orgId]);
   const profile = useFetch('/organizer/profile', [store.orgId]);
   const dash = useFetch('/organizer/dashboard?range=30d', [store.orgId]);
+  const clicks = useFetch('/organizer/affiliate?days=30', [store.orgId]);
   const today = vnDate();
   const items = events.data?.items ?? [];
   const by = useMemo(() => {
@@ -59,5 +60,8 @@ export function OrgHome() {
             h(DateBox, { iso: e.startsOn }), h(Thumb, { src: e.coverUrl, art: e.art, title: e.title, w: 72 }),
             h('span', { className: 'op-list-text' }, h('strong', null, e.title), h('small', null, [e.venueName, e.startTime && `${e.startTime}–${e.endTime}`].filter(Boolean).join(' · '))),
             h('span', { className: 'op-list-meta ff-num' }, e.views != null ? t(`${num(e.views)} xem · ${num(e.saves)} lưu`, `${num(e.views)} views · ${num(e.saves)} saves`) : null)))))
-          : h(Empty, { icon: 'calendar-blank', title: t('Chưa có sự kiện sắp tới', 'Nothing coming up') }))));
+          : h(Empty, { icon: 'calendar-blank', title: t('Chưa có sự kiện sắp tới', 'Nothing coming up') })),
+      clicks.data?.clicks ? h(Card, { title: t(`Lượt bấm mua vé · 30 ngày: ${num(clicks.data.clicks)}`, `Ticket clicks · 30 days: ${num(clicks.data.clicks)}`), icon: 'cursor-click' },
+        [[t('Vị trí', 'Placement'), clicks.data.byPlacement], [t('Thiết bị', 'Device'), clicks.data.byDevice], [t('Quốc gia', 'Country'), clicks.data.byCountry]].map(([title, rows]) =>
+          h('div', { key: title, className: 'op-feed-line' }, h('strong', null, title), ' · ', rows.slice(0, 4).map((r) => `${r.key ?? '—'} ${num(r.n)}`).join(' · ') || '—'))) : null));
 }

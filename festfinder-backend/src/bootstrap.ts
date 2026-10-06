@@ -6,6 +6,7 @@ import { migrate } from './db/migrate.ts';
 import { scheduleSupabaseCron } from './jobs.ts';
 import { fixedClock, systemClock } from './lib/time.ts';
 import { ConsoleTransport, RoutingTransport, SmtpTransport, WebhookTransport, WebPushTransport } from './services/messaging.ts';
+import { NoopAnalytics, PostHogAnalytics } from './services/analytics.ts';
 import { NoopReporter, SentryReporter } from './services/errors.ts';
 import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
 import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
@@ -13,6 +14,8 @@ import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
+import { addStarterSources } from './services/ingest/starter.ts';
+import { appendAudit } from './services/audit.ts';
 
 /** Wires real dependencies from configuration. Tests build their own Ctx instead. */
 export async function createContext(config: Config): Promise<Ctx> {
@@ -23,6 +26,11 @@ export async function createContext(config: Config): Promise<Ctx> {
   const unlabelled = db.kind === 'postgres' && await checkEnvironment(db, config.environment);
   await migrate(db, log);
   if (unlabelled) await claimEnvironment(db, config.environment, log);
+  // Production reads the starter sources from its first start; the team can turn any off in /ops/sources.
+  if (config.env === 'production' && db.kind === 'postgres') {
+    const added = await addStarterSources(db, new Date());
+    if (added) log(`added ${added} starter event sources`);
+  }
   if (db.kind === 'postgres') log(`environment: ${config.environment}`);
   // The pinned clock exists for the demo data in the tests. On a shared database it would
   // stamp real orders, sessions and audit entries with a made-up date.
@@ -32,7 +40,7 @@ export async function createContext(config: Config): Promise<Ctx> {
   for (const name of ['SEED_IF_EMPTY', 'DEMO_PASSWORD']) {
     if (process.env[name]) log(`${name} is no longer used: nothing seeds demo data into the database. Remove it from this environment.`);
   }
-  for (const email of config.adminEmails) await ensureAdmin(db, email, log);
+  await syncAdmins(db, config.adminEmails, log);
   if (config.schedulesCron && config.cronSecret && db.kind === 'postgres') {
     await scheduleSupabaseCron(db, `${config.publicBaseUrl}/internal/jobs`, config.cronSecret, log)
       .catch((e) => log(`pg_cron not scheduled: ${(e as Error).message}`));
@@ -71,6 +79,7 @@ export async function createContext(config: Config): Promise<Ctx> {
   const errors = config.sentryDsn
     ? new SentryReporter(config.sentryDsn, { release: config.release, environment: config.env, log })
     : new NoopReporter();
+  const analytics = config.posthog ? new PostHogAnalytics(config.posthog.key, config.posthog.host, log) : new NoopAnalytics();
   for (const [what, on] of [['email', !!config.smtp], ['push/Zalo/SMS', !!config.messagingWebhook], ['browser push', !!config.webPush], ['error reporting', !!config.sentryDsn]] as const) {
     if (!on && config.env === 'production') log(`warning: no ${what} provider configured`);
   }
@@ -85,6 +94,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     transport,
     storage,
     errors,
+    analytics,
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),
@@ -95,18 +105,42 @@ export async function createContext(config: Config): Promise<Ctx> {
 }
 
 /**
- * An admin account for an email that has no account yet. It has no password: its owner
- * claims it with "Forgot password" on /ops, which only the mailbox's owner can do. An
- * existing account is never promoted, so signing up first with a listed email gets nothing.
+ * The admin allowlist, applied at startup. A listed email with no account gets one with no
+ * password (its owner signs in with Google, or claims it with "Forgot password", which only
+ * the mailbox's owner can do). An existing account is promoted only when its email has been
+ * proven; one that only typed the address into its profile gets nothing. With a list set,
+ * an admin account that is not on it loses admin rights.
  */
+export async function syncAdmins(db: Db, emails: string[], log: (msg: string) => void) {
+  for (const email of emails) await ensureAdmin(db, email, log);
+  if (!emails.length) return;
+  const removed = await db.query<{ id: string; email: string | null }>(
+    `update users set role = 'user' where role = 'admin' and (email is null or email <> all($1::text[])) returning id, email`, [emails]);
+  for (const r of removed.rows) {
+    log(`admin rights removed from ${r.email ?? r.id}: not on ADMIN_EMAIL`);
+    await appendAudit(db, {
+      at: new Date(), actorType: 'system', actorId: null, actorLabel: 'ADMIN_EMAIL', action: 'admin.removed',
+      targetType: 'user', targetId: r.id, targetLabel: r.email ?? r.id, diff: [{ f: 'role', a: 'admin', b: 'user' }],
+    });
+  }
+}
+
 export async function ensureAdmin(db: Db, email: string, log: (msg: string) => void) {
   const out = await db.query<{ id: string }>(
     `insert into users (name, email, signup_method, role) values ('FeestFinder Admin', $1, 'email', 'admin')
      on conflict (email) do nothing returning id`, [email]);
-  if (out.rows.length) log(`created admin account ${email}; set its password with "Forgot password" on /ops`);
-  else {
-    const row = await db.query<{ role: string }>('select role from users where email = $1', [email]);
-    if (row.rows[0]?.role !== 'admin') log(`warning: ADMIN_EMAIL ${email} belongs to an existing account; not promoting it`);
+  if (out.rows.length) { log(`created admin account ${email}; sign in with Google, or set a password with "Forgot password" on /ops`); return; }
+  const promoted = await db.query<{ id: string }>(
+    `update users set role = 'admin' where email = $1 and role <> 'admin' and email_verified_at is not null returning id`, [email]);
+  if (promoted.rows.length) {
+    log(`admin rights granted to ${email} (ADMIN_EMAIL)`);
+    await appendAudit(db, {
+      at: new Date(), actorType: 'system', actorId: null, actorLabel: 'ADMIN_EMAIL', action: 'admin.granted',
+      targetType: 'user', targetId: promoted.rows[0].id, targetLabel: email, diff: [{ f: 'role', a: 'user', b: 'admin' }],
+    });
+    return;
   }
+  const row = await db.query<{ role: string }>('select role from users where email = $1', [email]);
+  if (row.rows[0]?.role !== 'admin') log(`warning: ADMIN_EMAIL ${email} is on an account that has not proven it; it gets admin rights when its owner signs in with Google`);
 }
 

@@ -4,7 +4,7 @@ import { initialsOf } from '../lib/contact.ts';
 import { haversineKm, round1 } from '../lib/geo.ts';
 import { BADGES, L, TIER_NAMES, type Localized } from '../lib/i18n.ts';
 import { cityOf } from '../lib/places.ts';
-import { CONFIDENCE_LABEL, freshness, type ConfidenceLabel } from '../services/ingest/confidence.ts';
+import { brandOf, CONFIDENCE_LABEL, freshness, type ConfidenceLabel } from '../services/ingest/confidence.ts';
 import { PROVIDER_LABEL } from '../services/ingest/providers.ts';
 
 /** Organiser columns a card shows. Alias the organizers table as `o`. */
@@ -129,14 +129,14 @@ export function presentCard(r: any, o: PresentOpts) {
   };
 }
 
-/** Where an event's facts came from, as the public page lists them: one line per site. */
+/** Where an event's facts came from, as the public page lists them: one line per brand. */
 export async function loadPublicSources(q: Queryable, eventId: string) {
   const rows = await many<any>(q,
     `select provider, source_url, source_host, last_seen_at, cancelled from event_sources where event_id = $1 order by first_seen_at`, [eventId]);
   const seen = new Set<string>();
   const out: { provider: string; label: Localized; host: string | null; url: string | null; lastSeenAt: Date }[] = [];
   for (const r of rows) {
-    const key = r.source_host ?? r.provider;
+    const key = brandOf(r.source_host) ?? r.provider;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({

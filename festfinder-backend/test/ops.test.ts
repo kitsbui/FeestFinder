@@ -18,7 +18,7 @@ describe('operations back office', () => {
   it('serves every dropdown list without signing in', async () => {
     const r = await env.as().get('/meta/form-options');
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body.genres.map((g: any) => g.value), ['EDM', 'Festival', 'Indie', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture']);
+    assert.deepEqual(r.body.genres.map((g: any) => g.value), ['EDM', 'Festival', 'Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture']);
     assert.ok(r.body.areaGroups.find((g: any) => g.key === 'central').areas.includes('Quận 1'));
     assert.ok(r.body.banks.some((b: any) => b.bin === '970436'));
     assert.deepEqual(r.body.statuses.map((s: any) => s.value), ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled']);

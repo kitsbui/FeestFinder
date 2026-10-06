@@ -111,6 +111,6 @@ export const icsAdapter: SourceAdapter = {
       eventUrl: ev.url,
       ticketUrl: ev.url,
       cancelled: ev.status === 'CANCELLED',
-    }, { now: ctx.now, fallbackCity: ctx.source.city });
+    }, { now: ctx.now, fallbackCity: ctx.source.city, wallClock: ctx.source.config.wallClock === true });
   },
 };

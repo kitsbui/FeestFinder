@@ -12,6 +12,7 @@ import { assessRisk } from '../risk.ts';
 import { refreshConfidence } from './confidence.ts';
 import { politeIO } from './fetch.ts';
 import { hostOf } from './normalize.ts';
+import { EVENT_TYPES } from '../../lib/styles.ts';
 import { ADAPTERS, PROVIDER_CONFIDENCE } from './providers.ts';
 import { findExact, findSimilar, MATCH_RULES, venueLikeness, type Match } from './resolve.ts';
 import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent, type RawRecord } from './types.ts';
@@ -81,7 +82,16 @@ export async function runSource(ctx: Ctx, sourceId: string, opts: { io?: IngestI
   const run = await one<{ id: string }>(ctx.db,
     `insert into ingest_runs (source_id, started_at, trigger) values ($1,$2,$3) returning id`, [sourceId, now, opts.trigger ?? 'schedule']);
   const touched = new Set<string>();
-  const io = opts.io ?? ioFor(ctx);
+  const base = opts.io ?? ioFor(ctx);
+  const io: IngestIO = {
+    ...base,
+    deadline: opts.deadline,
+    lastFetched: async (urls) => {
+      const rows = await many<{ source_url: string; at: Date }>(ctx.db,
+        `select source_url, max(fetched_at) as at from raw_events where source_id = $1 and source_url = any($2::text[]) group by source_url`, [sourceId, urls]);
+      return new Map(rows.map((r) => [r.source_url, new Date(r.at).getTime()]));
+    },
+  };
 
   const finish = async (error: string | null) => {
     sum.ms = Date.now() - t0;
@@ -139,6 +149,13 @@ export async function runSource(ctx: Ctx, sourceId: string, opts: { io?: IngestI
 
 type Outcome = { kind: 'created' | 'merged' | 'unchanged' | 'rejected' | 'failed'; eventId?: string };
 
+/** A source's `skip` pattern: records whose title or venue match it are not nights out (brunches, tours, day passes). */
+function skips(source: IngestSource, n: NormalizedEvent): boolean {
+  const pattern = typeof source.config.skip === 'string' ? source.config.skip : '';
+  if (!pattern) return false;
+  try { return new RegExp(pattern, 'i').test(`${n.title} ${n.venueName ?? ''}`); } catch { return false; }
+}
+
 /** One record: kept as sent, then normalised and resolved, in one transaction. */
 export async function ingestRecord(ctx: Ctx, source: IngestSource, record: RawRecord, now: Date, opts: { force?: boolean } = {}): Promise<Outcome> {
   const adapter = ADAPTERS[source.adapter];
@@ -162,7 +179,12 @@ export async function ingestRecord(ctx: Ctx, source: IngestSource, record: RawRe
        returning id`,
       [source.id, source.adapter, record.externalId, record.url, payload, hash, now]);
 
-    const n = adapter.normalize(record, { source, now });
+    const normalized = adapter.normalize(record, { source, now });
+    const n = !isRejection(normalized) && skips(source, normalized) ? { rejected: 'skipped' as const, detail: normalized.title } : normalized;
+    // A club's own site lists club nights, whatever its pages call them.
+    if (!isRejection(n) && typeof source.config.eventType === 'string' && (EVENT_TYPES as readonly string[]).includes(source.config.eventType)) {
+      n.eventType = source.config.eventType as NormalizedEvent['eventType'];
+    }
     if (isRejection(n)) {
       await q.query(`update raw_events set status = 'rejected', error = $2, processed_at = $3 where id = $1`, [raw!.id, n.detail ? `${n.rejected}: ${n.detail}` : n.rejected, now]);
       return { kind: 'rejected' };
@@ -212,7 +234,7 @@ export async function matchVenue(q: Queryable, n: { city: string; venueName: str
 }
 
 /** Facts the source states differently from the event: they cost confidence and tell the moderator to look. */
-async function conflictsWith(q: Queryable, eventId: string, n: NormalizedEvent) {
+export async function conflictsWith(q: Queryable, eventId: string, n: NormalizedEvent) {
   const ev = await one<any>(q, 'select starts_on::text as starts_on, venue_name, lat, lng from events where id = $1', [eventId]);
   const out: { field: string; source: string; event: string }[] = [];
   if (!ev) return out;
@@ -242,7 +264,7 @@ async function attachSource(q: Queryable, eventId: string, source: IngestSource,
  * Fills what the event is missing from what the source says. Never overwrites: an organiser's
  * or moderator's words stand, and a disagreement is recorded as a conflict instead.
  */
-async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Date) {
+export async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Date) {
   const ev = await one<any>(q, `select e.*, o.is_community from events e join organizers o on o.id = e.organizer_id where e.id = $1`, [eventId]);
   if (!ev) return;
   const set: Record<string, unknown> = {};
@@ -264,7 +286,7 @@ async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Da
 }
 
 /** A new event in the review queue, held by the community organiser until someone claims it. */
-async function createCandidate(q: Queryable, source: IngestSource, n: NormalizedEvent, venue: any, match: Match | null, now: Date): Promise<string> {
+export async function createCandidate(q: Queryable, source: Pick<IngestSource, 'name' | 'url'>, n: NormalizedEvent, venue: any, match: Match | null, now: Date): Promise<string> {
   const organizerId = await communityOrganizerId(q);
   const slug = `${slugify(n.title) || 'event'}-${randomCode(4).toLowerCase()}`;
   const paid = !n.free;
@@ -289,9 +311,11 @@ async function createCandidate(q: Queryable, source: IngestSource, n: Normalized
 }
 
 /** The moderator's advice for an imported candidate, with a possible duplicate first. */
-async function flagRisk(q: Queryable, eventId: string, match: Match | null, now: Date) {
+export async function flagRisk(q: Queryable, eventId: string, match: Match | null, now: Date) {
   const risk = await assessRisk(q, eventId, now);
   const dup = match ? [{ ok: false, label: L(`Maybe a duplicate of “${match.title}” (${match.reason})`, `Có thể trùng “${match.title}” (${match.reason})`) }] : [];
+  const ev = await one<{ entry_mode: string; price_from: number }>(q, 'select entry_mode, price_from from events where id = $1', [eventId]);
+  if (ev && ev.entry_mode === 'paid' && !ev.price_from) dup.push({ ok: false, label: L('The source gives no ticket price', 'Nguồn không ghi giá vé') });
   await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
     [eventId, risk.score, json(risk.factors), json([...dup, ...risk.signals].slice(0, 3)), match ? 'duplicate' : risk.flag]);
 }

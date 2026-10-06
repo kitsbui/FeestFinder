@@ -134,3 +134,21 @@ Read in `src/config.ts`. Secrets are entered by the user in Vercel. Groups:
 3. JSON-LD parsing, safe fetching and AI extraction exist and need generalising, not rewriting.
 4. Scheduling (pg_cron → `/internal/jobs` → advisory locks) can carry ingestion without new infrastructure.
 5. `smart_alerts` and `artist_follows` already cover part of "alerts".
+
+## Since the audit: the artist and organiser network
+
+Everything above describes the code at Phase 0. Phase 10 (migrations 019–026) added a layer on top of the canonical events, without a graph database:
+
+| Area | Tables | Code |
+| --- | --- | --- |
+| Personas | `user_roles`, `artist_claims`, `organizer_claims`; `users.onboarded_at`, `users.email_verified_at`; `sessions.method` | `services/roles.ts`, `routes/roles.ts`, `bootstrap.ts` (`syncAdmins`) |
+| Artists | columns on `artists` (roles, base, styles, booking, travel, links, anchors, `owner_user_id`, `alias_keys`) | `routes/artists.ts`, `services/artists.ts` |
+| Network | none: read from `event_artists` and `events` | `services/network.ts` |
+| Gig reports | `artist_gig_reports`; an `event_sources` row with provider `artist` | `services/ingest/report.ts` |
+| Affiliate | `affiliate_links`, `affiliate_payouts`; `outbound_clicks` gains `link_id`, `device`, `country`, `referrer_host` | `routes/outbound.ts`, `routes/admin/affiliate.ts` |
+| Gear | `gear_items`, `artist_gear` | `services/gear.ts`, `routes/gear.ts` |
+| Gigs | `gig_opportunities`, `gig_applications`, `booking_inquiries`, `artist_availability` | `services/gigs.ts`, `routes/gigs.ts` |
+| Analytics | none stored | `services/analytics.ts`, `routes/analytics.ts`, `FF.track` |
+| Brand campaigns | `brand_campaigns`, `brand_campaign_interests` | `routes/brands.ts` |
+
+Rules that hold across it: admin comes only from `ADMIN_EMAIL`; follower counts never rank an artist or a gig applicant; nothing an artist reports publishes an event or edits an organiser's lineup; fees in the marketplace are not payments.

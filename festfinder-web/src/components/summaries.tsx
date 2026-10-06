@@ -4,7 +4,7 @@
  * engines, link previews and slow phones get the facts straight away.
  */
 import type { ReactNode } from 'react';
-import { price, when, type EventCard, type EventSeo, type Lang, type OrganizerSeo, type PageSeo, type CollectionSeo } from '@/lib/api';
+import { price, when, type EventCard, type EventSeo, type Lang, type OrganizerSeo, type PageSeo, type CollectionSeo, type ArtistSeo, type DirectorySeo } from '@/lib/api';
 
 export function EventList({ title, intro, events, lang = 'vi' }: { title: string; intro?: string; events: EventCard[]; lang?: Lang }) {
   return (
@@ -76,7 +76,7 @@ export function EventSummary({ seo }: { seo: EventSeo }) {
 }
 
 /** An organiser page's facts, from the same OrganizerSeo the API's own pages render. */
-export function OrganizerSummary({ seo }: { seo: OrganizerSeo | CollectionSeo }) {
+export function OrganizerSummary({ seo }: { seo: OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo }) {
   const p = seo.page, h = seo.headings;
   const list = (items: OrganizerSeo['page']['upcoming']) => (
     <ul>{items.map((x) => <li key={x.path}><a href={x.path}>{x.title}</a> · {x.line}</li>)}</ul>

@@ -13,8 +13,12 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
   - Adapters: website JSON-LD (single page or list page with a link pattern), ICS, Ticketmaster Discovery (needs `TICKETMASTER_API_KEY`).
   - RA/Facebook links are kept as provenance only, never fetched.
   - `/ops/sources` adds sources, runs them, shows runs and raw records.
-  - [ ] Configure real sources per city in production (team task; see below).
+  - Starter sources (`services/ingest/starter.ts`): Megatix SG/ID/TH/VN, WOMB Tokyo, Savaya Bali, TicketGo (âm nhạc), Ticketmaster SG (enabled only with its key). Production adds the missing ones on boot; elsewhere "Add suggested sources" in `/ops/sources`. Once added, a source is the team's.
+  - Website adapter reads unseen pages first, then the oldest, within the run's time budget; finds links in embedded Next/Nuxt data; drops tracking parameters. Per-source `skip` (not a night out), `eventType` and `wallClock` (sources that stamp one offset on every city).
+  - Normaliser: English dates ("Oct 10, 2026 10 PM"), a city name in front of the title or as the venue, Bangkok/Tokyo district names.
+  - [ ] Configure more sources per city in production (team task; see below).
 - [x] Phase 4: Deduplication
+  - One voice per brand: megatix.com.sg and megatix.vn count as one source (`brandOf`).
   - Exact provenance first, then the deterministic score (title, venue, date, time, artist, 500 m).
   - Merge at 70 or more; 45–69 becomes a flagged candidate. Reason stored.
   - Community submissions use the same resolver.
@@ -25,35 +29,61 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
 - [x] Phase 6: Map discovery (web)
   - MapLibre view in `/list` next to Table and Grid, with "search this area" (no fetch on pan), clusters, drawer card and URL state (`view=map&bbox=…`).
   - `/events/map` takes every list filter and caps at 500.
-  - [ ] Host the PMTiles basemap and set `MAP_TILES_URL` (until then the map draws the board, city names and events).
-  - [ ] Map view in the app (`/app/list`).
-- [~] Phase 7: Music intelligence
+  - Basemap from two self-hosted PMTiles archives (`scripts/build-tiles.sh`): `MAP_OVERVIEW_URL` and `MAP_TILES_URL`.
+  - [ ] Upload the archives and set the variables in production (until then the map draws the board, city names and events).
+  - [x] Map view in the app (`/app/list`), sharing `FFMap.session` with the web (search on open, on a city chip and on "search this area" only).
+- [x] Phase 7: Music intelligence
   - [x] Style taxonomy, event types, deterministic classifier.
   - [x] Style and type chips in the list and map; styles and type in the ops event form.
-  - [ ] Smart Alerts by city and style.
-  - [ ] Phase 7b: artist entity and pages.
+  - [x] Smart Alerts by city and style (migration `017_artists_alerts.sql`; `/me/alert` takes `cities`, `styles`; app settings chips).
+  - [x] Phase 7b: artists as records (`artists`, `event_artists`, kept in step on every save, backfilled once), `/artists/:slug`, the `/a/<slug>` page on both fronts with `MusicGroup` structured data, Markdown copy and sitemap entries; lineup chips link to it.
 - [x] Phase 8: Asia expansion
   - Bangkok, Tokyo, Singapore, Bali launched next to the four Vietnamese cities.
   - City chips from `/meta/discovery`; prices in local currency.
   - Venues anywhere, checked against the city's bounds.
   - FeestFinder checkout and tiers stay VND-only.
+- [x] Phase 9: Ticket partners (affiliate)
+  - Every ticket button, web and app, goes through `GET /go/<event>`: counted in `outbound_clicks` (and the organiser's ticket-click counter), then sent to FeestFinder's checkout when a tier is on sale, else to the seller's page. No sign-in to leave for a seller.
+  - Migration `018_ticket_partners.sql`: `ticket_partners` (sites, link parameters or a network's tracking link, commission), `outbound_clicks`, `partner_conversions`.
+  - A partner's link gets its parameters, `{click}` becomes the click's id; partners report sales to `/partners/<slug>/postback?token=…` (GET or POST), matched back to the click and the event. Paid stays paid.
+  - `/ops/partners`: partners, the token (shown once), sales and their status, the most-clicked events, and the ticket sites people use that no partner covers yet.
+  - [ ] Sign the first affiliate deals and enter them in `/ops/partners` (team task).
+
+- [x] Phase 10: The artist and organiser network (Night Build)
+  - A. Personas: every account is a fan; `user_roles` adds artist and organiser, chosen in a role picker after the first sign-in. A profile already listed is claimed (`artist_claims`, `organizer_claims`), decided in `/ops/claims`. Admin only from the `ADMIN_EMAIL` allowlist, on a Google sign-in with a verified email (`ADMIN_SIGN_IN`); no route grants it. Only a proven email finds or links an account (`users.email_verified_at`). Migration `019_roles_profiles.sql`.
+  - B. Artists: roles, base city, styles, booking status, travel scope, gig types, set lengths, links on fixed sites, identity anchors (MusicBrainz, Wikidata, Spotify) and aliases set by the team (`/ops/artists`). Directory at `/a`, `/a/style/<style>`, `/a/city/<city>` (indexed from 3 artists), ordered by next show, then completeness, never followers. Rock is its own genre. Migration `020_artist_organizer_network.sql`.
+  - C. Organisers: type, markets, styles, open for submissions, links; pages list the artists and venues they worked with.
+  - D. Relationships are read from canonical events with their evidence (`services/network.ts`); similar artists by fixed weights. Artists report gigs (`POST /me/artist/gigs`, migration `021`): matched like an import, an "artist" source with community weight, never published or put on an organiser's lineup by itself.
+  - E. Affiliate: `/go/link/<code>` links (migration `022`), click placement, device, country and referrer (no IP, no user agent, no robots), payouts that settle approved sales once; `/ops/affiliate`, ticket clicks on the organiser overview.
+  - F. Gear and software: curated `gear_items` (migration `023`), artists list theirs on `/ops/artist/gear`, new names wait for the team; artist pages and `?gear=` in the directory.
+  - G. Gig marketplace (migration `024`): opportunities, applications sorted by a fixed fit score (`services/gigs.ts`), booking requests, availability; `/ops/org/gigs`, `/ops/artist/opportunities`.
+  - H. Analytics: `FF.track` → `/analytics/collect`, plus a few server events; forwarded to PostHog only with `POSTHOG_KEY`, pseudonymous, listed properties only, nothing under Do Not Track or GPC.
+  - Follow-ups: gig alerts under their own "bookings" notification topic (migration `025`); free and busy dates on public artist pages; payout CSV export; brand campaigns for artists open to brands (migration `026`, `/ops/brands`, the Brands tab in artist opportunities, `?brands=1` in the directory); gigs in `/studio/gigs`.
+  - [ ] Set `ADMIN_EMAIL` (and `POSTHOG_KEY` if wanted) in Vercel; rotate the admin password that was shared in chat (team task).
 
 ## What the team does next in production
 
 1. Set `TICKETMASTER_API_KEY` in Vercel if Ticketmaster is wanted (Singapore has the most coverage).
-2. Add sources in `/ops/sources` for each city: Ticketbox event lists, venue and festival programme pages that carry schema.org data, public ICS calendars.
-3. Approve candidates in the review queue (bulk approve works). The "500+ upcoming events in 5 cities" goal depends on these sources.
-4. Produce the PMTiles extract for the launched cities, upload it to the bucket with range requests enabled, and set `MAP_TILES_URL` (and `MAP_GLYPHS_URL` for place names).
+2. Add sources in `/ops/sources` for each city: venue and festival programme pages that carry schema.org data, public ICS calendars. Hà Nội is covered by TicketGo; Đà Nẵng and Nha Trang have no public structured source yet (see the note in `services/ingest/starter.ts`), so their events come from organisers and the community.
+3. In `/ops/partners`, add each ticket seller FeestFinder has an affiliate deal with, give them the sale report address, and settle reported sales.
+4. Approve candidates in the review queue (bulk approve works). The "500+ upcoming events in 5 cities" goal depends on these sources.
+5. Set `ADMIN_EMAIL` in Vercel to the team's Google addresses. Admins sign in with Google; the shared password disclosed earlier must be rotated and is not used by this build.
+6. Approve profile claims in `/ops/claims` (Profiles tab) and gear suggestions in `/ops/artists` (Gear tab); verify the artists you know and add their MusicBrainz or Spotify ids.
+7. Produce the PMTiles extract for the launched cities, upload it to the bucket with range requests enabled, and set `MAP_TILES_URL` (and `MAP_GLYPHS_URL` for place names).
 
 ## Postponed
 
 - Resident Advisor and Facebook adapters: terms forbid scraping. Their links are kept as provenance only.
 - Eventbrite and Bandsintown adapters, Playwright scraping.
 - EventSignal / early warning, AI duplicate fallback, AI style classifier, semantic search, recommendations.
-- Artist entity and pages (phase 7b), "festival within 500 km" alerts.
+- "Festival within 500 km" alerts; artist bios and photos (the columns exist, nothing fills them yet).
 - FeestFinder checkout in currencies other than VND.
 
 ## Log
 
 - 2026-10-05: Phase 0 audit written. Decisions taken: hybrid ingestion, no RA/FB crawling, map back now, five cities now.
 - 2026-10-05: Phases 1–6 and 8 built, phase 7 in part. API suite 224 tests (223 pass, 1 skipped as before); new `test/ingest.test.ts` (26 tests, fixtures only).
+- 2026-10-05: Phase 7 finished (Smart Alerts by city and style, artist pages), the map in the app, starter sources and fixes from reading real sources.
+- 2026-10-05: Ticket buttons fixed on the web (they only showed a message) and in the app (imported events said no tier was on sale); phase 9, ticket partners; normaliser splits a venue from its address and drops a city after the title. No new source for Đà Nẵng or Nha Trang: none publishes event data.
+- 2026-10-05: Phase 10, the Night Build: personas and the admin allowlist, the artist directory and network, organiser network, artist gig reports, affiliate links and payouts, gear, the gig marketplace and first-party analytics (migrations 019–024). Fixed on the way: an unproven email could take over an account by signing in with it.
+- 2026-10-06: Phase 10 follow-ups: bookings notification topic, public availability, payout CSV, brand campaigns, gigs in the studio (migrations 025–026).

@@ -5,8 +5,13 @@ import { many, one } from '../db/index.ts';
 import { notFound } from '../lib/errors.ts';
 import { GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
-import { cityBySlug, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
-import { EVENT_TYPE_LABEL, EVENT_TYPES, isStyle, STYLES } from '../lib/styles.ts';
+import { cityBySlug, cityLabel, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
+import { artistLinks } from '../services/artists.ts';
+import { countEventMetric } from '../services/partners.ts';
+import { EVENT_TYPE_LABEL, EVENT_TYPES, isStyle, styleByKey, STYLES } from '../lib/styles.ts';
+import { ORGANIZER_TYPE, type OrganizerType } from '../lib/network.ts';
+import { organizerArtists, organizerVenues } from '../services/network.ts';
+import { presentOrgLinks } from '../services/organizers.ts';
 import { dateIn, TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
 import { bool, csv, dateStr, limit, parse, uuid } from '../lib/validate.ts';
 import { decodeCursor, isUuid, page, SqlParams } from '../http/sql.ts';
@@ -278,6 +283,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     return {
       ...card,
       sources: await loadPublicSources(ctx.db, ev.id),
+      artistLinks: await artistLinks(ctx.db, ev.id),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,
@@ -286,6 +292,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
         event: ev.event_url ?? `${ctx.config.publicBaseUrl.replace(/\/$/, '')}/e/${ev.slug}`,
         brand: ev.brand_url,
         tickets: ev.entry_mode === 'paid' ? ev.ticket_url : null,
+        // Every ticket button goes through here: counted, then to the checkout or the seller.
+        go: ev.entry_mode === 'paid' && (tierRows.length || ev.ticket_url) ? `/go/${ev.slug}` : null,
       },
       ticketNote: L('Tickets are sold by the organiser. FeestFinder does not add a booking fee.', 'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'),
       tickets: ev.entry_mode === 'paid' && tierRows.length ? presentTiers(tierRows, now) : null,
@@ -361,17 +369,6 @@ export default async function catalogRoutes(app: FastifyInstance) {
     return { items: GENRES.map((g) => ({ genre: g, count: counts[g] ?? 0 })) };
   });
 
-  app.get('/artists', async (req) => {
-    const { q } = parse(z.object({ q: z.string().max(60).optional() }), req.query);
-    const rows = await many<any>(ctx.db,
-      `select a as name, count(*)::int as events
-         from events e, unnest(e.artists) a
-        where e.status = 'live' and not e.held_for_reports and e.ends_at >= $1
-        group by a order by a`, [ctx.clock.now()]);
-    const needle = q ? searchNormalize(q) : '';
-    return { items: rows.filter((r) => !needle || searchNormalize(r.name).includes(needle)) };
-  });
-
   app.get('/venues', async (req) => {
     // The organiser wizard takes the whole verified list for its autocomplete.
     const { q, limit: max } = parse(z.object({ q: z.string().max(100).optional(), limit: limit(200, 5) }), req.query);
@@ -395,14 +392,30 @@ export default async function catalogRoutes(app: FastifyInstance) {
         where e.organizer_id = $1 and e.status = 'live' and not e.held_for_reports order by e.starts_at`, [org.id]);
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const cards = rows.map((r) => presentCard(r, { now, viewer }));
-    const following = userId ? !!(await one(ctx.db, 'select 1 from organizer_follows where user_id = $1 and organizer_id = $2', [userId, org.id])) : false;
+    const [following, artists, venues, member] = await Promise.all([
+      userId ? one(ctx.db, 'select 1 from organizer_follows where user_id = $1 and organizer_id = $2', [userId, org.id]) : null,
+      organizerArtists(ctx.db, org.id),
+      organizerVenues(ctx.db, org.id),
+      userId ? one(ctx.db, 'select 1 from organizer_members where user_id = $1 and organizer_id = $2', [userId, org.id]) : null,
+    ]);
+    // The styles it runs: what its profile says, then what its events say.
+    const played = [...cards.flatMap((c) => c.styles).reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())]
+      .sort((x, y) => y[1] - x[1]).map(([x]) => x);
+    const styles = [...new Set([...(org.styles ?? []), ...played])].slice(0, 6);
     return {
-      id: org.id, slug: org.slug, name: org.name, initials: org.initials, art: org.art, logoUrl: org.logo_url,
-      bio: org.bio, type: org.type, website: org.website, verified: org.verification_state === 'verified',
-      stats: { events: cards.length, followers: org.followers_count, since: org.since_year },
+      id: org.id, slug: org.slug, name: org.name, initials: org.initials, art: org.art, logoUrl: org.logo_url, coverUrl: org.cover_url,
+      bio: org.bio, type: org.type, typeLabel: ORGANIZER_TYPE.label[org.type as OrganizerType] ?? null, website: org.website,
+      verified: org.verification_state === 'verified',
+      // The cities it says it runs events in, or else the ones its events are in.
+      markets: (org.markets?.length ? org.markets as string[] : [...new Set(cards.map((c) => c.city))]).map((slug) => ({ slug, label: cityLabel(slug) })),
+      styles: styles.map((k) => ({ key: k, label: styleByKey(k)?.label ?? L(k, k) })),
+      openForSubmissions: org.open_for_submissions,
+      links: presentOrgLinks(org),
+      stats: { events: cards.length, followers: org.followers_count, since: org.since_year, artists: artists.length },
       upcoming: cards.filter((c) => !c.past),
       past: cards.filter((c) => c.past).reverse(),
-      me: userId ? { following } : null,
+      artists, venues,
+      me: userId ? { following: !!following, member: !!member } : null,
     };
   });
 
@@ -445,17 +458,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
     if (last && now.getTime() - last < 30 * 60_000) return reply.code(202).send({ counted: false });
     seen.set(key, now.getTime());
     if (seen.size > 50_000) seen.clear();
-    const col = body.type === 'view' ? 'views' : 'ticket_clicks';
-    const res = await one(ctx.db,
-      `insert into event_metrics_daily (event_id, day, ${col}, sources)
-       select id, $2, 1, case when $4 then jsonb_build_object($3::text, 1) else '{}'::jsonb end from events where id = $1
-       on conflict (event_id, day) do update set
-         ${col} = event_metrics_daily.${col} + 1,
-         sources = case when $4 then jsonb_set(event_metrics_daily.sources, array[$3::text],
-           to_jsonb(coalesce((event_metrics_daily.sources->>$3::text)::int, 0) + 1)) else event_metrics_daily.sources end
-       returning 1`,
-      [req.params.id, vnDate(now), body.source === 'shared' && body.channel ? `shared:${body.channel}` : body.source, body.type === 'view']);
-    if (!res) throw notFound();
+    const counted = await countEventMetric(ctx.db, req.params.id, body.type === 'view' ? 'views' : 'ticket_clicks',
+      body.source === 'shared' && body.channel ? `shared:${body.channel}` : body.source, now);
+    if (!counted) throw notFound();
     return reply.code(202).send({ counted: true });
   });
 }

@@ -54,7 +54,10 @@ FF.loadWeb = async function () {
     ads: ad && ad.ad ? [{ id: ad.ad.id, brand: ad.ad.brand, logo: ad.ad.logo, art: ad.ad.art, head: ad.ad.headline, body: ad.ad.body, cta: ad.ad.cta }] : [],
     user: u ? { handle: u.email || u.phone || u.name, method: u.signupMethod, name: u.name || '', email: u.email || '', zalo: u.phone || '',
       // `social` is where friends come from; Google brings none.
-      city: u.city || '', photo: u.photoUrl || '', socials, social: socials.filter(x => x !== 'google')[0] || '' } : null,
+      city: u.city || '', photo: u.photoUrl || '', socials, social: socials.filter(x => x !== 'google')[0] || '',
+      // Asked once which other ways they use FeestFinder; what they are besides a fan.
+      onboarded: u.onboarded !== false,
+      roles: (FF.session && FF.session.roles) || { artist: null, organizer: null }, artist: (FF.session && FF.session.artist) || null } : null,
     saved: flags(saves.items), going: flags(going.items), following,
     notifM: prefs ? prefs.matrix : null,
     collections: cols.items,

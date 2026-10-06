@@ -12,6 +12,7 @@ import { hostOf } from '../../services/ingest/normalize.ts';
 import { ADAPTER_IDS, PROVIDER_CONFIDENCE, PROVIDER_LABEL, providerOfLink } from '../../services/ingest/providers.ts';
 import { MATCH_RULES } from '../../services/ingest/resolve.ts';
 import { reprocessSource, runSource } from '../../services/ingest/run.ts';
+import { addStarterSources } from '../../services/ingest/starter.ts';
 
 /*
  * The team's view of ingestion: which sources FeestFinder reads, what each run found, the raw
@@ -88,6 +89,20 @@ export default async function adminIngestRoutes(app: FastifyInstance) {
       targetType: 'ingest_source', targetId: row!.id, targetLabel: b.name, diff: [{ f: 'url', a: '—', b: b.url ?? b.adapter }],
     });
     return reply.code(201).send(presentSource(await sourceRow(row!.id)));
+  });
+
+  /** The sources FeestFinder starts with (services/ingest/starter.ts), where they are missing. */
+  app.post('/admin/sources/starter', async (req) => {
+    const s = requireAdmin(req);
+    const now = ctx.clock.now();
+    const added = await addStarterSources(ctx.db, now);
+    if (added) {
+      await appendAudit(ctx.db, {
+        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'source.starter_added',
+        targetType: 'ingest_source', targetId: null, targetLabel: `${added} sources`, diff: [{ f: 'sources', a: '—', b: String(added) }],
+      });
+    }
+    return { added, message: added ? L(`${added} sources added`, `Đã thêm ${added} nguồn`) : L('Every suggested source is already here', 'Đã có đủ các nguồn gợi ý') };
   });
 
   app.patch<{ Params: { id: string } }>('/admin/sources/:id', async (req) => {

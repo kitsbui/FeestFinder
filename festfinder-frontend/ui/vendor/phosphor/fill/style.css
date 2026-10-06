@@ -1,4 +1,4 @@
-/* Phosphor fill, cut to the 233 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
+/* Phosphor fill, cut to the 242 icons FeestFinder uses by festfinder-frontend/scripts/subset-icons.py. */
 @font-face {
   font-family: "Phosphor-Fill";
   src: url("./Phosphor-Fill.woff2") format("woff2"), url("./Phosphor-Fill.woff") format("woff");
@@ -143,6 +143,9 @@
 .ph-fill.ph-certificate:before {
   content: "\e766";
 }
+.ph-fill.ph-chart-bar:before {
+  content: "\e150";
+}
 .ph-fill.ph-chart-line-up:before {
   content: "\e156";
 }
@@ -199,6 +202,9 @@
 }
 .ph-fill.ph-cloud-slash:before {
   content: "\e1b6";
+}
+.ph-fill.ph-club:before {
+  content: "\e1ba";
 }
 .ph-fill.ph-code:before {
   content: "\e1bc";
@@ -293,9 +299,6 @@
 .ph-fill.ph-folder-simple:before {
   content: "\e25a";
 }
-.ph-fill.ph-folder-simple-star:before {
-  content: "\ec2e";
-}
 .ph-fill.ph-footprints:before {
   content: "\ea88";
 }
@@ -323,6 +326,9 @@
 .ph-fill.ph-globe:before {
   content: "\e288";
 }
+.ph-fill.ph-globe-hemisphere-east:before {
+  content: "\e28a";
+}
 .ph-fill.ph-globe-hemisphere-west:before {
   content: "\e28c";
 }
@@ -346,6 +352,9 @@
 }
 .ph-fill.ph-hash:before {
   content: "\e2a2";
+}
+.ph-fill.ph-headphones:before {
+  content: "\e2a6";
 }
 .ph-fill.ph-heart:before {
   content: "\e2a8";
@@ -599,6 +608,9 @@
 .ph-fill.ph-sort-descending:before {
   content: "\e446";
 }
+.ph-fill.ph-soundcloud-logo:before {
+  content: "\e8de";
+}
 .ph-fill.ph-sparkle:before {
   content: "\e6a2";
 }
@@ -607,6 +619,9 @@
 }
 .ph-fill.ph-spinner-gap:before {
   content: "\e66c";
+}
+.ph-fill.ph-spotify-logo:before {
+  content: "\e66e";
 }
 .ph-fill.ph-square:before {
   content: "\e45e";
@@ -634,6 +649,9 @@
 }
 .ph-fill.ph-tag:before {
   content: "\e478";
+}
+.ph-fill.ph-target:before {
+  content: "\e47c";
 }
 .ph-fill.ph-telegram-logo:before {
   content: "\e5bc";
@@ -704,6 +722,9 @@
 .ph-fill.ph-users-three:before {
   content: "\e68e";
 }
+.ph-fill.ph-vinyl-record:before {
+  content: "\ecac";
+}
 .ph-fill.ph-wallet:before {
   content: "\e68a";
 }
@@ -719,6 +740,9 @@
 .ph-fill.ph-warning-octagon:before {
   content: "\e4e4";
 }
+.ph-fill.ph-waveform:before {
+  content: "\e802";
+}
 .ph-fill.ph-whatsapp-logo:before {
   content: "\e5d0";
 }
@@ -730,4 +754,7 @@
 }
 .ph-fill.ph-x-logo:before {
   content: "\e4bc";
+}
+.ph-fill.ph-youtube-logo:before {
+  content: "\e4fc";
 }

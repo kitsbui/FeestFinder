@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { many, one } from '../db/index.ts';
 import { badRequest, conflict, notFound } from '../lib/errors.ts';
 import { fill, GENRES, L, NOTIFICATION_TOPICS, QUIET_HOURS_RULE } from '../lib/i18n.ts';
+import { launchedCity } from '../lib/places.ts';
+import { isStyle } from '../lib/styles.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
 import { imageUrl, limit, parse, uuid } from '../lib/validate.ts';
 import { BANKS } from '../lib/vietqr.ts';
@@ -37,7 +39,7 @@ export default async function meRoutes(app: FastifyInstance) {
     const prefs = await loadPrefs(ctx.db, s.user.id);
     const channelsOn = Object.values(prefs).reduce((n, p) => n + (p.push ? 1 : 0) + (p.zalo ? 1 : 0) + (p.email ? 1 : 0), 0);
     return {
-      user: publicUser(user),
+      user: publicUser(user, s.method, ctx),
       connections: connections.map((c) => ({ provider: c.provider, displayName: c.display_name, connectedAt: c.connected_at })),
       counts: { ...counts, notificationChannelsOn: channelsOn },
       payee: user.payee_account_no ? {
@@ -74,6 +76,8 @@ export default async function meRoutes(app: FastifyInstance) {
         throw badRequest('login_email_locked', L('This is the email you sign in with', 'Đây là email bạn dùng để đăng nhập'));
       }
       patch.email = email ? normalizeEmail(email) : null;
+      // A new address is unproven until its owner shows it (an email code or Google).
+      if (patch.email !== current.email) patch.email_verified_at = null;
     }
     if (body.zalo !== undefined) {
       const raw = body.zalo.trim();
@@ -96,7 +100,7 @@ export default async function meRoutes(app: FastifyInstance) {
       }
     }
     const user = await one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]);
-    return { user: publicUser(user), message: L('Profile saved', 'Đã lưu hồ sơ') };
+    return { user: publicUser(user, s.method, ctx), message: L('Profile saved', 'Đã lưu hồ sơ') };
   });
 
   /** Bank account used as the payee on group-plan VietQR requests. */
@@ -313,7 +317,7 @@ export default async function meRoutes(app: FastifyInstance) {
 
   const alertShape = async (userId: string) => {
     const a = await one<any>(ctx.db, 'select * from smart_alerts where user_id = $1', [userId]);
-    const alert = a ?? { enabled: true, genres: ['EDM'], artists: [], organizer_ids: [], areas: [], price_cap: 1000000 };
+    const alert = a ?? { enabled: true, genres: ['EDM'], artists: [], organizer_ids: [], areas: [], cities: [], styles: [], price_cap: 1000000 };
     const params: unknown[] = [ctx.clock.now()];
     const cond: string[] = [];
     const add = (v: unknown) => { params.push(v); return `$${params.length}`; };
@@ -321,13 +325,15 @@ export default async function meRoutes(app: FastifyInstance) {
     if (alert.artists.length) cond.push(`e.artists && ${add(alert.artists)}::text[]`);
     if (alert.organizer_ids.length) cond.push(`e.organizer_id = any(${add(alert.organizer_ids)}::uuid[])`);
     if (alert.areas.length) cond.push(`e.area = any(${add(alert.areas)}::text[])`);
+    if (alert.cities.length) cond.push(`e.city = any(${add(alert.cities)}::text[])`);
+    if (alert.styles.length) cond.push(`e.styles && ${add(alert.styles)}::text[]`);
     if (alert.price_cap === 0) cond.push(`(e.entry_mode = 'free' or e.price_from = 0)`);
     else if (alert.price_cap !== null) cond.push(`e.price_from <= ${add(alert.price_cap)}`);
     const m = await one<any>(ctx.db,
       `select count(*)::int as n from events e where e.status = 'live' and not e.held_for_reports and e.ends_at >= $1 ${cond.map((c) => `and ${c}`).join(' ')}`, params);
     return {
       enabled: alert.enabled, genres: alert.genres, artists: alert.artists, organizerIds: alert.organizer_ids,
-      areas: alert.areas, priceCap: alert.price_cap, matches: m.n,
+      areas: alert.areas, cities: alert.cities, styles: alert.styles, priceCap: alert.price_cap, matches: m.n,
     };
   };
 
@@ -341,14 +347,17 @@ export default async function meRoutes(app: FastifyInstance) {
       artists: z.array(z.string().max(100)).max(30),
       organizerIds: z.array(uuid).max(30),
       areas: z.array(z.string().max(60)).max(20),
+      cities: z.array(launchedCity).max(20).default([]),
+      styles: z.array(z.string().refine(isStyle, 'unknown style')).max(20).default([]),
       priceCap: z.number().int().min(0).nullable(),
     }), req.body);
     await ctx.db.query(
-      `insert into smart_alerts (user_id, enabled, genres, artists, organizer_ids, areas, price_cap, updated_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8)
+      `insert into smart_alerts (user_id, enabled, genres, artists, organizer_ids, areas, cities, styles, price_cap, updated_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        on conflict (user_id) do update set enabled = excluded.enabled, genres = excluded.genres, artists = excluded.artists,
-         organizer_ids = excluded.organizer_ids, areas = excluded.areas, price_cap = excluded.price_cap, updated_at = excluded.updated_at`,
-      [s.user.id, body.enabled, body.genres, body.artists, body.organizerIds, body.areas, body.priceCap, ctx.clock.now()]);
+         organizer_ids = excluded.organizer_ids, areas = excluded.areas, cities = excluded.cities, styles = excluded.styles,
+         price_cap = excluded.price_cap, updated_at = excluded.updated_at`,
+      [s.user.id, body.enabled, body.genres, body.artists, body.organizerIds, body.areas, body.cities, body.styles, body.priceCap, ctx.clock.now()]);
     return { ...(await alertShape(s.user.id)), message: body.enabled ? L('Smart Alert saved', 'Đã lưu Smart Alert') : L('Smart Alert off', 'Đã tắt Smart Alert') };
   });
 

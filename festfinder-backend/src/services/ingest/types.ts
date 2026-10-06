@@ -56,7 +56,7 @@ export interface NormalizedEvent {
 }
 
 export type Rejection = { rejected: RejectReason; detail?: string };
-export type RejectReason = 'no_title' | 'no_date' | 'bad_date' | 'past' | 'out_of_area' | 'too_long' | 'cancelled';
+export type RejectReason = 'no_title' | 'no_date' | 'bad_date' | 'past' | 'out_of_area' | 'too_long' | 'cancelled' | 'skipped';
 
 export const isRejection = (x: NormalizedEvent | Rejection): x is Rejection => 'rejected' in x;
 
@@ -71,6 +71,10 @@ export interface IngestIO {
   now: Date;
   /** API keys from the environment; never stored with a source. */
   secrets: { ticketmasterKey?: string };
+  /** When this run must stop reading (ms since epoch), so a long listing finishes in a later run. */
+  deadline?: number;
+  /** When each of these pages was last read for this source, so new pages are read first. */
+  lastFetched?: (urls: string[]) => Promise<Map<string, number>>;
 }
 
 export interface FetchedText { status: number; url: string; text: string; etag: string | null; lastModified: string | null }

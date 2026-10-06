@@ -172,7 +172,7 @@
   // Colour is genre: Lễ hội orange, EDM blue, Nhạc sống lilac (indie, hip-hop, pop, jazz),
   // Văn hoá pink (food, culture), and FeestFinder green for anything else. An event without
   // a cover wears its genre's art: a two-hue body with a lit sphere of the neighbouring hue.
-  const GENRE_TONE = { Festival: 'fest', EDM: 'edm', Indie: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
+  const GENRE_TONE = { Festival: 'fest', EDM: 'edm', Indie: 'live', Rock: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
   const TONES = {
     fest: { hue: '#FF8709', art: 'radial-gradient(circle at 76% 72%,#FFF1FE 0,#FEC5FB 12%,#F100CB 30%,rgba(241,0,203,0) 30.5%),linear-gradient(150deg,#FFD29C 0%,#FF8709 48%,#E8388A 118%)' },
     edm: { hue: '#00BAE2', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#FEC5FB 12%,#9D95FF 30%,rgba(157,149,255,0) 30.5%),linear-gradient(150deg,#BFF3FF 0%,#00BAE2 48%,#5A62E0 120%)' },
@@ -472,6 +472,29 @@
     if (path === location.pathname + location.search) return;
     history[o.replace ? 'replaceState' : 'pushState']({ ff: true }, '', path);
     readRoute(FF.route ? FF.route.base : '/');
+    FF.track('page_view');
+  };
+
+  // ---- analytics -------------------------------------------------------------------
+  //
+  // A few named events to /analytics/collect, which forwards them only when the site has an
+  // analytics provider. A visitor is a random id made here; "Do Not Track" and Global Privacy
+  // Control send nothing at all.
+
+  function anonId() {
+    try {
+      let id = localStorage.getItem('ff_aid');
+      if (!id) { id = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('ff_aid', id); }
+      return id;
+    } catch (e) { return undefined; }
+  }
+  FF.track = function (name, props) {
+    try {
+      if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl) return;
+      const body = JSON.stringify({ name, anonId: anonId(), props: Object.assign({ path: location.pathname, surface: FF.route ? FF.route.base : '/' }, props || {}) });
+      if (navigator.sendBeacon) navigator.sendBeacon('/analytics/collect', new Blob([body], { type: 'text/plain' }));
+      else fetch('/analytics/collect', { method: 'POST', body, keepalive: true, credentials: 'same-origin' }).catch(() => {});
+    } catch (e) { /* analytics never breaks a screen */ }
   };
 
   /** Build a path under the current surface: FF.href('e', 'ravo') → '/app/e/ravo'. */
@@ -485,6 +508,7 @@
   window.addEventListener('popstate', () => {
     const r = readRoute(FF.route ? FF.route.base : '/');
     if (FF.onRoute) FF.onRoute(r);
+    FF.track('page_view');
   });
 
   // ---- data loaded once, per route -------------------------------------------------
@@ -525,6 +549,7 @@
     const dir = '/pages/' + opts.surface + '/';
     takeOAuthResult();
     readRoute(opts.base);
+    FF.track('page_view');
 
     const template = text(vq(dir + 'template.html'));
     const logic = text(vq(dir + 'logic.js'));

@@ -7,6 +7,8 @@ import { BADGES, GENRES, L, REJECT_REASONS, REPORT_CATEGORY, REPORT_CODES, TIER_
 import { formatVnPhone, initialsOf, isEmail, normalizeEmail, searchNormalize, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { toCsv } from '../../lib/csv.ts';
+import { PROFILE_ARTS } from '../../lib/format.ts';
+import { ORGANIZER_TYPE, type OrganizerType } from '../../lib/network.ts';
 import { addDays, atVn, monthEnd, vnDate, weekendRange } from '../../lib/time.ts';
 import { bool, csv, dateStr, imageUrl, limit, localized, parse, uuid } from '../../lib/validate.ts';
 import { BANKS } from '../../lib/vietqr.ts';
@@ -20,6 +22,7 @@ import { EVENT_TYPE_LABEL, EVENT_TYPES, STYLES } from '../../lib/styles.ts';
 import { announceNewListing } from '../../services/listing.ts';
 import { notifyOrganizer } from '../../services/notify.ts';
 import { refundOrder } from '../../services/orders.ts';
+import { activateRole } from '../../services/roles.ts';
 import { assessRisk, riskBand } from '../../services/risk.ts';
 import { approveListing } from './moderation.ts';
 import { moderationThread } from '../organizer/inbox.ts';
@@ -41,19 +44,14 @@ const GENRE_LABEL: Record<string, { label: Localized; hint: Localized }> = {
   Festival: { label: L('Festival', 'Lễ hội'), hint: L('Multi-stage, multi-day, mixed genres', 'Nhiều sân khấu, nhiều ngày, nhiều thể loại') },
   Indie: { label: L('Indie', 'Indie'), hint: L('Singer-songwriters, bands, acoustic', 'Singer-songwriter, band, acoustic') },
   'Hip-Hop': { label: L('Hip-hop & rap', 'Hip-hop & rap'), hint: L('Rap shows, cyphers, battles', 'Show rap, cypher, battle') },
-  Pop: { label: L('Pop', 'Pop'), hint: L('Concerts, pop and rock nights', 'Concert, đêm nhạc pop & rock') },
+  Rock: { label: L('Rock & metal', 'Rock & metal'), hint: L('Bands, punk, metal, post-rock', 'Ban nhạc, punk, metal, post-rock') },
+  Pop: { label: L('Pop', 'Pop'), hint: L('Concerts, K-pop and V-pop nights', 'Concert, đêm nhạc K-pop & V-pop') },
   Jazz: { label: L('Jazz & blues', 'Jazz & blues'), hint: L('Jazz bars, blues nights, recitals', 'Jazz bar, đêm blues, recital') },
   Food: { label: L('Food & night markets', 'Ẩm thực & chợ đêm'), hint: L('Night markets, food fairs, pop-ups', 'Chợ đêm, hội chợ ẩm thực, pop-up') },
   Culture: { label: L('Culture & arts', 'Văn hoá & nghệ thuật'), hint: L('Book fairs, exhibitions, classical', 'Hội sách, triển lãm, nhạc cổ điển') },
 };
 
-const ORG_TYPES: Record<string, Localized> = {
-  promoter: L('Promoter', 'Đơn vị tổ chức'),
-  venue: L('Venue (bar, club, space)', 'Địa điểm (bar, club, không gian)'),
-  company: L('Company or brand', 'Doanh nghiệp / thương hiệu'),
-  agency: L('Agency or travel', 'Agency / lữ hành'),
-  public: L('Public body or non-profit', 'Cơ quan / tổ chức công'),
-};
+const ORG_TYPES: Record<string, Localized> = ORGANIZER_TYPE.label;
 
 /** Districts grouped the way people in the city think about them. Areas already in the data are added under "Other". */
 const AREA_GROUPS: { key: string; label: Localized; areas: string[] }[] = [
@@ -79,8 +77,7 @@ const ORDER_STATUS: Record<string, Localized> = {
 const PAY_METHOD: Record<string, string> = { card: 'Card', momo: 'MoMo', zalopay: 'ZaloPay', vietqr: 'VietQR', mock: 'Demo' };
 const SIGNUP: Record<string, string> = { email: 'Email', google: 'Google', zalo: 'Zalo', wa: 'WhatsApp', fb: 'Facebook', ig: 'Instagram', staff: 'Staff' };
 
-const ARTS = ['linear-gradient(135deg,#8C6BFF,#2AC4E8)', 'linear-gradient(135deg,#1B6BD6,#8C6BFF)', 'linear-gradient(135deg,#FFB35C,#FF8A3D)',
-  'linear-gradient(135deg,#2AC4E8,#2E9E5B)', 'linear-gradient(135deg,#FF8A3D,#8A2BE2)', 'linear-gradient(135deg,#2E9E5B,#FFD35C)'];
+const ARTS = PROFILE_ARTS;
 
 const minutesSince = (now: Date, at: Date | string | null) => (at ? Math.max(0, Math.round((now.getTime() - new Date(at).getTime()) / 60000)) : 0);
 const short = (v: unknown) => {
@@ -709,7 +706,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
   }
 
   const ProfileInput = z.object({
-    name: z.string().trim().min(2).max(80), type: z.enum(['promoter', 'venue', 'company', 'agency', 'public']), bio: localized,
+    name: z.string().trim().min(2).max(80), type: z.enum(ORGANIZER_TYPE.keys as [OrganizerType, ...OrganizerType[]]), bio: localized,
     logoUrl: imageUrl.nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
     taxCode: z.string().max(20), address: z.string().max(240), email: z.string().max(200), hotline: z.string().max(30),
     zalo: z.string().max(80), contactName: z.string().max(80), contactRole: z.string().max(80),
@@ -738,7 +735,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
   app.post('/admin/organizers', async (req, reply) => {
     const s = requireAdmin(req);
     const body = parse(ProfileInput.extend({
-      name: z.string().trim().min(2).max(80), type: z.enum(['promoter', 'venue', 'company', 'agency', 'public']),
+      name: z.string().trim().min(2).max(80), type: z.enum(ORGANIZER_TYPE.keys as [OrganizerType, ...OrganizerType[]]),
       ownerEmail: z.string().max(200), ownerName: z.string().max(80).optional(),
     }), req.body);
     const now = ctx.clock.now();
@@ -752,6 +749,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       const org = await one<any>(q, `insert into organizers (${cols.join(', ')}) values (${cols.map((_, i) => `$${i + 1}`).join(', ')}) returning *`, vals);
       const owner = await accountFor(q, body.ownerEmail, body.ownerName ?? body.contactName, now);
       await q.query(`insert into organizer_members (organizer_id, user_id, role) values ($1,$2,'owner') on conflict do nothing`, [org.id, owner.id]);
+      await activateRole(q, owner.id, 'organizer', now);
       await appendAudit(q, { at: now, ...actorOf(s), action: 'organizer.created', targetType: 'organizer', targetId: org.id, targetLabel: org.name,
         diff: [{ f: 'type', a: '—', b: org.type }, { f: 'owner', a: '—', b: normalizeEmail(body.ownerEmail) }, { f: 'account', a: '—', b: owner.created ? 'new' : 'existing' }] });
       return { org, owner };
@@ -821,6 +819,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       if (!o) throw notFound();
       const u = await accountFor(q, body.email, body.name, now);
       await q.query(`insert into organizer_members (organizer_id, user_id, role) values ($1,$2,$3) on conflict (organizer_id, user_id) do update set role = excluded.role`, [id, u.id, body.role]);
+      await activateRole(q, u.id, 'organizer', ctx.clock.now());
       await appendAudit(q, { at: now, ...actorOf(s), action: 'organizer.member_added', targetType: 'organizer', targetId: id, targetLabel: o.name,
         diff: [{ f: 'member', a: '—', b: normalizeEmail(body.email) }, { f: 'role', a: '—', b: body.role }] });
       return u;

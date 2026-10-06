@@ -4,7 +4,7 @@ import { apiOr, SITE_URL, type EventCard } from '@/lib/api';
 // Rebuilt at most every 15 minutes: new listings reach search engines the same hour.
 export const revalidate = 900;
 
-/** Every live listing, and every organiser with one, in both languages. */
+/** Every live listing, every organiser and artist with one, in both languages. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const events: EventCard[] = [];
   let cursor: string | null = null;
@@ -22,6 +22,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const organizers = new Map<string, EventCard['organizer']>();
   for (const e of events) organizers.set(e.organizer.slug, e.organizer);
+
+  // Artists with a show still to come.
+  const meta = await apiOr<{ items: { slug: string }[]; directories?: string[] } | null>('/meta/artists', null, { revalidate: 900 });
+  const artists = meta?.items ?? [];
+  // The artist directory pages that list enough artists to be indexed.
+  const directories = meta?.directories ?? [];
 
   const now = new Date();
   return [
@@ -42,6 +48,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       return [
         { url: vi, changeFrequency: 'weekly' as const, priority: 0.6, alternates },
         { url: en, changeFrequency: 'weekly' as const, priority: 0.4, alternates },
+      ];
+    }),
+    ...artists.flatMap((a) => {
+      const vi = `${SITE_URL}/a/${a.slug}`, en = `${vi}?lang=en`;
+      const alternates = { languages: { vi, en, 'x-default': vi } };
+      return [
+        { url: vi, changeFrequency: 'weekly' as const, priority: 0.6, alternates },
+        { url: en, changeFrequency: 'weekly' as const, priority: 0.4, alternates },
+      ];
+    }),
+    ...directories.flatMap((path) => {
+      const vi = `${SITE_URL}${path}`, en = `${vi}?lang=en`;
+      const alternates = { languages: { vi, en, 'x-default': vi } };
+      return [
+        { url: vi, changeFrequency: 'daily' as const, priority: 0.5, alternates },
+        { url: en, changeFrequency: 'daily' as const, priority: 0.4, alternates },
       ];
     }),
   ];

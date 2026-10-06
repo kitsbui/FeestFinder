@@ -17,6 +17,18 @@ async function signIn(page: Page, who: Account) {
   await signInWith(page, ACCOUNTS[who]);
 }
 
+/** What a click hands to window.open, without leaving for another site. */
+async function opened(page: Page, click: () => Promise<void>): Promise<string> {
+  await page.evaluate(() => {
+    const w = window as unknown as { __opened: string[]; open: (u?: string | URL) => null };
+    w.__opened = [];
+    w.open = (u) => { w.__opened.push(String(u)); return null; };
+  });
+  await click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __opened: string[] }).__opened.length)).toBeGreaterThan(0);
+  return page.evaluate(() => (window as unknown as { __opened: string[] }).__opened[0]);
+}
+
 test.describe('Web', () => {
   const routes: [string, RegExp][] = [
     ['/', /Khám phá/],
@@ -24,6 +36,8 @@ test.describe('Web', () => {
     ['/about', /VỀ FEESTFINDER/i],
     ['/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i],
     ['/o/ravoent', /RAVOLUTION ENTERTAINMENT/i],
+    ['/a/hoaprox', /HOAPROX/i],
+    ['/a', /NGHỆ SĨ/],
   ];
   for (const [path, shows] of routes) {
     test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
@@ -79,6 +93,97 @@ test.describe('Web', () => {
     await expect(page.getByText('Tìm trong khu vực này')).toHaveCount(0);
     await expect(page).toHaveURL(/view=map&bbox=/);
     expect(problems).toEqual([]);
+  });
+
+  test('a lineup name opens the artist page, with their shows and its own HTML for search engines', async ({ page, request }) => {
+    const html = await (await request.get('/a/hoaprox')).text();
+    expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/a\/hoaprox"/);
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+    expect(blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']))).toContain('MusicGroup');
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByRole('link', { name: 'Trang nghệ sĩ · Hoaprox' }).click();
+    await expect(page).toHaveURL(/\/a\/hoaprox$/);
+    await expect(page.getByText('Show sắp tới')).toBeVisible();
+    await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
+  });
+
+  test('the artist directory filters by style, and one style alone has its own address', async ({ page, request }) => {
+    await expectScreen(page, '/a', /NGHỆ SĨ/);
+    await expect(page.getByText('Hoaprox').first()).toBeVisible();
+    const style = (await (await request.get('/meta/discovery')).json()).styles[0];
+    await page.getByRole('button', { name: style.label.vi, exact: true }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/a/style/${style.key}$`));
+    await page.getByRole('button', { name: /Nhận booking$/ }).click();
+    await expect(page).toHaveURL(/\/a$/);
+    const html = await (await request.get(`/a/style/${style.key}`)).text();
+    expect(html).toMatch(new RegExp(`<link rel="canonical" href="http://localhost:\\d+/a/style/${style.key}"`));
+  });
+
+  test('an organiser page lists the artists it has worked with', async ({ page }) => {
+    await expectScreen(page, '/o/ravoent', /RAVOLUTION ENTERTAINMENT/i);
+    await expect(page.getByText('Nghệ sĩ đã hợp tác')).toBeVisible();
+    await expect(page.getByText('Hoaprox').first()).toBeVisible();
+  });
+
+  test('a new Google account picks a role: an artist gets a profile and the artist workspace, never admin', async ({ page }) => {
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    await page.getByText('Đăng nhập để đăng bài', { exact: true }).click();
+    await page.getByText('Tiếp tục với Google', { exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Bạn đến với âm nhạc thế nào?' })).toBeVisible();
+    await page.getByText('Biểu diễn', { exact: true }).click();
+    const name = `Night Owl ${Date.now() % 100000}`;
+    await page.getByLabel('Nghệ danh').fill(name);
+    await page.getByText('Tạo hồ sơ', { exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const who = await (await page.request.get('/auth/session')).json();
+    expect(who.user.role).toBe('user');
+    expect(who.roles.artist).toBe('active');
+    expect(who.artist.name).toBe(name);
+    await expectOps(page, '/ops/artist', /Nghệ danh/);
+    expect((await page.request.get('/admin/counts')).status()).toBe(403);
+    // A gig they report waits for a moderator.
+    await expectOps(page, '/ops/artist/gigs', /Báo lịch diễn/);
+    await page.request.post('/me/artist/gigs', { data: { title: 'Owl warehouse', startsOn: '2027-03-06', city: 'ho-chi-minh', venueName: 'Lot 9' } });
+    await page.reload();
+    await expect(page.getByRole('row').filter({ hasText: 'Owl warehouse' })).toContainText('Có tên bạn');
+    await expectOps(page, '/ops/artist/gear', /Thêm từ danh mục/);
+    await expectOps(page, '/ops/artist/opportunities', /Gig đang mở/);
+    await expectOps(page, '/ops/artist/opportunities?tab=dates', /Thêm khoảng/, '/ops/artist/opportunities');
+    await expectOps(page, '/ops/artist/opportunities?tab=brands', /Nhận hợp tác thương hiệu/, '/ops/artist/opportunities');
+    // Dates they set show on their public page, without the note.
+    await page.request.put('/me/artist/availability', { data: { items: [{ from: '2027-03-01', to: '2027-03-03', kind: 'available', note: 'private note' }] } });
+    await expectScreen(page, `/a/${who.artist.slug}`, new RegExp(name, 'i'));
+    await expect(page.getByText('01/03 – 03/03')).toBeVisible();
+    await expect(page.getByText('private note')).toHaveCount(0);
+  });
+
+  test('ticket buttons go to the checkout here, or out to the seller, and count the press', async ({ page }) => {
+    // FeestFinder sells Ravolution: the button goes to its checkout, in the same tab.
+    await expectScreen(page, '/e/ravo', /RAVOLUTION MUSIC FESTIVAL/i);
+    const go = page.waitForResponse((r) => r.url().includes('/go/ravo?src=detail'));
+    await page.getByText('Mua vé', { exact: true }).first().click();
+    expect((await go).headers().location).toBe('/app/checkout/ravo');
+    await expect(page).toHaveURL(/\/app\//);
+
+    // A night sold elsewhere: the seller's page opens in a new tab, no sign-in asked for it.
+    await signIn(page, 'admin');
+    const ev = await (await page.request.get('/events/nhacvien')).json();
+    const patched = await page.request.patch(`/admin/events/${ev.id}`, { data: { entryMode: 'paid', priceFrom: 250000, ticketUrl: 'https://tickets.example/nhacvien' } });
+    expect(patched.status()).toBe(200);
+    await page.request.delete('/auth/session');
+    await expectScreen(page, '/e/nhacvien', /HÒA NHẠC NHẠC VIỆN/i);
+    const url = await opened(page, () => page.getByText('Mua vé', { exact: true }).first().click());
+    expect(url).toBe('/go/nhacvien?src=detail');
+    const hop = await page.request.get(url, { maxRedirects: 0 });
+    expect([hop.status(), hop.headers().location]).toEqual([302, 'https://tickets.example/nhacvien']);
+    // The app does the same, where it used to say no tier was on sale.
+    await expectScreen(page, '/app/e/nhacvien', /HÒA NHẠC NHẠC VIỆN/i);
+    expect(await opened(page, () => page.getByText(/^Get tickets · from/).first().click())).toBe('/go/nhacvien?src=app');
+
+    // A free night opens the map.
+    await expectScreen(page, '/e/outcast', /SAIGON OUTCAST NIGHT MARKET/i);
+    expect(await opened(page, () => page.getByText('Vào cửa miễn phí', { exact: true }).first().click()))
+      .toBe('https://www.google.com/maps/search/?api=1&query=10.8065%2C106.7411');
   });
 
   test('the list filters by city, style and kind of night, and the API answers each', async ({ page }) => {
@@ -273,6 +378,31 @@ test.describe('App', () => {
       test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
     }
 
+    test('the list opens as a map that asks for events once, and again only on "search this area"', async ({ page }) => {
+      const asked: string[] = [];
+      page.on('request', (r) => { if (r.url().includes('/events/map?')) asked.push(r.url()); });
+      await expectScreen(page, '/app/list', /EVERY EVENT/i);
+      await page.getByRole('button', { name: 'Map', exact: true }).click();
+      await expect(page.locator('#ff-app-map canvas')).toBeVisible();
+      await expect.poll(() => asked.length).toBe(1);
+      const box = (await page.locator('#ff-app-map').boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 40, { steps: 10 });
+      await page.mouse.up();
+      await expect(page.getByText('Search this area')).toBeVisible();
+      expect(asked).toHaveLength(1);
+      await page.getByText('Search this area').click();
+      await expect.poll(() => asked.length).toBe(2);
+    });
+
+    test('Smart Alerts take cities and music styles', async ({ page }) => {
+      await expectScreen(page, '/app/alerts', /ALERT SETTINGS/i);
+      await expect(page.getByText('Music styles', { exact: true })).toBeVisible();
+      await page.getByText('Bangkok', { exact: true }).click();
+      await expect.poll(async () => (await (await page.request.get('/me/alert')).json()).cities).toEqual(['bangkok']);
+    });
+
     test('each ticket can be given away or resold from the wallet', async ({ page }) => {
       await expectScreen(page, '/app/tickets', /MY TICKETS/i);
       await expect(page.getByText('Resell', { exact: true })).toHaveCount(2);
@@ -353,10 +483,22 @@ test.describe('Organizer', () => {
       ['/studio/promos', /PROMOS & GUEST LIST/i],
       ['/studio/revenue', /REVENUE & PAYOUTS/i],
       ['/studio/inbox', /MESSAGES FROM FEESTFINDER/i],
+      ['/studio/gigs', /GIGS & BOOKINGS/i],
     ];
     for (const [path, shows] of routes) {
       test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
     }
+    test('posts a gig from the studio and lists it', async ({ page }) => {
+      await expectScreen(page, '/studio/gigs', /GIGS & BOOKINGS/i);
+      const title = `Studio slot ${Date.now() % 100000}`;
+      await page.getByLabel('e.g. Saturday warm-up').fill(title);
+      await page.getByLabel('date').fill('2027-04-10');
+      await page.getByLabel('Fee from').fill('2000000');
+      await page.getByRole('button', { name: 'Post', exact: true }).click();
+      await expect(page.getByText(title)).toBeVisible();
+      await page.getByText(title).click();
+      await expect(page.getByText('No applications yet')).toBeVisible();
+    });
   });
 });
 
@@ -391,21 +533,40 @@ test.describe('Ops', () => {
     const routes: [string, RegExp][] = [
       ['/ops', /Việc cần làm/],
       ['/ops/review', /Duyệt tin đăng/],
-      ['/ops/claims', /Nhận quản lý sự kiện/],
+      ['/ops/claims', /Hồ sơ nghệ sĩ & BTC/],
+      ['/ops/claims?what=profiles', /Không có yêu cầu nào|Duyệt/],
+      ['/ops/artists', /Hoaprox/],
+      ['/ops/artists?tab=gear', /Không có gì chờ duyệt|Duyệt/],
       ['/ops/events', /Đặc điểm/],
       ['/ops/events/new', /Đăng ngay sau khi tạo/],
       ['/ops/reports', /Báo cáo người dùng/],
       ['/ops/organizers', /Thêm nhà tổ chức/],
       ['/ops/venues', /Thêm địa điểm/],
       ['/ops/sources', /Thêm nguồn/],
+      ['/ops/partners', /Đối tác bán vé/],
+      ['/ops/brands', /Chiến dịch thương hiệu/],
+      ['/ops/affiliate', /Vị trí bấm/],
+      ['/ops/affiliate?tab=links', /Thêm liên kết/],
+      ['/ops/affiliate?tab=payouts', /Chốt kỳ thanh toán/],
       ['/ops/featured', /Thêm dãy/],
       ['/ops/users', /Đăng ký qua/],
       ['/ops/orders', /Chờ thanh toán/i],
       ['/ops/audit', /Chuỗi hash hợp lệ/i],
     ];
     for (const [path, shows] of routes) {
-      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/review' ? /^\/ops\/review(\/[0-9a-f-]{36})?$/ : path));
+      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/review' ? /^\/ops\/review(\/[0-9a-f-]{36})?$/ : path.split('?')[0]));
     }
+    test('adds a ticket partner and shows its report token once', async ({ page }) => {
+      await expectOps(page, '/ops/partners', /Đối tác bán vé/);
+      await page.getByRole('button', { name: 'Thêm đối tác' }).first().click();
+      await page.getByPlaceholder('Ticketbox', { exact: true }).fill('Megatix');
+      await page.getByPlaceholder('ticketbox.vn', { exact: true }).fill('megatix.vn');
+      await page.getByPlaceholder('ticketbox.vn', { exact: true }).press('Enter');
+      await page.locator('.op-drawer').getByRole('button', { name: 'Thêm đối tác' }).click();
+      await expect(page.getByText('Mã chỉ hiện một lần.')).toBeVisible();
+      await page.getByRole('button', { name: 'Đã lưu mã' }).click();
+      await expect(page.getByRole('row').filter({ hasText: 'megatix.vn' })).toHaveCount(1);
+    });
     test('organizer mode explains an admin account has no organizer team', async ({ page }) =>
       expectOps(page, '/ops/org', /chưa thuộc nhà tổ chức nào/));
   });
@@ -418,9 +579,11 @@ test.describe('Ops', () => {
       ['/ops/org/events/new', /Thông tin cơ bản/],
       ['/ops/org/inbox', /Hộp thư kiểm duyệt/],
       ['/ops/org/profile', /Hồ sơ doanh nghiệp/],
+      ['/ops/org/gigs', /Gig đã đăng/],
+      ['/ops/org/gigs?tab=inquiries', /Mời nghệ sĩ/],
     ];
     for (const [path, shows] of routes) {
-      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/org/inbox' ? /^\/ops\/org\/inbox(\/[0-9a-f-]{36})?$/ : path));
+      test(`${path}`, async ({ page }) => expectOps(page, path, shows, path === '/ops/org/inbox' ? /^\/ops\/org\/inbox(\/[0-9a-f-]{36})?$/ : path.split('?')[0]));
     }
     test('/ops sends an organizer account to organizer mode', async ({ page }) => expectOps(page, '/ops', /Cần bạn xử lý/, '/ops/org'));
   });

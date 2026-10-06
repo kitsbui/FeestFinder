@@ -56,10 +56,16 @@ const config: NextConfig = {
         { source: '/e/:file([^/]+\\.md)', destination: `${API}/e/:file` },
         { source: '/o/:file([^/]+\\.md)', destination: `${API}/o/:file` },
         { source: '/c/:file([^/]+\\.md)', destination: `${API}/c/:file` },
+        { source: '/a/:file([^/]+\\.md)', destination: `${API}/a/:file` },
+        { source: '/a.md', destination: `${API}/a.md` },
+        { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
         // An event or organiser page in English is /e/<slug>?lang=en: a cached page of its own.
         { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/e/:slug/en' },
         { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/o/:slug/en' },
         { source: '/c/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/c/:slug/en' },
+        { source: '/a/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:slug/en' },
+        { source: '/a', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/en' },
+        { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:by/:slug/en' },
       ],
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
@@ -85,6 +91,9 @@ const config: NextConfig = {
       { source: '/e/:slug/en', destination: '/e/:slug?lang=en', permanent: true },
       { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
       { source: '/c/:slug/en', destination: '/c/:slug?lang=en', permanent: true },
+      { source: '/a/en', destination: '/a?lang=en', permanent: true },
+      { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
+      { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
       // The map is a view of the list.
       { source: '/map', destination: '/list?view=map', permanent: false },
       { source: '/app/map', destination: '/app/list', permanent: true },

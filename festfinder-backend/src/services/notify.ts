@@ -76,8 +76,8 @@ export async function enqueue(
     [userId, channel, address, template, json(payload), notBefore, announcementId]);
 }
 
-export type OrgTopic = 'moderation' | 'tickets' | 'payouts' | 'crew';
-export const DEFAULT_ORG_PREFS: Record<OrgTopic, boolean> = { moderation: true, tickets: true, payouts: true, crew: false };
+export type OrgTopic = 'moderation' | 'tickets' | 'payouts' | 'crew' | 'bookings';
+export const DEFAULT_ORG_PREFS: Record<OrgTopic, boolean> = { moderation: true, tickets: true, payouts: true, crew: false, bookings: true };
 
 export async function loadOrgPrefs(q: Queryable, organizerId: string): Promise<Record<OrgTopic, boolean>> {
   const rows = await many<any>(q, 'select topic, enabled from organizer_notification_prefs where organizer_id = $1', [organizerId]);
@@ -89,7 +89,7 @@ export async function loadOrgPrefs(q: Queryable, organizerId: string): Promise<R
 export interface OrgNotice {
   organizerId: string;
   topic: OrgTopic;
-  kind: 'reject' | 'tickets' | 'payout' | 'live' | 'crew' | 'question' | 'hype';
+  kind: 'reject' | 'tickets' | 'payout' | 'live' | 'crew' | 'question' | 'hype' | 'gig';
   title: Localized;
   body: Localized;
   cta?: Localized;

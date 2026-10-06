@@ -665,6 +665,10 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query(`insert into event_updates (event_id, author_id, kind, body, created_at) values ($1,$2,'gate',$3,$4)`,
       [ids.event.ravo, orgUser.id, 'Cổng số 3 mở sớm từ 15:30 cho khách có vé. Mang theo CCCD để đổi vòng tay.', hours(4)]);
 
+    // The demo accounts are past the role picker; organiser members organise.
+    await q.query('update users set onboarded_at = created_at, email_verified_at = case when email is not null then created_at end');
+    await q.query(`insert into user_roles (user_id, role, status) select distinct user_id, 'organizer', 'active' from organizer_members on conflict do nothing`);
+
     const counts = await one<any>(q,
       `select (select count(*)::int from users) as users, (select count(*)::int from events) as events, (select count(*)::int from orders) as orders,
               (select count(*)::int from tickets) as tickets, (select count(*)::int from saves) as saves`);

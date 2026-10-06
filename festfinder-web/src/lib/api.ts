@@ -84,10 +84,10 @@ type PageLink = { title: string; path: string; line: string };
 
 /**
  * What a public page says to search engines and AI assistants: GET /seo/events/:slug and
- * GET /seo/organizers/:slug and GET /seo/collections/:slug (festfinder-backend/src/services/seo.ts).
+ * GET /seo/organizers/:slug, GET /seo/artists/:slug and GET /seo/collections/:slug (festfinder-backend/src/services/seo.ts).
  */
 export interface PageSeo {
-  kind: 'event' | 'organizer' | 'collection';
+  kind: 'event' | 'organizer' | 'collection' | 'artist' | 'directory';
   lang: Lang;
   url: string;
   canonical: string;
@@ -134,6 +134,16 @@ export interface OrganizerSeo extends PageSeo {
 /** A collection someone made public: the same lists as an organiser page. */
 export interface CollectionSeo extends Omit<OrganizerSeo, 'kind'> {
   kind: 'collection';
+}
+
+/** An artist: where they play next and where they have played, the same lists again. */
+export interface ArtistSeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'artist';
+}
+
+/** An artist directory page (/a, /a/style/<style>, /a/city/<city>): GET /seo/directory/:key. */
+export interface DirectorySeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'directory';
 }
 
 // ---- formatting the server-rendered summaries ---------------------------------------

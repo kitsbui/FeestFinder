@@ -27,8 +27,10 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
               (select count(distinct event_id)::int from listing_reports where resolved_at is null) as reports,
               (select count(*)::int from ad_inquiries where status = 'new') as ads,
               (select count(*)::int from event_claims where status = 'pending') as claims,
+              (select count(*)::int from artist_claims where status = 'pending')
+                + (select count(*)::int from organizer_claims where status = 'pending') as "profileClaims",
               (select count(*)::int from appeals where state in ('open','replied') and closes_at > $1) as appeals`, [ctx.clock.now()]);
-    return r;
+    return { ...r, allClaims: r.claims + r.profileClaims };
   });
 
   app.get('/admin/insights', async (req) => {
@@ -203,7 +205,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
         userId = o.user_id;
         label = o.name;
       }
-      const { token, expiresAt } = await createSession(q, now, { kind: 'user', userId, readOnly: true, impersonatorId: s.user.id, ttlMs: IMPERSONATION_TTL_MS });
+      const { token, expiresAt } = await createSession(q, now, { kind: 'user', userId, method: 'impersonation', readOnly: true, impersonatorId: s.user.id, ttlMs: IMPERSONATION_TTL_MS });
       await appendAudit(q, {
         at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'impersonation.started',
         targetType: body.targetType, targetId: body.targetId, targetLabel: label,

@@ -156,6 +156,11 @@ function SourceDetail({ source, onClose, onChanged }) {
 export function Sources() {
   const { data, error, loading, reload } = useFetch('/admin/sources');
   const [form, setForm] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const addStarter = async () => {
+    setAdding(true);
+    try { const out = await post('/admin/sources/starter'); toast(tx(out.message)); reload(true); } catch (e) { toast(errorText(e), 'error'); } finally { setAdding(false); }
+  };
   const [openId, setOpenId] = useState(null);
   const items = data?.items ?? [];
   const open = items.find((s) => s.id === openId) ?? null;
@@ -174,7 +179,9 @@ export function Sources() {
   return h(Fragment, null,
     h(PageHeader, {
       title: t('Nguồn dữ liệu', 'Sources'),
-      actions: h(Button, { variant: 'cta', icon: 'plus', onClick: () => setForm({}) }, t('Thêm nguồn', 'Add source')),
+      actions: h(Fragment, null,
+        h(Button, { icon: 'sparkle', busy: adding, onClick: addStarter }, t('Thêm nguồn gợi ý', 'Add suggested sources')),
+        h(Button, { variant: 'cta', icon: 'plus', onClick: () => setForm({}) }, t('Thêm nguồn', 'Add source'))),
     }),
     error ? h(ErrorBox, { error, onRetry: reload }) : null,
     !data ? (loading ? h(Spinner) : null) : h(Fragment, null,
@@ -184,7 +191,7 @@ export function Sources() {
           h('div', null, h('a', { className: 'op-feed-line', href: href('events', c.id), onClick: (e) => { e.preventDefault(); navigate(href('events', c.id) + '?tab=sources'); } }, h('strong', null, c.title)),
             h('div', { className: 'op-feed-time' }, [c.startsOn, c.host].filter(Boolean).join(' · '))))))) : null,
       h(DataTable, { columns, rows: items, onRowClick: (s) => setOpenId(s.id), minWidth: 980,
-        empty: h(Empty, { icon: 'broadcast', title: t('Chưa có nguồn nào', 'No sources yet'), action: h(Button, { variant: 'cta', icon: 'plus', onClick: () => setForm({}) }, t('Thêm nguồn', 'Add source')) }) })),
+        empty: h(Empty, { icon: 'broadcast', title: t('Chưa có nguồn nào', 'No sources yet'), action: h(Button, { variant: 'cta', icon: 'sparkle', busy: adding, onClick: addStarter }, t('Thêm nguồn gợi ý', 'Add suggested sources')) }) })),
     form ? h(SourceForm, { key: form.source?.id ?? 'new', source: form.source, onClose: () => setForm(null), onSaved: () => { setForm(null); reload(true); } }) : null,
     open ? h(SourceDetail, { key: open.id, source: open, onClose: () => setOpenId(null), onChanged: () => reload(true) }) : null);
 }

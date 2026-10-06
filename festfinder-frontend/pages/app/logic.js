@@ -118,7 +118,7 @@ const S = {
   alertGenres:{en:'Genres',vi:'Thể loại'},
   alertArtists:{en:'Artists',vi:'Nghệ sĩ'},
   alertOrgs:{en:'Organizers',vi:'Nhà tổ chức'},
-  alertAreas:{en:'Areas',vi:'Khu vực'},
+  alertAreas:{en:'Areas',vi:'Khu vực'}, alertCities:{en:'Cities',vi:'Thành phố'}, alertStyles:{en:'Music styles',vi:'Phong cách nhạc'},
   alertPrice:{en:'Price ceiling',vi:'Giá tối đa'},
   alertAny:{en:'Any',vi:'Tất cả'},
   alertFree:{en:'Free only',vi:'Chỉ miễn phí'},
@@ -181,7 +181,9 @@ const S = {
   linkTickets:{en:'Ticket page',vi:'Trang bán vé'},
   linkOpening:{en:'Opening',vi:'Đang mở'},
   listTitle:{en:'Every event',vi:'Tất cả sự kiện'}, listAll:{en:'All',vi:'Tất cả'},
-  listRows:{en:'List',vi:'Danh sách'}, listGrid:{en:'Grid',vi:'Lưới'},
+  listRows:{en:'List',vi:'Danh sách'}, listGrid:{en:'Grid',vi:'Lưới'}, listMap:{en:'Map',vi:'Bản đồ'},
+  mapSearch:{en:'Search this area',vi:'Tìm trong khu vực này'}, mapEmpty:{en:'No events in this area',vi:'Không có sự kiện trong khu vực này'},
+  mapMore:{en:'{n} of {t} · zoom in',vi:'{n}/{t} · phóng to thêm'}, mapOpen:{en:'Open event',vi:'Mở sự kiện'}, mapFailed:{en:'The map could not load',vi:'Không tải được bản đồ'},
   listUpdated:{en:'Updated {t}',vi:'Cập nhật {t}'}, listEmpty:{en:'Nothing in this city yet',vi:'Chưa có sự kiện ở thành phố này'},
   account:{en:'Account',vi:'Tài khoản'}, signOut:{en:'Sign out',vi:'Đăng xuất'},
   logIn:{en:'Log in',vi:'Đăng nhập'}, signUp:{en:'Sign up',vi:'Đăng ký'},
@@ -519,8 +521,11 @@ applyApp(APP);
  */
 const TABS = ['explore', 'saved', 'list', 'profile'];
 /** The cities FeestFinder lists, from GET /meta/discovery (four Vietnamese ones if it did not answer). */
-const CITY_LIST = APP.discovery ? APP.discovery.cities.map(c => ({ k: c.slug, en: c.name.en, vi: c.name.vi }))
-  : [{ k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM' }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội' }, { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng' }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang' }];
+const CITY_LIST = APP.discovery ? APP.discovery.cities.map(c => ({ k: c.slug, en: c.name.en, vi: c.name.vi, bbox: c.bbox, center: c.center }))
+  : [{ k:'ho-chi-minh', en:'Ho Chi Minh City', vi:'TP.HCM', bbox:[106.33,10.3,107.6,11.52] }, { k:'ha-noi', en:'Hanoi', vi:'Hà Nội', bbox:[105.28,20.56,106.02,21.39] },
+    { k:'da-nang', en:'Da Nang', vi:'Đà Nẵng', bbox:[107.2,14.9,108.75,16.35] }, { k:'nha-trang', en:'Nha Trang', vi:'Nha Trang', bbox:[108.55,11.25,109.48,12.88] }];
+/** The box that holds every listed city, for a map with no city chosen. */
+const ALL_BOUNDS = CITY_LIST.reduce((b, c) => [Math.min(b[0], c.bbox[0]), Math.min(b[1], c.bbox[1]), Math.max(b[2], c.bbox[2]), Math.max(b[3], c.bbox[3])], [180, 90, -180, -90]);
 const eventBy = (key) => EVENTS.filter(e => e.slug === key || e.id === key)[0] || null;
 const slugOf = (id) => { const e = EVENTS.filter(x => x.id === id)[0]; return e ? (e.slug || e.id) : id; };
 
@@ -582,6 +587,7 @@ class Component extends DCLogic {
     range:[null,null], saved: APP.saved || {}, hyped: APP.hyped || {},
     interests: APP.interests || { EDM:true, Indie:true, Nightlife:true },
     detail:null, sheet:null, toast:null, loading:true, limit:4, loadingMore:false, listCity:'all', listView:'rows', listAt: new Date(), listFacets:null,
+    mapItems:[], mapTotal:0, mapTruncated:false, mapDirty:false, mapBusy:false, mapReady:false, mapSel:null, mapFailed:false,
     user: APP.user || null,
     edit:false, pName:'', pEmail:'', pZalo:'', pCity:'', pPhoto:'', pErr:'',
     going: APP.going || {}, friendsOnly:false, friendSheet:null, chatWith:null, chats: APP.chats || {}, chatDraft:'',
@@ -592,7 +598,7 @@ class Component extends DCLogic {
     orgFollow: APP.orgFollow || {}, orgPanel:false,
     hypedPanel:false, showPastHyped:false, inviteLog:[],
     alGenres: APP.alert ? APP.alert.genres : { EDM:true }, alArtists: APP.alert ? APP.alert.artists : {},
-    alOrgs: APP.alert ? APP.alert.orgs : {}, alAreas: APP.alert ? APP.alert.areas : {},
+    alOrgs: APP.alert ? APP.alert.orgs : {}, alAreas: APP.alert ? APP.alert.areas : {}, alCities: {}, alStyles: {},
     alCap: APP.alert ? APP.alert.cap : 1000000, alMatches: APP.alert ? APP.alert.matches : 0,
     bestieArmed:null, bestieSplash:null, bestieWaved:{},
     genrePanel:false, tickets: APP.tickets || [], ticketsOpen:false, checkout:null, qty:1,
@@ -674,11 +680,12 @@ class Component extends DCLogic {
       const ev = eventBy(r.param);
       // Read before anything awaits: the URL is rewritten to the screen's own path meanwhile.
       const listing = r.query && r.query.get('listing');
+      const tier = r.query && r.query.get('tier');
       if (ev) await this.openDetail(ev.id, { silent: true });
       if (r.name === 'guide' && ev) this.loadGuide(ev);
       if (r.name === 'checkout' && ev) {
         if (listing) this.startResaleCheckout(listing, ev.id);
-        else this.startCheckout(ev.id);
+        else this.startCheckout(ev.id, tier);
       }
     }
     if (r.name === 'live') { const ev = eventBy(r.param); if (ev) await this.openLive(ev.id); }
@@ -693,6 +700,7 @@ class Component extends DCLogic {
     clearInterval(this._lt); clearInterval(this._lv);
     clearTimeout(this._t); clearTimeout(this._tt); clearTimeout(this._lm); clearTimeout(this._pa); clearTimeout(this._pm); clearTimeout(this._bt);
     if (this._net) { window.removeEventListener('online', this._net); window.removeEventListener('offline', this._net); }
+    this.dropMap();
   }
 
   setGuide(key, val) {
@@ -804,6 +812,8 @@ class Component extends DCLogic {
         artists: Object.keys(st.alArtists).filter(k => st.alArtists[k]),
         organizerIds: Object.keys(st.alOrgs).filter(k => st.alOrgs[k]),
         areas: Object.keys(st.alAreas).filter(k => st.alAreas[k]),
+        cities: Object.keys(st.alCities).filter(k => st.alCities[k]),
+        styles: Object.keys(st.alStyles).filter(k => st.alStyles[k]),
         priceCap: st.alCap >= 9e9 ? null : st.alCap
       });
       this.setState({ alMatches: out.matches });
@@ -850,6 +860,50 @@ class Component extends DCLogic {
     const onList = this.state.stage === 'app' && this.state.tab === 'list';
     if (onList !== !!this._lt) this.syncList(onList);
     if (onList && this._listCity !== this.state.listCity) { this._listCity = this.state.listCity; this.pullList(); }
+    this.syncMap(onList && this.state.listView === 'map');
+  }
+
+  /** The list's map: opened with the view, asked again only on "search this area" or a city chip. */
+  syncMap(want) {
+    const el = want && typeof document !== 'undefined' ? document.getElementById('ff-app-map') : null;
+    if (!el) { this.dropMap(); return; }
+    const box = (slug) => { const c = CITY_LIST.find(x => x.k === slug); return c ? c.bbox : ALL_BOUNDS; };
+    if (this._mapEl === el) {
+      if (this._map && this._mapCity !== this.state.listCity) { this._mapCity = this.state.listCity; this._map.fit(box(this.state.listCity)); }
+      return;
+    }
+    this.dropMap();
+    this._mapEl = el;
+    this._mapCity = this.state.listCity;
+    const g = this.state.lang;
+    FF.loadMap().then(FFMap => {
+      if (this._mapEl !== el) return;
+      this._map = FFMap.session(el, {
+        bounds: box(this.state.listCity),
+        hue: (genre) => FF.genreHue(genre),
+        cities: CITY_LIST.filter(c => c.center).map(c => ({ name: c[g], center: c.center })),
+        fetch: (bbox) => FF.get('/events/map?bbox=' + bbox.join(',') + '&limit=500'),
+        onChange: (m) => this.setState({ mapReady: m.ready, mapBusy: m.busy, mapDirty: m.dirty, mapItems: m.items, mapTotal: m.total, mapTruncated: m.truncated, mapSel: m.sel }),
+      });
+    }, () => this.setState({ mapFailed: true }));
+  }
+
+  dropMap() {
+    if (this._map) { try { this._map.destroy(); } catch (e) { /* already gone with its element */ } }
+    this._map = null;
+    this._mapEl = null;
+  }
+
+  /** Opens an event from the map, reading it first when this screen has not seen it yet. */
+  async openFromMap(id) {
+    if (!RAW.some(x => x.id === id)) {
+      const d = await FF.maybe(FF.get('/events/' + id), null);
+      if (!d) return;
+      const ev = toEvent(d);
+      RAW.push(ev);
+      EVENTS.push(normalize(ev));
+    }
+    this.openDetail(id);
   }
 
   /** The list's city from the API: its events join the ones this screen knows, and every city's count comes back. */
@@ -1282,25 +1336,25 @@ class Component extends DCLogic {
     } catch (e) { this.fail(e); }
   }
 
-  /** Open the checkout sheet for an event, pricing the cheapest tier on sale. */
-  async startCheckout(id) {
+  /** Open the checkout sheet for an event, pricing the tier asked for or else the cheapest on sale. */
+  async startCheckout(id, tierId) {
     if (!this.state.detailData || this.state.detailData.id !== id) {
       const d = await FF.maybe(FF.get('/events/' + id), null);
       if (!d) return;
       this.setState({ detailData: d });
     }
-    const tier = this.onSaleTier();
+    const tier = this.onSaleTier(tierId);
     if (!tier) return this.say(this.state.lang === 'vi' ? 'Chưa mở bán vé' : 'No tier is on sale yet');
     this.setState({ checkout: id, qty:1, tierId: tier.id, quote:null });
     this.quoteSoon(1, tier.id, id);
   }
 
   /** The cheapest tier actually on sale — what "from X₫" on the card means. */
-  onSaleTier() {
+  onSaleTier(tierId) {
     const d = this.state.detailData;
     if (!d || !d.tickets) return null;
     const open = d.tickets.tiers.filter(t => t.state === 'onsale' || t.state === 'last');
-    return open.sort((a, b) => a.price - b.price)[0] || null;
+    return open.find(t => t.id === tierId) || open.sort((a, b) => a.price - b.price)[0] || null;
   }
   /** The server prices the basket: fees, promos and sold-out tiers all come from it. */
   quoteSoon(qty, tierId, eventId) {
@@ -1712,8 +1766,7 @@ class Component extends DCLogic {
       return defs.filter(d => links[d.k]).map(d => ({
         icon: d.icon, color: d.color, label: d.label, host: host(links[d.k]),
         go: () => {
-          if (d.k === 'tickets') FF.fire(FF.post('/events/' + detail.id + '/track', { type: 'ticket_click', source: 'feed' }));
-          window.open(links[d.k], '_blank', 'noopener');
+          window.open(d.k === 'tickets' && links.go ? links.go + '?src=link' : links[d.k], '_blank', 'noopener');
           this.say(L.linkOpening + ' ' + host(links[d.k]));
         }
       }));
@@ -2133,6 +2186,8 @@ class Component extends DCLogic {
       alertArtistChips: AL_ARTISTS.map(x => this.alChip('alArtists', x, x)),
       alertOrgChips: AL_ORGS.map(x => this.alChip('alOrgs', x, x)),
       alertAreaChips: AL_AREAS.map(x => this.alChip('alAreas', x, x)),
+      alertCityChips: CITY_LIST.map(c => this.alChip('alCities', c.k, c[g])),
+      alertStyleChips: ((APP.discovery && APP.discovery.styles) || []).map(x => this.alChip('alStyles', x.key, x.label[g] || x.label.en)),
       alertCapChips: AL_CAPS.map(c => ({
         label: c.v === 0 ? L.alertFree : (c.v >= 9e9 ? L.alertAny : this.money(c.v)),
         bg: st.alCap === c.v ? '#0AE448' : 'transparent',
@@ -2930,9 +2985,28 @@ class Component extends DCLogic {
         const rows = inCity(st.listCity).sort((a, b) => a.ds - b.ds || String(a.startTime).localeCompare(String(b.startTime)));
         const hh = (t) => (t.getHours() < 10 ? '0' : '') + t.getHours() + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes();
         return {
-          rows: st.listView === 'rows', grid: st.listView === 'grid', empty: rows.length === 0,
+          rows: st.listView === 'rows', grid: st.listView === 'grid', mapView: st.listView === 'map', empty: rows.length === 0 && st.listView !== 'map',
+          map: (() => {
+            const sel = st.mapSel ? st.mapItems.find(x => x.id === st.mapSel) : null;
+            const day = (iso) => { const p = String(iso || '').split('-').map(Number); return p[2] + '/' + p[1]; };
+            const note = st.mapTruncated ? L.mapMore.replace('{n}', String(st.mapItems.length)).replace('{t}', String(st.mapTotal))
+              : st.mapReady && !st.mapBusy && !st.mapItems.length ? L.mapEmpty : '';
+            return {
+              searchShow: st.mapDirty && st.mapReady && !st.mapBusy, search: () => this._map && this._map.search(), searchLabel: L.mapSearch,
+              note, hasNote: !!note, failed: st.mapFailed, failedLabel: L.mapFailed, hasSel: !!sel,
+              sel: sel ? {
+                art: FF.artOf({ coverUrl: sel.coverUrl, genre: sel.genre, art: sel.art }), title: sel.title,
+                when: day(sel.startsOn) + (sel.startTime ? ' · ' + sel.startTime : ''),
+                where: [sel.venue, (sel.cityLabel || {})[g]].filter(Boolean).join(' · '),
+                conf: sel.confidence && sel.confidence.sourcesLine ? sel.confidence.sourcesLine[g] : '', hasConf: !!(sel.confidence && sel.confidence.sourcesLine),
+                price: sel.isFree ? L.free : L.from + ' ' + this.short(sel.priceFrom, sel.currency), priceFg: sel.isFree ? '#0AE448' : '#FFFCE1',
+                open: () => this.openFromMap(sel.id), openLabel: L.mapOpen,
+                close: () => this._map && this._map.select(null)
+              } : { art:'', title:'', when:'', where:'', conf:'', hasConf:false, price:'', priceFg:'', open: () => {}, openLabel:'', close: () => {} }
+            };
+          })(),
           updated: L.listUpdated.replace('{t}', hh(st.listAt)) + ' · ' + rows.length,
-          views: [{ k:'rows', label:L.listRows, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }]
+          views: [{ k:'rows', label:L.listRows, icon:'ph-bold ph-rows' }, { k:'grid', label:L.listGrid, icon:'ph-bold ph-squares-four' }, { k:'map', label:L.listMap, icon:'ph-bold ph-map-trifold' }]
             .map(v => Object.assign({ label: v.label, icon: v.icon, pick: () => this.setState({ listView: v.k }) }, on(st.listView === v.k))),
           cities: [{ k:'all', label:L.listAll }].concat(CITY_LIST.map(c => ({ k:c.k, label:c[g] })))
             .map(c => Object.assign({ label: c.label + ' · ' + cityCount(c.k), pick: () => this.setState({ listCity: c.k }) }, on(st.listCity === c.k))),
@@ -2974,6 +3048,12 @@ class Component extends DCLogic {
           const v = st.detailData && st.detailData.venue;
           if (v && v.lat) window.open('https://www.google.com/maps/search/?api=1&query=' + v.lat + ',' + v.lng, '_blank', 'noopener');
           return this.say(g === 'vi' ? 'Mở Google Maps…' : 'Opening Google Maps…');
+        }
+        // Nothing on sale here: the seller's page, through /go, which counts the press. No sign-in for that.
+        const d = st.detailData && st.detailData.id === detail.id ? st.detailData : null;
+        if (d && !this.onSaleTier() && d.links && d.links.go) {
+          window.open(d.links.go + '?src=app', '_blank', 'noopener');
+          return this.say(L.linkOpening + ' ' + String(d.links.tickets || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0]);
         }
         if (!st.user) return this.openAuth('signup', null, L.gateTickets);
         FF.fire(FF.post('/events/' + detail.id + '/track', { type: 'ticket_click', source: 'feed' }));
