@@ -34,11 +34,12 @@ const R = {
 export type RoleStep = 'menu' | 'artist' | 'organizer';
 interface Suggestion { id: string; name: string; owned?: boolean; managed?: boolean; events?: number }
 
-export function RolePicker({ lang, start = 'menu', onClose }: { lang: Lang; start?: RoleStep; onClose: (done: boolean) => void }) {
+export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lang: Lang; start?: RoleStep; name?: string; onClose: (done: boolean) => void }) {
   const C = pick(COMMON, lang);
   const t = pick(R, lang);
   const [step, setStep] = useState<RoleStep>(start);
-  const [name, setName] = useState('');
+  // Opened from a listed profile ("Are you this artist?"): its name, so the listing is offered to claim.
+  const [name, setName] = useState(asked ?? '');
   const [roles, setRoles] = useState<Record<string, boolean>>({ dj: true });
   const [type, setType] = useState('promoter');
   const [city, setCity] = useState('');
@@ -51,6 +52,8 @@ export function RolePicker({ lang, start = 'menu', onClose }: { lang: Lang; star
 
   useEffect(() => {
     FF.once('kd:discovery', () => FF.maybe(FF.get('/meta/discovery'), null)).then((d: any) => d && setCities(d.cities));
+    if (asked) suggest(asked);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fan = () => { FF.fire(FF.post('/me/onboarding')); onClose(true); };

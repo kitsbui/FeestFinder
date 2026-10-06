@@ -54,7 +54,7 @@ interface Kd {
   requireSignIn: (intent?: Intent, note?: string) => boolean;
   openSignIn: (note?: string) => void;
   /** The fan / artist / organiser picker (also opened by ?role=artist|organizer). */
-  openRolePicker: (start?: RoleStep) => void;
+  openRolePicker: (start?: RoleStep, name?: string) => void;
   signOut: () => Promise<void>;
   refresh: () => Promise<Session | null>;
   toast: (text: string, action?: ToastMsg['action']) => void;
@@ -77,7 +77,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   const [follows, setFollows] = useState<Map<string, boolean>>(() => new Map());
   const [sheet, setSheet] = useState<{ note?: string; intent?: Intent } | null>(null);
   const [toastMsg, setToast] = useState<ToastMsg | null>(null);
-  const [role, setRole] = useState<RoleStep | null>(null);
+  const [role, setRole] = useState<{ step: RoleStep; name?: string } | null>(null);
   const [clockReady, setClockReady] = useState(false);
   const toastId = useRef(0);
   // Settles once the first session read is back: what a click made while it loads waits for.
@@ -113,8 +113,8 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     // A new account says what it is first; ?role= opens the picker at that step.
     if (s?.user) {
       const asked = new URLSearchParams(location.search).get('role');
-      if (asked === 'artist' || asked === 'organizer') setRole(asked);
-      else if (s.user.onboarded === false) setRole('menu');
+      if (asked === 'artist' || asked === 'organizer') setRole({ step: asked });
+      else if (s.user.onboarded === false) setRole({ step: 'menu' });
     }
     return s;
   }, [loadPersonal]);
@@ -220,7 +220,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     lang, clockReady, session, user: session?.user ?? null, saved, follows,
     toggleSave, setFollow, requireSignIn, signOut, refresh, toast,
     openSignIn: (note?: string) => setSheet({ note }),
-    openRolePicker: (start: RoleStep = 'menu') => setRole(start),
+    openRolePicker: (start: RoleStep = 'menu', name?: string) => setRole({ step: start, name }),
   }), [lang, clockReady, session, saved, follows, toggleSave, setFollow, requireSignIn, signOut, refresh, toast]);
 
   return (
@@ -242,7 +242,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
         />
       ) : null}
       {role && session?.user && !sheet ? (
-        <RolePicker lang={lang} start={role} onClose={() => { setRole(null); refresh(); }} />
+        <RolePicker lang={lang} start={role.step} name={role.name} onClose={() => { setRole(null); refresh(); }} />
       ) : null}
       <Toast msg={toastMsg} onDone={() => setToast(null)} closeLabel={C.close} />
     </Ctx.Provider>

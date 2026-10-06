@@ -14,6 +14,10 @@ export const CUTOVER: readonly RegExp[] = [
   /^\/list(\/en)?$/,
   // The event pages, both languages (/e/<slug>/en is where ?lang=en is rewritten to).
   /^\/e\/[^/]+(\/en)?$/,
+  // The organiser pages, both languages.
+  /^\/o\/[^/]+(\/en)?$/,
+  // The artist pages, both languages; not the directory (/a, /a/en, /a/style/…, /a/city/…).
+  /^\/a\/(?!(en|style|city)(\/|$))[^/]+(\/en)?$/,
 ];
 
 /** Whether a path (with or without its query) is served by a rebuilt page. */

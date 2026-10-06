@@ -208,8 +208,12 @@ test.describe('the event page', () => {
   });
 
   test('legacy screens open a rebuilt event page as a page of its own', async ({ page }) => {
-    // A link on a compiled screen to an event: the rebuilt page loads, not the old drawing of it.
-    await page.goto('/o/ravoent');
+    // A link on a compiled screen (/saved, until it is rebuilt) to an event: the rebuilt page
+    // loads, not the old drawing of it.
+    await signInWith(page, ATTENDEE);
+    const ev = await (await page.request.get('/events/ravo')).json();
+    await page.request.put('/me/saves/' + ev.id);
+    await page.goto('/saved');
     await page.locator('#dc-root > .sc-host').waitFor({ state: 'attached' });
     await page.getByText('Ravolution Music Festival').first().click();
     await expect(page).toHaveURL(/\/e\/ravo/);
