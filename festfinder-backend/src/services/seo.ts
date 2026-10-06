@@ -727,7 +727,8 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
             e.address, e.area, e.city, e.entry_mode, e.price_from, e.currency, e.cover_url, e.updated_at
        from event_artists ea join events e on e.id = ea.event_id
       where ea.artist_id = $1 and ${PUBLIC_EVENT} order by e.starts_at`, [a.id]);
-  if (!events.length) return null;
+  // A profile someone claimed has a page before its first show (kept out of search results below).
+  if (!events.length && !a.owner_user_id) return null;
   const upcoming = events.filter((e) => new Date(e.ends_at) >= now && e.status === 'live');
   const past = events.filter((e) => new Date(e.ends_at) < now).reverse().slice(0, 12);
   const vi = lang === 'vi';
@@ -736,7 +737,8 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
   const alternates = { vi: `${base}${path}`, en: `${base}${path}?lang=en`, 'x-default': `${base}${path}` };
   const url = alternates[lang];
   const rank = (xs: string[]) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())].sort((x, y) => y[1] - x[1]).map(([x]) => x);
-  const styles = rank(events.flatMap((e) => e.styles ?? [])).slice(0, 4).map((k) => text(styleByKey(k)?.label, lang) || k);
+  // The styles the artist wrote first, then what their events say.
+  const styles = [...new Set([...(a.styles ?? []), ...rank(events.flatMap((e) => e.styles ?? []))])].slice(0, 4).map((k) => text(styleByKey(k)?.label, lang) || k);
   const genres = rank(events.map((e) => e.genre).filter(Boolean)).slice(0, 3);
   const cities = rank(upcoming.map((e) => cityOf(e.city).slug)).map((k) => text(cityLabel(k), lang));
   const next = upcoming[0];

@@ -1,6 +1,7 @@
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
+import { emailUser } from './people.ts';
 import { artistKey, backfillArtists, ensureArtists } from '../src/services/artists.ts';
 import { refreshDerived } from '../src/services/events.ts';
 
@@ -61,6 +62,18 @@ describe('artists', () => {
     assert.match(map.body, /\/a\/hoaprox</);
     assert.ok((await env.as().get('/meta/artists')).body.items.some((a: any) => a.slug === 'hoaprox'));
     assert.equal((await env.as().get('/seo/artists/nobody-here')).status, 404);
+  });
+
+  it('gives a claimed profile with no show yet a page, kept out of search results', async () => {
+    const token = await emailUser(env, 'first.timer@example.com');
+    await env.as(token).post('/me/roles/artist', { stageName: 'First Timer', styles: ['hard-techno'] });
+    const seo = await env.as().get('/seo/artists/first-timer');
+    assert.equal(seo.status, 200, JSON.stringify(seo.body));
+    assert.equal(seo.body.robots, 'noindex, follow');
+    assert.match(seo.body.page.kicker, /Hard techno/i);
+    const lone = await ensureArtists(env.ctx.db, ['Never Claimed']);
+    assert.ok(lone.size);
+    assert.equal((await env.as().get('/seo/artists/never-claimed')).status, 404, 'a name nobody claimed and no event lists has no page');
   });
 });
 
