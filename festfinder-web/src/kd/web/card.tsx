@@ -15,6 +15,7 @@ import { SaveToggle } from './save-toggle';
 
 export function cardTag(e: Card, lang: Lang): string | null {
   const T = pick(WEB, lang);
+  if (e.status === 'cancelled') return T.cancelled;
   if (e.past) return T.ended;
   if (e.soldOut) return T.soldOut;
   if (e.badge) return e.badge.label[lang];

@@ -13,6 +13,8 @@ export interface Card {
   badge: { key: string; label: Pair } | null;
   featured: boolean;
   soldOut: boolean;
+  /** 'live', or 'cancelled' for a listing its organiser called off (still listed, marked). */
+  status?: string;
   past: boolean;
   startsOn: string | null;
   endsOn: string | null;

@@ -44,6 +44,7 @@ export const WEB = {
   fromPrice: { en: 'from {p}', vi: 'từ {p}' },
   soldOut: { en: 'Sold out', vi: 'Hết vé' },
   ended: { en: 'Ended', vi: 'Đã kết thúc' },
+  cancelled: { en: 'Cancelled', vi: 'Đã huỷ' },
   featured: { en: 'Featured', vi: 'Nổi bật' },
 
   // event page
