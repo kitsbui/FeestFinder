@@ -143,6 +143,15 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal(imp.status, 202);
   });
 
+  it('publishes the advertising rates the team set', async () => {
+    const res = await env.as().get('/ads/rates');
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body, { rates: { feed: 180000, banner: 240000, live: 520000 }, currency: 'VND' });
+    await env.ctx.db.query(`update ad_settings set rates = '{"feed":200000,"banner":240000,"live":520000}' where id = 1`);
+    assert.equal((await env.as().get('/ads/rates')).body.rates.feed, 200000);
+    await env.ctx.db.query(`update ad_settings set rates = '{"feed":180000,"banner":240000,"live":520000}' where id = 1`);
+  });
+
   it('counts a view once per visitor per half hour', async () => {
     const id = env.ids.event.hozo;
     const first = await env.as().post(`/events/${id}/track`, { type: 'view', source: 'shelf' });

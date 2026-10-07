@@ -45,6 +45,13 @@ export default async function discoveryRoutes(app: FastifyInstance) {
     };
   });
 
+  /** The CPM rates the advertising page shows, as the team set them in the Console. */
+  app.get('/ads/rates', async (_req, reply) => {
+    const rates = (await one<{ rates: Record<string, number> }>(ctx.db, 'select rates from ad_settings where id = 1'))!.rates;
+    reply.header('cache-control', 'public, max-age=300');
+    return { rates: { feed: rates.feed, banner: rates.banner, live: rates.live }, currency: 'VND' };
+  });
+
   app.post<{ Params: { id: string } }>('/ads/:id/impression', async (req, reply) => {
     const id = parse(uuid, req.params.id);
     const rates = (await one<any>(ctx.db, 'select rates from ad_settings where id = 1'))!.rates;

@@ -173,8 +173,8 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
         <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
         <nav aria-label={T.footerNav} className="flex flex-wrap items-center gap-0.5">
           <a className="kd-nl" href="/studio">{T.forOrganisers}</a>
-          <a className="kd-nl" href="/about">{T.about}</a>
-          <a className="kd-nl" href="/advertise">{T.advertise}</a>
+          <a className="kd-nl" href={inLang('/about', lang)}>{T.about}</a>
+          <a className="kd-nl" href={inLang('/advertise', lang)}>{T.advertise}</a>
           <a className="kd-nl" href="mailto:hello@feestfinder.com">hello@feestfinder.com</a>
           {otherLang ? <a className="kd-nl" href={otherLang.href} hrefLang={lang === 'vi' ? 'en' : 'vi'} onClick={remember}>{otherLang.label}</a> : null}
         </nav>
