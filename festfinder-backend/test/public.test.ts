@@ -126,6 +126,11 @@ describe('public discovery (Web + App, signed out)', () => {
     const r = await env.as().get('/explore/stats?view=venues');
     assert.ok(r.body.counts.free >= 2);
     assert.ok(r.body.venues.some((v: any) => v.name.startsWith('SECC')));
+    // Each venue's events carry what a row shows: the family and the day.
+    const ev = r.body.venues[0].events[0];
+    assert.ok(ev.slug && ev.startsOn && 'genre' in ev && 'startTime' in ev);
+    // A city's weekend is its own: the same filters read in Bangkok's day answer too.
+    assert.equal((await env.as().get('/explore/stats?view=weekend&city=bangkok')).status, 200);
   });
 
   it('autocompletes venues and artists without diacritics', async () => {

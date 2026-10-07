@@ -326,7 +326,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
   app.get('/explore/stats', async (req) => {
     const f = parse(ExploreQuery.extend({ view: z.enum(['free', 'weekend', 'venues']).optional() }), req.query);
     const now = ctx.clock.now();
-    const today = vnDate(now);
+    // The chosen city's day, as /events reads it.
+    const today = todayFor(f, now);
     const sql = new SqlParams();
     const where = feedFilters(sql, f, today, null, { time: true, genre: true });
     where.push(`e.ends_at >= ${sql.p(now)}`);
@@ -347,7 +348,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     if (f.view === 'venues') {
       out.venues = [...venues.entries()].map(([name, list]) => ({
         name, area: list[0].venue.area, distanceKm: list[0].distanceKm, eventCount: list.length,
-        events: list.map((c) => ({ id: c.id, slug: c.slug, title: c.title })),
+        events: list.map((c) => ({ id: c.id, slug: c.slug, title: c.title, genre: c.genre, startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime })),
         art: list[0].art, firstEventId: list[0].id,
       }));
     }
