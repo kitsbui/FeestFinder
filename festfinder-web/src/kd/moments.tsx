@@ -32,8 +32,12 @@ const COPY = {
   signInToReport: { en: 'Log in to report a photo', vi: 'Đăng nhập để báo cáo ảnh' },
 };
 
-export function MomentsSection({ lang, as, items: initial, owner, compact, className }: {
-  lang: Lang; as: MomentOwner; items: Moment[]; owner: boolean; compact?: boolean; className?: string;
+/**
+ * `organizerId` names the organiser whose page this is (a person can be on several teams);
+ * `onChange` runs after the owner adds or removes a photo.
+ */
+export function MomentsSection({ lang, as, items: initial, owner, organizerId, onChange, compact, className }: {
+  lang: Lang; as: MomentOwner; items: Moment[]; owner: boolean; organizerId?: string; onChange?: () => void; compact?: boolean; className?: string;
 }) {
   const T = pick(COPY, lang);
   const kd = useKd();
@@ -52,8 +56,9 @@ export function MomentsSection({ lang, as, items: initial, owner, compact, class
       const form = new FormData();
       form.append('file', file);
       const up = await FF.api('POST', '/uploads?purpose=moment', form);
-      const m = await FF.post('/me/moments', { as, url: up.url });
+      const m = await FF.post('/me/moments', { as, url: up.url, ...(as === 'organizer' && organizerId ? { organizerId } : {}) });
       setItems((xs) => [...xs, m]);
+      onChange?.();
     } catch (e) {
       // A public profile needs a confirmed phone to publish: confirm it, then the same photo goes up.
       if ((e as { code?: string }).code === 'phone_unverified') setPhoneFor(file);
@@ -62,7 +67,7 @@ export function MomentsSection({ lang, as, items: initial, owner, compact, class
     setBusy(false);
   };
   const remove = async (m: Moment) => {
-    try { await FF.del('/me/moments/' + m.id); setItems((xs) => xs.filter((x) => x.id !== m.id)); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    try { await FF.del('/me/moments/' + m.id); setItems((xs) => xs.filter((x) => x.id !== m.id)); onChange?.(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const report = async (m: Moment, reason: string) => {
     if (!kd.user) { kd.openSignIn(T.signInToReport); return; }
@@ -74,7 +79,7 @@ export function MomentsSection({ lang, as, items: initial, owner, compact, class
       <MomentsGrid
         items={items}
         owner={owner}
-        onAdd={busy ? undefined : () => input.current?.click()}
+        onAdd={() => { if (!busy) input.current?.click(); }}
         onRemove={remove}
         onReport={report}
         reasons={[{ key: 'not_mine', label: T.rNotMine }, { key: 'offensive', label: T.rOffensive }, { key: 'unsafe', label: T.rUnsafe }, { key: 'spam', label: T.rSpam }]}

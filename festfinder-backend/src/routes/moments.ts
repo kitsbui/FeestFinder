@@ -19,6 +19,8 @@ export const MOMENTS_MAX = 9;
 type Kind = 'user' | 'artist' | 'organizer';
 const Kind = z.enum(['user', 'artist', 'organizer']);
 const REASONS = ['not_mine', 'offensive', 'unsafe', 'spam'] as const;
+/** A calendar day that exists: `dateStr` checks the shape only, and Postgres refuses 2026-02-30. */
+const day = dateStr.refine((v) => { const d = new Date(v + 'T00:00:00Z'); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v; }, 'Invalid date');
 const REASON_LABEL: Record<(typeof REASONS)[number], Localized> = {
   not_mine: L('Not theirs to post', 'Không phải ảnh của họ'), offensive: L('Offensive', 'Phản cảm'),
   unsafe: L('Unsafe or illegal', 'Nguy hiểm hoặc trái phép'), spam: L('Spam or advertising', 'Spam hoặc quảng cáo'),
@@ -39,14 +41,22 @@ export async function momentsOf(q: Queryable, kind: Kind, ownerId: string) {
 export default async function momentRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
 
-  /** Whose moments this person is managing: their own, the artist profile they own, or their organiser. */
-  const ownerFor = async (req: FastifyRequest, kind: Kind): Promise<{ userId: string; id: string }> => {
+  /**
+   * Whose moments this person is managing: their own, the artist profile they own, or an organiser
+   * they are on the team of (the one named, since a person can belong to several).
+   */
+  const ownerFor = async (req: FastifyRequest, kind: Kind, organizerId?: string): Promise<{ userId: string; id: string }> => {
     if (kind === 'user') { const me = requireUser(req).user.id; return { userId: me, id: me }; }
     const s = requireWriter(req);
     if (kind === 'artist') {
       const a = await one<{ id: string }>(ctx.db, 'select id from artists where owner_user_id = $1', [s.user.id]);
       if (!a) throw notFound(L('You have no artist profile yet', 'Bạn chưa có hồ sơ nghệ sĩ'));
       return { userId: s.user.id, id: a.id };
+    }
+    if (organizerId) {
+      const m = await one(ctx.db, 'select 1 from organizer_members where organizer_id = $1 and user_id = $2', [organizerId, s.user.id]);
+      if (!m) throw forbidden('not_yours', L('Only the profile’s owner can change its photos', 'Chỉ chủ hồ sơ mới sửa được ảnh'));
+      return { userId: s.user.id, id: organizerId };
     }
     const org = await requireOrganizer(ctx, req);
     return { userId: s.user.id, id: org.organizerId };
@@ -65,16 +75,16 @@ export default async function momentRoutes(app: FastifyInstance) {
   };
 
   app.get('/me/moments', async (req) => {
-    const { as } = parse(z.object({ as: Kind.default('user') }), req.query);
-    const owner = await ownerFor(req, as);
+    const { as, organizerId } = parse(z.object({ as: Kind.default('user'), organizerId: uuid.optional() }), req.query);
+    const owner = await ownerFor(req, as, organizerId);
     return { items: await momentsOf(ctx.db, as, owner.id), max: MOMENTS_MAX };
   });
 
   app.post('/me/moments', async (req, reply) => {
     const body = parse(z.object({
-      as: Kind.default('user'), url: z.string().max(2048), caption: z.string().trim().max(140).nullable().optional(), takenOn: dateStr.nullable().optional(),
+      as: Kind.default('user'), organizerId: uuid.optional(), url: z.string().max(2048), caption: z.string().trim().max(140).nullable().optional(), takenOn: day.nullable().optional(),
     }), req.body);
-    const owner = await ownerFor(req, body.as);
+    const owner = await ownerFor(req, body.as, body.organizerId);
     // Only a picture this person uploaded as a moment: no other host gets past the CSP, and no one else's upload.
     const up = await one(ctx.db, `select 1 from uploads where url = $1 and owner_id = $2 and purpose = 'moment'`, [body.url, owner.userId]);
     if (!up) throw badRequest('upload_required', L('Upload the photo first', 'Hãy tải ảnh lên trước'));
@@ -93,7 +103,7 @@ export default async function momentRoutes(app: FastifyInstance) {
 
   app.patch<{ Params: { id: string } }>('/me/moments/:id', async (req) => {
     const { m } = await managed(req, req.params.id);
-    const body = parse(z.object({ caption: z.string().trim().max(140).nullable(), takenOn: dateStr.nullable() }).partial(), req.body);
+    const body = parse(z.object({ caption: z.string().trim().max(140).nullable(), takenOn: day.nullable() }).partial(), req.body);
     const row = await one<any>(ctx.db,
       `update moments set caption = case when $2::boolean then $3 else caption end, taken_on = case when $4::boolean then $5::date else taken_on end
         where id = $1 returning id, url, caption, taken_on::text as taken_on, created_at`,
@@ -108,8 +118,8 @@ export default async function momentRoutes(app: FastifyInstance) {
   });
 
   app.put('/me/moments/order', async (req) => {
-    const { as, ids } = parse(z.object({ as: Kind.default('user'), ids: z.array(uuid).max(MOMENTS_MAX) }), req.body);
-    const owner = await ownerFor(req, as);
+    const { as, organizerId, ids } = parse(z.object({ as: Kind.default('user'), organizerId: uuid.optional(), ids: z.array(uuid).max(MOMENTS_MAX) }), req.body);
+    const owner = await ownerFor(req, as, organizerId);
     await ctx.db.tx(async (q) => {
       for (const [i, id] of ids.entries()) {
         await q.query('update moments set sort = $4 where id = $1 and owner_kind = $2 and owner_id = $3 and removed_at is null', [id, as, owner.id, i]);

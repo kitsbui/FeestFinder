@@ -54,7 +54,7 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, onReport, reasons, 
           onIndex={setOpen}
           onClose={() => setOpen(null)}
           onRemove={owner && onRemove ? (m) => { onRemove(m); setOpen(null); } : undefined}
-          onReport={!owner && onReport && reasons?.length ? onReport : undefined}
+          onReport={!owner && onReport && reasons?.length ? (m, r) => { onReport(m, r); setOpen(null); } : undefined}
           reasons={reasons}
           labels={labels}
         />

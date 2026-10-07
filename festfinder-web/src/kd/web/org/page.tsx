@@ -150,7 +150,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     ...(past.length ? [{ key: 'past', label: T.past, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}
                 />
-                <ProfileMoments lang={lang} source={source} items={org.moments ?? []} className="mt-12" />
+                <ProfileMoments lang={lang} source={source} items={org.moments ?? []} organizerId={org.id} className="mt-12" />
                 <Badges lang={lang} items={org.badges} who={{ vi: 'nhà tổ chức', en: 'organisers' }} className="mt-12" />
               </div>
 

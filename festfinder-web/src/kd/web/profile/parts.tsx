@@ -184,8 +184,16 @@ export function PastList({ lang, items, first = 10 }: { lang: Lang; items: PastI
   );
 }
 
-/** The profile's moments: the server's copy, then the browser's (fresh for the owner, with their controls). */
-export function ProfileMoments({ lang, source, items, className }: { lang: Lang; source: Source; items: Moment[]; className?: string }) {
+/**
+ * The profile's moments: the server's copy, then the browser's (fresh for the owner, with their
+ * controls). A change drops the page's cached answer, so coming back to the page shows it.
+ */
+export function ProfileMoments({ lang, source, items, organizerId, className }: { lang: Lang; source: Source; items: Moment[]; organizerId?: string; className?: string }) {
+  const kd = useKd();
   const v = useViewer(source);
-  return <MomentsSection lang={lang} as={source.kind === 'org' ? 'organizer' : 'artist'} items={v?.moments ?? items} owner={!!v?.owner} className={className} />;
+  const key = `kd:profile:${READ[source.kind].path(source.slug)}:${kd.user?.id ?? ''}`;
+  return (
+    <MomentsSection lang={lang} as={source.kind === 'org' ? 'organizer' : 'artist'} items={v?.moments ?? items} owner={!!v?.owner}
+      organizerId={organizerId} onChange={() => FF.forget(key)} className={className} />
+  );
 }

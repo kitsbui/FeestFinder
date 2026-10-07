@@ -79,6 +79,23 @@ describe('moments', () => {
     assert.equal((await env.as(admin).get('/admin/moments/reports')).body.items.some((m: any) => m.id === made.body.id), false);
   });
 
+  it('a photo goes to the organiser named, and only one the person is on the team of', async () => {
+    const id = (await env.as().get('/organizers/ravoent')).body.id;
+    const other = await one<{ id: string }>(env.ctx.db, 'select id from organizers where id <> $1 limit 1', [id]);
+    const url = (await upload(organizer)).json().url;
+    const made = await env.as(organizer).post('/me/moments', { as: 'organizer', organizerId: id, url });
+    assert.equal(made.status, 201);
+    assert.equal((await env.as(organizer).get(`/me/moments?as=organizer&organizerId=${id}`)).body.items.some((m: any) => m.id === made.body.id), true);
+    const elsewhere = await env.as(organizer).post('/me/moments', { as: 'organizer', organizerId: other!.id, url });
+    assert.equal(elsewhere.status, 403);
+    assert.equal(elsewhere.body.error.code, 'not_yours');
+    // A day that does not exist is a 400, not a database error.
+    const bad = await env.as(organizer).post('/me/moments', { as: 'organizer', organizerId: id, url, takenOn: '2026-02-30' });
+    assert.equal(bad.status, 400);
+    assert.equal((await env.as(organizer).patch(`/me/moments/${made.body.id}`, { takenOn: '2026-13-01' })).status, 400);
+    assert.equal((await env.as(organizer).delete(`/me/moments/${made.body.id}`)).status, 200);
+  });
+
   it('publishing on a public profile needs a confirmed phone', async () => {
     await env.ctx.db.query(`update users set phone_verified_at = null where email = 'team@ravolution.vn'`);
     const r = await env.as(organizer).post('/me/moments', { as: 'organizer', url: '/files/moment/00/' + '0'.repeat(64) + '.png' });

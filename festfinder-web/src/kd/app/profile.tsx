@@ -12,6 +12,7 @@ import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { dayMonth, weekdayShort } from '../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../genre';
+import { inLang } from '../link';
 import { useKd } from '../runtime';
 import { Button, Chip } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select } from '../ui/forms';
@@ -145,7 +146,7 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
             <ul className="mt-1 grid grid-cols-4 gap-x-2 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
-                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={(appLinks ? '/app/e/' : '/e/') + s.slug} />
+                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/app/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
                 </li>
               ))}
             </ul>

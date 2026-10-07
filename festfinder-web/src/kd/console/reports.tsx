@@ -34,7 +34,7 @@ export function Reports() {
   const loadPhotos = useCallback(async () => setPhotos((await FF.maybe(FF.get('/admin/moments/reports'), { items: [] })).items), []);
   useEffect(() => { loadPhotos(); }, [loadPhotos]);
   const decidePhoto = async (id: string, verdict: 'remove' | 'keep') => {
-    try { const out = await FF.post(`/admin/moments/${id}/${verdict}`); kd.toast(FF.text(out.message, lang)); loadPhotos(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    try { const out = await FF.post(`/admin/moments/${id}/${verdict}`); kd.toast(FF.text(out.message, lang)); loadPhotos(); refreshCounts(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const needle = q.trim().toLowerCase();
   const items = (data?.items ?? []).filter((r) => !needle || r.subject.toLowerCase().includes(needle));
@@ -46,7 +46,7 @@ export function Reports() {
           {data.last30Days.map((c) => <span key={c.category} className="kd-s kd-num">{c.label[lang]} {count(c.count, lang)}</span>)}
         </div>
       ) : null}
-      {data === null ? <div className="kd-skel h-60" aria-hidden="true" /> : !items.length ? <Panel className="p-5"><span className="kd-s">{T.noReports}</span></Panel> : (
+      {data === null ? <div className="kd-skel h-60" aria-hidden="true" /> : !items.length ? (photos?.length ? null : <Panel className="p-5"><span className="kd-s">{T.noReports}</span></Panel>) : (
         <ul className="flex flex-col gap-3">
           {items.map((r) => (
             <li key={r.id}>

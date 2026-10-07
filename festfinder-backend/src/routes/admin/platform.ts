@@ -25,7 +25,9 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
     const r = await one<any>(ctx.db,
       `select (select count(*)::int from events where status = 'in_review') as queue,
               (select count(*)::int from organizers where verification_state <> 'verified') as verification,
-              (select count(distinct event_id)::int from listing_reports where resolved_at is null) as reports,
+              (select count(distinct event_id)::int from listing_reports where resolved_at is null)
+                + (select count(distinct r.moment_id)::int from moment_reports r join moments m on m.id = r.moment_id
+                    where r.resolved_at is null and m.removed_at is null) as reports,
               (select count(*)::int from ad_inquiries where status = 'new') as ads,
               (select count(*)::int from event_claims where status = 'pending') as claims,
               (select count(*)::int from artist_claims where status = 'pending')

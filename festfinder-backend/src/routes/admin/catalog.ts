@@ -85,6 +85,8 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
         [o.id, body.state ?? null, body.docs?.id ?? null, body.docs?.tax ?? null, body.docs?.bank ?? null, body.bankVerified ?? null]);
       if (body.state && body.state !== o.verification_state) {
         const verified = body.state === 'verified';
+        // The "Verified" badge is a state, not a milestone: it goes with the verification.
+        if (!verified) await q.query(`delete from badge_awards where subject_kind = 'organizer' and subject_id = $1 and code = 'verified'`, [o.id]);
         await appendAudit(q, {
           at: now, ...admin(s), action: verified ? 'organizer.verified' : 'organizer.revoked', targetType: 'organizer', targetId: o.id, targetLabel: o.name,
           diff: [{ f: 'verified', a: String(o.verification_state === 'verified'), b: String(verified) }, ...(verified ? [{ f: 'badge', a: '—', b: 'shown on all cards' }] : [{ f: 'state', a: o.verification_state, b: body.state }])],

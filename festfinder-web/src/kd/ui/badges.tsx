@@ -26,7 +26,8 @@ const COPY = {
   close: { en: 'Close', vi: 'Đóng' },
 };
 
-const date = (iso: string, lang: Lang) => new Date(iso).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+// One zone for the server's HTML and the browser's, so the day never differs between them.
+const date = (iso: string, lang: Lang) => new Date(iso).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
 
 export function Badges({ lang, items, who, own, compact, className }: { lang: Lang; items: BadgeView[] | null | undefined; who: Pair; own?: boolean; compact?: boolean; className?: string }) {
   const T = pick(COPY, lang);
@@ -47,7 +48,7 @@ export function Badges({ lang, items, who, own, compact, className }: { lang: La
               <Emblem family={b.family} n={b.emblem === 'num' ? b.ring : null} />
               <span className="kd-hs text-[13px] leading-tight">{b.label[lang]}</span>
               {b.earnedAt ? <span className="kd-m kd-num text-[10px]">{date(b.earnedAt, lang)}</span> : null}
-              {b.isNew ? <span className="kd-tag kd-tag-acc absolute right-1.5 top-1.5 h-[18px] px-1.5 text-[10px]">{T.isNew}</span> : null}
+              {own && b.isNew ? <span className="kd-tag kd-tag-acc absolute right-1.5 top-1.5 h-[18px] px-1.5 text-[10px]">{T.isNew}</span> : null}
             </button>
           ))}
         </div>

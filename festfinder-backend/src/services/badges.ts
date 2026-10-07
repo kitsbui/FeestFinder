@@ -36,7 +36,7 @@ export const BADGE_CATALOGUE: BadgeDef[] = [
   b('user', 'four_families', 'free', 'num', 4, L('All four', 'Đủ 4 gu'), L('Go to all four kinds: festival, live music, EDM and culture.', 'Đi đủ 4 thể loại: Lễ hội, Nhạc sống, EDM và Văn hoá.')),
   b('user', 'passport_10', 'fest', 'num', 10, L('Passport 10', 'Hộ chiếu 10'), L('Go to 10 events listed on FeestFinder.', 'Tham dự 10 sự kiện đăng trên FeestFinder.')),
   b('user', 'night_owl', 'edm', 'shape', 5, L('Night owl', 'Cú đêm'), L('Go to 5 events that end after midnight.', 'Đi 5 sự kiện kết thúc sau nửa đêm.')),
-  b('user', 'doors', 'live', 'shape', 3, L('Doors open', 'Mở cửa'), L('Check in within the first hour at 3 events.', 'Check-in trong giờ đầu tiên ở 3 sự kiện.')),
+  b('user', 'doors', 'live', 'shape', 3, L('Doors open', 'Mở cửa'), L('Have your ticket scanned at the door within the first hour at 3 events.', 'Được quét vé ở cửa trong giờ đầu tiên ở 3 sự kiện.')),
   b('user', 'local', 'cult', 'shape', 5, L('Local', 'Thổ địa'), L('Go to events in 5 different districts.', 'Đi sự kiện ở 5 quận khác nhau.')),
   b('user', 'passport_25', 'fest', 'num', 25, L('Passport 25', 'Hộ chiếu 25'), L('Go to 25 events listed on FeestFinder.', 'Tham dự 25 sự kiện đăng trên FeestFinder.')),
   b('user', 'superfan', 'edm', 'shape', 3, L('Superfan', 'Fan cứng'), L('See 3 shows of the same artist you follow.', 'Xem 3 show của cùng một nghệ sĩ bạn theo dõi.')),
@@ -55,6 +55,9 @@ export const BADGE_CATALOGUE: BadgeDef[] = [
   b('organizer', 'all_families', 'free', 'num', 4, L('Every kind', 'Đa thể loại'), L('Run all four kinds: festival, live music, EDM and culture.', 'Tổ chức đủ 4 thể loại: Lễ hội, Nhạc sống, EDM và Văn hoá.')),
   b('organizer', 'events_100', 'fest', 'num', 100, L('100 events', '100 sự kiện'), L('List 100 events on FeestFinder.', 'Đăng 100 sự kiện trên FeestFinder.')),
 ];
+
+/** Badges that stand for a state rather than a milestone: shown only while the state holds. */
+const LIVE_STATE = new Set(['verified']);
 
 /** The number a badge shows on its ring. */
 const ringNumber = (d: BadgeDef) => (d.emblem === 'num' ? String(d.threshold) : null);
@@ -110,31 +113,36 @@ async function userProgress(q: Queryable, userId: string, now: Date): Promise<Re
 async function artistProgress(q: Queryable, artistId: string, now: Date): Promise<Record<string, number>> {
   const [shows, me] = await Promise.all([
     many<any>(q,
-      `select e.id, e.city, e.sold_out from event_artists ea join events e on e.id = ea.event_id
-        where ea.artist_id = $1 and e.status = 'live' and e.published_at is not null`, [artistId]),
+      `select e.id, e.city, e.sold_out, e.starts_at <= $2 as past from event_artists ea join events e on e.id = ea.event_id
+        where ea.artist_id = $1 and e.status = 'live' and not e.held_for_reports and e.published_at is not null`, [artistId, now]),
     one<{ normalized_name: string; alias_keys: string[] | null }>(q, 'select normalized_name, alias_keys from artists where id = $1', [artistId]),
   ]);
-  const played = shows;
+  // A debut is a show listed; the rest count shows that have happened.
+  const played = shows.filter((s) => s.past);
   // The last set of each day of each event this artist was billed on, from the timetables.
-  const lasts = played.length ? await many<{ artist: string }>(q,
-    `select s.artist from sets s
+  const lasts = played.length ? await many<{ event_id: string; artist: string }>(q,
+    `select distinct s.event_id, s.artist from sets s
       where s.event_id = any($1::uuid[]) and s.starts_at <= $2
         and s.ends_at = (select max(s2.ends_at) from sets s2 where s2.event_id = s.event_id and s2.day = s.day)`,
     [played.map((s) => s.id), now]) : [];
   const keys = new Set([me?.normalized_name, ...(me?.alias_keys ?? [])].filter(Boolean));
   const n = played.length;
   return {
-    debut: n, shows_25: n, shows_50: n,
+    debut: shows.length, shows_25: n, shows_50: n,
     touring: new Set(played.map((s) => s.city)).size,
-    closer: lasts.filter((s) => keys.has(artistKey(s.artist))).length,
-    sold_out: played.filter((s) => s.sold_out).length,
+    // Events, not days: closing every night of one festival is one event.
+    closer: new Set(lasts.filter((s) => keys.has(artistKey(s.artist))).map((s) => s.event_id)).size,
+    sold_out: shows.filter((s) => s.sold_out).length,
   };
 }
+
+/** An organiser's events that count: listed and live, as its public page shows them (not taken down). */
+const COUNTED_EVENT = `status = 'live' and not held_for_reports and published_at is not null`;
 
 async function organizerProgress(q: Queryable, organizerId: string): Promise<Record<string, number>> {
   const [o, events] = await Promise.all([
     one<{ verification_state: string }>(q, 'select verification_state from organizers where id = $1', [organizerId]),
-    many<{ genre: string | null; sold_out: boolean }>(q, 'select genre, sold_out from events where organizer_id = $1 and published_at is not null', [organizerId]),
+    many<{ genre: string | null; sold_out: boolean }>(q, `select genre, sold_out from events where organizer_id = $1 and ${COUNTED_EVENT}`, [organizerId]),
   ]);
   const n = events.length;
   return {
@@ -182,13 +190,15 @@ export async function badgesOf(q: Queryable, role: BadgeRole, id: string, now: D
   const byCode = new Map(awards.map((a) => [a.code, a]));
   const holders = new Map(held.map((h) => [h.code, h.n]));
   const views = BADGE_CATALOGUE.filter((d) => d.role === role).map((d): BadgeView => {
-    const a = byCode.get(d.code);
+    const a = LIVE_STATE.has(d.code) && (progress[d.code] ?? 0) < d.threshold ? undefined : byCode.get(d.code);
     const share = size?.n ? ((holders.get(d.code) ?? 0) / size.n) * 100 : null;
     return {
       code: d.code, family: d.family, emblem: d.emblem, ring: ringNumber(d), label: d.label, rule: d.rule,
       threshold: d.threshold, value: Math.min(progress[d.code] ?? 0, d.threshold), earned: !!a, earnedAt: a?.earned_at ?? null,
-      isNew: !!a && !a.seen_at && now.getTime() - new Date(a.earned_at).getTime() < 14 * 86400_000,
-      rarityPct: share === null ? null : share < 1 && share > 0 ? Math.round(share * 10) / 10 : Math.round(share),
+      // New only to the subject itself, until it has seen it.
+      isNew: !!opts.own && !!a && !a.seen_at && now.getTime() - new Date(a.earned_at).getTime() < 14 * 86400_000,
+      // A badge someone holds is never "0%".
+      rarityPct: share === null ? null : share > 0 && share < 1 ? Math.max(0.1, Math.round(share * 10) / 10) : Math.round(share),
     };
   });
   if (opts.own && views.some((v) => v.isNew)) {
@@ -207,7 +217,7 @@ export async function awardAll(q: Queryable, now: Date): Promise<number> {
       `select distinct user_id as id from tickets where status = 'used' and user_id is not null
        union select user_id from presence union select ref_user from share_visits`),
     many<{ id: string }>(q, `select distinct ea.artist_id as id from event_artists ea join events e on e.id = ea.event_id where e.published_at is not null`),
-    many<{ id: string }>(q, `select id from organizers where verification_state = 'verified' or exists (select 1 from events e where e.organizer_id = organizers.id and e.published_at is not null)`),
+    many<{ id: string }>(q, `select id from organizers where verification_state = 'verified' or exists (select 1 from events where events.organizer_id = organizers.id and ${COUNTED_EVENT})`),
   ]);
   let made = 0;
   for (const [role, list] of [['user', users], ['artist', artists], ['organizer', orgs]] as [BadgeRole, { id: string }[]][]) {
