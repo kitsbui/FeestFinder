@@ -18,7 +18,7 @@ import { Input } from '../ui/forms';
 import { WEB } from './copy';
 
 /** Which nav link is the current page; 'list' marks Bản đồ only when the list shows the map. */
-export type WebSection = 'explore' | 'map' | 'list' | 'none';
+export type WebSection = 'explore' | 'map' | 'list' | 'artists' | 'none';
 
 /** The key the legacy web screen keeps the chosen language under (pages/web/logic.js). */
 const LANG_KEY = 'ff_lang';
@@ -67,6 +67,7 @@ export function WebNav({ lang, current = 'none', familyCounts }: { lang: Lang; c
         <nav aria-label={T.mainNav} className="ml-3 hidden items-center gap-0.5 desk:flex">
           <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'explore' ? 'page' : undefined}>{T.explore}</Link>
           <a className="kd-nl" href={inLang('/list?view=map', lang)} aria-current={onMap ? 'page' : undefined}>{T.map}</a>
+          <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined}>{T.artists}</Link>
           <Menu
             label={T.genres}
             trigger={(p) => (
@@ -110,7 +111,7 @@ export function WebNav({ lang, current = 'none', familyCounts }: { lang: Lang; c
               {roles?.artist === 'pending' || roles?.organizer === 'pending' ? <MenuItem disabled>{T.rolePending}</MenuItem> : null}
               {roles?.artist !== 'active' && roles?.organizer !== 'active' ? <MenuItem onSelect={() => kd.openRolePicker()}>{T.roleBecome}</MenuItem> : null}
               <MenuItem href="/app/tickets" external aside={me ? me.tickets : null}>{T.myTickets}</MenuItem>
-              <MenuItem href="/saved" external aside={me ? me.saved : null}>{T.saved}</MenuItem>
+              <MenuItem href={inLang('/saved', lang)} external aside={me ? me.saved : null}>{T.saved}</MenuItem>
               <MenuSeparator />
               <MenuItem onSelect={() => kd.signOut()}>{T.signOut}</MenuItem>
             </Menu>

@@ -147,11 +147,15 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
        select ea.artist_id, count(distinct e.id)::int as events, max(e.starts_on) as last_on,
               coalesce(array_agg(distinct s) filter (where s is not null), '{}') as styles, coalesce(array_agg(distinct e.city) filter (where e.city is not null), '{}') as cities
          from event_artists ea join events e on e.id = ea.event_id left join lateral unnest(e.styles) s on true
-        where ${PUBLIC} group by ea.artist_id)
+        where ${PUBLIC} group by ea.artist_id),
+     -- The genre each artist has played most, which colours their card.
+     gn as (
+       select ea.artist_id, mode() within group (order by e.genre) as genre
+         from event_artists ea join events e on e.id = ea.event_id where ${PUBLIC} and e.genre is not null group by ea.artist_id)
      select a.id, a.slug, a.name, a.image_url, a.artist_roles, a.based_city, a.based_country, a.styles, a.booking_status, a.travel_scope,
             a.verified, a.owner_user_id is not null as claimed, coalesce(up.upcoming, 0) as upcoming, up.next_show, coalesce(pl.events, 0) as events,
-            coalesce(pl.styles, '{}') as played_styles, a.updated_at, count(*) over () as total
-       from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id
+            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, count(*) over () as total
+       from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id left join gn on gn.artist_id = a.id
       where ${where.join(' and ')}
       order by ${order} limit ${p(f.limit)} offset ${p(f.offset)}`, params);
   const total = rows[0] ? Number(rows[0].total) : 0;
@@ -163,7 +167,7 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
       styles: [...new Set<string>([...a.styles, ...a.played_styles])].slice(0, 4).map(styleItem),
       verified: a.verified as boolean, claimed: a.claimed as boolean,
       booking: label(BOOKING_STATUS, a.booking_status), travel: label(TRAVEL_SCOPE, a.travel_scope),
-      upcoming: a.upcoming as number, events: a.events as number, nextShow: presentNextShow(a.next_show), updatedAt: a.updated_at as Date,
+      upcoming: a.upcoming as number, events: a.events as number, nextShow: presentNextShow(a.next_show), genre: a.genre as string | null, updatedAt: a.updated_at as Date,
     })),
     total, offset: f.offset, limit: f.limit,
     nextOffset: f.offset + rows.length < total ? f.offset + rows.length : null,

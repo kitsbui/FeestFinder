@@ -27,6 +27,8 @@ describe('the artist network', () => {
     assert.equal(all.body.total, all.body.items.length);
     const hoaprox = all.body.items.find((a: any) => a.slug === 'hoaprox');
     assert.equal(hoaprox.nextShow.slug, 'ravo');
+    assert.equal(typeof hoaprox.genre, 'string', 'the genre they play most colours their card');
+    assert.equal(all.body.items.find((a: any) => a.slug === 'may-dem').genre, null);
     assert.ok(all.body.filters.roles.some((r: any) => r.key === 'dj'));
   });
 

@@ -10,6 +10,7 @@ export const WEB = {
   mainNav: { en: 'Main', vi: 'Chính' },
   explore: { en: 'Explore', vi: 'Khám phá' },
   map: { en: 'Map', vi: 'Bản đồ' },
+  artists: { en: 'Artists', vi: 'Nghệ sĩ' },
   genres: { en: 'Genres', vi: 'Thể loại' },
   search: { en: 'Search', vi: 'Tìm kiếm' },
   searchPh: { en: 'Events, artists, venues…', vi: 'Sự kiện, nghệ sĩ, địa điểm…' },
