@@ -19,6 +19,9 @@ import { inBackground } from '../lib/background.ts';
 import { checkOtp, identifierFor, publicUser, startOtp } from './auth.ts';
 import { hypeGoalsReached } from '../services/community.ts';
 
+/** An event a person's lists show: one anyone can open (cancelled ones stay, marked; taken-down or held ones do not). */
+const LISTED = `e.status in ('live', 'cancelled') and not e.held_for_reports and e.published_at is not null`;
+
 const INTERESTS = ['EDM', 'Pop', 'Indie', 'Hip-Hop', 'Jazz', 'Theatre', 'Art', 'Food', 'Markets', 'Nightlife', 'Culture'] as const;
 
 export default async function meRoutes(app: FastifyInstance) {
@@ -30,8 +33,8 @@ export default async function meRoutes(app: FastifyInstance) {
       one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]),
       many<any>(ctx.db, 'select provider, display_name, connected_at from social_connections where user_id = $1 order by connected_at', [s.user.id]),
       one<any>(ctx.db,
-        `select (select count(*)::int from saves where user_id = $1) as saved,
-                (select count(*)::int from hypes where user_id = $1) as hyped,
+        `select (select count(*)::int from saves x join events e on e.id = x.event_id where x.user_id = $1 and ${LISTED}) as saved,
+                (select count(*)::int from hypes x join events e on e.id = x.event_id where x.user_id = $1 and ${LISTED}) as hyped,
                 (select count(*)::int from organizer_follows where user_id = $1) as following,
                 (select count(*)::int from tickets where user_id = $1 and status in ('valid','used')) as tickets,
                 (select count(*)::int from friendships where user_id = $1) as friends,
@@ -163,7 +166,7 @@ export default async function meRoutes(app: FastifyInstance) {
       const pastClause = past === 'only' ? 'and e.ends_at < $2' : past === 'exclude' ? 'and e.ends_at >= $2' : 'and $2::timestamptz is not null';
       const rows = await many<any>(ctx.db,
         `select ${CARD_COLUMNS} from ${t.table} x join events e on e.id = x.event_id join organizers o on o.id = e.organizer_id
-          where x.user_id = $1 ${pastClause}
+          where x.user_id = $1 and ${LISTED} ${pastClause}
           order by (e.ends_at < $2), case when e.ends_at < $2 then -extract(epoch from e.starts_at) else extract(epoch from e.starts_at) end
           limit $3 offset $4`, [s.user.id, now, lim + 1, offset]);
       const viewer = await loadViewer(ctx.db, s.user.id, rows.map((r) => r.id));

@@ -47,6 +47,20 @@ describe('attendee (Web + App, signed in)', () => {
     assert.deepEqual(list.body.items.map((e: any) => e.slug).sort(), ['hozo', 'ravo']);
   });
 
+  it('lists and counts only saves anyone can open', async () => {
+    const token = await env.attendee();
+    const ev = (await env.as().get('/events/ravo')).body;
+    await env.as(token).put(`/me/saves/${ev.id}`);
+    const before = (await env.as(token).get('/me')).body.counts.saved;
+    assert.ok((await env.as(token).get('/me/saves?limit=100')).body.items.some((e: any) => e.id === ev.id));
+    // Held while moderators look at reports: gone from the list and the count, back after.
+    await env.ctx.db.query('update events set held_for_reports = true where id = $1', [ev.id]);
+    assert.equal((await env.as(token).get('/me/saves?limit=100')).body.items.some((e: any) => e.id === ev.id), false);
+    assert.equal((await env.as(token).get('/me')).body.counts.saved, before - 1);
+    await env.ctx.db.query('update events set held_for_reports = false where id = $1', [ev.id]);
+    assert.equal((await env.as(token).get('/me')).body.counts.saved, before);
+  });
+
   it('follows organisers and artists', async () => {
     const org = env.ids.org.vinwonder;
     const f = await env.as(token).put(`/me/follows/organizers/${org}`);

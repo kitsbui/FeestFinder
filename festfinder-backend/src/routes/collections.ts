@@ -42,13 +42,13 @@ function present(ctx: Ctx, c: any) {
 async function listFor(q: Queryable, userId: string, eventId: string | null) {
   return many<any>(q,
     `select c.*,
-            (select count(*)::int from collection_items i where i.collection_id = c.id) as count,
+            (select count(*)::int from collection_items i join events e on e.id = i.event_id where i.collection_id = c.id and ${VISIBLE}) as count,
             cov.cover_url, cov.genre as cover_genre
             ${eventId ? ', exists (select 1 from collection_items i where i.collection_id = c.id and i.event_id = $2) as has' : ''}
        from collections c
        left join lateral (
          select e.cover_url, e.genre from collection_items i join events e on e.id = i.event_id
-          where i.collection_id = c.id order by i.added_at desc limit 1) cov on true
+          where i.collection_id = c.id and ${VISIBLE} order by i.added_at desc limit 1) cov on true
       where c.user_id = $1
       order by c.updated_at desc`, eventId ? [userId, eventId] : [userId]);
 }
@@ -107,7 +107,7 @@ export default async function collectionRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const rows = await many<any>(ctx.db,
       `select ${CARD_COLUMNS} from collection_items i join events e on e.id = i.event_id join organizers o on o.id = e.organizer_id
-        where i.collection_id = $1 order by i.added_at desc`, [c.id]);
+        where i.collection_id = $1 and ${VISIBLE} order by i.added_at desc`, [c.id]);
     const viewer = await loadViewer(ctx.db, s.user.id, rows.map((r) => r.id));
     const meta = (await listFor(ctx.db, s.user.id, null)).find((x) => x.id === c.id);
     return { collection: present(ctx, meta), items: rows.map((r) => presentCard(r, { now, viewer })) };
