@@ -16,8 +16,16 @@ export const CUTOVER: readonly RegExp[] = [
   /^\/e\/[^/]+(\/en)?$/,
   // The organiser pages, both languages.
   /^\/o\/[^/]+(\/en)?$/,
-  // The artist pages, both languages; not the directory (/a, /a/en, /a/style/…, /a/city/…).
+  // The artist pages and the artist directory (/a, /a/style/<style>, /a/city/<city>), both languages.
+  /^\/a(\/en)?$/,
+  /^\/a\/(style|city)\/[^/]+(\/en)?$/,
   /^\/a\/(?!(en|style|city)(\/|$))[^/]+(\/en)?$/,
+  // Public collections, both languages.
+  /^\/c\/[^/]+(\/en)?$/,
+  // Saved events and collections, the about and advertising pages, one explore stat.
+  /^\/saved$/,
+  /^\/(about|advertise)$/,
+  /^\/stats\/[^/]+$/,
   // The app: every screen of it.
   /^\/app(\/.*)?$/,
   // Studio, the organisers' back office: every screen of it.

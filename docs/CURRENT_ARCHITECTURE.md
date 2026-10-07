@@ -21,7 +21,7 @@ Audit of 2026-10-05, branch `feat/next` at `11dcd08`. The file map, commands and
 | Database | Postgres on Supabase (production + staging projects, each labelled); PGlite in tests | pg 8, PGlite 0.5 |
 | Validation | zod through `lib/validate.ts` `parse()`; errors as `AppError` → `{error:{code,message}}` | zod 4 |
 | Screens | design templates (`template.html` + `logic.js` + `data.js`) run by `ui/support.js` on vendored React, served by the API | React 18 UMD |
-| Second front | `festfinder-web`, Next.js compiling the same templates to TSX | Next 16, React 19 |
+| Second front | `festfinder-web`, Next.js; since the Kính đêm redesign (2026-10), hand-written React + Tailwind (see the last section) | Next 16, React 19, Tailwind 4 |
 | Back office | `/ops`, plain ES modules on vendored React | |
 | AI | Anthropic SDK for the submission form fill-in (`claude-opus-5-5`), optional | SDK 0.128 |
 | Hosting | Vercel project `feestfinder`, functions in `hnd1`; GitHub `main` = production | |
@@ -152,3 +152,17 @@ Everything above describes the code at Phase 0. Phase 10 (migrations 019–026) 
 | Brand campaigns | `brand_campaigns`, `brand_campaign_interests` | `routes/brands.ts` |
 
 Rules that hold across it: admin comes only from `ADMIN_EMAIL`; follower counts never rank an artist or a gig applicant; nothing an artist reports publishes an event or edits an organiser's lineup; fees in the marketplace are not payments.
+
+## Since the audit: the Kính đêm front
+
+The Next front (`festfinder-web`) was rebuilt in the Kính đêm design (`design_handoff_kinh_dem/`, plan in `docs/KINH_DEM_PLAN.md`), route by route, in six phases. Production still runs the API-served front with the Bảng phấn look; nothing in the deployment changed.
+
+| Area | Where | Notes |
+| --- | --- | --- |
+| Pages | `festfinder-web/src/app/(kd)/` | Every route: `/`, `/list`, `/e`, `/o`, `/a` (+ directory), `/c`, `/saved`, `/about`, `/advertise`, `/stats`, `/profile`, `/app/*`, `/studio/*`, `/console/*`. Public pages render on the server with the API's SEO data. |
+| Screens and parts | `festfinder-web/src/kd/` | `ui/` parts, `web/`, `app/`, `studio/`, `console/`; strings as `{en, vi}` pairs per screen; tokens in `theme.css`; `/kit` shows the parts. |
+| Runtime | `festfinder-web/src/runtime/ff.ts`, `src/kd/runtime.tsx` | `FF` mirrors `ui/ff-client.js`; `KdProvider` holds the session, sign-in card, toasts, saves and follows. |
+| Compile step | `festfinder-web/scripts/compile-screens.ts` | Still copies `public/ui/` (map, brand images); its compiled screens are no longer routed and stay until production moves to Next. |
+| New API (Phase 4–5) | migrations `027`–`030` | Boost requests (`027`), badges (`028`, `services/badges.ts`), Moments (`029`, `routes/moments.ts`), row level security on them (`030`); per-day Studio performance, the Console's numbers board. |
+| Tests | `festfinder-backend/e2e/next/` | One spec per rebuilt area; the shared `e2e/screens.spec.ts` skips every path in `src/kd/cutover.ts` on Next. |
+
