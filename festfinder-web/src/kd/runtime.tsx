@@ -101,7 +101,8 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
 
   const loadPersonal = useCallback(async (s: Session | null) => {
     if (!s?.user) { setSaved(new Set()); return; }
-    const out = await FF.maybe(FF.get('/me/saves?limit=100&past=exclude'), { items: [] as { id: string }[] });
+    // Past nights too, so their hearts read as saved (upcoming come first in the answer).
+    const out = await FF.maybe(FF.get('/me/saves?limit=100'), { items: [] as { id: string }[] });
     setSaved(new Set(out.items.map((e: { id: string }) => e.id)));
   }, []);
 

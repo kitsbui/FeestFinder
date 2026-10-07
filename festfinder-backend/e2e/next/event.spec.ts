@@ -206,18 +206,4 @@ test.describe('the event page', () => {
     await expectOps(page, '/ops/artist', /Nghệ danh/);
     expect((await page.request.get('/admin/counts')).status()).toBe(403);
   });
-
-  test('legacy screens open a rebuilt event page as a page of its own', async ({ page }) => {
-    // A link on a compiled screen (/saved, until it is rebuilt) to an event: the rebuilt page
-    // loads, not the old drawing of it.
-    await signInWith(page, ATTENDEE);
-    const ev = await (await page.request.get('/events/ravo')).json();
-    await page.request.put('/me/saves/' + ev.id);
-    await page.goto('/saved');
-    await page.locator('#dc-root > .sc-host').waitFor({ state: 'attached' });
-    await page.getByText('Ravolution Music Festival').first().click();
-    await expect(page).toHaveURL(/\/e\/ravo/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Ravolution Music Festival' })).toBeVisible();
-    expect(await page.evaluate(() => !!document.querySelector('#dc-root'))).toBe(false);
-  });
 });

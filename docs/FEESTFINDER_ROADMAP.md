@@ -76,7 +76,7 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
   - [x] `/` (+ `?lang=en`): city and inline time headline, featured card, sort and family chips, "Gần đây, tối nay" with the map teaser, FAQ. `/events?family=` filters by genre family.
   - [x] `/list` (+ `?lang=en`): table, grid and map with the legacy filters in the address; the map asks `/events/map` on open and on "search this area" only, in the Kính đêm map style (`/map/style.json?theme=kd`).
   - [x] `/o/[slug]` (+ `?lang=en`): cover, organiser, numbers, upcoming cards and past events by year, what it runs, the artists it books, venues, business details. No rating or response time (no source). A listing that is not verified offers its people the role picker with its name filled in.
-  - [x] `/a/[slug]` (+ `?lang=en`): cover, artist, numbers, upcoming shows as dated rows (tickets through `/go/<slug>?src=artist`) and past shows, bio and links, who they play with most, free dates, venues, similar artists, gear, booking details. The directory (`/a`, `/a/style/…`, `/a/city/…`) stays compiled until Phase 6.
+  - [x] `/a/[slug]` (+ `?lang=en`): cover, artist, numbers, upcoming shows as dated rows (tickets through `/go/<slug>?src=artist`) and past shows, bio and links, who they play with most, free dates, venues, similar artists, gear, booking details. The directory (`/a`, `/a/style/…`, `/a/city/…`) followed in Phase 6.
 - [x] Phase 3: App
   - [x] The app root (`src/kd/app/root.tsx`): Vietnamese unless the device chose English, the service worker, the tab bar (Khám phá · Bản đồ · Đã lưu · Vé · Tôi). `/app` itself moved, so the legacy catch-all is `[...path]`.
   - [x] `/app` Explore and first-visit onboarding (genres, "Dùng vị trí của tôi" or a city; kept on the device only), `/app/e/[slug]` (the web event parts, a glass dock), `/app/list` (map, and the same events as rows; `?q=` search), `/app/saved` (saves and collections with the public link), `/app/tickets` (a real, scannable QR per ticket: `qrcode-generator`; the doors countdown; give or resell at face value), `/app/profile` (passport, Wrapped, your sound, following, settings), `/app/checkout/[slug]` (tier and quantity from `/go`, promo codes, VietQR transfer with polling, resale listings).
@@ -91,7 +91,15 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
   - [x] Moments (migration `029`, `routes/moments.ts`): up to nine photos on a fan's own profile, an artist's or an organiser's page, uploaded to FeestFinder (upload purpose `moment`; no other image host). Owners add, caption, reorder and remove (`/me/moments?as=user|artist|organizer`, with `organizerId` naming the team, since a person can be on several); a public profile needs a confirmed phone. Open photo reports count in the Console's Báo cáo tab. Migration `030` turns on row level security for the tables 027–029 added. Anyone signed in reports one; the Console's Báo cáo tab removes or keeps it, audited.
   - [x] `/profile`: the signed-in person's own profile on the web (numbers, Moments, nights coming up, passport and sound, badges, follows). Private and never indexed; the account menu leads there.
   - [x] Studio metrics and moderation reasons with undo: done in Phase 4.
-- [ ] Phase 6: Undrawn routes, clean-up, docs
+- [x] Phase 6: Undrawn routes, clean-up, docs
+  - [x] The artist directory (`/a`, `/a/style/<style>`, `/a/city/<city>`, each `?lang=en`): server-rendered cards and `ItemList`, filters kept in the address, back and forward through them, "Nghệ sĩ" in the web nav. `GET /artists` gives each artist the genre they play most, which colours their card.
+  - [x] Public collections (`/c/<slug>`, `?lang=en`): its events, the folded past, saving from a card, every share channel of the legacy sheet.
+  - [x] `/saved` (signed in): saved events with the past folded, collections as chips (`?c=<id>`, back and forward), create, rename, delete, add and remove events, the public link and its share sheet.
+  - [x] `/about`: contacts, links and hours as before; the made-up reach numbers replaced by live counts of upcoming events and cities. `/advertise`: the enquiry form (`POST /ad-inquiries`) and the CPM rates the team sets (`GET /ads/rates`).
+  - [x] `/stats/free|weekend|venues`: from `GET /explore/stats` (which now reads the chosen city's day), filters in the address; "Mọi địa điểm" on the home page leads there.
+  - [x] Cards mark a cancelled event; hearts on past saves read as saved; a picker's name says what is chosen.
+  - [x] The `(legacy)` route group, `components/seo-page.tsx` and `summaries.tsx` removed; `/vi/…` and `/en/<city>/…` still redirect to `/list`. The compile step stays (it copies `public/ui`, and production has not moved).
+  - [x] Docs: `CLAUDE.md`, the `festfinder-web` README, `CURRENT_ARCHITECTURE.md`.
 
 ## What the team does next in production
 
@@ -129,3 +137,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-06: Kính đêm Phase 4 done: the Console rebuilt (`e2e/next/console.spec.ts`); the numbers board in `/admin/insights`.
 - 2026-10-07: Kính đêm Phase 5: badges (migration `028`), Moments (migration `029`), `/profile`, reported photos in the Console (`e2e/next/profiles.spec.ts`).
 - 2026-10-07: Kính đêm Phase 5 review: organiser photos go to the team named, badge rules match their text, row level security on the new tables (migration `030`).
+- 2026-10-07: Kính đêm Phase 6: every Next route is rebuilt (`e2e/next/directory.spec.ts`, `collection.spec.ts`, `saved.spec.ts`, `about.spec.ts`, `stats.spec.ts`); the legacy route group is gone.

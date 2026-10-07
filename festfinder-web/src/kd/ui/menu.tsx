@@ -201,6 +201,8 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
   width?: number;
 }) {
   const current = options.find((o) => o.value === value);
+  // A screen reader hears what is chosen too: "Thời gian: Cuối tuần này".
+  const chosen = typeof current?.label === 'string' ? current.label : null;
   return (
     <Menu
       label={label}
@@ -212,7 +214,7 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
           type="button"
           {...p}
           ref={p.ref}
-          aria-label={tone === 'inline' ? undefined : label}
+          aria-label={tone === 'inline' ? undefined : chosen ? `${label}: ${chosen}` : label}
           className={cx(
             tone === 'chip' && 'kd-chip',
             tone === 'button' && 'kd-btn',

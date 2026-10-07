@@ -36,8 +36,8 @@ test.describe('the artist page', () => {
     expect(html).toContain('href="/e/ravo"');
     expect(html).not.toContain('/ui/theme.css');
     expect((await request.get('/a/nobody-here')).status()).toBe(404);
-    // The directory is still the compiled screen.
-    expect(await (await request.get('/a')).text()).toContain('/ui/theme.css');
+    // The directory is rebuilt too.
+    expect(await (await request.get('/a')).text()).not.toContain('/ui/theme.css');
   });
 
   test('opens in English at ?lang=en', async ({ page }) => {

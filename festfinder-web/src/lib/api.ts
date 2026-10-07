@@ -146,33 +146,6 @@ export interface DirectorySeo extends Omit<OrganizerSeo, 'kind'> {
   kind: 'directory';
 }
 
-// ---- formatting the server-rendered summaries ---------------------------------------
-
-export function text(v: Localized | string | null | undefined, lang: Lang): string {
-  if (!v) return '';
-  return typeof v === 'string' ? v : v[lang] || v.en || '';
-}
-
-export function vnd(n: number, lang: Lang): string {
-  return n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') + '₫';
-}
-
-export function when(e: Pick<EventCard, 'startsOn' | 'endsOn' | 'startTime' | 'endTime'>, lang: Lang): string {
-  const fmt = (iso: string) =>
-    new Date(iso + 'T12:00:00+07:00').toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', {
-      weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Ho_Chi_Minh',
-    });
-  const days = e.endsOn && e.endsOn !== e.startsOn ? `${fmt(e.startsOn)} – ${fmt(e.endsOn)}` : fmt(e.startsOn);
-  const hours = e.startTime ? ` · ${e.startTime}${e.endTime ? '–' + e.endTime : ''}` : '';
-  return days + hours;
-}
-
-export function price(e: Pick<EventCard, 'entryMode' | 'priceFrom'>, lang: Lang): string {
-  if (e.entryMode === 'free') return lang === 'vi' ? 'Miễn phí' : 'Free';
-  if (e.entryMode === 'donation') return lang === 'vi' ? 'Tuỳ tâm' : 'Pay what you like';
-  return (lang === 'vi' ? 'Từ ' : 'From ') + vnd(e.priceFrom, lang);
-}
-
 /** Structured data goes in as a JSON data block, never as script the browser runs. */
 export function jsonLdHtml(data: unknown): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');

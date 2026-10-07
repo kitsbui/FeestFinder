@@ -36,6 +36,7 @@ export const HOME = {
   aroundYou: { en: 'Around you', vi: 'Quanh bạn' },
   nearTonight: { en: 'Nearby, tonight', vi: 'Gần đây, tối nay' },
   openMap: { en: 'Open the map', vi: 'Mở bản đồ' },
+  allVenues: { en: 'Every venue', vi: 'Mọi địa điểm' },
   ad: { en: 'Ad', vi: 'Quảng cáo' },
   adHide: { en: 'Hide this ad', vi: 'Ẩn quảng cáo' },
   faq: { en: 'Questions', vi: 'Câu hỏi thường gặp' },

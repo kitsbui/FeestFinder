@@ -135,9 +135,10 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   if (f.brands) where.push('a.open_to_brands');
   if (f.verified) where.push('a.verified');
   if (f.upcoming) where.push('coalesce(up.upcoming, 0) > 0');
-  const order = f.sort === 'name' ? 'a.name'
+  // The id last, so pages never overlap when two artists share a name.
+  const order = (f.sort === 'name' ? 'a.name'
     : f.sort === 'active' ? `coalesce(pl.last_on, '0001-01-01') desc, a.name`
-    : `up.next_at nulls last, ${COMPLETENESS} desc, a.name`;
+    : `up.next_at nulls last, ${COMPLETENESS} desc, a.name`) + ', a.id';
   const rows = await many<any>(q,
     `with up as (
        select ea.artist_id, count(*)::int as upcoming, min(e.starts_at) as next_at,

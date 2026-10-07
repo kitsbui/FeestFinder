@@ -22,7 +22,7 @@ test.describe('the list', () => {
     await expect(page).toHaveURL(/\/list\?view=grid$/);
     await expect(page.getByRole('row')).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Ravolution Music Festival' })).toBeVisible();
-    await page.getByRole('button', { name: 'Thành phố', exact: true }).click();
+    await page.getByRole('button', { name: /^Thành phố/ }).click();
     await page.getByRole('menuitemradio', { name: /Hà Nội/ }).click();
     await expect(page.getByText('Không có sự kiện nào khớp')).toBeVisible();
     await expect(page).toHaveURL(/city=ha-noi/);

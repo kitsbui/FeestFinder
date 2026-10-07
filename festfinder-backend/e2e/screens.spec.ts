@@ -44,6 +44,7 @@ test.describe('Web', () => {
   }
 
   test('tabs change the URL and back returns to the previous screen', async ({ page }) => {
+    skipRebuilt('/about');
     await page.goto('/about');
     await expect.poll(() => page.locator('body').innerText()).toMatch(/VỀ FEESTFINDER/i);
     await page.getByText('Danh sách', { exact: true }).first().click();

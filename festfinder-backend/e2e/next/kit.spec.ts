@@ -73,16 +73,12 @@ test('the sign-in sheet opens from the kit with the ways in the server has', asy
   await expect(sheet).toHaveCount(0);
 });
 
-test('each look keeps its own stylesheet', async ({ page }) => {
+test('no page loads the legacy stylesheet', async ({ page }) => {
   const sheets = () => page.evaluate(() => [...document.styleSheets].map((s) => s.href ?? '(inline)'));
-  await page.goto('/kit');
-  expect((await sheets()).some((h) => h.includes('/ui/theme.css'))).toBe(false);
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(8, 9, 10)');
-  // A screen that is still the compiled one.
-  await page.goto('/about');
-  expect((await sheets()).some((h) => h.includes('/ui/theme.css'))).toBe(true);
-  // Tailwind's preflight would zero this margin; the legacy screens rely on the browser's.
-  expect(await page.evaluate(() => [...document.styleSheets].some((s) => {
-    try { return [...s.cssRules].some((r) => r.cssText.includes('--color-acc')); } catch { return false; }
-  }))).toBe(false);
+  // Every route is rebuilt: the API front's Bảng phấn sheet never reaches this front.
+  for (const path of ['/kit', '/about', '/a', '/saved']) {
+    await page.goto(path);
+    expect((await sheets()).some((h) => h.includes('/ui/theme.css')), path).toBe(false);
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), path).toBe('rgb(8, 9, 10)');
+  }
 });

@@ -1,6 +1,6 @@
 /**
- * The root layout of the Kính đêm pages. Navigating between it and the legacy layout is a
- * full page load (two root layouts), so the two looks' stylesheets never meet.
+ * The root layout of every page (the Kính đêm design). The compiled legacy screens no longer
+ * have routes here, so the API front's stylesheet never loads on this front.
  *
  * Fonts are self-hosted (the CSP allows no font CDN): Be Vietnam Pro and JetBrains Mono,
  * 400 and 500, in the latin, latin-ext and vietnamese subsets the browser picks by range.

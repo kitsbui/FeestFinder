@@ -10,7 +10,7 @@
  *
  * Two halves make that impossible:
  *
- *  - The page itself sits in <ff-app> (see app/layout.tsx), a tag no extension inserts.
+ *  - The page itself sits in <ff-app> (see app/(kd)/layout.tsx), a tag no extension inserts.
  *    The only <div>s the server puts straight into <body> are hidden ones: the one Next
  *    streams metadata into, and React's own streaming segments.
  *  - Until the page has hydrated, this script moves any other <div> added to <body> onto

@@ -255,8 +255,8 @@ function HeroCard({ e, lang }: { e: Card; lang: Lang }) {
   );
 }
 
-/** "Gần đây, tối nay": the nearest places with something tonight, and the map. */
-export function NearbyTonight({ lang, items }: { lang: Lang; items: Card[] }) {
+/** "Gần đây, tối nay": the nearest places with something tonight, every venue with something on, and the map. */
+export function NearbyTonight({ lang, items, city }: { lang: Lang; items: Card[]; city: string }) {
   const T = pick(HOME, lang);
   const near = useMemo(() => [...items].filter((e) => !e.past).sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99)).slice(0, 4), [items]);
   if (!near.length) return null;
@@ -278,7 +278,10 @@ export function NearbyTonight({ lang, items }: { lang: Lang; items: Card[] }) {
           </li>
         ))}
       </ul>
-      <a className={buttonClass({}, 'self-start')} href={inLang('/list?view=map', lang)}>{T.openMap}<ArrowRightIcon size={16} aria-hidden="true" /></a>
+      <div className="flex flex-wrap gap-2">
+        <a className={buttonClass({})} href={inLang('/list?view=map', lang)}>{T.openMap}<ArrowRightIcon size={16} aria-hidden="true" /></a>
+        <a className={buttonClass({ tone: 'ghost' })} href={inLang(`/stats/venues?time=tonight&city=${encodeURIComponent(city)}`, lang)}>{T.allVenues}</a>
+      </div>
     </div>
   );
 }

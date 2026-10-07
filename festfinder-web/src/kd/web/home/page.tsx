@@ -46,7 +46,7 @@ export async function HomePage({ lang }: { lang: Lang }) {
           {tonight.items.length ? (
             <section className="kd-wrap pt-[clamp(56px,7vw,96px)]">
               <div className="kd-split items-stretch">
-                <div className="kd-side"><NearbyTonight lang={lang} items={tonight.items} /></div>
+                <div className="kd-side"><NearbyTonight lang={lang} items={tonight.items} city={city} /></div>
                 <a className="kd-main kd-card relative min-h-[400px] overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-card after:shadow-[inset_0_0_0_1px_var(--color-line)] after:content-['']" href={inLang('/list?view=map', lang)} aria-label={T.openMap}>
                   <MiniMap pins={pins} className="absolute inset-0 bg-[#0b0c0d]" />
                 </a>

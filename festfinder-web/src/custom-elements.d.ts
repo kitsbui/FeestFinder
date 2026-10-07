@@ -5,7 +5,7 @@ declare module 'react' {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {
-      /** The page wrapper in app/layout.tsx. */
+      /** The page wrapper in app/(kd)/layout.tsx. */
       'ff-app': DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
