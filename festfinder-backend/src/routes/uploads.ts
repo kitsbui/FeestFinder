@@ -21,6 +21,9 @@ function checkDimensions(purpose: string, w: number, h: number) {
   if (purpose === 'logo' && (w < 256 || h < 256)) {
     throw badRequest('logo_size', L('Logos need to be at least 256×256', 'Logo cần tối thiểu 256×256'), { width: w, height: h });
   }
+  if (purpose === 'moment' && Math.min(w, h) < 400) {
+    throw badRequest('moment_size', L('Photos need to be at least 400 pixels on the short side', 'Ảnh cần tối thiểu 400 điểm ảnh ở cạnh ngắn'), { width: w, height: h });
+  }
   if (purpose === 'avatar' && (w < 128 || h < 128)) {
     throw badRequest('avatar_size', L('Photos need to be at least 128×128', 'Ảnh cần tối thiểu 128×128'), { width: w, height: h });
   }
@@ -31,7 +34,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
 
   app.post('/uploads', async (req, reply) => {
     const s = requireUser(req);
-    const { purpose } = parse(z.object({ purpose: z.enum(['cover', 'logo', 'avatar', 'recap']) }), req.query);
+    const { purpose } = parse(z.object({ purpose: z.enum(['cover', 'logo', 'avatar', 'recap', 'moment']) }), req.query);
     if (!req.isMultipart()) throw badRequest('multipart_required', L('Send the image as multipart/form-data', 'Gửi ảnh dạng multipart/form-data'));
     const file = await req.file();
     if (!file) throw badRequest('file_required', L('Choose an image', 'Chọn một ảnh'));
@@ -51,7 +54,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { '*': string } }>('/files/*', async (req, reply) => {
     const key = req.params['*'];
-    if (!/^(cover|logo|avatar|recap)\/[0-9a-f]{2}\/[0-9a-f]{64}\.(png|jpg|webp)$/.test(key)) throw notFound();
+    if (!/^(cover|logo|avatar|recap|moment)\/[0-9a-f]{2}\/[0-9a-f]{64}\.(png|jpg|webp)$/.test(key)) throw notFound();
     const data = await ctx.storage.get(key);
     if (!data) throw notFound();
     // Content-addressed, so browsers and the CDN in front of the API keep it for good.

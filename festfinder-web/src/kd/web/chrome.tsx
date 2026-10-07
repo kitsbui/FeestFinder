@@ -104,7 +104,7 @@ export function WebNav({ lang, current = 'none', familyCounts }: { lang: Lang; c
                   {me?.handle ? <span className="kd-m kd-ell normal-case">{me.handle}</span> : null}
                 </span>
               </MenuHeader>
-              <MenuItem href="/app/profile" external>{T.myProfile}</MenuItem>
+              <MenuItem href={inLang('/profile', lang)}>{T.myProfile}</MenuItem>
               {roles?.artist === 'active' ? <MenuItem href="/ops/artist" external>{T.artistSpace}</MenuItem> : null}
               {roles?.organizer === 'active' ? <MenuItem href="/ops/org" external>{T.orgSpace}</MenuItem> : null}
               {roles?.artist === 'pending' || roles?.organizer === 'pending' ? <MenuItem disabled>{T.rolePending}</MenuItem> : null}

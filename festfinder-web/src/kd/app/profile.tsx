@@ -2,8 +2,8 @@
 /**
  * /app/profile, the "Tôi" tab, in Kính đêm (design/Profile-Fan-App): who you are, how many nights
  * you went to and have coming, the tickets coming up, the raver passport (a stamp per scanned
- * ticket, filtered by family) and Wrapped, your sound, who you follow, and settings. Private:
- * it is the signed-in person's own (owner decision 2). Badges and Moments arrive in Phase 5.
+ * ticket, filtered by family) and Wrapped, your sound, your photos (Moments), your badges, who
+ * you follow, and settings. Private: it is the signed-in person's own (owner decision 2).
  */
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { CaretRightIcon, GearSixIcon } from '@phosphor-icons/react/ssr';
@@ -18,19 +18,22 @@ import { FieldError, FieldLabel, Input, Segmented, Select } from '../ui/forms';
 import { Accordion, Art, Avatar, Stamp, Stat } from '../ui/parts';
 import { AppBar } from '../ui/shell';
 import { Sheet } from '../ui/sheet';
+import { MomentsSection } from '../moments';
+import { Badges, type BadgeView } from '../ui/badges';
+import type { Moment } from '../ui/moments';
 import { APP } from './copy';
 import { useCity, useDiscovery } from './explore';
 import { useApp } from './root';
 import { SignInCard } from './row';
 
-interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
-interface Passport { stats: { nights: number; events: number; genres: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
-interface Follows {
+export interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
+export interface Passport { stats: { nights: number; events: number; genres: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
+export interface Follows {
   organizers: { following: { id: string; slug: string; name: string; logoUrl: string | null; next: { slug: string; title: string; startsOn: string } | null }[] };
   artists: string[];
   artistPages?: { name: string; slug: string | null }[];
 }
-interface Order { id: string; status: string; event: { slug: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; area: string | null; genre: string | null; endsAt: string | null }; tickets: unknown[] }
+export interface Order { id: string; status: string; event: { slug: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; area: string | null; genre: string | null; endsAt: string | null }; tickets: unknown[] }
 
 export function Profile({ lang }: { lang: Lang }) {
   const T = pick(APP, lang);
@@ -53,6 +56,8 @@ function Mine({ lang }: { lang: Lang }) {
   const [pp, setPp] = useState<Passport | null>(null);
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [follows, setFollows] = useState<Follows | null>(null);
+  const [badges, setBadges] = useState<BadgeView[] | null>(null);
+  const [moments, setMoments] = useState<Moment[] | null>(null);
   const [editing, setEditing] = useState(false);
   const [wrapped, setWrapped] = useState(false);
   const { clockReady } = useKd();
@@ -61,6 +66,8 @@ function Mine({ lang }: { lang: Lang }) {
     FF.maybe(FF.get('/me/passport'), null).then(setPp);
     FF.maybe(FF.get('/me/tickets'), { items: [] }).then((w: { items: Order[] }) => setOrders(w.items));
     FF.maybe(FF.get('/me/follows'), null).then(setFollows);
+    FF.maybe(FF.get('/me/badges'), null).then((b: { items: BadgeView[] } | null) => setBadges(b?.items ?? []));
+    FF.maybe(FF.get('/me/moments'), null).then((m: { items: Moment[] } | null) => setMoments(m?.items ?? []));
   }, []);
   const now = FF.now().getTime();
   const coming = (clockReady ? orders ?? [] : []).filter((o) => o.status === 'paid' && o.tickets.length && !(o.event.endsAt && Date.parse(o.event.endsAt) < now));
@@ -105,6 +112,8 @@ function Mine({ lang }: { lang: Lang }) {
       ) : null}
 
       {pp ? <PassportSection lang={lang} pp={pp} year={year} onWrapped={() => setWrapped(true)} /> : null}
+      {moments ? <MomentsSection lang={lang} as="user" items={moments} owner compact className="px-4 pt-8" /> : null}
+      <Badges lang={lang} items={badges} who={{ vi: 'người dùng', en: 'people' }} own compact className="px-4 pt-8" />
       {follows ? <FollowingSection lang={lang} f={follows} /> : null}
 
       {editing && u ? <EditSheet lang={lang} me={u} onClose={() => setEditing(false)} onSaved={(n) => { setMe((m) => m && { ...m, user: { ...m.user, ...n } }); setEditing(false); }} /> : null}
@@ -113,7 +122,7 @@ function Mine({ lang }: { lang: Lang }) {
   );
 }
 
-function PassportSection({ lang, pp, year, onWrapped }: { lang: Lang; pp: Passport; year: number; onWrapped: () => void }) {
+export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = true }: { lang: Lang; pp: Passport; year: number; onWrapped: () => void; flush?: boolean; appLinks?: boolean }) {
   const T = pick(APP, lang);
   const [only, setOnly] = useState<Family | null>(null);
   const [all, setAll] = useState(false);
@@ -125,7 +134,7 @@ function PassportSection({ lang, pp, year, onWrapped }: { lang: Lang; pp: Passpo
   const shown = all ? pp.stamps : pp.stamps.slice(0, 8);
   return (
     <>
-      <section className="flex flex-col gap-3 px-4 pt-8" aria-labelledby="pf-pass">
+      <section className={cx('flex flex-col gap-3 pt-8', !flush && 'px-4')} aria-labelledby="pf-pass">
         <div className="flex items-baseline justify-between"><h2 id="pf-pass" className="kd-h">{T.passport}</h2><span className="kd-m kd-num">{fill(T.stamps, { n: pp.stamps.length })}</span></div>
         <span className="kd-s">{fill(T.passportLine, { n: pp.stats.nights, g: pp.stats.genres, c: pp.stats.cities })}</span>
         {pp.stamps.length ? (
@@ -136,7 +145,7 @@ function PassportSection({ lang, pp, year, onWrapped }: { lang: Lang; pp: Passpo
             <ul className="mt-1 grid grid-cols-4 gap-x-2 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
-                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={'/app/e/' + s.slug} />
+                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={(appLinks ? '/app/e/' : '/e/') + s.slug} />
                 </li>
               ))}
             </ul>
@@ -147,7 +156,7 @@ function PassportSection({ lang, pp, year, onWrapped }: { lang: Lang; pp: Passpo
       </section>
 
       {mix.length ? (
-        <section className="flex flex-col gap-3.5 px-4 pt-8" aria-labelledby="pf-sound">
+        <section className={cx('flex flex-col gap-3.5 pt-8', !flush && 'px-4')} aria-labelledby="pf-sound">
           <div className="flex items-baseline justify-between"><h2 id="pf-sound" className="kd-h">{T.yourSound}</h2><span className="kd-m">{T.byNights}</span></div>
           <div className="flex h-3 gap-0.5" role="img" aria-label={mix.map((x) => `${FAMILY_LABEL[x.f][lang]} ${x.n}`).join(', ')}>
             {mix.map((x, i) => <i key={x.f} className={cx(g(x.f), 'bg-[var(--g)]', i === 0 && 'rounded-l', i === mix.length - 1 && 'rounded-r')} style={{ flex: `${x.n} 1 0` }} />)}
@@ -163,7 +172,7 @@ function PassportSection({ lang, pp, year, onWrapped }: { lang: Lang; pp: Passpo
   );
 }
 
-function FollowingSection({ lang, f }: { lang: Lang; f: Follows }) {
+export function FollowingSection({ lang, f, flush }: { lang: Lang; f: Follows; flush?: boolean }) {
   const T = pick(APP, lang);
   const rows = [
     ...(f.artistPages ?? f.artists.map((name) => ({ name, slug: null }))).map((a) => ({ key: 'a:' + a.name, href: a.slug ? '/a/' + a.slug : null, name: a.name, org: false, logo: null as string | null, line: T.artistRole })),
@@ -174,7 +183,7 @@ function FollowingSection({ lang, f }: { lang: Lang; f: Follows }) {
   ];
   if (!rows.length) return null;
   return (
-    <section className="flex flex-col px-4 pt-8" aria-labelledby="pf-follow">
+    <section className={cx('flex flex-col pt-8', !flush && 'px-4')} aria-labelledby="pf-follow">
       <div className="flex items-baseline justify-between pb-1.5"><h2 id="pf-follow" className="kd-h">{T.followingTitle}</h2><span className="kd-m kd-num">{rows.length}</span></div>
       {rows.slice(0, 6).map((r) => {
         const body = (
@@ -230,7 +239,7 @@ function Settings({ lang }: { lang: Lang }) {
   );
 }
 
-function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['user']; onClose: () => void; onSaved: (n: { name: string; city: string | null }) => void }) {
+export function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['user']; onClose: () => void; onSaved: (n: { name: string; city: string | null }) => void }) {
   const T = pick(APP, lang);
   const kd = useKd();
   const [name, setName] = useState(me.name ?? '');
@@ -262,7 +271,7 @@ interface Wrapped {
   topVenue: { name: string; times: number } | null; posts: number; helpful: number; brought: number; passedOn: number; cities: { vi: string; en: string }[];
 }
 
-function WrappedSheet({ lang, year, onClose }: { lang: Lang; year: number; onClose: () => void }) {
+export function WrappedSheet({ lang, year, onClose }: { lang: Lang; year: number; onClose: () => void }) {
   const T = pick(APP, lang);
   const kd = useKd();
   const [w, setW] = useState<Wrapped | null>(null);

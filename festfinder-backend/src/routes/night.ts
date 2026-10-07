@@ -12,6 +12,7 @@ import { isUuid } from '../http/sql.ts';
 import { requireOrganizer, requireOwnEvent, requireUser } from '../http/guards.ts';
 import { notifyUser } from '../services/notify.ts';
 import { nameOf, phaseOf } from '../services/community.ts';
+import { badgesOf } from '../services/badges.ts';
 
 /*
  * The night itself and what stays after it: the organiser's live updates, the photo wall,
@@ -176,6 +177,12 @@ export default async function nightRoutes(app: FastifyInstance) {
       })),
       badges: BADGES.map((b) => ({ key: b.key, icon: b.icon, label: b.label, need: b.need, earned: !!earned[b.key] })),
     };
+  });
+
+  /** The fan's own badges: earned, then in progress; the new ones count as seen once read. */
+  app.get('/me/badges', async (req) => {
+    const s = requireUser(req);
+    return { items: await badgesOf(ctx.db, 'user', s.user.id, ctx.clock.now(), { own: true }) };
   });
 
   // ---- the year in review -----------------------------------------------------------------------

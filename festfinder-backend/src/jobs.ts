@@ -9,6 +9,7 @@ import { checkTicketLink } from './routes/organizer/events.ts';
 import { expireResaleHolds } from './services/resale.ts';
 import { pingIndexNow } from './services/seo.ts';
 import { refreshConfidence } from './services/ingest/confidence.ts';
+import { awardAll } from './services/badges.ts';
 import { runDueSources } from './services/ingest/run.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
@@ -116,6 +117,11 @@ export const jobs = {
     return runs.map((r) => ({ source: r.name, created: r.created, merged: r.merged, rejected: r.rejected, failed: r.failed }));
   },
 
+  /** Badges reached since the last run, for everyone who could have reached one. */
+  async awardBadges(ctx: Ctx) {
+    return awardAll(ctx.db, ctx.clock.now());
+  },
+
   /** Confidence decays when sources stop listing an event, so it is recomputed for every upcoming one. */
   async refreshConfidence(ctx: Ctx) {
     return refreshConfidence(ctx.db, ctx.clock.now());
@@ -140,6 +146,7 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['checkTicketLinks', 15 * 60_000],
   ['pingIndexNow', 5 * 60_000],
   ['refreshConfidence', 60 * 60_000],
+  ['awardBadges', 60 * 60_000],
   // Last: it spends whatever time the call has left.
   ['ingest', 5 * 60_000],
 ];

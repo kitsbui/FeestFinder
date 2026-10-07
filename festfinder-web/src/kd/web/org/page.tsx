@@ -12,6 +12,8 @@ import { count } from '../../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { KdProvider } from '../../runtime';
+import { Badges, type BadgeView } from '../../ui/badges';
+import type { Moment } from '../../ui/moments';
 import { Clamp } from '../../ui/clamp';
 import { Accordion, Art, Avatar, Stat, Status, Tag } from '../../ui/parts';
 import type { Card } from '../../types';
@@ -20,7 +22,7 @@ import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
-import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ShareProfile, type Source } from '../profile/parts';
+import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, ShareProfile, type Source } from '../profile/parts';
 
 const enc = encodeURIComponent;
 
@@ -38,6 +40,8 @@ export interface Org {
   past: Card[];
   artists: ({ id: string; slug: string; name: string } & Evidence)[];
   venues: ({ name: string; city: string; cityLabel: Pair | null } & Evidence)[];
+  badges?: BadgeView[];
+  moments?: Moment[];
 }
 
 export async function loadOrg(slug: string, lang: Lang) {
@@ -146,6 +150,8 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     ...(past.length ? [{ key: 'past', label: T.past, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}
                 />
+                <ProfileMoments lang={lang} source={source} items={org.moments ?? []} className="mt-12" />
+                <Badges lang={lang} items={org.badges} who={{ vi: 'nhà tổ chức', en: 'organisers' }} className="mt-12" />
               </div>
 
               <aside className="kd-side flex flex-col gap-8">

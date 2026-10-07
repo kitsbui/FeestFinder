@@ -97,6 +97,11 @@ export const CONSOLE = {
   takeDown: { en: 'Take down', vi: 'Hạ tin' },
   takeDownAsk: { en: 'Take down {t}?', vi: 'Hạ tin {t}?' },
   noReports: { en: 'No open reports', vi: 'Không có báo cáo nào' },
+  photoReports: { en: 'Reported photos', vi: 'Ảnh bị báo cáo' },
+  photoRemove: { en: 'Remove', vi: 'Gỡ ảnh' },
+  photoKeep: { en: 'Keep', vi: 'Giữ ảnh' },
+  photoOn: { en: 'On {n}', vi: 'Trên {n}' },
+  photoFan: { en: 'A fan’s own profile', vi: 'Hồ sơ riêng của người dùng' },
   // featured
   shelves: { en: 'Shelves', vi: 'Kệ' },
   shelfNew: { en: 'New shelf', vi: 'Kệ mới' },

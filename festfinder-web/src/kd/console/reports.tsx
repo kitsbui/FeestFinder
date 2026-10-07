@@ -2,7 +2,8 @@
 /**
  * /console/reports: open user reports on listings, grouped by listing and kind, most reporters
  * first, with what one of them wrote; dismiss, warn the organiser (three warnings suspend), or
- * take the listing down. The last 30 days by kind above them.
+ * take the listing down. The last 30 days by kind above them. Below, reported photos (Moments) on
+ * profiles: remove or keep.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { FF } from '@/runtime/ff';
@@ -14,6 +15,7 @@ import { Card as Panel, Status } from '../ui/parts';
 import { CONSOLE } from './copy';
 import { useConsole } from './root';
 
+interface Photo { id: string; url: string; caption: string | null; reports: number; reasons: { key: string; label: Pair }[]; owner: { kind: string; name: string | null; href: string | null } }
 interface Report { id: string; eventId: string; category: string; categoryLabel: Pair; subject: string; eventStatus: string; heldFromFeed: boolean; count: number; quote: string | null; ageMinutes: number }
 
 const ago = (min: number, lang: Lang) => (min < 60 ? `${min} ${lang === 'vi' ? 'phút' : 'min'}` : min < 1440 ? `${Math.floor(min / 60)} ${lang === 'vi' ? 'giờ' : 'h'}` : `${Math.floor(min / 1440)} ${lang === 'vi' ? 'ngày' : 'd'}`);
@@ -27,6 +29,12 @@ export function Reports() {
   useEffect(() => { load(); }, [load]);
   const act = async (path: string, body: Record<string, unknown>) => {
     try { const out = await FF.post(path, body); kd.toast(FF.text(out.message, lang)); load(); refreshCounts(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+  };
+  const [photos, setPhotos] = useState<Photo[] | null>(null);
+  const loadPhotos = useCallback(async () => setPhotos((await FF.maybe(FF.get('/admin/moments/reports'), { items: [] })).items), []);
+  useEffect(() => { loadPhotos(); }, [loadPhotos]);
+  const decidePhoto = async (id: string, verdict: 'remove' | 'keep') => {
+    try { const out = await FF.post(`/admin/moments/${id}/${verdict}`); kd.toast(FF.text(out.message, lang)); loadPhotos(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const needle = q.trim().toLowerCase();
   const items = (data?.items ?? []).filter((r) => !needle || r.subject.toLowerCase().includes(needle));
@@ -63,6 +71,30 @@ export function Reports() {
           ))}
         </ul>
       )}
+      {photos?.length ? (
+        <section className="flex flex-col gap-3 pt-4" aria-label={T.photoReports}>
+          <h2 className="kd-h">{T.photoReports}</h2>
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(260px,100%),1fr))] gap-3">
+            {photos.map((p) => (
+              <li key={p.id}>
+                <Panel as="article" className="flex h-full flex-col overflow-hidden" aria-label={p.caption || p.url}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage */}
+                  <img src={p.url} alt={p.caption ?? ''} className="aspect-square w-full object-cover" loading="lazy" />
+                  <div className="flex flex-1 flex-col gap-2 p-4">
+                    {p.caption ? <span className="kd-hs">{p.caption}</span> : null}
+                    <span className="kd-s">{p.owner.href ? <a className="hover:underline" href={p.owner.href}>{fill(T.photoOn, { n: p.owner.name ?? '' })}</a> : T.photoFan}</span>
+                    <span className="kd-m">{p.reasons.map((r) => r.label[lang]).join(' · ')} · {fill(T.reporters, { n: p.reports })}</span>
+                    <div className="mt-auto flex gap-2 pt-1">
+                      <Button size="sm" onClick={() => decidePhoto(p.id, 'remove')}>{T.photoRemove}</Button>
+                      <Button size="sm" tone="ghost" onClick={() => decidePhoto(p.id, 'keep')}>{T.photoKeep}</Button>
+                    </div>
+                  </div>
+                </Panel>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

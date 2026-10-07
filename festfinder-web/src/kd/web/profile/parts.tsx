@@ -16,10 +16,12 @@ import { useKd } from '../../runtime';
 import { buttonClass, IconButton } from '../../ui/actions';
 import { DateBlock, Marker, Stat } from '../../ui/parts';
 import { Tabs } from '../../ui/shell';
+import { MomentsSection } from '../../moments';
+import type { Moment } from '../../ui/moments';
 import { PROFILE } from './copy';
 
 /** What the page's own API answer says about the viewer. */
-export interface Viewer { following: boolean; followers: number; owner: boolean; claimed: boolean }
+export interface Viewer { following: boolean; followers: number; owner: boolean; claimed: boolean; moments: Moment[] | null }
 
 /** Whose page this is: plain data, so the server page can hand it over. */
 export type Source = { kind: 'org' | 'artist'; slug: string };
@@ -27,11 +29,11 @@ export type Source = { kind: 'org' | 'artist'; slug: string };
 const READ: Record<Source['kind'], { path: (slug: string) => string; read: (d: any) => Viewer }> = {
   org: {
     path: (slug) => '/organizers/' + encodeURIComponent(slug),
-    read: (d) => ({ following: !!d.me?.following, followers: d.stats?.followers ?? 0, owner: !!d.me?.member, claimed: false }),
+    read: (d) => ({ following: !!d.me?.following, followers: d.stats?.followers ?? 0, owner: !!d.me?.member, claimed: false, moments: d.moments ?? null }),
   },
   artist: {
     path: (slug) => '/artists/' + encodeURIComponent(slug),
-    read: (d) => ({ following: !!d.artist?.following, followers: d.artist?.followers ?? 0, owner: !!d.artist?.editable, claimed: !!d.artist?.claimed }),
+    read: (d) => ({ following: !!d.artist?.following, followers: d.artist?.followers ?? 0, owner: !!d.artist?.editable, claimed: !!d.artist?.claimed, moments: d.moments ?? null }),
   },
 };
 
@@ -180,4 +182,10 @@ export function PastList({ lang, items, first = 10 }: { lang: Lang; items: PastI
       ) : null}
     </div>
   );
+}
+
+/** The profile's moments: the server's copy, then the browser's (fresh for the owner, with their controls). */
+export function ProfileMoments({ lang, source, items, className }: { lang: Lang; source: Source; items: Moment[]; className?: string }) {
+  const v = useViewer(source);
+  return <MomentsSection lang={lang} as={source.kind === 'org' ? 'organizer' : 'artist'} items={v?.moments ?? items} owner={!!v?.owner} className={className} />;
 }

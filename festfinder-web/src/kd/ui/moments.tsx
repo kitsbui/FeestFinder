@@ -2,10 +2,11 @@
 /**
  * Moments: up to nine pictures in a 3×3 grid; the owner sees a dashed "+ Thêm" tile while
  * there is room. A tile opens the lightbox: glass controls, previous and next, "i / n", and
- * for the owner "Xoá ảnh". Arrow keys move, Escape closes.
+ * for the owner "Xoá ảnh", for anyone else signed in "Báo cáo" with its reasons. Arrow keys
+ * move, Escape closes.
  */
 import { useEffect, useRef, useState } from 'react';
-import { CaretLeftIcon, CaretRightIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { CaretLeftIcon, CaretRightIcon, FlagIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { familyOf } from '../genre';
 import { Art } from './parts';
 
@@ -13,12 +14,17 @@ export interface Moment { id: string; url: string | null; caption?: string | nul
 
 export const MOMENTS_MAX = 9;
 
-export function MomentsGrid({ items, owner, onAdd, onRemove, labels }: {
+type Labels = { add: string; open: string; close: string; prev: string; next: string; remove: string; report?: string };
+
+export function MomentsGrid({ items, owner, onAdd, onRemove, onReport, reasons, labels }: {
   items: Moment[];
   owner?: boolean;
   onAdd?: () => void;
   onRemove?: (m: Moment) => void;
-  labels: { add: string; open: string; close: string; prev: string; next: string; remove: string };
+  /** Someone else's moment: report it for one of `reasons`. */
+  onReport?: (m: Moment, reason: string) => void;
+  reasons?: { key: string; label: string }[];
+  labels: Labels;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
@@ -48,6 +54,8 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, labels }: {
           onIndex={setOpen}
           onClose={() => setOpen(null)}
           onRemove={owner && onRemove ? (m) => { onRemove(m); setOpen(null); } : undefined}
+          onReport={!owner && onReport && reasons?.length ? onReport : undefined}
+          reasons={reasons}
           labels={labels}
         />
       ) : null}
@@ -55,11 +63,13 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, labels }: {
   );
 }
 
-function Lightbox({ items, index, onIndex, onClose, onRemove, labels }: {
+function Lightbox({ items, index, onIndex, onClose, onRemove, onReport, reasons, labels }: {
   items: Moment[]; index: number; onIndex: (i: number) => void; onClose: () => void; onRemove?: (m: Moment) => void;
-  labels: { close: string; prev: string; next: string; remove: string };
+  onReport?: (m: Moment, reason: string) => void; reasons?: { key: string; label: string }[];
+  labels: Labels;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [reporting, setReporting] = useState(false);
   const n = items.length;
   const m = items[index];
   useEffect(() => { ref.current?.showModal(); }, []);
@@ -94,10 +104,23 @@ function Lightbox({ items, index, onIndex, onClose, onRemove, labels }: {
               {labels.remove}
             </button>
           ) : null}
+          {onReport ? (
+            <button type="button" className="kd-btn kd-btn-sm kd-btn-glass" aria-expanded={reporting} onClick={() => setReporting(!reporting)}>
+              <FlagIcon size={16} aria-hidden="true" />
+              {labels.report}
+            </button>
+          ) : null}
           <button type="button" className="kd-ib kd-glass" aria-label={labels.close} onClick={onClose} autoFocus>
             <XIcon size={20} aria-hidden="true" />
           </button>
         </div>
+        {onReport && reporting ? (
+          <div className="kd-menu absolute right-3 top-16 z-10" role="group" aria-label={labels.report}>
+            {(reasons ?? []).map((r) => (
+              <button key={r.key} type="button" className="kd-mi" onClick={() => { onReport(m, r.key); setReporting(false); }}>{r.label}</button>
+            ))}
+          </div>
+        ) : null}
         {n > 1 ? (
           <>
             <button type="button" className="kd-ib kd-glass absolute left-3 top-1/2 -translate-y-1/2" aria-label={labels.prev} onClick={() => onIndex((index - 1 + n) % n)}>

@@ -14,6 +14,8 @@ import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../../genre
 import { KdLink as Link, inLang } from '../../link';
 import { KdProvider } from '../../runtime';
 import { buttonClass } from '../../ui/actions';
+import { Badges, type BadgeView } from '../../ui/badges';
+import type { Moment } from '../../ui/moments';
 import { Clamp } from '../../ui/clamp';
 import { Accordion, Art, Avatar, DateBlock, Marker, Stat, Status, type StatusTone } from '../../ui/parts';
 import type { Card } from '../../types';
@@ -21,7 +23,7 @@ import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
-import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ShareProfile, type Source } from '../profile/parts';
+import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, ShareProfile, type Source } from '../profile/parts';
 
 const enc = encodeURIComponent;
 
@@ -49,6 +51,8 @@ export interface ArtistData {
   };
   gear: { id: string; slug: string; name: string; brand: string | null; category: string; categoryLabel: Pair; url: string | null; usedForLabel?: Pair }[];
   availability: { from: string; to: string; kind: 'available' | 'busy' | string; city: string | null; cityLabel: Pair | null }[];
+  badges?: BadgeView[];
+  moments?: Moment[];
 }
 
 export async function loadArtist(slug: string, lang: Lang) {
@@ -188,6 +192,8 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                     ...(past.length ? [{ key: 'past', label: T.pastTab, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}
                 />
+                <ProfileMoments lang={lang} source={source} items={data.moments ?? []} className="mt-12" />
+                <Badges lang={lang} items={data.badges} who={{ vi: 'nghệ sĩ', en: 'artists' }} className="mt-12" />
               </div>
 
               <aside className="kd-side flex flex-col gap-8">

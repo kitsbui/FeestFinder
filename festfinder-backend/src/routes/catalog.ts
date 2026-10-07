@@ -20,6 +20,8 @@ import { findClashes, loadTimetable } from '../presenters/timetable.ts';
 import { SHARE_CHANNELS } from '../services/community.ts';
 import { eventExtras } from '../services/eventpage.ts';
 import { recordShareVisit } from './community.ts';
+import { badgesOf } from '../services/badges.ts';
+import { momentsOf } from './moments.ts';
 
 const PRICE_BANDS = ['free', 'under', 'over'] as const;
 const BBOX = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$/;
@@ -404,11 +406,13 @@ export default async function catalogRoutes(app: FastifyInstance) {
         where e.organizer_id = $1 and e.status = 'live' and not e.held_for_reports order by e.starts_at`, [org.id]);
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const cards = rows.map((r) => presentCard(r, { now, viewer }));
-    const [following, artists, venues, member] = await Promise.all([
+    const [following, artists, venues, member, badges, moments] = await Promise.all([
       userId ? one(ctx.db, 'select 1 from organizer_follows where user_id = $1 and organizer_id = $2', [userId, org.id]) : null,
       organizerArtists(ctx.db, org.id),
       organizerVenues(ctx.db, org.id),
       userId ? one(ctx.db, 'select 1 from organizer_members where user_id = $1 and organizer_id = $2', [userId, org.id]) : null,
+      badgesOf(ctx.db, 'organizer', org.id, now),
+      momentsOf(ctx.db, 'organizer', org.id),
     ]);
     // The styles it runs: what its profile says, then what its events say.
     const played = [...cards.flatMap((c) => c.styles).reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())]
@@ -426,7 +430,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       stats: { events: cards.length, followers: org.followers_count, since: org.since_year, artists: artists.length },
       upcoming: cards.filter((c) => !c.past),
       past: cards.filter((c) => c.past).reverse(),
-      artists, venues,
+      artists, venues, badges, moments,
       me: userId ? { following: !!following, member: !!member } : null,
     };
   });

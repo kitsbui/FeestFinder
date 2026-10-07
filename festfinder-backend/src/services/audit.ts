@@ -113,6 +113,11 @@ const ACTIONS: Record<string, Localized> = {
   'venue.updated': L('Edited a venue', 'Đã sửa địa điểm'),
   'user.role_changed': L('Changed account role', 'Đã đổi quyền tài khoản'),
   'order.refunded': L('Refunded an order', 'Đã hoàn tiền đơn hàng'),
+  'boost.requested': L('Asked to boost a listing', 'Yêu cầu đẩy tin'),
+  'boost.done': L('Boosted a listing', 'Đã đẩy tin'),
+  'boost.declined': L('Declined a boost', 'Đã từ chối đẩy tin'),
+  'moment.removed': L('Removed a photo', 'Đã gỡ ảnh'),
+  'moment.kept': L('Kept a reported photo', 'Giữ ảnh bị báo cáo'),
 };
 
 export function actionLabel(action: string, diff: DiffRow[] | null, lang: Lang): string {
