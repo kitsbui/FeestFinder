@@ -64,7 +64,7 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
    - `CORS_ORIGINS` += this site's origin (sign-in may return only to listed origins).
 4. **Google Cloud console** → the OAuth client → add the authorised redirect URI `<this site>/auth/oauth/google/return` (and the same for Facebook and Instagram if they are on).
 5. **Check.** `<this site>/health` answers `"webProxy":"visitor"` (the API sees each visitor; `false` means the secret is missing or differs, and the API logs a warning when it differs); sign in with Google; `/list` and an event page load.
-6. **Previews.** The API's preview deployments sit behind Vercel Authentication, so this project builds `main` only (Settings → Git → Ignored Build Step: `[ "$VERCEL_ENV" != "production" ]`).
+6. **Previews.** The API's preview deployments sit behind Vercel Authentication, so this project builds `main` only: `vercel.json` turns Git deployments off for every other branch (`git.deploymentEnabled`). Leave Settings → Git → Ignored Build Step empty; a command reading `$VERCEL_ENV` there skipped `main` too.
 
 
 ### Moving feestfinder.com to this project
