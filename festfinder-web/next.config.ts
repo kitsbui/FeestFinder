@@ -73,7 +73,7 @@ const config: NextConfig = {
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
       // browser, so the session cookie and every relative fetch in the screens just work.
-      // src/proxy.ts rewrites most of these itself (it signs them); this catches the rest.
+      // src/proxy.ts forwards most of these itself (it signs them); this catches the rest.
       fallback: [{ source: '/:path*', destination: `${API}/:path*` }],
     };
   },
