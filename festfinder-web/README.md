@@ -69,6 +69,8 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
 
 ### Moving feestfinder.com to this project
 
+Done on 2026-10-08: this project (`feestfinder-web`) holds feestfinder.com, `www.feestfinder.com` and `feestfinder.vercel.app` (both 308 to feestfinder.com); the API project keeps `feestfinder-api.vercel.app`. Moving `feestfinder.com` in Vercel moves the domains that redirect to it as well. The steps, for the record and for a move back:
+
 The API keeps running as it is; only the address people type changes hands. The API answers on an address of its own that this project calls: `https://feestfinder-api.vercel.app`, a domain on the API project with no redirect (the project's other `*.vercel.app` addresses redirect to feestfinder.com or sit behind Vercel Authentication). `api.feestfinder.com` can replace it later with a CNAME at the registrar (feestfinder.com's DNS is not on Vercel).
 
 1. **The API's own address.** On the API project (`feestfinder`) → Domains → `feestfinder-api.vercel.app`, no redirect. `https://feestfinder-api.vercel.app/health` answers `{"ok":true…}`.

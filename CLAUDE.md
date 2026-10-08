@@ -18,7 +18,7 @@ Event discovery for Vietnam and Asia (HCMC, Hà Nội, Đà Nẵng, Nha Trang, B
 | `festfinder-frontend/pages/ops/` | `/ops`, the working back office: plain ES modules on vendored React (`js/core.js`, `js/ui.js`, `js/team/*`, `js/org/*`). It does not use the design runtime. |
 | `festfinder-frontend/ui/` | `ff-client.js` (the `FF` runtime: API calls, routing, session, OAuth return, mount), `theme.css` (the "Bảng phấn" Chalkboard look), `support.js` (**generated** design runtime; do not edit), `fonts/` (Be Vietnam Pro, served from this site; no Google Fonts request, and the CSP allows none), `map/ff-map.js` (the map, shared by both fronts, loaded by `FF.loadMap()`), and `vendor/` (React, MapLibre + pmtiles, and the Phosphor icons cut to the ones in use). |
 | `festfinder-frontend/vendor-src/`, `scripts/` | The full Phosphor fonts and `subset-icons.py`, which cuts them. Neither is deployed. |
-| `festfinder-web/` | The Kính đêm ("night glass") redesign on Next.js 16: hand-written React 19 + Tailwind v4. Routes in `src/app/(kd)/`; the screens in `src/kd/` (`ui/` the parts, `web/`, `app/`, `studio/`, `console/`, strings in `copy/` and each screen's `copy.ts`); `src/kd/theme.css` holds the tokens; `/kit` (with `FF_KIT=1`) shows every part. `src/runtime/ff.ts` mirrors `ui/ff-client.js`. `scripts/compile-screens.ts` still copies `public/ui/` (map, brand images) and compiles the templates to `src/screens/` (generated, gitignored), which no route uses any more; it stays until production moves to this front. The board files are in `design_handoff_kinh_dem/` (reference only). Production does not run this front; keep it working and tested anyway. |
+| `festfinder-web/` | The Kính đêm ("night glass") redesign on Next.js 16: hand-written React 19 + Tailwind v4. Routes in `src/app/(kd)/`; the screens in `src/kd/` (`ui/` the parts, `web/`, `app/`, `studio/`, `console/`, strings in `copy/` and each screen's `copy.ts`); `src/kd/theme.css` holds the tokens; `/kit` (with `FF_KIT=1`) shows every part. `src/runtime/ff.ts` mirrors `ui/ff-client.js`. `scripts/compile-screens.ts` still copies `public/ui/` (map, brand images) and compiles the templates to `src/screens/` (generated, gitignored), which no route uses any more (the compiled screens can go; `public/ui/` must still be copied). The board files are in `design_handoff_kinh_dem/` (reference only). Production runs this front at feestfinder.com; every path that is not one of its pages goes to the API through `src/proxy.ts`. |
 | `design_handoff_festfinder/` | The original handoff. Reference only; never edit it. |
 | `docs/` | `CURRENT_ARCHITECTURE.md`, `TECH_DEBT.md`, `FEESTFINDER_IMPLEMENTATION_PLAN.md` (the event-intelligence plan and the decisions behind it) and `FEESTFINDER_ROADMAP.md`. Update the roadmap with the work. |
 
@@ -67,12 +67,14 @@ Outside development, every `/ui` and `/pages` URL carries `?v=<content hash>`:
 
 ## Deploying
 
-- Vercel project `feestfinder`, root directory `festfinder-backend`. Functions run in `hnd1` (Tokyo), next to the Supabase database.
-- The Next front deploys as its own Vercel project (root directory `festfinder-web`, `hnd1`), calling the API at `FF_API_ORIGIN`; `WEB_PROXY_SECRET` on both lets the API see each visitor behind it (`festfinder-web/README.md`, "Deploy on Vercel"). feestfinder.com stays on the API's project until its domain is moved.
-- Pushing to `main` deploys production: the project is linked to GitHub with `main` as its production branch. Other branches get preview deployments on the staging database. Migrations run on boot.
+- Two Vercel projects, both in `hnd1` (Tokyo), next to the Supabase database:
+  - `feestfinder-web` (root directory `festfinder-web`) holds feestfinder.com (`www` and `feestfinder.vercel.app` redirect to it). Its proxy (`src/proxy.ts`) forwards every non-page path to the API with fetch, signed with `WEB_PROXY_SECRET` so the API sees each visitor (`festfinder-web/README.md`, "Deploy on Vercel").
+  - `feestfinder` (root directory `festfinder-backend`) is the API, at `https://feestfinder-api.vercel.app` (the web project's `FF_API_ORIGIN`). Its `PUBLIC_BASE_URL` and `CORS_ORIGINS` stay `https://feestfinder.com`.
+- Pushing to `main` deploys production on both projects (both are linked to GitHub with `main` as the production branch). The API's other branches get preview deployments on the staging database; the web project builds `main` only (`festfinder-web/vercel.json`). Migrations run on boot.
 - Work happens on a branch and reaches `main` by merge. CI (`.github/workflows/ci.yml`) runs on pushes to `main` and on pull requests.
-- To ship a branch without merging it, run `vercel deploy --prod --yes` from the repo root.
-- pg_cron calls `POST https://feestfinder.com/internal/jobs` every minute.
+- To ship the API from a branch without merging it, run `vercel deploy --prod --yes` from the repo root (the root `.vercelignore` leaves `festfinder-web` out).
+- pg_cron calls `POST https://feestfinder.com/internal/jobs` every minute; the web proxy forwards it with its `Authorization`.
+- To move feestfinder.com back to the API's screens, move the domain back to the `feestfinder` project (`festfinder-web/README.md`, "Back out").
 - Secrets, such as `GOOGLE_CLIENT_SECRET`, are entered by the user in Vercel.
 
 ## Checking a change

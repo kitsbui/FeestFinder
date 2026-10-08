@@ -63,7 +63,7 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
 
 ## Kính đêm (the Next front in React + Tailwind)
 
-The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `feat/kinh-dem` branch. Production keeps the API-served front. Plan and decisions: [KINH_DEM_PLAN.md](KINH_DEM_PLAN.md).
+The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `feat/kinh-dem` branch. In production at feestfinder.com since 2026-10-08. Plan and decisions: [KINH_DEM_PLAN.md](KINH_DEM_PLAN.md).
 
 - [x] Phase 0: Plan, and the owner's answers to the handoff's questions
 - [x] Phase 1: Tailwind, tokens, fonts, icons, the `(legacy)`/`(kd)` split, the `kd` components, `/kit`
@@ -100,6 +100,10 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
   - [x] Cards mark a cancelled event; hearts on past saves read as saved; a picker's name says what is chosen.
   - [x] The `(legacy)` route group, `components/seo-page.tsx` and `summaries.tsx` removed; `/vi/…` and `/en/<city>/…` still redirect to `/list`. The compile step stays (it copies `public/ui`, and production has not moved).
   - [x] Docs: `CLAUDE.md`, the `festfinder-web` README, `CURRENT_ARCHITECTURE.md`.
+- [x] Production: feestfinder.com on its own Vercel project (`feestfinder-web`), the API at `feestfinder-api.vercel.app`
+  - The web proxy forwards every non-page path to the API with fetch, signed with `WEB_PROXY_SECRET` (on Vercel, headers a proxy adds never reach a rewrite to another deployment); the API keeps per-visitor rate limits, the sign-in throttle, click countries and Google's return address.
+  - [ ] Remove the compiled screens from the compile step (`public/ui/` must still be copied).
+  - [ ] A Vercel Firewall rate-limit rule on `feestfinder-web` for paths rendered on request (`/list?…`, `/stats/…`): the API caps their shared bucket, so one client could crowd out the others' renders.
 
 ## What the team does next in production
 
@@ -109,7 +113,8 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 4. Approve candidates in the review queue (bulk approve works). The "500+ upcoming events in 5 cities" goal depends on these sources.
 5. Set `ADMIN_EMAIL` in Vercel to the team's Google addresses. Admins sign in with Google; the shared password disclosed earlier must be rotated and is not used by this build.
 6. Approve profile claims in `/ops/claims` (Profiles tab) and gear suggestions in `/ops/artists` (Gear tab); verify the artists you know and add their MusicBrainz or Spotify ids.
-7. Produce the PMTiles extract for the launched cities, upload it to the bucket with range requests enabled, and set `MAP_TILES_URL` (and `MAP_GLYPHS_URL` for place names).
+7. Produce the PMTiles extract for the launched cities, upload it to the bucket with range requests enabled, and set `MAP_TILES_URL` (and `MAP_GLYPHS_URL` for place names), on both Vercel projects.
+8. Revoke the Vercel token that was pasted in chat for the move to the new front (Vercel → Account Settings → Tokens).
 
 ## Postponed
 
@@ -138,3 +143,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-07: Kính đêm Phase 5: badges (migration `028`), Moments (migration `029`), `/profile`, reported photos in the Console (`e2e/next/profiles.spec.ts`).
 - 2026-10-07: Kính đêm Phase 5 review: organiser photos go to the team named, badge rules match their text, row level security on the new tables (migration `030`).
 - 2026-10-07: Kính đêm Phase 6: every Next route is rebuilt (`e2e/next/directory.spec.ts`, `collection.spec.ts`, `saved.spec.ts`, `about.spec.ts`, `stats.spec.ts`); the legacy route group is gone.
+- 2026-10-08: feestfinder.com moved to the Kính đêm front: Vercel project `feestfinder-web` (with `www` and `feestfinder.vercel.app`), the API at `feestfinder-api.vercel.app`. The web proxy forwards the API's paths with fetch (a rewrite lost the signed headers on Vercel); the web project builds `main` only through `vercel.json`. API 317 pass; the Next run 167 passed.
