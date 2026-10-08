@@ -70,4 +70,11 @@ describe('the web app as its own deployment', () => {
     assert.match(String(ret.headers.location), /^https:\/\/web\.example\/app\?auth=google/);
     assert.match(String(ret.headers['set-cookie']), /ff_session=/);
   });
+
+  it('says on /health whether the web app signed the request', async () => {
+    const health = async (headers: Record<string, string>, remoteAddress: string) =>
+      (await env.app.inject({ method: 'GET', url: '/health', remoteAddress, headers })).json().webProxy;
+    assert.equal(await health(signed('203.0.113.60'), '198.18.0.9'), 'visitor');
+    assert.equal(await health({ 'x-ff-client-ip': '203.0.113.60' }, '198.18.0.10'), false);
+  });
 });

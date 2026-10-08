@@ -278,9 +278,13 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   });
 
   // Says where reads and writes go, so a deployment can be checked from outside.
-  app.get('/health', async () => {
+  app.get('/health', async (req) => {
     await ctx.db.query('select 1');
-    return { ok: true, time: ctx.clock.now(), environment: ctx.config.environment, database: ctx.db.provider, uploads: ctx.storage.kind };
+    return {
+      ok: true, time: ctx.clock.now(), environment: ctx.config.environment, database: ctx.db.provider, uploads: ctx.storage.kind,
+      // Whether the web app's proxy signed this request: the check after deploying it on its own.
+      webProxy: req.fromWebServer ? 'render' : req.clientIp !== req.ip ? 'visitor' : false,
+    };
   });
 
   await app.register(authRoutes);

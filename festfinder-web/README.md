@@ -47,7 +47,7 @@ The Playwright tests live with the API: `npm run test:screens:next --prefix fest
 | `MAP_TILES_URL`, `MAP_OVERVIEW_URL`, `MAP_GLYPHS_URL` | build time: their origins join the CSP's `connect-src` | none |
 | `FF_KIT` | runtime: `1` serves `/kit` | off |
 
-Behind this app, set the API's `PUBLIC_BASE_URL` to this app's address too, so the links and file URLs the API writes point here. `.env.example` lists them all.
+When this app is at the site's public address (feestfinder.com), the API's `PUBLIC_BASE_URL` is that address, so the links and file URLs the API writes point here; while it runs on an address of its own, leave the API's as it is. `.env.example` lists them all.
 
 ## Deploy on Vercel
 
@@ -63,7 +63,8 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
    - `WEB_PROXY_SECRET` = the same value.
    - `CORS_ORIGINS` += this site's origin (sign-in may return only to listed origins).
 4. **Google Cloud console** → the OAuth client → add the authorised redirect URI `<this site>/auth/oauth/google/return` (and the same for Facebook and Instagram if they are on).
-5. **Check.** Open the site; sign in with Google; `/list` and an event page load; in the API's logs there is no "every client shares one rate limit" warning.
+5. **Check.** `<this site>/health` answers `"webProxy":"visitor"` (the API sees each visitor; `false` means the secret is missing or differs, and the API logs a warning when it differs); sign in with Google; `/list` and an event page load.
+6. **Previews.** The API's preview deployments sit behind Vercel Authentication, so this project builds `main` only (Settings → Git → Ignored Build Step: `[ "$VERCEL_ENV" != "production" ]`).
 
 Production keeps serving the API's own screens at feestfinder.com until its domain moves here.
 

@@ -37,6 +37,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Everything but the build's own files: any other path may end at the API.
-  matcher: ['/((?!_next/static|_next/image).*)'],
+  // Not the files this app serves itself (public/), which never reach the API, nor uploads
+  // (/files/, which the API does not rate-limit); any other path may end at the API.
+  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|files/|favicon.ico|sw.js|manifest.webmanifest).*)'],
 };

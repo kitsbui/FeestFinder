@@ -48,9 +48,11 @@ export default async function outboundRoutes(app: FastifyInstance) {
   const seen = new Map<string, number>();
   const ownHost = hostOf(ctx.config.publicBaseUrl);
   /** Where a click came from. A robot (a crawler, a link preview) is not a click: null. */
-  const origin = (req: { headers: Record<string, string | string[] | undefined> }) => {
+  const origin = (req: { headers: Record<string, string | string[] | undefined>; webOrigin: string | null }) => {
     const device = deviceOf(req.headers['user-agent'] as string | undefined);
-    return device ? { device, country: countryOf(req.headers), referrer: referrerHostOf(req.headers, ownHost) } : null;
+    // The web app on an address of its own is this site too.
+    const own = req.webOrigin ? hostOf(req.webOrigin) : ownHost;
+    return device ? { device, country: countryOf(req.headers), referrer: referrerHostOf(req.headers, own) } : null;
   };
 
   app.get<{ Params: { event: string } }>('/go/:event', async (req, reply) => {
