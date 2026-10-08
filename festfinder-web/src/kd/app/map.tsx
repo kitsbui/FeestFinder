@@ -98,6 +98,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
     if (at) setMe(at);
     createKdMap(el.current, {
       bounds: start,
+      places: cities.flatMap((c) => (c.center ? [{ name: c.name[lang], at: c.center }] : [])),
       pinLabel: (p) => (p.title ?? '') + ', ' + p.label,
       onSelect: (id) => setSel(id),
       onMove: () => setDirty(true),

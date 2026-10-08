@@ -63,6 +63,9 @@ test.describe('the list', () => {
     await page.goto('/list?city=ho-chi-minh&view=map');
     const map = page.locator('[data-kd-map]');
     await expect(map.locator('canvas')).toBeVisible();
+    // With no basemap configured, the city names are what there is to see where things are.
+    await expect(map.locator('.kd-area', { hasText: 'TP.HCM' })).toBeVisible();
+    await expect(map.locator('.kd-area', { hasText: 'Hà Nội' })).toBeAttached();
     await expect.poll(() => asked.length).toBe(1);
     await expect(page.getByText(/\d+ sự kiện · gần nhất trước/)).toBeVisible();
     const box = (await map.boundingBox())!;
