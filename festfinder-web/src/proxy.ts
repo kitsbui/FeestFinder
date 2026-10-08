@@ -8,9 +8,12 @@ import { NextResponse, type NextRequest } from 'next/server';
  * WEB_PROXY_SECRET set here and on the API, each request carries the visitor's address and
  * country and this site's origin (so Google sign-in comes back here), signed by the secret.
  * Without it, nothing changes.
+ *
+ * Only on Vercel, whose edge sets X-Forwarded-For itself: anywhere else a client could put any
+ * address there, and this would sign it.
  */
 
-const SECRET = process.env.WEB_PROXY_SECRET ?? '';
+const SECRET = process.env.VERCEL === '1' ? (process.env.WEB_PROXY_SECRET ?? '').trim() : '';
 const OURS = ['x-ff-web-secret', 'x-ff-client-ip', 'x-ff-client-country', 'x-ff-web-origin'];
 
 export function proxy(request: NextRequest) {
@@ -34,6 +37,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Not the build's own files and the static ones: nothing there reaches the API.
-  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|favicon|sw\\.js|manifest\\.webmanifest).*)'],
+  // Everything but the build's own files: any other path may end at the API.
+  matcher: ['/((?!_next/static|_next/image).*)'],
 };

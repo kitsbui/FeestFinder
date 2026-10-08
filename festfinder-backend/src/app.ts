@@ -78,6 +78,8 @@ export function isInternal(ip: string): boolean {
   return ip === '::1' || /^f[cd][0-9a-f]{2}:/i.test(ip) || /^fe[89ab][0-9a-f]:/i.test(ip);
 }
 
+/** The rate-limit key of the web app's server renders (no visitor behind them). */
+const WEB_RENDER = 'web-render';
 const originOf = (u: string) => { try { return new URL(u).origin; } catch { return null; } };
 const one1 = (req: FastifyRequest, name: string) => { const v = req.headers[name]; return typeof v === 'string' ? v.trim() : null; };
 
@@ -86,18 +88,23 @@ const one1 = (req: FastifyRequest, name: string) => { const v = req.headers[name
  * X-Forwarded-For with the web app's own address: every visitor would share one rate limit and
  * one sign-in throttle. With WEB_PROXY_SECRET set on both, the web app's proxy (festfinder-web
  * src/proxy.ts) signs its requests and names the visitor (x-ff-client-ip, x-ff-client-country)
- * and its own origin (x-ff-web-origin); its server-side renders sign without a visitor. Anyone
- * else's x-ff-* headers are ignored.
+ * and its own origin (x-ff-web-origin); its server-side renders sign without a visitor and share
+ * one larger rate-limit bucket. Anyone else's x-ff-* headers are ignored.
  */
 function webProxy(ctx: Ctx) {
   const secret = ctx.config.webProxySecret ? Buffer.from(ctx.config.webProxySecret) : null;
+  if (!secret && (process.env.WEB_PROXY_SECRET ?? '').trim()) ctx.log('warning: WEB_PROXY_SECRET is shorter than 32 characters, so the web app\'s requests are not trusted.');
+  let warnedMismatch = false;
   const ours = new Set([...ctx.config.corsOrigins, ctx.config.publicBaseUrl].map(originOf).filter((o): o is string => !!o));
   return async (req: FastifyRequest) => {
     req.clientIp = req.ip;
     const given = one1(req, 'x-ff-web-secret');
     if (!secret || !given) return;
     const g = Buffer.from(given);
-    if (g.length !== secret.length || !timingSafeEqual(g, secret)) return;
+    if (g.length !== secret.length || !timingSafeEqual(g, secret)) {
+      if (!warnedMismatch) { warnedMismatch = true; ctx.log('warning: a request carried a WEB_PROXY_SECRET that does not match this API\'s; check both projects have the same value.'); }
+      return;
+    }
     const ip = one1(req, 'x-ff-client-ip');
     if (ip === null) req.fromWebServer = true;
     else if (isIP(ip)) {
@@ -178,10 +185,11 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   let warnedNoClientAddress = false;
   await app.register(rateLimit, {
     global: true,
-    max: ctx.config.rateLimitPerMinute,
+    // The web app's server renders share one bucket of their own, far above a visitor's: a
+    // page with a query (/a?q=…) is rendered on request, so a visitor can make it read.
+    max: (_req, key) => (key === WEB_RENDER ? ctx.config.rateLimitPerMinute * 20 : ctx.config.rateLimitPerMinute),
     timeWindow: '1 minute',
     allowList: (req) => req.url.startsWith('/ui/') || req.url.startsWith('/pages/') || req.url.startsWith('/files/')
-      || req.fromWebServer
       || (isInternal(req.ip) && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host']),
     keyGenerator: (req) => {
       // Next.js forwards the client's X-Forwarded-For but never adds the client's address
@@ -190,7 +198,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
         warnedNoClientAddress = true;
         ctx.log('warning: proxied requests arrive without X-Forwarded-For, so every client shares one rate limit. Put a proxy that sets it in front of the web app.');
       }
-      return req.clientIp || req.ip;
+      return req.fromWebServer ? WEB_RENDER : req.clientIp || req.ip;
     },
     errorResponseBuilder: (req, ctx2) => ({
       statusCode: 429,

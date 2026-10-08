@@ -12,7 +12,8 @@ export const API_ORIGIN = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
  * Signs this server's own reads when the API is another deployment (WEB_PROXY_SECRET on both,
  * see src/proxy.ts): a render has no visitor behind it, so the API does not rate-limit it.
  */
-const SIGNED: Record<string, string> = (process.env.WEB_PROXY_SECRET ?? '').length >= 32 ? { 'x-ff-web-secret': process.env.WEB_PROXY_SECRET! } : {};
+const SECRET = (process.env.WEB_PROXY_SECRET ?? '').trim();
+const SIGNED: Record<string, string> = SECRET.length >= 32 ? { 'x-ff-web-secret': SECRET } : {};
 export const SITE_URL = (process.env.SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
 export type Lang = 'en' | 'vi';

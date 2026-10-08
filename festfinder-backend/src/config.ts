@@ -211,7 +211,8 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     allowAiTraining: bool('ALLOW_AI_TRAINING', false),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
     trustProxy: trust(process.env.TRUST_PROXY),
-    webProxySecret: (process.env.WEB_PROXY_SECRET ?? '').length >= 32 ? process.env.WEB_PROXY_SECRET! : null,
+    // Trimmed as the web app trims it (a pasted value often ends in a newline).
+    webProxySecret: (process.env.WEB_PROXY_SECRET ?? '').trim().length >= 32 ? process.env.WEB_PROXY_SECRET!.trim() : null,
     s3: process.env.S3_BUCKET
       ? {
         bucket: str('S3_BUCKET'),

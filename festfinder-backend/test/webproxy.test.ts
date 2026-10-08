@@ -35,8 +35,11 @@ describe('the web app as its own deployment', () => {
     assert.equal((await via({ 'x-ff-client-ip': '192.0.2.99' })).statusCode, 429, 'all of them count as the one address they came from');
   });
 
-  it('never limits its server-side renders', async () => {
-    for (let i = 0; i < 6; i++) assert.equal((await via(signed(null))).statusCode, 200);
+  it('gives its server-side renders one bucket of their own, far above a visitor’s', async () => {
+    // A page with a query is rendered on request, so a visitor can make it read: capped, at 20 times.
+    for (let i = 0; i < 60; i++) assert.equal((await via(signed(null))).statusCode, 200);
+    assert.equal((await via(signed(null))).statusCode, 429);
+    assert.equal((await via(signed('203.0.113.23'))).statusCode, 200, 'a visitor is not held back by the renders');
   });
 
   it('records the visitor’s country on a ticket click, not the web app’s', async () => {
