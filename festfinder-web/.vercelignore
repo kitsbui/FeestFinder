@@ -1,0 +1,7 @@
+# This project's own list: it replaces the repository's, which leaves festfinder-web out of the
+# API's deployment. The build also reads ../festfinder-frontend (scripts/compile-screens.ts).
+**/.env
+**/.env.local
+**/.data
+**/test-results
+**/playwright-report

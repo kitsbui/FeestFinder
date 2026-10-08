@@ -43,8 +43,29 @@ The Playwright tests live with the API: `npm run test:screens:next --prefix fest
 | --- | --- | --- |
 | `FF_API_ORIGIN` | **build time** (it becomes a rewrite) and at runtime for server-rendered pages | `http://localhost:4000` |
 | `SITE_URL` | runtime: canonical links, sitemap, structured data | `http://localhost:3000` |
+| `WEB_PROXY_SECRET` | runtime: signs the requests this app sends the API (below) | off |
+| `MAP_TILES_URL`, `MAP_OVERVIEW_URL`, `MAP_GLYPHS_URL` | build time: their origins join the CSP's `connect-src` | none |
+| `FF_KIT` | runtime: `1` serves `/kit` | off |
 
-Behind this app, set the API's `PUBLIC_BASE_URL` to this app's address too, so the links and file URLs the API writes point here.
+Behind this app, set the API's `PUBLIC_BASE_URL` to this app's address too, so the links and file URLs the API writes point here. `.env.example` lists them all.
+
+## Deploy on Vercel
+
+This app is its own Vercel project, next to the API's (`feestfinder`, Root Directory `festfinder-backend`), and calls the API across the internet. Vercel overwrites `X-Forwarded-For` on the way in, so without help the API would see this app's address for every visitor (one rate limit, one sign-in throttle for everyone). `src/proxy.ts` fixes that: with the same `WEB_PROXY_SECRET` on both projects it names the visitor (address, country) and this site's origin in `x-ff-*` headers signed by the secret, and `lib/api.ts` signs the server's own reads so renders are never rate-limited. Google sign-in then comes back to this site.
+
+1. **New project.** Vercel → Add New → Project → import `kitsbui/FeestFinder`. Root Directory `festfinder-web`; keep "Include files outside the Root Directory in the Build Step" on (the build copies `../festfinder-frontend/ui`). Framework Next.js, the default install and build commands (`npm run build` compiles, then builds). Node 24 comes from `engines`; `vercel.json` puts the functions in `hnd1`, next to the API and the database.
+2. **Its variables** (Production, and Preview pointing at the staging API if wanted):
+   - `FF_API_ORIGIN` = the API's address, e.g. `https://feestfinder.com` (a rebuild is needed when it changes).
+   - `SITE_URL` = this project's address, e.g. `https://<project>.vercel.app` or its own domain.
+   - `WEB_PROXY_SECRET` = a random value of 32+ characters (`openssl rand -hex 32`).
+   - `MAP_TILES_URL`, `MAP_OVERVIEW_URL`, `MAP_GLYPHS_URL` = the API's values.
+3. **On the API project** (`feestfinder`), then redeploy it:
+   - `WEB_PROXY_SECRET` = the same value.
+   - `CORS_ORIGINS` += this site's origin (sign-in may return only to listed origins).
+4. **Google Cloud console** → the OAuth client → add the authorised redirect URI `<this site>/auth/oauth/google/return` (and the same for Facebook and Instagram if they are on).
+5. **Check.** Open the site; sign in with Google; `/list` and an event page load; in the API's logs there is no "every client shares one rate limit" warning.
+
+Production keeps serving the API's own screens at feestfinder.com until its domain moves here. Moving it is a separate step: give the API its own domain (e.g. `api.feestfinder.com`), point `FF_API_ORIGIN` at it and rebuild, move `feestfinder.com` to this project, and keep the API's `PUBLIC_BASE_URL` at `https://feestfinder.com` (emails, share links and the pg_cron call to `/internal/jobs` then come through this app's proxy).
 
 ## How it is put together
 

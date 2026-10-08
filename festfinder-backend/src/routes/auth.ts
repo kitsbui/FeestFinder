@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { one } from '../db/index.ts';
 import { AppError, badRequest, conflict, notFound, tooMany, unauthorized } from '../lib/errors.ts';
@@ -223,7 +223,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const body = parse(z.object({ identifier: z.string().min(3).max(200), password: z.string().min(1).max(200) }), req.body);
     const id = body.identifier.includes('@') ? normalizeEmail(body.identifier) : normalizeVnPhone(body.identifier);
     if (!id) throw badRequest('invalid_identifier', L('Enter your email or phone number', 'Nhập email hoặc số điện thoại'));
-    const keys = [`id:${id}`, `ip:${req.ip}`];
+    const keys = [`id:${id}`, `ip:${req.clientIp}`];
     if (keys.some((k) => recentFailures(k).length >= LOGIN_MAX_FAILURES)) {
       throw tooMany('login_rate_limited', L('Too many attempts. Try again in 15 minutes or reset your password.', 'Thử quá nhiều lần. Thử lại sau 15 phút hoặc đặt lại mật khẩu.'));
     }
@@ -277,8 +277,13 @@ export default async function authRoutes(app: FastifyInstance) {
 
   const OAUTH_COOKIE = 'ff_oauth';
   const providerOf = (raw: string) => parse(z.enum(['google', 'fb', 'ig']), raw);
-  /** Where each provider sends the browser back: one fixed address per provider, as Google requires. */
-  const callbackUrl = (provider: OAuthKind) => `${ctx.config.publicBaseUrl}/auth/oauth/${provider}/return`;
+  /**
+   * Where each provider sends the browser back: one fixed address per provider and site, as
+   * Google requires. The site is this API's own, or the web app's when its proxy signed the
+   * request (each needs its return address registered with the provider).
+   */
+  const siteOf = (req: FastifyRequest) => req.webOrigin ?? ctx.config.publicBaseUrl;
+  const callbackUrl = (provider: OAuthKind, site: string) => `${site}/auth/oauth/${provider}/return`;
 
   /** Get the provider's sign-in page; it comes back to /auth/oauth/:provider/return, then to `redirectUri`. */
   app.get<{ Params: { provider: string } }>('/auth/oauth/:provider/start', async (req, reply) => {
@@ -293,7 +298,7 @@ export default async function authRoutes(app: FastifyInstance) {
       [state, provider, req.session?.user?.id ?? null, redirectUri, new Date(ctx.clock.now().getTime() + 10 * 60_000)]);
     // The same browser must finish what it started: the state also rides in a cookie.
     reply.setCookie(OAUTH_COOKIE, state, { httpOnly: true, sameSite: 'lax', secure: ctx.config.cookieSecure, path: '/auth/oauth', maxAge: 600 });
-    return { url: impl.authorizeUrl(state, callbackUrl(provider)), state };
+    return { url: impl.authorizeUrl(state, callbackUrl(provider, siteOf(req))), state };
   });
 
   /**
@@ -305,7 +310,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.get<{ Params: { provider: string }; Querystring: Record<string, string> }>('/auth/oauth/:provider/return', async (req, reply) => {
     const provider = providerOf(req.params.provider);
     const q = req.query;
-    const fallback = `${ctx.config.publicBaseUrl}/`;
+    const fallback = `${siteOf(req)}/`;
     const back = (target: string, params: Record<string, string>) => {
       const u = new URL(allowedRedirect(target) ? target : fallback);
       for (const k of ['auth', 'via', 'auth_error']) u.searchParams.delete(k);
@@ -319,7 +324,7 @@ export default async function authRoutes(app: FastifyInstance) {
     if (!st || new Date(st.expires_at) <= ctx.clock.now() || !q.code) return back(target, { auth_error: 'oauth_state_invalid' });
     if (req.cookies?.[OAUTH_COOKIE] !== q.state) return back(target, { auth_error: 'oauth_state_invalid' });
     try {
-      const done = await completeOAuth(provider, q.code, st);
+      const done = await completeOAuth(provider, q.code, st, siteOf(req));
       if (done.userId) {
         const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId: done.userId, method: provider });
         setSessionCookie(ctx, reply, token, expiresAt);
@@ -331,13 +336,13 @@ export default async function authRoutes(app: FastifyInstance) {
   });
 
   /** Exchange the code, then sign in, create the account, or link it to the signed-in one. */
-  const completeOAuth = async (provider: OAuthKind, code: string, st: any): Promise<{ via: 'signin' | 'signup' | 'connect'; userId: string | null }> => {
+  const completeOAuth = async (provider: OAuthKind, code: string, st: any, site: string): Promise<{ via: 'signin' | 'signup' | 'connect'; userId: string | null }> => {
     const impl = ctx.oauth[provider];
     if (!impl) throw badRequest('provider_unavailable', L('This sign-in option is not available right now', 'Cách đăng nhập này tạm thời chưa dùng được'));
     const now = ctx.clock.now();
     let profile;
     try {
-      profile = await impl.exchange(code, callbackUrl(provider));
+      profile = await impl.exchange(code, callbackUrl(provider, site));
     } catch (e) {
       ctx.log(`oauth exchange failed: ${e}`);
       throw badRequest('oauth_failed', L('We could not confirm that account. Try again.', 'Chưa xác nhận được tài khoản. Hãy thử lại.'));

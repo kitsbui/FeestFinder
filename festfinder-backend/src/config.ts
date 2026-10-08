@@ -128,6 +128,12 @@ export interface Config {
    * any client claim any address, and dodge the rate limit with it.
    */
   trustProxy: boolean | number | string;
+  /**
+   * Shared with the Next.js web app when it runs as its own deployment (WEB_PROXY_SECRET, at
+   * least 32 characters). Its requests then carry the visitor's address, country and the site's
+   * own origin in x-ff-* headers, signed by this; without it those headers are ignored.
+   */
+  webProxySecret: string | null;
   /** Object storage for uploads (Supabase Storage over S3). Without S3_BUCKET they go to the database. */
   s3: { bucket: string; region: string; endpoint: string | null; accessKeyId: string; secretAccessKey: string; publicBaseUrl: string | null } | null;
   /** SMTP relay for email. Without SMTP_HOST, email is printed to the log. */
@@ -205,6 +211,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     allowAiTraining: bool('ALLOW_AI_TRAINING', false),
     rateLimitPerMinute: int('RATE_LIMIT_PER_MINUTE', 300),
     trustProxy: trust(process.env.TRUST_PROXY),
+    webProxySecret: (process.env.WEB_PROXY_SECRET ?? '').length >= 32 ? process.env.WEB_PROXY_SECRET! : null,
     s3: process.env.S3_BUCKET
       ? {
         bucket: str('S3_BUCKET'),

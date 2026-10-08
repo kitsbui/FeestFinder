@@ -95,7 +95,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
     if (partner) {
       try { location = partnerLink(location, partner, click!.id); } catch { /* a broken template: the plain link still sells */ }
     }
-    const dedupe = `${req.ip}|${userId ?? ''}|${ev.id}`;
+    const dedupe = `${req.clientIp}|${userId ?? ''}|${ev.id}`;
     const last = seen.get(dedupe);
     if (!last || now.getTime() - last >= 30 * 60_000) {
       seen.set(dedupe, now.getTime());

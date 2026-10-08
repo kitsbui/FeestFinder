@@ -1,4 +1,6 @@
-import Fastify, { type FastifyInstance } from 'fastify';
+import { timingSafeEqual } from 'node:crypto';
+import { isIP } from 'node:net';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -56,7 +58,15 @@ import frontendRoutes from './routes/frontend.ts';
 
 declare module 'fastify' {
   interface FastifyInstance { ctx: Ctx }
-  interface FastifyRequest { session: SessionInfo | null; lang: Lang; rawBody?: string }
+  interface FastifyRequest {
+    session: SessionInfo | null; lang: Lang; rawBody?: string;
+    /** The visitor's address: req.ip, or what the web app's signed proxy says (webProxy below). */
+    clientIp: string;
+    /** The web app's own origin, when it signed the request and is one of ours (sign-in returns there). */
+    webOrigin: string | null;
+    /** A server-side render of the web app, with no visitor behind it. */
+    fromWebServer: boolean;
+  }
 }
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -66,6 +76,39 @@ export function isInternal(ip: string): boolean {
   const v4 = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
   if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(v4)) return true;
   return ip === '::1' || /^f[cd][0-9a-f]{2}:/i.test(ip) || /^fe[89ab][0-9a-f]:/i.test(ip);
+}
+
+const originOf = (u: string) => { try { return new URL(u).origin; } catch { return null; } };
+const one1 = (req: FastifyRequest, name: string) => { const v = req.headers[name]; return typeof v === 'string' ? v.trim() : null; };
+
+/**
+ * The web app as its own deployment calls this API across the internet, and Vercel overwrites
+ * X-Forwarded-For with the web app's own address: every visitor would share one rate limit and
+ * one sign-in throttle. With WEB_PROXY_SECRET set on both, the web app's proxy (festfinder-web
+ * src/proxy.ts) signs its requests and names the visitor (x-ff-client-ip, x-ff-client-country)
+ * and its own origin (x-ff-web-origin); its server-side renders sign without a visitor. Anyone
+ * else's x-ff-* headers are ignored.
+ */
+function webProxy(ctx: Ctx) {
+  const secret = ctx.config.webProxySecret ? Buffer.from(ctx.config.webProxySecret) : null;
+  const ours = new Set([...ctx.config.corsOrigins, ctx.config.publicBaseUrl].map(originOf).filter((o): o is string => !!o));
+  return async (req: FastifyRequest) => {
+    req.clientIp = req.ip;
+    const given = one1(req, 'x-ff-web-secret');
+    if (!secret || !given) return;
+    const g = Buffer.from(given);
+    if (g.length !== secret.length || !timingSafeEqual(g, secret)) return;
+    const ip = one1(req, 'x-ff-client-ip');
+    if (ip === null) req.fromWebServer = true;
+    else if (isIP(ip)) {
+      req.clientIp = ip;
+      const country = one1(req, 'x-ff-client-country');
+      if (country) req.headers['x-vercel-ip-country'] = country;
+      else delete req.headers['x-vercel-ip-country'];
+    }
+    const origin = originOf(one1(req, 'x-ff-web-origin') ?? '');
+    if (origin && ours.has(origin)) req.webOrigin = origin;
+  };
 }
 
 export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
@@ -83,6 +126,11 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   app.decorate('ctx', ctx);
   app.decorateRequest('session', null);
   app.decorateRequest('lang', 'vi');
+  app.decorateRequest('clientIp', '');
+  app.decorateRequest('webOrigin', null);
+  app.decorateRequest('fromWebServer', false);
+  // Before the rate limit, which keys on the visitor this names.
+  app.addHook('onRequest', webProxy(ctx));
 
   await app.register(cors, { origin: ctx.config.corsOrigins, credentials: true });
   await app.register(cookie);
@@ -133,6 +181,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
     max: ctx.config.rateLimitPerMinute,
     timeWindow: '1 minute',
     allowList: (req) => req.url.startsWith('/ui/') || req.url.startsWith('/pages/') || req.url.startsWith('/files/')
+      || req.fromWebServer
       || (isInternal(req.ip) && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host']),
     keyGenerator: (req) => {
       // Next.js forwards the client's X-Forwarded-For but never adds the client's address
@@ -141,7 +190,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
         warnedNoClientAddress = true;
         ctx.log('warning: proxied requests arrive without X-Forwarded-For, so every client shares one rate limit. Put a proxy that sets it in front of the web app.');
       }
-      return req.ip;
+      return req.clientIp || req.ip;
     },
     errorResponseBuilder: (req, ctx2) => ({
       statusCode: 429,

@@ -466,10 +466,10 @@ export default async function catalogRoutes(app: FastifyInstance) {
     }), req.body);
     if (!isUuid(req.params.id)) throw notFound();
     const now = ctx.clock.now();
-    const key = `${req.ip}|${req.session?.user?.id ?? ''}|${req.params.id}|${body.type}`;
+    const key = `${req.clientIp}|${req.session?.user?.id ?? ''}|${req.params.id}|${body.type}`;
     const last = seen.get(key);
     if (body.type === 'view' && body.ref) {
-      const visitor = req.session?.user?.id ?? `${req.ip}|${req.headers['user-agent'] ?? ''}`;
+      const visitor = req.session?.user?.id ?? `${req.clientIp}|${req.headers['user-agent'] ?? ''}`;
       await recordShareVisit(app, req.params.id, body.ref, body.channel ?? 'copy', visitor).catch(() => false);
     }
     if (last && now.getTime() - last < 30 * 60_000) return reply.code(202).send({ counted: false });

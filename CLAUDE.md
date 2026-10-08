@@ -68,6 +68,7 @@ Outside development, every `/ui` and `/pages` URL carries `?v=<content hash>`:
 ## Deploying
 
 - Vercel project `feestfinder`, root directory `festfinder-backend`. Functions run in `hnd1` (Tokyo), next to the Supabase database.
+- The Next front deploys as its own Vercel project (root directory `festfinder-web`, `hnd1`), calling the API at `FF_API_ORIGIN`; `WEB_PROXY_SECRET` on both lets the API see each visitor behind it (`festfinder-web/README.md`, "Deploy on Vercel"). feestfinder.com stays on the API's project until its domain is moved.
 - Pushing to `main` deploys production: the project is linked to GitHub with `main` as its production branch. Other branches get preview deployments on the staging database. Migrations run on boot.
 - Work happens on a branch and reaches `main` by merge. CI (`.github/workflows/ci.yml`) runs on pushes to `main` and on pull requests.
 - To ship a branch without merging it, run `vercel deploy --prod --yes` from the repo root.
