@@ -54,9 +54,9 @@ When this app is at the site's public address (feestfinder.com), the API's `PUBL
 This app is its own Vercel project, next to the API's (`feestfinder`, Root Directory `festfinder-backend`), and calls the API across the internet. Vercel overwrites `X-Forwarded-For` on the way in, so without help the API would see this app's address for every visitor (one rate limit, one sign-in throttle for everyone). `src/proxy.ts` fixes that: with the same `WEB_PROXY_SECRET` on both projects it names the visitor (address, country) and this site's origin in `x-ff-*` headers signed by the secret, and `lib/api.ts` signs the server's own reads, which share one rate-limit bucket at 20 times a visitor's (a page with a query is rendered on request). Google sign-in then comes back to this site. The proxy signs only on Vercel (`VERCEL=1`), whose edge sets the visitor's address; the secret is trimmed on both sides, and the API logs a warning once when a request carries a secret that does not match.
 
 1. **New project.** Vercel → Add New → Project → import `kitsbui/FeestFinder`. Root Directory `festfinder-web`; keep "Include files outside the Root Directory in the Build Step" on (the build copies `../festfinder-frontend/ui`). Framework Next.js, the default install and build commands (`npm run build` compiles, then builds). Node 24 comes from `engines`; `vercel.json` puts the functions in `hnd1`, next to the API and the database.
-2. **Its variables** (Production, and Preview pointing at the staging API if wanted):
-   - `FF_API_ORIGIN` = the API's address, e.g. `https://feestfinder.com` (a rebuild is needed when it changes).
-   - `SITE_URL` = this project's address, e.g. `https://<project>.vercel.app` or its own domain.
+2. **Its variables**, for Production only (previews are off, step 6):
+   - `FF_API_ORIGIN` = the API's own address, `https://feestfinder-api.vercel.app` (never feestfinder.com, which this project takes over; a rebuild is needed when it changes).
+   - `SITE_URL` = `https://feestfinder.com`, even before the domain moves here, so every canonical link and the sitemap name the real site and the project's own address is never indexed as a copy.
    - `WEB_PROXY_SECRET` = a random value of 32+ characters (`openssl rand -hex 32`).
    - `MAP_TILES_URL`, `MAP_OVERVIEW_URL`, `MAP_GLYPHS_URL` = the API's values.
 3. **On the API project** (`feestfinder`), then redeploy it:
@@ -66,17 +66,16 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
 5. **Check.** `<this site>/health` answers `"webProxy":"visitor"` (the API sees each visitor; `false` means the secret is missing or differs, and the API logs a warning when it differs); sign in with Google; `/list` and an event page load.
 6. **Previews.** The API's preview deployments sit behind Vercel Authentication, so this project builds `main` only (Settings → Git → Ignored Build Step: `[ "$VERCEL_ENV" != "production" ]`).
 
-Production keeps serving the API's own screens at feestfinder.com until its domain moves here.
 
 ### Moving feestfinder.com to this project
 
-The API keeps running as it is; only the address people type changes hands. The API's own `*.vercel.app` addresses cannot stand in for it: `feestfinder.vercel.app` redirects to feestfinder.com, and the team address sits behind Vercel Authentication.
+The API keeps running as it is; only the address people type changes hands. The API answers on an address of its own that this project calls: `https://feestfinder-api.vercel.app`, a domain on the API project with no redirect (the project's other `*.vercel.app` addresses redirect to feestfinder.com or sit behind Vercel Authentication). `api.feestfinder.com` can replace it later with a CNAME at the registrar (feestfinder.com's DNS is not on Vercel).
 
-1. **The API's own address.** On the API project (`feestfinder`) → Domains → add `api.feestfinder.com`. If feestfinder.com's DNS is not on Vercel, add the CNAME record Vercel shows at the registrar. Wait until `https://api.feestfinder.com/health` answers `{"ok":true…}`.
-2. **This project, aimed at it.** Steps 1–2 above with `FF_API_ORIGIN=https://api.feestfinder.com` and `SITE_URL=https://feestfinder.com`; deploy, and check its `*.vercel.app` address renders `/`, `/list` and an event page.
-3. **The API's settings.** `WEB_PROXY_SECRET` (the same value), `CORS_ORIGINS` including `https://feestfinder.com` and `https://www.feestfinder.com`; keep `PUBLIC_BASE_URL=https://feestfinder.com` (sign-in returns, emails, share links and file URLs all stay on the public address). Redeploy the API.
-4. **The domain.** Remove `feestfinder.com` and `www.feestfinder.com` from the API project and add them to this one (same redirect between them as before). Google's redirect URI `https://feestfinder.com/auth/oauth/google/return` stays as it is: it now reaches the API through this app.
-5. **Check.** `https://feestfinder.com/` is the Kính đêm home; `/health` answers through the proxy; Google sign-in comes back signed in; a ticket button (`/go/<slug>`) redirects; `/ops` and `/door` still open (they are the API's screens, through the proxy); the pg_cron job `POST https://feestfinder.com/internal/jobs` still answers 200 (it is forwarded with its `Authorization`).
+1. **The API's own address.** On the API project (`feestfinder`) → Domains → `feestfinder-api.vercel.app`, no redirect. `https://feestfinder-api.vercel.app/health` answers `{"ok":true…}`.
+2. **This project, aimed at it.** Steps 1–2 above with `FF_API_ORIGIN=https://feestfinder-api.vercel.app` and `SITE_URL=https://feestfinder.com`; deploy, and check its `*.vercel.app` address renders `/`, `/list` and an event page, and `/health` answers `"webProxy":"visitor"`.
+3. **The API's settings.** `WEB_PROXY_SECRET` (the same value); `CORS_ORIGINS` and `PUBLIC_BASE_URL` stay `https://feestfinder.com` (sign-in returns, emails, share links and file URLs all stay on the public address). Redeploy the API.
+4. **The domain.** Remove `feestfinder.com` and `www.feestfinder.com` from the API project and add them to this one (`www` redirects to the bare domain, as before). Google's redirect URI `https://feestfinder.com/auth/oauth/google/return` stays as it is: it now reaches the API through this app.
+5. **Check.** `https://feestfinder.com/` is the Kính đêm home; `/health` answers `"webProxy":"visitor"`; Google sign-in comes back signed in; a ticket button (`/go/<slug>`) redirects; `/ops` still opens (the API's back office, through the proxy) and `/studio/door` scans; the pg_cron job `POST https://feestfinder.com/internal/jobs` still reaches the API (it is forwarded with its `Authorization`).
 6. **Back out** if anything is wrong: move the two domains back to the API project. Nothing else needs undoing.
 
 ## How it is put together
