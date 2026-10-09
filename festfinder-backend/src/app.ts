@@ -144,9 +144,9 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
 
   /*
-   * The screens carry no inline script and load React from this origin, so the policy
-   * can be strict. Inline *styles* stay allowed: the design's markup is styled with
-   * style attributes, and the runtime injects a stylesheet of its own.
+   * The API answers JSON, and /ops carries no inline script and loads React from this
+   * origin, so the policy can be strict. Inline *styles* stay allowed: /ops sets style
+   * attributes from its scripts.
    */
   await app.register(helmet, {
     contentSecurityPolicy: {
@@ -166,14 +166,14 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
       },
     },
     crossOriginEmbedderPolicy: false,
-    // Google Fonts and uploaded images are loaded cross-origin by the design.
+    // Uploaded images, OG images and /ui files may be loaded from another origin.
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
 
   /*
    * A ceiling per IP so one client cannot flood the API. Sign-in, OTP and the door
-   * scanner have their own tighter limits in their routes; webhooks and the screens'
-   * own static chunks are not counted.
+   * scanner have their own tighter limits in their routes; webhooks and the static
+   * files under /ui, /pages (Ops) and /files are not counted.
    *
    * Nor are calls from our own network with no client behind them: the Next.js app
    * rendering pages on the server, so a crawler burst cannot turn those pages into errors.

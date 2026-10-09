@@ -16,18 +16,14 @@ import { organizerArtists } from './network.ts';
 import { presentOrgLinks } from './organizers.ts';
 
 /*
- * What search engines and AI assistants read on an event page. The screens draw themselves
- * with JavaScript, which most AI crawlers never run, so each event page also arrives with
- * its facts as plain HTML (an answer first, then the details), one block of structured
- * data, and its link-preview tags. Both fronts build the page from the same EventSeo:
- * the API's own pages through buildEventSeo, the Next.js app through GET /seo/events/:slug.
+ * What search engines and AI assistants read on each public page: its title and description,
+ * language versions, link-preview tags, one block of structured data, and its facts (an
+ * answer first, then the details). The Next front renders the page from GET /seo/*; crawlers
+ * also get the same facts as Markdown, llms.txt and the sitemap.
  */
 
 const esc = (s: unknown) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-/** Structured data goes in as a JSON data block, never as script the browser runs. */
-export const jsonLdHtml = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');
 
 const baseOf = (ctx: Ctx) => ctx.config.publicBaseUrl.replace(/\/$/, '');
 const abs = (ctx: Ctx, url: string | null | undefined) => (url ? new URL(url, baseOf(ctx) + '/').href : null);
@@ -418,85 +414,6 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   };
 }
 
-/** The tags that go into <head>: title, description, robots, canonical and language versions, link previews, structured data. */
-export function seoHead(seo: PageSeo): { title: string; head: string } {
-  const tags = [
-    `<meta name="description" content="${esc(seo.description)}">`,
-    `<meta name="robots" content="${esc(seo.robots)}">`,
-    `<link rel="canonical" href="${esc(seo.canonical)}">`,
-    ...(['vi', 'en', 'x-default'] as const).map((l) => `<link rel="alternate" hreflang="${l}" href="${esc(seo.alternates[l])}">`),
-    `<link rel="alternate" type="text/markdown" href="${esc(seo.markdown)}">`,
-    `<meta property="og:type" content="${seo.kind === 'organizer' || seo.kind === 'artist' ? 'profile' : 'website'}">`,
-    `<meta property="og:site_name" content="FeestFinder">`,
-    `<meta property="og:locale" content="${seo.lang === 'vi' ? 'vi_VN' : 'en_US'}">`,
-    `<meta property="og:locale:alternate" content="${seo.lang === 'vi' ? 'en_US' : 'vi_VN'}">`,
-    `<meta property="og:url" content="${esc(seo.url)}">`,
-    `<meta property="og:title" content="${esc(seo.page.h1)}">`,
-    `<meta property="og:description" content="${esc(seo.description)}">`,
-    `<meta property="og:image" content="${esc(seo.image.url)}">`,
-    `<meta property="og:image:type" content="${esc(seo.image.type)}">`,
-    `<meta property="og:image:width" content="${seo.image.width}">`,
-    `<meta property="og:image:height" content="${seo.image.height}">`,
-    `<meta property="og:image:alt" content="${esc(seo.image.alt)}">`,
-    `<meta property="og:updated_time" content="${esc(seo.updatedAt)}">`,
-    `<meta name="twitter:card" content="summary_large_image">`,
-    `<meta name="twitter:title" content="${esc(seo.page.h1)}">`,
-    `<meta name="twitter:description" content="${esc(seo.description)}">`,
-    `<meta name="twitter:image" content="${esc(seo.image.url)}">`,
-    `<meta name="twitter:image:alt" content="${esc(seo.image.alt)}">`,
-    `<script type="application/ld+json">${jsonLdHtml(seo.jsonLd)}</script>`,
-    // Shown only until the screen takes over; crawlers that run no script read it as the page.
-    `<style>.ff-ssr{max-width:880px;margin:0 auto;padding:72px 24px 96px;color:#e6e3c8;background:#0e100f;font:400 16px/1.6 'Be Vietnam Pro',system-ui,sans-serif}.ff-ssr h1{color:#fffce1;font-size:clamp(34px,6vw,64px);line-height:1;margin:0 0 14px}.ff-ssr h2{color:#fffce1;font-size:24px;margin:40px 0 12px}.ff-ssr h3{color:#fffce1;font-size:17px;margin:20px 0 6px}.ff-ssr a{color:#abff84}.ff-ssr .meta,.ff-ssr nav{color:#a5a493;font-size:14px}.ff-ssr .lede{font-size:18px;color:#fffce1}.ff-ssr dt{color:#fffce1;font-weight:600;margin-top:14px}.ff-ssr dd{margin:4px 0 0}</style>`,
-  ];
-  return { title: seo.title, head: tags.join('\n') };
-}
-
-const section = (title: string, body: string) => (body ? `<section><h2>${esc(title)}</h2>${body}</section>` : '');
-const link = (href: string, label: string) => `<a href="${esc(href)}"${/^https?:/.test(href) ? ' rel="noopener"' : ''}>${esc(label)}</a>`;
-const stamp = (iso: string) => `${iso.slice(11, 16)} ${iso.slice(8, 10)}/${Number(iso.slice(5, 7))}/${iso.slice(0, 4)}`;
-
-/** The opening every page shares: breadcrumbs, the answer first, the key facts, what it is about. */
-function ssrTop(seo: PageSeo, h: { facts: string; about: string }) {
-  const p = seo.page;
-  return [
-    `<main class="ff-ssr" lang="${seo.lang}">`,
-    `<nav aria-label="Breadcrumb">${p.crumbs.slice(0, -1).map((c) => link(c.path, c.name)).join(' › ')}</nav>`,
-    '<article>',
-    `<p class="meta">${esc(p.kicker)}</p>`,
-    `<h1>${esc(p.h1)}</h1>`,
-    `<p class="lede">${esc(p.summary)}</p>`,
-    section(h.facts, `<dl>${p.facts.map((f) => `<dt>${esc(f.label)}</dt><dd>${f.datetime ? `<time datetime="${esc(f.datetime)}">${esc(f.value)}</time>` : f.href ? link(f.href, f.value) : esc(f.value)}</dd>`).join('')}</dl>`),
-    section(h.about, p.about ? `<p>${esc(p.about)}</p>` : ''),
-  ];
-}
-const ssrBottom = (seo: PageSeo, updated: string) => [
-  `<p class="meta">${esc(updated)} <time datetime="${esc(seo.updatedAt)}">${esc(stamp(seo.updatedAt))}</time> · ${link(seo.page.otherLang.path, seo.page.otherLang.label)}</p>`,
-  '</article></main>',
-];
-
-/** An event page's facts as readable HTML: what search engines index, what AI assistants quote, what a slow phone shows first. */
-export function eventSsr(seo: EventSeo): string {
-  const p = seo.page, h = seo.headings;
-  return [
-    ...ssrTop(seo, h),
-    section(h.lineup, p.lineup.length ? `<ul>${p.lineup.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>` : ''),
-    section(h.timetable, p.timetable.map((d) => `<h3>${esc(d.day)}</h3><ul>${d.sets.map((x) => `<li>${esc(x.time)} · ${esc(x.artist)}${x.stage ? ` · ${esc(x.stage)}` : ''}</li>`).join('')}</ul>`).join('')),
-    section(h.tickets, p.tickets.length ? `<ul>${p.tickets.map((x) => `<li>${esc(x.name)}: ${esc(x.price)} · ${esc(x.state)}</li>`).join('')}</ul>` : ''),
-    section(h.updates, p.updates.length ? `<ul>${p.updates.map((u) => `<li><time datetime="${esc(u.at)}">${esc(u.atLabel)}</time> · ${esc(u.kind)}: ${esc(u.body)}</li>`).join('')}</ul>` : ''),
-    section(h.faq, p.faq.length ? `<dl>${p.faq.map((f) => `<dt>${esc(f.question)}</dt><dd>${esc(f.answer)}</dd>`).join('')}</dl>` : ''),
-    section(h.editions, p.editions.length ? `<ul>${p.editions.map((x) => `<li>${esc(x.label)}: ${link(x.path, x.title)} · ${esc(x.line)}</li>`).join('')}</ul>` : ''),
-    section(h.related, p.related.length ? `<ul>${p.related.map((x) => `<li>${link(x.path, x.title)} · ${esc(x.line)}</li>`).join('')}</ul>` : ''),
-    ...ssrBottom(seo, h.updated),
-  ].join('');
-}
-
-/** An organiser or collection page's facts as readable HTML. */
-export function organizerSsr(seo: OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo): string {
-  const p = seo.page, h = seo.headings;
-  const list = (items: Link[]) => (items.length ? `<ul>${items.map((x) => `<li>${link(x.path, x.title)} · ${esc(x.line)}</li>`).join('')}</ul>` : '');
-  return [...ssrTop(seo, h), section(h.upcoming, list(p.upcoming)), section(h.past, list(p.past)), ...ssrBottom(seo, h.updated)].join('');
-}
-
 // ---- organiser pages ---------------------------------------------------------------------
 
 const PUBLIC_EVENT = `e.status in ('live', 'cancelled') and not e.held_for_reports and e.published_at is not null`;
@@ -623,8 +540,6 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
 
 // ---- collection pages --------------------------------------------------------------------
 
-export const collectionSsr = organizerSsr;
-
 /** Everything a public collection's page says to search engines and AI assistants, or null. */
 export async function buildCollectionSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<CollectionSeo | null> {
   const c = await one<any>(ctx.db,
@@ -714,8 +629,6 @@ function sameAsOf(a: any): string[] | undefined {
   const urls = [a.website, ...((a.owner_user_id || a.verified) ? presentLinks(a).map((l) => l.url) : [])].filter(Boolean);
   return urls.length ? urls : undefined;
 }
-
-export const artistSsr = organizerSsr;
 
 /** Everything an artist page says to search engines and AI assistants, or null when no public event lists them. */
 export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<ArtistSeo | null> {
@@ -899,8 +812,6 @@ export async function buildDirectorySeo(ctx: Ctx, key: string, lang: Lang = 'vi'
   };
 }
 
-export const directorySsr = organizerSsr;
-
 /** The directory paths with at least DIRECTORY_INDEX_MIN artists: /a, /a/style/<style>, /a/city/<city>. */
 export async function directoryPages(q: Queryable): Promise<string[]> {
   const rows = await many<{ styles: string[]; cities: string[] }>(q,
@@ -923,6 +834,8 @@ export async function directoryPages(q: Queryable): Promise<string[]> {
 }
 
 // ---- Markdown and llms.txt, for AI agents that read text ---------------------------------
+
+const stamp = (iso: string) => `${iso.slice(11, 16)} ${iso.slice(8, 10)}/${Number(iso.slice(5, 7))}/${iso.slice(0, 4)}`;
 
 /** A page as Markdown: the same answer, facts and lists as its HTML, with links made absolute. */
 export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo): string {

@@ -2,9 +2,8 @@ import { expect, test } from '@playwright/test';
 import { watch } from '../checks.ts';
 
 /*
- * Kính đêm: the component kit at /kit, and the line between the two looks. The rebuilt
- * pages and the compiled legacy screens have root layouts of their own, so neither page
- * ever carries the other's stylesheet.
+ * Kính đêm: the component kit at /kit, and the line between the two looks. No page of
+ * this front loads the Bảng phấn sheet (/ui/theme.css), which only /ops uses.
  */
 
 test('the kit renders every part and loads cleanly', async ({ page }) => {
@@ -75,7 +74,7 @@ test('the sign-in sheet opens from the kit with the ways in the server has', asy
 
 test('no page loads the legacy stylesheet', async ({ page }) => {
   const sheets = () => page.evaluate(() => [...document.styleSheets].map((s) => s.href ?? '(inline)'));
-  // Every route is rebuilt: the API front's Bảng phấn sheet never reaches this front.
+  // The Bảng phấn sheet is /ops's alone: it never reaches this front.
   for (const path of ['/kit', '/about', '/a', '/saved']) {
     await page.goto(path);
     expect((await sheets()).some((h) => h.includes('/ui/theme.css')), path).toBe(false);

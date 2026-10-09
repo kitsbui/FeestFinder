@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser, phoneUser } from './people.ts';
 import { many, one } from '../src/db/index.ts';
-import { buildEventSeo, eventSsr, pingIndexNow, queueIndexNow, seoHead } from '../src/services/seo.ts';
+import { buildEventSeo, pingIndexNow, queueIndexNow } from '../src/services/seo.ts';
 
 describe('community event pages', () => {
   let env: TestEnv;
@@ -108,12 +108,12 @@ describe('community event pages', () => {
     assert.ok(detail.body.faq.some((f: any) => f.question === 'Có được mang nước vào không ạ?'));
 
     const seo = await buildEventSeo(env.ctx, 'ravo');
-    const { head } = seoHead(seo!);
-    assert.match(head, /"@type":"MusicEvent"/);
-    assert.match(head, /"@type":"FAQPage"/);
-    assert.match(head, /Được mang chai nhựa rỗng/);
-    assert.match(head, /<link rel="canonical" href="http:\/\/test.local\/e\/ravo">/);
-    assert.match(eventSsr(seo!), /<h2>Câu hỏi thường gặp<\/h2>/);
+    const graph = seo!.jsonLd['@graph'] as any[];
+    assert.equal(graph.filter((n) => n['@type'] === 'MusicEvent').length, 1);
+    const faq = graph.find((n) => n['@type'] === 'FAQPage');
+    assert.ok(faq.mainEntity.some((q: any) => /Được mang chai nhựa rỗng/.test(q.acceptedAnswer.text)), 'the answer is in the structured data');
+    assert.equal(seo!.canonical, 'http://test.local/e/ravo');
+    assert.equal(seo!.headings.faq, 'Câu hỏi thường gặp');
   });
 
   it('counts helpful votes once per person, never on your own post', async () => {

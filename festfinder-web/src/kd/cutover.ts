@@ -1,8 +1,6 @@
 /**
- * The paths whose pages are rebuilt in Kính đêm (src/app/(kd)). The legacy screens are each a
- * single-page app that draws its own screen for every path below its base; their router
- * (FF.navigate in src/runtime/ff.ts) asks this list first and loads a rebuilt path as a page
- * of its own instead. The Next Playwright run reads it too, to leave these paths to e2e/next.
+ * The paths this app renders as pages (src/app/(kd)). src/proxy.ts sends every other path to
+ * the API, and KdLink makes only these client navigations.
  *
  * Add a route here in the same change that moves it to (kd).
  */

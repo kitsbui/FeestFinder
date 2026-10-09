@@ -7,7 +7,7 @@ describe('collections', () => {
   let env: TestEnv;
   let me: string;
   before(async () => {
-    env = await setup({ config: { serveFrontend: true } });
+    env = await setup();
     me = await emailUser(env, 'collector@example.com');
     await env.as(me).patch('/me', { name: 'Thu Hà' });
   });
@@ -73,16 +73,13 @@ describe('collections', () => {
     assert.ok(graph.some((n: any) => n['@type'] === 'CollectionPage'));
     assert.equal(graph.find((n: any) => n['@type'] === 'ItemList').itemListElement[0].url, 'http://test.local/e/ravo');
 
-    const html = await env.app.inject({ method: 'GET', url: `/c/${c.slug}` });
-    assert.equal(html.statusCode, 200);
-    assert.match(html.body, /<h1>Lễ hội tháng 9<\/h1>/);
-    assert.match(html.body, /<link rel="canonical" href="http:\/\/test\.local\/c\//);
+    assert.equal(seo.body.canonical, `http://test.local/c/${c.slug}`);
     const md = await env.app.inject({ method: 'GET', url: `/c/${c.slug}.md?lang=en` });
     assert.match(md.body, /^# Lễ hội tháng 9/);
     assert.match((await env.app.inject({ method: 'GET', url: '/sitemap.xml' })).body, new RegExp(`/c/${c.slug}</loc>`));
 
     await env.as(me).patch(`/me/collections/${c.id}`, { isPublic: false });
-    assert.equal((await env.app.inject({ method: 'GET', url: `/c/${c.slug}` })).statusCode, 404);
+    assert.equal((await env.as().get(`/seo/collections/${c.slug}`)).status, 404);
     assert.doesNotMatch((await env.app.inject({ method: 'GET', url: '/sitemap.xml' })).body, new RegExp(`/c/${c.slug}<`));
   });
 

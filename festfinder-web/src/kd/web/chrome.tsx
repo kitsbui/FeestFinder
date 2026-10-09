@@ -20,7 +20,7 @@ import { WEB } from './copy';
 /** Which nav link is the current page; 'list' marks Bản đồ only when the list shows the map. */
 export type WebSection = 'explore' | 'map' | 'list' | 'artists' | 'none';
 
-/** The key the legacy web screen keeps the chosen language under (pages/web/logic.js). */
+/** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
 const LANG_KEY = 'ff_lang';
 
 const FAMILIES: Family[] = ['fest', 'live', 'edm', 'cult', 'free'];

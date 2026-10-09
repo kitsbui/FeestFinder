@@ -150,8 +150,7 @@ describe('artist directory pages for search engines', () => {
     assert.equal((await env.as().get('/seo/directory/city:paris')).status, 404);
     const md = await env.as().get('/a/city/ho-chi-minh.md');
     assert.match(md.body, /^# Nghệ sĩ ở TP\.HCM/);
-    const html = await env.as().get('/a', { accept: 'text/html' });
-    assert.match(html.body, /<link rel="canonical" href="http:\/\/test\.local\/a">/);
+    assert.equal(all.body.canonical, 'http://test.local/a');
     const map = (await env.as().get('/sitemap.xml')).body;
     assert.match(map, /\/a<\/loc>/);
     assert.match(map, /\/a\/city\/ho-chi-minh<\/loc>/);

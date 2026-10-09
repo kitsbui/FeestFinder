@@ -8,8 +8,7 @@ named in the code. Every used icon is kept in both weights, because Ops picks th
 weight at run time.
 
 An icon counts as used when:
-  - "ph-<name>" appears anywhere in the screens, the shared runtime, the API or the
-    Next app;
+  - "ph-<name>" appears anywhere in /ops, the API or the Next app;
   - or a quoted string in the Ops code is exactly the name of an icon (Ops passes bare
     names to Icon()).
 
@@ -52,9 +51,6 @@ def sources():
     for base, exts in roots:
         for f in sorted(base.rglob('*')):
             if f.suffix not in exts or 'vendor' in f.parts:
-                continue
-            # The Next app's compiled screens repeat the templates.
-            if 'screens' in f.parts and 'festfinder-web' in f.parts:
                 continue
             yield f, 'ops' in f.relative_to(FRONT).parts if f.is_relative_to(FRONT) else False
 

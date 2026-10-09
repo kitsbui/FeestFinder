@@ -73,7 +73,7 @@ jobs:
 
       - run: npm ci
 
-      # Compiles the design templates to TSX, then checks them with everything else.
+      # Generates the route types, then checks everything with them. The build copies public/ui.
       - name: Typecheck
         run: npm run typecheck
 
@@ -88,8 +88,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The design runtime served by the API, and the same screens on Next.js.
-        front: [design, next]
+        # /ops served by the API alone (demo data and an empty database), and the Next.js
+        # site with /ops through its proxy.
+        front: [api, next]
     steps:
       - uses: actions/checkout@v7
 

@@ -1,75 +1,13 @@
 import { test } from '@playwright/test';
 import { EMPTY_ACCOUNTS } from '../test/fixtures/empty-accounts.ts';
-import { expectOps, expectScreen, signInWith } from './checks.ts';
+import { expectOps, signInWith } from './checks.ts';
 
 /*
- * The same routes on a database the way production starts (test/fixtures/empty.ts): no
- * events, no venues, an organiser with no listings. Every screen still has to come up
+ * The /ops routes on a database the way production starts (test/fixtures/empty.ts): no
+ * events, no venues, an organiser with no listings. Every page still has to come up
  * clean with nothing to show.
  */
 test.use({ baseURL: `http://localhost:${Number(process.env.EMPTY_PORT ?? 4101)}` });
-
-test.describe('Web, empty', () => {
-  const routes: [string, RegExp][] = [
-    ['/', /Khám phá/],
-    ['/list', /TẤT CẢ SỰ KIỆN/i],
-    ['/about', /VỀ FEESTFINDER/i],
-  ];
-  for (const [path, shows] of routes) {
-    test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
-  }
-});
-
-test.describe('App, empty', () => {
-  test('/app signed out', async ({ page }) => expectScreen(page, '/app', /AROUND YOU/i));
-
-  test.describe('signed in', () => {
-    test.beforeEach(async ({ page }) => signInWith(page, EMPTY_ACCOUNTS.attendee));
-    const routes: [string, RegExp][] = [
-      ['/app', /HAPPENING/i],
-      ['/app/saved', /SAVED EVENTS|NOTHING SAVED/i],
-      ['/app/profile', /YOU'RE INTO/i],
-      ['/app/tickets', /MY TICKETS/i],
-    ];
-    for (const [path, shows] of routes) {
-      test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
-    }
-  });
-});
-
-test.describe('Organizer, empty', () => {
-  test.beforeEach(async ({ page }) => signInWith(page, EMPTY_ACCOUNTS.organizer));
-  const routes: [string, RegExp][] = [
-    ['/studio', /ORGANIZER DASHBOARD/i],
-    ['/studio/new', /PUT YOUR EVENT IN FRONT/i],
-    ['/studio/attendees', /AFTER THE SALE/i],
-    ['/studio/announce', /REACH YOUR CROWD/i],
-    ['/studio/door', /CHECK TICKET/i],
-    ['/studio/promos', /PROMOS & GUEST LIST/i],
-    ['/studio/revenue', /REVENUE & PAYOUTS/i],
-    ['/studio/inbox', /MESSAGES FROM FEESTFINDER/i],
-  ];
-  for (const [path, shows] of routes) {
-    test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
-  }
-});
-
-test.describe('Admin, empty', () => {
-  test.beforeEach(async ({ page }) => signInWith(page, EMPTY_ACCOUNTS.admin));
-  const routes: [string, RegExp][] = [
-    ['/console', /MODERATION QUEUE/i],
-    ['/console/verification', /ORGANIZER VERIFICATION/i],
-    ['/console/reports', /USER REPORTS/i],
-    ['/console/featured', /FEATURED SHELVES/i],
-    ['/console/ads', /ADS & PARTNERS/i],
-    ['/console/insights', /PLATFORM NUMBERS/i],
-    ['/console/audit', /AUDIT LOG/i],
-    ['/console/appeals', /AFTER REJECTION/i],
-  ];
-  for (const [path, shows] of routes) {
-    test(`${path}`, async ({ page }) => expectScreen(page, path, shows));
-  }
-});
 
 test.describe('Ops, empty', () => {
   test.describe('team', () => {

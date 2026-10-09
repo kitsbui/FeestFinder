@@ -17,12 +17,11 @@ Audit of 2026-10-05, branch `feat/next` at `11dcd08`. The file map, commands and
 | Layer | What | Version |
 | --- | --- | --- |
 | Runtime | Node, TypeScript run directly (type stripping) | Node 24.x, TS 7 (backend), TS 5.9 (Next) |
-| API + screens | Fastify with helmet (strict CSP), cors, cookie, multipart, rate-limit | Fastify 5 |
+| API + /ops | Fastify with helmet (strict CSP), cors, cookie, multipart, rate-limit | Fastify 5 |
 | Database | Postgres on Supabase (production + staging projects, each labelled); PGlite in tests | pg 8, PGlite 0.5 |
 | Validation | zod through `lib/validate.ts` `parse()`; errors as `AppError` → `{error:{code,message}}` | zod 4 |
-| Screens | design templates (`template.html` + `logic.js` + `data.js`) run by `ui/support.js` on vendored React, served by the API | React 18 UMD |
 | Public front | `festfinder-web`, Next.js; since the Kính đêm redesign (2026-10), hand-written React + Tailwind (see the last section); at feestfinder.com since 2026-10-08 | Next 16, React 19, Tailwind 4 |
-| Back office | `/ops`, plain ES modules on vendored React | |
+| Back office | `/ops`, plain ES modules on vendored React, served by the API | React 18 UMD |
 | AI | Anthropic SDK for the submission form fill-in (`claude-opus-5-5`), optional | SDK 0.128 |
 | Hosting | Vercel, functions in `hnd1`: project `feestfinder-web` holds feestfinder.com, project `feestfinder` is the API at `feestfinder-api.vercel.app`; GitHub `main` = production on both | |
 
@@ -37,8 +36,8 @@ browser ──► feestfinder.com: festfinder-web (Next, hnd1) ── pages rend
             ┌────────────────────────────────────┼─────────────────────────────┐
             ▼                                    ▼                             ▼
   routes/frontend.ts                  routes/*.ts (JSON API)          routes/seo.ts
-  shells, /ui, /pages,                catalog, community, me,          robots, sitemap,
-  ?v=<hash> caching                   organizer/*, admin/*, …          llms.txt, OG images
+  /ops, /ui, /pages,                  catalog, community, me,          robots, sitemap,
+  ?v=<hash> caching                   organizer/*, admin/*, …          llms.txt, OG images, /seo/*
                                                  │
                                        services/* ──► Postgres (Supabase)
 ```
@@ -59,7 +58,7 @@ The API checks the signature in an `onRequest` hook (`webProxy` in `app.ts`) and
 ### `events`, the canonical record today
 
 - Identity and copy: `slug` (unique), `title`, `description {en, vi}`.
-- Classification: `genre`, one of 8 (`EDM, Festival, Indie, Hip-Hop, Pop, Jazz, Food, Culture`) under a CHECK constraint. Genre also picks the card colour (`FF.genreArt`).
+- Classification: `genre`, one of 8 (`EDM, Festival, Indie, Hip-Hop, Pop, Jazz, Food, Culture`) under a CHECK constraint. Genre also picks the card colour (`familyOf` / `g()` in `festfinder-web/src/kd/genre.ts`).
 - Place: `city`, text defaulting to `ho-chi-minh` and validated against 4 slugs in `lib/i18n.ts`; `venue_id` (nullable) plus free-text `venue_name`, `address`, `area`, `lat`, `lng`.
 - Time: `starts_on`/`ends_on` (local dates) and `start_time`/`end_time` (`HH:MM`). `starts_at`/`ends_at` are derived by `refreshDerived()` with a fixed UTC+7.
 - People: `lineup text[]`, `artists text[]` (GIN index).
@@ -158,14 +157,14 @@ Rules that hold across it: admin comes only from `ADMIN_EMAIL`; follower counts 
 
 ## Since the audit: the Kính đêm front
 
-The Next front (`festfinder-web`) was rebuilt in the Kính đêm design (`design_handoff_kinh_dem/`, plan in `docs/KINH_DEM_PLAN.md`), route by route, in six phases. It has served feestfinder.com since 2026-10-08 (above); the API-served Bảng phấn screens remain in the API, unrouted except `/ops`.
+The Next front (`festfinder-web`) was rebuilt in the Kính đêm design (`design_handoff_kinh_dem/`, plan in `docs/KINH_DEM_PLAN.md`), route by route, in six phases. It has served feestfinder.com since 2026-10-08 (above). The API-served Bảng phấn screens were removed on 2026-10-09; the API keeps `/ops`.
 
 | Area | Where | Notes |
 | --- | --- | --- |
 | Pages | `festfinder-web/src/app/(kd)/` | Every route: `/`, `/list`, `/e`, `/o`, `/a` (+ directory), `/c`, `/saved`, `/about`, `/advertise`, `/stats`, `/profile`, `/app/*`, `/studio/*`, `/console/*`. Public pages render on the server with the API's SEO data. |
 | Screens and parts | `festfinder-web/src/kd/` | `ui/` parts, `web/`, `app/`, `studio/`, `console/`; strings as `{en, vi}` pairs per screen; tokens in `theme.css`; `/kit` shows the parts. |
-| Runtime | `festfinder-web/src/runtime/ff.ts`, `src/kd/runtime.tsx` | `FF` mirrors `ui/ff-client.js`; `KdProvider` holds the session, sign-in card, toasts, saves and follows. |
-| Compile step | `festfinder-web/scripts/compile-screens.ts` | Still copies `public/ui/` (map, brand images); its compiled screens are no longer routed and can be removed. |
+| Runtime | `festfinder-web/src/runtime/ff.ts`, `src/kd/runtime.tsx` | `FF`: API calls, session, clock, loaders; `KdProvider` holds the session, sign-in card, toasts, saves and follows. |
+| Copy step | `festfinder-web/scripts/copy-ui.ts` | Copies `vendor`, `fonts`, `_ds`, `assets` and `map` from `festfinder-frontend/ui` to `public/ui/` before dev and build. |
 | New API (Phase 4–5) | migrations `027`–`030` | Boost requests (`027`), badges (`028`, `services/badges.ts`), Moments (`029`, `routes/moments.ts`), row level security on them (`030`); per-day Studio performance, the Console's numbers board. |
-| Tests | `festfinder-backend/e2e/next/` | One spec per rebuilt area; the shared `e2e/screens.spec.ts` skips every path in `src/kd/cutover.ts` on Next. |
+| Tests | `festfinder-backend/e2e/next/` | One spec per area of the site; `e2e/screens.spec.ts` and `empty.spec.ts` check /ops. |
 

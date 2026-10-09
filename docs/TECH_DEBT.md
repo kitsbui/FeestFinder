@@ -33,6 +33,6 @@ Items 1–8 and 10–12 were handled by phases 1–8. The Vietnam helpers in `li
 
 ## Accepted, not debt
 
-- Two fronts (API-served and Next) for the same screens. This is deliberate, and a change to `ff-client.js` needs the same change in `festfinder-web/src/runtime/ff.ts`.
+- Two back offices: `/ops` (API-served, Bảng phấn) next to the Next front's Studio and Console. `/ops` holds the team's tools the Console does not have yet.
 - One Postgres database with no separate ingestion service. The brief allows keeping the stack, and the ingestion load (a few thousand pages a day) fits in the existing jobs.
 - No Playwright or headless browser on Vercel. Sources must expose JSON-LD, ICS or an API; browser scraping stays out (brief §35).

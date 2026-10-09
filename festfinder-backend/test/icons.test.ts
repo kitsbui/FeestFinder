@@ -21,7 +21,7 @@ function* files(dir: string, exts: string[]): Generator<string> {
   for (const name of readdirSync(dir).sort()) {
     const f = join(dir, name);
     if (statSync(f).isDirectory()) {
-      if (name !== 'vendor' && !(dir.includes('festfinder-web') && name === 'screens')) yield* files(f, exts);
+      if (name !== 'vendor') yield* files(f, exts);
     } else if (exts.some((e) => f.endsWith(e))) yield f;
   }
 }
@@ -45,18 +45,21 @@ describe('icon font cut', () => {
         if (relative(FRONT, f).split(sep).includes('ops')) for (const m of text.matchAll(/['"`]([a-z0-9-]+)['"`]/g)) if (known.has(m[1])) used.add(m[1]);
       }
     }
-    assert.ok(used.has('heart') && used.has('google-logo'), 'the scan finds icons at all');
+    assert.ok(used.has('google-logo') && used.has('seal-check'), 'the scan finds icons at all');
     const missing = [...used].filter((n) => !cut.bold.has(n) || !cut.fill.has(n)).sort();
     assert.deepEqual(missing, [], 'run: python3 festfinder-frontend/scripts/subset-icons.py');
   });
 
   it('names only icons Phosphor has', () => {
     const unknown = new Set<string>();
-    for (const surface of ['web', 'app', 'organizer', 'admin']) {
-      for (const file of ['template.html', 'logic.js']) {
-        for (const m of read(join(FRONT, 'pages', surface, file)).matchAll(/ph-(?:bold|fill) ph-([a-z0-9-]+)/g)) {
-          if (!known.has(m[1])) unknown.add(`${surface}/${file}: ph-${m[1]}`);
-        }
+    // Ops names an icon with Icon('x') or icon: 'x'; the API with a ph-bold or ph-fill class.
+    const checks: [string, string[], RegExp][] = [
+      [join(FRONT, 'pages', 'ops'), ['.js'], /(?:icon:\s*|Icon\()['"]([a-z0-9-]+)['"]/g],
+      [join(ROOT, 'festfinder-backend/src'), ['.ts'], /ph-(?:bold|fill) ph-([a-z0-9-]+)/g],
+    ];
+    for (const [dir, exts, re] of checks) {
+      for (const f of files(dir, exts)) {
+        for (const m of read(f).matchAll(re)) if (!known.has(m[1])) unknown.add(`${relative(ROOT, f)}: ${m[1]}`);
       }
     }
     assert.deepEqual([...unknown], [], 'these show as blank squares');

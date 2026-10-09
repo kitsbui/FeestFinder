@@ -1,7 +1,6 @@
 /*
  * The Kính đêm stylesheet. Only the (kd) root layout imports it, so Tailwind's preflight
- * never reaches the compiled legacy screens, and theme.css (the Chalkboard look) never
- * reaches these.
+ * never reaches /ops, and theme.css (the Chalkboard look) never reaches these pages.
  *
  * Layout is Tailwind utilities in the components. What follows is the design system's parts
  * (design_handoff_kinh_dem/design/ff.css), each a kd-* class the React parts in src/kd/ui

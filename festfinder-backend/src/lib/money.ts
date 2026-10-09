@@ -3,7 +3,7 @@ import type { Lang } from './i18n.ts';
 /**
  * A price in whole units of its currency. Đồng keep the way Vietnamese write them
  * (1.200.000₫); other currencies use the locale's own format (¥5,000, THB 800).
- * The same rules are in FF.money in both front-end runtimes.
+ * The same rules are in money() in festfinder-web/src/kd/format.ts.
  */
 export function formatMoney(amount: number, currency = 'VND', lang: Lang = 'vi'): string {
   const locale = lang === 'vi' ? 'vi-VN' : 'en-US';

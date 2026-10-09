@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test';
 
 /*
  * What the Next.js app adds on top of the screens: pages a search engine can read without
- * running JavaScript, the headers that lock the pages down, and the service worker that
- * keeps tickets on the phone.
+ * running JavaScript, the API's Markdown versions through its proxy, the old addresses it
+ * redirects, the headers that lock the pages down, and the service worker that keeps
+ * tickets on the phone.
  */
 
 test.describe('pages for search engines', () => {
@@ -11,7 +12,7 @@ test.describe('pages for search engines', () => {
     const res = await request.get('/e/ravo');
     expect(res.status()).toBe(200);
     const html = await res.text();
-    // The same head, graph and facts the API's own event pages carry (GET /seo/events/ravo).
+    // The head, graph and facts the API builds for it (GET /seo/events/ravo).
     expect(html).toMatch(/<title>Ravolution Music Festival – 19\/9 · SECC[^<]*\| FeestFinder<\/title>/);
     expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
     expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"/);
@@ -48,6 +49,14 @@ test.describe('pages for search engines', () => {
     expect((await request.get('/e/not-a-real-event')).status()).toBe(404);
   });
 
+  test('the Markdown versions and llms.txt come from the API through the proxy', async ({ request }) => {
+    const md = await request.get('/e/ravo.md');
+    expect(md.headers()['content-type']).toMatch(/^text\/markdown/);
+    expect(await md.text()).toMatch(/^# Ravolution Music Festival/);
+    expect(await (await request.get('/o/ravoent.md?lang=en')).text()).toMatch(/^# Ravolution Entertainment\n\n> Ravolution Entertainment is an event promoter/);
+    expect(await (await request.get('/llms.txt')).text()).toMatch(/^# FeestFinder[\s\S]*\/e\/ravo\.md\)/);
+  });
+
   test('the sitemap lists live events and robots keeps the back offices out', async ({ request }) => {
     const sitemap = await (await request.get('/sitemap.xml')).text();
     expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo<\/loc>/);
@@ -71,6 +80,16 @@ test.describe('pages for search engines', () => {
       expect(`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`, `${icon.src} is ${icon.sizes}`).toBe(icon.sizes);
     }
   });
+});
+
+test('the old back-office and map addresses lead to their pages', async ({ request }) => {
+  const moved: [string, string][] = [['/organizer', '/studio'], ['/admin', '/console'], ['/map', '/list?view=map']];
+  for (const [from, to] of moved) {
+    const res = await request.get(from, { maxRedirects: 0 });
+    expect([307, 308], from).toContain(res.status());
+    const at = new URL(res.headers().location, res.url());
+    expect(at.pathname + at.search, from).toBe(to);
+  }
 });
 
 test('pages carry a strict policy with no eval', async ({ request }) => {

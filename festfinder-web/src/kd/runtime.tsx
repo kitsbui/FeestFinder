@@ -4,7 +4,7 @@
  * sign-in sheet and the toast. Pages render their public content on the server; this
  * provider adds the personal layer once the page is in the browser.
  *
- * API calls go through FF (src/runtime/ff.ts), the same client the legacy screens use.
+ * API calls go through FF (src/runtime/ff.ts), the site's API client.
  */
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
@@ -60,7 +60,7 @@ interface Kd {
   toast: (text: string, action?: ToastMsg['action']) => void;
 }
 
-/** Where the last server-clock offset is kept (the compiled screens' key too). */
+/** Where the last server-clock offset is kept. */
 const CLOCK_KEY = 'ff:clock-offset';
 
 const Ctx = createContext<Kd | null>(null);
@@ -141,8 +141,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   }, [toast, C.saved]);
 
   // The server's clock: "n minutes ago" and countdowns follow it (it is pinned in the tests).
-  // With no signal the check fails and the last offset holds, as in the compiled screens
-  // (ff-client.js keeps it under the same key): a ticket stays "upcoming" offline.
+  // With no signal the check fails and the last offset holds: a ticket stays "upcoming" offline.
   useEffect(() => {
     FF.once('kd:clock', () => FF.maybe(FF.get('/health'), null)).then((h: { time?: string } | null) => {
       if (h?.time) {

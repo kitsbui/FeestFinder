@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { expectOps, signInWith, watch } from '../checks.ts';
 
 /*
- * The event page in Kính đêm (festfinder-web/src/kd/web/event): what the compiled screen's
- * tests in screens.spec.ts checked, on the rebuilt page, plus its own parts.
+ * The event page in Kính đêm (festfinder-web/src/kd/web/event): what the removed API
+ * screen's tests checked, on the rebuilt page, plus its own parts.
  */
 
 const ATTENDEE = { identifier: 'minh@example.com', password: 'festfinder123' };
@@ -50,7 +50,7 @@ test.describe('the event page', () => {
     // Resale folds under the tickets.
     await page.locator('summary', { hasText: 'Pass vé' }).click();
     await expect(page.getByText('1.050.000₫').first()).toBeVisible();
-    // Nothing of the compiled screens' look, even after the links on the page were prefetched.
+    // Nothing of the Bảng phấn look (/ops's), even after the links on the page were prefetched.
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.getAttribute('href')).filter((h) => /theme\.css|screens_/.test(h ?? '')))).toEqual([]);
     expect(problems).toEqual([]);
