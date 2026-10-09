@@ -219,7 +219,7 @@ function Thread({ lang, url, initial, placeholder }: { lang: Lang; url: string; 
       {msgs === null ? <div className="kd-skel h-40" aria-hidden="true" /> : msgs.length ? (
         <ol className="flex flex-col gap-2" aria-live="polite">
           {msgs.map((m) => (
-            <li key={m.id} className={cx('flex max-w-[82%] flex-col gap-0.5', m.fromMe ? 'self-end items-end' : 'self-start')}>
+            <li key={m.id} className={cx('flex max-w-[min(82%,560px)] flex-col gap-0.5', m.fromMe ? 'self-end items-end' : 'self-start')}>
               {!m.fromMe && m.author ? <span className="kd-m">{m.author}</span> : null}
               <span className={cx('rounded-card px-3.5 py-2.5 text-[15px]', m.fromMe ? 'bg-paper text-void' : 'kd-card text-paper')}>{m.body}</span>
               {m.payload?.qrPayload ? <span className="rounded-card bg-white p-2"><QrCode value={m.payload.qrPayload} size={140} label={m.payload.reference ?? ''} /></span> : null}

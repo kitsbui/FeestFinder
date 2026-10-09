@@ -31,7 +31,7 @@ export type Genre = (typeof GENRES)[number];
 
 /**
  * Genre families: four groups of genres, each one colour and one shape on screen (the same
- * grouping as GENRE_TONE in ui/ff-client.js and familyOf in festfinder-web/src/kd/genre.ts).
+ * grouping as GENRE_TONE in festfinder-web/src/runtime/ff.ts and familyOf in festfinder-web/src/kd/genre.ts).
  */
 export const GENRE_FAMILIES = {
   fest: ['Festival'],

@@ -49,14 +49,14 @@ export async function AboutPage({ lang }: { lang: Lang }) {
       <div className="flex min-h-dvh flex-col" lang={lang}>
         <WebNav lang={lang} />
         <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
-          <header className="flex max-w-[760px] flex-col gap-4">
+          <header className="flex max-w-read flex-col gap-4">
             <span className="kd-m">{T.title}</span>
             <h1 className="kd-d1">{T.headline}</h1>
             <p className="kd-t max-w-[620px]">{T.lede}</p>
           </header>
 
           {/* ---- numbers: the API's, or only the fee when it does not answer ---- */}
-          <section aria-label={T.numbers} className="mt-10 grid auto-cols-fr grid-flow-col border-y border-line py-4.5">
+          <section aria-label={T.numbers} className="mt-10 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
             {reach ? <Stat value={count(reach.events, lang)} label={T.statEvents} /> : null}
             {reach ? <Stat value={count(reach.withEvents, lang)} label={T.statCities} /> : null}
             <Stat value="0" label={T.statFee} />
@@ -89,7 +89,7 @@ export async function AboutPage({ lang }: { lang: Lang }) {
           {/* ---- who to write to ---- */}
           <section aria-labelledby="ab-contact" className="mt-12 flex flex-col gap-4">
             <h2 id="ab-contact" className="kd-d3">{T.contact}</h2>
-            <ul className="grid gap-4 tab:grid-cols-2 desk:grid-cols-3">
+            <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
               {CONTACTS.map(({ title, body, email, Icon, advertise }) => (
                 <li key={email} className="kd-card flex flex-col gap-3 p-5">
                   <div className="flex items-center gap-3">

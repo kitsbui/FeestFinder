@@ -356,9 +356,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
   });
 
   /**
-   * The basemap in Bảng phấn colours: board-dark land, darker water, roads as faint chalk
-   * lines. Built from the Protomaps schema of the configured PMTiles archive; without one,
-   * the board alone, and the map shows the events on it.
+   * The basemap, in Bảng phấn colours by default and in Kính đêm with ?theme=kd (the site).
+   * Built from the Protomaps schema of the configured PMTiles archive; without one, the
+   * board alone, and the map shows the events on it.
    */
   app.get('/map/style.json', async (req, reply) => {
     const { theme } = parse(z.object({ theme: z.enum(['chalk', 'kd']).catch('chalk').default('chalk') }), req.query);
@@ -485,8 +485,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
 const CHALK = 'rgba(255,252,225,';
 
 /**
- * The basemap's colours: Bảng phấn (the API-served screens) and Kính đêm (the Next front's
- * rebuilt screens: a void ground, hairline roads, the river in the live family's teal).
+ * The basemap's colours: Bảng phấn (the default: board-dark land, darker water, roads as
+ * faint chalk lines) and Kính đêm (the site: a void ground, hairline roads, the river in the
+ * live family's teal).
  */
 const MAP_PALETTES = {
   chalk: { board: '#0E100F', earth: '#151714', park: '#181b17', water: '#0A0F10', line: CHALK, label: '#A5A493', halo: '#0E100F' },

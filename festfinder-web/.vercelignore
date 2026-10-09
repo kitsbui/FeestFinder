@@ -1,5 +1,5 @@
 # This project's own list: it replaces the repository's, which leaves festfinder-web out of the
-# API's deployment. The build also reads ../festfinder-frontend (scripts/compile-screens.ts).
+# API's deployment. The build also reads ../festfinder-frontend (scripts/copy-ui.ts copies its ui).
 **/.env
 **/.env.local
 **/.data

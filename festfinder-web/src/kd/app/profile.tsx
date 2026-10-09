@@ -135,7 +135,7 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
   const shown = all ? pp.stamps : pp.stamps.slice(0, 8);
   return (
     <>
-      <section className={cx('flex flex-col gap-3 pt-8', !flush && 'px-4')} aria-labelledby="pf-pass">
+      <section className={cx('@container flex flex-col gap-3 pt-8', !flush && 'px-4')} aria-labelledby="pf-pass">
         <div className="flex items-baseline justify-between"><h2 id="pf-pass" className="kd-h">{T.passport}</h2><span className="kd-m kd-num">{fill(T.stamps, { n: pp.stamps.length })}</span></div>
         <span className="kd-s">{fill(T.passportLine, { n: pp.stats.nights, g: pp.stats.genres, c: pp.stats.cities })}</span>
         {pp.stamps.length ? (
@@ -143,7 +143,7 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
             <div className="kd-hscroll" role="group" aria-label={T.genres}>
               {mix.map(({ f }) => <Chip key={f} family={f} on={only === f} onClick={() => setOnly(only === f ? null : f)}>{FAMILY_LABEL[f][lang]}</Chip>)}
             </div>
-            <ul className="mt-1 grid grid-cols-4 gap-x-2 gap-y-3.5">
+            <ul className="mt-1 grid grid-cols-4 gap-x-2 @2xl:grid-cols-8 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
                   <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/app/e/' + s.slug : inLang('/e/' + s.slug, lang)} />

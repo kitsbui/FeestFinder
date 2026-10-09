@@ -31,7 +31,7 @@ export async function AdvertisePage({ lang }: { lang: Lang }) {
       <div className="flex min-h-dvh flex-col" lang={lang}>
         <WebNav lang={lang} />
         <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
-          <header className="flex max-w-[760px] flex-col gap-4">
+          <header className="flex max-w-read flex-col gap-4">
             <span className="kd-m">{T.kicker}</span>
             <h1 className="kd-d1">{T.title}</h1>
             <p className="kd-t max-w-[620px]">{T.sub}</p>
@@ -45,7 +45,7 @@ export async function AdvertisePage({ lang }: { lang: Lang }) {
               <AdEnquiry lang={lang} />
             </div>
 
-            <aside className="kd-side flex flex-col gap-8">
+            <aside className="kd-side flex max-w-[400px] flex-col gap-8">
               {card ? (
                 <section aria-labelledby="ad-rates" className="flex flex-col">
                   <h2 id="ad-rates" className="kd-m pb-1.5">{T.rates}</h2>

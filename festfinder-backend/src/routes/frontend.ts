@@ -10,59 +10,21 @@ import { notFound } from '../lib/errors.ts';
 import { GENRES } from '../lib/i18n.ts';
 import { isCity } from '../lib/places.ts';
 import { slugify } from '../lib/contact.ts';
-import {
-  artistSsr, buildArtistSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, collectionSsr, directorySsr, eventSsr, organizerSsr, seoHead,
-  type ArtistSeo, type CollectionSeo, type DirectorySeo, type OrganizerSeo, type PageSeo,
-} from '../services/seo.ts';
 
 /**
- * The four Claude Design surfaces, wired to this API and served from the same origin, and
- * the operations back office (/ops) next to them.
+ * The operations back office (/ops), and the /ui and /pages files it loads. The site's own
+ * screens are the Next front in festfinder-web.
  *
- * Each surface is a small shell that answers every route below its base, so the screens,
- * tabs and panels all have real URLs while the browser keeps one copy of the template,
- * the logic and the runtime.
+ * The /ops shell answers every route below it, so its tabs and panels have real URLs while
+ * the browser keeps one copy of the scripts. It is plain scripts on vendored React, so it
+ * keeps the strict policy from app.ts.
  */
-const SURFACES = [
-  { base: '/', shell: 'pages/web/shell.html', routes: ['/', '/about', '/advertise', '/list', '/saved', '/stats/:key'] },
-  { base: '/app', shell: 'pages/app/shell.html', routes: ['/app', '/app/:screen', '/app/:screen/:param'] },
-  // The back offices sit on their own namespaces: /organizer/* and /admin/* are API paths,
-  // and a screen URL must never shadow an endpoint.
-  { base: '/studio', shell: 'pages/organizer/shell.html', routes: ['/studio', '/studio/:screen', '/studio/:screen/:param'] },
-  { base: '/console', shell: 'pages/admin/shell.html', routes: ['/console', '/console/:screen', '/console/:screen/:param'] },
-  // The operations back office is plain scripts, not the design runtime, so it keeps the
-  // strict policy from app.ts (no 'unsafe-eval').
-  { base: '/ops', shell: 'pages/ops/shell.html', routes: ['/ops', '/ops/*'], strict: true },
-];
-
-/**
- * The design runtime compiles each screen's template and logic with `new Function`, so
- * its pages need 'unsafe-eval'. Scripts still load only from this origin and nothing runs
- * inline, which is what keeps an injected script out. Every other response keeps the
- * strict policy set in app.ts.
- */
-export function designRuntimeCsp(map: Config['map']): string {
-  return [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
-    "font-src 'self' data:",
-    "img-src 'self' data: blob: https:",
-    ['connect-src', "'self'", ...mapOrigins(map)].join(' '),
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "object-src 'none'",
-  ].join('; ');
-}
+const OPS = { shell: 'pages/ops/shell.html', routes: ['/ops', '/ops/*'] };
 
 /** The hosts the map's tiles and glyphs come from, for connect-src. */
 export function mapOrigins(map: Config['map']): string[] {
   return [...new Set([map.tilesUrl, map.overviewUrl, map.glyphsUrl].filter((u): u is string => !!u).map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin))];
 }
-
-/** Where the old entry points went. */
-const MOVED: Record<string, string> = { '/organizer': '/studio', '/admin': '/console' };
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -103,19 +65,16 @@ type Cached = { etag: string; body: Buffer; gzip?: Buffer; type: string };
  * so `s-maxage` lets the edge near the visitor answer instead of the function in Tokyo.
  * - asset: a file named with this deployment's version (?v=…), kept for good;
  * - file: the same file without it (an old tab, a hand-typed URL);
- * - shell: a screen's empty shell; the browser checks back, the edge keeps it;
- * - page: an event or organiser page with its facts, edited from Ops now and then.
+ * - shell: the empty /ops shell; the browser checks back, the edge keeps it.
  */
-type Policy = 'asset' | 'file' | 'shell' | 'page' | 'none';
+type Policy = 'asset' | 'file' | 'shell';
 const POLICY: Record<Policy, string> = {
   asset: 'public, max-age=31536000, immutable',
   file: 'public, max-age=3600, s-maxage=86400',
   shell: 'public, max-age=0, s-maxage=86400',
-  page: 'public, max-age=0, s-maxage=60, stale-while-revalidate=600',
-  none: 'public, max-age=0',
 };
 
-/** A short hash of every file the screens load, so a deployment's URLs change with its content. */
+/** A short hash of every file under pages/ and ui/, so a deployment's URLs change with its content. */
 async function versionOf(dir: string): Promise<string> {
   const hash = createHash('sha256');
   const walk = async (d: string) => {
@@ -131,7 +90,7 @@ async function versionOf(dir: string): Promise<string> {
 
 /**
  * Adds the version to the /ui and /pages URLs an HTML or CSS file names, and to the fonts a
- * stylesheet loads next to it. ff-client.js adds it to what it fetches itself.
+ * stylesheet loads next to it.
  */
 export function stampUrls(text: string, version: string): string {
   return text
@@ -143,12 +102,11 @@ export default async function frontendRoutes(app: FastifyInstance) {
   // This repo's festfinder-frontend, wherever the process was started from. Written as a
   // URL literal so Vercel's file tracing ships the folder with the function.
   const dir = process.env.FRONTEND_DIR ? resolve(process.env.FRONTEND_DIR) : fileURLToPath(new URL('../../../festfinder-frontend', import.meta.url));
-  if (!existsSync(join(dir, 'pages/web/shell.html'))) {
+  if (!existsSync(join(dir, OPS.shell))) {
     app.ctx.log(`frontend not found at ${dir}; serving the API only`);
     return;
   }
   const dev = app.ctx.config.env !== 'production';
-  const csp = designRuntimeCsp(app.ctx.config.map);
   const cache = new Map<string, Cached & { mtime: number }>();
   // Outside development every file is fetched with the deployment's version and kept for good.
   const version = dev ? '' : await versionOf(dir);
@@ -187,79 +145,23 @@ export default async function frontendRoutes(app: FastifyInstance) {
     return reply.send(entry.body);
   }
 
-  /**
-   * Event and organiser pages arrive with their facts already in them: title, description,
-   * language versions and link-preview tags, structured data, and the details as plain HTML
-   * inside <x-dc>, which the screen replaces when it mounts. Search engines and AI assistants
-   * that run no script read that. Vietnamese at /e/:slug, English at /e/:slug?lang=en.
-   */
-  const page = <S extends PageSeo>(route: string, build: (slug: string, lang: 'vi' | 'en') => Promise<S | null>, ssr: (seo: S) => string,
-    keyOf: (params: { slug: string }) => string = (params) => params.slug) =>
-    app.get<{ Params: { slug: string }; Querystring: { lang?: string } }>(route, async (req, reply) => {
-      const entry = await load(join(dir, 'pages/web/shell.html'));
+  for (const route of OPS.routes) {
+    app.get(route, async (req, reply) => {
+      const entry = await load(join(dir, OPS.shell));
       if (!entry) throw notFound();
-      reply.header('content-security-policy', csp);
-      const lang = req.query?.lang === 'en' ? 'en' : 'vi';
-      const key = keyOf(req.params);
-      const seo = await build(key, lang).catch((e) => { app.ctx.log(`${route} ${key}: ${e}`); return null; });
-      if (!seo) return serve(req, reply.code(404), entry, 'none');
-      const { title, head } = seoHead(seo);
-      const html = entry.body.toString('utf8')
-        .replace('<html lang="vi">', `<html lang="${lang}">`)
-        .replace(/<title>[^<]*<\/title>/, `<title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title>`)
-        .replace('</head>', `${head}\n</head>`)
-        .replace('<x-dc></x-dc>', `<x-dc>${ssr(seo)}</x-dc>`);
-      reply.header('content-language', lang);
-      const body = Buffer.from(html);
-      return serve(req, reply, {
-        type: MIME['.html'], body,
-        etag: '"' + createHash('sha256').update(body).digest('base64url').slice(0, 20) + '"',
-        gzip: gzipSync(body, { level: 6 }),
-      }, 'page');
-    });
-  page('/e/:slug', (slug, lang) => buildEventSeo(app.ctx, slug, lang), eventSsr);
-  page<OrganizerSeo>('/o/:slug', (slug, lang) => buildOrganizerSeo(app.ctx, slug, lang), organizerSsr);
-  page<CollectionSeo>('/c/:slug', (slug, lang) => buildCollectionSeo(app.ctx, slug, lang), collectionSsr);
-  page<ArtistSeo>('/a/:slug', (slug, lang) => buildArtistSeo(app.ctx, slug, lang), artistSsr);
-  // The artist directory, and one style's or one city's artists.
-  page<DirectorySeo>('/a', (key, lang) => buildDirectorySeo(app.ctx, key, lang), directorySsr, () => 'all');
-  page<DirectorySeo>('/a/style/:slug', (key, lang) => buildDirectorySeo(app.ctx, key, lang), directorySsr, (p) => `style:${p.slug}`);
-  page<DirectorySeo>('/a/city/:slug', (key, lang) => buildDirectorySeo(app.ctx, key, lang), directorySsr, (p) => `city:${p.slug}`);
-
-  for (const surface of SURFACES) {
-    const shell = join(dir, surface.shell);
-    for (const route of surface.routes) {
-      app.get(route, async (req, reply) => {
-        const entry = await load(shell);
-        if (!entry) throw notFound();
-        if (!('strict' in surface)) reply.header('content-security-policy', csp);
-        // The shell carries no data of its own, so the edge may keep it for the deployment.
-        return serve(req, reply, entry, 'shell');
-      });
-    }
-  }
-
-  // A browser asking for the old entry point gets sent to the screen; API clients asking
-  // for the same path with Accept: application/json still reach the endpoint below it.
-  for (const [from, to] of Object.entries(MOVED)) {
-    app.get(from, async (req, reply) => {
-      if (!String(req.headers.accept ?? '').includes('text/html')) throw notFound();
-      return reply.redirect(to, 302);
+      // The shell carries no data of its own, so the edge may keep it for the deployment.
+      return serve(req, reply, entry, 'shell');
     });
   }
 
-  // The map became the list; old links and bookmarks land on it.
-  // The map is a view of the list.
-  app.get('/map', async (_req, reply) => reply.redirect('/list?view=map', 302));
-  app.get('/app/map', async (_req, reply) => reply.redirect('/app/list', 301));
-
-  // The city landing pages (/vi/ho-chi-minh/edm/this-weekend…) are gone: each event page now
-  // answers search engines itself. Their links land on the list with the same filters.
-  for (const route of ['/vi/:city', '/en/:city', '/city/:city', '/vi/:city/*', '/en/:city/*', '/city/:city/*']) {
+  // The old city landing pages (/city/ho-chi-minh/edm/this-weekend…) land on the list with the
+  // same filters. The Next front answers /vi/… and /en/… itself and sends /city/… here.
+  for (const route of ['/city/:city', '/city/:city/*']) {
     app.get<{ Params: { city: string; '*'?: string } }>(route, async (req, reply) => reply.redirect(legacyListPath(req.url.split('/')[1], req.params.city, req.params['*'] ?? ''), 301));
   }
 
-  // The template, logic and data chunks a shell pulls in, plus the shared runtime.
+  // The modules and styles the /ops shell pulls in, and the shared /ui files (fonts, icons,
+  // theme, map, brand images).
   for (const folder of ['pages', 'ui']) {
     app.get<{ Params: { '*': string } }>(`/${folder}/*`, async (req, reply) => {
       const rel = normalize(req.params['*']).replace(/^(\.\.[/\\])+/, '');

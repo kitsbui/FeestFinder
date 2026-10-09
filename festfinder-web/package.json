@@ -2,17 +2,17 @@
   "name": "festfinder-web",
   "version": "0.1.0",
   "private": true,
-  "description": "FeestFinder's four screens on Next.js: the design templates compiled to React, server-rendered pages for search engines",
+  "description": "FeestFinder's Kính đêm front on Next.js: hand-written React pages for the site, the app, Studio and Console, server-rendered for search engines",
   "type": "module",
   "engines": {
     "node": "24.x"
   },
   "scripts": {
-    "compile": "node scripts/compile-screens.ts",
-    "dev": "npm run compile && next dev --port 3000",
-    "build": "npm run compile && next build",
+    "copy-ui": "node scripts/copy-ui.ts",
+    "dev": "npm run copy-ui && next dev --port 3000",
+    "build": "npm run copy-ui && next build",
     "start": "next start --port 3000",
-    "typecheck": "npm run compile && next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.3.0",
@@ -29,8 +29,6 @@
     "@types/node": "^24.13.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "domhandler": "^6.0.1",
-    "htmlparser2": "^12.0.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3"
   }

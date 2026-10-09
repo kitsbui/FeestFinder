@@ -1,10 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Smoke tests for the four screens: every route boots, renders the screen it names and
- * throws nothing. Two APIs start fresh on their own ports and embedded databases, so the
- * run touches neither a dev server nor Supabase: one on the demo data (screens.spec.ts), one
- * empty the way production starts (empty.spec.ts).
+ * Browser checks for /ops, the back office this API serves: every route boots, shows what
+ * it names and throws nothing. Two APIs start fresh on their own ports and embedded
+ * databases, so the run touches neither a dev server nor Supabase: one on the demo data
+ * (screens.spec.ts), one empty the way production starts (empty.spec.ts).
  */
 const PORT = Number(process.env.SCREENS_PORT ?? 4100);
 const EMPTY_PORT = Number(process.env.EMPTY_PORT ?? 4101);

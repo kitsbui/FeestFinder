@@ -4,7 +4,7 @@ Grouped by the surface and screen in the design handoff. 🔒 needs a signed-in 
 
 Conventions (see the README): bilingual fields are `{en, vi}`; errors are `{error: {code, message, details}}`; lists page with `cursor` / `nextCursor`; money is integer VND; times are Ho Chi Minh City local.
 
-The four screens in `../festfinder-frontend/` call these endpoints directly. Each surface's `pages/<surface>/data.js` has one loader per screen — `FF.loadOrg` for the chrome, then `FF.orgDoor`, `FF.orgMoney` and so on — which is the quickest way to see what a given screen depends on.
+The site's screens (`festfinder-web/src/kd/`, through the proxy) and `/ops` (`festfinder-frontend/pages/ops/js/`) call these endpoints; the screens' loaders are the quickest way to see what a given screen depends on.
 
 ---
 
@@ -30,7 +30,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | Method | Path | Notes |
 | --- | --- | --- |
 | GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre`; `artist`; `price=free,under,over`; `area`; `organizer`; `city=ho-chi-minh\|ha-noi\|da-nang\|nha-trang`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` counts, `window`. Ended events sort last. |
-| GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat`, `genre`, `free`, `friendsOnly`, `time`. Upcoming only. The screens no longer use it: the List tab (`/list`, `/app/list`; `/map` redirects there) reads `/events?time=all` and refreshes it every minute while open. |
+| GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat`, `genre`, `free`, `friendsOnly`, `time`. Upcoming only. The map views (`/list?view=map`, `/app/list`; `/map` redirects there) ask it when they open and on "search this area". |
 | GET | `/events/:idOrSlug` | Detail: facts, description, `tickets` (tier ladder with state `onsale\|last\|soldout\|soon`, `left`, price-rise note, `urgency`, `refundPolicy`), `timetable` (days → stages → sets with minute offsets), organiser card, `similar`, and for a signed-in viewer `me` (following, artist follows, set plan with `clashes`, reported, group plan). Organisers and admins can preview non-live listings. |
 | GET | `/explore/stats?view=free\|weekend\|venues` | Hero stat cards and their drill-downs; takes the same filters as `/events`. |
 | GET | `/organizers/:slug` | Profile with stats, upcoming and past events, `me.following`. |

@@ -2,7 +2,7 @@
 
 FeestFinder's four surfaces — the public web, the attendee app, Studio for organisers and the Console for the team — in the **Kính đêm** ("night glass") design, on **Next.js 16, React 19, TypeScript and Tailwind v4**. Public pages render on the server for search engines; the attendee app installs as a PWA.
 
-Every page is written by hand in React from the boards in [`design_handoff_kinh_dem/`](../design_handoff_kinh_dem/README.md). Production still runs the API-served front (`festfinder-frontend`, the "Bảng phấn" look); this one is kept working and tested next to it.
+Every page is written by hand in React from the boards in [`design_handoff_kinh_dem/`](../design_handoff_kinh_dem/README.md). This is the site at feestfinder.com. The API keeps only `/ops`, the team's and organisers' working back office, which this app proxies.
 
 ## Run it
 
@@ -30,12 +30,12 @@ Open http://localhost:3000. Paths the app does not own (`/auth/*`, `/me/*`, `/ev
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | Compile the screens, then `next dev` on :3000 |
+| `npm run dev` | Copy `public/ui/`, then `next dev` on :3000 |
 | `npm run build` / `npm start` | Production build and server |
-| `npm run compile` | Copy `public/ui/` (the map, brand images, fonts) from `../festfinder-frontend`, and compile its templates to `src/screens/` (no route uses those any more; kept until production moves to this front) |
-| `npm run typecheck` | Compile, generate Next's route types, `tsc --noEmit` |
+| `npm run copy-ui` | Copy `public/ui/` from `../festfinder-frontend/ui`: the map and MapLibre, brand images, and the React, icon and text fonts /ops loads through this site |
+| `npm run typecheck` | Generate Next's route types, `tsc --noEmit` |
 
-The Playwright tests live with the API: `npm run test:screens:next --prefix festfinder-backend` builds this app, starts it with a fresh API behind it, and runs `e2e/next/*.spec.ts` (the shared `e2e/screens.spec.ts` is the API front's: it skips every path listed in `src/kd/cutover.ts`). Set `FF_KIT=1` to serve `/kit`, the page of every part.
+The Playwright tests live with the API: `npm run test:screens:next --prefix festfinder-backend` builds this app, starts it with a fresh API behind it, and runs `e2e/next/*.spec.ts` plus the /ops checks (`e2e/screens.spec.ts`) through the proxy. Set `FF_KIT=1` to serve `/kit`, the page of every part.
 
 ## Settings
 
@@ -53,7 +53,7 @@ When this app is at the site's public address (feestfinder.com), the API's `PUBL
 
 This app is its own Vercel project, next to the API's (`feestfinder`, Root Directory `festfinder-backend`), and calls the API across the internet. Vercel overwrites `X-Forwarded-For` on the way in, so without help the API would see this app's address for every visitor (one rate limit, one sign-in throttle for everyone). `src/proxy.ts` fixes that: it forwards every path that is not one of this app's pages to the API itself, with `fetch` (on Vercel, headers a proxy adds never reach a rewrite to another deployment), and with the same `WEB_PROXY_SECRET` on both projects it names the visitor (address, country) and this site's origin in `x-ff-*` headers signed by the secret, and `lib/api.ts` signs the server's own reads, which share one rate-limit bucket at 20 times a visitor's (a page with a query is rendered on request). Google sign-in then comes back to this site. The proxy signs only on Vercel (`VERCEL=1`), whose edge sets the visitor's address; the secret is trimmed on both sides, and the API logs a warning once when a request carries a secret that does not match.
 
-1. **New project.** Vercel → Add New → Project → import `kitsbui/FeestFinder`. Root Directory `festfinder-web`; keep "Include files outside the Root Directory in the Build Step" on (the build copies `../festfinder-frontend/ui`). Framework Next.js, the default install and build commands (`npm run build` compiles, then builds). Node 24 comes from `engines`; `vercel.json` puts the functions in `hnd1`, next to the API and the database.
+1. **New project.** Vercel → Add New → Project → import `kitsbui/FeestFinder`. Root Directory `festfinder-web`; keep "Include files outside the Root Directory in the Build Step" on (the build copies `../festfinder-frontend/ui`). Framework Next.js, the default install and build commands (`npm run build` copies `public/ui/`, then builds). Node 24 comes from `engines`; `vercel.json` puts the functions in `hnd1`, next to the API and the database.
 2. **Its variables**, for Production only (previews are off, step 6):
    - `FF_API_ORIGIN` = the API's own address, `https://feestfinder-api.vercel.app` (never feestfinder.com, which this project takes over; a rebuild is needed when it changes).
    - `SITE_URL` = `https://feestfinder.com`, even before the domain moves here, so every canonical link and the sitemap name the real site and the project's own address is never indexed as a copy.
@@ -69,7 +69,7 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
 
 ### Moving feestfinder.com to this project
 
-Done on 2026-10-08: this project (`feestfinder-web`) holds feestfinder.com, `www.feestfinder.com` and `feestfinder.vercel.app` (both 308 to feestfinder.com); the API project keeps `feestfinder-api.vercel.app`. Moving `feestfinder.com` in Vercel moves the domains that redirect to it as well. The steps, for the record and for a move back:
+Done on 2026-10-08: this project (`feestfinder-web`) holds feestfinder.com, `www.feestfinder.com` and `feestfinder.vercel.app` (both 308 to feestfinder.com); the API project keeps `feestfinder-api.vercel.app`. Moving `feestfinder.com` in Vercel moves the domains that redirect to it as well. The steps, for the record:
 
 The API keeps running as it is; only the address people type changes hands. The API answers on an address of its own that this project calls: `https://feestfinder-api.vercel.app`, a domain on the API project with no redirect (the project's other `*.vercel.app` addresses redirect to feestfinder.com or sit behind Vercel Authentication). `api.feestfinder.com` can replace it later with a CNAME at the registrar (feestfinder.com's DNS is not on Vercel).
 
@@ -78,7 +78,7 @@ The API keeps running as it is; only the address people type changes hands. The 
 3. **The API's settings.** `WEB_PROXY_SECRET` (the same value); `CORS_ORIGINS` and `PUBLIC_BASE_URL` stay `https://feestfinder.com` (sign-in returns, emails, share links and file URLs all stay on the public address). Redeploy the API.
 4. **The domain.** Remove `feestfinder.com` and `www.feestfinder.com` from the API project and add them to this one (`www` redirects to the bare domain, as before). Google's redirect URI `https://feestfinder.com/auth/oauth/google/return` stays as it is: it now reaches the API through this app.
 5. **Check.** `https://feestfinder.com/` is the Kính đêm home; `/health` answers `"webProxy":"visitor"`; Google sign-in comes back signed in; a ticket button (`/go/<slug>`) redirects; `/ops` still opens (the API's back office, through the proxy) and `/studio/door` scans; the pg_cron job `POST https://feestfinder.com/internal/jobs` still reaches the API (it is forwarded with its `Authorization`).
-6. **Back out** if anything is wrong: move the two domains back to the API project. Nothing else needs undoing.
+6. **Back out.** No longer possible: the API's own screens were removed on 2026-10-09, and it serves only `/ops`. Roll back a bad release with Vercel's Instant Rollback to an earlier deployment of this project.
 
 ## How it is put together
 
@@ -97,13 +97,13 @@ src/
     web/                     the public pages (chrome.tsx is the nav and footer)
     app/, studio/, console/  the attendee app, the organisers' Studio, the team's Console (one layout each)
     map/                     the map views on FF.loadMap()
-    cutover.ts               the rebuilt paths; the Playwright run reads it
+    cutover.ts               the paths this app renders; src/proxy.ts sends every other path to the API
   lib/api.ts                 server-side reads from the API and their types
   components/                the SEO head builder (seo-meta.ts) and the extension guard
   runtime/
-    ff.ts                    FF: API calls, session, clock, loaders — typed; mirrors festfinder-frontend/ui/ff-client.js
+    ff.ts                    FF: API calls, session, clock, sign-in, analytics, the map loader, story images — typed
     pwa.ts                   service worker registration, Web Push, sign-out clean-up
-    dc.tsx, view.ts, screen.tsx   the compiled screens' runtime (with src/surfaces and src/screens: unused since Phase 6)
+scripts/copy-ui.ts           copies public/ui/ from ../festfinder-frontend/ui
 public/sw.js                 the service worker
 ```
 
@@ -130,7 +130,7 @@ The product is **FeestFinder** (renamed from FestFinder on 2026-09-23), at **fee
 | [`ff-logo.svg`](../festfinder-frontend/ui/assets/ff-logo.svg) | The wordmark: cream letters, green flags and sparkles. Headers and sign-in screens, on dark backgrounds only. Size it by height (26px in headers, 22px in the app); its width is 5.77× that. |
 | [`ff-mark.svg`](../festfinder-frontend/ui/assets/ff-mark.svg) | The flag F on its own, where the wordmark does not fit: sign-in sheets, the share card. |
 | [`ff-appicon.svg`](../festfinder-frontend/ui/assets/ff-appicon.svg) | The mark on its board-black tile: the app icon, also shown in notification previews. |
-| `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | Favicons for both fronts. The SVG follows the browser's theme: ink on light, cream on dark. The ICO and the touch icon use the tile. |
+| `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | Favicons for the site and /ops. The SVG follows the browser's theme: ink on light, cream on dark. The ICO and the touch icon use the tile. |
 | `public/icons/app-icon-*.png`, `notification-badge.png` | The installed app's icons. The maskable one is full-bleed with the mark inside the safe zone. The badge is the white mark that Android shows in the status bar. |
 
 The SVGs are the vectors from the logo pack (`FeestFinder_logo_pack_2`), cropped to the artwork, with coordinates rounded and each outline within 0.15px of the original at any size the screens use. The PNGs are rendered from them. On 2026-09-29 they were recoloured for the Chalkboard system (letters `#fffce1`, flags `#0ae448`, tile `#0e100f`) and the PNGs re-rendered with Playwright's Chromium.

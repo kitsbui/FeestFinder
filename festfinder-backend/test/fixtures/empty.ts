@@ -1,6 +1,7 @@
 /**
  * An embedded database the way production starts: the migrations, one account per role and
- * an organiser with no listings — no demo data. The screen tests open every route on it.
+ * an organiser with no listings — no demo data. The /ops checks (e2e/empty.spec.ts) open every
+ * route on it.
  *
  *   PGLITE_DIR=./.data/pglite-empty node test/fixtures/empty.ts
  */

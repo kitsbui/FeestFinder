@@ -13,11 +13,10 @@ festfinder-backend/.uploads/
 test-results/
 playwright-report/
 
-# Next.js: build output, and what `npm run compile` generates from festfinder-frontend
+# Next.js: build output, and what `npm run copy-ui` copies from festfinder-frontend
 festfinder-web/.next/
 festfinder-web/next-env.d.ts
 festfinder-web/*.tsbuildinfo
-festfinder-web/src/screens/
 festfinder-web/public/ui/
 
 # Editor and OS noise

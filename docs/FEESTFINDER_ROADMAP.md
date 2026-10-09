@@ -102,7 +102,7 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
   - [x] Docs: `CLAUDE.md`, the `festfinder-web` README, `CURRENT_ARCHITECTURE.md`.
 - [x] Production: feestfinder.com on its own Vercel project (`feestfinder-web`), the API at `feestfinder-api.vercel.app`
   - The web proxy forwards every non-page path to the API with fetch, signed with `WEB_PROXY_SECRET` (on Vercel, headers a proxy adds never reach a rewrite to another deployment); the API keeps per-visitor rate limits, the sign-in throttle, click countries and Google's return address.
-  - [ ] Remove the compiled screens from the compile step (`public/ui/` must still be copied).
+  - [x] The old API-served screens removed (2026-10-09): `festfinder-frontend/pages/{web,app,organizer,admin}`, `ui/ff-client.js`, `ui/support.js`, the compiled screens and their runtime in `festfinder-web`, and the API's page shells. `/ops` stays; `scripts/copy-ui.ts` copies `public/ui/`.
   - [ ] A Vercel Firewall rate-limit rule on `feestfinder-web` for paths rendered on request (`/list?…`, `/stats/…`): the API caps their shared bucket, so one client could crowd out the others' renders.
 
 ## What the team does next in production
@@ -144,3 +144,5 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-07: Kính đêm Phase 5 review: organiser photos go to the team named, badge rules match their text, row level security on the new tables (migration `030`).
 - 2026-10-07: Kính đêm Phase 6: every Next route is rebuilt (`e2e/next/directory.spec.ts`, `collection.spec.ts`, `saved.spec.ts`, `about.spec.ts`, `stats.spec.ts`); the legacy route group is gone.
 - 2026-10-08: feestfinder.com moved to the Kính đêm front: Vercel project `feestfinder-web` (with `www` and `feestfinder.vercel.app`), the API at `feestfinder-api.vercel.app`. The web proxy forwards the API's paths with fetch (a rewrite lost the signed headers on Vercel); the web project builds `main` only through `vercel.json`. API 317 pass; the Next run 167 passed.
+- 2026-10-09: The old screens removed; the API serves `/ops` and its files, and answers 404 for the pages the site now owns. The map names the cities on its bare board. API 317 pass; /ops 58 passed; the Next run 174 passed, none skipped.
+- 2026-10-09: The site full width on desktop: one page container with gutters of 16, 32 and up to 64px, reading measures kept for long text, forms and dialogs; Studio and Console screens full width; `/app` fills the screen beside a side rail. The Next run 180 passed.

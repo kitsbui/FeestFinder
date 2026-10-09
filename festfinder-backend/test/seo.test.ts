@@ -3,10 +3,6 @@ import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { legacyListPath } from '../src/routes/frontend.ts';
 
-/** The JSON-LD blocks of a page, with their @graph spread out. */
-const nodes = (html: string) => [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)]
-  .flatMap((m) => { const d = JSON.parse(m[1]); return d['@graph'] ?? [d]; });
-
 describe('event pages for search engines and AI assistants', () => {
   let env: TestEnv;
   before(async () => { env = await setup({ config: { serveFrontend: true } }); });
@@ -64,32 +60,20 @@ describe('event pages for search engines and AI assistants', () => {
     assert.match(s.title, /^Ravolution Music Festival – 19 Sep · /);
     assert.match(s.page.summary, /^Ravolution Music Festival is an EDM event taking place on Saturday 19 September 2026, 16:00 – 02:00 \(next day\)/);
     assert.equal(s.page.otherLang.path, '/e/ravo');
-
-    const html = (await env.as().get('/e/ravo?lang=en')).body as string;
-    assert.match(html, /<html lang="en">/);
-    assert.match(html, /<link rel="canonical" href="http:\/\/test\.local\/e\/ravo\?lang=en">/);
-    assert.match(html, /<h2>Key facts<\/h2>/);
+    assert.equal(s.headings.facts, 'Key facts');
   });
 
-  it('arrives as complete HTML: head, one graph, and the facts before any script runs', async () => {
-    const res = await env.as().get('/e/ravo');
+  it('gives the page its head, one graph and its section headings, for the front to render', async () => {
+    const res = await env.as().get('/seo/events/ravo');
     assert.equal(res.status, 200);
-    assert.equal(res.headers['content-language'], 'vi');
-    const html = res.body as string;
-    assert.match(html, /<html lang="vi">/);
-    assert.match(html, /<title>Ravolution Music Festival – 19\/9 · /);
-    assert.match(html, /<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">/);
-    for (const l of ['vi', 'en', 'x-default']) assert.match(html, new RegExp(`<link rel="alternate" hreflang="${l}" href="http://test\\.local/e/ravo`));
-    assert.match(html, /<meta property="og:image" content="http:\/\/test\.local\/og\/v1\/edm\.png">/);
-    assert.match(html, /<meta property="og:image:width" content="1200">/);
-    assert.equal([...html.matchAll(/application\/ld\+json/g)].length, 1, 'one block of structured data');
-    assert.ok(nodes(html).some((n) => n['@type'] === 'MusicEvent'));
-    const ssr = html.slice(html.indexOf('<x-dc>'), html.indexOf('</x-dc>'));
-    assert.match(ssr, /<nav aria-label="Breadcrumb"><a href="\/">FeestFinder<\/a> › <a href="\/list\?city=ho-chi-minh">Sự kiện ở TP\.HCM<\/a>/);
-    assert.match(ssr, /<p class="lede">Ravolution Music Festival là sự kiện EDM/);
-    assert.match(ssr, /<dt>Thời gian<\/dt><dd><time datetime="2026-09-19T16:00:00\+07:00">/);
-    for (const h of ['Thông tin chính', 'Đội hình', 'Vé', 'Tin từ BTC', 'Câu hỏi thường gặp', 'Sự kiện liên quan']) assert.match(ssr, new RegExp(`<h2>${h}</h2>`));
-    assert.match(ssr, /<a href="\/e\/ravo\?lang=en">English<\/a>/);
+    assert.equal(res.headers['cache-control'], 'public, max-age=60');
+    const s = res.body;
+    assert.equal(s.robots, 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+    assert.equal(s.image.width, 1200);
+    assert.equal(s.jsonLd['@graph'].filter((n: any) => n['@type'] === 'MusicEvent').length, 1, 'one event in the structured data');
+    const headings = Object.values(s.headings);
+    for (const h of ['Thông tin chính', 'Đội hình', 'Vé', 'Tin từ BTC', 'Câu hỏi thường gặp', 'Sự kiện liên quan']) assert.ok(headings.includes(h), h);
+    assert.equal(s.page.otherLang.path, '/e/ravo?lang=en');
   });
 
   it('says when an event is cancelled', async () => {
@@ -121,10 +105,12 @@ describe('event pages for search engines and AI assistants', () => {
     assert.equal(legacyListPath('en', 'ho-chi-minh', 'free/edm'), '/list?city=ho-chi-minh&genre=EDM&lang=en');
     assert.equal(legacyListPath('vi', 'ho-chi-minh', 'thao-dien/night-market'), '/list?city=ho-chi-minh&genre=Food&lang=vi');
     assert.equal(legacyListPath('city', 'da-lat', ''), '/list');
-    const res = await env.as().get('/vi/ho-chi-minh/edm/this-weekend');
+    const res = await env.as().get('/city/ho-chi-minh/edm/this-weekend');
     assert.equal(res.status, 301);
-    assert.equal(res.headers.location, '/list?city=ho-chi-minh&genre=EDM&time=weekend&lang=vi');
-    assert.equal((await env.as().get('/en/ha-noi')).headers.location, '/list?city=ha-noi&lang=en');
+    assert.equal(res.headers.location, '/list?city=ho-chi-minh&genre=EDM&time=weekend');
+    // The Next front answers /vi/… and /en/… itself.
+    assert.equal((await env.as().get('/vi/ho-chi-minh/edm/this-weekend')).status, 404);
+    assert.equal((await env.as().get('/en/ha-noi')).status, 404);
     assert.equal((await env.as().get('/seo/landing/vi/ho-chi-minh/this-weekend')).status, 404);
   });
 
@@ -149,11 +135,8 @@ describe('event pages for search engines and AI assistants', () => {
     assert.match(en.page.summary, /^Ravolution Entertainment is an event promoter verified by FeestFinder/);
     assert.ok(en.page.upcoming.every((x: any) => x.path.endsWith('?lang=en')), 'English pages link to English pages');
 
-    const html = (await env.as().get('/o/ravoent')).body as string;
-    assert.match(html, /<link rel="canonical" href="http:\/\/test\.local\/o\/ravoent">/);
-    assert.match(html, /<meta property="og:type" content="profile">/);
-    assert.match(html, /<h2>Sự kiện sắp diễn ra<\/h2><ul><li><a href="\/e\/ravo-warmup">/);
-    assert.equal((await env.as().get('/o/nobody')).status, 404);
+    assert.equal(s.headings.upcoming, 'Sự kiện sắp diễn ra');
+    assert.equal(s.page.upcoming[0].path, '/e/ravo-warmup');
   });
 
   it('serves every event and organiser page as Markdown, and an llms.txt that lists them', async () => {
@@ -169,8 +152,7 @@ describe('event pages for search engines and AI assistants', () => {
     assert.match(enMd, /^# Ravolution Entertainment/);
     assert.match(enMd, /\[Ravolution Music Festival\]\(http:\/\/test\.local\/e\/ravo\?lang=en\)/);
     assert.equal((await env.as().get('/e/nothing.md')).status, 404);
-    const html = (await env.as().get('/e/ravo')).body as string;
-    assert.match(html, /<link rel="alternate" type="text\/markdown" href="\/e\/ravo\.md">/);
+    assert.equal((await env.as().get('/seo/events/ravo')).body.markdown, '/e/ravo.md');
 
     const llms = await env.as().get('/llms.txt');
     assert.equal(llms.status, 200);
@@ -193,29 +175,28 @@ describe('event pages for search engines and AI assistants', () => {
   });
 });
 
-describe('the screens behind a CDN', () => {
+describe('/ops behind a CDN', () => {
   let env: TestEnv;
   before(async () => { env = await setup({ config: { serveFrontend: true, env: 'production' } }); });
   after(async () => { await env.close(); });
-  const get = (url: string) => env.app.inject({ method: 'GET', url });
+  const get = (url: string, headers?: Record<string, string>) => env.app.inject({ method: 'GET', url, headers });
 
   it('names every file with the deployment version and keeps those for good', async () => {
-    const shell = await get('/list');
+    const shell = await get('/ops');
     assert.equal(shell.headers['cache-control'], 'public, max-age=0, s-maxage=86400', 'the edge keeps the empty shell for the deployment');
-    const v = shell.body.match(/\/ui\/ff-client\.js\?v=([\w-]+)/)?.[1];
-    assert.ok(v, 'the shell loads the client with the version');
-    assert.match(shell.body, new RegExp(`/ui/support\\.js\\?v=${v}" as="script"`), 'the runtime is fetched at once, next to the data');
-    assert.equal((await get(`/pages/web/template.html?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
-    assert.equal((await get('/pages/web/template.html')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
-    assert.equal((await get('/pages/web/template.html?v=old')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
-    assert.match((await get(`/pages/web/template.html?v=${v}`)).body, new RegExp(`/ui/theme\\.css\\?v=${v}`), 'stylesheets in the template carry it too');
+    const v = shell.body.match(/\/pages\/ops\/js\/main\.js\?v=([\w-]+)/)?.[1];
+    assert.ok(v, 'the shell loads its scripts with the version');
+    assert.match(shell.body, new RegExp(`/ui/theme\\.css\\?v=${v}`), 'and its stylesheets');
+    assert.doesNotMatch(String(shell.headers['content-security-policy']), /unsafe-eval/);
+    assert.equal((await get(`/pages/ops/ops.css?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
+    assert.equal((await get('/pages/ops/ops.css')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
+    assert.equal((await get('/pages/ops/ops.css?v=old')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
     assert.match((await get('/ui/vendor/phosphor/bold/style.css')).body, new RegExp(`Phosphor-Bold\\.woff2\\?v=${v}`), 'and the fonts they load');
   });
 
-  it('lets the edge answer for an event page for a minute', async () => {
-    const page = await get('/e/ravo');
-    assert.equal(page.statusCode, 200);
-    assert.equal(page.headers['cache-control'], 'public, max-age=0, s-maxage=60, stale-while-revalidate=600');
-    assert.equal((await get('/e/no-such-event')).headers['cache-control'], 'public, max-age=0', 'a missing page is not kept');
+  it('serves none of the old screens: the Next front draws them', async () => {
+    for (const path of ['/', '/list', '/app', '/studio', '/console', '/e/ravo', '/map', '/organizer']) {
+      assert.equal((await get(path, { accept: 'text/html' })).statusCode, 404, path);
+    }
   });
 });

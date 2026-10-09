@@ -1,6 +1,6 @@
 /**
  * Genre families: Kính đêm's taxonomy, one colour and one shape each (README §3.3). The
- * grouping is GENRE_TONE in ui/ff-client.js, where `culture` is `cult` here.
+ * grouping is GENRE_TONE in src/runtime/ff.ts, where `culture` is `cult` here.
  */
 export type Family = 'fest' | 'live' | 'edm' | 'cult' | 'free';
 

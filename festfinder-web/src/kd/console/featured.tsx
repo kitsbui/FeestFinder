@@ -57,7 +57,7 @@ export function Featured() {
   const setItems = (s: Shelf, ids: string[]) => act(() => FF.put(`/admin/shelves/${s.id}/items`, { eventIds: ids }));
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
+    <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       <div className="kd-split gap-3">
         <section className="kd-main flex flex-col gap-3" aria-label={T.shelves}>
           <h2 className="kd-h">{T.shelves}</h2>

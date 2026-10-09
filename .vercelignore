@@ -1,6 +1,6 @@
 # What a `vercel deploy` from this folder leaves behind. The project builds festfinder-backend,
-# which also ships festfinder-frontend (the screens it serves); node_modules, .git and .next
-# are skipped by the CLI already.
+# which also ships festfinder-frontend (/ops and the ui/ files it serves); node_modules, .git
+# and .next are skipped by the CLI already.
 
 # Laptop-only: local secrets and the test databases.
 **/.env

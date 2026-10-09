@@ -1,7 +1,7 @@
 /*
  * FeestFinder — Bảng phấn (Chalkboard).
  *
- * The design system every screen shares, on both fronts (the design runtime and Next.js).
+ * The design system of /ops, the back office the API serves.
  * A near-black board, warm cream chalk for type and outlines, and one colour per genre:
  * Lễ hội orange, EDM blue, Nhạc sống lilac, Văn hoá pink, with FeestFinder's green for the
  * brand and for what is free. Buttons are ghost pills; the one action a screen exists for

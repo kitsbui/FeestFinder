@@ -11,8 +11,8 @@ const MAP_ORIGINS = [...new Set([process.env.MAP_TILES_URL, process.env.MAP_OVER
   .map((u) => new URL(u.replace(/\{[^}]+\}/g, 'x')).origin))];
 
 /**
- * The screens are compiled to React, so unlike the design runtime nothing is evaluated
- * from strings: no 'unsafe-eval' outside development (React's dev tools need it there).
+ * Every page is React; nothing is evaluated from strings: no 'unsafe-eval' outside
+ * development (React's dev tools need it there).
  *
  * Scripts: this origin only. Next's own inline bootstrap scripts need 'unsafe-inline'
  * unless every page carries a per-request nonce — and a nonce makes every page dynamic,
@@ -44,8 +44,8 @@ const SECURITY_HEADERS = [
 ];
 
 const config: NextConfig = {
-  // The screens' logic was written for the design runtime, which mounted each screen once.
-  // Strict mode's deliberate double mount would start its timers and loaders twice.
+  // Strict mode's deliberate double mount would run the pages' effects twice in development
+  // (the OAuth hand-back, timers, loaders).
   reactStrictMode: false,
   poweredByHeader: false,
 
@@ -72,8 +72,9 @@ const config: NextConfig = {
       ],
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
-      // browser, so the session cookie and every relative fetch in the screens just work.
-      // src/proxy.ts forwards most of these itself (it signs them); this catches the rest.
+      // browser, so the session cookie and every relative fetch in the pages and /ops just work.
+      // src/proxy.ts forwards most of these itself (it signs them); this catches the rest,
+      // such as /ui/theme.css for /ops, which public/ui does not have.
       fallback: [{ source: '/:path*', destination: `${API}/:path*` }],
     };
   },

@@ -1,7 +1,7 @@
 /**
  * The city landing pages (/vi/ho-chi-minh/edm/this-weekend…) are gone: each event page now
- * answers search engines itself. Their links land on the list with the same filters, the
- * same way the API's own pages redirect them (legacyListPath in festfinder-backend).
+ * answers search engines itself. Their links land on the list with the same filters. This app
+ * answers /vi and /en; the API's legacyListPath now serves only /city/….
  */
 const CITIES = ['ho-chi-minh', 'ha-noi', 'da-nang', 'nha-trang'];
 const GENRES: Record<string, string> = {

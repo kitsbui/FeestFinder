@@ -45,7 +45,7 @@ export function Verification() {
   const docs: { key: keyof Org['docs']; label: string }[] = [{ key: 'id', label: T.docId }, { key: 'tax', label: T.docTax }, { key: 'bank', label: T.docBank }];
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
+    <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={T.tabVerify}>
         {states.map((s) => <Chip key={s.key} on={state === s.key} onClick={() => setState(s.key)}>{s.label}</Chip>)}
       </div>

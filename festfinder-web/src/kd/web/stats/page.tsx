@@ -68,7 +68,7 @@ export async function StatPage({ statKey, lang, search }: { statKey: StatKey; la
         <Crumbs label={W.crumbs} items={[{ name: W.explore, href: inLang('/', lang) }, { name: title }]} />
 
         <main className="kd-wrap flex flex-col gap-6 pt-[clamp(12px,3vw,32px)]">
-          <header className="flex max-w-[760px] flex-col gap-3">
+          <header className="flex max-w-read flex-col gap-3">
             <span className="kd-m">{T.kicker}</span>
             <h1 className="kd-d1">{title}</h1>
           </header>

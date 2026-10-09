@@ -25,9 +25,8 @@ export default async function seoRoutes(app: FastifyInstance) {
   }
 
   /**
-   * An event, organiser, artist or public collection page's head, structured data and server-rendered facts, for a front
-   * that renders its own HTML (the Next.js app). The API's own pages build the same thing
-   * in-process.
+   * An event, organiser, artist or public collection page's head, structured data and server-rendered facts, for the
+   * front that renders its HTML (the Next.js app).
    */
   const langOf = (query: unknown) => parse(z.object({ lang: z.enum(['vi', 'en']).default('vi') }), query).lang;
   const kinds = [

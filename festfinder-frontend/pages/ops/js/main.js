@@ -147,7 +147,7 @@ function Topbar({ mode, onMenu }) {
           { icon: 'user-circle', label: s.user.email || s.user.phone || s.user.name, hint: isAdmin() ? t('Quyền admin FeestFinder', 'FeestFinder admin') : mode === 'artist' ? s.artist?.name : currentOrg()?.name, disabled: true },
           '-',
           { icon: 'arrow-square-out', label: t('Mở trang công khai', 'Open the public site'), onClick: () => window.open('/', '_blank', 'noopener') },
-          isAdmin() ? { icon: 'shield-check', label: t('Console kiểm duyệt (bản cũ)', 'Moderation console (classic)'), onClick: () => window.open('/console', '_blank', 'noopener') } : null,
+          isAdmin() ? { icon: 'shield-check', label: t('Console kiểm duyệt', 'Moderation console'), onClick: () => window.open('/console', '_blank', 'noopener') } : null,
           isOrganizer() ? { icon: 'storefront', label: t('Studio đầy đủ (vé, soát vé, doanh thu)', 'Full studio (tickets, door, revenue)'), onClick: () => window.open('/studio', '_blank', 'noopener') } : null,
           '-',
           { icon: 'sign-out', label: t('Đăng xuất', 'Sign out'), onClick: signOut },

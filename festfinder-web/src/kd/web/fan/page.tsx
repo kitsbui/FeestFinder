@@ -67,7 +67,7 @@ function Mine({ lang }: { lang: Lang }) {
   return (
     <div className="kd-wrap pb-16 pt-8">
       <div className="kd-split gap-[clamp(28px,4vw,56px)]">
-        <aside className="kd-side flex flex-col gap-8 md:max-w-[380px]" aria-label={T.myProfile}>
+        <aside className="kd-side flex flex-col gap-8 tab:max-w-[380px]" aria-label={T.myProfile}>
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <Avatar name={u?.name || u?.email || '?'} src={u?.photoUrl} size={88} acc />
