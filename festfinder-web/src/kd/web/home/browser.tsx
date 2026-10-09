@@ -169,7 +169,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
               />{' '}
               {T.whatsOn}
             </h1>
-            <form role="search" onSubmit={search} className="kd-field h-14 rounded-opt pl-4 pr-1.5">
+            <form role="search" onSubmit={search} className="kd-field h-14 max-w-[640px] rounded-opt pl-4 pr-1.5">
               <MagnifyingGlassIcon size={20} aria-hidden="true" />
               <input name="q" type="search" placeholder={T.searchPh} aria-label={T.search} className="!text-base" />
               <Button type="submit" tone="acc">{T.searchGo}</Button>

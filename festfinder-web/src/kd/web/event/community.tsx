@@ -53,7 +53,7 @@ export function Hype({ lang }: { lang: Lang }) {
     } catch (e) { setOn(hyped); kd.toast(FF.errorText(e, lang)); }
   };
   return (
-    <section aria-labelledby="hype-h" className="kd-card flex flex-col gap-3 p-4">
+    <section aria-labelledby="hype-h" className="kd-card flex max-w-read flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 id="hype-h" className="kd-m">{T.hype}</h2>
         <span className="kd-mb kd-num whitespace-nowrap">{fill(T.hypeCount, { n: count(H.count, lang) })}</span>
@@ -125,7 +125,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
   const gate = d?.me.canWrite ?? 'signin';
 
   return (
-    <section id="discussion" aria-labelledby="disc-h" className="flex scroll-mt-32 flex-col gap-4">
+    <section id="discussion" aria-labelledby="disc-h" className="flex max-w-read scroll-mt-32 flex-col gap-4">
       <div className="kd-sec items-center">
         <h2 id="disc-h" className="kd-d3">{T.discussion}{d ? <span className="kd-m kd-num ml-3 align-middle">{d.total}</span> : null}</h2>
         <Picker

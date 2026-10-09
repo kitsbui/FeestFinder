@@ -160,7 +160,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
         <div className="absolute inset-0"><div ref={el} className="h-full w-full" data-kd-map /></div>
       </section>
 
-      <div className="absolute inset-x-3 top-[calc(10px+env(safe-area-inset-top))] z-[4] flex flex-col gap-2">
+      <div className="absolute inset-x-3 top-[calc(10px+env(safe-area-inset-top))] desk:right-auto desk:w-[420px] z-[4] flex flex-col gap-2">
         <div className="flex gap-2">
           <label className="kd-field kd-glass h-12 flex-1 rounded-opt">
             <MagnifyingGlassIcon size={18} aria-hidden="true" />
@@ -199,7 +199,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
             <CrosshairIcon size={20} aria-hidden="true" />
           </IconButton>
           {chosen ? (
-            <Link href={'/app/e/' + chosen.slug} className={cx('kd-glass absolute inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-[4] grid grid-cols-[84px_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] p-2.5', g(familyOf(chosen.genre)))}>
+            <Link href={'/app/e/' + chosen.slug} className={cx('kd-glass absolute inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] desk:bottom-4 desk:right-auto desk:w-[420px] z-[4] grid grid-cols-[84px_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] p-2.5', g(familyOf(chosen.genre)))}>
               <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} className="h-21 w-21 rounded-lg" />
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="kd-m flex items-center gap-1.5 text-mist"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[familyOf(chosen.genre)][lang]}</span>

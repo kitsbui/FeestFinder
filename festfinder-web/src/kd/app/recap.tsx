@@ -116,7 +116,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
 
       <div className="flex flex-col gap-2.5">
         <span className="kd-hs">{T.yourPhotos}</span>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5 desk:max-w-[720px]">
           {photos.map((u) => (
             <div key={u} className="kd-mtile relative">
               {/* eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage */}

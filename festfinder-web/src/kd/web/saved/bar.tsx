@@ -87,7 +87,7 @@ export function CollectionBar({ lang, col, events, onChange, onDeleted }: {
         <form onSubmit={rename} className="flex flex-wrap items-center gap-2">
           <h2 id={nameId} className="sr-only">{col.name}</h2>
           <Input
-            boxClass="min-w-0 flex-[1_1_240px]"
+            boxClass="min-w-0 max-w-[480px] flex-[1_1_240px]"
             autoFocus
             aria-label={T.namePh}
             value={editing}

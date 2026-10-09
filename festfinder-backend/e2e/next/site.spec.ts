@@ -168,3 +168,35 @@ test('browser extensions adding <div>s to <body> do not break hydration', async 
   }
   expect(errors).toEqual([]);
 });
+
+test.describe('full width on desktop', () => {
+  test.use({ viewport: { width: 1920, height: 1080 } });
+
+  for (const path of ['/', '/list', '/e/ravo', '/a', '/about']) {
+    test(`${path} spans the screen, with the page gutter on both sides`, async ({ page }) => {
+      await page.goto(path);
+      const width = await page.evaluate(() => document.documentElement.clientWidth);
+      const bar = (await page.locator('.kd-nav > .kd-wrap').boundingBox())!;
+      expect([bar.x, bar.width]).toEqual([0, width]);
+      // clamp(32px, 2.5vw, 64px): 48 at 1920.
+      const logo = (await page.locator('.kd-nav > .kd-wrap > a').first().boundingBox())!;
+      expect(Math.round(logo.x)).toBe(48);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+      // Wide screens get more cards, not wider ones.
+      const card = page.locator('.kd-cards > *').first();
+      if (await card.count()) expect((await card.boundingBox())!.width).toBeLessThanOrEqual(340);
+    });
+  }
+
+  test('the app fills the screen beside its tabs, which become a rail', async ({ page }) => {
+    await page.addInitScript(() => { try { localStorage.setItem('ff_city', 'ho-chi-minh'); } catch { /* storage blocked */ } });
+    await page.goto('/app');
+    const tabs = page.getByRole('navigation', { name: 'Điều hướng chính' });
+    await expect(tabs.getByRole('link', { name: 'Khám phá' })).toHaveAttribute('aria-current', 'page');
+    const rail = (await tabs.boundingBox())!;
+    expect([rail.x, rail.y, rail.width, rail.height]).toEqual([0, 0, 240, 1080]);
+    const app = (await page.locator('.kd-app').boundingBox())!;
+    expect(app.x).toBe(240);
+    expect(app.width).toBe(await page.evaluate(() => document.documentElement.clientWidth) - 240);
+  });
+});

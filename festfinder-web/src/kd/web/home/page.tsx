@@ -55,7 +55,7 @@ export async function HomePage({ lang }: { lang: Lang }) {
           ) : null}
 
           <section aria-labelledby="faq-h" className="kd-wrap pt-[clamp(56px,7vw,96px)]">
-            <div className="flex max-w-[760px] flex-col gap-1.5">
+            <div className="flex max-w-read flex-col gap-1.5">
               <h2 id="faq-h" className="kd-m">{T.faq}</h2>
               <div className="border-t border-line">
                 {faq.map((x) => (

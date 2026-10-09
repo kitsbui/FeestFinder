@@ -55,7 +55,7 @@ export function Audit() {
   useEffect(() => { FF.maybe(FF.get('/admin/audit/verify'), null).then((v: { ok: boolean } | null) => setChain(v ? v.ok : null)); }, []);
   const whos: { key: Who; label: string }[] = [{ key: 'all', label: T.aAll }, { key: 'admin', label: T.aAdmin }, { key: 'organizer', label: T.aOrganizer }, { key: 'system', label: T.aSystem }];
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
+    <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1.5" role="group" aria-label={T.tabAudit}>
           {whos.map((w) => <Chip key={w.key} on={who === w.key} onClick={() => setWho(w.key)}>{w.label}</Chip>)}

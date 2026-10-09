@@ -125,7 +125,7 @@ function EventBody({ lang }: { lang: Lang }) {
         </div>
 
         {description ? (
-          <div className="pt-4.5">
+          <div className="max-w-read pt-4.5">
             <Clamp lines={3} more={pick({ m: { vi: 'Xem thêm', en: 'Show more' } }, lang).m} less={pick({ l: { vi: 'Thu gọn', en: 'Show less' } }, lang).l} className="kd-t whitespace-pre-line text-mist">
               {description}
             </Clamp>

@@ -127,7 +127,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 <ShareProfile lang={lang} title={org.name} />
               </div>
             </div>
-            <div className="mt-7 grid auto-cols-fr grid-flow-col border-y border-line py-4.5">
+            <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
               <FollowersStat lang={lang} kind="org" id={org.id} source={source} served={org.stats.followers} />
               <Stat value={count(org.stats.events, lang)} label={T.orgEvents} />
               {org.stats.artists ? <Stat value={count(org.stats.artists, lang)} label={T.orgArtistsN} /> : null}

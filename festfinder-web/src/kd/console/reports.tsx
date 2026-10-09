@@ -39,7 +39,7 @@ export function Reports() {
   const needle = q.trim().toLowerCase();
   const items = (data?.items ?? []).filter((r) => !needle || r.subject.toLowerCase().includes(needle));
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
+    <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       {data ? (
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
           <span className="kd-m">{T.reports30}</span>
@@ -47,7 +47,7 @@ export function Reports() {
         </div>
       ) : null}
       {data === null ? <div className="kd-skel h-60" aria-hidden="true" /> : !items.length ? (photos?.length ? null : <Panel className="p-5"><span className="kd-s">{T.noReports}</span></Panel>) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(420px,100%),1fr))] items-start gap-3">
           {items.map((r) => (
             <li key={r.id}>
               <Panel as="article" className="flex flex-col gap-3 p-5" aria-label={r.subject}>

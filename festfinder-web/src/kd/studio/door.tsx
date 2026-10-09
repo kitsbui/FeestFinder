@@ -190,7 +190,7 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
   const gates: { value: Gate; label: string }[] = [{ value: 'main', label: T.gateMain }, { value: 'vip', label: T.gateVip }, { value: 'side', label: T.gateSide }];
 
   return (
-    <div className="mx-auto flex w-full max-w-[1080px] flex-wrap gap-x-8 gap-y-6 px-4 pb-10 pt-1.5">
+    <div className="kd-wrap flex flex-wrap gap-x-8 gap-y-6 pb-10 pt-1.5">
       <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-3 md:max-w-[480px]">
         <div className="flex min-h-10 items-center justify-between gap-2">
           {online ? <Status tone="ok">{T.online}</Status> : <Status tone="warn">{queue.length ? fill(T.offline, { n: queue.length }) : T.offlineNone}</Status>}

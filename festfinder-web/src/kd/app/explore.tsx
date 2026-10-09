@@ -318,7 +318,7 @@ function Onboarding({ lang, meta, onDone }: { lang: Lang; meta: { defaultCity: s
   // Twelve tiles in the colours of the picks (every family when none is picked).
   const shown: Family[] = likes.length ? likes : ['fest', 'live', 'edm', 'cult'];
   return (
-    <div className="flex min-h-dvh flex-col pb-[calc(20px+env(safe-area-inset-bottom))]">
+    <div className="flex min-h-dvh flex-col desk:mx-auto desk:w-full desk:max-w-[640px] pb-[calc(20px+env(safe-area-inset-bottom))]">
       <AppBar className="pr-1.5">
         <img src="/kd/ff-mark.svg" alt="FeestFinder" width={16} height={28} />
         <button type="button" className={buttonClass({ tone: 'ghost', size: 'sm' }, 'ml-auto')} onClick={() => finish(meta.defaultCity)}>{T.skip}</button>

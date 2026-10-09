@@ -173,7 +173,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 <ShareProfile lang={lang} title={a.name} />
               </div>
             </div>
-            <div className="mt-7 grid auto-cols-fr grid-flow-col border-y border-line py-4.5">
+            <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
               <FollowersStat lang={lang} kind="art" id={a.name} source={source} served={a.followers} />
               <Stat value={count(data.upcoming.length, lang)} label={T.shows} />
               {a.cities.length ? <Stat value={count(a.cities.length, lang)} label={T.cities} /> : null}
