@@ -18,7 +18,7 @@ describe('operations back office', () => {
   it('serves every dropdown list without signing in', async () => {
     const r = await env.as().get('/meta/form-options');
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body.genres.map((g: any) => g.value), ['EDM', 'Festival', 'Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture']);
+    assert.deepEqual(r.body.genres.map((g: any) => g.value), ['EDM']);
     assert.ok(r.body.areaGroups.find((g: any) => g.key === 'central').areas.includes('Quận 1'));
     assert.ok(r.body.banks.some((b: any) => b.bin === '970436'));
     assert.deepEqual(r.body.statuses.map((s: any) => s.value), ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled']);
@@ -65,7 +65,7 @@ describe('operations back office', () => {
     assert.equal(incomplete.status, 400);
     assert.equal(incomplete.body.error.code, 'not_ready');
     const r = await env.as(admin).post('/admin/events', {
-      organizerId: env.ids.org.yoko, publish: true, title: 'Yoko Late Jam Session', genre: 'Jazz', startsOn: '2026-09-25', startTime: '21:00', endTime: '23:30',
+      organizerId: env.ids.org.yoko, publish: true, title: 'Yoko Late Jam Session', genre: 'EDM', startsOn: '2026-09-25', startTime: '21:00', endTime: '23:30',
       venueId: venue.id, entryMode: 'free', description: { vi: 'Jam session mở cho mọi nhạc công.', en: '' }, lineup: ['House band'],
     });
     assert.equal(r.status, 201);

@@ -103,7 +103,7 @@ describe('event pages for search engines and AI assistants', () => {
   it('sends the old city landing pages to the list with the same filters', async () => {
     assert.equal(legacyListPath('vi', 'ho-chi-minh', 'this-weekend'), '/list?city=ho-chi-minh&time=weekend&lang=vi');
     assert.equal(legacyListPath('en', 'ho-chi-minh', 'free/edm'), '/list?city=ho-chi-minh&genre=EDM&lang=en');
-    assert.equal(legacyListPath('vi', 'ho-chi-minh', 'thao-dien/night-market'), '/list?city=ho-chi-minh&genre=Food&lang=vi');
+    assert.equal(legacyListPath('vi', 'ho-chi-minh', 'thao-dien/night-market'), '/list?city=ho-chi-minh&lang=vi');
     assert.equal(legacyListPath('city', 'da-lat', ''), '/list');
     const res = await env.as().get('/city/ho-chi-minh/edm/this-weekend');
     assert.equal(res.status, 301);

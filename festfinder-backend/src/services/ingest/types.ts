@@ -42,8 +42,11 @@ export interface NormalizedEvent {
   lat: number | null;
   lng: number | null;
   lineup: string[];
+  /** 'EDM' when the source names an EDM style; null is an unclassified candidate for review. */
   genre: Genre | null;
   styles: string[];
+  /** A genre FeestFinder does not list, named by the source when it names no EDM style: a new candidate is dropped. */
+  otherGenre: string | null;
   eventType: EventType | null;
   imageUrl: string | null;
   ticketUrl: string | null;

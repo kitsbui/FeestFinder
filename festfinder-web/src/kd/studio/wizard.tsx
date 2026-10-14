@@ -16,7 +16,7 @@ import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
 import { cx } from '../cx';
 import { money, whenShort } from '../format';
-import { FAMILY_LABEL, familyOf, g } from '../genre';
+import { g, STYLE_LABEL, styleLabel } from '../genre';
 import { KdLink } from '../link';
 import { priceLine } from '../web/card';
 import { useKd } from '../runtime';
@@ -26,12 +26,9 @@ import { Art, Card as Panel, Status } from '../ui/parts';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
 
-const GENRES = ['Festival', 'EDM', 'Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture'] as const;
-const GENRE_LABEL: Record<string, Pair> = {
-  Festival: { vi: 'Lễ hội', en: 'Festival' }, EDM: { vi: 'EDM', en: 'EDM' }, Indie: { vi: 'Indie', en: 'Indie' },
-  Rock: { vi: 'Rock', en: 'Rock' }, 'Hip-Hop': { vi: 'Hip-hop', en: 'Hip-hop' }, Pop: { vi: 'Pop', en: 'Pop' },
-  Jazz: { vi: 'Jazz', en: 'Jazz' }, Food: { vi: 'Ẩm thực', en: 'Food' }, Culture: { vi: 'Văn hoá', en: 'Culture' },
-};
+/** The styles an organiser picks from (lib/styles.ts): at most five, the first is the main one. */
+const STYLES = Object.keys(STYLE_LABEL);
+const STYLE_MAX = 5;
 const AGES = ['All ages', '16+', '18+'] as const;
 const NAME_MAX = 60;
 
@@ -39,7 +36,7 @@ interface City { slug: string; name: Pair; currency: string }
 interface Venue { id: string; name: string; address: string | null; area: string | null }
 interface Tier { key: string; name: string; price: string; capacity: string; sold: number }
 interface Form {
-  title: string; genre: string | null; description: string; lineup: string[];
+  title: string; styles: string[]; description: string; lineup: string[];
   logoUrl: string | null; coverUrl: string | null; eventUrl: string;
   date: string; start: string; end: string;
   venueId: string | null; venueName: string; city: string; age: (typeof AGES)[number];
@@ -47,7 +44,7 @@ interface Form {
   sellHere: boolean; tiers: Tier[];
 }
 interface Draft {
-  id: string; slug: string; status: string; statusLabel: Pair; title: string; genre: string | null; description: Pair | null;
+  id: string; slug: string; status: string; statusLabel: Pair; title: string; genre: string | null; styles?: string[]; description: Pair | null;
   city: string; currency: string; logoUrl: string | null; coverUrl: string | null;
   startsOn: string | null; startTime: string | null; endTime: string | null;
   venue: { id: string | null; name: string | null };
@@ -67,7 +64,7 @@ const int = (s: string) => parseInt(s.replace(/[^0-9]/g, ''), 10) || 0;
 function fromDraft(d: Draft | null, orgLogo: string | null, city: string): Form {
   return {
     title: d?.title === 'Untitled event' ? '' : d?.title ?? '',
-    genre: d?.genre ?? null,
+    styles: (d?.styles ?? []).filter((k) => STYLE_LABEL[k]),
     description: d?.description ? d.description.vi || d.description.en : '',
     lineup: d?.lineup ?? [],
     logoUrl: d ? d.logoUrl : orgLogo,
@@ -90,7 +87,8 @@ function payload(f: Form) {
   const desc = f.description.trim();
   return {
     title: f.title.trim(),
-    genre: f.genre,
+    genre: 'EDM',
+    styles: f.styles,
     description: { vi: desc, en: desc },
     lineup: f.lineup,
     logoUrl: f.logoUrl,
@@ -120,7 +118,7 @@ function check(f: Form) {
   const priced = f.entryMode === 'free' || ((f.sellHere ? tierRows(f).length > 0 : int(f.price) > 0) && !!p.ticketUrl);
   const missing: { key: string; step: number }[] = [];
   if (!p.title) missing.push({ key: 'mTitle', step: 0 });
-  if (!f.genre) missing.push({ key: 'mGenre', step: 0 });
+  if (!f.styles.length) missing.push({ key: 'mGenre', step: 0 });
   if (!f.logoUrl) missing.push({ key: 'mLogo', step: 0 });
   if (!p.eventUrl) missing.push({ key: 'mEventUrl', step: 0 });
   if (!f.date || !f.start || !f.end) missing.push({ key: 'mDates', step: 1 });
@@ -220,7 +218,7 @@ export function Wizard() {
   // Autosave a moment after the last change, drafts only.
   useEffect(() => {
     if (!f || !editable || sent) return;
-    const has = !!(f.title.trim() || f.genre || f.date || f.venueName || f.description || f.coverUrl);
+    const has = !!(f.title.trim() || f.styles.length || f.date || f.venueName || f.description || f.coverUrl);
     if (!has && !id.current) return;
     const t = setTimeout(() => { persist(f); }, 800);
     return () => clearTimeout(t);
@@ -235,7 +233,6 @@ export function Wizard() {
   if (draft === undefined || !f) return <div className="kd-skel m-6 h-80" aria-hidden="true" />;
 
   const { missing, done } = check(f);
-  const fam = familyOf(f.genre);
   const ready = !missing.length && agree;
 
   const submit = async () => {
@@ -257,7 +254,7 @@ export function Wizard() {
   };
 
   const sums = [
-    [f.title.trim(), f.genre ? GENRE_LABEL[f.genre][lang] : ''].filter(Boolean).join(' · '),
+    [f.title.trim(), f.styles.map((k) => styleLabel(k, lang)).join(', ')].filter(Boolean).join(' · '),
     [f.date ? whenShort({ startsOn: f.date, endsOn: f.date, startTime: f.start || null, endTime: f.end || null }, lang) : '', f.venueName].filter(Boolean).join(' · '),
     f.entryMode === 'free' ? T.free : f.sellHere && tierRows(f).length
       ? tierRows(f).map((t) => `${t.name} ${money(int(t.price), currency, lang)}`).join(' · ')
@@ -323,7 +320,10 @@ export function Wizard() {
                 <fieldset className="flex flex-col gap-2">
                   <legend className="kd-flabel mb-2">{T.fGenre}</legend>
                   <div className="flex flex-wrap gap-2">
-                    {GENRES.map((x) => <Chip key={x} family={familyOf(x)} on={f.genre === x} onClick={() => set({ genre: x })}>{GENRE_LABEL[x][lang]}</Chip>)}
+                    {STYLES.map((x) => {
+                      const on = f.styles.includes(x);
+                      return <Chip key={x} family="edm" on={on} disabled={!on && f.styles.length >= STYLE_MAX} onClick={() => set({ styles: on ? f.styles.filter((k) => k !== x) : [...f.styles, x] })}>{styleLabel(x, lang)}</Chip>;
+                    })}
                   </div>
                 </fieldset>
                 <Upload lang={lang} kind="logo" label={T.fLogo} hint={T.fLogoHint} value={f.logoUrl} onChange={(v) => set({ logoUrl: v })} required />
@@ -446,9 +446,9 @@ export function Wizard() {
 
           <aside className="kd-side flex max-w-[400px] flex-col gap-3 self-start md:sticky md:top-6" aria-label={T.preview}>
             <span className="kd-m">{T.preview}</span>
-            <article className={cx('kd-ev', g(fam))}>
+            <article className={cx('kd-ev', g('edm'))}>
               <div className="relative">
-                <Art family={fam} cover={f.coverUrl} />
+                <Art family="edm" cover={f.coverUrl} />
                 <span className="kd-tag kd-tag-glass absolute left-2.5 top-2.5 text-paper">{T.justListed}</span>
               </div>
               <div className="flex flex-col gap-1">
@@ -462,7 +462,7 @@ export function Wizard() {
                   if (f.entryMode !== 'free' && !p) return null;
                   return <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-acc')}>{f.entryMode === 'free' ? T.free : priceLine({ isFree: false, entryMode: 'paid', priceFrom: p, currency }, lang)}</span>;
                 })()}
-                {f.genre ? <span className="kd-m">{FAMILY_LABEL[fam][lang]}</span> : null}
+                {f.styles.length ? <span className="kd-m">{f.styles.map((k) => styleLabel(k, lang)).join(' · ')}</span> : null}
               </div>
             </article>
           </aside>

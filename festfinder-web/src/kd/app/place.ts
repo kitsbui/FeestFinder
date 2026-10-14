@@ -3,7 +3,7 @@
  * anywhere but as a filter): the chosen city, the last known position, the genres picked at
  * onboarding. Storage can be blocked; every read falls back to nothing.
  */
-import type { Family } from '../genre';
+import { STYLE_LABEL } from '../genre';
 
 const KEY = { city: 'ff_city', at: 'ff_at', likes: 'ff_likes', lang: 'ff_lang' } as const;
 
@@ -25,10 +25,11 @@ export const place = {
     } catch { return null; }
   },
   setAt: (p: { lat: number; lng: number }) => write(KEY.at, JSON.stringify({ lat: +p.lat.toFixed(3), lng: +p.lng.toFixed(3), t: Date.now() })),
-  likes: (): Family[] => {
-    try { return JSON.parse(read(KEY.likes) || '[]'); } catch { return []; }
+  /** The music styles someone said they like (older devices kept genre families: those are dropped). */
+  likes: (): string[] => {
+    try { return (JSON.parse(read(KEY.likes) || '[]') as string[]).filter((k) => STYLE_LABEL[k]); } catch { return []; }
   },
-  setLikes: (f: Family[]) => write(KEY.likes, JSON.stringify(f)),
+  setLikes: (f: string[]) => write(KEY.likes, JSON.stringify(f)),
   /** Whether this device has been through onboarding (a city or a position). */
   known: () => !!(read(KEY.city) || read(KEY.at)),
   lang: (): 'vi' | 'en' | null => { const v = read(KEY.lang); return v === 'en' || v === 'vi' ? v : null; },

@@ -29,7 +29,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre`; `artist`; `price=free,under,over`; `area`; `organizer`; `city=ho-chi-minh\|ha-noi\|da-nang\|nha-trang`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` counts, `window`. Ended events sort last. |
+| GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre` (only `EDM`); `style` (comma-separated EDM styles); `artist`; `price=free,under,over`; `area`; `organizer`; `city=ho-chi-minh\|ha-noi\|da-nang\|nha-trang`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` and `facets.city` counts, `facets.style` (each style under every filter but the style) and `facets.free`, `window`. Ended events sort last. |
 | GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat`, `genre`, `free`, `friendsOnly`, `time`. Upcoming only. The map views (`/list?view=map`, `/app/list`; `/map` redirects there) ask it when they open and on "search this area". |
 | GET | `/events/:idOrSlug` | Detail: facts, description, `tickets` (tier ladder with state `onsale\|last\|soldout\|soon`, `left`, price-rise note, `urgency`, `refundPolicy`), `timetable` (days → stages → sets with minute offsets), organiser card, `similar`, and for a signed-in viewer `me` (following, artist follows, set plan with `clashes`, reported, group plan). Organisers and admins can preview non-live listings. |
 | GET | `/explore/stats?view=free\|weekend\|venues` | Hero stat cards and their drill-downs; takes the same filters as `/events`. |
@@ -89,7 +89,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | POST | `/posts/:id/reports` 🔒 | `{code: spam\|scalping\|abuse\|drugs\|personal\|other}`. Three open reports hide the post until the team decides. |
 | PATCH | `/posts/:id` 🔒 | The event's team or FeestFinder: `{pinned?, hidden?, official?}`. DELETE `/posts/:id`: the author, or the team. |
 | POST | `/events/:id/shares` | `{channel}` (`zalo`, `messenger`, `facebook`, `instagram`, `tiktok`, `threads`, `x`, `telegram`, `copy`, `native`, `story`) → the share URL, tagged `?ref=<code>&ch=<channel>` when signed in. `POST /events/:id/track` with `{source:'shared', ref, channel}` credits the sharer once per visitor. |
-| POST | `/community/events` 🔒📱 | Anyone sends an event in (title, genre, date, `endsOn?`, times, venue, `city`, entry, `sourceUrl`…). Five a day. It joins the review queue; the sender hears the decision. GET `/me/submissions`. |
+| POST | `/community/events` 🔒📱 | Anyone sends an event in (title, genre (`EDM`, the default), date, `endsOn?`, times, venue, `city`, entry, `sourceUrl`…). Five a day. It joins the review queue; the sender hears the decision. GET `/me/submissions`. |
 | POST | `/community/prefill` 🔒📱 | `{url}` → `{fields, source: structured\|ai, sourceUrl}` to fill the form in. The page's schema.org Event data first (free); otherwise Claude reads the page text. Public pages only (private addresses are refused at every redirect), 2 MB, 8 s. 30 pages and 10 AI reads per person per hour (`429 prefill_limit`); `503 prefill_unavailable` when AI is off. |
 | POST | `/community/prefill/poster` 🔒📱 | Multipart `file` (JPEG/PNG/WebP, 5 MB) → `{fields}` read from a poster by Claude. Same hourly cap. |
 | POST | `/events/:id/claims` 🏢 | `{note (10+ chars), proofUrl?}`: an organiser asks to take over an event the community sent in. One open request per organiser per event (`409 claim_pending`); `409 not_claimable` once an organiser runs it. |
@@ -134,8 +134,8 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | POST | `/me/tickets/:id/wallet` 🔒 | `{platform: apple\|google}`. |
 | GET | `/events/:id/live` 🔒 | The organiser's `updates`; per stage: now playing (minutes left, progress), next, set list with states `played\|now\|next\|later` and your reminders; site zones; friends on site. |
 | PUT / DELETE | `/events/:id/presence` 🔒 | "Check in" on the day, optional `{zoneId}`. |
-| GET | `/me/passport` 🔒 | Raver passport: a stamp per night the door scanned you or you checked in, `stats` (nights, genres, venues, cities) and eight `badges` with `earned`. |
-| GET | `/me/wrapped?year=` 🔒 | The year in review: nights, top genre, artist and venue, first and last night, latest night, friends who were there, posts, helpful votes, people brought, tickets passed on, cities. |
+| GET | `/me/passport` 🔒 | Raver passport: a stamp per night the door scanned you or you checked in, `stats` (nights, styles, venues, cities) and eight `badges` with `earned`. |
+| GET | `/me/wrapped?year=` 🔒 | The year in review: nights, top style (`topStyle`), artist and venue, first and last night, latest night, friends who were there, posts, helpful votes, people brought, tickets passed on, cities. |
 | POST | `/events/:id/waves/:friendId` 🔒 | Once a minute. |
 | POST | `/events/:id/share-location` 🔒 | `{zoneId}` to your group plan. |
 

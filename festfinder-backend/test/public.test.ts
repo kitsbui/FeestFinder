@@ -43,18 +43,19 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.notEqual(next.body.items[0].id, edm.body.items[0].id);
   });
 
-  it('filters by genre family, and counts each family and what is free under the other filters', async () => {
+  it('filters by style, and counts each style and what is free under the other filters', async () => {
     const all = await env.as().get('/events?time=month&limit=60');
-    const live = await env.as().get('/events?time=month&family=live&limit=60');
-    assert.ok(live.body.items.length > 0);
-    assert.ok(live.body.items.every((e: any) => ['Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz'].includes(e.genre)));
-    const f = all.body.facets.family;
-    assert.equal(f.live, all.body.items.filter((e: any) => ['Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz'].includes(e.genre)).length);
-    assert.equal(f.edm, all.body.items.filter((e: any) => e.genre === 'EDM').length);
-    assert.equal(f.free, all.body.items.filter((e: any) => e.isFree).length);
-    // The family counts ignore the family chosen, so the other chips keep their numbers.
-    assert.deepEqual(live.body.facets.family, f);
-    assert.equal((await env.as().get('/events?family=jazz')).status, 400);
+    assert.ok(all.body.items.every((e: any) => e.genre === 'EDM'), 'FeestFinder lists EDM only');
+    const house = await env.as().get('/events?time=month&style=house&limit=60');
+    assert.ok(house.body.items.length > 0);
+    assert.ok(house.body.items.every((e: any) => e.styles.includes('house')));
+    const f = all.body.facets.style;
+    assert.equal(f.house, house.body.items.length);
+    assert.equal(all.body.facets.free, all.body.items.filter((e: any) => e.isFree).length);
+    // The style counts ignore the style chosen, so the other chips keep their numbers.
+    assert.deepEqual(house.body.facets.style, f);
+    assert.equal(house.body.facets.free, house.body.items.filter((e: any) => e.isFree).length);
+    assert.equal((await env.as().get('/events?style=polka')).status, 400);
   });
 
   it('searches across all dates, ignoring diacritics, with ended events last', async () => {

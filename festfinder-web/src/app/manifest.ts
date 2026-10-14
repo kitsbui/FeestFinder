@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'FeestFinder',
     short_name: 'FeestFinder',
-    description: 'Lễ hội, show và chợ đêm ở TP.HCM — vé, kế hoạch nhóm và chế độ trực tiếp.',
+    description: 'Club, rave và lễ hội EDM ở châu Á — vé, kế hoạch nhóm và chế độ trực tiếp.',
     id: '/app',
     start_url: '/app',
     scope: '/',

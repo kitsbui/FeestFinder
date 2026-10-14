@@ -28,7 +28,7 @@ import { useApp } from './root';
 import { SignInCard } from './row';
 
 export interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
-export interface Passport { stats: { nights: number; events: number; genres: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
+export interface Passport { stats: { nights: number; events: number; styles: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
 export interface Follows {
   organizers: { following: { id: string; slug: string; name: string; logoUrl: string | null; next: { slug: string; title: string; startsOn: string } | null }[] };
   artists: string[];
@@ -137,12 +137,12 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
     <>
       <section className={cx('@container flex flex-col gap-3 pt-8', !flush && 'px-4')} aria-labelledby="pf-pass">
         <div className="flex items-baseline justify-between"><h2 id="pf-pass" className="kd-h">{T.passport}</h2><span className="kd-m kd-num">{fill(T.stamps, { n: pp.stamps.length })}</span></div>
-        <span className="kd-s">{fill(T.passportLine, { n: pp.stats.nights, g: pp.stats.genres, c: pp.stats.cities })}</span>
+        <span className="kd-s">{fill(T.passportLine, { n: pp.stats.nights, g: pp.stats.styles, c: pp.stats.cities })}</span>
         {pp.stamps.length ? (
           <>
-            <div className="kd-hscroll" role="group" aria-label={T.genres}>
+            {mix.length > 1 ? <div className="kd-hscroll" role="group" aria-label={T.genres}>
               {mix.map(({ f }) => <Chip key={f} family={f} on={only === f} onClick={() => setOnly(only === f ? null : f)}>{FAMILY_LABEL[f][lang]}</Chip>)}
-            </div>
+            </div> : null}
             <ul className="mt-1 grid grid-cols-4 gap-x-2 @2xl:grid-cols-8 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
@@ -268,7 +268,7 @@ export function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['
 }
 
 interface Wrapped {
-  year: number; empty: boolean; nights: number; events: number; topGenre: { genre: string; nights: number } | null; topArtist: { name: string; times: number } | null;
+  year: number; empty: boolean; nights: number; events: number; topStyle: { style: string; label: { vi: string; en: string } | null; nights: number } | null; topArtist: { name: string; times: number } | null;
   topVenue: { name: string; times: number } | null; posts: number; helpful: number; brought: number; passedOn: number; cities: { vi: string; en: string }[];
 }
 
@@ -280,8 +280,8 @@ export function WrappedSheet({ lang, year, onClose }: { lang: Lang; year: number
   const share = async () => {
     if (!w) return;
     const how = await FF.shareStory({
-      genre: w.topGenre?.genre, kicker: fill(T.wrapped, { y: w.year }), title: `${w.nights} ${T.wrNights}`,
-      lines: [w.topGenre ? `${T.wrGenre}: ${w.topGenre.genre}` : '', w.topArtist ? `${T.wrArtist}: ${w.topArtist.name}` : '', w.topVenue ? `${T.wrVenue}: ${w.topVenue.name}` : ''].filter(Boolean),
+      genre: 'EDM', kicker: fill(T.wrapped, { y: w.year }), title: `${w.nights} ${T.wrNights}`,
+      lines: [w.topStyle ? `${T.wrGenre}: ${w.topStyle.label?.[lang] ?? w.topStyle.style}` : '', w.topArtist ? `${T.wrArtist}: ${w.topArtist.name}` : '', w.topVenue ? `${T.wrVenue}: ${w.topVenue.name}` : ''].filter(Boolean),
       url: location.host,
     }, 'wrapped-' + w.year).catch((e: unknown) => { kd.toast(FF.errorText(e, lang)); return null; });
     if (how === 'saved') kd.toast(T.storySaved);
@@ -289,10 +289,10 @@ export function WrappedSheet({ lang, year, onClose }: { lang: Lang; year: number
   return (
     <Sheet title={fill(T.wrapped, { y: year })} closeLabel={T.close} onClose={onClose}>
       {!w ? <div className="kd-skel h-40" aria-hidden="true" /> : w.empty ? <p className="kd-t">{fill(T.wrEmpty, { y: year })}</p> : (
-        <div className={cx('flex flex-col gap-4 pt-1', g(familyOf(w.topGenre?.genre)))}>
+        <div className={cx('flex flex-col gap-4 pt-1', g('edm'))}>
           <div className="flex items-baseline gap-2"><span className="kd-d1 kd-num">{w.nights}</span><span className="kd-t">{T.wrNights}</span></div>
           <dl className="flex flex-col">
-            {w.topGenre ? <Row k={T.wrGenre} v={w.topGenre.genre} /> : null}
+            {w.topStyle ? <Row k={T.wrGenre} v={w.topStyle.label?.[lang] ?? w.topStyle.style} /> : null}
             {w.topArtist ? <Row k={T.wrArtist} v={`${w.topArtist.name} · ${fill(T.wrTimes, { n: w.topArtist.times })}`} /> : null}
             {w.topVenue ? <Row k={T.wrVenue} v={`${w.topVenue.name} · ${fill(T.wrTimes, { n: w.topVenue.times })}`} /> : null}
           </dl>

@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { many, one } from '../src/db/index.ts';
 import { awardAll, BADGE_CATALOGUE, progressFor } from '../src/services/badges.ts';
-import { GENRE_FAMILIES } from '../src/lib/i18n.ts';
 
 describe('badges', () => {
   let env: TestEnv;
@@ -19,14 +18,13 @@ describe('badges', () => {
   it('a fan earns from the nights they were there, once, and sees "new" only the first time', async () => {
     const token = await env.attendee();
     const me = (await env.as(token).get('/auth/session')).body.user;
-    // Four nights already over, one of each family, each checked in on the site.
-    const byGenre = await many<{ id: string; genre: string }>(env.ctx.db,
-      `select distinct on (genre) id, genre from events where status = 'live' and starts_at <= $1 and genre = any($2::text[]) order by genre, starts_at`,
-      [env.clock.now(), Object.values(GENRE_FAMILIES).flat()]);
-    const past = Object.values(GENRE_FAMILIES).map((gs) => byGenre.find((e) => (gs as readonly string[]).includes(e.genre))).filter((e) => !!e);
-    assert.equal(past.length, 4, 'the seed has a past night of each family');
+    // Nights already over, one of each style, each checked in on the site.
+    const past = await many<{ id: string; style: string }>(env.ctx.db,
+      `select distinct on (styles[1]) id, styles[1] as style from events
+        where status = 'live' and starts_at <= $1 and cardinality(styles) > 0 order by styles[1], starts_at`, [env.clock.now()]);
+    assert.ok(past.length >= 4, 'the seed has past nights in four styles');
     const before = await progressFor(env.ctx.db, 'user', me.id, env.clock.now());
-    assert.ok(before.four_families < 4);
+    assert.ok(before.four_styles < 4);
     for (const e of past) await env.ctx.db.query('insert into presence (user_id, event_id) values ($1, $2) on conflict do nothing', [me.id, e.id]);
 
     const first = await env.as(token).get('/me/badges');
@@ -34,7 +32,7 @@ describe('badges', () => {
     const by = Object.fromEntries(first.body.items.map((b: any) => [b.code, b]));
     assert.equal(by.first.earned, true);
     assert.equal(by.first.isNew, true);
-    assert.equal(by.four_families.earned, true, 'the new nights count');
+    assert.equal(by.four_styles.earned, true, 'the new nights count');
     assert.equal(by.passport_10.earned, false);
     assert.ok(by.passport_10.value >= past.length && by.passport_10.value < 10);
     assert.equal(by.passport_10.ring, '10');

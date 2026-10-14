@@ -47,7 +47,7 @@ export function legacyListPath(prefix: string, city: string, facets: string): st
   if (isCity(city)) q.set('city', city);
   const time: Record<string, string> = { tonight: 'tonight', 'this-weekend': 'weekend', 'next-7-days': '7days', 'this-month': 'month' };
   for (const f of facets.split('/').map((x) => x.toLowerCase()).filter(Boolean)) {
-    const genre = f === 'night-market' ? 'Food' : GENRES.find((g) => slugify(g) === f);
+    const genre = GENRES.find((g) => slugify(g) === f);
     if (genre && !q.has('genre')) q.set('genre', genre);
     if (time[f] && !q.has('time')) q.set('time', time[f]);
   }

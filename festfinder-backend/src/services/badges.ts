@@ -11,11 +11,12 @@
  */
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
-import { GENRE_FAMILIES, L, type GenreFamily, type Localized } from '../lib/i18n.ts';
+import { L, type Localized } from '../lib/i18n.ts';
 import { artistKey } from './artists.ts';
 
 export type BadgeRole = 'user' | 'artist' | 'organizer';
-type Family = GenreFamily | 'free';
+/** The emblem's colour: the site's genre palette (festfinder-web/src/kd/genre.ts). */
+type Family = 'fest' | 'live' | 'edm' | 'cult' | 'free';
 
 interface BadgeDef {
   code: string;
@@ -33,7 +34,7 @@ const b = (role: BadgeRole, code: string, family: Family, emblem: 'shape' | 'num
 
 export const BADGE_CATALOGUE: BadgeDef[] = [
   b('user', 'first', 'free', 'shape', 1, L('First night', 'Lần đầu'), L('Go to your first event listed on FeestFinder.', 'Tham dự sự kiện đầu tiên qua FeestFinder.')),
-  b('user', 'four_families', 'free', 'num', 4, L('All four', 'Đủ 4 gu'), L('Go to all four kinds: festival, live music, EDM and culture.', 'Đi đủ 4 thể loại: Lễ hội, Nhạc sống, EDM và Văn hoá.')),
+  b('user', 'four_styles', 'free', 'num', 4, L('Four styles', 'Đủ 4 dòng nhạc'), L('Go to nights in four different styles, like techno, house, trance and drum & bass.', 'Đi sự kiện thuộc 4 dòng nhạc khác nhau, như techno, house, trance và drum & bass.')),
   b('user', 'passport_10', 'fest', 'num', 10, L('Passport 10', 'Hộ chiếu 10'), L('Go to 10 events listed on FeestFinder.', 'Tham dự 10 sự kiện đăng trên FeestFinder.')),
   b('user', 'night_owl', 'edm', 'shape', 5, L('Night owl', 'Cú đêm'), L('Go to 5 events that end after midnight.', 'Đi 5 sự kiện kết thúc sau nửa đêm.')),
   b('user', 'doors', 'live', 'shape', 3, L('Doors open', 'Mở cửa'), L('Have your ticket scanned at the door within the first hour at 3 events.', 'Được quét vé ở cửa trong giờ đầu tiên ở 3 sự kiện.')),
@@ -52,7 +53,7 @@ export const BADGE_CATALOGUE: BadgeDef[] = [
   b('organizer', 'verified', 'free', 'shape', 1, L('Verified', 'Đã xác minh'), L('Business licence and contacts checked by FeestFinder.', 'Giấy phép kinh doanh và thông tin liên hệ đã được FeestFinder đối chiếu.')),
   b('organizer', 'events_50', 'fest', 'num', 50, L('50 events', '50 sự kiện'), L('List 50 events on FeestFinder.', 'Đăng 50 sự kiện trên FeestFinder.')),
   b('organizer', 'sold_out_5', 'fest', 'shape', 5, L('Sold out ×5', 'Cháy vé ×5'), L('5 events sell out.', '5 sự kiện bán hết vé.')),
-  b('organizer', 'all_families', 'free', 'num', 4, L('Every kind', 'Đa thể loại'), L('Run all four kinds: festival, live music, EDM and culture.', 'Tổ chức đủ 4 thể loại: Lễ hội, Nhạc sống, EDM và Văn hoá.')),
+  b('organizer', 'all_styles', 'free', 'num', 4, L('Every style', 'Đa dòng nhạc'), L('Run nights in four different styles.', 'Tổ chức sự kiện thuộc 4 dòng nhạc khác nhau.')),
   b('organizer', 'events_100', 'fest', 'num', 100, L('100 events', '100 sự kiện'), L('List 100 events on FeestFinder.', 'Đăng 100 sự kiện trên FeestFinder.')),
 ];
 
@@ -62,10 +63,8 @@ const LIVE_STATE = new Set(['verified']);
 /** The number a badge shows on its ring. */
 const ringNumber = (d: BadgeDef) => (d.emblem === 'num' ? String(d.threshold) : null);
 
-const FAMILY_OF: Record<string, GenreFamily> = Object.fromEntries(
-  (Object.entries(GENRE_FAMILIES) as [GenreFamily, readonly string[]][]).flatMap(([f, gs]) => gs.map((g) => [g, f])),
-);
-const families = (genres: (string | null)[]) => new Set(genres.map((g) => (g ? FAMILY_OF[g] : undefined)).filter(Boolean)).size;
+/** How many styles a set of events covers, each counted by its most explicit (first) style. */
+const styleCount = (rows: { styles: string[] | null }[]) => new Set(rows.map((r) => r.styles?.[0]).filter(Boolean)).size;
 
 /** How far one subject is towards each of its role's badges. */
 export async function progressFor(q: Queryable, role: BadgeRole, id: string, now: Date): Promise<Record<string, number>> {
@@ -78,7 +77,7 @@ async function userProgress(q: Queryable, userId: string, now: Date): Promise<Re
   // A night counts once the door scanned the ticket or the person checked in on the site (as the passport does).
   const [nights, follows, shared] = await Promise.all([
     many<any>(q,
-      `select e.id, e.genre, e.area, e.start_time, e.end_time, e.starts_at, min(x.checked_in_at) as checked_in_at
+      `select e.id, e.styles, e.area, e.start_time, e.end_time, e.starts_at, min(x.checked_in_at) as checked_in_at
          from (select event_id, checked_in_at from tickets where user_id = $1 and status = 'used'
                union all select event_id, null from presence where user_id = $1) x
          join events e on e.id = x.event_id
@@ -101,7 +100,7 @@ async function userProgress(q: Queryable, userId: string, now: Date): Promise<Re
   }
   return {
     first: count, passport_10: count, passport_25: count,
-    four_families: families(nights.map((n) => n.genre)),
+    four_styles: styleCount(nights),
     night_owl: nights.filter((n) => n.start_time && n.end_time && n.end_time < n.start_time).length,
     doors: nights.filter((n) => n.checked_in_at && new Date(n.checked_in_at).getTime() - new Date(n.starts_at).getTime() <= 3600_000).length,
     local: new Set(nights.map((n) => n.area).filter(Boolean)).size,
@@ -142,14 +141,14 @@ const COUNTED_EVENT = `status = 'live' and not held_for_reports and published_at
 async function organizerProgress(q: Queryable, organizerId: string): Promise<Record<string, number>> {
   const [o, events] = await Promise.all([
     one<{ verification_state: string }>(q, 'select verification_state from organizers where id = $1', [organizerId]),
-    many<{ genre: string | null; sold_out: boolean }>(q, `select genre, sold_out from events where organizer_id = $1 and ${COUNTED_EVENT}`, [organizerId]),
+    many<{ styles: string[] | null; sold_out: boolean }>(q, `select styles, sold_out from events where organizer_id = $1 and ${COUNTED_EVENT}`, [organizerId]),
   ]);
   const n = events.length;
   return {
     verified: o?.verification_state === 'verified' ? 1 : 0,
     events_50: n, events_100: n,
     sold_out_5: events.filter((e) => e.sold_out).length,
-    all_families: families(events.map((e) => e.genre)),
+    all_styles: styleCount(events),
   };
 }
 

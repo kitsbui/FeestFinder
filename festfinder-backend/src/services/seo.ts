@@ -28,11 +28,8 @@ const esc = (s: unknown) => String(s ?? '')
 const baseOf = (ctx: Ctx) => ctx.config.publicBaseUrl.replace(/\/$/, '');
 const abs = (ctx: Ctx, url: string | null | undefined) => (url ? new URL(url, baseOf(ctx) + '/').href : null);
 
-/** schema.org's closest type for each genre. */
-const SCHEMA_TYPE: Record<string, string> = {
-  EDM: 'MusicEvent', Festival: 'Festival', Indie: 'MusicEvent', Rock: 'MusicEvent', 'Hip-Hop': 'MusicEvent', Pop: 'MusicEvent', Jazz: 'MusicEvent',
-  Food: 'FoodEvent', Culture: 'Festival',
-};
+/** schema.org's type for an event: every event is electronic music. */
+const SCHEMA_TYPE: Record<string, string> = { EDM: 'MusicEvent' };
 
 /** Where each Vietnamese city sits in a postal address; elsewhere the city's English name serves. */
 const VN_ADDRESS: Record<string, { locality: string; region: string }> = {
@@ -889,7 +886,7 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
   return [
     '# FeestFinder',
     '',
-    `> FeestFinder lists festivals, club nights, gigs, night markets and cultural events in Asia (${launchedCities().map((c) => c.name.en).join(', ')}): dates, venues, ticket prices, lineups, organisers and the sources each event was confirmed from. Organisers, the community and public event pages feed it; moderators check each event before it goes live.`,
+    `> FeestFinder lists festivals, club nights and raves of electronic music in Asia (${launchedCities().map((c) => c.name.en).join(', ')}): dates, venues, ticket prices, lineups, organisers and the sources each event was confirmed from. Organisers, the community and public event pages feed it; moderators check each event before it goes live.`,
     '',
     'Every event and organiser page exists in Vietnamese (`/e/<slug>`, `/o/<slug>`) and English (add `?lang=en`), carries schema.org data in its HTML, and has a Markdown version at the same address plus `.md`. Prices are in the event\'s local currency (₫ in Vietnam); dates and times are local to the event\'s city. Ticket links go to the organiser\'s own ticket seller.',
     '',

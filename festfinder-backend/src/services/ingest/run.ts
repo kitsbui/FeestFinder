@@ -27,6 +27,10 @@ import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent, ty
  * id), an unchanged record only refreshes "last seen", and a record already attached to an
  * event, even one a moderator rejected, always finds that event again. Nothing here
  * publishes: new events wait for a moderator like any community submission.
+ *
+ * FeestFinder lists electronic music only. A new record that names another genre and no EDM
+ * style is dropped ("other_genre"), and so is one with no style at all from a source that
+ * lists every kind of music (config.requireStyle); one that names no genre waits for review.
  */
 
 export interface RunSummary {
@@ -211,6 +215,8 @@ async function resolveAndApply(q: Queryable, source: IngestSource, rawId: string
   }
   // A cancelled night nobody listed is not worth a moderator's time.
   if (n.cancelled) return { kind: 'rejected' as const, eventId: null, match, error: 'cancelled' };
+  if (n.otherGenre) return { kind: 'rejected' as const, eventId: null, match, error: `other_genre: ${n.otherGenre}` };
+  if (source.config.requireStyle === true && !n.styles.length) return { kind: 'rejected' as const, eventId: null, match, error: 'no_style' };
   const eventId = await createCandidate(q, source, n, venue, match, now);
   await attachSource(q, eventId, source, rawId, record, n, null, now);
   await refreshDerived(q, eventId, now);
@@ -314,7 +320,8 @@ export async function createCandidate(q: Queryable, source: Pick<IngestSource, '
 export async function flagRisk(q: Queryable, eventId: string, match: Match | null, now: Date) {
   const risk = await assessRisk(q, eventId, now);
   const dup = match ? [{ ok: false, label: L(`Maybe a duplicate of “${match.title}” (${match.reason})`, `Có thể trùng “${match.title}” (${match.reason})`) }] : [];
-  const ev = await one<{ entry_mode: string; price_from: number }>(q, 'select entry_mode, price_from from events where id = $1', [eventId]);
+  const ev = await one<{ entry_mode: string; price_from: number; genre: string | null }>(q, 'select entry_mode, price_from, genre from events where id = $1', [eventId]);
+  if (ev && !ev.genre) dup.push({ ok: false, label: L('No EDM style in the source', 'Nguồn không ghi dòng nhạc EDM') });
   if (ev && ev.entry_mode === 'paid' && !ev.price_from) dup.push({ ok: false, label: L('The source gives no ticket price', 'Nguồn không ghi giá vé') });
   await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
     [eventId, risk.score, json(risk.factors), json([...dup, ...risk.signals].slice(0, 3)), match ? 'duplicate' : risk.flag]);

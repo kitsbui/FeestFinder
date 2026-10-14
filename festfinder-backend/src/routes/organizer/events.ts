@@ -54,7 +54,6 @@ export function presentDraft(ev: any) {
 export function missingForSubmit(ev: any): string[] {
   const missing: string[] = [];
   if (!ev.title?.trim()) missing.push('title');
-  if (!ev.genre) missing.push('genre');
   if (!ev.starts_on || !ev.start_time || !ev.end_time) missing.push('dates');
   if (!ev.venue_name) missing.push('venue');
   if (ev.entry_mode === 'paid' && (!ev.price_from || !ev.ticket_url)) missing.push('price');

@@ -44,13 +44,13 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
   const ev = await one<any>(q, 'select * from events where id = $1 for update', [eventId]);
   if (!ev) throw notFound();
   const from = ev.status;
-  await q.query(`update events set status = 'live', published_at = coalesce(published_at, $2), decided_at = $2 where id = $1`, [ev.id, now]);
+  await q.query(`update events set status = 'live', genre = coalesce(genre, 'EDM'), published_at = coalesce(published_at, $2), decided_at = $2 where id = $1`, [ev.id, now]);
   await q.query(`insert into moderation_decisions (event_id, decision, decided_by, decided_at) values ($1,$2,$3,$4)`,
     [ev.id, action === 'appeal.overturned' ? 'overturned' : 'approved', s.user.id, now]);
   const minutes = ev.submitted_at ? Math.round((now.getTime() - new Date(ev.submitted_at).getTime()) / 60000) : 0;
   await appendAudit(q, {
     at: now, ...actor(s), action, targetType: 'event', targetId: ev.id, targetLabel: ev.title,
-    diff: [{ f: 'status', a: from, b: 'live' }, ...(action === 'appeal.overturned' ? [] : [{ f: 'decision_time', a: '—', b: `${minutes}m` }]), { f: 'visible_in', a: '—', b: `Explore · ${cityOf(ev.city).name.vi}` }, ...extraDiff],
+    diff: [{ f: 'status', a: from, b: 'live' }, ...(ev.genre ? [] : [{ f: 'genre', a: '—', b: 'EDM' }]), ...(action === 'appeal.overturned' ? [] : [{ f: 'decision_time', a: '—', b: `${minutes}m` }]), { f: 'visible_in', a: '—', b: `Explore · ${cityOf(ev.city).name.vi}` }, ...extraDiff],
   });
   const hours = Math.max(1, Math.round(minutes / 60));
   await notifyOrganizer(q, now, {

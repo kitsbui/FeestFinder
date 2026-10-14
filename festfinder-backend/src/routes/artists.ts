@@ -259,6 +259,7 @@ export default async function artistRoutes(app: FastifyInstance) {
     if (out.outcome === 'rejected') {
       throw badRequest(`gig_${out.reason}`, out.reason === 'past' ? L('That date has passed', 'Ngày này đã qua')
         : out.reason === 'out_of_area' ? L('FeestFinder does not list that city yet', 'FeestFinder chưa có thành phố này')
+        : out.reason === 'other_genre' ? L('FeestFinder lists electronic music only', 'FeestFinder chỉ đăng nhạc điện tử')
         : L('That gig could not be read', 'Không đọc được lịch diễn này'));
     }
     void ctx.analytics.capture('gig_reported', personId(s.user.id), { outcome: out.outcome });

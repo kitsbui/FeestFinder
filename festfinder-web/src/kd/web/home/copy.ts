@@ -22,7 +22,7 @@ export const HOME = {
   s_date: { en: 'Soonest', vi: 'Gần nhất' },
   s_hype: { en: 'Most interest', vi: 'Được quan tâm' },
   s_price: { en: 'Cheapest first', vi: 'Giá thấp trước' },
-  genres: { en: 'Genres', vi: 'Thể loại' },
+  genres: { en: 'Styles', vi: 'Dòng nhạc' },
   all: { en: 'All', vi: 'Tất cả' },
   more: { en: 'Show more', vi: 'Xem thêm' },
   emptyTitle: { en: 'Nothing matches yet', vi: 'Chưa có sự kiện phù hợp' },
@@ -42,8 +42,8 @@ export const HOME = {
   faq: { en: 'Questions', vi: 'Câu hỏi thường gặp' },
   q1: { en: 'What is FeestFinder?', vi: 'FeestFinder là gì?' },
   a1: {
-    en: 'One place to see what is on tonight: festivals, live shows and night markets. Every listing is checked before it goes live.',
-    vi: 'Một nơi để biết tối nay có gì: lễ hội, show nhạc sống và chợ đêm. Mọi tin đều được kiểm tra trước khi lên sóng.',
+    en: 'One place to see what is on tonight: EDM club nights, raves and festivals. Every listing is checked before it goes live.',
+    vi: 'Một nơi để biết tối nay có gì: club, rave và lễ hội EDM. Mọi tin đều được kiểm tra trước khi lên sóng.',
   },
   q2: { en: 'Who sells the tickets?', vi: 'Ai bán vé?' },
   a2: {

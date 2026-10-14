@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { setup, type TestEnv } from './helpers.ts';
 import { cityAt, cityFromText } from '../src/lib/places.ts';
-import { classifyStyles, inferEventType } from '../src/lib/styles.ts';
+import { classifyStyles, inferEventType, otherGenreOf } from '../src/lib/styles.ts';
 import { atZone, dateIn, eventBounds, isoIn, timeIn } from '../src/lib/time.ts';
 import { formatMoney } from '../src/lib/money.ts';
 import { PageUnavailable } from '../src/services/fetchpage.ts';
@@ -71,8 +71,10 @@ describe('music styles', () => {
   it('reads styles from source tags first, then safe phrases in the text', () => {
     assert.deepEqual(classifyStyles({ tags: ['Hard Techno / Acid'] }), ['hard-techno', 'acid-techno']);
     assert.deepEqual(classifyStyles({ title: 'Drum & Bass Sunday' }), ['drum-and-bass']);
-    assert.deepEqual(classifyStyles({ title: 'Jazz at the Opera House' }), ['jazz'], '"Opera House" is not house music');
+    assert.deepEqual(classifyStyles({ title: 'Jazz at the Opera House' }), [], '"Opera House" is not house music');
+    assert.equal(otherGenreOf({ title: 'Jazz at the Opera House' }), 'Jazz', 'a genre FeestFinder does not list');
     assert.deepEqual(classifyStyles({ title: 'Pop-up market' }), [], '"pop-up" is not pop');
+    assert.equal(otherGenreOf({ title: 'Pop-up market' }), null);
     assert.ok(classifyStyles({ tags: ['Techno'], title: 'Hard Techno Night' }).includes('hard-techno'));
     assert.ok(!classifyStyles({ tags: ['Techno'], title: 'Hard Techno Night' }).includes('techno'), 'hard techno already says techno');
   });

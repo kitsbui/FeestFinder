@@ -8,7 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { CaretDownIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
-import { FAMILY_LABEL, g, type Family } from '../genre';
+import { FAMILY_LABEL, g, styleChips, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { buttonClass, IconButton } from '../ui/actions';
 import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
@@ -23,15 +23,13 @@ export type WebSection = 'explore' | 'map' | 'list' | 'artists' | 'none';
 /** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
 const LANG_KEY = 'ff_lang';
 
-const FAMILIES: Family[] = ['fest', 'live', 'edm', 'cult', 'free'];
+/** Where a style leads: the home page filtered to it ('free': what costs nothing). */
+export const styleHref = (k: string, lang: Lang = 'vi') => inLang(k === 'free' ? '/?price=free' : `/?style=${k}`, lang);
 
-/** Where a family leads: the home page filtered to it. */
-export const familyHref = (f: Family, lang: Lang = 'vi') => inLang(f === 'free' ? '/?price=free' : `/?family=${f}`, lang);
-
-export function WebNav({ lang, current = 'none', familyCounts }: { lang: Lang; current?: WebSection; familyCounts?: Partial<Record<Family, number>> | null }) {
+export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; current?: WebSection; styleCounts?: Record<string, number> | null }) {
   const kd = useKd();
   const T = pick(WEB, lang);
-  const [counts, setCounts] = useState(familyCounts ?? null);
+  const [counts, setCounts] = useState<{ style: Record<string, number>; free: number | null } | null>(styleCounts ? { style: styleCounts, free: null } : null);
   const [me, setMe] = useState<{ tickets: number; saved: number; handle: string } | null>(null);
   const [search, setSearch] = useState(false);
   const [onMap, setOnMap] = useState(current === 'map');
@@ -45,8 +43,8 @@ export function WebNav({ lang, current = 'none', familyCounts }: { lang: Lang; c
 
   const loadCounts = () => {
     if (counts) return;
-    FF.once('kd:family-counts', () => FF.maybe(FF.get('/events?time=all&upcoming=1&limit=1'), null)).then((r: any) => {
-      if (r?.facets?.family) setCounts(r.facets.family);
+    FF.once('kd:style-counts', () => FF.maybe(FF.get('/events?time=all&upcoming=1&limit=1'), null)).then((r: any) => {
+      if (r?.facets?.style) setCounts({ style: r.facets.style, free: r.facets.free ?? null });
     });
   };
   useEffect(() => {
@@ -77,11 +75,14 @@ export function WebNav({ lang, current = 'none', familyCounts }: { lang: Lang; c
               </button>
             )}
           >
-            {FAMILIES.map((f) => (
-              <MenuItem key={f} href={familyHref(f, lang)} external aside={counts?.[f] ?? null} icon={<span className={`kd-mk ${g(f)}`} aria-hidden="true" />}>
-                {FAMILY_LABEL[f][lang]}
+            {styleChips(counts?.style, 10).map((k) => (
+              <MenuItem key={k} href={styleHref(k, lang)} external aside={counts?.style[k] ?? null} icon={<span className={`kd-mk ${g('edm')}`} aria-hidden="true" />}>
+                {styleLabel(k, lang)}
               </MenuItem>
             ))}
+            <MenuItem href={styleHref('free', lang)} external aside={counts?.free ?? null} icon={<span className={`kd-mk ${g('free')}`} aria-hidden="true" />}>
+              {FAMILY_LABEL.free[lang]}
+            </MenuItem>
           </Menu>
         </nav>
         <div className="ml-auto flex items-center gap-1.5">

@@ -25,22 +25,10 @@ export function langFrom(query: unknown, headers: Record<string, string | string
   return 'vi';
 }
 
-export const GENRES = ['EDM', 'Festival', 'Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz', 'Food', 'Culture'] as const;
+/** FeestFinder lists electronic music only: one genre, and people filter by its styles (styles.ts). */
+export const GENRES = ['EDM'] as const;
 // Cities, countries, timezones and currencies are in places.ts.
 export type Genre = (typeof GENRES)[number];
-
-/**
- * Genre families: four groups of genres, each one colour and one shape on screen (the same
- * grouping as GENRE_TONE in festfinder-web/src/runtime/ff.ts and familyOf in festfinder-web/src/kd/genre.ts).
- */
-export const GENRE_FAMILIES = {
-  fest: ['Festival'],
-  live: ['Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz'],
-  edm: ['EDM'],
-  cult: ['Food', 'Culture'],
-} as const satisfies Record<string, readonly Genre[]>;
-export type GenreFamily = keyof typeof GENRE_FAMILIES;
-export const FAMILY_KEYS = Object.keys(GENRE_FAMILIES) as GenreFamily[];
 
 export const BADGES: Record<string, Localized> = {
   trending: L('Trending', 'Đang hot'),
@@ -104,6 +92,13 @@ export const REJECT_REASONS: Record<string, { label: Localized; message: Localiz
     message: L(
       'This event is already live under another listing. Edit the original instead of posting a second one so saves and reminders stay in one place.',
       'Sự kiện này đã có một tin khác đang chạy. Anh/chị sửa tin gốc thay vì đăng thêm, để lượt lưu và nhắc lịch không bị chia ra.'),
+  },
+  genre: {
+    appeal: false,
+    label: L('Not electronic music', 'Không phải nhạc điện tử'),
+    message: L(
+      'FeestFinder lists electronic music only (techno, house, trance, drum & bass…). This event is outside that, so it will not be published.',
+      'FeestFinder chỉ đăng sự kiện nhạc điện tử (techno, house, trance, drum & bass…). Sự kiện này nằm ngoài phạm vi đó nên sẽ không được đăng.'),
   },
   policy: {
     appeal: false,

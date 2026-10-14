@@ -5,6 +5,7 @@ import { many, one } from '../db/index.ts';
 import { forbidden, notFound, tooMany } from '../lib/errors.ts';
 import { L, type Localized } from '../lib/i18n.ts';
 import { cityOf } from '../lib/places.ts';
+import { styleByKey } from '../lib/styles.ts';
 import { initialsOf } from '../lib/contact.ts';
 import { vnDate } from '../lib/time.ts';
 import { parse, uuid } from '../lib/validate.ts';
@@ -40,7 +41,7 @@ export async function latestUpdates(q: Queryable, eventId: string, max = 20) {
 /** A night counts once the door scanned your ticket, or you checked in on the site. */
 async function stamps(q: Queryable, userId: string, now: Date) {
   return many<any>(q,
-    `select e.id, e.slug, e.title, e.genre, e.art, e.cover_url, e.starts_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.lineup,
+    `select e.id, e.slug, e.title, e.genre, e.styles, e.art, e.cover_url, e.starts_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.lineup,
             bool_or(x.via = 'door') as by_door
        from (select event_id, 'door' as via from tickets where user_id = $1 and status = 'used'
              union all select event_id, 'checkin' as via from presence where user_id = $1) x
@@ -55,7 +56,7 @@ const BADGES: { key: string; icon: string; label: Localized; need: Localized }[]
   { key: 'first', icon: 'ph-fill ph-ticket', label: L('First night', 'Đêm đầu tiên'), need: L('Get your first stamp', 'Có con dấu đầu tiên') },
   { key: 'five', icon: 'ph-fill ph-fire', label: L('Five nights', 'Năm đêm'), need: L('5 nights out', '5 đêm đi chơi') },
   { key: 'ten', icon: 'ph-fill ph-crown-simple', label: L('Ten nights', 'Mười đêm'), need: L('10 nights out', '10 đêm đi chơi') },
-  { key: 'hopper', icon: 'ph-fill ph-shuffle', label: L('Genre hopper', 'Đa thể loại'), need: L('3 different genres', '3 thể loại khác nhau') },
+  { key: 'hopper', icon: 'ph-fill ph-shuffle', label: L('Style hopper', 'Đa dòng nhạc'), need: L('3 different styles', '3 dòng nhạc khác nhau') },
   { key: 'afterdark', icon: 'ph-fill ph-moon-stars', label: L('After dark', 'Thức tới sáng'), need: L('A night that ran past midnight', 'Một đêm kéo qua nửa đêm') },
   { key: 'traveller', icon: 'ph-fill ph-airplane-tilt', label: L('On tour', 'Đi tour'), need: L('Nights in 2 cities', 'Đi chơi ở 2 thành phố') },
   { key: 'voice', icon: 'ph-fill ph-megaphone', label: L('Helpful voice', 'Người chia sẻ'), need: L('5 helpful votes on your posts', '5 lượt "hữu ích" cho bài của bạn') },
@@ -162,15 +163,16 @@ export default async function nightRoutes(app: FastifyInstance) {
       one<{ n: number }>(ctx.db, 'select count(*)::int as n from share_visits where ref_user = $1', [s.user.id]),
     ]);
     const nights = new Set(rows.map((r) => r.starts_on)).size;
-    const genres = new Set(rows.map((r) => r.genre).filter(Boolean));
+    // Each night counts by its most explicit (first) style.
+    const styles = new Set(rows.map((r) => r.styles?.[0]).filter(Boolean));
     const cities = new Set(rows.map((r) => cityOf(r.city).slug));
     const venues = new Set(rows.map((r) => r.venue_name).filter(Boolean));
     const earned: Record<string, boolean> = {
-      first: nights >= 1, five: nights >= 5, ten: nights >= 10, hopper: genres.size >= 3, afterdark: rows.some(overnight),
+      first: nights >= 1, five: nights >= 5, ten: nights >= 10, hopper: styles.size >= 3, afterdark: rows.some(overnight),
       traveller: cities.size >= 2, voice: helpful!.n >= 5, ambassador: brought!.n >= 10,
     };
     return {
-      stats: { nights, events: rows.length, genres: genres.size, venues: venues.size, cities: cities.size },
+      stats: { nights, events: rows.length, styles: styles.size, venues: venues.size, cities: cities.size },
       stamps: rows.map((r) => ({
         eventId: r.id, slug: r.slug, title: r.title, genre: r.genre, art: r.art, coverUrl: r.cover_url, date: r.starts_on,
         venue: r.venue_name, area: r.area, city: cityOf(r.city).name, via: r.by_door ? 'door' : 'checkin',
@@ -213,7 +215,7 @@ export default async function nightRoutes(app: FastifyInstance) {
                                     or exists (select 1 from tickets t where t.user_id = u.id and t.status = 'used' and t.event_id = any($2::uuid[]))
                                     or exists (select 1 from going g where g.user_id = u.id and g.event_id = any($2::uuid[])))`, [s.user.id, ids]) : Promise.resolve([]),
     ]);
-    const genre = count(rows.map((r) => r.genre).filter(Boolean));
+    const style = count(rows.map((r) => r.styles?.[0]).filter(Boolean));
     const artist = count(rows.flatMap((r) => (r.lineup ?? []) as string[]).filter((a) => !/vendors|gian hàng|DJ set \d/i.test(a)));
     const venue = count(rows.map((r) => r.venue_name).filter(Boolean));
     const latest = rows.filter(overnight).sort((a, b) => a.end_time.localeCompare(b.end_time)).pop() ?? null;
@@ -223,7 +225,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       empty: rows.length === 0,
       nights: new Set(rows.map((r) => r.starts_on)).size,
       events: rows.length,
-      topGenre: genre ? { genre: genre[0], nights: genre[1] } : null,
+      topStyle: style ? { style: style[0], label: styleByKey(style[0])?.label ?? null, nights: style[1] } : null,
       topArtist: artist ? { name: artist[0], times: artist[1] } : null,
       topVenue: venue ? { name: venue[0], times: venue[1] } : null,
       first: brief(rows[0] ?? null),

@@ -2,7 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
-import { classifyStyles, genreFromStyles } from '../src/lib/styles.ts';
+import { classifyStyles, genreFromStyles, otherGenreOf } from '../src/lib/styles.ts';
 import { ensureArtists } from '../src/services/artists.ts';
 
 describe('the artist network', () => {
@@ -90,12 +90,14 @@ describe('the artist network', () => {
     assert.equal((await env.as(owner).patch(`/admin/artists/${mie.id}`, { verified: true })).status, 403);
   });
 
-  it('files metal and punk under Rock, apart from Indie', () => {
-    assert.deepEqual(classifyStyles({ tags: ['Death Metal'] }), ['death-metal']);
-    assert.equal(genreFromStyles(['death-metal']), 'Rock');
-    assert.deepEqual(classifyStyles({ title: 'Saigon Pop Punk Night' }), ['pop-punk']);
-    assert.deepEqual(classifyStyles({ tags: ['Indie Rock'] }), ['indie-rock']);
-    assert.equal(genreFromStyles(['indie']), 'Indie');
+  it('recognises the genres FeestFinder does not list, which imports drop', () => {
+    assert.equal(otherGenreOf({ tags: ['Death Metal'] }), 'Rock');
+    assert.equal(otherGenreOf({ title: 'Saigon Pop Punk Night' }), 'Rock');
+    assert.deepEqual(classifyStyles({ tags: ['Indie Rock'] }), []);
+    assert.equal(otherGenreOf({ tags: ['Rock', 'Techno'] }), 'Rock');
+    assert.deepEqual(classifyStyles({ tags: ['Rock', 'Techno'] }), ['techno'], 'an EDM style wins: the night is kept');
+    assert.equal(genreFromStyles(['techno']), 'EDM');
+    assert.equal(genreFromStyles([]), null);
   });
 });
 
@@ -144,7 +146,7 @@ describe('artist directory pages for search engines', () => {
     assert.ok(all.body.jsonLd['@graph'].some((n: any) => n['@type'] === 'ItemList' && n.itemListElement.some((i: any) => i.url.endsWith('/a/hoaprox'))));
     const city = await env.as().get('/seo/directory/city:ho-chi-minh?lang=en');
     assert.match(city.body.page.h1, /^Artists in Ho Chi Minh City$/);
-    const thin = await env.as().get('/seo/directory/style:visual-kei');
+    const thin = await env.as().get('/seo/directory/style:gabber');
     assert.equal(thin.body.robots, 'noindex, follow');
     assert.equal((await env.as().get('/seo/directory/style:polka')).status, 404);
     assert.equal((await env.as().get('/seo/directory/city:paris')).status, 404);
@@ -154,7 +156,8 @@ describe('artist directory pages for search engines', () => {
     const map = (await env.as().get('/sitemap.xml')).body;
     assert.match(map, /\/a<\/loc>/);
     assert.match(map, /\/a\/city\/ho-chi-minh<\/loc>/);
-    assert.doesNotMatch(map, /\/a\/style\/visual-kei</);
+    assert.doesNotMatch(map, /\/a\/style\/gabber</);
+    assert.equal((await env.as().get('/seo/directory/style:visual-kei')).status, 404, 'not a style any more');
   });
 
   it('gives an artist page the profile’s own channels once someone owns it', async () => {

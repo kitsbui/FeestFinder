@@ -68,7 +68,7 @@ describe('the night and after', () => {
     assert.equal(y2025.body.latestNight.until, '02:00');
     const y2026 = await env.as(minh).get('/me/wrapped');
     assert.equal(y2026.body.year, 2026);
-    assert.equal(y2026.body.topGenre.genre, 'Indie');
+    assert.equal(y2026.body.topStyle.style, 'deep-house');
     assert.equal(y2026.body.topVenue.times, 2);
     assert.ok(y2026.body.hypes >= 0);
     const empty = await env.as(minh).get('/me/wrapped?year=2024');

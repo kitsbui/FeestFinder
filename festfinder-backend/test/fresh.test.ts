@@ -103,7 +103,7 @@ describe('a new, empty database', () => {
     assert.equal(served.status, 200);
     assert.match(String(served.headers['cache-control']), /s-maxage=31536000/);
     const draft = await env.as(organizer).post('/organizer/events', {
-      title: 'Đêm nhạc bến Bạch Đằng', genre: 'Indie', startsOn: '2026-10-03', startTime: '19:00', endTime: '22:00',
+      title: 'Đêm nhạc bến Bạch Đằng', genre: 'EDM', startsOn: '2026-10-03', startTime: '19:00', endTime: '22:00',
       venueName: 'Bến Bạch Đằng', address: 'Tôn Đức Thắng, Quận 1', area: 'Quận 1', entryMode: 'free',
       logoUrl: logo.url, coverUrl: cover.url, eventUrl: 'https://saigonsound.vn/ben-bach-dang',
     });

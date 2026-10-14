@@ -5,7 +5,8 @@
  */
 const CITIES = ['ho-chi-minh', 'ha-noi', 'da-nang', 'nha-trang'];
 const GENRES: Record<string, string> = {
-  edm: 'EDM', festival: 'Festival', indie: 'Indie', rock: 'Rock', 'hip-hop': 'Hip-Hop', pop: 'Pop', jazz: 'Jazz', food: 'Food', culture: 'Culture', 'night-market': 'Food',
+  // EDM is the only genre now; the old landing pages of the others land on the whole list.
+  edm: 'EDM',
 };
 const TIMES: Record<string, string> = { tonight: 'tonight', 'this-weekend': 'weekend', 'next-7-days': '7days', 'this-month': 'month' };
 

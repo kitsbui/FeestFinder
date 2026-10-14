@@ -12,7 +12,7 @@ import { apiOr } from '@/lib/api';
 import { fill, pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
 import { count, km, moneyShort, whenShort } from '../../format';
-import { FAMILY_LABEL, familyOf, g } from '../../genre';
+import { familyOf, g, styleLabel } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { KdProvider } from '../../runtime';
 import { ChipLink, LinkButton } from '../../ui/actions';
@@ -53,7 +53,7 @@ export async function StatPage({ statKey, lang, search }: { statKey: StatKey; la
   const title = T[statKey];
   const chip: Record<StatKey, string> = { free: T.chipFree, weekend: T.chipWeekend, venues: T.chipVenues };
   const timeLabel: Record<Time, string> = { tonight: T.tonight, weekend: T.thisWeekend, '7days': T.next7, month: T.month };
-  const genreLabel = f.family ? FAMILY_LABEL[f.family][lang] : f.genre;
+  const genreLabel = f.style ? styleLabel(f.style, lang) : f.genre;
   const n = data ? (statKey === 'venues' ? data.venues?.length ?? 0 : data.rows?.length ?? 0) : 0;
   const otherLang = { href: statHref(statKey, f, lang === 'vi' ? 'en' : 'vi'), label: lang === 'vi' ? W.english : W.vietnamese };
 
@@ -97,8 +97,8 @@ export async function StatPage({ statKey, lang, search }: { statKey: StatKey; la
                 />
               ) : null}
               {genreLabel ? (
-                <Link className={cx('kd-chip kd-chip-on', f.family && g(f.family))} href={href({ family: null, genre: null })} aria-label={fill(T.remove, { f: genreLabel })} scroll={false}>
-                  <Marker family={f.family ?? familyOf(f.genre)} />
+                <Link className={cx('kd-chip kd-chip-on', f.style && g('edm'))} href={href({ style: null, genre: null })} aria-label={fill(T.remove, { f: genreLabel })} scroll={false}>
+                  <Marker family={f.style ? 'edm' : familyOf(f.genre)} />
                   {genreLabel}
                   <XIcon size={14} aria-hidden="true" />
                 </Link>
