@@ -33,8 +33,8 @@ const AGES = ['All ages', '16+', '18+'] as const;
 const NAME_MAX = 60;
 
 interface City { slug: string; name: Pair; currency: string }
-interface Venue { id: string; name: string; address: string | null; area: string | null }
-interface Tier { key: string; name: string; price: string; capacity: string; sold: number }
+export interface Venue { id: string; name: string; address: string | null; area: string | null }
+export interface Tier { key: string; name: string; price: string; capacity: string; sold: number }
 interface Form {
   title: string; styles: string[]; description: string; lineup: string[];
   logoUrl: string | null; coverUrl: string | null; eventUrl: string;
@@ -473,7 +473,7 @@ export function Wizard() {
 }
 
 /** A listing sent back can be appealed once, within its window. */
-function Appeal({ lang, eventId }: { lang: Lang; eventId: string }) {
+export function Appeal({ lang, eventId }: { lang: Lang; eventId: string }) {
   const T = pick(STUDIO, lang);
   const kd = useKd();
   const [text, setText] = useState('');
@@ -490,11 +490,11 @@ function Appeal({ lang, eventId }: { lang: Lang; eventId: string }) {
   );
 }
 
-function newTier(price = ''): Tier {
+export function newTier(price = ''): Tier {
   return { key: 't' + Math.random().toString(36).slice(2, 8), name: '', price, capacity: '', sold: 0 };
 }
 
-function Tiers({ lang, currency, rows, onChange }: { lang: Lang; currency: string; rows: Tier[]; onChange: (t: Tier[]) => void }) {
+export function Tiers({ lang, currency, rows, onChange }: { lang: Lang; currency: string; rows: Tier[]; onChange: (t: Tier[]) => void }) {
   const T = pick(STUDIO, lang);
   const sym = currency === 'VND' ? '₫' : currency;
   const upd = (i: number, p: Partial<Tier>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
@@ -515,7 +515,7 @@ function Tiers({ lang, currency, rows, onChange }: { lang: Lang; currency: strin
   );
 }
 
-function Lineup({ lang, value, onChange }: { lang: Lang; value: string[]; onChange: (v: string[]) => void }) {
+export function Lineup({ lang, value, onChange }: { lang: Lang; value: string[]; onChange: (v: string[]) => void }) {
   const T = pick(STUDIO, lang);
   const [text, setText] = useState('');
   const add = () => {
@@ -538,7 +538,7 @@ function Lineup({ lang, value, onChange }: { lang: Lang; value: string[]; onChan
   );
 }
 
-function VenueField({ lang, venues, recent, value, onChange }: {
+export function VenueField({ lang, venues, recent, value, onChange }: {
   lang: Lang; venues: Venue[]; recent: string[]; value: { id: string | null; name: string }; onChange: (v: { id: string | null; name: string }) => void;
 }) {
   const T = pick(STUDIO, lang);
@@ -588,7 +588,7 @@ function VenueField({ lang, venues, recent, value, onChange }: {
   );
 }
 
-function Upload({ lang, kind, label, hint, value, onChange, required }: {
+export function Upload({ lang, kind, label, hint, value, onChange, required }: {
   lang: Lang; kind: 'logo' | 'cover'; label: string; hint: string; value: string | null; onChange: (v: string | null) => void; required?: boolean;
 }) {
   const T = pick(STUDIO, lang);

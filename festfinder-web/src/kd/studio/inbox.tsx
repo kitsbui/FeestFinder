@@ -16,12 +16,13 @@ import { Button, IconButton } from '../ui/actions';
 import { Input, SwitchRow } from '../ui/forms';
 import { Card as Panel } from '../ui/parts';
 import { Tabs } from '../ui/shell';
+import { Choice, FilterBar } from '../console/kit';
 import { STUDIO } from './copy';
 import { Page } from './parts';
 import { useStudio } from './root';
 
 type Tab = 'messages' | 'notifications' | 'settings';
-interface Thread { id: string; who: Pair; subject: Pair; unread: boolean; updatedAt: string; about: { title: string; startsOn: string | null } | null; snippet: Pair | null }
+interface Thread { id: string; topic: string; who: Pair; subject: Pair; unread: boolean; updatedAt: string; about: { title: string; startsOn: string | null } | null; snippet: Pair | null }
 interface Msg { id: string; fromMe: boolean; body: Pair | string; createdAt: string }
 interface Notif { id: string; kind: string; title: Pair; body: Pair; cta: Pair | null; link: { screen?: string; eventId?: string; threadId?: string } | null; unread: boolean; createdAt: string }
 
@@ -72,6 +73,8 @@ function Threads() {
   const [open, setOpen] = useState<string | null>(null);
   const [thread, setThread] = useState<{ id: string; subject: Pair; who: Pair; messages: Msg[] } | null>(null);
   const [draft, setDraft] = useState('');
+  const [topic, setTopic] = useState('');
+  const [unread, setUnread] = useState('');
   const end = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -111,11 +114,18 @@ function Threads() {
 
   if (!list) return <div className="kd-skel h-60" aria-hidden="true" />;
   if (!list.items.length) return <Panel className="p-5"><span className="kd-s">{T.noThreads}</span></Panel>;
+  const shown = list.items.filter((t) => (!topic || t.topic === topic) && (!unread || t.unread));
   return (
+    <div className="flex flex-col gap-3">
+    <FilterBar onReset={topic || unread ? () => { setTopic(''); setUnread(''); } : null}>
+      <Choice label={T.inTopic} value={topic} onChange={setTopic} options={[{ value: 'moderation', label: T.inModeration }, { value: 'partnerships', label: T.inPartnerships }, { value: 'support', label: T.inSupport }]} />
+      <Choice label={T.inShow} value={unread} onChange={setUnread} options={[{ value: '1', label: T.inUnread }]} />
+    </FilterBar>
     <div className="kd-split gap-3">
       <Panel as="section" className={cx('kd-side flex flex-col overflow-hidden', open && 'max-[899px]:hidden')} aria-label={T.messages}>
+        {!shown.length ? <span className="kd-s px-4 py-3">{T.noThreads}</span> : null}
         <ul className="flex flex-col">
-          {list.items.map((t) => (
+          {shown.map((t) => (
             <li key={t.id}>
               <button type="button" className={cx('flex w-full flex-col gap-0.5 border-b border-line px-4 py-3 text-left hover:bg-white/[0.03]', open === t.id && 'bg-white/[0.04]')} aria-current={open === t.id || undefined} onClick={() => pickThread(t.id)}>
                 <span className="flex items-center justify-between gap-3">
@@ -154,6 +164,7 @@ function Threads() {
           </>
         ) : open ? <div className="kd-skel m-4 h-40" aria-hidden="true" /> : null}
       </Panel>
+    </div>
     </div>
   );
 }

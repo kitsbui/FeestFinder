@@ -9,8 +9,10 @@ import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
 import { dayMonth, money } from '../format';
 import { KdLink } from '../link';
+import { STYLE_LABEL, styleLabel } from '../genre';
 import { useKd } from '../runtime';
-import { Button } from '../ui/actions';
+import { Button, Chip } from '../ui/actions';
+import { act, AsyncPick, type PickItem } from '../console/kit';
 import { FieldLabel, Input, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Accordion, Status } from '../ui/parts';
 import { STUDIO } from './copy';
@@ -23,7 +25,7 @@ interface Gig {
   gigType: { key: string; label: Pair } | null; setLength: { key: string; label: Pair } | null; feeMin: number | null; feeMax: number | null; currency: string;
   travelCovered: boolean; closesOn: string | null; applications?: number;
 }
-interface Application { id: string; status: 'pending' | 'shortlisted' | 'declined' | 'booked' | string; message: string; artist: { slug: string; name: string; roles: { label: Pair }[]; basedIn: Pair | null } }
+interface Application { id: string; status: 'pending' | 'shortlisted' | 'declined' | 'booked' | string; message: string; matchScore: number | null; artist: { slug: string; name: string; roles: { label: Pair }[]; basedIn: Pair | null } }
 interface Inquiry { id: string; eventOn: string; cityLabel: Pair | null; message: string; feeOffer: number | null; currency: string; status: 'pending' | 'accepted' | 'declined' | string; reply: string | null; artist?: { slug: string; name: string } }
 
 const GIG_TYPES: [string, Pair][] = [
@@ -61,6 +63,7 @@ export function Gigs() {
               <div className="flex flex-col">{gigs.map((g) => <GigRow key={g.id} lang={lang} g={g} onChange={load} />)}</div>
             )}
           </Block>
+          <AskArtist lang={lang} cities={cities} onSent={load} />
           <Block title={T.inquiries}>
             {inq === null ? <div className="kd-skel h-16" aria-hidden="true" /> : !inq.length ? <span className="kd-s">{T.inqNone}</span> : (
               <ul className="flex flex-col">
@@ -111,7 +114,7 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
                       {a.status === 'booked' ? T.appBooked : a.status === 'shortlisted' ? T.appShortlisted : a.status === 'declined' ? T.appDeclined : T.appNew}
                     </Status>
                   </span>
-                  <span className="kd-m">{[a.artist.roles.map((r) => r.label[lang]).join(', '), a.artist.basedIn?.[lang]].filter(Boolean).join(' · ')}</span>
+                  <span className="kd-m">{[a.matchScore != null ? fill(T.gigFit, { n: a.matchScore }) : null, a.artist.roles.map((r) => r.label[lang]).join(', '), a.artist.basedIn?.[lang]].filter(Boolean).join(' · ')}</span>
                   {a.message ? <span className="kd-s">{a.message}</span> : null}
                   {a.status !== 'booked' && a.status !== 'declined' && g.status !== 'filled' ? (
                     <span className="flex flex-wrap gap-2">
@@ -138,7 +141,7 @@ function NewGig({ lang, cities, onPosted }: { lang: Lang; cities: City[]; onPost
   const { events } = useStudio();
   const T = pick(STUDIO, lang);
   const kd = useKd();
-  const empty = { title: '', city: '', startsOn: '', closesOn: '', gigType: '', setLength: '', feeMin: '', feeMax: '', travelCovered: false, description: '', eventId: '' };
+  const empty = { title: '', city: '', startsOn: '', closesOn: '', gigType: '', setLength: '', feeMin: '', feeMax: '', travelCovered: false, description: '', eventId: '', styles: [] as string[] };
   const [f, setF] = useState(empty);
   const [busy, setBusy] = useState(false);
   const city = f.city || cities[0]?.slug || '';
@@ -151,7 +154,7 @@ function NewGig({ lang, cities, onPosted }: { lang: Lang; cities: City[]; onPost
       await FF.post('/organizer/gigs', {
         title: f.title, city, startsOn: f.startsOn, closesOn: f.closesOn || null, gigType: f.gigType || null, setLength: f.setLength || null,
         feeMin: f.feeMin ? Number(f.feeMin) : null, feeMax: f.feeMax ? Number(f.feeMax) : null, travelCovered: f.travelCovered,
-        description: f.description, eventId: f.eventId || null,
+        description: f.description, eventId: f.eventId || null, styles: f.styles,
       });
       kd.toast(T.saved);
       setF(empty);
@@ -173,12 +176,58 @@ function NewGig({ lang, cities, onPosted }: { lang: Lang; cities: City[]; onPost
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="gMax">{T.gigFeeMax} ({sym})</FieldLabel><Input id="gMax" inputMode="numeric" className="kd-num" value={f.feeMax} onChange={(e) => setF({ ...f, feeMax: e.target.value.replace(/\D/g, '') })} /></div>
           <div className="col-span-2 flex flex-col gap-2"><FieldLabel htmlFor="gCloses">{T.gigCloses}</FieldLabel><Input id="gCloses" type="date" className="kd-num" value={f.closesOn} onChange={(e) => setF({ ...f, closesOn: e.target.value })} /></div>
         </div>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="kd-flabel mb-2">{T.fGenre} <span className="font-normal text-fog">{T.optional}</span></legend>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.keys(STYLE_LABEL).map((k) => {
+              const on = f.styles.includes(k);
+              return <Chip key={k} family="edm" on={on} disabled={!on && f.styles.length >= 6} onClick={() => setF({ ...f, styles: on ? f.styles.filter((x) => x !== k) : [...f.styles, k] })}>{styleLabel(k, lang)}</Chip>;
+            })}
+          </div>
+        </fieldset>
         {upcoming.length ? (
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="gEvent">{T.gigEvent}</FieldLabel><Select id="gEvent" value={f.eventId} onChange={(e) => setF({ ...f, eventId: e.target.value })}><option value="">{T.gigNoEvent}</option>{upcoming.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</Select></div>
         ) : null}
         <div className="border-t border-line"><SwitchRow label={T.gigTravel} checked={f.travelCovered} onChange={(v) => setF({ ...f, travelCovered: v })} /></div>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="gDesc">{T.gigDesc} <span className="font-normal text-fog">{T.optional}</span></FieldLabel><TextArea id="gDesc" rows={3} maxLength={3000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
         <Button tone="acc" type="submit" className="self-start" disabled={busy || !city}>{T.gigPost}</Button>
+      </form>
+    </Block>
+  );
+}
+
+/** Ask one artist directly: a date, a city, a message and a fee offer. Their answer shows under "Booking requests sent". */
+function AskArtist({ lang, cities, onSent }: { lang: Lang; cities: City[]; onSent: () => void }) {
+  const T = pick(STUDIO, lang);
+  const kd = useKd();
+  const empty = { artist: null as PickItem | null, eventOn: '', city: '', message: '', feeOffer: '' };
+  const [f, setF] = useState(empty);
+  const [busy, setBusy] = useState(false);
+  const city = f.city || cities[0]?.slug || '';
+  const cur = cities.find((c) => c.slug === city)?.currency;
+  const find = useCallback(async (q: string): Promise<PickItem[]> => {
+    const out = await FF.get('/artists?limit=20&sort=name' + (q ? '&q=' + encodeURIComponent(q) : ''));
+    return out.items.map((a: { id: string; name: string; slug: string }) => ({ value: a.id, label: a.name, sub: '/a/' + a.slug }));
+  }, []);
+  const send = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!f.artist) return;
+    setBusy(true);
+    const out = await act(kd, lang, () => FF.post('/organizer/inquiries', { artistId: f.artist!.value, eventOn: f.eventOn, city, message: f.message.trim(), feeOffer: f.feeOffer ? Number(f.feeOffer) : null }));
+    if (out) { setF(empty); onSent(); }
+    setBusy(false);
+  };
+  return (
+    <Block title={T.inqNew}>
+      <form className="flex flex-col gap-3.5" onSubmit={send}>
+        <div className="flex flex-col gap-2"><span className="kd-flabel">{T.inqArtist}</span><AsyncPick label={T.inqArtist} placeholder={T.inqFind} load={find} value={f.artist} onPick={(a) => setF({ ...f, artist: a })} /></div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-3">
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqDate">{T.inqDate}</FieldLabel><Input id="iqDate" type="date" required className="kd-num" value={f.eventOn} onChange={(e) => setF({ ...f, eventOn: e.target.value })} /></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqCity">{T.fCity}</FieldLabel><Select id="iqCity" value={city} onChange={(e) => setF({ ...f, city: e.target.value })}>{cities.map((c) => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}</Select></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqFee">{T.inqFee} ({cur === 'VND' ? '₫' : cur ?? ''})</FieldLabel><Input id="iqFee" inputMode="numeric" className="kd-num" value={f.feeOffer} onChange={(e) => setF({ ...f, feeOffer: e.target.value.replace(/\D/g, '') })} /></div>
+        </div>
+        <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqMsg" hint={T.inqMsgRule}>{T.inqMsg}</FieldLabel><TextArea id="iqMsg" rows={3} minLength={10} maxLength={2000} required value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} /></div>
+        <Button type="submit" className="self-start" disabled={busy || !f.artist || !f.eventOn || f.message.trim().length < 10}>{T.inqSend}</Button>
       </form>
     </Block>
   );

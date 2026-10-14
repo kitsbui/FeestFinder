@@ -8,25 +8,31 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  BuildingsIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, SignOutIcon, SquaresFourIcon, TagIcon, TrayIcon, UsersIcon,
+  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, SignOutIcon, SquaresFourIcon, TagIcon, TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { pick, type Lang, type Pair } from '../copy';
 import { KdProvider, useKd } from '../runtime';
 import { buttonClass } from '../ui/actions';
+import { AskHost } from '../console/kit';
+import { Menu, MenuItem } from '../ui/menu';
 import { Avatar, Card as Panel } from '../ui/parts';
 import { Shell, SideNav } from '../ui/shell';
 import { place } from '../app/place';
 import { STUDIO } from './copy';
 
-export type StudioScreen = 'dash' | 'new' | 'attendees' | 'door' | 'revenue' | 'inbox' | 'announce' | 'promos' | 'gigs' | 'profile';
+export type StudioScreen = 'dash' | 'events' | 'new' | 'attendees' | 'door' | 'revenue' | 'inbox' | 'announce' | 'promos' | 'gigs' | 'profile';
 
 export interface OrgEvent {
   id: string; slug: string; title: string; status: 'draft' | 'in_review' | 'live' | 'rejected' | 'ended' | string; statusLabel: Pair;
   startsOn: string | null; endsOn: string | null; startTime: string | null; endTime: string | null; genre: string | null;
   venueName: string | null; area: string | null; entryMode: 'free' | 'paid' | 'donation'; priceFrom: number;
   views: number | null; saves: number | null; clicks: number | null; sold: number | null; hasPerformance: boolean; meta: Pair;
+  coverUrl?: string | null; qualityScore?: number | null; missing?: string[]; submittedAt?: string | null; updatedAt?: string | null;
+  lastDecision?: { decision: string; code: string | null; message: string | null; at: string; reason: Pair | null } | null;
 }
+/** An organiser team the account belongs to (the session lists them). */
+export interface OrgSeat { id: string; slug: string; name: string; role: string }
 export interface OrgProfile { id: string; slug: string; name: string; logoUrl: string | null; verified: boolean; myRole: string }
 
 interface StudioCtx {
@@ -36,6 +42,9 @@ interface StudioCtx {
   event: OrgEvent | null;
   setEvent: (id: string) => void;
   reload: () => Promise<void>;
+  /** Every organiser this account belongs to, and switching between them. */
+  seats: OrgSeat[];
+  switchOrg: (id: string) => void;
 }
 const Ctx = createContext<StudioCtx | null>(null);
 export function useStudio(): StudioCtx {
@@ -45,11 +54,13 @@ export function useStudio(): StudioCtx {
 }
 
 const KEY = 'ff_studio_event';
+/** The organiser chosen in /ops and here: kept per browser, as /ops kept it. */
+const ORG_KEY = 'ff_ops_org';
 
 /** Whether an event's last day is behind us (by the server's clock; a day either way does not matter here). */
 export const isPast = (e: Pick<OrgEvent, 'startsOn' | 'endsOn'>) => !!e.startsOn && (e.endsOn ?? e.startsOn) < FF.now().toISOString().slice(0, 10);
 
-const SCREENS: StudioScreen[] = ['new', 'attendees', 'door', 'revenue', 'inbox', 'announce', 'promos', 'gigs', 'profile'];
+const SCREENS: StudioScreen[] = ['events', 'new', 'attendees', 'door', 'revenue', 'inbox', 'announce', 'promos', 'gigs', 'profile'];
 
 /** The Studio layout: one root for every /studio path, so moving between screens keeps the organiser and the events. */
 export function StudioRoot({ children }: { children: ReactNode }) {
@@ -66,7 +77,9 @@ function OrgRoot({ path, children }: { path: string; children: ReactNode }) {
   useEffect(() => { const l = place.lang(); if (l) setLang(l); }, []);
   return (
     <KdProvider lang={lang}>
-      <Gate lang={lang} current={current}>{children}</Gate>
+      <AskHost lang={lang}>
+        <Gate lang={lang} current={current}>{children}</Gate>
+      </AskHost>
     </KdProvider>
   );
 }
@@ -74,7 +87,23 @@ function OrgRoot({ path, children }: { path: string; children: ReactNode }) {
 function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; children: ReactNode }) {
   const kd = useKd();
   const T = pick(STUDIO, lang);
-  const orgs = (kd.session as { organizers?: unknown[] } | null | undefined)?.organizers ?? [];
+  const orgs = useMemo(() => (kd.session as { organizers?: OrgSeat[] } | null | undefined)?.organizers ?? [], [kd.session]);
+  // Which organiser the screens act for: the one picked before, else the one the account owns, else the first.
+  const [picked, setPicked] = useState<string | null>(() => {
+    try { return localStorage.getItem(ORG_KEY); } catch { return null; }
+  });
+  const orgId = orgs.some((o) => o.id === picked) ? picked : (orgs.find((o) => o.role === 'owner') ?? orgs[0])?.id ?? null;
+  // Set before the screens below ask anything, so every /organizer request carries it.
+  FF.organizerId = orgId;
+  const switchOrg = useCallback((id: string) => {
+    try { localStorage.setItem(ORG_KEY, id); } catch { /* storage blocked */ }
+    try { sessionStorage.removeItem(KEY); } catch { /* storage blocked */ }
+    FF.organizerId = id;
+    const q = new URLSearchParams(location.search);
+    q.delete('event');
+    history.replaceState(history.state, '', location.pathname + (q.size ? '?' + q : ''));
+    setPicked(id);
+  }, []);
   if (kd.session === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
   if (!kd.user || !orgs.length) {
     return (
@@ -89,10 +118,11 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
       </div>
     );
   }
-  return <Studio lang={lang} current={current}>{children}</Studio>;
+  // A new organiser is a new Studio: every screen loads again for it.
+  return <Studio key={orgId} lang={lang} current={current} seats={orgs} switchOrg={switchOrg}>{children}</Studio>;
 }
 
-function Studio({ lang, current, children }: { lang: Lang; current: StudioScreen; children: ReactNode }) {
+function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; current: StudioScreen; children: ReactNode; seats: OrgSeat[]; switchOrg: (id: string) => void }) {
   const T = pick(STUDIO, lang);
   const kd = useKd();
   const [org, setOrg] = useState<OrgProfile | null>(null);
@@ -146,11 +176,28 @@ function Studio({ lang, current, children }: { lang: Lang; current: StudioScreen
               <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell text-sm">{org.name}</span><span className="kd-s text-xs">{T.publicProfile}</span></span>
             </a>
           ) : null}
+          {seats.length > 1 && org ? (
+            <Menu
+              label={T.switchOrg}
+              width={260}
+              className="kd-sn-hide mb-2 w-full"
+              trigger={(p) => (
+                <button type="button" {...p} ref={p.ref} className="kd-sn w-full text-left" aria-label={T.switchOrg}>
+                  {i(CaretUpDownIcon)}<span className="kd-ell">{T.switchOrg}</span>
+                </button>
+              )}
+            >
+              {seats.map((s) => (
+                <MenuItem key={s.id} checked={s.id === org.id} aside={s.role === 'owner' ? T.roleOwner : T.roleMember} onSelect={() => { if (s.id !== org.id) switchOrg(s.id); }}>{s.name}</MenuItem>
+              ))}
+            </Menu>
+          ) : null}
           <a className={buttonClass({ tone: 'acc', size: 'sm' }, 'mb-3 shrink-0')} href="/studio/new"><PlusIcon size={16} aria-hidden="true" />{T.newEvent}</a>
         </>
       )}
       items={[
         { key: 'dash', label: T.dash, href: '/studio', icon: i(SquaresFourIcon) },
+        { key: 'events', label: T.events, href: '/studio/events', icon: i(CalendarDotsIcon) },
         { key: 'attendees', label: T.attendees, href: '/studio/attendees', icon: i(UsersIcon) },
         { key: 'door', label: T.door, href: '/studio/door', icon: i(QrCodeIcon) },
         { key: 'revenue', label: T.revenue, href: '/studio/revenue', icon: i(CoinsIcon) },
@@ -171,7 +218,7 @@ function Studio({ lang, current, children }: { lang: Lang; current: StudioScreen
   const frame = (body: ReactNode) => (current === 'new' || current === 'door' ? body : <Shell nav={nav}>{body}</Shell>);
   if (!org || !events) return frame(<div className="kd-skel m-6 h-60" aria-hidden="true" />);
   return (
-    <Ctx.Provider value={{ lang, org, events, event, setEvent, reload }}>
+    <Ctx.Provider value={{ lang, org, events, event, setEvent, reload, seats, switchOrg }}>
       {frame(children)}
     </Ctx.Provider>
   );

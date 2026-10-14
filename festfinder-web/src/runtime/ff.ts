@@ -67,6 +67,8 @@ FF.api = async function api(method: string, path: string, body?: unknown, opts?:
   // Signing out: let the app detach this device first (push, offline copies).
   if (method === 'DELETE' && path === '/auth/session' && FF.beforeSignOut) await FF.beforeSignOut().catch(() => {});
   const headers: Record<string, string> = { 'x-lang': opts?.lang || FF.lang };
+  // Studio acts for one organiser at a time when the account belongs to several (http/guards.ts requireOrganizer).
+  if (FF.organizerId && /^\/(organizer|door)\//.test(path)) headers['x-organizer-id'] = FF.organizerId;
   let payload: BodyInit | undefined;
   if (body instanceof FormData) payload = body;
   else if (body !== undefined) {
