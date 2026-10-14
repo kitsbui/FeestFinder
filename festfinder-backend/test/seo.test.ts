@@ -175,23 +175,42 @@ describe('event pages for search engines and AI assistants', () => {
   });
 });
 
-describe('/ops behind a CDN', () => {
+describe('the API behind a CDN', () => {
   let env: TestEnv;
   before(async () => { env = await setup({ config: { serveFrontend: true, env: 'production' } }); });
   after(async () => { await env.close(); });
   const get = (url: string, headers?: Record<string, string>) => env.app.inject({ method: 'GET', url, headers });
 
-  it('names every file with the deployment version and keeps those for good', async () => {
-    const shell = await get('/ops');
-    assert.equal(shell.headers['cache-control'], 'public, max-age=0, s-maxage=86400', 'the edge keeps the empty shell for the deployment');
-    const v = shell.body.match(/\/pages\/ops\/js\/main\.js\?v=([\w-]+)/)?.[1];
-    assert.ok(v, 'the shell loads its scripts with the version');
-    assert.match(shell.body, new RegExp(`/ui/theme\\.css\\?v=${v}`), 'and its stylesheets');
-    assert.doesNotMatch(String(shell.headers['content-security-policy']), /unsafe-eval/);
-    assert.equal((await get(`/pages/ops/ops.css?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
-    assert.equal((await get('/pages/ops/ops.css')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
-    assert.equal((await get('/pages/ops/ops.css?v=old')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
-    assert.match((await get('/ui/vendor/phosphor/bold/style.css')).body, new RegExp(`Phosphor-Bold\\.woff2\\?v=${v}`), 'and the fonts they load');
+  it('names the /ui files with the deployment version and keeps those for good', async () => {
+    const css = await get('/ui/fonts/be-vietnam-pro.css');
+    const v = css.body.match(/\.woff2\?v=([\w-]+)/)?.[1];
+    assert.ok(v, 'a stylesheet loads its fonts with the version');
+    assert.equal(css.headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
+    assert.equal((await get(`/ui/fonts/be-vietnam-pro.css?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
+    assert.equal((await get('/ui/fonts/be-vietnam-pro.css?v=old')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
+    assert.equal((await get('/pages/ops/shell.html')).statusCode, 404, 'the old back office is gone');
+  });
+
+  it('sends every old /ops address to where it lives now', async () => {
+    const moved: [string, string][] = [
+      ['/ops', '/console/overview'],
+      ['/ops/review', '/console'],
+      ['/ops/review/1f0c', '/console?id=1f0c'],
+      ['/ops/events?status=live&when=week', '/console/events?status=live&when=week'],
+      ['/ops/organizers/9a2b', '/console/organizers/9a2b'],
+      ['/ops/reports?tab=appeals', '/console?filter=appeals'],
+      ['/ops/org', '/studio'],
+      ['/ops/org/events/new', '/studio/new'],
+      ['/ops/org/events/7d1e', '/studio/events/7d1e'],
+      ['/ops/org/inbox/3c4d', '/studio/inbox'],
+      ['/ops/artist', '/studio/artist'],
+      ['/ops/artist/gigs', '/studio/artist/gigs?tab=report'],
+      ['/ops/artist/opportunities?tab=brands', '/studio/artist/opportunities?tab=brands'],
+    ];
+    for (const [from, to] of moved) {
+      const res = await get(from);
+      assert.deepEqual([res.statusCode, res.headers.location], [301, to], from);
+    }
   });
 
   it('serves none of the old screens: the Next front draws them', async () => {

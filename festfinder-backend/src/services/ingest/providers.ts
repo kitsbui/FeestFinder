@@ -14,7 +14,7 @@ export const ADAPTERS: Record<string, SourceAdapter> = {
 };
 export const ADAPTER_IDS = Object.keys(ADAPTERS) as [string, ...string[]];
 
-/** Who a fact came from, as shown in /ops and on the event page. */
+/** Who a fact came from, as shown in the Console and on the event page. */
 export const PROVIDER_LABEL: Record<string, Localized> = {
   organizer: L('Organiser', 'Nhà tổ chức'),
   community: L('Community', 'Cộng đồng'),

@@ -103,16 +103,17 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - [x] Production: feestfinder.com on its own Vercel project (`feestfinder-web`), the API at `feestfinder-api.vercel.app`
   - The web proxy forwards every non-page path to the API with fetch, signed with `WEB_PROXY_SECRET` (on Vercel, headers a proxy adds never reach a rewrite to another deployment); the API keeps per-visitor rate limits, the sign-in throttle, click countries and Google's return address.
   - [x] The old API-served screens removed (2026-10-09): `festfinder-frontend/pages/{web,app,organizer,admin}`, `ui/ff-client.js`, `ui/support.js`, the compiled screens and their runtime in `festfinder-web`, and the API's page shells. `/ops` stays; `scripts/copy-ui.ts` copies `public/ui/`.
+  - [x] `/ops` merged into the Kính đêm back offices (2026-10-14): the Console takes every team tool behind a side rail (overview, review queue with filters, bulk and keys, claims, reports with posts and photos, events with the team's editor and provenance, organisers, venues, artists and gear, sources, partners, affiliate, brands, featured shelves, accounts, orders and resale, numbers, audit); Studio takes the organiser's (events list and editor for any status, hype goals, live updates, an organiser switcher); the artist studio (`/studio/artist`) takes the artist's. The API redirects every old `/ops` address and serves only `/ui`.
   - [ ] A Vercel Firewall rate-limit rule on `feestfinder-web` for paths rendered on request (`/list?…`, `/stats/…`): the API caps their shared bucket, so one client could crowd out the others' renders.
 
 ## What the team does next in production
 
 1. Set `TICKETMASTER_API_KEY` in Vercel if Ticketmaster is wanted (Singapore has the most coverage).
-2. Add sources in `/ops/sources` for each city: venue and festival programme pages that carry schema.org data, public ICS calendars. Hà Nội is covered by TicketGo; Đà Nẵng and Nha Trang have no public structured source yet (see the note in `services/ingest/starter.ts`), so their events come from organisers and the community.
-3. In `/ops/partners`, add each ticket seller FeestFinder has an affiliate deal with, give them the sale report address, and settle reported sales.
+2. Add sources in `/console/sources` for each city: venue and festival programme pages that carry schema.org data, public ICS calendars. Hà Nội is covered by TicketGo; Đà Nẵng and Nha Trang have no public structured source yet (see the note in `services/ingest/starter.ts`), so their events come from organisers and the community.
+3. In `/console/partners`, add each ticket seller FeestFinder has an affiliate deal with, give them the sale report address, and settle reported sales.
 4. Approve candidates in the review queue (bulk approve works). The "500+ upcoming events in 5 cities" goal depends on these sources.
 5. Set `ADMIN_EMAIL` in Vercel to the team's Google addresses. Admins sign in with Google; the shared password disclosed earlier must be rotated and is not used by this build.
-6. Approve profile claims in `/ops/claims` (Profiles tab) and gear suggestions in `/ops/artists` (Gear tab); verify the artists you know and add their MusicBrainz or Spotify ids.
+6. Approve profile claims in `/console/claims` (Profiles tab) and gear suggestions in `/console/artists` (Gear tab); verify the artists you know and add their MusicBrainz or Spotify ids.
 7. Produce the PMTiles extract for the launched cities, upload it to the bucket with range requests enabled, and set `MAP_TILES_URL` (and `MAP_GLYPHS_URL` for place names), on both Vercel projects.
 8. Revoke the Vercel token that was pasted in chat for the move to the new front (Vercel → Account Settings → Tokens).
 
@@ -147,3 +148,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-09: The old screens removed; the API serves `/ops` and its files, and answers 404 for the pages the site now owns. The map names the cities on its bare board. API 317 pass; /ops 58 passed; the Next run 174 passed, none skipped.
 - 2026-10-09: The site full width on desktop: one page container with gutters of 16, 32 and up to 64px, reading measures kept for long text, forms and dialogs; Studio and Console screens full width; `/app` fills the screen beside a side rail. The Next run 180 passed.
 - 2026-10-14: EDM only. `GENRES` is `['EDM']` and people filter by style (`facets.style`, `facets.free` replace `facets.family`); imports naming another genre are dropped, unclassified ones wait for review and become EDM when approved; TicketGo and Ticketmaster need an EDM style. Migration 031 deletes every event with what hangs off it (tickets and orders, saves, plans, posts, views and clicks, ingestion's memory), keeps accounts, organisers, artists, venues and sources, and makes the sources due now. The site, the app, Studio's wizard and the stats pages offer styles instead of genre families.
+- 2026-10-14: `/ops` merged into the Console, Studio and the new artist studio, and retired (its addresses redirect). Test counts: TBD.

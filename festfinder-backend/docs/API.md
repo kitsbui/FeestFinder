@@ -4,7 +4,7 @@ Grouped by the surface and screen in the design handoff. 🔒 needs a signed-in 
 
 Conventions (see the README): bilingual fields are `{en, vi}`; errors are `{error: {code, message, details}}`; lists page with `cursor` / `nextCursor`; money is integer VND; times are Ho Chi Minh City local.
 
-The site's screens (`festfinder-web/src/kd/`, through the proxy) and `/ops` (`festfinder-frontend/pages/ops/js/`) call these endpoints; the screens' loaders are the quickest way to see what a given screen depends on.
+The site's screens, the Console, Studio and the artist studio (`festfinder-web/src/kd/`, through the proxy) call these endpoints; the screens' loaders are the quickest way to see what a given screen depends on.
 
 ---
 
@@ -221,9 +221,9 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 
 ---
 
-## Operations back office (/ops) 🛡
+## Operations back office (the Console) 🛡
 
-The team mode of `/ops` uses the admin endpoints above plus these. Every write is in the audit log.
+The Console (`/console`, `festfinder-web/src/kd/console/`) uses the admin endpoints above plus these. Every write is in the audit log.
 
 | Method | Path | Notes |
 | --- | --- | --- |

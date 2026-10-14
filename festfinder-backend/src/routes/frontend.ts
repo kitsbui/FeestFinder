@@ -12,14 +12,46 @@ import { isCity } from '../lib/places.ts';
 import { slugify } from '../lib/contact.ts';
 
 /**
- * The operations back office (/ops), and the /ui and /pages files it loads. The site's own
- * screens are the Next front in festfinder-web.
- *
- * The /ops shell answers every route below it, so its tabs and panels have real URLs while
- * the browser keeps one copy of the scripts. It is plain scripts on vendored React, so it
- * keeps the strict policy from app.ts.
+ * What the API still serves of festfinder-frontend: the shared /ui files (fonts, the map,
+ * brand images; the Next front copies them into its own public/ui) and the favicon. The old
+ * back office, /ops, now lives in the Next front: its addresses redirect (opsPath).
  */
-const OPS = { shell: 'pages/ops/shell.html', routes: ['/ops', '/ops/*'] };
+
+/** The Console screens that kept their /ops name. */
+const CONSOLE_SAME = new Set(['claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'featured', 'users', 'orders', 'audit']);
+
+/**
+ * Where an /ops address lives now: the team's screens in the Console, the organiser's in
+ * Studio, the artist's in the artist studio. The query is kept (filters, tabs).
+ */
+export function opsPath(path: string, search: string): string {
+  const q = new URLSearchParams(search);
+  const parts = path.split('/').filter(Boolean).slice(1);
+  const [area, ...rest] = parts;
+  const at = (p: string, extra?: Record<string, string>) => {
+    for (const [k, v] of Object.entries(extra ?? {})) q.set(k, v);
+    const qs = q.toString();
+    return p + (qs ? `?${qs}` : '');
+  };
+  if (!area) return at('/console/overview');
+  if (area === 'review') return rest[0] ? at('/console', { id: rest[0] }) : at('/console');
+  if (area === 'reports' && q.get('tab') === 'appeals') { q.delete('tab'); return at('/console', { filter: 'appeals' }); }
+  if (CONSOLE_SAME.has(area)) return at(['/console', area, ...rest].join('/'));
+  if (area === 'org') {
+    const [screen, id] = rest;
+    if (screen === 'events') return at(id === 'new' ? '/studio/new' : id ? `/studio/events/${id}` : '/studio/events');
+    if (screen === 'inbox' || screen === 'gigs' || screen === 'profile') return at(`/studio/${screen}`);
+    return at('/studio');
+  }
+  if (area === 'artist') {
+    const [screen] = rest;
+    // /ops/artist/gigs was the gigs an artist reports; applications and requests were opportunities' tabs.
+    if (screen === 'gigs') return at('/studio/artist/gigs', { tab: 'report' });
+    if (screen === 'gear' || screen === 'opportunities') return at(`/studio/artist/${screen}`);
+    return at('/studio/artist');
+  }
+  return at('/console/overview');
+}
 
 /** The hosts the map's tiles and glyphs come from, for connect-src. */
 export function mapOrigins(map: Config['map']): string[] {
@@ -64,17 +96,15 @@ type Cached = { etag: string; body: Buffer; gzip?: Buffer; type: string };
  * How long a response may be kept. Vercel's CDN starts a fresh cache with every deployment,
  * so `s-maxage` lets the edge near the visitor answer instead of the function in Tokyo.
  * - asset: a file named with this deployment's version (?v=…), kept for good;
- * - file: the same file without it (an old tab, a hand-typed URL);
- * - shell: the empty /ops shell; the browser checks back, the edge keeps it.
+ * - file: the same file without it (an old tab, a hand-typed URL).
  */
-type Policy = 'asset' | 'file' | 'shell';
+type Policy = 'asset' | 'file';
 const POLICY: Record<Policy, string> = {
   asset: 'public, max-age=31536000, immutable',
   file: 'public, max-age=3600, s-maxage=86400',
-  shell: 'public, max-age=0, s-maxage=86400',
 };
 
-/** A short hash of every file under pages/ and ui/, so a deployment's URLs change with its content. */
+/** A short hash of every file under ui/, so a deployment's URLs change with its content. */
 async function versionOf(dir: string): Promise<string> {
   const hash = createHash('sha256');
   const walk = async (d: string) => {
@@ -84,17 +114,14 @@ async function versionOf(dir: string): Promise<string> {
       else hash.update(f.slice(dir.length)).update(await readFile(f));
     }
   };
-  for (const folder of ['pages', 'ui']) await walk(join(dir, folder));
+  await walk(join(dir, 'ui'));
   return hash.digest('base64url').slice(0, 10);
 }
 
-/**
- * Adds the version to the /ui and /pages URLs an HTML or CSS file names, and to the fonts a
- * stylesheet loads next to it.
- */
+/** Adds the version to the /ui URLs an HTML or CSS file names, and to the fonts a stylesheet loads next to it. */
 export function stampUrls(text: string, version: string): string {
   return text
-    .replace(/(["'(])(\/(?:ui|pages)\/[^"'()?#\s]+)(?=["')])/g, `$1$2?v=${version}`)
+    .replace(/(["'(])(\/ui\/[^"'()?#\s]+)(?=["')])/g, `$1$2?v=${version}`)
     .replace(/url\((["']?)(\.\/[^"')?#]+)\1\)/g, `url($1$2?v=${version}$1)`);
 }
 
@@ -102,7 +129,15 @@ export default async function frontendRoutes(app: FastifyInstance) {
   // This repo's festfinder-frontend, wherever the process was started from. Written as a
   // URL literal so Vercel's file tracing ships the folder with the function.
   const dir = process.env.FRONTEND_DIR ? resolve(process.env.FRONTEND_DIR) : fileURLToPath(new URL('../../../festfinder-frontend', import.meta.url));
-  if (!existsSync(join(dir, OPS.shell))) {
+  // The old /ops addresses, wherever someone kept them (bookmarks, notifications, emails).
+  for (const route of ['/ops', '/ops/*']) {
+    app.get(route, async (req, reply) => {
+      const [path, search = ''] = req.url.split('?');
+      return reply.redirect(opsPath(path, search), 301);
+    });
+  }
+
+  if (!existsSync(join(dir, 'ui'))) {
     app.ctx.log(`frontend not found at ${dir}; serving the API only`);
     return;
   }
@@ -145,34 +180,22 @@ export default async function frontendRoutes(app: FastifyInstance) {
     return reply.send(entry.body);
   }
 
-  for (const route of OPS.routes) {
-    app.get(route, async (req, reply) => {
-      const entry = await load(join(dir, OPS.shell));
-      if (!entry) throw notFound();
-      // The shell carries no data of its own, so the edge may keep it for the deployment.
-      return serve(req, reply, entry, 'shell');
-    });
-  }
-
   // The old city landing pages (/city/ho-chi-minh/edm/this-weekend…) land on the list with the
   // same filters. The Next front answers /vi/… and /en/… itself and sends /city/… here.
   for (const route of ['/city/:city', '/city/:city/*']) {
     app.get<{ Params: { city: string; '*'?: string } }>(route, async (req, reply) => reply.redirect(legacyListPath(req.url.split('/')[1], req.params.city, req.params['*'] ?? ''), 301));
   }
 
-  // The modules and styles the /ops shell pulls in, and the shared /ui files (fonts, icons,
-  // theme, map, brand images).
-  for (const folder of ['pages', 'ui']) {
-    app.get<{ Params: { '*': string } }>(`/${folder}/*`, async (req, reply) => {
-      const rel = normalize(req.params['*']).replace(/^(\.\.[/\\])+/, '');
-      const file = join(dir, folder, rel);
-      if (!file.startsWith(join(dir, folder))) throw notFound();
-      const entry = await load(file);
-      if (!entry) throw notFound();
-      const q = req.query as { v?: string };
-      return serve(req, reply, entry, version && q.v === version ? 'asset' : 'file');
-    });
-  }
+  // The shared /ui files (fonts, the map, brand images).
+  app.get<{ Params: { '*': string } }>('/ui/*', async (req, reply) => {
+    const rel = normalize(req.params['*']).replace(/^(\.\.[/\\])+/, '');
+    const file = join(dir, 'ui', rel);
+    if (!file.startsWith(join(dir, 'ui'))) throw notFound();
+    const entry = await load(file);
+    if (!entry) throw notFound();
+    const q = req.query as { v?: string };
+    return serve(req, reply, entry, version && q.v === version ? 'asset' : 'file');
+  });
 
   // Browsers ask for this path on their own, whatever the page links.
   app.get('/favicon.ico', async (req, reply) => {

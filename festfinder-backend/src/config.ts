@@ -108,8 +108,8 @@ export interface Config {
    */
   map: { tilesUrl: string | null; overviewUrl: string | null; glyphsUrl: string | null };
   /**
-   * /ops and the /ui and /pages files from festfinder-frontend. Off only when env is 'test';
-   * `node --test` leaves NODE_ENV unset, so the unit tests serve them too.
+   * The /ui files from festfinder-frontend and the redirects of the old /ops addresses. Off
+   * only when env is 'test'; `node --test` leaves NODE_ENV unset, so the unit tests serve them too.
    */
   serveFrontend: boolean;
   /**

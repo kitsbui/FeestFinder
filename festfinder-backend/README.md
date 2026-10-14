@@ -1,6 +1,6 @@
 # FeestFinder API
 
-The backend for FeestFinder: the public **Web** site, the attendee **App**, **Studio** for organisers and the **Console** for the team (drawn in Next.js, [`../festfinder-web`](../festfinder-web/README.md)), and **/ops**, the working back office this API serves itself. One JSON API, Vietnamese-first, bilingual throughout.
+The backend for FeestFinder: the public **Web** site, the attendee **App**, **Studio** for organisers, the **artist studio** and the **Console** for the team, all drawn in Next.js ([`../festfinder-web`](../festfinder-web/README.md)). One JSON API, Vietnamese-first, bilingual throughout.
 
 - **Node 24 + TypeScript**, run directly (Node strips types, so there is no build step)
 - **Fastify 5**, **zod** validation
@@ -23,9 +23,9 @@ npm run db:check
 npm run dev
 ```
 
-The API is on http://localhost:4000, and it serves /ops too — see [Ops](#ops). The site itself is the Next.js app in [`../festfinder-web`](../festfinder-web/README.md), which proxies every other path here. At startup the API checks the database's environment label, applies pending migrations and logs where the data goes (`database: supabase (…pooler.supabase.com)`, `environment: staging`); `GET /health` says the same.
+The API is on http://localhost:4000. The site itself is the Next.js app in [`../festfinder-web`](../festfinder-web/README.md), which proxies every other path here. At startup the API checks the database's environment label, applies pending migrations and logs where the data goes (`database: supabase (…pooler.supabase.com)`, `environment: staging`); `GET /health` says the same.
 
-There is no demo data outside the tests. Admins are the emails in `ADMIN_EMAIL`: each gets an account with no password, set with "Forgot password" on `/ops`. The team then adds organisers, venues and events on `/ops`.
+There is no demo data outside the tests. Admins are the emails in `ADMIN_EMAIL`: each gets an account and signs in to `/console` with Google. The team then adds organisers, venues and events there.
 
 In development every outbound push, Zalo, email or SMS message is printed to the console, OTP codes included, and the background jobs run (`JOBS_ENABLED=false` turns them off). On staging, `EXPOSE_DEV_CODES=true` also returns OTP codes in the response as `devCode`, and `PAYMENT_PROVIDER=mock` makes payments instant; production refuses both. The stand-in Facebook/Instagram sign-in only exists on the tests' embedded database.
 
@@ -39,8 +39,7 @@ In development every outbound push, Zalo, email or SMS message is printed to the
 | `npm run db:check` | Connect with `DATABASE_URL` the way the API does, say whether it is the production or the staging database, and report what is wrong, never the password |
 | `npm test` | Integration and unit tests, on the demo data and on an empty database (about 35 s on PGlite) |
 | `npm run typecheck` | `tsc --noEmit` for the server, then for the Playwright tests (with browser types) |
-| `npm run test:screens` | Playwright: every /ops route, served by this API, boots cleanly on the demo data and on an empty database |
-| `npm run test:screens:next` | The Next.js app's pages (`e2e/next`), its SEO pages, headers and offline tickets, and /ops through its proxy |
+| `npm run test:screens` | Playwright on a production build of the Next.js app with this API behind it (`e2e/next`): the site, its SEO pages, headers and offline tickets, the Console, Studio and the artist studio |
 
 The tests never touch Supabase: they run on in-memory PGlite, and the Playwright runs start their own APIs on throwaway embedded databases. The demo data from the prototypes (6,000 attendees, 28 events around the 18–20 Sep 2026 weekend, about 3,600 orders, with the clock pinned to 14 Sep by `FF_NOW`) lives in [`test/fixtures/seed.ts`](test/fixtures/seed.ts) and refuses to load into Supabase. To run the suite against a real Postgres server, point `TEST_DATABASE_URL` at a role that can create databases:
 
@@ -48,20 +47,11 @@ The tests never touch Supabase: they run on in-memory PGlite, and the Playwright
 TEST_DATABASE_URL=postgres://user:pass@localhost:5432/postgres npm test
 ```
 
-## Ops
+## Back offices
 
-`../festfinder-frontend/pages/ops/` is the working back office, served by this API from the same origin, so the session cookie just works. feestfinder.com reaches it through the Next.js app's proxy.
+The team's back office is the Console (`/console`), the organisers' is Studio (`/studio`) and the artists' is the artist studio (`/studio/artist`), all in the Next.js app. They replaced `/ops`, which this API served until 2026-10-14: its old addresses now redirect to the matching screen (`opsPath` in `routes/frontend.ts`). Every filter lives in the URL, and fixed lists (genres, districts, statuses, banks, reject reasons…) come from `GET /meta/form-options`, so forms pick rather than type.
 
-**Every tab and panel has its own URL**, so anything can be linked, bookmarked and reopened, and back and forward work:
-
-| Surface | Routes | Sign-in |
-| --- | --- | --- |
-| Ops | Team: `/ops` · `/ops/review/:id?` · `/ops/events` · `/ops/events/new` · `/ops/events/:id` · `/ops/reports` · `/ops/organizers/:id?` · `/ops/venues` · `/ops/featured` · `/ops/users/:id?` · `/ops/orders/:id?` · `/ops/audit` — Organizer: `/ops/org` · `/ops/org/events` · `/ops/org/events/new` · `/ops/org/events/:id` · `/ops/org/inbox/:threadId?` · `/ops/org/profile` | its own sign-in, with "forgot password" for accounts the team opened |
-| Dev | `/_console` — API explorer, using the session signed in on `/ops` (disabled in production) | — |
-
-**Ops** is the working back office, in two modes on one page: the FeestFinder team (review queue, catalogue, venues, organiser onboarding, accounts, orders, audit) and organisers (their listings, the event form, submit for review, messages from moderation). Plain ES modules on the vendored React, under the strict Content-Security-Policy (no `'unsafe-eval'`), styled with `ui/theme.css` plus `pages/ops/ops.css`. Every filter lives in the URL. Fixed lists (genres, districts, statuses, banks, reject reasons…) come from `GET /meta/form-options`, so forms pick rather than type.
-
-/ops sits beside the API's `/organizer/*` and `/admin/*` paths, because a screen URL must never shadow an endpoint; `/studio` and `/console` are the Next.js app's. Point `FRONTEND_DIR` elsewhere to serve a different folder.
+The API explorer, `/_console`, uses the session signed in on the site in the same browser (disabled in production).
 
 Two notes:
 
@@ -95,17 +85,16 @@ src/
   services/            audit chain, notifications, outbox, payouts, risk, quality, tickets, AI guide, OAuth
   presenters/          event card/detail and timetable shapes shared by Web and App
   lib/                 VN time, VietQR, i18n, validation, CSV, image headers
-  routes/frontend.ts   serves /ops and the /ui and /pages files: ETags, gzip, ?v= versions
+  routes/frontend.ts   serves the /ui files (ETags, gzip, ?v= versions) and redirects the old /ops addresses
 test/                  node:test suites per surface
-  fixtures/            the demo data (seed.ts) and the empty database (empty.ts) the tests run on
+  fixtures/            the demo data (seed.ts) the tests run on
 ```
 
-The back office lives next door:
+The files the site loads from `/ui` live next door:
 
 ```
 ../festfinder-frontend/
-  pages/ops/           shell.html, ops.css, js/ (core.js, ui.js, team/, org/, artist/)
-  ui/                  theme.css, fonts/, vendor/ (React, MapLibre, the Phosphor cut), map/ff-map.js, assets/, _ds/
+  ui/                  fonts/, vendor/ (MapLibre, pmtiles), map/ff-map.js, assets/, _ds/
 ```
 
 ## Decisions worth knowing
@@ -147,9 +136,9 @@ The back office lives next door:
 
 **Filling in a sent-in event.** `POST /community/prefill` fetches the pasted page (public addresses only, every redirect checked, 2 MB, 8 s) and reads its schema.org Event data first; only a page without one goes to Claude, which also reads posters (`/community/prefill/poster`). The person checks the form before sending. Each person gets 30 pages and 10 AI reads an hour, logged in `ai_calls`.
 
-**The night itself.** Organisers post updates (a set running late, a quieter gate) from the event editor in `/ops`; with "notify" on, ticket holders and people going get them at once, at most ten a day. Attendees' memory and talk posts can carry a photo, which also lands on the event's photo wall. Each night the door scanned, or the person checked in, is a stamp in their raver passport (`/me/passport`), and `/me/wrapped` sums up their year; the App turns both into story images for Instagram.
+**The night itself.** Organisers post updates (a set running late, a quieter gate) from the event editor in Studio (`/studio/events/<id>`); with "notify" on, ticket holders and people going get them at once, at most ten a day. Attendees' memory and talk posts can carry a photo, which also lands on the event's photo wall. Each night the door scanned, or the person checked in, is a stamp in their raver passport (`/me/passport`), and `/me/wrapped` sums up their year; the App turns both into story images for Instagram.
 
-**Taking over a community event.** An organiser presses "I organise this" on an event the community sent in, with a note and a proof link; a moderator approves it in `/ops/claims`, which moves the event to their account and tells the person who sent it in.
+**Taking over a community event.** An organiser presses "I organise this" on an event the community sent in, with a note and a proof link; a moderator approves it in `/console/claims`, which moves the event to their account and tells the person who sent it in.
 
 ## Running it in production
 
@@ -181,7 +170,7 @@ Every outside service is switched on by its environment variables and logged ins
 
 **Community, discussion and resale (migration `010`).** Anyone whose phone number is proven by a code can post on an event page, or send an event in; it waits in the review queue like any listing, owned by the "Cộng đồng FeestFinder" organiser. A number typed into a profile is unproven, and never signs anyone in to that account. Tickets move between attendees as gifts or resold at no more than face value, until the event ends: each move gives the ticket a new QR version, and scanners refresh what changed every 20 seconds. FeestFinder holds a resale buyer's money and pays the seller two days after the event, from `/ops/orders → Pass vé`.
 
-**Security headers.** Every response carries helmet's headers. JSON answers and /ops get a strict Content-Security-Policy, with no `'unsafe-eval'`.
+**Security headers.** Every response carries helmet's headers. JSON answers get a strict Content-Security-Policy, with no `'unsafe-eval'`; the Next.js app sets its own.
 
 **Several instances.** Background jobs take a Postgres advisory lock per job and tick, so any number of API instances can run with `JOBS_ENABLED=true` and each job still runs once.
 
@@ -209,7 +198,7 @@ A deployment's startup log names its database and environment (`database: supaba
 
 Migration `007` also closes Supabase's Data API over our tables: it serves the public schema to anyone with the project's anon key, and this API never uses it, so the `anon` and `authenticated` roles lose their grants and every table gets row level security with no policies.
 
-**CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright checks: /ops against this API (demo data and an empty database), and the Next.js app with /ops through its proxy.
+**CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright checks on a production build of the Next.js app with this API behind it.
 
 ## Before production: what still needs a real provider
 

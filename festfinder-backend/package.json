@@ -14,8 +14,7 @@
     "db:check": "node --env-file-if-exists=.env scripts/check-db.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
-    "test:screens": "playwright test",
-    "test:screens:next": "playwright test -c playwright.next.config.ts"
+    "test:screens": "playwright test -c playwright.next.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

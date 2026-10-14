@@ -1,6 +1,6 @@
 /**
  * A link inside the site. To a Kính đêm page it is a Next client navigation; to a path the API
- * serves (/ops, /go/<event>, files) it is a plain link: a full load, never prefetched.
+ * serves (/go/<event>, files) it is a plain link: a full load, never prefetched.
  */
 import NextLink from 'next/link';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';

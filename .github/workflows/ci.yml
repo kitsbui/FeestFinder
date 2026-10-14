@@ -88,9 +88,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # /ops served by the API alone (demo data and an empty database), and the Next.js
-        # site with /ops through its proxy.
-        front: [api, next]
+        # The Next.js site and its back offices, with a fresh API behind it.
+        front: [next]
     steps:
       - uses: actions/checkout@v7
 
@@ -106,7 +105,6 @@ jobs:
         working-directory: festfinder-backend
 
       - run: npm ci
-        if: matrix.front == 'next'
         working-directory: festfinder-web
 
       # The Chromium build that matches the Playwright version in the lockfile.
@@ -115,7 +113,7 @@ jobs:
         working-directory: festfinder-backend
 
       - name: Smoke-test every route
-        run: npm run ${{ matrix.front == 'next' && 'test:screens:next' || 'test:screens' }}
+        run: npm run test:screens
         working-directory: festfinder-backend
         env:
           NEXT_TELEMETRY_DISABLED: '1'

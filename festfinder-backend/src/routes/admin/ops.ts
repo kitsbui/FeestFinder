@@ -31,8 +31,7 @@ import {
 } from '../organizer/events.ts';
 
 /*
- * The operations back office (/ops): what the FeestFinder team needs beyond the moderation
- * console — the whole catalogue with filters, listings created or fixed by the team, venues,
+ * The team's operations (the Console's catalogue screens; once /ops): what the FeestFinder team needs beyond moderation — the whole catalogue with filters, listings created or fixed by the team, venues,
  * organiser onboarding, accounts and orders — plus the option lists every form draws from,
  * so a style, a district or a bank is always picked, never typed.
  */

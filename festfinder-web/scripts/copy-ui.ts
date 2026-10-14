@@ -1,7 +1,6 @@
 /**
  * Copies ../festfinder-frontend/ui into public/ui: the map and MapLibre for the Kính đêm
- * pages, the brand images, and what /ops loads from this site (React, the icon and text
- * fonts). Run by `npm run dev` and `npm run build`.
+ * pages, the brand images and the text fonts. Run by `npm run dev` and `npm run build`.
  */
 import { cpSync, existsSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';

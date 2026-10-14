@@ -26,7 +26,7 @@ export async function createContext(config: Config): Promise<Ctx> {
   const unlabelled = db.kind === 'postgres' && await checkEnvironment(db, config.environment);
   await migrate(db, log);
   if (unlabelled) await claimEnvironment(db, config.environment, log);
-  // Production reads the starter sources from its first start; the team can turn any off in /ops/sources.
+  // Production reads the starter sources from its first start; the team can turn any off in /console/sources.
   if (config.env === 'production' && db.kind === 'postgres') {
     const added = await addStarterSources(db, new Date());
     if (added) log(`added ${added} starter event sources`);
@@ -129,7 +129,7 @@ export async function ensureAdmin(db: Db, email: string, log: (msg: string) => v
   const out = await db.query<{ id: string }>(
     `insert into users (name, email, signup_method, role) values ('FeestFinder Admin', $1, 'email', 'admin')
      on conflict (email) do nothing returning id`, [email]);
-  if (out.rows.length) { log(`created admin account ${email}; sign in with Google, or set a password with "Forgot password" on /ops`); return; }
+  if (out.rows.length) { log(`created admin account ${email}; sign in to /console with Google`); return; }
   const promoted = await db.query<{ id: string }>(
     `update users set role = 'admin' where email = $1 and role <> 'admin' and email_verified_at is not null returning id`, [email]);
   if (promoted.rows.length) {

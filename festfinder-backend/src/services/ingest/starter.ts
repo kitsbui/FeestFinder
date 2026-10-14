@@ -4,7 +4,7 @@ import { json, one } from '../../db/index.ts';
 /*
  * The sources FeestFinder starts with: public pages checked on 2026-10-05 to carry schema.org
  * Event data on pages robots.txt lets FeestFinderBot read. Production adds the missing ones
- * when it starts; elsewhere the team adds them from /ops/sources. Once added, a source is the
+ * when it starts; elsewhere the team adds them from /console/sources. Once added, a source is the
  * team's: it is never changed or re-enabled from here.
  *
  * Not here, and why: Ticketbox, Ticketmelon and Zaiko draw their listings in the browser

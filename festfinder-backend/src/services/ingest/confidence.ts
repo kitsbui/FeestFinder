@@ -5,7 +5,7 @@ import { L, type Localized } from '../../lib/i18n.ts';
 /*
  * How sure FeestFinder is that an event is real and its facts current: 0–100, from where its
  * facts came from and who checked them. Every rule and weight is in CONFIDENCE_RULES, and each
- * event keeps the breakdown that produced its score, so /ops can show why.
+ * event keeps the breakdown that produced its score, so the Console can show why.
  *
  * This is a different question from the quality score (is the listing complete?) and the
  * risk score (should a moderator look twice?).

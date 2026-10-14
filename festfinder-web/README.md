@@ -2,7 +2,7 @@
 
 FeestFinder's four surfaces — the public web, the attendee app, Studio for organisers and the Console for the team — in the **Kính đêm** ("night glass") design, on **Next.js 16, React 19, TypeScript and Tailwind v4**. Public pages render on the server for search engines; the attendee app installs as a PWA.
 
-Every page is written by hand in React from the boards in [`design_handoff_kinh_dem/`](../design_handoff_kinh_dem/README.md). This is the site at feestfinder.com. The API keeps only `/ops`, the team's and organisers' working back office, which this app proxies.
+Every page is written by hand in React from the boards in [`design_handoff_kinh_dem/`](../design_handoff_kinh_dem/README.md). This is the site at feestfinder.com, with every back office: the Console (`/console`), Studio (`/studio`) and the artist studio (`/studio/artist`). The API keeps no screens of its own; it redirects the old `/ops` addresses here.
 
 ## Run it
 
@@ -32,10 +32,10 @@ Open http://localhost:3000. Paths the app does not own (`/auth/*`, `/me/*`, `/ev
 | --- | --- |
 | `npm run dev` | Copy `public/ui/`, then `next dev` on :3000 |
 | `npm run build` / `npm start` | Production build and server |
-| `npm run copy-ui` | Copy `public/ui/` from `../festfinder-frontend/ui`: the map and MapLibre, brand images, and the React, icon and text fonts /ops loads through this site |
+| `npm run copy-ui` | Copy `public/ui/` from `../festfinder-frontend/ui`: the map and MapLibre, brand images and the text fonts |
 | `npm run typecheck` | Generate Next's route types, `tsc --noEmit` |
 
-The Playwright tests live with the API: `npm run test:screens:next --prefix festfinder-backend` builds this app, starts it with a fresh API behind it, and runs `e2e/next/*.spec.ts` plus the /ops checks (`e2e/screens.spec.ts`) through the proxy. Set `FF_KIT=1` to serve `/kit`, the page of every part.
+The Playwright tests live with the API: `npm run test:screens --prefix festfinder-backend` builds this app, starts it with a fresh API behind it, and runs `e2e/next/*.spec.ts`. Set `FF_KIT=1` to serve `/kit`, the page of every part.
 
 ## Settings
 
@@ -77,8 +77,8 @@ The API keeps running as it is; only the address people type changes hands. The 
 2. **This project, aimed at it.** Steps 1–2 above with `FF_API_ORIGIN=https://feestfinder-api.vercel.app` and `SITE_URL=https://feestfinder.com`; deploy, and check its `*.vercel.app` address renders `/`, `/list` and an event page, and `/health` answers `"webProxy":"visitor"`.
 3. **The API's settings.** `WEB_PROXY_SECRET` (the same value); `CORS_ORIGINS` and `PUBLIC_BASE_URL` stay `https://feestfinder.com` (sign-in returns, emails, share links and file URLs all stay on the public address). Redeploy the API.
 4. **The domain.** Remove `feestfinder.com` and `www.feestfinder.com` from the API project and add them to this one (`www` redirects to the bare domain, as before). Google's redirect URI `https://feestfinder.com/auth/oauth/google/return` stays as it is: it now reaches the API through this app.
-5. **Check.** `https://feestfinder.com/` is the Kính đêm home; `/health` answers `"webProxy":"visitor"`; Google sign-in comes back signed in; a ticket button (`/go/<slug>`) redirects; `/ops` still opens (the API's back office, through the proxy) and `/studio/door` scans; the pg_cron job `POST https://feestfinder.com/internal/jobs` still reaches the API (it is forwarded with its `Authorization`).
-6. **Back out.** No longer possible: the API's own screens were removed on 2026-10-09, and it serves only `/ops`. Roll back a bad release with Vercel's Instant Rollback to an earlier deployment of this project.
+5. **Check.** `https://feestfinder.com/` is the Kính đêm home; `/health` answers `"webProxy":"visitor"`; Google sign-in comes back signed in; a ticket button (`/go/<slug>`) redirects; `/console` opens for an admin and `/studio/door` scans; the pg_cron job `POST https://feestfinder.com/internal/jobs` still reaches the API (it is forwarded with its `Authorization`).
+6. **Back out.** No longer possible: the API's own screens were removed on 2026-10-09, and `/ops` on 2026-10-14. Roll back a bad release with Vercel's Instant Rollback to an earlier deployment of this project.
 
 ## How it is put together
 
@@ -130,7 +130,7 @@ The product is **FeestFinder** (renamed from FestFinder on 2026-09-23), at **fee
 | [`ff-logo.svg`](../festfinder-frontend/ui/assets/ff-logo.svg) | The wordmark: cream letters, green flags and sparkles. Headers and sign-in screens, on dark backgrounds only. Size it by height (26px in headers, 22px in the app); its width is 5.77× that. |
 | [`ff-mark.svg`](../festfinder-frontend/ui/assets/ff-mark.svg) | The flag F on its own, where the wordmark does not fit: sign-in sheets, the share card. |
 | [`ff-appicon.svg`](../festfinder-frontend/ui/assets/ff-appicon.svg) | The mark on its board-black tile: the app icon, also shown in notification previews. |
-| `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | Favicons for the site and /ops. The SVG follows the browser's theme: ink on light, cream on dark. The ICO and the touch icon use the tile. |
+| `favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | Favicons for the site. The SVG follows the browser's theme: ink on light, cream on dark. The ICO and the touch icon use the tile. |
 | `public/icons/app-icon-*.png`, `notification-badge.png` | The installed app's icons. The maskable one is full-bleed with the mark inside the safe zone. The badge is the white mark that Android shows in the status bar. |
 
 The SVGs are the vectors from the logo pack (`FeestFinder_logo_pack_2`), cropped to the artwork, with coordinates rounded and each outline within 0.15px of the original at any size the screens use. The PNGs are rendered from them. On 2026-09-29 they were recoloured for the Chalkboard system (letters `#fffce1`, flags `#0ae448`, tile `#0e100f`) and the PNGs re-rendered with Playwright's Chromium.
