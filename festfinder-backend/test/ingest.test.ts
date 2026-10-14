@@ -306,6 +306,9 @@ describe('ingestion runs (API)', () => {
   let venueSource: string;
   it('turns a venue site into candidates in the review queue, never live events', async () => {
     venueSource = await addSource({ adapter: 'website', name: 'The Warehouse BKK', url: 'https://warehouse-bkk.example/programme', city: 'bangkok', authority: 'official', config: { follow: '/events/' } });
+    // An edit cannot point a source at a site that forbids reading either.
+    const moved = await env.as(admin).patch(`/admin/sources/${venueSource}`, { url: 'https://www.facebook.com/warehousebkk/events' });
+    assert.equal(moved.body.error?.code, 'source_not_allowed');
     const run = await env.as(admin).post(`/admin/sources/${venueSource}/run`);
     assert.equal(run.status, 200, JSON.stringify(run.body));
     assert.deepEqual(
