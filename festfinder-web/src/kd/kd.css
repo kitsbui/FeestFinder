@@ -361,6 +361,8 @@
 .kd-sheet {
   color-scheme: dark;
 }
+/* The toast is a popover (top layer): drop the browser's popover box. */
+.kd-toast[popover] { inset: auto; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); margin: 0; border: 0; overflow: visible; }
 /* The Console's side drawer: from the right edge, the page behind dimmed. */
 dialog.kd-drawer { border-radius: 0; }
 

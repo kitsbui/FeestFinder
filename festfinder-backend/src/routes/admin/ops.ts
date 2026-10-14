@@ -296,7 +296,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     status: e.status, statusLabel: STATUS_LABEL[e.status], genre: e.genre, area: e.area,
     venueName: e.venue_name, venueResolved: !!e.venue_id || e.lat !== null,
     startsOn: e.starts_on, endsOn: e.ends_on, startTime: e.start_time, endTime: e.end_time,
-    entryMode: e.entry_mode, priceFrom: Number(e.price_from), capacity: e.capacity, age: e.age,
+    entryMode: e.entry_mode, priceFrom: Number(e.price_from), currency: e.currency, capacity: e.capacity, age: e.age,
     organizer: { id: e.organizer_id, name: e.org_name, initials: e.org_initials, verified: e.org_state === 'verified' },
     featured: e.featured, badge: e.badge, hype: e.hype_count, saves: e.save_count, sold: e.sold, openReports: e.open_reports,
     heldForReports: e.held_for_reports, qualityScore: e.quality_score, riskScore: e.risk_score,
