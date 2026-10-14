@@ -1,13 +1,19 @@
 'use client';
 /**
- * The Console (/console/…) in Kính đêm (Console-Moderation, Console-Insights): the team's back
- * office. One root for every tab: the admin gate (an admin session only; admin comes from the
- * allowlist on a Google sign-in, never from here), the top bar with the search and the account
- * menu (View as, log out), and the tab row with its counts.
+ * The Console (/console/…) in Kính đêm: the team's whole back office (it took over /ops). One
+ * root for every screen: the admin gate (an admin session only; admin comes from the allowlist
+ * on a Google sign-in, never from here), the side rail with the screens in four groups and
+ * their counts, the top bar with the search and the account menu (View as, log out), and the
+ * confirm dialog every screen asks through.
  */
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
+import Link from 'next/link';
+import {
+  ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, GuitarIcon, HandWavingIcon,
+  HandshakeIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon, StorefrontIcon,
+  TrayIcon, UsersIcon,
+} from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
 import { KdProvider, useKd } from '../runtime';
@@ -16,11 +22,17 @@ import { buttonClass } from '../ui/actions';
 import { Input } from '../ui/forms';
 import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
 import { Card as Panel } from '../ui/parts';
-import { Tabs } from '../ui/shell';
+import { Shell, type SideItem } from '../ui/shell';
+import { AskHost } from './kit';
 import { CONSOLE } from './copy';
 
-export type ConsoleTab = 'queue' | 'verification' | 'reports' | 'featured' | 'insights' | 'audit';
-interface Counts { queue: number; verification: number; reports: number; ads: number; appeals: number }
+export type ConsoleTab =
+  | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports'
+  | 'partners' | 'affiliate' | 'brands' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
+export interface Counts {
+  queue: number; verification: number; reports: number; ads: number; appeals: number;
+  claims: number; profileClaims: number; allClaims: number; unresolvedVenues?: number;
+}
 
 interface ConsoleCtx { lang: Lang; q: string; counts: Counts | null; refreshCounts: () => void }
 const Ctx = createContext<ConsoleCtx | null>(null);
@@ -30,7 +42,9 @@ export function useConsole(): ConsoleCtx {
   return v;
 }
 
-const TABS: ConsoleTab[] = ['verification', 'reports', 'featured', 'insights', 'audit'];
+const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'featured', 'users', 'orders', 'insights', 'audit'];
+/** Routes that belong to a tab of another name. */
+const ALIAS: Record<string, ConsoleTab> = { verification: 'organizers' };
 
 export function ConsoleRoot({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('vi');
@@ -67,14 +81,23 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   const T = pick(CONSOLE, lang);
   const kd = useKd();
   const path = usePathname() ?? '/console';
-  const seg = path.split('/')[2] as ConsoleTab | undefined;
-  const current: ConsoleTab = seg && TABS.includes(seg) ? seg : 'queue';
+  const seg = path.split('/')[2] ?? '';
+  const current: ConsoleTab = ALIAS[seg] ?? (TABS.includes(seg as ConsoleTab) ? seg as ConsoleTab : 'queue');
   const [counts, setCounts] = useState<Counts | null>(null);
   const [q, setQ] = useState('');
   const [viewing, setViewing] = useState<string | null>(null);
   const [options, setOptions] = useState<{ targetType: 'user' | 'organizer'; id: string; name: string; role: Pair }[] | null>(null);
-  const refreshCounts = useCallback(() => { FF.maybe(FF.get('/admin/counts'), null).then(setCounts); }, []);
-  useEffect(() => { refreshCounts(); }, [refreshCounts]);
+  const refreshCounts = useCallback(() => {
+    Promise.all([FF.maybe(FF.get('/admin/counts'), null), FF.maybe(FF.get('/admin/overview'), null)]).then(([c, o]: [Counts | null, { unresolvedVenues?: number } | null]) => {
+      setCounts(c ? { ...c, unresolvedVenues: o?.unresolvedVenues } : null);
+    });
+  }, []);
+  // Counts on open, every minute, and when a screen says something changed.
+  useEffect(() => {
+    refreshCounts();
+    const t = setInterval(refreshCounts, 60_000);
+    return () => clearInterval(t);
+  }, [refreshCounts]);
   // A new tab starts with an empty search.
   useEffect(() => { setQ(''); }, [current]);
 
@@ -86,61 +109,102 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   };
   const initials = name.split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   const n = (v: number | undefined) => (v ? v : null);
+  const session = kd.session as { organizers?: unknown[]; roles?: { artist?: string } } | null | undefined;
+  const i = (Icon: typeof GaugeIcon) => <Icon size={18} aria-hidden="true" />;
+  const group = (label: string, items: SideItem[]) => (
+    <div className="flex flex-col gap-0.5" key={label}>
+      <span className="kd-m kd-sn-hide px-2.5 pt-3 pb-1">{label}</span>
+      {items.map((it) => (
+        <Link key={it.key} href={it.href} className="kd-sn" aria-current={it.key === current ? 'page' : undefined}>
+          {it.icon}
+          <span className="kd-ell">{it.label}</span>
+          {it.count ? <span className="kd-count kd-num">{it.count}</span> : null}
+        </Link>
+      ))}
+    </div>
+  );
+
+  const nav = (
+    <nav aria-label={T.console} className="kd-side-nav">
+      <div className="kd-sn-hide flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
+        <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
+        <span className="kd-m">{T.console}</span>
+      </div>
+      {group(T.navWork, [
+        { key: 'overview', label: T.tabOverview, href: '/console/overview', icon: i(GaugeIcon) },
+        { key: 'queue', label: T.tabQueue, href: '/console', icon: i(TrayIcon), count: n(counts?.queue) },
+        { key: 'claims', label: T.tabClaims, href: '/console/claims', icon: i(HandWavingIcon), count: n(counts?.allClaims) },
+        { key: 'reports', label: T.tabReports, href: '/console/reports', icon: i(FlagIcon), count: n(counts?.reports) },
+      ])}
+      {group(T.navCatalogue, [
+        { key: 'events', label: T.tabEvents, href: '/console/events', icon: i(CalendarDotsIcon) },
+        { key: 'organizers', label: T.tabOrganizers, href: '/console/organizers', icon: i(BuildingsIcon), count: n(counts?.verification) },
+        { key: 'venues', label: T.tabVenues, href: '/console/venues', icon: i(MapPinIcon), count: n(counts?.unresolvedVenues) },
+        { key: 'artists', label: T.tabArtists, href: '/console/artists', icon: i(MicrophoneStageIcon) },
+        { key: 'sources', label: T.tabSources, href: '/console/sources', icon: i(PlugsIcon) },
+      ])}
+      {group(T.navPartners, [
+        { key: 'partners', label: T.tabPartners, href: '/console/partners', icon: i(HandshakeIcon) },
+        { key: 'affiliate', label: T.tabAffiliate, href: '/console/affiliate', icon: i(LinkSimpleIcon) },
+        { key: 'brands', label: T.tabBrands, href: '/console/brands', icon: i(MegaphoneIcon) },
+      ])}
+      {group(T.navPlatform, [
+        { key: 'featured', label: T.tabFeatured, href: '/console/featured', icon: i(StarIcon), count: n(counts?.ads) },
+        { key: 'users', label: T.tabUsers, href: '/console/users', icon: i(UsersIcon) },
+        { key: 'orders', label: T.tabOrders, href: '/console/orders', icon: i(ReceiptIcon) },
+        { key: 'insights', label: T.tabInsights, href: '/console/insights', icon: i(ChartLineIcon) },
+        { key: 'audit', label: T.tabAudit, href: '/console/audit', icon: i(ClockCounterClockwiseIcon) },
+      ])}
+      <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line pt-4">
+        {session?.organizers?.length ? <a className="kd-sn" href="/studio">{i(StorefrontIcon)}{T.toStudio}</a> : null}
+        {session?.roles?.artist === 'active' ? <a className="kd-sn" href="/studio/artist">{i(GuitarIcon)}{T.toArtist}</a> : null}
+        <a className="kd-sn" href="/" target="_blank" rel="noopener">{i(ArrowSquareOutIcon)}{T.toSite}</a>
+      </div>
+    </nav>
+  );
 
   return (
     <Ctx.Provider value={{ lang, q, counts, refreshCounts }}>
-      <div className="flex min-h-dvh flex-col">
-        <header className="flex h-15 items-center gap-3.5 bg-carbon px-4">
-          <img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} />
-          <span className="kd-m text-paper">{T.console}</span>
-          <Input
-            boxClass="ml-auto h-[38px] min-h-0 flex-[0_1_420px]"
-            className="text-sm"
-            icon={<MagnifyingGlassIcon size={16} className="text-fog" aria-hidden="true" />}
-            type="search"
-            value={q}
-            placeholder={T.search}
-            aria-label={T.searchLabel}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <Menu
-            align="end"
-            label={T.account}
-            trigger={(p) => (
-              <button type="button" {...p} ref={p.ref} aria-label={name} className="kd-mb flex size-8 shrink-0 items-center justify-center rounded-full bg-acc text-xs text-acc-ink" onClick={() => { p.onClick(); if (!options) FF.maybe(FF.get('/admin/impersonation/options'), { items: [] }).then((o: { items: NonNullable<typeof options> }) => setOptions(o.items)); }}>
-                {initials}
-              </button>
-            )}
-          >
-            <MenuHeader><span className="kd-m">{T.viewAs}</span></MenuHeader>
-            {(options ?? []).map((o) => <MenuItem key={o.id} aside={o.role[lang]} onSelect={() => startViewAs(o)}>{o.name}</MenuItem>)}
-            <MenuSeparator />
-            <MenuItem onSelect={async () => { await kd.signOut(); location.assign('/console'); }}>{T.signOut}</MenuItem>
-          </Menu>
-        </header>
-        {viewing ? (
-          <div className="flex items-center gap-3 bg-warn px-4 py-2 text-ink" role="status">
-            <span className="kd-hs text-ink">{fill(T.viewingAs, { n: viewing })}</span>
-            <button type="button" className="kd-btn kd-btn-sm kd-btn-dark ml-auto" onClick={endViewAs}>{T.viewAsExit}</button>
+      <AskHost lang={lang}>
+        <Shell nav={nav}>
+          <div className="flex min-h-dvh flex-col">
+            <header className="flex h-15 items-center gap-3.5 border-b border-line px-[var(--kd-gutter)]">
+              <Input
+                boxClass="h-[38px] min-h-0 flex-[0_1_420px]"
+                className="text-sm"
+                icon={<MagnifyingGlassIcon size={16} className="text-fog" aria-hidden="true" />}
+                type="search"
+                value={q}
+                placeholder={T.search}
+                aria-label={T.searchLabel}
+                onChange={(e) => setQ(e.target.value)}
+              />
+              <Menu
+                align="end"
+                label={T.account}
+                className="ml-auto"
+                trigger={(p) => (
+                  <button type="button" {...p} ref={p.ref} aria-label={name} className="kd-mb ml-auto flex size-8 shrink-0 items-center justify-center rounded-full bg-acc text-xs text-acc-ink" onClick={() => { p.onClick(); if (!options) FF.maybe(FF.get('/admin/impersonation/options'), { items: [] }).then((o: { items: NonNullable<typeof options> }) => setOptions(o.items)); }}>
+                    {initials}
+                  </button>
+                )}
+              >
+                <MenuHeader><span className="kd-m">{T.viewAs}</span></MenuHeader>
+                {(options ?? []).map((o) => <MenuItem key={o.id} aside={o.role[lang]} onSelect={() => startViewAs(o)}>{o.name}</MenuItem>)}
+                <MenuSeparator />
+                <MenuItem onSelect={async () => { await kd.signOut(); location.assign('/console'); }}>{T.signOut}</MenuItem>
+              </Menu>
+            </header>
+            {viewing ? (
+              <div className="flex items-center gap-3 bg-warn px-4 py-2 text-ink" role="status">
+                <span className="kd-hs text-ink">{fill(T.viewingAs, { n: viewing })}</span>
+                <button type="button" className="kd-btn kd-btn-sm kd-btn-dark ml-auto" onClick={endViewAs}>{T.viewAsExit}</button>
+              </div>
+            ) : null}
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
           </div>
-        ) : null}
-        <nav aria-label={T.console} className="bg-carbon px-2">
-          <Tabs
-            label={T.console}
-            current={current}
-            className="border-b-0"
-            items={[
-              { key: 'queue', label: T.tabQueue, href: '/console', count: n(counts ? counts.queue : undefined) },
-              { key: 'verification', label: T.tabVerify, href: '/console/verification', count: n(counts?.verification) },
-              { key: 'reports', label: T.tabReports, href: '/console/reports', count: n(counts?.reports) },
-              { key: 'featured', label: T.tabFeatured, href: '/console/featured', count: n(counts?.ads) },
-              { key: 'insights', label: T.tabInsights, href: '/console/insights' },
-              { key: 'audit', label: T.tabAudit, href: '/console/audit' },
-            ]}
-          />
-        </nav>
-        <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-      </div>
+        </Shell>
+      </AskHost>
     </Ctx.Provider>
   );
 }

@@ -54,6 +54,12 @@ const SCREENS: StudioScreen[] = ['new', 'attendees', 'door', 'revenue', 'inbox',
 /** The Studio layout: one root for every /studio path, so moving between screens keeps the organiser and the events. */
 export function StudioRoot({ children }: { children: ReactNode }) {
   const path = usePathname() ?? '/studio';
+  // The artist studio (/studio/artist/…) has its own root and gate.
+  if (path.startsWith('/studio/artist')) return <>{children}</>;
+  return <OrgRoot path={path}>{children}</OrgRoot>;
+}
+
+function OrgRoot({ path, children }: { path: string; children: ReactNode }) {
   const seg = path.split('/')[2] as StudioScreen | undefined;
   const current: StudioScreen = seg && SCREENS.includes(seg) ? seg : 'dash';
   const [lang, setLang] = useState<Lang>('vi');
