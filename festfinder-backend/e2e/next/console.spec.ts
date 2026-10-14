@@ -103,6 +103,7 @@ test.describe('the Console, signed in', () => {
     await open(page, '/console/reports');
     const before = (await (await page.request.get('/admin/reports')).json()).items.length;
     await page.getByRole('article').first().getByRole('button', { name: 'Bỏ qua' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Bỏ qua' }).click();
     await expect.poll(async () => (await (await page.request.get('/admin/reports')).json()).items.length).toBe(before - 1);
   });
 
@@ -139,6 +140,6 @@ test.describe('the Console, signed in', () => {
     await open(page, '/console/audit');
     await page.getByRole('button', { name: 'Admin', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Admin', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('link', { name: 'Tải 30 ngày (CSV)' })).toHaveAttribute('href', /actor=admin/);
+    await expect(page.getByRole('link', { name: 'Tải CSV 90 ngày' })).toHaveAttribute('href', /actor=admin&days=90/);
   });
 });
