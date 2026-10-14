@@ -67,6 +67,9 @@ export function useQuery(): [URLSearchParams, (patch: Record<string, string | nu
     addEventListener('popstate', read);
     return () => removeEventListener('popstate', read);
   }, []);
+  // A link to the same screen with another query (a rail item, a to-do) fires no popstate:
+  // the address is read again after each render.
+  useEffect(() => { if (location.search !== search) setSearch(location.search); });
   const params = useMemo(() => new URLSearchParams(search), [search]);
   const set = useCallback((patch: Record<string, string | null | undefined>) => {
     const q = new URLSearchParams(location.search);
@@ -297,7 +300,8 @@ export function Drawer({ open = true, onClose, title, sub, children, footer, wid
           </div>
           <button type="button" className="kd-ib kd-ib-sm" aria-label={T.close} onClick={onClose}><XIcon size={18} aria-hidden="true" /></button>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">{children}</div>
+        {/* Sections keep their height and the body scrolls: a flex child would shrink and overlap the next. */}
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4 [&>*]:shrink-0">{children}</div>
         {footer ? <div className="flex flex-wrap items-center gap-2 border-t border-line px-5 py-3">{footer}</div> : null}
       </div>
     </dialog>
@@ -329,13 +333,18 @@ export function AsyncPick({ load, onPick, label, placeholder, value }: {
   const [items, setItems] = useState<PickItem[] | null>(null);
   const [at, setAt] = useState(0);
   const list = useId();
+  // Closing waits for a click on an option to land; coming back to the field cancels it.
+  const closing = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // The latest loader, so a parent passing a new function on each render does not search again.
+  const loader = useRef(load);
+  loader.current = load;
   useEffect(() => {
     if (!open) return;
     let live = true;
     setItems(null);
-    const t = setTimeout(() => { load(q.trim()).then((r) => { if (live) { setItems(r); setAt(0); } }, () => { if (live) setItems([]); }); }, 200);
+    const t = setTimeout(() => { loader.current(q.trim()).then((r) => { if (live) { setItems(r); setAt(0); } }, () => { if (live) setItems([]); }); }, 200);
     return () => { live = false; clearTimeout(t); };
-  }, [q, open, load]);
+  }, [q, open]);
   const choose = (i: PickItem) => { onPick(i); setQ(''); setOpen(false); };
   if (value) {
     return (
@@ -355,8 +364,9 @@ export function AsyncPick({ load, onPick, label, placeholder, value }: {
         aria-autocomplete="list"
         placeholder={placeholder ?? label}
         value={q}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onFocus={() => { clearTimeout(closing.current); setOpen(true); }}
+        onClick={() => setOpen(true)}
+        onBlur={() => { closing.current = setTimeout(() => setOpen(false), 150); }}
         onChange={(e) => { setQ(e.target.value); setOpen(true); }}
         onKeyDown={(e) => {
           if (!items?.length) return;

@@ -6,8 +6,8 @@
  */
 import { KdLink as Link } from '../link';
 import {
-  createContext, useCallback, useContext, useEffect, useId, useRef, useState,
-  type KeyboardEvent, type ReactNode,
+  createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState,
+  type CSSProperties, type KeyboardEvent, type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { CaretDownIcon, CheckIcon } from '@phosphor-icons/react/ssr';
@@ -65,6 +65,23 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
     return () => window.removeEventListener(OPEN_EVENT, other);
   }, [id]);
 
+  // Inside a scrolling table the box would clip the menu: there it is placed against the
+  // window instead, and closes when anything scrolls.
+  const [fixedAt, setFixedAt] = useState<CSSProperties | null>(null);
+  useLayoutEffect(() => {
+    const t = triggerRef.current;
+    if (!open || !t?.closest('.kd-tbl')) { setFixedAt(null); return; }
+    const r = t.getBoundingClientRect();
+    setFixedAt({
+      position: 'fixed',
+      ...(up ? { bottom: innerHeight - r.top + 8 } : { top: r.bottom + 8 }),
+      ...(align === 'end' ? { right: innerWidth - r.right } : { left: r.left }),
+    });
+    const onScroll = () => close(false);
+    addEventListener('scroll', onScroll, { capture: true, once: true });
+    return () => removeEventListener('scroll', onScroll, { capture: true });
+  }, [open, up, align, close]);
+
   useEffect(() => {
     if (!open) return;
     window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: id }));
@@ -111,6 +128,22 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
   };
 
   const root = open ? rootOf() : null;
+  // Placed against the window, the menu lives beside its scrim at the page's root, above any layer the trigger sits in.
+  const list = (
+    <MenuCtx.Provider value={{ close: () => close() }}>
+      <div
+        ref={menuRef}
+        id={id + '-m'}
+        role="menu"
+        aria-label={label}
+        onKeyDown={onMenuKey}
+        className={cx('kd-menu', !fixedAt && (align === 'end' ? 'right-0' : 'left-0'), !fixedAt && (up ? 'bottom-full mb-2' : 'top-full mt-2'))}
+        style={{ ...fixedAt, ...(width ? { width } : null) }}
+      >
+        {children}
+      </div>
+    </MenuCtx.Provider>
+  );
   return (
     <div className={cx(inline ? 'relative inline' : 'relative inline-flex', className)}>
       {trigger({
@@ -122,21 +155,7 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
         onKeyDown: onTriggerKey,
         ref: (el) => { triggerRef.current = el; },
       }, open)}
-      {open ? (
-        <MenuCtx.Provider value={{ close: () => close() }}>
-          <div
-            ref={menuRef}
-            id={id + '-m'}
-            role="menu"
-            aria-label={label}
-            onKeyDown={onMenuKey}
-            className={cx('kd-menu', align === 'end' ? 'right-0' : 'left-0', up ? 'bottom-full mb-2' : 'top-full mt-2')}
-            style={width ? { width } : undefined}
-          >
-            {children}
-          </div>
-        </MenuCtx.Provider>
-      ) : null}
+      {open ? (fixedAt && root ? createPortal(list, root) : list) : null}
       {root ? createPortal(<button type="button" tabIndex={-1} aria-hidden="true" className="kd-scrim" onClick={() => close(false)} />, root) : null}
     </div>
   );
