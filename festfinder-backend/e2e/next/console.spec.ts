@@ -75,6 +75,8 @@ test.describe('the Console, signed in', () => {
     await rows.nth(0).check();
     await rows.nth(1).check();
     await page.getByRole('button', { name: 'Duyệt 2 tin' }).click();
+    // Several at once are confirmed first, as /ops did.
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Duyệt tất cả' }).click();
     await expect.poll(async () => (await waiting(page)).length, { timeout: 10_000 }).toBe(before.length - 2);
   });
 

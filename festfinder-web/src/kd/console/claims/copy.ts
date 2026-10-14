@@ -1,0 +1,43 @@
+/** /console/claims's text. */
+import type { Dict } from '../../copy';
+
+export const CLAIMS = {
+  title: { en: 'Claims', vi: 'Nhận quản lý' },
+  what: { en: 'What is claimed', vi: 'Loại yêu cầu' },
+  events: { en: 'Events', vi: 'Sự kiện' },
+  profiles: { en: 'Artist & organiser profiles', vi: 'Hồ sơ nghệ sĩ & BTC' },
+  status: { en: 'Status', vi: 'Trạng thái' },
+  pending: { en: 'Pending', vi: 'Đang chờ' },
+  approved: { en: 'Approved', vi: 'Đã duyệt' },
+  rejected: { en: 'Declined', vi: 'Đã từ chối' },
+  moved: { en: 'Moved', vi: 'Đã chuyển' },
+  none: { en: 'No requests', vi: 'Không có yêu cầu nào' },
+  // columns
+  cEvent: { en: 'Event', vi: 'Sự kiện' },
+  cOrg: { en: 'Organiser', vi: 'Nhà tổ chức' },
+  cProfile: { en: 'Profile', vi: 'Hồ sơ' },
+  cFrom: { en: 'From', vi: 'Người gửi' },
+  cNote: { en: 'Note', vi: 'Lời nhắn' },
+  cSent: { en: 'Sent', vi: 'Gửi lúc' },
+  cOutcome: { en: 'Outcome', vi: 'Kết quả' },
+  sentBy: { en: 'sent by {n}', vi: '{n} gửi' },
+  verified: { en: 'Verified', vi: 'Đã xác minh' },
+  orgSite: { en: 'Organiser site', vi: 'Website BTC' },
+  proof: { en: 'Proof', vi: 'Bằng chứng' },
+  artist: { en: 'Artist', vi: 'Nghệ sĩ' },
+  organiser: { en: 'Organiser', vi: 'BTC' },
+  nEvents: { en: '{n} events', vi: '{n} sự kiện' },
+  managed: { en: 'already managed', vi: 'đã có người quản lý' },
+  nMembers: { en: '{n} members', vi: '{n} thành viên' },
+  // decisions
+  approve: { en: 'Approve', vi: 'Duyệt' },
+  decline: { en: 'Decline', vi: 'Từ chối' },
+  moveAsk: { en: 'Move to {o}?', vi: 'Chuyển cho {o}?' },
+  moveGo: { en: 'Move the event', vi: 'Chuyển sự kiện' },
+  giveAsk: { en: 'Give {p} to {u}?', vi: 'Giao {p} cho {u}?' },
+  declineAsk: { en: 'Decline the request?', vi: 'Từ chối yêu cầu?' },
+  noteOrg: { en: 'Note to the organiser', vi: 'Lời nhắn cho nhà tổ chức' },
+  note: { en: 'Note', vi: 'Lời nhắn' },
+  didApprove: { en: 'Approved', vi: 'Đã duyệt' },
+  didDecline: { en: 'Declined', vi: 'Đã từ chối' },
+} satisfies Dict;
