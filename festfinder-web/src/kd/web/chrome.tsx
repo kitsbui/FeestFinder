@@ -107,8 +107,8 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
                 </span>
               </MenuHeader>
               <MenuItem href={inLang('/profile', lang)}>{T.myProfile}</MenuItem>
-              {roles?.artist === 'active' ? <MenuItem href="/ops/artist" external>{T.artistSpace}</MenuItem> : null}
-              {roles?.organizer === 'active' ? <MenuItem href="/ops/org" external>{T.orgSpace}</MenuItem> : null}
+              {roles?.artist === 'active' ? <MenuItem href="/studio/artist" external>{T.artistSpace}</MenuItem> : null}
+              {roles?.organizer === 'active' ? <MenuItem href="/studio" external>{T.orgSpace}</MenuItem> : null}
               {roles?.artist === 'pending' || roles?.organizer === 'pending' ? <MenuItem disabled>{T.rolePending}</MenuItem> : null}
               {roles?.artist !== 'active' && roles?.organizer !== 'active' ? <MenuItem onSelect={() => kd.openRolePicker()}>{T.roleBecome}</MenuItem> : null}
               <MenuItem href="/app/tickets" external aside={me ? me.tickets : null}>{T.myTickets}</MenuItem>

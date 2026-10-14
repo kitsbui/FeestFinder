@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectOps, signInWith, watch } from '../checks.ts';
+import { signInWith, watch } from '../checks.ts';
 
 /*
  * The event page in Kính đêm (festfinder-web/src/kd/web/event): what the removed API
@@ -198,12 +198,12 @@ test.describe('the event page', () => {
     const name = `Night Owl ${Date.now() % 100000}`;
     await page.getByLabel('Nghệ danh').fill(name);
     await page.getByRole('button', { name: 'Tạo hồ sơ' }).click();
-    await expect(page).toHaveURL(/\/ops\/artist/);
+    await expect(page).toHaveURL(/\/studio\/artist$/);
     const after = await (await page.request.get('/auth/session')).json();
     expect(after.user.role).toBe('user');
     expect(after.roles.artist).toBe('active');
     expect(after.artist.name).toBe(name);
-    await expectOps(page, '/ops/artist', /Nghệ danh/);
+    await expect(page.getByLabel('Nghệ danh')).toHaveValue(name);
     expect((await page.request.get('/admin/counts')).status()).toBe(403);
   });
 });

@@ -169,7 +169,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
               </div>
               <div className="flex items-center gap-2">
                 <FollowButton lang={lang} kind="art" id={a.name} name={a.name} source={source} />
-                <OwnerLink lang={lang} source={source} href="/ops/artist" />
+                <OwnerLink lang={lang} source={source} href="/studio/artist" />
                 <ShareProfile lang={lang} title={a.name} />
               </div>
             </div>

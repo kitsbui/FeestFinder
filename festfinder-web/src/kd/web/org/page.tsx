@@ -123,7 +123,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
               </div>
               <div className="flex items-center gap-2">
                 <FollowButton lang={lang} kind="org" id={org.id} name={org.name} source={source} />
-                <OwnerLink lang={lang} source={source} href="/ops/org" />
+                <OwnerLink lang={lang} source={source} href="/studio" />
                 <ShareProfile lang={lang} title={org.name} />
               </div>
             </div>
