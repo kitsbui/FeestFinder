@@ -37,6 +37,7 @@ import adminPlatformRoutes from './routes/admin/platform.ts';
 import adminOpsRoutes from './routes/admin/ops.ts';
 import adminIngestRoutes from './routes/admin/ingest.ts';
 import devConsoleRoutes from './routes/dev-console.ts';
+import projectRoutes from './routes/projects.ts';
 import internalRoutes from './routes/internal.ts';
 import discussionRoutes from './routes/discussion.ts';
 import communityRoutes from './routes/community.ts';
@@ -313,6 +314,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(gigRoutes);
   await app.register(analyticsRoutes);
   await app.register(brandRoutes);
+  await app.register(projectRoutes);
   await app.register(momentRoutes);
   await app.register(devConsoleRoutes);
   await app.register(internalRoutes);

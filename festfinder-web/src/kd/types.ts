@@ -70,6 +70,8 @@ export interface EventMine {
 export interface EventDetail extends Omit<Card, 'organizer'> {
   sources: { provider: string; label: Pair; host: string | null; url: string | null }[];
   artistLinks: { name: string; slug: string }[];
+  /** Sponsors who backed the project this night came from (festfinder-backend services/projects.ts). */
+  sponsors?: { name: string }[];
   phase: 'before' | 'live' | 'after' | string;
   community: { submittedBy: { name: string | null } | null; claimable: boolean } | null;
   hype: { count: number; last24h: number; goals: { threshold: number; reward: Pair; reached: boolean }[]; next: { threshold: number; left: number; reward: Pair; progress: number } | null } | null;

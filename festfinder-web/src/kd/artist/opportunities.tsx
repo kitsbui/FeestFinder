@@ -2,7 +2,8 @@
 /**
  * /studio/artist/opportunities: open gigs, best fit first (a fixed score from styles, place,
  * kind of gig, dates and booking status; never followers), to apply to with a message; and
- * brand campaigns for an artist open to brands (?tab=brands, linked from notifications).
+ * brand campaigns for an artist open to brands (?tab=brands, linked from notifications); and
+ * projects looking for artists (?tab=projects), offered to from the project's own page.
  * /ops kept applications, requests and dates here too (?tab=mine|requests|dates): those links
  * now open the same tab of /studio/artist/gigs.
  */
@@ -23,7 +24,7 @@ import { ARTIST } from './copy';
 import { Block, closesText, feeText, statusOf } from './parts';
 import { useArtist } from './root';
 
-type Tab = 'open' | 'brands';
+type Tab = 'open' | 'brands' | 'projects';
 const MOVED = ['mine', 'requests', 'dates'];
 
 interface Gig {
@@ -43,7 +44,7 @@ export function ArtistOpportunities() {
   const [params, setParams] = useQuery();
   const asked = params.get('tab');
   useEffect(() => { if (asked && MOVED.includes(asked)) router.replace('/studio/artist/gigs?tab=' + asked); }, [asked, router]);
-  const tab: Tab = asked === 'brands' ? 'brands' : 'open';
+  const tab: Tab = asked === 'brands' || asked === 'projects' ? asked : 'open';
   return (
     <>
       <PageHead title={T.opportunities} />
@@ -52,9 +53,9 @@ export function ArtistOpportunities() {
           label={T.opportunities}
           current={tab}
           onSelect={(k) => setParams({ tab: k === 'open' ? null : k })}
-          items={[{ key: 'open', label: T.tabOpen }, { key: 'brands', label: T.tabBrands }]}
+          items={[{ key: 'open', label: T.tabOpen }, { key: 'brands', label: T.tabBrands }, { key: 'projects', label: T.tabProjects }]}
         />
-        {tab === 'brands' ? <Brands lang={lang} /> : <Open lang={lang} />}
+        {tab === 'brands' ? <Brands lang={lang} /> : tab === 'projects' ? <Projects lang={lang} /> : <Open lang={lang} />}
       </Body>
     </>
   );
@@ -195,5 +196,34 @@ function Brands({ lang }: { lang: Lang }) {
         </Sheet>
       ) : null}
     </>
+  );
+}
+
+// ---- projects looking for artists ---------------------------------------------------------
+
+interface ProjectRow { id: string; slug: string; title: string; pitch: string; city: { label: Pair | null }; targetOn: string | null; styles: { key: string; label: Pair }[] }
+const PROJECT_COLS = 'minmax(260px,2fr) minmax(160px,1fr) minmax(120px,auto)';
+
+function Projects({ lang }: { lang: Lang }) {
+  const T = pick(ARTIST, lang);
+  const load = useLoad<{ items: ProjectRow[] }>('/projects?seeking=artists&limit=60');
+  return (
+    <Loaded load={load}>
+      {({ items }) => !items.length ? <Empty title={T.noProjects} /> : (
+        <Table cols={PROJECT_COLS} label={T.tabProjects} head={[T.project, T.styles, '']}>
+          {items.map((p) => (
+            <Row key={p.id} cols={PROJECT_COLS} className="py-3">
+              <span role="cell" className="flex min-w-0 flex-col gap-0.5">
+                <span className="kd-hs kd-ell">{p.title}</span>
+                <span className="kd-s kd-num">{[p.city.label?.[lang], p.targetOn ? dayMonth(p.targetOn, lang) : null].filter(Boolean).join(' · ')}</span>
+                {p.pitch ? <span className="kd-s line-clamp-2">{p.pitch}</span> : null}
+              </span>
+              <span role="cell" className="kd-s kd-ell">{p.styles.map((s) => s.label[lang]).join(', ')}</span>
+              <span role="cell" className="flex justify-end"><LinkButton size="sm" tone="acc" href={'/p/' + encodeURIComponent(p.slug)}>{T.offerToPlay}</LinkButton></span>
+            </Row>
+          ))}
+        </Table>
+      )}
+    </Loaded>
   );
 }

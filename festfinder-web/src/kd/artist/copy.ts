@@ -148,5 +148,9 @@ export const ARTIST = {
   brandsOff: { en: 'Turn on "Open to brand collaborations" in your profile to see campaigns', vi: 'Bật "Nhận hợp tác thương hiệu" trong hồ sơ để xem chiến dịch' },
   toProfile: { en: 'Open the profile', vi: 'Mở hồ sơ' },
   noCampaigns: { en: 'No open campaigns', vi: 'Chưa có chiến dịch nào đang mở' },
+  tabProjects: { en: 'Projects', vi: 'Dự án' },
+  noProjects: { en: 'No project is looking for artists right now', vi: 'Chưa có dự án nào đang tìm nghệ sĩ' },
+  project: { en: 'Project', vi: 'Dự án' },
+  offerToPlay: { en: 'Offer to play', vi: 'Đề nghị biểu diễn' },
   pickedYou: { en: 'Brands that picked you', vi: 'Thương hiệu đã chọn bạn' },
 } satisfies Dict;

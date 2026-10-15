@@ -18,6 +18,9 @@ export const CUTOVER: readonly RegExp[] = [
   /^\/a(\/en)?$/,
   /^\/a\/(style|city)\/[^/]+(\/en)?$/,
   /^\/a\/(?!(en|style|city)(\/|$))[^/]+(\/en)?$/,
+  // Projects looking for backers: the list, one project, its owner's page, a new one, one's own; both languages.
+  /^\/p(\/(en|new|mine))?$/,
+  /^\/p\/(?!(en|new|mine)(\/|$))[^/]+(\/(en|manage))?$/,
   // Public collections, both languages.
   /^\/c\/[^/]+(\/en)?$/,
   // Saved events and collections, the about and advertising pages, one explore stat.

@@ -21,6 +21,7 @@ import { SHARE_CHANNELS } from '../services/community.ts';
 import { eventExtras } from '../services/eventpage.ts';
 import { recordShareVisit } from './community.ts';
 import { badgesOf } from '../services/badges.ts';
+import { sponsorsOf } from '../services/projects.ts';
 import { momentsOf } from './moments.ts';
 
 const PRICE_BANDS = ['free', 'under', 'over'] as const;
@@ -313,6 +314,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       ...card,
       sources: await loadPublicSources(ctx.db, ev.id),
       artistLinks: await artistLinks(ctx.db, ev.id),
+      sponsors: await sponsorsOf(ctx.db, ev.id),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,

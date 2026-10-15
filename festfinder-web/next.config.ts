@@ -58,6 +58,7 @@ const config: NextConfig = {
         { source: '/c/:file([^/]+\\.md)', destination: `${API}/c/:file` },
         { source: '/a/:file([^/]+\\.md)', destination: `${API}/a/:file` },
         { source: '/a.md', destination: `${API}/a.md` },
+        { source: '/p/:file([^/]+\\.md)', destination: `${API}/p/:file` },
         { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
         // The home page in English is /?lang=en: a cached page of its own.
         { source: '/', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/en' },
@@ -68,6 +69,8 @@ const config: NextConfig = {
         { source: '/c/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/c/:slug/en' },
         { source: '/a/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:slug/en' },
         { source: '/a', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/en' },
+        { source: '/p', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/en' },
+        { source: '/p/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/:slug/en' },
         { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:by/:slug/en' },
       ],
       afterFiles: [],
@@ -104,6 +107,8 @@ const config: NextConfig = {
       { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
       { source: '/c/:slug/en', destination: '/c/:slug?lang=en', permanent: true },
       { source: '/a/en', destination: '/a?lang=en', permanent: true },
+      { source: '/p/en', destination: '/p?lang=en', permanent: true },
+      { source: '/p/:slug/en', destination: '/p/:slug?lang=en', permanent: true },
       { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
       // The map is a view of the list.

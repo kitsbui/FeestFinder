@@ -11,7 +11,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, GuitarIcon, HandWavingIcon,
-  HandshakeIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon, StorefrontIcon,
+  HandshakeIcon, LightbulbIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon, StorefrontIcon,
   TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
@@ -28,10 +28,10 @@ import { CONSOLE } from './copy';
 
 export type ConsoleTab =
   | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports'
-  | 'partners' | 'affiliate' | 'brands' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
+  | 'partners' | 'affiliate' | 'brands' | 'projects' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
 export interface Counts {
   queue: number; verification: number; reports: number; ads: number; appeals: number;
-  claims: number; profileClaims: number; allClaims: number; unresolvedVenues?: number;
+  claims: number; profileClaims: number; allClaims: number; unresolvedVenues?: number; projects?: number;
 }
 
 interface ConsoleCtx { lang: Lang; q: string; counts: Counts | null; refreshCounts: () => void }
@@ -42,7 +42,7 @@ export function useConsole(): ConsoleCtx {
   return v;
 }
 
-const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'featured', 'users', 'orders', 'insights', 'audit'];
+const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'projects', 'featured', 'users', 'orders', 'insights', 'audit'];
 /** Routes that belong to a tab of another name. */
 const ALIAS: Record<string, ConsoleTab> = { verification: 'organizers' };
 
@@ -147,6 +147,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
         { key: 'partners', label: T.tabPartners, href: '/console/partners', icon: i(HandshakeIcon) },
         { key: 'affiliate', label: T.tabAffiliate, href: '/console/affiliate', icon: i(LinkSimpleIcon) },
         { key: 'brands', label: T.tabBrands, href: '/console/brands', icon: i(MegaphoneIcon) },
+        { key: 'projects', label: T.tabProjects, href: '/console/projects', icon: i(LightbulbIcon), count: n(counts?.projects) },
       ])}
       {group(T.navPlatform, [
         { key: 'featured', label: T.tabFeatured, href: '/console/featured', icon: i(StarIcon), count: n(counts?.ads) },

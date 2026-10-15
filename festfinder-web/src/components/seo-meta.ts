@@ -3,19 +3,20 @@
  * and hreflang links, Open Graph. Used by the Kính đêm pages.
  */
 import type { Metadata } from 'next';
-import { api, type ArtistSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo } from '@/lib/api';
+import { api, type ArtistSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo, type ProjectSeo } from '@/lib/api';
 
-export type Kind = 'events' | 'organizers' | 'collections' | 'artists';
+export type Kind = 'events' | 'organizers' | 'collections' | 'artists' | 'projects';
 export type Props = { params: Promise<{ slug: string }> };
 
 export const load = async (kind: Kind, slug: string, lang: Lang) =>
-  api<EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'en' ? '?lang=en' : ''}`);
+  api<EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | ProjectSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'en' ? '?lang=en' : ''}`);
 
 const MISSING = {
   events: { vi: 'Không tìm thấy sự kiện', en: 'Event not found' },
   organizers: { vi: 'Không tìm thấy nhà tổ chức', en: 'Organiser not found' },
   collections: { vi: 'Không tìm thấy bộ sưu tập', en: 'Collection not found' },
   artists: { vi: 'Không tìm thấy nghệ sĩ', en: 'Artist not found' },
+  projects: { vi: 'Không tìm thấy dự án', en: 'Project not found' },
 };
 
 export const seoMetadata = (kind: Kind, lang: Lang) => async ({ params }: Props): Promise<Metadata> => {

@@ -14,6 +14,7 @@ import { OG_HEIGHT, OG_WIDTH, toneOf } from './ogimage.ts';
 import { presentLinks, searchArtists } from './artists.ts';
 import { organizerArtists } from './network.ts';
 import { presentOrgLinks } from './organizers.ts';
+import { loadProject, presentProject, sponsorsOf } from './projects.ts';
 
 /*
  * What search engines and AI assistants read on each public page: its title and description,
@@ -76,6 +77,10 @@ const T = {
   roles: { vi: 'Vai trò', en: 'Roles' }, booking: { vi: 'Booking', en: 'Booking' }, organizersWorked: { vi: 'Nhà tổ chức đã hợp tác', en: 'Organisers worked with' },
   directory: { vi: 'Nghệ sĩ', en: 'Artists' }, withShows: { vi: 'Có show sắp tới', en: 'With shows coming up' }, others: { vi: 'Nghệ sĩ khác', en: 'More artists' },
   artistCount: { vi: 'Số nghệ sĩ', en: 'Artists' },
+  project: { vi: 'Dự án', en: 'Project' }, projects: { vi: 'Dự án', en: 'Projects' }, seeking: { vi: 'Đang tìm', en: 'Looking for' },
+  target: { vi: 'Dự kiến', en: 'Planned for' }, budget: { vi: 'Ngân sách', en: 'Budget' }, raise: { vi: 'Cần gọi', en: 'Raising' },
+  capacity: { vi: 'Sức chứa', en: 'Capacity' }, by: { vi: 'Người khởi xướng', en: 'Started by' }, onBoard: { vi: 'Đã đồng hành', en: 'On board' },
+  realized: { vi: 'Đã thành sự kiện', en: 'Became an event' },
 };
 const ORG_TYPE: Record<string, Localized> = {
   promoter: { vi: 'đơn vị tổ chức sự kiện', en: 'event promoter' }, venue: { vi: 'địa điểm tổ chức', en: 'venue' },
@@ -119,7 +124,7 @@ type Link = { title: string; path: string; line: string };
 
 /** What every public page says to search engines and AI assistants: its head, its graph, its facts. */
 export interface PageSeo {
-  kind: 'event' | 'organizer' | 'collection' | 'artist' | 'directory';
+  kind: 'event' | 'organizer' | 'collection' | 'artist' | 'directory' | 'project';
   lang: Lang;
   url: string;
   canonical: string;
@@ -341,6 +346,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     validFrom: vnIso(ev.published_at),
   }));
   const prices = tiers.map((x) => x.price);
+  const sponsors = await sponsorsOf(ctx.db, ev.id);
   const ids = { site: `${base}/#website`, page: url, event: `${url}#event`, crumbs: `${url}#breadcrumb`, faq: `${url}#faq` };
   const event = {
     '@type': SCHEMA_TYPE[ev.genre] ?? 'Event',
@@ -373,6 +379,8 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     },
     organizer: org ? { '@type': 'Organization', name: org.name, url: base + inLang(`/o/${org.slug}`, lang), sameAs: org.website ? [org.website] : undefined } : undefined,
     performer: lineup.length ? lineup.slice(0, 30).map((name) => ({ '@type': 'PerformingGroup', name })) : undefined,
+    // Sponsors who backed the project the night came from (services/projects.ts).
+    sponsor: sponsors.length ? sponsors.map((x) => ({ '@type': 'Organization', name: x.name })) : undefined,
     offers: offers.length > 1
       ? { '@type': 'AggregateOffer', priceCurrency: ev.currency, lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: offers.length, offers, url: ev.ticket_url || url,
           availability: soldOut ? 'https://schema.org/SoldOut' : low ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock' }
@@ -732,6 +740,87 @@ export interface DirectorySeo extends Omit<OrganizerSeo, 'kind'> {
   kind: 'directory';
 }
 
+/** A project looking for backers: its idea and its needs, the same page parts as an organiser. */
+export interface ProjectSeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'project';
+}
+
+/**
+ * A public project page (services/projects.ts): what the idea is, where and when, what it is
+ * looking for, who is on board. Drafts and projects in review have no page (null).
+ */
+export async function buildProjectSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<ProjectSeo | null> {
+  const x = await loadProject(ctx.db, { slug });
+  if (!x || !['open', 'realized', 'closed'].includes(x.p.status)) return null;
+  const pr = presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event });
+  const vi = lang === 'vi';
+  const base = baseOf(ctx);
+  const path = `/p/${pr.slug}`;
+  const alternates = { vi: `${base}${path}`, en: `${base}${path}?lang=en`, 'x-default': `${base}${path}` };
+  const url = alternates[lang];
+  const city = text(pr.city.label, lang);
+  const seeking = pr.seeking.map((k) => text(k.label, lang));
+  const money = (n: number | null) => (n == null ? '' : formatMoney(n, pr.currency, lang));
+  const onBoard = Object.entries(pr.onBoard).reduce((n, [, v]) => n + (v as number), 0);
+  const summary = vi
+    ? `${pr.title}: dự án sự kiện ở ${city}${seeking.length ? `, đang tìm ${seeking.join(', ').toLowerCase()}` : ''}. ${pr.pitch}`.trim()
+    : `${pr.title}: an event project in ${city}${seeking.length ? `, looking for ${seeking.join(', ').toLowerCase()}` : ''}. ${pr.pitch}`.trim();
+  const description = clip(summary, 160);
+  const title = [`${pr.title} – ${t('project', lang).toLowerCase()} ${city}`, pr.title].find((s) => s.length <= 62) ?? clip(pr.title, 62);
+  const image = pr.coverUrl
+    ? { url: abs(ctx, pr.coverUrl)!, width: 1600, height: 900, type: 'image/jpeg' }
+    : { url: `${base}/og/v1/${toneOf('EDM')}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+  const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: t('projects', lang), path: inLang('/p', lang) }, { name: pr.title, path: inLang(path, lang) }];
+  const facts: Fact[] = [
+    { label: t('cities', lang), value: city },
+    { label: t('target', lang), value: pr.targetOn ? longDate(pr.targetOn, lang) : '', datetime: pr.targetOn ?? undefined },
+    { label: t('type', lang), value: text(pr.eventType?.label, lang) },
+    { label: t('styles', lang), value: pr.styles.map((s) => text(s.label, lang)).join(', ') },
+    { label: t('seeking', lang), value: seeking.join(', ') },
+    { label: t('budget', lang), value: money(pr.budget) },
+    { label: t('raise', lang), value: money(pr.raiseAmount) },
+    { label: t('capacity', lang), value: pr.capacity ? String(pr.capacity) : '' },
+    { label: t('onBoard', lang), value: onBoard ? String(onBoard) : '' },
+    { label: t('by', lang), value: pr.owner.name ?? t('member', lang) },
+    ...(pr.event ? [{ label: t('realized', lang), value: pr.event.title, href: inLang(`/e/${pr.event.slug}`, lang) }] : []),
+  ].filter((f) => f.value);
+  const ids = { page: url, project: `${url}#project`, crumbs: `${url}#breadcrumb` };
+  const graph = [
+    ...siteNodes(base),
+    {
+      '@type': 'WebPage', '@id': ids.page, url, name: `${title} | FeestFinder`, description, inLanguage: lang,
+      isPartOf: { '@id': `${base}/#website` }, breadcrumb: { '@id': ids.crumbs }, mainEntity: { '@id': ids.project },
+      primaryImageOfPage: { '@type': 'ImageObject', url: image.url, width: image.width, height: image.height },
+      datePublished: vnIso(pr.publishedAt) ?? undefined, dateModified: vnIso(pr.updatedAt),
+    },
+    {
+      '@type': 'Project', '@id': ids.project, name: pr.title, description: pr.pitch || description, url, image: image.url,
+      location: { '@type': 'Place', address: { '@type': 'PostalAddress', ...addressOf(pr.city.slug), addressCountry: addressOf(pr.city.slug).country } },
+      // What it asks for, as demands (schema.org `seeks`).
+      seeks: seeking.map((name) => ({ '@type': 'Demand', name })),
+      subjectOf: pr.event ? { '@type': 'Event', url: base + inLang(`/e/${pr.event.slug}`, lang), name: pr.event.title } : undefined,
+    },
+    crumbList(base, ids.crumbs, crumbs),
+  ];
+  return {
+    kind: 'project', lang, url, canonical: url, alternates, markdown: `${path}.md${vi ? '' : '?lang=en'}`,
+    title: `${title} | FeestFinder`, description,
+    // A closed project keeps its page for links, out of search results.
+    robots: x.p.status === 'closed' ? 'noindex, follow' : ROBOTS,
+    image: { ...image, alt: pr.title },
+    publishedAt: vnIso(pr.publishedAt) ?? null,
+    updatedAt: vnIso(pr.updatedAt)!,
+    headings: { facts: t('facts', lang), about: t('about', lang), upcoming: t('upcoming', lang), past: t('pastEvents', lang), updated: t('updated', lang) },
+    page: {
+      crumbs, kicker: [t('project', lang), city].join(' · '), h1: pr.title, summary, facts,
+      about: [pr.story, text(pr.disclaimer, lang)].filter(Boolean).join('\n\n'),
+      upcoming: [], past: [],
+      otherLang: { label: t('otherLang', lang), path: vi ? `${path}?lang=en` : path },
+    },
+    jsonLd: { '@context': 'https://schema.org', '@graph': JSON.parse(JSON.stringify(graph)) },
+  };
+}
+
 /** Which directory page a key names: '' for all artists, 'style:hard-techno', 'city:tokyo'. */
 export function directoryScope(key: string): { style?: string; city?: string } | null {
   if (!key || key === 'all') return {};
@@ -835,7 +924,7 @@ export async function directoryPages(q: Queryable): Promise<string[]> {
 const stamp = (iso: string) => `${iso.slice(11, 16)} ${iso.slice(8, 10)}/${Number(iso.slice(5, 7))}/${iso.slice(0, 4)}`;
 
 /** A page as Markdown: the same answer, facts and lists as its HTML, with links made absolute. */
-export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo): string {
+export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo | ProjectSeo): string {
   const base = baseOf(ctx);
   const absUrl = (href: string) => (/^https?:/.test(href) ? href : base + href);
   const md = (s: string) => s.replace(/([\\`*_[\]])/g, '\\$1');
@@ -872,7 +961,7 @@ export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | Collection
 export async function llmsTxt(ctx: Ctx): Promise<string> {
   const now = ctx.clock.now();
   const base = baseOf(ctx);
-  const [events, orgs] = await Promise.all([
+  const [events, orgs, projects] = await Promise.all([
     many<any>(ctx.db,
       `select e.slug, e.title, e.genre, e.starts_on, e.start_time, e.venue_name, e.city, e.entry_mode, e.price_from, e.currency
          from events e where ${PUBLIC_EVENT} and e.status = 'live' and e.ends_at >= $1 order by e.starts_at limit 300`, [now]),
@@ -881,6 +970,7 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
          from organizers o join events e on e.organizer_id = o.id
         where ${PUBLIC_EVENT} and e.status = 'live' and e.ends_at >= $1 and o.suspended_at is null
         group by o.slug, o.name order by count(*) desc, o.name limit 200`, [now]),
+    many<any>(ctx.db, `select slug, title, pitch, city, seeking from projects where status = 'open' order by published_at desc limit 100`),
   ]);
   const md = (s: string) => s.replace(/([\\`*_[\]])/g, '\\$1');
   return [
@@ -898,6 +988,14 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
     '',
     ...orgs.map((o) => `- [${md(o.name)}](${base}/o/${o.slug}.md): ${o.n} upcoming ${o.n === 1 ? 'event' : 'events'}${o.genres?.length ? ` · ${o.genres.join(', ')}` : ''}`),
     '',
+    ...(projects.length ? [
+      '## Projects looking for backers',
+      '',
+      'Ideas for nights that ask for investment, sponsors, artists, a venue or an organising partner. FeestFinder introduces the people and never handles the money.',
+      '',
+      ...projects.map((x) => `- [${md(x.title)}](${base}/p/${x.slug}.md): ${[text(cityLabel(x.city), 'en'), x.seeking.join(', '), md(x.pitch)].filter(Boolean).join(' · ')}`),
+      '',
+    ] : []),
     '## Optional',
     '',
     `- [Every event, by city](${base}/list): the list as people see it; filters \`?city=ho-chi-minh|ha-noi|da-nang|nha-trang\`, \`&genre=EDM\`, \`&time=tonight|weekend|7days|month\``,
@@ -934,7 +1032,7 @@ export function robotsTxt(ctx: Ctx): string {
 export async function sitemapXml(ctx: Ctx): Promise<string> {
   const now = ctx.clock.now();
   const since = new Date(now.getTime() - 183 * 86400_000);
-  const [events, orgs, artists, collections] = await Promise.all([
+  const [events, orgs, artists, collections, projects] = await Promise.all([
     many<any>(ctx.db,
       `select slug, updated_at from events where status in ('live', 'cancelled') and not held_for_reports and published_at is not null and ends_at >= $1
         order by starts_at limit 20000`, [since]),
@@ -950,6 +1048,8 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
       `select c.slug, greatest(c.updated_at, max(e.updated_at)) as updated_at
          from collections c join collection_items i on i.collection_id = c.id join events e on e.id = i.event_id
         where c.is_public and ${PUBLIC_EVENT} and e.ends_at >= $1 group by c.slug, c.updated_at limit 5000`, [now]),
+    // Projects open to backers, and the ones that became events.
+    many<any>(ctx.db, `select slug, updated_at from projects where status in ('open', 'realized') order by published_at desc limit 5000`),
   ]);
   const base = baseOf(ctx);
   const day = (d: Date | string | null) => (d ? new Date(d).toISOString().slice(0, 10) : now.toISOString().slice(0, 10));
@@ -974,6 +1074,11 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
       const vi = `${base}/c/${c.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
       return [{ loc: vi, lastmod: day(c.updated_at), priority: '0.5', alternates: links }, { loc: en, lastmod: day(c.updated_at), priority: '0.3', alternates: links }];
     }),
+    ...projects.flatMap((x) => {
+      const vi = `${base}/p/${x.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
+      return [{ loc: vi, lastmod: day(x.updated_at), priority: '0.5', alternates: links }, { loc: en, lastmod: day(x.updated_at), priority: '0.3', alternates: links }];
+    }),
+    ...(projects.length ? [{ loc: `${base}/p`, lastmod: day(projects[0].updated_at), priority: '0.5' }] : []),
     // The directory pages that list enough artists to be worth a search result.
     ...(await directoryPages(ctx.db)).flatMap((path) => {
       const vi = `${base}${path}`, en = `${vi}?lang=en`, links = alt(vi, en);

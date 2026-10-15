@@ -32,7 +32,8 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
               (select count(*)::int from event_claims where status = 'pending') as claims,
               (select count(*)::int from artist_claims where status = 'pending')
                 + (select count(*)::int from organizer_claims where status = 'pending') as "profileClaims",
-              (select count(*)::int from appeals where state in ('open','replied') and closes_at > $1) as appeals`, [ctx.clock.now()]);
+              (select count(*)::int from appeals where state in ('open','replied') and closes_at > $1) as appeals,
+              (select count(*)::int from projects where status = 'in_review') as projects`, [ctx.clock.now()]);
     return { ...r, allClaims: r.claims + r.profileClaims };
   });
 

@@ -4,7 +4,7 @@
  * and answers, structured data); the personal and interactive parts hydrate on top.
  */
 import { KdLink as Link, inLang } from '../../link';
-import { BroadcastIcon, CalendarBlankIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon } from '@phosphor-icons/react/ssr';
+import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon } from '@phosphor-icons/react/ssr';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick } from '../../copy';
 import { cx } from '../../cx';
@@ -119,6 +119,12 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                           {org.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-acc" role="img" aria-label={T.verifiedOrg} /> : null}
                         </Link>
                         <FollowOrg lang={lang} />
+                      </div>
+                    ) : null}
+                    {ev.sponsors?.length ? (
+                      <div className="kd-lrow min-h-13">
+                        <HandshakeIcon size={18} className="text-fog" aria-hidden="true" />
+                        <span className="kd-t flex-1 text-paper"><span className="text-fog">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
                       </div>
                     ) : null}
                     <div className="kd-lrow min-h-13">

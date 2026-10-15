@@ -20,7 +20,7 @@ import { CRAFT, WORKSPACE, otherCraft } from '../craft';
 import { WEB } from './copy';
 
 /** Which nav link is the current page: 'list' is Sự kiện, in each of its views (table, grid, map). */
-export type WebSection = 'explore' | 'list' | 'artists' | 'none';
+export type WebSection = 'explore' | 'list' | 'artists' | 'projects' | 'none';
 
 /** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
 const LANG_KEY = 'ff_lang';
@@ -63,6 +63,7 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
           <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'explore' ? 'page' : undefined}>{T.explore}</Link>
           <Link className="kd-nl" href={inLang('/list', lang)} aria-current={current === 'list' ? 'page' : undefined}>{T.events}</Link>
           <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined}>{T.artists}</Link>
+          <Link className="kd-nl" href={inLang('/p', lang)} aria-current={current === 'projects' ? 'page' : undefined}>{T.projects}</Link>
           <Menu
             label={T.genres}
             trigger={(p) => (
@@ -111,6 +112,7 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
               {craft ? <MenuItem onSelect={() => kd.openRolePicker(otherCraft(craft))}>{fill(K.switchTo, { r: K[otherCraft(craft)] })}</MenuItem> : null}
               <MenuSeparator />
               <MenuItem href={inLang('/profile', lang)}>{T.myProfile}</MenuItem>
+              <MenuItem href={inLang('/p/mine', lang)}>{T.myProjects}</MenuItem>
               <MenuItem href="/app/tickets" external aside={me ? me.tickets : null}>{T.myTickets}</MenuItem>
               <MenuItem href={inLang('/saved', lang)} external aside={me ? me.saved : null}>{T.saved}</MenuItem>
               <MenuSeparator />
@@ -130,7 +132,7 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
       {menu ? (
         <Sheet title={T.menu} closeLabel={T.close} onClose={() => setMenu(false)}>
           <nav aria-label={T.mainNav} className="flex flex-col gap-0.5 pt-1">
-            {([['explore', '/', T.explore], ['list', '/list', T.events], ['artists', '/a', T.artists]] as const).map(([k, href, label]) => (
+            {([['explore', '/', T.explore], ['list', '/list', T.events], ['artists', '/a', T.artists], ['projects', '/p', T.projects]] as const).map(([k, href, label]) => (
               <Link
                 key={k}
                 href={inLang(href, lang)}
