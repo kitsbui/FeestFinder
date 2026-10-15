@@ -115,7 +115,6 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 5. Set `ADMIN_EMAIL` in Vercel to the team's Google addresses. Admins sign in with Google; the shared password disclosed earlier must be rotated and is not used by this build.
 6. Approve profile claims in `/console/claims` (Profiles tab) and gear suggestions in `/console/artists` (Gear tab); verify the artists you know and add their MusicBrainz or Spotify ids.
 7. Produce the PMTiles extract for the launched cities, upload it to the bucket with range requests enabled, and set `MAP_TILES_URL` (and `MAP_GLYPHS_URL` for place names), on both Vercel projects.
-8. Revoke the Vercel token that was pasted in chat for the move to the new front (Vercel → Account Settings → Tokens).
 
 ## Postponed
 
@@ -149,3 +148,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-09: The site full width on desktop: one page container with gutters of 16, 32 and up to 64px, reading measures kept for long text, forms and dialogs; Studio and Console screens full width; `/app` fills the screen beside a side rail. The Next run 180 passed.
 - 2026-10-14: EDM only. `GENRES` is `['EDM']` and people filter by style (`facets.style`, `facets.free` replace `facets.family`); imports naming another genre are dropped, unclassified ones wait for review and become EDM when approved; TicketGo and Ticketmaster need an EDM style. Migration 031 deletes every event with what hangs off it (tickets and orders, saves, plans, posts, views and clicks, ingestion's memory), keeps accounts, organisers, artists, venues and sources, and makes the sources due now. The site, the app, Studio's wizard and the stats pages offer styles instead of genre families.
 - 2026-10-14: `/ops` merged into the Console, Studio and the new artist studio, and retired (its addresses redirect). API 322 tests (321 pass, 1 skipped); browser checks 189 (e2e/next only), all passing locally once the Studio dashboard check took any draft.
+- 2026-10-15: The old /ops code deleted; migration `030_9_backup_before_edm.sql` copies every table into the `backup_before_031` schema before 031 empties the catalogue (drop the schema once nothing more is needed). The Vercel token used for the move was revoked.
