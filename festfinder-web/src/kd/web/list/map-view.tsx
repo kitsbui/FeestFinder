@@ -99,6 +99,7 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
     const start = f.bbox ?? cityBox(f.city);
     createKdMap(el.current, {
       bounds: start,
+      places: meta.cities.flatMap((c) => (c.center ? [{ name: c.name[lang], at: c.center }] : [])),
       pinLabel: (p) => (p.title ?? '') + ', ' + p.label,
       onSelect: (id) => setSel(id),
       onMove: () => setDirty(true),

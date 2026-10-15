@@ -1,24 +1,32 @@
 'use client';
 /**
- * /console/featured: the shelves on Explore (shown or not, the date window, the listings in
- * order: add a live one, move up, remove); organisers' boost requests, answered by putting the
- * listing on a shelf or declining; and ads (enquiries to turn into campaigns, campaigns on or
- * off with their numbers, the CPM rates).
+ * /console/featured: the shelves on Explore, each with its VI/EN name (edited in place), its
+ * phase, shown or not, the date window (or none), and the listings in order, changed on a
+ * local copy (add a live upcoming one, up, down, remove) and saved as a whole; organisers'
+ * boost requests, answered by putting the listing on a shelf or declining; and ads (enquiries
+ * to turn into campaigns, campaigns on or off with their numbers, the CPM rates).
  */
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { ArrowUpIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { CaretDownIcon, CaretUpIcon, FloppyDiskIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
-import { count, dayMonth, money } from '../format';
+import { count, dayMonth, money, todayIn, whenShort } from '../format';
 import { useKd } from '../runtime';
-import { Button, IconButton } from '../ui/actions';
+import { Button, Chip, IconButton } from '../ui/actions';
 import { FieldLabel, Input, Switch } from '../ui/forms';
 import { Menu, MenuItem } from '../ui/menu';
-import { Card as Panel, Status } from '../ui/parts';
+import { Art, Card as Panel, Status, type StatusTone } from '../ui/parts';
 import { CONSOLE } from './copy';
+import { act as run, AsyncPick, Body, Empty, ErrorBox, Loading, PageHead, type PickItem } from './kit';
+import { MOD } from './moderation/copy';
 import { useConsole } from './root';
 
-interface Shelf { id: string; name: Pair; enabled: boolean; startsOn: string | null; endsOn: string | null; phaseLabel: Pair; items: { id: string; title: string; startsOn: string | null }[] }
+/** A listing on a shelf: what /admin/shelves and /admin/events both give. */
+interface Item { id: string; title: string; coverUrl: string | null; startsOn: string | null; endsOn?: string | null; venue?: { name: string | null } | null; venueName?: string | null }
+interface Shelf {
+  id: string; name: Pair; enabled: boolean; startsOn: string | null; endsOn: string | null;
+  phase: 'live' | 'always' | 'scheduled' | 'ended' | 'off'; phaseLabel: Pair; items: Item[];
+}
 interface Boost { id: string; status: 'open' | 'done' | 'declined'; requestedAt: string; event: { id: string; title: string; startsOn: string | null }; organizer: string }
 interface Ads {
   inquiries: { id: string; brand: string; category: string; email: string; budget: string | number | null; placements: string[]; message: string | null }[];
@@ -27,6 +35,7 @@ interface Ads {
 }
 /** Ads are sold in đồng (ad_settings rates, campaign spend). */
 const ADS_CURRENCY = 'VND';
+const PHASE_TONE: Record<Shelf['phase'], StatusTone> = { live: 'live', always: 'ok', scheduled: 'warn', ended: 'none', off: 'none' };
 
 function useAct(lang: Lang, after: () => void) {
   const kd = useKd();
@@ -39,123 +48,209 @@ function useAct(lang: Lang, after: () => void) {
   };
 }
 
+/** 'YYYY-MM-DD' plus whole days. */
+const addDays = (iso: string, n: number) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+};
+
 export function Featured() {
   const { lang, refreshCounts } = useConsole();
   const T = pick(CONSOLE, lang);
+  const M = pick(MOD, lang);
   const [shelves, setShelves] = useState<Shelf[] | null>(null);
+  const [shelfError, setShelfError] = useState<unknown>(null);
   const [boosts, setBoosts] = useState<Boost[] | null>(null);
   const [ads, setAds] = useState<Ads | null>(null);
   const load = useCallback(async () => {
     const [s, b, a] = await Promise.all([
-      FF.maybe(FF.get('/admin/shelves'), { items: [] }), FF.maybe(FF.get('/admin/boosts'), { items: [] }), FF.maybe(FF.get('/admin/ads'), null),
+      FF.get('/admin/shelves').then((x: { items: Shelf[] }) => { setShelfError(null); return x.items; }, (e: unknown) => { setShelfError(e); return null; }),
+      FF.maybe(FF.get('/admin/boosts'), { items: [] }), FF.maybe(FF.get('/admin/ads'), null),
     ]);
-    setShelves(s.items); setBoosts(b.items); setAds(a);
+    if (s) setShelves(s);
+    setBoosts(b.items); setAds(a);
     refreshCounts();
   }, [refreshCounts]);
   useEffect(() => { load(); }, [load]);
   const act = useAct(lang, load);
-  const setItems = (s: Shelf, ids: string[]) => act(() => FF.put(`/admin/shelves/${s.id}/items`, { eventIds: ids }));
+  const replace = (out: Shelf) => setShelves((all) => (all ?? []).map((x) => (x.id === out.id ? out : x)));
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
-      <div className="kd-split gap-3">
-        <section className="kd-main flex flex-col gap-3" aria-label={T.shelves}>
-          <h2 className="kd-h">{T.shelves}</h2>
-          {shelves === null ? <div className="kd-skel h-60" aria-hidden="true" /> : shelves.map((s) => (
-            <Panel as="article" key={s.id} className="flex flex-col gap-3 p-5" aria-label={s.name[lang]}>
-              <div className="flex flex-wrap items-center gap-3">
-                <h3 className="kd-hs flex-1">{s.name[lang]}</h3>
-                <span className="kd-m">{s.phaseLabel[lang]}</span>
-                <Switch checked={s.enabled} label={fill(T.shelfOn, { n: s.name[lang] })} onChange={(v) => act(() => FF.patch('/admin/shelves/' + s.id, { enabled: v }))} />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-2 kd-s">{T.shelfFrom}<Input type="date" className="kd-num" value={s.startsOn ?? ''} onChange={(e) => act(() => FF.patch('/admin/shelves/' + s.id, { startsOn: e.target.value || null }))} /></label>
-                <label className="flex items-center gap-2 kd-s">{T.shelfTo}<Input type="date" className="kd-num" value={s.endsOn ?? ''} onChange={(e) => act(() => FF.patch('/admin/shelves/' + s.id, { endsOn: e.target.value || null }))} /></label>
-              </div>
-              <ol className="flex flex-col">
-                {s.items.map((e, i) => (
-                  <li key={e.id} className="flex min-h-11 items-center gap-2 border-b border-line">
-                    <span className="kd-m kd-num w-5">{i + 1}</span>
-                    <span className="kd-s kd-ell flex-1 text-mist">{e.title}</span>
-                    {i > 0 ? <IconButton size="sm" label={fill(T.up, { t: e.title })} onClick={() => { const ids = s.items.map((x) => x.id); [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; setItems(s, ids); }}><ArrowUpIcon size={14} aria-hidden="true" /></IconButton> : null}
-                    <IconButton size="sm" label={fill(T.shelfRemove, { t: e.title })} onClick={() => setItems(s, s.items.filter((x) => x.id !== e.id).map((x) => x.id))}><XIcon size={14} aria-hidden="true" /></IconButton>
-                  </li>
-                ))}
-              </ol>
-              <AddListing lang={lang} onPick={(id) => setItems(s, [...s.items.map((x) => x.id), id])} />
-            </Panel>
-          ))}
-          <NewShelf lang={lang} onMade={load} />
-        </section>
-        <section className="kd-side flex flex-col gap-3" aria-label={T.boosts}>
-          <h2 className="kd-h">{T.boosts}</h2>
-          <Panel className="flex flex-col px-4">
-            {boosts === null ? <div className="kd-skel my-4 h-24" aria-hidden="true" /> : !boosts.length ? <span className="kd-s py-4">{T.noBoosts}</span> : boosts.map((b) => (
-              <div key={b.id} className="flex flex-col gap-2 border-b border-line py-3 last:border-b-0">
-                <span className="flex items-center justify-between gap-2">
-                  <span className="kd-hs kd-ell">{b.event.title}</span>
-                  <Status tone={b.status === 'done' ? 'ok' : b.status === 'declined' ? 'bad' : 'warn'}>{b.status === 'done' ? T.boostDone : b.status === 'declined' ? T.boostDeclined : T.boostOpen}</Status>
-                </span>
-                <span className="kd-s">{b.organizer}{b.event.startsOn ? ' · ' + dayMonth(b.event.startsOn, lang) : ''}</span>
-                {b.status === 'open' ? (
-                  <span className="flex flex-wrap gap-2">
-                    <Menu
-                      label={T.boostDone}
-                      trigger={(p) => <button type="button" {...p} ref={p.ref} className="kd-btn kd-btn-acc kd-btn-sm">{T.boostDone}</button>}
-                    >
-                      {(shelves ?? []).map((s) => (
-                        <MenuItem key={s.id} onSelect={() => act(async () => {
-                          if (!s.items.some((x) => x.id === b.event.id)) await FF.put(`/admin/shelves/${s.id}/items`, { eventIds: [b.event.id, ...s.items.map((x) => x.id)] });
-                          return FF.post('/admin/boosts/' + b.id, { status: 'done' });
-                        })}>{s.name[lang]}</MenuItem>
-                      ))}
-                    </Menu>
-                    <Button size="sm" tone="ghost" onClick={() => act(() => FF.post('/admin/boosts/' + b.id, { status: 'declined' }))}>{T.boostDecline}</Button>
+    <>
+      <PageHead title={M.featuredTitle} />
+      <Body>
+        <div className="kd-split gap-3">
+          <section className="kd-main flex flex-col gap-3" aria-label={T.shelves}>
+            <h2 className="kd-h">{T.shelves}</h2>
+            {shelfError && !shelves ? <ErrorBox error={shelfError} retry={load} />
+              : shelves === null ? <Loading className="h-60" />
+              : !shelves.length ? <Empty title={M.noShelves} />
+              : shelves.map((s) => <ShelfCard key={s.id} lang={lang} shelf={s} onChange={replace} />)}
+            <NewShelf lang={lang} onMade={(s) => setShelves((all) => [...(all ?? []), s])} />
+          </section>
+          <section className="kd-side flex flex-col gap-3" aria-label={T.boosts}>
+            <h2 className="kd-h">{T.boosts}</h2>
+            <Panel className="flex flex-col px-4">
+              {boosts === null ? <div className="kd-skel my-4 h-24" aria-hidden="true" /> : !boosts.length ? <span className="kd-s py-4">{T.noBoosts}</span> : boosts.map((b) => (
+                <div key={b.id} className="flex flex-col gap-2 border-b border-line py-3 last:border-b-0">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="kd-hs kd-ell">{b.event.title}</span>
+                    <Status tone={b.status === 'done' ? 'ok' : b.status === 'declined' ? 'bad' : 'warn'}>{b.status === 'done' ? T.boostDone : b.status === 'declined' ? T.boostDeclined : T.boostOpen}</Status>
                   </span>
-                ) : null}
-              </div>
-            ))}
-          </Panel>
-        </section>
-      </div>
-      {ads ? <AdsBlock lang={lang} ads={ads} act={act} /> : null}
-    </div>
+                  <span className="kd-s">{b.organizer}{b.event.startsOn ? ' · ' + dayMonth(b.event.startsOn, lang) : ''}</span>
+                  {b.status === 'open' ? (
+                    <span className="flex flex-wrap gap-2">
+                      <Menu
+                        label={T.boostDone}
+                        trigger={(p) => <button type="button" {...p} ref={p.ref} className="kd-btn kd-btn-acc kd-btn-sm">{T.boostDone}</button>}
+                      >
+                        {(shelves ?? []).map((s) => (
+                          <MenuItem key={s.id} onSelect={() => act(async () => {
+                            if (!s.items.some((x) => x.id === b.event.id)) await FF.put(`/admin/shelves/${s.id}/items`, { eventIds: [b.event.id, ...s.items.map((x) => x.id)] });
+                            return FF.post('/admin/boosts/' + b.id, { status: 'done' });
+                          })}>{s.name[lang]}</MenuItem>
+                        ))}
+                      </Menu>
+                      <Button size="sm" tone="ghost" onClick={() => act(() => FF.post('/admin/boosts/' + b.id, { status: 'declined' }))}>{T.boostDecline}</Button>
+                    </span>
+                  ) : null}
+                </div>
+              ))}
+            </Panel>
+          </section>
+        </div>
+        {ads ? <AdsBlock lang={lang} ads={ads} act={act} /> : null}
+      </Body>
+    </>
   );
 }
 
-function AddListing({ lang, onPick }: { lang: Lang; onPick: (id: string) => void }) {
+/** One shelf: names saved on demand, switch and window saved at once, the list saved as a whole. */
+function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChange: (s: Shelf) => void }) {
   const T = pick(CONSOLE, lang);
-  const [q, setQ] = useState('');
-  const [hits, setHits] = useState<{ id: string; title: string }[]>([]);
-  useEffect(() => {
-    if (q.trim().length < 2) { setHits([]); return; }
-    const t = setTimeout(async () => setHits((await FF.maybe(FF.get('/events?limit=6&q=' + encodeURIComponent(q.trim())), { items: [] })).items), 250);
-    return () => clearTimeout(t);
-  }, [q]);
+  const M = pick(MOD, lang);
+  const kd = useKd();
+  const [name, setName] = useState<Pair>(shelf.name);
+  const [items, setItems] = useState<Item[]>(shelf.items);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setName(shelf.name); setItems(shelf.items); }, [shelf]);
+  const nameDirty = name.vi !== shelf.name.vi || name.en !== shelf.name.en;
+  const orderDirty = items.map((i) => i.id).join() !== shelf.items.map((i) => i.id).join();
+  // The picker hands back an id and a label; the rows it came from keep the rest.
+  const found = useRef(new Map<string, Item>());
+
+  const save = async (body: Record<string, unknown>) => {
+    setBusy(true);
+    const out = await run(kd, lang, () => FF.patch('/admin/shelves/' + shelf.id, body));
+    setBusy(false);
+    if (out && typeof out === 'object') { onChange(out as Shelf); kd.toast(M.saved); }
+  };
+  const saveItems = async () => {
+    setBusy(true);
+    const out = await run(kd, lang, () => FF.put(`/admin/shelves/${shelf.id}/items`, { eventIds: items.map((i) => i.id) }));
+    setBusy(false);
+    if (out && typeof out === 'object') { onChange(out as Shelf); kd.toast(M.listSaved); }
+  };
+  const move = (i: number, d: number) => {
+    const j = i + d;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[i], next[j]] = [next[j], next[i]];
+    setItems(next);
+  };
+  const searchLive = useCallback(async (q: string): Promise<PickItem[]> => {
+    const p = new URLSearchParams({ status: 'live', when: 'upcoming', limit: '20', sort: 'date' });
+    if (q) p.set('q', q);
+    const out: { items: (Item & { organizer: { name: string } })[] } = await FF.get('/admin/events?' + p);
+    for (const e of out.items) found.current.set(e.id, e);
+    return out.items.map((e) => ({ value: e.id, label: e.title, sub: [whenShort(e, lang), e.venueName, e.organizer.name].filter(Boolean).join(' · ') }));
+  }, [lang]);
+  const today = () => todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone, FF.now());
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <Input value={q} placeholder={T.shelfAddPh} aria-label={T.shelfAdd} onChange={(e) => setQ(e.target.value)} />
-      {hits.length ? (
-        <ul className="flex flex-col">
-          {hits.map((h) => <li key={h.id}><button type="button" className="kd-mi" onClick={() => { onPick(h.id); setQ(''); }}>{h.title}</button></li>)}
-        </ul>
-      ) : null}
-    </div>
+    <Panel as="article" className="flex flex-col gap-4 p-5" aria-label={shelf.name[lang]}>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex min-w-[160px] flex-1 flex-col gap-1.5">
+          <FieldLabel htmlFor={'shvi-' + shelf.id}>{M.nameVi}</FieldLabel>
+          <Input id={'shvi-' + shelf.id} maxLength={80} value={name.vi} onChange={(e) => setName({ ...name, vi: e.target.value })} />
+        </div>
+        <div className="flex min-w-[160px] flex-1 flex-col gap-1.5">
+          <FieldLabel htmlFor={'shen-' + shelf.id}>{M.nameEn}</FieldLabel>
+          <Input id={'shen-' + shelf.id} maxLength={80} value={name.en} onChange={(e) => setName({ ...name, en: e.target.value })} />
+        </div>
+        {nameDirty ? <Button size="sm" disabled={busy || !name.vi.trim()} onClick={() => save({ name: { vi: name.vi.trim(), en: name.en.trim() || name.vi.trim() } })}>{M.saveName}</Button> : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Status tone={PHASE_TONE[shelf.phase] ?? 'none'}>{shelf.phaseLabel[lang]}</Status>
+        <span className="flex-1" />
+        <Switch checked={shelf.enabled} label={fill(T.shelfOn, { n: shelf.name[lang] })} onChange={(v) => save({ enabled: v })} />
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor={'shfrom-' + shelf.id}>{M.showFrom}</FieldLabel>
+          <Input id={'shfrom-' + shelf.id} type="date" className="kd-num" value={shelf.startsOn ?? ''} onChange={(e) => save({ startsOn: e.target.value || null })} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor={'shto-' + shelf.id}>{M.until}</FieldLabel>
+          <Input id={'shto-' + shelf.id} type="date" className="kd-num" min={shelf.startsOn ?? undefined} value={shelf.endsOn ?? ''} onChange={(e) => save({ endsOn: e.target.value || null })} />
+        </div>
+        <span className="flex flex-wrap gap-1.5 pb-1">
+          <Chip onClick={() => { const d = today(); save({ startsOn: d, endsOn: addDays(d, 6) }); }}>{M.week}</Chip>
+          <Chip onClick={() => save({ startsOn: null, endsOn: null })}>{M.noWindow}</Chip>
+        </span>
+      </div>
+      {items.length ? (
+        <ol className="flex flex-col">
+          {items.map((e, i) => (
+            <li key={e.id} className="flex min-h-14 items-center gap-3 border-b border-line py-1.5">
+              <span className="kd-m kd-num w-5">{i + 1}</span>
+              <Art family="edm" cover={e.coverUrl} className="h-10 w-16 shrink-0 rounded-md" />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="kd-hs kd-ell">{e.title}</span>
+                <span className="kd-s kd-ell">{[whenShort(e, lang), e.venue?.name ?? e.venueName].filter(Boolean).join(' · ')}</span>
+              </span>
+              <IconButton size="sm" label={fill(T.up, { t: e.title })} disabled={i === 0} onClick={() => move(i, -1)}><CaretUpIcon size={14} aria-hidden="true" /></IconButton>
+              <IconButton size="sm" label={fill(M.down, { t: e.title })} disabled={i === items.length - 1} onClick={() => move(i, 1)}><CaretDownIcon size={14} aria-hidden="true" /></IconButton>
+              <IconButton size="sm" label={fill(T.shelfRemove, { t: e.title })} onClick={() => setItems(items.filter((x) => x.id !== e.id))}><XIcon size={14} aria-hidden="true" /></IconButton>
+            </li>
+          ))}
+        </ol>
+      ) : <p className="kd-s">{M.noItems}</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-[220px] flex-1">
+          <AsyncPick
+            label={T.shelfAdd}
+            placeholder={M.addLive}
+            load={searchLive}
+            onPick={(it) => {
+              const row = it && found.current.get(it.value);
+              if (row && !items.some((x) => x.id === row.id)) setItems([...items, row]);
+            }}
+          />
+        </div>
+        {orderDirty ? <Button tone="acc" disabled={busy} onClick={saveItems}><FloppyDiskIcon size={16} aria-hidden="true" />{M.saveList}</Button> : null}
+      </div>
+    </Panel>
   );
 }
 
-function NewShelf({ lang, onMade }: { lang: Lang; onMade: () => void }) {
+function NewShelf({ lang, onMade }: { lang: Lang; onMade: (s: Shelf) => void }) {
   const T = pick(CONSOLE, lang);
+  const M = pick(MOD, lang);
+  const kd = useKd();
   const [vi, setVi] = useState('');
   const [en, setEn] = useState('');
-  const act = useAct(lang, () => { setVi(''); setEn(''); onMade(); });
-  const make = (e: FormEvent) => { e.preventDefault(); act(() => FF.post('/admin/shelves', { name: { vi: vi.trim(), en: en.trim() || vi.trim() } })); };
+  const make = async (e: FormEvent) => {
+    e.preventDefault();
+    const out = await run(kd, lang, () => FF.post('/admin/shelves', { name: { vi: vi.trim(), en: en.trim() || vi.trim() } }));
+    if (out && typeof out === 'object') { onMade(out as Shelf); setVi(''); setEn(''); kd.toast(M.shelfMade); }
+  };
   return (
     <Panel as="section" className="p-5" aria-label={T.shelfNew}>
       <form className="flex flex-wrap items-end gap-3" onSubmit={make}>
-        <div className="flex min-w-[160px] flex-1 flex-col gap-2"><FieldLabel htmlFor="shVi">{T.shelfName}</FieldLabel><Input id="shVi" required maxLength={80} value={vi} onChange={(e) => setVi(e.target.value)} /></div>
-        <div className="flex min-w-[160px] flex-1 flex-col gap-2"><FieldLabel htmlFor="shEn">{T.shelfName} (English)</FieldLabel><Input id="shEn" maxLength={80} value={en} onChange={(e) => setEn(e.target.value)} /></div>
-        <Button type="submit">{T.shelfCreate}</Button>
+        <div className="flex min-w-[160px] flex-1 flex-col gap-2"><FieldLabel htmlFor="shVi">{M.nameVi}</FieldLabel><Input id="shVi" required maxLength={80} placeholder={M.nameViPh} value={vi} onChange={(e) => setVi(e.target.value)} /></div>
+        <div className="flex min-w-[160px] flex-1 flex-col gap-2"><FieldLabel htmlFor="shEn">{M.nameEn}</FieldLabel><Input id="shEn" maxLength={80} value={en} onChange={(e) => setEn(e.target.value)} /></div>
+        <Button type="submit" disabled={!vi.trim()}>{T.shelfCreate}</Button>
       </form>
     </Panel>
   );

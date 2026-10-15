@@ -25,7 +25,7 @@ const SUBMISSIONS_PER_DAY = 5;
 /** What anyone can send in about an event they found. The source link is how a moderator checks it. */
 const SubmissionInput = z.object({
   title: z.string().trim().min(6).max(120),
-  genre: z.enum(GENRES),
+  genre: z.enum(GENRES).default('EDM'),
   description: z.string().trim().max(4000).default(''),
   startsOn: dateStr,
   endsOn: dateStr.optional(),

@@ -27,7 +27,7 @@ test.describe('the home page', () => {
     expect(en).toMatch(/This weekend[\s\S]*what’s on\?/);
   });
 
-  test('the time in the headline, the family chips and the sort change the list and the address', async ({ page }) => {
+  test('the time in the headline, the style chips and the sort change the list and the address', async ({ page }) => {
     const problems = await open(page);
     await expect(headings(page)).toHaveText(/\d+ sự kiện cuối tuần này/);
     await page.getByRole('group', { name: 'Thời gian' }).getByRole('button', { name: /Tối nay/ }).click();
@@ -36,13 +36,10 @@ test.describe('the home page', () => {
     await expect(headings(page)).toHaveText(/\d+ sự kiện tối nay/);
 
     await page.getByRole('button', { name: /Tháng này/ }).first().click();
-    await page.getByRole('group', { name: 'Thể loại' }).getByRole('button', { name: /EDM/ }).click();
-    await expect(page).toHaveURL(/time=month&family=edm/);
-    // Every card left is of the family (cards wear their family's class), whichever events are live.
-    await expect.poll(async () => {
-      const classes = await page.locator('.kd-ev').evaluateAll((els) => els.map((e) => e.className));
-      return classes.length > 0 && classes.every((c) => c.includes('kd-g-edm'));
-    }).toBe(true);
+    // The chips name the styles there are events in: the seed's techno night and its house warm-up.
+    await page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /^Techno/ }).click();
+    await expect(page).toHaveURL(/time=month&style=techno/);
+    await expect.poll(() => page.locator('.kd-ev .kd-h').allInnerTexts()).toEqual(['Ravolution Music Festival']);
 
     await page.getByRole('button', { name: 'Sắp xếp' }).click();
     await page.getByRole('menuitemradio', { name: 'Giá thấp trước' }).click();
@@ -50,12 +47,13 @@ test.describe('the home page', () => {
     expect(problems).toEqual([]);
   });
 
-  test('the nav’s genre menu lands on the family it names', async ({ page }) => {
+  test('the nav’s style menu lands on what it names', async ({ page }) => {
     await open(page);
-    await page.getByRole('button', { name: 'Thể loại' }).click();
+    await page.getByRole('button', { name: 'Dòng nhạc' }).click();
+    await expect(page.getByRole('menuitem', { name: /House/ })).toBeVisible();
     await page.getByRole('menuitem', { name: /Miễn phí/ }).click();
     await expect(page).toHaveURL(/\/\?price=free$/);
-    await expect(page.getByRole('group', { name: 'Thể loại' }).getByRole('button', { name: /Miễn phí/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /Miễn phí/ })).toHaveAttribute('aria-pressed', 'true');
     for (const price of await page.locator('.kd-ev .kd-mb').allInnerTexts()) expect(price).toBe('Miễn phí');
   });
 
@@ -67,8 +65,8 @@ test.describe('the home page', () => {
     await expect(menu.getByRole('menuitemradio', { name: /Sắp có/ }).first()).toHaveAttribute('aria-disabled', 'true');
   });
 
-  test('nothing in a family this weekend offers the way out', async ({ page }) => {
-    await open(page, '/?time=tonight&family=fest');
+  test('nothing in a style tonight offers the way out', async ({ page }) => {
+    await open(page, '/?time=tonight&style=trance');
     await expect(page.getByText('Chưa có sự kiện phù hợp')).toBeVisible();
     await page.getByRole('button', { name: 'Bỏ lọc' }).click();
     await expect(page).toHaveURL(/\/\?time=tonight$/);

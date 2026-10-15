@@ -10,7 +10,6 @@
   },
   "include": [
     "e2e",
-    "playwright.config.ts",
     "playwright.next.config.ts"
   ]
 }

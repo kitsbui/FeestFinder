@@ -59,7 +59,7 @@ export function InsightsScreen() {
   const cols = 'minmax(180px,2fr) 80px 100px 100px 80px';
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
+    <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(210px,100%),1fr))] gap-3">
         <Panel className="kd-kpi"><span className="kd-m">{T.kLive}</span><span className="kd-d2 kd-num">{count(b.live.n, lang)}</span><span className="kd-s">{fill(T.kLiveNew, { n: b.live.new7 })}</span></Panel>
         <Kpi lang={lang} label={T.kUsers} now={b.newUsers.n7} before={b.newUsers.prev7} />

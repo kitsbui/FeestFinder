@@ -11,7 +11,7 @@ import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
 import { cx } from '../cx';
 import { km, money, moneyShort, whenShort } from '../format';
-import { FAMILY_LABEL, familyOf, g, type Family } from '../genre';
+import { FAMILY_LABEL, familyOf, g, styleLabel } from '../genre';
 import { KdLink as Link } from '../link';
 import { createKdMap, type Box, type KdMap } from '../map/kd-map';
 import { useKd } from '../runtime';
@@ -27,7 +27,8 @@ interface MapItem {
   priceFrom: number; currency: string; isFree: boolean; soldOut: boolean;
 }
 type Time = 'all' | 'tonight' | 'weekend' | '7days';
-const FAMILIES: Family[] = ['fest', 'live', 'edm', 'cult', 'free'];
+/** The map's chips: the main EDM styles, then what is free. */
+const CHIPS = ['techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'free'];
 
 function boxOf(cities: City[], slug: string | null): Box {
   const c = cities.find((x) => x.slug === slug);
@@ -52,7 +53,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
   const [q] = useState(() => new URLSearchParams(location.search).get('q')?.trim() ?? '');
   const [view, setView] = useState<'map' | 'list'>(() => (new URLSearchParams(location.search).get('q') ? 'list' : 'map'));
   const [time, setTime] = useState<Time>('all');
-  const [family, setFamily] = useState<Family | null>(null);
+  const [family, setFamily] = useState<string | null>(null);
   const [items, setItems] = useState<MapItem[]>([]);
   const [total, setTotal] = useState(0);
   const [truncated, setTruncated] = useState(false);
@@ -76,7 +77,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
     const f = filters.current;
     if (f.time !== 'all') p.set('time', f.time);
     if (f.family === 'free') p.set('price', 'free');
-    else if (f.family) p.set('family', f.family);
+    else if (f.family) p.set('style', f.family);
     if (q) p.set('q', q);
     const out = await FF.maybe(FF.get('/events/map?' + p), null);
     if (n !== seq.current) return;
@@ -98,6 +99,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
     if (at) setMe(at);
     createKdMap(el.current, {
       bounds: start,
+      places: cities.flatMap((c) => (c.center ? [{ name: c.name[lang], at: c.center }] : [])),
       pinLabel: (p) => (p.title ?? '') + ', ' + p.label,
       onSelect: (id) => setSel(id),
       onMove: () => setDirty(true),
@@ -159,7 +161,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
         <div className="absolute inset-0"><div ref={el} className="h-full w-full" data-kd-map /></div>
       </section>
 
-      <div className="absolute inset-x-3 top-[calc(10px+env(safe-area-inset-top))] z-[4] flex flex-col gap-2">
+      <div className="absolute inset-x-3 top-[calc(10px+env(safe-area-inset-top))] desk:right-auto desk:w-[420px] z-[4] flex flex-col gap-2">
         <div className="flex gap-2">
           <label className="kd-field kd-glass h-12 flex-1 rounded-opt">
             <MagnifyingGlassIcon size={18} aria-hidden="true" />
@@ -180,8 +182,8 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
           {(['all', 'tonight', 'weekend', '7days'] as Time[]).map((k) => (
             <Chip key={k} on={time === k} className="kd-glass" onClick={() => setTime(k)}>{timeLabel(k)}</Chip>
           ))}
-          {FAMILIES.map((f) => (
-            <Chip key={f} family={f} on={family === f} className="kd-glass" onClick={() => setFamily(family === f ? null : f)}>{FAMILY_LABEL[f][lang]}</Chip>
+          {CHIPS.map((f) => (
+            <Chip key={f} family={f === 'free' ? 'free' : 'edm'} on={family === f} className="kd-glass" onClick={() => setFamily(family === f ? null : f)}>{f === 'free' ? FAMILY_LABEL.free[lang] : styleLabel(f, lang)}</Chip>
           ))}
         </div>
       </div>
@@ -198,7 +200,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
             <CrosshairIcon size={20} aria-hidden="true" />
           </IconButton>
           {chosen ? (
-            <Link href={'/app/e/' + chosen.slug} className={cx('kd-glass absolute inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-[4] grid grid-cols-[84px_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] p-2.5', g(familyOf(chosen.genre)))}>
+            <Link href={'/app/e/' + chosen.slug} className={cx('kd-glass absolute inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] desk:bottom-4 desk:right-auto desk:w-[420px] z-[4] grid grid-cols-[84px_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] p-2.5', g(familyOf(chosen.genre)))}>
               <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} className="h-21 w-21 rounded-lg" />
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="kd-m flex items-center gap-1.5 text-mist"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[familyOf(chosen.genre)][lang]}</span>

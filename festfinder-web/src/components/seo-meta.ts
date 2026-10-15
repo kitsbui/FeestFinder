@@ -1,7 +1,6 @@
 /**
  * The head of every public page the API describes (GET /seo/…): title, description, canonical
- * and hreflang links, Open Graph. Shared by the legacy pages (seo-page.tsx) and the Kính đêm
- * ones, so it imports no screen.
+ * and hreflang links, Open Graph. Used by the Kính đêm pages.
  */
 import type { Metadata } from 'next';
 import { api, type ArtistSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo } from '@/lib/api';

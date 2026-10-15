@@ -1,6 +1,5 @@
-import { GENRES, type Genre } from '../../lib/i18n.ts';
 import { cityAt, cityBySlug, cityFromText, countryCodeOf, plainText } from '../../lib/places.ts';
-import { classifyStyles, genreFromStyles, inferEventType } from '../../lib/styles.ts';
+import { classifyStyles, genreFromStyles, inferEventType, otherGenreOf } from '../../lib/styles.ts';
 import { addDays, dateIn, daysBetween, timeIn, toMinutes } from '../../lib/time.ts';
 import type { NormalizedEvent, Rejection } from './types.ts';
 
@@ -119,7 +118,6 @@ export interface Draft {
   lineup?: string[];
   tags?: string[];
   schemaType?: string | null;
-  genre?: string | null;
   imageUrl?: string | null;
   ticketUrl?: string | null;
   eventUrl?: string | null;
@@ -189,7 +187,6 @@ export function finalize(d: Draft, opts: { now: Date; fallbackCity?: string | nu
   const venueName = isCityName(place.venue, city) ? cleanText(place.address?.split(',')[0], 160) : cleanText(place.venue, 160);
   const description = cleanText(d.description, 3000);
   const styles = classifyStyles({ tags: d.tags, title, description, lineup });
-  const declared = (GENRES as readonly string[]).find((g) => g.toLowerCase() === String(d.genre ?? '').toLowerCase()) as Genre | undefined;
   const sameCurrency = !d.currency || d.currency.toUpperCase() === city.currency;
   const price = d.price !== null && d.price !== undefined && Number.isFinite(d.price) && d.price >= 0 && sameCurrency ? Math.round(d.price) : null;
   return {
@@ -207,8 +204,10 @@ export function finalize(d: Draft, opts: { now: Date; fallbackCity?: string | nu
     lat: lat !== null && lng !== null ? lat : null,
     lng: lat !== null && lng !== null ? lng : null,
     lineup,
-    genre: declared ?? genreFromStyles(styles) ?? (d.schemaType === 'Festival' ? 'Festival' : null),
+    genre: genreFromStyles(styles),
     styles,
+    // EDM wins: a night that names an EDM style is never dropped, even if it also says "hip hop".
+    otherGenre: styles.length ? null : otherGenreOf({ tags: d.tags, title, description, lineup }),
     eventType: inferEventType({ schemaType: d.schemaType, title, description, startTime: start.time, endTime: end?.time ?? null }),
     imageUrl: cleanUrl(d.imageUrl),
     ticketUrl: cleanUrl(d.ticketUrl),

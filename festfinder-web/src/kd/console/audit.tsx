@@ -1,37 +1,57 @@
 'use client';
 /**
  * /console/audit: every decision, as it happened, newest first: who (admin, organiser or the
- * system), what, on what, and what changed, with the entry's hash. Filtered by who, searched
- * from the top bar, more on demand, the last 30 days as CSV. Nothing here can be changed.
+ * system), what, on what, and what changed, with the entry's #seq and hash. The chain check
+ * sits above the title. Filtered by who and by area, searched by who or what (all three in the
+ * address), more on demand by cursor, the last 90 days as CSV. Nothing here can be changed.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { DownloadSimpleIcon } from '@phosphor-icons/react/ssr';
+import { ArrowRightIcon, DownloadSimpleIcon, GearIcon, ShieldCheckIcon, ShieldWarningIcon, StorefrontIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../copy';
-import { dayMonth } from '../format';
+import { fill, pick, type Lang, type Pair } from '../copy';
+import { count } from '../format';
 import { Button, buttonClass, Chip } from '../ui/actions';
 import { Card as Panel, Status } from '../ui/parts';
 import { CONSOLE } from './copy';
+import { Body, Choice, Empty, ErrorBox, FilterBar, Loading, PageHead, qs, SearchField, stamp, useQuery } from './kit';
+import { MOD } from './moderation/copy';
 import { useConsole } from './root';
 
 export interface AuditItem {
   seq: number; at: string; action: string; label: Pair; actorType: 'admin' | 'organizer' | 'system' | string; actor: Pair;
   target: { type: string; id: string | null; label: string }; diff: { field: string; before: string; after: string }[]; hash: string;
 }
-type Who = 'all' | 'admin' | 'organizer' | 'system';
+type Who = '' | 'admin' | 'organizer' | 'system';
+const PAGE = 40;
+const AREAS = ['listing', 'organizer', 'venue', 'shelf', 'report', 'appeal', 'order', 'payout', 'user', 'ads', 'impersonation'] as const;
+const AREA_KEY: Record<(typeof AREAS)[number], keyof typeof MOD> = {
+  listing: 'arListing', organizer: 'arOrganizer', venue: 'arVenue', shelf: 'arShelf', report: 'arReport', appeal: 'arAppeal',
+  order: 'arOrder', payout: 'arPayout', user: 'arUser', ads: 'arAds', impersonation: 'arImpersonation',
+};
 
-/** Audit rows: time, what was done to what, and who · the entry's hash; the changes under it. */
+/** Audit rows: who · what · on what, the changes under it; when, and #seq · hash on the right. */
 export function AuditRows({ lang, items }: { lang: Lang; items: AuditItem[] }) {
+  const icon = (t: string) => {
+    const I = t === 'admin' ? ShieldCheckIcon : t === 'organizer' ? StorefrontIcon : GearIcon;
+    return <I size={16} className="mt-0.5 text-fog" aria-hidden="true" />;
+  };
   return (
     <ul className="flex flex-col">
       {items.map((a) => (
-        <li key={a.seq} className="grid grid-cols-[60px_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-line px-4 py-3 sm:grid-cols-[60px_minmax(0,1fr)_220px]">
-          <span className="kd-m kd-num pt-0.5">{FF.hhmm(a.at)}<br />{dayMonth(a.at.slice(0, 10), lang)}</span>
+        <li key={a.seq} className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-line px-4 py-3 sm:grid-cols-[20px_minmax(0,1fr)_230px]">
+          {icon(a.actorType)}
           <span className="flex min-w-0 flex-col gap-1">
-            <span className="kd-t">{a.label[lang]} <span className="text-paper">{a.target.label}</span></span>
-            {a.diff.length ? <span className="kd-s kd-num">{a.diff.map((d) => `${d.field}: ${d.before} → ${d.after}`).join(' · ')}</span> : null}
+            <span className="kd-t"><span className="text-paper">{a.actor[lang]}</span> · {a.label[lang]} · <span className="text-paper">{a.target.label}</span></span>
+            {a.diff.map((d, i) => (
+              <span key={i} className="kd-s kd-num flex flex-wrap items-center gap-1.5">
+                <code className="kd-m">{d.field}</code><span>{d.before}</span><ArrowRightIcon size={12} aria-hidden="true" /><span className="text-paper">{d.after}</span>
+              </span>
+            ))}
           </span>
-          <span className="kd-m kd-num col-start-2 sm:col-start-auto sm:text-right">{a.actor[lang]} · {a.hash.replace('sha256:', '#')}</span>
+          <span className="kd-m kd-num col-start-2 flex flex-col sm:col-start-auto sm:text-right">
+            <span>{stamp(a.at, lang)}</span>
+            <code>#{a.seq} · {a.hash}</code>
+          </span>
         </li>
       ))}
     </ul>
@@ -39,34 +59,62 @@ export function AuditRows({ lang, items }: { lang: Lang; items: AuditItem[] }) {
 }
 
 export function Audit() {
-  const { lang, q } = useConsole();
+  const { lang, q: topQ } = useConsole();
   const T = pick(CONSOLE, lang);
-  const [who, setWho] = useState<Who>('all');
+  const M = pick(MOD, lang);
+  const [params, setParams] = useQuery();
+  const who = (['admin', 'organizer', 'system'].includes(params.get('actor') ?? '') ? params.get('actor') : '') as Who;
+  const area = (AREAS as readonly string[]).includes(params.get('area') ?? '') ? params.get('area')! : '';
+  const search = params.get('q') ?? '';
+  // The top bar's search works here too when the page's own field is empty.
+  const q = (search || topQ).trim();
   const [data, setData] = useState<{ items: AuditItem[]; nextCursor: string | null } | null>(null);
-  const [chain, setChain] = useState<boolean | null>(null);
-  const load = useCallback(async (cursor?: string) => {
-    const p = new URLSearchParams({ actor: who, limit: '30' });
-    if (q.trim()) p.set('q', q.trim());
-    if (cursor) p.set('cursor', cursor);
-    const out = await FF.maybe(FF.get('/admin/audit?' + p), { items: [], nextCursor: null });
-    setData((d) => (cursor && d ? { items: [...d.items, ...out.items], nextCursor: out.nextCursor } : out));
-  }, [who, q]);
-  useEffect(() => { const t = setTimeout(() => load(), q ? 250 : 0); return () => clearTimeout(t); }, [load, q]);
-  useEffect(() => { FF.maybe(FF.get('/admin/audit/verify'), null).then((v: { ok: boolean } | null) => setChain(v ? v.ok : null)); }, []);
-  const whos: { key: Who; label: string }[] = [{ key: 'all', label: T.aAll }, { key: 'admin', label: T.aAdmin }, { key: 'organizer', label: T.aOrganizer }, { key: 'system', label: T.aSystem }];
+  const [error, setError] = useState<unknown>(null);
+  const [more, setMore] = useState(false);
+  const [chain, setChain] = useState<{ ok: boolean; entries: number; brokenAt: number | null } | null>(null);
+  const base = useCallback((cursor?: string | null) => '/admin/audit' + qs({ actor: who || 'all', area, q, limit: PAGE, cursor }), [who, area, q]);
+  const load = useCallback(async () => {
+    setError(null);
+    try { setData(await FF.get(base())); } catch (e) { setError(e); }
+  }, [base]);
+  useEffect(() => { const t = setTimeout(load, q ? 250 : 0); return () => clearTimeout(t); }, [load, q]);
+  useEffect(() => { FF.maybe(FF.get('/admin/audit/verify'), null).then(setChain); }, []);
+  const loadMore = async () => {
+    if (!data?.nextCursor) return;
+    setMore(true);
+    try {
+      const out = await FF.get(base(data.nextCursor));
+      setData((d) => ({ items: [...(d?.items ?? []), ...out.items], nextCursor: out.nextCursor }));
+    } catch (e) { setError(e); } finally { setMore(false); }
+  };
+  const whos: { key: Who; label: string }[] = [{ key: '', label: T.aAll }, { key: 'admin', label: T.aAdmin }, { key: 'organizer', label: T.aOrganizer }, { key: 'system', label: T.aSystem }];
+
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-3 p-[clamp(16px,3vw,32px)]">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label={T.tabAudit}>
-          {whos.map((w) => <Chip key={w.key} on={who === w.key} onClick={() => setWho(w.key)}>{w.label}</Chip>)}
-        </div>
-        {chain === null ? null : <Status tone={chain ? 'ok' : 'bad'}>{chain ? T.chainOk : T.chainBroken}</Status>}
-        <a className={buttonClass({ size: 'sm' }, 'ml-auto')} href={`/admin/audit.csv?actor=${who}&days=30`} download><DownloadSimpleIcon size={14} aria-hidden="true" />{T.aCsv}</a>
-      </div>
-      <Panel as="section" aria-label={T.tabAudit}>
-        {data === null ? <div className="kd-skel m-4 h-60" aria-hidden="true" /> : !data.items.length ? <p className="kd-s p-5">{T.aNone}</p> : <AuditRows lang={lang} items={data.items} />}
-        {data?.nextCursor ? <div className="border-t border-line px-4 py-3"><Button tone="ghost" size="sm" onClick={() => load(data.nextCursor!)}>{T.more}</Button></div> : null}
-      </Panel>
-    </div>
+    <>
+      <PageHead
+        eyebrow={chain ? (
+          <Status tone={chain.ok ? 'ok' : 'bad'}>{chain.ok ? fill(M.chainOk, { n: count(chain.entries, lang) }) : fill(M.chainBroken, { n: chain.brokenAt ?? '?' })}</Status>
+        ) : null}
+        title={M.auditTitle}
+        actions={<a className={buttonClass({ size: 'sm' })} href={'/admin/audit.csv' + qs({ actor: who || 'all', days: 90 })} download><DownloadSimpleIcon size={14} aria-hidden="true" />{M.csv}</a>}
+      />
+      <Body>
+        <FilterBar onReset={who || area ? () => setParams({ actor: null, area: null }) : null}>
+          <SearchField label={M.search} value={search} onChange={(v) => setParams({ q: v })} />
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={M.actor}>
+            {whos.map((w) => <Chip key={w.key || 'all'} on={who === w.key} onClick={() => setParams({ actor: w.key })}>{w.label}</Chip>)}
+          </div>
+          <Choice label={M.area} value={area} onChange={(v) => setParams({ area: v })} options={AREAS.map((a) => ({ value: a, label: M[AREA_KEY[a]] }))} />
+        </FilterBar>
+        {error && !data ? <ErrorBox error={error} retry={load} /> : null}
+        {data === null ? (error ? null : <Loading className="h-60" />) : !data.items.length ? <Empty title={M.nothing} /> : (
+          <Panel as="section" aria-label={T.tabAudit}>
+            <AuditRows lang={lang} items={data.items} />
+            {data.nextCursor ? <div className="border-t border-line px-4 py-3"><Button tone="ghost" size="sm" disabled={more} onClick={loadMore}>{M.more}</Button></div> : null}
+          </Panel>
+        )}
+        {error && data ? <ErrorBox error={error} retry={load} /> : null}
+      </Body>
+    </>
   );
 }

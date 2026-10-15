@@ -113,7 +113,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
 
   const fam = familyOf(ev.genre);
   return (
-    <div className="flex flex-col gap-5 px-4 pb-[calc(110px+env(safe-area-inset-bottom))] pt-2">
+    <div className="flex flex-col gap-5 px-4 desk:max-w-[640px] pb-[calc(110px+env(safe-area-inset-bottom))] pt-2">
       <div className={`grid grid-cols-[64px_minmax(0,1fr)] items-center gap-3 ${g(fam)}`}>
         <Art family={fam} cover={ev.coverUrl} className="h-16 rounded-lg" />
         <span className="flex min-w-0 flex-col gap-0.5">

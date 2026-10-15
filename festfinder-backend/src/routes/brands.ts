@@ -201,7 +201,7 @@ export default async function brandRoutes(app: FastifyInstance) {
         const words = { shortlisted: L('You are on a brand shortlist', 'Bạn đã vào danh sách chọn của thương hiệu'), declined: L('Not this time', 'Lần này chưa phù hợp'), selected: L('A brand picked you', 'Thương hiệu đã chọn bạn') }[status];
         await notifyUser(q, now, {
           userId: i.owner_user_id, topic: null, kind: 'brand_campaign', title: words, body: L(`${i.brand_name} · ${i.title}`, `${i.brand_name} · ${i.title}`),
-          link: { screen: 'ops', path: '/ops/artist/opportunities?tab=brands' }, dedupeKey: `brand:${i.id}:${status}`,
+          link: { screen: 'artist', url: '/studio/artist/opportunities?tab=brands' }, dedupeKey: `brand:${i.id}:${status}`,
         });
       }
     });

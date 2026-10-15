@@ -79,7 +79,7 @@ const VENUES: Record<string, [string, string, string, number, number]> = {
 };
 
 interface EventSeed {
-  org: string; title: string; genre: string; starts: string; ends?: string; time: [string, string];
+  org: string; title: string; genre: string; styles?: string[]; starts: string; ends?: string; time: [string, string];
   venue?: keyof typeof VENUES; unresolved?: { name: string; address: string; area: string };
   price?: number; hype?: number; featured?: boolean; badge?: string; soldOut?: boolean; age?: string;
   lineup?: string[]; artists?: string[]; art?: string; status?: string; capacity?: number;
@@ -87,49 +87,49 @@ interface EventSeed {
 }
 
 const EVENTS: Record<string, EventSeed> = {
-  hozo: { org: 'hozoco', title: 'HOZO Super Fest', genre: 'Festival', starts: '2026-09-18', ends: '2026-09-20', time: ['17:00', '23:00'], venue: 'riverside',
+  hozo: { org: 'hozoco', title: 'HOZO Super Fest', genre: 'EDM', starts: '2026-09-18', ends: '2026-09-20', time: ['17:00', '23:00'], venue: 'riverside',
     hype: 4820, featured: true, badge: 'trending', art: ART.hozo, lineup: ['Trúc Nhân', 'Hoàng Thùy Linh', 'DTAP', 'Phương Mỹ Chi'], eventUrl: 'https://hozo.vn',
     description: L('Three nights on the Saigon riverside with four stages running in parallel, from Vietnamese pop headliners to a folk stage and a late electronic tent. Entry is free and unticketed; the site opens at 17:00 and the main stage runs until 23:00.',
       'Ba đêm bên bờ sông Sài Gòn với bốn sân khấu chạy song song, từ dàn ca sĩ pop Việt tới sân khấu dân gian và lều điện tử về khuya. Vào cửa miễn phí, không cần vé; khu vực mở từ 17:00 và sân khấu chính diễn đến 23:00.') },
-  ravo: { org: 'ravoent', title: 'Ravolution Music Festival', genre: 'EDM', starts: '2026-09-19', time: ['16:00', '02:00'], venue: 'secc', price: 1_200_000,
+  ravo: { org: 'ravoent', title: 'Ravolution Music Festival', genre: 'EDM', styles: ['techno'], starts: '2026-09-19', time: ['16:00', '02:00'], venue: 'secc', price: 1_200_000,
     hype: 2140, featured: true, badge: 'low_tickets', art: ART.violetCyan, age: '18+', capacity: 4800, lineup: ['Hoaprox', 'DJ Mie', 'Wukong'], logo: true,
     ticketUrl: 'https://ticketbox.vn/ravolution-2026', eventUrl: 'https://feestfinder.com/e/ravolution-2026', brandUrl: 'https://ravolution.vn',
     description: L('An indoor electronic festival at SECC with two stages and full production. Doors at 16:00, last set at 02:00. The ticket includes re-entry until 22:00, so you can step out for food and come back.',
       'Lễ hội điện tử trong nhà tại SECC với hai sân khấu và sản xuất đầy đủ. Mở cửa 16:00, set cuối 02:00. Vé cho phép ra vào lại đến 22:00, bạn có thể ra ngoài ăn rồi quay lại.') },
-  outcast: { org: 'outcastco', title: 'Saigon Outcast Night Market', genre: 'Food', starts: '2026-09-19', ends: '2026-09-20', time: ['16:00', '22:00'], venue: 'outcast',
+  outcast: { org: 'outcastco', title: 'Saigon Outcast Night Market', genre: 'EDM', starts: '2026-09-19', ends: '2026-09-20', time: ['16:00', '22:00'], venue: 'outcast',
     hype: 530, art: ART.amber, lineup: ['60+ gian hàng / vendors', 'DJ set 19:00'], artists: [],
     description: L('A weekend night market in the Saigon Outcast courtyard: more than sixty food and craft stalls, a DJ set from 19:00 and seating under the trees. Free to walk in, pay per stall.',
       'Chợ đêm cuối tuần trong sân Saigon Outcast: hơn sáu mươi gian hàng ăn uống và đồ thủ công, DJ set từ 19:00 và chỗ ngồi dưới hàng cây. Vào cửa miễn phí, trả tiền theo từng gian.') },
-  rapviet: { org: 'rvlive', title: 'Rap Việt Live Stage', genre: 'Hip-Hop', starts: '2026-09-20', time: ['19:00', '23:00'], venue: 'phuthoArena', price: 650_000,
+  rapviet: { org: 'rvlive', title: 'Rap Việt Live Stage', genre: 'EDM', starts: '2026-09-20', time: ['19:00', '23:00'], venue: 'phuthoArena', price: 650_000,
     hype: 1780, soldOut: true, art: ART.rap, age: '16+', lineup: ['Wowy', 'Karik', 'Blacka', 'Rhymastic'], ticketUrl: 'https://ticketbox.vn/rap-viet-live',
     description: L('The Rap Việt live roster on an indoor arena stage at Phú Thọ, with a full band behind the rappers. This date is sold out; the organiser releases returns on the event page occasionally.',
       'Dàn nghệ sĩ Rap Việt trên sân khấu nhà thi đấu Phú Thọ, có band chơi trực tiếp phía sau. Đêm này đã hết vé; nhà tổ chức thỉnh thoảng mở bán lại vé trả về trên trang sự kiện.') },
-  blues: { org: 'bluemonkey', title: 'Vietnam Blues Experience', genre: 'Jazz', starts: '2026-09-14', time: ['19:00', '23:00'], venue: 'bluemonkey', price: 150_000,
+  blues: { org: 'bluemonkey', title: 'Vietnam Blues Experience', genre: 'EDM', starts: '2026-09-14', time: ['19:00', '23:00'], venue: 'bluemonkey', price: 150_000,
     hype: 312, badge: 'selling_fast', art: ART.blues, age: '18+', lineup: ['Saigon Blues Collective', 'Hoàng Minh'], ticketUrl: 'https://bluemonkey.vn/tickets',
     description: L('A weekly blues night in a small Thảo Điền bar. Two sets, the first at 19:30, the second after 21:30. Tables are first come, first served.',
       'Đêm blues hàng tuần trong một quán bar nhỏ ở Thảo Điền. Hai set, set đầu 19:30, set sau từ 21:30. Bàn theo thứ tự đến trước.') },
-  momang: { org: 'momangco', title: 'Những Thành Phố Mơ Màng', genre: 'Indie', starts: '2026-09-26', time: ['15:00', '22:30'], venue: 'phuthoStadium', price: 890_000,
+  momang: { org: 'momangco', title: 'Những Thành Phố Mơ Màng', genre: 'EDM', starts: '2026-09-26', time: ['15:00', '22:30'], venue: 'phuthoStadium', price: 890_000,
     hype: 3260, badge: 'selling_fast', art: ART.cyanGreen, lineup: ['Đen', 'Vũ.', 'Hoàng Dũng', 'Chillies'], ticketUrl: 'https://ticketbox.vn/mo-mang-2026',
     description: L('A daytime-into-night indie festival at Phú Thọ stadium, built around Vietnamese singer-songwriters. Gates at 15:00, low stages, picnic seating on the field.',
       'Lễ hội indie từ chiều sang đêm tại sân Phú Thọ, xoay quanh các singer-songwriter Việt. Mở cổng 15:00, sân khấu thấp, ngồi picnic trên sân.') },
-  nhacvien: { org: 'hcmc', title: 'Hòa nhạc Nhạc viện TP.HCM', genre: 'Culture', starts: '2026-09-16', time: ['09:00', '11:30'], venue: 'idecaf',
+  nhacvien: { org: 'hcmc', title: 'Hòa nhạc Nhạc viện TP.HCM', genre: 'EDM', starts: '2026-09-16', time: ['09:00', '11:30'], venue: 'idecaf',
     hype: 41, art: ART.greenCyan, lineup: ['Sinh viên Nhạc viện TP.HCM'],
     description: L('A free morning concert by students of the HCMC Conservatory at IDECAF. Chamber and orchestral programme, roughly ninety minutes with one interval.',
       'Hoà nhạc buổi sáng miễn phí do sinh viên Nhạc viện TP.HCM biểu diễn tại IDECAF. Chương trình hoà tấu và giao hưởng, khoảng chín mươi phút, có một lần nghỉ.') },
-  '8wonder': { org: 'vinwonder', title: '8Wonder Concert', genre: 'Pop', starts: '2026-10-03', time: ['18:00', '23:00'], venue: 'grandpark', price: 1_500_000,
+  '8wonder': { org: 'vinwonder', title: '8Wonder Concert', genre: 'EDM', starts: '2026-10-03', time: ['18:00', '23:00'], venue: 'grandpark', price: 1_500_000,
     hype: 5940, badge: 'going_500', art: ART.blueViolet, lineup: ['Soobin Hoàng Sơn', 'HIEUTHUHAI'], ticketUrl: 'https://ticketbox.vn/8wonder',
     description: L('A stadium pop concert at Vinhomes Grand Park with Vietnamese headliners and an international guest. Gates at 18:00; the venue is a forty-minute drive from District 1.',
       'Concert pop sân vận động tại Vinhomes Grand Park với dàn ca sĩ Việt và một khách mời quốc tế. Mở cổng 18:00; địa điểm cách Quận 1 khoảng bốn mươi phút xe.') },
-  duongsach: { org: 'duongsachco', title: 'Đường sách Nguyễn Văn Bình Book Fest', genre: 'Culture', starts: '2026-09-12', time: ['08:00', '21:00'], venue: 'duongsach',
+  duongsach: { org: 'duongsachco', title: 'Đường sách Nguyễn Văn Bình Book Fest', genre: 'EDM', styles: ['drum-and-bass'], starts: '2026-09-12', time: ['08:00', '21:00'], venue: 'duongsach',
     hype: 210, art: ART.book, lineup: ['Giao lưu tác giả'], artists: [],
     description: L('An all-day book festival along the District 1 book street, with author talks, signings and publisher stalls. Free, open from 08:00 to 21:00.',
       'Ngày hội sách cả ngày dọc đường sách Quận 1, có giao lưu tác giả, ký tặng và gian hàng nhà xuất bản. Miễn phí, mở từ 08:00 đến 21:00.') },
-  'yoko-sinco': { org: 'yoko', title: 'Classic Pop Rock Hits — Sinco Band', genre: 'Pop', starts: '2026-09-14', time: ['20:45', '23:30'], venue: 'yoko', price: 120_000,
+  'yoko-sinco': { org: 'yoko', title: 'Classic Pop Rock Hits — Sinco Band', genre: 'EDM', starts: '2026-09-14', time: ['20:45', '23:30'], venue: 'yoko', price: 120_000,
     hype: 96, badge: 'just_added', art: ART.yoko, age: '18+', lineup: ['Sinco Band'], ticketUrl: 'https://yokosaigon.vn',
     description: L('Yoko has run live music seven nights a week for over a decade. Sinco Band plays the classic pop-rock set — no cover after 23:00.',
       'Yoko chơi nhạc sống bảy tối một tuần suốt hơn mười năm. Sinco Band chơi set pop-rock kinh điển — miễn phí vào cửa sau 23:00.') },
   // Ravolution's back office
-  'ravo-warmup': { org: 'ravoent', title: 'Ravolution Warm-up · Rooftop', genre: 'EDM', starts: '2026-09-18', time: ['19:00', '23:00'], venue: 'reverie', price: 350_000,
+  'ravo-warmup': { org: 'ravoent', title: 'Ravolution Warm-up · Rooftop', genre: 'EDM', styles: ['house'], starts: '2026-09-18', time: ['19:00', '23:00'], venue: 'reverie', price: 350_000,
     hype: 640, art: ART.blueViolet, age: '18+', capacity: 900, lineup: ['DJ Mie', 'Trần Duy', 'SlimV'], logo: true, ticketUrl: 'https://ticketbox.vn/ravolution-warmup', eventUrl: 'https://ravolution.vn/warmup',
     description: L('A rooftop warm-up the night before the festival, with three local selectors and the city skyline.', 'Đêm khởi động trên sân thượng trước lễ hội, ba DJ địa phương và toàn cảnh thành phố.') },
   'ravo-after-hours': { org: 'ravoent', title: 'Ravolution After Hours', genre: 'EDM', starts: '2026-09-20', time: ['02:00', '06:00'], status: 'in_review',
@@ -138,28 +138,28 @@ const EVENTS: Record<string, EventSeed> = {
     description: L('Keep going after the festival closes.', 'Tiếp tục sau khi lễ hội đóng cửa.') },
   'ravo-bus': { org: 'ravoent', title: 'Ravolution Bus · Vũng Tàu', genre: 'EDM', starts: '2026-10-03', time: ['06:00', '22:00'], status: 'draft',
     unresolved: { name: 'Bãi Sau, Vũng Tàu', address: 'Thùy Vân, Vũng Tàu', area: 'Vũng Tàu' }, art: ART.cyanGreen, lineup: [] },
-  'ravo-2025': { org: 'ravoent', title: 'Ravolution Music Festival 2025', genre: 'EDM', starts: '2025-09-20', time: ['16:00', '02:00'], venue: 'secc', price: 1_100_000,
+  'ravo-2025': { org: 'ravoent', title: 'Ravolution Music Festival 2025', genre: 'EDM', styles: ['techno'], starts: '2025-09-20', time: ['16:00', '02:00'], venue: 'secc', price: 1_100_000,
     hype: 1980, art: ART.violetCyan, age: '18+', capacity: 4500, lineup: ['Hoaprox', 'KSHMR'], ticketUrl: 'https://ticketbox.vn/ravolution-2025' },
   // Past editions for organiser profiles
-  'hozo-2025': { org: 'hozoco', title: 'HOZO Super Fest 2025', genre: 'Festival', starts: '2025-12-12', ends: '2025-12-14', time: ['17:00', '23:00'], venue: 'riverside', hype: 4100, art: ART.hozo, lineup: ['Mỹ Tâm'] },
-  'momang-2025': { org: 'momangco', title: 'Những Thành Phố Mơ Màng 2025', genre: 'Indie', starts: '2025-09-27', time: ['15:00', '22:30'], venue: 'phuthoStadium', price: 790_000, hype: 2900, art: ART.cyanGreen, lineup: ['Ngọt'] },
-  '8wonder-winter': { org: 'vinwonder', title: '8Wonder Winter', genre: 'Pop', starts: '2025-12-06', time: ['18:00', '23:00'], venue: 'grandpark', price: 1_400_000, hype: 5100, art: ART.blueViolet, lineup: ['Maroon 5'] },
-  'bside-acoustic-1': { org: 'bside', title: 'Bside Acoustic Night · Vol. 1', genre: 'Indie', starts: '2026-06-14', time: ['18:00', '21:00'], venue: 'bside', price: 120_000, art: ART.cyanGreen, lineup: ['Thiện Thảo'] },
-  'bside-acoustic-2': { org: 'bside', title: 'Bside Acoustic Night · Vol. 2', genre: 'Indie', starts: '2026-08-09', time: ['18:00', '21:00'], venue: 'bside', price: 120_000, art: ART.cyanGreen, lineup: ['Mỹ Anh'] },
+  'hozo-2025': { org: 'hozoco', title: 'HOZO Super Fest 2025', genre: 'EDM', styles: ['trance'], starts: '2025-12-12', ends: '2025-12-14', time: ['17:00', '23:00'], venue: 'riverside', hype: 4100, art: ART.hozo, lineup: ['Mỹ Tâm'] },
+  'momang-2025': { org: 'momangco', title: 'Những Thành Phố Mơ Màng 2025', genre: 'EDM', styles: ['deep-house'], starts: '2025-09-27', time: ['15:00', '22:30'], venue: 'phuthoStadium', price: 790_000, hype: 2900, art: ART.cyanGreen, lineup: ['Ngọt'] },
+  '8wonder-winter': { org: 'vinwonder', title: '8Wonder Winter', genre: 'EDM', styles: ['mainstage'], starts: '2025-12-06', time: ['18:00', '23:00'], venue: 'grandpark', price: 1_400_000, hype: 5100, art: ART.blueViolet, lineup: ['Maroon 5'] },
+  'bside-acoustic-1': { org: 'bside', title: 'Bside Acoustic Night · Vol. 1', genre: 'EDM', styles: ['deep-house'], starts: '2026-06-14', time: ['18:00', '21:00'], venue: 'bside', price: 120_000, art: ART.cyanGreen, lineup: ['Thiện Thảo'] },
+  'bside-acoustic-2': { org: 'bside', title: 'Bside Acoustic Night · Vol. 2', genre: 'EDM', styles: ['deep-house'], starts: '2026-08-09', time: ['18:00', '21:00'], venue: 'bside', price: 120_000, art: ART.cyanGreen, lineup: ['Mỹ Anh'] },
   // Moderation queue
   'neon-rooftop-session': { org: 'neondistrict', title: 'Neon District Rooftop Session', genre: 'EDM', starts: '2026-09-26', time: ['20:00', '01:00'], venue: 'neonRooftop', price: 450_000,
     status: 'in_review', art: ART.violetCyan, lineup: ['Wukong', 'SlimV', 'Kreo'], logo: true, cover: 'neon-2026', ticketUrl: 'https://ticketbox.vn/neon-rooftop', eventUrl: 'https://neondistrict.vn' },
   'underground-techno-w12': { org: 'w12', title: 'Underground Techno — Warehouse 12', genre: 'EDM', starts: '2026-09-25', time: ['22:00', '05:00'], status: 'in_review',
     unresolved: { name: 'Warehouse 12', address: '12 Tôn Thất Thuyết, Quận 4', area: 'Quận 4' }, price: 300_000, art: ART.blueViolet, lineup: ['Dark Tempo'], logo: true, cover: 'w12-2026',
     ticketUrl: 'https://w12.vn/tickets', eventUrl: 'https://w12.vn' },
-  'acoustic-sunset-bside': { org: 'bside', title: 'Acoustic Sunset · Thảo Điền', genre: 'Indie', starts: '2026-09-27', time: ['17:30', '20:00'], venue: 'bside', price: 150_000,
+  'acoustic-sunset-bside': { org: 'bside', title: 'Acoustic Sunset · Thảo Điền', genre: 'EDM', starts: '2026-09-27', time: ['17:30', '20:00'], venue: 'bside', price: 150_000,
     status: 'in_review', art: ART.cyanGreen, capacity: 80, lineup: ['Hà Myo', 'Thiện Thảo', 'Ngũ Cung'], logo: true, cover: 'bside-sunset', ticketUrl: 'https://bside.vn/sunset', eventUrl: 'https://bside.vn' },
   'edm-beach-bus': { org: 'tripside', title: 'EDM Beach Bus — Vũng Tàu', genre: 'EDM', starts: '2026-10-03', time: ['06:00', '23:00'], status: 'in_review',
     venue: 'baiSau', price: 690_000, art: ART.amber, lineup: ['Local DJs'], logo: true, cover: 'tripside-bus',
     ticketUrl: 'https://tripside.vn/beach-bus-404', eventUrl: 'https://tripside.vn' },
   // Report subjects
   'edm-beach-bus-mui-ne': { org: 'tripside', title: 'EDM Beach Bus — Mũi Né', genre: 'EDM', starts: '2025-08-16', time: ['06:00', '23:00'], venue: 'secc', price: 650_000, art: ART.amber, cover: 'tripside-bus', lineup: ['Local DJs'] },
-  'warehouse-rave-q4': { org: 'concrete', title: 'Warehouse Rave · Quận 4', genre: 'Hip-Hop', starts: '2026-09-25', time: ['21:00', '03:00'], venue: 'secc', price: 250_000, art: ART.rap, lineup: ['Concrete Crew'] },
+  'warehouse-rave-q4': { org: 'concrete', title: 'Warehouse Rave · Quận 4', genre: 'EDM', starts: '2026-09-25', time: ['21:00', '03:00'], venue: 'secc', price: 250_000, art: ART.rap, lineup: ['Concrete Crew'] },
   'rooftop-sessions-vol3': { org: 'neondistrict', title: 'Rooftop Sessions · Vol. 3', genre: 'EDM', starts: '2026-09-24', time: ['20:00', '00:00'], venue: 'neonRooftop', price: 400_000, art: ART.violetCyan, lineup: ['Wukong'] },
   // Appeals
   'rooftop-nye-countdown': { org: 'neondistrict', title: 'Rooftop NYE Countdown', genre: 'EDM', starts: '2026-12-31', time: ['20:00', '01:00'], venue: 'neonRooftop', price: 500_000, status: 'rejected', art: ART.blueViolet, lineup: ['Wukong'] },
@@ -226,7 +226,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     const admin = await one<any>(q, `insert into users (name, email, password_hash, signup_method, role, city, locale, created_at) values ('FeestFinder Admin','admin@feestfinder.com',$1,'email','admin','TP.HCM','en',$2) returning id`, [adminHash, hours(24 * 400)]);
     const demo = await one<any>(q,
       `insert into users (name, email, phone, password_hash, signup_method, city, locale, interests, birth_year, payee_bank_bin, payee_bank_name, payee_account_no, payee_account_name, created_at)
-       values ('Minh Anh','minh@example.com','+84901234567',$1,'email','TP.HCM','en','{EDM,Indie,Nightlife}',1998,'970436','Vietcombank','0071008842','NGUYEN MINH ANH',$2) returning id`, [demoHash, hours(24 * 300)]);
+       values ('Minh Anh','minh@example.com','+84901234567',$1,'email','TP.HCM','en','{techno,house}',1998,'970436','Vietcombank','0071008842','NGUYEN MINH ANH',$2) returning id`, [demoHash, hours(24 * 300)]);
     const orgUser = await one<any>(q, `insert into users (name, email, phone, password_hash, signup_method, city, created_at) values ('Trần Minh','team@ravolution.vn','+84903112884',$1,'email','TP.HCM',$2) returning id`, [orgHash, hours(24 * 500)]);
     await q.query(`insert into social_connections (user_id, provider, external_id, display_name) values ($1,'fb','fb-minh-anh','Minh Anh')`, [demo.id]);
 
@@ -250,7 +250,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
               case when i % 25 < 11 then 'email' else 'zalo' end,
               case when i % 100 < 61 then 'TP.HCM' when i % 100 < 83 then 'Hà Nội' when i % 100 < 92 then 'Đà Nẵng' else '' end,
               1996 + i % 14,
-              case when i % 100 < 71 then '{EDM,Nightlife}'::text[] else '{Indie,Food}'::text[] end,
+              case when i % 100 < 71 then '{EDM,techno}'::text[] else '{house}'::text[] end,
               $1::timestamptz - make_interval(days => i % 365),
               case when i % 100 < 23 then $1::timestamptz - make_interval(hours => i % 150) else $1::timestamptz - make_interval(days => 8 + i % 60) end
          from generate_series(1, $2) i`, [now, people]);
@@ -286,10 +286,10 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
       const status = e.status ?? 'live';
       const paid = !!e.price;
       const row = await one<any>(q,
-        `insert into events (slug, organizer_id, title, genre, description, venue_id, venue_name, address, area, lat, lng, starts_on, ends_on, start_time, end_time,
+        `insert into events (slug, organizer_id, title, genre, styles, description, venue_id, venue_name, address, area, lat, lng, starts_on, ends_on, start_time, end_time,
                              entry_mode, price_from, capacity, age, lineup, artists, art, logo_url, cover_url, cover_sha256, ticket_url, event_url, brand_url, badge, featured,
                              sold_out, hype_count, status, published_at, submitted_at, decided_at, ticket_link_status, created_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) returning id`,
+         values ($1,$2,$3,$4,$39,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) returning id`,
         [slug, ids.org[e.org], e.title, e.genre, json(e.description ?? { en: '', vi: '' }),
           e.venue ? ids.venue[e.venue] : null, v ? v[0] : e.unresolved?.name ?? null, v ? v[1] : e.unresolved?.address ?? null, v ? v[2] : e.unresolved?.area ?? null,
           v ? v[3] : null, v ? v[4] : null, e.starts, e.ends ?? e.starts, e.time[0], e.time[1],
@@ -298,7 +298,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
           e.cover ? `https://assets.feestfinder.com/covers/${slug}.jpg` : null, e.cover ? sha256(e.cover) : null,
           e.ticketUrl ?? null, e.eventUrl ?? null, e.brandUrl ?? null, e.badge ?? null, !!e.featured, !!e.soldOut, e.hype ?? 0, status,
           status === 'live' ? hours(24 * 30) : null, null, null,
-          slug === 'edm-beach-bus' ? 'broken' : e.ticketUrl && status === 'in_review' ? 'ok' : null, hours(24 * 40)]);
+          slug === 'edm-beach-bus' ? 'broken' : e.ticketUrl && status === 'in_review' ? 'ok' : null, hours(24 * 40), e.styles ?? []]);
       ids.event[slug] = row.id;
       await refreshDerived(q, row.id, now);
     }
@@ -423,7 +423,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query(`update events e set save_count = (select count(*) from saves s where s.event_id = e.id)`);
     for (const slug of ['ravoent', 'hozoco', 'momangco']) await q.query('insert into organizer_follows (user_id, organizer_id) values ($1,$2)', [demo.id, ids.org[slug]]);
     await q.query(`insert into artist_follows (user_id, artist) values ($1,'Hoaprox')`, [demo.id]);
-    await q.query(`insert into smart_alerts (user_id, enabled, genres, areas, price_cap) values ($1, true, '{EDM}', '{Quận 1,Quận 3}', 1000000)`, [demo.id]);
+    await q.query(`insert into smart_alerts (user_id, enabled, genres, styles, areas, price_cap) values ($1, true, '{EDM}', '{house}', '{Quận 1,Quận 3}', 1000000)`, [demo.id]);
 
     // ---- timetables & site maps ----
     for (const [slug, days] of Object.entries(TIMETABLES)) {

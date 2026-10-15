@@ -40,11 +40,13 @@ function Gate({ lang, note, children }: { lang: Lang; note: string; children: Re
 
 // ---- notifications ------------------------------------------------------------------------
 
-interface Note { id: string; kind: string; title: Pair; body: Pair | null; link: { screen?: string; eventId?: string; friendId?: string } | null; unread: boolean; createdAt: string }
+interface Note { id: string; kind: string; title: Pair; body: Pair | null; link: { screen?: string; eventId?: string; friendId?: string; url?: string } | null; unread: boolean; createdAt: string }
 
 /** Where a notification's link leads in the app. */
 function hrefOf(n: Note): string {
   const l = n.link ?? {};
+  // A path on this site (never `//host`): the artist studio's answers, for one.
+  if (l.url && /^\/(?![/\\])/.test(l.url)) return l.url;
   if (l.eventId) {
     if (l.screen === 'live') return '/app/live/' + l.eventId;
     if (l.screen === 'recap') return '/app/recap/' + l.eventId;

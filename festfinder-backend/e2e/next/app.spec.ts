@@ -28,13 +28,13 @@ test.describe('the app', () => {
     const problems = await open(page, '/app');
     await expect(page.getByRole('heading', { level: 1, name: 'Có gì quanh bạn?' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Điều hướng chính' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'EDM' }).click();
-    await expect(page.getByRole('button', { name: 'EDM' })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Techno' }).click();
+    await expect(page.getByRole('button', { name: 'Techno' })).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Chọn thành phố khác' }).click();
     await page.getByRole('button', { name: 'TP.HCM' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toContainText('có gì chơi?');
-    // One family picked: Explore opens on it.
-    await expect(page.getByRole('group', { name: 'Thể loại' }).getByRole('button', { name: 'EDM' })).toHaveAttribute('aria-pressed', 'true');
+    // One style picked: Explore opens on it.
+    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: 'Techno' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('link', { name: 'Khám phá' })).toHaveAttribute('aria-current', 'page');
     // The choice stays on the device.
     await page.reload();
@@ -42,7 +42,7 @@ test.describe('the app', () => {
     expect(problems).toEqual([]);
   });
 
-  test('Explore: the time in the headline and the genre chips change the events', async ({ page }) => {
+  test('Explore: the time in the headline and the style chips change the events', async ({ page }) => {
     await returning(page);
     await open(page, '/app');
     const line = page.getByText(/\d+ sự kiện$/).first();
@@ -52,7 +52,7 @@ test.describe('the app', () => {
     await page.getByRole('button', { name: /Cuối tuần này/ }).click();
     await page.getByRole('menuitemradio', { name: /Tháng này/ }).click();
     await expect.poll(n).toBeGreaterThanOrEqual(weekend);
-    await page.getByRole('group', { name: 'Thể loại' }).getByRole('button', { name: 'EDM' }).click();
+    await page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: 'Techno' }).click();
     await expect(page.getByRole('link', { name: /Ravolution Music Festival/ }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /HOZO Super Fest/ })).toHaveCount(0);
     await page.getByRole('link', { name: /Ravolution Music Festival/ }).first().click();
@@ -171,7 +171,7 @@ test.describe('the app', () => {
     await returning(page);
     await signInWith(page, ATTENDEE);
     await open(page, '/app/profile');
-    await expect(page.getByText('5 đêm · 3 thể loại · 1 thành phố')).toBeVisible();
+    await expect(page.getByText('5 đêm · 3 dòng nhạc · 1 thành phố')).toBeVisible();
     await page.getByRole('button', { name: /^Wrapped 20\d\d$/ }).click();
     await expect(page.getByRole('dialog', { name: /^Wrapped 20\d\d$/ }).getByText('đêm đi chơi')).toBeVisible();
     await page.keyboard.press('Escape');

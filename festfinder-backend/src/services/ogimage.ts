@@ -2,7 +2,7 @@ import { crc32, deflateSync } from 'node:zlib';
 
 /*
  * The link-preview picture of an event without a cover: its genre's art, the same two-hue
- * body and lit sphere the screens draw in CSS (FF.genreArt), as a 1200×630 PNG. Facebook,
+ * body and lit sphere the site's genre art draws in CSS, as a 1200×630 PNG. Facebook,
  * Zalo and Google Discover want a raster image at least 1200 wide; there is no image
  * library on the server, so this paints the pixels and writes the PNG itself.
  */
@@ -12,7 +12,7 @@ export const OG_HEIGHT = 630;
 
 type Stop = [string, number];
 
-/** The CSS of FF.genreArt in ff-client.js: a 150° body gradient, and a sphere at 76% 72% sized by the farthest corner. */
+/** The genre art: a 150° body gradient and a sphere at 76% 72% sized by the farthest corner (the same stops as TONES in festfinder-web/src/runtime/ff.ts). */
 const TONES: Record<string, { body: Stop[]; ball: Stop[] }> = {
   fest: { body: [['#FFD29C', 0], ['#FF8709', 0.48], ['#E8388A', 1.18]], ball: [['#FFF1FE', 0], ['#FEC5FB', 0.12], ['#F100CB', 0.3]] },
   edm: { body: [['#BFF3FF', 0], ['#00BAE2', 0.48], ['#5A62E0', 1.2]], ball: [['#FFFCE1', 0], ['#FEC5FB', 0.12], ['#9D95FF', 0.3]] },
@@ -20,7 +20,8 @@ const TONES: Record<string, { body: Stop[]; ball: Stop[] }> = {
   culture: { body: [['#FFF1FE', 0], ['#FEC5FB', 0.45], ['#E86FD8', 1.2]], ball: [['#FFF3DF', 0], ['#FFB35C', 0.12], ['#FF8709', 0.3]] },
   brand: { body: [['#DFFFD1', 0], ['#ABFF84', 0.35], ['#0AE448', 0.75], ['#00BAE2', 1.3]], ball: [['#FFFCE1', 0], ['#DFFFD1', 0.12], ['#00BAE2', 0.3]] },
 };
-const GENRE_TONE: Record<string, string> = { Festival: 'fest', EDM: 'edm', Indie: 'live', Rock: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
+// Every event is EDM now; the other tones stay for the OG images already cached under their URLs.
+const GENRE_TONE: Record<string, string> = { EDM: 'edm' };
 export const toneOf = (genre: string | null | undefined) => GENRE_TONE[genre ?? ''] ?? 'brand';
 
 const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));

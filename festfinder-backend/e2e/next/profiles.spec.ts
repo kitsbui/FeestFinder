@@ -70,7 +70,7 @@ test('an organiser’s photo: added on its page, reported by a fan, removed by a
   await expect(page.getByText('Cảm ơn bạn, kiểm duyệt viên sẽ xem')).toBeVisible();
 
   await signInWith(page, ADMIN);
-  await open(page, '/console/reports');
+  await open(page, '/console/reports?tab=moments');
   const reported = page.getByRole('region', { name: 'Ảnh bị báo cáo' });
   await expect(reported.getByText(/Trên Ravolution Entertainment/)).toBeVisible();
   await reported.getByRole('button', { name: 'Gỡ ảnh' }).first().click();

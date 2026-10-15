@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { pick, type Lang, type Pair } from '../copy';
+import { STYLE_LABEL, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { Button, buttonClass, Chip } from '../ui/actions';
 import { FieldLabel, Input, Select, SwitchRow, TextArea } from '../ui/forms';
@@ -20,7 +21,7 @@ interface City { slug: string; name: Pair }
 interface Profile {
   slug: string; name: string; type: string; bio: Pair | null; logoUrl: string | null; coverUrl: string | null; website: string | null;
   legalName: string | null; taxCode: string | null; address: string | null; email: string | null; hotline: string | null; zalo: string | null;
-  contactName: string | null; contactRole: string | null; verified: boolean; markets: string[] | null; openForSubmissions: boolean;
+  contactName: string | null; contactRole: string | null; verified: boolean; markets: string[] | null; styles: string[] | null; openForSubmissions: boolean;
   links: Record<string, string> | null; members: { id: string; name: string; email: string; role: string }[]; myRole: string;
 }
 
@@ -96,13 +97,13 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
   const { busy, save } = useSave(lang, onSaved);
   const [f, setF] = useState({
     name: p.name, type: p.type, bioVi: p.bio?.vi ?? '', bioEn: p.bio?.en ?? '', website: p.website ?? '', logoUrl: p.logoUrl, coverUrl: p.coverUrl,
-    markets: p.markets ?? [], open: p.openForSubmissions, links: { ...(p.links ?? {}) } as Record<string, string>,
+    markets: p.markets ?? [], styles: (p.styles ?? []).filter((k) => STYLE_LABEL[k]), open: p.openForSubmissions, links: { ...(p.links ?? {}) } as Record<string, string>,
   });
   const submit = (e: FormEvent) => {
     e.preventDefault();
     save({
       name: f.name.trim(), type: f.type, bio: { vi: f.bioVi.trim(), en: f.bioEn.trim() || f.bioVi.trim() }, website: f.website.trim(),
-      logoUrl: f.logoUrl, coverUrl: f.coverUrl, markets: f.markets, openForSubmissions: f.open,
+      logoUrl: f.logoUrl, coverUrl: f.coverUrl, markets: f.markets, styles: f.styles, openForSubmissions: f.open,
       links: Object.fromEntries(LINKS.map(([k]) => [k, f.links[k]?.trim() || null])),
     });
   };
@@ -124,6 +125,15 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
           <legend className="kd-flabel mb-2">{T.bizMarkets}</legend>
           <div className="flex flex-wrap gap-1.5">
             {cities.map((c) => <Chip key={c.slug} on={f.markets.includes(c.slug)} onClick={() => setF({ ...f, markets: f.markets.includes(c.slug) ? f.markets.filter((x) => x !== c.slug) : [...f.markets, c.slug].slice(0, 12) })}>{c.name[lang]}</Chip>)}
+          </div>
+        </fieldset>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="kd-flabel mb-2">{T.bizStyles} <span className="font-normal text-fog">{T.bizStylesMax}</span></legend>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.keys(STYLE_LABEL).map((k) => {
+              const on = f.styles.includes(k);
+              return <Chip key={k} family="edm" on={on} disabled={!on && f.styles.length >= 8} onClick={() => setF({ ...f, styles: on ? f.styles.filter((x) => x !== k) : [...f.styles, k] })}>{styleLabel(k, lang)}</Chip>;
+            })}
           </div>
         </fieldset>
         <fieldset className="flex flex-col gap-2">

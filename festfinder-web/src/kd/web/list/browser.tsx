@@ -15,7 +15,7 @@ import { moneyShort, whenShort, count as fmtCount } from '../../format';
 import { FAMILY_LABEL, familyOf, type Family } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
-import { Button } from '../../ui/actions';
+import { Button, Chip } from '../../ui/actions';
 import { Input, Segmented } from '../../ui/forms';
 import { Menu, MenuItem, MenuSeparator, Picker } from '../../ui/menu';
 import { Card as Panel, Marker, Status, type StatusTone } from '../../ui/parts';
@@ -46,22 +46,20 @@ export interface Filters {
 }
 
 const TIMES: Time[] = ['all', 'tonight', 'weekend', '7days', 'month'];
-const FAMILIES: Family[] = ['fest', 'live', 'edm', 'cult', 'free'];
 /** The kinds of night and music styles the list offers as one picker (the legacy chips). */
 const TYPE_CHIPS = ['club', 'festival', 'concert'];
-const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass', 'hip-hop'];
+const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass'];
 
 export const DEFAULT: Filters = { city: 'all', time: 'all', family: null, genre: null, style: null, type: null, q: '', view: 'table', bbox: null };
 
 export function readFilters(q: URLSearchParams, meta: Meta): Filters {
   const time = q.get('time') as Time | null;
   const view = q.get('view') as View | null;
-  const fam = q.get('price') === 'free' ? 'free' : (q.get('family') as Family | null);
   const bbox = (q.get('bbox') || '').split(',').map(Number);
   return {
     city: meta.cities.some((c) => c.slug === q.get('city')) ? q.get('city')! : 'all',
     time: time && TIMES.includes(time) ? time : 'all',
-    family: fam && FAMILIES.includes(fam) ? fam : null,
+    family: q.get('price') === 'free' ? 'free' : null,
     genre: meta.genres.includes(q.get('genre') ?? '') ? q.get('genre') : null,
     style: q.get('style') || null,
     type: q.get('type') || null,
@@ -77,7 +75,6 @@ export function apiQuery(f: Filters, opts: { city?: boolean } = {}) {
   if (opts.city !== false && f.city !== 'all') q.set('city', f.city);
   if (f.genre) q.set('genre', f.genre);
   if (f.family === 'free') q.set('price', 'free');
-  else if (f.family) q.set('family', f.family);
   q.set('time', f.time);
   if (f.style) q.set('style', f.style);
   if (f.type) q.set('type', f.type);
@@ -90,7 +87,6 @@ function address(f: Filters, lang: Lang) {
   if (f.city !== 'all') q.set('city', f.city);
   if (f.genre) q.set('genre', f.genre);
   if (f.family === 'free') q.set('price', 'free');
-  else if (f.family) q.set('family', f.family);
   if (f.time !== 'all') q.set('time', f.time);
   if (f.style) q.set('style', f.style);
   if (f.type) q.set('type', f.type);
@@ -207,24 +203,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
         display={f.city === 'all' ? T.allCities : cityName(f.city)}
       />
       <Picker label={T.when} value={f.time} onChange={(v) => set({ time: v })} options={TIMES.map((t) => ({ value: t, label: timeLabel(t) }))} />
-      <Menu
-        label={T.genre}
-        trigger={(p) => (
-          <button type="button" {...p} ref={p.ref} className={cx('kd-chip', (f.family || f.genre) && 'kd-chip-on')} aria-label={T.genre}>
-            {f.family ? <Marker family={f.family} /> : null}
-            {f.family ? FAMILY_LABEL[f.family][lang] : f.genre ?? T.allGenres}
-          </button>
-        )}
-      >
-        <MenuItem checked={!f.family && !f.genre} onSelect={() => set({ family: null, genre: null })}>{T.allGenres}</MenuItem>
-        {FAMILIES.map((fam) => (
-          <MenuItem key={fam} checked={f.family === fam} icon={<Marker family={fam} />} onSelect={() => set({ family: fam, genre: null })}>{FAMILY_LABEL[fam][lang]}</MenuItem>
-        ))}
-        <MenuSeparator />
-        {meta.genres.map((gen) => (
-          <MenuItem key={gen} checked={f.genre === gen} icon={<Marker family={familyOf(gen)} />} onSelect={() => set({ genre: gen, family: null })}>{gen}</MenuItem>
-        ))}
-      </Menu>
+      <Chip family="free" on={f.family === 'free'} onClick={() => set({ family: f.family === 'free' ? null : 'free', genre: null })}>{FAMILY_LABEL.free[lang]}</Chip>
       <Menu
         label={T.kind}
         trigger={(p) => (

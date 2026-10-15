@@ -4,19 +4,18 @@ import { json, one } from '../../db/index.ts';
 /*
  * The sources FeestFinder starts with: public pages checked on 2026-10-05 to carry schema.org
  * Event data on pages robots.txt lets FeestFinderBot read. Production adds the missing ones
- * when it starts; elsewhere the team adds them from /ops/sources. Once added, a source is the
+ * when it starts; elsewhere the team adds them from /console/sources. Once added, a source is the
  * team's: it is never changed or re-enabled from here.
  *
  * Not here, and why: Ticketbox, Ticketmelon and Zaiko draw their listings in the browser
  * (nothing to read without their private APIs); Clubberia has no structured data; Bali
  * Buddies and The Observatory disallow crawlers; Resident Advisor and Facebook forbid it.
  *
- * Hà Nội, Đà Nẵng and Nha Trang (checked 2026-10-05): TicketGo's music list is the one public
- * source with event data, and most of it is Hà Nội. Hanoi Grapevine lists long exhibitions
- * with no calendar feed; Hanoi Rock City, Minh's Jazz, Sky36, Skylight, Nhà hát Hồ Gươm and
- * Nhà hát Trưng Vương publish no event data (or draw it in the browser); Danang Fantasticity's
- * festival calendar is an article. Bandsintown and Eventbrite wait for their own adapters.
- * Those cities' nights come from organisers and the community until a venue publishes data.
+ * FeestFinder lists electronic music only. WOMB and Savaya are electronic clubs; Megatix sells
+ * nightlife, and what names no style waits for review. TicketGo's music list and Ticketmaster
+ * cover every kind of music, so only records naming an EDM style get through (requireStyle).
+ * Hà Nội, Đà Nẵng and Nha Trang have no public electronic source with event data yet (checked
+ * 2026-10-05): their nights come from organisers and the community.
  */
 
 /** What a ticket seller also sells that is not a night out. */
@@ -56,11 +55,11 @@ export const STARTER_SOURCES: StarterSource[] = [
   },
   {
     adapter: 'website', name: 'TicketGo · Âm nhạc', url: 'https://ticketgo.vn/event/category/am-nhac', city: null, authority: 'ticketing', intervalMinutes: 720,
-    config: { follow: '^/event/[a-z0-9-]+$', maxPages: 20 },
+    config: { follow: '^/event/[a-z0-9-]+$', maxPages: 20, requireStyle: true },
   },
   {
     adapter: 'ticketmaster', name: 'Ticketmaster Singapore', url: null, city: 'singapore', authority: 'ticketing', intervalMinutes: 360,
-    config: { countryCode: 'SG', pages: 2 }, needs: 'TICKETMASTER_API_KEY',
+    config: { countryCode: 'SG', pages: 2, requireStyle: true }, needs: 'TICKETMASTER_API_KEY',
   },
 ];
 

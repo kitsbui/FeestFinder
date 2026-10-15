@@ -1,5 +1,6 @@
 /*
- * FeestFinder's map: MapLibre on the Bảng phấn board, shared by both fronts.
+ * FeestFinder's map: MapLibre and the loader the Kính đêm map uses (FFMap.load). The Bảng
+ * phấn map below it (FFMap.create, FFMap.session) has no caller left.
  *
  * It is loaded only when someone opens the map view, and it never fetches events itself:
  * the screen asks the API for the events inside the visible box when the map opens and

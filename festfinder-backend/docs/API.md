@@ -4,7 +4,7 @@ Grouped by the surface and screen in the design handoff. 🔒 needs a signed-in 
 
 Conventions (see the README): bilingual fields are `{en, vi}`; errors are `{error: {code, message, details}}`; lists page with `cursor` / `nextCursor`; money is integer VND; times are Ho Chi Minh City local.
 
-The four screens in `../festfinder-frontend/` call these endpoints directly. Each surface's `pages/<surface>/data.js` has one loader per screen — `FF.loadOrg` for the chrome, then `FF.orgDoor`, `FF.orgMoney` and so on — which is the quickest way to see what a given screen depends on.
+The site's screens, the Console, Studio and the artist studio (`festfinder-web/src/kd/`, through the proxy) call these endpoints; the screens' loaders are the quickest way to see what a given screen depends on.
 
 ---
 
@@ -29,8 +29,8 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre`; `artist`; `price=free,under,over`; `area`; `organizer`; `city=ho-chi-minh\|ha-noi\|da-nang\|nha-trang`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` counts, `window`. Ended events sort last. |
-| GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat`, `genre`, `free`, `friendsOnly`, `time`. Upcoming only. The screens no longer use it: the List tab (`/list`, `/app/list`; `/map` redirects there) reads `/events?time=all` and refreshes it every minute while open. |
+| GET | `/events` | Explore feed. `time=tonight\|weekend\|7days\|month\|all` (default `weekend`) or `from`/`to`; `q` (all dates, diacritic-insensitive); `genre` (only `EDM`); `style` (comma-separated EDM styles); `artist`; `price=free,under,over`; `area`; `organizer`; `city=ho-chi-minh\|ha-noi\|da-nang\|nha-trang`; `friendsOnly` 🔒; `sort=date\|hype\|price\|relevance` (relevance = followed organisers → featured → interests → soonest); `lat`/`lng` for distance; `limit` (6), `cursor`. Returns `items`, `total`, `hero`, `facets.time` and `facets.city` counts, `facets.style` (each style under every filter but the style) and `facets.free`, `window`. Ended events sort last. |
+| GET | `/events/map` | `bbox=minLng,minLat,maxLng,maxLat`, `genre`, `free`, `friendsOnly`, `time`. Upcoming only. The map views (`/list?view=map`, `/app/list`; `/map` redirects there) ask it when they open and on "search this area". |
 | GET | `/events/:idOrSlug` | Detail: facts, description, `tickets` (tier ladder with state `onsale\|last\|soldout\|soon`, `left`, price-rise note, `urgency`, `refundPolicy`), `timetable` (days → stages → sets with minute offsets), organiser card, `similar`, and for a signed-in viewer `me` (following, artist follows, set plan with `clashes`, reported, group plan). Organisers and admins can preview non-live listings. |
 | GET | `/explore/stats?view=free\|weekend\|venues` | Hero stat cards and their drill-downs; takes the same filters as `/events`. |
 | GET | `/organizers/:slug` | Profile with stats, upcoming and past events, `me.following`. |
@@ -89,7 +89,7 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | POST | `/posts/:id/reports` 🔒 | `{code: spam\|scalping\|abuse\|drugs\|personal\|other}`. Three open reports hide the post until the team decides. |
 | PATCH | `/posts/:id` 🔒 | The event's team or FeestFinder: `{pinned?, hidden?, official?}`. DELETE `/posts/:id`: the author, or the team. |
 | POST | `/events/:id/shares` | `{channel}` (`zalo`, `messenger`, `facebook`, `instagram`, `tiktok`, `threads`, `x`, `telegram`, `copy`, `native`, `story`) → the share URL, tagged `?ref=<code>&ch=<channel>` when signed in. `POST /events/:id/track` with `{source:'shared', ref, channel}` credits the sharer once per visitor. |
-| POST | `/community/events` 🔒📱 | Anyone sends an event in (title, genre, date, `endsOn?`, times, venue, `city`, entry, `sourceUrl`…). Five a day. It joins the review queue; the sender hears the decision. GET `/me/submissions`. |
+| POST | `/community/events` 🔒📱 | Anyone sends an event in (title, genre (`EDM`, the default), date, `endsOn?`, times, venue, `city`, entry, `sourceUrl`…). Five a day. It joins the review queue; the sender hears the decision. GET `/me/submissions`. |
 | POST | `/community/prefill` 🔒📱 | `{url}` → `{fields, source: structured\|ai, sourceUrl}` to fill the form in. The page's schema.org Event data first (free); otherwise Claude reads the page text. Public pages only (private addresses are refused at every redirect), 2 MB, 8 s. 30 pages and 10 AI reads per person per hour (`429 prefill_limit`); `503 prefill_unavailable` when AI is off. |
 | POST | `/community/prefill/poster` 🔒📱 | Multipart `file` (JPEG/PNG/WebP, 5 MB) → `{fields}` read from a poster by Claude. Same hourly cap. |
 | POST | `/events/:id/claims` 🏢 | `{note (10+ chars), proofUrl?}`: an organiser asks to take over an event the community sent in. One open request per organiser per event (`409 claim_pending`); `409 not_claimable` once an organiser runs it. |
@@ -134,8 +134,8 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 | POST | `/me/tickets/:id/wallet` 🔒 | `{platform: apple\|google}`. |
 | GET | `/events/:id/live` 🔒 | The organiser's `updates`; per stage: now playing (minutes left, progress), next, set list with states `played\|now\|next\|later` and your reminders; site zones; friends on site. |
 | PUT / DELETE | `/events/:id/presence` 🔒 | "Check in" on the day, optional `{zoneId}`. |
-| GET | `/me/passport` 🔒 | Raver passport: a stamp per night the door scanned you or you checked in, `stats` (nights, genres, venues, cities) and eight `badges` with `earned`. |
-| GET | `/me/wrapped?year=` 🔒 | The year in review: nights, top genre, artist and venue, first and last night, latest night, friends who were there, posts, helpful votes, people brought, tickets passed on, cities. |
+| GET | `/me/passport` 🔒 | Raver passport: a stamp per night the door scanned you or you checked in, `stats` (nights, styles, venues, cities) and eight `badges` with `earned`. |
+| GET | `/me/wrapped?year=` 🔒 | The year in review: nights, top style (`topStyle`), artist and venue, first and last night, latest night, friends who were there, posts, helpful votes, people brought, tickets passed on, cities. |
 | POST | `/events/:id/waves/:friendId` 🔒 | Once a minute. |
 | POST | `/events/:id/share-location` 🔒 | `{zoneId}` to your group plan. |
 
@@ -221,9 +221,9 @@ Successful sign-in returns `{token, expiresAt, created, user}` and sets the `ff_
 
 ---
 
-## Operations back office (/ops) 🛡
+## Operations back office (the Console) 🛡
 
-The team mode of `/ops` uses the admin endpoints above plus these. Every write is in the audit log.
+The Console (`/console`, `festfinder-web/src/kd/console/`) uses the admin endpoints above plus these. Every write is in the audit log.
 
 | Method | Path | Notes |
 | --- | --- | --- |

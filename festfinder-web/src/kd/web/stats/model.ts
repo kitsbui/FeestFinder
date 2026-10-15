@@ -13,20 +13,17 @@ export const isStatKey = (k: string): k is StatKey => (STAT_KEYS as readonly str
 export const TIMES = ['tonight', 'weekend', '7days', 'month'] as const;
 export type Time = (typeof TIMES)[number];
 
-/** The genre families the API filters by (lib/i18n.ts GENRE_FAMILIES); free is a stat of its own here. */
-const FAMILIES = ['fest', 'live', 'edm', 'cult'] as const;
-export type StatFamily = (typeof FAMILIES)[number];
-
 export interface StatFilters {
   time: Time;
   city: string | null;
-  family: StatFamily | null;
+  /** A music style (free is a stat of its own here). */
+  style: string | null;
   genre: string | null;
   q: string;
 }
 
 /** Where the legacy screen started: this weekend, everywhere, every genre. */
-export const NO_FILTERS: StatFilters = { time: 'weekend', city: null, family: null, genre: null, q: '' };
+export const NO_FILTERS: StatFilters = { time: 'weekend', city: null, style: null, genre: null, q: '' };
 
 /** What /meta/discovery gives the filters. */
 export interface Discovery {
@@ -63,33 +60,32 @@ const one = (sp: Search, k: string) => {
 export const langOf = (sp: Search): Lang => (one(sp, 'lang') === 'en' ? 'en' : 'vi');
 
 /**
- * The address's filters, kept only when the API takes them: a city it lists, a family or a
+ * The address's filters, kept only when the API takes them: a city it lists, a style or a
  * genre it knows (not both), a search of at most 100 characters. The weekend stat is always
  * this weekend.
  */
 export function readFilters(sp: Search, key: StatKey, d: Discovery): StatFilters {
   const time = one(sp, 'time') as Time;
   const city = one(sp, 'city');
-  const family = one(sp, 'family') as StatFamily;
   const genre = one(sp, 'genre');
-  const fam = FAMILIES.includes(family) ? family : null;
+  const style = /^[a-z-]{2,30}$/.test(one(sp, 'style')) ? one(sp, 'style') : null;
   return {
     time: key === 'weekend' ? 'weekend' : TIMES.includes(time) ? time : 'weekend',
     city: d.cities.some((c) => c.slug === city) ? city : null,
-    family: fam,
-    genre: !fam && d.genres.includes(genre) ? genre : null,
+    style,
+    genre: !style && d.genres.includes(genre) ? genre : null,
     q: one(sp, 'q').trim().slice(0, 100),
   };
 }
 
 /** Whether anything narrows the stat beyond where it starts. */
-export const isFiltered = (f: StatFilters) => f.time !== 'weekend' || !!f.city || !!f.family || !!f.genre || !!f.q;
+export const isFiltered = (f: StatFilters) => f.time !== 'weekend' || !!f.city || !!f.style || !!f.genre || !!f.q;
 
 /** The API's question for one stat under the filters; with no stat, the three counts alone. */
 export function apiPath(key: StatKey | null, f: StatFilters): string {
   const q = new URLSearchParams(key ? { view: key, time: f.time } : { time: f.time });
   if (f.city) q.set('city', f.city);
-  if (f.family) q.set('family', f.family);
+  if (f.style) q.set('style', f.style);
   if (f.genre) q.set('genre', f.genre);
   if (f.q) q.set('q', f.q);
   return '/explore/stats?' + q;
@@ -100,7 +96,7 @@ export function statHref(key: StatKey, f: StatFilters, lang: Lang): string {
   const q = new URLSearchParams();
   if (key !== 'weekend' && f.time !== 'weekend') q.set('time', f.time);
   if (f.city) q.set('city', f.city);
-  if (f.family) q.set('family', f.family);
+  if (f.style) q.set('style', f.style);
   if (f.genre) q.set('genre', f.genre);
   if (f.q) q.set('q', f.q);
   if (lang === 'en') q.set('lang', 'en');

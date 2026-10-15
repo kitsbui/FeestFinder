@@ -5,12 +5,12 @@ export const ABOUT = {
   title: { en: 'About FeestFinder', vi: 'Về FeestFinder' },
   headline: { en: 'One place to see what is on tonight', vi: 'Một nơi để biết tối nay có gì' },
   lede: {
-    en: 'FeestFinder lists festivals, live shows and night markets. Organisers publish for free, every listing is checked before it goes live, and tickets are sold by the organiser — we add no booking fee.',
-    vi: 'FeestFinder tập hợp lễ hội, show nhạc sống và chợ đêm. Nhà tổ chức đăng miễn phí, mọi tin đều được kiểm tra trước khi lên sóng, và vé do nhà tổ chức bán — chúng tôi không thu thêm phí đặt vé.',
+    en: 'FeestFinder lists electronic music: club nights, raves and EDM festivals. Organisers publish for free, every listing is checked before it goes live, and tickets are sold by the organiser — we add no booking fee.',
+    vi: 'FeestFinder tập hợp sự kiện nhạc điện tử: club, rave và lễ hội EDM. Nhà tổ chức đăng miễn phí, mọi tin đều được kiểm tra trước khi lên sóng, và vé do nhà tổ chức bán — chúng tôi không thu thêm phí đặt vé.',
   },
   metaDesc: {
-    en: 'Festivals, live shows and night markets in one place. How to reach FeestFinder: for people going out, organisers, brands and press.',
-    vi: 'Lễ hội, show nhạc sống và chợ đêm ở một nơi. Liên hệ FeestFinder: cho người đi chơi, nhà tổ chức, thương hiệu và báo chí.',
+    en: 'EDM club nights, raves and festivals in one place. How to reach FeestFinder: for people going out, organisers, brands and press.',
+    vi: 'Club, rave và lễ hội EDM ở một nơi. Liên hệ FeestFinder: cho người đi chơi, nhà tổ chức, thương hiệu và báo chí.',
   },
 
   // numbers

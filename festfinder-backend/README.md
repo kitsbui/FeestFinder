@@ -1,6 +1,6 @@
 # FeestFinder API
 
-The backend for all four FeestFinder surfaces in `design_handoff_festfinder/`: the public **Web** site, the attendee **App**, the **Organizer** back office and the internal **Admin** tool. One JSON API, Vietnamese-first, bilingual throughout.
+The backend for FeestFinder: the public **Web** site, the attendee **App**, **Studio** for organisers, the **artist studio** and the **Console** for the team, all drawn in Next.js ([`../festfinder-web`](../festfinder-web/README.md)). One JSON API, Vietnamese-first, bilingual throughout.
 
 - **Node 24 + TypeScript**, run directly (Node strips types, so there is no build step)
 - **Fastify 5**, **zod** validation
@@ -23,9 +23,9 @@ npm run db:check
 npm run dev
 ```
 
-The API is on http://localhost:4000, and it serves the four screens too — see [The screens](#the-screens). The same screens on Next.js, with server-rendered pages for search engines, are in [`../festfinder-web`](../festfinder-web/README.md). At startup the API checks the database's environment label, applies pending migrations and logs where the data goes (`database: supabase (…pooler.supabase.com)`, `environment: staging`); `GET /health` says the same.
+The API is on http://localhost:4000. The site itself is the Next.js app in [`../festfinder-web`](../festfinder-web/README.md), which proxies every other path here. At startup the API checks the database's environment label, applies pending migrations and logs where the data goes (`database: supabase (…pooler.supabase.com)`, `environment: staging`); `GET /health` says the same.
 
-There is no demo data outside the tests. Admins are the emails in `ADMIN_EMAIL`: each gets an account with no password, set with "Forgot password" on `/ops`. The team then adds organisers, venues and events on `/ops`.
+There is no demo data outside the tests. Admins are the emails in `ADMIN_EMAIL`: each gets an account and signs in to `/console` with Google. The team then adds organisers, venues and events there.
 
 In development every outbound push, Zalo, email or SMS message is printed to the console, OTP codes included, and the background jobs run (`JOBS_ENABLED=false` turns them off). On staging, `EXPOSE_DEV_CODES=true` also returns OTP codes in the response as `devCode`, and `PAYMENT_PROVIDER=mock` makes payments instant; production refuses both. The stand-in Facebook/Instagram sign-in only exists on the tests' embedded database.
 
@@ -39,35 +39,19 @@ In development every outbound push, Zalo, email or SMS message is printed to the
 | `npm run db:check` | Connect with `DATABASE_URL` the way the API does, say whether it is the production or the staging database, and report what is wrong, never the password |
 | `npm test` | Integration and unit tests, on the demo data and on an empty database (about 35 s on PGlite) |
 | `npm run typecheck` | `tsc --noEmit` for the server, then for the Playwright tests (with browser types) |
-| `npm run test:screens` | Playwright: every route of the four screens and Ops, served by this API, boots cleanly on the demo data and on an empty database |
-| `npm run test:screens:next` | The same routes on the Next.js app, plus its SEO pages, headers and offline tickets |
+| `npm run test:screens` | Playwright on a production build of the Next.js app with this API behind it (`e2e/next`): the site, its SEO pages, headers and offline tickets, the Console, Studio and the artist studio |
 
-The tests never touch Supabase: they run on in-memory PGlite, and the screen tests start their own APIs on throwaway embedded databases. The demo data from the prototypes (6,000 attendees, 28 events around the 18–20 Sep 2026 weekend, about 3,600 orders, with the clock pinned to 14 Sep by `FF_NOW`) lives in [`test/fixtures/seed.ts`](test/fixtures/seed.ts) and refuses to load into Supabase. To run the suite against a real Postgres server, point `TEST_DATABASE_URL` at a role that can create databases:
+The tests never touch Supabase: they run on in-memory PGlite, and the Playwright runs start their own APIs on throwaway embedded databases. The demo data from the prototypes (6,000 attendees, 28 events around the 18–20 Sep 2026 weekend, about 3,600 orders, with the clock pinned to 14 Sep by `FF_NOW`) lives in [`test/fixtures/seed.ts`](test/fixtures/seed.ts) and refuses to load into Supabase. To run the suite against a real Postgres server, point `TEST_DATABASE_URL` at a role that can create databases:
 
 ```bash
 TEST_DATABASE_URL=postgres://user:pass@localhost:5432/postgres npm test
 ```
 
-## The screens
+## Back offices
 
-`../festfinder-frontend/` holds the four design prototypes with their fake data replaced by calls to this API. With the server running they are served from the same origin, so the session cookie just works.
+The team's back office is the Console (`/console`), the organisers' is Studio (`/studio`) and the artists' is the artist studio (`/studio/artist`), all in the Next.js app. They replaced `/ops`, which this API served until 2026-10-14: its old addresses now redirect to the matching screen (`opsPath` in `routes/frontend.ts`). Every filter lives in the URL, and fixed lists (genres, districts, statuses, banks, reject reasons…) come from `GET /meta/form-options`, so forms pick rather than type.
 
-**Every screen, tab and panel has its own URL**, so anything can be linked, bookmarked and reopened, and back and forward work:
-
-| Surface | Routes | Sign-in |
-| --- | --- | --- |
-| Web | `/` · `/list` · `/saved` · `/about` · `/advertise` · `/e/:slug` · `/o/:slug` · `/stats/:key` (old `/map`, `/vi/…`, `/en/…` and `/city/…` links redirect to `/list`) | optional (Google first) |
-| App | `/app` · `/app/saved` · `/app/list` · `/app/profile` · `/app/tickets` · `/app/notifications` · `/app/alerts` · `/app/settings` · `/app/hyped` · `/app/following` · `/app/e/:slug` · `/app/live/:slug` · `/app/plan/:slug` · `/app/recap/:slug` · `/app/guide/:slug` · `/app/checkout/:slug` · `/app/chat/:friendId` | optional |
-| Organizer | `/studio` · `/studio/new` · `/studio/attendees` · `/studio/announce` · `/studio/door` · `/studio/promos` · `/studio/revenue` · `/studio/inbox` · `/studio/profile` | the design's own sign-in gate |
-| Admin | `/console` · `/console/verification` · `/console/reports` · `/console/featured` · `/console/ads` · `/console/insights` · `/console/audit` · `/console/appeals` | a small sign-in card (the design ships no admin gate) |
-| Ops | Team: `/ops` · `/ops/review/:id?` · `/ops/events` · `/ops/events/new` · `/ops/events/:id` · `/ops/reports` · `/ops/organizers/:id?` · `/ops/venues` · `/ops/featured` · `/ops/users/:id?` · `/ops/orders/:id?` · `/ops/audit` — Organizer: `/ops/org` · `/ops/org/events` · `/ops/org/events/new` · `/ops/org/events/:id` · `/ops/org/inbox/:threadId?` · `/ops/org/profile` | its own sign-in, with "forgot password" for accounts the team opened |
-| Dev | `/_console` — API explorer, using the session signed in on `/ops` (disabled in production) | — |
-
-**Ops** is the working back office, in two modes on one page: the FeestFinder team (review queue, catalogue, venues, organiser onboarding, accounts, orders, audit) and organisers (their listings, the event form, submit for review, messages from moderation). It is not a design prototype: plain ES modules on the vendored React, under the strict Content-Security-Policy (no `'unsafe-eval'`), styled with `ui/theme.css` plus `pages/ops/ops.css`. Every filter lives in the URL. Fixed lists (genres, districts, statuses, banks, reject reasons…) come from `GET /meta/form-options`, so forms pick rather than type.
-
-The back offices sit on `/studio`, `/console` and `/ops` because `/organizer/*` and `/admin/*` are API paths and a screen URL must never shadow an endpoint; both old entry points redirect. Point `FRONTEND_DIR` elsewhere to serve a different folder.
-
-**How a screen loads.** Each surface is a ~700-byte shell that fetches three cacheable chunks — `template.html`, `logic.js`, `data.js` — alongside the session and only the data the open route needs, then hands the lot to the prototype runtime. So a screen renders live data on its first paint, a tab switch is a URL change plus one small fetch, and the next route's data is warmed on idle. Opening `/studio/revenue` makes four API calls, not twenty; the app's feed makes nine, not seventeen. Everything static is served with an ETag and gzip, so repeat visits and moving between surfaces mostly hit cache: a first visit transfers 57–92 KB, of which 24 KB is the shared runtime that is then reused.
+The API explorer, `/_console`, uses the session signed in on the site in the same browser (disabled in production).
 
 Two notes:
 
@@ -101,22 +85,16 @@ src/
   services/            audit chain, notifications, outbox, payouts, risk, quality, tickets, AI guide, OAuth
   presenters/          event card/detail and timetable shapes shared by Web and App
   lib/                 VN time, VietQR, i18n, validation, CSV, image headers
-  routes/frontend.ts   serves the screens, their chunks, ETags and gzip
+  routes/frontend.ts   serves the /ui files (ETags, gzip, ?v= versions) and redirects the old /ops addresses
 test/                  node:test suites per surface
-  fixtures/            the demo data (seed.ts) and the empty database (empty.ts) the tests run on
+  fixtures/            the demo data (seed.ts) the tests run on
 ```
 
-The wired screens live next door, one folder per surface:
+The files the site loads from `/ui` live next door:
 
 ```
 ../festfinder-frontend/
-  pages/<surface>/     web · app · organizer · admin
-    shell.html         ~700 B: answers every route of the surface and calls FF.mount
-    template.html      the design's markup, fetched once and cached
-    logic.js           the design's component logic, with the routes for its screens
-    data.js            one loader per screen, so a route only fetches what it shows
-  ui/ff-client.js      shared glue: fetch helpers, router, session, clock, QR signing, sign-in card
-  ui/support.js        the prototype runtime from the handoff, unchanged
+  ui/                  fonts/, vendor/ (MapLibre, pmtiles), map/ff-map.js, assets/, _ds/
 ```
 
 ## Decisions worth knowing
@@ -158,9 +136,9 @@ The wired screens live next door, one folder per surface:
 
 **Filling in a sent-in event.** `POST /community/prefill` fetches the pasted page (public addresses only, every redirect checked, 2 MB, 8 s) and reads its schema.org Event data first; only a page without one goes to Claude, which also reads posters (`/community/prefill/poster`). The person checks the form before sending. Each person gets 30 pages and 10 AI reads an hour, logged in `ai_calls`.
 
-**The night itself.** Organisers post updates (a set running late, a quieter gate) from the event editor in `/ops`; with "notify" on, ticket holders and people going get them at once, at most ten a day. Attendees' memory and talk posts can carry a photo, which also lands on the event's photo wall. Each night the door scanned, or the person checked in, is a stamp in their raver passport (`/me/passport`), and `/me/wrapped` sums up their year; the App turns both into story images for Instagram.
+**The night itself.** Organisers post updates (a set running late, a quieter gate) from the event editor in Studio (`/studio/events/<id>`); with "notify" on, ticket holders and people going get them at once, at most ten a day. Attendees' memory and talk posts can carry a photo, which also lands on the event's photo wall. Each night the door scanned, or the person checked in, is a stamp in their raver passport (`/me/passport`), and `/me/wrapped` sums up their year; the App turns both into story images for Instagram.
 
-**Taking over a community event.** An organiser presses "I organise this" on an event the community sent in, with a note and a proof link; a moderator approves it in `/ops/claims`, which moves the event to their account and tells the person who sent it in.
+**Taking over a community event.** An organiser presses "I organise this" on an event the community sent in, with a note and a proof link; a moderator approves it in `/console/claims`, which moves the event to their account and tells the person who sent it in.
 
 ## Running it in production
 
@@ -178,12 +156,12 @@ Every outside service is switched on by its environment variables and logged ins
 | Search engines | `INDEXNOW_KEY`, `ALLOW_AI_TRAINING` | With a key (8–128 letters, digits or dashes), approved and changed event pages are announced to IndexNow every five minutes (Bing, and the assistants that search its index); the key is served at `/<key>.txt`. `robots.txt` lets AI search and answer crawlers (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot…) read every public page; training crawlers (GPTBot, ClaudeBot, Google-Extended, CCBot…) are turned away unless `ALLOW_AI_TRAINING=true`. Neither changes Google Search or its AI Overviews |
 | Abuse | `RATE_LIMIT_PER_MINUTE`, `TRUST_PROXY` | Per-client limit on the API (default 300/min), answered with `429` and `Retry-After`. Static files are exempt, and so are calls from our own network that carry no forwarding headers — the Next.js app rendering pages on the server. A browser's call through the Next.js proxy is always counted, whatever address it claims. The client address comes from `X-Forwarded-For` only when the peer is a trusted proxy (default: loopback and private networks), so a client talking to the API directly cannot fake it. Next.js passes on an `X-Forwarded-For` the client sent and never adds the client's own address, so in production put a load balancer or CDN in front of Next that appends or sets it; without one, every browser shares one limit and the API logs a warning |
 
-**Event and organiser pages for search engines and AI assistants.** There are no landing pages: each event and organiser page answers for itself, and the old `/vi/…`, `/en/…` and `/city/…` addresses redirect (301) to `/list` with the same city, genre and time filters. Two builders in `src/services/seo.ts`, `buildEventSeo` and `buildOrganizerSeo`, make everything a page says to crawlers; the API's own pages use them in-process and the Next.js app reads them from `GET /seo/events/:slug` and `GET /seo/organizers/:slug`.
+**Event and organiser pages for search engines and AI assistants.** There are no landing pages: each event and organiser page answers for itself, and the old `/vi/…`, `/en/…` and `/city/…` addresses redirect (301) to `/list` with the same city, genre and time filters (`/vi/…` and `/en/…` in the Next.js app's `src/lib/legacy.ts`, `/city/…` here). Two builders in `src/services/seo.ts`, `buildEventSeo` and `buildOrganizerSeo`, make everything a page says to crawlers; the Next.js app reads them from `GET /seo/events/:slug` and `GET /seo/organizers/:slug`, and the `.md` versions and `llms.txt` use them here.
 
-- **Two languages, two addresses.** The site opens in Vietnamese; the VI/EN switch in the floating bar changes it and the browser remembers the choice. `/e/:slug` and `/o/:slug` are Vietnamese and `?lang=en` English, each with its own canonical, `hreflang` links to the other, and the screen opening in that language, so a crawler that runs JavaScript sees the same language as the head.
+- **Two languages, two addresses.** The site opens in Vietnamese; `?lang=en` is English. `/e/:slug` and `/o/:slug` are Vietnamese and `?lang=en` English, each with its own canonical and `hreflang` links to the other.
 - **The head.** A title short enough for a search result, a factual description under 160 characters, `robots` allowing large image previews and full snippets, and Open Graph and Twitter tags. The preview image is the cover, or the event's genre art painted as a 1200×630 PNG at `/og/v1/<tone>.png` (`src/services/ogimage.ts`, no image library).
 - **One schema.org graph.** `Organization` and `WebSite` (FeestFinder), the `WebPage` with its dates, the event (`MusicEvent`, `Festival` or `FoodEvent`) with its offers (an `AggregateOffer` across tiers, with availability), place (a Vietnamese postal address, coordinates, a map link), performers and organiser, a `BreadcrumbList`, and a `FAQPage` of the organiser's answers only, since those are what the page shows as its FAQ.
-- **The facts as plain HTML.** Most AI crawlers run no script, so the page arrives with an answer first (what, when, where, how much, for whom, who plays, who organises), then the key facts, set times, tickets and their state, the organiser's latest updates, the FAQ, other editions, related events in the same city and genre, and when it last changed. The screen replaces it when it mounts.
+- **The facts as plain HTML.** Most AI crawlers run no script, so the page arrives with an answer first (what, when, where, how much, for whom, who plays, who organises), then the key facts, set times, tickets and their state, the organiser's latest updates, the FAQ, other editions, related events in the same city and genre, and when it last changed.
 - **Organiser pages** carry the same head and frame: an answer first (what they put on, where, since when, what is next), key facts (no private contact details), their upcoming and past events, and a `ProfilePage` graph with the organiser as an `Organization` listing its upcoming events.
 - **For AI agents that read text.** Every event and organiser page is also Markdown at the same address plus `.md` (`/e/ravo.md`, `/o/ravoent.md?lang=en`), linked from the page's head and pointing back to it as canonical. `/llms.txt` (llmstxt.org) says what FeestFinder is and lists every upcoming event and organiser by its Markdown address; `robots.txt` points to it. Search engines do not use llms.txt yet; agents browsing on someone's behalf can.
 - **Freshness.** Migration `013` keeps `events.updated_at` to real changes of what the page shows (counters do not count), and touches it when the organiser posts an update or answers a question. The sitemap lists every page in both languages with that date and its `hreflang` pairs, including events of the last six months; with `INDEXNOW_KEY`, each event or organiser page whose content changed since it was last announced goes to IndexNow within five minutes, in both languages.
@@ -192,7 +170,7 @@ Every outside service is switched on by its environment variables and logged ins
 
 **Community, discussion and resale (migration `010`).** Anyone whose phone number is proven by a code can post on an event page, or send an event in; it waits in the review queue like any listing, owned by the "Cộng đồng FeestFinder" organiser. A number typed into a profile is unproven, and never signs anyone in to that account. Tickets move between attendees as gifts or resold at no more than face value, until the event ends: each move gives the ticket a new QR version, and scanners refresh what changed every 20 seconds. FeestFinder holds a resale buyer's money and pays the seller two days after the event, from `/ops/orders → Pass vé`.
 
-**Security headers.** Every response carries helmet's headers. JSON answers have a strict Content-Security-Policy. The design-runtime shells get one that also allows `'unsafe-eval'`, because the prototype runtime evaluates the screens' logic from strings. The Next.js app does not need that.
+**Security headers.** Every response carries helmet's headers. JSON answers get a strict Content-Security-Policy, with no `'unsafe-eval'`; the Next.js app sets its own.
 
 **Several instances.** Background jobs take a Postgres advisory lock per job and tick, so any number of API instances can run with `JOBS_ENABLED=true` and each job still runs once.
 
@@ -220,7 +198,7 @@ A deployment's startup log names its database and environment (`database: supaba
 
 Migration `007` also closes Supabase's Data API over our tables: it serves the public schema to anyone with the project's anon key, and this API never uses it, so the `anon` and `authenticated` roles lose their grants and every table gets row level security with no policies.
 
-**CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright route tests against both fronts, on the demo data and on an empty database.
+**CI.** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs the suite on PGlite and on Postgres 18. It typechecks and builds the Next.js app, and runs the Playwright checks on a production build of the Next.js app with this API behind it.
 
 ## Before production: what still needs a real provider
 

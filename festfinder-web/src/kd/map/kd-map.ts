@@ -1,7 +1,9 @@
 /**
  * The Kính đêm map: MapLibre on the self-hosted PMTiles basemap (GET /map/style.json?theme=kd),
  * with events as glass pills (the family marker and a mono price, the chosen one in paper)
- * and clusters as hairline circles with a count. Like ui/map/ff-map.js it never fetches
+ * and clusters as hairline circles with a count, and place names as mono labels (.kd-area): on
+ * a bare board, with no basemap configured, they are all there is to see where things are.
+ * Like ui/map/ff-map.js it never fetches
  * events itself: the screen asks /events/map when the view opens and on "search this area",
  * then hands the result to setEvents(). Moving the map only says that it moved.
  *
@@ -23,6 +25,8 @@ export interface KdMapOptions {
   onSelect?: (id: string | null) => void;
   onMove?: () => void;
   zoomLabels?: { in: string; out: string };
+  /** Place names, [lng, lat]: shown zoomed out, and at every zoom on a bare board. */
+  places?: { name: string; at: [number, number] }[];
 }
 
 export interface KdMap {
@@ -67,6 +71,19 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
   const pins = new Map<string, { marker: any; button: HTMLButtonElement }>();
   const counts = new Map<number, any>();
   let me: any = null;
+  // Under the point, so a cluster on the city centre keeps its count readable.
+  const places = (opts.places ?? []).map((p) => {
+    const node = document.createElement('span');
+    node.className = 'kd-area';
+    node.setAttribute('aria-hidden', 'true');
+    node.textContent = p.name;
+    return new m.Marker({ element: node, anchor: 'top', offset: [0, 20] }).setLngLat(p.at).addTo(map);
+  });
+  let bare = true;
+  const syncPlaces = () => {
+    const show = bare || map.getZoom() < 7;
+    for (const p of places) p.getElement().style.display = show ? '' : 'none';
+  };
 
   const geo = () => ({
     type: 'FeatureCollection',
@@ -77,6 +94,9 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
 
   const ready = new Promise<void>((resolve) => map.on('load', () => resolve()));
   map.on('load', () => {
+    // No source in the style: the basemap is not configured, so the names stay at every zoom.
+    bare = Object.keys(map.getStyle().sources ?? {}).length === 0;
+    syncPlaces();
     map.addSource('kd-events', { type: 'geojson', data: geo(), cluster: true, clusterRadius: 52, clusterMaxZoom: 14 });
     map.addLayer({
       id: 'kd-clusters', type: 'circle', source: 'kd-events', filter: ['has', 'point_count'],
@@ -159,6 +179,7 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
     map.easeTo({ center: f.geometry.coordinates, zoom: Math.min(zoom, 16) });
   });
   map.on('click', (e: any) => { if (!e.defaultPrevented) opts.onSelect?.(null); });
+  map.on('zoomend', syncPlaces);
   map.on('mouseenter', 'kd-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'kd-clusters', () => { map.getCanvas().style.cursor = ''; });
   // Only the visitor's own moves count; fitting to a city or a cluster does not.
@@ -202,6 +223,7 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
       if (timer) clearTimeout(timer);
       pins.forEach((p) => p.marker.remove());
       counts.forEach((c) => c.remove());
+      places.forEach((p) => p.remove());
       me?.remove();
       map.remove();
     },

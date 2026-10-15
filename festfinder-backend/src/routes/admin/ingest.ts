@@ -73,13 +73,18 @@ export default async function adminIngestRoutes(app: FastifyInstance) {
     };
   });
 
+  /** Resident Advisor and Facebook (and Instagram) forbid automated reading: never a source, on creation or on an edit. */
+  const refuseBlocked = (url: string | null | undefined) => {
+    if (url && /(^|\.)(ra\.co|residentadvisor\.net|facebook\.com|instagram\.com)$/.test(hostOf(url) ?? '')) {
+      throw badRequest('source_not_allowed', L('FeestFinder does not read this site automatically', 'FeestFinder không tự động đọc trang này'));
+    }
+  };
+
   app.post('/admin/sources', async (req, reply) => {
     const s = requireAdmin(req);
     const b = parse(SourceInput, req.body);
     if (b.adapter !== 'ticketmaster' && !b.url) throw badRequest('url_required', L('Add the address to read', 'Nhập địa chỉ cần đọc'));
-    if (b.url && /(^|\.)(ra\.co|residentadvisor\.net|facebook\.com|instagram\.com)$/.test(hostOf(b.url) ?? '')) {
-      throw badRequest('source_not_allowed', L('FeestFinder does not read this site automatically', 'FeestFinder không tự động đọc trang này'));
-    }
+    refuseBlocked(b.url);
     const row = await one<{ id: string }>(ctx.db,
       `insert into ingest_sources (adapter, name, url, city, authority, config, interval_minutes, enabled, created_by, next_run_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
@@ -109,6 +114,7 @@ export default async function adminIngestRoutes(app: FastifyInstance) {
     requireAdmin(req);
     const id = parse(uuid, req.params.id);
     const b = parse(SourceInput.partial(), req.body);
+    refuseBlocked(b.url);
     const cols: Record<string, unknown> = {
       name: b.name, url: b.url, city: b.city, authority: b.authority, config: b.config === undefined ? undefined : json(b.config),
       interval_minutes: b.intervalMinutes, enabled: b.enabled,

@@ -4,9 +4,9 @@ import { SITE_URL } from '@/lib/api';
 
 export const siteMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: 'FeestFinder — lễ hội, show và chợ đêm ở TP.HCM', template: '%s · FeestFinder' },
+  title: { default: 'FeestFinder — club, rave và lễ hội EDM', template: '%s · FeestFinder' },
   description:
-    'Tìm lễ hội, show nhạc và chợ đêm ở TP.HCM tối nay và cuối tuần này. Festivals, gigs and night markets in Ho Chi Minh City.',
+    'Tìm club, rave và lễ hội EDM tối nay và cuối tuần này. EDM club nights, raves and festivals in Asia.',
   applicationName: 'FeestFinder',
   openGraph: { siteName: 'FeestFinder', locale: 'vi_VN', alternateLocale: ['en_US'], type: 'website' },
   // The ICO first with its size, so browsers that read SVG favicons still choose the SVG,

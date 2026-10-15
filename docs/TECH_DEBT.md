@@ -24,7 +24,7 @@ Found in the 2026-10-05 audit, ranked by how much each item blocks the Asia even
 | 11 | `prefillFromJsonLd` converts to Vietnam time and returns form fields, not instants | `services/prefill.ts` | Generalise into a JSON-LD normaliser that keeps the source offset; the form keeps using it |
 | 12 | `CLAUDE.md` said the next migration was `015`, but `015_collections.sql` had shipped | `CLAUDE.md` | Fixed: the next is `017` |
 | 13 | `ops.ts` `AREA_GROUPS` uses pre-2025 districts | `routes/admin/ops.ts` | Noted on 2026-10-01; unrelated to this plan |
-| 14 | Seed covers point at a dead host `assets.feestfinder.com` | `test/fixtures/seed.ts` | Tests only; `/ops` falls back to gradients |
+| 14 | Seed covers point at a dead host `assets.feestfinder.com` | `test/fixtures/seed.ts` | Tests only; the screens fall back to gradients |
 | 15 | No linter | repo | The unused-code typecheck covers most of it; leave as is |
 
 ## Resolved on 2026-10-05
@@ -33,6 +33,5 @@ Items 1–8 and 10–12 were handled by phases 1–8. The Vietnam helpers in `li
 
 ## Accepted, not debt
 
-- Two fronts (API-served and Next) for the same screens. This is deliberate, and a change to `ff-client.js` needs the same change in `festfinder-web/src/runtime/ff.ts`.
 - One Postgres database with no separate ingestion service. The brief allows keeping the stack, and the ingestion load (a few thousand pages a day) fits in the existing jobs.
 - No Playwright or headless browser on Vercel. Sources must expose JSON-LD, ICS or an API; browser scraping stays out (brief §35).

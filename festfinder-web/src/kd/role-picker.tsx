@@ -1,8 +1,8 @@
 'use client';
 /**
  * After a first sign-in: fan, artist or organiser. Every account is a fan; an artist or an
- * organiser profile is created (or an existing listing claimed) and its workspace in /ops
- * opens. Admin never comes from here (CLAUDE.md: only the ADMIN_EMAIL allowlist).
+ * organiser profile is created (or an existing listing claimed) and its workspace opens (the
+ * artist studio, or Studio). Admin never comes from here (CLAUDE.md: only the ADMIN_EMAIL allowlist).
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { HeadphonesIcon, MicrophoneStageIcon, StorefrontIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
@@ -70,10 +70,10 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
     try {
       if (step === 'artist') {
         await FF.post('/me/roles/artist', { stageName: name.trim(), roles: Object.keys(roles).filter((k) => roles[k]), basedCity: city || null });
-        location.assign('/ops/artist');
+        location.assign('/studio/artist');
       } else {
         await FF.post('/me/roles/organizer', { name: name.trim(), type, city: city || null });
-        location.assign('/ops/org');
+        location.assign('/studio');
       }
     } catch (e) {
       setBusy(false);

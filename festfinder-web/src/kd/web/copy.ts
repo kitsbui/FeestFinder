@@ -11,7 +11,7 @@ export const WEB = {
   explore: { en: 'Explore', vi: 'Khám phá' },
   map: { en: 'Map', vi: 'Bản đồ' },
   artists: { en: 'Artists', vi: 'Nghệ sĩ' },
-  genres: { en: 'Genres', vi: 'Thể loại' },
+  genres: { en: 'Styles', vi: 'Dòng nhạc' },
   search: { en: 'Search', vi: 'Tìm kiếm' },
   searchPh: { en: 'Events, artists, venues…', vi: 'Sự kiện, nghệ sĩ, địa điểm…' },
   searchGo: { en: 'Search', vi: 'Tìm' },

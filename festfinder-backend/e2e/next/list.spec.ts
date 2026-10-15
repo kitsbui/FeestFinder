@@ -34,19 +34,22 @@ test.describe('the list', () => {
     await page.getByRole('button', { name: 'Kiểu đêm' }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
     await expect(page).toHaveURL(/style=techno/);
-    await expect(page.getByText('Không có sự kiện nào khớp')).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(page.getByRole('row').filter({ hasText: 'HOZO' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Kiểu đêm' }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
-    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(page.getByRole('row').filter({ hasText: 'HOZO' })).toHaveCount(1);
   });
 
   test('the old city landing pages land on the list with their filters', async ({ page }) => {
     await page.goto('/vi/ho-chi-minh/edm/this-weekend');
     await expect(page).toHaveURL(/\/list\?city=ho-chi-minh&genre=EDM&time=weekend(&lang=vi)?$/);
-    await expect(page.getByRole('main').getByRole('button', { name: 'Thể loại' })).toContainText('EDM');
+    // Every event is EDM: the genre narrows nothing.
     const rows = page.getByRole('row');
     await expect(rows.filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await expect(rows.filter({ hasText: 'HOZO' })).toHaveCount(0);
+    await expect(rows.filter({ hasText: 'HOZO' })).toHaveCount(1);
+    await page.goto('/vi/ho-chi-minh/night-market');
+    await expect(page).toHaveURL(/\/list\?city=ho-chi-minh(&lang=vi)?$/);
   });
 
   test('a search from anywhere lands here with the words in the address', async ({ page }) => {
@@ -63,6 +66,9 @@ test.describe('the list', () => {
     await page.goto('/list?city=ho-chi-minh&view=map');
     const map = page.locator('[data-kd-map]');
     await expect(map.locator('canvas')).toBeVisible();
+    // With no basemap configured, the city names are what there is to see where things are.
+    await expect(map.locator('.kd-area', { hasText: 'TP.HCM' })).toBeVisible();
+    await expect(map.locator('.kd-area', { hasText: 'Hà Nội' })).toBeAttached();
     await expect.poll(() => asked.length).toBe(1);
     await expect(page.getByText(/\d+ sự kiện · gần nhất trước/)).toBeVisible();
     const box = (await map.boundingBox())!;

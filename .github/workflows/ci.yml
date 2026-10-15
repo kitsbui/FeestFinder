@@ -73,7 +73,7 @@ jobs:
 
       - run: npm ci
 
-      # Compiles the design templates to TSX, then checks them with everything else.
+      # Generates the route types, then checks everything with them. The build copies public/ui.
       - name: Typecheck
         run: npm run typecheck
 
@@ -88,8 +88,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The design runtime served by the API, and the same screens on Next.js.
-        front: [design, next]
+        # The Next.js site and its back offices, with a fresh API behind it.
+        front: [next]
     steps:
       - uses: actions/checkout@v7
 
@@ -105,7 +105,6 @@ jobs:
         working-directory: festfinder-backend
 
       - run: npm ci
-        if: matrix.front == 'next'
         working-directory: festfinder-web
 
       # The Chromium build that matches the Playwright version in the lockfile.
@@ -114,7 +113,7 @@ jobs:
         working-directory: festfinder-backend
 
       - name: Smoke-test every route
-        run: npm run ${{ matrix.front == 'next' && 'test:screens:next' || 'test:screens' }}
+        run: npm run test:screens
         working-directory: festfinder-backend
         env:
           NEXT_TELEMETRY_DISABLED: '1'

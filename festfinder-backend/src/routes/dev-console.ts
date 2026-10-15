@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 
 /**
  * A small API explorer at `/_console` for local development: click a request, see the JSON.
- * Requests carry the session of whoever signed in on /ops in the same browser. Not served
+ * Requests carry the session of whoever signed in on the site in the same browser. Not served
  * in production.
  */
 const PAGE = `<!doctype html>
@@ -49,7 +49,7 @@ const PAGE = `<!doctype html>
   <h1>Fest<span>Finder</span> API</h1>
   <div class="who">
     <span id="who">Signed out</span>
-    <a class="pill" href="/ops" target="_blank" rel="noopener">Sign in on /ops</a>
+    <a class="pill" href="/console" target="_blank" rel="noopener">Sign in on the site</a>
     <button id="lang">EN</button>
   </div>
 </header>
@@ -61,7 +61,7 @@ const PAGE = `<!doctype html>
       <button id="send">Send</button>
       <span id="status" class="status">GET</span>
     </div>
-    <pre id="out"><div class="hint">Pick a request on the left, or type a path and press Send. Requests marked <span class="lock">sign in</span> need an account: sign in on /ops in this browser, then reload. The full reference is in <code>docs/API.md</code>.</div></pre>
+    <pre id="out"><div class="hint">Pick a request on the left, or type a path and press Send. Requests marked <span class="lock">sign in</span> need an account: sign in on the site in this browser, then reload. The full reference is in <code>docs/API.md</code>.</div></pre>
   </section>
 </main>
 <script>

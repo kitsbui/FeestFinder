@@ -12,6 +12,7 @@ import { fill, pick, type Pair } from '../copy';
 import { cx } from '../cx';
 import { count, dayMonth } from '../format';
 import { familyOf, g } from '../genre';
+import { KdLink } from '../link';
 import { useKd } from '../runtime';
 import { Button, buttonClass } from '../ui/actions';
 import { BarRow, LineChart } from '../ui/charts';
@@ -32,13 +33,18 @@ interface Perf {
   boost: { status: 'open' | 'done' | 'declined' } | null;
 }
 
+interface Clicks { clicks: number; byPlacement: Tally[]; byDevice: Tally[]; byCountry: Tally[]; byEvent: { id: string; title: string; n: number }[] }
+interface Tally { key: string | null; n: number }
+
 export function Dashboard() {
-  const { lang, events, event, setEvent } = useStudio();
+  const { lang, org, events, event, setEvent } = useStudio();
   const T = pick(STUDIO, lang);
   const kd = useKd();
   const [range, setRange] = useState<Range>('14d');
   const [perf, setPerf] = useState<Perf | null | undefined>(undefined);
   const [todo, setTodo] = useState<{ eventId: string; text: Pair }[]>([]);
+  const [clicks, setClicks] = useState<Clicks | null>(null);
+  const [gaps, setGaps] = useState<string[] | null>(null);
   const load = useCallback(async () => {
     if (!event?.hasPerformance) { setPerf(null); return; }
     setPerf(undefined);
@@ -47,7 +53,16 @@ export function Dashboard() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     FF.maybe(FF.get('/organizer/dashboard?range=30d'), null).then((d: { todo: { eventId: string; text: Pair }[] } | null) => setTodo(d?.todo ?? []));
+    FF.maybe(FF.get('/organizer/affiliate?days=30'), null).then(setClicks);
   }, []);
+  // Verification is on the same list: what the profile still lacks before FeestFinder can check it.
+  useEffect(() => {
+    if (org.verified) { setGaps(null); return; }
+    FF.maybe(FF.get('/organizer/profile'), null).then((p: { legalName: string | null; taxCode: string | null; bank: unknown } | null) => {
+      if (p) setGaps([[p.legalName, T.gapLegal], [p.taxCode, T.gapTax], [p.bank, T.gapBank]].filter(([ok]) => !ok).map(([, l]) => l as string));
+    });
+  }, [org.verified, T.gapLegal, T.gapTax, T.gapBank]);
+  const sentBack = events.filter((e) => e.status === 'rejected');
 
   const free = event?.entryMode === 'free';
   const pct = (a: number, b: number) => (b ? `${(Math.round((a / b) * 1000) / 10).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}%` : '0%');
@@ -67,6 +82,7 @@ export function Dashboard() {
           <>
             <Segmented label={T.range} value={range} onChange={setRange} options={(['7d', '14d', '30d'] as Range[]).map((r) => ({ value: r, label: fill(T.days, { n: r.slice(0, -1) }) }))} />
             {event?.status === 'live' ? <a className={buttonClass({ size: 'sm' })} href={'/e/' + event.slug}>{T.viewPage}<ArrowUpRightIcon size={14} aria-hidden="true" /></a> : null}
+            {event ? <KdLink className={buttonClass({ size: 'sm' })} href={'/studio/events/' + event.id}>{T.wEdit}</KdLink> : null}
           </>
         )}
       />
@@ -120,7 +136,7 @@ export function Dashboard() {
 
       <div className="kd-split gap-3">
         <Panel as="section" className="kd-main overflow-hidden" aria-label={T.yourEvents}>
-          <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4"><span className="kd-h">{T.yourEvents}</span><span className="kd-m">{T.pickRow}</span></div>
+          <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4"><span className="kd-h">{T.yourEvents}</span><span className="flex items-center gap-3"><span className="kd-m max-sm:hidden">{T.pickRow}</span><KdLink className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href="/studio/events">{T.evAll}</KdLink></span></div>
           <div className="overflow-x-auto"><div className="min-w-[540px]">
           <Table cols={cols} label={T.yourEvents} head={[T.colEvent, T.colDate, T.colStatus, T.colFill]}>
             {events.map((e) => {
@@ -150,10 +166,31 @@ export function Dashboard() {
               {perf.sources.map((s) => <BarRow key={s.key} label={srcLabel[s.key] ?? s.key} value={s.pct} max={perf.sources[0].pct} display={s.pct + '%'} />)}
             </Panel>
           ) : null}
-          {todo.length ? (
+          {clicks?.clicks ? (
+            <Panel as="section" className="flex flex-col gap-3 p-5" aria-label={T.clicks30}>
+              <div className="flex items-baseline justify-between gap-3"><span className="kd-h">{T.clicks30}</span><span className="kd-d3 kd-num">{count(clicks.clicks, lang)}</span></div>
+              {([[T.byEvent, clicks.byEvent.map((r) => ({ key: r.title, n: r.n }))], [T.byPlacement, clicks.byPlacement], [T.byDevice, clicks.byDevice], [T.byCountry, clicks.byCountry]] as [string, Tally[]][]).map(([title, rows]) => rows.length ? (
+                <div key={title} className="flex flex-col gap-1.5 border-t border-line pt-3">
+                  <span className="kd-m">{title}</span>
+                  {rows.slice(0, 4).map((r) => <BarRow key={String(r.key)} label={r.key ?? '—'} value={r.n} max={rows[0].n} display={count(r.n, lang)} />)}
+                </div>
+              ) : null)}
+            </Panel>
+          ) : null}
+          {todo.length || sentBack.length || gaps ? (
             <Panel className="px-5 py-1">
-              <Accordion small summary={T.todo} aside={todo.length} open>
+              <Accordion small summary={T.todo} aside={todo.length + sentBack.length + (gaps ? 1 : 0)} open>
                 <ul className="flex flex-col gap-2.5">
+                  {sentBack.map((e) => (
+                    <li key={'r' + e.id} className="kd-s">
+                      <KdLink className="hover:text-paper" href={'/studio/events/' + e.id}>{fill(T.todoSentBack, { t: e.title, r: e.lastDecision?.reason?.[lang] ?? T.evRejected })}</KdLink>
+                    </li>
+                  ))}
+                  {gaps ? (
+                    <li className="kd-s">
+                      <KdLink className="hover:text-paper" href="/studio/profile">{gaps.length ? fill(T.todoVerify, { m: gaps.join(', ') }) : T.todoVerifyWait}</KdLink>
+                    </li>
+                  ) : null}
                   {todo.map((t, i) => (
                     <li key={i} className="kd-s">
                       {events.some((e) => e.id === t.eventId && (e.status === 'draft' || e.status === 'rejected'))

@@ -113,7 +113,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                 </div>
                 <ShareCollection lang={lang} name={col.name} url={inLang(col.url, lang)} slug={col.slug} story={story} />
               </div>
-              <div className="mt-7 grid auto-cols-fr grid-flow-col border-y border-line py-4.5">
+              <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
                 <Stat value={count(col.items.length, lang)} label={T.events} />
                 <Stat value={count(upcoming.length, lang)} label={T.upcoming} />
                 {cities.length ? <Stat value={count(cities.length, lang)} label={T.cities} /> : null}

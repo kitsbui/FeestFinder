@@ -85,9 +85,9 @@
   --radius-pill: 9999px;
 
   /* ---- layout ---- */
-  --breakpoint-tab: 760px;     /* wrap gutters 16 → 32 */
+  --breakpoint-tab: 760px;     /* page gutters 16 → 32 → 64 */
   --breakpoint-desk: 900px;    /* hide-sm / show-sm, side nav becomes a column */
-  --container-wrap: 1200px;    /* max-w-wrap */
+  --container-read: 760px;     /* max-w-read: reading measure */
 
   /* ---- motion ---- */
   --ease-ff: cubic-bezier(0.4, 0, 0.2, 1);

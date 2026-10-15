@@ -11,7 +11,7 @@ import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { dayMonth, km, money, moneyShort, weekdayLong, whenShort } from '../format';
-import { FAMILY_LABEL, familyOf, g, type Family } from '../genre';
+import { FAMILY_LABEL, familyOf, g, styleChips, styleLabel } from '../genre';
 import { KdLink as Link } from '../link';
 import { useKd } from '../runtime';
 import { Button, buttonClass, Chip, IconButton } from '../ui/actions';
@@ -31,10 +31,11 @@ export type TimeKey = 'tonight' | 'weekend' | '7days' | 'month';
 export interface City { slug: string; name: { vi: string; en: string }; timezone: string; center: [number, number] | null; bbox: [number, number, number, number] | null }
 interface Feed {
   items: Card[]; total: number; nextCursor: string | null; hero: Card | null;
-  facets: { time: Record<TimeKey, number>; city: Record<string, number>; family: Record<Family, number> };
+  facets: { time: Record<TimeKey, number>; city: Record<string, number>; style: Record<string, number>; free: number };
 }
 const TIMES: TimeKey[] = ['tonight', 'weekend', '7days', 'month'];
-const FAMILIES: Family[] = ['fest', 'live', 'edm', 'cult', 'free'];
+/** What the onboarding offers: the main EDM styles. */
+const LIKE_STYLES = ['techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'dubstep', 'bass'];
 const PAGE = 20;
 
 /** /meta/discovery, once per page. */
@@ -90,7 +91,8 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
   const kd = useKd();
   const [city, setCity] = useCity(meta);
   const [time, setTime] = useState<TimeKey>('weekend');
-  const [family, setFamily] = useState<Family | null>(() => { const l = place.likes(); return l.length === 1 ? l[0] : null; });
+  // A style key, or 'free'. One style liked at onboarding opens Explore on it.
+  const [family, setFamily] = useState<string | null>(() => { const l = place.likes(); return l.length === 1 ? l[0] : null; });
   const [feed, setFeed] = useState<Feed | null>(null);
   const [items, setItems] = useState<Card[]>([]);
   const [busy, setBusy] = useState(false);
@@ -104,7 +106,7 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
     const q = new URLSearchParams({ time, limit: String(PAGE), upcoming: '1' });
     if (city) q.set('city', city);
     if (family === 'free') q.set('price', 'free');
-    else if (family) q.set('family', family);
+    else if (family) q.set('style', family);
     if (at) { q.set('lat', String(at.lat)); q.set('lng', String(at.lng)); }
     if (cursor) q.set('cursor', cursor);
     return '/events?' + q;
@@ -191,9 +193,10 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
 
       <div className="kd-hscroll px-4 pt-4" role="group" aria-label={T.genres}>
         <Chip on={!family} onClick={() => setFamily(null)}>{T.allGenres}</Chip>
-        {FAMILIES.map((f) => (
-          <Chip key={f} family={f} on={family === f} onClick={() => setFamily(family === f ? null : f)}>{FAMILY_LABEL[f][lang]}</Chip>
+        {[...new Set([...(family && family !== 'free' ? [family] : []), ...styleChips(feed?.facets?.style)])].map((f) => (
+          <Chip key={f} family="edm" on={family === f} onClick={() => setFamily(family === f ? null : f)}>{styleLabel(f, lang)}</Chip>
         ))}
+        <Chip family="free" on={family === 'free'} onClick={() => setFamily(family === 'free' ? null : 'free')}>{FAMILY_LABEL.free[lang]}</Chip>
       </div>
 
       {hero ? (
@@ -287,15 +290,15 @@ function SearchSheet({ lang, city, onClose }: { lang: Lang; city: string | null;
 function Onboarding({ lang, meta, onDone }: { lang: Lang; meta: { defaultCity: string; cities: City[] }; onDone: () => void }) {
   const T = pick(APP, lang);
   const kd = useKd();
-  const [likes, setLikes] = useState<Family[]>(() => place.likes());
-  const [count, setCount] = useState<Record<Family, number> | null>(null);
+  const [likes, setLikes] = useState<string[]>(() => place.likes());
+  const [count, setCount] = useState<{ style: Record<string, number>; total: number } | null>(null);
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    FF.maybe(FF.get('/events?time=7days&limit=1&upcoming=1'), null).then((r: any) => r?.facets?.family && setCount(r.facets.family));
+    FF.maybe(FF.get('/events?time=7days&limit=1&upcoming=1'), null).then((r: any) => r?.facets?.style && setCount({ style: r.facets.style, total: r.total }));
   }, []);
-  const matching = count ? (likes.length ? likes : (['fest', 'live', 'edm', 'cult'] as Family[])).reduce((s, f) => s + (count[f] ?? 0), 0) : null;
-  const toggle = (f: Family) => setLikes((xs) => (xs.includes(f) ? xs.filter((x) => x !== f) : [...xs, f]));
+  const matching = count ? (likes.length ? Math.min(count.total, likes.reduce((s, k) => s + (count.style[k] ?? 0), 0)) : count.total) : null;
+  const toggle = (f: string) => setLikes((xs) => (xs.includes(f) ? xs.filter((x) => x !== f) : [...xs, f]));
   const finish = (city: string) => {
     place.setCity(city);
     place.setLikes(likes);
@@ -315,17 +318,15 @@ function Onboarding({ lang, meta, onDone }: { lang: Lang; meta: { defaultCity: s
       { enableHighAccuracy: false, timeout: 8000 },
     );
   };
-  // Twelve tiles in the colours of the picks (every family when none is picked).
-  const shown: Family[] = likes.length ? likes : ['fest', 'live', 'edm', 'cult'];
   return (
-    <div className="flex min-h-dvh flex-col pb-[calc(20px+env(safe-area-inset-bottom))]">
+    <div className="flex min-h-dvh flex-col desk:mx-auto desk:w-full desk:max-w-[640px] pb-[calc(20px+env(safe-area-inset-bottom))]">
       <AppBar className="pr-1.5">
         <img src="/kd/ff-mark.svg" alt="FeestFinder" width={16} height={28} />
         <button type="button" className={buttonClass({ tone: 'ghost', size: 'sm' }, 'ml-auto')} onClick={() => finish(meta.defaultCity)}>{T.skip}</button>
       </AppBar>
       <div className="relative mx-4 mt-2">
         <div className="grid grid-cols-4 gap-1.5" aria-hidden="true">
-          {Array.from({ length: 12 }, (_, i) => <Art key={i} family={shown[i % shown.length]} bone={i % 5 === 2} className="aspect-square rounded-[10px]" />)}
+          {Array.from({ length: 12 }, (_, i) => <Art key={i} family="edm" bone={i % 3 === 1} className="aspect-square rounded-[10px]" />)}
         </div>
         {matching != null ? <span className="kd-tag kd-tag-glass kd-num absolute bottom-2.5 left-2.5 h-7 px-2.5 text-paper">{fill(T.obCount, { n: matching })}</span> : null}
       </div>
@@ -336,8 +337,8 @@ function Onboarding({ lang, meta, onDone }: { lang: Lang; meta: { defaultCity: s
       <div className="flex flex-col gap-2.5 px-4 pt-5.5" role="group" aria-label={T.obLike}>
         <span className="kd-m">{T.obLike}</span>
         <div className="flex flex-wrap gap-2">
-          {(['fest', 'live', 'edm', 'cult'] as Family[]).map((f) => (
-            <Chip key={f} family={f} on={likes.includes(f)} onClick={() => toggle(f)} className="h-11 px-4 text-[15px]">{FAMILY_LABEL[f][lang]}</Chip>
+          {LIKE_STYLES.map((f) => (
+            <Chip key={f} family="edm" on={likes.includes(f)} onClick={() => toggle(f)} className="h-11 px-4 text-[15px]">{styleLabel(f, lang)}</Chip>
           ))}
         </div>
       </div>

@@ -56,7 +56,7 @@ function GuideBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
     </section>
   ) : null;
   return (
-    <div className="flex flex-col gap-6 px-4 pb-8">
+    <div className="flex max-w-read flex-col gap-6 px-4 pb-8">
       {spots(T.guideBefore, g.before)}
       {spots(T.guideAfter, g.after)}
       {spots(T.guideExplore, g.explore)}

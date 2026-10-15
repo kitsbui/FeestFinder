@@ -145,7 +145,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
               <div className="kd-split gap-[clamp(28px,4vw,56px)]">
                 <div className="kd-main flex flex-col gap-11">
                   {ev.updates.length ? (
-                    <section aria-labelledby="upd-h" className="flex flex-col gap-2">
+                    <section aria-labelledby="upd-h" className="flex max-w-read flex-col gap-2">
                       <h2 id="upd-h" className="kd-m">{T.updates}</h2>
                       <ul className="flex flex-col">
                         {ev.updates.map((u) => (
@@ -161,7 +161,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     </section>
                   ) : null}
 
-                  <section id="about" aria-labelledby="about-h" className="flex scroll-mt-32 flex-col gap-3">
+                  <section id="about" aria-labelledby="about-h" className="flex max-w-read scroll-mt-32 flex-col gap-3">
                     <h2 id="about-h" className="kd-m">{T.about2}</h2>
                     {description ? (
                       <Clamp lines={3} more={pick({ m: { vi: 'Xem thêm', en: 'Show more' } }, lang).m} less={pick({ l: { vi: 'Thu gọn', en: 'Show less' } }, lang).l} className="kd-tl max-w-[680px] whitespace-pre-line text-paper">
@@ -194,7 +194,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <Hype lang={lang} />
 
                   {ev.faq.length ? (
-                    <section aria-labelledby="faq-h" className="flex flex-col">
+                    <section aria-labelledby="faq-h" className="flex max-w-read flex-col">
                       <h2 id="faq-h" className="kd-m pb-1.5">{seo.headings.faq}</h2>
                       <div className="border-t border-line">
                         {ev.faq.map((f) => (

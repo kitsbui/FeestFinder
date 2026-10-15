@@ -31,24 +31,15 @@ import {
 } from '../organizer/events.ts';
 
 /*
- * The operations back office (/ops): what the FeestFinder team needs beyond the moderation
- * console — the whole catalogue with filters, listings created or fixed by the team, venues,
+ * The team's operations (the Console's catalogue screens; once /ops): what the FeestFinder team needs beyond moderation — the whole catalogue with filters, listings created or fixed by the team, venues,
  * organiser onboarding, accounts and orders — plus the option lists every form draws from,
- * so a genre, a district or a bank is always picked, never typed.
+ * so a style, a district or a bank is always picked, never typed.
  */
 
 const STATUSES = ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled'] as const;
 
 const GENRE_LABEL: Record<string, { label: Localized; hint: Localized }> = {
   EDM: { label: L('EDM & electronic', 'EDM & điện tử'), hint: L('Raves, club nights, DJ sets', 'Rave, club night, DJ set') },
-  Festival: { label: L('Festival', 'Lễ hội'), hint: L('Multi-stage, multi-day, mixed genres', 'Nhiều sân khấu, nhiều ngày, nhiều thể loại') },
-  Indie: { label: L('Indie', 'Indie'), hint: L('Singer-songwriters, bands, acoustic', 'Singer-songwriter, band, acoustic') },
-  'Hip-Hop': { label: L('Hip-hop & rap', 'Hip-hop & rap'), hint: L('Rap shows, cyphers, battles', 'Show rap, cypher, battle') },
-  Rock: { label: L('Rock & metal', 'Rock & metal'), hint: L('Bands, punk, metal, post-rock', 'Ban nhạc, punk, metal, post-rock') },
-  Pop: { label: L('Pop', 'Pop'), hint: L('Concerts, K-pop and V-pop nights', 'Concert, đêm nhạc K-pop & V-pop') },
-  Jazz: { label: L('Jazz & blues', 'Jazz & blues'), hint: L('Jazz bars, blues nights, recitals', 'Jazz bar, đêm blues, recital') },
-  Food: { label: L('Food & night markets', 'Ẩm thực & chợ đêm'), hint: L('Night markets, food fairs, pop-ups', 'Chợ đêm, hội chợ ẩm thực, pop-up') },
-  Culture: { label: L('Culture & arts', 'Văn hoá & nghệ thuật'), hint: L('Book fairs, exhibitions, classical', 'Hội sách, triển lãm, nhạc cổ điển') },
 };
 
 const ORG_TYPES: Record<string, Localized> = ORGANIZER_TYPE.label;
@@ -116,7 +107,7 @@ function missingForPublish(ev: any): string[] {
 }
 
 async function publishByTeam(q: Queryable, s: UserSession, ev: any, now: Date) {
-  await q.query(`update events set status = 'live', published_at = coalesce(published_at, $2), decided_at = $2 where id = $1`, [ev.id, now]);
+  await q.query(`update events set status = 'live', genre = coalesce(genre, 'EDM'), published_at = coalesce(published_at, $2), decided_at = $2 where id = $1`, [ev.id, now]);
   await q.query(`insert into moderation_decisions (event_id, decision, decided_by, decided_at) values ($1,'approved',$2,$3)`, [ev.id, s.user.id, now]);
   await appendAudit(q, {
     at: now, ...actorOf(s), action: 'listing.published_by_team', targetType: 'event', targetId: ev.id, targetLabel: ev.title,
@@ -304,7 +295,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     status: e.status, statusLabel: STATUS_LABEL[e.status], genre: e.genre, area: e.area,
     venueName: e.venue_name, venueResolved: !!e.venue_id || e.lat !== null,
     startsOn: e.starts_on, endsOn: e.ends_on, startTime: e.start_time, endTime: e.end_time,
-    entryMode: e.entry_mode, priceFrom: Number(e.price_from), capacity: e.capacity, age: e.age,
+    entryMode: e.entry_mode, priceFrom: Number(e.price_from), currency: e.currency, capacity: e.capacity, age: e.age,
     organizer: { id: e.organizer_id, name: e.org_name, initials: e.org_initials, verified: e.org_state === 'verified' },
     featured: e.featured, badge: e.badge, hype: e.hype_count, saves: e.save_count, sold: e.sold, openReports: e.open_reports,
     heldForReports: e.held_for_reports, qualityScore: e.quality_score, riskScore: e.risk_score,
@@ -540,7 +531,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
           ? L(`Marked cancelled · ${sold.n} paid orders still need refunds`, `Đã đánh dấu huỷ · còn ${sold.n} đơn đã thanh toán cần hoàn tiền`)
           : L('Marked cancelled', 'Đã đánh dấu huỷ');
       }
-      await q.query(`update events set status = 'live', decided_at = $2, published_at = coalesce(published_at, $2) where id = $1`, [id, now]);
+      await q.query(`update events set status = 'live', genre = coalesce(genre, 'EDM'), decided_at = $2, published_at = coalesce(published_at, $2) where id = $1`, [id, now]);
       await appendAudit(q, { at: now, ...actorOf(s), action: 'listing.restored', targetType: 'event', targetId: id, targetLabel: ev.title, diff: [{ f: 'status', a: ev.status, b: 'live' }] });
       return L('Restored and live again', 'Đã khôi phục, tin đang chạy lại');
     });

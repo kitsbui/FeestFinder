@@ -107,7 +107,10 @@ export interface Config {
    * Without them the map draws the events on a plain board. Glyphs (place names) are optional.
    */
   map: { tilesUrl: string | null; overviewUrl: string | null; glyphsUrl: string | null };
-  /** The screens and event pages from festfinder-frontend; off in unit tests unless one asks. */
+  /**
+   * The /ui files from festfinder-frontend and the redirects of the old /ops addresses. Off
+   * only when env is 'test'; `node --test` leaves NODE_ENV unset, so the unit tests serve them too.
+   */
   serveFrontend: boolean;
   /**
    * IndexNow key (8–128 letters, digits or dashes). With it, new and changed event pages are

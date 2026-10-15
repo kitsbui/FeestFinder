@@ -166,7 +166,7 @@ export default async function gigRoutes(app: FastifyInstance) {
         const words = { shortlisted: L('You are on the shortlist', 'Bạn đã vào danh sách chọn'), declined: L('Not this time', 'Lần này chưa phù hợp'), booked: L('You are booked', 'Bạn đã được chốt') }[status];
         await notifyUser(q, now, {
           userId: p.owner_user_id, topic: null, kind: 'gig_application', title: words, body: L(`${g.org_name} · ${g.title}`, `${g.org_name} · ${g.title}`),
-          link: { screen: 'ops', path: '/ops/artist/opportunities?tab=mine' }, dedupeKey: `gig_app:${p.id}:${status}`,
+          link: { screen: 'artist', url: '/studio/artist/gigs?tab=mine' }, dedupeKey: `gig_app:${p.id}:${status}`,
         });
       }
     });
@@ -207,7 +207,7 @@ export default async function gigRoutes(app: FastifyInstance) {
       await notifyUser(q, now, {
         userId: a.owner_user_id!, topic: null, kind: 'booking_inquiry', title: L('A booking request', 'Lời mời booking'),
         body: L(`${o!.name} · ${b.eventOn} · ${cityLabel(b.city)?.en ?? b.city}`, `${o!.name} · ${b.eventOn} · ${cityLabel(b.city)?.vi ?? b.city}`),
-        link: { screen: 'ops', path: '/ops/artist/opportunities?tab=requests' }, dedupeKey: `inquiry:${row!.id}`,
+        link: { screen: 'artist', url: '/studio/artist/gigs?tab=requests' }, dedupeKey: `inquiry:${row!.id}`,
       });
       return row!.id;
     });

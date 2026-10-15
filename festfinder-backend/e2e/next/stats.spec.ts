@@ -137,15 +137,15 @@ test.describe('an explore stat', () => {
     expect(problems).toEqual([]);
   });
 
-  test('a genre, a search or a city from the address narrows it, and its chip takes it off', async ({ page }) => {
-    const problems = await open(page, '/stats/weekend?family=edm');
+  test('a style, a search or a city from the address narrows it, and its chip takes it off', async ({ page }) => {
+    const problems = await open(page, '/stats/weekend?style=techno');
     const filters = page.getByRole('group', { name: 'Bộ lọc' });
     const list = page.getByRole('list', { name: 'Diễn ra cuối tuần này' });
     await expect(list.getByRole('link', { name: /^Ravolution Music Festival/ })).toBeVisible();
     await expect(list.getByRole('link', { name: /HOZO Super Fest/ })).toHaveCount(0);
-    // The other stats keep the genre.
-    await expect(page.getByRole('navigation', { name: 'Danh sách' }).getByRole('link', { name: /^Địa điểm/ })).toHaveAttribute('href', '/stats/venues?family=edm');
-    await filters.getByRole('link', { name: 'Bỏ lọc: EDM' }).click();
+    // The other stats keep the style.
+    await expect(page.getByRole('navigation', { name: 'Danh sách' }).getByRole('link', { name: /^Địa điểm/ })).toHaveAttribute('href', '/stats/venues?style=techno');
+    await filters.getByRole('link', { name: 'Bỏ lọc: Techno' }).click();
     await expect(page).toHaveURL(/\/stats\/weekend$/);
     await expect(list.getByRole('link', { name: /HOZO Super Fest/ })).toBeVisible();
 

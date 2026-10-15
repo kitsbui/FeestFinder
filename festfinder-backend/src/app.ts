@@ -144,9 +144,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
 
   /*
-   * The screens carry no inline script and load React from this origin, so the policy
-   * can be strict. Inline *styles* stay allowed: the design's markup is styled with
-   * style attributes, and the runtime injects a stylesheet of its own.
+   * The API answers JSON (and a few files: /ui, the development explorer), so the policy
+   * can be strict. The Next front sets its own.
    */
   await app.register(helmet, {
     contentSecurityPolicy: {
@@ -166,14 +165,14 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
       },
     },
     crossOriginEmbedderPolicy: false,
-    // Google Fonts and uploaded images are loaded cross-origin by the design.
+    // Uploaded images, OG images and /ui files may be loaded from another origin.
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
 
   /*
    * A ceiling per IP so one client cannot flood the API. Sign-in, OTP and the door
-   * scanner have their own tighter limits in their routes; webhooks and the screens'
-   * own static chunks are not counted.
+   * scanner have their own tighter limits in their routes; webhooks and the static
+   * files under /ui, /pages (Ops) and /files are not counted.
    *
    * Nor are calls from our own network with no client behind them: the Next.js app
    * rendering pages on the server, so a crawler burst cannot turn those pages into errors.
@@ -189,7 +188,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
     // page with a query (/a?q=…) is rendered on request, so a visitor can make it read.
     max: (_req, key) => (key === WEB_RENDER ? ctx.config.rateLimitPerMinute * 20 : ctx.config.rateLimitPerMinute),
     timeWindow: '1 minute',
-    allowList: (req) => req.url.startsWith('/ui/') || req.url.startsWith('/pages/') || req.url.startsWith('/files/')
+    allowList: (req) => req.url.startsWith('/ui/') || req.url.startsWith('/files/')
       || (isInternal(req.ip) && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host']),
     keyGenerator: (req) => {
       // Next.js forwards the client's X-Forwarded-For but never adds the client's address

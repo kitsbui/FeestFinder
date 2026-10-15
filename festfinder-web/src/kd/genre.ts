@@ -1,6 +1,6 @@
 /**
  * Genre families: Kính đêm's taxonomy, one colour and one shape each (README §3.3). The
- * grouping is GENRE_TONE in ui/ff-client.js, where `culture` is `cult` here.
+ * grouping is GENRE_TONE in src/runtime/ff.ts, where `culture` is `cult` here.
  */
 export type Family = 'fest' | 'live' | 'edm' | 'cult' | 'free';
 
@@ -42,3 +42,22 @@ export const FAMILY_LABEL: Record<Family, { vi: string; en: string }> = {
 
 /** The CSS class that sets --g for a family. */
 export const g = (f: Family) => `kd-g-${f}`;
+
+/*
+ * FeestFinder lists electronic music only, so every event is the edm family; people choose
+ * between its styles (festfinder-backend/src/lib/styles.ts, the same keys and names).
+ */
+export const STYLE_LABEL: Record<string, { vi: string; en: string }> = Object.fromEntries(([
+  ['techno', 'Techno'], ['hard-techno', 'Hard techno'], ['acid-techno', 'Acid techno'], ['industrial-techno', 'Industrial techno'],
+  ['house', 'House'], ['tech-house', 'Tech house'], ['deep-house', 'Deep house'], ['progressive-house', 'Progressive house'],
+  ['trance', 'Trance'], ['psytrance', 'Psytrance'], ['hardstyle', 'Hardstyle'], ['rawstyle', 'Rawstyle'], ['hardcore', 'Hardcore'],
+  ['gabber', 'Gabber'], ['dubstep', 'Dubstep'], ['drum-and-bass', 'Drum & bass'], ['breakbeat', 'Breakbeat'], ['bass', 'Bass'],
+  ['edm', 'EDM'], ['mainstage', 'Mainstage'],
+] as const).map(([k, l]) => [k, { vi: l, en: l }]));
+
+export const styleLabel = (key: string, lang: 'vi' | 'en') => STYLE_LABEL[key]?.[lang] ?? key;
+
+/** The styles worth a chip: those with events under the other filters, most first. */
+export function styleChips(counts: Record<string, number> | null | undefined, max = 8): string[] {
+  return Object.entries(counts ?? {}).filter(([k, n]) => n > 0 && STYLE_LABEL[k]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, max).map(([k]) => k);
+}

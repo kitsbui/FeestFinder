@@ -1,25 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * The same screen tests, against the Next.js app (festfinder-web) in production mode,
- * plus what only it does: server-rendered pages for search engines, security headers,
- * the service worker. A fresh API runs behind it on its own port and database.
+ * The checks of the site and its back offices (e2e/next) against the Next.js app
+ * (festfinder-web) in production mode. A fresh API runs behind it on its own port and database.
  *
  * FF_API_ORIGIN is read when the app is built (it becomes a rewrite), so the build runs
  * here with the test API's address.
  */
-// The shared specs ask which front they run against: rebuilt routes belong to e2e/next.
-process.env.FF_FRONT = 'next';
-
 const API_PORT = Number(process.env.SCREENS_PORT ?? 4100);
 const WEB_PORT = Number(process.env.WEB_PORT ?? 3100);
 const API = `http://localhost:${API_PORT}`;
 const WEB = `http://localhost:${WEB_PORT}`;
 
 export default defineConfig({
-  testDir: './e2e',
-  // The empty-database routes run against the API's own screens only (playwright.config.ts).
-  testIgnore: ['empty.spec.ts'],
+  testDir: './e2e/next',
   timeout: 30_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

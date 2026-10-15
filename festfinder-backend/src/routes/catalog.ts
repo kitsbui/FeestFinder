@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Ctx } from '../context.ts';
 import { many, one } from '../db/index.ts';
 import { notFound } from '../lib/errors.ts';
-import { FAMILY_KEYS, GENRE_FAMILIES, GENRES, L } from '../lib/i18n.ts';
+import { GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
 import { cityBySlug, cityLabel, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
 import { artistLinks } from '../services/artists.ts';
@@ -46,8 +46,6 @@ const ExploreQuery = z.object({
   to: dateStr.optional(),
   q: z.string().max(100).optional(),
   genre: z.enum(GENRES).optional(),
-  /** A genre family: every genre in it (lib/i18n.ts GENRE_FAMILIES). */
-  family: z.enum(FAMILY_KEYS as [string, ...string[]]).optional(),
   artist: z.string().max(100).optional(),
   price: csv(z.enum(PRICE_BANDS)).optional(),
   area: z.string().max(60).optional(),
@@ -71,7 +69,7 @@ const ExploreQuery = z.object({
 });
 
 /** Filters shared by the Explore feed, the stat drill-downs and the facet counts. */
-function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; genre: boolean; city?: boolean }) {
+function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; style?: boolean; city?: boolean }) {
   const where = [`e.status = 'live'`, 'not e.held_for_reports'];
   const q = f.q?.trim();
   if (q) {
@@ -81,15 +79,14 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
     const w = f.from ? { from: f.from, to: f.to ?? f.from } : f.time !== 'all' ? timeWindow(f.time as TimeKey, today) : null;
     if (w) where.push(`e.starts_on <= ${sql.p(w.to)} and e.ends_on >= ${sql.p(w.from)}`);
   }
-  if (opts.genre && f.genre) where.push(`e.genre = ${sql.p(f.genre)}`);
-  if (opts.genre && f.family) where.push(`e.genre = any(${sql.p([...GENRE_FAMILIES[f.family as keyof typeof GENRE_FAMILIES]])}::text[])`);
+  if (f.genre) where.push(`e.genre = ${sql.p(f.genre)}`);
   if (f.artist) where.push(`${sql.p(f.artist)} = any(e.artists)`);
   if (f.area) where.push(`e.area = ${sql.p(f.area)}`);
   if (opts.city !== false && f.city) where.push(`e.city = ${sql.p(f.city)}`);
   // Only listed cities appear in discovery, whatever the country filter says.
   where.push(`e.city = any(${sql.p(launchedCities().map((c) => c.slug))}::text[])`);
   if (f.country) where.push(`e.city in (select slug from cities where country_code = ${sql.p(f.country)})`);
-  if (f.style?.length) where.push(`e.styles && ${sql.p(f.style)}::text[]`);
+  if (opts.style !== false && f.style?.length) where.push(`e.styles && ${sql.p(f.style)}::text[]`);
   if (f.type?.length) where.push(`e.event_type = any(${sql.p(f.type)}::text[])`);
   if (f.venue) where.push(`e.venue_id = ${sql.p(f.venue)}`);
   if (f.confidenceMin !== undefined) where.push(`coalesce(e.confidence_score, 0) >= ${sql.p(f.confidenceMin)}`);
@@ -161,7 +158,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const offset = decodeCursor(f.cursor);
 
     const sql = new SqlParams();
-    const where = feedFilters(sql, f, today, userId, { time: true, genre: true });
+    const where = feedFilters(sql, f, today, userId, { time: true });
     if (f.upcoming) where.push(`(e.ends_at is null or e.ends_at >= ${sql.p(now)})`);
     const rows = await many<any>(ctx.db,
       `select ${CARD_COLUMNS}, count(*) over () as total
@@ -172,7 +169,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
 
     // Time facet counts follow the genre filter but ignore the chosen time, like the filter rail.
     const fsql = new SqlParams();
-    const fwhere = feedFilters(fsql, { ...f, q: undefined }, today, userId, { time: false, genre: true });
+    const fwhere = feedFilters(fsql, { ...f, q: undefined }, today, userId, { time: false });
     const counts = TIME_KEYS.map((k) => {
       const w = timeWindow(k, today);
       return `count(*) filter (where e.starts_on <= ${fsql.p(w.to)} and e.ends_on >= ${fsql.p(w.from)})::int as "${k}"`;
@@ -181,18 +178,23 @@ export default async function catalogRoutes(app: FastifyInstance) {
       `select ${counts.join(', ')} from events e join organizers o on o.id = e.organizer_id where ${fwhere.join(' and ')}`, fsql.values);
     // City chips count upcoming events in each city under every other filter.
     const csql = new SqlParams();
-    const cwhere = feedFilters(csql, f, today, userId, { time: true, genre: true, city: false });
+    const cwhere = feedFilters(csql, f, today, userId, { time: true, city: false });
     cwhere.push(`(e.ends_at is null or e.ends_at >= ${csql.p(now)})`);
     const facetCity = await many<{ city: string; n: number }>(ctx.db,
       `select e.city, count(*)::int as n from events e join organizers o on o.id = e.organizer_id where ${cwhere.join(' and ')} group by e.city`, csql.values);
-    // Family chips count each family (and what is free) under every filter but the genre.
+    // Style chips count each style under every filter but the style; "free" under them all.
     const gsql = new SqlParams();
-    const gwhere = feedFilters(gsql, f, today, userId, { time: true, genre: false });
+    const gwhere = feedFilters(gsql, f, today, userId, { time: true, style: false });
     if (f.upcoming) gwhere.push(`(e.ends_at is null or e.ends_at >= ${gsql.p(now)})`);
-    const familyCounts = FAMILY_KEYS.map((k) => `count(*) filter (where e.genre = any(${gsql.p([...GENRE_FAMILIES[k]])}::text[]))::int as "${k}"`);
-    const facetFamily = await one<Record<string, number>>(ctx.db,
-      `select ${familyCounts.join(', ')}, count(*) filter (where e.entry_mode = 'free' or e.price_from = 0)::int as "free"
-         from events e join organizers o on o.id = e.organizer_id where ${gwhere.join(' and ')}`, gsql.values);
+    const facetStyle = await many<{ key: string; n: number }>(ctx.db,
+      `select s as key, count(*)::int as n from events e join organizers o on o.id = e.organizer_id cross join lateral unnest(e.styles) s
+        where ${gwhere.join(' and ')} group by s`, gsql.values);
+    const fr = new SqlParams();
+    const frwhere = feedFilters(fr, f, today, userId, { time: true });
+    if (f.upcoming) frwhere.push(`(e.ends_at is null or e.ends_at >= ${fr.p(now)})`);
+    const facetFree = await one<{ n: number }>(ctx.db,
+      `select count(*) filter (where e.entry_mode = 'free' or e.price_from = 0)::int as n
+         from events e join organizers o on o.id = e.organizer_id where ${frwhere.join(' and ')}`, fr.values);
 
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const origin = f.lat !== undefined && f.lng !== undefined ? { lat: f.lat, lng: f.lng } : undefined;
@@ -204,7 +206,10 @@ export default async function catalogRoutes(app: FastifyInstance) {
       total: rows[0]?.total ?? 0,
       nextCursor,
       hero,
-      facets: { time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])), family: facetFamily },
+      facets: {
+        time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])),
+        style: Object.fromEntries(facetStyle.filter((r) => isStyle(r.key)).map((r) => [r.key, r.n])), free: facetFree?.n ?? 0,
+      },
       window: f.q ? null : f.from ? { from: f.from, to: f.to ?? f.from } : f.time !== 'all' ? timeWindow(f.time as TimeKey, today) : null,
     };
   });
@@ -220,7 +225,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
     const sql = new SqlParams();
-    const where = feedFilters(sql, f, todayFor(f, now), userId, { time: true, genre: true });
+    const where = feedFilters(sql, f, todayFor(f, now), userId, { time: true });
     where.push(`(e.ends_at is null or e.ends_at >= ${sql.p(now)})`, 'e.lat is not null', 'e.lng is not null');
     const rows = await many<any>(ctx.db,
       `select ${CARD_COLUMNS}, count(*) over () as total from events e join organizers o on o.id = e.organizer_id
@@ -329,7 +334,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     // The chosen city's day, as /events reads it.
     const today = todayFor(f, now);
     const sql = new SqlParams();
-    const where = feedFilters(sql, f, today, null, { time: true, genre: true });
+    const where = feedFilters(sql, f, today, null, { time: true });
     where.push(`e.ends_at >= ${sql.p(now)}`);
     const rows = await many<any>(ctx.db,
       `select ${CARD_COLUMNS} from events e join organizers o on o.id = e.organizer_id where ${where.join(' and ')} order by e.starts_at`, sql.values);
@@ -356,9 +361,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
   });
 
   /**
-   * The basemap in Bảng phấn colours: board-dark land, darker water, roads as faint chalk
-   * lines. Built from the Protomaps schema of the configured PMTiles archive; without one,
-   * the board alone, and the map shows the events on it.
+   * The basemap, in Bảng phấn colours by default and in Kính đêm with ?theme=kd (the site).
+   * Built from the Protomaps schema of the configured PMTiles archive; without one, the
+   * board alone, and the map shows the events on it.
    */
   app.get('/map/style.json', async (req, reply) => {
     const { theme } = parse(z.object({ theme: z.enum(['chalk', 'kd']).catch('chalk').default('chalk') }), req.query);
@@ -485,8 +490,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
 const CHALK = 'rgba(255,252,225,';
 
 /**
- * The basemap's colours: Bảng phấn (the API-served screens) and Kính đêm (the Next front's
- * rebuilt screens: a void ground, hairline roads, the river in the live family's teal).
+ * The basemap's colours: Bảng phấn (the default: board-dark land, darker water, roads as
+ * faint chalk lines) and Kính đêm (the site: a void ground, hairline roads, the river in the
+ * live family's teal).
  */
 const MAP_PALETTES = {
   chalk: { board: '#0E100F', earth: '#151714', park: '#181b17', water: '#0A0F10', line: CHALK, label: '#A5A493', halo: '#0E100F' },

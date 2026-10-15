@@ -146,7 +146,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
   };
 
   return (
-    <div className="flex flex-col gap-2 px-4">
+    <div className="flex flex-col gap-2 px-4 desk:max-w-[480px]">
       <article className={cx('kd-bonecard overflow-hidden', g(fam))} aria-label={o.event.title}>
         <Art family={fam} className="relative h-33 rounded-none">
           {doors ? <span className="kd-tag kd-tag-glass kd-num absolute bottom-3 left-3 h-7 text-paper"><span className="h-2 w-2 rounded-full bg-acc" aria-hidden="true" />{doors}</span> : null}

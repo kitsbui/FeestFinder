@@ -142,7 +142,7 @@ const SYSTEM = [
   "You read event announcements for FeestFinder, an event-discovery site for Vietnam and Asia, and fill in the submission form.",
   'Only state what the announcement says or shows. Leave a field null when it is not there; never guess a date, a time or a price.',
   `Times are 24-hour local time in the event's city. Prices are whole numbers in the local currency (500k = 500000). City must be one of ${launchedCities().map((c) => c.slug).join(', ')}, or null.`,
-  'Genre: EDM for electronic/techno/house/rave; Festival for multi-act festivals; Indie, Hip-Hop, Pop or Jazz for live music; Food or Culture otherwise.',
+  'Genre: EDM when it is electronic dance music (techno, house, trance, drum & bass, a DJ set, a rave or a club night); otherwise null.',
 ].join(' ');
 
 export class ClaudePrefill implements PrefillGenerator {

@@ -5,7 +5,7 @@ import { HomePage } from '@/kd/web/home/page';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: { absolute: 'FeestFinder — festivals, gigs and night markets' },
+  title: { absolute: 'FeestFinder — EDM club nights, raves and festivals' },
   alternates: { canonical: '/?lang=en', languages: { vi: '/', en: '/?lang=en', 'x-default': '/' } },
 };
 

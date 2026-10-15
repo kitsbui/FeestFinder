@@ -4,7 +4,7 @@ import { many, one } from '../db/index.ts';
 import { badRequest, conflict, notFound } from '../lib/errors.ts';
 import { fill, GENRES, L, NOTIFICATION_TOPICS, QUIET_HOURS_RULE } from '../lib/i18n.ts';
 import { launchedCity } from '../lib/places.ts';
-import { isStyle } from '../lib/styles.ts';
+import { isStyle, STYLE_KEYS } from '../lib/styles.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
 import { imageUrl, limit, parse, uuid } from '../lib/validate.ts';
 import { BANKS } from '../lib/vietqr.ts';
@@ -22,7 +22,8 @@ import { hypeGoalsReached } from '../services/community.ts';
 /** An event a person's lists show: one anyone can open (cancelled ones stay, marked; taken-down or held ones do not). */
 const LISTED = `e.status in ('live', 'cancelled') and not e.held_for_reports and e.published_at is not null`;
 
-const INTERESTS = ['EDM', 'Pop', 'Indie', 'Hip-Hop', 'Jazz', 'Theatre', 'Art', 'Food', 'Markets', 'Nightlife', 'Culture'] as const;
+/** What someone likes: EDM as a whole, or its styles (lib/styles.ts). */
+const INTERESTS: readonly string[] = ['EDM', ...STYLE_KEYS];
 
 export default async function meRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
@@ -61,7 +62,7 @@ export default async function meRoutes(app: FastifyInstance) {
       city: z.string().max(80).optional(),
       photoUrl: imageUrl.nullable().optional(),
       locale: z.enum(['en', 'vi']).optional(),
-      interests: z.array(z.enum(INTERESTS)).max(INTERESTS.length).optional(),
+      interests: z.array(z.string().refine((v) => INTERESTS.includes(v), 'unknown interest')).max(INTERESTS.length).optional(),
       birthYear: z.number().int().min(1900).max(2030).nullable().optional(),
     }), req.body);
     const current = await one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]);

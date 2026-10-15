@@ -102,7 +102,7 @@ test.describe('the artist page', () => {
     await page.getByText('Lịch', { exact: true }).click();
     await expect(page.getByText('01/03 – 03/03')).toBeVisible();
     await expect(page.getByText('private note')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveAttribute('href', '/ops/artist');
+    await expect(page.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveAttribute('href', '/studio/artist');
     await expect(page.getByRole('button', { name: 'Bạn là nghệ sĩ này?' })).toHaveCount(0);
 
     // Anyone else sees no edit link.

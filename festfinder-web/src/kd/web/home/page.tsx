@@ -17,7 +17,7 @@ import { AdBanner, type Ad } from './ad';
 import { HomeBrowser, NearbyTonight, type City, type Feed } from './browser';
 import { HOME } from './copy';
 
-const EMPTY_FEED: Feed = { items: [], total: 0, nextCursor: null, hero: null, facets: { time: { tonight: 0, weekend: 0, '7days': 0, month: 0 }, city: {}, family: { fest: 0, live: 0, edm: 0, cult: 0, free: 0 } } };
+const EMPTY_FEED: Feed = { items: [], total: 0, nextCursor: null, hero: null, facets: { time: { tonight: 0, weekend: 0, '7days': 0, month: 0 }, city: {}, style: {}, free: 0 } };
 
 export async function HomePage({ lang }: { lang: Lang }) {
   const T = pick(HOME, lang);
@@ -37,7 +37,7 @@ export async function HomePage({ lang }: { lang: Lang }) {
   return (
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} current="explore" familyCounts={feed.facets?.family} />
+        <WebNav lang={lang} current="explore" styleCounts={feed.facets?.style} />
         <main className="flex flex-col">
           <HomeBrowser lang={lang} initial={feed} cities={meta?.cities ?? []} defaultCity={city} />
 
@@ -55,7 +55,7 @@ export async function HomePage({ lang }: { lang: Lang }) {
           ) : null}
 
           <section aria-labelledby="faq-h" className="kd-wrap pt-[clamp(56px,7vw,96px)]">
-            <div className="flex max-w-[760px] flex-col gap-1.5">
+            <div className="flex max-w-read flex-col gap-1.5">
               <h2 id="faq-h" className="kd-m">{T.faq}</h2>
               <div className="border-t border-line">
                 {faq.map((x) => (

@@ -1,9 +1,9 @@
 'use client';
 /**
  * The home page's live part: the city and the time ("Cuối tuần này ▾ có gì chơi?"), search,
- * the featured card, and the list with its sort and family chips. The server renders the
- * default (this weekend, every family) for search engines; any other choice is asked of
- * /events from here and kept in the address (?time=&family=&price=free&sort=&city=).
+ * the featured card, and the list with its sort and style chips. The server renders the
+ * default (this weekend, every style) for search engines; any other choice is asked of
+ * /events from here and kept in the address (?time=&style=&price=free&sort=&city=).
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowRightIcon, CaretDownIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/ssr';
@@ -11,7 +11,7 @@ import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
 import { dayMonth, km, money, weekdayLong, whenShort } from '../../format';
-import { FAMILY_LABEL, familyOf, g, type Family } from '../../genre';
+import { FAMILY_LABEL, familyOf, g, styleChips, styleLabel } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
 import { buttonClass, Button, Chip } from '../../ui/actions';
@@ -29,20 +29,20 @@ export interface Feed {
   total: number;
   nextCursor: string | null;
   hero: Card | null;
-  facets: { time: Record<TimeKey, number>; city: Record<string, number>; family: Record<Family, number> };
+  facets: { time: Record<TimeKey, number>; city: Record<string, number>; style: Record<string, number>; free: number };
 }
 
 const TIMES: TimeKey[] = ['tonight', 'weekend', '7days', 'month'];
-const FAMILIES: Family[] = ['fest', 'live', 'edm', 'cult', 'free'];
 const PAGE = 12;
 
-interface Filters { city: string; time: TimeKey; family: Family | null; sort: Sort }
+/** `pick` is a style key, or 'free'. */
+interface Filters { city: string; time: TimeKey; pick: string | null; sort: Sort }
 
 function query(f: Filters, cursor?: string | null) {
   const q = new URLSearchParams({ time: f.time, limit: String(PAGE), sort: f.sort, upcoming: '1' });
   if (f.city) q.set('city', f.city);
-  if (f.family === 'free') q.set('price', 'free');
-  else if (f.family) q.set('family', f.family);
+  if (f.pick === 'free') q.set('price', 'free');
+  else if (f.pick) q.set('style', f.pick);
   if (cursor) q.set('cursor', cursor);
   return '/events?' + q;
 }
@@ -52,8 +52,8 @@ function address(f: Filters, defaultCity: string) {
   const q = new URLSearchParams();
   if (f.city && f.city !== defaultCity) q.set('city', f.city);
   if (f.time !== 'weekend') q.set('time', f.time);
-  if (f.family === 'free') q.set('price', 'free');
-  else if (f.family) q.set('family', f.family);
+  if (f.pick === 'free') q.set('price', 'free');
+  else if (f.pick) q.set('style', f.pick);
   if (f.sort !== 'date') q.set('sort', f.sort);
   const s = q.toString();
   return '/' + (s ? '?' + s : '');
@@ -61,7 +61,7 @@ function address(f: Filters, defaultCity: string) {
 
 export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang; initial: Feed; cities: City[]; defaultCity: string }) {
   const T = pick(HOME, lang);
-  const [f, setF] = useState<Filters>({ city: defaultCity, time: 'weekend', family: null, sort: 'date' });
+  const [f, setF] = useState<Filters>({ city: defaultCity, time: 'weekend', pick: null, sort: 'date' });
   const [feed, setFeed] = useState<Feed>(initial);
   const [items, setItems] = useState<Card[]>(initial.items);
   const [busy, setBusy] = useState(false);
@@ -77,17 +77,17 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
     if (out) { setFeed(out); setItems(out.items); }
   }, []);
 
-  // The address says what to show: the nav's genre links land here with ?family=.
+  // The address says what to show: the nav's style links land here with ?style=.
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const time = q.get('time') as TimeKey | null;
-    const fam = q.get('price') === 'free' ? 'free' : (q.get('family') as Family | null);
+    const pick = q.get('price') === 'free' ? 'free' : q.get('style');
     const sort = q.get('sort') as Sort | null;
     const city = q.get('city');
     const next: Filters = {
       city: city && cities.some((c) => c.slug === city) ? city : defaultCity,
       time: time && TIMES.includes(time) ? time : 'weekend',
-      family: fam && FAMILIES.includes(fam) ? fam : null,
+      pick: pick && /^[a-z-]{2,30}$/.test(pick) ? pick : null,
       sort: sort && ['date', 'hype', 'price'].includes(sort) ? sort : 'date',
     };
     if (address(next, defaultCity) !== '/') { setF(next); load(next); }
@@ -120,7 +120,8 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
   const timeLabel = (k: TimeKey) => T[('t_' + k) as 't_tonight'];
   const timeLower = (k: TimeKey) => T[('tl_' + k) as 'tl_tonight'];
   const counts = feed.facets?.time;
-  const famCounts = feed.facets?.family;
+  const styles = styleChips(feed.facets?.style);
+  if (f.pick && f.pick !== 'free' && !styles.includes(f.pick)) styles.unshift(f.pick);
   const cityCounts = feed.facets?.city ?? {};
   const city = cities.find((c) => c.slug === f.city);
   const hero = feed.hero && !feed.hero.past ? feed.hero : items[0] ?? null;
@@ -169,7 +170,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
               />{' '}
               {T.whatsOn}
             </h1>
-            <form role="search" onSubmit={search} className="kd-field h-14 rounded-opt pl-4 pr-1.5">
+            <form role="search" onSubmit={search} className="kd-field h-14 max-w-[640px] rounded-opt pl-4 pr-1.5">
               <MagnifyingGlassIcon size={20} aria-hidden="true" />
               <input name="q" type="search" placeholder={T.searchPh} aria-label={T.search} className="!text-base" />
               <Button type="submit" tone="acc">{T.searchGo}</Button>
@@ -198,12 +199,13 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
           />
         </div>
         <div className="kd-hscroll" role="group" aria-label={T.genres}>
-          <Chip on={!f.family} onClick={() => set({ family: null })}>{T.all}</Chip>
-          {FAMILIES.map((fam) => (
-            <Chip key={fam} family={fam} on={f.family === fam} count={famCounts?.[fam] ?? null} onClick={() => set({ family: f.family === fam ? null : fam })}>
-              {FAMILY_LABEL[fam][lang]}
+          <Chip on={!f.pick} onClick={() => set({ pick: null })}>{T.all}</Chip>
+          {styles.map((k) => (
+            <Chip key={k} family="edm" on={f.pick === k} count={feed.facets?.style?.[k] ?? null} onClick={() => set({ pick: f.pick === k ? null : k })}>
+              {styleLabel(k, lang)}
             </Chip>
           ))}
+          <Chip family="free" on={f.pick === 'free'} count={feed.facets?.free ?? null} onClick={() => set({ pick: f.pick === 'free' ? null : 'free' })}>{FAMILY_LABEL.free[lang]}</Chip>
         </div>
         {items.length ? (
           <>
@@ -222,7 +224,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
           <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">
             <span className="flex flex-col gap-1"><span className="kd-h">{T.emptyTitle}</span><span className="kd-s">{T.emptyBody}</span></span>
             <span className="flex gap-2">
-              {f.family ? <Button onClick={() => set({ family: null })}><XIcon size={16} aria-hidden="true" />{T.clearGenre}</Button> : null}
+              {f.pick ? <Button onClick={() => set({ pick: null })}><XIcon size={16} aria-hidden="true" />{T.clearGenre}</Button> : null}
               {f.time !== 'month' ? <Button tone="light" onClick={() => set({ time: 'month' })}>{T.widen}</Button> : null}
             </span>
           </Panel>

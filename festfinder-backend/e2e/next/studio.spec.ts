@@ -53,8 +53,8 @@ test.describe('Studio, signed in', () => {
     await page.getByRole('heading', { level: 1 }).getByRole('button').click();
     await page.getByRole('menuitemradio', { name: /Ravolution Warm-up/ }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ravolution Warm-up · Rooftop');
-    // A draft continues in the wizard.
-    await expect(page.getByRole('link', { name: 'Tiếp tục' })).toHaveAttribute('href', /\/studio\/new\?draft=/);
+    // A draft continues in the wizard (other specs leave drafts of their own too).
+    await expect(page.getByRole('link', { name: 'Tiếp tục' }).first()).toHaveAttribute('href', /\/studio\/new\?draft=/);
     expect(problems).toEqual([]);
   });
 
