@@ -463,6 +463,8 @@ export const STUDIO = {
   fCapacity: { en: 'Capacity', vi: 'Sức chứa' },
   fBrandUrl: { en: 'Brand page', vi: 'Trang thương hiệu' },
   quality: { en: 'Listing quality', vi: 'Chất lượng tin' },
+  searchTitle: { en: 'On Google and AI assistants', vi: 'Hiển thị trên Google & AI' },
+  searchDone: { en: 'Search engines and assistants get everything they read', vi: 'Google và trợ lý AI đã có đủ thông tin' },
   hypeGoals: { en: 'Hype goals', vi: 'Mốc hype' },
   hypeNow: { en: '{n} hype now', vi: '{n} hype hiện tại' },
   hypeCount: { en: 'Hype count', vi: 'Số hype' },

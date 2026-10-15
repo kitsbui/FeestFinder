@@ -43,6 +43,26 @@ describe('organizer back office (Ravolution)', () => {
     assert.ok(audience.body.total > 0);
   });
 
+  it('says what Google and AI assistants read from each listing, and what to add, weakest first', async () => {
+    const one = (await env.as(token).get(`/organizer/events/${ravo}/search`)).body;
+    assert.equal(one.checks.length, 10);
+    assert.equal(one.checks.reduce((n: number, c: any) => n + c.points, 0), 100);
+    assert.ok(one.checks.every((c: any) => c.label.vi && c.why.vi && c.field));
+    const before = one.score;
+    // Nothing in English yet: adding it is worth its points.
+    const en = one.checks.find((c: any) => c.key === 'about_en');
+    if (!en.ok) {
+      await env.ctx.db.query(`update events set description = jsonb_set(description, '{en}', to_jsonb($2::text)) where id = $1`,
+        [ravo, 'Ravolution Music Festival brings two days of techno, house and trance to SECC in District 7, with an international lineup, two stages and a late closing.']);
+      assert.equal((await env.as(token).get(`/organizer/events/${ravo}/search`)).body.score, before + en.points);
+    }
+    const all = (await env.as(token).get('/organizer/search')).body;
+    assert.ok(all.items.length >= 2);
+    assert.ok(all.items.every((x: any, i: number, a: any[]) => i === 0 || a[i - 1].score <= x.score), 'weakest first');
+    assert.equal(typeof all.average, 'number');
+    assert.equal((await env.as(await env.attendee()).get('/organizer/search')).status, 403);
+  });
+
   it('opens the performance drawer', async () => {
     const r = await env.as(token).get(`/organizer/events/${ravo}/performance`);
     assert.equal(r.status, 200);

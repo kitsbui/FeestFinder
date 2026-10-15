@@ -19,7 +19,7 @@ import { BANKS } from '../../lib/vietqr.ts';
 import { requireOrganizer, requireOwnEvent } from '../../http/guards.ts';
 import { appendAudit } from '../../services/audit.ts';
 import { draftFacts, refreshDerived } from '../../services/events.ts';
-import { qualityScore } from '../../services/quality.ts';
+import { qualityScore, searchScore, type SearchFacts } from '../../services/quality.ts';
 import { assessRisk } from '../../services/risk.ts';
 import { refreshSoldOut } from '../../services/tickets.ts';
 import { inBackground } from '../../lib/background.ts';
@@ -325,6 +325,38 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const ev = await requireOwnEvent(ctx, org, req.params.id);
     const copy = await duplicateEvent(ctx, ev, ev.organizer_id);
     return reply.code(201).send({ ...presentDraft(copy), message: L('Copied into a new draft. Set the dates and submit.', 'Đã sao chép thành bản nháp mới. Chọn ngày rồi gửi duyệt.') });
+  });
+
+  /** What Google and AI assistants get from the organiser's listings (services/quality.ts searchChecks). */
+  const searchFacts = async (orgId: string, evs: any[]): Promise<Map<string, SearchFacts>> => {
+    const org = await one<{ logo_url: string | null; website: string | null; links: Record<string, string> | null }>(ctx.db, 'select logo_url, website, links from organizers where id = $1', [orgId]);
+    const tiers = await many<{ event_id: string; n: number }>(ctx.db, 'select event_id, count(*)::int as n from ticket_tiers where event_id = any($1::uuid[]) group by event_id', [evs.map((e) => e.id)]);
+    const orgLinks = (org?.website ? 1 : 0) + Object.values(org?.links ?? {}).filter(Boolean).length;
+    return new Map(evs.map((e) => [e.id, {
+      coverUrl: e.cover_url, description: e.description ?? { en: '', vi: '' }, endTime: e.end_time, pinned: e.lat !== null && e.lng !== null,
+      entryMode: e.entry_mode, priceFrom: e.price_from ?? 0, ticketUrl: e.ticket_url, tiers: tiers.find((t) => t.event_id === e.id)?.n ?? 0,
+      lineup: e.lineup ?? [], styles: e.styles ?? [], eventType: e.event_type, eventUrl: e.event_url, orgLogo: !!org?.logo_url, orgLinks,
+    }]));
+  };
+
+  app.get<{ Params: { id: string } }>('/organizer/events/:id/search', async (req) => {
+    const org = await requireOrganizer(ctx, req);
+    const ev = await requireOwnEvent(ctx, org, req.params.id);
+    return searchScore((await searchFacts(org.organizerId, [ev])).get(ev.id)!);
+  });
+
+  /** The listings still to come, weakest in search first: what to fix next. */
+  app.get('/organizer/search', async (req) => {
+    const org = await requireOrganizer(ctx, req);
+    const evs = await many<any>(ctx.db,
+      `select * from events where organizer_id = $1 and status in ('live', 'in_review', 'draft', 'rejected') and (ends_at is null or ends_at >= $2)
+        order by starts_at nulls last limit 100`, [org.organizerId, ctx.clock.now()]);
+    const facts = await searchFacts(org.organizerId, evs);
+    const items = evs.map((e) => {
+      const s = searchScore(facts.get(e.id)!);
+      return { id: e.id, slug: e.slug, title: e.title, status: e.status, score: s.score, missing: s.checks.filter((c) => !c.ok).map((c) => c.label) };
+    }).sort((a, b) => a.score - b.score);
+    return { items, average: items.length ? Math.round(items.reduce((n, x) => n + x.score, 0) / items.length) : null };
   });
 
   app.get<{ Params: { id: string } }>('/organizer/events/:id/quality', async (req) => {

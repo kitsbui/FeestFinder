@@ -200,6 +200,12 @@ const inLang = (path: string, lang: Lang) => (lang === 'vi' ? path : `${path}${p
 const eventLine = (r: any, lang: Lang) => [shortDay(r.starts_on, lang) + (r.start_time ? ` ${r.start_time}` : ''),
   [r.venue_name, text(cityLabel(r.city), lang)].filter(Boolean).join(', '), priceLine(r, lang)].join(' · ');
 
+/** An organiser's own website and channels, for `sameAs`: they tie its listings to one organiser. */
+const orgSameAsOf = (o: { website?: string | null; links?: Record<string, string> | null }) => {
+  const urls = [o.website, ...presentOrgLinks(o).map((l) => l.url)].filter((u): u is string => !!u);
+  return urls.length ? [...new Set(urls)] : undefined;
+};
+
 /** Everything an event page says to search engines and AI assistants, or null if it is not public. */
 export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<EventSeo | null> {
   const ev = await one<any>(ctx.db,
@@ -209,7 +215,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const relatedSql = `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.entry_mode, e.price_from, e.currency
       from events e where e.status = 'live' and not e.held_for_reports and e.published_at is not null`;
   const [org, tierRows, faq, updates, timetable, related, nextEdition, prevEdition] = await Promise.all([
-    one<any>(ctx.db, 'select slug, name, website from organizers where id = $1', [ev.organizer_id]),
+    one<any>(ctx.db, 'select slug, name, website, links from organizers where id = $1', [ev.organizer_id]),
     many<any>(ctx.db, 'select * from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
     faqFor(ctx.db, ev.id, 10),
     latestUpdates(ctx.db, ev.id, 5),
@@ -377,7 +383,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
       geo: ev.lat != null && ev.lng != null ? { '@type': 'GeoCoordinates', latitude: ev.lat, longitude: ev.lng } : undefined,
       hasMap: mapsUrl,
     },
-    organizer: org ? { '@type': 'Organization', name: org.name, url: base + inLang(`/o/${org.slug}`, lang), sameAs: org.website ? [org.website] : undefined } : undefined,
+    organizer: org ? { '@type': 'Organization', name: org.name, url: base + inLang(`/o/${org.slug}`, lang), sameAs: orgSameAsOf(org) } : undefined,
     performer: lineup.length ? lineup.slice(0, 30).map((name) => ({ '@type': 'PerformingGroup', name })) : undefined,
     // Sponsors who backed the project the night came from (services/projects.ts).
     sponsor: sponsors.length ? sponsors.map((x) => ({ '@type': 'Organization', name: x.name })) : undefined,

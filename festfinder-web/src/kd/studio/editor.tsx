@@ -380,11 +380,11 @@ export function EventEditor({ id }: { id: string }) {
             ), errors.ticketUrl)}
           </Block>
 
-          <Block title={T.sLineup}>
+          <Block title={T.sLineup} id="edLineup">
             <Lineup lang={lang} value={f.lineup} onChange={(lineup) => set({ lineup })} />
           </Block>
 
-          <Block title={T.sMedia} aside={tag('media')}>
+          <Block title={T.sMedia} aside={tag('media')} id="edMedia">
             <Upload lang={lang} kind="cover" label={T.fCover} hint={T.fCoverHint} value={f.coverUrl} onChange={(v) => set({ coverUrl: v })} />
             <Upload lang={lang} kind="logo" label={T.fLogo} hint={T.fLogoHint} value={f.logoUrl} onChange={(v) => set({ logoUrl: v })} required />
             <div className={grid}>
@@ -412,6 +412,7 @@ export function EventEditor({ id }: { id: string }) {
               </ul>
             ) : null}
           </Panel>
+          <SearchCard lang={lang} eventId={d.id} saved={d} />
         </aside>
       </div>
 
@@ -522,3 +523,47 @@ function LiveUpdates({ lang, eventId }: { lang: Lang; eventId: string }) {
     </Block>
   );
 }
+
+// ---- what search engines and AI assistants read ---------------------------------------------
+
+interface SearchCheck { key: string; ok: boolean; points: number; label: Pair; why: Pair; field: string }
+
+/**
+ * "Hiển thị trên Google & AI": the parts of the listing's structured data and text that search
+ * results and AI answers use (festfinder-backend services/quality.ts searchChecks), each missing
+ * one a button to its field. Asked again after each save.
+ */
+function SearchCard({ lang, eventId, saved }: { lang: Lang; eventId: string; saved: unknown }) {
+  const T = pick(STUDIO, lang);
+  const [s, setS] = useState<{ score: number; checks: SearchCheck[] } | null>(null);
+  useEffect(() => {
+    FF.maybe(FF.get(`/organizer/events/${eventId}/search`), null).then((out: { score: number; checks: SearchCheck[] } | null) => out && setS(out));
+  }, [eventId, saved]);
+  if (!s) return null;
+  const go = (field: string) => {
+    if (field === 'profile') { location.assign('/studio/profile'); return; }
+    const el = document.getElementById(field);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el?.focus({ preventScroll: true });
+  };
+  const missing = s.checks.filter((c) => !c.ok);
+  return (
+    <Panel as="section" className="flex flex-col gap-3 p-5" aria-label={T.searchTitle}>
+      <span className="kd-m">{T.searchTitle}</span>
+      <span className="flex items-baseline gap-2"><span className="kd-d2 kd-num">{s.score}</span><span className="kd-s">/ 100</span></span>
+      {missing.length ? (
+        <ul className="flex flex-col gap-1 border-t border-line pt-3">
+          {missing.map((c) => (
+            <li key={c.key}>
+              <button type="button" className="flex w-full flex-col gap-0.5 rounded-seg px-1.5 py-1.5 text-left hover:bg-white/[0.04]" onClick={() => go(c.field)}>
+                <span className="kd-s flex w-full justify-between gap-3 text-mist"><span>{c.label[lang]}</span><span className="kd-mb kd-num">+{c.points}</span></span>
+                <span className="kd-s text-xs text-fog">{c.why[lang]}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : <span className="kd-s text-ok border-t border-line pt-3">{T.searchDone}</span>}
+    </Panel>
+  );
+}
+

@@ -76,3 +76,71 @@ export function qualityScore(d: DraftFacts) {
   const bandLabel = { strong: L('Strong', 'Mạnh'), passable: L('Passable', 'Đủ duyệt'), at_risk: L('At risk', 'Rủi ro') }[band];
   return { score, band, bandLabel, verdict, checks };
 }
+
+// ---- what search engines and AI assistants read ---------------------------------------------
+
+/** What an event's page tells Google and AI assistants (services/seo.ts buildEventSeo's JSON-LD and Markdown). */
+export interface SearchFacts {
+  coverUrl: string | null;
+  description: Localized;
+  endTime: string | null;
+  pinned: boolean;
+  entryMode: 'free' | 'paid' | 'donation';
+  priceFrom: number;
+  ticketUrl: string | null;
+  tiers: number;
+  lineup: string[];
+  styles: string[];
+  eventType: string | null;
+  eventUrl: string | null;
+  orgLogo: boolean;
+  orgLinks: number;
+}
+
+export interface SearchCheck { key: string; ok: boolean; points: number; label: Localized; why: Localized; field: string }
+
+/**
+ * Ten checks, 100 points: each one a part of the structured data or the text that search results
+ * and AI answers quote. `field` is the editor's input to fix it (or 'profile', Studio's profile).
+ */
+export function searchChecks(f: SearchFacts): SearchCheck[] {
+  const paid = f.entryMode === 'paid';
+  return [
+    { key: 'image', ok: !!f.coverUrl, points: 14, field: 'edMedia',
+      label: L('A landscape image', 'Có ảnh ngang'),
+      why: L('Google shows event results with an image first; AI answers link it.', 'Google ưu tiên kết quả sự kiện có ảnh; trợ lý AI dẫn kèm ảnh.') },
+    { key: 'about_vi', ok: f.description.vi.trim().length >= 300, points: 14, field: 'edDescVi',
+      label: L('Vietnamese description of 300 characters or more', 'Mô tả tiếng Việt từ 300 ký tự'),
+      why: L('AI assistants answer from the description: who plays, what kind of night, who it is for.', 'Trợ lý AI trả lời dựa trên mô tả: ai diễn, đêm kiểu gì, dành cho ai.') },
+    { key: 'about_en', ok: f.description.en.trim().length >= 150, points: 10, field: 'edDescEn',
+      label: L('An English description', 'Có mô tả tiếng Anh'),
+      why: L('The English page (?lang=en) is what visitors and assistants abroad find.', 'Trang tiếng Anh (?lang=en) là trang khách nước ngoài và AI quốc tế tìm thấy.') },
+    { key: 'end', ok: !!f.endTime, points: 8, field: 'edEnd',
+      label: L('An end time', 'Có giờ kết thúc'),
+      why: L('Event results need a start and an end (endDate).', 'Kết quả sự kiện cần giờ bắt đầu và kết thúc (endDate).') },
+    { key: 'geo', ok: f.pinned, points: 10, field: 'edAddr',
+      label: L('The venue on the map', 'Địa điểm có toạ độ'),
+      why: L('"Near me" searches and maps need the coordinates.', 'Tìm kiếm "gần tôi" và bản đồ cần toạ độ.') },
+    { key: 'offers', ok: !paid || (f.priceFrom > 0 && (!!f.ticketUrl || f.tiers > 0)), points: 12, field: 'edPrice',
+      label: L('Price, currency and where to buy', 'Giá, tiền tệ và nơi mua vé'),
+      why: L('Without an offer Google shows no price, and assistants cannot say how much.', 'Thiếu thông tin vé thì Google không hiện giá và trợ lý không trả lời được giá bao nhiêu.') },
+    { key: 'performers', ok: f.lineup.length > 0, points: 10, field: 'edLineup',
+      label: L('A lineup', 'Có đội hình'),
+      why: L('Each name becomes a performer with its own artist page, found by fans searching for them.', 'Mỗi tên thành một performer có trang nghệ sĩ riêng, fan tìm tên là thấy.') },
+    { key: 'styles', ok: f.styles.length > 0 && !!f.eventType, points: 8, field: 'edType',
+      label: L('Styles and the kind of night', 'Dòng nhạc và kiểu đêm'),
+      why: L('"Techno this weekend" searches match on these.', 'Các tìm kiếm như "techno cuối tuần này" khớp theo hai trường này.') },
+    { key: 'official', ok: isHttpUrl(f.eventUrl), points: 6, field: 'edPage',
+      label: L('Your own event page linked', 'Có link trang sự kiện chính thức'),
+      why: L('It tells search engines and assistants this listing is the real one.', 'Giúp công cụ tìm kiếm và AI xác nhận đây là tin chính chủ.') },
+    { key: 'organizer', ok: f.orgLogo && f.orgLinks > 0, points: 8, field: 'profile',
+      label: L('Organiser profile with a logo and a link', 'Hồ sơ nhà tổ chức có logo và link'),
+      why: L('Your website and socials (sameAs) tie every listing to one organiser.', 'Website và mạng xã hội (sameAs) gắn mọi tin về đúng một nhà tổ chức.') },
+  ];
+}
+
+export function searchScore(f: SearchFacts) {
+  const checks = searchChecks(f);
+  return { score: checks.reduce((n, c) => n + (c.ok ? c.points : 0), 0), checks };
+}
+

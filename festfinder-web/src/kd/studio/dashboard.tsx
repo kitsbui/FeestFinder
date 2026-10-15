@@ -43,6 +43,8 @@ export function Dashboard() {
   const [range, setRange] = useState<Range>('14d');
   const [perf, setPerf] = useState<Perf | null | undefined>(undefined);
   const [todo, setTodo] = useState<{ eventId: string; text: Pair }[]>([]);
+  // How Google and AI assistants see the listings still to come, weakest first.
+  const [search, setSearch] = useState<{ average: number | null; items: { id: string; title: string; score: number; missing: Pair[] }[] } | null>(null);
   const [clicks, setClicks] = useState<Clicks | null>(null);
   const [gaps, setGaps] = useState<string[] | null>(null);
   const load = useCallback(async () => {
@@ -53,6 +55,7 @@ export function Dashboard() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     FF.maybe(FF.get('/organizer/dashboard?range=30d'), null).then((d: { todo: { eventId: string; text: Pair }[] } | null) => setTodo(d?.todo ?? []));
+    FF.maybe(FF.get('/organizer/search'), null).then((d: typeof search) => setSearch(d));
     FF.maybe(FF.get('/organizer/affiliate?days=30'), null).then(setClicks);
   }, []);
   // Verification is on the same list: what the profile still lacks before FeestFinder can check it.
@@ -200,6 +203,21 @@ export function Dashboard() {
                   ))}
                 </ul>
               </Accordion>
+            </Panel>
+          ) : null}
+          {search?.items.length ? (
+            <Panel as="section" className="flex flex-col gap-3 p-5" aria-label={T.searchTitle}>
+              <div className="flex items-baseline justify-between gap-3"><span className="kd-h">{T.searchTitle}</span><span className="kd-d3 kd-num">{search.average}<span className="kd-s"> / 100</span></span></div>
+              <ul className="flex flex-col gap-2 border-t border-line pt-3">
+                {search.items.slice(0, 3).map((x) => (
+                  <li key={x.id}>
+                    <KdLink className="flex flex-col gap-0.5 hover:text-paper" href={'/studio/events/' + x.id}>
+                      <span className="kd-s flex justify-between gap-3 text-mist"><span className="kd-ell">{x.title}</span><span className="kd-mb kd-num">{x.score}</span></span>
+                      {x.missing[0] ? <span className="kd-s text-xs text-fog">{x.missing[0][lang]}</span> : null}
+                    </KdLink>
+                  </li>
+                ))}
+              </ul>
             </Panel>
           ) : null}
         </div>

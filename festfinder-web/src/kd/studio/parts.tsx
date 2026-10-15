@@ -31,9 +31,9 @@ export function Kpi({ label, value, note, bone, children }: { label: string; val
 }
 
 /** A section card with a heading row. */
-export function Block({ title, aside, children, className, label }: { title: ReactNode; aside?: ReactNode; children: ReactNode; className?: string; label?: string }) {
+export function Block({ title, aside, children, className, label, id }: { title: ReactNode; aside?: ReactNode; children: ReactNode; className?: string; label?: string; id?: string }) {
   return (
-    <Panel as="section" className={cx('flex min-w-0 flex-col gap-4 p-5', className)} aria-label={label ?? (typeof title === 'string' ? title : undefined)}>
+    <Panel as="section" id={id} tabIndex={id ? -1 : undefined} className={cx('flex min-w-0 flex-col gap-4 p-5', className)} aria-label={label ?? (typeof title === 'string' ? title : undefined)}>
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="kd-h">{title}</h2>{aside}</div>
       {children}
     </Panel>

@@ -77,6 +77,20 @@ test.describe('Studio events', () => {
     expect(problems).toEqual([]);
   });
 
+  test('the editor says what Google and AI assistants read, and each gap opens its field', async ({ page }) => {
+    // After Hours has no cover: the gap is the media block.
+    const id = await eventId(page, 'Ravolution After Hours');
+    const problems = await open(page, '/studio/events/' + id);
+    const card = page.getByRole('region', { name: 'Hiển thị trên Google & AI' });
+    await expect(card.getByText('/ 100')).toBeVisible();
+    await card.getByRole('button', { name: /Có ảnh ngang/ }).click();
+    await expect(page.locator('#edMedia')).toBeFocused();
+    // The dashboard lists the weakest listings with what to add first.
+    await page.goto('/studio');
+    await expect(page.getByRole('region', { name: 'Hiển thị trên Google & AI' }).getByRole('link').first()).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
   test('duplicate from the list, then delete the copy', async ({ page }) => {
     const problems = await open(page, '/studio/events?status=past');
     const table = page.getByRole('table', { name: 'Sự kiện của tôi' });
