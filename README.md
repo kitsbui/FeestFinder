@@ -11,6 +11,14 @@ festfinder-web/              the site at feestfinder.com: Next.js 16 + React 19 
 
 ## Run it
 
+To look at everything on this machine with the demo data (no Supabase), one command starts the API and the site and prints the link and the demo accounts:
+
+```bash
+bash scripts/preview.sh
+```
+
+To work against the staging database instead:
+
 ```bash
 npm install --prefix festfinder-backend
 ```
