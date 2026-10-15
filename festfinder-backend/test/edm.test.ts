@@ -15,6 +15,7 @@ import type { NormalizedEvent } from '../src/services/ingest/types.ts';
  */
 
 const MIGRATION = readFileSync(new URL('../src/db/migrations/031_edm_only.sql', import.meta.url), 'utf8');
+const BACKUP = readFileSync(new URL('../src/db/migrations/030_9_backup_before_edm.sql', import.meta.url), 'utf8');
 const count = async (env: TestEnv, table: string) => (await one<{ n: number }>(env.ctx.db, `select count(*)::int as n from ${table}`))!.n;
 
 describe('EDM only', () => {
@@ -43,15 +44,22 @@ describe('EDM only', () => {
     assert.equal((await env.as().get('/events?genre=Jazz')).status, 400);
   });
 
-  it('migration 031 deletes every event and what hangs off it, keeps people, places and sources, and lets sources start over', async () => {
+  it('migration 031 deletes every event and what hangs off it (after a copy), keeps people, places and sources, and lets sources start over', async () => {
     const kept = { users: await count(env, 'users'), organizers: await count(env, 'organizers'), venues: await count(env, 'venues'), artists: await count(env, 'artists') };
     assert.ok((await count(env, 'events')) > 0 && (await count(env, 'orders')) > 0 && (await count(env, 'tickets')) > 0);
     await env.ctx.db.query(`insert into ingest_sources (adapter, name, url, authority, config, etag, content_hash, next_run_at)
       values ('website', 'TicketGo · Âm nhạc', 'https://ticketgo.vn/event/category/am-nhac', 'ticketing', '{"maxPages": 20}', 'W/"1"', 'abc', '2030-01-01')`);
     await env.ctx.db.query(`update artists set styles = '{rock,techno}' where id = (select id from artists order by name limit 1)`);
 
-    // Applied the way migrate() applies a file: in one transaction, statement by statement.
+    const events = await count(env, 'events');
+    // Applied the way migrate() applies a file: in one transaction, statement by statement. In
+    // production the copy runs first (030_9 sorts before 031); here it ran on the empty database,
+    // so it is taken again.
+    await env.ctx.db.query('drop schema backup_before_031 cascade');
+    await env.ctx.db.tx(async (q) => { for (const s of splitSql(BACKUP)) await q.query(s); });
     await env.ctx.db.tx(async (q) => { for (const s of splitSql(MIGRATION)) await q.query(s); });
+    assert.equal(await count(env, 'backup_before_031.events'), events, 'every event is kept in the copy');
+    assert.ok((await count(env, 'backup_before_031.orders')) > 0, 'with its orders');
 
     for (const t of ['events', 'orders', 'tickets', 'ticket_tiers', 'saves', 'raw_events', 'event_sources']) assert.equal(await count(env, t), 0, t);
     assert.deepEqual({ users: await count(env, 'users'), organizers: await count(env, 'organizers'), venues: await count(env, 'venues'), artists: await count(env, 'artists') }, kept);
