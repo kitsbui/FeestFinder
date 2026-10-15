@@ -2,8 +2,8 @@
  * FeestFinder — Kính đêm (Night Glass) for Tailwind CSS v4: the tokens as utilities, the page
  * defaults and the kd-* classes that need pseudo-elements or a --g custom property.
  *
- * Copied from design_handoff_kinh_dem/tokens/tailwind-theme.css; kd.css imports it right after
- * Tailwind, then adds the rest of the design system (design/ff.css) as kd-* component classes.
+ * kd.css imports this right after Tailwind, then adds the rest of the design system as kd-*
+ * component classes.
  */
 
 @theme {

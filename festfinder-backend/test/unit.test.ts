@@ -208,13 +208,10 @@ describe('map style', () => {
     assert.ok(city.layers.some((l: any) => l.source === 'detail' && !l.minzoom), 'alone, the cities serve every zoom');
   });
 
-  it('comes in the Kính đêm colours for the rebuilt screens', async () => {
+  it('comes in the Kính đêm colours', async () => {
     const { mapStyle } = await import('../src/routes/catalog.ts');
-    const kd: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', glyphsUrl: null }, 'kd');
+    const kd: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', glyphsUrl: null });
     assert.equal(kd.layers[0].paint['background-color'], '#08090a');
-    assert.ok(!JSON.stringify(kd).includes('255,252,225'), 'no chalk in the Kính đêm style');
-    const chalk: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', glyphsUrl: null });
-    assert.equal(chalk.layers[0].paint['background-color'], '#0E100F');
   });
 
   it('names streets, wards and cities with the site\'s own glyphs', async () => {
@@ -222,7 +219,7 @@ describe('map style', () => {
     const { loadConfig } = await import('../src/config.ts');
     const glyphs = loadConfig({}).map.glyphsUrl!;
     assert.match(glyphs, /\/ui\/map\/glyphs\/\{fontstack\}\/\{range\}\.pbf$/);
-    const kd: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: glyphs }, 'kd');
+    const kd: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: glyphs });
     assert.equal(kd.glyphs, glyphs);
     const labels = kd.layers.filter((l: any) => l.type === 'symbol');
     assert.deepEqual(labels.map((l: any) => [l.id, l.source]), [['roads-names', 'detail'], ['places-wards', 'detail'], ['places-countries', 'overview'], ['places', 'detail']]);

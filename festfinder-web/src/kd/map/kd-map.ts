@@ -1,5 +1,5 @@
 /**
- * The Kính đêm map: MapLibre on the self-hosted PMTiles basemap (GET /map/style.json?theme=kd),
+ * The Kính đêm map: MapLibre on the self-hosted PMTiles basemap (GET /map/style.json),
  * with events as glass pills (the family marker and a mono price, the chosen one in paper)
  * and clusters as hairline circles with a count, and place names as mono labels (.kd-area): on
  * a bare board, with no basemap configured, they are all there is to see where things are.
@@ -46,7 +46,7 @@ export interface KdMap {
 
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
-const STYLE = '/map/style.json?theme=kd';
+const STYLE = '/map/style.json';
 
 async function maplibre(): Promise<any> {
   const FFMap = await FF.loadMap();

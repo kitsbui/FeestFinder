@@ -156,7 +156,7 @@ Rules that hold across it: admin comes only from `ADMIN_EMAIL`; follower counts 
 
 ## Since the audit: the Kính đêm front
 
-The Next front (`festfinder-web`) was rebuilt in the Kính đêm design (`design_handoff_kinh_dem/`, plan in `docs/KINH_DEM_PLAN.md`), route by route, in six phases. It has served feestfinder.com since 2026-10-08 (above). The API-served Bảng phấn screens were removed on 2026-10-09; the API keeps `/ops`.
+The Next front (`festfinder-web`) was rebuilt in the Kính đêm design, route by route, in six phases. It has served feestfinder.com since 2026-10-08 (above). The API-served Bảng phấn screens were removed on 2026-10-09; the API keeps `/ops`.
 
 | Area | Where | Notes |
 | --- | --- | --- |

@@ -45,10 +45,5 @@ export function providerOfLink(url: string): string {
   return LINK_ONLY.find(([re]) => re.test(host))?.[1] ?? 'link';
 }
 
-/** True for a link the ingestion must not fetch. */
-export function isLinkOnly(url: string): boolean {
-  const host = hostOf(url) ?? '';
-  return LINK_ONLY.some(([re]) => re.test(host));
-}
 
 export const PROVIDER_CONFIDENCE: Record<Authority, number> = { official: 90, ticketing: 80, listing: 60, community: 40 };

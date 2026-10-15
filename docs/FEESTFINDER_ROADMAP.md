@@ -65,7 +65,7 @@ How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) 
 
 ## Kính đêm (the Next front in React + Tailwind)
 
-The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `feat/kinh-dem` branch. In production at feestfinder.com since 2026-10-08. Plan and decisions: [KINH_DEM_PLAN.md](KINH_DEM_PLAN.md).
+The Kính đêm redesign, built in `festfinder-web` on the `feat/kinh-dem` branch. In production at feestfinder.com since 2026-10-08.
 
 - [x] Phase 0: Plan, and the owner's answers to the handoff's questions
 - [x] Phase 1: Tailwind, tokens, fonts, icons, the `(legacy)`/`(kd)` split, the `kd` components, `/kit`
@@ -158,3 +158,4 @@ The redesign from `design_handoff_kinh_dem/`, built in `festfinder-web` on the `
 - 2026-10-15: Scrollbars that take no room, everywhere: the browser's are hidden (`kd.css`) and `kd/ui/scrollbars.tsx` draws a 3px thumb over the page, a list column, a table or a sheet while it scrolls, fading out 0.9s after; with a mouse, the edge brings it back, it thickens to 6px and drags. Its layer is a top-layer popover, or sits inside an open dialog for the boxes in it.
 - 2026-10-15: Posted or FeestFinder Radar, for events and artists. Migration 032 adds `events.origin` (`radar` when only ingestion found it, kept current by `refreshConfidence`); artists are Radar when nobody runs or verified them and they play Radar events only. `?origin=` on `/events`, `/events/map`, `/artists`, with counts. The site: a "Radar" tag on cards, rows, the map list and both pages, Tất cả · Đã đăng · Radar tabs on `/list` (every view) and `/a`, and "FeestFinder Radar · Tìm thấy trên …" in place of the placeholder organiser. The preview seeds five Radar finds through the real pipeline from the ingestion fixtures.
 - 2026-10-15: The home page shows every listed city at once: the city menu (which marked cities with nothing on in the chosen time "Sắp có") and the time menu in the heading (which repeated the chips and broke its type) are gone; the heading says the time the chips chose, and every card names its city. Menus keep their own type wherever they open. A cover that fails to load leaves the art (`kd/ui/covers.tsx`).
+- 2026-10-15: Cleanup. The two design handoffs and the finished Kính đêm plan deleted (git history keeps them), the unused Nocturne bundle (`ui/_ds`), the Bảng phấn map (`FFMap.create`/`session`) and its chalk basemap palette, nine unused exports, stale preview configs, and the region tiles on Blob that the world archive replaced.

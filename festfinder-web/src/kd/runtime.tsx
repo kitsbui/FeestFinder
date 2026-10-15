@@ -72,8 +72,6 @@ export function useKd(): Kd {
 }
 
 /** The current language, for components that only need that. */
-export const useLang = () => useKd().lang;
-
 export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [saved, setSaved] = useState<Set<string>>(() => new Set());
@@ -265,10 +263,3 @@ export function useSaved(id: string): [boolean, () => void] {
   return [kd.saved.has(id), () => { kd.toggleSave(id); }];
 }
 
-/** Follow state for an organiser (`org`, by id) or an artist (`art`, by name). */
-export function useFollow(key: 'org' | 'art', id: string, initial: boolean): [boolean, () => void] {
-  const kd = useKd();
-  const k = key + ':' + id;
-  const on = kd.follows.has(k) ? !!kd.follows.get(k) : initial;
-  return [on, () => { kd.setFollow(key, id, !on); }];
-}

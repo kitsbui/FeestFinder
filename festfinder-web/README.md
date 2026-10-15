@@ -2,7 +2,7 @@
 
 FeestFinder's four surfaces — the public web, the attendee app, Studio for organisers and the Console for the team — in the **Kính đêm** ("night glass") design, on **Next.js 16, React 19, TypeScript and Tailwind v4**. Public pages render on the server for search engines; the attendee app installs as a PWA.
 
-Every page is written by hand in React from the boards in [`design_handoff_kinh_dem/`](../design_handoff_kinh_dem/README.md). This is the site at feestfinder.com, with every back office: the Console (`/console`), Studio (`/studio`) and the artist studio (`/studio/artist`). The API keeps no screens of its own; it redirects the old `/ops` addresses here.
+Every page is written by hand in React in the Kính đêm design. This is the site at feestfinder.com, with every back office: the Console (`/console`), Studio (`/studio`) and the artist studio (`/studio/artist`). The API keeps no screens of its own; it redirects the old `/ops` addresses here.
 
 ## Run it
 
@@ -113,7 +113,7 @@ public/sw.js                 the service worker
 
 ## Design system: Kính đêm
 
-The tokens are in [`src/kd/theme.css`](src/kd/theme.css), from `design_handoff_kinh_dem/tokens/`. `/kit` shows every part.
+The tokens are in [`src/kd/theme.css`](src/kd/theme.css). `/kit` shows every part.
 
 - **Surface.** A near-black `void` (`#08090a`) with glass panels (`carbon`, `obsidian`, `slate`) and hairlines (`line`, `line2`). Type is `paper` and `mist`, quiet text `fog`.
 - **One lime action.** The accent `acc` (`#e4f222`, ink `#08090a`) is for the one thing a screen is for; everything else is a quiet button.

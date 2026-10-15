@@ -68,13 +68,6 @@ export function IconButton({ label, line, size = 'md', glass, pressed, className
   );
 }
 
-export function IconLink({ label, href, line, glass, size = 'md', className, external, children }: {
-  label: string; href: string; line?: boolean; glass?: boolean; size?: 'sm' | 'md'; className?: string; external?: boolean; children: ReactNode;
-}) {
-  const cls = cx('kd-ib', line && 'kd-ib-line', size === 'sm' && 'kd-ib-sm', glass && 'kd-glass', className);
-  if (external) return <a href={href} aria-label={label} title={label} className={cls}>{children}</a>;
-  return <Link href={href} aria-label={label} title={label} className={cls}>{children}</Link>;
-}
 
 type ChipProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   on?: boolean;

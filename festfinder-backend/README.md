@@ -94,7 +94,7 @@ The files the site loads from `/ui` live next door:
 
 ```
 ../festfinder-frontend/
-  ui/                  fonts/, vendor/ (MapLibre, pmtiles), map/ff-map.js, assets/, _ds/
+  ui/                  fonts/, vendor/ (MapLibre, pmtiles), map/ (ff-map.js, glyphs), assets/
 ```
 
 ## Decisions worth knowing

@@ -9,7 +9,7 @@ const ROOT = resolve(import.meta.dirname, '..');
 const SOURCE = resolve(ROOT, '../festfinder-frontend');
 const PUBLIC_UI = join(ROOT, 'public/ui');
 
-for (const folder of ['vendor', 'fonts', '_ds', 'assets', 'map']) {
+for (const folder of ['vendor', 'fonts', 'assets', 'map']) {
   const from = join(SOURCE, 'ui', folder);
   // A mirror: a file removed there must stop being served here too.
   rmSync(join(PUBLIC_UI, folder), { recursive: true, force: true });

@@ -372,14 +372,12 @@ export default async function catalogRoutes(app: FastifyInstance) {
   });
 
   /**
-   * The basemap, in Bảng phấn colours by default and in Kính đêm with ?theme=kd (the site).
-   * Built from the Protomaps schema of the configured PMTiles archive; without one, the
-   * board alone, and the map shows the events on it.
+   * The basemap in Kính đêm colours, built from the Protomaps schema of the configured PMTiles
+   * archives; without them, the board alone, and the map shows the events on it.
    */
-  app.get('/map/style.json', async (req, reply) => {
-    const { theme } = parse(z.object({ theme: z.enum(['chalk', 'kd']).catch('chalk').default('chalk') }), req.query);
+  app.get('/map/style.json', async (_req, reply) => {
     reply.header('cache-control', 'public, max-age=300, s-maxage=3600');
-    return mapStyle(ctx.config.map, theme);
+    return mapStyle(ctx.config.map);
   });
 
   /** What the discovery screens build their chips from: listed cities, music styles, event types. */
@@ -498,18 +496,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
   });
 }
 
-const CHALK = 'rgba(255,252,225,';
-
-/**
- * The basemap's colours: Bảng phấn (the default: board-dark land, darker water, roads as
- * faint chalk lines) and Kính đêm (the site: a void ground, hairline roads, the river in the
- * live family's teal).
- */
-const MAP_PALETTES = {
-  chalk: { board: '#0E100F', earth: '#151714', park: '#181b17', water: '#0A0F10', line: CHALK, label: '#A5A493', halo: '#0E100F' },
-  kd: { board: '#08090a', earth: '#0b0c0d', park: '#0d0f0f', water: '#0a1517', line: 'rgba(208,214,224,', label: '#62666d', halo: '#08090a' },
-} as const;
-export type MapTheme = keyof typeof MAP_PALETTES;
+/** The basemap's colours (Kính đêm): a void ground, hairline roads, the river in the live family's teal. */
+const MAP_PALETTE = { board: '#08090a', earth: '#0b0c0d', park: '#0d0f0f', water: '#0a1517', line: 'rgba(208,214,224,', label: '#62666d', halo: '#08090a' } as const;
 
 /** Where the cities' archive takes over from the world's (which stops at zoom 6). */
 const MAP_HANDOVER = 7;
@@ -523,8 +511,8 @@ const MAP_WORLD_FILL_MAXZOOM = 10;
  * and sea alone carry on a little further, so the map past a city is not a black hole. The two
  * are styled the same, so where they meet nobody can tell.
  */
-export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | null; glyphsUrl: string | null }, theme: MapTheme = 'chalk') {
-  const P = MAP_PALETTES[theme];
+export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | null; glyphsUrl: string | null }) {
+  const P = MAP_PALETTE;
   const layers: Record<string, unknown>[] = [{ id: 'board', type: 'background', paint: { 'background-color': P.board } }];
   const sources: Record<string, unknown> = {};
   const attribution = '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -596,5 +584,5 @@ export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | 
       paint,
     });
   }
-  return { version: 8, name: 'FeestFinder Bảng phấn', ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}), sources, layers };
+  return { version: 8, name: 'FeestFinder Kính đêm', ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}), sources, layers };
 }

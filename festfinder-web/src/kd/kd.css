@@ -2,9 +2,9 @@
  * The Kính đêm stylesheet, imported by the (kd) root layout: the site, the app and every
  * back office.
  *
- * Layout is Tailwind utilities in the components. What follows is the design system's parts
- * (design_handoff_kinh_dem/design/ff.css), each a kd-* class the React parts in src/kd/ui
- * put on: utilities written after them win, so a part can still be adjusted in place.
+ * Layout is Tailwind utilities in the components. What follows is the design system's parts,
+ * each a kd-* class the React parts in src/kd/ui put on: utilities written after them win, so a
+ * part can still be adjusted in place.
  */
 
 @import 'tailwindcss';

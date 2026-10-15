@@ -13,13 +13,11 @@ const list = <K extends string>(entries: [K, string, string][]) => ({
 export const ARTIST_ROLE = list([
   ['dj', 'DJ', 'DJ'], ['producer', 'Producer', 'Producer'], ['live', 'Live act', 'Live act'], ['band', 'Band', 'Ban nhạc'], ['vocalist', 'Vocalist', 'Ca sĩ'],
 ]);
-export type ArtistRole = (typeof ARTIST_ROLE.keys)[number];
 
 export const BOOKING_STATUS = list([
   ['available', 'Available for bookings', 'Đang nhận booking'], ['limited', 'Limited dates', 'Còn ít ngày trống'],
   ['touring', 'On tour', 'Đang lưu diễn'], ['unavailable', 'Not taking bookings', 'Tạm ngừng nhận booking'],
 ]);
-export type BookingStatus = (typeof BOOKING_STATUS.keys)[number];
 
 export const TRAVEL_SCOPE = list([
   ['local', 'Home city', 'Trong thành phố'], ['domestic', 'Anywhere in the country', 'Trong nước'],
@@ -34,13 +32,11 @@ export const GIG_TYPE = list([
   ['brand_event', 'Brand event', 'Sự kiện thương hiệu'], ['private', 'Private', 'Riêng tư'], ['support', 'Support slot', 'Diễn mở màn'],
   ['headline', 'Headline', 'Diễn chính'], ['b2b', 'B2B', 'B2B'],
 ]);
-export type GigType = (typeof GIG_TYPE.keys)[number];
 
 export const SET_LENGTH = list([
   ['60', '60 min', '60 phút'], ['90', '90 min', '90 phút'], ['120', '120 min', '120 phút'],
   ['open_format', 'Open format', 'Linh hoạt'], ['all_night_long', 'All night long', 'Cả đêm'],
 ]);
-export type SetLength = (typeof SET_LENGTH.keys)[number];
 
 /** Where an artist's music and channels are, in the order a profile shows them. */
 export const ARTIST_LINK = list([

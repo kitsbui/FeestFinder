@@ -3,7 +3,6 @@
 Electronic-music event discovery for Vietnam and Asia: club nights, raves and festivals, with ticketing, group plans, an organiser back office and an internal moderation console. Vietnamese-first and bilingual throughout (₫, Zalo/Momo/ZaloPay/VietQR, district naming).
 
 ```
-design_handoff_festfinder/   the original Claude Design handoff (untouched reference)
 festfinder-backend/          the API: Node 24 + TypeScript, Fastify, PostgreSQL on Supabase
 festfinder-frontend/         ui/ (the map, fonts, brand images), copied into the site's public/ui
 festfinder-web/              the site at feestfinder.com: Next.js 16 + React 19 + Tailwind (Kính đêm), SEO pages, PWA

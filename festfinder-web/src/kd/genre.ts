@@ -24,14 +24,6 @@ export function familyOf(genre: string | null | undefined): Family {
 /** The order charts stack families in: checked for colour-blind separation on the dark ground. */
 export const CHART_ORDER: Exclude<Family, 'free'>[] = ['fest', 'live', 'edm', 'cult'];
 
-/** The API genres in each family, for filters that ask the API by genre. */
-export const FAMILY_GENRES: Record<Exclude<Family, 'free'>, string[]> = {
-  fest: ['Festival'],
-  live: ['Indie', 'Rock', 'Hip-Hop', 'Pop', 'Jazz'],
-  edm: ['EDM'],
-  cult: ['Food', 'Culture'],
-};
-
 export const FAMILY_LABEL: Record<Family, { vi: string; en: string }> = {
   fest: { vi: 'Lễ hội', en: 'Festival' },
   live: { vi: 'Nhạc sống', en: 'Live music' },
