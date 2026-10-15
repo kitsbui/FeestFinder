@@ -69,8 +69,9 @@ const config: NextConfig = {
         { source: '/c/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/c/:slug/en' },
         { source: '/a/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:slug/en' },
         { source: '/a', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/en' },
-        { source: '/p', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/en' },
+        // The slug first: a rewritten path is matched again by the rules after it (/p → /p/en must not become /p/en/en).
         { source: '/p/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/:slug/en' },
+        { source: '/p', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/en' },
         { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:by/:slug/en' },
       ],
       afterFiles: [],

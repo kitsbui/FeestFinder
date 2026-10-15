@@ -75,4 +75,7 @@ test('the nav leads to projects, which split by what they look for', async ({ pa
   await expect(page).toHaveURL(/\/p$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Dự án đang kêu gọi' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Đang tìm' }).getByRole('tab', { name: /^Nghệ sĩ/ })).toBeVisible();
+  // In English at ?lang=en, as every page.
+  await page.goto('/p?lang=en');
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects looking for backers' })).toBeVisible();
 });
