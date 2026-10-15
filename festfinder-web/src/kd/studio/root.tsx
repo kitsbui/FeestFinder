@@ -8,10 +8,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, SignOutIcon, SquaresFourIcon, TagIcon, TrayIcon, UsersIcon,
+  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, SignOutIcon, SquaresFourIcon, TagIcon, TicketIcon, TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair } from '../copy';
+import { CRAFT } from '../craft';
 import { KdProvider, useKd } from '../runtime';
 import { buttonClass } from '../ui/actions';
 import { AskHost } from '../console/kit';
@@ -118,12 +119,34 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
       </div>
     );
   }
+  // Organising is the account's craft only while it is on (kd/craft.ts); otherwise one switch away.
+  const craft = kd.session?.craft ?? null;
+  if (craft === 'artist' || kd.session?.roles?.organizer === 'disabled') {
+    const K = pick(CRAFT, lang);
+    const on = async () => {
+      try { await FF.post('/me/roles/switch', { to: 'organizer' }); await kd.refresh(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    };
+    return (
+      <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
+        <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
+          <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={127} height={22} />
+          <h1 className="kd-d3">{craft === 'artist' ? T.asArtist : T.orgOff}</h1>
+          {craft === 'artist' ? <p className="kd-s">{fill(K.oneBody, { a: K.artist, b: K.organizer })}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={buttonClass({ tone: 'acc' })} onClick={on}>{fill(K.switchTo, { r: K.organizer })}</button>
+            <a className={buttonClass({})} href="/">{K.attendee}</a>
+          </div>
+        </Panel>
+      </div>
+    );
+  }
   // A new organiser is a new Studio: every screen loads again for it.
   return <Studio key={orgId} lang={lang} current={current} seats={orgs} switchOrg={switchOrg}>{children}</Studio>;
 }
 
 function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; current: StudioScreen; children: ReactNode; seats: OrgSeat[]; switchOrg: (id: string) => void }) {
   const T = pick(STUDIO, lang);
+  const K = pick(CRAFT, lang);
   const kd = useKd();
   const [org, setOrg] = useState<OrgProfile | null>(null);
   const [events, setEvents] = useState<OrgEvent[] | null>(null);
@@ -209,6 +232,9 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
       footer={(
         <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line pt-4">
           <a className="kd-sn" href="/studio/profile" aria-current={current === 'profile' ? 'page' : undefined}>{i(BuildingsIcon)}{T.business}</a>
+          {/* The other roles: attending (the site), or performing instead of organising. */}
+          <a className="kd-sn" href="/">{i(TicketIcon)}{K.attendee}</a>
+          <button type="button" className="kd-sn w-full text-left" onClick={() => kd.openRolePicker('artist')}>{i(MicrophoneStageIcon)}{fill(K.switchTo, { r: K.artist })}</button>
           <button type="button" className="kd-sn w-full text-left" onClick={async () => { await kd.signOut(); location.assign('/studio'); }}>{i(SignOutIcon)}{T.signOut}</button>
         </div>
       )}

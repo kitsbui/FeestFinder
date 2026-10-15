@@ -65,26 +65,58 @@ describe('personas: artist and organiser, from the person’s side and the team�
     assert.equal(second.body.error.code, 'has_profile');
   });
 
-  it('creates an organiser waiting for verification, or claims a listed one as a manager', async () => {
+  it('keeps one craft per account: a second one asks to switch, and switching keeps the first profile', async () => {
+    // Linh performs; organising too is refused, with the craft in the way.
+    const refused = await env.as(dj).post('/me/roles/organizer', { name: 'Hanoi Warehouse Collective', type: 'collective', city: 'ha-noi' });
+    assert.equal(refused.status, 409);
+    assert.deepEqual([refused.body.error.code, refused.body.error.details.current], ['one_craft', 'artist']);
+    assert.equal((await env.as(dj).get('/me/roles')).body.craft, 'artist');
+    // Switching with no organiser yet turns the artist off and says what is missing.
+    const sw = await env.as(dj).post('/me/roles/switch', { to: 'organizer' });
+    assert.deepEqual([sw.body.ready, sw.body.roles.artist, sw.body.craft], [false, 'disabled', null]);
+    assert.equal((await env.as().get('/artists/linh-ngo')).status, 200, 'the public profile stays');
     const taken = await env.as(dj).post('/me/roles/organizer', { name: 'Ravolution Entertainment' });
     assert.equal(taken.body.error.code, 'organizer_exists');
     const made = await env.as(dj).post('/me/roles/organizer', { name: 'Hanoi Warehouse Collective', type: 'collective', city: 'ha-noi' });
     assert.equal(made.status, 201, JSON.stringify(made.body));
     const org = (await env.ctx.db.query<any>(`select o.verification_state, o.type, o.markets, m.role from organizers o join organizer_members m on m.organizer_id = o.id where o.slug = $1`, [made.body.slug])).rows[0];
-    assert.deepEqual([org.verification_state, org.type, org.markets, org.role, made.body.roles.organizer], ['pending', 'collective', ['ha-noi'], 'owner', 'active']);
+    assert.deepEqual([org.verification_state, org.type, org.markets, org.role, made.body.roles.organizer, made.body.craft], ['pending', 'collective', ['ha-noi'], 'owner', 'active', 'organizer']);
+    // Back to performing: both profiles exist, so it is one step, and organising goes off.
+    const back = await env.as(dj).post('/me/roles/switch', { to: 'artist' });
+    assert.deepEqual([back.body.ready, back.body.roles.artist, back.body.roles.organizer, back.body.craft], [true, 'active', 'disabled', 'artist']);
+    assert.equal((await env.as(dj).put('/me/roles/organizer')).body.error.code, 'one_craft', 'turning the other on asks to switch too');
+    // The database holds the rule as well.
+    await assert.rejects(env.ctx.db.query(`update user_roles set status = 'active' where role = 'organizer' and user_id = (select id from users where email = 'dj.linh@example.com')`));
+  });
+
+  it('claims an organiser only after switching, and the team’s yes never gives a second craft', async () => {
     const ravo = (await env.ctx.db.query<any>(`select id from organizers where slug = 'ravoent'`)).rows[0].id;
+    // The promoter manages Hoaprox now: a claim on an organiser asks to switch first.
+    assert.equal((await env.as(promoter).post('/me/roles/organizer', { claimOrganizerId: ravo, note: 'I run bookings' })).body.error.code, 'one_craft');
+    await env.as(promoter).post('/me/roles/switch', { to: 'organizer' });
     const claim = await env.as(promoter).post('/me/roles/organizer', { claimOrganizerId: ravo, note: 'I run bookings' });
     assert.equal(claim.body.roles.organizer, 'pending');
     const item = (await env.as(admin).get('/admin/profile-claims')).body.items.find((c: any) => c.kind === 'organizer');
     await env.as(admin).post(`/admin/profile-claims/organizer/${item.id}/decision`, { approve: true });
     const member = await env.ctx.db.query<any>(`select m.role from organizer_members m join users u on u.id = m.user_id where u.email = 'promo@example.com' and m.organizer_id = $1`, [ravo]);
     assert.equal(member.rows[0].role, 'manager', 'Ravolution has an owner already');
-    assert.equal((await env.as(promoter).get('/me/roles')).body.roles.organizer, 'active');
+    assert.deepEqual([(await env.as(promoter).get('/me/roles')).body.roles.organizer, (await env.as(promoter).get('/me/roles')).body.craft], ['active', 'organizer']);
+
+    // A claim decided after its owner switched away: the profile is theirs, the craft stays off.
+    const vy = await emailUser(env, 'vy.dj@example.com');
+    const wukong = (await env.ctx.db.query<any>(`select id from artists where slug = 'wukong'`)).rows[0].id;
+    await env.as(vy).post('/me/roles/artist', { claimArtistId: wukong, note: 'me' });
+    await env.as(vy).post('/me/roles/switch', { to: 'organizer' });
+    await env.as(vy).post('/me/roles/organizer', { name: 'Vy Nights', type: 'promoter', city: 'ho-chi-minh' });
+    const pending = (await env.as(admin).get('/admin/profile-claims')).body.items.find((c: any) => c.kind === 'artist' && c.target.slug === 'wukong');
+    assert.equal((await env.as(admin).post(`/admin/profile-claims/artist/${pending.id}/decision`, { approve: true })).status, 200);
+    const roles = (await env.as(vy).get('/me/roles')).body;
+    assert.deepEqual([roles.artist?.slug, roles.roles.artist, roles.roles.organizer], ['wukong', 'disabled', 'active']);
   });
 
-  it('turns a persona off without losing the profile, and back on', async () => {
+  it('turns a craft off without losing the profile, and back on', async () => {
     const off = await env.as(dj).delete('/me/roles/artist');
-    assert.equal(off.body.roles.artist, 'disabled');
+    assert.deepEqual([off.body.roles.artist, off.body.craft], ['disabled', null]);
     assert.equal((await env.as().get('/artists/linh-ngo')).status, 200, 'the public profile stays');
     const on = await env.as(dj).put('/me/roles/artist');
     assert.equal(on.body.roles.artist, 'active');

@@ -10,28 +10,68 @@ import type { OrganizerType } from '../lib/network.ts';
 import { artistKey, ensureArtists } from './artists.ts';
 
 /*
- * Personas. Every account is a music fan. Some also perform (an artist profile they own) and
- * some also organise (membership of an organiser). Both are opted into from the screens; a
- * profile that already exists in the catalogue is claimed, and the team decides the claim.
- * Admin is never one of these: it comes from the ADMIN_EMAIL allowlist.
+ * Personas. Every account attends: buys tickets, saves, follows. On top of that it has at most one
+ * craft (migration 033): it performs (an artist profile it owns) or it organises (membership of
+ * an organiser), never both at once; switching turns one off, keeping its profile and history,
+ * and the other on. A profile that already exists in the catalogue is claimed, and the team
+ * decides the claim. Admin is never one of these: it comes from the ADMIN_EMAIL allowlist.
  */
 
 export type Persona = 'artist' | 'organizer';
 export type RoleStatus = 'active' | 'pending' | 'disabled';
 
+const otherCraft = (role: Persona): Persona => (role === 'artist' ? 'organizer' : 'artist');
+
+/** The other craft when it is on or waiting on a claim: what stands in the way of this one. */
+export async function craftInTheWay(q: Queryable, userId: string, role: Persona): Promise<Persona | null> {
+  const r = await one(q, `select 1 from user_roles where user_id = $1 and role = $2 and status <> 'disabled'`, [userId, otherCraft(role)]);
+  return r ? otherCraft(role) : null;
+}
+
+/** One craft per account: starting, claiming or turning on a second one asks to switch instead. */
+export async function assertOneCraft(q: Queryable, userId: string, role: Persona): Promise<void> {
+  const current = await craftInTheWay(q, userId, role);
+  if (!current) return;
+  throw conflict('one_craft', current === 'artist'
+    ? L('An account has one craft. You perform as an artist: switch to organising first.', 'Mỗi tài khoản có một vai nghề. Bạn đang là Nghệ sĩ: hãy chuyển sang Nhà tổ chức trước.')
+    : L('An account has one craft. You organise: switch to performing first.', 'Mỗi tài khoản có một vai nghề. Bạn đang là Nhà tổ chức: hãy chuyển sang Nghệ sĩ trước.'),
+  { current, wanted: role });
+}
+
 export async function setRole(q: Queryable, userId: string, role: Persona, status: RoleStatus, now: Date): Promise<void> {
+  if (status !== 'disabled') await assertOneCraft(q, userId, role);
   await q.query(
     `insert into user_roles (user_id, role, status, created_at, updated_at) values ($1,$2,$3,$4,$4)
      on conflict (user_id, role) do update set status = excluded.status, updated_at = excluded.updated_at`,
     [userId, role, status, now]);
 }
 
-/** Active unless the person turned it off themselves; a claim that came through wakes a pending role. */
+/**
+ * Active unless the person turned it off themselves; a claim that came through wakes a pending
+ * role. The team's yes never breaks the one-craft rule: with the other craft on, this one is
+ * kept off (the profile is theirs), for the person to switch to.
+ */
 export async function activateRole(q: Queryable, userId: string, role: Persona, now: Date): Promise<void> {
+  const status = (await craftInTheWay(q, userId, role)) ? 'disabled' : 'active';
   await q.query(
-    `insert into user_roles (user_id, role, status, created_at, updated_at) values ($1,$2,'active',$3,$3)
-     on conflict (user_id, role) do update set status = 'active', updated_at = excluded.updated_at where user_roles.status = 'pending'`,
-    [userId, role, now]);
+    `insert into user_roles (user_id, role, status, created_at, updated_at) values ($1,$2,$3,$4,$4)
+     on conflict (user_id, role) do update set status = $3, updated_at = excluded.updated_at where user_roles.status = 'pending'`,
+    [userId, role, status, now]);
+}
+
+/**
+ * From one craft to the other: the current one is turned off (profile and history stay), and the
+ * wanted one on when there is a profile or membership behind it. `ready: false` means it still
+ * has to be started or claimed (the screens open that step).
+ */
+export async function switchCraft(q: Queryable, userId: string, to: Persona, now: Date): Promise<{ ready: boolean }> {
+  await q.query(`update user_roles set status = 'disabled', updated_at = $3 where user_id = $1 and role = $2 and status <> 'disabled'`, [userId, otherCraft(to), now]);
+  const backed = to === 'artist'
+    ? await one(q, 'select 1 from artists where owner_user_id = $1', [userId])
+    : await one(q, 'select 1 from organizer_members where user_id = $1', [userId]);
+  if (!backed) return { ready: false };
+  await setRole(q, userId, to, 'active', now);
+  return { ready: true };
 }
 
 /** What the screens need to know about who someone is, beyond being a fan. */
@@ -48,8 +88,11 @@ export async function personasOf(q: Queryable, userId: string) {
   ]);
   const status = (r: Persona) => roles.find((x) => x.role === r)?.status ?? null;
   const claim = (c: any) => ({ id: c.id, status: c.status, createdAt: c.created_at, slug: c.slug, name: c.name });
+  const on = (r: Persona) => status(r) === 'active' || status(r) === 'pending';
   return {
     roles: { artist: status('artist'), organizer: status('organizer') },
+    /** The one craft on (or waiting), besides attending; null when the account only attends. */
+    craft: on('artist') ? 'artist' as const : on('organizer') ? 'organizer' as const : null,
     artist: artist ? { id: artist.id, slug: artist.slug, name: artist.name } : null,
     claims: { artist: artistClaims.map(claim), organizer: orgClaims.map(claim) },
   };
@@ -65,6 +108,7 @@ export interface NewArtist { stageName: string; roles: string[]; basedCity: stri
  * signed up and left before.
  */
 export async function startArtistProfile(q: Queryable, userId: string, a: NewArtist, now: Date): Promise<{ id: string; slug: string }> {
+  await assertOneCraft(q, userId, 'artist');
   const owned = await one<{ id: string; slug: string }>(q, 'select id, slug from artists where owner_user_id = $1', [userId]);
   if (owned) {
     await setRole(q, userId, 'artist', 'active', now);
@@ -91,6 +135,7 @@ export async function startArtistProfile(q: Queryable, userId: string, a: NewArt
 export async function claimArtist(q: Queryable, userId: string, artistId: string, note: string, proofUrl: string | null, now: Date): Promise<{ id: string }> {
   const a = await one<{ id: string; owner_user_id: string | null }>(q, 'select id, owner_user_id from artists where id = $1', [artistId]);
   if (!a) throw notFound(L('Artist not found', 'Không tìm thấy nghệ sĩ'));
+  await assertOneCraft(q, userId, 'artist');
   if (a.owner_user_id === userId) throw conflict('already_yours', L('This profile is already yours', 'Hồ sơ này đã là của bạn'));
   if (await one(q, 'select 1 from artists where owner_user_id = $1', [userId])) {
     throw conflict('has_profile', L('You already have an artist profile', 'Bạn đã có hồ sơ nghệ sĩ'));
@@ -112,6 +157,7 @@ export interface NewOrganizer { name: string; type: OrganizerType; city: string 
 
 /** An organiser of one's own, waiting for verification like any new organiser. */
 export async function startOrganizer(q: Queryable, userId: string, o: NewOrganizer, now: Date): Promise<{ id: string; slug: string }> {
+  await assertOneCraft(q, userId, 'organizer');
   const name = o.name.trim();
   const clash = await one<{ id: string; slug: string; name: string }>(q,
     `select id, slug, name from organizers where lower(name) = lower($1) or slug = $2 limit 1`, [name, slugify(name)]);
@@ -136,6 +182,7 @@ export async function startOrganizer(q: Queryable, userId: string, o: NewOrganiz
 export async function claimOrganizer(q: Queryable, userId: string, organizerId: string, note: string, proofUrl: string | null, now: Date): Promise<{ id: string }> {
   const o = await one<{ id: string }>(q, 'select id from organizers where id = $1', [organizerId]);
   if (!o) throw notFound(L('Organiser not found', 'Không tìm thấy nhà tổ chức'));
+  await assertOneCraft(q, userId, 'organizer');
   if (await one(q, 'select 1 from organizer_members where organizer_id = $1 and user_id = $2', [organizerId, userId])) {
     throw conflict('already_member', L('You already manage this organiser', 'Bạn đã quản lý nhà tổ chức này'));
   }

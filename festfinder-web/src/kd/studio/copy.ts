@@ -21,6 +21,8 @@ export const STUDIO = {
   signIn: { en: 'Log in', vi: 'Đăng nhập' },
   notOrg: { en: 'This account has no organiser profile yet', vi: 'Tài khoản này chưa có hồ sơ nhà tổ chức' },
   becomeOrg: { en: 'Create an organiser profile', vi: 'Tạo hồ sơ nhà tổ chức' },
+  asArtist: { en: 'This account performs as an artist now', vi: 'Tài khoản đang dùng vai Nghệ sĩ' },
+  orgOff: { en: 'Organising is turned off', vi: 'Vai Nhà tổ chức đang tắt' },
   pickEvent: { en: 'Event', vi: 'Sự kiện' },
   noEvents: { en: 'No events yet', vi: 'Chưa có sự kiện nào' },
   viewPage: { en: 'View page', vi: 'Xem trang' },

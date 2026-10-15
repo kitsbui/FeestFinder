@@ -10,8 +10,6 @@ export const ARTIST = {
   gigs: { en: 'Gigs & bookings', vi: 'Lịch diễn & booking' },
   opportunities: { en: 'Opportunities', vi: 'Cơ hội diễn' },
   gear: { en: 'Gear', vi: 'Thiết bị' },
-  toStudio: { en: 'Organiser Studio', vi: 'Studio nhà tổ chức' },
-  toSite: { en: 'FeestFinder', vi: 'FeestFinder' },
   signOut: { en: 'Log out', vi: 'Đăng xuất' },
   // the gate
   gate: { en: 'Log in to manage your artist profile', vi: 'Đăng nhập để quản lý hồ sơ nghệ sĩ' },
@@ -19,6 +17,7 @@ export const ARTIST = {
   noArtist: { en: 'This account has no artist profile', vi: 'Tài khoản này chưa có hồ sơ nghệ sĩ' },
   pending: { en: 'Your profile claim is waiting for review', vi: 'Yêu cầu nhận hồ sơ đang chờ duyệt' },
   disabled: { en: 'Your artist profile is turned off', vi: 'Hồ sơ nghệ sĩ đang tắt' },
+  asOrganizer: { en: 'This account organises now', vi: 'Tài khoản đang dùng vai Nhà tổ chức' },
   create: { en: 'Create an artist profile', vi: 'Tạo hồ sơ nghệ sĩ' },
   turnOn: { en: 'Turn your artist profile back on', vi: 'Bật lại hồ sơ nghệ sĩ' },
   switchAccount: { en: 'Switch account', vi: 'Đổi tài khoản' },

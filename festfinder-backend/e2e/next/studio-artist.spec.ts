@@ -44,6 +44,31 @@ async function as(baseURL: string | undefined, account: { identifier: string; pa
   return ctx;
 }
 
+test('one craft per account: from performing to organising and back, both profiles kept', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const me = await newArtist(page);
+  await open(page, '/');
+  await page.getByRole('button', { name: 'Tài khoản' }).click();
+  const menu = page.getByRole('menu', { name: 'Tài khoản' });
+  await expect(menu.getByRole('menuitemradio', { name: 'Người tham dự' })).toHaveAttribute('aria-checked', 'true');
+  await expect(menu.getByRole('menuitem', { name: 'Nghệ sĩ', exact: true })).toHaveAttribute('href', '/studio/artist');
+  await menu.getByRole('menuitem', { name: 'Đổi sang Nhà tổ chức' }).click();
+  // The picker says what switching does, then starts the organiser that does not exist yet.
+  const sheet = page.getByRole('dialog');
+  await expect(sheet.getByText('Mỗi tài khoản một vai nghề')).toBeVisible();
+  await sheet.getByRole('button', { name: 'Đổi sang Nhà tổ chức' }).click();
+  await sheet.getByLabel('Tên nhà tổ chức').fill(`Owl Nights ${stamp()}`);
+  await sheet.getByRole('button', { name: 'Tạo hồ sơ' }).click();
+  await expect(page).toHaveURL(/\/studio$/);
+  // From Studio's rail back to performing: one step, the artist profile is still there.
+  await page.getByRole('button', { name: 'Đổi sang Nghệ sĩ' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Đổi sang Nghệ sĩ' }).click();
+  await expect(page).toHaveURL(/\/studio\/artist$/);
+  await expect(page.getByText(me.name).first()).toBeVisible();
+  const session = await (await page.request.get('/auth/session')).json();
+  expect([session.craft, session.roles.artist, session.roles.organizer]).toEqual(['artist', 'active', 'disabled']);
+});
+
 test('signed out, the artist studio asks to log in', async ({ page }) => {
   await open(page, '/studio/artist');
   await expect(page.locator('[data-ff-gate]')).toBeVisible();

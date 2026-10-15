@@ -12,7 +12,7 @@ import { appendAudit } from '../services/audit.ts';
 import { personId } from '../services/analytics.ts';
 import { notifyUser } from '../services/notify.ts';
 import {
-  activateRole, claimArtist, claimOrganizer, claimSuggestions, personasOf, setRole, startArtistProfile, startOrganizer, type Persona,
+  activateRole, claimArtist, claimOrganizer, claimSuggestions, personasOf, setRole, startArtistProfile, startOrganizer, switchCraft, type Persona,
 } from '../services/roles.ts';
 
 /*
@@ -23,6 +23,7 @@ import {
  *   DELETE /me/roles/artist          hide the artist workspace; the profile and its history stay
  *   POST   /me/roles/organizer       an organiser of their own, or a claim on a listed one
  *   DELETE /me/roles/organizer
+ *   POST   /me/roles/switch          from one craft to the other (an account has one, besides attending)
  *   POST   /me/onboarding            the role picker was answered (or skipped)
  *   GET    /me/roles/suggestions?q=  listed artists and organisers with that name
  *
@@ -118,6 +119,14 @@ export default async function roleRoutes(app: FastifyInstance) {
     if (!has) throw notFound(role === 'artist' ? L('Start or claim an artist profile first', 'Hãy tạo hoặc nhận hồ sơ nghệ sĩ trước') : L('Create or claim an organiser first', 'Hãy tạo hoặc nhận nhà tổ chức trước'));
     await setRole(ctx.db, s.user.id, role, 'active', ctx.clock.now());
     return answer(s.user.id);
+  });
+
+  /** Switching craft: the current one off (its profile stays), the other on, or its first step. */
+  app.post('/me/roles/switch', async (req) => {
+    const s = requireUser(req);
+    const { to } = parse(z.object({ to: z.enum(['artist', 'organizer']) }), req.body);
+    const out = await ctx.db.tx((q) => switchCraft(q, s.user.id, to as Persona, ctx.clock.now()));
+    return { ...(await answer(s.user.id)), ready: out.ready };
   });
 
   app.delete<{ Params: { role: string } }>('/me/roles/:role', async (req) => {

@@ -16,6 +16,7 @@ import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
 import { Avatar } from '../ui/parts';
 import { Sheet } from '../ui/sheet';
 import { Input } from '../ui/forms';
+import { CRAFT, WORKSPACE, otherCraft } from '../craft';
 import { WEB } from './copy';
 
 /** Which nav link is the current page: 'list' is Sự kiện, in each of its views (table, grid, map). */
@@ -49,7 +50,9 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
   }, [kd.user]);
 
   const user = kd.user;
-  const roles = (kd.session as { roles?: { artist: string | null; organizer: string | null } } | null | undefined)?.roles;
+  const K = pick(CRAFT, lang);
+  const roles = kd.session?.roles;
+  const craft = kd.session?.craft ?? null;
   return (
     <header className="kd-nav kd-glass">
       <div className="kd-wrap flex h-16 items-center gap-3">
@@ -97,11 +100,17 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
                   {me?.handle ? <span className="kd-m kd-ell normal-case">{me.handle}</span> : null}
                 </span>
               </MenuHeader>
+              {/* Attending here; the one craft (if any) has its workspace; the other is a switch. */}
+              <MenuHeader><span className="kd-m">{K.roles}</span></MenuHeader>
+              <MenuItem checked onSelect={() => {}}>{K.attendee}</MenuItem>
+              {craft ? (
+                <MenuItem checked={false} href={WORKSPACE[craft]} external aside={roles?.[craft] === 'pending' ? K.waiting : null}>{K[craft]}</MenuItem>
+              ) : (
+                <MenuItem onSelect={() => kd.openRolePicker()}>{K.add}</MenuItem>
+              )}
+              {craft ? <MenuItem onSelect={() => kd.openRolePicker(otherCraft(craft))}>{fill(K.switchTo, { r: K[otherCraft(craft)] })}</MenuItem> : null}
+              <MenuSeparator />
               <MenuItem href={inLang('/profile', lang)}>{T.myProfile}</MenuItem>
-              {roles?.artist === 'active' ? <MenuItem href="/studio/artist" external>{T.artistSpace}</MenuItem> : null}
-              {roles?.organizer === 'active' ? <MenuItem href="/studio" external>{T.orgSpace}</MenuItem> : null}
-              {roles?.artist === 'pending' || roles?.organizer === 'pending' ? <MenuItem disabled>{T.rolePending}</MenuItem> : null}
-              {roles?.artist !== 'active' && roles?.organizer !== 'active' ? <MenuItem onSelect={() => kd.openRolePicker()}>{T.roleBecome}</MenuItem> : null}
               <MenuItem href="/app/tickets" external aside={me ? me.tickets : null}>{T.myTickets}</MenuItem>
               <MenuItem href={inLang('/saved', lang)} external aside={me ? me.saved : null}>{T.saved}</MenuItem>
               <MenuSeparator />

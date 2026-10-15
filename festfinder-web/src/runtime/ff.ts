@@ -12,6 +12,10 @@ export interface Session {
   organizers: { id: string; slug: string; name: string; role: string }[];
   readOnly: boolean;
   impersonatedBy: string | null;
+  /** Personas (festfinder-backend services/roles.ts personasOf): the one craft on besides attending, if any. */
+  roles?: { artist: 'active' | 'pending' | 'disabled' | null; organizer: 'active' | 'pending' | 'disabled' | null };
+  craft?: 'artist' | 'organizer' | null;
+  artist?: { id: string; slug: string; name: string } | null;
 }
 
 export class ApiError extends Error {

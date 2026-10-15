@@ -1,13 +1,17 @@
 'use client';
 /**
- * After a first sign-in: fan, artist or organiser. Every account is a fan; an artist or an
- * organiser profile is created (or an existing listing claimed) and its workspace opens (the
- * artist studio, or Studio). Admin never comes from here (CLAUDE.md: only the ADMIN_EMAIL allowlist).
+ * After a first sign-in, and whenever someone adds or switches a craft: attendee, artist or
+ * organiser. Every account attends; it has one craft besides at most (kd/craft.ts), so choosing
+ * the other one asks to switch first, keeping the current profile. Then an artist or organiser
+ * profile is created (or an existing listing claimed) and its workspace opens (the artist studio,
+ * or Studio). Admin never comes from here (CLAUDE.md: only the ADMIN_EMAIL allowlist).
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { HeadphonesIcon, MicrophoneStageIcon, StorefrontIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { COMMON, pick, type Lang } from './copy';
+import { COMMON, fill, pick, type Lang } from './copy';
+import { CRAFT, WORKSPACE } from './craft';
+import { useKd } from './runtime';
 import { Button, Chip } from './ui/actions';
 import { FieldError, FieldLabel, Input } from './ui/forms';
 import { Sheet } from './ui/sheet';
@@ -49,6 +53,27 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
   const [clash, setClash] = useState<Suggestion | null>(null);
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const kd = useKd();
+  const K = pick(CRAFT, lang);
+  // The craft this account has now: choosing it again opens its workspace, choosing the other asks to switch.
+  const craft = kd.session?.craft ?? null;
+  const [switched, setSwitched] = useState(false);
+  const mustSwitch = step !== 'menu' && !!craft && craft !== step && !switched;
+  const doSwitch = async () => {
+    if (step === 'menu' || busy) return;
+    setBusy(true); setErr('');
+    try {
+      const out = (await FF.post('/me/roles/switch', { to: step })) as { ready: boolean };
+      if (out.ready) { location.assign(WORKSPACE[step]); return; }
+      await kd.refresh();
+      setSwitched(true);
+    } catch (e) { setErr(FF.errorText(e, lang)); }
+    setBusy(false);
+  };
+  const choose = (to: 'artist' | 'organizer') => {
+    if (craft === to && kd.session?.roles?.[to] === 'active') { location.assign(WORKSPACE[to]); return; }
+    setStep(to); setName(''); setSug(null); setErr('');
+  };
 
   useEffect(() => {
     FF.once('kd:discovery', () => FF.maybe(FF.get('/meta/discovery'), null)).then((d: any) => d && setCities(d.cities));
@@ -106,8 +131,18 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
       {step === 'menu' ? (
         <div className="flex flex-col gap-2 pt-2">
           {card(t.fan, t.fanSub, <HeadphonesIcon size={20} aria-hidden="true" />, fan)}
-          {card(t.artist, t.artistSub, <MicrophoneStageIcon size={20} aria-hidden="true" />, () => { setStep('artist'); setName(''); setSug(null); setErr(''); })}
-          {card(t.org, t.orgSub, <StorefrontIcon size={20} aria-hidden="true" />, () => { setStep('organizer'); setName(''); setSug(null); setErr(''); })}
+          {card(t.artist, t.artistSub, <MicrophoneStageIcon size={20} aria-hidden="true" />, () => choose('artist'))}
+          {card(t.org, t.orgSub, <StorefrontIcon size={20} aria-hidden="true" />, () => choose('organizer'))}
+        </div>
+      ) : mustSwitch ? (
+        <div className="flex flex-col gap-3 pt-1">
+          <span className="kd-hs">{K.oneTitle}</span>
+          <p className="kd-s">{fill(K.oneBody, { a: K[craft!], b: K[step] })}</p>
+          <FieldError>{err}</FieldError>
+          <div className="flex flex-wrap gap-2">
+            <Button tone="acc" disabled={busy} onClick={doSwitch}>{fill(K.switchTo, { r: K[step] })}</Button>
+            <Button tone="ghost" onClick={() => onClose(false)}>{C.close}</Button>
+          </div>
         </div>
       ) : (
         <form className="flex flex-col gap-3 pt-1" onSubmit={(e) => { e.preventDefault(); create(); }}>
