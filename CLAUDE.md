@@ -54,6 +54,11 @@ For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. 
 - **Map:** the map view asks `/events/map` when it opens and on "search this area" only, never on pan. The basemap is two self-hosted PMTiles archives, cut by `festfinder-backend/scripts/build-tiles.sh`: `MAP_OVERVIEW_URL` (the whole world, zoom 0–6, drawn below zoom 7) and `MAP_TILES_URL` (the listed cities, zoom 0–14, drawn from zoom 7, so no tile is drawn twice), on Vercel Blob (store `feestfinder-tiles`, `tiles/<planet build>/…`). Street, ward and city names use the site's own Noto Sans glyphs in `festfinder-frontend/ui/map/glyphs` (`MAP_GLYPHS_URL` overrides them). Without the archives the map draws the board and the events. Rebuild the tiles after adding a city, upload them under a new build folder and point the variables there.
 - **Commits:** commit, push or deploy only when the user asks. A push to `main` is a production deploy.
 
+## Skills and MCP (for coding agents)
+
+- `.claude/skills/`: `feestfinder-preview` (run or restart the local preview), `feestfinder-migration`, `feestfinder-add-city` (places, tiles, Blob, `MAP_*`), `feestfinder-radar-adapter` and `feestfinder-ship` (checks, merge, deploy, verify). Keep them true when the commands they name change.
+- `.mcp.json`: the Vercel MCP server (sign in with OAuth when asked) and the Supabase one, read-only, on the project in `SUPABASE_PROJECT_REF` with the token in `SUPABASE_ACCESS_TOKEN` (both from your own environment; use staging). Never write a ref, token or password into the repo.
+
 ## Caching (frontend.ts)
 
 Outside development, the `/ui` URLs in CSS carry `?v=<content hash>`:
