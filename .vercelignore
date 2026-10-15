@@ -1,5 +1,5 @@
 # What a `vercel deploy` from this folder leaves behind. The project builds festfinder-backend,
-# which also ships festfinder-frontend (/ops and the ui/ files it serves); node_modules, .git
+# which also ships festfinder-frontend (the ui/ files it serves); node_modules, .git
 # and .next are skipped by the CLI already.
 
 # Laptop-only: local secrets and the test databases.
@@ -11,6 +11,3 @@
 # Not part of this deployment.
 festfinder-web
 design_handoff_festfinder
-# The full icon fonts and the script that cuts them; the cut lives in ui/vendor/phosphor.
-festfinder-frontend/vendor-src
-festfinder-frontend/scripts

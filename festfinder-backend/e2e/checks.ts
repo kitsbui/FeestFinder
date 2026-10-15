@@ -25,19 +25,3 @@ export async function signInWith(page: Page, account: { identifier: string; pass
   const res = await page.request.post('/auth/login', { data: account });
   expect(res.ok(), `sign in as ${account.identifier}`).toBeTruthy();
 }
-
-/*
- * /ops is plain scripts: it is ready when its own frame (or the sign-in card) is there.
- * It opens in Vietnamese.
- */
-export async function expectOps(page: Page, path: string, shows: RegExp, landsOn: string | RegExp = path) {
-  const problems = watch(page);
-  await page.goto(path);
-  await page.locator('.op-frame, .op-gate').first().waitFor({ state: 'attached' });
-  await expect.poll(() => page.locator('body').innerText(), { message: `${path} shows ${shows}` }).toMatch(shows);
-  // The queue and the inbox open their first item on a wide screen, which adds its id.
-  const at = new URL(page.url()).pathname;
-  if (typeof landsOn === 'string') expect(at, `${path} lands on ${landsOn}`).toBe(landsOn);
-  else expect(at, `${path} lands on ${landsOn}`).toMatch(landsOn);
-  expect(problems, `${path} loaded cleanly`).toEqual([]);
-}

@@ -72,9 +72,8 @@ const config: NextConfig = {
       ],
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
-      // browser, so the session cookie and every relative fetch in the pages and /ops just work.
-      // src/proxy.ts forwards most of these itself (it signs them); this catches the rest,
-      // such as /ui/theme.css for /ops, which public/ui does not have.
+      // browser, so the session cookie and every relative fetch in the pages just work.
+      // src/proxy.ts forwards most of these itself (it signs them); this catches the rest.
       fallback: [{ source: '/:path*', destination: `${API}/:path*` }],
     };
   },
