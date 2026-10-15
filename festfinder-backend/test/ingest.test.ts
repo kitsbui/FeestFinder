@@ -396,6 +396,29 @@ describe('ingestion runs (API)', () => {
     assert.equal(ev.location.address.addressCountry, 'SG');
   });
 
+  it('tells what FeestFinder Radar found from what someone posted, for events and their artists', async () => {
+    // Approved by a moderator, still nobody's post: Radar. Ravolution took an import too, and stays posted.
+    const all = (await env.as().get('/events?time=all')).body;
+    const radar = (await env.as().get('/events?time=all&origin=radar')).body;
+    assert.deepEqual(radar.items.map((e: any) => [e.title, e.origin]), [['ZOUK presents: Techno Marathon', 'radar']]);
+    assert.equal(all.items.find((e: any) => e.slug === 'ravo').origin, 'posted');
+    assert.deepEqual([all.facets.origin.radar, all.facets.origin.posted + all.facets.origin.radar], [1, all.total]);
+    const posted = (await env.as().get('/events?time=all&origin=posted')).body;
+    assert.equal(posted.total, all.total - 1);
+    assert.ok(posted.items.every((e: any) => e.origin === 'posted'));
+    const map = (await env.as().get('/events/map?bbox=103.6,1.2,104.05,1.48&origin=posted')).body;
+    assert.equal(map.items.length, 0);
+
+    // Its lineup is known only from that night: Radar artists, counted in their own tab.
+    const artists = (await env.as().get('/artists?origin=radar')).body;
+    assert.deepEqual(artists.items.map((a: any) => [a.name, a.origin]).sort(), [['Amelie Lens', 'radar'], ['Charlotte de Witte', 'radar']]);
+    assert.equal(artists.origins.radar, 2);
+    const everyone = (await env.as().get('/artists')).body;
+    assert.equal(everyone.origins.posted + everyone.origins.radar, everyone.total);
+    assert.equal(everyone.items.find((a: any) => a.slug === 'hoaprox')?.origin, 'posted');
+    assert.equal((await env.as().get('/artists/charlotte-de-witte')).body.artist.origin, 'radar');
+  });
+
   it('serves the listed cities, styles and event types for the chips', async () => {
     const meta = (await env.as().get('/meta/discovery')).body;
     assert.deepEqual(meta.cities.map((c: any) => c.slug), ['ho-chi-minh', 'ha-noi', 'da-nang', 'nha-trang', 'bangkok', 'tokyo', 'singapore', 'bali']);

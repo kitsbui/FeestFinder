@@ -37,8 +37,11 @@
         link.setAttribute('data-ff-map', '');
         document.head.appendChild(link);
       }
-      if (!window.pmtiles) await loadScript(at('/ui/vendor/maplibre/pmtiles.js'));
-      const m = await import(at('/ui/vendor/maplibre/maplibre-gl.mjs'));
+      // Side by side: the PMTiles protocol is small, MapLibre is not.
+      const [m] = await Promise.all([
+        import(at('/ui/vendor/maplibre/maplibre-gl.mjs')),
+        window.pmtiles ? null : loadScript(at('/ui/vendor/maplibre/pmtiles.js')),
+      ]);
       m.setWorkerUrl(new URL(at('/ui/vendor/maplibre/maplibre-gl-worker.mjs'), location.href).href);
       const protocol = new window.pmtiles.Protocol();
       m.addProtocol('pmtiles', protocol.tile);

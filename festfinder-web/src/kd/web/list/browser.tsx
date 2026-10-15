@@ -1,12 +1,14 @@
 'use client';
 /**
- * /list: every upcoming event as a table, a grid or a map, by city, time, genre family (or one
- * API genre), kind of night and music style, and text. The address carries the choices with
+ * /list (Sự kiện in the nav): every upcoming event as a table, a grid or a map, by city, time,
+ * genre family (or one API genre), kind of night and music style, and text. The three views
+ * share one title, one view switch, one search and one row of filters, so a choice made in
+ * one view is there, and visible, in the others. The address carries the choices with
  * the legacy names (city, genre, time, style, type, view, bbox, q) so old links and the
  * /vi/… and /en/… redirects keep landing on the right list. The list re-reads itself every
  * minute while it is open.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../../copy';
@@ -21,8 +23,9 @@ import { Menu, MenuItem, MenuSeparator, Picker } from '../../ui/menu';
 import { Card as Panel, Marker, Status, type StatusTone } from '../../ui/parts';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
+import { OriginTabs, RadarTag, type Origin } from '../../ui/origin';
 import { LIST } from './copy';
-import type { Box } from '../../map/kd-map';
+import { warmKdMap, type Box } from '../../map/kd-map';
 import { MapView } from './map-view';
 
 export type View = 'table' | 'grid' | 'map';
@@ -43,6 +46,8 @@ export interface Filters {
   q: string;
   view: View;
   bbox: [number, number, number, number] | null;
+  /** Posted, or found by FeestFinder Radar; null is both. */
+  origin: Origin | null;
 }
 
 const TIMES: Time[] = ['all', 'tonight', 'weekend', '7days', 'month'];
@@ -50,7 +55,7 @@ const TIMES: Time[] = ['all', 'tonight', 'weekend', '7days', 'month'];
 const TYPE_CHIPS = ['club', 'festival', 'concert'];
 const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass'];
 
-export const DEFAULT: Filters = { city: 'all', time: 'all', family: null, genre: null, style: null, type: null, q: '', view: 'table', bbox: null };
+export const DEFAULT: Filters = { city: 'all', time: 'all', family: null, genre: null, style: null, type: null, q: '', view: 'table', bbox: null, origin: null };
 
 export function readFilters(q: URLSearchParams, meta: Meta): Filters {
   const time = q.get('time') as Time | null;
@@ -66,6 +71,7 @@ export function readFilters(q: URLSearchParams, meta: Meta): Filters {
     q: (q.get('q') || '').slice(0, 100),
     view: view === 'grid' || view === 'map' ? view : 'table',
     bbox: bbox.length === 4 && bbox.every(Number.isFinite) ? (bbox as Filters['bbox']) : null,
+    origin: q.get('origin') === 'radar' || q.get('origin') === 'posted' ? (q.get('origin') as Origin) : null,
   };
 }
 
@@ -79,6 +85,7 @@ export function apiQuery(f: Filters, opts: { city?: boolean } = {}) {
   if (f.style) q.set('style', f.style);
   if (f.type) q.set('type', f.type);
   if (f.q) q.set('q', f.q);
+  if (f.origin) q.set('origin', f.origin);
   return q;
 }
 
@@ -91,6 +98,7 @@ function address(f: Filters, lang: Lang) {
   if (f.style) q.set('style', f.style);
   if (f.type) q.set('type', f.type);
   if (f.q) q.set('q', f.q);
+  if (f.origin) q.set('origin', f.origin);
   if (f.view !== 'table') q.set('view', f.view);
   if (f.view === 'map' && f.bbox) q.set('bbox', f.bbox.join(','));
   if (lang === 'en') q.set('lang', 'en');
@@ -98,7 +106,7 @@ function address(f: Filters, lang: Lang) {
   return '/list' + (s ? '?' + s : '');
 }
 
-interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number> } }
+interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; origin?: { posted: number; radar: number } } }
 
 export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; initial: Page }) {
   const T = pick(LIST, lang);
@@ -183,8 +191,8 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
   const cityName = (slug: string) => meta.cities.find((c) => c.slug === slug)?.name[lang] ?? '';
   const timeLabel = (t: Time) => ({ all: T.anyTime, tonight: T.tonight, weekend: T.weekend, '7days': T.next7, month: T.month })[t];
   const kindLabel = f.type ? meta.eventTypes.find((x) => x.key === f.type)?.label[lang] : f.style ? meta.styles.find((x) => x.key === f.style)?.label[lang] : null;
-  const filtered = f.city !== 'all' || f.time !== 'all' || !!f.family || !!f.genre || !!f.style || !!f.type || !!f.q;
-  const clear = () => set({ city: 'all', time: 'all', family: null, genre: null, style: null, type: null, q: '' });
+  const filtered = f.city !== 'all' || f.time !== 'all' || !!f.family || !!f.genre || !!f.style || !!f.type || !!f.q || !!f.origin;
+  const clear = () => set({ city: 'all', time: 'all', family: null, genre: null, style: null, type: null, q: '', origin: null });
 
   const search = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -193,7 +201,28 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
     set({ q: v });
   };
 
-  const filters = (
+  const viewSwitch = (full?: boolean) => (
+    <Segmented label={T.view} value={f.view} full={full} onChange={(v) => set({ view: v })} options={[{ value: 'table', label: T.table }, { value: 'grid', label: T.grid }, { value: 'map', label: T.map }]} />
+  );
+  /** Posted or found by Radar: the list's two kinds, with their counts where the list has them. */
+  const originTabs = (counts: boolean) => (
+    <OriginTabs lang={lang} value={f.origin} onChange={(v) => set({ origin: v })} counts={counts ? page.facets?.origin ?? null : null} />
+  );
+  const searchBox = (
+    <form role="search" onSubmit={search} className="max-w-xl">
+      <Input
+        key={f.q}
+        name="q"
+        type="search"
+        defaultValue={f.q}
+        placeholder={T.searchPh}
+        aria-label={T.search}
+        icon={<MagnifyingGlassIcon size={18} aria-hidden="true" />}
+      />
+    </form>
+  );
+  /** The filters every view shares; the map adds its own "Dưới 5 km". */
+  const filters = (extra?: ReactNode) => (
     <div className="flex flex-wrap items-center gap-2">
       <Picker
         label={T.city}
@@ -221,6 +250,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
           <MenuItem key={k} checked={f.style === k} onSelect={() => set({ style: f.style === k ? null : k })}>{meta.styles.find((x) => x.key === k)?.label[lang] ?? k}</MenuItem>
         ))}
       </Menu>
+      {extra}
       {filtered ? <button type="button" className="kd-more ml-1" onClick={clear}><XIcon size={14} aria-hidden="true" />{T.clear}</button> : null}
     </div>
   );
@@ -231,9 +261,12 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
         lang={lang}
         meta={meta}
         filters={f}
-        onFilters={set}
         onBbox={onBbox}
-        viewSwitch={<Segmented label={T.view} value={f.view} onChange={(v) => set({ view: v })} options={[{ value: 'table', label: T.table }, { value: 'grid', label: T.grid }, { value: 'map', label: T.map }]} />}
+        onClear={clear}
+        viewSwitch={viewSwitch(true)}
+        search={searchBox}
+        toolbar={filters}
+        tabs={originTabs(false)}
       />
     );
   }
@@ -272,20 +305,12 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
             {added ? ' · ' + fill(T.added, { n: added }) : ''}
           </span>
         </div>
-        <Segmented label={T.view} value={f.view} onChange={(v) => set({ view: v })} options={[{ value: 'table', label: T.table }, { value: 'grid', label: T.grid }, { value: 'map', label: T.map }]} />
+        {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. */}
+        <div onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
       </div>
-      <form role="search" onSubmit={search} className="max-w-xl">
-        <Input
-          key={f.q}
-          name="q"
-          type="search"
-          defaultValue={f.q}
-          placeholder={T.searchPh}
-          aria-label={T.search}
-          icon={<MagnifyingGlassIcon size={18} aria-hidden="true" />}
-        />
-      </form>
-      {filters}
+      {originTabs(true)}
+      {searchBox}
+      {filters()}
       {sorted.length ? (
         f.view === 'grid' ? (
           <div className={cx('kd-cards mt-2 transition-opacity', busy && 'opacity-60')}>
@@ -309,7 +334,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
                 <Link key={e.id} role="row" href={inLang('/e/' + e.slug, lang)} className="kd-tr min-w-[1020px] hover:bg-white/[0.03]" style={{ gridTemplateColumns: COLS }}>
                   <span role="cell" className="kd-s kd-num text-mist">{whenShort(e, lang)}</span>
                   <span role="cell" className="kd-mb kd-num">{e.startTime ?? ''}</span>
-                  <span role="cell" className="kd-hs flex min-w-0 items-center gap-2"><Marker family={familyOf(e.genre)} /><span className="kd-ell">{e.title}</span></span>
+                  <span role="cell" className="kd-hs flex min-w-0 items-center gap-2"><Marker family={familyOf(e.genre)} /><span className="kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
                   <span role="cell" className="kd-s kd-ell">{[e.venue.name, e.venue.area].filter(Boolean).join(' · ')}</span>
                   <span role="cell" className="kd-s kd-ell">{cityName(e.city)}</span>
                   <span role="cell" className={cx('kd-mb kd-num', e.isFree && 'text-acc')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>

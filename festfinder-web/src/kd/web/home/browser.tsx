@@ -1,9 +1,10 @@
 'use client';
 /**
- * The home page's live part: the city and the time ("Cuối tuần này ▾ có gì chơi?"), search,
- * the featured card, and the list with its sort and style chips. The server renders the
- * default (this weekend, every style) for search engines; any other choice is asked of
- * /events from here and kept in the address (?time=&style=&price=free&sort=&city=).
+ * The home page's live part: the day, "Cuối tuần này có gì chơi?" with the time chips under it,
+ * search, the featured card, and the list with its sort, "Miễn phí" and style chips. Every listed
+ * city at once (the cards name theirs; /list filters by city). The server renders the default
+ * (this weekend, every style) for search engines; any other choice is asked of /events from here
+ * and kept in the address (?time=&style=&price=free&sort=).
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowRightIcon, CaretDownIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/ssr';
@@ -15,7 +16,7 @@ import { FAMILY_LABEL, familyOf, g, styleChips, styleLabel } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
 import { buttonClass, Button, Chip } from '../../ui/actions';
-import { Menu, MenuItem, Picker } from '../../ui/menu';
+import { Picker } from '../../ui/menu';
 import { Art, Card as Panel } from '../../ui/parts';
 import type { Card } from '../../types';
 import { EventCard, cardTag } from '../card';
@@ -35,25 +36,23 @@ export interface Feed {
 const TIMES: TimeKey[] = ['tonight', 'weekend', '7days', 'month'];
 const PAGE = 12;
 
-/** `pick` is a style key, or 'free'. */
-interface Filters { city: string; time: TimeKey; pick: string | null; sort: Sort }
+/** A music style and the price are separate choices: Techno and free together is one list. */
+interface Filters { time: TimeKey; style: string | null; free: boolean; sort: Sort }
 
 function query(f: Filters, cursor?: string | null) {
   const q = new URLSearchParams({ time: f.time, limit: String(PAGE), sort: f.sort, upcoming: '1' });
-  if (f.city) q.set('city', f.city);
-  if (f.pick === 'free') q.set('price', 'free');
-  else if (f.pick) q.set('style', f.pick);
+  if (f.style) q.set('style', f.style);
+  if (f.free) q.set('price', 'free');
   if (cursor) q.set('cursor', cursor);
   return '/events?' + q;
 }
 
 /** The address for the choices: only what differs from the default. */
-function address(f: Filters, defaultCity: string) {
+function address(f: Filters) {
   const q = new URLSearchParams();
-  if (f.city && f.city !== defaultCity) q.set('city', f.city);
   if (f.time !== 'weekend') q.set('time', f.time);
-  if (f.pick === 'free') q.set('price', 'free');
-  else if (f.pick) q.set('style', f.pick);
+  if (f.style) q.set('style', f.style);
+  if (f.free) q.set('price', 'free');
   if (f.sort !== 'date') q.set('sort', f.sort);
   const s = q.toString();
   return '/' + (s ? '?' + s : '');
@@ -61,7 +60,7 @@ function address(f: Filters, defaultCity: string) {
 
 export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang; initial: Feed; cities: City[]; defaultCity: string }) {
   const T = pick(HOME, lang);
-  const [f, setF] = useState<Filters>({ city: defaultCity, time: 'weekend', pick: null, sort: 'date' });
+  const [f, setF] = useState<Filters>({ time: 'weekend', style: null, free: false, sort: 'date' });
   const [feed, setFeed] = useState<Feed>(initial);
   const [items, setItems] = useState<Card[]>(initial.items);
   const [busy, setBusy] = useState(false);
@@ -81,31 +80,30 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const time = q.get('time') as TimeKey | null;
-    const pick = q.get('price') === 'free' ? 'free' : q.get('style');
+    const style = q.get('style');
     const sort = q.get('sort') as Sort | null;
-    const city = q.get('city');
     const next: Filters = {
-      city: city && cities.some((c) => c.slug === city) ? city : defaultCity,
       time: time && TIMES.includes(time) ? time : 'weekend',
-      pick: pick && /^[a-z-]{2,30}$/.test(pick) ? pick : null,
+      style: style && /^[a-z-]{2,30}$/.test(style) ? style : null,
+      free: q.get('price') === 'free',
       sort: sort && ['date', 'hype', 'price'].includes(sort) ? sort : 'date',
     };
-    if (address(next, defaultCity) !== '/') { setF(next); load(next); }
+    if (address(next) !== '/') { setF(next); load(next); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Today in the chosen city, by the API's clock.
+  // Today where FeestFinder's default city is (the API's "tonight" is that city's too), by the API's clock.
   const { clockReady } = useKd();
   useEffect(() => {
     if (!clockReady) return;
-    const tz = cities.find((c) => c.slug === f.city)?.timezone || 'Asia/Ho_Chi_Minh';
+    const tz = cities.find((c) => c.slug === defaultCity)?.timezone || cities[0]?.timezone;
     setToday(new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(FF.now()));
-  }, [f.city, cities, clockReady]);
+  }, [defaultCity, cities, clockReady]);
 
   const set = (patch: Partial<Filters>) => {
     const next = { ...f, ...patch };
     setF(next);
-    history.replaceState(history.state, '', address(next, defaultCity));
+    history.replaceState(history.state, '', address(next));
     load(next);
   };
 
@@ -121,9 +119,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
   const timeLower = (k: TimeKey) => T[('tl_' + k) as 'tl_tonight'];
   const counts = feed.facets?.time;
   const styles = styleChips(feed.facets?.style);
-  if (f.pick && f.pick !== 'free' && !styles.includes(f.pick)) styles.unshift(f.pick);
-  const cityCounts = feed.facets?.city ?? {};
-  const city = cities.find((c) => c.slug === f.city);
+  if (f.style && !styles.includes(f.style)) styles.unshift(f.style);
   const hero = feed.hero && !feed.hero.past ? feed.hero : items[0] ?? null;
 
   const search = (e: FormEvent<HTMLFormElement>) => {
@@ -131,7 +127,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
     const v = String(new FormData(e.currentTarget).get('q') ?? '').trim();
     if (!v) return;
     FF.track('search', { screen: 'home' });
-    location.assign(inLang('/list?q=' + encodeURIComponent(v) + (f.city ? '&city=' + f.city : ''), lang));
+    location.assign(inLang('/list?q=' + encodeURIComponent(v), lang));
   };
 
   return (
@@ -139,37 +135,9 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
       <section className="kd-wrap pt-8 tab:pt-12">
         <div className="grid grid-cols-1 items-center gap-8 desk:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] desk:gap-12">
           <div className="flex min-w-0 flex-col gap-5.5">
-            <div className="kd-m relative z-[27] flex items-center gap-2">
-              <Menu
-                label={T.city}
-                trigger={(p) => (
-                  <button type="button" {...p} ref={p.ref} className="kd-dd min-h-8 underline-offset-[5px]">
-                    {city?.name[lang] ?? T.city}
-                    <CaretDownIcon size={14} className="kd-chev" aria-hidden="true" />
-                  </button>
-                )}
-              >
-                {cities.map((c) => {
-                  const n = cityCounts[c.slug] ?? 0;
-                  return (
-                    <MenuItem key={c.slug} checked={c.slug === f.city} disabled={!n && c.slug !== f.city} aside={!n && c.slug !== f.city ? T.soon : n} onSelect={() => set({ city: c.slug })}>
-                      {c.name[lang]}
-                    </MenuItem>
-                  );
-                })}
-              </Menu>
-              {today ? <span className="kd-num" suppressHydrationWarning>· {weekdayLong(today, lang)} {dayMonth(today, lang)}</span> : null}
-            </div>
-            <h1 className="kd-d0">
-              <Picker
-                tone="inline"
-                label={T.when}
-                value={f.time}
-                onChange={(v) => set({ time: v })}
-                options={TIMES.map((k) => ({ value: k, label: timeLabel(k), aside: counts?.[k] ?? null }))}
-              />{' '}
-              {T.whatsOn}
-            </h1>
+            <span className="kd-m kd-num min-h-8 content-center" suppressHydrationWarning>{today ? `${weekdayLong(today, lang)} ${dayMonth(today, lang)}` : ''}</span>
+            {/* The chips under the search choose the time; the heading says it. */}
+            <h1 className="kd-d0" aria-live="polite">{timeLabel(f.time)} {T.whatsOn}</h1>
             <form role="search" onSubmit={search} className="kd-field h-14 max-w-[640px] rounded-opt pl-4 pr-1.5">
               <MagnifyingGlassIcon size={20} aria-hidden="true" />
               <input name="q" type="search" placeholder={T.searchPh} aria-label={T.search} className="!text-base" />
@@ -198,14 +166,18 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
             options={(['date', 'hype', 'price'] as Sort[]).map((s) => ({ value: s, label: T[('s_' + s) as 's_date'] }))}
           />
         </div>
-        <div className="kd-hscroll" role="group" aria-label={T.genres}>
-          <Chip on={!f.pick} onClick={() => set({ pick: null })}>{T.all}</Chip>
-          {styles.map((k) => (
-            <Chip key={k} family="edm" on={f.pick === k} count={feed.facets?.style?.[k] ?? null} onClick={() => set({ pick: f.pick === k ? null : k })}>
-              {styleLabel(k, lang)}
-            </Chip>
-          ))}
-          <Chip family="free" on={f.pick === 'free'} count={feed.facets?.free ?? null} onClick={() => set({ pick: f.pick === 'free' ? null : 'free' })}>{FAMILY_LABEL.free[lang]}</Chip>
+        <div className="kd-hscroll items-center">
+          {/* The price stands apart from the styles: it narrows whichever style is chosen. */}
+          <Chip family="free" on={f.free} count={feed.facets?.free ?? null} onClick={() => set({ free: !f.free })}>{FAMILY_LABEL.free[lang]}</Chip>
+          <span className="mx-1 h-6 w-px shrink-0 bg-line2" aria-hidden="true" />
+          <div className="contents" role="group" aria-label={T.genres}>
+            <Chip on={!f.style} onClick={() => set({ style: null })}>{T.all}</Chip>
+            {styles.map((k) => (
+              <Chip key={k} family="edm" on={f.style === k} count={feed.facets?.style?.[k] ?? null} onClick={() => set({ style: f.style === k ? null : k })}>
+                {styleLabel(k, lang)}
+              </Chip>
+            ))}
+          </div>
         </div>
         {items.length ? (
           <>
@@ -224,7 +196,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
           <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">
             <span className="flex flex-col gap-1"><span className="kd-h">{T.emptyTitle}</span><span className="kd-s">{T.emptyBody}</span></span>
             <span className="flex gap-2">
-              {f.pick ? <Button onClick={() => set({ pick: null })}><XIcon size={16} aria-hidden="true" />{T.clearGenre}</Button> : null}
+              {f.style || f.free ? <Button onClick={() => set({ style: null, free: false })}><XIcon size={16} aria-hidden="true" />{T.clearGenre}</Button> : null}
               {f.time !== 'month' ? <Button tone="light" onClick={() => set({ time: 'month' })}>{T.widen}</Button> : null}
             </span>
           </Panel>
@@ -247,7 +219,7 @@ function HeroCard({ e, lang }: { e: Card; lang: Lang }) {
       <span className={cx('kd-glass absolute bottom-3.5 left-3.5 flex w-[min(300px,calc(100%-28px))] flex-col gap-1.5 rounded-card px-4 py-3.5', g(fam))}>
         <span className="kd-m flex items-center gap-1.5 text-mist"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[fam][lang]} · {T.featured}</span>
         <span className="kd-h">{e.title}</span>
-        <span className="kd-s text-mist">{whenShort(e, lang)}{e.venue.name ? ' · ' + e.venue.name : ''}</span>
+        <span className="kd-s text-mist">{whenShort(e, lang)}{e.venue.name ? ' · ' + e.venue.name : ''} · {e.cityLabel[lang]}</span>
         <span className="flex items-center justify-between gap-2 pt-0.5">
           <span className={cx('kd-mb kd-num', e.isFree && 'text-acc')}>{e.isFree ? T.free : fill(T.fromPrice, { p: money(e.priceFrom, e.currency, lang) })}</span>
           {tag && tag !== T.featured ? <span className="kd-tag bg-hot text-void">{tag}</span> : null}
@@ -257,17 +229,14 @@ function HeroCard({ e, lang }: { e: Card; lang: Lang }) {
   );
 }
 
-/** "Gần đây, tối nay": the nearest places with something tonight, every venue with something on, and the map. */
-export function NearbyTonight({ lang, items, city }: { lang: Lang; items: Card[]; city: string }) {
+/** "Tối nay ở đâu": the places with something on tonight, soonest first, every venue with something on, and the map. */
+export function NearbyTonight({ lang, items }: { lang: Lang; items: Card[] }) {
   const T = pick(HOME, lang);
-  const near = useMemo(() => [...items].filter((e) => !e.past).sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99)).slice(0, 4), [items]);
+  const near = useMemo(() => [...items].filter((e) => !e.past).sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? '')).slice(0, 4), [items]);
   if (!near.length) return null;
   return (
     <div className="flex flex-col gap-4.5">
-      <div className="flex flex-col gap-2">
-        <span className="kd-m">{T.aroundYou}</span>
-        <h2 className="kd-d2">{T.nearTonight}</h2>
-      </div>
+      <h2 className="kd-d2">{T.nearTonight}</h2>
       <ul className="border-t border-line">
         {near.map((e) => (
           <li key={e.id} className={cx('grid min-h-15 grid-cols-[14px_minmax(0,1fr)_auto] items-center gap-3 border-b border-line', g(familyOf(e.genre)))}>
@@ -276,13 +245,13 @@ export function NearbyTonight({ lang, items, city }: { lang: Lang; items: Card[]
               <span className="kd-hs kd-ell">{e.venue.name}</span>
               <span className="kd-s kd-ell">{[e.venue.area, e.title].filter(Boolean).join(' · ')}</span>
             </Link>
-            {e.distanceKm != null ? <span className="kd-mb kd-num">{km(e.distanceKm, lang)}</span> : null}
+            <span className="kd-m kd-num">{e.cityLabel[lang]}</span>
           </li>
         ))}
       </ul>
       <div className="flex flex-wrap gap-2">
         <a className={buttonClass({})} href={inLang('/list?view=map', lang)}>{T.openMap}<ArrowRightIcon size={16} aria-hidden="true" /></a>
-        <a className={buttonClass({ tone: 'ghost' })} href={inLang(`/stats/venues?time=tonight&city=${encodeURIComponent(city)}`, lang)}>{T.allVenues}</a>
+        <a className={buttonClass({ tone: 'ghost' })} href={inLang('/stats/venues?time=tonight', lang)}>{T.allVenues}</a>
       </div>
     </div>
   );

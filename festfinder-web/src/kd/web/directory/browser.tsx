@@ -24,6 +24,7 @@ import { Menu, MenuItem } from '../../ui/menu';
 import { Card as Panel, Marker } from '../../ui/parts';
 import { Crumbs, WebFooter } from '../chrome';
 import { WEB } from '../copy';
+import { OriginTabs } from '../../ui/origin';
 import { ArtistCard } from './card';
 import { DIR } from './copy';
 import {
@@ -36,7 +37,7 @@ const text = (v: Pair | null | undefined, lang: Lang) => (v ? v[lang] || v.vi ||
 /** A directory address: /a, /a/style/<style> or /a/city/<city>. */
 const DIRECTORY_PATH = /^\/a(\/(style|city)\/[^/]+)?\/?$/;
 
-type List = Pick<DirPage, 'items' | 'total' | 'nextOffset'>;
+type List = Pick<DirPage, 'items' | 'total' | 'nextOffset' | 'origins'>;
 
 export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   lang: Lang;
@@ -57,7 +58,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   const initial = useMemo(() => fromScope({ style: scope.style, city: scope.city }), [scope.style, scope.city]);
   const [f, setF] = useState<Filters>(start);
   const [q, setQ] = useState(start.q);
-  const [list, setList] = useState<List>({ items: first.items, total: first.total, nextOffset: first.nextOffset });
+  const [list, setList] = useState<List>({ items: first.items, total: first.total, nextOffset: first.nextOffset, origins: first.origins });
   const [busy, setBusy] = useState(false);
   const seq = useRef(0);
   const current = useRef(f);
@@ -78,9 +79,9 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
         offset = 0;
       }
       setList((cur) => {
-        if (!offset) return { items: out.items, total: out.total, nextOffset: out.nextOffset };
+        if (!offset) return { items: out.items, total: out.total, nextOffset: out.nextOffset, origins: out.origins };
         const known = new Set(cur.items.map((a) => a.id));
-        return { items: [...cur.items, ...out.items.filter((a) => !known.has(a.id))], total: out.total, nextOffset: out.nextOffset };
+        return { items: [...cur.items, ...out.items.filter((a) => !known.has(a.id))], total: out.total, nextOffset: out.nextOffset, origins: out.origins };
       });
     } catch (e) {
       if (n === seq.current) toast(FF.errorText(e, lang));
@@ -106,7 +107,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
       setF(at);
       setQ(at.q);
       setBusy(false);
-      setList({ items: first.items, total: first.total, nextOffset: first.nextOffset });
+      setList({ items: first.items, total: first.total, nextOffset: first.nextOffset, origins: first.origins });
       return;
     }
     if (sameFilters(at, current.current)) return;
@@ -238,6 +239,8 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
             />
           </form>
         </div>
+
+        <OriginTabs lang={lang} value={f.origin || null} onChange={(v) => change({ origin: v ?? '' })} counts={list.origins ?? null} />
 
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label={T.filters}>
           {roles.length ? (

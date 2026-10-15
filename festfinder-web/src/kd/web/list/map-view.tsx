@@ -1,7 +1,8 @@
 'use client';
 /**
- * /list?view=map (design/Web-Map): the list column (place search, time, Miễn phí, Dưới 5 km,
- * rows nearest first) and the map (glass pins, zoom, my location, the chosen event's card).
+ * /list?view=map (design/Web-Map): the list column (the view switch, the list's own search and
+ * filters plus Dưới 5 km, rows nearest first) and the map (glass pins, zoom, my location, the
+ * chosen event's card).
  * Selecting a row or a pin selects both. The map asks /events/map when it opens and when
  * someone presses "Tìm trong khu vực này", never on a pan (CLAUDE.md).
  */
@@ -16,16 +17,15 @@ import { KdLink as Link, inLang } from '../../link';
 import { createKdMap, type Box, type KdMap } from '../../map/kd-map';
 import { useKd } from '../../runtime';
 import { buttonClass, Button, Chip, IconButton } from '../../ui/actions';
-import { Input } from '../../ui/forms';
-import { Picker } from '../../ui/menu';
+import { RadarTag } from '../../ui/origin';
 import { Art } from '../../ui/parts';
-import { apiQuery, type Filters, type Meta, type Time } from './browser';
+import { apiQuery, type Filters, type Meta } from './browser';
 import { LIST } from './copy';
 
 interface MapItem {
   id: string; slug: string; title: string; genre: string | null; lat: number; lng: number; venue: string | null; area: string | null;
   city: string; cityLabel: Pair; startsOn: string; endsOn: string | null; startTime: string | null; coverUrl: string | null;
-  priceFrom: number; currency: string; isFree: boolean; soldOut: boolean;
+  priceFrom: number; currency: string; isFree: boolean; soldOut: boolean; origin?: 'posted' | 'radar';
 }
 
 /** All the listed cities, when no city is chosen. */
@@ -42,8 +42,9 @@ function haversine(a: { lat: number; lng: number }, b: { lat: number; lng: numbe
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch }: {
-  lang: Lang; meta: Meta; filters: Filters; onFilters: (p: Partial<Filters>) => void; onBbox: (b: Box) => void; viewSwitch: ReactNode;
+export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, tabs, search: searchBox, toolbar }: {
+  lang: Lang; meta: Meta; filters: Filters; onBbox: (b: Box) => void; onClear: () => void;
+  viewSwitch: ReactNode; tabs: ReactNode; search: ReactNode; toolbar: (extra?: ReactNode) => ReactNode;
 }) {
   const T = pick(LIST, lang);
   const kd = useKd();
@@ -58,10 +59,8 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
   const [total, setTotal] = useState(0);
   const [truncated, setTruncated] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
-  const [place, setPlace] = useState('');
   const [near, setNear] = useState(false);
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
-  const [timeCounts, setTimeCounts] = useState<Record<string, number> | null>(null);
   const fRef = useRef(f);
   fRef.current = f;
 
@@ -124,18 +123,10 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
       const box = cityBox(f.city);
       map.current.fit(box, false);
       search(box);
-    } else if (p.time !== f.time || p.family !== f.family || p.genre !== f.genre || p.style !== f.style || p.type !== f.type || p.q !== f.q) {
+    } else if (p.time !== f.time || p.family !== f.family || p.genre !== f.genre || p.style !== f.style || p.type !== f.type || p.q !== f.q || p.origin !== f.origin) {
       search();
     }
   }, [f, ready, cityBox, search]);
-
-  // How many each time choice holds, for the time menu.
-  useEffect(() => {
-    const q = apiQuery({ ...f, time: 'all' });
-    q.set('limit', '1');
-    q.set('upcoming', 'true');
-    FF.maybe(FF.get('/events?' + q), null).then((out: any) => out?.facets?.time && setTimeCounts(out.facets.time));
-  }, [f]);
 
   useEffect(() => { map.current?.select(sel); }, [sel]);
 
@@ -144,14 +135,10 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
     const c = meta.cities.find((x) => x.slug === f.city)?.center;
     return c ? { lng: c[0], lat: c[1] } : null;
   }, [me, meta, f.city]);
-  const rows = useMemo(() => {
-    const text = place.trim().toLowerCase();
-    return items
-      .map((x) => ({ ...x, d: centre ? haversine(centre, x) : null }))
-      .filter((x) => !text || [x.title, x.venue, x.area].some((v) => (v ?? '').toLowerCase().includes(text)))
-      .filter((x) => !near || (x.d != null && x.d <= 5))
-      .sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9));
-  }, [items, place, near, centre]);
+  const rows = useMemo(() => items
+    .map((x) => ({ ...x, d: centre ? haversine(centre, x) : null }))
+    .filter((x) => !near || (x.d != null && x.d <= 5))
+    .sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9)), [items, near, centre]);
   const chosen = rows.find((x) => x.id === sel) ?? items.find((x) => x.id === sel) ?? null;
 
   const locate = () => {
@@ -168,37 +155,23 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
       { enableHighAccuracy: false, timeout: 8000 },
     );
   };
-  const timeLabel = (t: Time) => ({ all: T.anyTime, tonight: T.tonight, weekend: T.weekend, '7days': T.next7, month: T.month })[t];
   const note = failed ? T.mapFailed : truncated ? fill(T.mapMore, { n: items.length, t: total }) : ready && !busy && !items.length ? T.mapEmpty : '';
-  const reset = () => { setPlace(''); setNear(false); onFilters({ time: 'all', family: null, genre: null, style: null, type: null, q: '' }); };
+  const reset = () => { setNear(false); onClear(); };
+  // The city is where the map is, not a filter here.
+  const filtered = near || f.time !== 'all' || !!f.family || !!f.genre || !!f.style || !!f.type || !!f.q || !!f.origin;
+  /** From an empty corner of the world back to where the events are. */
+  const home = () => { const box = cityBox(f.city); map.current?.fit(box); search(box); };
 
   return (
     <main className="flex min-h-[calc(100dvh-64px)] flex-wrap desk:h-[calc(100dvh-64px)]">
       <aside className="flex max-h-full min-w-0 flex-[1_1_340px] flex-col overflow-y-auto border-line desk:border-r">
         <div className="flex flex-col gap-3 px-4 pb-2.5 pt-4.5">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="kd-h">{T.map}</h1>
-            {viewSwitch}
-          </div>
-          <Input
-            type="search"
-            placeholder={T.placePh}
-            aria-label={T.place}
-            value={place}
-            onChange={(e) => setPlace(e.target.value)}
-            icon={<MagnifyingGlassIcon size={18} aria-hidden="true" />}
-          />
-          <div className="relative z-[27] flex flex-wrap items-center gap-1.5">
-            <Picker
-              label={T.when}
-              value={f.time}
-              onChange={(v) => onFilters({ time: v })}
-              display={timeLabel(f.time)}
-              options={(['all', 'tonight', 'weekend', '7days', 'month'] as Time[]).map((t) => ({ value: t, label: timeLabel(t), aside: t === 'all' ? null : timeCounts?.[t] ?? null }))}
-            />
-            <Chip family="free" on={f.family === 'free'} onClick={() => onFilters({ family: f.family === 'free' ? null : 'free', genre: null })}>{T.free}</Chip>
-            <Chip on={near} onClick={() => setNear((x) => !x)}>{T.within5}</Chip>
-          </div>
+          {/* The nav names the page (Sự kiện) and the switch the view: no third label. */}
+          <h1 className="sr-only">{T.title}</h1>
+          {viewSwitch}
+          {tabs}
+          {searchBox}
+          <div className="relative z-[27]">{toolbar(<Chip on={near} onClick={() => setNear((x) => !x)}>{T.within5}</Chip>)}</div>
           <span className="kd-m kd-num" aria-live="polite">{fill(T.nearest, { n: rows.length })}</span>
         </div>
         <div className="flex flex-col gap-0.5 px-2 pb-4">
@@ -216,7 +189,7 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
             >
               <Art family={familyOf(x.genre)} cover={x.coverUrl} bone={i % 2 === 1} off={x.soldOut} className="h-12 w-12 rounded-seg" />
               <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="kd-hs kd-ell">{x.title}</span>
+                <span className="flex min-w-0 items-center gap-2"><span className="kd-hs kd-ell">{x.title}</span>{x.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
                 <span className="kd-s flex min-w-0 items-center gap-1.5"><span className="kd-mk" aria-hidden="true" /><span className="kd-ell">{whenShort(x, lang)}{x.area ? ' · ' + x.area : ''}</span></span>
               </span>
               <span className="flex flex-col items-end gap-0.5">
@@ -227,8 +200,8 @@ export function MapView({ lang, meta, filters: f, onFilters, onBbox, viewSwitch 
           ))}
           {ready && !busy && !rows.length ? (
             <div className="flex flex-col items-start gap-2.5 px-2 py-6">
-              <span className="kd-hs">{T.empty}</span>
-              <Button size="sm" onClick={reset}>{T.clear}</Button>
+              <span className="kd-hs">{filtered ? T.empty : T.mapEmpty}</span>
+              {filtered ? <Button size="sm" onClick={reset}>{T.clear}</Button> : <Button size="sm" onClick={home}>{T.backToEvents}</Button>}
             </div>
           ) : null}
         </div>

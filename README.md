@@ -17,6 +17,8 @@ To look at everything on this machine with the demo data (no Supabase), one comm
 bash scripts/preview.sh
 ```
 
+The map draws streets once the basemap is cut into `.data/tiles` (needs the [pmtiles CLI](https://github.com/protomaps/go-pmtiles/releases); about 180 MB, once): `cd festfinder-backend && bash scripts/build-tiles.sh`. The preview then serves it on :4400.
+
 To work against the staging database instead:
 
 ```bash

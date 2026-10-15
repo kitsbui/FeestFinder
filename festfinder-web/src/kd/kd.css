@@ -18,6 +18,9 @@
   body {
     min-height: 100%;
   }
+  /* No browser scrollbar takes room anywhere: ui/scrollbars.tsx draws a hairline over what scrolls. */
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
   h1, h2, h3, h4 {
     text-wrap: balance;
   }
@@ -162,6 +165,8 @@
   .kd-bonecard :is(.kd-s, .kd-m, .kd-t) { color: var(--color-ink2); }
   .kd-hr { height: 1px; background: var(--color-line); border: 0; }
   .kd-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+  /* A cover that failed to load (ui/covers.tsx): the art under it shows. */
+  .kd-cover[data-broken] { display: none; }
   .kd-art .kd-over { position: absolute; z-index: 1; }
 
   /* ---- selectable option (ticket tier) ---- */
@@ -313,7 +318,8 @@
   .kd-bdg[aria-pressed='true'] { background: var(--color-obsidian); box-shadow: inset 0 0 0 1.5px var(--color-paper); }
 
   /* ---- disclosure ---- */
-  .kd-menu { position: absolute; z-index: 40; min-width: 220px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+  /* Its own type wherever it opens: inside a display heading it would take the heading's tracking and leading. */
+  .kd-menu { position: absolute; z-index: 40; min-width: 220px; padding: 6px; display: flex; flex-direction: column; gap: 2px; font-family: var(--font-sans); font-size: 14px; font-weight: 400; line-height: 1.4; letter-spacing: normal; text-transform: none; text-wrap: nowrap; }
   .kd-mi { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: var(--radius-seg); background: transparent; color: var(--color-mist); font-size: 14px; text-align: left; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
   .kd-mi:hover, .kd-mi:focus-visible { background: rgba(255, 255, 255, 0.07); color: var(--color-paper); outline: none; }
   .kd-mi[aria-checked='true'] { color: var(--color-paper); }
@@ -365,6 +371,37 @@
 .kd-toast[popover] { inset: auto; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); margin: 0; border: 0; overflow: visible; }
 /* The Console's side drawer: from the right edge, the page behind dimmed. */
 dialog.kd-drawer { border-radius: 0; }
+
+/*
+ * The scroll thumbs (ui/scrollbars.tsx): a layer over the whole screen in the top layer, which
+ * nothing under it notices, and a 3px bar per scrolling box that fades in while it scrolls and
+ * out after. The grip is wider than the bar, for the mouse; under it the bar thickens to 6px.
+ */
+ff-scrollbars {
+  position: fixed; inset: 0; width: auto; height: auto; margin: 0; padding: 0; border: 0;
+  background: none; overflow: hidden; pointer-events: none; color: inherit;
+}
+.ff-sb {
+  position: absolute; top: 0; left: 0; display: block; width: 12px; height: 12px;
+  opacity: 0; pointer-events: none; will-change: transform, opacity;
+  transition: opacity 0.45s var(--ease-ff);
+}
+.ff-sb[hidden] { display: none; }
+.ff-sb::after {
+  content: ''; position: absolute; border-radius: 999px; background: rgba(247, 248, 248, 0.34);
+  transition: width 0.15s var(--ease-ff), height 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff);
+}
+.ff-sb-y::after { top: 0; bottom: 0; right: 2px; width: 3px; }
+.ff-sb-x::after { left: 0; right: 0; bottom: 2px; height: 3px; }
+.ff-sb.on { opacity: 1; transition-duration: 0.12s; }
+@media (pointer: fine) {
+  .ff-sb.on { pointer-events: auto; cursor: default; }
+  .ff-sb-y:hover::after, .ff-sb-y.drag::after { width: 6px; background: rgba(247, 248, 248, 0.56); }
+  .ff-sb-x:hover::after, .ff-sb-x.drag::after { height: 6px; background: rgba(247, 248, 248, 0.56); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ff-sb, .ff-sb::after { transition: none; }
+}
 
 /* The page's own box (app/(kd)/layout.tsx). */
 ff-app {

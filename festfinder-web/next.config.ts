@@ -83,6 +83,12 @@ const config: NextConfig = {
       { source: '/:path*', headers: SECURITY_HEADERS },
       // The worker must never be served stale, or a fix to it would take a day to land.
       { source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }, { key: 'Service-Worker-Allowed', value: '/' }] },
+      // The map's code (1.1 MB of MapLibre) and its loader: an hour without asking, then served
+      // while it is checked. Not immutable: the names stay the same when they are upgraded.
+      { source: '/ui/vendor/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' }] },
+      { source: '/ui/map/ff-map.js', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' }] },
+      // The map's glyphs are one font, cut once.
+      { source: '/ui/map/glyphs/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=2592000' }] },
     ];
   },
 

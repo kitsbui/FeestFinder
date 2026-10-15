@@ -56,6 +56,8 @@ const ExploreQuery = z.object({
   venue: uuid.optional(),
   confidenceMin: z.coerce.number().int().min(0).max(100).optional(),
   source: z.string().regex(/^[a-z_]{2,30}$/).optional(),
+  /** Posted by someone on FeestFinder, or found by FeestFinder Radar. */
+  origin: z.enum(['posted', 'radar']).optional(),
   bbox: z.string().regex(BBOX, 'minLng,minLat,maxLng,maxLat').optional(),
   /** Only events that have not ended. */
   upcoming: bool.optional(),
@@ -69,7 +71,7 @@ const ExploreQuery = z.object({
 });
 
 /** Filters shared by the Explore feed, the stat drill-downs and the facet counts. */
-function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; style?: boolean; city?: boolean }) {
+function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; style?: boolean; city?: boolean; origin?: boolean }) {
   const where = [`e.status = 'live'`, 'not e.held_for_reports'];
   const q = f.q?.trim();
   if (q) {
@@ -91,6 +93,7 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
   if (f.venue) where.push(`e.venue_id = ${sql.p(f.venue)}`);
   if (f.confidenceMin !== undefined) where.push(`coalesce(e.confidence_score, 0) >= ${sql.p(f.confidenceMin)}`);
   if (f.source) where.push(`exists (select 1 from event_sources s where s.event_id = e.id and s.provider = ${sql.p(f.source)})`);
+  if (opts.origin !== false && f.origin) where.push(`e.origin = ${sql.p(f.origin)}`);
   if (f.bbox) {
     const b = parseBbox(f.bbox);
     const lng = b.minLng <= b.maxLng
@@ -196,6 +199,13 @@ export default async function catalogRoutes(app: FastifyInstance) {
       `select count(*) filter (where e.entry_mode = 'free' or e.price_from = 0)::int as n
          from events e join organizers o on o.id = e.organizer_id where ${frwhere.join(' and ')}`, fr.values);
 
+    // The two kinds of listing, under every filter but that one.
+    const osql = new SqlParams();
+    const owhere = feedFilters(osql, f, today, userId, { time: true, origin: false });
+    if (f.upcoming) owhere.push(`(e.ends_at is null or e.ends_at >= ${osql.p(now)})`);
+    const facetOrigin = await many<{ origin: string; n: number }>(ctx.db,
+      `select e.origin, count(*)::int as n from events e join organizers o on o.id = e.organizer_id where ${owhere.join(' and ')} group by e.origin`, osql.values);
+
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const origin = f.lat !== undefined && f.lng !== undefined ? { lat: f.lat, lng: f.lng } : undefined;
     const { items, nextCursor } = page(rows, offset, f.limit);
@@ -209,6 +219,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       facets: {
         time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])),
         style: Object.fromEntries(facetStyle.filter((r) => isStyle(r.key)).map((r) => [r.key, r.n])), free: facetFree?.n ?? 0,
+        origin: { posted: facetOrigin.find((r) => r.origin === 'posted')?.n ?? 0, radar: facetOrigin.find((r) => r.origin === 'radar')?.n ?? 0 },
       },
       window: f.q ? null : f.from ? { from: f.from, to: f.to ?? f.from } : f.time !== 'all' ? timeWindow(f.time as TimeKey, today) : null,
     };
@@ -236,7 +247,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
         const c = presentCard(r, { now, viewer: null });
         return {
           id: c.id, slug: c.slug, title: c.title, genre: c.genre, styles: c.styles, eventType: c.eventType,
-          lat: c.venue.lat, lng: c.venue.lng, venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel,
+          lat: c.venue.lat, lng: c.venue.lng, venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel, origin: c.origin,
           startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime,
           art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, soldOut: c.soldOut,
           lineup: c.lineup.slice(0, 6), confidence: c.confidence,
@@ -500,44 +511,89 @@ const MAP_PALETTES = {
 } as const;
 export type MapTheme = keyof typeof MAP_PALETTES;
 
+/** Where the cities' archive takes over from the world's (which stops at zoom 6). */
+const MAP_HANDOVER = 7;
+/** How far the world's land and sea go on, overzoomed, where no city archive has a tile. */
+const MAP_WORLD_FILL_MAXZOOM = 10;
+
 /**
  * A MapLibre style for Protomaps basemaps, or the plain board when there is none. The
- * overview archive (the region at low zoom) draws underneath up to zoom 8; the detail
- * archive (the listed cities) draws on top at every zoom. The two are styled the same,
- * so where both have a tile nobody can tell.
+ * overview archive (the whole world up to zoom 6) draws below MAP_HANDOVER and the detail
+ * archive (the listed cities) from there on, so no tile is ever drawn twice; the world's land
+ * and sea alone carry on a little further, so the map past a city is not a black hole. The two
+ * are styled the same, so where they meet nobody can tell.
  */
 export function mapStyle(map: { tilesUrl: string | null; overviewUrl?: string | null; glyphsUrl: string | null }, theme: MapTheme = 'chalk') {
   const P = MAP_PALETTES[theme];
   const layers: Record<string, unknown>[] = [{ id: 'board', type: 'background', paint: { 'background-color': P.board } }];
   const sources: Record<string, unknown> = {};
   const attribution = '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>';
-  const archives = [map.overviewUrl ? { src: 'overview', url: map.overviewUrl, maxzoom: map.tilesUrl ? 8 : undefined } : null,
-    map.tilesUrl ? { src: 'detail', url: map.tilesUrl, maxzoom: undefined } : null].filter((a): a is NonNullable<typeof a> => !!a);
+  const both = !!(map.overviewUrl && map.tilesUrl);
+  const archives = [
+    map.overviewUrl ? { src: 'overview', url: map.overviewUrl, minzoom: 0, maxzoom: both ? MAP_HANDOVER : 24, fillMaxzoom: both ? MAP_WORLD_FILL_MAXZOOM : 24 } : null,
+    map.tilesUrl ? { src: 'detail', url: map.tilesUrl, minzoom: both ? MAP_HANDOVER : 0, maxzoom: 24, fillMaxzoom: 24 } : null,
+  ].filter((a): a is NonNullable<typeof a> => !!a);
   if (!archives.length) return { version: 8, name: 'FeestFinder board', sources, layers };
+  /** The zooms a layer draws at: its own, inside its archive's. */
+  const span = (a: { minzoom: number; maxzoom: number }, own: { minzoom?: number; maxzoom?: number } = {}) => {
+    const lo = Math.max(a.minzoom, own.minzoom ?? 0), hi = Math.min(a.maxzoom, own.maxzoom ?? 24);
+    return { ...(lo > 0 ? { minzoom: lo } : {}), ...(hi < 24 ? { maxzoom: hi } : {}) };
+  };
   for (const a of archives) {
     sources[a.src] = { type: 'vector', url: `pmtiles://${a.url}`, attribution };
-    const z = a.maxzoom ? { maxzoom: a.maxzoom } : {};
-    const layer = (id: string, def: Record<string, unknown>) => layers.push({ id: `${a.src}-${id}`, source: a.src, ...z, ...def });
+    const layer = (id: string, def: Record<string, unknown>, own?: { minzoom?: number; maxzoom?: number }) =>
+      layers.push({ id: `${a.src}-${id}`, source: a.src, ...def, ...span(a, own) });
+    const fill = { minzoom: a.minzoom, maxzoom: a.fillMaxzoom };
     const road = (id: string, filter: unknown[], color: string, width: unknown[], minzoom: number) =>
-      layer(id, { type: 'line', 'source-layer': 'roads', minzoom, filter, paint: { 'line-color': color, 'line-width': width } });
-    layer('earth', { type: 'fill', 'source-layer': 'earth', paint: { 'fill-color': P.earth } });
+      layer(id, { type: 'line', 'source-layer': 'roads', filter, paint: { 'line-color': color, 'line-width': width } }, { minzoom });
+    layers.push({ id: `${a.src}-earth`, source: a.src, type: 'fill', 'source-layer': 'earth', paint: { 'fill-color': P.earth }, ...span(fill) });
     layer('parks', { type: 'fill', 'source-layer': 'landuse', filter: ['in', ['get', 'kind'], ['literal', ['park', 'nature_reserve', 'forest', 'wood', 'golf_course']]], paint: { 'fill-color': P.park } });
-    layer('water', { type: 'fill', 'source-layer': 'water', paint: { 'fill-color': P.water } });
-    layer('buildings', { type: 'fill', 'source-layer': 'buildings', minzoom: 14, paint: { 'fill-color': `${P.line}0.035)` } });
-    road('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${P.line}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12);
-    road('roads-major', ['==', ['get', 'kind'], 'major_road'], `${P.line}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 7);
-    road('roads-highway', ['==', ['get', 'kind'], 'highway'], `${P.line}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 5);
+    layers.push({ id: `${a.src}-water`, source: a.src, type: 'fill', 'source-layer': 'water', paint: { 'fill-color': P.water }, ...span(fill) });
+    if (a.maxzoom > 14) layer('buildings', { type: 'fill', 'source-layer': 'buildings', paint: { 'fill-color': `${P.line}0.035)` } }, { minzoom: 14 });
+    if (a.maxzoom > 12) road('roads-minor', ['in', ['get', 'kind'], ['literal', ['minor_road', 'other']]], `${P.line}0.06)`, ['interpolate', ['linear'], ['zoom'], 12, 0.4, 16, 2], 12);
+    road('roads-major', ['==', ['get', 'kind'], 'major_road'], `${P.line}0.12)`, ['interpolate', ['linear'], ['zoom'], 8, 0.4, 16, 3], 6);
+    road('roads-highway', ['==', ['get', 'kind'], 'highway'], `${P.line}0.2)`, ['interpolate', ['linear'], ['zoom'], 5, 0.4, 16, 4], 4);
     layer('borders', { type: 'line', 'source-layer': 'boundaries', filter: ['<=', ['get', 'kind_detail'], 2],
       paint: { 'line-color': `${P.line}0.28)`, 'line-width': 0.8, 'line-dasharray': [3, 2] } });
   }
   if (map.glyphsUrl) {
-    // Place names from the most detailed archive, in Vietnamese or English where the map has them.
+    // Countries from the world archive while it draws, the rest from the cities' one. Countries
+    // and cities in Vietnamese or English where the map has them; streets and wards in their
+    // local name (Vietnamese, Thai…), since the English one drops the diacritics. The screens
+    // name the listed cities themselves below zoom 7.
+    const low = archives[0].src;
     const src = archives[archives.length - 1].src;
+    const font = ['Noto Sans Regular'];
+    const paint = { 'text-color': P.label, 'text-halo-color': P.halo, 'text-halo-width': 1.4 };
+    const local = ['coalesce', ['get', 'name:vi'], ['get', 'name']];
     layers.push({
-      id: 'places', type: 'symbol', source: src, 'source-layer': 'places',
-      filter: ['in', ['get', 'kind'], ['literal', ['country', 'region', 'locality']]],
-      layout: { 'text-field': ['coalesce', ['get', 'name:vi'], ['get', 'name:en'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 11, 10, 14], 'symbol-sort-key': ['get', 'min_zoom'] },
-      paint: { 'text-color': P.label, 'text-halo-color': P.halo, 'text-halo-width': 1.4 },
+      id: 'roads-names', type: 'symbol', source: src, 'source-layer': 'roads', minzoom: 13,
+      filter: ['any', ['in', ['get', 'kind'], ['literal', ['highway', 'major_road']]], ['all', ['==', ['get', 'kind'], 'minor_road'], ['>=', ['zoom'], 15]]],
+      layout: { 'symbol-placement': 'line', 'text-field': local, 'text-font': font, 'text-size': ['interpolate', ['linear'], ['zoom'], 13, 10, 17, 12], 'text-max-angle': 30, 'symbol-spacing': 320 },
+      paint,
+    });
+    layers.push({
+      id: 'places-wards', type: 'symbol', source: src, 'source-layer': 'places', minzoom: 12,
+      // Wards (phường) first; named quarters (Ba Son, Thị Nghè) and villages closer in; never
+      // the numbered "Khu phố 3" blocks.
+      filter: ['any', ['all', ['==', ['get', 'kind'], 'neighbourhood'], ['==', ['get', 'kind_detail'], 'suburb']],
+        ['all', ['==', ['get', 'kind'], 'neighbourhood'], ['>=', ['zoom'], 15], ['!', ['in', 'Khu phố', ['coalesce', ['get', 'name'], '']]]],
+        ['all', ['==', ['get', 'kind'], 'locality'], ['!', ['in', ['get', 'kind_detail'], ['literal', ['city', 'town']]]], ['>=', ['zoom'], 13]]],
+      layout: { 'text-field': local, 'text-font': font, 'text-size': ['interpolate', ['linear'], ['zoom'], 12, 10, 16, 12], 'text-transform': 'uppercase', 'text-letter-spacing': 0.08, 'text-max-width': 7 },
+      paint,
+    });
+    const named = { 'text-field': ['coalesce', ['get', 'name:vi'], ['get', 'name:en'], ['get', 'name']], 'text-font': font, 'symbol-sort-key': ['-', 0, ['coalesce', ['get', 'population_rank'], 0]] };
+    layers.push({
+      id: 'places-countries', type: 'symbol', source: low, 'source-layer': 'places', minzoom: 1, maxzoom: 7,
+      filter: ['==', ['get', 'kind'], 'country'],
+      layout: { ...named, 'text-size': ['interpolate', ['linear'], ['zoom'], 1, 10, 6, 13], 'text-max-width': 8 },
+      paint,
+    });
+    layers.push({
+      id: 'places', type: 'symbol', source: src, 'source-layer': 'places', minzoom: 7,
+      filter: ['all', ['==', ['get', 'kind'], 'locality'], ['in', ['get', 'kind_detail'], ['literal', ['city', 'town']]]],
+      layout: { ...named, 'text-size': ['interpolate', ['linear'], ['zoom'], 7, 12, 10, 14] },
+      paint,
     });
   }
   return { version: 8, name: 'FeestFinder Bảng phấn', ...(map.glyphsUrl ? { glyphs: map.glyphsUrl } : {}), sources, layers };

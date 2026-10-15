@@ -10,6 +10,7 @@ import { loadConfig } from '../../src/config.ts';
 import { openDb } from '../../src/db/index.ts';
 import { migrate } from '../../src/db/migrate.ts';
 import { fixedClock, systemClock } from '../../src/lib/time.ts';
+import { seedRadar } from './radar.ts';
 import { seed } from './seed.ts';
 
 const config = loadConfig();
@@ -22,5 +23,7 @@ const db = await openDb({ databaseUrl: null, pgliteDir: config.pgliteDir });
 await migrate(db, (m) => console.log(m));
 const clock = config.fixedNow ? fixedClock(config.fixedNow) : systemClock;
 const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: process.env.SEED_VOLUME === 'small' ? 'small' : 'full' })) as Record<string, unknown>;
+// The local preview also shows what FeestFinder Radar finds (test/fixtures/radar.ts).
+if (process.env.SEED_RADAR === '1') Object.assign(summary, await seedRadar(db, clock));
 console.log(`seeded ${config.pgliteDir}: ${JSON.stringify(summary)}`);
 await db.close();

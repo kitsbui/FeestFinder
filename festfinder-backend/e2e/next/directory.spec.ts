@@ -122,6 +122,21 @@ test.describe('the artist directory', () => {
     expect(problems).toEqual([]);
   });
 
+  test('splits artists someone posted from those only FeestFinder Radar knows, with their counts', async ({ page }) => {
+    await open(page, '/a');
+    const tabs = page.getByRole('tablist', { name: 'Nguồn đăng' });
+    await expect(tabs.getByRole('tab', { name: /^Tất cả/ })).toHaveAttribute('aria-selected', 'true');
+    await page.route(/\/artists\?.*origin=radar/, async (route) => {
+      const real = await route.fetch({ url: route.request().url().replace('origin=radar', 'origin=posted') });
+      const body = await real.json();
+      await route.fulfill({ json: { ...body, total: 1, nextOffset: null, items: body.items.slice(0, 1).map((a: any) => ({ ...a, origin: 'radar' })) } });
+    });
+    await tabs.getByRole('tab', { name: /^Radar/ }).click();
+    await expect(page).toHaveURL(/\/a\?origin=radar$/);
+    await expect(results(page).getByRole('listitem')).toHaveCount(1);
+    await expect(results(page).getByRole('listitem').first().getByText('Do FeestFinder Radar tìm thấy')).toBeAttached();
+  });
+
   test('more artists come 24 at a time, next show first', async ({ page }) => {
     const all = await (await page.request.get('/artists?limit=60')).json();
     test.skip(all.total <= 24, 'the demo data lists one page of artists');

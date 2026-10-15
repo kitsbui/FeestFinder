@@ -18,7 +18,7 @@ export const CARD_COLUMNS = `
   e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at,
   e.venue_id, e.venue_name, e.area, e.address, e.lat, e.lng, e.city,
   e.entry_mode, e.price_from, e.currency, e.hype_count, e.save_count, e.lineup, e.artists, e.organizer_id,
-  e.styles, e.event_type, e.confidence_score, e.confidence, e.source_count, e.last_verified_at, ${ORG_COLUMNS}`;
+  e.styles, e.event_type, e.confidence_score, e.confidence, e.source_count, e.last_verified_at, e.origin, ${ORG_COLUMNS}`;
 
 export interface FriendFace { id: string; name: string; initials: string; photoUrl: string | null; source: string }
 
@@ -112,6 +112,8 @@ export function presentCard(r: any, o: PresentOpts) {
     styles: (r.styles ?? []) as string[],
     eventType: (r.event_type ?? null) as string | null,
     confidence: presentConfidence(r, o.now),
+    /** 'radar': found by FeestFinder Radar on another site, not posted by anyone here (migration 032). */
+    origin: (r.origin === 'radar' ? 'radar' : 'posted') as 'posted' | 'radar',
     isFree: r.entry_mode === 'free' || r.price_from === 0,
     hypeCount: r.hype_count as number,
     saveCount: r.save_count as number,

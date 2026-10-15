@@ -1,5 +1,5 @@
 'use client';
-/** An event as an app row (design/Main "Gần bạn"): art, title, marker + when, price and distance. */
+/** An event as an app row (design/Main "Gần bạn"): art, title (and "Radar" for what FeestFinder Radar found), marker + when, price and distance. */
 import { pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { km, moneyShort, whenShort } from '../format';
@@ -7,6 +7,7 @@ import { familyOf, g } from '../genre';
 import { KdLink as Link } from '../link';
 import { useKd } from '../runtime';
 import { Button } from '../ui/actions';
+import { RadarTag } from '../ui/origin';
 import { Art, Card as Panel, Marker } from '../ui/parts';
 import type { Card } from '../types';
 import { APP } from './copy';
@@ -18,7 +19,7 @@ export function EventRow({ e, lang, d, dim }: { e: Card; lang: Lang; d?: number 
     <Link className={cx('kd-row', g(fam), dim && 'opacity-60')} href={'/app/e/' + e.slug}>
       <Art family={fam} cover={e.coverUrl} off={e.soldOut || e.past} />
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="kd-hs kd-ell">{e.title}</span>
+        <span className="flex min-w-0 items-center gap-2"><span className="kd-hs kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
         <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{whenShort(e, lang)}{e.venue.area ? ' · ' + e.venue.area : ''}</span>
       </span>
       <span className="flex flex-col items-end gap-0.5">

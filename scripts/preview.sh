@@ -32,17 +32,26 @@ PIDS=()
 stop() { for p in "${PIDS[@]}"; do kill "$p" 2>/dev/null || true; done; }
 trap stop EXIT INT TERM
 
+# The basemap, when festfinder-backend/scripts/build-tiles.sh has cut it into .data/tiles.
+TILES="$ROOT/.data/tiles"
+if [ -f "$TILES/feestfinder-world.pmtiles" ] && ! taken http://localhost:4400/; then
+  node "$ROOT/scripts/tiles-server.ts" "$TILES" 4400 > "$LOGS/tiles.log" 2>&1 &
+  PIDS+=($!)
+  export MAP_OVERVIEW_URL=http://localhost:4400/feestfinder-world.pmtiles
+  [ -f "$TILES/feestfinder-cities.pmtiles" ] && export MAP_TILES_URL=http://localhost:4400/feestfinder-cities.pmtiles
+fi
+
 say "2/3 Starting the API with the demo data…"
 (
   cd "$ROOT/festfinder-backend"
   export PORT=4300 PUBLIC_BASE_URL=http://localhost:3000 DATABASE_URL= DATABASE_URL_FROM= \
     PGLITE_DIR=./.data/pglite-preview UPLOAD_DIR=./.data/uploads-preview \
-    FF_NOW=2026-09-14T10:00:00+07:00 JOBS_ENABLED=false LINK_CHECKS_ENABLED=false
+    FF_NOW=2026-09-14T10:00:00+07:00 JOBS_ENABLED=false LINK_CHECKS_ENABLED=false SEED_RADAR=1
   node test/fixtures/reset.ts && exec node src/server.ts
 ) > "$LOGS/api.log" 2>&1 &
 PIDS+=($!)
 until up http://localhost:4300/health; do
-  if ! kill -0 "${PIDS[0]}" 2>/dev/null; then echo "The API stopped; its log:" >&2; tail -n 30 "$LOGS/api.log" >&2; exit 1; fi
+  if ! kill -0 "${PIDS[-1]}" 2>/dev/null; then echo "The API stopped; its log:" >&2; tail -n 30 "$LOGS/api.log" >&2; exit 1; fi
   sleep 1
 done
 
@@ -50,7 +59,7 @@ say "3/3 Starting the site…"
 (cd "$ROOT/festfinder-web" && FF_API_ORIGIN=http://localhost:4300 exec npm run dev) > "$LOGS/web.log" 2>&1 &
 PIDS+=($!)
 until up http://localhost:3000/robots.txt; do
-  if ! kill -0 "${PIDS[1]}" 2>/dev/null; then echo "The site stopped; its log:" >&2; tail -n 30 "$LOGS/web.log" >&2; exit 1; fi
+  if ! kill -0 "${PIDS[-1]}" 2>/dev/null; then echo "The site stopped; its log:" >&2; tail -n 30 "$LOGS/web.log" >&2; exit 1; fi
   sleep 1
 done
 

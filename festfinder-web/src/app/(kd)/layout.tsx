@@ -21,6 +21,8 @@ import '@fontsource/jetbrains-mono/vietnamese-500.css';
 import '@/kd/kd.css';
 import { siteMetadata } from '@/lib/site';
 import { ExtensionGuardRelease, ExtensionGuardScript } from '@/components/extension-guard';
+import { BrokenCovers } from '@/kd/ui/covers';
+import { Scrollbars } from '@/kd/ui/scrollbars';
 
 export const metadata: Metadata = siteMetadata;
 
@@ -42,6 +44,8 @@ export default function KdLayout({ children }: { children: ReactNode }) {
         {/* The page's own box, so no <div> of ours sits directly in <body>: see extension-guard.tsx. */}
         <ff-app>
           {children}
+          <Scrollbars />
+          <BrokenCovers />
           <ExtensionGuardRelease />
         </ff-app>
       </body>

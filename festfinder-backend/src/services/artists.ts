@@ -85,7 +85,24 @@ export const styleItem = (k: string) => ({ key: k, label: styleByKey(k)?.label ?
 
 export interface ArtistFilters {
   q?: string; role?: string[]; style?: string[]; city?: string; country?: string; booking?: string[]; travel?: string;
-  gig?: string[]; gear?: string; brands?: boolean; verified?: boolean; upcoming?: boolean; sort?: 'next' | 'name' | 'active'; limit: number; offset: number;
+  gig?: string[]; gear?: string; brands?: boolean; verified?: boolean; upcoming?: boolean; origin?: 'posted' | 'radar';
+  sort?: 'next' | 'name' | 'active'; limit: number; offset: number;
+}
+
+/**
+ * Where an artist's profile comes from: 'radar' when nobody runs or vouches for it (no owner, not
+ * verified) and every event it plays was found by FeestFinder Radar; 'posted' otherwise. Reads the
+ * `pl` counts of searchArtists.
+ */
+const ORIGIN = `(case when a.owner_user_id is not null or a.verified or coalesce(pl.posted, 0) > 0 or coalesce(pl.events, 0) = 0 then 'posted' else 'radar' end)`;
+
+/** The same, for one artist. */
+export async function artistOrigin(q: Queryable, a: { id: string; owner_user_id: string | null; verified: boolean }): Promise<'posted' | 'radar'> {
+  if (a.owner_user_id || a.verified) return 'posted';
+  const r = await one<{ posted: number; events: number }>(q,
+    `select count(*) filter (where e.origin = 'posted')::int as posted, count(*)::int as events
+       from event_artists ea join events e on e.id = ea.event_id where ea.artist_id = $1 and ${PUBLIC}`, [a.id]);
+  return r && r.events > 0 && r.posted === 0 ? 'radar' : 'posted';
 }
 
 /** How much of a profile is filled in, 0–6: it breaks ties in the directory, never follower counts. */
@@ -135,30 +152,38 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   if (f.brands) where.push('a.open_to_brands');
   if (f.verified) where.push('a.verified');
   if (f.upcoming) where.push('coalesce(up.upcoming, 0) > 0');
+  // The two tabs count under every filter but their own.
+  const base = [...params];
+  const all = [...where];
+  if (f.origin) where.push(`${ORIGIN} = ${p(f.origin)}`);
   // The id last, so pages never overlap when two artists share a name.
   const order = (f.sort === 'name' ? 'a.name'
     : f.sort === 'active' ? `coalesce(pl.last_on, '0001-01-01') desc, a.name`
     : `up.next_at nulls last, ${COMPLETENESS} desc, a.name`) + ', a.id';
-  const rows = await many<any>(q,
-    `with up as (
+  const ctes = `with up as (
        select ea.artist_id, count(*)::int as upcoming, min(e.starts_at) as next_at,
               (array_agg(e.slug || '|' || e.title || '|' || e.starts_on || '|' || coalesce(e.city, '') order by e.starts_at))[1] as next_show
          from event_artists ea join events e on e.id = ea.event_id where ${LIVE} and e.ends_at >= $1 group by ea.artist_id),
      pl as (
-       select ea.artist_id, count(distinct e.id)::int as events, max(e.starts_on) as last_on,
+       select ea.artist_id, count(distinct e.id)::int as events, count(distinct e.id) filter (where e.origin = 'posted')::int as posted,
+              max(e.starts_on) as last_on,
               coalesce(array_agg(distinct s) filter (where s is not null), '{}') as styles, coalesce(array_agg(distinct e.city) filter (where e.city is not null), '{}') as cities
          from event_artists ea join events e on e.id = ea.event_id left join lateral unnest(e.styles) s on true
         where ${PUBLIC} group by ea.artist_id),
      -- The genre each artist has played most, which colours their card.
      gn as (
        select ea.artist_id, mode() within group (order by e.genre) as genre
-         from event_artists ea join events e on e.id = ea.event_id where ${PUBLIC} and e.genre is not null group by ea.artist_id)
+         from event_artists ea join events e on e.id = ea.event_id where ${PUBLIC} and e.genre is not null group by ea.artist_id)`;
+  const from = `from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id left join gn on gn.artist_id = a.id`;
+  const rows = await many<any>(q,
+    `${ctes}
      select a.id, a.slug, a.name, a.image_url, a.artist_roles, a.based_city, a.based_country, a.styles, a.booking_status, a.travel_scope,
             a.verified, a.owner_user_id is not null as claimed, coalesce(up.upcoming, 0) as upcoming, up.next_show, coalesce(pl.events, 0) as events,
-            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, count(*) over () as total
-       from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id left join gn on gn.artist_id = a.id
+            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, ${ORIGIN} as origin, count(*) over () as total
+       ${from}
       where ${where.join(' and ')}
       order by ${order} limit ${p(f.limit)} offset ${p(f.offset)}`, params);
+  const kinds = await many<{ origin: string; n: number }>(q, `${ctes} select ${ORIGIN} as origin, count(*)::int as n ${from} where ${all.join(' and ')} group by 1`, base);
   const total = rows[0] ? Number(rows[0].total) : 0;
   return {
     items: rows.map((a) => ({
@@ -169,8 +194,10 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
       verified: a.verified as boolean, claimed: a.claimed as boolean,
       booking: label(BOOKING_STATUS, a.booking_status), travel: label(TRAVEL_SCOPE, a.travel_scope),
       upcoming: a.upcoming as number, events: a.events as number, nextShow: presentNextShow(a.next_show), genre: a.genre as string | null, updatedAt: a.updated_at as Date,
+      origin: a.origin as 'posted' | 'radar',
     })),
     total, offset: f.offset, limit: f.limit,
+    origins: { posted: kinds.find((k) => k.origin === 'posted')?.n ?? 0, radar: kinds.find((k) => k.origin === 'radar')?.n ?? 0 },
     nextOffset: f.offset + rows.length < total ? f.offset + rows.length : null,
   };
 }

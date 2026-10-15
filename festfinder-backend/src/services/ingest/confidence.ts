@@ -167,17 +167,19 @@ export async function refreshConfidence(q: Queryable, now: Date, eventIds?: stri
     const verified = [...outside, e.decided_at ? new Date(e.decided_at).getTime() : 0].filter(Boolean);
     return {
       id: e.id, score: out.score, label: out.label, breakdown: JSON.stringify(out.breakdown), count: independentSources(facts),
+      // Posted by someone here, or found by FeestFinder Radar alone (migration 032).
+      origin: !facts.length || facts.some((s) => ORIGIN_PROVIDERS.includes(s.provider)) ? 'posted' : 'radar',
       lastSeen: seen.length ? new Date(Math.max(...seen)) : null,
       lastVerified: verified.length ? new Date(Math.max(...verified)) : null,
     };
   });
   await q.query(
     `update events e set confidence_score = r.score, confidence = r.label, confidence_breakdown = r.breakdown::jsonb, source_count = r.count,
-            last_seen_at = coalesce(r.last_seen, e.last_seen_at), last_verified_at = greatest(e.last_verified_at, r.last_verified)
-       from unnest($1::uuid[], $2::int[], $3::text[], $4::text[], $5::int[], $6::timestamptz[], $7::timestamptz[])
-            as r(id, score, label, breakdown, count, last_seen, last_verified)
+            last_seen_at = coalesce(r.last_seen, e.last_seen_at), last_verified_at = greatest(e.last_verified_at, r.last_verified), origin = r.origin
+       from unnest($1::uuid[], $2::int[], $3::text[], $4::text[], $5::int[], $6::timestamptz[], $7::timestamptz[], $8::text[])
+            as r(id, score, label, breakdown, count, last_seen, last_verified, origin)
       where e.id = r.id`,
     [rows.map((r) => r.id), rows.map((r) => r.score), rows.map((r) => r.label), rows.map((r) => r.breakdown), rows.map((r) => r.count),
-      rows.map((r) => r.lastSeen), rows.map((r) => r.lastVerified)]);
+      rows.map((r) => r.lastSeen), rows.map((r) => r.lastVerified), rows.map((r) => r.origin)]);
   return rows.length;
 }

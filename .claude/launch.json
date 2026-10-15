@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "festfinder-preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["scripts/preview.sh"],
+      "port": 3000
+    },
+    {
       "name": "festfinder-design",
       "runtimeExecutable": "python3",
       "runtimeArgs": [

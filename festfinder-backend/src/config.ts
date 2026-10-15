@@ -168,6 +168,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
   // only, so it runs on the development defaults when none is set.
   const live = environment === 'production';
   const ticketSigningSecret = live ? str('TICKET_SIGNING_SECRET') : str('TICKET_SIGNING_SECRET', 'dev-ticket-secret');
+  const publicBaseUrl = str('PUBLIC_BASE_URL', vercelHost ? `https://${vercelHost}` : 'http://localhost:4000');
   const cfg: Config = {
     env,
     environment,
@@ -176,7 +177,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     host: str('HOST', prod ? '0.0.0.0' : 'localhost'),
     databaseUrl,
     pgliteDir: process.env.PGLITE_DIR || null,
-    publicBaseUrl: str('PUBLIC_BASE_URL', vercelHost ? `https://${vercelHost}` : 'http://localhost:4000'),
+    publicBaseUrl,
     corsOrigins: str('CORS_ORIGINS', 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
     cookieSecure: bool('COOKIE_SECURE', prod),
     ticketSigningSecret,
@@ -207,7 +208,9 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     map: {
       tilesUrl: tilesUrl(process.env.MAP_TILES_URL, prod),
       overviewUrl: tilesUrl(process.env.MAP_OVERVIEW_URL, prod),
-      glyphsUrl: /^https:\/\/\S+\{fontstack\}\S*\{range\}/.test(process.env.MAP_GLYPHS_URL ?? '') ? process.env.MAP_GLYPHS_URL! : null,
+      // The site's own Noto Sans glyphs (ui/map/glyphs) unless MAP_GLYPHS_URL names others.
+      glyphsUrl: /^https:\/\/\S+\{fontstack\}\S*\{range\}/.test(process.env.MAP_GLYPHS_URL ?? '') ? process.env.MAP_GLYPHS_URL!
+        : `${publicBaseUrl.replace(/\/+$/, '')}/ui/map/glyphs/{fontstack}/{range}.pbf`,
     },
     serveFrontend: env !== 'test',
     indexNowKey: /^[A-Za-z0-9-]{8,128}$/.test(process.env.INDEXNOW_KEY ?? '') ? process.env.INDEXNOW_KEY! : null,

@@ -41,7 +41,7 @@ export async function loadDirectory(scope: Scope, lang: Lang, search?: Search) {
     const out = sameFilters(at, start) ? null : await api<DirPage>('/artists?' + apiQuery(at), { lang });
     if (out) { start = at; first = out; }
   }
-  const page: DirPage = { items: first.items, total: first.total, nextOffset: first.nextOffset, filters: { roles } };
+  const page: DirPage = { items: first.items, total: first.total, nextOffset: first.nextOffset, filters: { roles }, origins: first.origins };
   return { seo, first: page, meta: lists, start };
 }
 

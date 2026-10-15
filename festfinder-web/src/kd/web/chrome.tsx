@@ -1,14 +1,15 @@
 'use client';
 /**
- * The public site's frame: the sticky glass nav (Khám phá, Bản đồ, the Thể loại menu with live
- * counts, search, "Đăng sự kiện" and the account menu), and the one-line footer.
+ * The public site's frame: the sticky glass nav (Khám phá, Sự kiện, the Thể loại menu with live
+ * counts, search, "Đăng sự kiện" and the account menu; below desk width a Menu button opens the
+ * same pages, styles and "Đăng sự kiện" in a sheet), and the one-line footer.
  */
 import { KdLink as Link, inLang } from '../link';
 import { useEffect, useState, type FormEvent } from 'react';
-import { CaretDownIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
+import { CaretDownIcon, ListIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
-import { FAMILY_LABEL, g, styleChips, styleLabel } from '../genre';
+import { g, styleChips, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { buttonClass, IconButton } from '../ui/actions';
 import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
@@ -17,34 +18,27 @@ import { Sheet } from '../ui/sheet';
 import { Input } from '../ui/forms';
 import { WEB } from './copy';
 
-/** Which nav link is the current page; 'list' marks Bản đồ only when the list shows the map. */
-export type WebSection = 'explore' | 'map' | 'list' | 'artists' | 'none';
+/** Which nav link is the current page: 'list' is Sự kiện, in each of its views (table, grid, map). */
+export type WebSection = 'explore' | 'list' | 'artists' | 'none';
 
 /** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
 const LANG_KEY = 'ff_lang';
 
-/** Where a style leads: the home page filtered to it ('free': what costs nothing). */
-export const styleHref = (k: string, lang: Lang = 'vi') => inLang(k === 'free' ? '/?price=free' : `/?style=${k}`, lang);
+/** Where a style leads: the home page filtered to it. Only music styles: price is a filter, not a style. */
+export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/?style=${k}`, lang);
 
 export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; current?: WebSection; styleCounts?: Record<string, number> | null }) {
   const kd = useKd();
   const T = pick(WEB, lang);
-  const [counts, setCounts] = useState<{ style: Record<string, number>; free: number | null } | null>(styleCounts ? { style: styleCounts, free: null } : null);
+  const [counts, setCounts] = useState<Record<string, number> | null>(styleCounts ?? null);
   const [me, setMe] = useState<{ tickets: number; saved: number; handle: string } | null>(null);
   const [search, setSearch] = useState(false);
-  const [onMap, setOnMap] = useState(current === 'map');
-  useEffect(() => {
-    if (current !== 'list') return;
-    const check = () => setOnMap(new URLSearchParams(location.search).get('view') === 'map');
-    check();
-    const t = setInterval(check, 500);
-    return () => clearInterval(t);
-  }, [current]);
+  const [menu, setMenu] = useState(false);
 
   const loadCounts = () => {
     if (counts) return;
     FF.once('kd:style-counts', () => FF.maybe(FF.get('/events?time=all&upcoming=1&limit=1'), null)).then((r: any) => {
-      if (r?.facets?.style) setCounts({ style: r.facets.style, free: r.facets.free ?? null });
+      if (r?.facets?.style) setCounts(r.facets.style);
     });
   };
   useEffect(() => {
@@ -64,7 +58,7 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
         </Link>
         <nav aria-label={T.mainNav} className="ml-3 hidden items-center gap-0.5 desk:flex">
           <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'explore' ? 'page' : undefined}>{T.explore}</Link>
-          <a className="kd-nl" href={inLang('/list?view=map', lang)} aria-current={onMap ? 'page' : undefined}>{T.map}</a>
+          <Link className="kd-nl" href={inLang('/list', lang)} aria-current={current === 'list' ? 'page' : undefined}>{T.events}</Link>
           <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined}>{T.artists}</Link>
           <Menu
             label={T.genres}
@@ -75,14 +69,11 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
               </button>
             )}
           >
-            {styleChips(counts?.style, 10).map((k) => (
-              <MenuItem key={k} href={styleHref(k, lang)} external aside={counts?.style[k] ?? null} icon={<span className={`kd-mk ${g('edm')}`} aria-hidden="true" />}>
+            {styleChips(counts, 10).map((k) => (
+              <MenuItem key={k} href={styleHref(k, lang)} external aside={counts?.[k] ?? null} icon={<span className={`kd-mk ${g('edm')}`} aria-hidden="true" />}>
                 {styleLabel(k, lang)}
               </MenuItem>
             ))}
-            <MenuItem href={styleHref('free', lang)} external aside={counts?.free ?? null} icon={<span className={`kd-mk ${g('free')}`} aria-hidden="true" />}>
-              {FAMILY_LABEL.free[lang]}
-            </MenuItem>
           </Menu>
         </nav>
         <div className="ml-auto flex items-center gap-1.5">
@@ -121,9 +112,39 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
           ) : (
             <button type="button" className={buttonClass({ size: 'sm', tone: 'ghost' })} onClick={() => kd.openSignIn()}>{T.signIn}</button>
           )}
+          <IconButton label={T.menu} className="desk:hidden" aria-haspopup="dialog" aria-expanded={menu} onClick={() => { loadCounts(); setMenu(true); }}>
+            <ListIcon size={22} aria-hidden="true" />
+          </IconButton>
         </div>
       </div>
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
+      {menu ? (
+        <Sheet title={T.menu} closeLabel={T.close} onClose={() => setMenu(false)}>
+          <nav aria-label={T.mainNav} className="flex flex-col gap-0.5 pt-1">
+            {([['explore', '/', T.explore], ['list', '/list', T.events], ['artists', '/a', T.artists]] as const).map(([k, href, label]) => (
+              <Link
+                key={k}
+                href={inLang(href, lang)}
+                aria-current={current === k ? 'page' : undefined}
+                onClick={() => setMenu(false)}
+                className="kd-h flex min-h-13 items-center rounded-opt px-3 text-mist hover:bg-white/[0.04] aria-[current=page]:bg-white/[0.06] aria-[current=page]:text-paper"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <h3 className="kd-m mt-5 mb-2.5 px-3">{T.genres}</h3>
+          <div className="flex flex-wrap gap-2 px-1">
+            {styleChips(counts, 10).map((k) => (
+              <a key={k} href={styleHref(k, lang)} className="kd-chip">
+                <span className={`kd-mk ${g('edm')}`} aria-hidden="true" />{styleLabel(k, lang)}
+                {counts?.[k] != null ? <span className="kd-num text-fog">{counts[k]}</span> : null}
+              </a>
+            ))}
+          </div>
+          <a href="/studio" className={buttonClass({ tone: 'light', block: true }, 'mt-6')}>{T.listEvent}</a>
+        </Sheet>
+      ) : null}
     </header>
   );
 }

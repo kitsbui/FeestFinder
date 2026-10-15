@@ -7,6 +7,8 @@ declare module 'react' {
     interface IntrinsicElements {
       /** The page wrapper in app/(kd)/layout.tsx. */
       'ff-app': DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>;
+      /** The scroll thumbs' layer (kd/ui/scrollbars.tsx). */
+      'ff-scrollbars': DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
 }

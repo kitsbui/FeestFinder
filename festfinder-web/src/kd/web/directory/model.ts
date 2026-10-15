@@ -25,6 +25,8 @@ export interface DirArtist {
   /** The genre of most of their listed shows: it colours the card when no style says. */
   genre: string | null;
   nextShow: { slug: string; title: string; startsOn: string; city: string | null; cityLabel: Pair | null } | null;
+  /** 'radar': known only from events FeestFinder Radar found, and nobody runs the profile. */
+  origin?: 'posted' | 'radar';
 }
 
 export interface DirPage {
@@ -32,6 +34,8 @@ export interface DirPage {
   total: number;
   nextOffset: number | null;
   filters?: { roles: Keyed[] };
+  /** How many of each kind under the other filters, for the tabs. */
+  origins?: { posted: number; radar: number };
 }
 
 /** What /meta/discovery gives the filters: the listed cities and the music styles. */
@@ -49,11 +53,13 @@ export interface Filters {
   booking: boolean;
   /** With a show still to come. */
   soon: boolean;
+  /** Posted, or found by FeestFinder Radar; '' is both. */
+  origin: '' | 'posted' | 'radar';
 }
 
 export type Scope = { style?: string; city?: string };
 
-export const NO_FILTERS: Filters = { q: '', role: '', style: '', city: '', booking: false, soon: false };
+export const NO_FILTERS: Filters = { q: '', role: '', style: '', city: '', booking: false, soon: false, origin: '' };
 
 export const PAGE = 24;
 
@@ -62,7 +68,7 @@ export const scopeKey = (s: Scope) => (s.style ? `style:${s.style}` : s.city ? `
 export const fromScope = (s: Scope): Filters => ({ ...NO_FILTERS, style: s.style ?? '', city: s.city ?? '' });
 
 export const sameFilters = (a: Filters, b: Filters) =>
-  a.q === b.q && a.role === b.role && a.style === b.style && a.city === b.city && a.booking === b.booking && a.soon === b.soon;
+  a.q === b.q && a.role === b.role && a.style === b.style && a.city === b.city && a.booking === b.booking && a.soon === b.soon && a.origin === b.origin;
 
 export const isFiltered = (f: Filters) => !sameFilters(f, NO_FILTERS);
 
@@ -76,12 +82,13 @@ export function apiQuery(f: Filters, offset = 0, limit = PAGE): string {
   if (f.city) q.set('city', f.city);
   if (f.booking) q.set('booking', 'available,limited');
   if (f.soon) q.set('upcoming', '1');
+  if (f.origin) q.set('origin', f.origin);
   return q.toString();
 }
 
 /** The directory page's own path for these filters: a style or a city alone has one. */
 export function pathOf(f: Filters): string {
-  const only = !f.q && !f.role && !f.booking && !f.soon;
+  const only = !f.q && !f.role && !f.booking && !f.soon && !f.origin;
   if (only && f.style && !f.city) return '/a/style/' + encodeURIComponent(f.style);
   if (only && f.city && !f.style) return '/a/city/' + encodeURIComponent(f.city);
   return '/a';
@@ -98,6 +105,7 @@ export function addressOf(f: Filters, lang: Lang): string {
     if (f.city) q.set('city', f.city);
     if (f.booking) q.set('booking', '1');
     if (f.soon) q.set('upcoming', '1');
+    if (f.origin) q.set('origin', f.origin);
   }
   if (lang === 'en') q.set('lang', 'en');
   const s = q.toString();
@@ -128,6 +136,8 @@ export function readAddress(pathname: string, search: string, known: { roles: Ke
   if (city && known.meta.cities.some((c) => c.slug === city)) f.city = city;
   f.booking = q.get('booking') === '1';
   f.soon = q.get('upcoming') === '1';
+  const origin = q.get('origin');
+  if (origin === 'posted' || origin === 'radar') f.origin = origin;
   return f;
 }
 

@@ -2,8 +2,6 @@
 import type { Dict } from '../../copy';
 
 export const HOME = {
-  city: { en: 'City', vi: 'Thành phố' },
-  soon: { en: 'Soon', vi: 'Sắp có' },
   when: { en: 'When', vi: 'Thời gian' },
   t_tonight: { en: 'Tonight', vi: 'Tối nay' },
   t_weekend: { en: 'This weekend', vi: 'Cuối tuần này' },
@@ -33,8 +31,7 @@ export const HOME = {
   featuredLabel: { en: 'Featured: {t}', vi: 'Nổi bật: {t}' },
   free: { en: 'Free', vi: 'Miễn phí' },
   fromPrice: { en: 'from {p}', vi: 'từ {p}' },
-  aroundYou: { en: 'Around you', vi: 'Quanh bạn' },
-  nearTonight: { en: 'Nearby, tonight', vi: 'Gần đây, tối nay' },
+  nearTonight: { en: 'Where to tonight', vi: 'Tối nay ở đâu' },
   openMap: { en: 'Open the map', vi: 'Mở bản đồ' },
   allVenues: { en: 'Every venue', vi: 'Mọi địa điểm' },
   ad: { en: 'Ad', vi: 'Quảng cáo' },

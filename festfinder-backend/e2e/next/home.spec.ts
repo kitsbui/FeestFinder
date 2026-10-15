@@ -50,19 +50,35 @@ test.describe('the home page', () => {
   test('the nav’s style menu lands on what it names', async ({ page }) => {
     await open(page);
     await page.getByRole('button', { name: 'Dòng nhạc' }).click();
-    await expect(page.getByRole('menuitem', { name: /House/ })).toBeVisible();
-    await page.getByRole('menuitem', { name: /Miễn phí/ }).click();
-    await expect(page).toHaveURL(/\/\?price=free$/);
-    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /Miễn phí/ })).toHaveAttribute('aria-pressed', 'true');
+    // Styles only: the price is a filter, not a style.
+    await expect(page.getByRole('menuitem', { name: /Miễn phí/ })).toHaveCount(0);
+    await page.getByRole('menuitem', { name: /House/ }).click();
+    await expect(page).toHaveURL(/\/\?style=house$/);
+    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /House/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /Miễn phí/ })).toHaveCount(0);
+  });
+
+  test('free stands apart from the styles and narrows the one chosen', async ({ page }) => {
+    await open(page, '/?time=month&style=techno');
+    const free = page.getByRole('button', { name: /^Miễn phí/ });
+    await free.click();
+    await expect(page).toHaveURL(/style=techno&price=free/);
+    await expect(free).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /Techno/ })).toHaveAttribute('aria-pressed', 'true');
+    await page.goto('/?time=month&price=free');
+    await expect(page.getByRole('button', { name: /^Miễn phí/ })).toHaveAttribute('aria-pressed', 'true');
     for (const price of await page.locator('.kd-ev .kd-mb').allInnerTexts()) expect(price).toBe('Miễn phí');
   });
 
-  test('a city with no events yet is shown as coming soon', async ({ page }) => {
+  test('shows every city at once: no city menu, and the heading only says the time the chips chose', async ({ page }) => {
     await open(page);
-    await page.getByRole('button', { name: /TP\.HCM/ }).click();
-    const menu = page.getByRole('menu', { name: 'Thành phố' });
-    await expect(menu.getByRole('menuitemradio', { name: /TP\.HCM/ })).toHaveAttribute('aria-checked', 'true');
-    await expect(menu.getByRole('menuitemradio', { name: /Sắp có/ }).first()).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1 }).getByRole('button')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /TP\.HCM/ })).toHaveCount(0);
+    // The cards name their city instead.
+    await expect(page.locator('.kd-ev').first()).toContainText('TP.HCM');
+    await page.getByRole('group', { name: 'Thời gian' }).getByRole('button', { name: /7 ngày tới/ }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('7 ngày tới có gì chơi?');
   });
 
   test('nothing in a style tonight offers the way out', async ({ page }) => {

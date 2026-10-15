@@ -10,6 +10,7 @@ import { cx } from '../../cx';
 import { whenShort } from '../../format';
 import { familyOf, g } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
+import { RadarTag } from '../../ui/origin';
 import { Art, Avatar, Status, type StatusTone } from '../../ui/parts';
 import { DIR } from './copy';
 import type { DirArtist } from './model';
@@ -35,9 +36,12 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
 
   return (
     <article className="flex min-w-0 flex-col" aria-labelledby={id}>
-      <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
-        {fam ? <Art family={fam} bone={i % 2 === 1} className="h-24" /> : <div className="kd-art h-24" />}
-      </Link>
+      <div className="relative">
+        <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
+          {fam ? <Art family={fam} bone={i % 2 === 1} className="h-24" /> : <div className="kd-art h-24" />}
+        </Link>
+        {a.origin === 'radar' ? <RadarTag lang={lang} glass className="pointer-events-none absolute right-2.5 top-2.5" /> : null}
+      </div>
       <div className="flex items-end justify-between gap-3 pl-3">
         {/* The name is in the heading below. */}
         <span aria-hidden="true" className="-mt-8 flex"><Avatar ring name={a.name} src={a.imageUrl} size={64} /></span>

@@ -1,7 +1,7 @@
 /**
- * / in Kính đêm (design/Web-Home): the city and time headline, search, the featured card, this
- * weekend's events with sort and family chips, "Gần đây, tối nay" with the map, the FAQ.
- * Rendered on the server with this weekend in the default city; the rest follows the choices.
+ * / in Kính đêm (design/Web-Home): the time headline, search, the featured card, this weekend's
+ * events with sort and style chips, "Tối nay ở đâu" with the map, the FAQ. Every listed city at
+ * once. Rendered on the server with this weekend; the rest follows the choices.
  */
 import { apiOr, type Lang } from '@/lib/api';
 import { inLang } from '../../link';
@@ -24,8 +24,8 @@ export async function HomePage({ lang }: { lang: Lang }) {
   const meta = await apiOr<{ defaultCity: string; cities: City[] } | null>('/meta/discovery', null, { revalidate: 300 });
   const city = meta?.defaultCity ?? 'ho-chi-minh';
   const [feed, tonight, ad] = await Promise.all([
-    apiOr<Feed>(`/events?time=weekend&limit=12&upcoming=1&city=${city}`, EMPTY_FEED, { lang }),
-    apiOr<{ items: Card[] }>(`/events?time=tonight&limit=20&upcoming=1&city=${city}`, { items: [] }, { lang }),
+    apiOr<Feed>('/events?time=weekend&limit=12&upcoming=1', EMPTY_FEED, { lang }),
+    apiOr<{ items: Card[] }>('/events?time=tonight&limit=20&upcoming=1', { items: [] }, { lang }),
     apiOr<{ ad: Ad | null }>('/ads?placement=banner', { ad: null }, { lang }),
   ]);
   const pins = tonight.items.filter((e) => e.venue.lat != null).slice(0, 12).map((e) => ({
@@ -46,7 +46,7 @@ export async function HomePage({ lang }: { lang: Lang }) {
           {tonight.items.length ? (
             <section className="kd-wrap pt-[clamp(56px,7vw,96px)]">
               <div className="kd-split items-stretch">
-                <div className="kd-side"><NearbyTonight lang={lang} items={tonight.items} city={city} /></div>
+                <div className="kd-side"><NearbyTonight lang={lang} items={tonight.items} /></div>
                 <a className="kd-main kd-card relative min-h-[400px] overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-card after:shadow-[inset_0_0_0_1px_var(--color-line)] after:content-['']" href={inLang('/list?view=map', lang)} aria-label={T.openMap}>
                   <MiniMap pins={pins} className="absolute inset-0 bg-[#0b0c0d]" />
                 </a>

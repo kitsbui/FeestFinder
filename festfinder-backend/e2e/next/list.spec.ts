@@ -59,6 +59,68 @@ test.describe('the list', () => {
     await expect(page.getByRole('row').filter({ hasText: 'HOZO' })).toHaveCount(0);
   });
 
+  test('is Sự kiện in the nav in every view, and a filter stays chosen and shown on the map', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await open(page, '/');
+    const nav = page.getByRole('navigation', { name: 'Chính' });
+    await expect(nav.getByRole('link', { name: 'Bản đồ' })).toHaveCount(0);
+    await nav.getByRole('link', { name: 'Sự kiện' }).click();
+    await expect(page).toHaveURL(/\/list$/);
+    await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('aria-current', 'page');
+    await page.getByRole('button', { name: 'Kiểu đêm' }).click();
+    await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
+    await page.getByRole('button', { name: 'Bản đồ', exact: true }).click();
+    await expect(page).toHaveURL(/style=techno&view=map/);
+    // One title for the page, one name per view: "Bản đồ" is the pressed view, nothing else.
+    await expect(page.getByRole('heading', { level: 1, name: 'Tất cả sự kiện' })).toBeAttached();
+    await expect(page.getByText('Bản đồ', { exact: true })).toHaveCount(1);
+    await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('button', { name: 'Kiểu đêm' })).toHaveText('Techno');
+    await expect(page.getByRole('button', { name: /Ravolution Music Festival/ })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /HOZO/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Bảng', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Kiểu đêm' })).toHaveText('Techno');
+    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+  });
+
+  test('on a phone, the Menu sheet holds the pages, the styles and "Đăng sự kiện"', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open(page, '/list');
+    await page.getByRole('button', { name: 'Menu' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Menu' });
+    await expect(sheet.getByRole('link', { name: 'Sự kiện', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(sheet.getByRole('link', { name: /^Techno/ })).toHaveAttribute('href', '/?style=techno');
+    await expect(sheet.getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio');
+    await sheet.getByRole('link', { name: 'Nghệ sĩ' }).click();
+    await expect(page).toHaveURL(/\/a$/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(page.getByRole('button', { name: 'Menu' })).toBeHidden();
+  });
+
+  test('splits what someone posted from what FeestFinder Radar found, and tags the Radar ones', async ({ page }) => {
+    await open(page, '/list');
+    const tabs = page.getByRole('tablist', { name: 'Nguồn đăng' });
+    await expect(tabs.getByRole('tab', { name: /^Tất cả/ })).toHaveAttribute('aria-selected', 'true');
+    // The demo data is all posted; a Radar find as the API sends one: the first event, found on another site.
+    await page.route(/\/events\?.*origin=radar/, async (route) => {
+      const real = await route.fetch({ url: route.request().url().replace('origin=radar', 'origin=posted') });
+      const body = await real.json();
+      await route.fulfill({ json: { ...body, total: 1, items: body.items.slice(0, 1).map((e: any) => ({ ...e, origin: 'radar' })) } });
+    });
+    await tabs.getByRole('tab', { name: /^Radar/ }).click();
+    await expect(page).toHaveURL(/origin=radar/);
+    await expect(tabs.getByRole('tab', { name: /^Radar/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('row').nth(1).getByText('Do FeestFinder Radar tìm thấy')).toBeAttached();
+    await page.getByRole('button', { name: 'Lưới', exact: true }).click();
+    await expect(page.locator('.kd-ev').first().getByText('Do FeestFinder Radar tìm thấy')).toBeAttached();
+    // The address keeps the tab; "Tất cả" drops it.
+    await page.goto('/list?origin=posted');
+    await expect(page.getByRole('tablist', { name: 'Nguồn đăng' }).getByRole('tab', { name: /^Đã đăng/ })).toHaveAttribute('aria-selected', 'true');
+    await page.getByRole('tablist', { name: 'Nguồn đăng' }).getByRole('tab', { name: /^Tất cả/ }).click();
+    await expect(page).not.toHaveURL(/origin=/);
+  });
+
   test('the map asks for the events in view once, and again only on "search this area"', async ({ page }) => {
     const problems = watch(page);
     const asked: string[] = [];

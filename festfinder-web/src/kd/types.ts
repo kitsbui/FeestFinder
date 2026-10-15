@@ -38,6 +38,8 @@ export interface Card {
   lineup: string[];
   organizer: { id: string; slug: string; name: string; initials?: string; verified: boolean; logoUrl?: string | null };
   confidence?: { label: string; labelText: Pair; sources: number; sourcesLine: Pair | null } | null;
+  /** 'radar': found by FeestFinder Radar, nobody on FeestFinder posted it. */
+  origin?: 'posted' | 'radar';
 }
 
 export interface Tier {

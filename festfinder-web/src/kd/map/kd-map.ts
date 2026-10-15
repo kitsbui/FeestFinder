@@ -7,7 +7,9 @@
  * events itself: the screen asks /events/map when the view opens and on "search this area",
  * then hands the result to setEvents(). Moving the map only says that it moved.
  *
- * MapLibre and the PMTiles protocol come from /ui/vendor/maplibre, loaded once by FFMap.load.
+ * MapLibre and the PMTiles protocol come from /ui/vendor/maplibre, loaded once by FFMap.load,
+ * side by side with the style; warmKdMap() starts both early (on the way to a map), so the map
+ * opening is mostly the tiles. The map can be zoomed out to the whole world.
  */
 import { FF } from '@/runtime/ff';
 import type { Family } from '../genre';
@@ -44,16 +46,28 @@ export interface KdMap {
 
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
+const STYLE = '/map/style.json?theme=kd';
+
 async function maplibre(): Promise<any> {
   const FFMap = await FF.loadMap();
   return FFMap.load(FF.asset);
 }
 
+/** The style, once per page; its address if it cannot be read now (MapLibre then tries itself). */
+function kdStyle(): Promise<object | string> {
+  return FF.once('kd:map-style', () => fetch(STYLE).then((r) => (r.ok ? r.json() : STYLE), () => STYLE));
+}
+
+/** Starts loading MapLibre and the style, for a map about to open (a hover on "Bản đồ"). */
+export function warmKdMap(): void {
+  Promise.all([maplibre(), kdStyle()]).catch(() => { /* the map retries when it opens */ });
+}
+
 export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<KdMap> {
-  const m = await maplibre();
+  const [m, style] = await Promise.all([maplibre(), kdStyle()]);
   const map = new m.Map({
     container: el,
-    style: '/map/style.json?theme=kd',
+    style,
     ...(opts.bounds ? { bounds: opts.bounds, fitBoundsOptions: { padding: 40 } } : { center: opts.center, zoom: opts.zoom ?? 13 }),
     attributionControl: { compact: true },
     dragRotate: false,
@@ -61,7 +75,12 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
     renderWorldCopies: false,
     interactive: opts.interactive !== false,
     maxZoom: 17,
-    minZoom: 2,
+    // The whole world fits a phone at zoom 0.
+    minZoom: 0,
+    // A phone's 3x screen draws a third of the pixels at 2x and looks the same; smoother panning.
+    pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+    // The archives never change under a URL (a new build gets a new folder).
+    refreshExpiredTiles: false,
   });
   map.touchZoomRotate?.disableRotation();
   map.keyboard?.disableRotation();
@@ -80,8 +99,11 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
     return new m.Marker({ element: node, anchor: 'top', offset: [0, 20] }).setLngLat(p.at).addTo(map);
   });
   let bare = true;
+  // The listed cities' names between the world view (where they would pile up on each other) and
+  // the street names; on a bare board, always.
   const syncPlaces = () => {
-    const show = bare || map.getZoom() < 7;
+    const z = map.getZoom();
+    const show = bare || (z >= 3 && z < 7);
     for (const p of places) p.getElement().style.display = show ? '' : 'none';
   };
 

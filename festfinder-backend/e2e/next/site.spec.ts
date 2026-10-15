@@ -200,3 +200,66 @@ test.describe('full width on desktop', () => {
     expect(app.width).toBe(await page.evaluate(() => document.documentElement.clientWidth) - 240);
   });
 });
+
+test('a cover that does not load leaves the art, not a broken image', async ({ page }) => {
+  // One event's cover lives on a site that has lost it.
+  await page.route('https://covers.example/**', (route) => route.fulfill({ status: 404, body: '' }));
+  await page.route(/\/events\?.*city=ho-chi-minh/, async (route) => {
+    const body = await (await route.fetch()).json();
+    body.items[0] = { ...body.items[0], coverUrl: 'https://covers.example/gone.jpg' };
+    await route.fulfill({ json: body });
+  });
+  await page.goto('/list?view=grid&city=ho-chi-minh');
+  const cover = page.locator('.kd-ev').first().locator('img.kd-cover');
+  await expect(cover).toHaveAttribute('data-broken', '');
+  await expect(cover).toBeHidden();
+});
+
+test.describe('scrollbars', () => {
+  test('take no room: a hairline over the page while it scrolls, which fades and can be dragged', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 600 });
+    await page.goto('/list');
+    await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+    expect(await page.evaluate(() => innerWidth - document.documentElement.clientWidth)).toBe(0);
+    const thumb = page.locator('ff-scrollbars .ff-sb-y.on');
+    await expect(thumb).toHaveCount(0);
+    await page.mouse.move(600, 300);
+    await page.mouse.wheel(0, 200);
+    await expect(thumb).toHaveCount(1);
+    const at = (await thumb.boundingBox())!;
+    expect(Math.round(at.x + at.width)).toBe(1280);
+    await expect(thumb).toHaveCount(0, { timeout: 3000 });
+    // Near the edge it comes back, and it drags the page.
+    await page.mouse.move(1275, at.y + at.height / 2);
+    await expect(thumb).toHaveCount(1);
+    const y0 = await page.evaluate(() => scrollY);
+    await page.mouse.down();
+    await page.mouse.move(1275, at.y + at.height / 2 + 120, { steps: 6 });
+    await page.mouse.up();
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(y0);
+  });
+
+  test('a box that scrolls inside gets its own, above an open sheet too', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 700 });
+    await page.goto('/list');
+    await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+    await page.getByRole('button', { name: 'Menu' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Menu' });
+    await expect(sheet).toBeVisible();
+    // A long box in the sheet, scrolled: its thumb sits on its right edge and is what is on top there.
+    const edge = await sheet.evaluate((d) => {
+      const box = document.createElement('section');
+      box.style.cssText = 'height:120px;overflow:auto';
+      box.innerHTML = '<p style="height:600px">x</p>';
+      d.append(box);
+      box.scrollTop = 100;
+      const r = box.getBoundingClientRect();
+      return { right: r.right, top: r.top };
+    });
+    const thumb = page.locator('ff-scrollbars .ff-sb-y.on');
+    await expect(thumb).toHaveCount(1);
+    const at = (await thumb.boundingBox())!;
+    expect(Math.round(at.x + at.width)).toBe(Math.round(edge.right));
+    expect(await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('ff-scrollbars'), { x: at.x + at.width - 3, y: at.y + 5 })).toBe(true);
+  });
+});

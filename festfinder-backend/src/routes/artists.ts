@@ -43,12 +43,14 @@ const DirectoryQuery = z.object({
   brands: bool.optional(),
   verified: bool.optional(),
   upcoming: bool.optional(),
+  /** Posted (run, verified or played at a posted event) or found by FeestFinder Radar. */
+  origin: z.enum(['posted', 'radar']).optional(),
   sort: z.enum(['next', 'name', 'active']).default('next'),
   limit: limit(60, 24),
   offset: z.coerce.number().int().min(0).max(10_000).default(0),
 });
 
-import { label, styleItem } from '../services/artists.ts';
+import { artistOrigin, label, styleItem } from '../services/artists.ts';
 import { badgesOf } from '../services/badges.ts';
 import { momentsOf } from './moments.ts';
 
@@ -96,7 +98,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
     ]);
-    const [gear, badges, moments] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id)]);
+    const [gear, badges, moments, origin] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistOrigin(ctx.db, a)]);
     // Free and busy dates still to come, as the artist set them. Their notes are for them alone.
     const windows = await many<any>(ctx.db,
       `select from_on::text, to_on::text, kind, city from artist_availability where artist_id = $1 and to_on >= $2 order by from_on limit 12`,
@@ -114,7 +116,7 @@ export default async function artistRoutes(app: FastifyInstance) {
         languages: a.languages, activeSince: a.active_since,
         booking: label(BOOKING_STATUS, a.booking_status), travel: label(TRAVEL_SCOPE, a.travel_scope),
         gigTypes: a.gig_types.map((k: any) => label(GIG_TYPE, k)), setLengths: a.set_lengths.map((k: any) => label(SET_LENGTH, k)),
-        links: presentLinks(a), openToBrands: a.open_to_brands, verified: a.verified, claimed: !!a.owner_user_id,
+        links: presentLinks(a), openToBrands: a.open_to_brands, verified: a.verified, claimed: !!a.owner_user_id, origin,
         cities: rank(cards.map((c) => c.city)).map((slug) => ({ slug, label: cityLabel(slug) })),
         followers: new Set(follows.map((f) => f.user_id)).size,
         following: !!userId && follows.some((f) => f.user_id === userId),

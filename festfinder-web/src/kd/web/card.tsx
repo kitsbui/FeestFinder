@@ -1,13 +1,14 @@
 /**
  * An event card for grids: the art (cover, or the family's shapes, plain or bone by index),
- * a glass status tag and the save toggle over it, then the title, marker + when · venue, the
- * price (lime when free) and "n quan tâm".
+ * a glass status tag and the save toggle over it (and "Radar" below, for what FeestFinder Radar
+ * found), then the title, marker + when · venue · city, the price (lime when free) and "n quan tâm".
  */
 import { KdLink as Link, inLang } from '../link';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { count, money, whenShort } from '../format';
 import { familyOf, g } from '../genre';
+import { RadarTag } from '../ui/origin';
 import { Art } from '../ui/parts';
 import type { Card } from '../types';
 import { WEB } from './copy';
@@ -44,12 +45,13 @@ export function EventCard({ e, i, lang }: { e: Card; i: number; lang: Lang }) {
           {tag ? <span className="kd-tag kd-tag-glass text-paper">{tag}</span> : <span />}
           <span className="pointer-events-auto"><SaveToggle id={e.id} label={fill(T.saveEvent, { t: e.title })} /></span>
         </div>
+        {e.origin === 'radar' ? <RadarTag lang={lang} glass className="pointer-events-none absolute bottom-2.5 left-2.5" /> : null}
       </div>
       <div className="flex flex-col gap-1">
         <Link href={href} className="kd-h">{e.title}</Link>
         <span className="kd-s flex min-w-0 items-center gap-1.5">
           <span className="kd-mk" aria-hidden="true" />
-          <span className="kd-ell">{whenShort(e, lang)}{e.venue.name ? ' · ' + e.venue.name : ''}</span>
+          <span className="kd-ell">{whenShort(e, lang)}{e.venue.name ? ' · ' + e.venue.name : ''} · {e.cityLabel[lang]}</span>
         </span>
         <span className="mt-0.5 flex items-baseline justify-between gap-2">
           <span className={cx('kd-mb kd-num', (e.isFree || e.entryMode === 'free') && 'text-acc')}>{priceLine(e, lang)}</span>

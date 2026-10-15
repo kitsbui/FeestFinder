@@ -17,6 +17,7 @@ import { buttonClass } from '../../ui/actions';
 import { Badges, type BadgeView } from '../../ui/badges';
 import type { Moment } from '../../ui/moments';
 import { Clamp } from '../../ui/clamp';
+import { RadarTag } from '../../ui/origin';
 import { Accordion, Art, Avatar, DateBlock, Marker, Stat, Status, type StatusTone } from '../../ui/parts';
 import type { Card } from '../../types';
 import { Crumbs, WebFooter, WebNav } from '../chrome';
@@ -38,6 +39,8 @@ export interface ArtistData {
     languages: string[]; activeSince: number | null;
     booking: Keyed | null; travel: Keyed | null; gigTypes: Keyed[]; setLengths: Keyed[];
     links: ProfileLink[]; openToBrands: boolean; verified: boolean; claimed: boolean;
+    /** 'radar': known only from events FeestFinder Radar found, and nobody runs the profile. */
+    origin?: 'posted' | 'radar';
     cities: { slug: string; label: Pair | null }[];
     followers: number;
   };
@@ -164,6 +167,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                     <span className="kd-m">{meta}</span>
                     {families.map((f) => <span key={f} className={cx('kd-tag', g(f))}><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[f][lang]}</span>)}
                     {a.booking ? <Status tone={BOOKING_TONE[a.booking.key] ?? 'none'}>{text(a.booking.label, lang)}</Status> : null}
+                    {a.origin === 'radar' ? <RadarTag lang={lang} /> : null}
                   </div>
                 </div>
               </div>

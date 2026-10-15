@@ -4,7 +4,7 @@
  * and answers, structured data); the personal and interactive parts hydrate on top.
  */
 import { KdLink as Link, inLang } from '../../link';
-import { CalendarBlankIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon } from '@phosphor-icons/react/ssr';
+import { BroadcastIcon, CalendarBlankIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon } from '@phosphor-icons/react/ssr';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick } from '../../copy';
 import { cx } from '../../cx';
@@ -13,6 +13,7 @@ import { FAMILY_LABEL, familyOf, g } from '../../genre';
 import { KdProvider } from '../../runtime';
 import { buttonClass } from '../../ui/actions';
 import { Clamp } from '../../ui/clamp';
+import { RadarTag } from '../../ui/origin';
 import { Accordion, Art, Avatar, Tag } from '../../ui/parts';
 import { VenueMap } from '../../map/venue-map';
 import type { Card, EventDetail } from '../../types';
@@ -68,6 +69,8 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
     ...(ev.styles ?? []).slice(0, 3),
   ].filter((x): x is string => !!x);
   const org = ev.organizer;
+  // Nobody posted a Radar event: it is FeestFinder Radar's find, not its placeholder organiser's.
+  const radarHosts = [...new Set(ev.sources.map((s) => s.host || s.label[lang]).filter(Boolean))].join(', ');
   const orgData = org ? await api<{ upcoming: Card[] }>(`/organizers/${enc(org.slug)}`, { lang }).catch(() => null) : null;
   const more = (orgData?.upcoming ?? []).filter((x) => x.id !== ev.id).slice(0, 3);
   const also = more.length ? more : ev.similar.slice(0, 3);
@@ -90,6 +93,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-paper">{ev.age}</span> : null}
                     {status ? <span className="kd-tag kd-tag-glass text-paper"><span className={cx('h-[7px] w-[7px] rounded-full', statusTone)} aria-hidden="true" />{status}</span> : null}
+                    {ev.origin === 'radar' ? <RadarTag lang={lang} glass /> : null}
                   </div>
                   <Countdown lang={lang} />
                 </div>
@@ -99,7 +103,15 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     <h1 className="kd-d1">{ev.title}</h1>
                   </div>
                   <div className="border-t border-line">
-                    {org ? (
+                    {ev.origin === 'radar' ? (
+                      <div className="kd-lrow min-h-15">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-paper" aria-hidden="true"><BroadcastIcon size={18} /></span>
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="kd-hs kd-ell">FeestFinder Radar</span>
+                          {radarHosts ? <span className="kd-s kd-ell">{fill(T.radarFound, { s: radarHosts })}</span> : null}
+                        </span>
+                      </div>
+                    ) : org ? (
                       <div className="kd-lrow min-h-15">
                         <Link href={inLang('/o/' + org.slug, lang)} className="flex min-w-0 flex-1 items-center gap-3">
                           <Avatar name={org.name} src={org.logoUrl} size={36} org />

@@ -187,21 +187,25 @@ describe('notification links', () => {
 });
 
 describe('map style', () => {
-  it('is the bare board without tiles, and layers the city detail over the overview', async () => {
+  it('is the bare board without tiles, and hands the world over to the cities at zoom 7', async () => {
     const { mapStyle } = await import('../src/routes/catalog.ts');
     const bare = mapStyle({ tilesUrl: null, overviewUrl: null, glyphsUrl: null });
     assert.deepEqual([Object.keys(bare.sources), bare.layers.length], [[], 1]);
-    const both: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: null });
+    const both: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: 'https://cdn.example/world.pmtiles', glyphsUrl: null });
     assert.deepEqual(Object.keys(both.sources), ['overview', 'detail']);
     assert.equal(both.sources.detail.url, 'pmtiles://https://cdn.example/cities.pmtiles');
     const overview = both.layers.filter((l: any) => l.source === 'overview');
     const detail = both.layers.filter((l: any) => l.source === 'detail');
-    assert.ok(overview.every((l: any) => l.maxzoom === 8), 'the overview hands over to the detail at zoom 8');
-    assert.ok(detail.every((l: any) => l.maxzoom === undefined));
+    const fills = (l: any) => /-(earth|water)$/.test(l.id);
+    assert.ok(overview.filter((l: any) => !fills(l)).every((l: any) => l.maxzoom === 7), 'the world draws below zoom 7');
+    assert.ok(overview.filter(fills).every((l: any) => l.maxzoom === 10), 'its land and sea carry on past the cities');
+    assert.ok(detail.every((l: any) => l.minzoom >= 7 && l.maxzoom === undefined), 'the cities draw from zoom 7, so no tile is drawn twice');
     assert.ok(both.layers.findIndex((l: any) => l.source === 'detail') > both.layers.findIndex((l: any) => l.source === 'overview'), 'detail draws on top');
     assert.equal(both.glyphs, undefined);
-    const one: any = mapStyle({ tilesUrl: null, overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: null });
-    assert.ok(one.layers.filter((l: any) => l.source === 'overview').every((l: any) => l.maxzoom === undefined), 'alone, the overview serves every zoom');
+    const one: any = mapStyle({ tilesUrl: null, overviewUrl: 'https://cdn.example/world.pmtiles', glyphsUrl: null });
+    assert.ok(one.layers.filter((l: any) => l.source === 'overview').every((l: any) => l.maxzoom === undefined), 'alone, the world serves every zoom');
+    const city: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: null, glyphsUrl: null });
+    assert.ok(city.layers.some((l: any) => l.source === 'detail' && !l.minzoom), 'alone, the cities serve every zoom');
   });
 
   it('comes in the Kính đêm colours for the rebuilt screens', async () => {
@@ -211,5 +215,18 @@ describe('map style', () => {
     assert.ok(!JSON.stringify(kd).includes('255,252,225'), 'no chalk in the Kính đêm style');
     const chalk: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', glyphsUrl: null });
     assert.equal(chalk.layers[0].paint['background-color'], '#0E100F');
+  });
+
+  it('names streets, wards and cities with the site\'s own glyphs', async () => {
+    const { mapStyle } = await import('../src/routes/catalog.ts');
+    const { loadConfig } = await import('../src/config.ts');
+    const glyphs = loadConfig({}).map.glyphsUrl!;
+    assert.match(glyphs, /\/ui\/map\/glyphs\/\{fontstack\}\/\{range\}\.pbf$/);
+    const kd: any = mapStyle({ tilesUrl: 'https://cdn.example/cities.pmtiles', overviewUrl: 'https://cdn.example/overview.pmtiles', glyphsUrl: glyphs }, 'kd');
+    assert.equal(kd.glyphs, glyphs);
+    const labels = kd.layers.filter((l: any) => l.type === 'symbol');
+    assert.deepEqual(labels.map((l: any) => [l.id, l.source]), [['roads-names', 'detail'], ['places-wards', 'detail'], ['places-countries', 'overview'], ['places', 'detail']]);
+    assert.ok(labels.every((l: any) => l.layout['text-font'][0] === 'Noto Sans Regular'));
+    assert.equal(mapStyle({ tilesUrl: null, overviewUrl: null, glyphsUrl: glyphs }).glyphs, undefined, 'a bare board asks for no glyphs');
   });
 });
