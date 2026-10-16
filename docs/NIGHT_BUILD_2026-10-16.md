@@ -13,6 +13,7 @@ Plan: `docs/NIGHT_BUILD_PLAN_2026-10-16.md` · Xuất phát: main `cebeb3d` · N
 | N6 Cache CDN cho API đọc công khai | night/2026-10-16-N6 | API 374 (373 qua, 1 bỏ qua) · screens 215/215 | **Sáng mai kiểm trên production:** `curl -sI https://feestfinder.com/events?limit=5` lần 2 có `x-vercel-cache: HIT`; với cookie `ff_session` thì `private, no-store`. Nếu Vercel không cache phản hồi của proxy, lợi ích nằm ở chặng web → API (CDN của project API). |
 | N7 Thư mục nghệ sĩ: loại hồ sơ, follow theo hồ sơ (migration 041) | night/2026-10-16-N7 | API 377 (376 qua, 1 bỏ qua) | Màn hình làm ở N8. `owned` = nghệ sĩ tự chạy hồ sơ **hoặc đội đã xác minh** (`verified`); ghi ra để chủ SP xác nhận. Demo thêm 2 nghệ sĩ có chủ: Trần Duy, SlimV (chỉ test/preview). Next migration giờ là `042`. |
 | N8 Thư mục nghệ sĩ, phần web | night/2026-10-16-N8 | **screens 215/215** · directory + artist 15/15 | Làm trước N7b để giao diện xanh lại ngay sau N7. Chưa làm: bộ lọc Có chủ · Chưa nhận · Radar trong `/console/artists` (để ban ngày). Các màn "Đang theo dõi" trong app vẫn đọc `artistPages` (API vẫn trả). |
+| N7b Bắt tay lineup ↔ hồ sơ, phần API | night/2026-10-16-N7b | API 383 (382 qua, 1 bỏ qua) · lineup.test 6/6 · artist/directory/studio specs 33/33 | Hồ sơ có chủ chỉ hiện show đã xác nhận. Ba màn hình (ô lineup của NTC, Lịch nghệ sĩ có Xác nhận/Không phải tôi, dấu xác nhận trên trang sự kiện) để ban ngày. |
 
 ## Dùng mặc định
 - D4: bản tạm (tin vẫn `live`, cờ chờ duyệt), theo plan.
