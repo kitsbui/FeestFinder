@@ -1,7 +1,8 @@
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
-import { legacyListPath } from '../src/routes/frontend.ts';
+import { fileURLToPath } from 'node:url';
+import { legacyListPath, stampUrls, versionOf } from '../src/routes/frontend.ts';
 
 describe('event pages for search engines and AI assistants', () => {
   let env: TestEnv;
@@ -182,12 +183,13 @@ describe('the API behind a CDN', () => {
   const get = (url: string, headers?: Record<string, string>) => env.app.inject({ method: 'GET', url, headers });
 
   it('names the /ui files with the deployment version and keeps those for good', async () => {
-    const css = await get('/ui/fonts/be-vietnam-pro.css');
-    const v = css.body.match(/\.woff2\?v=([\w-]+)/)?.[1];
-    assert.ok(v, 'a stylesheet loads its fonts with the version');
-    assert.equal(css.headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
-    assert.equal((await get(`/ui/fonts/be-vietnam-pro.css?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
-    assert.equal((await get('/ui/fonts/be-vietnam-pro.css?v=old')).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
+    assert.equal(stampUrls(`@font-face{src:url("./a.woff2")} .x{background:url('/ui/assets/b.png')}`, 'v1'),
+      `@font-face{src:url("./a.woff2?v=v1")} .x{background:url('/ui/assets/b.png?v=v1')}`, 'a stylesheet names its files with the version');
+    const v = await versionOf(fileURLToPath(new URL('../../festfinder-frontend', import.meta.url)));
+    const css = '/ui/vendor/maplibre/maplibre-gl.css';
+    assert.equal((await get(css)).headers['cache-control'], 'public, max-age=3600, s-maxage=86400', 'an unversioned URL is not kept for good');
+    assert.equal((await get(`${css}?v=${v}`)).headers['cache-control'], 'public, max-age=31536000, immutable');
+    assert.equal((await get(`${css}?v=old`)).headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
     assert.equal((await get('/pages/ops/shell.html')).statusCode, 404, 'the old back office is gone');
   });
 

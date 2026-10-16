@@ -17,6 +17,7 @@ import { Button, Chip } from '../ui/actions';
 import { Input, Switch } from '../ui/forms';
 import { Card as Panel } from '../ui/parts';
 import { AppBar } from '../ui/shell';
+import { BackLink } from '../ui/back-link';
 import { APP } from './copy';
 import { ago } from '../web/event/community';
 import { SignInCard } from './row';
@@ -25,7 +26,7 @@ function Head({ lang, title, back = '/app/profile', aside }: { lang: Lang; title
   const T = pick(APP, lang);
   return (
     <AppBar className="pr-1.5">
-      <a className="kd-ib -ml-2" href={back} aria-label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></a>
+      <BackLink className="kd-ib -ml-2" href={back} label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></BackLink>
       <h1 className="kd-h ml-1">{title}</h1>
       {aside ? <span className="ml-auto">{aside}</span> : null}
     </AppBar>

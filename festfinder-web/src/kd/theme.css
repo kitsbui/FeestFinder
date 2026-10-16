@@ -36,8 +36,10 @@
   --color-cult: #d6589e;
 
   /* ---- type ---- */
-  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* One family, Noto Sans, for every word and number (numbers line up with tabular-nums, the kd-num class).
+     Thai and Japanese titles fall to Noto Sans Thai and Noto Sans JP, fetched only for those characters. */
+  --font-*: initial;
+  --font-sans: "Noto Sans Variable", "Noto Sans Thai Variable", "Noto Sans JP Variable", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
 
   --text-d0: clamp(44px, 6.6vw, 92px);
   --text-d0--line-height: 0.96;
@@ -69,9 +71,9 @@
   --text-t--line-height: 1.55;
   --text-s: 13px;
   --text-s--line-height: 1.4;
-  --text-m: 11px;              /* use with font-mono uppercase tracking-[.03em] text-fog, or the kd-m class */
+  --text-m: 11px;              /* use with uppercase tracking-[.06em] text-fog, or the kd-m class */
   --text-m--line-height: 1.2;
-  --text-mb: 13px;             /* use with font-mono font-medium text-paper tabular-nums, or kd-mb */
+  --text-mb: 13px;             /* use with font-medium text-paper tabular-nums, or kd-mb */
   --text-mb--line-height: 1.4;
 
   /* ---- shape ---- */
@@ -123,6 +125,7 @@
   ::selection { background: var(--color-acc); color: var(--color-acc-ink); }
   :focus-visible { outline: 2px solid var(--color-acc); outline-offset: 2px; }
   input::placeholder, textarea::placeholder { color: var(--color-fog); }
+  code, kbd, samp, pre { font-family: inherit; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -130,8 +133,8 @@
 
 @layer components {
   /* ---- type shorthands the design uses everywhere ---- */
-  .kd-m { font-family: var(--font-mono); font-size: 11px; line-height: 1.2; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-fog); font-weight: 400; }
-  .kd-mb { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  .kd-m { font-size: 11px; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fog); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .kd-mb { font-size: 13px; letter-spacing: 0; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
 
   /* ---- glass: only over colour or a moving page ---- */
   .kd-glass {
@@ -191,7 +194,7 @@
   .kd-emb.kd-g-live .kd-mk { width: 23px; height: 23px; border-radius: 2px; }
   .kd-emb.kd-g-edm .kd-mk { width: 28px; height: 25px; }
   .kd-emb.kd-g-cult .kd-mk { width: 30px; height: 15px; border-radius: 30px 30px 0 0; }
-  .kd-emb .kd-n { font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: -0.02em; color: var(--color-paper); }
+  .kd-emb .kd-n { font-size: 14px; font-weight: 500; letter-spacing: -0.02em; color: var(--color-paper); font-variant-numeric: tabular-nums; }
   .kd-emb.kd-off { box-shadow: inset 0 0 0 2px var(--color-line2); }
   .kd-emb.kd-off .kd-mk { background: var(--color-line2); }
   .kd-emb.kd-off .kd-n { color: var(--color-fog); }
@@ -204,7 +207,7 @@
   .kd-emb.kd-sm .kd-n { font-size: 11px; }
 
   /* status: a dot plus a word, never colour alone */
-  .kd-st { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-mist); }
+  .kd-st { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-mist); }
   .kd-st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--color-fog); flex-shrink: 0; }
   .kd-st.kd-ok::before { background: var(--color-ok); }
   .kd-st.kd-warn::before { background: var(--color-warn); }

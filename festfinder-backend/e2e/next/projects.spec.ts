@@ -68,10 +68,17 @@ test('a project from idea to an accepted sponsor, and its page for search engine
   await brand.close();
 });
 
-test('the nav leads to projects, which split by what they look for', async ({ page }) => {
+test('"Đăng sự kiện" posts an event or a project, and leads to the projects, which split by what they look for', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Dự án' }).click();
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  // Projects are no longer a tab of their own: they are one of the two things to post.
+  await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Dự án' })).toHaveCount(0);
+  await page.getByRole('banner').getByRole('button', { name: 'Đăng sự kiện' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Đăng sự kiện' });
+  await expect(sheet.getByRole('link', { name: /^Sự kiện/ })).toHaveAttribute('href', '/studio/new');
+  await expect(sheet.getByRole('link', { name: /^Dự án/ })).toHaveAttribute('href', '/p/new');
+  await sheet.getByRole('link', { name: 'Xem dự án đang kêu gọi' }).click();
   await expect(page).toHaveURL(/\/p$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Dự án đang kêu gọi' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Đang tìm' }).getByRole('tab', { name: /^Nghệ sĩ/ })).toBeVisible();

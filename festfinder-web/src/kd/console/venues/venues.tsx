@@ -149,7 +149,7 @@ function Registry({ lang, items, params, setQuery, onOpen }: {
                 </span>
                 <span role="cell" className="kd-num text-sm"><strong className="text-paper">{v.upcoming}</strong> · {v.events}</span>
                 <span role="cell">
-                  <a className="kd-s inline-flex items-center gap-1 font-mono hover:text-paper" href={`https://www.google.com/maps?q=${v.lat},${v.lng}`} target="_blank" rel="noopener noreferrer" aria-label={fill(T.openPinOf, { n: v.name })}>
+                  <a className="kd-s inline-flex items-center gap-1 kd-num hover:text-paper" href={`https://www.google.com/maps?q=${v.lat},${v.lng}`} target="_blank" rel="noopener noreferrer" aria-label={fill(T.openPinOf, { n: v.name })}>
                     {Number(v.lat).toFixed(4)}, {Number(v.lng).toFixed(4)}<ArrowSquareOutIcon size={12} aria-hidden="true" />
                   </a>
                 </span>

@@ -105,7 +105,7 @@ const POLICY: Record<Policy, string> = {
 };
 
 /** A short hash of every file under ui/, so a deployment's URLs change with its content. */
-async function versionOf(dir: string): Promise<string> {
+export async function versionOf(dir: string): Promise<string> {
   const hash = createHash('sha256');
   const walk = async (d: string) => {
     for (const e of (await readdir(d, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {

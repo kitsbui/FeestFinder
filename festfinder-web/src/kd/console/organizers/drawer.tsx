@@ -145,10 +145,10 @@ function Verification({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChan
         </div>
         <KV rows={[
           [T.legalName, o.legalName || '—'],
-          [T.taxCode, o.taxCode ? <span className="font-mono">{o.taxCode}</span> : '—'],
+          [T.taxCode, o.taxCode ? <span className="kd-num">{o.taxCode}</span> : '—'],
           [T.payout, o.bank ? (
             <span>
-              {o.bank.bankName ?? '—'} · <span className="font-mono">{o.bank.accountNo}</span>
+              {o.bank.bankName ?? '—'} · <span className="kd-num">{o.bank.accountNo}</span>
               {o.bank.accountName ? ` · ${o.bank.accountName}` : <span className="text-warn"> · {T.holderMissing}</span>}
             </span>
           ) : '—'],

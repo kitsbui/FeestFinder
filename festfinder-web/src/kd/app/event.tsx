@@ -17,6 +17,7 @@ import { buttonClass, IconButton } from '../ui/actions';
 import { Clamp } from '../ui/clamp';
 import { Accordion, Art, Avatar, Status } from '../ui/parts';
 import { Dock } from '../ui/shell';
+import { BackLink } from '../ui/back-link';
 import type { EventDetail } from '../types';
 import { CopyAddress, Countdown, ShareSheet } from '../web/event/actions';
 import { Ambassadors, DiscussionSection, Hype, PhotoWall } from '../web/event/community';
@@ -61,17 +62,13 @@ function EventBody({ lang }: { lang: Lang }) {
   const mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.venue.lat != null && ev.venue.lng != null ? `${ev.venue.lat},${ev.venue.lng}` : [ev.venue.name, address].filter(Boolean).join(', '));
   const d = at ? distanceKm(at, ev.venue) : null;
   const org = ev.organizer;
-  const back = (e: React.MouseEvent) => {
-    // Back where they came from inside the app; a link from outside lands on Explore.
-    if (document.referrer.startsWith(location.origin + '/app') && history.length > 1) { e.preventDefault(); history.back(); }
-  };
 
   return (
     <div className={cx('flex flex-col', g(fam), canBuy && 'pb-[calc(96px+env(safe-area-inset-bottom))]')}>
       <div className="relative">
         <Art family={fam} cover={ev.coverUrl} alt={ev.title} off={ev.past} className="h-[300px] rounded-none" />
         <div className="absolute inset-x-3 top-2.5 z-[3] flex gap-2">
-          <a className="kd-ib kd-glass text-paper" href="/app" aria-label={T.back} onClick={back}><ArrowLeftIcon size={20} aria-hidden="true" /></a>
+          <BackLink className="kd-ib kd-glass text-paper" href="/app" label={T.back}><ArrowLeftIcon size={20} aria-hidden="true" /></BackLink>
           <IconButton glass label={T.share} className="ml-auto text-paper" onClick={() => setSharing(true)}><ShareNetworkIcon size={20} aria-hidden="true" /></IconButton>
           <IconButton glass label={T.saveEvent} pressed={saved} className={saved ? 'text-acc' : 'text-paper'} onClick={toggleSave}>
             <HeartIcon size={20} weight={saved ? 'fill' : 'regular'} aria-hidden="true" />

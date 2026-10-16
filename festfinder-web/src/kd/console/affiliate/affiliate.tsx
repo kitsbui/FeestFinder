@@ -125,7 +125,7 @@ function Links({ lang }: { lang: Lang }) {
                 </button>
               </Cell>
               <Cell>
-                <Button size="sm" aria-label={fill(T.copyCode, { c: l.code })} onClick={() => copyText(kd, lang, l.url)}><CopyIcon size={14} aria-hidden="true" /><span className="font-mono">{l.code}</span></Button>
+                <Button size="sm" aria-label={fill(T.copyCode, { c: l.code })} onClick={() => copyText(kd, lang, l.url)}><CopyIcon size={14} aria-hidden="true" /><span className="kd-num">{l.code}</span></Button>
               </Cell>
               <Cell className="kd-s">{kind[l.kind] ?? l.kind}</Cell>
               <Cell className="kd-s kd-ell">{l.artist?.name ?? l.organizer?.name ?? l.partner?.name ?? '—'}</Cell>
@@ -168,7 +168,7 @@ function LinkForm({ lang, link, kinds, onClose, onSaved }: { lang: Lang; link?: 
           <Input id="al-dest" type="url" value={f.destinationUrl} invalid={f.destinationUrl.length > 8 && !destOk} onChange={(e) => upd({ destinationUrl: e.target.value })} />
         </Field>
         <Field label={<>{T.fCode} <span className="kd-s">({T.optional})</span></>} htmlFor="al-code" hint="a-z 0-9 -" error={codeOk ? null : T.fCodeBad}>
-          <Input id="al-code" className="font-mono" value={f.code} invalid={!codeOk} placeholder="tet-2027" onChange={(e) => upd({ code: e.target.value.toLowerCase() })} />
+          <Input id="al-code" className="kd-num" value={f.code} invalid={!codeOk} placeholder="tet-2027" onChange={(e) => upd({ code: e.target.value.toLowerCase() })} />
         </Field>
         <Field label={T.fKind} htmlFor="al-kind">
           <Select id="al-kind" value={f.kind} onChange={(e) => upd({ kind: e.target.value as Kind })}>

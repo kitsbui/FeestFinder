@@ -6,7 +6,7 @@
  */
 import { KdLink as Link, inLang } from '../link';
 import { useEffect, useState, type FormEvent } from 'react';
-import { CaretDownIcon, ListIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
+import { CalendarPlusIcon, CaretDownIcon, CaretRightIcon, LightbulbIcon, ListIcon, MagnifyingGlassIcon, ShieldCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
 import { g, styleChips, styleLabel } from '../genre';
@@ -16,7 +16,8 @@ import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
 import { Avatar } from '../ui/parts';
 import { Sheet } from '../ui/sheet';
 import { Input } from '../ui/forms';
-import { CRAFT, WORKSPACE, otherCraft } from '../craft';
+import { POST_HREF } from '../ui/post-kind';
+import { CRAFT, WORKSPACE, isTeam, otherCraft } from '../craft';
 import { WEB } from './copy';
 
 /** Which nav link is the current page: 'list' is Sự kiện, in each of its views (table, grid, map). */
@@ -34,6 +35,7 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
   const [counts, setCounts] = useState<Record<string, number> | null>(styleCounts ?? null);
   const [me, setMe] = useState<{ tickets: number; saved: number; handle: string } | null>(null);
   const [search, setSearch] = useState(false);
+  const [post, setPost] = useState(false);
   const [menu, setMenu] = useState(false);
 
   const loadCounts = () => {
@@ -63,7 +65,6 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
           <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'explore' ? 'page' : undefined}>{T.explore}</Link>
           <Link className="kd-nl" href={inLang('/list', lang)} aria-current={current === 'list' ? 'page' : undefined}>{T.events}</Link>
           <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined}>{T.artists}</Link>
-          <Link className="kd-nl" href={inLang('/p', lang)} aria-current={current === 'projects' ? 'page' : undefined}>{T.projects}</Link>
           <Menu
             label={T.genres}
             trigger={(p) => (
@@ -84,7 +85,11 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
           <IconButton label={T.search} onClick={() => setSearch(true)}>
             <MagnifyingGlassIcon size={20} aria-hidden="true" />
           </IconButton>
-          <a className={buttonClass({ tone: 'light', size: 'sm', pill: true }, 'hidden desk:inline-flex')} href="/studio">{T.listEvent}</a>
+          {/* The team's way into the Console. */}
+          {isTeam(user) ? (
+            <a className={buttonClass({ size: 'sm', pill: true }, 'hidden desk:inline-flex')} href="/console"><ShieldCheckIcon size={16} aria-hidden="true" />{K.console}</a>
+          ) : null}
+          <button type="button" className={buttonClass({ tone: 'light', size: 'sm', pill: true }, 'hidden desk:inline-flex')} aria-haspopup="dialog" onClick={() => setPost(true)}>{T.listEvent}</button>
           {user ? (
             <Menu
               label={T.account}
@@ -101,6 +106,13 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
                   {me?.handle ? <span className="kd-m kd-ell normal-case">{me.handle}</span> : null}
                 </span>
               </MenuHeader>
+              {isTeam(user) ? (
+                <>
+                  <MenuHeader><span className="kd-m">{K.team}</span></MenuHeader>
+                  <MenuItem href="/console" external icon={<ShieldCheckIcon size={16} aria-hidden="true" />}>{K.console}</MenuItem>
+                  <MenuSeparator />
+                </>
+              ) : null}
               {/* Attending here; the one craft (if any) has its workspace; the other is a switch. */}
               <MenuHeader><span className="kd-m">{K.roles}</span></MenuHeader>
               <MenuItem checked onSelect={() => {}}>{K.attendee}</MenuItem>
@@ -129,10 +141,11 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
         </div>
       </div>
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
+      {post ? <PostSheet lang={lang} onClose={() => setPost(false)} /> : null}
       {menu ? (
         <Sheet title={T.menu} closeLabel={T.close} onClose={() => setMenu(false)}>
           <nav aria-label={T.mainNav} className="flex flex-col gap-0.5 pt-1">
-            {([['explore', '/', T.explore], ['list', '/list', T.events], ['artists', '/a', T.artists], ['projects', '/p', T.projects]] as const).map(([k, href, label]) => (
+            {([['explore', '/', T.explore], ['list', '/list', T.events], ['artists', '/a', T.artists]] as const).map(([k, href, label]) => (
               <Link
                 key={k}
                 href={inLang(href, lang)}
@@ -153,10 +166,35 @@ export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; cu
               </a>
             ))}
           </div>
-          <a href="/studio" className={buttonClass({ tone: 'light', block: true }, 'mt-6')}>{T.listEvent}</a>
+          <button type="button" className={buttonClass({ tone: 'light', block: true }, 'mt-6')} aria-haspopup="dialog" onClick={() => { setMenu(false); setPost(true); }}>{T.listEvent}</button>
+          {isTeam(user) ? <a href="/console" className={buttonClass({ block: true }, 'mt-2')}><ShieldCheckIcon size={16} aria-hidden="true" />{K.console}</a> : null}
         </Sheet>
       ) : null}
     </header>
+  );
+}
+
+/** "Đăng sự kiện": an event (a date and a venue) or a project (an idea looking for backers). */
+function PostSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const T = pick(WEB, lang);
+  const rows = [
+    { kind: 'event' as const, icon: CalendarPlusIcon, title: T.postEvent, sub: T.postEventSub },
+    { kind: 'project' as const, icon: LightbulbIcon, title: T.postProject, sub: T.postProjectSub },
+  ];
+  return (
+    <Sheet title={T.listEvent} closeLabel={T.close} onClose={onClose}>
+      <div className="flex flex-col gap-2 pt-1">
+        {rows.map(({ kind, icon: Icon, title, sub }) => (
+          <a key={kind} href={POST_HREF[kind] + (lang === 'en' && kind === 'project' ? '?lang=en' : '')}
+            className="kd-lrow min-h-16 rounded-card border-b-0 px-3.5 shadow-[inset_0_0_0_1px_var(--color-line2)] hover:bg-white/[0.04]">
+            <Icon size={22} className="text-paper" aria-hidden="true" />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="kd-h">{title}</span><span className="kd-s">{sub}</span></span>
+            <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+          </a>
+        ))}
+        <Link href={inLang('/p', lang)} className="kd-nl mt-2 self-start" onClick={onClose}>{T.browseProjects}</Link>
+      </div>
+    </Sheet>
   );
 }
 

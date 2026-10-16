@@ -32,7 +32,7 @@ Open http://localhost:3000. Paths the app does not own (`/auth/*`, `/me/*`, `/ev
 | --- | --- |
 | `npm run dev` | Copy `public/ui/`, then `next dev` on :3000 |
 | `npm run build` / `npm start` | Production build and server |
-| `npm run copy-ui` | Copy `public/ui/` from `../festfinder-frontend/ui`: the map and MapLibre, brand images and the text fonts |
+| `npm run copy-ui` | Copy `public/ui/` from `../festfinder-frontend/ui`: the map and MapLibre and the brand images |
 | `npm run typecheck` | Generate Next's route types, `tsc --noEmit` |
 
 The Playwright tests live with the API: `npm run test:screens --prefix festfinder-backend` builds this app, starts it with a fresh API behind it, and runs `e2e/next/*.spec.ts`. Set `FF_KIT=1` to serve `/kit`, the page of every part.
@@ -118,7 +118,7 @@ The tokens are in [`src/kd/theme.css`](src/kd/theme.css). `/kit` shows every par
 - **Surface.** A near-black `void` (`#08090a`) with glass panels (`carbon`, `obsidian`, `slate`) and hairlines (`line`, `line2`). Type is `paper` and `mist`, quiet text `fog`.
 - **One lime action.** The accent `acc` (`#e4f222`, ink `#08090a`) is for the one thing a screen is for; everything else is a quiet button.
 - **Colour is genre.** Lễ hội `fest` `#ee6018`, Nhạc sống `live` `#0aa5b8`, EDM `edm` `#8b5cf6`, Văn hoá `cult` `#d6589e`. `familyOf(genre)` and `g(family)` (`src/kd/genre.ts`) set them on a card or a chart.
-- **Type.** Be Vietnam Pro for words and JetBrains Mono for numbers, dates and labels, 400 and 500, served from this site (latin, latin-ext, vietnamese).
+- **Type.** One family, Noto Sans (variable weight), for words, numbers, dates and labels, served from this site from `@fontsource-variable/noto-sans`; the browser fetches only the scripts a page uses. Noto Sans Thai and Noto Sans JP cover Thai and Japanese titles. No monospace face: numbers use tabular figures (`kd-num`, `kd-mb`).
 - **Motion and access.** Animations stop under `prefers-reduced-motion`; menus close on Escape and outside clicks; toggles carry `aria-pressed` or `aria-expanded`.
 
 ## Brand

@@ -23,6 +23,8 @@ import { useKd } from '../runtime';
 import { Button, buttonClass, Chip, IconButton } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Art, Card as Panel, Status } from '../ui/parts';
+import { PostKindSwitch } from '../ui/post-kind';
+import { BackLink } from '../ui/back-link';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
 
@@ -292,11 +294,14 @@ export function Wizard() {
           <span className={cx('kd-m max-sm:hidden', save.state === 'error' && 'text-hot normal-case')} role="status" aria-live="polite">
             {save.state === 'saving' ? T.wSaving : save.state === 'saved' ? fill(T.wSaved, { t: save.at ?? '' }) : save.state === 'error' ? fill(T.wNotSaved, { m: save.error ?? '' }) : editable ? T.wDraft : draft?.statusLabel[lang]}
           </span>
-          <KdLink href="/studio" className="kd-ib kd-ib-line ml-auto" aria-label={T.wClose}><XIcon size={18} aria-hidden="true" /></KdLink>
+          {/* Closing returns where the person came from (the site's "Đăng sự kiện", the dashboard), else the dashboard. */}
+          <BackLink href="/studio" className="kd-ib kd-ib-line ml-auto" label={T.wClose}><XIcon size={18} aria-hidden="true" /></BackLink>
         </div>
       </header>
 
       <div className="kd-wrap pb-12 pt-7">
+        {/* "Đăng sự kiện" posts an event or a project; a new listing can still become a project. */}
+        {!draft ? <PostKindSwitch lang={lang} current="event" className="mb-6" /> : null}
         <div className="kd-split gap-[clamp(24px,4vw,56px)]">
           <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">

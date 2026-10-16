@@ -1,23 +1,16 @@
 /**
  * The root layout of every page (the Kính đêm design).
  *
- * Fonts are self-hosted (the CSP allows no font CDN): Be Vietnam Pro and JetBrains Mono,
- * 400 and 500, in the latin, latin-ext and vietnamese subsets the browser picks by range.
+ * Fonts are self-hosted (the CSP allows no font CDN) and come from one family, Noto Sans:
+ * variable weight, split by script so the browser fetches only the ranges a page uses
+ * (latin, latin-ext and vietnamese for most pages). Noto Sans Thai and Noto Sans JP cover
+ * titles from Bangkok and Tokyo, fetched only when such characters appear.
  */
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import '@fontsource/be-vietnam-pro/latin-400.css';
-import '@fontsource/be-vietnam-pro/latin-500.css';
-import '@fontsource/be-vietnam-pro/latin-ext-400.css';
-import '@fontsource/be-vietnam-pro/latin-ext-500.css';
-import '@fontsource/be-vietnam-pro/vietnamese-400.css';
-import '@fontsource/be-vietnam-pro/vietnamese-500.css';
-import '@fontsource/jetbrains-mono/latin-400.css';
-import '@fontsource/jetbrains-mono/latin-500.css';
-import '@fontsource/jetbrains-mono/latin-ext-400.css';
-import '@fontsource/jetbrains-mono/latin-ext-500.css';
-import '@fontsource/jetbrains-mono/vietnamese-400.css';
-import '@fontsource/jetbrains-mono/vietnamese-500.css';
+import '@fontsource-variable/noto-sans/wght.css';
+import '@fontsource-variable/noto-sans-thai/wght.css';
+import '@fontsource-variable/noto-sans-jp/wght.css';
 import '@/kd/kd.css';
 import { siteMetadata } from '@/lib/site';
 import { ExtensionGuardRelease, ExtensionGuardScript } from '@/components/extension-guard';

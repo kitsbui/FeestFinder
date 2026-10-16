@@ -169,7 +169,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
         <div className={cx('flex justify-center pt-4', used && 'opacity-30')}>
           <QrCode value={t.qr} size={184} label={fill(T.qrLabel, { c: t.code })} />
         </div>
-        <div className="kd-num pt-2.5 text-center font-mono text-[15px] font-medium tracking-[0.12em] text-[#101010]">{t.code}</div>
+        <div className="kd-num pt-2.5 text-center text-[15px] font-medium tracking-[0.12em] text-[#101010]">{t.code}</div>
         <div className="flex items-center justify-between py-1.5 pl-4.5 pr-2">
           <span className="kd-s">
             {used ? T.checkedIn : t.listing ? fill(T.listed, { p: money(t.listing.price, 'VND', lang) }) : o.received ? T.received : offline ? T.offlineNow : T.offlineReady}

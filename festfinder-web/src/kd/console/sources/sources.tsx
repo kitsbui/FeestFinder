@@ -383,7 +383,7 @@ function RawSheet({ lang, id, onClose }: { lang: Lang; id: string; onClose: () =
         {(d) => (
           <div className="flex flex-col gap-2">
             <p className="kd-s break-all">{[d.externalId, d.error].filter(Boolean).join(' · ')}</p>
-            <pre className="font-mono max-h-[60dvh] overflow-auto rounded-lg bg-black/30 p-3 text-xs leading-relaxed text-mist" aria-label={T.raw} tabIndex={0}>{JSON.stringify(d.payload, null, 2)}</pre>
+            <pre className="kd-num max-h-[60dvh] overflow-auto rounded-lg bg-black/30 p-3 text-xs leading-relaxed text-mist" aria-label={T.raw} tabIndex={0}>{JSON.stringify(d.payload, null, 2)}</pre>
           </div>
         )}
       </Loaded>

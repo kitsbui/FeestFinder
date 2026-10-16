@@ -16,6 +16,7 @@ import { Input, Option, Segmented } from '../ui/forms';
 import { Accordion, Avatar, Card as Panel, Status } from '../ui/parts';
 import { QrCode } from '../ui/qr';
 import { AppBar } from '../ui/shell';
+import { BackLink } from '../ui/back-link';
 import type { Card, EventDetail } from '../types';
 import { APP } from './copy';
 import { EventRow, SignInCard } from './row';
@@ -24,7 +25,7 @@ function Head({ lang, title, back, sub }: { lang: Lang; title: string; back: str
   const T = pick(APP, lang);
   return (
     <AppBar className="pr-1.5">
-      <a className="kd-ib -ml-2" href={back} aria-label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></a>
+      <BackLink className="kd-ib -ml-2" href={back} label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></BackLink>
       <span className="ml-1 flex min-w-0 flex-col"><h1 className="kd-hs kd-ell">{title}</h1>{sub ? <span className="kd-m">{sub}</span> : null}</span>
     </AppBar>
   );

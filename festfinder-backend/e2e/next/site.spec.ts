@@ -188,13 +188,17 @@ test.describe('full width on desktop', () => {
     });
   }
 
-  test('the app fills the screen beside its tabs, which become a rail', async ({ page }) => {
+  test('the app fills the screen beside its tabs, which become a rail under the site’s nav', async ({ page }) => {
     await page.addInitScript(() => { try { localStorage.setItem('ff_city', 'ho-chi-minh'); } catch { /* storage blocked */ } });
     await page.goto('/app');
+    // On a computer the site's own nav stays on top, so leaving the web for the app never loses the way around.
+    const site = page.getByRole('navigation', { name: 'Chính' });
+    await expect(site.getByRole('link', { name: 'Sự kiện' })).toBeVisible();
+    expect((await page.getByRole('banner').first().boundingBox())!.height).toBe(65);
     const tabs = page.getByRole('navigation', { name: 'Điều hướng chính' });
     await expect(tabs.getByRole('link', { name: 'Khám phá' })).toHaveAttribute('aria-current', 'page');
     const rail = (await tabs.boundingBox())!;
-    expect([rail.x, rail.y, rail.width, rail.height]).toEqual([0, 0, 240, 1080]);
+    expect([rail.x, rail.y, rail.width, rail.height]).toEqual([0, 65, 240, 1015]);
     const app = (await page.locator('.kd-app').boundingBox())!;
     expect(app.x).toBe(240);
     expect(app.width).toBe(await page.evaluate(() => document.documentElement.clientWidth) - 240);

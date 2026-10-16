@@ -83,3 +83,20 @@ test('an organiser’s photo: added on its page, reported by a fan, removed by a
   await reported.getByRole('button', { name: 'Gỡ ảnh' }).first().click();
   await expect.poll(async () => (await (await page.request.get('/organizers/ravoent')).json()).moments.length).toBe(0);
 });
+
+test('the team finds the Console from the site; a fan does not', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await signInWith(page, ADMIN);
+  await open(page, '/');
+  const nav = page.getByRole('banner');
+  await expect(nav.getByRole('link', { name: 'Console' })).toHaveAttribute('href', '/console');
+  await page.getByRole('button', { name: 'Tài khoản' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Console' })).toHaveAttribute('href', '/console');
+  await page.keyboard.press('Escape');
+
+  await signInWith(page, ATTENDEE);
+  await open(page, '/');
+  await expect(page.getByRole('link', { name: 'Console' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tài khoản' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Console' })).toHaveCount(0);
+});

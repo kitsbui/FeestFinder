@@ -206,7 +206,7 @@ const wrapLines = (x: CanvasRenderingContext2D, text: unknown, width: number, ma
   if (out.length > max) { out.length = max; out[max - 1] = out[max - 1].replace(/\s*\S*$/, '') + '…'; }
   return out;
 };
-const storyFont = (w: number, px: number) => w + ' ' + px + 'px "Be Vietnam Pro", system-ui, sans-serif';
+const storyFont = (w: number, px: number) => w + ' ' + px + 'px "Noto Sans Variable", "Noto Sans Thai Variable", "Noto Sans JP Variable", "Noto Sans", system-ui, sans-serif';
 const storyFonts = async () => {
   try { await Promise.all([document.fonts.load(storyFont(600, 96)), document.fonts.load(storyFont(500, 44))]); } catch { /* the system font will do */ }
 };

@@ -13,6 +13,7 @@ import { cx } from '../cx';
 import { dayMonth, weekdayShort } from '../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../genre';
 import { inLang } from '../link';
+import { isTeam } from '../craft';
 import { useKd } from '../runtime';
 import { Button, Chip } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select } from '../ui/forms';
@@ -218,6 +219,10 @@ function Settings({ lang }: { lang: Lang }) {
     <div id="settings" className="scroll-mt-4 px-4 pb-6 pt-6">
       <Accordion summary={T.settings} open className="border-t border-line">
         <div className="flex flex-col">
+          {/* The team's way into the Console. */}
+          {isTeam(kd.user) ? (
+            <a className="kd-lrow" href="/console"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.console}</span><span className="kd-s">{T.consoleSub}</span></span><CaretRightIcon size={16} className="text-fog" aria-hidden="true" /></a>
+          ) : null}
           {kd.user ? (
             <>
               <a className="kd-lrow" href="/app/alerts"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.alerts}</span><span className="kd-s">{T.alertsSub}</span></span><CaretRightIcon size={16} className="text-fog" aria-hidden="true" /></a>

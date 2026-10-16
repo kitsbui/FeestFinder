@@ -12,6 +12,12 @@ export const WORKSPACE: Record<Craft, string> = { artist: '/studio/artist', orga
 
 export const otherCraft = (c: Craft): Craft => (c === 'artist' ? 'organizer' : 'artist');
 
+/**
+ * Whether the account is the team's (an admin from the ADMIN_EMAIL allowlist): the screens then
+ * offer the Console. An admin signed in another way than Google is too; the Console asks for Google.
+ */
+export const isTeam = (u: { role?: string; adminNeedsGoogle?: unknown } | null | undefined) => !!u && (u.role === 'admin' || u.adminNeedsGoogle === true);
+
 export const CRAFT = {
   roles: { en: 'Role', vi: 'Vai trò' },
   attendee: { en: 'Attendee', vi: 'Người tham dự' },
@@ -20,6 +26,8 @@ export const CRAFT = {
   add: { en: 'Add a craft', vi: 'Thêm vai nghề' },
   switchTo: { en: 'Switch to {r}', vi: 'Đổi sang {r}' },
   waiting: { en: 'Waiting', vi: 'Chờ duyệt' },
+  team: { en: 'FeestFinder team', vi: 'Đội FeestFinder' },
+  console: { en: 'Console', vi: 'Console' },
   oneTitle: { en: 'One craft per account', vi: 'Mỗi tài khoản một vai nghề' },
   oneBody: {
     en: 'Besides attending, an account performs or organises. Switch from {a} to {b}? Your {a} profile stays, and you can switch back any time.',

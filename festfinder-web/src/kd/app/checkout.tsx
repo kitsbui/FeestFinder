@@ -18,6 +18,7 @@ import { FieldError, Input, Option, Stepper } from '../ui/forms';
 import { Accordion, Art, Card as Panel, Status } from '../ui/parts';
 import { QrCode } from '../ui/qr';
 import { AppBar, Dock } from '../ui/shell';
+import { BackLink } from '../ui/back-link';
 import type { EventDetail, Tier } from '../types';
 import { tierStatus } from '../web/event/tickets';
 import { APP } from './copy';
@@ -42,7 +43,7 @@ export function Checkout({ lang, slug }: { lang: Lang; slug: string }) {
   return (
     <>
       <AppBar>
-        <a className="kd-ib -ml-2" href={'/app/e/' + encodeURIComponent(slug)} aria-label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></a>
+        <BackLink className="kd-ib -ml-2" href={'/app/e/' + encodeURIComponent(slug)} label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></BackLink>
         <h1 className="kd-h ml-1">{T.checkoutTitle}</h1>
       </AppBar>
       {ev === undefined || kd.session === undefined ? <div className="kd-skel mx-4 mt-2 h-60" aria-hidden="true" />

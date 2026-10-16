@@ -105,11 +105,11 @@
   }
   .kd-chip:hover { background: rgba(255, 255, 255, 0.09); color: var(--color-paper); }
   .kd-chip[aria-pressed='true'], .kd-chip-on { background: var(--color-paper); color: var(--color-void); box-shadow: none; }
-  .kd-chip .kd-chip-n { font-family: var(--font-mono); font-size: 11px; opacity: 0.6; font-variant-numeric: tabular-nums; }
+  .kd-chip .kd-chip-n { font-size: 11px; opacity: 0.6; font-variant-numeric: tabular-nums; }
 
   .kd-tag {
     display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--radius-tag); white-space: nowrap;
-    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-mist);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-mist); font-variant-numeric: tabular-nums;
     background: rgba(255, 255, 255, 0.06);
   }
   .kd-tag-glass { background: rgba(8, 9, 10, 0.42); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%); }
@@ -185,13 +185,13 @@
   .kd-qty > button { position: relative; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); color: var(--color-paper); }
   .kd-qty > button:hover { background: rgba(255, 255, 255, 0.1); }
   .kd-qty > button:disabled { opacity: 0.38; cursor: default; }
-  .kd-qty > output { min-width: 32px; text-align: center; font-family: var(--font-mono); font-size: 15px; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  .kd-qty > output { min-width: 32px; text-align: center; font-size: 15px; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
 
   /* ---- map ---- */
   .kd-ppin {
     position: relative; display: inline-flex; align-items: center; gap: 6px;
     height: 30px; padding: 0 10px 0 9px; border: 0; border-radius: 9999px; cursor: pointer; white-space: nowrap;
-    font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--color-paper);
+    font-size: 12px; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums;
     background: rgba(15, 16, 17, 0.5); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.07);
     transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff), transform 0.15s var(--ease-ff);
@@ -200,7 +200,7 @@
   .kd-ppin:hover { transform: scale(1.05); }
   .kd-ppin[aria-pressed='true'] { z-index: 3; background: var(--color-paper); color: var(--color-void); box-shadow: 0 0 0 4px rgba(247, 248, 248, 0.14); transform: scale(1.08); }
   .kd-me { width: 16px; height: 16px; border-radius: 50%; background: var(--color-acc); box-shadow: 0 0 0 4px rgba(228, 242, 34, 0.22), 0 0 0 10px rgba(228, 242, 34, 0.08); }
-  .kd-area { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #5d6168; white-space: nowrap; pointer-events: none; }
+  .kd-area { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #5d6168; white-space: nowrap; pointer-events: none; }
 
   /* ---- lists ---- */
   .kd-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; padding: 8px 0; border-bottom: 1px solid var(--color-line); color: inherit; }
@@ -229,8 +229,9 @@
   @media (min-width: 900px) {
     .kd-app { max-width: none; margin: 0; }
     .kd-app.kd-app-tabs { width: auto; margin-left: 240px; padding-bottom: env(safe-area-inset-bottom); }
+    /* Under the site’s nav (64px and its 1px line), which the app shows on a computer (app/root.tsx). */
     .kd-app ~ .kd-tabbar {
-      top: 0; bottom: 0; left: 0; right: auto; width: 240px; height: auto; border-radius: 0;
+      top: 65px; bottom: 0; left: 0; right: auto; width: 240px; height: auto; border-radius: 0;
       grid-template-columns: none; grid-auto-rows: 44px; align-content: start; gap: 2px; padding: 16px 12px;
       background: var(--color-carbon); box-shadow: inset -1px 0 0 var(--color-line);
     }
@@ -264,7 +265,7 @@
   .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fog); transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
   .kd-sn:hover { color: var(--color-paper); background: rgba(255, 255, 255, 0.04); }
   .kd-sn[aria-current='page'] { color: var(--color-paper); background: rgba(255, 255, 255, 0.07); }
-  .kd-sn .kd-count { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--color-paper); }
+  .kd-sn .kd-count { margin-left: auto; font-size: 11px; color: var(--color-paper); font-variant-numeric: tabular-nums; }
   @media (max-width: 899px) {
     .kd-side-nav { flex-direction: row; align-items: center; overflow-x: auto; scrollbar-width: none; border-right: 0; border-bottom: 1px solid var(--color-line); padding: 8px 12px; gap: 4px; }
     .kd-side-nav .kd-sn { flex-shrink: 0; }
@@ -277,7 +278,7 @@
   .kd-tab:hover { color: var(--color-paper); }
   .kd-tab[aria-selected='true'], .kd-tab[aria-current='page'], .kd-tab[aria-current='true'] { color: var(--color-paper); }
   .kd-tab[aria-selected='true']::after, .kd-tab[aria-current='page']::after, .kd-tab[aria-current='true']::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--color-paper); }
-  .kd-tab .kd-c { font-family: var(--font-mono); font-size: 11px; color: var(--color-fog); }
+  .kd-tab .kd-c { font-size: 11px; color: var(--color-fog); font-variant-numeric: tabular-nums; }
   .kd-tbl { overflow-x: auto; }
   .kd-tr { display: grid; align-items: center; gap: 16px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--color-line); min-width: 640px; }
   .kd-tr-head { min-height: 40px; }
@@ -304,7 +305,7 @@
   .kd-stat .kd-v { font-size: 22px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
   .kd-dblk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 56px; height: 60px; flex-shrink: 0; border-radius: var(--radius-seg); background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px var(--color-line); }
   .kd-dblk .kd-dd { font-size: 22px; line-height: 1; font-weight: 500; letter-spacing: -0.03em; color: var(--color-paper); font-variant-numeric: tabular-nums; }
-  .kd-dblk .kd-mm { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-fog); }
+  .kd-dblk .kd-mm { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fog); }
   .kd-dblk-hi { background: var(--color-bone); box-shadow: none; }
   .kd-dblk-hi .kd-dd { color: var(--color-ink); }
   .kd-dblk-hi .kd-mm { color: var(--color-ink2); }
@@ -328,7 +329,7 @@
   .kd-mi[aria-checked='true'] { color: var(--color-paper); }
   .kd-mi:disabled, .kd-mi[aria-disabled='true'] { opacity: 0.45; cursor: default; background: transparent; }
   .kd-mi .kd-tick { margin-left: auto; color: var(--color-acc); }
-  .kd-mi .kd-aside { margin-left: auto; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-fog); }
+  .kd-mi .kd-aside { margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fog); }
   .kd-mi-sep { height: 1px; margin: 4px 6px; background: var(--color-line); }
   .kd-scrim { position: fixed; inset: 0; z-index: 25; padding: 0; border: 0; background: transparent; cursor: default; }
   .kd-dd { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line2); text-decoration-thickness: 2px; text-underline-offset: 6px; transition: text-decoration-color 0.15s var(--ease-ff); }

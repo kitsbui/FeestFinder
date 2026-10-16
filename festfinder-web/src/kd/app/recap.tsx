@@ -17,6 +17,7 @@ import { Button, Chip } from '../ui/actions';
 import { FieldError } from '../ui/forms';
 import { Art, Card as Panel, Stat } from '../ui/parts';
 import { AppBar } from '../ui/shell';
+import { BackLink } from '../ui/back-link';
 import type { EventDetail } from '../types';
 import { APP } from './copy';
 import { SignInCard } from './row';
@@ -35,7 +36,7 @@ export function RecapScreen({ lang, ev }: { lang: Lang; ev: EventDetail }) {
   return (
     <>
       <AppBar>
-        <a className="kd-ib -ml-2" href="/app/profile" aria-label={T.back}><XIcon size={22} aria-hidden="true" /></a>
+        <BackLink className="kd-ib -ml-2" href="/app/profile" label={T.back}><XIcon size={22} aria-hidden="true" /></BackLink>
         <span className="kd-hs kd-ell ml-1">{ev.title}</span>
       </AppBar>
       {kd.session === undefined ? <div className="kd-skel mx-4 h-60" aria-hidden="true" /> : kd.user ? <RecapForm lang={lang} ev={ev} /> : <SignInCard lang={lang} note={T.gateMe} />}

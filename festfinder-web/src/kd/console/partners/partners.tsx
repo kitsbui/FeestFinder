@@ -133,11 +133,11 @@ function TokenSheet({ lang, token, partner, onClose }: { lang: Lang; token: stri
       <div className="flex flex-col gap-4">
         <p role="status" className="kd-hs rounded-lg bg-warn/15 px-3 py-2 text-warn">{T.tokenOnce}</p>
         <Field label={T.token}>
-          <Input readOnly value={token} aria-label={T.token} className="font-mono text-sm"
+          <Input readOnly value={token} aria-label={T.token} className="kd-num text-sm"
             end={<IconButton size="sm" label={T.copyToken} onClick={() => copyText(kd, lang, token)}><CopyIcon size={16} aria-hidden="true" /></IconButton>} />
         </Field>
         <Field label={T.address} hint={T.addressHint}>
-          <TextArea readOnly rows={3} value={url} aria-label={T.address} className="font-mono text-xs" />
+          <TextArea readOnly rows={3} value={url} aria-label={T.address} className="kd-num text-xs" />
         </Field>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => copyText(kd, lang, url)}><CopyIcon size={16} aria-hidden="true" />{T.copyAddress}</Button>
@@ -219,7 +219,7 @@ function PartnerForm({ lang, partner, presetHosts, onClose, onSaved }: {
           </label>
         </div>
         <Field label={T.params} htmlFor="pf-params" hint={T.paramsHint}>
-          <TextArea id="pf-params" rows={4} className="font-mono text-xs" value={f.params} onChange={(e) => upd({ params: e.target.value })} />
+          <TextArea id="pf-params" rows={4} className="kd-num text-xs" value={f.params} onChange={(e) => upd({ params: e.target.value })} />
         </Field>
         <Field label={<>{T.template} <span className="kd-s">({T.optional})</span></>} htmlFor="pf-tpl" hint="https://…?url={url}&sub={click}" error={templateOk ? null : T.templateBad}>
           <Input id="pf-tpl" value={f.template} invalid={!templateOk} placeholder="https://" onChange={(e) => upd({ template: e.target.value })} />
@@ -271,8 +271,8 @@ function PartnerDetail({ lang, partner, onClose, onEdit, onChanged }: { lang: La
       <KV rows={[
         [T.kPct, `${partner.commissionPct}%`],
         [T.kClicks, partner.clicks30.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')],
-        [T.kExample, <code key="e" className="font-mono text-xs break-all">{partner.example}</code>],
-        [T.kPostback, <code key="p" className="font-mono text-xs break-all">{partner.postbackUrl}</code>],
+        [T.kExample, <code key="e" className="kd-num text-xs break-all">{partner.example}</code>],
+        [T.kPostback, <code key="p" className="kd-num text-xs break-all">{partner.postbackUrl}</code>],
       ]} />
       <Tabs label={T.tabs} current={tab} onSelect={(k) => setTab(k as 'sales' | 'events')}
         items={[{ key: 'sales', label: T.tSales, count: conv.data?.items.length ?? null }, { key: 'events', label: T.tTop, count: conv.data ? top.length : null }]} />

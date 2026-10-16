@@ -12,6 +12,7 @@ import { forgetDevice, registerServiceWorker } from '@/runtime/pwa';
 import { pick, type Lang } from '../copy';
 import { KdProvider } from '../runtime';
 import { TabBar } from '../ui/shell';
+import { WebNav } from '../web/chrome';
 import { APP } from './copy';
 import { place } from './place';
 
@@ -36,6 +37,12 @@ export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang)
   return (
     <ChromeCtx.Provider value={{ lang, setLang, setTabs }}>
       <KdProvider lang={lang}>
+        {/*
+          On a computer the app sits inside the site: the site's own nav stays on top (search, the
+          pages, the account menu), so moving from the web to "My tickets" or a checkout never
+          leaves the person without their way around. Phones keep the app's tab bar alone.
+        */}
+        <div className="hidden desk:contents"><WebNav lang={lang} current={tab === 'explore' ? 'explore' : tab === 'map' ? 'list' : 'none'} /></div>
         <div className={tab && tabs ? 'kd-app kd-app-tabs' : 'kd-app'} lang={lang}>
           {children(lang)}
         </div>

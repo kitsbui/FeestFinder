@@ -15,7 +15,7 @@ const PAGE = `<!doctype html>
 <style>
   :root { --bg:#06080D; --s1:#0A0E1A; --s2:#121826; --s3:#1A2233; --bd:#262F44; --tx:#F3F6FC; --tx2:#C3CBDC; --tx3:#8891A8; --ac:#2AC4E8; --ach:#7FE0F5; --vi:#B9A8FF; --gr:#6FD79B; --am:#FFB35C; --rd:#FF9A9A; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--tx); font:14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--tx); font:14px/1.5 "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
   header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--bd); background:var(--s1); position:sticky; top:0; z-index:2; }
   h1 { margin:0; font-size:16px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
   h1 span { color:var(--ac); }
@@ -30,14 +30,14 @@ const PAGE = `<!doctype html>
   nav h2 { margin:16px 18px 6px; font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--tx3); }
   nav a { display:flex; gap:8px; align-items:baseline; padding:6px 18px; color:var(--tx2); text-decoration:none; font-size:13px; }
   nav a:hover, nav a.on { background:var(--s2); color:var(--tx); }
-  nav a small { color:var(--tx3); font-family:ui-monospace, monospace; font-size:11px; margin-left:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50%; }
+  nav a small { color:var(--tx3); font-variant-numeric:tabular-nums; font-size:11px; margin-left:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50%; }
   .lock { color:var(--am); font-size:11px; }
   section { min-width:0; display:flex; flex-direction:column; }
   .bar { display:flex; gap:8px; align-items:center; padding:10px 16px; border-bottom:1px solid var(--bd); background:var(--s1); }
-  .bar input { flex:1; min-width:0; background:var(--bg); border:1px solid var(--bd); color:var(--tx); border-radius:10px; padding:7px 10px; font:13px ui-monospace, monospace; }
-  .status { font:12px ui-monospace, monospace; padding:3px 8px; border-radius:999px; border:1px solid var(--bd); color:var(--tx3); white-space:nowrap; }
+  .bar input { flex:1; min-width:0; background:var(--bg); border:1px solid var(--bd); color:var(--tx); border-radius:10px; padding:7px 10px; font:13px "Noto Sans", system-ui, sans-serif; }
+  .status { font:12px "Noto Sans", system-ui, sans-serif; font-variant-numeric:tabular-nums; padding:3px 8px; border-radius:999px; border:1px solid var(--bd); color:var(--tx3); white-space:nowrap; }
   .ok { color:var(--gr); border-color:rgba(46,158,91,.5); } .err { color:var(--rd); border-color:rgba(224,74,74,.5); }
-  pre { margin:0; padding:16px; overflow:auto; flex:1; font:12.5px/1.55 ui-monospace, monospace; color:var(--tx2); white-space:pre-wrap; word-break:break-word; }
+  pre { margin:0; padding:16px; overflow:auto; flex:1; font:12.5px/1.55 "Noto Sans", system-ui, sans-serif; color:var(--tx2); white-space:pre-wrap; word-break:break-word; }
   .k { color:var(--ach); } .s { color:var(--gr); } .n { color:var(--am); } .b { color:var(--vi); }
   .hint { padding:22px 16px; color:var(--tx3); }
   .hint code { color:var(--ach); }

@@ -66,7 +66,7 @@ export function Promos() {
                     {promos.items.map((p) => (
                       <li key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-line py-3 first:pt-0">
                         <span className="flex min-w-0 items-baseline gap-2.5">
-                          <span className="kd-mb kd-num font-mono text-paper">{p.code}</span>
+                          <span className="kd-mb kd-num text-paper">{p.code}</span>
                           <span className="kd-s kd-num">{p.value[lang]}</span>
                           {p.nearlyUsedUp ? <Status tone="warn">{T.promoNearly}</Status> : null}
                         </span>
@@ -80,7 +80,7 @@ export function Promos() {
                   </ul>
                 ) : <span className="kd-s">{T.promoNone}</span>}
                 <form className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] items-end gap-3 border-t border-line pt-4" onSubmit={addCode} aria-label={T.promoNew}>
-                  <div className="flex flex-col gap-2"><FieldLabel htmlFor="pCode">{T.promoCode}</FieldLabel><Input id="pCode" required minLength={3} maxLength={24} className="font-mono uppercase" value={code.code} onChange={(e) => setCode({ ...code, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} /></div>
+                  <div className="flex flex-col gap-2"><FieldLabel htmlFor="pCode">{T.promoCode}</FieldLabel><Input id="pCode" required minLength={3} maxLength={24} className="kd-num uppercase" value={code.code} onChange={(e) => setCode({ ...code, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="pPct">{T.promoPct}</FieldLabel><Input id="pPct" required inputMode="numeric" className="kd-num" value={code.pct} onChange={(e) => setCode({ ...code, pct: e.target.value.replace(/\D/g, '').slice(0, 3) })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="pCap">{T.promoCap}</FieldLabel><Input id="pCap" inputMode="numeric" className="kd-num" placeholder="500" value={code.cap} onChange={(e) => setCode({ ...code, cap: e.target.value.replace(/\D/g, '') })} /></div>
                   <Button tone="acc" type="submit">{T.promoCreate}</Button>

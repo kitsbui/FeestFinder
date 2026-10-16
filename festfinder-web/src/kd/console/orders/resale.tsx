@@ -50,7 +50,7 @@ export function Resale({ lang, params, set }: { lang: Lang; params: URLSearchPar
     const b = r.seller.bank;
     const ok = await ask({
       title: fill(T.rPayAsk, { m: m(r.price), n: r.seller.name }),
-      body: b ? <span className="font-mono text-paper">{b.name} · {b.accountNo} · {b.accountName}</span> : T.rPayNoBank,
+      body: b ? <span className="kd-num text-paper">{b.name} · {b.accountNo} · {b.accountName}</span> : T.rPayNoBank,
       confirm: T.rPayConfirm, note: 'required', noteLabel: T.rPayRef,
     });
     if (ok) run(r.id, () => FF.post(`/admin/resale/${r.id}/payout`, { reference: ok.note }));
@@ -73,7 +73,7 @@ export function Resale({ lang, params, set }: { lang: Lang; params: URLSearchPar
         <Table label={T.rTable} cols={COLS} head={[T.rCode, T.rEvent, T.rPeople, T.rGets, state === 'paid_out' ? T.rPaidCol : T.rDueCol, '']}>
           {load.data.items.map((r) => (
             <Row key={r.id} cols={COLS}>
-              <Cell className="font-mono text-xs text-paper">{r.code}</Cell>
+              <Cell className="kd-num text-xs text-paper">{r.code}</Cell>
               <Cell>
                 <span className="flex min-w-0 flex-col items-start gap-1">
                   <span className="kd-ell text-sm text-paper">{r.event.title}</span>
@@ -88,7 +88,7 @@ export function Resale({ lang, params, set }: { lang: Lang; params: URLSearchPar
                   ? <Button size="sm" disabled={busy === r.id} onClick={() => payout(r)}><BankIcon size={14} aria-hidden="true" />{T.rPay}</Button>
                   : state === 'failed' || (r.event.cancelled && !r.paidOutAt)
                     ? <Button size="sm" className="kd-btn-danger" disabled={busy === r.id} onClick={() => refund(r)}>{T.rRefund}</Button>
-                    : r.payoutRef ? <span className="kd-s font-mono text-xs">{r.payoutRef}</span> : null}
+                    : r.payoutRef ? <span className="kd-s kd-num text-xs">{r.payoutRef}</span> : null}
               </Cell>
             </Row>
           ))}

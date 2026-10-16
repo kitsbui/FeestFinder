@@ -112,7 +112,7 @@ function OrderList({ lang, params, set }: { lang: Lang; params: URLSearchParams;
           {!load.data.items.length ? <Empty /> : <Table label={T.table} cols={COLS} head={[T.colCode, T.colWhen, T.colBuyer, T.colEvent, T.colMethod, T.colTotal, T.colStatus]}>
             {load.data.items.map((o) => (
               <Row key={o.id} cols={COLS} current={o.id === id} onClick={() => set({ id: o.id })}>
-                <Cell className="font-mono text-xs text-paper">{o.code}</Cell>
+                <Cell className="kd-num text-xs text-paper">{o.code}</Cell>
                 <Cell className="kd-s kd-num text-xs">{stamp(o.createdAt, lang)}</Cell>
                 <Cell><Two title={o.buyer.name || '—'} sub={o.buyer.email ?? o.buyer.phone ?? ''} /></Cell>
                 <Cell><Two title={o.event.title} sub={`${FF.text(o.tier, lang)} × ${o.qty}`} /></Cell>
@@ -146,7 +146,7 @@ function OrderDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang;
   };
   return (
     <Drawer
-      title={o ? <span className="font-mono">{o.code}</span> : T.loading}
+      title={o ? <span className="kd-num">{o.code}</span> : T.loading}
       sub={o ? <span className="flex flex-wrap items-center gap-2"><Pill tone={STATUS_TONE[o.status]}>{o.statusLabel[lang]}</Pill><span>{o.methodLabel} · {stamp(o.createdAt, lang)}</span></span> : null}
       onClose={onClose}
       footer={o ? (
@@ -172,7 +172,7 @@ function OrderDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang;
               [T.kTotal, <strong key="t" className="kd-num">{m(o.total)}</strong>],
               [T.kPaidAt, o.paidAt ? stamp(o.paidAt, lang) : '—'],
               [T.kRefundedAt, o.refundedAt ? stamp(o.refundedAt, lang) : '—'],
-              [T.kRef, o.providerRef ? <span key="r" className="font-mono text-xs">{o.providerRef}</span> : '—'],
+              [T.kRef, o.providerRef ? <span key="r" className="kd-num text-xs">{o.providerRef}</span> : '—'],
             ]} />
           </Section>
           <Section title={T.buyer}>
@@ -186,7 +186,7 @@ function OrderDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang;
             <ul className="flex flex-col">
               {o.tickets.map((x) => (
                 <li key={x.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-b border-line py-2">
-                  <span className="font-mono text-xs text-paper">{x.code}</span>
+                  <span className="kd-num text-xs text-paper">{x.code}</span>
                   <span className="kd-s kd-ell">{x.holder || '—'}</span>
                   <Pill tone={TICKET[x.status]?.[0] ?? 'none'}>{TICKET[x.status]?.[1] ?? x.status}</Pill>
                   {x.checkedInAt ? <span className="kd-s kd-num col-span-3 text-xs">{stamp(x.checkedInAt, lang)}{x.gate ? ' · ' + x.gate : ''}</span> : null}

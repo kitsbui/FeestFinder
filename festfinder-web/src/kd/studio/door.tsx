@@ -200,7 +200,7 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
         <Viewfinder lang={lang} onCode={scan} />
         <form className="flex gap-2" onSubmit={submit}>
           <label className="sr-only" htmlFor="doorCode">{T.code}</label>
-          <Input ref={field} id="doorCode" boxClass="flex-1" className="kd-num font-mono text-sm tracking-[0.04em]" value={code} placeholder={T.codePh} autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => setCode(e.target.value)} />
+          <Input ref={field} id="doorCode" boxClass="flex-1" className="kd-num text-sm tracking-[0.04em]" value={code} placeholder={T.codePh} autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={(e) => setCode(e.target.value)} />
           <Button tone="acc" type="submit">{T.check}</Button>
         </form>
         <div role="status" aria-live="polite">
@@ -208,7 +208,7 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
             <div className={cx('flex items-center gap-3.5 rounded-xl p-4 text-ink', R.bg)}>
               <span className={cx('flex size-13 shrink-0 items-center justify-center bg-void', R.shape, R.color)}>{R.icon}</span>
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="kd-num font-mono text-[11px] uppercase tracking-[0.03em]">{result.time} · {gates.find((x) => x.value === result.gate)?.label}{result.queued ? ' · ' + T.queued : ''}</span>
+                <span className="kd-num text-[11px] uppercase tracking-[0.03em]">{result.time} · {gates.find((x) => x.value === result.gate)?.label}{result.queued ? ' · ' + T.queued : ''}</span>
                 <span className="text-[26px] font-medium leading-[1.1] tracking-[-0.03em]">{R.title}</span>
                 <span className="text-[13px]">{[result.name !== '—' ? result.name : null, result.detail[lang]].filter(Boolean).join(' · ')}</span>
               </div>

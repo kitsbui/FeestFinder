@@ -150,6 +150,8 @@ export const APP = {
   artistRole: { en: 'Artist', vi: 'Nghệ sĩ' },
   orgNext: { en: 'Organiser · next {d}', vi: 'Nhà tổ chức · tiếp theo {d}' },
   orgNone: { en: 'Organiser · nothing new yet', vi: 'Nhà tổ chức · chưa có lịch mới' },
+  console: { en: 'Console', vi: 'Console' },
+  consoleSub: { en: 'Review, advertising, reports', vi: 'Duyệt tin, quảng cáo, báo cáo' },
   alerts: { en: 'Smart Alerts', vi: 'Cảnh báo thông minh' },
   alertsSub: { en: 'Cities, styles, artists and price', vi: 'Thành phố, phong cách, nghệ sĩ và giá' },
   notifSettings: { en: 'Notifications', vi: 'Thông báo' },

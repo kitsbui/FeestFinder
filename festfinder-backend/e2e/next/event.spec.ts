@@ -235,3 +235,14 @@ test.describe('the ride button on an Android phone', () => {
     expect(rides[0].android).toMatch(/^intent:\/\/open\?screenType=BOOKING#Intent;scheme=grab;package=com\.grabtaxi\.passenger;/);
   });
 });
+
+test('back from a checkout returns to the web event page it came from, not the app’s', async ({ page }) => {
+  await signInWith(page, ATTENDEE);
+  await page.goto('/e/ravo');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  // A ticket button leads to FeestFinder's checkout in the app.
+  await page.evaluate(() => location.assign('/app/checkout/ravo'));
+  await expect(page).toHaveURL(/\/app\/checkout\/ravo/);
+  await page.getByRole('link', { name: 'Quay lại' }).first().click();
+  await expect(page).toHaveURL(/\/e\/ravo$/);
+});

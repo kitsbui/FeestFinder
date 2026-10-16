@@ -125,7 +125,7 @@ export function Kit() {
         </div>
       </Section>
 
-      <Section n="03" title="Chữ" aside="Be Vietnam Pro 400 · 500 — JetBrains Mono 400 · 500">
+      <Section n="03" title="Chữ" aside="Noto Sans · một họ chữ cho chữ và số">
         <div className="flex flex-col">
           {[
             ['D0 · hero', <span key="d0" className="kd-d0">Tối nay</span>],
@@ -135,8 +135,8 @@ export function Kit() {
             ['Tiêu đề thẻ · 17', <span key="h" className="kd-h">Tên sự kiện trên thẻ</span>],
             ['Nội dung · 15', <span key="t" className="kd-t">Mở cửa 16:00, set cuối 02:00. Vé cho phép ra vào lại đến 22:00.</span>],
             ['Phụ · 13', <span key="s" className="kd-s">T7 19.09 · Địa điểm · Quận 7</span>],
-            ['Nhãn mono · 11', <span key="m" className="kd-m text-mist">Cuối tuần · 28 sự kiện · ABC-26-4F8K</span>],
-            ['Số · mono 13', <span key="mb" className="kd-mb kd-num">1.200.000₫</span>],
+            ['Nhãn · 11', <span key="m" className="kd-m text-mist">Cuối tuần · 28 sự kiện · ABC-26-4F8K</span>],
+            ['Số · 13', <span key="mb" className="kd-mb kd-num">1.200.000₫</span>],
           ].map(([k, v]) => (
             <div key={k as string} className="grid grid-cols-1 items-baseline gap-2 border-b border-line py-3.5 desk:grid-cols-[220px_minmax(0,1fr)] desk:gap-6">
               <span className="kd-m">{k}</span>

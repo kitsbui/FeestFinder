@@ -11,6 +11,7 @@ import { pick, type Lang } from '../copy';
 import { Button } from '../ui/actions';
 import { Card as Panel } from '../ui/parts';
 import { AppBar } from '../ui/shell';
+import { BackLink } from '../ui/back-link';
 import type { EventDetail } from '../types';
 import { APP } from './copy';
 import { SignInCard } from './row';
@@ -25,7 +26,7 @@ export function GuideScreen({ lang, ev }: { lang: Lang; ev: EventDetail }) {
   return (
     <>
       <AppBar>
-        <a className="kd-ib -ml-2" href={'/app/e/' + ev.slug} aria-label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></a>
+        <BackLink className="kd-ib -ml-2" href={'/app/e/' + ev.slug} label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></BackLink>
         <span className="ml-1 flex min-w-0 flex-col"><h1 className="kd-hs">{T.guideTitle}</h1><span className="kd-m kd-ell">{ev.title}</span></span>
       </AppBar>
       {kd.session === undefined ? <div className="kd-skel mx-4 h-40" aria-hidden="true" /> : kd.user ? <GuideBody lang={lang} ev={ev} /> : <SignInCard lang={lang} note={T.gateMe} />}
