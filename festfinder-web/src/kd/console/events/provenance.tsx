@@ -95,7 +95,7 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                   })}
                 </ul>
               )}
-              <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (isLink(url)) add(); }}>
+              <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (isLink(url)) void add(); }}>
                 <Input boxClass="flex-1" type="url" aria-label={T.pAddLabel} placeholder={T.pAddPh} value={url} icon={<LinkIcon size={16} className="text-fog" aria-hidden="true" />} onChange={(e) => setUrl(e.target.value)} />
                 <Button type="submit" disabled={busy || !isLink(url)}><PlusIcon size={16} aria-hidden="true" />{T.pAdd}</Button>
               </form>

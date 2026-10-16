@@ -150,7 +150,7 @@ export function Wizard() {
   // The cities, the verified venues, and the draft named in the address.
   useEffect(() => {
     const ask = new URLSearchParams(location.search).get('draft');
-    Promise.all([
+    void Promise.all([
       FF.maybe(FF.get('/meta/discovery'), { cities: [], defaultCity: 'ho-chi-minh' }),
       FF.maybe(FF.get('/venues?limit=200'), { items: [] }),
       ask ? FF.maybe(FF.get('/organizer/events/' + encodeURIComponent(ask)), null) : Promise.resolve(null),
@@ -196,7 +196,7 @@ export function Wizard() {
         const q = new URLSearchParams(location.search);
         q.set('draft', out.id);
         history.replaceState(history.state, '', location.pathname + '?' + q);
-        reload();
+        void reload();
       } else {
         const was = JSON.parse(base.current || '{}') as Partial<Payload>;
         const diff = Object.fromEntries(Object.entries(body).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify((was as Record<string, unknown>)[k])));
@@ -208,7 +208,7 @@ export function Wizard() {
         await FF.put('/organizer/events/' + id.current + '/tiers', { tiers });
         tierBase.current = tiersJson;
       }
-      setDraft((d) => ({ ...(d ?? {}), ...out } as Draft));
+      setDraft((d) => ({ ...(d ?? {}), ...out }));
       setSave({ state: 'saved', at: new Date().toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) });
       return true;
     } catch (e) {
@@ -222,7 +222,7 @@ export function Wizard() {
     if (!f || !editable || sent) return;
     const has = !!(f.title.trim() || f.styles.length || f.date || f.venueName || f.description || f.coverUrl);
     if (!has && !id.current) return;
-    const t = setTimeout(() => { persist(f); }, 800);
+    const t = setTimeout(() => { void persist(f); }, 800);
     return () => clearTimeout(t);
   }, [f, editable, sent, persist]);
 
@@ -241,13 +241,13 @@ export function Wizard() {
     if (!ready || busy) return;
     setBusy(true);
     if (!(await persist(f))) { setBusy(false); return; }
-    if (live) { setBusy(false); reload(); return; }
+    if (live) { setBusy(false); void reload(); return; }
     try {
       // The listing it became (in review, or live for the team): the header stops saying "Nháp".
       const out = await FF.post('/organizer/events/' + id.current + '/submit');
       setDraft((d) => ({ ...(d ?? {}), ...out } as Draft));
       setSent({ boost: 'none' });
-      reload();
+      void reload();
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
     setBusy(false);
   };
@@ -305,7 +305,7 @@ export function Wizard() {
         {/* "Đăng sự kiện" posts an event or a project; a new listing can still become a project. */}
         {!draft ? <PostKindSwitch lang={lang} current="event" className="mb-6" /> : null}
         <div className="kd-split gap-[clamp(24px,4vw,56px)]">
-          <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
             <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
               <h1 className="kd-d2">{draft ? (editable ? T.wNew : T.wEdit) : T.wNew}</h1>
               <span className="kd-m kd-num">{fill(T.wDone, { n: done.filter(Boolean).length })}</span>
@@ -616,14 +616,14 @@ export function Upload({ lang, kind, label, hint, value, onChange, required }: {
   return (
     <div className="flex min-h-16 w-full items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
       {value
-        // eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage
+         
         ? <img src={value} alt="" className={cx('shrink-0 object-cover', kind === 'logo' ? 'size-11 rounded-lg' : 'h-11 w-[78px] rounded-md')} />
         : <ImageSquareIcon size={22} className="shrink-0 text-fog" aria-hidden="true" />}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="kd-hs">{label} {required ? null : <span className="font-normal text-fog">{T.optional}</span>}</span>
         <span className="kd-s">{busy ? T.fUploading : hint}</span>
       </span>
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) send(file); e.target.value = ''; }} />
+      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) void send(file); e.target.value = ''; }} />
       {value && !required ? <Button tone="ghost" size="sm" onClick={() => onChange(null)}>{T.fRemove}</Button> : null}
       <Button size="sm" disabled={busy} onClick={() => input.current?.click()} aria-label={`${value ? T.fChange : T.fUpload} · ${label}`}>{value ? T.fChange : T.fUpload}</Button>
     </div>

@@ -137,7 +137,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
       ) : mustSwitch ? (
         <div className="flex flex-col gap-3 pt-1">
           <span className="kd-hs">{K.oneTitle}</span>
-          <p className="kd-s">{fill(K.oneBody, { a: K[craft!], b: K[step] })}</p>
+          <p className="kd-s">{fill(K.oneBody, { a: K[craft], b: K[step] })}</p>
           <FieldError>{err}</FieldError>
           <div className="flex flex-wrap gap-2">
             <Button tone="acc" disabled={busy} onClick={doSwitch}>{fill(K.switchTo, { r: K[step] })}</Button>
@@ -145,7 +145,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
           </div>
         </div>
       ) : (
-        <form className="flex flex-col gap-3 pt-1" onSubmit={(e) => { e.preventDefault(); create(); }}>
+        <form className="flex flex-col gap-3 pt-1" onSubmit={(e) => { e.preventDefault(); void create(); }}>
           <button type="button" className="kd-more" onClick={() => { setStep('menu'); setErr(''); }}>
             <ArrowLeftIcon size={14} aria-hidden="true" />{C.back}
           </button>

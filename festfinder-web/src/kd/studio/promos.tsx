@@ -35,18 +35,18 @@ export function Promos() {
     const [p, g] = await Promise.all([FF.maybe(FF.get(base + '/promos'), null), FF.maybe(FF.get(base + '/guests'), null)]);
     setPromos(p); setGuests(g);
   }, [base]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const act = async (run: () => Promise<{ message?: Pair } | undefined>, after?: () => void) => {
-    try { const out = await run(); if (out?.message) kd.toast(FF.text(out.message, lang)); after?.(); load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    try { const out = await run(); if (out?.message) kd.toast(FF.text(out.message, lang)); after?.(); void load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const addCode = (e: FormEvent) => {
     e.preventDefault();
-    act(() => FF.post(base + '/promos', { code: code.code, pct: Number(code.pct), cap: Number(code.cap) || 500 }), () => setCode({ code: '', pct: '', cap: '' }));
+    void act(() => FF.post(base + '/promos', { code: code.code, pct: Number(code.pct), cap: Number(code.cap) || 500 }), () => setCode({ code: '', pct: '', cap: '' }));
   };
   const addGuest = (e: FormEvent) => {
     e.preventDefault();
-    act(() => FF.post(base + '/guests', { name: guest.name, seats: Number(guest.seats) || 1 }), () => setGuest({ name: '', seats: '1' }));
+    void act(() => FF.post(base + '/guests', { name: guest.name, seats: Number(guest.seats) || 1 }), () => setGuest({ name: '', seats: '1' }));
   };
 
   return (

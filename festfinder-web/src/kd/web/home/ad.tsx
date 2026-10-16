@@ -40,7 +40,7 @@ export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
         <span className="kd-s">{ad.body[lang]}</span>
       </div>
       {ad.image ? (
-        // eslint-disable-next-line @next/next/no-img-element -- a product picture the brand gave as a link
+         
         <img src={ad.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="hidden h-16 w-24 shrink-0 rounded-seg object-cover tab:block" />
       ) : null}
       {ad.url ? (

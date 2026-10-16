@@ -68,7 +68,7 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
     const mine = list.items.find((p: { event: { id: string } }) => p.event.id === ev.id);
     setPlan(mine ? await FF.maybe(FF.get('/plans/' + mine.id), null) : null);
   }, [ev.id]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   const act = async (fn: () => Promise<{ message?: Pair } | unknown>) => {
     try {
       const out = await fn() as { message?: Pair } | null;

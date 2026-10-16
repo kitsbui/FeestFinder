@@ -108,7 +108,7 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
     const out: SavesPage | null = await FF.maybe(FF.get('/me/saves?limit=100'), null);
     setSaves(out ?? { items: [], nextCursor: null });
   }, []);
-  useEffect(() => { loadSaves(); loadCols(); }, [loadSaves, loadCols]);
+  useEffect(() => { void loadSaves(); void loadCols(); }, [loadSaves, loadCols]);
 
   // The hearts on the cards go through the shared saved set: follow what it drops and takes back.
   const before = useRef(kd.saved);
@@ -141,7 +141,7 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
   useEffect(() => {
     if (!cur) { token.current++; setOpened(null); return; }
     setOpened((o) => (o && o.id === cur ? o : null));
-    loadOpened(cur);
+    void loadOpened(cur);
   }, [cur, loadOpened]);
 
   const more = async () => {
@@ -168,12 +168,12 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
 
   /** After the folder sheet changed something: counts, the open collection, and the heart (collecting saves). */
   const changed = (added: boolean) => {
-    loadCols();
-    if (cur) loadOpened(cur);
+    void loadCols();
+    if (cur) void loadOpened(cur);
     const e = collecting;
     if (!added || !e) return;
     if (e.past) markAs(e.id, true);
-    else if (!kd.saved.has(e.id)) kd.toggleSave(e.id);
+    else if (!kd.saved.has(e.id)) void kd.toggleSave(e.id);
   };
 
   const col = cur ? (cols?.find((c) => c.id === cur) ?? (opened?.id === cur ? opened.meta : null)) : null;

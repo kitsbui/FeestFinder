@@ -109,7 +109,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
       await m.ready;
       if (at) m.setMe(at);
       setReady(true);
-      search(start);
+      void search(start);
     }).catch(() => setFailed(true));
     return () => { dead = true; map.current?.destroy(); map.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,7 +120,7 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
   useEffect(() => {
     if (!ready || (asked.current.time === time && asked.current.family === family)) return;
     asked.current = { time, family };
-    search();
+    void search();
   }, [time, family, ready, search]);
 
   useEffect(() => { map.current?.select(sel); }, [sel]);

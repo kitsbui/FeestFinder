@@ -74,6 +74,7 @@ export function EventDetail({ id }: { id: string }) {
                 )}>
                   <MenuItem icon={<CopyIcon size={16} aria-hidden="true" />} onSelect={() => duplicate(ev)}>{T.duplicate}</MenuItem>
                   <MenuItem icon={<ReceiptIcon size={16} aria-hidden="true" />} href={'/console/orders' + qs({ event: ev.id, eventLabel: ev.title })}>{T.orders}</MenuItem>
+                  {/* eslint-disable-next-line @typescript-eslint/no-misused-promises -- run catches its own errors */}
                   {statusItems(ev, run, lang, { publish: false })}
                 </Menu>
               </>}

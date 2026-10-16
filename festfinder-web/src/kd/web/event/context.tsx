@@ -52,7 +52,7 @@ export function EventClientProvider({ ev: served, children }: { ev: EventDetail;
   // Once the session is known, and again whenever who is signed in changes.
   useEffect(() => {
     if (signedIn === undefined) return;
-    reload();
+    void reload();
   }, [signedIn, kd.user, reload]);
 
   return <Ctx.Provider value={{ ev, personal, reload }}>{children}</Ctx.Provider>;

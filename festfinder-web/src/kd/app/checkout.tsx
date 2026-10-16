@@ -92,7 +92,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       setErr(FF.errorText(e, lang));
     }
   }, [listing, ev.id, tierId, qty, applied, lang]);
-  useEffect(() => { if (listing || tierId) price(); }, [price, listing, tierId]);
+  useEffect(() => { if (listing || tierId) void price(); }, [price, listing, tierId]);
 
   const pay = async () => {
     setBusy(true); setErr('');
@@ -110,7 +110,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
     setBusy(false);
   };
 
-  if (pending) return <Transfer lang={lang} pending={pending} onCancelled={() => { setPending(null); price(); }} />;
+  if (pending) return <Transfer lang={lang} pending={pending} onCancelled={() => { setPending(null); void price(); }} />;
 
   const fam = familyOf(ev.genre);
   return (
@@ -181,6 +181,7 @@ function Transfer({ lang, pending, onCancelled }: { lang: Lang; pending: { id: s
   const base = pending.resale ? '/resale/orders/' : '/orders/';
   // Every few seconds: has the money landed?
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- FF.maybe never rejects
     const id = setInterval(async () => {
       const o = await FF.maybe(FF.get(base + pending.id), null);
       if (o?.status === 'paid') {

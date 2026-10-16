@@ -106,7 +106,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
     if (out) { setD(out); setKind(out.kind); setMore({}); }
   }, [ev.id, kind, sort]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, [ev.id, kd.user]);
+  useEffect(() => { void load(); }, [ev.id, kd.user]);
 
   /** A write: sign in first, or prove a phone when the API asks, then retry. */
   const write = async <R,>(run: () => Promise<R>): Promise<R | null> => {
@@ -114,7 +114,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
     try {
       return await run();
     } catch (e) {
-      if ((e as { code?: string }).code === 'phone_unverified') setPhoneFor(() => () => { write(run); });
+      if ((e as { code?: string }).code === 'phone_unverified') setPhoneFor(() => () => { void write(run); });
       else kd.toast(FF.errorText(e, lang));
       return null;
     }
@@ -131,14 +131,14 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
         <Picker
           label={T.discSort}
           value={sort}
-          onChange={(v) => { setSort(v); load(kind, v); }}
+          onChange={(v) => { setSort(v); void load(kind, v); }}
           options={[{ value: 'top', label: T.discTop }, { value: 'new', label: T.discNew }]}
         />
       </div>
       {kinds.length ? (
         <div className="kd-hscroll" role="group" aria-label={T.discussion}>
           {kinds.map((k) => (
-            <Chip key={k.kind} on={k.kind === kind} count={k.count || null} onClick={() => { setKind(k.kind); setReplyTo(null); load(k.kind, sort); }}>
+            <Chip key={k.kind} on={k.kind === kind} count={k.count || null} onClick={() => { setKind(k.kind); setReplyTo(null); void load(k.kind, sort); }}>
               {k.label[lang]}
             </Chip>
           ))}
@@ -147,7 +147,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
       {d && cur && !cur.open ? <p className="kd-s">{T.discClosed}</p> : null}
       {d && cur?.open ? (
         gate === 'ok' || !kd.user ? (
-          <Composer lang={lang} kind={kind!} onPosted={() => { load(); reloadEvent(); }} write={write} />
+          <Composer lang={lang} kind={kind!} onPosted={() => { void load(); void reloadEvent(); }} write={write} />
         ) : gate === 'verify_phone' ? (
           <Button onClick={() => setPhoneFor(() => () => load())}>{T.discVerify}</Button>
         ) : null
@@ -303,7 +303,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
         {p.set || p.heardAt ? <span className="kd-m">{[p.set?.artist, p.heardAt].filter(Boolean).join(' · ')}</span> : null}
         <p className={cx('kd-t whitespace-pre-line', p.removed && 'text-fog')}>{p.removed ? T.discRemoved : p.body}</p>
         {p.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- uploaded to the API's file storage
+           
           <img src={p.photoUrl} alt="" loading="lazy" className="max-h-80 w-auto max-w-full rounded-card object-cover" />
         ) : null}
         {!p.removed ? (
@@ -362,7 +362,7 @@ export function PhotoWall({ lang }: { lang: Lang }) {
       <div className="kd-mgrid">
         {items.slice(0, 9).map((x) => (
           <figure key={x.url} className="kd-mtile m-0 cursor-default">
-            {/* eslint-disable-next-line @next/next/no-img-element -- uploaded to the API's file storage */}
+            { }
             <img src={x.url} alt={x.caption ?? ''} loading="lazy" />
           </figure>
         ))}

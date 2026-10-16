@@ -43,7 +43,7 @@ export function ProjectsBrowser({ lang, first, cities }: { lang: Lang; first: Pr
     const q = new URLSearchParams(location.search);
     const s = q.get('seeking') as Seeking | null;
     const next = { seeking: s && SEEKING.includes(s) ? s : null, city: cities.some((c) => c.slug === q.get('city')) ? q.get('city')! : '' };
-    if (next.seeking || next.city) { setF(next); load(next); }
+    if (next.seeking || next.city) { setF(next); void load(next); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const set = (patch: Partial<Filters>) => {
@@ -54,7 +54,7 @@ export function ProjectsBrowser({ lang, first, cities }: { lang: Lang; first: Pr
     if (next.city) q.set('city', next.city);
     if (lang === 'en') q.set('lang', 'en');
     history.replaceState(history.state, '', '/p' + (q.size ? '?' + q : ''));
-    load(next);
+    void load(next);
   };
   const all = Object.values(list.seeking).reduce((a, b) => Math.max(a, b), 0);
 

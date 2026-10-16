@@ -36,12 +36,12 @@ export function Verification() {
     if (q.trim()) p.set('q', q.trim());
     setOrgs((await FF.maybe(FF.get('/admin/organizers?' + p), { items: [] })).items);
   }, [state, q]);
-  useEffect(() => { const t = setTimeout(load, q ? 250 : 0); return () => clearTimeout(t); }, [load, q]);
+  useEffect(() => { const t = setTimeout(() => void load(), q ? 250 : 0); return () => clearTimeout(t); }, [load, q]);
   const patch = async (o: Org, body: Record<string, unknown>) => {
     try {
       const out = await FF.patch('/admin/organizers/' + o.id, body);
       if (out.message) kd.toast(FF.text(out.message as Pair, lang));
-      load(); refreshCounts();
+      void load(); refreshCounts();
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const states: { key: State; label: string }[] = [{ key: 'pending', label: T.vPending }, { key: 'flagged', label: T.vFlagged }, { key: 'verified', label: T.vVerified }, { key: 'all', label: T.vAll }];

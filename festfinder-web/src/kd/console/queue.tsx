@@ -75,7 +75,7 @@ export function Queue() {
     refreshCounts();
   }, [refreshCounts]);
   useEffect(() => {
-    load();
+    void load();
     FF.maybe(FF.get('/admin/reject-reasons'), { items: [] }).then((r: { items: Reason[] }) => setReasons(r.items));
   }, [load]);
 
@@ -89,13 +89,13 @@ export function Queue() {
       return;
     }
     try { await FF.post(path, body); } catch (e) { kd.toast(FF.errorText(e, lang)); }
-    load();
+    void load();
   }, [kd, lang, load]);
   const sendRef = useRef(send);
   sendRef.current = send;
   // Leaving the page (or this tab of the Console) sends what is held.
   useEffect(() => {
-    const flush = () => { const h = heldRef.current; if (h) { clearTimeout(h.timer); heldRef.current = null; sendRef.current(h, true); } };
+    const flush = () => { const h = heldRef.current; if (h) { clearTimeout(h.timer); heldRef.current = null; void sendRef.current(h, true); } };
     addEventListener('pagehide', flush);
     return () => { removeEventListener('pagehide', flush); flush(); };
   }, []);
@@ -127,13 +127,13 @@ export function Queue() {
   const decide = (verb: Verb, ids: string[], reason: Reason | null = null, extra: { message?: string; allowAppeal?: boolean } = {}) => {
     if (!ids.length) return;
     // A new decision sends the one still held.
-    if (held) { clearTimeout(held.timer); send(held); }
+    if (held) { clearTimeout(held.timer); void send(held); }
     const order = visible.map((i) => i.id);
     const at = Math.max(0, order.indexOf(ids[0]));
     const nextId = order.filter((id) => !ids.includes(id))[at] ?? order.filter((id) => !ids.includes(id))[at - 1] ?? null;
     const title = ids.length > 1 ? fill(T.selected, { n: ids.length }) : (items ?? []).find((i) => i.id === ids[0])?.title ?? '';
     const h: Held = { verb, ids, title, reason, ...extra, timer: 0 };
-    h.timer = window.setTimeout(() => { setHeld((cur) => (cur === h ? null : cur)); send(h); }, HOLD_MS);
+    h.timer = window.setTimeout(() => { setHeld((cur) => (cur === h ? null : cur)); void send(h); }, HOLD_MS);
     setHeld(h);
     setPicked((p) => p.filter((x) => !ids.includes(x)));
     open(nextId);

@@ -138,7 +138,7 @@ function AlertForm({ lang }: { lang: Lang }) {
   const toggle = (key: 'cities' | 'styles' | 'genres', v: string) => {
     if (!a) return;
     const xs = a[key];
-    save({ ...a, [key]: xs.includes(v) ? xs.filter((x) => x !== v) : [...xs, v] });
+    void save({ ...a, [key]: xs.includes(v) ? xs.filter((x) => x !== v) : [...xs, v] });
   };
   const styles = useMemo(() => (meta?.styles ?? []).slice(0, 24), [meta]);
   const addArtist = (e: FormEvent) => {
@@ -146,7 +146,7 @@ function AlertForm({ lang }: { lang: Lang }) {
     const v = artist.trim();
     if (!a || !v || a.artists.includes(v)) return;
     setArtist('');
-    save({ ...a, artists: [...a.artists, v] });
+    void save({ ...a, artists: [...a.artists, v] });
   };
   if (!a || !meta) return <div className="kd-skel mx-4 h-60" aria-hidden="true" />;
   const capLabel = (c: number | null) => (c === null ? T.alertAny : c === 0 ? T.alertFreeOnly : money(c, 'VND', lang));

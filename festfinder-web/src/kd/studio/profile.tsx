@@ -98,11 +98,11 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
   const { busy, save } = useSave(lang, onSaved);
   const [f, setF] = useState({
     name: p.name, type: p.type, bioVi: p.bio?.vi ?? '', bioEn: p.bio?.en ?? '', website: p.website ?? '', logoUrl: p.logoUrl, coverUrl: p.coverUrl,
-    markets: p.markets ?? [], styles: (p.styles ?? []).filter((k) => STYLE_LABEL[k]), open: p.openForSubmissions, links: { ...(p.links ?? {}) } as Record<string, string>,
+    markets: p.markets ?? [], styles: (p.styles ?? []).filter((k) => STYLE_LABEL[k]), open: p.openForSubmissions, links: { ...(p.links ?? {}) },
   });
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    save({
+    void save({
       name: f.name.trim(), type: f.type, bio: { vi: f.bioVi.trim(), en: f.bioEn.trim() || f.bioVi.trim() }, website: f.website.trim(),
       logoUrl: f.logoUrl, coverUrl: f.coverUrl, markets: f.markets, styles: f.styles, openForSubmissions: f.open,
       links: Object.fromEntries(LINKS.map(([k]) => [k, f.links[k]?.trim() || null])),
@@ -163,7 +163,7 @@ function LegalForm({ lang, p, onSaved }: { lang: Lang; p: Profile; onSaved: (p: 
   const max: Record<(typeof keys)[number], number> = { legalName: 160, taxCode: 20, address: 240, email: 200, hotline: 30, zalo: 80, contactName: 80, contactRole: 80 };
   return (
     <Block title={T.bizLegal}>
-      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); save(Object.fromEntries(keys.map((k) => [k, f[k].trim()]))); }}>
+      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); void save(Object.fromEntries(keys.map((k) => [k, f[k].trim()]))); }}>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
           {keys.map((k) => (
             <div key={k} className="flex flex-col gap-2">

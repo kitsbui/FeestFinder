@@ -120,7 +120,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
         <div className="grid grid-cols-3 gap-1.5 desk:max-w-[720px]">
           {photos.map((u) => (
             <div key={u} className="kd-mtile relative">
-              {/* eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage */}
+              { }
               <img src={u} alt="" />
               <button type="button" className="kd-ib kd-ib-sm kd-glass absolute right-1 top-1 text-paper" aria-label={T.removePhoto} onClick={() => setPhotos((xs) => xs.filter((x) => x !== u))}><XIcon size={14} aria-hidden="true" /></button>
             </div>

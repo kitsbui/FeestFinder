@@ -54,7 +54,7 @@ export function Dashboard() {
     setPerf(undefined);
     setPerf(await FF.maybe(FF.get(`/organizer/events/${event.id}/performance?range=${range}`), null));
   }, [event, range]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     FF.maybe(FF.get('/organizer/dashboard?range=30d'), null).then((d: { todo: { eventId: string; text: Pair }[] } | null) => setTodo(d?.todo ?? []));
     FF.maybe(FF.get('/organizer/search'), null).then((d: typeof search) => setSearch(d));

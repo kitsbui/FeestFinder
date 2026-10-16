@@ -55,7 +55,7 @@ export function Art({ family, cover, bone, off, className, style, children, alt 
   return (
     <div className={cx('kd-art', g(family), bone && 'kd-b', off && 'kd-off', className)} style={style}>
       {cover ? (
-        // eslint-disable-next-line @next/next/no-img-element -- covers come from the API's file storage and other sites' links
+         
         <img src={cover} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} />
       ) : null}
       {children}
@@ -103,7 +103,7 @@ export function Avatar({ name, src, size = 40, org, ring, acc, className }: {
       {/* Under the photo, so a link that does not open (ui/covers.tsx) leaves the initials. */}
       <span aria-hidden="true">{initials}</span>
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element -- profile photos are links to other sites
+         
         <img src={src} alt={name} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
       ) : null}
     </span>

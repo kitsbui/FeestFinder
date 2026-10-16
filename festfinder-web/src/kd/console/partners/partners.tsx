@@ -186,7 +186,7 @@ function PartnerForm({ lang, partner, presetHosts, onClose, onSaved }: {
       onClose={onClose}
       footer={<><Button onClick={onClose}>{T.cancel}</Button><span className="flex-1" /><Button tone="acc" disabled={!ok || busy} onClick={save}><CheckIcon size={16} aria-hidden="true" />{editing ? T.save : T.add}</Button></>}
     >
-      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok && !busy) save(); }}>
+      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok && !busy) void save(); }}>
         <Field label={T.name} htmlFor="pf-name">
           <Input id="pf-name" value={f.name} onChange={(e) => upd({ name: e.target.value })} placeholder="Ticketbox" autoFocus={!editing} />
         </Field>

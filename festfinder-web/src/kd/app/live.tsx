@@ -45,8 +45,8 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
     if (out) setD(out);
   }, [ev.id]);
   useEffect(() => {
-    load();
-    const id = setInterval(load, 60_000);
+    void load();
+    const id = setInterval(() => void load(), 60_000);
     const on = () => setOffline(!navigator.onLine);
     on();
     addEventListener('online', on); addEventListener('offline', on);

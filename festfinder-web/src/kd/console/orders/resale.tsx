@@ -53,11 +53,11 @@ export function Resale({ lang, params, set }: { lang: Lang; params: URLSearchPar
       body: b ? <span className="kd-num text-paper">{b.name} · {b.accountNo} · {b.accountName}</span> : T.rPayNoBank,
       confirm: T.rPayConfirm, note: 'required', noteLabel: T.rPayRef,
     });
-    if (ok) run(r.id, () => FF.post(`/admin/resale/${r.id}/payout`, { reference: ok.note }));
+    if (ok) void run(r.id, () => FF.post(`/admin/resale/${r.id}/payout`, { reference: ok.note }));
   };
   const refund = async (r: Sale) => {
     const ok = await ask({ title: fill(T.rRefundAsk, { m: m(r.total), n: r.buyer.name }), body: r.event.title, confirm: T.rRefundConfirm, danger: true });
-    if (ok) run(r.id, () => FF.post(`/admin/resale/${r.id}/refund`));
+    if (ok) void run(r.id, () => FF.post(`/admin/resale/${r.id}/refund`));
   };
   const states: { value: State; label: string }[] = [
     { value: 'due', label: T.rDue }, { value: 'upcoming', label: T.rUpcoming }, { value: 'paid_out', label: T.rPaidOut }, { value: 'failed', label: T.rFailed },

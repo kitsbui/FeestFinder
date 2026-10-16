@@ -49,7 +49,7 @@ export function Gigs() {
     setGigs(g.items); setInq(i.items);
   }, []);
   useEffect(() => {
-    load();
+    void load();
     FF.maybe(FF.get('/meta/discovery'), { cities: [] }).then((m: { cities: City[] }) => setCities(m.cities));
   }, [load]);
 
@@ -93,12 +93,12 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
   const kd = useKd();
   const [apps, setApps] = useState<Application[] | null>(null);
   const loadApps = useCallback(async () => setApps((await FF.maybe(FF.get(`/organizer/gigs/${g.id}/applications`), { items: [] })).items), [g.id]);
-  const act = async (run: () => Promise<unknown>) => { try { await run(); onChange(); loadApps(); } catch (e) { kd.toast(FF.errorText(e, lang)); } };
+  const act = async (run: () => Promise<unknown>) => { try { await run(); onChange(); void loadApps(); } catch (e) { kd.toast(FF.errorText(e, lang)); } };
   const st = { open: { tone: 'ok' as const, label: T.gigOpen }, closed: { tone: 'none' as const, label: T.gigClosed }, filled: { tone: 'warn' as const, label: T.gigFilled } }[g.status];
   const fee = g.feeMin != null || g.feeMax != null ? [g.feeMin, g.feeMax].filter((x): x is number => x != null).map((x) => money(x, g.currency, lang)).join(' – ') : null;
   return (
       <Accordion
-        onToggle={(open) => { if (open && apps === null) loadApps(); }}
+        onToggle={(open) => { if (open && apps === null) void loadApps(); }}
         summary={<span className="flex flex-col gap-0.5"><span className="flex flex-wrap items-center gap-x-3 gap-y-1"><span className="kd-hs">{g.title}</span><Status tone={st.tone}>{st.label}</Status></span><span className="kd-s kd-num">{[dayMonth(g.startsOn, lang), g.cityLabel?.[lang], g.gigType?.label[lang], g.setLength?.label[lang], fee].filter(Boolean).join(' · ')}</span></span>}
         aside={g.applications != null ? fill(T.gigApps, { n: g.applications }) : undefined}
       >

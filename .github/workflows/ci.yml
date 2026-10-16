@@ -77,6 +77,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Type-aware ESLint: bugs are errors; warnings (any, …) may only go down (--max-warnings in package.json).
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
         env:

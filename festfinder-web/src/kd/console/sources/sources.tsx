@@ -167,8 +167,8 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
   const editing = !!source;
   const c = source?.config ?? {};
   const [f, setF] = useState(() => ({
-    adapter: source?.adapter ?? 'website' as Adapter, name: source?.name ?? '', url: source?.url ?? '', city: source?.city ?? '',
-    authority: source?.authority ?? 'official' as Authority, hours: String(Math.round((source?.intervalMinutes ?? 720) / 60)), enabled: source?.enabled ?? true,
+    adapter: source?.adapter ?? 'website', name: source?.name ?? '', url: source?.url ?? '', city: source?.city ?? '',
+    authority: source?.authority ?? 'official', hours: String(Math.round((source?.intervalMinutes ?? 720) / 60)), enabled: source?.enabled ?? true,
     follow: String(c.follow ?? ''), maxPages: String(c.maxPages ?? 20),
     countryCode: String(c.countryCode ?? ''), tmCity: String(c.city ?? ''), pages: String(c.pages ?? 1),
   }));

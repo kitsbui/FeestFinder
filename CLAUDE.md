@@ -30,7 +30,7 @@ npm run test:screens       # Playwright: e2e/next against a production Next buil
 npm run dev                # the API on :4000 against the staging database in .env
 ```
 
-For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. Both copy `public/ui/` first.
+For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. Both copy `public/ui/` first. `npm run lint` there runs type-aware ESLint: no errors, and no more warnings than the budget in its `package.json` (lower it when you fix some). The API has no linter yet: it runs TypeScript 7, which typescript-eslint does not support.
 
 ## Rules this codebase follows
 
@@ -86,6 +86,6 @@ Outside development, the `/ui` URLs in CSS carry `?v=<content hash>`:
 
 ## Checking a change
 
-1. `npm run typecheck`, then the test file for the area, then `npm test`.
+1. `npm run typecheck`, then the test file for the area, then `npm test`; `npm run lint` in `festfinder-web/` when the web changed.
 2. Browser checks: `npm run test:screens` (the checks are in `e2e/next/`).
 3. Add a test next to similar ones: API behaviour in `test/*.test.ts`, a page of the site or a back-office flow in `e2e/next/<area>.spec.ts`.

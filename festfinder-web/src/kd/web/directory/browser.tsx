@@ -112,7 +112,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
     if (sameFilters(at, current.current)) return;
     setF(at);
     setQ(at.q);
-    load(at);
+    void load(at);
   }, [first, start, roles, meta, load, pathname]);
 
   // Back and forward between the directory's own addresses.
@@ -123,7 +123,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
       if (sameFilters(at, current.current)) return;
       setF(at);
       setQ(at.q);
-      load(at);
+      void load(at);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -140,7 +140,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
       if (how === 'push' && pathOf(next) !== location.pathname) history.pushState(null, '', to);
       else history.replaceState(null, '', to);
     }
-    load(next);
+    void load(next);
   };
 
   // A link to another directory address on this page (the breadcrumb, the nav's "Nghệ sĩ") is a

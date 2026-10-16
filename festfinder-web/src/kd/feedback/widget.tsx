@@ -185,7 +185,7 @@ function FeedbackSheet({ onClose }: { onClose: () => void }) {
             <div className="flex flex-wrap items-center gap-2">
               {shots.map((s, i) => (
                 <span key={s.url} className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- a local preview of a screenshot about to be sent */}
+                  { }
                   <img src={s.url} alt="" className="h-16 w-16 rounded-seg object-cover" />
                   <button type="button" className="kd-ib kd-ib-sm kd-glass absolute -top-2 -right-2" aria-label={T.removeShot} onClick={() => setShots((xs) => xs.filter((_, j) => j !== i))}><XIcon size={12} aria-hidden="true" /></button>
                 </span>

@@ -187,7 +187,7 @@ function CollectRow({ lang }: { lang: Lang }) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const load = () => FF.maybe(FF.get('/me/collections?event=' + ev.id), null).then((r: any) => r && setItems(r.items));
-  useEffect(() => { if (kd.user) load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [kd.user]);
+  useEffect(() => { if (kd.user) load();   }, [kd.user]);
   if (!kd.user) {
     return (
       <button type="button" className="kd-btn kd-btn-block" onClick={() => kd.requireSignIn({ kind: 'save', id: ev.id }, t.gateCollect)}>
@@ -291,7 +291,7 @@ export function ReportLink({ lang }: { lang: Lang }) {
       await FF.post('/events/' + ev.id + '/reports', { code, note: note.trim() });
       setOpen(false);
       kd.toast(t.reportSent);
-      reload();
+      void reload();
     } catch (x) { kd.toast(FF.errorText(x, lang)); }
     setBusy(false);
   };
@@ -355,7 +355,7 @@ export function CommunityLine({ lang }: { lang: Lang }) {
       const out = await FF.post('/events/' + ev.id + '/claims', { note: note.trim(), ...(p ? { proofUrl: /^https?:\/\//.test(p) ? p : 'https://' + p } : {}) });
       setOpen(false);
       kd.toast(FF.text(out.message, lang));
-      reload();
+      void reload();
     } catch (x) { setErr(FF.errorText(x, lang)); }
     setBusy(false);
   };

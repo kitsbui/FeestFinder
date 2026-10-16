@@ -98,8 +98,9 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
   useEffect(() => {
     setQueue(readQueue(eventId));
     setOnline(!offline());
-    reload();
+    void reload();
     FF.maybe(FF.get(`/door/events/${eventId}/manifest`), null).then((m: Manifest | null) => { if (m) manifest.current = m; });
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- FF.maybe never rejects
     const tick = setInterval(async () => {
       const m = manifest.current;
       if (!m || offline()) return;
@@ -173,15 +174,15 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
       setQueue((q) => { const next = q.slice(sending.length); writeQueue(eventId, next); return next; });
       setOnline(true);
       kd.toast(FF.text(out.message, lang));
-      reload();
+      void reload();
     } catch { kd.toast(T.notSynced); }
     setSyncing(false);
   }, [T.notSynced, eventId, kd, lang, queue, reload, syncing]);
 
   // Back online with scans on the device: send them.
-  useEffect(() => { if (online && queue.length) sync(); }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (online && queue.length) void sync(); }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const submit = (e: FormEvent) => { e.preventDefault(); const c = code; setCode(''); scan(c); field.current?.focus(); };
+  const submit = (e: FormEvent) => { e.preventDefault(); const c = code; setCode(''); void scan(c); field.current?.focus(); };
   const R = result ? {
     valid: { bg: 'bg-ok', icon: <CheckIcon size={26} weight="bold" aria-hidden="true" />, shape: 'rounded-full', color: 'text-ok', title: T.rValid },
     duplicate: { bg: 'bg-warn', icon: <WarningIcon size={26} weight="bold" aria-hidden="true" />, shape: 'rounded-xl', color: 'text-warn', title: T.rUsed },
@@ -254,7 +255,7 @@ function Viewfinder({ lang, onCode }: { lang: Lang; onCode: (code: string) => vo
   useEffect(() => {
     if (!on) return;
     let stream: MediaStream | null = null, stop = false, timer = 0;
-    (async () => {
+    void (async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
         if (stop || !video.current) return;
@@ -272,9 +273,9 @@ function Viewfinder({ lang, onCode }: { lang: Lang; onCode: (code: string) => vo
               onCode(hit.rawValue);
             }
           } catch { /* a frame it could not read */ }
-          timer = window.setTimeout(look, 250);
+          timer = window.setTimeout(() => void look(), 250);
         };
-        look();
+        void look();
       } catch { setBlocked(true); setOn(false); }
     })();
     return () => { stop = true; clearTimeout(timer); stream?.getTracks().forEach((t) => t.stop()); };

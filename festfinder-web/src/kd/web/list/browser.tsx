@@ -153,7 +153,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
     setF(next);
     setReady(true);
     const same = JSON.stringify({ ...next, view: 'table', bbox: null }) === JSON.stringify({ ...DEFAULT });
-    if (!same || next.view === 'map') load(next);
+    if (!same || next.view === 'map') void load(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -164,7 +164,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
   // Every minute while the list is on screen (not more pages: they would be dropped).
   useEffect(() => {
     if (!ready || f.view === 'map') return;
-    const t = setInterval(() => { if (!page.nextCursor || rowsRef.current.length <= 60) load(f, 'refresh'); }, 60_000);
+    const t = setInterval(() => { if (!page.nextCursor || rowsRef.current.length <= 60) void load(f, 'refresh'); }, 60_000);
     return () => clearInterval(t);
   }, [ready, f, page.nextCursor, load]);
 
@@ -180,7 +180,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
     if (patch.view && patch.view !== 'map') next.bbox = null;
     setF(next);
     if ('view' in patch && Object.keys(patch).length === 1 && patch.view !== 'map' && f.view !== 'map') return;
-    load(next);
+    void load(next);
   };
 
   const sorted = useMemo(() => {

@@ -259,7 +259,7 @@ export function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['
       await FF.patch('/me', { name: name.trim(), city: city.trim(), ...(photo !== me.photoUrl ? { photoUrl: photo } : {}) });
       kd.toast(T.saved2);
       onSaved({ name: name.trim(), city: city.trim() || null, photoUrl: photo });
-      kd.refresh();
+      void kd.refresh();
     } catch (x) { setErr(FF.errorText(x, lang)); }
   };
   return (

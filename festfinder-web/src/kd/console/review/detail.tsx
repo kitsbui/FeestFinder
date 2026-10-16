@@ -65,7 +65,7 @@ function Pic({ src, label, broken, none, ok, className }: { src: string | null; 
     <figure className="flex flex-col gap-1.5">
       <div className={cx('overflow-hidden rounded-lg bg-white/[0.04] shadow-[inset_0_0_0_1px_var(--color-line)]', className)}>
         {src && !bad ? (
-          // eslint-disable-next-line @next/next/no-img-element -- uploads and organisers' own image hosts
+           
           <img src={src} alt={label} className="size-full object-cover" onError={() => setBad(true)} />
         ) : null}
       </div>
@@ -218,7 +218,7 @@ export function Detail({ lang, id, item, reasons, onDecide, onSendBack, onChange
                 )],
                 ...(!v?.resolved ? [[R.linkVenue, (
                   <span className="flex flex-col gap-2">
-                    <AsyncPick label={R.linkVenue} placeholder={R.linkVenuePh} load={loadVenues} onPick={(p) => { if (p) quick({ venueId: p.value }, fill(R.linked, { n: p.label })); }} />
+                    <AsyncPick label={R.linkVenue} placeholder={R.linkVenuePh} load={loadVenues} onPick={(p) => { if (p) void quick({ venueId: p.value }, fill(R.linked, { n: p.label })); }} />
                     <LinkButton size="sm" className="self-start" href={`/console/venues${qs({ new: v?.name ?? '', address: v?.address ?? '', area: v?.area ?? '', event: id })}`}>{R.newVenue}</LinkButton>
                   </span>
                 )] as [ReactNode, ReactNode]] : []),
@@ -328,7 +328,7 @@ function Thread({ lang, eventId, n }: { lang: Lang; eventId: string; n: number }
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => setData(await FF.maybe(FF.get(`/admin/listings/${eventId}/thread`), { messages: [], quickAsks: [] })), [eventId]);
-  useEffect(() => { if (n) load(); }, [n, load]);
+  useEffect(() => { if (n) void load(); }, [n, load]);
   const send = async () => {
     if (!body.trim()) return;
     setBusy(true);
@@ -340,7 +340,7 @@ function Thread({ lang, eventId, n }: { lang: Lang; eventId: string; n: number }
     } catch (e) { kd.toast(FF.errorText(e, lang)); } finally { setBusy(false); }
   };
   return (
-    <Accordion small open={n > 0 || undefined} summary={T.thread} aside={(data?.messages.length ?? n) || null} onToggle={(open) => { if (open && !data && !n) load(); }}>
+    <Accordion small open={n > 0 || undefined} summary={T.thread} aside={(data?.messages.length ?? n) || null} onToggle={(open) => { if (open && !data && !n) void load(); }}>
       <div className="flex flex-col gap-3">
         {data && !data.messages.length ? <span className="kd-s">{R.noMsgs}</span> : null}
         {(data?.messages ?? []).map((m) => (

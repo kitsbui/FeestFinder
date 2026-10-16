@@ -161,7 +161,7 @@ function ReportDrawer({ lang, id, onClose }: { lang: Lang; id: string; onClose: 
               <div className="flex flex-wrap gap-2">
                 {r.attachments.map((a) => (
                   <a key={a.n} href={a.url} target="_blank" rel="noopener">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- screenshots are served to the team only */}
+                    { }
                     <img src={a.url} alt={`${T.shots} ${a.n}`} className="h-40 w-auto rounded-seg object-contain shadow-[inset_0_0_0_1px_var(--color-line)]" />
                   </a>
                 ))}

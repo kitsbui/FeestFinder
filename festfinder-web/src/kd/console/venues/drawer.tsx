@@ -44,12 +44,12 @@ export function VenueDrawer({ lang, venue, preset, onClose, onSaved }: {
   const lat = f.lat.trim() === '' ? null : Number(f.lat), lng = f.lng.trim() === '' ? null : Number(f.lng);
   const has = lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng);
   const bbox = (cities.find((c) => c.value === f.city) as { bbox?: number[] } | undefined)?.bbox;
-  const coordsOk = has && inBox(lat!, lng!, bbox);
+  const coordsOk = has && inBox(lat, lng, bbox);
   const ok = f.name.trim().length >= 2 && f.address.trim().length >= 3 && f.area.trim().length >= 2 && !!f.city && coordsOk;
   // The map follows the pin once typing pauses.
   const [shown, setShown] = useState<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
-    const t = setTimeout(() => setShown(has && onEarth(lat!, lng!) ? { lat: lat!, lng: lng! } : null), 400);
+    const t = setTimeout(() => setShown(has && onEarth(lat, lng) ? { lat: lat, lng: lng } : null), 400);
     return () => clearTimeout(t);
   }, [has, lat, lng]);
 
@@ -61,7 +61,7 @@ export function VenueDrawer({ lang, venue, preset, onClose, onSaved }: {
   const save = async () => {
     setBusy(true);
     const body = { name: f.name.trim(), address: f.address.trim(), area: f.area.trim(), city: f.city, lat, lng, verified: f.verified, permitOnFile: f.permitOnFile };
-    const out = await act(kd, lang, () => (editing ? FF.patch('/admin/venues/' + venue!.id, body) : FF.post('/admin/venues', body)));
+    const out = await act(kd, lang, () => (editing ? FF.patch('/admin/venues/' + venue.id, body) : FF.post('/admin/venues', body)));
     setBusy(false);
     if (out) onSaved(out as Venue);
   };
@@ -70,7 +70,7 @@ export function VenueDrawer({ lang, venue, preset, onClose, onSaved }: {
 
   return (
     <Drawer
-      title={editing ? venue!.name : T.addTitle}
+      title={editing ? venue.name : T.addTitle}
       sub={preset?.eventId ? fill(T.linksTo, { e: preset.eventTitle || T.theListing }) : null}
       onClose={onClose}
       footer={(
@@ -80,7 +80,7 @@ export function VenueDrawer({ lang, venue, preset, onClose, onSaved }: {
         </>
       )}
     >
-      <form id="venue-form" className="grid gap-4 tab:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (ok) save(); }}>
+      <form id="venue-form" className="grid gap-4 tab:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (ok) void save(); }}>
         <div className="tab:col-span-2"><Field label={T.name} htmlFor="v-name"><Input id="v-name" required minLength={2} maxLength={160} autoFocus={!editing} value={f.name} onChange={set('name')} placeholder={T.namePh} /></Field></div>
         <div className="tab:col-span-2"><Field label={T.address} htmlFor="v-address"><Input id="v-address" required minLength={3} maxLength={240} value={f.address} onChange={set('address')} placeholder={T.addressPh} /></Field></div>
         <Field label={T.city} htmlFor="v-city">
