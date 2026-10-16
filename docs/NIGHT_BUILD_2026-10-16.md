@@ -16,6 +16,7 @@ Plan: `docs/NIGHT_BUILD_PLAN_2026-10-16.md` · Xuất phát: main `cebeb3d` · N
 | N7b Bắt tay lineup ↔ hồ sơ, phần API | night/2026-10-16-N7b | API 383 (382 qua, 1 bỏ qua) · lineup.test 6/6 · artist/directory/studio specs 33/33 | Hồ sơ có chủ chỉ hiện show đã xác nhận. Ba màn hình (ô lineup của NTC, Lịch nghệ sĩ có Xác nhận/Không phải tôi, dấu xác nhận trên trang sự kiện) để ban ngày. |
 | N9 Mười lỗi nhỏ (10 commit) | night/2026-10-16-N9 | API 384 (383 qua, 1 bỏ qua) · **screens 218/218** | 9.1 Bận/Rảnh · 9.2 link thông báo kế hoạch · 9.3 focus trong sheet · 9.4 lịch đã báo đang duyệt không link 404 · 9.5 "Mời nghệ sĩ" chỉ nghệ sĩ có chủ · 9.6 wizard hết ghi "Nháp" sau khi gửi · 9.7 gợi ý địa điểm cùng thành phố · 9.8 `/list` trên điện thoại mở dạng lưới · 9.9 menu Dòng nhạc dẫn tới `/list?style=` · 9.10 hàng hướng dẫn AI chỉ khi chạy được. |
 | N10 ESLint với ngân sách | night/2026-10-16-N10 | lint 0 lỗi / 56 cảnh báo (ngân sách) · screens 218/218 | **Chỉ web.** API dùng TypeScript 7 nên typescript-eslint không chạy được; ghi vào TECH_DEBT #15 với hai hướng (oxlint type-aware, hoặc chờ). 135 promise không ai chờ được đánh dấu `void` (hành vi không đổi). |
+| N11 Lấp đầy bề ngang, không cuộn ngang | `133e747` | **layout.spec 10/10** (5 vai × 390/1440) · screens 228 (1 bỏ qua) · lint 0 lỗi / 56 | Rail back-office gập thành thanh menu dưới 900px (`ui/rail.tsx`); bảng co cột, thành thẻ khi hẹp hơn 640px; timetable trên điện thoại liệt kê set theo sân khấu; ô hạng vé và số liệu dự án xuống dòng. Chỉ tabs, hàng chip và `data-scroll-x` được cuộn ngang, và mờ dần ở mép. Lần chạy đầu: 7/10 vai đỏ. |
 
 ## Dùng mặc định
 - D4: bản tạm (tin vẫn `live`, cờ chờ duyệt), theo plan.
@@ -25,3 +26,18 @@ Plan: `docs/NIGHT_BUILD_PLAN_2026-10-16.md` · Xuất phát: main `cebeb3d` · N
 - N10 phía API: không có linter type-aware cho TypeScript 7; cần chủ SP chọn hướng.
 
 ## Kết quả cuối (N12)
+Trên `night/2026-10-16`, 17/10:
+- typecheck API + e2e sạch · web `tsc` sạch
+- API 384 test: 383 qua, 1 bỏ qua, 0 lỗi
+- screens 229: 228 qua, 1 bỏ qua (phân trang thư mục nghệ sĩ, chỉ chạy khi demo có hơn 24 nghệ sĩ)
+- lint web: 0 lỗi, 56 cảnh báo (đúng ngân sách)
+- Đã đẩy `night/2026-10-16` lên origin. `main` không đổi, không deploy.
+- Plan đêm được chép vào `docs/NIGHT_BUILD_PLAN_2026-10-16.md` (trước đó chỉ nằm ngoài repo).
+
+## Sáng hôm sau (chủ sản phẩm)
+1. Đọc bảng trên.
+2. `preview_start festfinder-preview`; thu cửa sổ về cỡ điện thoại rồi kéo rộng: không trang nào cuộn ngang, rail back-office gập thành thanh menu.
+3. Bốn luồng: mua vé (không phí) · sửa tin đang bán (trang vẫn mở, Console thấy "Bản sửa · vẫn đang đăng") · /a và /a/radar · trang nghệ sĩ có chủ và trang Radar.
+4. Việc của chủ SP: xoá `SERVICE_FEE_PCT` trên Vercel nếu có; sau khi ship, `curl -sI https://feestfinder.com/events?limit=5` hai lần để xem `x-vercel-cache: HIT`; chọn hướng linter cho API (TECH_DEBT #15); xác nhận "owned" gồm cả hồ sơ đội đã xác minh.
+5. Ổn: "commit all merge main redeploy". Một việc hỏng: "revert N<k>", phần còn lại vẫn ship.
+6. Ban ngày: ba màn của bắt tay lineup, bộ lọc Có chủ · Chưa nhận · Radar trong `/console/artists`.
