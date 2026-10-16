@@ -267,3 +267,15 @@ test.describe('scrollbars', () => {
     expect(await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('ff-scrollbars'), { x: at.x + at.width - 3, y: at.y + 5 })).toBe(true);
   });
 });
+
+test.describe('sheets', () => {
+  test('a sheet that asks for text puts the cursor in its field, so typing goes there at once', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+    await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).first().click();
+    const dialog = page.getByRole('dialog', { name: 'Tìm kiếm' });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.type('ravo');
+    await expect(dialog.getByRole('searchbox')).toHaveValue('ravo');
+  });
+});
