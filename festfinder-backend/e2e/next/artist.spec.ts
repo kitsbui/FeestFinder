@@ -56,15 +56,15 @@ test.describe('the artist page', () => {
     await expect(page.getByRole('tabpanel', { name: 'Đã diễn' }).getByRole('link', { name: /Ravolution Music Festival 2025/ })).toBeVisible();
   });
 
-  test('following asks for sign-in, then follows the name and moves the count', async ({ page }) => {
-    await open(page, '/a/hoaprox');
+  test('following an artist who runs their profile asks for sign-in, then follows and moves the count', async ({ page }) => {
+    await open(page, '/a/slimv');
     await page.getByRole('button', { name: 'Theo dõi', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();
     await page.keyboard.press('Escape');
 
     await signInWith(page, ATTENDEE);
-    await page.request.delete('/me/follows/artists/Hoaprox');
-    await open(page, '/a/hoaprox');
+    await page.request.delete('/me/follows/artists/slimv');
+    await open(page, '/a/slimv');
     const followers = page.locator('.kd-stat').filter({ hasText: 'Người theo dõi' }).locator('.kd-v');
     const n = async () => Number((await followers.innerText()).replace(/\D/g, ''));
     await expect(page.getByRole('button', { name: 'Theo dõi', exact: true })).toHaveAttribute('aria-pressed', 'false');
@@ -74,9 +74,29 @@ test.describe('the artist page', () => {
     await page.getByRole('button', { name: 'Theo dõi', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Đang theo dõi' })).toHaveAttribute('aria-pressed', 'true');
     await expect.poll(n).toBe(before + 1);
-    await expect.poll(async () => (await (await page.request.get('/artists/hoaprox')).json()).artist.following).toBe(true);
+    await expect.poll(async () => (await (await page.request.get('/artists/slimv')).json()).artist.following).toBe(true);
     await page.getByRole('button', { name: 'Đang theo dõi' }).click();
     await expect.poll(n).toBe(before);
+  });
+
+  test('a profile nobody runs: "Đây là tôi" to claim it, "Nhắc khi có show" instead of following', async ({ page }) => {
+    const problems = await open(page, '/a/hoaprox');
+    await expect(page.getByText('Chưa có người quản lý', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Theo dõi', exact: true })).toHaveCount(0);
+    await expect(page.locator('.kd-stat').filter({ hasText: 'Người theo dõi' })).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Đường dẫn' }).getByRole('link', { name: 'Nghệ sĩ', exact: true })).toHaveAttribute('href', '/a');
+    await page.getByRole('button', { name: 'Đây là tôi' }).click();
+    await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await signInWith(page, ATTENDEE);
+    await open(page, '/a/hoaprox');
+    await page.getByRole('button', { name: 'Nhắc khi có show' }).click();
+    await expect(page.getByRole('button', { name: 'Sẽ nhắc bạn' })).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(async () => (await (await page.request.get('/me/alert')).json()).artists).toContain('Hoaprox');
+    await page.getByRole('button', { name: 'Sẽ nhắc bạn' }).click();
+    await expect.poll(async () => (await (await page.request.get('/me/alert')).json()).artists).not.toContain('Hoaprox');
+    expect(problems).toEqual([]);
   });
 
   test('an artist’s own profile: their bio, links, booking and free dates, and the edit link only for them', async ({ page, browser }) => {
@@ -103,7 +123,8 @@ test.describe('the artist page', () => {
     await expect(page.getByText('01/03 – 03/03')).toBeVisible();
     await expect(page.getByText('private note')).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveAttribute('href', '/studio/artist');
-    await expect(page.getByRole('button', { name: 'Bạn là nghệ sĩ này?' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Theo dõi', exact: true }), 'nobody follows their own page').toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Đây là tôi' })).toHaveCount(0);
 
     // Anyone else sees no edit link.
     const visitor = await (await browser.newContext()).newPage();

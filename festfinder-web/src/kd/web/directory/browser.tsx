@@ -16,7 +16,7 @@ import { fill, pick, type Lang, type Pair } from '../../copy';
 import { cx } from '../../cx';
 import { count } from '../../format';
 import { familyOf, type Family } from '../../genre';
-import { inLang } from '../../link';
+import { inLang, KdLink } from '../../link';
 import { useKd } from '../../runtime';
 import { Button, Chip } from '../../ui/actions';
 import { Input } from '../../ui/forms';
@@ -24,7 +24,6 @@ import { Menu, MenuItem } from '../../ui/menu';
 import { Card as Panel, Marker } from '../../ui/parts';
 import { Crumbs, WebFooter } from '../chrome';
 import { WEB } from '../copy';
-import { OriginTabs } from '../../ui/origin';
 import { ArtistCard } from './card';
 import { DIR } from './copy';
 import {
@@ -35,9 +34,9 @@ import {
 const text = (v: Pair | null | undefined, lang: Lang) => (v ? v[lang] || v.vi || v.en || '' : '');
 
 /** A directory address: /a, /a/style/<style> or /a/city/<city>. */
-const DIRECTORY_PATH = /^\/a(\/(style|city)\/[^/]+)?\/?$/;
+const DIRECTORY_PATH = /^\/a(\/(style|city)\/[^/]+|\/radar)?\/?$/;
 
-type List = Pick<DirPage, 'items' | 'total' | 'nextOffset' | 'origins'>;
+type List = Pick<DirPage, 'items' | 'total' | 'nextOffset' | 'kinds'>;
 
 export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   lang: Lang;
@@ -55,10 +54,10 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   const W = pick(WEB, lang);
   const { toast } = useKd();
   const roles = useMemo(() => first.filters?.roles ?? [], [first.filters]);
-  const initial = useMemo(() => fromScope({ style: scope.style, city: scope.city }), [scope.style, scope.city]);
+  const initial = useMemo(() => fromScope({ style: scope.style, city: scope.city, unclaimed: scope.unclaimed }), [scope.style, scope.city, scope.unclaimed]);
   const [f, setF] = useState<Filters>(start);
   const [q, setQ] = useState(start.q);
-  const [list, setList] = useState<List>({ items: first.items, total: first.total, nextOffset: first.nextOffset, origins: first.origins });
+  const [list, setList] = useState<List>({ items: first.items, total: first.total, nextOffset: first.nextOffset, kinds: first.kinds });
   const [busy, setBusy] = useState(false);
   const seq = useRef(0);
   const current = useRef(f);
@@ -79,9 +78,9 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
         offset = 0;
       }
       setList((cur) => {
-        if (!offset) return { items: out.items, total: out.total, nextOffset: out.nextOffset, origins: out.origins };
+        if (!offset) return { items: out.items, total: out.total, nextOffset: out.nextOffset, kinds: out.kinds };
         const known = new Set(cur.items.map((a) => a.id));
-        return { items: [...cur.items, ...out.items.filter((a) => !known.has(a.id))], total: out.total, nextOffset: out.nextOffset, origins: out.origins };
+        return { items: [...cur.items, ...out.items.filter((a) => !known.has(a.id))], total: out.total, nextOffset: out.nextOffset, kinds: out.kinds };
       });
     } catch (e) {
       if (n === seq.current) toast(FF.errorText(e, lang));
@@ -107,7 +106,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
       setF(at);
       setQ(at.q);
       setBusy(false);
-      setList({ items: first.items, total: first.total, nextOffset: first.nextOffset, origins: first.origins });
+      setList({ items: first.items, total: first.total, nextOffset: first.nextOffset, kinds: first.kinds });
       return;
     }
     if (sameFilters(at, current.current)) return;
@@ -240,7 +239,12 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
           </form>
         </div>
 
-        <OriginTabs lang={lang} value={f.origin || null} onChange={(v) => change({ origin: v ?? '' })} counts={list.origins ?? null} />
+        {/* The directory is the artists who run their profile; the names nobody runs yet wait apart (D13). */}
+        {f.unclaimed ? (
+          <KdLink href={inLang('/a', lang)} className="kd-more self-start">{T.toDirectory}</KdLink>
+        ) : list.kinds && list.kinds.unclaimed + list.kinds.radar > 0 ? (
+          <KdLink href={inLang('/a/radar', lang)} className="kd-more self-start">{fill(T.toUnclaimed, { n: count(list.kinds.unclaimed + list.kinds.radar, lang) })}</KdLink>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label={T.filters}>
           {roles.length ? (
@@ -295,7 +299,10 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
         ) : (
           <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">
             <span className="kd-h">{T.empty}</span>
-            {filtered ? <Button onClick={clear}>{T.clear}</Button> : null}
+            {/* A name searched in the directory may be one nobody runs yet. */}
+            {!f.unclaimed && f.q && list.kinds && list.kinds.unclaimed + list.kinds.radar > 0 ? (
+              <KdLink href={addressOf({ ...f, unclaimed: true }, lang)} className="kd-more">{fill(T.sameNames, { n: count(list.kinds.unclaimed + list.kinds.radar, lang) })}</KdLink>
+            ) : filtered ? <Button onClick={clear}>{T.clear}</Button> : null}
           </Panel>
         )}
         {list.nextOffset != null && list.items.length ? (

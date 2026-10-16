@@ -2,6 +2,8 @@
  * The artist directory's data and its filters, shared by the server page and the browser.
  * The address carries the filters: one style alone is /a/style/<style>, one city alone
  * /a/city/<city> (the pages search engines see), anything more is /a with a query.
+ * The directory lists the artists who run their profile (D13); every other name events show,
+ * from a lineup or from Radar, waits at /a/radar ("Chưa có người quản lý"), with the same filters.
  */
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { DIR } from './copy';
@@ -27,6 +29,10 @@ export interface DirArtist {
   nextShow: { slug: string; title: string; startsOn: string; city: string | null; cityLabel: Pair | null } | null;
   /** 'radar': known only from events FeestFinder Radar found, and nobody runs the profile. */
   origin?: 'posted' | 'radar';
+  /** 'owned': the artist runs it (or the team verified it). The others are names nobody runs yet. */
+  kind?: 'owned' | 'unclaimed' | 'radar';
+  /** Where an unclaimed name was seen: the latest event that lists it. */
+  source?: { kind: 'lineup' | 'radar'; event: { slug: string; title: string } } | null;
 }
 
 export interface DirPage {
@@ -34,8 +40,8 @@ export interface DirPage {
   total: number;
   nextOffset: number | null;
   filters?: { roles: Keyed[] };
-  /** How many of each kind under the other filters, for the tabs. */
-  origins?: { posted: number; radar: number };
+  /** How many of each kind under the other filters. */
+  kinds?: { owned: number; unclaimed: number; radar: number };
 }
 
 /** What /meta/discovery gives the filters: the listed cities and the music styles. */
@@ -53,24 +59,24 @@ export interface Filters {
   booking: boolean;
   /** With a show still to come. */
   soon: boolean;
-  /** Posted, or found by FeestFinder Radar; '' is both. */
-  origin: '' | 'posted' | 'radar';
+  /** The names nobody runs yet (/a/radar) instead of the directory. */
+  unclaimed: boolean;
 }
 
-export type Scope = { style?: string; city?: string };
+export type Scope = { style?: string; city?: string; unclaimed?: boolean };
 
-export const NO_FILTERS: Filters = { q: '', role: '', style: '', city: '', booking: false, soon: false, origin: '' };
+export const NO_FILTERS: Filters = { q: '', role: '', style: '', city: '', booking: false, soon: false, unclaimed: false };
 
 export const PAGE = 24;
 
 export const scopeKey = (s: Scope) => (s.style ? `style:${s.style}` : s.city ? `city:${s.city}` : 'all');
 
-export const fromScope = (s: Scope): Filters => ({ ...NO_FILTERS, style: s.style ?? '', city: s.city ?? '' });
+export const fromScope = (s: Scope): Filters => ({ ...NO_FILTERS, style: s.style ?? '', city: s.city ?? '', unclaimed: !!s.unclaimed });
 
 export const sameFilters = (a: Filters, b: Filters) =>
-  a.q === b.q && a.role === b.role && a.style === b.style && a.city === b.city && a.booking === b.booking && a.soon === b.soon && a.origin === b.origin;
+  a.q === b.q && a.role === b.role && a.style === b.style && a.city === b.city && a.booking === b.booking && a.soon === b.soon && a.unclaimed === b.unclaimed;
 
-export const isFiltered = (f: Filters) => !sameFilters(f, NO_FILTERS);
+export const isFiltered = (f: Filters) => !sameFilters({ ...f, unclaimed: false }, NO_FILTERS);
 
 /** The API's query for one page of the list. */
 export function apiQuery(f: Filters, offset = 0, limit = PAGE): string {
@@ -82,13 +88,14 @@ export function apiQuery(f: Filters, offset = 0, limit = PAGE): string {
   if (f.city) q.set('city', f.city);
   if (f.booking) q.set('booking', 'available,limited');
   if (f.soon) q.set('upcoming', '1');
-  if (f.origin) q.set('origin', f.origin);
+  if (f.unclaimed) q.set('kind', 'unclaimed');
   return q.toString();
 }
 
 /** The directory page's own path for these filters: a style or a city alone has one. */
 export function pathOf(f: Filters): string {
-  const only = !f.q && !f.role && !f.booking && !f.soon && !f.origin;
+  if (f.unclaimed) return '/a/radar';
+  const only = !f.q && !f.role && !f.booking && !f.soon;
   if (only && f.style && !f.city) return '/a/style/' + encodeURIComponent(f.style);
   if (only && f.city && !f.style) return '/a/city/' + encodeURIComponent(f.city);
   return '/a';
@@ -98,14 +105,13 @@ export function pathOf(f: Filters): string {
 export function addressOf(f: Filters, lang: Lang): string {
   const path = pathOf(f);
   const q = new URLSearchParams();
-  if (path === '/a') {
+  if (path === '/a' || path === '/a/radar') {
     if (f.q) q.set('q', f.q);
     if (f.role) q.set('role', f.role);
     if (f.style) q.set('style', f.style);
     if (f.city) q.set('city', f.city);
     if (f.booking) q.set('booking', '1');
     if (f.soon) q.set('upcoming', '1');
-    if (f.origin) q.set('origin', f.origin);
   }
   if (lang === 'en') q.set('lang', 'en');
   const s = q.toString();
@@ -126,6 +132,7 @@ export function readAddress(pathname: string, search: string, known: { roles: Ke
   // ['', 'a', 'style' | 'city', '<slug>']
   if (at[1] === 'a' && at[2] === 'style' && at[3]) f.style = decodeURIComponent(at[3]);
   if (at[1] === 'a' && at[2] === 'city' && at[3]) f.city = decodeURIComponent(at[3]);
+  if (at[1] === 'a' && at[2] === 'radar') f.unclaimed = true;
   const q = new URLSearchParams(search);
   f.q = (q.get('q') ?? '').trim().slice(0, 80);
   const role = q.get('role');
@@ -136,8 +143,6 @@ export function readAddress(pathname: string, search: string, known: { roles: Ke
   if (city && known.meta.cities.some((c) => c.slug === city)) f.city = city;
   f.booking = q.get('booking') === '1';
   f.soon = q.get('upcoming') === '1';
-  const origin = q.get('origin');
-  if (origin === 'posted' || origin === 'radar') f.origin = origin;
   return f;
 }
 
@@ -148,6 +153,7 @@ export function titleOf(f: Filters, lang: Lang, meta: DirMeta): string {
   const T = pick(DIR, lang);
   const s = f.style ? text(meta.styles.find((x) => x.key === f.style)?.label, lang) || f.style : '';
   const c = f.city ? text(meta.cities.find((x) => x.slug === f.city)?.name, lang) || f.city : '';
+  if (f.unclaimed) return T.titleUnclaimed;
   if (s && c) return fill(T.titleBoth, { s, c });
   if (s) return fill(T.titleStyle, { s });
   if (c) return fill(T.titleCity, { c });

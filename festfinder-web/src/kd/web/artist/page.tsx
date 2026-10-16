@@ -25,7 +25,7 @@ import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
 import { ArtistMixes, type Mix } from './mixes';
-import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, ShareProfile, type Source } from '../profile/parts';
+import { ClaimButton, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
 
 const enc = encodeURIComponent;
 
@@ -42,6 +42,8 @@ export interface ArtistData {
     links: ProfileLink[]; openToBrands: boolean; verified: boolean; claimed: boolean;
     /** 'radar': known only from events FeestFinder Radar found, and nobody runs the profile. */
     origin?: 'posted' | 'radar';
+    /** 'owned': the artist runs it (or the team verified it); otherwise a name nobody runs yet (D13). */
+    kind?: 'owned' | 'unclaimed' | 'radar';
     cities: { slug: string; label: Pair | null }[];
     followers: number;
   };
@@ -79,6 +81,8 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
   const T = pick(PROFILE, lang);
   const W = pick(WEB, lang);
   const a = data.artist;
+  const unclaimed = !!a.kind && a.kind !== 'owned';
+  const P = pick(PROFILE, lang);
   const rel = data.relationships;
   const source: Source = { kind: 'artist', slug: a.slug };
   // The families of the nights they play, most first; their own styles say it when no show does.
@@ -170,17 +174,28 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                     {families.map((f) => <span key={f} className={cx('kd-tag', g(f))}><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[f][lang]}</span>)}
                     {a.booking ? <Status tone={BOOKING_TONE[a.booking.key] ?? 'none'}>{text(a.booking.label, lang)}</Status> : null}
                     {a.origin === 'radar' ? <RadarTag lang={lang} /> : null}
+                    {unclaimed ? <span className="kd-tag">{P.unclaimed}</span> : null}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <FollowButton lang={lang} kind="art" id={a.name} name={a.name} source={source} />
-                <OwnerLink lang={lang} source={source} href="/studio/artist" />
+                {unclaimed ? (
+                  // Nobody runs this profile: claiming it is the action, and a fan asks to be told instead of following.
+                  <>
+                    <ClaimButton lang={lang} kind="artist" name={a.name} />
+                    <RemindButton lang={lang} name={a.name} />
+                  </>
+                ) : (
+                  <>
+                    <FollowButton lang={lang} kind="art" id={a.id} name={a.name} source={source} />
+                    <OwnerLink lang={lang} source={source} href="/studio/artist" />
+                  </>
+                )}
                 <ShareProfile lang={lang} title={a.name} />
               </div>
             </div>
             <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
-              <FollowersStat lang={lang} kind="art" id={a.name} source={source} served={a.followers} />
+              {unclaimed ? null : <FollowersStat lang={lang} kind="art" id={a.id} source={source} served={a.followers} />}
               <Stat value={count(data.upcoming.length, lang)} label={T.shows} />
               {a.cities.length ? <Stat value={count(a.cities.length, lang)} label={T.cities} /> : null}
               {data.past.length ? <Stat value={data.past.length >= 20 ? '20+' : count(data.past.length, lang)} label={T.playedN} /> : null}
@@ -310,9 +325,6 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
 
           <div className="mt-auto">
             <WebFooter lang={lang} otherLang={otherLang} />
-            <div className="kd-wrap -mt-4 flex flex-wrap gap-1 pb-6">
-              {!a.claimed ? <ClaimLink lang={lang} kind="artist" name={a.name} source={source} /> : null}
-            </div>
           </div>
         </div>
       </KdProvider>

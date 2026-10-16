@@ -11,7 +11,9 @@ import { api, apiOr, jsonLdHtml, type DirectorySeo, type Lang } from '@/lib/api'
 import { loadDir } from '@/components/seo-meta';
 import { KdProvider } from '../../runtime';
 import { WebNav } from '../chrome';
+import { pick } from '../../copy';
 import { DirectoryBrowser } from './browser';
+import { DIR } from './copy';
 import {
   apiQuery, fromScope, queryOf, readAddress, sameFilters, scopeKey,
   type DirMeta, type DirPage, type Filters, type Scope,
@@ -37,11 +39,11 @@ export async function loadDirectory(scope: Scope, lang: Lang, search?: Search) {
   let start: Filters = fromScope(scope);
   let first = all;
   if (search) {
-    const at = readAddress('/a', queryOf(search), { roles, meta: lists });
+    const at = readAddress(scope.unclaimed ? '/a/radar' : '/a', queryOf(search), { roles, meta: lists });
     const out = sameFilters(at, start) ? null : await api<DirPage>('/artists?' + apiQuery(at), { lang });
     if (out) { start = at; first = out; }
   }
-  const page: DirPage = { items: first.items, total: first.total, nextOffset: first.nextOffset, filters: { roles }, origins: first.origins };
+  const page: DirPage = { items: first.items, total: first.total, nextOffset: first.nextOffset, filters: { roles }, kinds: first.kinds };
   return { seo, first: page, meta: lists, start };
 }
 
@@ -52,11 +54,12 @@ export function DirectoryPage({ data, scope, lang }: {
 }) {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(data.seo.jsonLd) }} />
+      {/* /a/radar is not the directory search engines read: no structured data there. */}
+      {scope.unclaimed ? null : <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(data.seo.jsonLd) }} />}
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="artists" />
-          <DirectoryBrowser lang={lang} scope={scope} h1={data.seo.page.h1} first={data.first} start={data.start} meta={data.meta} />
+          <DirectoryBrowser lang={lang} scope={scope} h1={scope.unclaimed ? pick(DIR, lang).titleUnclaimed : data.seo.page.h1} first={data.first} start={data.start} meta={data.meta} />
         </div>
       </KdProvider>
     </>

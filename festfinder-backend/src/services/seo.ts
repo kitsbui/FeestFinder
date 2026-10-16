@@ -686,7 +686,7 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
   const image = cover
     ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
     : { url: `${base}/og/v1/${toneOf(genres[0])}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
-  const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: a.name, path: inLang(path, lang) }];
+  const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: lang === 'vi' ? 'Nghệ sĩ' : 'Artists', path: inLang('/a', lang) }, { name: a.name, path: inLang(path, lang) }];
   const facts: Fact[] = [
     { label: t('styles', lang), value: what },
     { label: t('upcoming', lang), value: String(upcoming.length) },

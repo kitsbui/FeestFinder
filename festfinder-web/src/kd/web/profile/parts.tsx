@@ -69,6 +69,8 @@ export function FollowButton({ lang, kind, id, name, source, className }: {
   const T = pick(PROFILE, lang);
   const v = useViewer(source);
   const [on] = useFollowing(kind, id, v);
+  // Nobody follows their own page: "Chỉnh hồ sơ" stands there instead.
+  if (v?.owner) return null;
   const toggle = async () => {
     const out = await kd.setFollow(kind, id, !on);
     if (out != null) kd.toast(fill(out ? T.followed : T.unfollowed, { n: name }));
@@ -94,7 +96,7 @@ export function OwnerLink({ lang, source, href }: { lang: Lang; source: Source; 
   const T = pick(PROFILE, lang);
   const v = useViewer(source);
   if (!v?.owner) return null;
-  return <a className={buttonClass({})} href={href}>{T.edit}</a>;
+  return <a className={buttonClass({ tone: 'acc' })} href={href}>{T.edit}</a>;
 }
 
 export function ShareProfile({ lang, title }: { lang: Lang; title: string }) {
@@ -125,6 +127,50 @@ export function ClaimLink({ lang, kind, name, source }: { lang: Lang; kind: 'org
     kd.openRolePicker(kind, name);
   };
   return <button type="button" className="kd-nl" onClick={go}>{kind === 'organizer' ? T.isThisYouOrg : T.isThisYouArtist}</button>;
+}
+
+/**
+ * "Đây là tôi" as the page's one lime action, on a profile nobody runs yet (D13): sign in, then
+ * the role picker offers this listing to claim.
+ */
+export function ClaimButton({ lang, kind, name, size, className }: { lang: Lang; kind: 'organizer' | 'artist'; name: string; size?: 'sm'; className?: string }) {
+  const kd = useKd();
+  const T = pick(PROFILE, lang);
+  const go = () => {
+    if (!kd.requireSignIn(undefined, T.gateClaim)) return;
+    kd.openRolePicker(kind, name);
+  };
+  return <button type="button" onClick={go} className={buttonClass({ tone: 'acc', size }, className)}>{T.thisIsMe}</button>;
+}
+
+/**
+ * "Nhắc khi có show": a name nobody runs cannot be followed, so a fan asks Smart Alerts to tell
+ * them when it plays (PUT /me/alert keeps the list of names).
+ */
+export function RemindButton({ lang, name }: { lang: Lang; name: string }) {
+  const kd = useKd();
+  const T = pick(PROFILE, lang);
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!kd.user) { setOn(false); return; }
+    FF.maybe(FF.get('/me/alert'), null).then((a: { artists?: string[] } | null) => setOn(!!a?.artists?.includes(name)));
+  }, [kd.user, name]);
+  const toggle = async () => {
+    if (!kd.requireSignIn(undefined, T.gateRemind)) return;
+    try {
+      const a = await FF.get('/me/alert');
+      const artists: string[] = a.artists ?? [];
+      const next = on ? artists.filter((x) => x !== name) : [...new Set([...artists, name])].slice(-30);
+      await FF.put('/me/alert', { ...a, artists: next });
+      setOn(!on);
+      kd.toast(fill(on ? T.remindOff : T.remindOn, { n: name }));
+    } catch (e) { kd.toast(FF.errorText(e, lang)); }
+  };
+  return (
+    <button type="button" aria-pressed={!!on} onClick={toggle} disabled={on == null} className={buttonClass({ tone: 'default' })}>
+      {on ? T.reminding : T.remind}
+    </button>
+  );
 }
 
 /** Upcoming / past: both panels are in the page's HTML; the tabs show one. */
