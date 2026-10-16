@@ -113,8 +113,8 @@ export function EventsList() {
           ? <Empty title={T.noMatchEvents}><button type="button" className={buttonClass({ size: 'sm' })} onClick={() => setParams({ q: null, when: null, status: null })}>{T.showAll}</button></Empty>
           : <Empty title={T.noEvents}><KdLink className={buttonClass({ size: 'sm' })} href="/studio/new">{T.createEvent}</KdLink></Empty>
       ) : (
-        <Panel className="overflow-x-auto">
-          <div className="min-w-[960px]">
+        <Panel>
+          <div>
             <Table cols={cols} label={T.myEvents} head={[T.colDate, T.colEvent, T.colStatus, T.colQuality, T.colPerf, T.colUpdated, '']}>
               {rows.map((e) => {
                 const past = ended(e);

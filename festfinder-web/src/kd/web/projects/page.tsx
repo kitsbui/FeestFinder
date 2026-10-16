@@ -85,7 +85,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                 </div>
                 <OfferBox lang={lang} slug={p.slug} status={p.status} seeking={p.seeking.map((s) => s.key)} packages={p.packages} currency={p.currency} />
               </div>
-              <div className="mt-7 grid auto-cols-[minmax(0,220px)] grid-flow-col overflow-x-auto border-y border-line py-4.5">
+              <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-y-4 border-y border-line py-4.5">
                 {p.targetOn ? <Stat value={dayMonth(p.targetOn, lang) + (lang === 'vi' ? '.' : ' ') + p.targetOn.slice(0, 4)} label={T.target} /> : null}
                 {p.budget != null ? <Stat value={money(p.budget, p.currency, lang)} label={T.budget} /> : null}
                 {p.raiseAmount != null ? <Stat value={money(p.raiseAmount, p.currency, lang)} label={T.raise} /> : null}

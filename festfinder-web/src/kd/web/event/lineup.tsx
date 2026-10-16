@@ -175,10 +175,35 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
         const ticks: number[] = [];
         for (let m = Math.ceil(d.window.startMin / 120) * 120; m <= d.window.endMin; m += 120) ticks.push(m);
         return (
-          <div key={d.date} className="flex flex-col gap-2">
+          <div key={d.date} className="@container flex flex-col gap-2">
             {ev.timetable!.days.length > 1 ? <span className="kd-m">{d.label[lang]}</span> : null}
-            <div className="overflow-x-auto">
-              <div className="min-w-[640px]">
+            {/* Under 640px a time axis has no room: each stage is a list of its sets instead (nothing scrolls sideways). */}
+            <div className="flex flex-col gap-4 @min-[640px]:hidden">
+              {d.stages.map((st) => (
+                <div key={st.id} className="flex flex-col">
+                  <span className="kd-hs flex items-center gap-2 pb-1"><Marker family={fam} />{st.name[lang]}</span>
+                  {[...st.sets].sort((a, b) => a.startMin - b.startMin).map((s) => {
+                    const on = picked.has(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        aria-pressed={on}
+                        aria-label={fill(on ? T.planDrop : T.planPick, { a: s.artist }) + ' · ' + hhmm(s.startMin) + '–' + hhmm(s.endMin)}
+                        onClick={() => toggle(s)}
+                        className={cx('kd-lrow min-h-12 w-full text-left', on && 'text-paper')}
+                      >
+                        <span className="kd-m kd-num w-24 shrink-0">{hhmm(s.startMin)}–{hhmm(s.endMin)}</span>
+                        <span className={cx('kd-t kd-ell flex-1', s.artist === headName ? 'font-medium text-paper' : 'text-mist')}>{s.artist}</span>
+                        {on ? <span className="kd-st kd-ok shrink-0">{T.planPicked}</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+            <div className="hidden @min-[640px]:block">
+              <div>
                 <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3">
                   <span />
                   <div className="relative h-4">

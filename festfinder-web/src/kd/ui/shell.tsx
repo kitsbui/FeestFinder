@@ -5,6 +5,7 @@
 import { KdLink as Link } from '../link';
 import type { ReactNode } from 'react';
 import { cx } from '../cx';
+import { Rail } from './rail';
 
 // ---- tabs ---------------------------------------------------------------------------
 
@@ -71,7 +72,7 @@ export interface SideItem { key: string; label: string; href: string; icon?: Rea
 
 export function SideNav({ items, current, head, label, footer }: { items: SideItem[]; current: string; head?: ReactNode; label: string; footer?: ReactNode }) {
   return (
-    <nav aria-label={label} className="kd-side-nav">
+    <Rail label={label} current={items.find((i) => i.key === current)?.label as string ?? ''}>
       {head}
       {items.map((i) => {
         const props = { className: cx('kd-sn', i.hideSmall && 'kd-sn-hide'), 'aria-current': i.key === current ? ('page' as const) : undefined };
@@ -85,7 +86,7 @@ export function SideNav({ items, current, head, label, footer }: { items: SideIt
         return i.external ? <a key={i.key} href={i.href} {...props}>{body}</a> : <Link key={i.key} href={i.href} {...props}>{body}</Link>;
       })}
       {footer}
-    </nav>
+    </Rail>
   );
 }
 
@@ -98,11 +99,19 @@ export function Shell({ nav, children }: { nav: ReactNode; children: ReactNode }
   );
 }
 
+/**
+ * Every column may shrink below the size it asks for, so a row never pushes past its box (the cells
+ * clip; kd.css turns rows into cards below 640px): `110px` becomes `minmax(0,110px)`, and
+ * `minmax(160px,2fr)` becomes `minmax(0,2fr)`.
+ */
+export const shrinkable = (cols: string) =>
+  cols.replace(/minmax\(\s*[^,()]+,/g, 'minmax(0,').replace(/(^|\s)(\d+(?:\.\d+)?(?:px|rem))(?=\s|$)/g, '$1minmax(0,$2)');
+
 /** A table built from grid rows; `cols` is the grid-template-columns of every row. */
 export function Table({ cols, head, children, label }: { cols: string; head: ReactNode[]; children: ReactNode; label?: string }) {
   return (
     <div className="kd-tbl" role="table" aria-label={label}>
-      <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: cols }}>
+      <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: shrinkable(cols) }}>
         {head.map((h, i) => <span role="columnheader" key={i} className="kd-m">{h}</span>)}
       </div>
       {children}
@@ -113,7 +122,7 @@ export function Table({ cols, head, children, label }: { cols: string; head: Rea
 export function Row({ cols, children, onClick, href, current, className }: {
   cols: string; children: ReactNode; onClick?: () => void; href?: string; current?: boolean; className?: string;
 }) {
-  const style = { gridTemplateColumns: cols };
+  const style = { gridTemplateColumns: shrinkable(cols) };
   const cls = cx('kd-tr', current && 'bg-white/[0.04]', className);
   if (href) return <Link role="row" href={href} className={cls} style={style} aria-current={current || undefined}>{children}</Link>;
   if (onClick) return <button role="row" type="button" className={cls} style={style} onClick={onClick} aria-current={current || undefined}>{children}</button>;

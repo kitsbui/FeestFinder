@@ -85,6 +85,7 @@ export const WEB = {
   byStage: { en: 'Set times by stage', vi: 'Lịch theo sân khấu' },
   planCount: { en: '{n} in your plan', vi: '{n} set trong lịch của bạn' },
   planPick: { en: 'Add {a} to my plan', vi: 'Thêm {a} vào lịch' },
+  planPicked: { en: 'In my plan', vi: 'Trong lịch' },
   planDrop: { en: 'Remove {a} from my plan', vi: 'Bỏ {a} khỏi lịch' },
   planClear: { en: 'Clear', vi: 'Bỏ hết' },
   planRemind: { en: 'Remind me 15 min before', vi: 'Nhắc trước 15 phút' },

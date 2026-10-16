@@ -27,6 +27,7 @@ import { OriginTabs, RadarTag, type Origin } from '../../ui/origin';
 import { LIST } from './copy';
 import { warmKdMap, type Box } from '../../map/kd-map';
 import { MapView } from './map-view';
+import { shrinkable } from '../../ui/shell';
 
 export type View = 'table' | 'grid' | 'map';
 export type Time = 'all' | 'tonight' | 'weekend' | '7days' | 'month';
@@ -321,7 +322,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
           </div>
         ) : (
           <div className={cx('kd-tbl -mx-4 tab:mx-0 transition-opacity', busy && 'opacity-60')} role="table" aria-label={T.title}>
-            <div role="row" className="kd-tr kd-tr-head min-w-[1020px]" style={{ gridTemplateColumns: COLS }}>
+            <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: shrinkable(COLS) }}>
               <span role="columnheader">{head(T.colDate, 'date')}</span>
               <span role="columnheader" className="kd-m">{T.colTime}</span>
               <span role="columnheader" className="kd-m">{T.colEvent}</span>
@@ -334,7 +335,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
             {sorted.map((e) => {
               const st = status(e);
               return (
-                <Link key={e.id} role="row" href={inLang('/e/' + e.slug, lang)} className="kd-tr min-w-[1020px] hover:bg-white/[0.03]" style={{ gridTemplateColumns: COLS }}>
+                <Link key={e.id} role="row" href={inLang('/e/' + e.slug, lang)} className="kd-tr hover:bg-white/[0.03]" style={{ gridTemplateColumns: shrinkable(COLS) }}>
                   <span role="cell" className="kd-s kd-num text-mist">{whenShort(e, lang)}</span>
                   <span role="cell" className="kd-mb kd-num">{e.startTime ?? ''}</span>
                   <span role="cell" className="kd-hs flex min-w-0 items-center gap-2"><Marker family={familyOf(e.genre)} /><span className="kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
