@@ -386,7 +386,7 @@ export const STUDIO = {
   appBooked: { en: 'Booked', vi: 'Đã chốt' },
   appNew: { en: 'New', vi: 'Mới' },
   inquiries: { en: 'Booking requests sent', vi: 'Yêu cầu booking đã gửi' },
-  inqNone: { en: 'Book an artist from their profile', vi: 'Gửi yêu cầu booking từ hồ sơ nghệ sĩ' },
+  inqNone: { en: 'No requests sent yet', vi: 'Chưa gửi yêu cầu nào' },
   inqPending: { en: 'Waiting', vi: 'Chờ trả lời' },
   inqAccepted: { en: 'Accepted', vi: 'Đã nhận' },
   inqDeclined: { en: 'Declined', vi: 'Đã từ chối' },

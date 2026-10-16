@@ -183,6 +183,15 @@ test.describe('Studio, signed in', () => {
     await expect(page.getByText('Chưa có hồ sơ')).toBeVisible();
   });
 
+  test('"Mời nghệ sĩ" offers only artists who run their profile, who can read the request', async ({ page }) => {
+    await open(page, '/studio/gigs');
+    const pick = page.getByRole('combobox', { name: 'Nghệ sĩ' });
+    await pick.fill('mie');
+    await expect(page.getByRole('option', { name: /DJ Mie/ })).toHaveCount(0);
+    await pick.fill('slim');
+    await expect(page.getByRole('option', { name: /SlimV/ })).toBeVisible();
+  });
+
   test('business details save', async ({ page }) => {
     await open(page, '/studio/profile');
     await page.getByLabel('Hotline').fill('1900 1234');

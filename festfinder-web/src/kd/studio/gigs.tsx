@@ -2,7 +2,7 @@
 /**
  * /studio/gigs: slots the organiser posts for artists to apply to, each opening its
  * applications (shortlist, decline, book; best match first, never by followers), a form to
- * post one, and the booking requests sent from artist profiles with their answers.
+ * post one, and the booking requests sent to one artist ("Hỏi trực tiếp") with their answers.
  */
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { FF } from '@/runtime/ff';
@@ -206,8 +206,9 @@ function AskArtist({ lang, cities, onSent }: { lang: Lang; cities: City[]; onSen
   const city = f.city || cities[0]?.slug || '';
   const cur = cities.find((c) => c.slug === city)?.currency;
   const find = useCallback(async (q: string): Promise<PickItem[]> => {
+    // Only artists who run their profile read a request (the API refuses the others): the directory's list, less those only the team verified.
     const out = await FF.get('/artists?limit=20&sort=name' + (q ? '&q=' + encodeURIComponent(q) : ''));
-    return out.items.map((a: { id: string; name: string; slug: string }) => ({ value: a.id, label: a.name, sub: '/a/' + a.slug }));
+    return out.items.filter((a: { claimed: boolean }) => a.claimed).map((a: { id: string; name: string; slug: string }) => ({ value: a.id, label: a.name, sub: '/a/' + a.slug }));
   }, []);
   const send = async (e: FormEvent) => {
     e.preventDefault();
