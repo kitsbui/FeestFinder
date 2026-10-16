@@ -49,9 +49,10 @@ export default defineConfig({
       },
     },
     {
+      // The fetch cache would carry the last run's API answers (and its random ids) into this build.
       command: process.env.WEB_SKIP_BUILD
         ? `npx next start --port ${WEB_PORT}`
-        : `npm run build && npx next start --port ${WEB_PORT}`,
+        : `node -e "require('fs').rmSync('.next/cache/fetch-cache',{recursive:true,force:true})" && npm run build && npx next start --port ${WEB_PORT}`,
       cwd: '../festfinder-web',
       url: `${WEB}/robots.txt`,
       timeout: 300_000,

@@ -18,6 +18,7 @@ festfinder-web/.next/
 festfinder-web/next-env.d.ts
 festfinder-web/*.tsbuildinfo
 festfinder-web/public/ui/
+festfinder-web/public/fonts/
 
 # Editor and OS noise
 .DS_Store

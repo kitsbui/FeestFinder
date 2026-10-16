@@ -97,6 +97,8 @@ const config: NextConfig = {
       { source: '/ui/map/ff-map.js', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, stale-while-revalidate=86400' }] },
       // The map's glyphs are one font, cut once.
       { source: '/ui/map/glyphs/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=2592000' }] },
+      // Noto Sans JP (scripts/fonts-css.ts): file names change only with the package version.
+      { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=2592000' }] },
     ];
   },
 
