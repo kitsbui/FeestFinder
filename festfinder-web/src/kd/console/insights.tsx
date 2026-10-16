@@ -96,7 +96,7 @@ export function InsightsScreen() {
       <div className="kd-split gap-3">
         <Panel as="section" className="kd-main overflow-hidden" aria-label={T.organisers}>
           <div className="px-4 pb-3 pt-4"><span className="kd-h">{T.organisers}</span></div>
-          <div className="overflow-x-auto"><div className="min-w-[560px]">
+          <div><div>
             <Table cols={cols} label={T.organisers} head={[T.colOrg, T.colLive, T.colViews, T.colCtr, T.colReports]}>
               {data.organizers.map((o) => (
                 <Row key={o.id} cols={cols}>

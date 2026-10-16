@@ -81,8 +81,8 @@ export function Attendees() {
               </div>
               <Input boxClass="ml-auto w-full max-w-[280px]" icon={<MagnifyingGlassIcon size={16} className="text-fog" aria-hidden="true" />} type="search" value={q} placeholder={T.attSearch} aria-label={T.search} onChange={(e) => setQ(e.target.value)} />
             </div>
-            <div className="overflow-x-auto">
-              <div className="min-w-[720px]">
+            <div>
+              <div>
                 <Table cols={cols} label={T.attendees} head={[T.colName, T.colPhone, T.colTier, T.colBought, T.colState, '']}>
                   {data.items.map((a) => (
                     <Row key={a.ticketId} cols={cols}>

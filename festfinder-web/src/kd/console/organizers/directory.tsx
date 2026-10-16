@@ -90,7 +90,7 @@ export function Organizers() {
         </FilterBar>
         <Loaded load={load}>
           {() => !rows.length ? <Empty /> : (
-            <div className="[&_.kd-tr]:min-w-[1000px]">
+            <div>
               <Table label={T.title} cols={COLS} head={[T.colOrg, T.colListings, T.colState, T.colDocs, T.colStrikes, T.colTeam, T.colJoined]}>
                 {rows.map((o) => (
                   <Row key={o.id} cols={COLS} current={o.id === current} onClick={() => setQuery({ id: o.id })}>

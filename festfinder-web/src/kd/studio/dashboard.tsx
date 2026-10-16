@@ -140,7 +140,7 @@ export function Dashboard() {
       <div className="kd-split gap-3">
         <Panel as="section" className="kd-main overflow-hidden" aria-label={T.yourEvents}>
           <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4"><span className="kd-h">{T.yourEvents}</span><span className="flex items-center gap-3"><span className="kd-m max-sm:hidden">{T.pickRow}</span><KdLink className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href="/studio/events">{T.evAll}</KdLink></span></div>
-          <div className="overflow-x-auto"><div className="min-w-[540px]">
+          <div><div>
           <Table cols={cols} label={T.yourEvents} head={[T.colEvent, T.colDate, T.colStatus, T.colFill]}>
             {events.map((e) => {
               const body = (

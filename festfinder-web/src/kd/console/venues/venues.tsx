@@ -130,7 +130,7 @@ function Registry({ lang, items, params, setQuery, onOpen }: {
         <span className="kd-m kd-num ml-auto">{fill(T.shown, { n: rows.length, t: items.length })}</span>
       </FilterBar>
       {!rows.length ? <Empty /> : (
-        <div className="[&_.kd-tr]:min-w-[960px]">
+        <div>
           <Table label={T.title} cols={COLS} head={[T.colVenue, T.colDistrict, T.colStatus, T.colEvents, T.colPin, '']}>
             {rows.map((v) => (
               // A row holds a link and a button, so it is not itself a button: the name opens the drawer.

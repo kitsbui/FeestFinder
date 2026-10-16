@@ -218,16 +218,16 @@ export function TierEditor({ lang, rows, onChange, presets, priceFrom, currency,
       : { key: `tier-${rows.length + 1}`, nameVi: '', nameEn: '', price: 0, capacity: '100', sold: 0 }]);
   };
   const total = rows.reduce((n, r) => n + (Number(r.capacity) || 0), 0);
-  const cols = 'grid grid-cols-[150px_minmax(0,1fr)_130px_110px_44px] items-center gap-2';
+  const cols = 'grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] @min-[600px]:grid-cols-[150px_minmax(0,1fr)_130px_110px_44px] items-center gap-2';
   const price = fill(T.tierPrice, { c: currency });
   return (
     <div className="flex flex-col gap-2">
       {rows.length ? (
-        <div className="overflow-x-auto">
-          <div className="flex min-w-[600px] flex-col gap-2">
-            <div className={cx(cols, 'kd-m')}><span>{T.tier}</span><span>{T.tierName}</span><span>{price}</span><span>{T.tierQty}</span><span /></div>
+        <div className="@container">
+          <div className="flex flex-col gap-2">
+            <div className={cx(cols, 'kd-m hidden @min-[600px]:grid')}><span>{T.tier}</span><span>{T.tierName}</span><span>{price}</span><span>{T.tierQty}</span><span /></div>
             {rows.map((r, i) => (
-              <div key={i} className={cols}>
+              <div key={i} className={cx(cols, 'border-b border-line pb-2 @min-[600px]:border-0 @min-[600px]:pb-0')}>
                 <Select aria-label={`${T.tier} ${i + 1}`} disabled={r.sold > 0 || disabled}
                   value={presets.some((p) => p.key === r.key) ? r.key : '__custom'}
                   onChange={(e) => {
@@ -238,7 +238,7 @@ export function TierEditor({ lang, rows, onChange, presets, priceFrom, currency,
                   {presets.map((p) => <option key={p.key} value={p.key} disabled={rows.some((x, j) => j !== i && x.key === p.key)}>{p.name[lang]}</option>)}
                   <option value="__custom">{T.tierCustom}</option>
                 </Select>
-                <Input aria-label={`${T.tierName} ${i + 1}`} value={r.nameVi} placeholder={T.tierNamePh} maxLength={60} disabled={disabled}
+                <Input aria-label={`${T.tierName} ${i + 1}`} boxClass="col-span-2 @min-[600px]:col-span-1" value={r.nameVi} placeholder={T.tierNamePh} maxLength={60} disabled={disabled}
                   onChange={(e) => upd(i, { nameVi: e.target.value, nameEn: r.nameEn || e.target.value })} />
                 <PriceInput id={`tierPrice${i}`} label={`${price} ${i + 1}`} lang={lang} value={r.price} onChange={(v) => upd(i, { price: v })} />
                 <Input aria-label={`${T.tierQty} ${i + 1}`} className="kd-num" inputMode="numeric" value={r.capacity} disabled={disabled}

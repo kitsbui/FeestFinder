@@ -206,7 +206,8 @@
   .kd-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; padding: 8px 0; border-bottom: 1px solid var(--color-line); color: inherit; }
   .kd-row .kd-art { width: 52px; height: 52px; border-radius: var(--radius-seg); }
   .kd-lrow { display: flex; align-items: center; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--color-line); color: inherit; }
-  .kd-hscroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  /* A row of chips or cards that scrolls inside itself: its fading edge says there is more (never the page). */
+  .kd-hscroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
   .kd-hscroll::-webkit-scrollbar { display: none; }
 
   /* ---- mobile shell ---- */
@@ -259,28 +260,43 @@
   .kd-split > .kd-side { flex: 1 1 320px; min-width: 0; }
 
   /* ---- app shell (studio, console) ---- */
-  .kd-shell { display: flex; flex-wrap: wrap; min-height: 100dvh; }
+  .kd-shell { display: flex; flex-wrap: wrap; align-content: flex-start; min-height: 100dvh; }
   .kd-side-nav { flex: 1 1 240px; max-width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 16px 12px; border-right: 1px solid var(--color-line); background: var(--color-carbon); }
   .kd-shell > .kd-content { flex: 999 1 640px; min-width: 0; }
   .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fog); transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
   .kd-sn:hover { color: var(--color-paper); background: rgba(255, 255, 255, 0.04); }
   .kd-sn[aria-current='page'] { color: var(--color-paper); background: rgba(255, 255, 255, 0.07); }
   .kd-sn .kd-count { margin-left: auto; font-size: 11px; color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  /* The rail's phone bar and its menu (ui/rail.tsx): on a desktop the bar is not there and the body is the column. */
+  .kd-sn-bar { display: none; }
+  .kd-sn-body { display: contents; }
   @media (max-width: 899px) {
-    .kd-side-nav { flex-direction: row; align-items: center; overflow-x: auto; scrollbar-width: none; border-right: 0; border-bottom: 1px solid var(--color-line); padding: 8px 12px; gap: 4px; }
-    .kd-side-nav .kd-sn { flex-shrink: 0; }
-    .kd-side-nav .kd-sn-hide { display: none !important; }
+    .kd-side-nav { flex: 1 1 100%; flex-direction: column; align-items: stretch; gap: 0; padding: 0; border-right: 0; border-bottom: 1px solid var(--color-line); position: sticky; top: 0; z-index: 30; }
+    .kd-sn-bar { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 12px 0 16px; }
+    .kd-sn-body { display: none; flex-direction: column; gap: 2px; padding: 4px 12px 16px; max-height: calc(100dvh - 56px); overflow-y: auto; }
+    .kd-side-nav[data-open] .kd-sn-body { display: flex; }
   }
   .kd-kpi { display: flex; flex-direction: column; gap: 8px; padding: 20px; min-width: 0; }
+  /* A row of tabs may scroll inside itself on a phone; its fading edge says there is more (never the page). */
   .kd-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-line); }
+  @media (max-width: 759px) { .kd-tabs { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); } }
   .kd-tabs::-webkit-scrollbar { display: none; }
   .kd-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; color: var(--color-fog); white-space: nowrap; cursor: pointer; transition: color 0.15s var(--ease-ff); }
   .kd-tab:hover { color: var(--color-paper); }
   .kd-tab[aria-selected='true'], .kd-tab[aria-current='page'], .kd-tab[aria-current='true'] { color: var(--color-paper); }
   .kd-tab[aria-selected='true']::after, .kd-tab[aria-current='page']::after, .kd-tab[aria-current='true']::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--color-paper); }
   .kd-tab .kd-c { font-size: 11px; color: var(--color-fog); font-variant-numeric: tabular-nums; }
-  .kd-tbl { overflow-x: auto; }
-  .kd-tr { display: grid; align-items: center; gap: 16px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--color-line); min-width: 640px; }
+  /* Tables never push past their box: the columns shrink (ui/shell.tsx shrinkable), and a box under 640px wide shows each row as a card. */
+  .kd-tbl { container-type: inline-size; }
+  .kd-tr { display: grid; align-items: center; gap: 16px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--color-line); min-width: 0; }
+  .kd-tr > * { min-width: 0; }
+  @container (max-width: 639px) {
+    .kd-tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px; }
+    .kd-tr > * { max-width: 100%; }
+    .kd-tr > :first-child { flex: 1 1 100%; }
+    .kd-tr > [role='cell']:last-child:not(:first-child) { margin-left: auto; }
+    .kd-tr-head { display: none; }
+  }
   .kd-tr-head { min-height: 40px; }
   button.kd-tr, a.kd-tr { width: 100%; text-align: left; border-top: 0; border-left: 0; border-right: 0; background: transparent; color: inherit; transition: background-color 0.15s var(--ease-ff); }
   button.kd-tr:hover, a.kd-tr:hover { background: rgba(255, 255, 255, 0.03); }

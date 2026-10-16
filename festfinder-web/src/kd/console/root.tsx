@@ -25,6 +25,7 @@ import { Card as Panel } from '../ui/parts';
 import { Shell, type SideItem } from '../ui/shell';
 import { AskHost } from './kit';
 import { CONSOLE } from './copy';
+import { Rail } from '../ui/rail';
 
 export type ConsoleTab =
   | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports' | 'feedback'
@@ -111,6 +112,10 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   const n = (v: number | undefined) => (v ? v : null);
   const session = kd.session as { organizers?: unknown[]; roles?: { artist?: string } } | null | undefined;
   const i = (Icon: typeof GaugeIcon) => <Icon size={18} aria-hidden="true" />;
+  // The page's name, for the rail folded into a bar on a phone.
+  const railLabel = ({ overview: T.tabOverview, queue: T.tabQueue, claims: T.tabClaims, reports: T.tabReports, feedback: T.tabFeedback, events: T.tabEvents,
+    organizers: T.tabOrganizers, venues: T.tabVenues, artists: T.tabArtists, sources: T.tabSources, partners: T.tabPartners, affiliate: T.tabAffiliate,
+    brands: T.tabBrands, projects: T.tabProjects, featured: T.tabFeatured, users: T.tabUsers, orders: T.tabOrders, insights: T.tabInsights, audit: T.tabAudit } as Record<string, string>)[current] ?? T.console;
   const group = (label: string, items: SideItem[]) => (
     <div className="flex flex-col gap-0.5" key={label}>
       <span className="kd-m kd-sn-hide px-2.5 pt-3 pb-1">{label}</span>
@@ -125,7 +130,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   );
 
   const nav = (
-    <nav aria-label={T.console} className="kd-side-nav">
+    <Rail label={T.console} current={railLabel}>
       <div className="kd-sn-hide flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
         <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
         <span className="kd-m">{T.console}</span>
@@ -162,7 +167,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
         {session?.roles?.artist === 'active' ? <a className="kd-sn" href="/studio/artist">{i(GuitarIcon)}{T.toArtist}</a> : null}
         <a className="kd-sn" href="/" target="_blank" rel="noopener">{i(ArrowSquareOutIcon)}{T.toSite}</a>
       </div>
-    </nav>
+    </Rail>
   );
 
   return (
