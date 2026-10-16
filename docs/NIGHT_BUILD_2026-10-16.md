@@ -14,6 +14,7 @@ Plan: `docs/NIGHT_BUILD_PLAN_2026-10-16.md` · Xuất phát: main `cebeb3d` · N
 | N7 Thư mục nghệ sĩ: loại hồ sơ, follow theo hồ sơ (migration 041) | night/2026-10-16-N7 | API 377 (376 qua, 1 bỏ qua) | Màn hình làm ở N8. `owned` = nghệ sĩ tự chạy hồ sơ **hoặc đội đã xác minh** (`verified`); ghi ra để chủ SP xác nhận. Demo thêm 2 nghệ sĩ có chủ: Trần Duy, SlimV (chỉ test/preview). Next migration giờ là `042`. |
 | N8 Thư mục nghệ sĩ, phần web | night/2026-10-16-N8 | **screens 215/215** · directory + artist 15/15 | Làm trước N7b để giao diện xanh lại ngay sau N7. Chưa làm: bộ lọc Có chủ · Chưa nhận · Radar trong `/console/artists` (để ban ngày). Các màn "Đang theo dõi" trong app vẫn đọc `artistPages` (API vẫn trả). |
 | N7b Bắt tay lineup ↔ hồ sơ, phần API | night/2026-10-16-N7b | API 383 (382 qua, 1 bỏ qua) · lineup.test 6/6 · artist/directory/studio specs 33/33 | Hồ sơ có chủ chỉ hiện show đã xác nhận. Ba màn hình (ô lineup của NTC, Lịch nghệ sĩ có Xác nhận/Không phải tôi, dấu xác nhận trên trang sự kiện) để ban ngày. |
+| N9 Mười lỗi nhỏ (10 commit) | night/2026-10-16-N9 | API 384 (383 qua, 1 bỏ qua) · **screens 218/218** | 9.1 Bận/Rảnh · 9.2 link thông báo kế hoạch · 9.3 focus trong sheet · 9.4 lịch đã báo đang duyệt không link 404 · 9.5 "Mời nghệ sĩ" chỉ nghệ sĩ có chủ · 9.6 wizard hết ghi "Nháp" sau khi gửi · 9.7 gợi ý địa điểm cùng thành phố · 9.8 `/list` trên điện thoại mở dạng lưới · 9.9 menu Dòng nhạc dẫn tới `/list?style=` · 9.10 hàng hướng dẫn AI chỉ khi chạy được. |
 
 ## Dùng mặc định
 - D4: bản tạm (tin vẫn `live`, cờ chờ duyệt), theo plan.
