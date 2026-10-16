@@ -4,7 +4,9 @@ import { watch } from '../checks.ts';
 /*
  * The artist directory in Kính đêm (festfinder-web/src/kd/web/directory): /a, /a/style/<style>
  * and /a/city/<city>, with what the compiled screen did (role, style, city, taking bookings,
- * playing soon, search, more artists, a card opens the artist) on the rebuilt page.
+ * playing soon, search, more artists, a card opens the artist) on the rebuilt page. The directory
+ * lists the artists who run their profile (D13: SlimV and Trần Duy in the demo data); every other
+ * name events show waits at /a/radar with "Đây là tôi".
  */
 
 type Meta = { styles: { key: string; label: { vi: string; en: string } }[]; cities: { slug: string; name: { vi: string; en: string } }[] };
@@ -31,7 +33,8 @@ test.describe('the artist directory', () => {
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
     const types = blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']));
     for (const t of ['CollectionPage', 'ItemList', 'BreadcrumbList']) expect(types).toContain(t);
-    expect(html).toContain('href="/a/hoaprox"');
+    expect(html).toContain('href="/a/slimv"');
+    expect(html, 'a lineup name nobody runs is not in the directory').not.toContain('href="/a/hoaprox"');
     expect(html).not.toContain('/ui/theme.css');
 
     // One style's and one city's artists have pages of their own; an unknown one has none.
@@ -50,7 +53,7 @@ test.describe('the artist directory', () => {
     const { styles } = await meta(page);
     const style = styles[0];
     const problems = await open(page, '/a');
-    await expect(results(page).getByRole('link', { name: 'Hoaprox', exact: true })).toBeVisible();
+    await expect(results(page).getByRole('link', { name: 'SlimV', exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: /^Phong cách/ }).click();
     await page.getByRole('menuitemradio', { name: style.label.vi, exact: true }).click();
@@ -72,37 +75,37 @@ test.describe('the artist directory', () => {
     await page.getByRole('button', { name: 'Bỏ lọc' }).first().click();
     await expect(page).toHaveURL(/\/a$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nghệ sĩ trên FeestFinder');
-    await expect(results(page).getByRole('link', { name: 'Hoaprox', exact: true })).toBeVisible();
+    await expect(results(page).getByRole('link', { name: 'SlimV', exact: true })).toBeVisible();
     expect(problems).toEqual([]);
   });
 
   test('search finds an artist by part of the name, and the card opens their page', async ({ page }) => {
     const problems = await open(page, '/a');
-    await page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' }).fill('hoap');
-    await expect(page).toHaveURL(/\/a\?q=hoap$/);
+    await page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' }).fill('slim');
+    await expect(page).toHaveURL(/\/a\?q=slim$/);
     await expect(results(page).getByRole('listitem')).toHaveCount(1);
     await expect(page.getByText('1 nghệ sĩ', { exact: true })).toBeVisible();
-    await results(page).getByRole('link', { name: 'Hoaprox', exact: true }).click();
-    await expect(page).toHaveURL(/\/a\/hoaprox$/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Hoaprox');
+    await results(page).getByRole('link', { name: 'SlimV', exact: true }).click();
+    await expect(page).toHaveURL(/\/a\/slimv$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('SlimV');
     expect(problems).toEqual([]);
   });
 
   test('an address with filters opens the same list', async ({ page }) => {
     // The server renders it already filtered.
-    const html = await (await page.request.get('/a?upcoming=1&q=hoap')).text();
-    expect(html).toContain('href="/a/hoaprox"');
-    expect(html).not.toContain('href="/a/hoang-minh"');
-    expect(html).toMatch(/<input[^>]*value="hoap"/);
+    const html = await (await page.request.get('/a?upcoming=1&q=slim')).text();
+    expect(html).toContain('href="/a/slimv"');
+    expect(html).not.toContain('href="/a/tran-duy"');
+    expect(html).toMatch(/<input[^>]*value="slim"/);
 
-    await open(page, '/a?upcoming=1&q=hoap');
+    await open(page, '/a?upcoming=1&q=slim');
     await expect(page.getByRole('button', { name: 'Sắp diễn' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' })).toHaveValue('hoap');
+    await expect(page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' })).toHaveValue('slim');
     await expect(results(page).getByRole('listitem')).toHaveCount(1);
     // Nobody in the demo data takes bookings yet.
     await page.getByRole('button', { name: 'Nhận booking' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Không có nghệ sĩ nào khớp' })).toBeVisible();
-    await expect(page).toHaveURL(/\/a\?q=hoap&booking=1&upcoming=1$/);
+    await expect(page).toHaveURL(/\/a\?q=slim&booking=1&upcoming=1$/);
   });
 
   test('a link back to the directory clears the filters', async ({ page }) => {
@@ -118,23 +121,31 @@ test.describe('the artist directory', () => {
     await expect(page).toHaveURL(/\/a$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nghệ sĩ trên FeestFinder');
     await expect(page.getByRole('button', { name: 'Thành phố: Mọi thành phố' })).toBeVisible();
-    await expect(results(page).getByRole('link', { name: 'Hoaprox', exact: true })).toBeVisible();
+    await expect(results(page).getByRole('link', { name: 'SlimV', exact: true })).toBeVisible();
     expect(problems).toEqual([]);
   });
 
-  test('splits artists someone posted from those only FeestFinder Radar knows, with their counts', async ({ page }) => {
-    await open(page, '/a');
-    const tabs = page.getByRole('tablist', { name: 'Nguồn đăng' });
-    await expect(tabs.getByRole('tab', { name: /^Tất cả/ })).toHaveAttribute('aria-selected', 'true');
-    await page.route(/\/artists\?.*origin=radar/, async (route) => {
-      const real = await route.fetch({ url: route.request().url().replace('origin=radar', 'origin=posted') });
-      const body = await real.json();
-      await route.fulfill({ json: { ...body, total: 1, nextOffset: null, items: body.items.slice(0, 1).map((a: any) => ({ ...a, origin: 'radar' })) } });
-    });
-    await tabs.getByRole('tab', { name: /^Radar/ }).click();
-    await expect(page).toHaveURL(/\/a\?origin=radar$/);
-    await expect(results(page).getByRole('listitem')).toHaveCount(1);
-    await expect(results(page).getByRole('listitem').first().getByText('Do FeestFinder Radar tìm thấy')).toBeAttached();
+  test('names nobody runs wait apart at /a/radar, each with where it was seen and "Đây là tôi"', async ({ page }) => {
+    const problems = await open(page, '/a');
+    await expect(page.getByRole('tablist', { name: 'Nguồn đăng' })).toHaveCount(0);
+    await page.getByRole('link', { name: /tên từ lineup và Radar chưa có người quản lý/ }).click();
+    await expect(page).toHaveURL(/\/a\/radar$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Chưa có người quản lý');
+    const card = results(page).getByRole('article', { name: 'Hoaprox' });
+    await expect(card.getByText(/^Lineup · /)).toBeVisible();
+    await card.getByRole('button', { name: 'Đây là tôi' }).click();
+    await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await page.getByRole('link', { name: 'Nghệ sĩ trên FeestFinder' }).click();
+    await expect(page).toHaveURL(/\/a$/);
+
+    // A name searched in the directory may be one nobody runs yet.
+    await page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' }).fill('hoap');
+    await page.getByRole('status').getByRole('link', { name: /tên trùng chưa có người quản lý/ }).click();
+    await expect(page).toHaveURL(/\/a\/radar\?q=hoap$/);
+    await expect(results(page).getByRole('link', { name: 'Hoaprox', exact: true })).toBeVisible();
+    expect(await (await page.request.get('/a/radar')).text()).toMatch(/<meta name="robots" content="noindex/);
+    expect(problems).toEqual([]);
   });
 
   test('more artists come 24 at a time, next show first', async ({ page }) => {
@@ -155,7 +166,7 @@ test.describe('the artist directory', () => {
     const city = cities[0];
     const problems = await open(page, '/a?lang=en');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Artists on FeestFinder');
-    await expect(results(page, 'Artists').getByRole('link', { name: 'Hoaprox', exact: true })).toHaveAttribute('href', '/a/hoaprox?lang=en');
+    await expect(results(page, 'Artists').getByRole('link', { name: 'SlimV', exact: true })).toHaveAttribute('href', '/a/slimv?lang=en');
 
     await page.getByRole('button', { name: /^City/ }).click();
     await page.getByRole('menuitemradio', { name: city.name.en, exact: true }).click();

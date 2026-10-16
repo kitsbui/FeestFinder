@@ -5,13 +5,14 @@
  * follower counts are not part of it.
  */
 import { CalendarCheckIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
-import { pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair } from '../../copy';
 import { cx } from '../../cx';
 import { whenShort } from '../../format';
 import { familyOf, g } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { RadarTag } from '../../ui/origin';
 import { Art, Avatar, Status, type StatusTone } from '../../ui/parts';
+import { ClaimButton } from '../profile/parts';
 import { DIR } from './copy';
 import type { DirArtist } from './model';
 
@@ -66,6 +67,13 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
             })}
           </span>
         ) : null}
+        {/* A name nobody runs (/a/radar): where it was seen, and the way to claim it. */}
+        {a.source?.kind === 'lineup' ? (
+          <span className="kd-s kd-ell">
+            {fill(T.fromLineup, { t: '' })}
+            <Link href={inLang('/e/' + encodeURIComponent(a.source.event.slug), lang)} className="text-mist hover:underline">{a.source.event.title}</Link>
+          </span>
+        ) : null}
         {next ? (
           <span className="kd-s flex min-w-0 items-center gap-1.5 pt-0.5">
             <CalendarCheckIcon size={16} className="shrink-0 text-fog" aria-hidden="true" />
@@ -77,6 +85,7 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
             </span>
           </span>
         ) : null}
+        {a.kind && a.kind !== 'owned' ? <ClaimButton lang={lang} kind="artist" name={a.name} size="sm" className="mt-1.5 self-start" /> : null}
       </div>
     </article>
   );
