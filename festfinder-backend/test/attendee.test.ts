@@ -68,17 +68,18 @@ describe('attendee (Web + App, signed in)', () => {
     const org = env.ids.org.vinwonder;
     const f = await env.as(token).put(`/me/follows/organizers/${org}`);
     assert.equal(f.body.message.en, 'Following 8Wonder');
-    await env.as(token).put(`/me/follows/artists/${encodeURIComponent('Wukong')}`);
+    // A follow is of a profile an artist runs (D13): Wukong is a lineup name nobody runs yet.
+    assert.equal((await env.as(token).put(`/me/follows/artists/${encodeURIComponent('Wukong')}`)).body.error.code, 'not_claimed');
+    assert.equal((await env.as(token).put(`/me/follows/artists/${encodeURIComponent('Nobody Listed')}`)).status, 404);
     const detail = await env.as(token).get('/events/ravo');
     assert.equal(detail.body.me.followingOrganizer, true);
-    assert.deepEqual(detail.body.me.followingArtists.sort(), ['Hoaprox', 'Wukong']);
-    assert.match(detail.body.me.followingArtistsLine.en, /^Following 2 of this lineup/);
+    // The demo follow of Hoaprox, made by name before profiles, still counts.
+    assert.deepEqual(detail.body.me.followingArtists.sort(), ['Hoaprox']);
+    // SlimV runs their profile: followed by its slug.
+    assert.equal((await env.as(token).put('/me/follows/artists/slimv')).body.following, true);
     const panel = await env.as(token).get('/me/follows');
     assert.ok(panel.body.organizers.following.some((o: any) => o.slug === 'vinwonder'));
-    // Each followed name with the page of the artist listed under it.
-    assert.deepEqual(panel.body.artistPages.find((a: any) => a.name === 'Wukong'), { name: 'Wukong', slug: 'wukong' });
-    await env.as(token).put(`/me/follows/artists/${encodeURIComponent('Nobody Listed')}`);
-    assert.equal((await env.as(token).get('/me/follows')).body.artistPages.find((a: any) => a.name === 'Nobody Listed').slug, null);
+    assert.ok(panel.body.profiles.some((a: any) => a.slug === 'slimv' && a.name === 'SlimV'), 'followed profiles, by id');
   });
 
   it('builds a set-time plan and reports clashes', async () => {

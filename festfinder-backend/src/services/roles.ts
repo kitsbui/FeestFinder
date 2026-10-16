@@ -7,7 +7,7 @@ import { randomCode } from '../lib/crypto.ts';
 import { PROFILE_ARTS } from '../lib/format.ts';
 import { cityOf } from '../lib/places.ts';
 import type { OrganizerType } from '../lib/network.ts';
-import { artistKey, ensureArtists } from './artists.ts';
+import { artistKey, ensureArtists, adoptNameFollows } from './artists.ts';
 
 /*
  * Personas. Every account attends: buys tickets, saves, follows. On top of that it has at most one
@@ -128,6 +128,8 @@ export async function startArtistProfile(q: Queryable, userId: string, a: NewArt
     `update artists set owner_user_id = $2, name = $3, artist_roles = $4, based_city = $5, based_country = $6, styles = $7, updated_at = $8
       where id = $1 returning id, slug`,
     [id, userId, a.stageName.trim(), a.roles, city?.slug ?? null, city?.countryCode ?? null, a.styles, now]);
+  // Anyone who followed or asked to be told about this name now follows the profile.
+  await adoptNameFollows(q, id);
   await setRole(q, userId, 'artist', 'active', now);
   return row!;
 }

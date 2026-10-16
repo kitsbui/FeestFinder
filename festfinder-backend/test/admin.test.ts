@@ -85,7 +85,9 @@ describe('internal admin', () => {
     assert.equal(appeal.closesInDays, 7);
 
     const attendee = await env.attendee();
-    await env.as(attendee).put(`/me/follows/artists/${encodeURIComponent('Triple D')}`);
+    // Only a profile someone runs or the team verified can be followed (D13): the team vouches for Triple D here.
+    await env.ctx.db.query(`update artists set verified = true where normalized_name = 'triple d'`);
+    assert.equal((await env.as(attendee).put(`/me/follows/artists/${encodeURIComponent('Triple D')}`)).status, 200);
     const overturn = await env.as(admin).post(`/admin/appeals/${appeal.id}/overturn`);
     assert.equal(overturn.status, 200);
     const live = await env.as().get(`/events/${eventId}`);

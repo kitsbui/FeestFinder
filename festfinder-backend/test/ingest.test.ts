@@ -409,14 +409,16 @@ describe('ingestion runs (API)', () => {
     const map = (await env.as().get('/events/map?bbox=103.6,1.2,104.05,1.48&origin=posted')).body;
     assert.equal(map.items.length, 0);
 
-    // Its lineup is known only from that night: Radar artists, counted in their own tab.
-    const artists = (await env.as().get('/artists?origin=radar')).body;
-    assert.deepEqual(artists.items.map((a: any) => [a.name, a.origin]).sort(), [['Amelie Lens', 'radar'], ['Charlotte de Witte', 'radar']]);
-    assert.equal(artists.origins.radar, 2);
-    const everyone = (await env.as().get('/artists')).body;
-    assert.equal(everyone.origins.posted + everyone.origins.radar, everyone.total);
-    assert.equal(everyone.items.find((a: any) => a.slug === 'hoaprox')?.origin, 'posted');
+    // Its lineup is known only from that night: Radar artists, among the unclaimed names, never in the directory.
+    const unclaimed = (await env.as().get('/artists?kind=unclaimed&limit=60')).body;
+    const radarArtists = unclaimed.items.filter((a: any) => a.kind === 'radar');
+    assert.deepEqual(radarArtists.map((a: any) => [a.name, a.source.kind]).sort(), [['Amelie Lens', 'radar'], ['Charlotte de Witte', 'radar']]);
+    assert.equal(unclaimed.kinds.radar, 2);
+    assert.equal(unclaimed.items.find((a: any) => a.slug === 'hoaprox')?.kind, 'unclaimed', 'a name from a posted lineup');
+    const directory = (await env.as().get('/artists')).body;
+    assert.ok(!directory.items.some((a: any) => a.kind !== 'owned'));
     assert.equal((await env.as().get('/artists/charlotte-de-witte')).body.artist.origin, 'radar');
+    assert.equal((await env.as().get('/artists/charlotte-de-witte')).body.artist.kind, 'radar');
   });
 
   it('serves the listed cities, styles and event types for the chips', async () => {

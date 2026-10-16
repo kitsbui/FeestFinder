@@ -44,14 +44,14 @@ const DirectoryQuery = z.object({
   brands: bool.optional(),
   verified: bool.optional(),
   upcoming: bool.optional(),
-  /** Posted (run, verified or played at a posted event) or found by FeestFinder Radar. */
-  origin: z.enum(['posted', 'radar']).optional(),
+  /** The directory lists the profiles artists run ('owned'); 'unclaimed' lists every other name events show, from lineups or Radar. */
+  kind: z.enum(['owned', 'unclaimed']).default('owned'),
   sort: z.enum(['next', 'name', 'active']).default('next'),
   limit: limit(60, 24),
   offset: z.coerce.number().int().min(0).max(10_000).default(0),
 });
 
-import { artistOrigin, label, styleItem } from '../services/artists.ts';
+import { artistKind, label, styleItem } from '../services/artists.ts';
 import { badgesOf } from '../services/badges.ts';
 import { momentsOf } from './moments.ts';
 import { mixesOf } from '../services/mixes.ts';
@@ -93,14 +93,15 @@ export default async function artistRoutes(app: FastifyInstance) {
         `select e.id, e.slug, e.title, e.starts_on::text as starts_on, e.city, e.venue_name from event_artists ea join events e on e.id = ea.event_id
           where ea.artist_id = $1 and e.status = 'live' and not e.held_for_reports and e.ends_at < $2 order by e.starts_at desc limit 20`, [a.id, now]),
       // A follow is of a name; any spelling of this artist counts.
-      many<{ user_id: string; artist: string }>(ctx.db, 'select user_id, artist from artist_follows where artist = any($1::text[])', [[a.name, ...(a.aliases ?? [])]]),
+      many<{ user_id: string }>(ctx.db, 'select user_id from artist_follows where artist_id = $1', [a.id]),
       artistStyles(ctx.db, a.id),
       artistOrganizers(ctx.db, a.id),
       artistVenues(ctx.db, a.id),
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
     ]);
-    const [gear, badges, moments, origin, mixes] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistOrigin(ctx.db, a), mixesOf(ctx.db, a.id)]);
+    const [gear, badges, moments, kind, mixes] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistKind(ctx.db, a), mixesOf(ctx.db, a.id)]);
+    const origin = kind === 'radar' ? 'radar' : 'posted';
     // Free and busy dates still to come, as the artist set them. Their notes are for them alone.
     const windows = await many<any>(ctx.db,
       `select from_on::text, to_on::text, kind, city from artist_availability where artist_id = $1 and to_on >= $2 order by from_on limit 12`,
@@ -118,7 +119,7 @@ export default async function artistRoutes(app: FastifyInstance) {
         languages: a.languages, activeSince: a.active_since,
         booking: label(BOOKING_STATUS, a.booking_status), travel: label(TRAVEL_SCOPE, a.travel_scope),
         gigTypes: a.gig_types.map((k: any) => label(GIG_TYPE, k)), setLengths: a.set_lengths.map((k: any) => label(SET_LENGTH, k)),
-        links: presentLinks(a), openToBrands: a.open_to_brands, verified: a.verified, claimed: !!a.owner_user_id, origin,
+        links: presentLinks(a), openToBrands: a.open_to_brands, verified: a.verified, claimed: !!a.owner_user_id, origin, kind,
         cities: rank(cards.map((c) => c.city)).map((slug) => ({ slug, label: cityLabel(slug) })),
         followers: new Set(follows.map((f) => f.user_id)).size,
         following: !!userId && follows.some((f) => f.user_id === userId),
@@ -166,8 +167,8 @@ export default async function artistRoutes(app: FastifyInstance) {
       one<any>(ctx.db,
         `select (select count(*)::int from event_artists ea join events e on e.id = ea.event_id where ea.artist_id = $1 and ${LIVE} and e.ends_at >= $2) as upcoming,
                 (select count(*)::int from event_artists ea join events e on e.id = ea.event_id where ea.artist_id = $1 and ${PUBLIC}) as events,
-                (select count(distinct user_id)::int from artist_follows where artist = any($3::text[])) as followers`,
-        [a.id, ctx.clock.now(), [a.name, ...(a.aliases ?? [])]]),
+                (select count(distinct user_id)::int from artist_follows where artist_id = $1) as followers`,
+        [a.id, ctx.clock.now()]),
     ]);
     return {
       profile: editable(a), stats,

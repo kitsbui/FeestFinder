@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { adoptNameFollows } from '../services/artists.ts';
 import { z } from 'zod';
 import { many, one } from '../db/index.ts';
 import { conflict, notFound } from '../lib/errors.ts';
@@ -186,6 +187,8 @@ export default async function roleRoutes(app: FastifyInstance) {
             throw conflict('has_profile', L('This person already owns another artist profile', 'Người này đã quản lý một hồ sơ nghệ sĩ khác'));
           }
           await q.query('update artists set owner_user_id = $2, updated_at = $3 where id = $1', [a.id, c.user_id, now]);
+          // Follows and Smart Alerts of the name now belong to the profile someone runs.
+          await adoptNameFollows(q, a.id);
           // Other people's claims on the same profile end here.
           await q.query(`update artist_claims set status = 'rejected', decided_at = $2, decided_by = $3, decision_note = 'Another claim was approved'
                           where artist_id = $1 and status = 'pending' and id <> $4`, [a.id, now, s.user.id, id]);

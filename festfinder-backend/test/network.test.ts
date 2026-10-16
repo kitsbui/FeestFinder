@@ -25,7 +25,9 @@ describe('the artist network', () => {
     assert.ok(firstWithout > 0 && all.body.items.slice(firstWithout).every((a: any) => a.upcoming === 0), 'those with a show come first');
     assert.ok(slugs.includes('may-dem'), 'a claimed profile is listed without any event yet');
     assert.equal(all.body.total, all.body.items.length);
-    const hoaprox = all.body.items.find((a: any) => a.slug === 'hoaprox');
+    // The directory is the artists who run their profile (D13); a lineup name like Hoaprox waits under kind=unclaimed.
+    assert.ok(all.body.items.every((a: any) => a.kind === 'owned'));
+    const hoaprox = (await env.as().get('/artists?kind=unclaimed&limit=60')).body.items.find((a: any) => a.slug === 'hoaprox');
     assert.equal(hoaprox.nextShow.slug, 'ravo');
     assert.equal(typeof hoaprox.genre, 'string', 'the genre they play most colours their card');
     assert.equal(all.body.items.find((a: any) => a.slug === 'may-dem').genre, null);
@@ -34,7 +36,7 @@ describe('the artist network', () => {
 
   it('filters by role, style, city, travel and upcoming shows', async () => {
     const djs = await env.as().get('/artists?role=dj');
-    assert.deepEqual(djs.body.items.map((a: any) => a.slug), ['may-dem']);
+    assert.deepEqual(djs.body.items.map((a: any) => a.slug).sort(), ['may-dem', 'slimv', 'tran-duy'], 'the demo artists who run their profile are DJs too');
     const hard = await env.as().get('/artists?style=hard-techno');
     assert.deepEqual(hard.body.items.map((a: any) => a.slug), ['may-dem']);
     const bkk = await env.as().get('/artists?city=bangkok');
@@ -140,10 +142,16 @@ describe('artist directory pages for search engines', () => {
   after(async () => { await env.close(); });
 
   it('serves the directory and curated style and city pages, indexed only when they list enough artists', async () => {
+    // Two demo artists run their profile: too few to index the directory. A third makes it enough.
+    assert.equal((await env.as().get('/seo/directory/all')).body.robots, 'noindex, follow');
+    const third = await emailUser(env, 'third.artist@example.com');
+    await env.as(third).post('/me/roles/artist', { stageName: 'Nhịp Ba', roles: ['dj'], basedCity: 'ho-chi-minh', styles: ['techno'] });
     const all = await env.as().get('/seo/directory/all');
     assert.equal(all.status, 200);
     assert.equal(all.body.robots.startsWith('index'), true);
-    assert.ok(all.body.jsonLd['@graph'].some((n: any) => n['@type'] === 'ItemList' && n.itemListElement.some((i: any) => i.url.endsWith('/a/hoaprox'))));
+    // The directory lists the artists who run their profile: here Mây Đêm, SlimV and Trần Duy, enough to index.
+    assert.ok(all.body.jsonLd['@graph'].some((n: any) => n['@type'] === 'ItemList' && n.itemListElement.some((i: any) => i.url.endsWith('/a/slimv'))));
+    assert.ok(!all.body.jsonLd['@graph'].some((n: any) => n['@type'] === 'ItemList' && n.itemListElement.some((i: any) => i.url.endsWith('/a/hoaprox'))), 'no unclaimed names');
     const city = await env.as().get('/seo/directory/city:ho-chi-minh?lang=en');
     assert.match(city.body.page.h1, /^Artists in Ho Chi Minh City$/);
     const thin = await env.as().get('/seo/directory/style:gabber');

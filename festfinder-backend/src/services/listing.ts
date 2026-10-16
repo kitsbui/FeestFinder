@@ -16,7 +16,10 @@ export async function announceNewListing(q: Queryable, eventId: string, now: Dat
   const told = new Set<string>();
   const link = { screen: 'event', eventId: ev.id };
 
-  const artistFans = await many<any>(q, 'select user_id, artist from artist_follows where artist = any($1::text[])', [ev.artists]);
+  // Fans of a listed artist: by the profile the lineup links to (041), or by a name an older follow kept.
+  const artistFans = await many<any>(q,
+    `select f.user_id, coalesce(a.name, f.artist) as artist from artist_follows f left join artists a on a.id = f.artist_id
+      where f.artist = any($1::text[]) or f.artist_id in (select artist_id from event_artists where event_id = $2)`, [ev.artists, ev.id]);
   for (const f of artistFans) {
     if (told.has(f.user_id)) continue;
     told.add(f.user_id);

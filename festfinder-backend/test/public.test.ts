@@ -153,8 +153,10 @@ describe('public discovery (Web + App, signed out)', () => {
   it('autocompletes venues and artists without diacritics', async () => {
     const v = await env.as().get('/venues?q=phu%20tho');
     assert.equal(v.body.items.length, 2);
-    const a = await env.as().get('/artists?q=hoap');
-    assert.deepEqual(a.body.items.map((x: any) => x.name), ['Hoaprox']);
+    // Hoaprox is a lineup name nobody runs: found among the unclaimed names, not in the directory.
+    assert.deepEqual((await env.as().get('/artists?q=hoap')).body.items, []);
+    assert.deepEqual((await env.as().get('/artists?q=hoap&kind=unclaimed')).body.items.map((x: any) => x.name), ['Hoaprox']);
+    assert.deepEqual((await env.as().get('/artists?q=tran duy')).body.items.map((x: any) => x.name), ['Trần Duy'], 'without accents');
   });
 
   it('serves one sponsored ad per placement, never alcohol to unknown ages', async () => {

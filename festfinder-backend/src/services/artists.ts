@@ -85,7 +85,9 @@ export const styleItem = (k: string) => ({ key: k, label: styleByKey(k)?.label ?
 
 export interface ArtistFilters {
   q?: string; role?: string[]; style?: string[]; city?: string; country?: string; booking?: string[]; travel?: string;
-  gig?: string[]; gear?: string; brands?: boolean; verified?: boolean; upcoming?: boolean; origin?: 'posted' | 'radar';
+  gig?: string[]; gear?: string; brands?: boolean; verified?: boolean; upcoming?: boolean;
+  /** 'owned' (the directory, the default): profiles an artist runs or the team verified. 'unclaimed': every other name a public event lists, from a lineup or from Radar. */
+  kind?: 'owned' | 'unclaimed';
   sort?: 'next' | 'name' | 'active'; limit: number; offset: number;
 }
 
@@ -95,6 +97,21 @@ export interface ArtistFilters {
  * `pl` counts of searchArtists.
  */
 const ORIGIN = `(case when a.owner_user_id is not null or a.verified or coalesce(pl.posted, 0) > 0 or coalesce(pl.events, 0) = 0 then 'posted' else 'radar' end)`;
+
+/**
+ * What kind of profile an artist has (D13): 'owned' when the artist runs it (claimed or made it)
+ * or the team verified it, and only those are listed in the directory and can be followed;
+ * otherwise 'radar' when every event it plays was found by FeestFinder Radar, else 'unclaimed'
+ * (a name an organiser typed into a lineup). Reads the `pl` counts of searchArtists.
+ */
+const KIND = `(case when a.owner_user_id is not null or a.verified then 'owned' when coalesce(pl.events, 0) > 0 and coalesce(pl.posted, 0) = 0 then 'radar' else 'unclaimed' end)`;
+export type ArtistKind = 'owned' | 'unclaimed' | 'radar';
+
+/** The same, for one artist. */
+export async function artistKind(q: Queryable, a: { id: string; owner_user_id: string | null; verified: boolean }): Promise<ArtistKind> {
+  if (a.owner_user_id || a.verified) return 'owned';
+  return (await artistOrigin(q, a)) === 'radar' ? 'radar' : 'unclaimed';
+}
 
 /** The same, for one artist. */
 export async function artistOrigin(q: Queryable, a: { id: string; owner_user_id: string | null; verified: boolean }): Promise<'posted' | 'radar'> {
@@ -119,14 +136,16 @@ function presentNextShow(raw: string | null) {
 }
 
 /**
- * Artists with a profile someone claimed or at least one public event, under the filters.
+ * The directory: profiles an artist runs (or the team verified), under the filters; with
+ * `kind: 'unclaimed'`, every other name a public event lists, each with where it came from.
  * Order: who plays soonest, then the fuller profile, then the name. Follower counts never
  * rank anyone, so a new name with a show next week comes before a famous one with none.
  */
 export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   const params: unknown[] = [now];
   const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
-  const where = ['(a.owner_user_id is not null or coalesce(pl.events, 0) > 0)'];
+  const owned = '(a.owner_user_id is not null or a.verified)';
+  const where = [(f.kind ?? 'owned') === 'owned' ? owned : `(not ${owned} and coalesce(pl.events, 0) > 0)`];
   if (f.q) {
     const key = artistKey(f.q);
     where.push(`(a.normalized_name like ${p(`%${key}%`)} or ${p(key)} = any(a.alias_keys))`);
@@ -152,10 +171,9 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   if (f.brands) where.push('a.open_to_brands');
   if (f.verified) where.push('a.verified');
   if (f.upcoming) where.push('coalesce(up.upcoming, 0) > 0');
-  // The two tabs count under every filter but their own.
+  // The kinds count under every other filter, so the directory can say how many names wait unclaimed.
   const base = [...params];
-  const all = [...where];
-  if (f.origin) where.push(`${ORIGIN} = ${p(f.origin)}`);
+  const all = [...where.slice(1)];
   // The id last, so pages never overlap when two artists share a name.
   const order = (f.sort === 'name' ? 'a.name'
     : f.sort === 'active' ? `coalesce(pl.last_on, '0001-01-01') desc, a.name`
@@ -167,7 +185,8 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
      pl as (
        select ea.artist_id, count(distinct e.id)::int as events, count(distinct e.id) filter (where e.origin = 'posted')::int as posted,
               max(e.starts_on) as last_on,
-              coalesce(array_agg(distinct s) filter (where s is not null), '{}') as styles, coalesce(array_agg(distinct e.city) filter (where e.city is not null), '{}') as cities
+              coalesce(array_agg(distinct s) filter (where s is not null), '{}') as styles, coalesce(array_agg(distinct e.city) filter (where e.city is not null), '{}') as cities,
+              (array_agg(e.slug || '|' || e.title order by e.starts_at desc))[1] as last_event
          from event_artists ea join events e on e.id = ea.event_id left join lateral unnest(e.styles) s on true
         where ${PUBLIC} group by ea.artist_id),
      -- The genre each artist has played most, which colours their card.
@@ -179,11 +198,11 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
     `${ctes}
      select a.id, a.slug, a.name, a.image_url, a.artist_roles, a.based_city, a.based_country, a.styles, a.booking_status, a.travel_scope,
             a.verified, a.owner_user_id is not null as claimed, coalesce(up.upcoming, 0) as upcoming, up.next_show, coalesce(pl.events, 0) as events,
-            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, ${ORIGIN} as origin, count(*) over () as total
+            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, ${ORIGIN} as origin, ${KIND} as kind, pl.last_event, count(*) over () as total
        ${from}
       where ${where.join(' and ')}
       order by ${order} limit ${p(f.limit)} offset ${p(f.offset)}`, params);
-  const kinds = await many<{ origin: string; n: number }>(q, `${ctes} select ${ORIGIN} as origin, count(*)::int as n ${from} where ${all.join(' and ')} group by 1`, base);
+  const kinds = await many<{ kind: string; n: number }>(q, `${ctes} select ${KIND} as kind, count(*)::int as n ${from} where ${['(a.owner_user_id is not null or a.verified or coalesce(pl.events, 0) > 0)', ...all].join(' and ')} group by 1`, base);
   const total = rows[0] ? Number(rows[0].total) : 0;
   return {
     items: rows.map((a) => ({
@@ -195,9 +214,56 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
       booking: label(BOOKING_STATUS, a.booking_status), travel: label(TRAVEL_SCOPE, a.travel_scope),
       upcoming: a.upcoming as number, events: a.events as number, nextShow: presentNextShow(a.next_show), genre: a.genre as string | null, updatedAt: a.updated_at as Date,
       origin: a.origin as 'posted' | 'radar',
+      kind: a.kind as ArtistKind,
+      // Where an unclaimed name was seen, for "Đây là tôi": the latest event that lists it.
+      source: a.kind === 'owned' || !a.last_event ? null : { kind: a.kind === 'radar' ? 'radar' : 'lineup', event: { slug: String(a.last_event).split('|')[0], title: String(a.last_event).split('|').slice(1).join('|') } },
     })),
     total, offset: f.offset, limit: f.limit,
-    origins: { posted: kinds.find((k) => k.origin === 'posted')?.n ?? 0, radar: kinds.find((k) => k.origin === 'radar')?.n ?? 0 },
+    kinds: { owned: kinds.find((k) => k.kind === 'owned')?.n ?? 0, unclaimed: kinds.find((k) => k.kind === 'unclaimed')?.n ?? 0, radar: kinds.find((k) => k.kind === 'radar')?.n ?? 0 },
     nextOffset: f.offset + rows.length < total ? f.offset + rows.length : null,
   };
+}
+
+// ---- follows of a profile (migration 041) ----------------------------------------------------
+
+/** Links follows made by name to the record that name or alias belongs to. Idempotent; runs at boot. */
+export async function backfillArtistFollows(q: Queryable): Promise<number> {
+  const loose = await many<{ user_id: string; artist: string }>(q, 'select user_id, artist from artist_follows where artist_id is null');
+  if (!loose.length) return 0;
+  const keys = [...new Set(loose.map((f) => artistKey(f.artist)))];
+  const found = await many<{ id: string; normalized_name: string; alias_keys: string[] }>(q,
+    'select id, normalized_name, alias_keys from artists where normalized_name = any($1::text[]) or alias_keys && $1::text[]', [keys]);
+  const byKey = new Map<string, string>();
+  for (const r of found) for (const k of [r.normalized_name, ...r.alias_keys]) if (!byKey.has(k)) byKey.set(k, r.id);
+  let n = 0;
+  for (const f of loose) {
+    const id = byKey.get(artistKey(f.artist));
+    if (!id) continue;
+    await q.query('update artist_follows set artist_id = $3 where user_id = $1 and artist = $2 and artist_id is null', [f.user_id, f.artist, id]);
+    n++;
+  }
+  return n;
+}
+
+/**
+ * When an artist takes over a profile: follows of its name join the profile, and people who
+ * asked Smart Alerts for that name now follow it (the same wish, now that someone runs it).
+ * Returns how many alerts became follows.
+ */
+export async function adoptNameFollows(q: Queryable, artistId: string): Promise<number> {
+  const a = await one<{ name: string; aliases: string[]; normalized_name: string; alias_keys: string[] }>(q, 'select name, aliases, normalized_name, alias_keys from artists where id = $1', [artistId]);
+  if (!a) return 0;
+  const keys = new Set([a.normalized_name, ...a.alias_keys]);
+  const names = await many<{ user_id: string; artist: string }>(q, 'select user_id, artist from artist_follows where artist_id is null');
+  for (const f of names) if (keys.has(artistKey(f.artist))) await q.query('update artist_follows set artist_id = $3 where user_id = $1 and artist = $2', [f.user_id, f.artist, artistId]);
+  const alerts = await many<{ user_id: string; artists: string[] }>(q, `select user_id, artists from smart_alerts where cardinality(artists) > 0`);
+  let moved = 0;
+  for (const al of alerts) {
+    const hit = al.artists.filter((n) => keys.has(artistKey(n)));
+    if (!hit.length) continue;
+    await q.query('insert into artist_follows (user_id, artist, artist_id) values ($1,$2,$3) on conflict (user_id, artist) do update set artist_id = excluded.artist_id', [al.user_id, a.name, artistId]);
+    await q.query('update smart_alerts set artists = $2 where user_id = $1', [al.user_id, al.artists.filter((n) => !keys.has(artistKey(n)))]);
+    moved++;
+  }
+  return moved;
 }
