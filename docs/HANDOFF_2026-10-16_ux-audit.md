@@ -9,8 +9,8 @@
 
 ## 0. Cách làm việc với handoff này
 
-1. Có **10 workstream** (W0–W9). W0 là danh sách lỗi nhỏ, độc lập, nên làm trước. Các workstream còn lại tách được thành branch riêng. Thứ tự đề xuất ở mục 5.
-2. Migration: số tiếp theo là `040`. Dự kiến cần: `040_event_revisions.sql` (W0.3), có thể `041_event_postpone.sql` (W5). Dùng skill `feestfinder-migration`. Không sửa migration đã ship.
+1. Có **11 workstream** (W0–W10). W0 là danh sách lỗi nhỏ, độc lập, nên làm trước. Các workstream còn lại tách được thành branch riêng. Thứ tự đề xuất ở mục 5.
+2. Migration: số tiếp theo là `040`. Dự kiến cần: `040_event_revisions.sql` (W0.3), `041_artist_follows_by_id.sql` (W10), có thể `042_event_postpone.sql` (W5). Đổi số theo thứ tự merge thật. Dùng skill `feestfinder-migration`. Không sửa migration đã ship.
 3. Mỗi workstream xong: `npm run typecheck` → file test của khu vực → `npm test` → `npm run test:screens` (từ `festfinder-backend/`), và `npx tsc --noEmit -p .` trong `festfinder-web/`. Xem bằng skill `feestfinder-preview`.
 4. Commit, push, deploy **chỉ khi người dùng bảo** (push lên `main` là deploy production). Khi được bảo thì dùng skill `feestfinder-ship`.
 5. Cập nhật `docs/FEESTFINDER_ROADMAP.md` ngay trong thay đổi đó, và `CLAUDE.md` khi một quy tắc đổi (ví dụ tên gọi ở W7, route `/app` ở W1).
@@ -60,6 +60,7 @@ Mỗi quyết định đã có mặc định để làm luôn. Nếu người d�
 | D10 | Tên gọi đang lẫn lộn (xem bảng ở W7). | Dùng bảng tên của W7. |
 | D11 | Noto Sans JP thêm khoảng 5,5 MB file font vào bản build. Trình duyệt chỉ tải khi trang có chữ Nhật. | **Giữ.** Bỏ nếu muốn bản build nhẹ hơn. |
 | D12 | Trang mặc định của `/console`. | **Hộp việc "Cần xử lý"** gộp mọi loại việc đang chờ (W3). |
+| D13 | Thư mục nghệ sĩ `/a` trộn ba loại: hồ sơ có chủ, tên nhà tổ chức gõ vào lineup (chưa ai nhận), tên Radar quét. Follow theo tên chữ, không theo hồ sơ. | **Đã chốt (chủ sản phẩm, 2026-10-16): `/a` chỉ hiện hồ sơ có chủ, như một mạng xã hội. Mọi tên chưa có chủ, từ lineup hay Radar, vào mục riêng `/a/radar`.** Follow chuyển sang theo id hồ sơ. Xem W10. |
 
 ---
 
@@ -368,7 +369,7 @@ Làm theo thứ tự trong bảng. Mỗi dòng một commit, mỗi dòng có tes
    - Rail thành thanh tab dưới 4–5 mục cộng "Thêm". "Thêm" mở sheet chứa phần còn lại và phần chân: trang công khai, Về trang khám phá, Đổi vai, Ngôn ngữ, Đăng xuất. Hiện `kd/kd.css:270-272` (`.kd-sn-hide`) giấu chân rail, nên không có lối ra.
    - Chiều cao cố định; thêm `align-content: flex-start` cho `.kd-shell` (`kd.css:262`) để hết khoảng trống 150–240px.
    - Console: chạm một tin thì chi tiết mở như trang hoặc sheet toàn màn.
-2. **Bảng thành thẻ dưới 640px** (`kd/kd.css:283`, `.kd-tr { min-width: 640px }`): tên, dòng phụ, số, rồi nút hành động rộng hết thẻ.
+2. **Bảng thành thẻ dưới 760px** (`kd/kd.css:283`, `.kd-tr { min-width: 640px }`): tên, dòng phụ, số, rồi nút hành động rộng hết thẻ. **Quy tắc chung (chủ sản phẩm chốt 2026-10-16): mọi giao diện lấp đầy bề ngang màn hình trên desktop lẫn điện thoại, và tuyệt đối không cuộn ngang ở bất kỳ route nào**; `e2e/next/layout.spec.ts` kiểm `scrollWidth === innerWidth` ở 390 và 1440 cho mọi route (chi tiết ở `TECH_LEAD_REVIEW_2026-10-16.md` mục 5b).
 3. **Chân rail giống nhau ở cả ba back office:** [Trang công khai] · Về trang khám phá · Đổi vai · Ngôn ngữ · Đăng xuất. Back office hiện không có công tắc ngôn ngữ.
 4. **Bộ thành phần chung:**
    - Chuyển `kd/console/kit.tsx` thành `kd/ui/backoffice.tsx`.
@@ -455,12 +456,59 @@ Theo yêu cầu "bỏ font mono, toàn bộ sử dụng noto sans family". Việ
 
 ---
 
+### W10. Thư mục nghệ sĩ như một mạng xã hội; Radar và tên chưa nhận ở mục riêng (D13 đã chốt)
+
+**Hiện trạng (đã kiểm trong code):**
+- `artist_follows` lưu `artist text` (`db/migrations/004_engagement.sql:33`): một follow là của một **tên**, không phải một hồ sơ. Trang nghệ sĩ đếm follower bằng mọi user theo dõi tên hoặc alias (`routes/artists.ts:96,123`); nút Theo dõi gửi `a.name` (`kd/web/artist/page.tsx:178`); `PUT /me/follows/artists/:artist` nhận chuỗi bất kỳ (`routes/me.ts:208`). Hệ quả: tên trùng thì gộp follower; nghệ sĩ tự theo dõi được; đổi nghệ danh là mất follower; `/me/follows` phải suy ra trang từ tên (`artistPages`).
+- `searchArtists` (`services/artists.ts:112`) liệt kê mọi artist có chủ **hoặc** có ít nhất một sự kiện công khai; `ORIGIN` (`:97`) chỉ tách Radar với phần còn lại. `/a` mặc định tab "Tất cả" (`kd/web/directory/browser.tsx`, `OriginTabs` trong `kd/ui/origin.tsx`).
+- Ba loại hồ sơ đang trộn trong `/a`: (A) có chủ: nghệ sĩ tự tạo hoặc đã nhận (`owner_user_id` khác null, hoặc `verified`); (B) tên nhà tổ chức gõ vào lineup của sự kiện đã đăng, chưa ai nhận; (C) tên FeestFinder Radar quét từ site khác.
+
+**Quy tắc mới:**
+1. **`/a` là mạng xã hội của nghệ sĩ: chỉ loại A.** Bỏ `OriginTabs` ở `/a`; giữ bộ lọc vai trò, phong cách, thành phố, "Nhận booking", "Sắp diễn", ô tìm. `/a/style/<s>`, `/a/city/<c>` cũng chỉ loại A. Sắp xếp như cũ (ai diễn sớm nhất, rồi hồ sơ đầy hơn), **không bao giờ theo follower**.
+2. **`/a/radar` = "Chưa có người quản lý"**: loại B và C, mỗi thẻ có nhãn nguồn ("Lineup · <tên sự kiện>" hoặc `RadarTag`) và nút "Đây là tôi" mở luồng nhận hồ sơ (W6.1). Có cùng bộ lọc và ô tìm. Khi ô tìm ở `/a` không ra kết quả, hiện dòng "Có N tên trùng ở mục Chưa có người quản lý →".
+3. **Trang `/a/<slug>` vẫn mở cho cả ba loại** (lineup và SEO trỏ tới), nhưng khác đầu trang:
+   - Loại A: nút lime duy nhất là **Theo dõi** (chủ hồ sơ thấy **Chỉnh hồ sơ** thay vào, không theo dõi được chính mình); số follower; Mix, Khoảnh khắc, Lịch, booking như hiện nay.
+   - Loại B, C: nhãn "Chưa có người quản lý" (và `RadarTag` nếu C); nút lime duy nhất là **Đây là tôi** (nhận hồ sơ); nút phụ **Nhắc khi có show** = thêm tên vào Cảnh báo thông minh (`PUT /me/alert`, `routes/me.ts:356`, đã có). Không có Theo dõi, không có số follower, không Mix, không booking. Show sắp tới, đã diễn, "Diễn nhiều nhất với" giữ nguyên vì lấy từ sự kiện.
+   - `noindex` cho loại C khi chưa có show sắp tới (tránh hàng nghìn trang Radar mỏng vào Google); loại A và B index như cũ.
+4. **Follow theo id hồ sơ.** Migration `041_artist_follows_by_id.sql` (theo skill `feestfinder-migration`, kiểu expand → contract):
+   - Thêm cột `artist_id uuid references artists on delete cascade` vào `artist_follows`, cho phép null; chỉ mục `(artist_id, user_id)`.
+   - Backfill: khớp `artist` với `artists.name` hoặc `aliases` (cùng cách chuẩn hoá của `017`: bỏ dấu, chữ thường) → ghi `artist_id`. Dòng không khớp giữ `artist_id` null (tên chưa có hồ sơ, vẫn dùng cho Cảnh báo thông minh).
+   - Ràng buộc: chỉ cho `insert` khi hồ sơ đích là loại A (kiểm trong API, không trong DB vì loại A/B phụ thuộc sự kiện); `check (artist_id is not null or artist <> '')`.
+   - API: `PUT/DELETE /me/follows/artists/:id` nhận **id hoặc slug** của hồ sơ; trả `conflict('own_profile')` khi chủ tự theo dõi, `badRequest('not_claimed')` khi hồ sơ chưa có chủ. Route cũ theo tên giữ 1 bản phát hành rồi bỏ (contract). `GET /me/follows` trả `artists: [{id, slug, name, imageUrl, next}]` thẳng từ bảng, bỏ `artistPages`.
+   - Trang nghệ sĩ đếm `count(distinct user_id) where artist_id = a.id`.
+   - Cảnh báo thông minh (`smart_alerts.artists`) vẫn theo tên: đó là cách "nhắc tôi khi tên này có show" cho loại B, C. Khi một tên được nhận hồ sơ, job một lần chuyển các alert của tên đó thành follow của hồ sơ (đồng ý ngầm, vì ý nghĩa như nhau), ghi audit.
+5. **Khi một tên được nhận hồ sơ** (claim duyệt): hồ sơ chuyển sang `/a`; các follow cũ theo tên (đã có `artist_id` nhờ backfill) đi theo; alias giữ để lineup và link cũ vẫn tới.
+6. **Dọn đầu trang nghệ sĩ** (gộp với W6.8): breadcrumb `FeestFinder / Nghệ sĩ / <tên>`; một nút lime; "Mua vé" ở dòng show tông thường; số follower chỉ hiện ở loại A; câu trống cho chủ hồ sơ là link "Báo lịch diễn".
+7. **Studio nghệ sĩ:** tab "Người theo dõi" không cần (follower không xếp hạng ai), nhưng số follower hiện ở đầu Hồ sơ lấy từ bảng mới.
+8. **Console:** `/console/artists` có bộ lọc Có chủ · Chưa nhận · Radar (dùng chung định nghĩa A/B/C với API, một hàm `artistKind()` trong `services/artists.ts` thay cho `ORIGIN` hai giá trị); `RadarTag` ở bảng (W3.5).
+9. **Sơ đồ và SEO:** sitemap liệt kê loại A và B; `services/seo.ts` `buildArtistSeo` nhận `kind` để đặt `noindex` cho C không có show.
+10. **Tài liệu:** sửa mục "Artists and gigs" và "Posted or Radar" trong `CLAUDE.md`: thư mục `/a` là hồ sơ có chủ; `/a/radar` là tên chưa nhận; follow theo id; `OriginTabs` chỉ còn ở `/list`.
+
+11. **Bắt tay hai chiều giữa lineup và hồ sơ (chủ sản phẩm thêm 2026-10-16).** Hồ sơ do nghệ sĩ tạo là **hồ sơ chính thức** của tên đó: mọi lineup, dù nhà tổ chức gõ hay Radar quét, trỏ về nó và nó không bao giờ nằm trong `/a/radar`. Hiện `ensureArtists` (`services/artists.ts:30-40`) đã nối tên theo `normalized_name` và alias, nên phần dữ liệu có sẵn; thiếu là thông báo và xác nhận.
+    - **Chiều NTC → nghệ sĩ.** Khi một tin được gửi duyệt hoặc đăng (`syncEventArtists`, gọi từ `routes/organizer/events.ts` và luồng duyệt) mà một tên trong lineup trỏ tới hồ sơ có chủ: thông báo trong app (và push, email theo cài đặt) tới tài khoản của nghệ sĩ, `kind: 'lineup_added'`, dedupe theo `(event_id, artist_id)`: "<NTC> đã đưa bạn vào lineup <sự kiện> · <ngày> · <thành phố>", hai hành động: **Xác nhận** và **Không phải tôi**, cùng link "Thêm giờ diễn, mix" mở Lịch trong Studio nghệ sĩ (W6.2). Khi tin được đăng mà nghệ sĩ chưa trả lời thì nhắc lại một lần 48 giờ trước đêm diễn.
+    - **Chiều nghệ sĩ → NTC.** Khi nghệ sĩ báo lịch diễn (`artist_gig_reports`, `021`) và báo cáo ghép vào một sự kiện đã đăng của NTC (`outcome = 'merged'`), hoặc khi nghệ sĩ bấm "Tôi diễn ở đây" trên trang sự kiện: thông báo tới NTC (`notifyOrganizer`, `kind: 'gig'` hiện có, thêm `lineup_claim`): "<nghệ sĩ> nói họ diễn ở <sự kiện> · Thêm vào lineup · Không đúng". **Thêm** thì tên vào lineup, trỏ hồ sơ, đánh dấu đã xác nhận bởi cả hai; **Không đúng** thì báo cáo thành `rejected` với lý do về cho nghệ sĩ. Quy tắc của `021` giữ nguyên: báo cáo của nghệ sĩ không bao giờ tự thêm vào lineup của người khác.
+    - **Khi nghệ sĩ mới tạo hoặc nhận hồ sơ** mà tên đã có trong lineup của sự kiện sắp tới (loại B hoặc C): một thông báo gộp cho nghệ sĩ "Có N show đang ghi tên bạn · Xác nhận từng show", và với show của NTC đã đăng thì NTC nhận "<nghệ sĩ> vừa mở hồ sơ, đang có tên trong <sự kiện>" (chỉ thông tin, không cần hành động). Từ lúc này hồ sơ rời `/a/radar`, follow và alert theo tên đi theo hồ sơ (mục 4, 5).
+    - **Dữ liệu** (trong cùng migration `041`): `event_artists` thêm `confirmed_at timestamptz`, `confirmed_by text check (confirmed_by in ('artist','organizer','both'))`, `disputed_at timestamptz`, `disputed_note text`. Một tên bị nghệ sĩ từ chối: dòng `event_artists` bỏ liên kết (giữ tên chữ trong `events.artists` để lineup không mất tên), NTC được báo, `ensureArtists` không nối lại tên đó cho sự kiện đó nữa (ghi `(event_id, normalized_name)` vào `lineup_disputes`). Tên trùng giữa hai nghệ sĩ thật được xử lý bằng chính nút "Không phải tôi"; `artists.normalized_name` đang unique, nên nghệ sĩ thứ hai cùng tên phải chọn nghệ danh khác hoặc thêm hậu tố, như quy tắc "listed profiles are claimed, never duplicated".
+    - **Hiển thị.** Trang sự kiện: dấu xác nhận cạnh tên đã `confirmed_by` (không phải dấu verified của hồ sơ). Trình sửa của NTC, ô Lineup: avatar hồ sơ và trạng thái "Đã xác nhận · Chờ nghệ sĩ · Không phải họ" cạnh mỗi tên có hồ sơ, gợi ý hồ sơ khi gõ (đã có ở "Mời nghệ sĩ", dùng chung). Lịch của nghệ sĩ (W6.2): dòng show có "Đã xác nhận" hoặc hai nút. Hồ sơ công khai chỉ hiện show đã xác nhận ở tab "Sắp diễn"; show chưa xác nhận hiện mờ với nhãn "Chưa xác nhận" cho chủ hồ sơ, ẩn với người xem.
+    - **Chống làm phiền.** Một thông báo mỗi `(sự kiện, nghệ sĩ)`; nghệ sĩ tắt được chủ đề "lineup" trong cài đặt thông báo (W2.3); NTC đăng 20 tin một lúc thì nghệ sĩ nhận một thông báo gộp.
+    - **Test.** `test/lineup.test.ts` mới: NTC đăng tin có tên hồ sơ có chủ → nghệ sĩ có thông báo `lineup_added`; xác nhận → `confirmed_by = 'artist'`, show hiện ở `/artists/:slug` upcoming; "Không phải tôi" → liên kết bỏ, tên vẫn trong `events.artists`, NTC có thông báo, sửa tin lại không nối lại; nghệ sĩ báo lịch ghép vào tin của NTC → NTC có thông báo, "Thêm" → `confirmed_by = 'both'`; tạo hồ sơ trùng tên đang trong lineup → thông báo gộp N show; Radar quét tên có hồ sơ chính thức → trỏ hồ sơ, hồ sơ không có trong `?kind=unclaimed`. E2E: `studio-artist.spec.ts` xác nhận từ thông báo; `studio-events.spec.ts` ô lineup hiện trạng thái.
+    - **Ước lượng:** thêm 1–1,5 ngày vào W10 (API và migration nửa ngày, ba màn 1 ngày).
+
+**Test:**
+- API `test/artists.test.ts`: `/artists` không trả hồ sơ chưa có chủ; `/artists?kind=unclaimed` trả loại B và C với `source`; follow hồ sơ chưa có chủ → `not_claimed`; chủ tự follow → `own_profile`; backfill: một follow theo tên "Kobosil" có `artist_id` sau migration; đổi nghệ danh không đổi số follower; nhận hồ sơ xong thì hồ sơ xuất hiện trong `/artists` và follow cũ đi theo.
+- E2E `directory.spec.ts`: `/a` không có thẻ Radar; `/a/radar` có và có nút "Đây là tôi"; `artist.spec.ts`: trang loại A có một nút lime "Theo dõi", chủ hồ sơ thấy "Chỉnh hồ sơ"; trang Radar có "Đây là tôi" và không có Theo dõi.
+- Seed: thêm một hồ sơ loại B (tên trong lineup Ravolution chưa nhận) để ba loại đều có trong demo.
+
+**Rủi ro:** thấp về dữ liệu (expand → contract, backfill idempotent). Trung bình về SEO: trang Radar không show chuyển `noindex` sẽ rụng khỏi Google, đó là chủ ý. `/a` sẽ ngắn hơn hẳn lúc đầu (demo: 36 → khoảng 10); chấp nhận, vì đó là người thật.
+
+**Ước lượng:** 3–4,5 ngày agent: migration và API 1 ngày, hai trang thư mục và đầu trang nghệ sĩ 1 ngày, bắt tay lineup (mục 11) 1–1,5 ngày, test và tài liệu nửa ngày.
+
 ## 5. Thứ tự đề xuất
 
 | Giai đoạn | Việc | Ghi chú |
 | --- | --- | --- |
 | A (1–2 ngày) | W0 (cả 24 dòng), commit W9 | 0.1 (cấp admin), 0.7 (bỏ phí 5%, đang thu tiền trái lời hứa) và 0.3 (404 khi sửa tin) trước tiên. |
-| B (khoảng 1 tuần) | W7 mục 1–3 (điện thoại, bảng, chân rail) · W3 mục 1–2 (hộp việc, số đếm) · W4 mục 1–3 (tên, tách màn, ngừng bán) · W5 mục 1, 3 (form cộng đồng, sửa wizard) · W6 mục 1, 3 (nhận hồ sơ, liên hệ) · W2 mục 2, 4 (chuông, báo admin) | Mỗi mục là một branch nhỏ. |
+| B (khoảng 1 tuần) | **W10 (thư mục nghệ sĩ, follow theo id)** · W7 mục 1–3 (điện thoại, bảng, chân rail) · W3 mục 1–2 (hộp việc, số đếm) · W4 mục 1–3 (tên, tách màn, ngừng bán) · W5 mục 1, 3 (form cộng đồng, sửa wizard) · W6 mục 1, 3 (nhận hồ sơ, liên hệ) · W2 mục 2, 4 (chuông, báo admin) | Mỗi mục là một branch nhỏ. W10 trước W6.1 vì luồng nhận hồ sơ là lối vào của `/a/radar`. |
 | C (một sprint) | W1 từng bước · W2 phần còn lại · W5 mục 2, 4, 7, 8 (một form, khách mời, gửi tin) · W6 mục 2 (rail 4 mục, pipeline) · W3 phần còn lại · W7 mục 4–8 | W1 bước 3 chỉ làm sau khi đo `FF.track`. |
 | D (sau đó) | W4 mục 4 (mô hình vị trí, hiển thị kệ) · W5 mục 5 (hoãn/huỷ, lịch diễn, mời thành viên) · W5 mục 10 (QR trên iOS) · W8 | |
 
@@ -471,4 +519,5 @@ Theo yêu cầu "bỏ font mono, toàn bộ sử dụng noto sans family". Việ
 - Mỗi dòng của W0 có test riêng (cột Test).
 - E2E cần sửa vì đổi route hoặc tên: `app.spec.ts`, `app-more.spec.ts`, `saved.spec.ts`, `profiles.spec.ts`, `site.spec.ts`, `event.spec.ts`, `list.spec.ts`, `stats.spec.ts`, `studio*.spec.ts`, `console*.spec.ts`, `projects.spec.ts`.
 - Thêm E2E ở 390px cho ba back office: có lối đăng xuất và đổi vai, nút hành động của bảng nằm trong màn hình.
+- `e2e/next/layout.spec.ts`: mọi route ở 390 và 1440, không cuộn ngang, nội dung lấp đầy bề ngang.
 - Sau mỗi giai đoạn: chạy lại một vòng test theo vai (fan, NTC, nghệ sĩ, admin) trên preview, bám các luồng ở mục 3, và đánh dấu luồng nào đã hết ✗.

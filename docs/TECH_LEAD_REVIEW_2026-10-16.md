@@ -148,6 +148,7 @@ Mục tiêu: ba back office dùng được trên điện thoại, một bộ th�
 | 1.2 | Back office trên điện thoại: rail thành thanh tab + "Thêm"; chân rail giống nhau ở cả ba; bảng thành thẻ dưới 640px; chiều cao cố định | Agent | Plan W7.1–3 | E2E mới ở 390px cho `/studio`, `/studio/artist`, `/console`: có Đăng xuất, có Đổi vai, nút hành động của bảng nằm trong màn. |
 | 1.3 | Bộ thành phần back office chung (`kd/ui/backoffice.tsx`), một từ điển trạng thái, một `tone()` | Agent | Plan W7.4 | `/kit` hiển thị bộ này; không còn `Block`, `Kpi`, `Tile` trùng. |
 | 1.4 | Từ điển tên gọi (bảng W7.8) thành file `festfinder-web/src/kd/copy/glossary.ts` và áp vào mọi `copy.ts`; review PR kiểm theo file này | Agent | Plan W7.8, D10 | Grep không còn "Đẩy tin", "Người tham dự" ở chân rail, "Chiến dịch thương hiệu". |
+| 1.4b | Thư mục nghệ sĩ như mạng xã hội: `/a` chỉ hồ sơ có chủ, `/a/radar` cho tên chưa nhận, follow theo id (migration `041`) | Agent | Handoff W10, D13 đã chốt | `/artists` không trả hồ sơ chưa có chủ; follow hồ sơ chưa có chủ bị từ chối; e2e `directory`, `artist`. |
 | 1.5 | Trung tâm thông báo: API `scope=all`, chuông ở 4 khung, một trang cài đặt thông báo, báo admin thêm 4 loại việc | Agent | Plan W2 | Admin nhận thông báo dự án và yêu cầu nhận; e2e chuông trên nav web và Console. |
 | 1.6 | Console "Cần xử lý": một hộp việc, một nguồn số đếm, rail sắp lại, Radar thấy được | Agent | Plan W3.1–3, 5 | Mọi loại việc ở mục 3.4 của plan có mặt; rail và Tổng quan cùng số. |
 | 1.7 | Quảng cáo: một tên, tách màn Console, ngừng bán chỗ không hiển thị, "Tạo chiến dịch" có drawer xem trước | Agent | Plan W4.1–3, W0.16–17 | `/advertise` không còn `feed`, `live`; Studio không còn "Đẩy tin". |
@@ -189,6 +190,60 @@ Mục tiêu: mỗi vai có **một** đường đi cho việc chính, được b
 
 ---
 
+## 5b. Night build: kế hoạch một đêm chạy liền
+
+> Bản đầy đủ để chạy, tự đứng được, ở `docs/NIGHT_BUILD_PLAN_2026-10-16.md`. Mục này giữ phần tóm tắt.
+
+Chủ sản phẩm muốn gom việc thành một "night build": agent chạy nhiều giờ liền, không có người xem, sáng hôm sau có kết quả kiểm được. Nguyên tắc của night build khác ban ngày: **chỉ làm việc đã có quyết định**, **mỗi việc một branch và một commit**, **không deploy**, **dừng và ghi lại khi gặp quyết định mới** thay vì tự quyết.
+
+### Quy tắc bố cục bắt buộc cho mọi việc trong đêm (chủ sản phẩm chốt 2026-10-16)
+
+**Mọi giao diện phải lấp đầy bề ngang màn hình, trên desktop lẫn điện thoại, và tuyệt đối không có cuộn ngang.** Áp cho site, app, Studio, Studio nghệ sĩ và Console; cho mọi màn có sẵn mà việc trong đêm chạm tới, và cho mọi màn mới.
+
+- Lấp đầy: `.kd-wrap` không có `max-width` (đã đúng); phần nội dung của mọi màn trải hết chiều rộng còn lại sau rail hoặc gutter. Không có cột trống bên phải (checkout đang 624 px trái, phải trống: fan #31). Chữ dài vẫn giữ `max-w-read`, lưới thẻ thì thêm cột.
+- Không cuộn ngang: `document.documentElement.scrollWidth` phải bằng `window.innerWidth` ở **mọi** route, ở 390 px và 1440 px, kể cả khi mở drawer, sheet, menu. Không phần tử nào được dựa vào `overflow-x: auto` để "chứa" nội dung rộng hơn màn hình, vì `kd.css` ẩn thanh cuộn nên người dùng không biết có thứ bị cắt.
+- Bảng: dưới `tab` (760 px) bảng đổi thành thẻ (tên, dòng phụ, số, nút hành động rộng hết thẻ); trên desktop cột co theo `minmax(0, …)`, chữ dài `kd-ell`, không `min-width` cố định lớn hơn màn hình. Hiện đang sai ở: `/list` bảng 1020 px (fan #2), `/console/events` 1020 px (admin #16), mọi `.kd-tr { min-width: 640px }` của ba back office (nghệ sĩ #3, NTC L.1), rail Studio thành dải 1.503 px trên điện thoại.
+- Dải chip, tab, rail ngang: được cuộn ngang **bên trong** chính nó chỉ khi có dấu hiệu rõ (mờ dần ở mép và vẫn cuộn bằng tay), nhưng không được làm trang cuộn ngang; ưu tiên xuống dòng.
+- Ảnh, iframe, mã QR, bản đồ, `<pre>` JSON: `max-width: 100%`, `min-width: 0` trên mọi flex item chứa chữ dài.
+
+**Cổng kiểm tra chung, chạy sau mỗi việc N1–N11:** một spec Playwright mới `e2e/next/layout.spec.ts` đi qua **mọi** route trong `src/app/(kd)` (lấy từ danh sách route, với slug seed) ở 390 px và 1440 px, đăng nhập theo vai cần thiết, và khẳng định: `scrollWidth === innerWidth`; không phần tử nào có `getBoundingClientRect().right > innerWidth + 1` trừ phần tử bị `overflow: hidden` bởi cha; phần nội dung chính rộng ≥ 95% chiều rộng còn lại. Spec này **đỏ là không được sang việc kế**.
+
+### Đầu vào bắt buộc trước khi bắt đầu
+
+| # | Điều kiện | Lý do |
+| --- | --- | --- |
+| 1 | Mọi quyết định D1–D13 của handoff đã chốt hoặc chấp nhận mặc định (chủ SP ghi một dòng vào roadmap: "chấp nhận mặc định D2–D12") | Agent không được tự quyết việc sản phẩm |
+| 2 | `main` sạch, CI xanh, `npm test` và `npm run test:screens` xanh trên máy chạy | Để biết lỗi mới là của đêm nay |
+| 3 | Máy không ngủ (skill `ccd_host` request_keep_awake), còn đủ hạn mức phiên; preview không chạy để tránh tranh cổng 3000/4300/4100 | Hai lần hôm nay agent bị dừng vì hết hạn mức |
+| 4 | Một file `docs/NIGHT_BUILD_<ngày>.md` do agent ghi tiến độ sau **mỗi** việc: branch, commit, test đã chạy, điều còn mở | Nếu bị dừng giữa chừng, sáng sau vẫn đọc được |
+
+### Thứ tự trong đêm (khoảng 15 giờ agent; nếu hạn mức không đủ thì cắt từ N7b trở đi sang đêm sau; mỗi việc có cổng kiểm tra)
+
+| Giờ | Việc | Nguồn | Cổng để sang việc kế |
+| --- | --- | --- | --- |
+| 0:00 | Khởi động: tạo file tiến độ, `git fetch`, xác nhận điều kiện 1–2 | | Ghi dòng đầu tiên |
+| 0:10 | **N1** Bỏ phí 5% checkout và Pass vé | Handoff W0.7 | `test/attendee.test.ts`, `resale.test.ts` xanh; e2e `event.spec.ts` xanh |
+| 1:00 | **N2** Bỏ cấp admin qua Console; tách `admin/ops.ts` thành 4 file nhân tiện | Handoff W0.1, Audit Q3 | `admin.test.ts` xanh; test 403 cho người không phải admin |
+| 2:00 | **N3** Sửa tạm 404 khi sửa tin đang bán (cờ `needs_review`, migration `040`) | Review 0.3 | `organizer` tests xanh; `/events/<slug>` 200 sau khi sửa |
+| 3:30 | **N4** Báo cáo: một thẻ mỗi đối tượng, cảnh cáo theo đối tượng, báo admin khi tin bị ẩn | Handoff W0.11, D8 | `moderation.test.ts` xanh |
+| 4:30 | **N5** Font gọn: 3 `@font-face` Noto Sans, Thai/JP chỉ dải riêng, preload | Audit P1 | e2e mới: trang Việt không tải latin-ext, jp, thai; font < 60 KB |
+| 5:30 | **N6** Cache CDN cho API đọc công khai và `/map/style.json` | Audit P3 | test API: không cookie → `s-maxage`; có cookie → `private, no-store` |
+| 6:30 | **N7** W10 phần API và migration `041`: follow theo id, `artistKind()`, `/artists` chỉ loại A, `?kind=unclaimed` | Handoff W10.4, 8 | `artists.test.ts` theo danh sách test của W10 |
+| 8:00 | **N8** W10 phần web: `/a` không tab, `/a/radar`, đầu trang nghệ sĩ theo loại, breadcrumb | Handoff W10.1–3, 6 | `directory.spec.ts`, `artist.spec.ts` xanh |
+| 9:30 | **N9** 10 lỗi nhỏ của W0 không cần quyết định: 0.8, 0.9, 0.10, 0.12, 0.13, 0.14, 0.15, 0.19, 0.20, 0.21 | Handoff W0 | mỗi lỗi một test |
+| 11:00 | **N10** ESLint bật với baseline (không sửa `any` cũ), `no-floating-promises` sửa hết vì là lỗi thật | Audit Q1 | `npm run lint` 0 lỗi; CI có job lint |
+| 11:40 | **N7b** Bắt tay lineup ↔ hồ sơ, phần API: cột `confirmed_*`/`disputed_*` trong cùng migration `041`, thông báo `lineup_added` khi NTC đăng tên có hồ sơ chính thức, `lineup_claim` khi báo lịch ghép vào tin NTC, endpoint xác nhận / không phải tôi / thêm vào lineup; hồ sơ chính thức không bao giờ ở `/a/radar` | Handoff W10.11 | `test/lineup.test.ts` xanh. Phần màn hình (ô lineup của NTC, Lịch nghệ sĩ, dấu trên trang sự kiện) để đêm sau hoặc ban ngày vì cần xem bằng mắt |
+| 13:00 | **N11** Lấp đầy bề ngang, không cuộn ngang: viết `layout.spec.ts` **trước**, chạy để có danh sách màn đang sai, rồi sửa theo thứ tự: `.kd-tr` thành thẻ dưới 760 px (ba back office), `/list` mặc định lưới trên điện thoại và bảng co được trên desktop, `/console/events` co cột, rail Studio và Console trên điện thoại thành thanh tab + "Thêm" (Handoff W7.1), checkout hai cột trên desktop, `.kd-shell` `align-content: flex-start` | Quy tắc bố cục ở trên; Handoff W7.1–2, W0.19; Audit fan #2 #31, admin #16, nghệ sĩ #3 #12 | `layout.spec.ts` xanh ở 390 và 1440 cho mọi route |
+| 15:00 | Khép: `npm run typecheck`, `npm test`, `npm run test:screens` trên nhánh gộp `night/2026-10-xx`; cập nhật roadmap, `CLAUDE.md` (font, `/a`, follow, hồ sơ chính thức và bắt tay lineup, và quy tắc "lấp đầy bề ngang, không cuộn ngang" vào mục Look), file tiến độ; **không push `main`** | | Báo cáo sáng: bảng việc, số test, điều còn mở |
+
+Việc **không** làm trong đêm, dù có thời gian: gộp web và app (W1), gộp wizard và editor (W5.2), hộp việc Console (W3.1), trung tâm thông báo (W2). Chúng đụng nhiều màn và cần người xem bằng mắt trước khi đi tiếp.
+
+### Sáng hôm sau (chủ sản phẩm, 30 phút)
+
+1. Đọc `docs/NIGHT_BUILD_<ngày>.md`: việc nào xong, việc nào dừng vì gặp quyết định.
+2. Chạy preview (skill `feestfinder-preview`), thu cửa sổ về cỡ điện thoại rồi kéo rộng ra: không trang nào cuộn ngang, không cột trống. Đi 4 luồng ngắn: mua vé (không phí), sửa tin đang bán (trang vẫn mở), `/a` và `/a/radar`, trang nghệ sĩ có chủ và trang Radar.
+3. Nếu ổn: "commit all merge main redeploy" như thường lệ (skill `feestfinder-ship`). Nếu một việc hỏng: bảo agent revert đúng commit đó, phần còn lại vẫn ship.
+
 ## 6. Tiêu chí hoàn thành (Definition of Done) và test hành trình
 
 ### 6.1 DoD cho mọi PR từ nay
@@ -197,7 +252,7 @@ Mục tiêu: mỗi vai có **một** đường đi cho việc chính, được b
 2. Có test cho hành vi mới hoặc lỗi đã sửa (API trong `test/`, màn hình trong `e2e/next/`).
 3. Chuỗi hiển thị song ngữ qua `pick()` / `L()`; không còn tiếng Anh lọt trong giao diện tiếng Việt; tên gọi theo `glossary.ts`.
 4. Mỗi màn một nút lime; không có câu giải thích ngoài quy tắc định dạng (Lean UI).
-5. Màn mới hoặc sửa phải chụp ở 390px và 1440px, đính vào PR.
+5. Màn mới hoặc sửa phải chụp ở 390px và 1440px, đính vào PR. Màn lấp đầy bề ngang ở cả hai cỡ và `layout.spec.ts` xanh: không cuộn ngang ở bất kỳ route nào.
 6. Thay đổi route có redirect và được ghi trong `CLAUDE.md`; thay đổi quy tắc có dòng trong roadmap.
 7. Migration theo quy ước expand → contract và có bước lùi ghi trong file.
 8. Không thêm route, vai hay mật khẩu nào cấp admin; route admin mới có test 403 cho người không phải admin.
