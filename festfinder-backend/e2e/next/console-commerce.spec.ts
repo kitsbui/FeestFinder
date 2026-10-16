@@ -54,20 +54,15 @@ test.describe('the Console: accounts, orders and partners', () => {
     expect(problems).toEqual([]);
   });
 
-  test('accounts: make an admin, then take it back', async ({ page }) => {
+  test('accounts: the drawer cannot grant admin, which comes only from ADMIN_EMAIL', async ({ page }) => {
     const { items } = await (await page.request.get('/admin/users?q=guest1%40example.com&kind=attendee')).json();
     const guest = items[0] as { id: string; name: string; email: string };
     await open(page, '/console/users/' + guest.id);
     await expect(page).toHaveURL(new RegExp(`/console/users\\?id=${guest.id}`));
     const drawer = page.getByRole('dialog', { name: guest.name });
-    const role = async () => (await (await page.request.get('/admin/users/' + guest.id)).json()).role;
-
-    await drawer.getByRole('button', { name: 'Cấp quyền admin' }).click();
-    await page.getByRole('alertdialog', { name: 'Cấp quyền admin?' }).getByRole('button', { name: 'Cấp quyền' }).click();
-    await expect.poll(role).toBe('admin');
-    await drawer.getByRole('button', { name: 'Gỡ quyền admin' }).click();
-    await page.getByRole('alertdialog', { name: 'Gỡ quyền admin?' }).getByRole('button', { name: 'Gỡ quyền' }).click();
-    await expect.poll(role).toBe('user');
+    await expect(drawer.getByRole('heading', { name: 'Đơn hàng gần đây' })).toBeVisible();
+    await expect(drawer.getByRole('button', { name: /quyền admin/i })).toHaveCount(0);
+    expect((await page.request.patch('/admin/users/' + guest.id, { data: { role: 'admin' } })).status()).toBe(404);
   });
 
   test('orders: tiles, search, the event filter, and the refund asks for a reason', async ({ page }) => {

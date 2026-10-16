@@ -7,16 +7,12 @@
  * the API refuses); the ADMIN_EMAIL allowlist still decides on every boot who keeps it.
  */
 import { useCallback } from 'react';
-import { ShieldCheckIcon, ShieldSlashIcon } from '@phosphor-icons/react/ssr';
-import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { money } from '../../format';
 import { KdLink } from '../../link';
-import { useKd } from '../../runtime';
-import { Button } from '../../ui/actions';
 import { Avatar, Stat, StatRow } from '../../ui/parts';
 import { Row, Table } from '../../ui/shell';
-import { act, ago, Body, Choice, Drawer, Empty, ErrorBox, FilterBar, KV, Loading, MultiChoice, PageHead, Pager, Pill, qs, SearchField, stamp, useAsk, useLoad, useOptions, useQuery } from '../kit';
+import { ago, Body, Choice, Drawer, Empty, ErrorBox, FilterBar, KV, Loading, MultiChoice, PageHead, Pager, Pill, qs, SearchField, stamp, useLoad, useOptions, useQuery } from '../kit';
 import { useConsole } from '../root';
 import { Cell, CHECKOUT_CURRENCY, Section, STATUS_TONE, Two, useTyped } from '../orders/parts';
 import { USERS } from './copy';
@@ -101,25 +97,15 @@ export function Users() {
         )}
         {load.data ? <Pager offset={offset} limit={limit} total={load.data.total} onChange={(o, l) => set({ offset: o ? String(o) : null, limit: l === 25 ? null : String(l) })} /> : null}
       </Body>
-      {id ? <UserDrawer key={id} id={id} lang={lang} onClose={() => set({ id: null })} onChanged={load.reload} /> : null}
+      {id ? <UserDrawer key={id} id={id} lang={lang} onClose={() => set({ id: null })} /> : null}
     </>
   );
 }
 
-function UserDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang; onClose: () => void; onChanged: () => void }) {
+function UserDrawer({ id, lang, onClose }: { id: string; lang: Lang; onClose: () => void }) {
   const T = pick(USERS, lang);
-  const kd = useKd();
-  const ask = useAsk();
   const load = useLoad<UserDetail>('/admin/users/' + id);
   const u = load.data;
-  const self = kd.user?.id === id;
-  const setRole = async (role: 'admin' | 'user') => {
-    const ok = await ask(role === 'admin'
-      ? { title: T.makeAsk, body: T.makeBody, confirm: T.makeConfirm, danger: true }
-      : { title: T.removeAsk, confirm: T.removeConfirm, danger: true });
-    if (!ok) return;
-    if (await act(kd, lang, () => FF.patch('/admin/users/' + id, { role }))) { load.reload(); onChanged(); }
-  };
   const name = u ? u.name || u.email || phone(u.phone) || '—' : T.loading;
   return (
     <Drawer
@@ -127,20 +113,12 @@ function UserDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang; 
       title={name}
       sub={u ? (
         <span className="flex flex-wrap items-center gap-2">
-          {u.role === 'admin' ? <Pill tone="live">{T.kAdmin}</Pill> : null}
+          {u.role === 'admin' ? <Pill tone="live">{T.kAdminFrom}</Pill> : null}
           {u.organizers.length ? <Pill tone="ok">{T.organizer}</Pill> : null}
           <span>{fill(T.joined, { m: u.signupLabel, d: stamp(u.createdAt, lang, false) })}</span>
         </span>
       ) : null}
       onClose={onClose}
-      footer={u && !self ? (
-        <>
-          <span className="flex-1" />
-          {u.role === 'admin'
-            ? <Button size="sm" className="kd-btn-danger" onClick={() => setRole('user')}><ShieldSlashIcon size={16} aria-hidden="true" />{T.removeAdmin}</Button>
-            : <Button size="sm" onClick={() => setRole('admin')}><ShieldCheckIcon size={16} aria-hidden="true" />{T.makeAdmin}</Button>}
-        </>
-      ) : null}
     >
       {load.error && !u ? <ErrorBox error={load.error} retry={load.reload} /> : !u ? <Loading /> : (
         <>
