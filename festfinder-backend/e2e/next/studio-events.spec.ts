@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, request, test, type Page } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 
 /*
@@ -10,6 +10,7 @@ import { signInWith, watch } from '../checks.ts';
  */
 
 const ORGANIZER = { identifier: 'team@ravolution.vn', password: 'ravolution2026' };
+const ADMIN = { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' };
 
 async function open(page: Page, path: string) {
   const problems = watch(page);
@@ -76,14 +77,36 @@ test.describe('Studio events', () => {
     expect(after.status).toBe('live');
     expect(after.startsOn).toBe('2026-09-18');
 
-    // Saved: the listing stays live and its page stays up, with the change waiting for review.
+    expect(problems).toEqual([]);
+  });
+
+  test('saving a date change keeps a live event live and its page up, with the change waiting', async ({ page }) => {
+    // An event of its own, so the specs that share this API keep tonight's Warm-up as it is:
+    // a copy of Warm-up with a later date, published by the team.
+    const source = await eventId(page, 'Ravolution Warm-up · Rooftop');
+    const copy = await (await page.request.post(`/organizer/events/${source}/duplicate`)).json();
+    expect((await page.request.patch('/organizer/events/' + copy.id, { data: { title: `Warm-up copy ${Date.now() % 100000}`, startsOn: '2026-10-09', endsOn: '2026-10-09' } })).ok()).toBeTruthy();
+    await page.goto('/studio');
+    const base = new URL(page.url()).origin;
+    const admin = await request.newContext({ baseURL: base });
+    expect((await admin.post('/auth/login', { data: ADMIN })).ok()).toBeTruthy();
+    const published = await admin.post(`/admin/events/${copy.id}/status`, { data: { action: 'publish' } });
+    expect(published.ok(), await published.text()).toBeTruthy();
+
+    const problems = await open(page, '/studio/events/' + copy.id);
+    await page.getByLabel('Ngày', { exact: true }).fill('2026-10-10');
     await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
     await page.getByRole('alertdialog').getByRole('button', { name: 'Lưu', exact: true }).click();
     await expect(page.getByText('Thay đổi đang chờ duyệt')).toBeVisible();
-    const saved = await (await page.request.get('/organizer/events/' + id)).json();
+    const saved = await (await page.request.get('/organizer/events/' + copy.id)).json();
     expect(saved.status).toBe('live');
-    expect(saved.startsOn).toBe('2026-09-25');
+    expect(saved.startsOn).toBe('2026-10-10');
     expect((await page.request.get('/events/' + saved.slug)).status()).toBe(200);
+    // The team's queue shows it as a change to a live listing.
+    const queue = await (await admin.get('/admin/queue')).json();
+    expect(queue.items.find((i: { id: string }) => i.id === copy.id)?.kind).toBe('revision');
+    await admin.post('/admin/listings/approve', { data: { ids: [copy.id] } });
+    await admin.dispose();
     expect(problems).toEqual([]);
   });
 

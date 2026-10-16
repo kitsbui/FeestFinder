@@ -76,5 +76,5 @@ export const config = {
   // Not the files this app serves itself (public/), nor uploads (/files/): those that are the
   // API's (/ui/ files this app lacks, /files/) reach it through the fallback rewrite, unsigned,
   // which is fine because the API does not rate-limit them, and Vercel caches them.
-  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|files/|favicon.ico|sw.js|manifest.webmanifest).*)'],
+  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|fonts/|files/|favicon.ico|sw.js|manifest.webmanifest).*)'],
 };
