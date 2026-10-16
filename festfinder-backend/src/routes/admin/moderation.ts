@@ -10,9 +10,9 @@ import { parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { appendAudit, type DiffRow } from '../../services/audit.ts';
 import { announceNewListing } from '../../services/listing.ts';
-import { cityOf } from '../../lib/places.ts';
+import { cityBySlug, cityOf } from '../../lib/places.ts';
 import { refreshConfidence } from '../../services/ingest/confidence.ts';
-import { notifyOrganizer } from '../../services/notify.ts';
+import { notifyAdmins, notifyOrganizer } from '../../services/notify.ts';
 import { assessRisk, riskBand, SLA_HOURS } from '../../services/risk.ts';
 import { moderationThread } from '../organizer/inbox.ts';
 import { notifySubmitter } from '../../services/community.ts';
@@ -64,6 +64,23 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
   await notifySubmitter(q, ev, now, 'live');
   await queueIndexNow(q, ctx, ev.slug);
   return ev;
+}
+
+/**
+ * A listing someone sent in waits in the review queue: every admin hears of it (in the app, by
+ * push and by email) with a link to it in the Console. `from` says who sent it.
+ */
+export async function askForReview(q: Queryable, now: Date, ev: { id: string; title: string; starts_on?: string | null; city?: string | null }, from: string, again = false) {
+  const when = ev.starts_on ? String(ev.starts_on).slice(0, 10) : null;
+  const where = cityBySlug(ev.city)?.name ?? null;
+  await notifyAdmins(q, now, {
+    kind: 'review_needed',
+    dedupeKey: `review:${ev.id}:${now.getTime()}`,
+    title: again ? L(`Changed, to review again: ${ev.title}`, `Đã sửa, cần duyệt lại: ${ev.title}`) : L(`To review: ${ev.title}`, `Cần duyệt: ${ev.title}`),
+    body: L([from, when, where?.en].filter(Boolean).join(' · '), [from, when, where?.vi].filter(Boolean).join(' · ')),
+    cta: L('Review it', 'Duyệt ngay'),
+    link: { url: `/console?id=${ev.id}` },
+  });
 }
 
 export default async function adminModerationRoutes(app: FastifyInstance) {

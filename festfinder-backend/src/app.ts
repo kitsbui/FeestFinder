@@ -32,6 +32,7 @@ import organizerAudienceRoutes from './routes/organizer/audience.ts';
 import doorRoutes from './routes/organizer/door.ts';
 import organizerMoneyRoutes from './routes/organizer/money.ts';
 import organizerInboxRoutes from './routes/organizer/inbox.ts';
+import organizerAdRoutes from './routes/organizer/ads.ts';
 import adminModerationRoutes from './routes/admin/moderation.ts';
 import adminCatalogRoutes from './routes/admin/catalog.ts';
 import adminPlatformRoutes from './routes/admin/platform.ts';
@@ -307,6 +308,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(doorRoutes);
   await app.register(organizerMoneyRoutes);
   await app.register(organizerInboxRoutes);
+  await app.register(organizerAdRoutes);
   await app.register(adminModerationRoutes);
   await app.register(adminCatalogRoutes);
   await app.register(adminPlatformRoutes);

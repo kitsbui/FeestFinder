@@ -30,7 +30,7 @@ interface Perf {
   daily: { day: string; views: number; clicks: number; saves: number; sold: number }[];
   period: { views: number; clicks: number; saves: number; sold: number; viewsBefore: number };
   sources: { key: string; pct: number }[];
-  boost: { status: 'open' | 'done' | 'declined' } | null;
+  boost: { status: 'open' | 'approved' | 'done' | 'declined' | 'withdrawn' } | null;
   /** Presses of "Đặt xe" (Grab, Green SM) on the event page, all time. */
   rideClicks?: number;
 }
@@ -73,10 +73,8 @@ export function Dashboard() {
   const pct = (a: number, b: number) => (b ? `${(Math.round((a / b) * 1000) / 10).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}%` : '0%');
   const delta = perf ? (perf.period.viewsBefore ? Math.round(((perf.period.views - perf.period.viewsBefore) / perf.period.viewsBefore) * 100) : null) : null;
   const srcLabel: Record<string, string> = { feed: T.srcFeed, shelf: T.srcShelf, shared: T.srcShared, search: T.srcSearch, own: T.srcOwn, ads: T.srcAds, map: T.srcMap, list: T.srcList, artist: T.srcArtist };
-  const boost = async () => {
-    if (!event) return;
-    try { const out = await FF.post(`/organizer/events/${event.id}/boost`); kd.toast(FF.text(out.message, lang)); load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
-  };
+  // "Đẩy tin" asks for advertising: the form opens on this event.
+  const boost = () => { if (event) location.assign('/studio/ads?event=' + encodeURIComponent(event.id)); };
   const cols = 'minmax(200px,2fr) 72px 120px 120px';
 
   return (
@@ -130,7 +128,7 @@ export function Dashboard() {
                 <div className="flex items-center justify-between gap-2.5 border-t border-line pt-3">
                   <span className="kd-s">{T.boostLine}</span>
                   {perf.boost?.status === 'open' ? <Status tone="warn">{T.boostAsked}</Status>
-                    : perf.boost?.status === 'done' ? <Status tone="ok">{T.boostDone}</Status>
+                    : perf.boost?.status === 'done' || perf.boost?.status === 'approved' ? <Status tone="ok">{T.boostDone}</Status>
                     : <Button size="sm" onClick={boost}><RocketLaunchIcon size={14} aria-hidden="true" />{T.boost}</Button>}
                 </div>
               ) : null}

@@ -9,13 +9,23 @@ import { dateStr, localized, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { CARD_COLUMNS, presentCard } from '../../presenters/event.ts';
 import { appendAudit } from '../../services/audit.ts';
-import { notifyOrganizer } from '../../services/notify.ts';
+import { notifyOrganizer, notifyUser } from '../../services/notify.ts';
+import { cityLabel } from '../../lib/places.ts';
+import { AD_CATEGORY_LABEL, BRAND_AD_PLACEMENT_LABEL, type AdCategory } from '../../lib/ads.ts';
+import { AD_REQUEST_COLUMNS, presentAdRequest } from '../organizer/ads.ts';
 
 const AD_ART: Record<string, string> = {
   'F&B': 'linear-gradient(135deg,#FFB35C,#FF5C5C)',
   Fashion: 'linear-gradient(135deg,#8C6BFF,#FF6FA5)',
   Healthcare: 'linear-gradient(135deg,#2AC4E8,#1B6BD6)',
+  Beauty: 'linear-gradient(135deg,#FF8FB1,#C24DFF)',
+  Tech: 'linear-gradient(135deg,#5AE0C8,#1B6BD6)',
+  Travel: 'linear-gradient(135deg,#FFD25C,#2AC4E8)',
+  Lifestyle: 'linear-gradient(135deg,#ABFF84,#0AE448)',
+  Other: 'linear-gradient(135deg,#9D95FF,#5A62E0)',
+  Event: 'linear-gradient(150deg,#BFF3FF,#00BAE2 48%,#5A62E0 120%)',
 };
+const day = (v: unknown) => (v ? String(v).slice(0, 10) : null);
 
 const admin = (s: UserSession) => ({ actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin' });
 
@@ -209,7 +219,8 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
   // ---- advertising ---------------------------------------------------------------------
 
   const presentCampaign = (c: any) => ({
-    id: c.id, brand: c.brand, category: c.category, logo: c.logo, art: c.art, placement: c.placement, active: c.active,
+    id: c.id, brand: c.brand, category: c.category, logo: c.logo, logoUrl: c.logo_url, images: c.images ?? [], art: c.art, placement: c.placement, active: c.active,
+    startsOn: day(c.starts_on), endsOn: day(c.ends_on), cities: c.cities ?? [], eventId: c.event_id,
     headline: c.headline, body: c.body, cta: c.cta, url: c.url, genres: c.genres, areas: c.areas, isAlcohol: c.is_alcohol,
     impressions: c.impressions, clicks: c.clicks, ctrPct: c.impressions ? Math.round((c.clicks / c.impressions) * 10000) / 100 : null,
     spend: c.spend, budgetTotal: c.budget_total, dailyCap: c.daily_cap,
@@ -226,8 +237,13 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     return {
       inquiries: inquiries.map((q) => ({
-        id: q.id, brand: q.brand, category: q.category, logo: initialsOf(q.brand), art: AD_ART[q.category], email: q.email, budget: q.budget,
-        placements: q.placements, message: q.message, ageMinutes: Math.round((now.getTime() - new Date(q.created_at).getTime()) / 60000),
+        id: q.id, brand: q.brand, category: q.category, categoryLabel: AD_CATEGORY_LABEL[q.category as AdCategory] ?? null, logo: initialsOf(q.brand), logoUrl: q.logo_url,
+        art: AD_ART[q.category], email: q.email, budget: q.budget, budgetAmount: q.budget_amount == null ? null : Number(q.budget_amount), currency: q.currency,
+        placements: q.placements, placementLabels: (q.placements as string[]).map((k) => BRAND_AD_PLACEMENT_LABEL[k as keyof typeof BRAND_AD_PLACEMENT_LABEL] ?? L(k, k)),
+        message: q.message, website: q.website, links: q.links ?? {}, productImages: q.product_images ?? [], description: q.description,
+        contactName: q.contact_name, phone: q.phone, startsOn: day(q.starts_on), endsOn: day(q.ends_on), isAlcohol: q.is_alcohol,
+        cities: (q.cities ?? []).map((c: string) => ({ slug: c, label: cityLabel(c) })),
+        ageMinutes: Math.round((now.getTime() - new Date(q.created_at).getTime()) / 60000),
       })),
       campaigns: campaigns.map(presentCampaign),
       rates: settings.rates,
@@ -245,19 +261,34 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
       dailyCap: z.number().int().min(1_000_000).max(60_000_000).default(12_000_000),
       budgetTotal: z.number().int().min(0).default(0),
       headline: localized.optional(), body: localized.optional(), cta: localized.optional(), url: z.string().url().optional(),
-      isAlcohol: z.boolean().default(false),
+      isAlcohol: z.boolean().optional(),
+      reply: z.string().trim().max(1000).optional(),
     }), req.body ?? {});
     const now = ctx.clock.now();
     const campaign = await ctx.db.tx(async (q) => {
       const inq = await one<any>(q, `select * from ad_inquiries where id = $1 for update`, [parse(uuid, req.params.id)]);
       if (!inq) throw notFound();
       if (inq.status !== 'new') throw conflict('already_decided', L('This enquiry was already handled', 'Yêu cầu này đã được xử lý'));
-      await q.query(`update ad_inquiries set status = 'approved', decided_at = $2 where id = $1`, [inq.id, now]);
+      await q.query(`update ad_inquiries set status = 'approved', decided_at = $2, reply = $3 where id = $1`, [inq.id, now, body.reply || null]);
+      // What the brand sent becomes the campaign: its logo and images, its site, its dates and cities.
+      const links = Object.values((inq.links ?? {}) as Record<string, string>);
+      const text = (v: string) => ({ en: v, vi: v });
       const c = await one<any>(q,
-        `insert into ad_campaigns (inquiry_id, brand, category, logo, art, headline, body, cta, url, placement, genres, areas, is_alcohol, budget_total, daily_cap)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning *`,
-        [inq.id, inq.brand, inq.category, initialsOf(inq.brand), AD_ART[inq.category], json(body.headline ?? { en: '', vi: '' }), json(body.body ?? { en: '', vi: '' }),
-          json(body.cta ?? { en: '', vi: '' }), body.url ?? null, body.placement ?? inq.placements[0], body.genres, body.areas, body.isAlcohol, body.budgetTotal, body.dailyCap]);
+        `insert into ad_campaigns (inquiry_id, brand, category, logo, art, headline, body, cta, url, placement, genres, areas, is_alcohol, budget_total, daily_cap,
+                                   logo_url, images, starts_on, ends_on, cities)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) returning *`,
+        [inq.id, inq.brand, inq.category, initialsOf(inq.brand), AD_ART[inq.category], json(body.headline ?? text(inq.brand)), json(body.body ?? text(inq.description ?? '')),
+          json(body.cta ?? { en: 'Visit', vi: 'Xem ngay' }), body.url ?? inq.website ?? links[0] ?? null, body.placement ?? inq.placements[0], body.genres, body.areas,
+          body.isAlcohol ?? inq.is_alcohol, body.budgetTotal || Number(inq.budget_amount ?? 0), body.dailyCap,
+          inq.logo_url, inq.product_images ?? [], inq.starts_on, inq.ends_on, inq.cities ?? []]);
+      if (inq.user_id) {
+        await notifyUser(q, now, {
+          userId: inq.user_id, topic: null, kind: 'ad_inquiry', dedupeKey: `ad-inquiry-answer:${inq.id}`, email: true,
+          title: L(`Your ad for ${inq.brand} is approved`, `Quảng cáo ${inq.brand} đã được duyệt`),
+          body: body.reply ? { en: body.reply, vi: body.reply } : L('Our partnerships team will be in touch about the next steps.', 'Đội đối tác sẽ liên hệ bạn về các bước tiếp theo.'),
+          link: { url: '/advertise' },
+        });
+      }
       await appendAudit(q, { at: now, ...admin(s), action: 'ads.campaign_created', targetType: 'campaign', targetId: c.id, targetLabel: inq.brand,
         diff: [{ f: 'placement', a: '—', b: c.placement }, { f: 'daily_cap', a: '—', b: String(c.daily_cap) }] });
       return c;
@@ -267,11 +298,20 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { id: string } }>('/admin/ads/inquiries/:id/decline', async (req) => {
     const s = requireAdmin(req);
+    const { reply } = parse(z.object({ reply: z.string().trim().max(1000).optional() }), req.body ?? {});
     const now = ctx.clock.now();
     const brand = await ctx.db.tx(async (q) => {
-      const inq = await one<any>(q, `update ad_inquiries set status = 'declined', decided_at = $2 where id = $1 and status = 'new' returning *`, [parse(uuid, req.params.id), now]);
+      const inq = await one<any>(q, `update ad_inquiries set status = 'declined', decided_at = $2, reply = $3 where id = $1 and status = 'new' returning *`, [parse(uuid, req.params.id), now, reply || null]);
       if (!inq) throw notFound();
       await appendAudit(q, { at: now, ...admin(s), action: 'ads.inquiry_declined', targetType: 'inquiry', targetId: inq.id, targetLabel: inq.brand, diff: null });
+      if (inq.user_id) {
+        await notifyUser(q, now, {
+          userId: inq.user_id, topic: null, kind: 'ad_inquiry', dedupeKey: `ad-inquiry-answer:${inq.id}`, email: true,
+          title: L(`About your ad for ${inq.brand}`, `Về quảng cáo ${inq.brand}`),
+          body: reply ? { en: reply, vi: reply } : L('We cannot run this one. Thank you for asking.', 'Lần này chúng tôi chưa thể chạy quảng cáo này. Cảm ơn bạn đã gửi.'),
+          link: { url: '/advertise' },
+        });
+      }
       return inq.brand;
     });
     return { ok: true, message: L(`${brand} declined`, `Đã từ chối ${brand}`) };
@@ -317,43 +357,57 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     return { rates };
   });
 
-  /** Organisers' requests to feature a listing, open ones first. */
+  /** Organisers' advertising requests (organizer/ads.ts), open ones first. */
   app.get('/admin/boosts', async (req) => {
     requireAdmin(req);
     const rows = await many<any>(ctx.db,
-      `select b.id, b.status, b.created_at, b.answered_at, e.id as event_id, e.slug, e.title, e.starts_on::text as starts_on, e.genre, o.name as organizer
-         from boost_requests b join events e on e.id = b.event_id join organizers o on o.id = b.organizer_id
-        order by (b.status = 'open') desc, b.created_at desc limit 60`);
-    return {
-      items: rows.map((r) => ({
-        id: r.id, status: r.status, requestedAt: r.created_at, answeredAt: r.answered_at,
-        event: { id: r.event_id, slug: r.slug, title: r.title, startsOn: r.starts_on, genre: r.genre }, organizer: r.organizer,
-      })),
-    };
+      `select ${AD_REQUEST_COLUMNS}, e.genre, o.name as organizer from boost_requests b join events e on e.id = b.event_id join organizers o on o.id = b.organizer_id
+        where b.status <> 'withdrawn' order by (b.status = 'open') desc, b.created_at desc limit 60`);
+    return { items: rows.map((r) => ({ ...presentAdRequest(r), organizer: r.organizer as string, event: { ...presentAdRequest(r).event, genre: r.genre } })) };
   });
 
+  /**
+   * The team's answer to an advertising request: approved (with a reply; for the Explore banner a
+   * campaign is made from the event, within the request's dates and budget) or declined.
+   * "done" is the old "featured" answer, kept for the shelves' button.
+   */
   app.post<{ Params: { id: string } }>('/admin/boosts/:id', async (req) => {
     const s = requireAdmin(req);
-    const { status } = parse(z.object({ status: z.enum(['done', 'declined']) }), req.body);
+    const body = parse(z.object({ status: z.enum(['approved', 'done', 'declined']), reply: z.string().trim().max(1000).optional() }), req.body);
+    const status = body.status;
     const now = ctx.clock.now();
     return ctx.db.tx(async (q) => {
       const b = await one<any>(q,
-        `select b.*, e.title from boost_requests b join events e on e.id = b.event_id where b.id = $1 for update`, [parse(uuid, req.params.id)]);
+        `select b.*, e.title, e.slug, e.cover_url, e.starts_on::text as event_on, e.venue_name, e.city, o.name as org_name, o.logo_url as org_logo
+           from boost_requests b join events e on e.id = b.event_id join organizers o on o.id = b.organizer_id where b.id = $1 for update of b`, [parse(uuid, req.params.id)]);
       if (!b) throw notFound();
       if (b.status !== 'open') throw conflict('already_answered', L('This request was already answered', 'Yêu cầu này đã được trả lời'));
-      await q.query('update boost_requests set status = $2, answered_at = $3, answered_by = $4 where id = $1', [b.id, status, now, s.user.id]);
+      await q.query('update boost_requests set status = $2, answered_at = $3, answered_by = $4, reply = $5 where id = $1', [b.id, status, now, s.user.id, body.reply || null]);
+      let campaign: string | null = null;
+      if (status === 'approved' && (b.placements ?? []).includes('banner')) {
+        const c = await one<{ id: string }>(q,
+          `insert into ad_campaigns (brand, category, logo, art, headline, body, cta, url, placement, budget_total, logo_url, images, starts_on, ends_on, cities, event_id, boost_id)
+           values ($1,'Event',$2,$3,$4,$5,$6,$7,'banner',$8,$9,$10,$11,$12,$13,$14,$15) returning id`,
+          [b.org_name, initialsOf(b.org_name), AD_ART.Event, json({ en: b.title, vi: b.title }),
+            json({ en: [b.event_on, b.venue_name].filter(Boolean).join(' · '), vi: [b.event_on, b.venue_name].filter(Boolean).join(' · ') }),
+            json({ en: 'See the event', vi: 'Xem sự kiện' }), `/e/${b.slug}`, Number(b.budget ?? 0), b.org_logo, b.cover_url ? [b.cover_url] : [],
+            b.starts_on, b.ends_on, b.city ? [b.city] : [], b.event_id, b.id]);
+        campaign = c!.id;
+      }
       await appendAudit(q, {
         at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin',
-        action: status === 'done' ? 'boost.done' : 'boost.declined', targetType: 'event', targetId: b.event_id, targetLabel: b.title,
-        diff: [{ f: 'boost', a: 'open', b: status }],
+        action: status === 'declined' ? 'boost.declined' : 'boost.done', targetType: 'event', targetId: b.event_id, targetLabel: b.title,
+        diff: [{ f: 'boost', a: 'open', b: status }, ...(campaign ? [{ f: 'campaign', a: '—', b: 'banner' }] : [])],
       });
+      const yes = status !== 'declined';
       await notifyOrganizer(q, now, {
         organizerId: b.organizer_id, topic: 'moderation', kind: 'boost',
-        title: status === 'done' ? L(`${b.title} is featured`, `${b.title} đã được đẩy lên Nổi bật`) : L(`${b.title} was not featured this time`, `${b.title} chưa được đẩy lần này`),
-        body: status === 'done' ? L('It now shows on a featured shelf.', 'Sự kiện đang hiện trên một kệ nổi bật.') : L('The shelves are full for those dates. Ask again closer to the event.', 'Các kệ đã kín cho những ngày này. Hãy gửi lại gần ngày diễn hơn.'),
-        link: { screen: 'dash', eventId: b.event_id }, dedupeKey: `boost:${b.id}`,
+        title: yes ? L(`Advertising for ${b.title} is approved`, `Quảng cáo cho ${b.title} đã được duyệt`) : L(`Advertising for ${b.title} was declined`, `Quảng cáo cho ${b.title} chưa được duyệt`),
+        body: body.reply ? { en: body.reply, vi: body.reply }
+          : yes ? L('It runs on the dates you asked for.', 'Quảng cáo sẽ chạy theo thời gian bạn chọn.') : L('The placements are full for those dates. Ask again with other dates.', 'Các vị trí đã kín cho những ngày này. Hãy gửi lại với thời gian khác.'),
+        link: { url: '/studio/ads' }, dedupeKey: `boost:${b.id}`,
       });
-      return { id: b.id, status, message: status === 'done' ? L('Marked featured', 'Đã đánh dấu đẩy tin') : L('Declined', 'Đã từ chối') };
+      return { id: b.id, status, campaignId: campaign, message: yes ? L('Approved', 'Đã duyệt') : L('Declined', 'Đã từ chối') };
     });
   });
 }

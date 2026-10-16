@@ -92,8 +92,10 @@ test.describe('Studio, signed in', () => {
     expect(made.status).toBe('in_review');
     expect(made.priceFrom).toBe(250000);
 
+    // "Đẩy tin" opens the advertising request on the event just sent.
     await page.getByRole('button', { name: 'Đẩy tin' }).click();
-    await expect(page.getByText('Đã gửi yêu cầu đẩy tin', { exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/studio\/ads\?event=/);
+    await expect(page.getByRole('dialog', { name: 'Yêu cầu quảng cáo' }).getByLabel('Sự kiện')).toHaveValue(/.+/);
     expect(problems).toEqual([]);
   });
 

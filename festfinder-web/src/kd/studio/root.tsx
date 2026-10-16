@@ -8,7 +8,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, SignOutIcon, SquaresFourIcon, TagIcon, TicketIcon, TrayIcon, UsersIcon,
+  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, RocketLaunchIcon, SignOutIcon, SquaresFourIcon, TagIcon, TicketIcon, TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
@@ -22,7 +22,7 @@ import { Shell, SideNav } from '../ui/shell';
 import { place } from '../app/place';
 import { STUDIO } from './copy';
 
-export type StudioScreen = 'dash' | 'events' | 'new' | 'attendees' | 'door' | 'revenue' | 'inbox' | 'announce' | 'promos' | 'gigs' | 'profile';
+export type StudioScreen = 'dash' | 'events' | 'new' | 'attendees' | 'door' | 'revenue' | 'inbox' | 'announce' | 'promos' | 'ads' | 'gigs' | 'profile';
 
 export interface OrgEvent {
   id: string; slug: string; title: string; status: 'draft' | 'in_review' | 'live' | 'rejected' | 'ended' | string; statusLabel: Pair;
@@ -61,7 +61,7 @@ const ORG_KEY = 'ff_ops_org';
 /** Whether an event's last day is behind us (by the server's clock; a day either way does not matter here). */
 export const isPast = (e: Pick<OrgEvent, 'startsOn' | 'endsOn'>) => !!e.startsOn && (e.endsOn ?? e.startsOn) < FF.now().toISOString().slice(0, 10);
 
-const SCREENS: StudioScreen[] = ['events', 'new', 'attendees', 'door', 'revenue', 'inbox', 'announce', 'promos', 'gigs', 'profile'];
+const SCREENS: StudioScreen[] = ['events', 'new', 'attendees', 'door', 'revenue', 'inbox', 'announce', 'promos', 'ads', 'gigs', 'profile'];
 
 /** The Studio layout: one root for every /studio path, so moving between screens keeps the organiser and the events. */
 export function StudioRoot({ children }: { children: ReactNode }) {
@@ -227,6 +227,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
         { key: 'inbox', label: T.inbox, href: '/studio/inbox', icon: i(TrayIcon), count: unread || null },
         { key: 'announce', label: T.announce, href: '/studio/announce', icon: i(MegaphoneIcon) },
         { key: 'promos', label: T.promos, href: '/studio/promos', icon: i(TagIcon) },
+        { key: 'ads', label: T.ads, href: '/studio/ads', icon: i(RocketLaunchIcon) },
         { key: 'gigs', label: T.gigs, href: '/studio/gigs', icon: i(MicrophoneStageIcon) },
       ]}
       footer={(

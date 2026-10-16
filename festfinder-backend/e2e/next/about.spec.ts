@@ -128,23 +128,34 @@ test.describe('the advertising page', () => {
     // The account's email is the starting point.
     await expect(email).toHaveValue('minh@example.com');
 
+    // Nothing filled: each field that is needed says so.
     await send.click();
-    await expect(form.getByRole('alert')).toHaveText('Nhập tên thương hiệu');
-    await expect(brand).toBeFocused();
+    await expect(form.getByText('Nhập tên thương hiệu')).toBeVisible();
+    await expect(form.getByText('Thêm website hoặc một trang mạng xã hội')).toBeVisible();
     await expect(brand).toHaveAttribute('aria-invalid', 'true');
 
     await brand.fill('Zenkai Energy');
+    await form.getByLabel('Ngành hàng').selectOption({ label: 'Thời trang' });
+    // Pictures are links, checked as they are pasted (the test API's network: every https link is an image).
+    const logo = form.getByRole('textbox', { name: /^Logo/ });
+    await logo.fill('https://photos.example/logo.png');
+    await logo.press('Enter');
+    await expect(form.locator('img[src="https://photos.example/logo.png"]')).toBeVisible();
+    await form.getByLabel(/^Website/).fill('zenkai.vn');
+    await form.getByLabel('Instagram').fill('https://instagram.com/zenkai');
+    await form.getByLabel('Sản phẩm / dịch vụ').fill('Áo thun phản quang cho rave.');
+    const shot = form.getByRole('textbox', { name: /^Ảnh 1/ });
+    await shot.fill('https://photos.example/tee.png');
+    await shot.press('Enter');
+    await expect(form.locator('img[src="https://photos.example/tee.png"]')).toBeVisible();
     await email.fill('not-an-email');
+    await form.getByLabel(/^Ngân sách/).fill('80000000');
+    await form.getByLabel('Từ ngày').fill('2026-10-01');
+    await form.getByLabel('Đến ngày').fill('2026-10-31');
     await send.click();
-    await expect(form.getByRole('alert')).toHaveText('Email chưa đúng định dạng');
-    await expect(email).toBeFocused();
+    await expect(form.getByText('Email chưa đúng định dạng')).toBeVisible();
 
     await email.fill('brand@zenkai.vn');
-    const category = form.getByRole('group', { name: 'Ngành hàng' });
-    await category.getByRole('button', { name: 'Thời trang' }).click();
-    await expect(category.getByRole('button', { name: 'Thời trang' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(category.getByRole('button', { name: 'Ăn uống' })).toHaveAttribute('aria-pressed', 'false');
-    await form.getByLabel('Ngân sách tháng').selectOption('150–400tr₫');
     await form.getByRole('checkbox', { name: 'Banner trang Khám phá' }).uncheck();
     await form.getByRole('checkbox', { name: 'Trong sự kiện (chế độ trực tiếp)' }).check();
     await form.getByLabel('Thông tin thêm').fill('Lễ hội tháng 10');
@@ -153,20 +164,26 @@ test.describe('the advertising page', () => {
     await send.click();
     const res = await sent;
     expect(res.status()).toBe(201);
-    expect(res.request().postDataJSON()).toEqual({
-      brand: 'Zenkai Energy', category: 'Fashion', email: 'brand@zenkai.vn', budget: '150–400tr₫', placements: ['feed', 'live'], message: 'Lễ hội tháng 10',
+    expect(res.request().postDataJSON()).toMatchObject({
+      brand: 'Zenkai Energy', category: 'Fashion', logoUrl: 'https://photos.example/logo.png', website: 'https://zenkai.vn',
+      links: { instagram: 'https://instagram.com/zenkai' }, description: 'Áo thun phản quang cho rave.', productImages: ['https://photos.example/tee.png'],
+      email: 'brand@zenkai.vn', budgetAmount: 80_000_000, startsOn: '2026-10-01', endsOn: '2026-10-31', placements: ['feed', 'live'],
+      cities: [], isAlcohol: false, message: 'Lễ hội tháng 10',
     });
     await expect(page.getByRole('heading', { name: 'Đã gửi yêu cầu' })).toBeFocused();
     await expect(page.getByText(/đội đối tác sẽ phản hồi trong hai ngày làm việc/)).toBeVisible();
 
-    // Another one starts from a clean form, at its first field.
+    // Another one starts from a clean form, at its first field; the request sent is listed under it.
     await page.getByRole('button', { name: 'Gửi yêu cầu khác' }).click();
     const again = page.getByRole('form', { name: 'Đặt quảng cáo' });
     await expect(again.getByLabel('Tên thương hiệu')).toHaveValue('');
     await expect(again.getByLabel('Tên thương hiệu')).toBeFocused();
     await expect(again.getByLabel('Email công việc')).toHaveValue('minh@example.com');
-    await expect(again.getByRole('group', { name: 'Ngành hàng' }).getByRole('button', { name: 'Ăn uống' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(again.getByLabel('Ngành hàng')).toHaveValue('F&B');
     await expect(again.getByRole('checkbox', { name: 'Trong sự kiện (chế độ trực tiếp)' })).not.toBeChecked();
+    const mine = page.getByRole('region', { name: 'Yêu cầu của bạn' });
+    await expect(mine.getByText('Zenkai Energy')).toBeVisible();
+    await expect(mine.getByText('Chờ FeestFinder trả lời').first()).toBeVisible();
     expect(problems).toEqual([]);
   });
 
@@ -176,7 +193,8 @@ test.describe('the advertising page', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Advertise on FeestFinder');
     const form = page.getByRole('form', { name: 'Book advertising' });
     await expect(form.getByRole('button', { name: 'Send enquiry' })).toBeVisible();
-    await expect(form.getByLabel('Monthly budget').locator('option')).toHaveText([/^Under /, / – /, / – /, / and up$/]);
+    await expect(form.getByLabel(/^Budget \(VND\)/)).toBeVisible();
+    await expect(form.getByLabel('Category').locator('option')).toHaveCount(8);
     await expect(page.getByRole('region', { name: 'Rate card' }).getByText('Feed card')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Footer' }).getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('href', '/advertise');
     expect(problems).toEqual([]);

@@ -35,6 +35,8 @@ export interface UserNotice {
   urgent?: boolean;
   /** Skip the in-app row (e.g. OTP-like or pure channel messages). */
   inApp?: boolean;
+  /** A transactional notice (topic null) that also goes by email: the team's work. */
+  email?: boolean;
 }
 
 /** Writes the in-app notification and queues channel messages the user has switched on. */
@@ -50,7 +52,7 @@ export async function notifyUser(q: Queryable, now: Date, n: UserNotice): Promis
   }
   const user = await one<any>(q, 'select id, email, phone, locale from users where id = $1', [n.userId]);
   if (!user) return false;
-  const channels = n.topic ? (await loadPrefs(q, n.userId))[n.topic] : { push: true, zalo: false, email: false };
+  const channels = n.topic ? (await loadPrefs(q, n.userId))[n.topic] : { push: true, zalo: false, email: !!n.email };
   const notBefore = !n.urgent && inQuietHours(now) ? quietHoursEnd(now) : now;
   const payload = { lang: user.locale, title: n.title, body: n.body, link: n.link ?? null };
 
@@ -65,6 +67,17 @@ export async function notifyUser(q: Queryable, now: Date, n: UserNotice): Promis
   }
   if (channels.email && user.email) await enqueue(q, n.userId, 'email', user.email, n.kind, payload, notBefore);
   return true;
+}
+
+/**
+ * Tells every account of the team (the admins the ADMIN_EMAIL allowlist made): in the app, by
+ * push and by email. Who they are comes from the database, never from a list in the code.
+ */
+export async function notifyAdmins(q: Queryable, now: Date, n: Omit<UserNotice, 'userId' | 'topic' | 'email'>): Promise<number> {
+  const admins = await many<{ id: string }>(q, `select id from users where role = 'admin'`);
+  let sent = 0;
+  for (const a of admins) if (await notifyUser(q, now, { ...n, userId: a.id, topic: null, email: true })) sent++;
+  return sent;
 }
 
 export async function enqueue(

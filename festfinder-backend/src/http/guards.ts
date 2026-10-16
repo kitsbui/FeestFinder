@@ -26,6 +26,15 @@ export function requireWriter(req: FastifyRequest): UserSession {
   return s;
 }
 
+/**
+ * The session when it is the team's (an admin from the ADMIN_EMAIL allowlist, not viewing as
+ * someone else), else null: what the team posts needs no review.
+ */
+export function teamSession(req: FastifyRequest): UserSession | null {
+  const s = req.session;
+  return s?.user && s.user.role === 'admin' && !s.impersonatorId ? s as UserSession : null;
+}
+
 export function requireAdmin(req: FastifyRequest): UserSession {
   const s = requireUser(req);
   if (s.user.role !== 'admin' || s.impersonatorId) throw forbidden('admin_only', L('Admin account only', 'Chỉ tài khoản admin'));

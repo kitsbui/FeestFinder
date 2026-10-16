@@ -118,14 +118,14 @@ test.describe('the Console, signed in', () => {
     await signInWith(page, ADMIN);
 
     const problems = await open(page, '/console/featured');
-    const boosts = page.getByRole('region', { name: 'Yêu cầu đẩy tin' });
-    await boosts.getByRole('button', { name: 'Đã đẩy' }).first().click();
+    const boosts = page.getByRole('region', { name: 'Yêu cầu quảng cáo sự kiện' });
+    await boosts.getByRole('button', { name: 'Duyệt + lên kệ' }).first().click();
     await page.getByRole('menuitem', { name: 'Đang hot tuần này' }).click();
     await expect(page.getByRole('article', { name: 'Đang hot tuần này' }).getByText('Ravolution Warm-up · Rooftop')).toBeVisible();
     await expect.poll(async () => {
       const { items: asked } = await (await page.request.get('/admin/boosts')).json();
       return asked.find((b: { event: { id: string } }) => b.event.id === warm.id).status;
-    }).toBe('done');
+    }).toBe('approved');
     expect(problems).toEqual([]);
   });
 

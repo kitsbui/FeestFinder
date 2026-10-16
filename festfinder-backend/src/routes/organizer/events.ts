@@ -17,7 +17,8 @@ import { atVn, toMinutes, addDays, vnDate } from '../../lib/time.ts';
 import { dateStr, imageUrl, localized, parse, timeStr, uuid } from '../../lib/validate.ts';
 import { imageChange } from '../../services/remote-images.ts';
 import { BANKS } from '../../lib/vietqr.ts';
-import { requireOrganizer, requireOwnEvent } from '../../http/guards.ts';
+import { requireOrganizer, requireOwnEvent, teamSession } from '../../http/guards.ts';
+import { approveListing, askForReview } from '../admin/moderation.ts';
 import { appendAudit } from '../../services/audit.ts';
 import { draftFacts, refreshDerived } from '../../services/events.ts';
 import { qualityScore, searchScore, type SearchFacts } from '../../services/quality.ts';
@@ -303,7 +304,8 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const ev = await requireOwnEvent(ctx, org, req.params.id);
     const body = parse(DraftInput, req.body);
     if (['removed', 'cancelled'].includes(ev.status)) throw conflict('not_editable', L('This listing can no longer be edited', 'Tin này không còn sửa được'));
-    const sendsBack = ev.status === 'live' && REVIEWED_FIELDS.some((f) => (body as any)[f] !== undefined);
+    // What the team changes stays live: only someone else's change goes back through review.
+    const sendsBack = ev.status === 'live' && !teamSession(req) && REVIEWED_FIELDS.some((f) => (body as any)[f] !== undefined);
     await ctx.db.tx(async (q) => {
       await applyDraft(q, ev.id, body);
       if (sendsBack) {
@@ -311,6 +313,8 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
         const risk = await assessRisk(q, ev.id, ctx.clock.now());
         await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
           [ev.id, risk.score, json(risk.factors), json(risk.signals), risk.flag]);
+        const by = await one<{ name: string }>(q, 'select name from organizers where id = $1', [org.organizerId]);
+        await askForReview(q, ctx.clock.now(), ev, by?.name ?? '', true);
       }
     });
     const updated = await one<any>(ctx.db, 'select * from events where id = $1', [ev.id]);
@@ -387,6 +391,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       throw badRequest('not_ready', L('Add the logo and your event page before submitting', 'Thêm logo và trang sự kiện trước khi gửi'), { missing });
     }
     const now = ctx.clock.now();
+    const team = teamSession(req);
     await ctx.db.tx(async (q) => {
       await q.query(`update events set status = 'in_review', submitted_at = $2 where id = $1`, [ev.id, now]);
       const risk = await assessRisk(q, ev.id, now);
@@ -398,12 +403,18 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
         targetType: 'event', targetId: ev.id, targetLabel: ev.title,
         diff: [{ f: 'status', a: ev.status, b: 'in_review' }, { f: 'risk_score', a: String(ev.risk_score ?? 0), b: String(risk.score) }],
       });
+      // The team's own listing goes live at once; anyone else's waits for an admin, who is told.
+      if (team) await approveListing(ctx, q, team, ev.id, 'listing.approved');
+      else await askForReview(q, now, ev, actor.name);
     });
     if (ev.ticket_url && ev.entry_mode === 'paid' && ctx.config.linkChecksEnabled) {
       inBackground(checkTicketLink(ctx, ev.id, ev.ticket_url), (e) => ctx.log(`link check failed: ${e}`));
     }
     const updated = await one<any>(ctx.db, 'select * from events where id = $1', [ev.id]);
-    return { ...presentDraft(updated), message: L('Submitted for review · usually live within 2 hours', 'Đã gửi kiểm duyệt · thường xong trong 2 giờ') };
+    return {
+      ...presentDraft(updated),
+      message: team ? L('Published', 'Đã đăng') : L('Submitted for review · usually live within 2 hours', 'Đã gửi kiểm duyệt · thường xong trong 2 giờ'),
+    };
   });
 
   // ---- tiers, timetable and site map ----------------------------------------------

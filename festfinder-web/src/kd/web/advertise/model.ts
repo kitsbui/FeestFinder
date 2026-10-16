@@ -9,7 +9,7 @@ import type { ADVERTISE } from './copy';
 type T = Strings<typeof ADVERTISE>;
 
 export type Placement = 'feed' | 'banner' | 'live';
-export type Category = 'F&B' | 'Fashion' | 'Healthcare';
+export type Category = 'F&B' | 'Fashion' | 'Healthcare' | 'Beauty' | 'Tech' | 'Travel' | 'Lifestyle' | 'Other';
 export type Rates = Record<Placement, number>;
 export interface RateCard { rates: Rates; currency: string }
 
@@ -19,35 +19,34 @@ export const PLACEMENTS: readonly { key: Placement; label: 'placeFeed' | 'placeB
   { key: 'live', label: 'placeLive' },
 ];
 
-export const CATEGORIES: readonly { key: Category; label: 'catFB' | 'catFashion' | 'catHealth' }[] = [
+/** festfinder-backend lib/ads.ts AD_CATEGORIES, in the same order. */
+export const CATEGORIES: readonly { key: Category; label: 'catFB' | 'catFashion' | 'catHealth' | 'catBeauty' | 'catTech' | 'catTravel' | 'catLife' | 'catOther' }[] = [
   { key: 'F&B', label: 'catFB' },
   { key: 'Fashion', label: 'catFashion' },
   { key: 'Healthcare', label: 'catHealth' },
+  { key: 'Beauty', label: 'catBeauty' },
+  { key: 'Tech', label: 'catTech' },
+  { key: 'Travel', label: 'catTravel' },
+  { key: 'Lifestyle', label: 'catLife' },
+  { key: 'Other', label: 'catOther' },
 ];
+
+/** A brand's own channels (lib/ads.ts BRAND_LINKS) that the form asks for. */
+export const LINKS = [
+  { key: 'facebook', label: 'Facebook' }, { key: 'instagram', label: 'Instagram' }, { key: 'tiktok', label: 'TikTok' }, { key: 'shopee', label: 'Shopee' },
+] as const;
+export type LinkKey = (typeof LINKS)[number]['key'];
+
+/** The smallest budget the API takes, in AD_CURRENCY. */
+export const MIN_BUDGET = 1_000_000;
+/** Up to this many product pictures. */
+export const MAX_IMAGES = 4;
 
 /** Advertising is sold in VND: the budget bands below are amounts in it. */
 export const AD_CURRENCY = 'VND';
 
-/**
- * The budget bands. `value` is the API's own key for the band (its enum, sent as is and never
- * shown); the label is written from the amounts with money().
- */
-export const BUDGETS: readonly { value: string; lo: number | null; hi: number | null }[] = [
-  { value: 'Dưới 50tr₫', lo: null, hi: 50_000_000 },
-  { value: '50–150tr₫', lo: 50_000_000, hi: 150_000_000 },
-  { value: '150–400tr₫', lo: 150_000_000, hi: 400_000_000 },
-  { value: '400tr₫+', lo: 400_000_000, hi: null },
-];
-
-export function budgetLabel(b: (typeof BUDGETS)[number], T: T, lang: Lang): string {
-  const m = (n: number) => money(n, AD_CURRENCY, lang);
-  if (b.lo == null && b.hi != null) return fill(T.under, { a: m(b.hi) });
-  if (b.hi == null && b.lo != null) return fill(T.over, { a: m(b.lo) });
-  return fill(T.between, { a: m(b.lo ?? 0), b: m(b.hi ?? 0) });
-}
-
-/** The legacy screen's default band. */
-export const DEFAULT_BUDGET = BUDGETS[1].value;
+/** "Từ 1.000.000₫": the smallest budget, written with money(). */
+export const minBudgetLabel = (T: T, lang: Lang) => fill(T.budgetMin, { a: money(MIN_BUDGET, AD_CURRENCY, lang) });
 
 /** A plausible address; the API checks it again. */
 export const looksLikeEmail = (s: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);

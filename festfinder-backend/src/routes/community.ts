@@ -7,7 +7,8 @@ import { DEFAULT_CITY, launchedCity } from '../lib/places.ts';
 import { slugify } from '../lib/contact.ts';
 import { randomCode, sha256 } from '../lib/crypto.ts';
 import { dateStr, imageUrl, parse, timeStr, uuid } from '../lib/validate.ts';
-import { requireAdmin, requireOrganizer, requireOwnEvent, requireUser, requireWriter } from '../http/guards.ts';
+import { requireAdmin, requireOrganizer, requireOwnEvent, requireUser, requireWriter, teamSession } from '../http/guards.ts';
+import { approveListing, askForReview } from './admin/moderation.ts';
 import { appendAudit } from '../services/audit.ts';
 import { refreshDerived } from '../services/events.ts';
 import { assessRisk } from '../services/risk.ts';
@@ -51,10 +52,12 @@ export default async function communityRoutes(app: FastifyInstance) {
 
   /**
    * Anyone with a proven phone number can send in an event. It joins the same review queue
-   * as organisers' listings and goes live only when a moderator approves it.
+   * as organisers' listings and goes live only when a moderator approves it; every admin is
+   * told. What the team itself sends in goes live at once.
    */
   app.post('/community/events', async (req, reply) => {
-    const s = requireWriter(req);
+    const team = teamSession(req);
+    const s = team ?? requireWriter(req);
     const b = parse(SubmissionInput, req.body);
     const now = ctx.clock.now();
     if (b.endsOn && b.endsOn < b.startsOn) throw badRequest('dates_order', L('The end date is before the start date', 'Ngày kết thúc trước ngày bắt đầu'));
@@ -96,12 +99,14 @@ export default async function communityRoutes(app: FastifyInstance) {
         at: now, actorType: 'system', actorId: s.user.id, actorLabel: `Community · ${s.user.name || s.user.phone || s.user.id}`, action: 'listing.submitted',
         targetType: 'event', targetId: ev.id, targetLabel: b.title, diff: [{ f: 'status', a: '—', b: 'in_review' }, { f: 'source', a: '—', b: b.sourceUrl }],
       });
+      if (team) await approveListing(ctx, q, team, ev.id, 'listing.approved');
+      else await askForReview(q, now, { id: ev.id, title: b.title, starts_on: b.startsOn, city: b.city }, `Community · ${s.user.name || s.user.phone || s.user.email || ''}`);
       return ev.id as string;
     });
     const ev = await one<any>(ctx.db, 'select id, slug, status, title from events where id = $1', [id]);
     return reply.code(201).send({
       id: ev.id, slug: ev.slug, status: ev.status, statusLabel: STATUS_LABEL[ev.status],
-      message: L('Sent for review · you will hear when it is live', 'Đã gửi kiểm duyệt · bạn sẽ được báo khi sự kiện lên sóng'),
+      message: team ? L('Published', 'Đã đăng') : L('Sent for review · you will hear when it is live', 'Đã gửi kiểm duyệt · bạn sẽ được báo khi sự kiện lên sóng'),
     });
   });
 

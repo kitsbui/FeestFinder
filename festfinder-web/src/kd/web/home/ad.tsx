@@ -11,7 +11,7 @@ import { useKd } from '../../runtime';
 import { buttonClass, IconButton } from '../../ui/actions';
 import { HOME } from './copy';
 
-export interface Ad { id: string; brand: string; logo: string | null; headline: Pair; body: Pair; cta: Pair; url: string | null; sponsoredLabel: Pair; why: Pair }
+export interface Ad { id: string; brand: string; logo: string | null; logoUrl?: string | null; image?: string | null; headline: Pair; body: Pair; cta: Pair; url: string | null; sponsoredLabel: Pair; why: Pair }
 
 export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
   const kd = useKd();
@@ -29,14 +29,22 @@ export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
   };
   return (
     <aside aria-label={ad.sponsoredLabel[lang]} className="kd-card flex flex-wrap items-center gap-4 p-5">
-      <span className="kd-av kd-av-sq h-12 w-12 text-base" aria-hidden="true">{ad.logo || ad.brand.slice(0, 2)}</span>
+      <span className="kd-av kd-av-sq h-12 w-12 text-base" aria-hidden="true">
+        <span>{ad.logo || ad.brand.slice(0, 2)}</span>
+        {/* The brand's logo is a link it gave; the initials show under it if it does not open. */}
+        {ad.logoUrl ? <img src={ad.logoUrl} alt="" loading="lazy" referrerPolicy="no-referrer" /> : null}
+      </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="kd-m" title={ad.why[lang]}>{ad.sponsoredLabel[lang]} · {ad.brand}</span>
         <span className="kd-h">{ad.headline[lang]}</span>
         <span className="kd-s">{ad.body[lang]}</span>
       </div>
+      {ad.image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a product picture the brand gave as a link
+        <img src={ad.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="hidden h-16 w-24 shrink-0 rounded-seg object-cover tab:block" />
+      ) : null}
       {ad.url ? (
-        <a className={buttonClass({ size: 'sm' })} href={ad.url} target="_blank" rel="noopener sponsored" onClick={click}>
+        <a className={buttonClass({ size: 'sm' })} href={ad.url} target={ad.url.startsWith('/') ? undefined : '_blank'} rel={ad.url.startsWith('/') ? undefined : 'noopener sponsored'} onClick={click}>
           {ad.cta[lang]}<ArrowUpRightIcon size={14} aria-hidden="true" />
         </a>
       ) : null}

@@ -247,10 +247,11 @@ export function Wizard() {
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
     setBusy(false);
   };
-  const boost = async () => {
+  // "Đẩy tin" asks for advertising: the form opens on the event just sent.
+  const boost = () => {
     if (!sent || !id.current) return;
     setSent({ boost: 'busy' });
-    try { const out = await FF.post('/organizer/events/' + id.current + '/boost'); kd.toast(FF.text(out.message, lang)); setSent({ boost: 'open' }); } catch (e) { kd.toast(FF.errorText(e, lang)); setSent({ boost: 'none' }); }
+    location.assign('/studio/ads?event=' + encodeURIComponent(id.current));
   };
 
   const sums = [

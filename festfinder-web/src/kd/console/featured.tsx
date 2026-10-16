@@ -27,9 +27,18 @@ interface Shelf {
   id: string; name: Pair; enabled: boolean; startsOn: string | null; endsOn: string | null;
   phase: 'live' | 'always' | 'scheduled' | 'ended' | 'off'; phaseLabel: Pair; items: Item[];
 }
-interface Boost { id: string; status: 'open' | 'done' | 'declined'; requestedAt: string; event: { id: string; title: string; startsOn: string | null }; organizer: string }
+interface Boost {
+  id: string; status: 'open' | 'approved' | 'done' | 'declined'; requestedAt: string; event: { id: string; title: string; startsOn: string | null }; organizer: string;
+  placements: { key: string; label: Pair }[]; budget: number | null; currency: string; startsOn: string | null; endsOn: string | null; message: string | null; reply: string | null;
+}
+interface Inquiry {
+  id: string; brand: string; category: string; categoryLabel: Pair | null; email: string; budget: string | null; budgetAmount: number | null; currency: string;
+  placements: string[]; placementLabels: Pair[]; message: string | null; logoUrl: string | null; website: string | null; links: Record<string, string>;
+  productImages: string[]; description: string | null; contactName: string | null; phone: string | null; startsOn: string | null; endsOn: string | null;
+  isAlcohol: boolean; cities: { slug: string; label: Pair | null }[];
+}
 interface Ads {
-  inquiries: { id: string; brand: string; category: string; email: string; budget: string | number | null; placements: string[]; message: string | null }[];
+  inquiries: Inquiry[];
   campaigns: { id: string; brand: string; placement: string; active: boolean; impressions: number; clicks: number; spend: number }[];
   rates: { feed: number; banner: number; live: number };
 }
@@ -91,37 +100,55 @@ export function Featured() {
           <section className="kd-side flex flex-col gap-3" aria-label={T.boosts}>
             <h2 className="kd-h">{T.boosts}</h2>
             <Panel className="flex flex-col px-4">
-              {boosts === null ? <div className="kd-skel my-4 h-24" aria-hidden="true" /> : !boosts.length ? <span className="kd-s py-4">{T.noBoosts}</span> : boosts.map((b) => (
-                <div key={b.id} className="flex flex-col gap-2 border-b border-line py-3 last:border-b-0">
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="kd-hs kd-ell">{b.event.title}</span>
-                    <Status tone={b.status === 'done' ? 'ok' : b.status === 'declined' ? 'bad' : 'warn'}>{b.status === 'done' ? T.boostDone : b.status === 'declined' ? T.boostDeclined : T.boostOpen}</Status>
-                  </span>
-                  <span className="kd-s">{b.organizer}{b.event.startsOn ? ' · ' + dayMonth(b.event.startsOn, lang) : ''}</span>
-                  {b.status === 'open' ? (
-                    <span className="flex flex-wrap gap-2">
-                      <Menu
-                        label={T.boostDone}
-                        trigger={(p) => <button type="button" {...p} ref={p.ref} className="kd-btn kd-btn-acc kd-btn-sm">{T.boostDone}</button>}
-                      >
-                        {(shelves ?? []).map((s) => (
-                          <MenuItem key={s.id} onSelect={() => act(async () => {
-                            if (!s.items.some((x) => x.id === b.event.id)) await FF.put(`/admin/shelves/${s.id}/items`, { eventIds: [b.event.id, ...s.items.map((x) => x.id)] });
-                            return FF.post('/admin/boosts/' + b.id, { status: 'done' });
-                          })}>{s.name[lang]}</MenuItem>
-                        ))}
-                      </Menu>
-                      <Button size="sm" tone="ghost" onClick={() => act(() => FF.post('/admin/boosts/' + b.id, { status: 'declined' }))}>{T.boostDecline}</Button>
-                    </span>
-                  ) : null}
-                </div>
-              ))}
+              {boosts === null ? <div className="kd-skel my-4 h-24" aria-hidden="true" /> : !boosts.length ? <span className="kd-s py-4">{T.noBoosts}</span>
+                : boosts.map((b) => <BoostRow key={b.id} lang={lang} b={b} shelves={shelves ?? []} act={act} />)}
             </Panel>
           </section>
         </div>
         {ads ? <AdsBlock lang={lang} ads={ads} act={act} /> : null}
       </Body>
     </>
+  );
+}
+
+/** An organiser's advertising request: what they asked for, and the answer with a reply. */
+function BoostRow({ lang, b, shelves, act }: { lang: Lang; b: Boost; shelves: Shelf[]; act: ReturnType<typeof useAct> }) {
+  const T = pick(CONSOLE, lang);
+  const [reply, setReply] = useState('');
+  const yes = b.status === 'approved' || b.status === 'done';
+  const answer = (status: 'approved' | 'declined') => FF.post('/admin/boosts/' + b.id, { status, reply: reply.trim() || undefined });
+  return (
+    <div className="flex flex-col gap-2 border-b border-line py-3 last:border-b-0">
+      <span className="flex items-center justify-between gap-2">
+        <span className="kd-hs kd-ell">{b.event.title}</span>
+        <Status tone={yes ? 'ok' : b.status === 'declined' ? 'bad' : 'warn'}>{yes ? T.boostApproved : b.status === 'declined' ? T.boostDeclined : T.boostOpen}</Status>
+      </span>
+      <span className="kd-s">{b.organizer}{b.event.startsOn ? ' · ' + dayMonth(b.event.startsOn, lang) : ''}</span>
+      {b.placements.length || b.budget != null ? (
+        <span className="kd-s kd-num">
+          {[b.placements.map((p) => p.label[lang]).join(', '), b.budget != null ? money(b.budget, b.currency, lang) : null, b.startsOn && b.endsOn ? `${dayMonth(b.startsOn, lang)} – ${dayMonth(b.endsOn, lang)}` : null].filter(Boolean).join(' · ')}
+        </span>
+      ) : null}
+      {b.message ? <span className="kd-s text-mist">“{b.message}”</span> : null}
+      {b.reply ? <span className="kd-s text-mist">↳ {b.reply}</span> : null}
+      {b.status === 'open' ? (
+        <>
+          <Input aria-label={T.replyPh} placeholder={T.replyPh} maxLength={1000} value={reply} onChange={(e) => setReply(e.target.value)} />
+          <span className="flex flex-wrap gap-2">
+            <Button size="sm" tone="acc" onClick={() => act(() => answer('approved'))}>{T.boostApprove}</Button>
+            <Menu label={T.boostShelf} trigger={(p) => <button type="button" {...p} ref={p.ref} className="kd-btn kd-btn-sm">{T.boostShelf}</button>}>
+              {shelves.map((s) => (
+                <MenuItem key={s.id} onSelect={() => act(async () => {
+                  if (!s.items.some((x) => x.id === b.event.id)) await FF.put(`/admin/shelves/${s.id}/items`, { eventIds: [b.event.id, ...s.items.map((x) => x.id)] });
+                  return answer('approved');
+                })}>{s.name[lang]}</MenuItem>
+              ))}
+            </Menu>
+            <Button size="sm" tone="ghost" onClick={() => act(() => answer('declined'))}>{T.boostDecline}</Button>
+          </span>
+        </>
+      ) : null}
+    </div>
   );
 }
 
@@ -256,6 +283,48 @@ function NewShelf({ lang, onMade }: { lang: Lang; onMade: (s: Shelf) => void }) 
   );
 }
 
+/** A brand's request: everything it sent, and the answer with a reply. */
+function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<typeof useAct> }) {
+  const T = pick(CONSOLE, lang);
+  const [reply, setReply] = useState('');
+  const links = [...(i.website ? [['web', i.website]] : []), ...Object.entries(i.links ?? {})] as [string, string][];
+  return (
+    <div className="flex flex-col gap-2 border-b border-line pb-3 last:border-b-0">
+      <span className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element -- the brand's logo is a link it gave */}
+        {i.logoUrl ? <img src={i.logoUrl} alt="" referrerPolicy="no-referrer" className="size-10 shrink-0 rounded-lg object-cover" /> : null}
+        <span className="flex min-w-0 flex-col">
+          <span className="kd-hs">{i.brand}</span>
+          <span className="kd-s">{[i.categoryLabel?.[lang] ?? i.category, i.isAlcohol ? T.adAlcohol : null].filter(Boolean).join(' · ')}</span>
+        </span>
+      </span>
+      <span className="kd-s kd-num">
+        {[i.budgetAmount != null ? money(i.budgetAmount, i.currency, lang) : i.budget, i.startsOn && i.endsOn ? `${dayMonth(i.startsOn, lang)} – ${dayMonth(i.endsOn, lang)}` : null,
+          (i.placementLabels ?? []).map((p) => p[lang]).join(', '), i.cities.map((c) => c.label?.[lang] ?? c.slug).join(', ')].filter(Boolean).join(' · ')}
+      </span>
+      <span className="kd-s">{T.adContact}: {[i.contactName, i.email, i.phone].filter(Boolean).join(' · ')}</span>
+      {links.length ? (
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
+          {links.map(([k, u]) => <a key={k} className="kd-s underline decoration-line2 underline-offset-4" href={u} target="_blank" rel="noopener nofollow">{k === 'web' ? u.replace(/^https?:\/\/(www\.)?/, '') : k}</a>)}
+        </span>
+      ) : null}
+      {i.description ? <span className="kd-s text-mist">{i.description}</span> : null}
+      {i.productImages.length ? (
+        <span className="flex flex-wrap gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element -- product pictures are links the brand gave */}
+          {i.productImages.map((u) => <a key={u} href={u} target="_blank" rel="noopener nofollow"><img src={u} alt="" referrerPolicy="no-referrer" className="h-16 w-16 rounded-seg object-cover" /></a>)}
+        </span>
+      ) : null}
+      {i.message ? <span className="kd-s text-mist">“{i.message}”</span> : null}
+      <Input aria-label={T.replyPh} placeholder={T.replyPh} maxLength={1000} value={reply} onChange={(e) => setReply(e.target.value)} />
+      <span className="flex gap-2">
+        <Button size="sm" tone="acc" onClick={() => act(() => FF.post(`/admin/ads/inquiries/${i.id}/approve`, { reply: reply.trim() || undefined }))}>{T.adApprove}</Button>
+        <Button size="sm" tone="ghost" onClick={() => act(() => FF.post(`/admin/ads/inquiries/${i.id}/decline`, { reply: reply.trim() || undefined }))}>{T.adDecline}</Button>
+      </span>
+    </div>
+  );
+}
+
 function AdsBlock({ lang, ads, act }: { lang: Lang; ads: Ads; act: ReturnType<typeof useAct> }) {
   const T = pick(CONSOLE, lang);
   const [rates, setRates] = useState(ads.rates);
@@ -266,17 +335,7 @@ function AdsBlock({ lang, ads, act }: { lang: Lang; ads: Ads; act: ReturnType<ty
       <div className="kd-split gap-3">
         <Panel className="kd-main flex flex-col gap-3 p-5">
           <span className="kd-m">{T.adInquiries}</span>
-          {!ads.inquiries.length ? <span className="kd-s">{T.noAds}</span> : ads.inquiries.map((i) => (
-            <div key={i.id} className="flex flex-col gap-1.5 border-b border-line pb-3 last:border-b-0">
-              <span className="kd-hs">{i.brand}</span>
-              <span className="kd-s">{[i.category, i.email, i.budget, i.placements.join(', ')].filter(Boolean).join(' · ')}</span>
-              {i.message ? <span className="kd-s text-mist">{i.message}</span> : null}
-              <span className="flex gap-2">
-                <Button size="sm" tone="acc" onClick={() => act(() => FF.post(`/admin/ads/inquiries/${i.id}/approve`, {}))}>{T.adApprove}</Button>
-                <Button size="sm" tone="ghost" onClick={() => act(() => FF.post(`/admin/ads/inquiries/${i.id}/decline`, {}))}>{T.adDecline}</Button>
-              </span>
-            </div>
-          ))}
+          {!ads.inquiries.length ? <span className="kd-s">{T.noAds}</span> : ads.inquiries.map((i) => <InquiryRow key={i.id} lang={lang} i={i} act={act} />)}
           <span className="kd-m pt-2">{T.adCampaigns}</span>
           {ads.campaigns.map((c) => (
             <div key={c.id} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
