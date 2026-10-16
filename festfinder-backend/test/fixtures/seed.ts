@@ -436,6 +436,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
       await q.query(`update artists set owner_user_id = $2, bio = $3, artist_roles = '{dj,producer}', based_city = $4, based_country = 'VN'
                       where normalized_name = $1`, [artistKey(name), u.id, json(bio), city]);
     }
+    // They confirmed the shows that list them (the lineup handshake, migration 041).
+    await q.query(`update event_artists ea set confirmed_at = $1, confirmed_by = 'both' from artists a where a.id = ea.artist_id and a.owner_user_id is not null`, [hours(24)]);
     await q.query(`insert into artist_follows (user_id, artist, artist_id) select $1, name, id from artists where owner_user_id is not null and name = 'SlimV'`, [demo.id]);
     await q.query(`insert into smart_alerts (user_id, enabled, genres, styles, areas, price_cap) values ($1, true, '{EDM}', '{house}', '{Quận 1,Quận 3}', 1000000)`, [demo.id]);
 

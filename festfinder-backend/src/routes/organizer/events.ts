@@ -4,8 +4,8 @@ import { CHECKOUT_CURRENCY } from '../../lib/money.ts';
 import type { Ctx } from '../../context.ts';
 import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
-import { badRequest, conflict } from '../../lib/errors.ts';
-import { GENRES, L, REJECT_REASONS, type Localized } from '../../lib/i18n.ts';
+import { badRequest, conflict, notFound } from '../../lib/errors.ts';
+import { fill, GENRES, L, REJECT_REASONS, type Localized } from '../../lib/i18n.ts';
 import { citySlug, launchedCity } from '../../lib/places.ts';
 import { ARTIST_LINK, ORGANIZER_TYPE, type OrganizerType } from '../../lib/network.ts';
 import { cleanOrgLinks } from '../../services/organizers.ts';
@@ -25,6 +25,9 @@ import { qualityScore, searchScore, type SearchFacts } from '../../services/qual
 import { assessRisk } from '../../services/risk.ts';
 import { refreshSoldOut } from '../../services/tickets.ts';
 import { inBackground } from '../../lib/background.ts';
+import { askArtistsToConfirm } from '../../services/lineup.ts';
+import { notifyUser } from '../../services/notify.ts';
+import { artistKey } from '../../services/artists.ts';
 
 export const STATUS_LABEL: Record<string, Localized> = {
   draft: L('Draft', 'Nháp'),
@@ -341,12 +344,78 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
         const by = await one<{ name: string }>(q, 'select name from organizers where id = $1', [org.organizerId]);
         await askForReview(q, now, ev, by?.name ?? '', true);
       }
+      if (body.lineup && ['in_review', 'live'].includes(ev.status)) await askArtistsToConfirm(q, ev.id, ctx.clock.now());
     });
     const updated = await one<any>(ctx.db, 'select * from events where id = $1', [ev.id]);
     return {
       ...presentDraft(updated),
       ...(sendsBack ? { message: L('Saved · the page stays up while the team reviews the change', 'Đã lưu · trang vẫn hiện trong lúc đội FeestFinder duyệt thay đổi') } : {}),
     };
+  });
+
+  // ---- artists who say they play one of these nights (the lineup handshake, D13) -----------
+
+  app.get('/organizer/lineup-claims', async (req) => {
+    const org = await requireOrganizer(ctx, req);
+    const rows = await many<any>(ctx.db,
+      `select g.id, g.created_at, a.id as artist_id, a.slug, a.name, a.image_url, e.id as event_id, e.slug as event_slug, e.title, e.starts_on::text as starts_on
+         from artist_gig_reports g join artists a on a.id = g.artist_id join events e on e.id = g.event_id
+        where e.organizer_id = $1 and g.outcome = 'merged'
+          and not exists (select 1 from event_artists ea where ea.event_id = e.id and ea.artist_id = g.artist_id)
+        order by g.created_at desc limit 50`, [org.organizerId]);
+    return { items: rows.map((r) => ({
+      id: r.id, at: r.created_at, artist: { id: r.artist_id, slug: r.slug, name: r.name, imageUrl: r.image_url },
+      event: { id: r.event_id, slug: r.event_slug, title: r.title, startsOn: r.starts_on },
+    })) };
+  });
+
+  const lineupClaim = async (orgId: string, reportId: string) => {
+    const r = await one<any>(ctx.db,
+      `select g.id, g.artist_id, g.user_id, a.name, a.owner_user_id, e.id as event_id, e.title, e.artists, e.lineup
+         from artist_gig_reports g join artists a on a.id = g.artist_id join events e on e.id = g.event_id
+        where g.id = $1 and e.organizer_id = $2 and g.outcome = 'merged'`, [parse(uuid, reportId), orgId]);
+    if (!r) throw notFound(L('Nothing to answer here', 'Không có gì cần trả lời'));
+    return r;
+  };
+
+  app.post<{ Params: { id: string } }>('/organizer/lineup-claims/:id/accept', async (req) => {
+    const org = await requireOrganizer(ctx, req);
+    const r = await lineupClaim(org.organizerId, req.params.id);
+    const now = ctx.clock.now();
+    await ctx.db.tx(async (q) => {
+      const lineup: string[] = r.lineup ?? [];
+      if (!lineup.some((n) => artistKey(n) === artistKey(r.name))) {
+        await applyDraft(q, r.event_id, { lineup: [...lineup, r.name] });
+      }
+      // Both sides said so: the artist by reporting it, the organiser now.
+      await q.query(`update event_artists set confirmed_at = $3, confirmed_by = 'both' where event_id = $1 and artist_id = $2`, [r.event_id, r.artist_id, now]);
+      const to = r.owner_user_id ?? r.user_id;
+      if (to) await notifyUser(q, now, {
+        userId: to, topic: 'artists', kind: 'lineup_accepted', dedupeKey: `lineup-accepted:${r.id}`,
+        title: L(`You are on the lineup of ${r.title}`, `Bạn đã có tên trong lineup ${r.title}`),
+        body: L('The organiser added you; it shows on your profile.', 'Nhà tổ chức đã thêm bạn; show hiện trên hồ sơ của bạn.'),
+        link: { url: '/studio/artist/gigs' },
+      });
+    });
+    return { ok: true, message: fill(L('{n} is on the lineup', 'Đã thêm {n} vào lineup'), { n: r.name }) };
+  });
+
+  app.post<{ Params: { id: string } }>('/organizer/lineup-claims/:id/decline', async (req) => {
+    const org = await requireOrganizer(ctx, req);
+    const r = await lineupClaim(org.organizerId, req.params.id);
+    const { reason } = parse(z.object({ reason: z.string().trim().max(500).optional() }), req.body ?? {});
+    const now = ctx.clock.now();
+    await ctx.db.tx(async (q) => {
+      await q.query(`update artist_gig_reports set outcome = 'rejected', error = $2 where id = $1`, [r.id, reason || 'declined_by_organizer']);
+      const to = r.owner_user_id ?? r.user_id;
+      if (to) await notifyUser(q, now, {
+        userId: to, topic: 'artists', kind: 'lineup_declined', dedupeKey: `lineup-declined:${r.id}`,
+        title: L(`${r.title}: the organiser says you are not on it`, `${r.title}: nhà tổ chức báo bạn không có trong lineup`),
+        body: reason ? { en: reason, vi: reason } : L('Reply to them if this is a mistake.', 'Hãy liên hệ họ nếu có nhầm lẫn.'),
+        link: { url: '/studio/artist/gigs' },
+      });
+    });
+    return { ok: true, message: L('Declined · the artist is told', 'Đã từ chối · nghệ sĩ đã được báo') };
   });
 
   app.delete<{ Params: { id: string } }>('/organizer/events/:id', async (req) => {
@@ -431,6 +500,8 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       // The team's own listing goes live at once; anyone else's waits for an admin, who is told.
       if (team) await approveListing(ctx, q, team, ev.id, 'listing.approved');
       else await askForReview(q, now, ev, actor.name);
+      // Artists on the lineup who run their profile are asked to confirm (D13).
+      await askArtistsToConfirm(q, ev.id, now);
     });
     if (ev.ticket_url && ev.entry_mode === 'paid' && ctx.config.linkChecksEnabled) {
       inBackground(checkTicketLink(ctx, ev.id, ev.ticket_url), (e) => ctx.log(`link check failed: ${e}`));

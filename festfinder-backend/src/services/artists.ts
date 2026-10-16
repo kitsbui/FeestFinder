@@ -43,18 +43,26 @@ export async function ensureArtists(q: Queryable, names: string[]): Promise<Map<
   return out;
 }
 
-/** Links an event to the artists it lists, in its order. */
+/**
+ * Links an event to the artists it lists, in its order. A link an artist or organiser already
+ * confirmed keeps its confirmation; a name an artist said is not them is not linked to them again
+ * for this event (lineup_disputes, migration 041).
+ */
 export async function syncEventArtists(q: Queryable, eventId: string, names: string[]): Promise<void> {
-  const ids = await ensureArtists(q, names);
-  await q.query('delete from event_artists where event_id = $1', [eventId]);
-  const seen = new Set<string>();
+  const disputed = new Set((await many<{ normalized_name: string }>(q, 'select normalized_name from lineup_disputes where event_id = $1', [eventId])).map((d) => d.normalized_name));
+  const wanted = names.filter((n) => !disputed.has(artistKey(n)));
+  const ids = await ensureArtists(q, wanted);
+  const keep: string[] = [];
   let sort = 0;
-  for (const n of names) {
+  for (const n of wanted) {
     const id = ids.get(artistKey(n));
-    if (!id || seen.has(id)) continue;
-    seen.add(id);
-    await q.query('insert into event_artists (event_id, artist_id, sort) values ($1,$2,$3)', [eventId, id, sort++]);
+    if (!id || keep.includes(id)) continue;
+    keep.push(id);
+    await q.query(
+      `insert into event_artists (event_id, artist_id, sort) values ($1,$2,$3)
+       on conflict (event_id, artist_id) do update set sort = excluded.sort`, [eventId, id, sort++]);
   }
+  await q.query('delete from event_artists where event_id = $1 and not (artist_id = any($2::uuid[]))', [eventId, keep]);
 }
 
 /** Links every event made before artists had records of their own. Runs once, when there are none. */
@@ -66,10 +74,10 @@ export async function backfillArtists(q: Queryable): Promise<number> {
   return events.length;
 }
 
-/** Each listed name with its artist page, for an event's lineup. */
-export async function artistLinks(q: Queryable, eventId: string): Promise<{ name: string; slug: string }[]> {
-  return many<{ name: string; slug: string }>(q,
-    `select a.name, a.slug from event_artists ea join artists a on a.id = ea.artist_id where ea.event_id = $1 order by ea.sort`, [eventId]);
+/** Each listed name with its artist page, for an event's lineup; `confirmed` once the artist (or both sides) said so. */
+export async function artistLinks(q: Queryable, eventId: string): Promise<{ name: string; slug: string; confirmed: boolean }[]> {
+  return many<{ name: string; slug: string; confirmed: boolean }>(q,
+    `select a.name, a.slug, ea.confirmed_at is not null as confirmed from event_artists ea join artists a on a.id = ea.artist_id where ea.event_id = $1 order by ea.sort`, [eventId]);
 }
 
 // ---- the directory -----------------------------------------------------------------------
@@ -127,6 +135,8 @@ const COMPLETENESS = `((coalesce(a.bio->>'en', '') <> '' or coalesce(a.bio->>'vi
   + (cardinality(a.artist_roles) > 0)::int + (cardinality(a.styles) > 0)::int + (a.links <> '{}'::jsonb)::int + (a.based_city is not null)::int)`;
 
 const LIVE = `e.status = 'live' and not e.held_for_reports and e.published_at is not null`;
+/** A show counts on an artist's profile once confirmed when the artist runs it (someone could type a famous name into a lineup); on a profile nobody runs, every listing counts. */
+export const SHOWN = `(ar.owner_user_id is null or ea.confirmed_at is not null)`;
 const PUBLIC = `e.status in ('live', 'cancelled') and not e.held_for_reports and e.published_at is not null`;
 
 function presentNextShow(raw: string | null) {
@@ -181,7 +191,8 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   const ctes = `with up as (
        select ea.artist_id, count(*)::int as upcoming, min(e.starts_at) as next_at,
               (array_agg(e.slug || '|' || e.title || '|' || e.starts_on || '|' || coalesce(e.city, '') order by e.starts_at))[1] as next_show
-         from event_artists ea join events e on e.id = ea.event_id where ${LIVE} and e.ends_at >= $1 group by ea.artist_id),
+         from event_artists ea join events e on e.id = ea.event_id join artists ar on ar.id = ea.artist_id
+        where ${LIVE} and e.ends_at >= $1 and ${SHOWN} group by ea.artist_id),
      pl as (
        select ea.artist_id, count(distinct e.id)::int as events, count(distinct e.id) filter (where e.origin = 'posted')::int as posted,
               max(e.starts_on) as last_on,

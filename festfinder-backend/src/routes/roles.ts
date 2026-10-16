@@ -15,6 +15,7 @@ import { notifyUser } from '../services/notify.ts';
 import {
   activateRole, claimArtist, claimOrganizer, claimSuggestions, personasOf, setRole, startArtistProfile, startOrganizer, switchCraft, type Persona,
 } from '../services/roles.ts';
+import { announceTakeover } from '../services/lineup.ts';
 
 /*
  * Personas from the person's side (/me/roles) and the team's (/admin/profile-claims).
@@ -189,6 +190,7 @@ export default async function roleRoutes(app: FastifyInstance) {
           await q.query('update artists set owner_user_id = $2, updated_at = $3 where id = $1', [a.id, c.user_id, now]);
           // Follows and Smart Alerts of the name now belong to the profile someone runs.
           await adoptNameFollows(q, a.id);
+          await announceTakeover(q, a.id, now);
           // Other people's claims on the same profile end here.
           await q.query(`update artist_claims set status = 'rejected', decided_at = $2, decided_by = $3, decision_note = 'Another claim was approved'
                           where artist_id = $1 and status = 'pending' and id <> $4`, [a.id, now, s.user.id, id]);

@@ -9,6 +9,7 @@ import { finalize, hostOf } from './normalize.ts';
 import { findSimilar, MATCH_RULES } from './resolve.ts';
 import { conflictsWith, createCandidate, enrich, flagRisk, matchVenue } from './run.ts';
 import { isRejection } from './types.ts';
+import { askOrganizerToAdd } from '../lineup.ts';
 
 /*
  * An artist says "I'm playing here". The report goes through the same matching as an import:
@@ -105,6 +106,8 @@ export async function reportGig(ctx: Ctx, artist: { id: string; name: string }, 
     }
     const ev = (await one<{ id: string; slug: string; title: string; status: string }>(q, 'select id, slug, title, status from events where id = $1', [eventId]))!;
     const onLineup = !!(await one(q, 'select 1 from event_artists where event_id = $1 and artist_id = $2', [eventId, artist.id]));
+    // On a night an organiser listed, they are asked to add the artist (never added by the report).
+    if (outcome === 'merged' && !onLineup) await askOrganizerToAdd(q, reportId, now);
     return { outcome, reportId, event: ev, onLineup };
   }).then(async (out) => {
     if (out.outcome !== 'rejected') await refreshConfidence(ctx.db, now, [out.event.id]);
