@@ -26,6 +26,7 @@ Found in the 2026-10-05 audit, ranked by how much each item blocks the Asia even
 | 13 | `ops.ts` `AREA_GROUPS` uses pre-2025 districts | `routes/admin/ops.ts` | Noted on 2026-10-01; unrelated to this plan |
 | 14 | Seed covers point at a dead host `assets.feestfinder.com` | `test/fixtures/seed.ts` | Tests only; the screens fall back to gradients |
 | 15 | No linter | repo | 2026-10-16: the web has type-aware ESLint (`npm run lint`, in CI), 0 errors, a budget of 56 warnings (38 `any`, 10 object-to-string, 4 hook deps, 4 `<a>` for pages) that may only go down; 135 fire-and-forget calls are now marked `void`. The API still has none: it runs TypeScript 7 and typescript-eslint supports up to 6. Options: oxlint with its type-aware mode (built on typescript-go), or wait for typescript-eslint. |
+| 16 | Screens could scroll sideways on phones (fixed-width tables, rails, timetable) | `festfinder-web/src/kd` | Fixed on 2026-10-16 (night build N11): rails fold, tables shrink and become cards, `e2e/next/layout.spec.ts` checks 5 roles × 390/1440. A new screen that needs a wide grid must fold the same way. |
 
 ## Resolved on 2026-10-05
 
