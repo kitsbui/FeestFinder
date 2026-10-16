@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "node",
+    "promise"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": [
+    "node_modules",
+    ".data",
+    "e2e/.cache",
+    "test-results",
+    "playwright-report"
+  ],
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-base-to-string": "warn",
+    "typescript/restrict-template-expressions": "off",
+    "no-unused-vars": "off",
+    "no-control-regex": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "test/**",
+        "e2e/**"
+      ],
+      "rules": {
+        "typescript/no-floating-promises": "off"
+      }
+    }
+  ]
+}

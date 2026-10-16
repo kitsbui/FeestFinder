@@ -178,7 +178,7 @@ export function startJobs(ctx: Ctx): () => void {
   const timers: NodeJS.Timeout[] = [];
   const running = new Set<string>();
   for (const [name, every] of SCHEDULE) {
-    timers.push(setInterval(async () => {
+    const tick = async () => {
       if (running.has(name)) return;
       running.add(name);
       try {
@@ -188,7 +188,9 @@ export function startJobs(ctx: Ctx): () => void {
       } finally {
         running.delete(name);
       }
-    }, every));
+    };
+    // tick catches its own errors, so nothing is left unhandled.
+    timers.push(setInterval(() => void tick(), every));
   }
   return () => timers.forEach(clearInterval);
 }
