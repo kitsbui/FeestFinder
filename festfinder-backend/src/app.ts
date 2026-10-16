@@ -258,13 +258,19 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   // Whatever answers a signed-in person, or signs one in, is theirs alone: no shared cache keeps it.
   // The public reads a visitor without a session makes (the lists, an event, an artist, an
   // organiser, a collection) are the same for everyone, so the CDN keeps them for a minute and
-  // serves a stale copy while it refreshes. Vary: Cookie keeps a signed-in request off that copy.
+  // serves a stale copy while it refreshes. Vercel's CDN refuses to cache a response that varies
+  // on Cookie, so the web proxy says whether the visitor has a session (X-FF-Session: 1) and the
+  // copy varies on that: a signed-in request never meets the shared one. A request that carries
+  // the header gets no shared copy at all, so nobody can store an anonymous answer under it.
   app.addHook('onSend', async (req, reply, payload) => {
     if (reply.hasHeader('cache-control')) return payload;
     if (req.session || reply.hasHeader('set-cookie')) reply.header('cache-control', 'private, no-store');
-    else if (req.method === 'GET' && reply.statusCode === 200 && !hasSessionCookie(req) && isPublicRead(req.url)) {
-      reply.header('cache-control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
-      reply.header('vary', 'cookie, x-lang, accept-language');
+    else if (req.method === 'GET' && reply.statusCode === 200 && !hasSessionCookie(req) && !req.headers['x-ff-session'] && isPublicRead(req.url)) {
+      // Only Vercel's CDN keeps the copy (it reads this header and passes it on to nobody); the
+      // browser asks again every time, so signing in never shows a stale anonymous answer.
+      reply.header('cache-control', 'public, max-age=0, must-revalidate');
+      reply.header('vercel-cdn-cache-control', 'max-age=60, stale-while-revalidate=300');
+      reply.header('vary', 'x-ff-session, x-lang, accept-language');
     }
     return payload;
   });

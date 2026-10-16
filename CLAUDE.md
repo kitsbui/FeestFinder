@@ -71,6 +71,7 @@ Outside development, the `/ui` URLs in CSS carry `?v=<content hash>`:
 - Versioned files are `immutable`; the same file without it gets `max-age=3600`.
 - Vercel starts a fresh CDN cache on every deployment.
 - Responses for a signed-in person get `private, no-store` (`app.ts` onSend hook).
+- Public reads without a session (`PUBLIC_READS` in `app.ts`) get `Vercel-CDN-Cache-Control: max-age=60, stale-while-revalidate=300` (only Vercel's CDN keeps them; the browser's `Cache-Control` stays `max-age=0, must-revalidate`, so it never shows a stale anonymous copy after sign-in) and vary on `X-FF-Session`, which the web proxy sets to 1 for a visitor with a session cookie. Never vary on `Cookie`: Vercel's CDN does not cache such a response.
 
 ## Deploying
 
