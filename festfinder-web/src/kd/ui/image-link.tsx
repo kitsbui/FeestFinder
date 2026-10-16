@@ -54,7 +54,7 @@ export function ImageLinkField({ lang, purpose, label, hint, value, onChange, cl
     <div className={cx('flex flex-col gap-2 rounded-[10px] border border-dashed border-line2 px-4 py-3', className)}>
       <div className="flex min-h-11 items-center gap-3">
         {value ? (
-          // eslint-disable-next-line @next/next/no-img-element -- a link to another site, checked by the API
+           
           <img src={value} alt="" referrerPolicy="no-referrer" className={cx('shrink-0 object-cover', round ? 'size-11 rounded-full' : purpose === 'profile_cover' ? 'h-11 w-[78px] rounded-md' : 'size-11 rounded-lg')} />
         ) : null}
         <label htmlFor={id} className="flex min-w-0 flex-1 flex-col gap-0.5">

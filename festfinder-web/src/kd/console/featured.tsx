@@ -80,7 +80,8 @@ export function Featured() {
     setBoosts(b.items); setAds(a);
     refreshCounts();
   }, [refreshCounts]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- load catches its own errors
   const act = useAct(lang, load);
   const replace = (out: Shelf) => setShelves((all) => (all ?? []).map((x) => (x.id === out.id ? out : x)));
 
@@ -222,7 +223,7 @@ function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChan
           <Input id={'shto-' + shelf.id} type="date" className="kd-num" min={shelf.startsOn ?? undefined} value={shelf.endsOn ?? ''} onChange={(e) => save({ endsOn: e.target.value || null })} />
         </div>
         <span className="flex flex-wrap gap-1.5 pb-1">
-          <Chip onClick={() => { const d = today(); save({ startsOn: d, endsOn: addDays(d, 6) }); }}>{M.week}</Chip>
+          <Chip onClick={() => { const d = today(); void save({ startsOn: d, endsOn: addDays(d, 6) }); }}>{M.week}</Chip>
           <Chip onClick={() => save({ startsOn: null, endsOn: null })}>{M.noWindow}</Chip>
         </span>
       </div>
@@ -291,7 +292,7 @@ function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<
   return (
     <div className="flex flex-col gap-2 border-b border-line pb-3 last:border-b-0">
       <span className="flex items-center gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element -- the brand's logo is a link it gave */}
+        { }
         {i.logoUrl ? <img src={i.logoUrl} alt="" referrerPolicy="no-referrer" className="size-10 shrink-0 rounded-lg object-cover" /> : null}
         <span className="flex min-w-0 flex-col">
           <span className="kd-hs">{i.brand}</span>
@@ -311,7 +312,7 @@ function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<
       {i.description ? <span className="kd-s text-mist">{i.description}</span> : null}
       {i.productImages.length ? (
         <span className="flex flex-wrap gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element -- product pictures are links the brand gave */}
+          { }
           {i.productImages.map((u) => <a key={u} href={u} target="_blank" rel="noopener nofollow"><img src={u} alt="" referrerPolicy="no-referrer" className="h-16 w-16 rounded-seg object-cover" /></a>)}
         </span>
       ) : null}
@@ -346,7 +347,7 @@ function AdsBlock({ lang, ads, act }: { lang: Lang; ads: Ads; act: ReturnType<ty
         </Panel>
         <Panel className="kd-side flex flex-col gap-3 self-start p-5">
           <span className="kd-m">{T.rates}</span>
-          <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); act(() => FF.put('/admin/ads/rates', rates)); }}>
+          <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void act(() => FF.put('/admin/ads/rates', rates)); }}>
             {(['feed', 'banner', 'live'] as const).map((k) => (
               <div key={k} className="flex flex-col gap-2"><FieldLabel htmlFor={'rate-' + k}>{k}</FieldLabel><Input id={'rate-' + k} inputMode="numeric" className="kd-num" value={String(rates[k])} onChange={(e) => setRates({ ...rates, [k]: Number(e.target.value.replace(/\D/g, '')) || 0 })} /></div>
             ))}

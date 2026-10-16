@@ -107,7 +107,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
       map.current = m;
       await m.ready;
       setReady(true);
-      search(start);
+      void search(start);
     }).catch(() => setFailed(true));
     return () => { dead = true; map.current?.destroy(); map.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,9 +122,9 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     if (p.city !== f.city) {
       const box = cityBox(f.city);
       map.current.fit(box, false);
-      search(box);
+      void search(box);
     } else if (p.time !== f.time || p.family !== f.family || p.genre !== f.genre || p.style !== f.style || p.type !== f.type || p.q !== f.q || p.origin !== f.origin) {
-      search();
+      void search();
     }
   }, [f, ready, cityBox, search]);
 
@@ -160,7 +160,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
   // The city is where the map is, not a filter here.
   const filtered = near || f.time !== 'all' || !!f.family || !!f.genre || !!f.style || !!f.type || !!f.q || !!f.origin;
   /** From an empty corner of the world back to where the events are. */
-  const home = () => { const box = cityBox(f.city); map.current?.fit(box); search(box); };
+  const home = () => { const box = cityBox(f.city); map.current?.fit(box); void search(box); };
 
   return (
     <main className="flex min-h-[calc(100dvh-64px)] flex-wrap desk:h-[calc(100dvh-64px)]">

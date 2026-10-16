@@ -88,7 +88,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
       free: q.get('price') === 'free',
       sort: sort && ['date', 'hype', 'price'].includes(sort) ? sort : 'date',
     };
-    if (address(next) !== '/') { setF(next); load(next); }
+    if (address(next) !== '/') { setF(next); void load(next); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -104,7 +104,7 @@ export function HomeBrowser({ lang, initial, cities, defaultCity }: { lang: Lang
     const next = { ...f, ...patch };
     setF(next);
     history.replaceState(history.state, '', address(next));
-    load(next);
+    void load(next);
   };
 
   const more = async () => {

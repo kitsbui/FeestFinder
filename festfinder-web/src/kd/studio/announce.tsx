@@ -47,8 +47,8 @@ export function Announce() {
   }, [base]);
   useEffect(() => {
     if (!base) return;
-    loadSent();
-    Promise.all((['saved', 'holders', 'vip', 'past'] as Audience[]).map((a) => FF.maybe(FF.get(`${base}/estimate?audience=${a}&channels=`), null)))
+    void loadSent();
+    void Promise.all((['saved', 'holders', 'vip', 'past'] as Audience[]).map((a) => FF.maybe(FF.get(`${base}/estimate?audience=${a}&channels=`), null)))
       .then((r: (Estimate | null)[]) => setSizes({ saved: r[0]?.audienceSize, holders: r[1]?.audienceSize, vip: r[2]?.audienceSize, past: r[3]?.audienceSize }));
   }, [base, loadSent]);
   useEffect(() => {
@@ -64,12 +64,12 @@ export function Announce() {
       const out = await FF.post(base, { audience, channels, subject, body, sendAt: later && at ? new Date(at).toISOString() : null });
       kd.toast(FF.text(out.message, lang));
       setSubject(''); setBody(''); setLater(false); setAt('');
-      loadSent();
+      void loadSent();
     } catch (x) { kd.toast(FF.errorText(x, lang)); }
     setBusy(false);
   };
   const cancel = async (id: string) => {
-    try { const out = await FF.del('/organizer/announcements/' + id); kd.toast(FF.text(out.message, lang)); loadSent(); } catch (x) { kd.toast(FF.errorText(x, lang)); }
+    try { const out = await FF.del('/organizer/announcements/' + id); kd.toast(FF.text(out.message, lang)); void loadSent(); } catch (x) { kd.toast(FF.errorText(x, lang)); }
   };
   const audiences: { value: Audience; label: string }[] = [
     { value: 'saved', label: T.audSaved }, { value: 'holders', label: T.audHolders }, { value: 'vip', label: T.audVip }, { value: 'past', label: T.audPast },

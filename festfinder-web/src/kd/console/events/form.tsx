@@ -289,7 +289,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
   };
 
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); } };
+    const key = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); void save(); } };
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
   });
@@ -320,7 +320,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
 
   return (
     <div className="kd-split gap-[clamp(24px,3vw,40px)]">
-      <form className="kd-main flex flex-col gap-4" noValidate onSubmit={(e) => { e.preventDefault(); save(); }}>
+      <form className="kd-main flex flex-col gap-4" noValidate onSubmit={(e) => { e.preventDefault(); void save(); }}>
         {banner}
 
         <Section id="basics" n={1} title={sec('basics')} done={sectionDone('basics', f)} doneLabel={T.done}>

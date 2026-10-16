@@ -54,7 +54,7 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
   const sellsHere = tiers.some(open);
   const anyOpen = !!firstOpen;
   const panelStatus = tiers.length
-    ? (anyOpen ? tierStatus(firstOpen!, lang) : { tone: 'none' as StatusTone, text: tiers.every((t) => t.state === 'soon') ? T.tierSoon : T.tierSoldOut })
+    ? (anyOpen ? tierStatus(firstOpen, lang) : { tone: 'none' as StatusTone, text: tiers.every((t) => t.state === 'soon') ? T.tierSoon : T.tierSoldOut })
     : null;
 
   const buyHref = (() => {
@@ -159,7 +159,7 @@ function ResaleBlock({ lang }: { lang: Lang }) {
   const T = pick(WEB, lang);
   const [r, setR] = useState<Resale | null>(null);
   const load = () => FF.maybe(FF.get('/events/' + ev.id + '/resale'), null).then((x: Resale | null) => setR(x));
-  useEffect(() => { if (ev.resale?.enabled || ev.resale?.count) load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ev.id, kd.user]);
+  useEffect(() => { if (ev.resale?.enabled || ev.resale?.count) load();   }, [ev.id, kd.user]);
   if (!(ev.resale?.enabled || r?.count)) return null;
   const toggleWatch = async () => {
     if (!kd.requireSignIn(undefined, T.resaleWatch)) return;

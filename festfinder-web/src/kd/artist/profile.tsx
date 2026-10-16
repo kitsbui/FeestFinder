@@ -93,7 +93,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
       setF(next);
       setBase(JSON.stringify(next));
       // The rail shows the stage name from the session.
-      if (out.profile.name !== me.profile.name) kd.refresh();
+      if (out.profile.name !== me.profile.name) void kd.refresh();
     } catch (x) {
       const d = (x as { code?: string; details?: { kind?: string } });
       if (d.code === 'invalid_link' && d.details?.kind) setErr({ ['link:' + d.details.kind]: FF.errorText(x, lang) });

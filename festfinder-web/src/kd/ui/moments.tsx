@@ -35,7 +35,7 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, onReport, reasons, 
             {/* The art under the photo shows when a linked photo does not open (ui/covers.tsx). */}
             <Art family={familyOf(m.genre)} bone={i % 2 === 1} />
             {m.url ? (
-              // eslint-disable-next-line @next/next/no-img-element -- moments are links to other sites
+               
               <img src={m.url} alt={m.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
             ) : null}
           </button>
@@ -90,7 +90,7 @@ function Lightbox({ items, index, onIndex, onClose, onRemove, onReport, reasons,
     >
       <div className="relative flex h-full w-full items-center justify-center">
         {m.url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- moments are links to other sites
+           
           <img src={m.url} alt={m.caption ?? ''} referrerPolicy="no-referrer" className="max-h-full max-w-full object-contain" />
         ) : (
           <Art family={familyOf(m.genre)} className="aspect-square w-[min(90vw,90vh)]" />

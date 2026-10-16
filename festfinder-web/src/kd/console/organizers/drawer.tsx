@@ -167,7 +167,7 @@ function Verification({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChan
         <Segmented<OrgState>
           label={T.verdict}
           value={o.state}
-          onChange={(v) => { if (v !== o.state && busy !== 'state') save({ state: v }, 'state'); }}
+          onChange={(v) => { if (v !== o.state && busy !== 'state') void save({ state: v }, 'state'); }}
           options={[{ value: 'pending', label: T.pending }, { value: 'verified', label: T.verified }, { value: 'flagged', label: T.flagged }]}
         />
         {!docs.id && o.state !== 'verified' ? <p className="kd-s">{T.needsId}</p> : null}
@@ -178,7 +178,7 @@ function Verification({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChan
           <Segmented
             label={T.strikes}
             value={String(o.strikes)}
-            onChange={(v) => { if (Number(v) !== o.strikes) standing({ strikes: Number(v) }); }}
+            onChange={(v) => { if (Number(v) !== o.strikes) void standing({ strikes: Number(v) }); }}
             options={['0', '1', '2', '3'].map((n) => ({ value: n, label: n }))}
           />
         </div>
@@ -217,7 +217,7 @@ function ProfileForm({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChang
   };
   const types: { value: string; label: Pair }[] = opts?.organizerTypes ?? [];
   return (
-    <form className="grid gap-4 tab:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (dirty && f.name.trim().length >= 2) save(); }}>
+    <form className="grid gap-4 tab:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (dirty && f.name.trim().length >= 2) void save(); }}>
       <div className="flex items-center gap-3 tab:col-span-2">
         <Avatar org name={f.name || o.name} src={f.logoUrl || null} size={52} />
         {/* An organiser's logo is a link (only event media is uploaded), checked as it is pasted. */}
@@ -289,7 +289,7 @@ function Team({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChanged: () 
       <form
         className="flex flex-col gap-3"
         aria-label={T.addMember}
-        onSubmit={(e) => { e.preventDefault(); if (/@/.test(f.email)) add(); }}
+        onSubmit={(e) => { e.preventDefault(); if (/@/.test(f.email)) void add(); }}
       >
         <h3 className="kd-hs">{T.addMember}</h3>
         <div className="grid gap-3 tab:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_140px_auto]">

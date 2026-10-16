@@ -68,7 +68,7 @@ export function EventsList() {
     try {
       const out = await FF.post(`/organizer/events/${e.id}/submit`);
       kd.toast(FF.text(out.message, lang));
-      reload();
+      void reload();
     } catch (x) {
       const miss = (x as { details?: { missing?: string[] } }).details?.missing;
       kd.toast(miss ? fill(T.stillMissing, { m: missingText(miss, lang) }) : FF.errorText(x, lang));
@@ -86,7 +86,7 @@ export function EventsList() {
   };
   const remove = async (e: OrgEvent) => {
     if (!(await ask({ title: T.deleteDraftAsk, body: e.title, confirm: T.deleteDraft, danger: true }))) return;
-    if (await act(kd, lang, () => FF.del(`/organizer/events/${e.id}`))) { kd.toast(T.deleted); reload(); }
+    if (await act(kd, lang, () => FF.del(`/organizer/events/${e.id}`))) { kd.toast(T.deleted); void reload(); }
   };
 
   const labels: Record<Tab, string> = { all: T.evAll, draft: T.evDrafts, in_review: T.evReview, live: T.evLive, rejected: T.evRejected, past: T.evEnded };

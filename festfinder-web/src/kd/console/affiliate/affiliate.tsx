@@ -143,7 +143,7 @@ function Links({ lang }: { lang: Lang }) {
 function LinkForm({ lang, link, kinds, onClose, onSaved }: { lang: Lang; link?: Link; kinds: Record<Kind, string>; onClose: () => void; onSaved: () => void }) {
   const T = pick(AFFILIATE, lang);
   const kd = useKd();
-  const [f, setF] = useState(() => ({ label: link?.label ?? '', destinationUrl: link?.destinationUrl ?? 'https://', code: link?.code ?? '', kind: link?.kind ?? 'campaign' as Kind, enabled: link?.enabled ?? true }));
+  const [f, setF] = useState(() => ({ label: link?.label ?? '', destinationUrl: link?.destinationUrl ?? 'https://', code: link?.code ?? '', kind: link?.kind ?? 'campaign', enabled: link?.enabled ?? true }));
   const [busy, setBusy] = useState(false);
   const upd = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const destOk = /^https:\/\/\S+\.\S+/.test(f.destinationUrl.trim());
@@ -162,7 +162,7 @@ function LinkForm({ lang, link, kinds, onClose, onSaved }: { lang: Lang; link?: 
       onClose={onClose}
       footer={<><Button onClick={onClose}>{T.cancel}</Button><span className="flex-1" /><Button tone="acc" disabled={!ok || busy} onClick={save}><CheckIcon size={16} aria-hidden="true" />{T.save}</Button></>}
     >
-      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok && !busy) save(); }}>
+      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok && !busy) void save(); }}>
         <Field label={T.fName} htmlFor="al-name"><Input id="al-name" value={f.label} autoFocus={!link} onChange={(e) => upd({ label: e.target.value })} /></Field>
         <Field label={T.fDest} htmlFor="al-dest" error={f.destinationUrl.length > 8 && !destOk ? T.fDestBad : null}>
           <Input id="al-dest" type="url" value={f.destinationUrl} invalid={f.destinationUrl.length > 8 && !destOk} onChange={(e) => upd({ destinationUrl: e.target.value })} />

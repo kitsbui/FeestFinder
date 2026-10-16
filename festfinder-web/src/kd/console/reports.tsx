@@ -223,7 +223,7 @@ function MomentsTab({ lang }: { lang: Lang }) {
             {data.items.map((p) => (
               <li key={p.id}>
                 <Panel as="article" className="flex h-full flex-col overflow-hidden" aria-label={p.caption || p.url}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- moments are links to other sites (and uploads from before) */}
+                  { }
                   <img src={p.url} alt={p.caption ?? ''} className="aspect-square w-full object-cover" loading="lazy" referrerPolicy="no-referrer" />
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     {p.caption ? <span className="kd-hs">{p.caption}</span> : null}

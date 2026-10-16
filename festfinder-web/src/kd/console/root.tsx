@@ -59,7 +59,7 @@ export function ConsoleRoot({ children }: { children: ReactNode }) {
 function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
   const kd = useKd();
   const T = pick(CONSOLE, lang);
-  const user = kd.user as (NonNullable<typeof kd.user> & { role?: string; adminNeedsGoogle?: boolean }) | null;
+  const user = kd.user;
   if (kd.session === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
   if (!user || user.role !== 'admin') {
     return (
@@ -88,7 +88,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   const [viewing, setViewing] = useState<string | null>(null);
   const [options, setOptions] = useState<{ targetType: 'user' | 'organizer'; id: string; name: string; role: Pair }[] | null>(null);
   const refreshCounts = useCallback(() => {
-    Promise.all([FF.maybe(FF.get('/admin/counts'), null), FF.maybe(FF.get('/admin/overview'), null)]).then(([c, o]: [Counts | null, { unresolvedVenues?: number } | null]) => {
+    void Promise.all([FF.maybe(FF.get('/admin/counts'), null), FF.maybe(FF.get('/admin/overview'), null)]).then(([c, o]: [Counts | null, { unresolvedVenues?: number } | null]) => {
       setCounts(c ? { ...c, unresolvedVenues: o?.unresolvedVenues } : null);
     });
   }, []);

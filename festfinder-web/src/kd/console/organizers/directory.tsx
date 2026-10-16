@@ -177,7 +177,7 @@ function Onboard({ lang, onClose, onDone }: { lang: Lang; onClose: () => void; o
         </>
       )}
     >
-      <form id="org-onboard" className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok) save(); }}>
+      <form id="org-onboard" className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok) void save(); }}>
         <Field label={T.brandName} htmlFor="ob-name"><Input id="ob-name" required minLength={2} maxLength={80} autoFocus value={f.name} onChange={set('name')} placeholder={T.namePh} /></Field>
         <Field label={T.orgType} htmlFor="ob-type">
           <Select id="ob-type" value={f.type} onChange={set('type')}>

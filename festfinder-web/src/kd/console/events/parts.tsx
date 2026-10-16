@@ -118,14 +118,14 @@ export function Upload({ lang, purpose, label, value, onChange, disabled }: {
         className={cx('flex min-h-20 items-center gap-3 rounded-[10px] border border-dashed px-4 py-3', drag ? 'border-acc' : 'border-line2')}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
-        onDrop={(e) => { e.preventDefault(); setDrag(false); if (!disabled) take(e.dataTransfer.files[0]); }}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); if (!disabled) void take(e.dataTransfer.files[0]); }}
       >
         {value
-          // eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage
+           
           ? <img src={value} alt="" className={cx('shrink-0 object-cover', purpose === 'logo' ? 'size-12 rounded-lg' : 'h-12 w-[86px] rounded-md')} />
           : <ImageSquareIcon size={22} className="shrink-0 text-fog" aria-hidden="true" />}
         <span className="kd-s min-w-0 flex-1">{busy ? T.uploading : purpose === 'cover' ? T.coverRule : T.logoRule}</span>
-        <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { take(e.target.files?.[0]); e.target.value = ''; }} />
+        <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void take(e.target.files?.[0]); e.target.value = ''; }} />
         {value ? <Button tone="ghost" size="sm" disabled={disabled} aria-label={`${T.remove} · ${name}`} onClick={() => onChange(null)}>{T.remove}</Button> : null}
         <Button size="sm" disabled={busy || disabled} aria-label={`${value ? T.replace : T.upload} · ${name}`} onClick={() => input.current?.click()}>{value ? T.replace : T.upload}</Button>
       </div>

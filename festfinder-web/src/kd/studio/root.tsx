@@ -160,7 +160,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
   useEffect(() => {
     FF.maybe(FF.get('/organizer/profile'), null).then(setOrg);
     FF.maybe(FF.get('/organizer/inbox'), null).then((r: { unread?: number } | null) => setUnread(r?.unread ?? 0));
-    reload();
+    void reload();
   }, [reload]);
 
   // The event the screens are about: the address, else the last one picked in this tab, else the next live one.

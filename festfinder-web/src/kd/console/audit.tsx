@@ -77,7 +77,7 @@ export function Audit() {
     setError(null);
     try { setData(await FF.get(base())); } catch (e) { setError(e); }
   }, [base]);
-  useEffect(() => { const t = setTimeout(load, q ? 250 : 0); return () => clearTimeout(t); }, [load, q]);
+  useEffect(() => { const t = setTimeout(() => void load(), q ? 250 : 0); return () => clearTimeout(t); }, [load, q]);
   useEffect(() => { FF.maybe(FF.get('/admin/audit/verify'), null).then(setChain); }, []);
   const loadMore = async () => {
     if (!data?.nextCursor) return;

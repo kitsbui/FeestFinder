@@ -151,7 +151,7 @@ export function Body({ children, className }: { children: ReactNode; className?:
 
 /** A row of filters above a table. */
 export function FilterBar({ children, onReset }: { children: ReactNode; onReset?: (() => void) | null }) {
-  const lang = FF.lang as Lang;
+  const lang = FF.lang;
   return (
     <div className="flex flex-wrap items-center gap-2">
       {children}
@@ -164,7 +164,7 @@ export function FilterBar({ children, onReset }: { children: ReactNode; onReset?
 export function Choice({ label, value, options, onChange, any = true }: {
   label: string; value: string; options: { value: string; label: ReactNode; aside?: ReactNode }[]; onChange: (v: string) => void; any?: boolean;
 }) {
-  const T = pick(KIT, FF.lang as Lang);
+  const T = pick(KIT, FF.lang);
   const cur = options.find((o) => o.value === value);
   return (
     <Menu label={label} trigger={(p) => (
@@ -182,7 +182,7 @@ export function Choice({ label, value, options, onChange, any = true }: {
 export function MultiChoice({ label, values, options, onChange }: {
   label: string; values: string[]; options: { value: string; label: ReactNode; aside?: ReactNode }[]; onChange: (v: string[]) => void;
 }) {
-  const T = pick(KIT, FF.lang as Lang);
+  const T = pick(KIT, FF.lang);
   const one = values.length === 1 ? options.find((o) => o.value === values[0]) : null;
   return (
     <Menu label={label} trigger={(p) => (
@@ -208,7 +208,7 @@ export function Loading({ className }: { className?: string }) {
 }
 
 export function ErrorBox({ error, retry }: { error: unknown; retry?: () => void }) {
-  const lang = FF.lang as Lang;
+  const lang = FF.lang;
   const T = pick(KIT, lang);
   return (
     <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg p-4 shadow-[inset_0_0_0_1px_var(--color-line2)]">
@@ -222,7 +222,7 @@ export function ErrorBox({ error, retry }: { error: unknown; retry?: () => void 
 export function Empty({ title, children }: { title?: ReactNode; children?: ReactNode }) {
   return (
     <div className="flex flex-col items-start gap-3 rounded-lg p-6 shadow-[inset_0_0_0_1px_var(--color-line)]">
-      <p className="kd-hs">{title ?? pick(KIT, FF.lang as Lang).nothing}</p>
+      <p className="kd-hs">{title ?? pick(KIT, FF.lang).nothing}</p>
       {children}
     </div>
   );
@@ -257,7 +257,7 @@ export function KV({ rows, className }: { rows: [ReactNode, ReactNode][]; classN
 export function Pager({ offset, limit, total, onChange, sizes = [25, 50, 100] }: {
   offset: number; limit: number; total: number; onChange: (offset: number, limit: number) => void; sizes?: number[];
 }) {
-  const T = pick(KIT, FF.lang as Lang);
+  const T = pick(KIT, FF.lang);
   if (!total) return null;
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -277,7 +277,7 @@ export function Drawer({ open = true, onClose, title, sub, children, footer, wid
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
-  const T = pick(KIT, FF.lang as Lang);
+  const T = pick(KIT, FF.lang);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -327,7 +327,7 @@ export interface PickItem { value: string; label: string; sub?: string }
 export function AsyncPick({ load, onPick, label, placeholder, value }: {
   load: (q: string) => Promise<PickItem[]>; onPick: (item: PickItem | null) => void; label: string; placeholder?: string; value?: PickItem | null;
 }) {
-  const T = pick(KIT, FF.lang as Lang);
+  const T = pick(KIT, FF.lang);
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<PickItem[] | null>(null);

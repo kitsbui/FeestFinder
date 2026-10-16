@@ -33,7 +33,7 @@ export function LineChart({ points, height = 180, format = (n) => String(n), lab
         style={{ height }}
         onPointerLeave={() => setHover(null)}
         onPointerMove={(e) => {
-          const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
+          const r = (e.currentTarget).getBoundingClientRect();
           const i = Math.round(((e.clientX - r.left) / r.width) * (points.length - 1));
           setHover(Math.max(0, Math.min(points.length - 1, i)));
         }}

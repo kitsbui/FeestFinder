@@ -140,7 +140,7 @@ export function EventEditor({ id }: { id: string }) {
       setSave({ state: 'idle' });
     } catch (e) { setError(e); }
   }, [id]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => { FF.maybe(FF.get('/venues?limit=200'), { items: [] }).then((v: { items: Venue[] }) => setVenues(v.items)); }, []);
 
   const body = useMemo(() => (f ? payload(f) : null), [f]);
@@ -198,7 +198,7 @@ export function EventEditor({ id }: { id: string }) {
       setD(out);
       setSave({ state: 'saved', at: new Date().toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) });
       if (!quiet && !changed.length) kd.toast(T.saved);
-      if (out.status !== d.status || changed.includes('title')) reload();
+      if (out.status !== d.status || changed.includes('title')) void reload();
       return out;
     } catch (e) {
       setSave({ state: 'error', error: FF.errorText(e, lang) });
@@ -210,13 +210,13 @@ export function EventEditor({ id }: { id: string }) {
   // Drafts and listings sent back save themselves a moment after the last change.
   useEffect(() => {
     if (!draftLike || !dirty || !valid) return;
-    const t = setTimeout(() => { persist(true); }, 1500);
+    const t = setTimeout(() => { void persist(true); }, 1500);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- persist reads the latest render
   }, [f, draftLike]);
   // Ctrl/⌘+S saves; leaving with unsaved changes asks the browser first.
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); persist(false); } };
+    const key = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); void persist(false); } };
     const leave = (e: BeforeUnloadEvent) => { if (dirty && !readOnly) e.preventDefault(); };
     addEventListener('keydown', key);
     addEventListener('beforeunload', leave);
@@ -437,14 +437,14 @@ function HypeGoals({ lang, eventId }: { lang: Lang; eventId: string }) {
   const [rows, setRows] = useState<GoalRow[] | null>(null);
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => setData(await FF.maybe(FF.get(`/organizer/events/${eventId}/hype-goals`), null)), [eventId]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   if (!data) return null;
   const list = rows ?? data.goals.map((g) => ({ threshold: String(g.threshold), vi: g.reward.vi, en: g.reward.en === g.reward.vi ? '' : g.reward.en, reached: g.reached }));
   const edit = (i: number, p: Partial<GoalRow>) => setRows(list.map((r, j) => (j === i ? { ...r, ...p } : r)));
   const saveGoals = async () => {
     setBusy(true);
     const goals = list.filter((r) => int(r.threshold) && r.vi.trim()).map((r) => ({ threshold: int(r.threshold), reward: { vi: r.vi.trim(), en: r.en.trim() } }));
-    if (await act(kd, lang, () => FF.put(`/organizer/events/${eventId}/hype-goals`, { goals }))) { setRows(null); load(); }
+    if (await act(kd, lang, () => FF.put(`/organizer/events/${eventId}/hype-goals`, { goals }))) { setRows(null); void load(); }
     setBusy(false);
   };
   const cols = 'grid grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 max-sm:grid-cols-[80px_minmax(0,1fr)_auto]';
@@ -482,16 +482,16 @@ function LiveUpdates({ lang, eventId }: { lang: Lang; eventId: string }) {
   const [notify, setNotify] = useState(true);
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => setItems((await FF.maybe(FF.get(`/organizer/events/${eventId}/updates`), { items: [] })).items), [eventId]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   const kindLabel: Record<string, string> = { info: T.updInfo, delay: T.updDelay, gate: T.updGate, safety: T.updSafety, lineup: T.updLineup };
   const post = async () => {
     setBusy(true);
-    if (await act(kd, lang, () => FF.post(`/organizer/events/${eventId}/updates`, { kind, body: text.trim(), notify }))) { setText(''); load(); }
+    if (await act(kd, lang, () => FF.post(`/organizer/events/${eventId}/updates`, { kind, body: text.trim(), notify }))) { setText(''); void load(); }
     setBusy(false);
   };
   const remove = async (u: Update) => {
     if (!(await ask({ title: T.updRemoveAsk, body: u.body, confirm: T.updRemove, danger: true }))) return;
-    if (await act(kd, lang, () => FF.del(`/organizer/events/${eventId}/updates/${u.id}`))) load();
+    if (await act(kd, lang, () => FF.del(`/organizer/events/${eventId}/updates/${u.id}`))) void load();
   };
   return (
     <Block title={T.updates}>

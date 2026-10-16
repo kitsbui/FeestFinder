@@ -144,7 +144,7 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
       const out = await FF.patch('/me/plan/events/' + ev.id, body);
       apply(out);
       if (out.message) kd.toast(FF.text(out.message, lang));
-      onChanged();
+      void onChanged();
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
 

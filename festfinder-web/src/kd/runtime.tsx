@@ -157,7 +157,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     FF.takeOAuthResult();
     const back = FF.data.oauth as { error?: string; via?: string; next?: string | null } | undefined;
     FF.data.oauth = undefined;
-    refresh().then((s) => {
+    void refresh().then((s) => {
       if (!back) return;
       if (back.error) {
         if (s?.user) toast(FF.oauthErrorText(back.error, lang));
@@ -165,7 +165,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
         return;
       }
       toast(back.via === 'signup' ? C.welcome : C.loggedIn);
-      runIntent(decodeIntent(back.next));
+      void runIntent(decodeIntent(back.next));
     });
     // Once per page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,9 +175,9 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     if (session?.user) return true;
     if (session === undefined) {
       // Still reading the session: decide once it is known.
-      ready.current!.promise.then((s) => {
+      void ready.current!.promise.then((s) => {
         if (!s?.user) setSheet({ note, intent });
-        else if (intent) runIntent(intent);
+        else if (intent) void runIntent(intent);
       });
       return false;
     }
@@ -245,12 +245,12 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
             setSheet(null);
             await refresh();
             toast(created ? C.welcome : C.loggedIn);
-            runIntent(intent);
+            void runIntent(intent);
           }}
         />
       ) : null}
       {role && session?.user && !sheet ? (
-        <RolePicker lang={lang} start={role.step} name={role.name} onClose={() => { setRole(null); refresh(); }} />
+        <RolePicker lang={lang} start={role.step} name={role.name} onClose={() => { setRole(null); void refresh(); }} />
       ) : null}
       <Toast msg={toastMsg} onDone={() => setToast(null)} closeLabel={C.close} />
     </Ctx.Provider>
@@ -260,6 +260,6 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
 /** Whether an event is saved, and the toggle (which asks for sign-in first when needed). */
 export function useSaved(id: string): [boolean, () => void] {
   const kd = useKd();
-  return [kd.saved.has(id), () => { kd.toggleSave(id); }];
+  return [kd.saved.has(id), () => { void kd.toggleSave(id); }];
 }
 

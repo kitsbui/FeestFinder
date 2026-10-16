@@ -41,12 +41,12 @@ export function StudioAds() {
   const [data, setData] = useState<Data | null>(null);
   const [asking, setAsking] = useState<string | null>(null);
   const load = useCallback(async () => setData(await FF.maybe(FF.get('/organizer/ads'), null)), []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   // The dashboard's and the wizard's "Đẩy tin" come with the event.
   useEffect(() => { const e = new URLSearchParams(location.search).get('event'); if (e) setAsking(e); }, []);
 
   const withdraw = async (r: Request) => {
-    try { const out = await FF.del('/organizer/ads/' + r.id); kd.toast(FF.text(out.message, lang)); load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    try { const out = await FF.del('/organizer/ads/' + r.id); kd.toast(FF.text(out.message, lang)); void load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const when = (r: Request) => (r.startsOn && r.endsOn ? `${dayMonth(r.startsOn, lang)} – ${dayMonth(r.endsOn, lang)}` : '—');
 
@@ -72,7 +72,7 @@ export function StudioAds() {
           </Table>
         )}
       </Block>
-      {asking !== null && data ? <AskDrawer lang={lang} data={data} eventId={asking} onClose={() => setAsking(null)} onSent={() => { setAsking(null); load(); }} /> : null}
+      {asking !== null && data ? <AskDrawer lang={lang} data={data} eventId={asking} onClose={() => setAsking(null)} onSent={() => { setAsking(null); void load(); }} /> : null}
     </Page>
   );
 }

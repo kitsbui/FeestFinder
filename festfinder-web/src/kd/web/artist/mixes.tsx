@@ -150,7 +150,7 @@ function CommentsSheet({ lang, mix, onClose, onTotal }: { lang: Lang; mix: Mix; 
     onTotal(out.total);
   }, [mix.id, onTotal]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, [mix.id, kd.user]);
+  useEffect(() => { void load(); }, [mix.id, kd.user]);
 
   /** A write: sign in first, or prove a phone when the API asks, then try again. */
   const write = async <R,>(run: () => Promise<R>): Promise<R | null> => {

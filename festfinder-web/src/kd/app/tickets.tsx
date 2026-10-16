@@ -65,7 +65,7 @@ function Wallet({ lang }: { lang: Lang }) {
     const out = await FF.maybe(FF.get('/me/tickets'), null);
     if (out) setW(out);
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     const on = () => setOffline(!navigator.onLine);
     on();

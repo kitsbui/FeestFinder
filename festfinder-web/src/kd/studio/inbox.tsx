@@ -84,7 +84,7 @@ function Threads() {
   }, []);
   useEffect(() => {
     const t = new URLSearchParams(location.search).get('thread');
-    load().then((out) => {
+    void load().then((out) => {
       // Side by side on a wide screen: the newest thread is open from the start.
       if (t) setOpen(t);
       else if (out.items[0] && matchMedia('(min-width: 900px)').matches) setOpen(out.items[0].id);
@@ -92,7 +92,7 @@ function Threads() {
   }, [load]);
   useEffect(() => {
     if (!open) { setThread(null); return; }
-    FF.maybe(FF.get('/organizer/inbox/' + open), null).then((t: { id: string; subject: Pair; who: Pair; messages: Msg[] } | null) => { setThread(t); load(); });
+    FF.maybe(FF.get('/organizer/inbox/' + open), null).then((t: { id: string; subject: Pair; who: Pair; messages: Msg[] } | null) => { setThread(t); void load(); });
   }, [open, load]);
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }); }, [thread]);
 
@@ -175,9 +175,9 @@ function Notices() {
   const kd = useKd();
   const [list, setList] = useState<{ items: Notif[]; unread: number } | null>(null);
   const load = useCallback(async () => setList(await FF.maybe(FF.get('/organizer/notifications?limit=50'), { items: [], unread: 0 })), []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   const readAll = async () => {
-    try { const out = await FF.post('/organizer/notifications/read-all'); kd.toast(FF.text(out.message, lang)); load(); } catch (x) { kd.toast(FF.errorText(x, lang)); }
+    try { const out = await FF.post('/organizer/notifications/read-all'); kd.toast(FF.text(out.message, lang)); void load(); } catch (x) { kd.toast(FF.errorText(x, lang)); }
   };
   if (!list) return <div className="kd-skel h-60" aria-hidden="true" />;
   return (
@@ -212,11 +212,11 @@ function Topics() {
     const out = await FF.maybe(FF.get('/organizer/notification-preferences'), null);
     setTopics(out?.topics ?? []);
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   const names: Record<string, string> = { moderation: T.topicModeration, tickets: T.topicTickets, payouts: T.topicPayouts, crew: T.topicCrew, bookings: T.topicBookings };
   const set = async (key: string, on: boolean) => {
     setTopics((ts) => ts && ts.map((t) => (t.key === key ? { ...t, enabled: on } : t)));
-    try { await FF.put('/organizer/notification-preferences', { [key]: on }); load(); } catch (x) { kd.toast(FF.errorText(x, lang)); load(); }
+    try { await FF.put('/organizer/notification-preferences', { [key]: on }); void load(); } catch (x) { kd.toast(FF.errorText(x, lang)); void load(); }
   };
   const test = async () => {
     try { const out = await FF.post('/organizer/notifications/test'); kd.toast(out.message ? FF.text(out.message, lang) : T.testPush); } catch (x) { kd.toast(FF.errorText(x, lang)); }

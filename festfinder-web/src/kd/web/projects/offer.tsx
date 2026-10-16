@@ -75,7 +75,7 @@ function OfferSheet({ lang, slug, kinds, packages, currency, onClose }: {
   };
   return (
     <Sheet title={T.offer} closeLabel={C.close} onClose={() => onClose(false)}>
-      <form className="flex flex-col gap-3 pt-1" onSubmit={(e) => { e.preventDefault(); send(); }}>
+      <form className="flex flex-col gap-3 pt-1" onSubmit={(e) => { e.preventDefault(); void send(); }}>
         <fieldset className="flex flex-col gap-2">
           <legend className="kd-flabel mb-2">{T.offerAs}</legend>
           <div className="flex flex-wrap gap-2">

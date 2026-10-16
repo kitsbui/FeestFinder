@@ -43,7 +43,7 @@ function SavedList({ lang }: { lang: Lang }) {
   }, []);
   useEffect(() => {
     FF.maybe(FF.get('/me/saves?limit=100'), { items: [] }).then((out: { items: Card[] }) => setSaves(out.items));
-    loadCols();
+    void loadCols();
   }, [loadCols]);
   // A heart taken off elsewhere on the page leaves the list too.
   const shown = (saves ?? []).filter((e) => kd.saved.has(e.id) || !kd.saved.size);

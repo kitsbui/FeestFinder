@@ -113,7 +113,7 @@ function CampaignForm({ lang, campaign, status, onClose, onSaved }: { lang: Lang
     brandName: campaign?.brandName ?? '', title: campaign?.title ?? '', brief: campaign?.brief ?? '',
     cities: campaign?.cities.map((c) => c.slug) ?? [], styles: campaign?.styles.map((s) => s.key) ?? [],
     feeMin: campaign?.feeMin != null ? String(campaign.feeMin) : '', feeMax: campaign?.feeMax != null ? String(campaign.feeMax) : '',
-    closesOn: campaign?.closesOn ?? '', status: campaign?.status ?? 'open' as Status,
+    closesOn: campaign?.closesOn ?? '', status: campaign?.status ?? 'open',
   }));
   const [busy, setBusy] = useState(false);
   const upd = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
@@ -138,7 +138,7 @@ function CampaignForm({ lang, campaign, status, onClose, onSaved }: { lang: Lang
       onClose={onClose}
       footer={<><Button onClick={onClose}>{T.cancel}</Button><span className="flex-1" /><Button tone="acc" disabled={!ok || busy} onClick={save}><CheckIcon size={16} aria-hidden="true" />{T.save}</Button></>}
     >
-      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok && !busy) save(); }}>
+      <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); if (ok && !busy) void save(); }}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={T.brand} htmlFor="bc-brand"><Input id="bc-brand" value={f.brandName} autoFocus={!campaign} onChange={(e) => upd({ brandName: e.target.value })} /></Field>
           <Field label={T.status} htmlFor="bc-status">

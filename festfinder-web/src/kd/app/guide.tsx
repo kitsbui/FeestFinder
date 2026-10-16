@@ -42,7 +42,7 @@ function GuideBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
     setErr(''); setG(null);
     try { setG(await FF.get('/events/' + ev.id + '/guide?lang=' + lang)); } catch (e) { setErr(FF.errorText(e, lang)); }
   }, [ev.id, lang]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   if (err) return <Panel className="m-4 flex flex-col items-start gap-3 p-5"><span className="kd-t">{err}</span><Button size="sm" onClick={load}>{T.guideRetry}</Button></Panel>;
   if (!g) return <p className="kd-s px-4" role="status">{T.guideLoading}</p>;
   const spots = (title: string, xs: Spot[]) => xs.length ? (

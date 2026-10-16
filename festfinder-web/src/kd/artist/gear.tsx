@@ -81,7 +81,7 @@ function List({ lang, served, categories, onSaved }: {
             label={T.fromCatalogue}
             placeholder={T.searchGear}
             load={search}
-            onPick={(p) => { if (p && !items.some((x) => x.gearId === p.value)) save([...items, { gearId: p.value, name: p.label, approved: true, usedFor: 'both' }]); }}
+            onPick={(p) => { if (p && !items.some((x) => x.gearId === p.value)) void save([...items, { gearId: p.value, name: p.label, approved: true, usedFor: 'both' }]); }}
           />
         </Block>
         <Block title={T.notInCatalogue}>

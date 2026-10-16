@@ -47,12 +47,12 @@ export function Attendees() {
     setData((d) => (cursor && d && out ? { ...out, items: [...d.items, ...out.items] } : out));
   }, [event, filter, q]);
   useEffect(() => {
-    const t = setTimeout(() => load(), q ? 300 : 0);
+    const t = setTimeout(() => void load(), q ? 300 : 0);
     return () => clearTimeout(t);
   }, [load, q]);
 
   const act = async (run: () => Promise<{ message?: Pair }>) => {
-    try { const out = await run(); if (out?.message) kd.toast(FF.text(out.message, lang)); load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    try { const out = await run(); if (out?.message) kd.toast(FF.text(out.message, lang)); void load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const k = data?.kpis;
   const pct = (n: number) => `${n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}%`;
@@ -100,7 +100,7 @@ export function Attendees() {
                           >
                             <MenuItem onSelect={() => act(() => FF.post(`/organizer/tickets/${a.ticketId}/resend`))}>{T.resend}</MenuItem>
                             {org.myRole === 'owner' && a.orderId ? (
-                              <MenuItem onSelect={() => { if (confirm(fill(T.refundAsk, { c: a.orderCode }))) act(() => FF.post(`/organizer/orders/${a.orderId}/refund`)); }}>{T.refund}</MenuItem>
+                              <MenuItem onSelect={() => { if (confirm(fill(T.refundAsk, { c: a.orderCode }))) void act(() => FF.post(`/organizer/orders/${a.orderId}/refund`)); }}>{T.refund}</MenuItem>
                             ) : null}
                           </Menu>
                         ) : null}

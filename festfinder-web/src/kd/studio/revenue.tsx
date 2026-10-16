@@ -40,7 +40,7 @@ export function RevenueScreen() {
     if (!event) return;
     setR(await FF.maybe(FF.get(`/organizer/events/${event.id}/revenue`), null));
   }, [event]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   const m = (n: number) => money(n, CHECKOUT, lang);
   const status: Record<Payout['status'], { tone: 'ok' | 'warn' | 'none'; label: string }> = {
     paid: { tone: 'ok', label: T.pPaid }, available: { tone: 'warn', label: T.pAvailable }, scheduled: { tone: 'none', label: T.pScheduled },
