@@ -56,7 +56,7 @@ export default async function adminVenueRoutes(app: FastifyInstance) {
                 (select max(e.starts_on) from events e where e.venue_id = v.id and e.published_at is not null) as last_event
            from venues v order by v.name`, [today]),
       many<any>(ctx.db,
-        `select e.id, e.title, e.status, e.starts_on, e.venue_name, e.address, e.area, o.name as org_name
+        `select e.id, e.title, e.status, e.starts_on, e.venue_name, e.address, e.area, e.city, o.name as org_name
            from events e join organizers o on o.id = e.organizer_id
           where e.venue_id is null and e.lat is null and e.venue_name is not null and e.status in ('in_review','live')
             and coalesce(e.ends_on, e.starts_on, $1) >= $1
@@ -74,7 +74,9 @@ export default async function adminVenueRoutes(app: FastifyInstance) {
       unresolved: unresolved.map((e) => ({
         id: e.id, title: e.title, status: e.status, statusLabel: STATUS_LABEL[e.status], startsOn: e.starts_on, organizer: e.org_name,
         venueName: e.venue_name, address: e.address, area: e.area,
-        suggestions: rows.map((v) => ({ id: v.id, name: v.name, area: v.area, score: Math.max(venueLikeness(`${e.venue_name}`, v.name), venueLikeness(`${e.address ?? ''}`, v.address) * 0.9) }))
+        // A venue in another city is never the same place.
+        suggestions: rows.filter((v) => !e.city || !v.city || v.city === e.city)
+          .map((v) => ({ id: v.id, name: v.name, area: v.area, score: Math.max(venueLikeness(`${e.venue_name}`, v.name), venueLikeness(`${e.address ?? ''}`, v.address) * 0.9) }))
           .filter((x) => x.score >= 0.5).sort((a, b) => b.score - a.score).slice(0, 3),
       })),
     };

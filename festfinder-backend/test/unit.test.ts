@@ -261,3 +261,11 @@ describe('AI local guide prompt', () => {
     assert.match(guidePrompt(ev({ entryMode: 'free', priceFrom: 0 }), 'en'), /Ticket: free entry/);
   });
 });
+
+describe('venue names', () => {
+  it('a shared article or kind of place does not make two venues one', async () => {
+    const { venueLikeness } = await import('../src/routes/admin/ops-shared.ts');
+    assert.equal(venueLikeness('The Warehouse', 'The Reverie Rooftop'), 0);
+    assert.ok(venueLikeness('Warehouse 12', 'Warehouse 12 Quận 4') >= 0.5);
+  });
+});
