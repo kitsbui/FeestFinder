@@ -46,4 +46,6 @@ Trên `night/2026-10-16`, 17/10:
 - `SERVICE_FEE_PCT`: không có trên cả hai project Vercel (kiểm bằng `vercel env ls`), không cần xoá.
 - Linter API: chọn oxlint type-aware, đã thêm vào CI.
 - "Hồ sơ có chủ" gồm cả hồ sơ đội đã xác minh: chủ SP xác nhận.
-- Kiểm CDN: chờ ship.
+- Đã ship lên `main` lúc 03:18 ngày 17/10 (cả hai project Ready).
+- Kiểm CDN: lần đầu luôn `MISS`, vì hai lỗi của N6. Thứ nhất, Vercel không cache phản hồi có `Vary: Cookie`; giờ proxy web gửi `X-FF-Session: 1` cho người đã đăng nhập và API vary theo header đó. Thứ hai, `stale-while-revalidate` trong `Cache-Control` làm trình duyệt hiện lại bản ẩn danh ngay sau khi đăng nhập (screen test bắt được); giờ thời gian cache nằm trong `Vercel-CDN-Cache-Control`. Thêm nữa, `curl -I` (HEAD) không nhận header cache; đã sửa để HEAD trả như GET.
+- Sau sửa: GET lần hai trong cùng vùng trả `x-vercel-cache: HIT` trên cả `feestfinder-api.vercel.app` và `feestfinder.com`; request có cookie phiên luôn `MISS`.
