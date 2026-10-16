@@ -15,6 +15,9 @@ export interface Item {
   waitingMinutes: number; sla: { state: Sla; label: Pair };
   riskScore: number; riskBand: Band; threadMessages: number;
   signals: { ok: boolean; label: Pair }[];
+  /** 'revision': an organiser's change to a live listing, which stays live meanwhile (migration 040). */
+  kind?: 'listing' | 'revision';
+  changes?: { field: string; before: unknown; after: unknown }[];
 }
 
 /** /admin/reject-reasons. */

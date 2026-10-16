@@ -31,14 +31,14 @@ import { Appeal, Lineup, newTier, Tiers, Upload, VenueField, type Tier, type Ven
 const STYLES = Object.keys(STYLE_LABEL);
 const STYLE_MAX = 5;
 const AGES = ['All ages', '16+', '18+'];
-/** Edits to these on a live listing send it back to review (organizer/events.ts REVIEWED_FIELDS). */
+/** Edits to these on a live listing wait for the team's review; the listing stays live (organizer/events.ts REVIEWED_FIELDS). */
 const REVIEWED = ['title', 'startsOn', 'endsOn', 'startTime', 'endTime', 'venueId', 'venueName', 'entryMode', 'priceFrom', 'coverUrl'];
 /** The sections a reviewed field lives in, tagged on a live listing. */
 const REVIEWED_SECTIONS = new Set(['basics', 'when', 'where', 'tickets', 'media']);
 
 interface SavedTier { key: string; name: Pair; note: Pair | null; price: number; capacity: number; sold: number; isLast: boolean; salesOpenAt: string | null; priceRiseOn: string | null; priceRiseTo: number | null }
 interface Listing {
-  id: string; slug: string; status: string; statusLabel: Pair; title: string; styles: string[]; eventType: string | null; description: Pair | null;
+  id: string; slug: string; status: string; statusLabel: Pair; reviewPending?: { at: string; fields: string[] } | null; title: string; styles: string[]; eventType: string | null; description: Pair | null;
   city: string; currency: string; logoUrl: string | null; coverUrl: string | null;
   startsOn: string | null; endsOn: string | null; startTime: string | null; endTime: string | null;
   venue: { id: string | null; name: string | null; address: string | null; area: string | null };
@@ -174,7 +174,9 @@ export function EventEditor({ id }: { id: string }) {
     const sendsBack = d.status === 'live' && changed.some((k) => REVIEWED.includes(k));
     if (sendsBack) {
       if (quiet) return null;
-      if (!(await ask({ title: T.reAskTitle, body: T.reAskBody, confirm: T.resubmit }))) return null;
+      const names = T.reviewedNames.split('|');
+      const what = [...new Set(changed.filter((k) => REVIEWED.includes(k)).map((k) => names[REVIEWED.indexOf(k)]))].join(', ');
+      if (!(await ask({ title: T.reAskTitle, body: fill(T.reAskBody, { f: what }), confirm: T.resubmit }))) return null;
     }
     setSave({ state: 'saving' });
     try {
@@ -276,6 +278,7 @@ export function EventEditor({ id }: { id: string }) {
           <h1 className="kd-d2 kd-ell">{f.title.trim() || T.noTitle}</h1>
           <span className="kd-s flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <Status tone={statusTone(d.status)}>{d.statusLabel[lang]}</Status>
+            {d.reviewPending ? <Status tone="warn">{T.reviewPending}</Status> : null}
             {d.submittedAt ? <span className="kd-num">{fill(T.submittedOn, { t: stamp(d.submittedAt, lang) })}</span> : null}
             <span role="status" aria-live="polite" className={cx(save.state === 'error' && 'text-hot')}>{saveLine}</span>
           </span>

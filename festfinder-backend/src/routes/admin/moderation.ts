@@ -17,6 +17,7 @@ import { assessRisk, riskBand, SLA_HOURS } from '../../services/risk.ts';
 import { moderationThread } from '../organizer/inbox.ts';
 import { notifySubmitter } from '../../services/community.ts';
 import { queueIndexNow } from '../../services/seo.ts';
+import { refreshDerived, REVIEW_COLUMNS } from '../../services/events.ts';
 
 const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 
@@ -30,13 +31,67 @@ const QUEUE_SQL = `
   select e.id, e.slug, e.title, e.art, e.cover_url, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.flag, e.risk_score, e.signals, e.submitted_at,
          e.genre, e.area, e.currency, e.age, e.entry_mode, e.price_from, e.quality_score, e.logo_url, (e.venue_id is not null or e.lat is not null) as venue_resolved,
          e.organizer_id, o.name as org_name, o.verification_state, o.is_community, e.submitted_by, su.name as submitter_name,
+         e.status, e.needs_review_at, e.needs_review_fields, e.needs_review_before, e.city, e.address, e.lat, e.lng, e.venue_id,
          not exists (select 1 from events e2 where e2.organizer_id = e.organizer_id and e2.published_at is not null and e2.id <> e.id) as new_org,
          (select count(*)::int from inbox_messages m join inbox_threads t on t.id = m.thread_id where t.event_id = e.id and t.topic = 'moderation') as thread_messages
     from events e join organizers o on o.id = e.organizer_id left join users su on su.id = e.submitted_by
-   where e.status = 'in_review'`;
+   where e.status = 'in_review' or (e.status = 'live' and e.needs_review_at is not null)`;
 
 function actor(s: UserSession) {
   return { actorType: 'admin' as const, actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin' };
+}
+
+/** A live listing with an organiser's change waiting (migration 040), rather than a listing waiting to go live. */
+const isRevision = (ev: { status: string; needs_review_at?: unknown }) => ev.status === 'live' && !!ev.needs_review_at;
+
+/** What changed on a live listing, field by field, for the review card. */
+function revisionChanges(r: any): { field: string; before: unknown; after: unknown }[] {
+  const before = r.needs_review_before ?? {};
+  return REVIEW_COLUMNS.filter((c) => c !== 'cover_sha256' && JSON.stringify(before[c] ?? null) !== JSON.stringify(normal(r[c])))
+    .map((c) => ({ field: c, before: before[c] ?? null, after: normal(r[c]) }));
+}
+const normal = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : v ?? null);
+
+/** The team accepts an organiser's change to a live listing: it was already showing, so only the flag clears. */
+async function approveRevision(ctx: Ctx, q: Queryable, s: UserSession, ev: any) {
+  const now = ctx.clock.now();
+  await q.query('update events set needs_review_at = null, needs_review_fields = $2, needs_review_before = null, decided_at = $3 where id = $1', [ev.id, [], now]);
+  await q.query(`insert into moderation_decisions (event_id, decision, decided_by, decided_at) values ($1,'approved',$2,$3)`, [ev.id, s.user.id, now]);
+  await appendAudit(q, { at: now, ...actor(s), action: 'listing.revision_approved', targetType: 'event', targetId: ev.id, targetLabel: ev.title, diff: [{ f: 'fields', a: '—', b: (ev.needs_review_fields ?? []).join(', ') }] });
+  await notifyOrganizer(q, now, {
+    organizerId: ev.organizer_id, topic: 'moderation', kind: 'live',
+    title: L(`Change approved: ${ev.title}`, `Đã duyệt thay đổi: ${ev.title}`),
+    body: L('The listing kept showing the whole time.', 'Tin vẫn hiện suốt thời gian chờ duyệt.'),
+    cta: L('View dashboard', 'Xem dashboard'), link: { screen: 'dash', eventId: ev.id },
+  });
+  await queueIndexNow(q, ctx, ev.slug);
+}
+
+/** The team sends an organiser's change back: the listing returns to what it showed before, and stays live. */
+async function rejectRevision(ctx: Ctx, q: Queryable, s: UserSession, ev: any, code: string, message: Localized) {
+  const now = ctx.clock.now();
+  const before = ev.needs_review_before ?? {};
+  const cols = REVIEW_COLUMNS.filter((c) => c in before);
+  if (cols.length) await q.query(`update events set ${cols.map((c, i) => `${c} = $${i + 2}`).join(', ')} where id = $1`, [ev.id, ...cols.map((c) => before[c])]);
+  await q.query('update events set needs_review_at = null, needs_review_fields = $2, needs_review_before = null, decided_at = $3 where id = $1', [ev.id, [], now]);
+  await refreshDerived(q, ev.id, now);
+  await q.query(`insert into moderation_decisions (event_id, decision, reason_code, message, allow_appeal, decided_by, decided_at) values ($1,'rejected',$2,$3,false,$4,$5)`,
+    [ev.id, code, message.en, s.user.id, now]);
+  const reason = REJECT_REASONS[code];
+  const threadId = await moderationThread(q, ev, now);
+  await q.query(`insert into inbox_messages (thread_id, sender, author_id, body, created_at) values ($1,'ff',$2,$3,$4)`, [threadId, s.user.id,
+    json({ en: `Change not accepted · ${reason.label.en} (${code}). ${message.en}\n\nThe listing shows what it did before the change.`, vi: `Thay đổi chưa được chấp nhận · ${reason.label.vi} (${code}). ${message.vi}\n\nTin hiện lại như trước khi sửa.` }), now]);
+  await q.query('update inbox_threads set organizer_unread = true, updated_at = $2 where id = $1', [threadId, now]);
+  await notifyOrganizer(q, now, {
+    organizerId: ev.organizer_id, topic: 'moderation', kind: 'reject',
+    title: L('Change sent back', 'Thay đổi bị trả lại'),
+    body: L(`${ev.title}: ${reason.label.en}. The listing stays live as it was.`, `${ev.title}: ${reason.label.vi}. Tin vẫn đăng như trước.`),
+    cta: L('Open moderation thread', 'Mở thư kiểm duyệt'), link: { screen: 'inbox', threadId },
+  });
+  await appendAudit(q, {
+    at: now, ...actor(s), action: 'listing.revision_rejected', targetType: 'event', targetId: ev.id, targetLabel: ev.title,
+    diff: [{ f: 'fields', a: (ev.needs_review_fields ?? []).join(', '), b: 'restored' }, { f: 'reason_code', a: '—', b: code }],
+  });
 }
 
 export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eventId: string, action: 'listing.approved' | 'listing.approved_bulk' | 'appeal.overturned', extraDiff: DiffRow[] = []) {
@@ -92,9 +147,13 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const rows = await many<any>(ctx.db, QUEUE_SQL, []);
     const items = rows.map((r) => {
-      const waiting = Math.max(0, Math.round((now.getTime() - new Date(r.submitted_at).getTime()) / 60000));
+      const revision = isRevision(r);
+      const waiting = Math.max(0, Math.round((now.getTime() - new Date(revision ? r.needs_review_at : r.submitted_at).getTime()) / 60000));
       return {
         id: r.id, slug: r.slug, title: r.title, art: r.art, coverUrl: r.cover_url,
+        kind: revision ? 'revision' as const : 'listing' as const,
+        kindLabel: revision ? L('Change to a live listing', 'Bản sửa của tin đang đăng') : null,
+        changes: revision ? revisionChanges(r) : [],
         organizer: { id: r.organizer_id, name: r.org_name, initials: initialsOf(r.org_name), verified: r.verification_state === 'verified', newOrganizer: r.new_org, community: r.is_community },
         submittedBy: r.submitted_by ? { id: r.submitted_by, name: r.submitter_name || null } : null,
         startsOn: r.starts_on, endsOn: r.ends_on, startTime: r.start_time, endTime: r.end_time, venueName: r.venue_name, currency: r.currency, age: r.age,
@@ -161,7 +220,8 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
     const approved: string[] = [];
     for (const id of ids) {
       await ctx.db.tx(async (q) => {
-        const ev = await one<any>(q, 'select status from events where id = $1', [id]);
+        const ev = await one<any>(q, 'select * from events where id = $1 for update', [id]);
+        if (ev && isRevision(ev)) { await approveRevision(ctx, q, s, ev); approved.push(id); return; }
         if (ev?.status !== 'in_review') return;
         await approveListing(ctx, q, s, id, ids.length > 1 ? 'listing.approved_bulk' : 'listing.approved');
         approved.push(id);
@@ -192,6 +252,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
     for (const id of body.ids) {
       await ctx.db.tx(async (q) => {
         const ev = await one<any>(q, 'select * from events where id = $1 for update', [id]);
+        if (ev && isRevision(ev)) { await rejectRevision(ctx, q, s, ev, body.code, message); rejected.push(id); return; }
         if (ev?.status !== 'in_review') return;
         await q.query(`update events set status = 'rejected', decided_at = $2 where id = $1`, [id, now]);
         const d = await one<any>(q,

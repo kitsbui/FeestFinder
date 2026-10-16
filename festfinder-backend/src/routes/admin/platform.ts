@@ -23,7 +23,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
   app.get('/admin/counts', async (req) => {
     requireAdmin(req);
     const r = await one<any>(ctx.db,
-      `select (select count(*)::int from events where status = 'in_review') as queue,
+      `select (select count(*)::int from events where status = 'in_review' or (status = 'live' and needs_review_at is not null)) as queue,
               (select count(*)::int from organizers where verification_state <> 'verified') as verification,
               (select count(distinct event_id)::int from listing_reports where resolved_at is null)
                 + (select count(distinct r.moment_id)::int from moment_reports r join moments m on m.id = r.moment_id
@@ -94,7 +94,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
     const weekAgo = new Date(now.getTime() - 7 * 86400_000);
 
     const [queue, approved, flagged, reports, orgs, users, cities, genres, accounts] = await Promise.all([
-      one<any>(ctx.db, `select count(*)::int as n, min(submitted_at) as oldest from events where status = 'in_review'`),
+      one<any>(ctx.db, `select count(*)::int as n, min(coalesce(needs_review_at, submitted_at)) as oldest from events where status = 'in_review' or (status = 'live' and needs_review_at is not null)`),
       one<any>(ctx.db,
         `select count(*)::int as n, percentile_cont(0.5) within group (order by extract(epoch from (d.decided_at - e.submitted_at)) / 60) as median
            from moderation_decisions d join events e on e.id = d.event_id where d.decision = 'approved' and d.decided_at >= $1 and e.submitted_at is not null`, [dayStart]),

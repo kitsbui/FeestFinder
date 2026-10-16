@@ -153,10 +153,12 @@ export function Detail({ lang, id, item, reasons, onDecide, onSendBack, onChange
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {ev && !inReview ? <Status>{ev.statusLabel[lang]}</Status> : null}
+            {item?.kind === 'revision' ? <Status tone="warn">{R.revisionTag}</Status> : null}
             {waiting != null ? <Status tone={waiting >= 240 ? 'bad' : waiting >= 120 ? 'warn' : 'none'}>{fill(R.waitingFor, { d: duration(waiting, lang) })}</Status> : null}
             {ev ? <Status tone={BAND_TONE[ev.risk.band]}>{fill(ev.risk.band === 'high' ? R.riskHigh : ev.risk.band === 'medium' ? R.riskMedium : R.riskLow, { n: ev.risk.score })}</Status> : null}
           </div>
         </div>
+        {item?.kind === 'revision' && item.changes?.length ? <Changes lang={lang} changes={item.changes} /> : null}
         <div className="relative z-[27] flex flex-col items-end gap-2">
           <div className="flex flex-wrap justify-end gap-2">
             <LinkButton size="sm" tone="ghost" external href={ev?.publicUrl ?? `/e/${item?.slug ?? ''}`} target="_blank" rel="noopener"><EyeIcon size={14} aria-hidden="true" />{R.preview}</LinkButton>
@@ -357,5 +359,27 @@ function Thread({ lang, eventId, n }: { lang: Lang; eventId: string; n: number }
         <Button className="self-end" disabled={!body.trim() || busy} onClick={send}>{T.send}</Button>
       </div>
     </Accordion>
+  );
+}
+
+const REVIEW_COLUMNS = ['title', 'starts_on', 'ends_on', 'start_time', 'end_time', 'venue_id', 'venue_name', 'address', 'area', 'lat', 'lng', 'city', 'entry_mode', 'price_from', 'cover_url'];
+
+/** An organiser's change to a live listing, before and after, field by field (the API's revisionChanges). */
+function Changes({ lang, changes }: { lang: Lang; changes: { field: string; before: unknown; after: unknown }[] }) {
+  const R = pick(REVIEW, lang);
+  const names = R.fieldNames.split('|');
+  const show = (v: unknown) => (v == null || v === '' ? '—' : String(v));
+  const rows = changes.filter((c) => c.field !== 'venue_id' && c.field !== 'lng');
+  return (
+    <div className="flex w-full min-w-0 flex-col gap-1.5" role="group" aria-label={R.revisionHead}>
+      <span className="kd-m">{R.revisionHead}</span>
+      {rows.map((c) => (
+        <div key={c.field} className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_minmax(0,1fr)] items-baseline gap-3 kd-s">
+          <span className="kd-m">{names[REVIEW_COLUMNS.indexOf(c.field)] ?? c.field}</span>
+          <span className="min-w-0 break-words text-fog line-through" title={R.before}>{show(c.before)}</span>
+          <span className="min-w-0 break-words text-paper" title={R.after}>{show(c.after)}</span>
+        </div>
+      ))}
+    </div>
   );
 }

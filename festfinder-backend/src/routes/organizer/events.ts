@@ -20,7 +20,7 @@ import { BANKS } from '../../lib/vietqr.ts';
 import { requireOrganizer, requireOwnEvent, teamSession } from '../../http/guards.ts';
 import { approveListing, askForReview } from '../admin/moderation.ts';
 import { appendAudit } from '../../services/audit.ts';
-import { draftFacts, refreshDerived } from '../../services/events.ts';
+import { draftFacts, refreshDerived, reviewSnapshot } from '../../services/events.ts';
 import { qualityScore, searchScore, type SearchFacts } from '../../services/quality.ts';
 import { assessRisk } from '../../services/risk.ts';
 import { refreshSoldOut } from '../../services/tickets.ts';
@@ -40,6 +40,8 @@ const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT
 export function presentDraft(ev: any) {
   return {
     id: ev.id, slug: ev.slug, status: ev.status, statusLabel: STATUS_LABEL[ev.status],
+    // A change to a live listing waiting for the team (the listing stays live meanwhile).
+    reviewPending: ev.needs_review_at ? { at: ev.needs_review_at, fields: ev.needs_review_fields ?? [] } : null,
     title: ev.title, genre: ev.genre, description: ev.description,
     city: ev.city, currency: ev.currency, styles: ev.styles ?? [], eventType: ev.event_type ?? null,
     logoUrl: ev.logo_url, coverUrl: ev.cover_url,
@@ -91,8 +93,21 @@ export const DraftInput = z.object({
   eventType: z.enum(EVENT_TYPES).nullable(),
 }).partial();
 
-/** Edits to these on a live listing send it back to review. */
+/** Edits to these on a live listing wait for the team's review (the listing stays live meanwhile). */
 export const REVIEWED_FIELDS = ['title', 'startsOn', 'endsOn', 'startTime', 'endTime', 'venueId', 'venueName', 'entryMode', 'priceFrom', 'coverUrl'];
+
+const FIELD_COLUMN: Record<string, string> = {
+  title: 'title', startsOn: 'starts_on', endsOn: 'ends_on', startTime: 'start_time', endTime: 'end_time',
+  venueId: 'venue_id', venueName: 'venue_name', entryMode: 'entry_mode', priceFrom: 'price_from', coverUrl: 'cover_url',
+};
+
+/** Whether an edit leaves a reviewed field as it was (an unchanged field sent along with the form is not a change). */
+function sameValue(ev: any, field: string, value: unknown): boolean {
+  const cur = ev[FIELD_COLUMN[field]];
+  const a = cur instanceof Date ? cur.toISOString().slice(0, 10) : cur == null ? null : String(cur).slice(0, field === 'startTime' || field === 'endTime' ? 5 : undefined);
+  const b = value == null || value === '' ? null : String(value);
+  return a === b;
+}
 
 export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof DraftInput>) {
   const set: Record<string, unknown> = {};
@@ -304,23 +319,33 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const ev = await requireOwnEvent(ctx, org, req.params.id);
     const body = parse(DraftInput, req.body);
     if (['removed', 'cancelled'].includes(ev.status)) throw conflict('not_editable', L('This listing can no longer be edited', 'Tin này không còn sửa được'));
-    // What the team changes stays live: only someone else's change goes back through review.
-    const sendsBack = ev.status === 'live' && !teamSession(req) && REVIEWED_FIELDS.some((f) => (body as any)[f] !== undefined);
+    // What the team changes needs no review. Someone else's change to a reviewed field applies at
+    // once and the listing stays live; it waits in the review queue with what it was before
+    // (migration 040), so the event page and ticket sales never stop for an edit.
+    const changed = ev.status === 'live' && !teamSession(req) ? REVIEWED_FIELDS.filter((f) => (body as any)[f] !== undefined && !sameValue(ev, f, (body as any)[f])) : [];
+    const sendsBack = changed.length > 0;
     await ctx.db.tx(async (q) => {
       await applyDraft(q, ev.id, body);
       if (sendsBack) {
-        await q.query(`update events set status = 'in_review', submitted_at = $2 where id = $1`, [ev.id, ctx.clock.now()]);
-        const risk = await assessRisk(q, ev.id, ctx.clock.now());
+        const now = ctx.clock.now();
+        // The first pending change keeps its time (the queue's clock) and its "before"; later ones add fields.
+        await q.query(
+          `update events set needs_review_at = coalesce(needs_review_at, $2),
+                  needs_review_fields = (select array(select distinct unnest(needs_review_fields || $3::text[]))),
+                  needs_review_before = coalesce(needs_review_before, $4::jsonb)
+            where id = $1`,
+          [ev.id, now, changed, json(reviewSnapshot(ev))]);
+        const risk = await assessRisk(q, ev.id, now);
         await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
           [ev.id, risk.score, json(risk.factors), json(risk.signals), risk.flag]);
         const by = await one<{ name: string }>(q, 'select name from organizers where id = $1', [org.organizerId]);
-        await askForReview(q, ctx.clock.now(), ev, by?.name ?? '', true);
+        await askForReview(q, now, ev, by?.name ?? '', true);
       }
     });
     const updated = await one<any>(ctx.db, 'select * from events where id = $1', [ev.id]);
     return {
       ...presentDraft(updated),
-      ...(sendsBack ? { message: L('Changes to dates, venue or price go back through review', 'Thay đổi ngày, địa điểm hay giá sẽ được duyệt lại') } : {}),
+      ...(sendsBack ? { message: L('Saved · the page stays up while the team reviews the change', 'Đã lưu · trang vẫn hiện trong lúc đội FeestFinder duyệt thay đổi') } : {}),
     };
   });
 

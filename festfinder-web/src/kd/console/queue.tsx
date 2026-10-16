@@ -236,6 +236,7 @@ export function Queue() {
                   <Art family={familyOf(i.genre)} cover={i.coverUrl} className="size-12 shrink-0 rounded-lg" />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="kd-hs kd-ell">{i.title}</span>
+                    {i.kind === 'revision' ? <span className="kd-m text-warn">{R.revisionTag}</span> : null}
                     <span className="kd-s kd-ell">
                       {i.submittedBy ? fill(R.community, { n: i.submittedBy.name || '—' }) : i.organizer.name}
                       {i.organizer.newOrganizer && !i.submittedBy ? <span className="text-warn"> · {R.newTag}</span> : null}
