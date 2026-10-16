@@ -23,6 +23,7 @@ import { siteMetadata } from '@/lib/site';
 import { ExtensionGuardRelease, ExtensionGuardScript } from '@/components/extension-guard';
 import { BrokenCovers } from '@/kd/ui/covers';
 import { Scrollbars } from '@/kd/ui/scrollbars';
+import { FeedbackWidget } from '@/kd/feedback/widget';
 
 export const metadata: Metadata = siteMetadata;
 
@@ -46,6 +47,7 @@ export default function KdLayout({ children }: { children: ReactNode }) {
           {children}
           <Scrollbars />
           <BrokenCovers />
+          <FeedbackWidget />
           <ExtensionGuardRelease />
         </ff-app>
       </body>

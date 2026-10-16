@@ -2,15 +2,17 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
-import { badRequest, conflict, forbidden, notFound } from '../lib/errors.ts';
+import { conflict, forbidden, notFound } from '../lib/errors.ts';
 import { L, type Localized } from '../lib/i18n.ts';
 import { dateStr, limit, parse, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireOrganizer, requireUser, requireWriter } from '../http/guards.ts';
 import { appendAudit } from '../services/audit.ts';
+import { probeImage } from '../services/remote-images.ts';
 
 /*
- * Moments: up to nine pictures on a profile, each an image uploaded to FeestFinder (purpose
- * `moment`), with a caption and a date. A fan's are on their own profile only; an artist's and an
+ * Moments: up to nine pictures on a profile, each a link to an image kept elsewhere (checked by
+ * services/remote-images.ts; only an event's own media is uploaded), with a caption and a date.
+ * Moments uploaded before links were the rule stay as they are. A fan's are on their own profile only; an artist's and an
  * organiser's are public, so adding one needs a confirmed phone like any other publishing.
  * Anyone signed in can report one; a moderator removes it or keeps it, and both are audited.
  */
@@ -85,9 +87,8 @@ export default async function momentRoutes(app: FastifyInstance) {
       as: Kind.default('user'), organizerId: uuid.optional(), url: z.string().max(2048), caption: z.string().trim().max(140).nullable().optional(), takenOn: day.nullable().optional(),
     }), req.body);
     const owner = await ownerFor(req, body.as, body.organizerId);
-    // Only a picture this person uploaded as a moment: no other host gets past the CSP, and no one else's upload.
-    const up = await one(ctx.db, `select 1 from uploads where url = $1 and owner_id = $2 and purpose = 'moment'`, [body.url, owner.userId]);
-    if (!up) throw badRequest('upload_required', L('Upload the photo first', 'Hãy tải ảnh lên trước'));
+    // A link that opens, is an image, is big enough and will not expire.
+    const url = (await probeImage(ctx, body.url, 'moment')).url;
     const row = await ctx.db.tx(async (q) => {
       await q.query('select pg_advisory_xact_lock(hashtext($1))', [`moments:${body.as}:${owner.id}`]);
       const n = await one<{ n: number; top: number }>(q,
@@ -96,7 +97,7 @@ export default async function momentRoutes(app: FastifyInstance) {
       return one<any>(q,
         `insert into moments (owner_kind, owner_id, url, caption, taken_on, sort, created_by, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8)
          returning id, url, caption, taken_on::text as taken_on, created_at`,
-        [body.as, owner.id, body.url, body.caption || null, body.takenOn ?? null, n!.top + 1, owner.userId, ctx.clock.now()]);
+        [body.as, owner.id, url, body.caption || null, body.takenOn ?? null, n!.top + 1, owner.userId, ctx.clock.now()]);
     });
     return reply.code(201).send(presentMoment(row));
   });

@@ -8,7 +8,7 @@ import { isStyle } from '../lib/styles.ts';
 import {
   ARTIST_LINK, ARTIST_ROLE, BOOKING_STATUS, cleanLink, GIG_TYPE, SET_LENGTH, TRAVEL_SCOPE, type ArtistLink,
 } from '../lib/network.ts';
-import { bool, csv, dateStr, imageUrl, limit, localized, parse, timeStr, uuid } from '../lib/validate.ts';
+import { bool, csv, dateStr, limit, localized, parse, timeStr, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireUser } from '../http/guards.ts';
 import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
 import { artistKey, presentLinks, searchArtists } from '../services/artists.ts';
@@ -16,6 +16,7 @@ import { directoryPages } from '../services/seo.ts';
 import { reportGig, reportsOf } from '../services/ingest/report.ts';
 import { gearOf, presentGear } from '../services/gear.ts';
 import { appendAudit } from '../services/audit.ts';
+import { imageChange } from '../services/remote-images.ts';
 import { personId } from '../services/analytics.ts';
 import { artistOrganizers, artistStyles, artistVenues, sharedLineups, similarArtists } from '../services/network.ts';
 
@@ -53,6 +54,7 @@ const DirectoryQuery = z.object({
 import { artistOrigin, label, styleItem } from '../services/artists.ts';
 import { badgesOf } from '../services/badges.ts';
 import { momentsOf } from './moments.ts';
+import { mixesOf } from '../services/mixes.ts';
 
 
 
@@ -98,7 +100,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
     ]);
-    const [gear, badges, moments, origin] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistOrigin(ctx.db, a)]);
+    const [gear, badges, moments, origin, mixes] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistOrigin(ctx.db, a), mixesOf(ctx.db, a.id)]);
     // Free and busy dates still to come, as the artist set them. Their notes are for them alone.
     const windows = await many<any>(ctx.db,
       `select from_on::text, to_on::text, kind, city from artist_availability where artist_id = $1 and to_on >= $2 order by from_on limit 12`,
@@ -129,6 +131,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       availability: windows.map((w) => ({ from: w.from_on, to: w.to_on, kind: w.kind, city: w.city, cityLabel: w.city ? cityLabel(w.city) : null })),
       badges,
       moments,
+      mixes,
     };
   });
 
@@ -179,8 +182,9 @@ export default async function artistRoutes(app: FastifyInstance) {
   const ProfilePatch = z.object({
     name: z.string().trim().min(2).max(80),
     bio: localized,
-    imageUrl: imageUrl.nullable(),
-    coverUrl: imageUrl.nullable(),
+    // Links, checked when they change (services/remote-images.ts): an artist's pictures are never uploaded.
+    imageUrl: z.string().max(2048).nullable(),
+    coverUrl: z.string().max(2048).nullable(),
     website: z.string().url().max(500).nullable(),
     roles: z.array(z.enum(keysOf(ARTIST_ROLE))).max(5),
     basedCity: citySlug.nullable(),
@@ -225,8 +229,12 @@ export default async function artistRoutes(app: FastifyInstance) {
       set.based_city = b.basedCity;
       set.based_country = b.basedCity ? cityBySlug(b.basedCity)?.countryCode ?? null : null;
     }
+    const image = await imageChange(ctx, a.image_url, b.imageUrl, 'avatar');
+    const cover = await imageChange(ctx, a.cover_url, b.coverUrl, 'profile_cover');
+    if (image !== undefined) set.image_url = image;
+    if (cover !== undefined) set.cover_url = cover;
     const direct: Record<string, string> = {
-      imageUrl: 'image_url', coverUrl: 'cover_url', website: 'website', roles: 'artist_roles', languages: 'languages', activeSince: 'active_since',
+      website: 'website', roles: 'artist_roles', languages: 'languages', activeSince: 'active_since',
       bookingStatus: 'booking_status', travelScope: 'travel_scope', gigTypes: 'gig_types', setLengths: 'set_lengths', openToBrands: 'open_to_brands',
     };
     for (const [k, col] of Object.entries(direct)) if ((b as any)[k] !== undefined) set[col] = (b as any)[k];

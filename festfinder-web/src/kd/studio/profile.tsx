@@ -4,7 +4,7 @@
  * about, website, cities, links, open to artist submissions), the business and contact details
  * review and invoices use, and the team.
  */
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { pick, type Lang, type Pair } from '../copy';
@@ -12,6 +12,7 @@ import { STYLE_LABEL, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { Button, buttonClass, Chip } from '../ui/actions';
 import { FieldLabel, Input, Select, SwitchRow, TextArea } from '../ui/forms';
+import { ImageLinkField } from '../ui/image-link';
 import { Avatar, Status } from '../ui/parts';
 import { STUDIO } from './copy';
 import { Block, Page } from './parts';
@@ -111,8 +112,8 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
     <Block title={T.bizPublic}>
       <form className="flex flex-col gap-4" onSubmit={submit}>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
-          <ImagePick lang={lang} kind="logo" label={T.fLogo} hint={T.fLogoHint} value={f.logoUrl} onChange={(v) => setF({ ...f, logoUrl: v })} />
-          <ImagePick lang={lang} kind="cover" label={T.fCover} hint="1600 × 900" value={f.coverUrl} onChange={(v) => setF({ ...f, coverUrl: v })} />
+          <ImageLinkField lang={lang} purpose="logo" label={T.fLogo} hint={T.fLogoLinkHint} value={f.logoUrl} onChange={(v) => setF({ ...f, logoUrl: v })} />
+          <ImageLinkField lang={lang} purpose="profile_cover" label={T.fCover} hint={T.fCoverLinkHint} value={f.coverUrl} onChange={(v) => setF({ ...f, coverUrl: v })} />
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzName">{T.bizName}</FieldLabel><Input id="bzName" required maxLength={80} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
@@ -177,25 +178,3 @@ function LegalForm({ lang, p, onSaved }: { lang: Lang; p: Profile; onSaved: (p: 
   );
 }
 
-function ImagePick({ lang, kind, label, hint, value, onChange }: { lang: Lang; kind: 'logo' | 'cover'; label: string; hint: string; value: string | null; onChange: (v: string | null) => void }) {
-  const T = pick(STUDIO, lang);
-  const kd = useKd();
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const send = async (file: File) => {
-    setBusy(true);
-    try { const form = new FormData(); form.append('file', file); onChange((await FF.api('POST', '/uploads?purpose=' + kind, form)).url); } catch (e) { kd.toast(FF.errorText(e, lang)); }
-    setBusy(false);
-  };
-  return (
-    <div className="flex min-h-16 items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
-      {value
-        // eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage
-        ? <img src={value} alt="" className={kind === 'logo' ? 'size-11 shrink-0 rounded-lg object-cover' : 'h-11 w-[78px] shrink-0 rounded-md object-cover'} />
-        : null}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="kd-hs">{label}</span><span className="kd-s">{busy ? T.fUploading : hint}</span></span>
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) send(file); e.target.value = ''; }} />
-      <Button size="sm" disabled={busy} onClick={() => input.current?.click()} aria-label={`${value ? T.fChange : T.fUpload} · ${label}`}>{value ? T.fChange : T.fUpload}</Button>
-    </div>
-  );
-}

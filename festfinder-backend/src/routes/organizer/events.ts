@@ -15,6 +15,7 @@ import { randomCode } from '../../lib/crypto.ts';
 import { vnd } from '../../lib/format.ts';
 import { atVn, toMinutes, addDays, vnDate } from '../../lib/time.ts';
 import { dateStr, imageUrl, localized, parse, timeStr, uuid } from '../../lib/validate.ts';
+import { imageChange } from '../../services/remote-images.ts';
 import { BANKS } from '../../lib/vietqr.ts';
 import { requireOrganizer, requireOwnEvent } from '../../http/guards.ts';
 import { appendAudit } from '../../services/audit.ts';
@@ -159,8 +160,9 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const body = parse(z.object({
       name: z.string().max(80), type: z.enum(ORGANIZER_TYPE.keys as [OrganizerType, ...OrganizerType[]]), bio: localized,
       markets: z.array(citySlug).max(12), styles: z.array(z.string().refine(isStyle, 'unknown style')).max(8), openForSubmissions: z.boolean(),
-      coverUrl: imageUrl.nullable(), links: z.record(z.string(), z.string().max(500).nullable()),
-      logoUrl: imageUrl.nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
+      // An organiser's logo and cover are links, checked when they change; only event media is uploaded.
+      coverUrl: z.string().max(2048).nullable(), links: z.record(z.string(), z.string().max(500).nullable()),
+      logoUrl: z.string().max(2048).nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
       taxCode: z.string().max(20), address: z.string().max(240), email: z.string().max(200), hotline: z.string().max(30),
       zalo: z.string().max(80), contactName: z.string().max(80), contactRole: z.string().max(80),
     }).partial(), req.body);
@@ -170,11 +172,18 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       throw badRequest('invalid_tax_code', L('Tax codes are 10 to 14 digits', 'Mã số thuế gồm 10 đến 14 chữ số'));
     }
     const map: Record<string, string> = {
-      name: 'name', type: 'type', logoUrl: 'logo_url', website: 'website', legalName: 'legal_name', taxCode: 'tax_code', address: 'address',
-      email: 'email', hotline: 'hotline', zalo: 'zalo', contactName: 'contact_name', contactRole: 'contact_role', coverUrl: 'cover_url',
+      name: 'name', type: 'type', website: 'website', legalName: 'legal_name', taxCode: 'tax_code', address: 'address',
+      email: 'email', hotline: 'hotline', zalo: 'zalo', contactName: 'contact_name', contactRole: 'contact_role',
     };
     const set: Record<string, unknown> = {};
     for (const [k, col] of Object.entries(map)) if ((body as any)[k] !== undefined) set[col] = typeof (body as any)[k] === 'string' ? (body as any)[k].trim() || null : (body as any)[k];
+    if (body.logoUrl !== undefined || body.coverUrl !== undefined) {
+      const was = await one<{ logo_url: string | null; cover_url: string | null }>(ctx.db, 'select logo_url, cover_url from organizers where id = $1', [org.organizerId]);
+      const logo = await imageChange(ctx, was?.logo_url, body.logoUrl, 'logo');
+      const cover = await imageChange(ctx, was?.cover_url, body.coverUrl, 'profile_cover');
+      if (logo !== undefined) set.logo_url = logo;
+      if (cover !== undefined) set.cover_url = cover;
+    }
     if (body.name) { set.name = body.name.trim(); set.initials = body.name.replace(/[^\p{L}\s]/gu, '').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || 'FF'; }
     if (body.email) set.email = normalizeEmail(body.email);
     if (body.taxCode) set.tax_code = body.taxCode.replace(/[\s-]/g, '');

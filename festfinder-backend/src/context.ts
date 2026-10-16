@@ -10,6 +10,8 @@ import type { PrefillGenerator } from './services/prefill.ts';
 import type { PageFetcher } from './services/fetchpage.ts';
 import type { IngestIO } from './services/ingest/types.ts';
 import type { Analytics } from './services/analytics.ts';
+import type { ImageFetcher } from './services/remote-images.ts';
+import type { OembedFetcher } from './services/mixes.ts';
 
 /** Everything a route or job needs. Built once in server.ts, or per test. */
 export interface Ctx {
@@ -27,6 +29,10 @@ export interface Ctx {
   prefill: PrefillGenerator;
   /** Fetches a public page someone pasted, never one on a private network. */
   fetchPage: PageFetcher;
+  /** Reads the head of a linked image (or the page it is on), never anything on a private network. */
+  fetchImage: ImageFetcher;
+  /** Asks SoundCloud, Mixcloud or Spotify about a pasted link (oEmbed). */
+  oembed: OembedFetcher;
   oauth: { google: OAuthProvider | null; fb: OAuthProvider | null; ig: OAuthProvider | null };
   checkLink: (url: string) => Promise<'ok' | 'broken'>;
   /** The network an ingestion run reads through. Tests hand in fixtures; otherwise the polite fetcher. */

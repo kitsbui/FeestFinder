@@ -12,6 +12,7 @@ import { hashPassword, verifyPassword } from '../src/lib/crypto.ts';
 import { splitSql } from '../src/db/migrate.ts';
 import { isInternal } from '../src/app.ts';
 import { linkUrl } from '../src/services/messaging.ts';
+import { guidePrompt, guideSystem, type GuideEvent } from '../src/services/guide.ts';
 
 describe('Vietnam time', () => {
   it('finds the coming weekend from a Monday, and the current one on a Saturday', () => {
@@ -225,5 +226,38 @@ describe('map style', () => {
     assert.deepEqual(labels.map((l: any) => [l.id, l.source]), [['roads-names', 'detail'], ['places-wards', 'detail'], ['places-countries', 'overview'], ['places', 'detail']]);
     assert.ok(labels.every((l: any) => l.layout['text-font'][0] === 'Noto Sans Regular'));
     assert.equal(mapStyle({ tilesUrl: null, overviewUrl: null, glyphsUrl: glyphs }).glyphs, undefined, 'a bare board asks for no glyphs');
+  });
+});
+
+describe('AI local guide prompt', () => {
+  const ev = (o: Partial<GuideEvent>): GuideEvent => ({
+    title: 'Night', genre: 'EDM', venueName: 'Club', address: '1 Road', area: 'Sukhumvit', startTime: '22:00', endTime: '04:00',
+    lineup: ['A'], age: '20+', priceFrom: 800, entryMode: 'paid', city: 'bangkok', currency: 'THB', ...o,
+  });
+
+  it('names the event’s own city and country and prices in its currency', () => {
+    const e = ev({});
+    for (const text of [guideSystem(e), guidePrompt(e, 'en')]) {
+      assert.match(text, /Bangkok/);
+      assert.match(text, /Thailand/);
+      assert.doesNotMatch(text, /Ho Chi Minh|HCMC/);
+    }
+    assert.match(guidePrompt(e, 'en'), /THB\s?800/);
+    assert.doesNotMatch(guidePrompt(e, 'en'), /VND|₫/);
+  });
+
+  it('uses the English name lib/places.ts gives a Vietnamese city', () => {
+    assert.match(guideSystem(ev({ city: 'ha-noi', currency: 'VND', priceFrom: 300000 })), /Hanoi, Vietnam/);
+    assert.match(guidePrompt(ev({ city: 'ha-noi', currency: 'VND', priceFrom: 300000 }), 'vi'), /300,000₫/);
+  });
+
+  it('names no city at all, rather than a default one, when the event has none', () => {
+    const e = ev({ city: null });
+    assert.doesNotMatch(guideSystem(e) + guidePrompt(e, 'en'), /Ho Chi Minh|HCMC|Bangkok|Vietnam/);
+    assert.match(guidePrompt(e, 'en'), /Venue: Club, 1 Road, Sukhumvit\n/);
+  });
+
+  it('says free entry for a free night', () => {
+    assert.match(guidePrompt(ev({ entryMode: 'free', priceFrom: 0 }), 'en'), /Ticket: free entry/);
   });
 });

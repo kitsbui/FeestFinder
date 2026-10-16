@@ -32,12 +32,12 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, onReport, reasons, 
       <div className="kd-mgrid">
         {items.slice(0, MOMENTS_MAX).map((m, i) => (
           <button key={m.id} type="button" className="kd-mtile" aria-label={m.caption ? `${labels.open}: ${m.caption}` : labels.open} onClick={() => setOpen(i)}>
+            {/* The art under the photo shows when a linked photo does not open (ui/covers.tsx). */}
+            <Art family={familyOf(m.genre)} bone={i % 2 === 1} />
             {m.url ? (
-              // eslint-disable-next-line @next/next/no-img-element -- uploaded files from the API's storage
-              <img src={m.url} alt={m.caption ?? ''} loading="lazy" />
-            ) : (
-              <Art family={familyOf(m.genre)} bone={i % 2 === 1} />
-            )}
+              // eslint-disable-next-line @next/next/no-img-element -- moments are links to other sites
+              <img src={m.url} alt={m.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+            ) : null}
           </button>
         ))}
         {owner && items.length < MOMENTS_MAX && onAdd ? (
@@ -90,8 +90,8 @@ function Lightbox({ items, index, onIndex, onClose, onRemove, onReport, reasons,
     >
       <div className="relative flex h-full w-full items-center justify-center">
         {m.url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- uploaded files from the API's storage
-          <img src={m.url} alt={m.caption ?? ''} className="max-h-full max-w-full object-contain" />
+          // eslint-disable-next-line @next/next/no-img-element -- moments are links to other sites
+          <img src={m.url} alt={m.caption ?? ''} referrerPolicy="no-referrer" className="max-h-full max-w-full object-contain" />
         ) : (
           <Art family={familyOf(m.genre)} className="aspect-square w-[min(90vw,90vh)]" />
         )}

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 
 /*
@@ -205,5 +205,33 @@ test.describe('the event page', () => {
     expect(after.artist.name).toBe(name);
     await expect(page.getByLabel('Nghệ danh')).toHaveValue(name);
     expect((await page.request.get('/admin/counts')).status()).toBe(403);
+  });
+});
+
+test.describe('the ride button', () => {
+  test('on a computer, the sheet shows a QR code that opens it on the phone', async ({ page }) => {
+    const problems = await open(page, '/e/ravo');
+    await page.getByRole('button', { name: 'Đặt xe', exact: true }).first().click();
+    const sheet = page.getByRole('dialog', { name: 'Đặt xe tới đây' });
+    await expect(sheet.getByRole('img', { name: 'Mã QR mở sự kiện này trên điện thoại' })).toBeVisible();
+    await expect(sheet.getByText(/^Tới SECC/)).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+});
+
+// A phone's size, touch and Android user agent; the browser stays the configured one.
+const { defaultBrowserType: _browser, ...PIXEL } = devices['Pixel 7'];
+
+test.describe('the ride button on an Android phone', () => {
+  test.use(PIXEL);
+
+  test('lists Grab and Green SM for a night in Vietnam, and opens with ?ride=1', async ({ page }) => {
+    await open(page, '/app/e/ravo?ride=1');
+    const sheet = page.getByRole('dialog', { name: 'Đặt xe tới đây' });
+    await expect(sheet.getByRole('button', { name: 'Grab' })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: 'Green SM' })).toBeVisible();
+    // The links themselves come from the API: the app by its package, the Play Store when it is missing.
+    const rides = (await (await page.request.get('/events/ravo')).json()).rides;
+    expect(rides[0].android).toMatch(/^intent:\/\/open\?screenType=BOOKING#Intent;scheme=grab;package=com\.grabtaxi\.passenger;/);
   });
 });

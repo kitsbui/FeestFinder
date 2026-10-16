@@ -31,6 +31,8 @@ interface Perf {
   period: { views: number; clicks: number; saves: number; sold: number; viewsBefore: number };
   sources: { key: string; pct: number }[];
   boost: { status: 'open' | 'done' | 'declined' } | null;
+  /** Presses of "Đặt xe" (Grab, Green SM) on the event page, all time. */
+  rideClicks?: number;
 }
 
 interface Clicks { clicks: number; byPlacement: Tally[]; byDevice: Tally[]; byCountry: Tally[]; byEvent: { id: string; title: string; n: number }[] }
@@ -163,6 +165,11 @@ export function Dashboard() {
           </div></div>
         </Panel>
         <div className="kd-side flex flex-col gap-3">
+          {perf?.rideClicks ? (
+            <Panel as="section" className="flex items-baseline justify-between gap-3 p-5" aria-label={T.rideClicks}>
+              <span className="kd-h">{T.rideClicks}</span><span className="kd-d3 kd-num">{count(perf.rideClicks, lang)}</span>
+            </Panel>
+          ) : null}
           {perf?.sources.length ? (
             <Panel as="section" className="flex flex-col gap-3.5 p-5" aria-label={T.sources}>
               <span className="kd-h">{T.sources}</span>

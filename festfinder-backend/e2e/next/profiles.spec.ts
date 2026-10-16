@@ -10,12 +10,19 @@ const ATTENDEE = { identifier: 'minh@example.com', password: 'festfinder123' };
 const ORGANIZER = { identifier: 'team@ravolution.vn', password: 'ravolution2026' };
 const ADMIN = { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' };
 
-/** A PNG header is all the upload checks read. */
-const png = (w: number, h: number) => {
-  const b = Buffer.alloc(64);
-  b.writeUInt32BE(0x89504e47, 0); b.write('IHDR', 12, 'ascii'); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20);
-  return b;
-};
+/**
+ * A moment is a link to a picture (only event media is uploaded). The test API reads links from a
+ * fake network (FAKE_REMOTE_MEDIA): every https link is a 1600×1000 PNG.
+ */
+async function addMoment(page: Page, moments: ReturnType<Page['getByRole']>, url: string) {
+  await moments.getByRole('button', { name: 'Thêm' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Thêm khoảnh khắc' });
+  await sheet.getByPlaceholder('https://').fill(url);
+  await sheet.getByPlaceholder('https://').press('Enter');
+  await expect(sheet.locator('img')).toHaveAttribute('src', url);
+  await sheet.getByRole('button', { name: 'Thêm', exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+}
 
 async function open(page: Page, path: string) {
   const problems = watch(page);
@@ -41,7 +48,7 @@ test('the fan’s own profile: numbers, passport, badges, and a photo of their o
 
   const moments = page.getByRole('region', { name: 'Khoảnh khắc' });
   await expect(moments).toBeVisible();
-  await moments.locator('input[type=file]').setInputFiles({ name: 'night.png', mimeType: 'image/png', buffer: png(1200, 900) });
+  await addMoment(page, moments, 'https://photos.example/night.png');
   await expect(moments.getByRole('button', { name: 'Mở ảnh' })).toHaveCount(1);
   expect((await (await page.request.get('/me/moments')).json()).items).toHaveLength(1);
   // The account menu leads here.
@@ -55,7 +62,7 @@ test('an organiser’s photo: added on its page, reported by a fan, removed by a
   await open(page, '/o/ravoent');
   const moments = page.getByRole('region', { name: 'Khoảnh khắc' });
   await expect(moments.getByRole('button', { name: 'Thêm' })).toBeVisible();
-  await moments.locator('input[type=file]').setInputFiles({ name: 'stage.png', mimeType: 'image/png', buffer: png(1600, 900) });
+  await addMoment(page, moments, 'https://photos.example/stage.png');
   await expect(moments.getByRole('button', { name: 'Mở ảnh' })).toHaveCount(1);
   // Its badges are on the page too.
   await expect(page.getByRole('region', { name: 'Huy hiệu' }).getByRole('button', { name: /Đã xác minh/ })).toBeVisible();

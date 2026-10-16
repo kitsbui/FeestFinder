@@ -33,3 +33,25 @@ export function imageInfo(buf: Buffer): { mime: 'image/png' | 'image/jpeg' | 'im
   }
   return null;
 }
+
+export type WebImageMime = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif' | 'image/avif';
+
+/**
+ * Width/height of any image a browser shows from a link: what imageInfo reads, plus GIF and
+ * AVIF. Uploads stay PNG, JPEG or WebP (imageInfo); a linked image may be any of these.
+ */
+export function webImageInfo(buf: Buffer): { mime: WebImageMime; width: number; height: number } | null {
+  const known = imageInfo(buf);
+  if (known) return known;
+  // GIF: "GIF87a"/"GIF89a", then the logical screen's width/height as little-endian u16.
+  if (buf.length >= 10 && buf.toString('ascii', 0, 4) === 'GIF8') {
+    return { mime: 'image/gif', width: buf.readUInt16LE(6), height: buf.readUInt16LE(8) };
+  }
+  // AVIF: an ISO-BMFF "ftyp" box naming avif/avis; the size is in the first "ispe" box
+  // (4-byte version and flags, then width and height as big-endian u32).
+  if (buf.length >= 16 && buf.toString('ascii', 4, 8) === 'ftyp' && /avi[fs]/.test(buf.toString('ascii', 8, Math.min(buf.length, 64)))) {
+    const at = buf.indexOf('ispe', 0, 'ascii');
+    if (at > 0 && at + 16 <= buf.length) return { mime: 'image/avif', width: buf.readUInt32BE(at + 8), height: buf.readUInt32BE(at + 12) };
+  }
+  return null;
+}

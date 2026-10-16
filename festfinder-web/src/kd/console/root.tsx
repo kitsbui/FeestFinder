@@ -10,7 +10,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, GuitarIcon, HandWavingIcon,
+  ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ChatTextIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, GuitarIcon, HandWavingIcon,
   HandshakeIcon, LightbulbIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon, StorefrontIcon,
   TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
@@ -27,7 +27,7 @@ import { AskHost } from './kit';
 import { CONSOLE } from './copy';
 
 export type ConsoleTab =
-  | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports'
+  | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports' | 'feedback'
   | 'partners' | 'affiliate' | 'brands' | 'projects' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
 export interface Counts {
   queue: number; verification: number; reports: number; ads: number; appeals: number;
@@ -42,7 +42,7 @@ export function useConsole(): ConsoleCtx {
   return v;
 }
 
-const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'projects', 'featured', 'users', 'orders', 'insights', 'audit'];
+const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'feedback', 'partners', 'affiliate', 'brands', 'projects', 'featured', 'users', 'orders', 'insights', 'audit'];
 /** Routes that belong to a tab of another name. */
 const ALIAS: Record<string, ConsoleTab> = { verification: 'organizers' };
 
@@ -135,6 +135,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
         { key: 'queue', label: T.tabQueue, href: '/console', icon: i(TrayIcon), count: n(counts?.queue) },
         { key: 'claims', label: T.tabClaims, href: '/console/claims', icon: i(HandWavingIcon), count: n(counts?.allClaims) },
         { key: 'reports', label: T.tabReports, href: '/console/reports', icon: i(FlagIcon), count: n(counts?.reports) },
+        { key: 'feedback', label: T.tabFeedback, href: '/console/feedback', icon: i(ChatTextIcon) },
       ])}
       {group(T.navCatalogue, [
         { key: 'events', label: T.tabEvents, href: '/console/events', icon: i(CalendarDotsIcon) },

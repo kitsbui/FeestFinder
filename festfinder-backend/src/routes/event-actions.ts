@@ -186,6 +186,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
       const data = trimGuide(await ctx.guide.generate({
         title: ev.title, genre: ev.genre, venueName: ev.venue_name, address: ev.address, area: ev.area,
         startTime: ev.start_time, endTime: ev.end_time, lineup: ev.lineup, age: ev.age, priceFrom: ev.price_from, entryMode: ev.entry_mode,
+        city: ev.city ?? null, currency: ev.currency,
       }, lang));
       await ctx.db.query(
         `insert into ai_guides (event_id, lang, data, model, created_at) values ($1,$2,$3,$4,$5)

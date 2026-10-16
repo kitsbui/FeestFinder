@@ -7,6 +7,7 @@ import { cityBySlug, launchedCity } from '../lib/places.ts';
 import { EVENT_TYPES, isStyle } from '../lib/styles.ts';
 import { dateStr, limit, parse, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireUser, requireWriter } from '../http/guards.ts';
+import { imageChange } from '../services/remote-images.ts';
 import { personId } from '../services/analytics.ts';
 import { appendAudit } from '../services/audit.ts';
 import { notifyUser } from '../services/notify.ts';
@@ -41,7 +42,8 @@ const Fields = {
   budget: amount.nullable(),
   raiseAmount: amount.nullable(),
   seeking: z.array(z.enum(SEEKING)).max(SEEKING.length),
-  coverUrl: z.string().max(500).regex(/^(https:\/\/|\/files\/)/).nullable(),
+  // A link, checked when it changes (services/remote-images.ts): only event media is uploaded.
+  coverUrl: z.string().max(2048).nullable(),
 };
 const Create = z.object({
   ...Fields,
@@ -134,13 +136,14 @@ export default async function projectRoutes(app: FastifyInstance) {
     const s = requireUser(req);
     const b = parse(Create, req.body);
     const now = ctx.clock.now();
+    const cover = (await imageChange(ctx, null, b.coverUrl, 'profile_cover')) ?? null;
     const row = await ctx.db.tx(async (q) => {
       const slug = await newSlug(q, b.title);
       return one<{ id: string; slug: string }>(q,
         `insert into projects (slug, owner_user_id, title, pitch, story, city, styles, event_type, target_on, capacity, budget, raise_amount, currency, seeking, cover_url, created_at, updated_at)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$16) returning id, slug`,
         [slug, s.user.id, b.title, b.pitch, b.story, b.city, b.styles, b.eventType, b.targetOn, b.capacity, b.budget, b.raiseAmount,
-          cityBySlug(b.city)!.currency, b.seeking, b.coverUrl, now]);
+          cityBySlug(b.city)!.currency, b.seeking, cover, now]);
     });
     void ctx.analytics.capture('project_created', personId(s.user.id), { city: b.city });
     return reply.code(201).send({ ...(await full(row!.id, req)), message: L('Draft saved', 'Đã lưu bản nháp') });
@@ -157,6 +160,10 @@ export default async function projectRoutes(app: FastifyInstance) {
     const p = await ownProject(s.user.id, req.params.id);
     if (!EDITABLE.includes(p.status)) throw conflict('not_editable', L('This project can no longer be edited', 'Dự án này không còn sửa được'));
     const b = parse(Update, req.body);
+    if (b.coverUrl !== undefined) {
+      const cover = await imageChange(ctx, p.cover_url, b.coverUrl, 'profile_cover');
+      if (cover === undefined) delete b.coverUrl; else b.coverUrl = cover;
+    }
     const keys = Object.keys(b).filter((k) => k in COLUMN);
     if (keys.length) {
       const set = keys.map((k, i) => `${COLUMN[k]} = $${i + 2}`);

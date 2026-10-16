@@ -23,6 +23,7 @@ export const CONSOLE = {
   tabAffiliate: { en: 'Affiliate', vi: 'Tiếp thị liên kết' },
   tabBrands: { en: 'Brand campaigns', vi: 'Chiến dịch thương hiệu' },
   tabProjects: { en: 'Projects', vi: 'Dự án' },
+  tabFeedback: { en: 'Feedback', vi: 'Góp ý' },
   tabUsers: { en: 'Accounts', vi: 'Tài khoản' },
   tabOrders: { en: 'Orders', vi: 'Đơn hàng' },
   navWork: { en: 'To do', vi: 'Việc cần làm' },

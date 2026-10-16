@@ -14,6 +14,7 @@ import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { FieldError, FieldLabel, Input, Select, TextArea } from '../../ui/forms';
+import { ImageLinkField } from '../../ui/image-link';
 import { Card as Panel, Status, type StatusTone } from '../../ui/parts';
 import { PROJ } from './copy';
 import { SEEKING, SEEKING_LABEL, text, type Package, type Project, type Seeking } from './model';
@@ -113,7 +114,6 @@ function StatusBar({ lang, p, onChange }: { lang: Lang; p: Project; onChange: (p
 function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project | null; onSaved: (p: Project) => void }) {
   const T = pick(PROJ, lang);
   const S = pick(SEEKING_LABEL, lang);
-  const kd = useKd();
   const [f, setF] = useState({
     title: p?.title ?? '', pitch: p?.pitch ?? '', story: p?.story ?? '', city: p?.city.slug ?? meta.cities[0]?.slug ?? '',
     styles: p?.styles.map((s) => s.key) ?? [], eventType: p?.eventType?.key ?? '', targetOn: p?.targetOn ?? '',
@@ -126,11 +126,6 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
   const num = (s: string) => (s.replace(/\D/g, '') ? Number(s.replace(/\D/g, '')) : null);
   const toggle = <K extends 'styles' | 'seeking'>(k: K, v: string) =>
     setF((x) => ({ ...x, [k]: (x[k] as string[]).includes(v) ? (x[k] as string[]).filter((y) => y !== v) : [...(x[k] as string[]), v] }));
-  const upload = async (file: File | undefined) => {
-    if (!file) return;
-    try { const form = new FormData(); form.append('file', file); setF((x) => ({ ...x, coverUrl: null })); const out = await FF.api('POST', '/uploads?purpose=cover', form); setF((x) => ({ ...x, coverUrl: out.url })); }
-    catch (e) { kd.toast(FF.errorText(e, lang)); }
-  };
   const save = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setErr('');
@@ -169,13 +164,10 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
         <legend className="kd-flabel mb-2">{T.fStyles}</legend>
         <div className="flex flex-wrap gap-2">{meta.styles.map((s) => <Chip key={s.key} family="edm" on={f.styles.includes(s.key)} onClick={() => toggle('styles', s.key)}>{s.label[lang]}</Chip>)}</div>
       </fieldset>
-      <div className="flex flex-col gap-2 tab:col-span-2">
-        <FieldLabel htmlFor="pj-cover">{T.fCover}</FieldLabel>
-        <div className="flex flex-wrap items-center gap-3">
-          {f.coverUrl ? <img src={f.coverUrl} alt="" className="h-16 w-28 rounded-seg object-cover" /> : null}
-          <input id="pj-cover" type="file" accept="image/jpeg,image/png,image/webp" disabled={!editable} className="kd-s" onChange={(e) => upload(e.target.files?.[0])} />
-        </div>
-      </div>
+      {/* A project's cover is a link (only event media is uploaded), checked as it is pasted. */}
+      {editable ? (
+        <ImageLinkField lang={lang} purpose="profile_cover" label={T.fCover} hint={T.fCoverHint} value={f.coverUrl} onChange={(v) => setF((x) => ({ ...x, coverUrl: v }))} className="tab:col-span-2" />
+      ) : null}
       <FieldError>{err}</FieldError>
       {editable ? <Button type="submit" tone={p ? 'default' : 'acc'} disabled={busy} className="justify-self-start">{p ? T.save : T.start}</Button> : null}
     </form>

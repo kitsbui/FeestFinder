@@ -9,6 +9,8 @@ import { NoopReporter } from '../src/services/errors.ts';
 import { NoopAnalytics, type Analytics } from '../src/services/analytics.ts';
 import { ConsoleTransport } from '../src/services/messaging.ts';
 import { MemoryStorage } from '../src/services/storage.ts';
+import { fakeImageFetcher, type ImageFetcher } from '../src/services/remote-images.ts';
+import { fakeOembed, type OembedFetcher } from '../src/services/mixes.ts';
 import { DisabledGuide, type GuideGenerator } from '../src/services/guide.ts';
 import { MockOAuth } from '../src/services/oauth.ts';
 import { DisabledPrefill, type PrefillGenerator } from '../src/services/prefill.ts';
@@ -42,7 +44,7 @@ async function freshDatabaseUrl(): Promise<string | null> {
  * A test API on a fresh database. With `seed: false` the database has the migrations only,
  * the way production starts; otherwise it holds the demo data from fixtures/seed.ts.
  */
-export async function setup(opts: { now?: string; guide?: GuideGenerator; prefill?: PrefillGenerator; fetchPage?: PageFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; config?: Partial<Config>; seed?: boolean } = {}) {
+export async function setup(opts: { now?: string; guide?: GuideGenerator; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; config?: Partial<Config>; seed?: boolean } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
@@ -62,6 +64,8 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; prefil
     prefill: opts.prefill ?? new DisabledPrefill(),
     // The tests never reach the internet.
     fetchPage: opts.fetchPage ?? (async () => { throw new Error('no network in tests'); }),
+    fetchImage: opts.fetchImage ?? fakeImageFetcher,
+    oembed: opts.oembed ?? fakeOembed,
     oauth: { google: new MockOAuth('google'), fb: new MockOAuth('fb'), ig: new MockOAuth('ig') },
     checkLink: opts.checkLink ?? (async () => 'ok'),
     // The tests never reach the internet: without fixtures, ingestion has nothing to read.

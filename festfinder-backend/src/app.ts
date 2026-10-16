@@ -25,6 +25,7 @@ import commerceRoutes from './routes/commerce.ts';
 import liveRoutes from './routes/live.ts';
 import discoveryRoutes from './routes/discovery.ts';
 import uploadRoutes from './routes/uploads.ts';
+import imageRoutes from './routes/images.ts';
 import organizerEventRoutes from './routes/organizer/events.ts';
 import organizerInsightRoutes from './routes/organizer/insights.ts';
 import organizerAudienceRoutes from './routes/organizer/audience.ts';
@@ -55,6 +56,8 @@ import gigRoutes from './routes/gigs.ts';
 import analyticsRoutes from './routes/analytics.ts';
 import brandRoutes from './routes/brands.ts';
 import momentRoutes from './routes/moments.ts';
+import mixRoutes from './routes/mixes.ts';
+import feedbackRoutes from './routes/feedback.ts';
 import frontendRoutes from './routes/frontend.ts';
 
 declare module 'fastify' {
@@ -297,6 +300,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(commerceRoutes);
   await app.register(liveRoutes);
   await app.register(uploadRoutes);
+  await app.register(imageRoutes);
   await app.register(organizerEventRoutes);
   await app.register(organizerInsightRoutes);
   await app.register(organizerAudienceRoutes);
@@ -316,6 +320,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(brandRoutes);
   await app.register(projectRoutes);
   await app.register(momentRoutes);
+  await app.register(mixRoutes);
+  await app.register(feedbackRoutes);
   await app.register(devConsoleRoutes);
   await app.register(internalRoutes);
   await app.register(discussionRoutes);

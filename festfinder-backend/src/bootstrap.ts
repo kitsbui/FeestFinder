@@ -14,6 +14,8 @@ import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
+import { fakeImageFetcher, fetchImageHead } from './services/remote-images.ts';
+import { fakeOembed, fetchOembed } from './services/mixes.ts';
 import { addStarterSources } from './services/ingest/starter.ts';
 import { appendAudit } from './services/audit.ts';
 
@@ -98,6 +100,8 @@ export async function createContext(config: Config): Promise<Ctx> {
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),
+    fetchImage: config.fakeRemoteMedia ? fakeImageFetcher : fetchImageHead,
+    oembed: config.fakeRemoteMedia ? fakeOembed : fetchOembed,
     oauth: { google: googleOAuth(), fb: oauthFor('fb'), ig: oauthFor('ig') },
     checkLink,
     log,

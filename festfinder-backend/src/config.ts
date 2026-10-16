@@ -101,6 +101,17 @@ export interface Config {
   exposeDevCodes: boolean;
   linkChecksEnabled: boolean;
   /**
+   * Linked images and music embeds read from a fake network instead of the internet: the screen
+   * tests and an offline preview. Refused in production.
+   */
+  fakeRemoteMedia: boolean;
+  /**
+   * Where the team's feedback goes besides the Console: a GitHub repository the team files an
+   * issue in by hand (FEEDBACK_GITHUB_REPO "owner/name" with GITHUB_TOKEN), and a chat webhook
+   * told of each new report (FEEDBACK_WEBHOOK_URL: Slack, Discord). Both optional.
+   */
+  feedback: { githubRepo: string | null; githubToken: string | null; webhookUrl: string | null };
+  /**
    * The map's basemap: PMTiles archives (Protomaps schema) served with range requests from
    * storage FeestFinder controls, so there is no per-request fee. `tilesUrl` holds the
    * listed cities in detail, `overviewUrl` the region at low zoom; either works alone.
@@ -205,6 +216,12 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     // real accounts; on staging only with EXPOSE_DEV_CODES. The server log has the codes too.
     exposeDevCodes: environment === 'staging' && bool('EXPOSE_DEV_CODES', !databaseUrl),
     linkChecksEnabled: bool('LINK_CHECKS_ENABLED', env !== 'test'),
+    fakeRemoteMedia: env !== 'production' && bool('FAKE_REMOTE_MEDIA', false),
+    feedback: {
+      githubRepo: /^[\w.-]+\/[\w.-]+$/.test(process.env.FEEDBACK_GITHUB_REPO ?? '') ? process.env.FEEDBACK_GITHUB_REPO! : null,
+      githubToken: process.env.GITHUB_TOKEN || null,
+      webhookUrl: /^https:\/\//.test(process.env.FEEDBACK_WEBHOOK_URL ?? '') ? process.env.FEEDBACK_WEBHOOK_URL! : null,
+    },
     map: {
       tilesUrl: tilesUrl(process.env.MAP_TILES_URL, prod),
       overviewUrl: tilesUrl(process.env.MAP_OVERVIEW_URL, prod),

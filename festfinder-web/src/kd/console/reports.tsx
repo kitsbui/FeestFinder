@@ -1,12 +1,13 @@
 'use client';
 /**
- * /console/reports: what people reported, in three tabs kept in the address (?tab=).
+ * /console/reports: what people reported, in four tabs kept in the address (?tab=).
  * - reports: open user reports on listings, grouped by listing and kind, most reporters (or
  *   open longest) first, with what one of them wrote; filtered by kind (?cat=). Dismiss, warn
  *   the organiser (a third strike suspends) or take the listing down, each confirmed. The last
  *   30 days by kind above them.
  * - posts: discussion posts people reported on event pages: keep, hide or delete.
  * - moments: reported photos on profiles: remove or keep.
+ * - mixes: reported comments under artists' mixes: remove or keep.
  * Appeals are answered in the queue (/console?filter=appeals); the head links there.
  */
 import { useMemo } from 'react';
@@ -26,13 +27,17 @@ import { useConsole } from './root';
 interface Photo { id: string; url: string; caption: string | null; reports: number; reasons: { key: string; label: Pair }[]; owner: { kind: string; name: string | null; href: string | null } }
 interface Report { id: string; eventId: string; category: string; categoryLabel: Pair; subject: string; eventStatus: string; heldFromFeed: boolean; count: number; quote: string | null; ageMinutes: number }
 interface Reports { items: Report[]; last30Days: { category: string; label: Pair; count: number }[] }
+interface MixComment {
+  id: string; body: string; hidden: boolean; reports: number; createdAt: string; author: string | null;
+  reasons: { key: string; label: Pair }[]; mix: { id: string; title: string; href: string; artist: string };
+}
 interface Post {
   id: string; body: string; kind: string; kindLabel: Pair; status: 'visible' | 'hidden'; reports: number; codes: string[]; createdAt: string;
   event: { id: string; title: string; slug: string }; author: { id: string; name: string | null };
 }
 
-type Tab = 'reports' | 'posts' | 'moments';
-const TABS: Tab[] = ['reports', 'posts', 'moments'];
+type Tab = 'reports' | 'posts' | 'moments' | 'mixes';
+const TABS: Tab[] = ['reports', 'posts', 'moments', 'mixes'];
 
 const ago = (min: number, lang: Lang) => (min < 60 ? `${min} ${lang === 'vi' ? 'phút' : 'min'}` : min < 1440 ? `${Math.floor(min / 60)} ${lang === 'vi' ? 'giờ' : 'h'}` : `${Math.floor(min / 1440)} ${lang === 'vi' ? 'ngày' : 'd'}`);
 /** Refund claims and safety are the serious kinds. */
@@ -58,9 +63,10 @@ export function Reports() {
             { key: 'reports', label: M.tabReports, count: counts?.reports || null },
             { key: 'posts', label: M.tabPosts },
             { key: 'moments', label: M.tabMoments },
+            { key: 'mixes', label: M.tabMixComments },
           ]}
         />
-        {tab === 'posts' ? <PostsTab lang={lang} /> : tab === 'moments' ? <MomentsTab lang={lang} /> : <ReportsTab lang={lang} params={params} setParams={setParams} />}
+        {tab === 'posts' ? <PostsTab lang={lang} /> : tab === 'moments' ? <MomentsTab lang={lang} /> : tab === 'mixes' ? <MixCommentsTab lang={lang} /> : <ReportsTab lang={lang} params={params} setParams={setParams} />}
       </Body>
     </>
   );
@@ -215,8 +221,8 @@ function MomentsTab({ lang }: { lang: Lang }) {
             {data.items.map((p) => (
               <li key={p.id}>
                 <Panel as="article" className="flex h-full flex-col overflow-hidden" aria-label={p.caption || p.url}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage */}
-                  <img src={p.url} alt={p.caption ?? ''} className="aspect-square w-full object-cover" loading="lazy" />
+                  {/* eslint-disable-next-line @next/next/no-img-element -- moments are links to other sites (and uploads from before) */}
+                  <img src={p.url} alt={p.caption ?? ''} className="aspect-square w-full object-cover" loading="lazy" referrerPolicy="no-referrer" />
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     {p.caption ? <span className="kd-hs">{p.caption}</span> : null}
                     <span className="kd-s">{p.owner.href ? <a className="hover:underline" href={p.owner.href}>{fill(T.photoOn, { n: p.owner.name ?? '' })}</a> : T.photoFan}</span>
@@ -233,5 +239,45 @@ function MomentsTab({ lang }: { lang: Lang }) {
         )}
       </Loaded>
     </section>
+  );
+}
+
+const MIX_COLS = 'minmax(260px,2.2fr) minmax(180px,1fr) minmax(140px,1fr) 70px 100px minmax(160px,auto)';
+
+/** Comments people reported under artists' mixes. Three reports hide one until someone decides. */
+function MixCommentsTab({ lang }: { lang: Lang }) {
+  const M = pick(MOD, lang);
+  const kd = useKd();
+  const load = useLoad<{ items: MixComment[] }>('/admin/mix-comments/reported');
+  const decide = async (id: string, verdict: 'remove' | 'keep') => {
+    if (await act(kd, lang, () => FF.post(`/admin/mix-comments/${id}/${verdict}`))) load.reload();
+  };
+  return (
+    <Loaded load={load}>
+      {(data) => !data.items.length ? <Empty title={M.noMixComments} /> : (
+        <Table cols={MIX_COLS} label={M.tabMixComments} head={[M.colComment, M.colMix, M.colWhy, M.colReports, M.colStatus, '']}>
+          {data.items.map((c) => (
+            <Row key={c.id} cols={MIX_COLS} className="py-3">
+              <span role="cell" className="flex min-w-0 flex-col gap-1">
+                <span className="text-sm text-paper">“{c.body}”</span>
+                <span className="kd-s">{c.author || M.member} · {stamp(c.createdAt, lang)}</span>
+              </span>
+              <span role="cell" className="min-w-0">
+                <a className="kd-s inline-flex items-center gap-1 hover:underline" href={c.mix.href} target="_blank" rel="noopener">
+                  <span className="kd-ell">{c.mix.artist} · {c.mix.title}</span><ArrowSquareOutIcon size={12} aria-hidden="true" />
+                </a>
+              </span>
+              <span role="cell" className="flex flex-wrap gap-x-3 gap-y-1">{c.reasons.map((r) => <Status key={r.key} tone="warn">{r.label[lang]}</Status>)}</span>
+              <span role="cell" className="kd-num text-paper">{c.reports}</span>
+              <span role="cell">{c.hidden ? <Status tone="bad">{M.hidden}</Status> : <Status tone="ok">{M.visible}</Status>}</span>
+              <span role="cell" className="flex flex-wrap justify-end gap-2">
+                <Button size="sm" onClick={() => decide(c.id, 'keep')}>{M.keepComment}</Button>
+                <Button size="sm" tone="ghost" className="text-hot" onClick={() => decide(c.id, 'remove')}>{M.remove}</Button>
+              </span>
+            </Row>
+          ))}
+        </Table>
+      )}
+    </Loaded>
   );
 }

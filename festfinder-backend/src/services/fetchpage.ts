@@ -34,7 +34,13 @@ async function assertPublicHost(hostname: string) {
 
 export const BOT_USER_AGENT = 'Mozilla/5.0 (compatible; FeestFinderBot/1.0; +https://feestfinder.com)';
 
-export interface PublicResponse { status: number; url: string; text: string; contentType: string; etag: string | null; lastModified: string | null }
+export interface PublicResponse {
+  status: number; url: string; text: string; contentType: string; etag: string | null; lastModified: string | null;
+  /** The body as read (the first maxBytes of it with `truncate`). */
+  bytes: Buffer;
+  /** The whole body's size, when the server said (Content-Range or Content-Length). */
+  totalBytes: number | null;
+}
 
 /**
  * GETs a public URL, never one on a private network: every hop of a redirect is checked, the
@@ -43,6 +49,8 @@ export interface PublicResponse { status: number; url: string; text: string; con
  */
 export async function fetchPublic(raw: string, opts: {
   maxBytes?: number; timeoutMs?: number; accept?: string; types?: RegExp; headers?: Record<string, string>;
+  /** Stop at maxBytes and keep what was read, instead of failing (enough to read an image's header). */
+  truncate?: boolean;
 } = {}): Promise<PublicResponse> {
   const maxBytes = opts.maxBytes ?? 2_000_000;
   let current: URL;
@@ -66,8 +74,13 @@ export async function fetchPublic(raw: string, opts: {
       current = new URL(location, current);
       continue;
     }
-    const meta = { url: current.toString(), contentType: res.headers.get('content-type') ?? '', etag: res.headers.get('etag'), lastModified: res.headers.get('last-modified') };
-    if (res.status === 304) return { status: 304, text: '', ...meta };
+    const range = res.headers.get('content-range')?.match(/\/(\d+)\s*$/)?.[1];
+    const length = res.status === 206 ? null : res.headers.get('content-length');
+    const meta = {
+      url: current.toString(), contentType: res.headers.get('content-type') ?? '', etag: res.headers.get('etag'), lastModified: res.headers.get('last-modified'),
+      totalBytes: range ? Number(range) : length && /^\d+$/.test(length) ? Number(length) : null,
+    };
+    if (res.status === 304) return { status: 304, text: '', bytes: Buffer.alloc(0), ...meta };
     if (!res.ok) throw new PageUnavailable('upstream', `status ${res.status}`);
     if (opts.types && !opts.types.test(meta.contentType)) throw new PageUnavailable('not_html');
     const reader = res.body?.getReader();
@@ -78,10 +91,16 @@ export async function fetchPublic(raw: string, opts: {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > maxBytes) { await reader.cancel(); throw new PageUnavailable('too_large'); }
+      if (size > maxBytes) {
+        await reader.cancel();
+        if (!opts.truncate) throw new PageUnavailable('too_large');
+        chunks.push(value.subarray(0, value.byteLength - (size - maxBytes)));
+        break;
+      }
       chunks.push(value);
     }
-    return { status: res.status, text: Buffer.concat(chunks).toString('utf8'), ...meta };
+    const bytes = Buffer.concat(chunks);
+    return { status: res.status, text: bytes.toString('utf8'), bytes, ...meta };
   }
   throw new PageUnavailable('upstream', 'too many redirects');
 }

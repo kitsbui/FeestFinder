@@ -5,36 +5,27 @@ import { AppError, badRequest, notFound } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
 import { sha256 } from '../lib/crypto.ts';
 import { imageInfo } from '../lib/image.ts';
+import { checkDimensions } from '../lib/image-rules.ts';
 import { parse } from '../lib/validate.ts';
 import { requireUser } from '../http/guards.ts';
 
 const EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' } as const;
+/** What can still be uploaded: event media only. */
+export const UPLOAD_PURPOSES = ['cover', 'logo', 'recap'] as const;
 const MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
-
-/** Size rules per purpose. Event covers must be 16:9 at 1600×900 or larger. */
-function checkDimensions(purpose: string, w: number, h: number) {
-  if (purpose === 'cover') {
-    if (w < 1600 || h < 900 || Math.abs(w / h - 16 / 9) > 0.01) {
-      throw badRequest('cover_size', L('Use a landscape image of at least 1600×900 (16:9)', 'Dùng ảnh ngang tối thiểu 1600×900 (16:9)'), { width: w, height: h });
-    }
-  }
-  if (purpose === 'logo' && (w < 256 || h < 256)) {
-    throw badRequest('logo_size', L('Logos need to be at least 256×256', 'Logo cần tối thiểu 256×256'), { width: w, height: h });
-  }
-  if (purpose === 'moment' && Math.min(w, h) < 400) {
-    throw badRequest('moment_size', L('Photos need to be at least 400 pixels on the short side', 'Ảnh cần tối thiểu 400 điểm ảnh ở cạnh ngắn'), { width: w, height: h });
-  }
-  if (purpose === 'avatar' && (w < 128 || h < 128)) {
-    throw badRequest('avatar_size', L('Photos need to be at least 128×128', 'Ảnh cần tối thiểu 128×128'), { width: w, height: h });
-  }
-}
 
 export default async function uploadRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
 
   app.post('/uploads', async (req, reply) => {
     const s = requireUser(req);
-    const { purpose } = parse(z.object({ purpose: z.enum(['cover', 'logo', 'avatar', 'recap', 'moment']) }), req.query);
+    const { purpose: asked } = parse(z.object({ purpose: z.string().max(40) }), req.query);
+    // Only an event's own media is uploaded (its cover and logo, and the photos fans take at it).
+    // Every other picture is a link: see services/remote-images.ts. Files uploaded before stay served.
+    if (!(UPLOAD_PURPOSES as readonly string[]).includes(asked)) {
+      throw badRequest('upload_not_allowed', L('Paste an image link instead', 'Hãy dán link ảnh thay vì tải lên'));
+    }
+    const purpose = asked as (typeof UPLOAD_PURPOSES)[number];
     if (!req.isMultipart()) throw badRequest('multipart_required', L('Send the image as multipart/form-data', 'Gửi ảnh dạng multipart/form-data'));
     const file = await req.file();
     if (!file) throw badRequest('file_required', L('Choose an image', 'Chọn một ảnh'));

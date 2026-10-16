@@ -113,3 +113,43 @@ test.describe('the artist page', () => {
     await expect(visitor.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveCount(0);
   });
 });
+
+test.describe('mixes on the artist page', () => {
+  const ADMIN = { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' };
+
+  test('a mix plays only when asked, in its service’s own player; a like asks a stranger to log in', async ({ page, request }) => {
+    // The team adds a set to a profile nobody runs (the test API reads services from a fake network).
+    expect((await request.post('/auth/login', { data: ADMIN })).ok()).toBeTruthy();
+    const id = (await (await request.get('/artists/wukong')).json()).artist.id;
+    const added = await request.post(`/admin/artists/${id}/mixes`, { data: { url: 'https://soundcloud.com/wukong/warehouse-set' } });
+    expect(added.status(), await added.text()).toBe(201);
+
+    const problems = await open(page, '/a/wukong');
+    const listen = page.getByRole('region', { name: 'Nghe' });
+    await expect(listen).toBeVisible();
+    await expect(listen.locator('iframe'), 'nothing from SoundCloud loads before play').toHaveCount(0);
+    await listen.getByRole('button', { name: /^Phát / }).click();
+    await expect(listen.locator('iframe')).toHaveAttribute('src', /^https:\/\/w\.soundcloud\.com\/player\/\?url=https%3A%2F%2Fapi\.soundcloud\.com%2F.*auto_play=true/);
+    await listen.getByRole('button', { name: /Thích/ }).click();
+    await expect(page.getByText('Đăng nhập để thích mix')).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('a fan likes a mix and opens its comments', async ({ page }) => {
+    await signInWith(page, ATTENDEE);
+    await open(page, '/a/wukong');
+    const listen = page.getByRole('region', { name: 'Nghe' });
+    // "0 Thích", then "1 Đã thích" once pressed.
+    const like = listen.getByRole('button', { name: /thích/i }).first();
+    await like.click();
+    await expect(like).toHaveAttribute('aria-pressed', 'true');
+    await listen.getByRole('button', { name: /Bình luận/ }).first().click();
+    const sheet = page.getByRole('dialog', { name: /Bình luận · / });
+    await expect(sheet.getByText('Chưa có bình luận')).toBeVisible();
+    await sheet.getByRole('textbox', { name: 'Viết bình luận' }).fill('Đoạn drop này đỉnh quá');
+    await sheet.getByRole('textbox', { name: 'Tại' }).fill('45:30');
+    await sheet.getByRole('button', { name: 'Đăng' }).click();
+    await expect(sheet.getByText('Đoạn drop này đỉnh quá')).toBeVisible();
+    await expect(sheet.getByText('Tại 45:30')).toBeVisible();
+  });
+});

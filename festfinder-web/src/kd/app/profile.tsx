@@ -18,6 +18,7 @@ import { Button, Chip } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select } from '../ui/forms';
 import { Accordion, Art, Avatar, Stamp, Stat } from '../ui/parts';
 import { AppBar } from '../ui/shell';
+import { ImageLinkField } from '../ui/image-link';
 import { Sheet } from '../ui/sheet';
 import { MomentsSection } from '../moments';
 import { Badges, type BadgeView } from '../ui/badges';
@@ -240,18 +241,19 @@ function Settings({ lang }: { lang: Lang }) {
   );
 }
 
-export function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['user']; onClose: () => void; onSaved: (n: { name: string; city: string | null }) => void }) {
+export function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['user']; onClose: () => void; onSaved: (n: { name: string; city: string | null; photoUrl: string | null }) => void }) {
   const T = pick(APP, lang);
   const kd = useKd();
   const [name, setName] = useState(me.name ?? '');
   const [city, setCity] = useState(me.city ?? '');
+  const [photo, setPhoto] = useState<string | null>(me.photoUrl);
   const [err, setErr] = useState('');
   const save = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      await FF.patch('/me', { name: name.trim(), city: city.trim() });
+      await FF.patch('/me', { name: name.trim(), city: city.trim(), ...(photo !== me.photoUrl ? { photoUrl: photo } : {}) });
       kd.toast(T.saved2);
-      onSaved({ name: name.trim(), city: city.trim() || null });
+      onSaved({ name: name.trim(), city: city.trim() || null, photoUrl: photo });
       kd.refresh();
     } catch (x) { setErr(FF.errorText(x, lang)); }
   };
@@ -260,6 +262,7 @@ export function EditSheet({ lang, me, onClose, onSaved }: { lang: Lang; me: Me['
       <form className="flex flex-col gap-3 pt-1" onSubmit={save}>
         <div className="flex flex-col gap-1.5"><FieldLabel htmlFor="pf-name">{T.name}</FieldLabel><Input id="pf-name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} /></div>
         <div className="flex flex-col gap-1.5"><FieldLabel htmlFor="pf-city2">{T.city}</FieldLabel><Input id="pf-city2" value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} /></div>
+        <ImageLinkField lang={lang} purpose="avatar" label={T.photo} hint={T.photoLinkHint} value={photo} onChange={setPhoto} />
         {err ? <FieldError>{err}</FieldError> : null}
         <Button type="submit" tone="acc" block>{T.save}</Button>
       </form>

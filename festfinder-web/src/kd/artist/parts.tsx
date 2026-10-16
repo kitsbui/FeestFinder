@@ -1,12 +1,10 @@
 'use client';
-/** Pieces the artist screens share: a section card, chip pickers, an image upload, fees and statuses. */
-import { useRef, useState, type ReactNode } from 'react';
-import { FF } from '@/runtime/ff';
+/** Pieces the artist screens share: a section card, chip pickers, fees and statuses. */
+import type { ReactNode } from 'react';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { dayMonth, money } from '../format';
-import { useKd } from '../runtime';
-import { Button, Chip } from '../ui/actions';
+import { Chip } from '../ui/actions';
 import { Card as Panel, type StatusTone } from '../ui/parts';
 import { ARTIST } from './copy';
 
@@ -38,33 +36,6 @@ export function ChipPick({ label, options, value, onChange, max }: {
         })}
       </div>
     </fieldset>
-  );
-}
-
-/** A photo or cover: the preview, and upload or change (POST /uploads?purpose=…). */
-export function ImagePick({ lang, purpose, label, hint, value, onChange }: {
-  lang: Lang; purpose: 'avatar' | 'cover'; label: string; hint: string; value: string | null; onChange: (v: string | null) => void;
-}) {
-  const T = pick(ARTIST, lang);
-  const kd = useKd();
-  const input = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const send = async (file: File) => {
-    setBusy(true);
-    try { const form = new FormData(); form.append('file', file); onChange((await FF.api('POST', '/uploads?purpose=' + purpose, form)).url); } catch (e) { kd.toast(FF.errorText(e, lang)); }
-    setBusy(false);
-  };
-  return (
-    <div className="flex min-h-16 items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
-      {value
-        // eslint-disable-next-line @next/next/no-img-element -- uploads come from the API's file storage
-        ? <img src={value} alt="" className={purpose === 'avatar' ? 'size-11 shrink-0 rounded-full object-cover' : 'h-11 w-[78px] shrink-0 rounded-md object-cover'} />
-        : null}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="kd-hs">{label}</span><span className="kd-s">{busy ? T.uploading : hint}</span></span>
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) send(file); e.target.value = ''; }} />
-      {value ? <Button size="sm" tone="ghost" onClick={() => onChange(null)} aria-label={`${T.remove} · ${label}`}>{T.remove}</Button> : null}
-      <Button size="sm" disabled={busy} onClick={() => input.current?.click()} aria-label={`${value ? T.change : T.upload} · ${label}`}>{value ? T.change : T.upload}</Button>
-    </div>
   );
 }
 

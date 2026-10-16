@@ -2,14 +2,16 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { crc16, parseTlv } from '../src/lib/vietqr.ts';
-import type { Guide, GuideGenerator } from '../src/services/guide.ts';
+import type { Guide, GuideEvent, GuideGenerator } from '../src/services/guide.ts';
 import { many } from '../src/db/index.ts';
 
 class FakeGuide implements GuideGenerator {
   readonly model = 'fake';
   calls = 0;
-  async generate(): Promise<Guide> {
+  last: GuideEvent | null = null;
+  async generate(ev: GuideEvent): Promise<Guide> {
     this.calls++;
+    this.last = ev;
     const spot = { name: 'Bánh mì Huỳnh Hoa', kind: 'food' as const, walk: '6 min ride', why: 'Busy, fast and filling before doors.' };
     return { before: [spot, spot, spot, spot], after: [], explore: [], wear: { headline: 'Light layers', items: ['Mesh top'], avoid: 'Heels' }, tip: 'Arrive before 18:00.' };
   }
@@ -260,6 +262,10 @@ describe('attendee (Web + App, signed in)', () => {
     const second = await env.as(token).get(`/events/${env.ids.event.hozo}/guide?lang=vi`);
     assert.equal(second.body.cached, true);
     assert.equal(guide.calls, 1);
+    // The guide is told the event's own city and currency, not a default one.
+    const ev = (await env.as().get('/events/hozo')).body;
+    assert.equal(guide.last?.city, ev.city);
+    assert.equal(guide.last?.currency, ev.currency);
   });
 
   it('rates an event after attending', async () => {

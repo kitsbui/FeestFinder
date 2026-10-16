@@ -1,7 +1,7 @@
 /**
  * /a/<slug> (and ?lang=en) in Kính đêm (design/Profile-Artist-Web): the cover, the artist, their
- * numbers, upcoming shows as dated rows (the next one in bone) and the ones they played, then their
- * bio and links, who they play with most, and the booking details. Every show and every line comes
+ * numbers, upcoming shows as dated rows (the next one in bone) and the ones they played, their mixes
+ * to play right here (./mixes.tsx), then their bio and links, who they play with most, and the booking details. Every show and every line comes
  * from canonical events; follower counts are shown, never used to rank. The server renders it with
  * its structured data; following and the owner's controls come in the browser.
  */
@@ -24,6 +24,7 @@ import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
+import { ArtistMixes, type Mix } from './mixes';
 import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, ShareProfile, type Source } from '../profile/parts';
 
 const enc = encodeURIComponent;
@@ -56,6 +57,7 @@ export interface ArtistData {
   availability: { from: string; to: string; kind: 'available' | 'busy' | string; city: string | null; cityLabel: Pair | null }[];
   badges?: BadgeView[];
   moments?: Moment[];
+  mixes?: Mix[];
 }
 
 export async function loadArtist(slug: string, lang: Lang) {
@@ -196,6 +198,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                     ...(past.length ? [{ key: 'past', label: T.pastTab, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}
                 />
+                <ArtistMixes lang={lang} slug={a.slug} items={data.mixes ?? []} className="mt-12" />
                 <ProfileMoments lang={lang} source={source} items={data.moments ?? []} className="mt-12" />
                 <Badges lang={lang} items={data.badges} who={{ vi: 'nghệ sĩ', en: 'artists' }} className="mt-12" />
               </div>

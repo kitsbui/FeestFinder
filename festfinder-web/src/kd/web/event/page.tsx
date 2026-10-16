@@ -24,6 +24,7 @@ import { CommunityLine, CopyAddress, Countdown, FollowOrg, ReportLink, SaveWithC
 import { Ambassadors, DiscussionSection, Hype, PhotoWall } from './community';
 import { EventClientProvider } from './context';
 import { Lineup } from './lineup';
+import { RideButton } from './ride';
 import { TicketsPanel } from './tickets';
 
 const enc = encodeURIComponent;
@@ -137,6 +138,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     <div className="kd-lrow min-h-13">
                       <MapPinIcon size={18} className="text-fog" aria-hidden="true" />
                       <span className="kd-t flex-1 text-paper">{ev.venue.name}{ev.venue.area ? <span className="text-fog"> · {ev.venue.area}</span> : null}</span>
+                      <RideButton lang={lang} fromLink />
                       <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href="#venue">{T.directions}</a>
                     </div>
                   </div>
@@ -244,6 +246,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   {address ? <p className="kd-t">{address}</p> : null}
                   <div className="mt-1 flex flex-wrap gap-2">
                     <a className={buttonClass({})} href={mapsHref} target="_blank" rel="noopener">{T.directions}<ArrowUpRightIcon size={16} aria-hidden="true" /></a>
+                    <RideButton lang={lang} size="md" tone="default" />
                     {address ? <CopyAddress lang={lang} text={[ev.venue.name, address].filter(Boolean).join(', ')} /> : null}
                   </div>
                   {ev.travel || ev.entryRules ? (

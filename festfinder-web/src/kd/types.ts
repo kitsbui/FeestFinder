@@ -72,6 +72,8 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   artistLinks: { name: string; slug: string }[];
   /** Sponsors who backed the project this night came from (festfinder-backend services/projects.ts). */
   sponsors?: { name: string }[];
+  /** "Đặt xe": the ride apps of the event's country, for a night still to come (festfinder-backend lib/rides.ts). */
+  rides?: RideOption[];
   phase: 'before' | 'live' | 'after' | string;
   community: { submittedBy: { name: string | null } | null; claimable: boolean } | null;
   hype: { count: number; last24h: number; goals: { threshold: number; reward: Pair; reached: boolean }[]; next: { threshold: number; left: number; reward: Pair; progress: number } | null } | null;
@@ -139,4 +141,14 @@ export interface Resale {
   feePct: number;
   items: { id: string; price: number; faceValue: number; tier: Pair | null; seller: { name: string; initials: string }; mine: boolean }[];
   rules: Pair | null;
+}
+
+/** A ride app an event page opens on the phone, with the address copied for its destination field. */
+export interface RideOption {
+  key: 'grab' | 'greensm';
+  name: string;
+  prefilled: boolean;
+  copyText: string;
+  android: string;
+  ios: { app: string; store: string };
 }

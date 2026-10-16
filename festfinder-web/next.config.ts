@@ -26,6 +26,8 @@ const CSP = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
   `connect-src 'self'${MAP_ORIGINS.map((o) => ` ${o}`).join('')}${dev ? ' ws: wss:' : ''}`,
+  // The music players an artist's page embeds (festfinder-backend lib/mixes.ts EMBED_HOSTS), and nothing else.
+  'frame-src https://w.soundcloud.com https://player-widget.mixcloud.com https://www.mixcloud.com https://open.spotify.com',
   "worker-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -48,6 +50,8 @@ const config: NextConfig = {
   // (the OAuth hand-back, timers, loaders).
   reactStrictMode: false,
   poweredByHeader: false,
+  // Which build a bug report came from (kd/feedback/telemetry.ts).
+  env: { NEXT_PUBLIC_BUILD_ID: (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 12) },
 
   async rewrites() {
     return {

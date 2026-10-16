@@ -11,6 +11,8 @@ import { pingIndexNow } from './services/seo.ts';
 import { refreshConfidence } from './services/ingest/confidence.ts';
 import { awardAll } from './services/badges.ts';
 import { runDueSources } from './services/ingest/run.ts';
+import { checkRemoteImages } from './services/remote-images.ts';
+import { purgeFeedbackAttachments } from './routes/feedback.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
 export const jobs = {
@@ -127,6 +129,17 @@ export const jobs = {
     return refreshConfidence(ctx.db, ctx.clock.now());
   },
 
+  /** Linked pictures checked again every week; one that keeps failing is marked broken and its owner told. */
+  async checkRemoteImages(ctx: Ctx) {
+    if (!ctx.config.linkChecksEnabled) return 0;
+    return checkRemoteImages(ctx);
+  },
+
+  /** Feedback screenshots are deleted after 90 days (routes/feedback.ts). */
+  async purgeFeedbackAttachments(ctx: Ctx) {
+    return purgeFeedbackAttachments(ctx);
+  },
+
   async checkTicketLinks(ctx: Ctx) {
     if (!ctx.config.linkChecksEnabled) return 0;
     const rows = await many<any>(ctx.db,
@@ -144,6 +157,8 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['lowTicketAlerts', 10 * 60_000],
   ['expireAppeals', 10 * 60_000],
   ['checkTicketLinks', 15 * 60_000],
+  ['checkRemoteImages', 10 * 60_000],
+  ['purgeFeedbackAttachments', 4 * 60 * 60_000],
   ['pingIndexNow', 5 * 60_000],
   ['refreshConfidence', 60 * 60_000],
   ['awardBadges', 60 * 60_000],

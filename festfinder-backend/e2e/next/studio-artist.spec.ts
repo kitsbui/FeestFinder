@@ -37,6 +37,13 @@ async function newArtist(page: Page) {
   return { name, id: session.artist.id as string, slug: session.artist.slug as string };
 }
 
+/** Proves a phone number for the page's account (the test API hands back the code), as publishing needs. */
+async function confirmPhone(page: Page) {
+  const phone = '09' + String(Date.now()).slice(-8);
+  const start = await (await page.request.post('/me/connections/zalo/start', { data: { phone } })).json();
+  expect((await page.request.post('/me/connections/zalo/verify', { data: { challengeId: start.challengeId, code: start.devCode } })).ok(), 'confirm phone').toBeTruthy();
+}
+
 /** Another person's API session (the organiser, the admin), beside the artist's page. */
 async function as(baseURL: string | undefined, account: { identifier: string; password: string }): Promise<APIRequestContext> {
   const ctx = await request.newContext({ baseURL });
@@ -230,4 +237,25 @@ test.describe('the artist studio, signed in', () => {
     await expect(page).toHaveURL(/\/studio\/artist\/gigs\?tab=requests$/);
     await expect(page.getByRole('tab', { name: 'Lời mời' })).toHaveAttribute('aria-selected', 'true');
   });
+});
+
+test('mixes: a pasted link is previewed from the service, added, pinned, and shows on the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const me = await newArtist(page);
+  await confirmPhone(page);
+  const problems = await open(page, '/studio/artist/mixes');
+  await expect(page.getByText('Chưa có mix')).toBeVisible();
+  await page.getByRole('button', { name: 'Thêm mix' }).click();
+  const drawer = page.getByRole('dialog', { name: 'Thêm mix' });
+  await drawer.getByLabel('Link SoundCloud, Mixcloud hoặc Spotify').fill('https://www.mixcloud.com/owl/sunrise-set/');
+  await drawer.getByRole('button', { name: 'Xem trước' }).click();
+  await expect(drawer.locator('iframe')).toHaveAttribute('src', 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&light=0&feed=https%3A%2F%2Fwww.mixcloud.com%2Fowl%2Fsunrise-set%2F&autoplay=0');
+  await drawer.getByRole('button', { name: 'Thêm vào trang' }).click();
+  await expect(drawer).toHaveCount(0);
+  const row = page.getByRole('row').filter({ hasText: 'sunrise set' });
+  await expect(row).toBeVisible();
+  await row.getByRole('button', { name: 'Ghim lên đầu' }).click();
+  await expect(row.getByText('Đã ghim')).toBeVisible();
+  expect(((await (await page.request.get(`/artists/${me.slug}`)).json()).mixes as { pinned: boolean }[])[0].pinned).toBe(true);
+  expect(problems).toEqual([]);
 });

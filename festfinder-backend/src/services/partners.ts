@@ -91,7 +91,7 @@ export async function recordConversion(q: Queryable, partner: Partner, c: Conver
 }
 
 /** One more view or ticket click on an event's daily counters, by where it came from. */
-export async function countEventMetric(q: Queryable, eventId: string, kind: 'views' | 'ticket_clicks', source: string, now: Date): Promise<boolean> {
+export async function countEventMetric(q: Queryable, eventId: string, kind: 'views' | 'ticket_clicks' | 'ride_clicks', source: string, now: Date): Promise<boolean> {
   const bySource = kind === 'views';
   const res = await one(q,
     `insert into event_metrics_daily (event_id, day, ${kind}, sources)

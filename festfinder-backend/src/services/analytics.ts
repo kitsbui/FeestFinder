@@ -11,9 +11,9 @@ import { sha256 } from '../lib/crypto.ts';
  */
 
 /** Events a screen may send. Anything else is dropped. */
-export const CLIENT_EVENTS = ['page_view', 'search', 'directory_filter', 'artist_view', 'event_view', 'ticket_click', 'role_picker_shown', 'share'] as const;
+export const CLIENT_EVENTS = ['page_view', 'search', 'directory_filter', 'artist_view', 'event_view', 'ticket_click', 'role_picker_shown', 'share', 'mix_play', 'ride_click'] as const;
 /** Events only the server records. */
-export const SERVER_EVENTS = ['role_chosen', 'profile_claimed', 'gig_reported', 'gig_posted', 'gig_applied', 'booking_requested', 'signed_up', 'project_created', 'project_offer_sent'] as const;
+export const SERVER_EVENTS = ['role_chosen', 'profile_claimed', 'gig_reported', 'gig_posted', 'gig_applied', 'booking_requested', 'signed_up', 'project_created', 'project_offer_sent', 'mix_liked', 'mix_commented', 'feedback_sent'] as const;
 export type AnalyticsEvent = (typeof CLIENT_EVENTS)[number] | (typeof SERVER_EVENTS)[number];
 
 export const ALLOWED_PROPS = ['path', 'screen', 'slug', 'city', 'style', 'genre', 'source', 'lang', 'role', 'outcome', 'kind', 'surface'] as const;

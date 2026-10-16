@@ -14,6 +14,7 @@ import { organizerArtists, organizerVenues } from '../services/network.ts';
 import { presentOrgLinks } from '../services/organizers.ts';
 import { dateIn, TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } from '../lib/time.ts';
 import { bool, csv, dateStr, limit, parse, uuid } from '../lib/validate.ts';
+import { ridesFor } from '../lib/rides.ts';
 import { decodeCursor, isUuid, page, SqlParams } from '../http/sql.ts';
 import { CARD_COLUMNS, loadPublicSources, loadViewer, ORG_COLUMNS, presentCard, presentTiers } from '../presenters/event.ts';
 import { findClashes, loadTimetable } from '../presenters/timetable.ts';
@@ -336,6 +337,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
         followNote: L('You hear about their next listing before it reaches the feed.', 'Bạn biết tin sự kiện tiếp theo trước khi nó lên feed.'),
       },
       similar: similarRows.map((r) => presentCard(r, { now, viewer: null })),
+      // "Đặt xe": the ride apps of the event's country, opened on the phone (lib/rides.ts).
+      rides: ridesFor({ city: card.city, past: card.past, status: card.status, venue: card.venue }, req.lang),
       me: mine,
     };
   });
@@ -474,7 +477,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
   const seen = new Map<string, number>();
   app.post<{ Params: { id: string } }>('/events/:id/track', async (req, reply) => {
     const body = parse(z.object({
-      type: z.enum(['view', 'ticket_click']),
+      type: z.enum(['view', 'ticket_click', 'ride_click']),
       source: z.enum(['feed', 'shelf', 'shared', 'search', 'own', 'ads', 'map', 'list']).default('feed'),
       // A view that arrived on a share link: where it was shared, and who shared it.
       channel: z.enum(SHARE_CHANNELS).optional(),
@@ -491,7 +494,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     if (last && now.getTime() - last < 30 * 60_000) return reply.code(202).send({ counted: false });
     seen.set(key, now.getTime());
     if (seen.size > 50_000) seen.clear();
-    const counted = await countEventMetric(ctx.db, req.params.id, body.type === 'view' ? 'views' : 'ticket_clicks',
+    const counted = await countEventMetric(ctx.db, req.params.id, body.type === 'view' ? 'views' : body.type === 'ride_click' ? 'ride_clicks' : 'ticket_clicks',
       body.source === 'shared' && body.channel ? `shared:${body.channel}` : body.source, now);
     if (!counted) throw notFound();
     return reply.code(202).send({ counted: true });

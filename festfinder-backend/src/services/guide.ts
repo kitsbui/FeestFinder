@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import type { Lang } from '../lib/i18n.ts';
+import { formatMoney } from '../lib/money.ts';
+import { cityBySlug, countryByCode } from '../lib/places.ts';
 
 const Spot = z.object({
   name: z.string(),
@@ -31,6 +33,10 @@ export interface GuideEvent {
   age: string;
   priceFrom: number;
   entryMode: string;
+  /** The event's city (lib/places.ts slug), when it has one. */
+  city: string | null;
+  /** events.currency: what priceFrom is counted in. */
+  currency: string;
 }
 
 export class GuideUnavailable extends Error {
@@ -46,18 +52,30 @@ export interface GuideGenerator {
   generate(ev: GuideEvent, lang: Lang): Promise<Guide>;
 }
 
-const SYSTEM =
-  "You are FeestFinder's local guide for Ho Chi Minh City, Vietnam. Name real, well-known places in or near the given district. " +
-  'Keep every line under 18 words.';
+/** The event's city and country in English, from lib/places.ts; nothing when the event names no known city. */
+function placeOf(slug: string | null): { city: string; country: string | null } | null {
+  const city = cityBySlug(slug);
+  if (!city) return null;
+  return { city: city.name.en, country: countryByCode(city.countryCode)?.name.en ?? null };
+}
 
-function prompt(ev: GuideEvent, lang: Lang): string {
+/** The system prompt: a local guide for the event's own city, never a default one. */
+export function guideSystem(ev: GuideEvent): string {
+  const place = placeOf(ev.city);
+  const where = place ? ` for ${[place.city, place.country].filter(Boolean).join(', ')}` : '';
+  return `You are FeestFinder's local guide${where}. Name real, well-known places in or near the given district. Keep every line under 18 words.`;
+}
+
+export function guidePrompt(ev: GuideEvent, lang: Lang): string {
+  const place = placeOf(ev.city);
+  const free = ev.entryMode === 'free' || !ev.priceFrom;
   return [
     `Event: ${ev.title}`,
     `Genre / theme: ${ev.genre ?? 'general'}`,
-    `Venue: ${[ev.venueName, ev.address, ev.area, 'HCMC'].filter(Boolean).join(', ')}`,
+    `Venue: ${[ev.venueName, ev.address, ev.area, place?.city, place?.country].filter(Boolean).join(', ')}`,
     `Doors ${ev.startTime ?? '—'}, ends ${ev.endTime ?? '—'}`,
     `Lineup: ${ev.lineup.join(', ') || '—'}`,
-    `Age: ${ev.age} · Ticket: ${ev.entryMode === 'free' || !ev.priceFrom ? 'free entry' : `${ev.priceFrom} VND`}`,
+    `Age: ${ev.age} · Ticket: ${free ? 'free entry' : formatMoney(ev.priceFrom, ev.currency, 'en')}`,
     '',
     '- before: 3 spots to eat or drink near the venue before doors (kind food, drink, coffee or market)',
     '- after: 3 late-night spots for when this show ends (kind bar, latenight, food or coffee)',
@@ -89,8 +107,8 @@ export class ClaudeGuide implements GuideGenerator {
         // If a safety classifier declines, let the API retry on its recommended fallback model.
         betas: ['server-side-fallback-2026-07-01'],
         fallbacks: 'default',
-        system: SYSTEM,
-        messages: [{ role: 'user', content: prompt(ev, lang) }],
+        system: guideSystem(ev),
+        messages: [{ role: 'user', content: guidePrompt(ev, lang) }],
       });
     } catch (err) {
       if (err instanceof Anthropic.RateLimitError) throw new GuideUnavailable('upstream', 'rate limited');

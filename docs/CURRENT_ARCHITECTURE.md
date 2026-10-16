@@ -125,7 +125,8 @@ Read in `src/config.ts`. Secrets are entered by the user in Vercel. Groups:
 - Jobs: `CRON_SECRET`, `JOBS_ENABLED`, `LINK_CHECKS_ENABLED`.
 - Sign-in: `ADMIN_EMAIL`, `GOOGLE_CLIENT_ID`/`SECRET`, FB/IG credentials, `MESSAGING_WEBHOOK_URL`/`SECRET`, `EXPOSE_DEV_CODES`.
 - Money: `PAYMENT_PROVIDER`, `PAYMENT_WEBHOOK_SECRET`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*`.
-- Files, mail, push: `S3_*`, `UPLOAD_DIR`, `SMTP_*`, `VAPID_*`.
+- Files, mail, push: `S3_*`, `UPLOAD_DIR`, `SMTP_*`, `VAPID_*`. Uploads are event media only (cover, logo, fans' photos at an event); every other picture is a checked link (`remote_images`, `services/remote-images.ts`). `FAKE_REMOTE_MEDIA` (never in production) reads linked images and music oEmbed from a fake network for the screen tests.
+- Feedback: `FEEDBACK_GITHUB_REPO` with `GITHUB_TOKEN` (the Console files an issue), `FEEDBACK_WEBHOOK_URL` (a chat told of each report).
 - AI and search: `AI_GUIDE_ENABLED`, `ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`, `ALLOW_AI_TRAINING`, `INDEXNOW_KEY`.
 
 ## What the brief can build on
@@ -164,6 +165,7 @@ The Next front (`festfinder-web`) was rebuilt in the Kính đêm design, route b
 | Screens and parts | `festfinder-web/src/kd/` | `ui/` parts, `web/`, `app/`, `studio/`, `console/`; strings as `{en, vi}` pairs per screen; tokens in `theme.css`; `/kit` shows the parts. |
 | Runtime | `festfinder-web/src/runtime/ff.ts`, `src/kd/runtime.tsx` | `FF`: API calls, session, clock, loaders; `KdProvider` holds the session, sign-in card, toasts, saves and follows. |
 | Copy step | `festfinder-web/scripts/copy-ui.ts` | Copies `vendor`, `fonts`, `_ds`, `assets` and `map` from `festfinder-frontend/ui` to `public/ui/` before dev and build. |
+| Phase 7 | migrations `035`–`038` | Linked images (`035`, `services/remote-images.ts`, `POST /images/check`), mixes on artist pages with likes and comments (`036`, `lib/mixes.ts`, `routes/mixes.ts`, `frame-src` for SoundCloud, Mixcloud, Spotify), ride clicks for "Đặt xe" (`037`, `lib/rides.ts`), feedback reports and their screenshots (`038`, `routes/feedback.ts`, the widget in `kd/feedback/`, `/console/feedback`). |
 | New API (Phase 4–5) | migrations `027`–`030` | Boost requests (`027`), badges (`028`, `services/badges.ts`), Moments (`029`, `routes/moments.ts`), row level security on them (`030`); per-day Studio performance, the Console's numbers board. |
 | Tests | `festfinder-backend/e2e/next/` | One spec per area of the site and of each back office. |
 

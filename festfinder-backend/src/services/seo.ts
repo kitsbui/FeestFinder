@@ -13,6 +13,7 @@ import { latestUpdates } from '../routes/night.ts';
 import { OG_HEIGHT, OG_WIDTH, toneOf } from './ogimage.ts';
 import { presentLinks, searchArtists } from './artists.ts';
 import { organizerArtists } from './network.ts';
+import { mixesOf } from './mixes.ts';
 import { presentOrgLinks } from './organizers.ts';
 import { loadProject, presentProject, sponsorsOf } from './projects.ts';
 
@@ -71,7 +72,7 @@ const T = {
   no: { vi: 'Chưa xác minh', en: 'Not verified yet' }, source: { vi: 'Nguồn', en: 'Source' }, verifiedShort: { vi: 'Đã xác minh', en: 'Verified' },
   collection: { vi: 'Bộ sưu tập', en: 'Collection' }, madeBy: { vi: 'Người tạo', en: 'Made by' }, eventCount: { vi: 'Số sự kiện', en: 'Events' },
   member: { vi: 'Thành viên FeestFinder', en: 'A FeestFinder member' },
-  artist: { vi: 'Nghệ sĩ', en: 'Artist' }, styles: { vi: 'Phong cách', en: 'Styles' }, playsIn: { vi: 'Diễn ở', en: 'Plays in' },
+  artist: { vi: 'Nghệ sĩ', en: 'Artist' }, mixes: { vi: 'Nghe', en: 'Listen' }, styles: { vi: 'Phong cách', en: 'Styles' }, playsIn: { vi: 'Diễn ở', en: 'Plays in' },
   nextShow: { vi: 'Show gần nhất', en: 'Next show' },
   artistsWorked: { vi: 'Nghệ sĩ đã hợp tác', en: 'Artists worked with' }, basedIn: { vi: 'Hoạt động tại', en: 'Based in' },
   roles: { vi: 'Vai trò', en: 'Roles' }, booking: { vi: 'Booking', en: 'Booking' }, organizersWorked: { vi: 'Nhà tổ chức đã hợp tác', en: 'Organisers worked with' },
@@ -175,9 +176,11 @@ export interface CollectionSeo extends Omit<OrganizerSeo, 'kind'> {
   kind: 'collection';
 }
 
-/** An artist: where they play next and where they have played, the same lists again. */
-export interface ArtistSeo extends Omit<OrganizerSeo, 'kind'> {
+/** An artist: where they play next and where they have played, the same lists again, and their mixes. */
+export interface ArtistSeo extends Omit<OrganizerSeo, 'kind' | 'headings' | 'page'> {
   kind: 'artist';
+  headings: OrganizerSeo['headings'] & { mixes: string };
+  page: OrganizerSeo['page'] & { mixes: { title: string; url: string; line: string }[] };
 }
 
 const ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -669,6 +672,7 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
   const updatedAt = [a.created_at, ...events.map((e) => e.updated_at)].map((d) => new Date(d)).sort((x, y) => y.getTime() - x.getTime())[0];
   const what = styles.length ? styles.join(', ') : genres.join(', ');
   const bio = text(a.bio, lang);
+  const mixes = await mixesOf(ctx.db, a.id);
 
   const summary = [
     vi
@@ -717,6 +721,17 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
         location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : `${base}/og/v1/${toneOf(e.genre)}.png`],
         performer: { '@id': ids.artist },
       })),
+      // Their sets and tracks, played by each service's own player (services/mixes.ts).
+      track: mixes.length ? mixes.map((m) => ({
+        '@type': ['track', 'show', 'episode'].includes(m.kind) ? 'MusicRecording' : 'MusicPlaylist',
+        name: m.title, url: m.url, image: m.thumbnailUrl ?? undefined, byArtist: { '@id': ids.artist },
+        audio: { '@type': 'AudioObject', name: m.title, embedUrl: m.embedSrc, provider: { '@type': 'Organization', name: m.providerLabel } },
+        recordedAt: m.event ? { '@type': 'Event', name: m.event.title, url: `${base}/e/${m.event.slug}${vi ? '' : '?lang=en'}` } : undefined,
+        interactionStatistic: [
+          { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: m.likeCount },
+          { '@type': 'InteractionCounter', interactionType: 'https://schema.org/CommentAction', userInteractionCount: m.commentCount },
+        ],
+      })) : undefined,
     },
     crumbList(base, ids.crumbs, crumbs),
   ];
@@ -729,10 +744,11 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
     image: { ...image, alt: a.name },
     publishedAt: vnIso(a.created_at) ?? null,
     updatedAt: vnIso(updatedAt)!,
-    headings: { facts: t('facts', lang), about: t('about', lang), upcoming: t('upcoming', lang), past: t('pastEvents', lang), updated: t('updated', lang) },
+    headings: { facts: t('facts', lang), about: t('about', lang), upcoming: t('upcoming', lang), past: t('pastEvents', lang), updated: t('updated', lang), mixes: t('mixes', lang) },
     page: {
       crumbs, kicker: [t('artist', lang), what].filter(Boolean).join(' · '), h1: a.name, summary, facts, about: bio,
       upcoming: links(upcoming), past: links(past),
+      mixes: mixes.map((m) => ({ title: m.title, url: m.url, line: m.providerLabel })),
       otherLang: { label: t('otherLang', lang), path: vi ? `${path}?lang=en` : path },
     },
     jsonLd: { '@context': 'https://schema.org', '@graph': JSON.parse(JSON.stringify(graph)) },
@@ -952,6 +968,7 @@ export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | Collection
   } else {
     sec(seo.headings.upcoming, seo.page.upcoming.map(linkLine));
     sec(seo.headings.past, seo.page.past.map(linkLine));
+    if (seo.kind === 'artist') sec(seo.headings.mixes, seo.page.mixes.map((m) => `- [${md(m.title)}](${m.url}) · ${md(m.line)}`));
   }
   // The other language's Markdown: /e/<slug>.md and /e/<slug>.md?lang=en.
   const other = `${absUrl(p.otherLang.path.split('?')[0])}.md${seo.lang === 'vi' ? '?lang=en' : ''}`;

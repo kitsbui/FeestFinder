@@ -9,7 +9,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  CalendarCheckIcon, HeadphonesIcon, MegaphoneIcon, MicrophoneStageIcon, SignOutIcon, StorefrontIcon, TicketIcon,
+  CalendarCheckIcon, HeadphonesIcon, MegaphoneIcon, MicrophoneStageIcon, SignOutIcon, StorefrontIcon, TicketIcon, WaveformIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
@@ -22,8 +22,8 @@ import { Shell, SideNav } from '../ui/shell';
 import { AskHost } from '../console/kit';
 import { ARTIST } from './copy';
 
-export type ArtistScreen = 'profile' | 'gigs' | 'opportunities' | 'gear';
-const SCREENS: ArtistScreen[] = ['gigs', 'opportunities', 'gear'];
+export type ArtistScreen = 'profile' | 'mixes' | 'gigs' | 'opportunities' | 'gear';
+const SCREENS: ArtistScreen[] = ['mixes', 'gigs', 'opportunities', 'gear'];
 
 export interface ArtistRef { id: string; slug: string; name: string }
 
@@ -108,6 +108,7 @@ function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; chi
       )}
       items={[
         { key: 'profile', label: T.profile, href: '/studio/artist', icon: i(MicrophoneStageIcon) },
+        { key: 'mixes', label: T.mixes, href: '/studio/artist/mixes', icon: i(WaveformIcon) },
         { key: 'gigs', label: T.gigs, href: '/studio/artist/gigs', icon: i(CalendarCheckIcon) },
         { key: 'opportunities', label: T.opportunities, href: '/studio/artist/opportunities', icon: i(MegaphoneIcon) },
         { key: 'gear', label: T.gear, href: '/studio/artist/gear', icon: i(HeadphonesIcon) },

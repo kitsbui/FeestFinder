@@ -31,6 +31,7 @@ export const WEB = {
   forOrganisers: { en: 'For organisers', vi: 'Cho nhà tổ chức' },
   about: { en: 'About', vi: 'Về FeestFinder' },
   advertise: { en: 'Advertise', vi: 'Quảng cáo' },
+  feedback: { en: 'Feedback', vi: 'Góp ý' },
   company: { en: '© {y} FestFinder Co., Ltd', vi: '© {y} Công ty TNHH FestFinder' },
   crumbs: { en: 'Breadcrumb', vi: 'Đường dẫn' },
   english: { en: 'English', vi: 'English' },

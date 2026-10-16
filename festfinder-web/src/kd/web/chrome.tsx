@@ -208,6 +208,8 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
           <a className="kd-nl" href="/studio">{T.forOrganisers}</a>
           <a className="kd-nl" href={inLang('/about', lang)}>{T.about}</a>
           <a className="kd-nl" href={inLang('/advertise', lang)}>{T.advertise}</a>
+          {/* Opens the feedback sheet (kd/feedback/widget.tsx). */}
+          <button type="button" className="kd-nl" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{T.feedback}</button>
           <a className="kd-nl" href="mailto:hello@feestfinder.com">hello@feestfinder.com</a>
           {otherLang ? <a className="kd-nl" href={otherLang.href} hrefLang={lang === 'vi' ? 'en' : 'vi'} onClick={remember}>{otherLang.label}</a> : null}
         </nav>

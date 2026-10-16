@@ -292,7 +292,10 @@
 
   /* ---- profiles ---- */
   .kd-av { display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: var(--color-bone); color: var(--color-ink); font-weight: 500; letter-spacing: -0.03em; }
-  .kd-av img { width: 100%; height: 100%; object-fit: cover; }
+  .kd-av { position: relative; }
+  .kd-av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* A linked photo that does not open (ui/covers.tsx marks it) leaves the initials under it. */
+  .kd-av img[data-broken], .kd-mtile img[data-broken] { display: none; }
   .kd-av-sq { border-radius: var(--radius-org); }
   .kd-av-ring { position: relative; z-index: 5; box-shadow: 0 0 0 4px var(--color-void); }
   .kd-av-acc { background: var(--color-acc); color: var(--color-acc-ink); }
@@ -352,12 +355,26 @@
   /* ---- toast ---- */
   .kd-toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 60; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); min-height: 44px; padding: 0 8px 0 16px; border-radius: var(--radius-card); font-size: 14px; color: var(--color-paper); }
 
+  /* ---- the feedback button (kd/feedback/widget.tsx): in the corner, above the app's tab bar,
+     the ticket dock and the map's controls; gone while a sheet is open ---- */
+  .kd-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 19; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: var(--color-paper); cursor: pointer; }
+  .kd-fab:hover { color: var(--color-acc); }
+  body:has(.kd-tabbar) .kd-fab { bottom: calc(88px + env(safe-area-inset-bottom)); }
+  body:has(.kd-dock) .kd-fab { bottom: calc(104px + env(safe-area-inset-bottom)); }
+  body:has(.kd-tabbar):has(.kd-dock) .kd-fab { bottom: calc(176px + env(safe-area-inset-bottom)); }
+  body:has(.maplibregl-ctrl-bottom-right) .kd-fab { bottom: calc(56px + env(safe-area-inset-bottom)); }
+  body:has(dialog[open]) .kd-fab { display: none; }
+  @media (min-width: 900px) {
+    body:has(.kd-app ~ .kd-tabbar) .kd-fab { bottom: calc(24px + env(safe-area-inset-bottom)); }
+    body:has(.kd-dock) .kd-fab { bottom: calc(104px + env(safe-area-inset-bottom)); }
+  }
+
   /* ---- skeleton while a client part loads ---- */
   .kd-skel { border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); }
 }
 
 @media print {
-  .kd-nav, .kd-tabbar, .kd-dock, .kd-scrim { display: none !important; }
+  .kd-nav, .kd-tabbar, .kd-dock, .kd-scrim, .kd-fab { display: none !important; }
 }
 
 /* The sheet's backdrop: the page dims behind a modal. */

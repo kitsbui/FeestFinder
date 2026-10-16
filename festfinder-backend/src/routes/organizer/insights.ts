@@ -137,7 +137,7 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
     const boost = await one<any>(ctx.db, 'select status, created_at from boost_requests where event_id = $1 order by created_at desc limit 1', [ev.id]);
     const [tiers, metrics, daily, prevEv] = await Promise.all([
       many<any>(ctx.db, 'select name, capacity, sold from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
-      one<any>(ctx.db, `select coalesce(sum(views),0)::int as views, coalesce(sum(ticket_clicks),0)::int as clicks from event_metrics_daily where event_id = $1`, [ev.id]),
+      one<any>(ctx.db, `select coalesce(sum(views),0)::int as views, coalesce(sum(ticket_clicks),0)::int as clicks, coalesce(sum(ride_clicks),0)::int as rides from event_metrics_daily where event_id = $1`, [ev.id]),
       many<any>(ctx.db,
         `select to_char(paid_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') as day, sum(qty)::int as n
            from orders where event_id = $1 and status = 'paid' and paid_at >= $2 group by 1`, [ev.id, new Date(`${addDays(today, -13)}T00:00:00+07:00`)]),
@@ -193,6 +193,8 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
       daily: series,
       period: { views: sum('views'), clicks: sum('clicks'), saves: sum('saves'), sold: sum('sold'), viewsBefore: before.views },
       boost: boost ? { status: boost.status, requestedAt: boost.created_at } : null,
+      // Presses of "Đặt xe" (Grab, Green SM) on the event page: people on their way.
+      rideClicks: metrics.rides as number,
       sources: sources.map((s) => ({ key: s.key, pct: Math.round((s.n / Math.max(totalSources, 1)) * 100) })),
       tiers: tiers.map((t) => ({ name: t.name, sold: t.sold, capacity: t.capacity, pct: pct(t.sold, t.capacity), soldOut: t.sold >= t.capacity })),
       vsPrevious,

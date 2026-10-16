@@ -17,6 +17,8 @@ export const APP = {
   notifications: { en: 'Notifications', vi: 'Thông báo' },
   notificationsNew: { en: 'Notifications, {n} new', vi: 'Thông báo, {n} mới' },
   city: { en: 'City', vi: 'Thành phố' },
+  photo: { en: 'Profile photo', vi: 'Ảnh đại diện' },
+  photoLinkHint: { en: 'Image link · from 128 × 128', vi: 'Link ảnh · từ 128 × 128' },
   soon: { en: 'Coming soon', vi: 'Sắp có' },
   // explore
   tonight: { en: 'Tonight', vi: 'Tối nay' },

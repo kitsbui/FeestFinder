@@ -4,14 +4,15 @@
  * the test transfer, the verdict, strikes and suspension with a note), the whole profile, the
  * team (add, remove; the last owner stays) and its listings.
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowSquareOutIcon, PlusIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ArrowSquareOutIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { count, money, whenShort } from '../../format';
 import { useKd } from '../../runtime';
 import { Button, IconButton, LinkButton } from '../../ui/actions';
 import { Input, Segmented, Select, Switch, SwitchRow, TextArea } from '../../ui/forms';
+import { ImageLinkField } from '../../ui/image-link';
 import { Avatar, Stat, StatRow } from '../../ui/parts';
 import { Tabs } from '../../ui/shell';
 import { act, ago, Drawer, Empty, ErrorBox, Field, KV, Loading, Pill, stamp, useAsk, useLoad, useOptions } from '../kit';
@@ -203,20 +204,8 @@ function ProfileForm({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChang
   });
   const [f, setF] = useState(init);
   const [busy, setBusy] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const file = useRef<HTMLInputElement>(null);
   const set = (k: keyof ReturnType<typeof init>) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   const dirty = JSON.stringify(f) !== JSON.stringify(init());
-  const upload = async (picked: File | undefined) => {
-    if (!picked) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', picked);
-      const out = await FF.api('POST', '/uploads?purpose=logo', fd);
-      setF((x) => ({ ...x, logoUrl: out.url }));
-    } catch (e) { kd.toast(FF.errorText(e, lang)); } finally { setUploading(false); if (file.current) file.current.value = ''; }
-  };
   const save = async () => {
     setBusy(true);
     const { bioVi, bioEn, logoUrl, ...rest } = f;
@@ -231,9 +220,8 @@ function ProfileForm({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChang
     <form className="grid gap-4 tab:grid-cols-2" onSubmit={(e) => { e.preventDefault(); if (dirty && f.name.trim().length >= 2) save(); }}>
       <div className="flex items-center gap-3 tab:col-span-2">
         <Avatar org name={f.name || o.name} src={f.logoUrl || null} size={52} />
-        <input ref={file} type="file" accept="image/*" hidden aria-label={T.logo} onChange={(e) => upload(e.target.files?.[0])} />
-        <Button size="sm" disabled={uploading} onClick={() => file.current?.click()}><UploadSimpleIcon size={16} aria-hidden="true" />{T.logo}</Button>
-        {f.logoUrl ? <IconButton size="sm" label={T.removeLogo} onClick={() => setF((x) => ({ ...x, logoUrl: '' }))}><XIcon size={16} aria-hidden="true" /></IconButton> : null}
+        {/* An organiser's logo is a link (only event media is uploaded), checked as it is pasted. */}
+        <ImageLinkField lang={lang} purpose="logo" label={T.logo} hint={T.logoLinkHint} value={f.logoUrl || null} onChange={(v) => setF((x) => ({ ...x, logoUrl: v ?? '' }))} className="min-w-0 flex-1" />
       </div>
       <Field label={T.brandName} htmlFor="org-name"><Input id="org-name" required minLength={2} maxLength={80} value={f.name} onChange={set('name')} /></Field>
       <Field label={T.orgType} htmlFor="org-type">
@@ -253,7 +241,7 @@ function ProfileForm({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChang
       <Field label={T.contactName} htmlFor="org-contact"><Input id="org-contact" value={f.contactName} onChange={set('contactName')} /></Field>
       <Field label={T.contactRole} htmlFor="org-contact-role"><Input id="org-contact-role" value={f.contactRole} onChange={set('contactRole')} /></Field>
       <div className="flex justify-end tab:col-span-2">
-        <Button type="submit" tone="acc" disabled={busy || uploading || !dirty || f.name.trim().length < 2}>{T.saveProfile}</Button>
+        <Button type="submit" tone="acc" disabled={busy || !dirty || f.name.trim().length < 2}>{T.saveProfile}</Button>
       </div>
     </form>
   );

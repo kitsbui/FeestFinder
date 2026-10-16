@@ -86,7 +86,7 @@ export const ORGS = {
   brandName: { en: 'Brand name', vi: 'Tên thương hiệu' },
   logo: { en: 'Logo', vi: 'Logo' },
   upload: { en: 'Upload', vi: 'Tải lên' },
-  removeLogo: { en: 'Remove logo', vi: 'Gỡ logo' },
+  logoLinkHint: { en: 'Image link · square, from 256 × 256', vi: 'Link ảnh · ảnh vuông, từ 256 × 256' },
   aboutVi: { en: 'About (VI)', vi: 'Giới thiệu (VI)' },
   aboutEn: { en: 'About (EN)', vi: 'Giới thiệu (EN)' },
   website: { en: 'Website', vi: 'Website' },

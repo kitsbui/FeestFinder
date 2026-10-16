@@ -6,7 +6,8 @@ import { fill, GENRES, L, NOTIFICATION_TOPICS, QUIET_HOURS_RULE } from '../lib/i
 import { launchedCity } from '../lib/places.ts';
 import { isStyle, STYLE_KEYS } from '../lib/styles.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
-import { imageUrl, limit, parse, uuid } from '../lib/validate.ts';
+import { limit, parse, uuid } from '../lib/validate.ts';
+import { imageChange } from '../services/remote-images.ts';
 import { BANKS } from '../lib/vietqr.ts';
 import { artistKey } from '../services/artists.ts';
 import { requireUser } from '../http/guards.ts';
@@ -60,7 +61,8 @@ export default async function meRoutes(app: FastifyInstance) {
       email: z.string().max(200).optional(),
       zalo: z.string().max(30).optional(),
       city: z.string().max(80).optional(),
-      photoUrl: imageUrl.nullable().optional(),
+      // A link, checked when it changes (services/remote-images.ts): a person's photo is not uploaded.
+      photoUrl: z.string().max(2048).nullable().optional(),
       locale: z.enum(['en', 'vi']).optional(),
       interests: z.array(z.string().refine((v) => INTERESTS.includes(v), 'unknown interest')).max(INTERESTS.length).optional(),
       birthYear: z.number().int().min(1900).max(2030).nullable().optional(),
@@ -69,7 +71,8 @@ export default async function meRoutes(app: FastifyInstance) {
     const patch: Record<string, unknown> = {};
     if (body.name !== undefined) patch.name = body.name.trim();
     if (body.city !== undefined) patch.city = body.city.trim();
-    if (body.photoUrl !== undefined) patch.photo_url = body.photoUrl;
+    const photo = await imageChange(ctx, current.photo_url, body.photoUrl, 'avatar');
+    if (photo !== undefined) patch.photo_url = photo;
     if (body.locale) patch.locale = body.locale;
     if (body.interests) patch.interests = body.interests;
     if (body.birthYear !== undefined) patch.birth_year = body.birthYear;

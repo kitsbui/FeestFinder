@@ -84,6 +84,8 @@ FF.api = async function api(method: string, path: string, body?: unknown, opts?:
   const data = type.includes('json') ? await res.json() : await res.text();
   if (!res.ok) {
     const err = (data && (data as any).error) || {};
+    // The last failure, for a bug report (kd/feedback): the path without its query, never the body.
+    FF.lastApiError = { method, path: path.split('?')[0], status: res.status, code: err.code || 'http_' + res.status };
     throw new ApiError(res.status, err.code || 'http_' + res.status, err.message, err.details);
   }
   return data;

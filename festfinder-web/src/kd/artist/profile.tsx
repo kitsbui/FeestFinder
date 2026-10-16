@@ -15,7 +15,8 @@ import { Input, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Stat, StatRow } from '../ui/parts';
 import { Body, Field, Loaded, PageHead, useLoad, useOptions } from '../console/kit';
 import { ARTIST } from './copy';
-import { Block, ChipPick, ImagePick } from './parts';
+import { Block, ChipPick } from './parts';
+import { ImageLinkField } from '../ui/image-link';
 import { useArtist } from './root';
 
 interface Opt { key: string; label: Pair }
@@ -150,8 +151,8 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
                 </Field>
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
-                <ImagePick lang={lang} purpose="avatar" label={T.photo} hint={T.photoHint} value={f.imageUrl} onChange={set('imageUrl')} />
-                <ImagePick lang={lang} purpose="cover" label={T.cover} hint={T.coverHint} value={f.coverUrl} onChange={set('coverUrl')} />
+                <ImageLinkField lang={lang} purpose="avatar" label={T.photo} hint={T.photoHint} value={f.imageUrl} onChange={set('imageUrl')} />
+                <ImageLinkField lang={lang} purpose="profile_cover" label={T.cover} hint={T.coverHint} value={f.coverUrl} onChange={set('coverUrl')} />
               </div>
             </Block>
             <Block title={T.listen}>

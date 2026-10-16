@@ -10,7 +10,7 @@ import { toCsv } from '../../lib/csv.ts';
 import { PROFILE_ARTS } from '../../lib/format.ts';
 import { ORGANIZER_TYPE, type OrganizerType } from '../../lib/network.ts';
 import { addDays, atVn, monthEnd, vnDate, weekendRange } from '../../lib/time.ts';
-import { bool, csv, dateStr, imageUrl, limit, localized, parse, uuid } from '../../lib/validate.ts';
+import { bool, csv, dateStr, limit, localized, parse, uuid } from '../../lib/validate.ts';
 import { BANKS } from '../../lib/vietqr.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { SqlParams } from '../../http/sql.ts';
@@ -23,6 +23,7 @@ import { announceNewListing } from '../../services/listing.ts';
 import { notifyOrganizer } from '../../services/notify.ts';
 import { refundOrder } from '../../services/orders.ts';
 import { activateRole } from '../../services/roles.ts';
+import { imageChange } from '../../services/remote-images.ts';
 import { assessRisk, riskBand } from '../../services/risk.ts';
 import { approveListing } from './moderation.ts';
 import { moderationThread } from '../organizer/inbox.ts';
@@ -698,17 +699,19 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
 
   const ProfileInput = z.object({
     name: z.string().trim().min(2).max(80), type: z.enum(ORGANIZER_TYPE.keys as [OrganizerType, ...OrganizerType[]]), bio: localized,
-    logoUrl: imageUrl.nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
+    // A link, checked when it changes (services/remote-images.ts): an organiser's logo is not uploaded.
+    logoUrl: z.string().max(2048).nullable(), website: z.string().url().nullable().or(z.literal('')), legalName: z.string().max(160),
     taxCode: z.string().max(20), address: z.string().max(240), email: z.string().max(200), hotline: z.string().max(30),
     zalo: z.string().max(80), contactName: z.string().max(80), contactRole: z.string().max(80),
   }).partial();
 
   const PROFILE_COLUMNS: Record<string, string> = {
-    name: 'name', type: 'type', logoUrl: 'logo_url', website: 'website', legalName: 'legal_name', taxCode: 'tax_code', address: 'address',
+    name: 'name', type: 'type', website: 'website', legalName: 'legal_name', taxCode: 'tax_code', address: 'address',
     email: 'email', hotline: 'hotline', zalo: 'zalo', contactName: 'contact_name', contactRole: 'contact_role',
   };
 
-  function profileSet(body: z.infer<typeof ProfileInput>): Record<string, unknown> {
+  /** `logo` is the checked link (imageChange), worked out before the transaction: checking fetches it. */
+  function profileSet(body: z.infer<typeof ProfileInput>, logo: string | null | undefined): Record<string, unknown> {
     if (body.email && !isEmail(body.email)) throw badRequest('invalid_email', L('That email address does not look right', 'Email chưa đúng định dạng'));
     if (body.taxCode && !/^\d{10,14}$/.test(body.taxCode.replace(/[\s-]/g, ''))) throw badRequest('invalid_tax_code', L('Tax codes are 10 to 14 digits', 'Mã số thuế gồm 10 đến 14 chữ số'));
     const set: Record<string, unknown> = {};
@@ -720,6 +723,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     if (body.email) set.email = normalizeEmail(body.email);
     if (body.taxCode) set.tax_code = body.taxCode.replace(/[\s-]/g, '');
     if (body.bio) set.bio = json(body.bio);
+    if (logo !== undefined) set.logo_url = logo;
     return set;
   }
 
@@ -730,8 +734,9 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       ownerEmail: z.string().max(200), ownerName: z.string().max(80).optional(),
     }), req.body);
     const now = ctx.clock.now();
+    const logo = await imageChange(ctx, null, body.logoUrl, 'logo');
     const out = await ctx.db.tx(async (q) => {
-      const set = profileSet(body);
+      const set = profileSet(body, logo);
       let slug = slugify(body.name) || 'organizer';
       if (await one(q, 'select 1 from organizers where slug = $1', [slug])) slug = `${slug}-${randomCode(4).toLowerCase()}`;
       const cols = ['slug', 'art', 'since_year', 'verification_state', ...Object.keys(set)];
@@ -758,10 +763,12 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     const id = parse(uuid, req.params.id);
     const body = parse(ProfileInput, req.body);
     const now = ctx.clock.now();
+    const was = await one<{ logo_url: string | null }>(ctx.db, 'select logo_url from organizers where id = $1', [id]);
+    const logo = was ? await imageChange(ctx, was.logo_url, body.logoUrl, 'logo') : undefined;
     await ctx.db.tx(async (q) => {
       const old = await one<any>(q, 'select * from organizers where id = $1 for update', [id]);
       if (!old) throw notFound();
-      const set = profileSet(body);
+      const set = profileSet(body, logo);
       const keys = Object.keys(set);
       if (!keys.length) return;
       await q.query(`update organizers set ${keys.map((k, i) => `${k} = $${i + 2}`).join(', ')} where id = $1`, [id, ...keys.map((k) => set[k])]);

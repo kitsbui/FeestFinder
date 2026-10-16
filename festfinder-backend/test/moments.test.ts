@@ -2,7 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { one } from '../src/db/index.ts';
-import { multipart, png } from './files.ts';
+import { fakeImages, multipart, png } from './files.ts';
 
 describe('moments', () => {
   let env: TestEnv;
@@ -10,29 +10,33 @@ describe('moments', () => {
   let organizer: string;
   let admin: string;
   before(async () => {
-    env = await setup();
+    env = await setup({ fetchImage: fakeImages() });
     minh = await env.attendee();
     organizer = await env.organizer();
     admin = await env.admin();
   });
   after(async () => { await env.close(); });
 
-  const upload = async (token: string, w = 1200, h = 900) => {
-    const mp = multipart(png(w, h), 'moment.png');
-    const res = await env.app.inject({ method: 'POST', url: '/uploads?purpose=moment', payload: mp.payload, headers: { 'content-type': mp.type, authorization: `Bearer ${token}` } });
-    return res;
-  };
+  const IMG = 'https://img.test/moment.png';
 
-  it('takes uploaded photos only, its owner’s own, up to nine', async () => {
-    const small = await upload(minh, 300, 300);
-    assert.equal(small.statusCode, 400);
-    assert.equal(small.json().error.code, 'moment_size');
-    const up = await upload(minh);
-    assert.equal(up.statusCode, 201, up.body);
-    const url = up.json().url;
+  it('takes checked image links, never uploads, up to nine', async () => {
+    // Moments are links now: the upload purpose is gone.
+    const mp = multipart(png(1200, 900), 'moment.png');
+    const up = await env.app.inject({ method: 'POST', url: '/uploads?purpose=moment', payload: mp.payload, headers: { 'content-type': mp.type, authorization: `Bearer ${minh}` } });
+    assert.equal(up.statusCode, 400);
+    assert.equal(up.json().error.code, 'upload_not_allowed');
 
-    assert.equal((await env.as(minh).post('/me/moments', { url: 'https://example.com/x.jpg' })).body.error.code, 'upload_required');
-    assert.equal((await env.as(organizer).post('/me/moments', { as: 'organizer', url })).body.error.code, 'upload_required', 'someone else’s upload');
+    assert.equal((await env.as(minh).post('/me/moments', { url: 'https://img.test/small.png?w=300&h=300' })).body.error.code, 'moment_size');
+    assert.equal((await env.as(minh).post('/me/moments', { url: 'http://img.test/plain.png' })).body.error.code, 'invalid_image_link');
+    assert.equal((await env.as(minh).post('/me/moments', { url: 'https://scontent.cdninstagram.com/v/x.jpg?oe=1' })).body.error.code, 'image_link_expires');
+    assert.equal((await env.as(minh).post('/me/moments', { url: 'https://img.test/broken.png' })).body.error.code, 'image_unreachable');
+    assert.equal((await env.as(minh).post('/me/moments', { url: '/files/moment/00/' + '0'.repeat(64) + '.png' })).body.error.code, 'upload_not_allowed');
+    // A page's preview picture is what is kept.
+    const fromPage = await env.as(minh).post('/me/moments', { url: `https://page.test/album?img=${encodeURIComponent(IMG + '?w=1600&h=1200')}` });
+    assert.equal(fromPage.status, 201, JSON.stringify(fromPage.body));
+    assert.equal(fromPage.body.url, IMG + '?w=1600&h=1200');
+    assert.equal((await env.as(minh).delete(`/me/moments/${fromPage.body.id}`)).status, 200);
+    const url = IMG;
 
     const made = await env.as(minh).post('/me/moments', { url, caption: 'Drop đầu tiên', takenOn: '2026-09-12' });
     assert.equal(made.status, 201);
@@ -57,8 +61,7 @@ describe('moments', () => {
   });
 
   it('an organiser’s show on its public page; a report goes to the moderators, who remove it', async () => {
-    const up = await upload(organizer);
-    const made = await env.as(organizer).post('/me/moments', { as: 'organizer', url: up.json().url, caption: 'Sân khấu chính' });
+    const made = await env.as(organizer).post('/me/moments', { as: 'organizer', url: IMG, caption: 'Sân khấu chính' });
     assert.equal(made.status, 201);
     const page = await env.as().get('/organizers/ravoent');
     assert.equal(page.body.moments[0].caption, 'Sân khấu chính');
@@ -82,7 +85,7 @@ describe('moments', () => {
   it('a photo goes to the organiser named, and only one the person is on the team of', async () => {
     const id = (await env.as().get('/organizers/ravoent')).body.id;
     const other = await one<{ id: string }>(env.ctx.db, 'select id from organizers where id <> $1 limit 1', [id]);
-    const url = (await upload(organizer)).json().url;
+    const url = IMG;
     const made = await env.as(organizer).post('/me/moments', { as: 'organizer', organizerId: id, url });
     assert.equal(made.status, 201);
     assert.equal((await env.as(organizer).get(`/me/moments?as=organizer&organizerId=${id}`)).body.items.some((m: any) => m.id === made.body.id), true);
@@ -98,7 +101,7 @@ describe('moments', () => {
 
   it('publishing on a public profile needs a confirmed phone', async () => {
     await env.ctx.db.query(`update users set phone_verified_at = null where email = 'team@ravolution.vn'`);
-    const r = await env.as(organizer).post('/me/moments', { as: 'organizer', url: '/files/moment/00/' + '0'.repeat(64) + '.png' });
+    const r = await env.as(organizer).post('/me/moments', { as: 'organizer', url: IMG });
     assert.equal(r.status, 403);
     assert.equal(r.body.error.code, 'phone_unverified');
   });

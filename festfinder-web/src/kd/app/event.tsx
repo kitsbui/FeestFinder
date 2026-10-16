@@ -22,6 +22,7 @@ import { CopyAddress, Countdown, ShareSheet } from '../web/event/actions';
 import { Ambassadors, DiscussionSection, Hype, PhotoWall } from '../web/event/community';
 import { EventClientProvider, useEvent } from '../web/event/context';
 import { Lineup } from '../web/event/lineup';
+import { RideButton } from '../web/event/ride';
 import { TicketsPanel } from '../web/event/tickets';
 import { APP } from './copy';
 import { distanceKm, place } from './place';
@@ -108,6 +109,7 @@ function EventBody({ lang }: { lang: Lang }) {
             <span className="kd-t flex-1 text-paper">{ev.venue.name}{d != null ? <span className="kd-num text-fog"> · {km(d, lang)}</span> : ev.venue.area ? <span className="text-fog"> · {ev.venue.area}</span> : null}</span>
             <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>
           </div>
+          <RideButton lang={lang} row fromLink />
           {!ev.past ? (
             <a className="kd-lrow min-h-13" href={'/app/plan/' + ev.slug}>
               <UsersThreeIcon size={18} className="text-fog" aria-hidden="true" />
@@ -169,6 +171,7 @@ function EventBody({ lang }: { lang: Lang }) {
             {address ? <p className="kd-s">{address}</p> : null}
             <div className="flex flex-wrap gap-2 pt-1">
               <a className={buttonClass({ size: 'sm' })} href={mapsHref} target="_blank" rel="noopener">{T.directions}<ArrowUpRightIcon size={14} aria-hidden="true" /></a>
+              <RideButton lang={lang} tone="default" />
               {address ? <CopyAddress lang={lang} text={[ev.venue.name, address].filter(Boolean).join(', ')} /> : null}
             </div>
           </section>

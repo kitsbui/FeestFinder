@@ -43,6 +43,8 @@ export default defineConfig({
         FF_NOW: '2026-09-14T10:00:00+07:00',
         JOBS_ENABLED: 'false',
         LINK_CHECKS_ENABLED: 'false',
+        // Linked images and music embeds read from a fake network: no request leaves the machine.
+        FAKE_REMOTE_MEDIA: '1',
         RATE_LIMIT_PER_MINUTE: '10000',
       },
     },
