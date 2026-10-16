@@ -7,6 +7,7 @@ Plan: `docs/NIGHT_BUILD_PLAN_2026-10-16.md` · Xuất phát: main `cebeb3d` · N
 | N0 Khởi động | `5405e4e` | typecheck sạch · API 368 (367 qua, 1 bỏ qua) · screens 211/211 | Docs ngày 16/10 commit trên nhánh đêm, không trên `main` |
 | N1 Bỏ phí 5% | night/2026-10-16-N1 | attendee + resale 23/23 · app + event spec 25/25 | **Chủ SP: xoá biến `SERVICE_FEE_PCT` trên Vercel nếu có** (code không đọc nữa). Console vẫn hiện cột phí cho đơn cũ. |
 | N2 Bỏ cấp admin, tách `admin/ops.ts` | night/2026-10-16-N2 | API 369 (368 qua, 1 bỏ qua) · Console specs 47/47 | `ops.ts` 1.030 → 446 dòng + venues, organizers, users, orders, ops-shared. Gỡ admin giờ chỉ bằng cách sửa `ADMIN_EMAIL` trên Vercel rồi redeploy. |
+| N3 Sửa tin đang bán không 404 (migration 040) | night/2026-10-16-N3 | API 371 (370 qua, 1 bỏ qua) · review/organizer/admin 36/36 · Studio events 7/7, studio + console-review 25/25 | Bản tạm theo D4: tin giữ `live`, cờ `needs_review_*`; duyệt xoá cờ, trả lại phục hồi giá trị cũ. Next migration giờ là `041`. |
 
 ## Dùng mặc định
 - D4: bản tạm (tin vẫn `live`, cờ chờ duyệt), theo plan.
