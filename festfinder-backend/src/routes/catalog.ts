@@ -316,6 +316,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
       sources: await loadPublicSources(ctx.db, ev.id),
       artistLinks: await artistLinks(ctx.db, ev.id),
       sponsors: await sponsorsOf(ctx.db, ev.id),
+      // Whether the AI local guide can answer: it runs, or it wrote this event's guide before.
+      guide: ctx.guide.model !== 'none' || !!(await one(ctx.db, 'select 1 from ai_guides where event_id = $1', [ev.id])),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,

@@ -105,10 +105,11 @@ test.describe('the app, signed in', () => {
     await expect(ravo.getByRole('button', { name: 'Đang theo dõi' })).toBeVisible();
   });
 
-  test('the guide says when it is off, and offers to try again', async ({ page }) => {
+  test('the guide is offered only when it can answer; its page still says when it is off', async ({ page }) => {
+    // The test API runs no guide and none was written: the event offers no row that would lead to "đang tạm nghỉ".
     await open(page, '/app/e/ravo');
-    await page.getByRole('link', { name: 'Trước & sau show' }).click();
-    await expect(page).toHaveURL(/\/app\/guide\/ravo$/);
+    await expect(page.getByRole('link', { name: 'Trước & sau show' })).toHaveCount(0);
+    await open(page, '/app/guide/ravo');
     await expect(page.getByRole('button', { name: 'Thử lại' })).toBeVisible();
   });
 });
