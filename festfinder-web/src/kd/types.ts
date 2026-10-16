@@ -79,7 +79,7 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   hype: { count: number; last24h: number; goals: { threshold: number; reward: Pair; reached: boolean }[]; next: { threshold: number; left: number; reward: Pair; progress: number } | null } | null;
   discussion: { total: number; faqCount: number } | null;
   faq: { question: string; answer: string }[];
-  resale: { enabled: boolean; count: number; fromPrice: number | null; feePct: number } | null;
+  resale: { enabled: boolean; count: number; fromPrice: number | null } | null;
   ambassadors: { name: string; initials: string; visits: number }[];
   updates: { id: string; kind: string; kindLabel: Pair | null; body: string; createdAt: string }[];
   description: Pair | null;
@@ -138,7 +138,6 @@ export interface Resale {
   count: number;
   fromPrice: number | null;
   watching: boolean;
-  feePct: number;
   items: { id: string; price: number; faceValue: number; tier: Pair | null; seller: { name: string; initials: string }; mine: boolean }[];
   rules: Pair | null;
 }

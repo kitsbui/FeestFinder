@@ -138,8 +138,9 @@ describe('attendee (Web + App, signed in)', () => {
     assert.equal(quote.status, 200);
     assert.equal(quote.body.subtotal, 4_800_000);
     assert.equal(quote.body.discount, 480_000);
-    assert.equal(quote.body.fee, 216_000);
-    assert.equal(quote.body.total, 4_536_000);
+    assert.equal(quote.body.fee, 0, 'FeestFinder charges buyers no fee');
+    assert.equal(quote.body.total, 4_320_000);
+    assert.ok(!quote.body.lines.some((l: any) => /fee|phí/i.test(l.label.en + l.label.vi)), 'no fee line');
 
     const bad = await env.as(token).post('/checkout/quote', { eventId: env.ids.event.ravo, tierId: vip.id, qty: 2, promoCode: 'EARLYBIRD' });
     assert.equal(bad.body.error.code, 'promo_invalid', 'EARLYBIRD is paused');

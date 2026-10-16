@@ -4,7 +4,6 @@ import { initialsOf } from '../lib/contact.ts';
 import type { Localized } from '../lib/i18n.ts';
 import { discussionCounts, faqFor } from '../routes/discussion.ts';
 import { kindsShown, nameOf, phaseOf, type Phase } from './community.ts';
-import { RESALE_FEE_PCT } from './resale.ts';
 import { latestUpdates } from '../routes/night.ts';
 
 const firstName = (name: string | null) => nameOf(name).split(/\s+/).slice(-1)[0];
@@ -67,7 +66,7 @@ export async function eventExtras(q: Queryable, ev: any, viewerId: string | null
     },
     discussion: { ...counts, kinds: kindsShown(phase), faqCount: faq.length },
     faq,
-    resale: { enabled: resaleOpen, count: resaleOpen ? resale!.n : 0, fromPrice: resaleOpen ? resale!.from_price : null, feePct: RESALE_FEE_PCT },
+    resale: { enabled: resaleOpen, count: resaleOpen ? resale!.n : 0, fromPrice: resaleOpen ? resale!.from_price : null },
     ambassadors: ambassadors.map((a) => ({ name: firstName(a.name), initials: initialsOf(nameOf(a.name)), visits: a.visits })),
     updates,
     mine: mine ? {

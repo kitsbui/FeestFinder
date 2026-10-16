@@ -2,7 +2,7 @@
 /**
  * /app/checkout/<slug> in Kính đêm: where every FeestFinder ticket button lands (through /go,
  * with ?tier=&qty=, or ?listing= for a resale ticket). The basket is priced by the API's quote
- * (tier, quantity up to 6, promo code, service fee); paying opens the VietQR transfer and waits
+ * (tier, quantity up to 6, promo code; no fee on top); paying opens the VietQR transfer and waits
  * for the money, or, with the development payment stand-in, lands straight in Vé của tôi.
  * FeestFinder checkout is VND only (CLAUDE.md); the API refuses anything else.
  */

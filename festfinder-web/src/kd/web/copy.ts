@@ -121,7 +121,6 @@ export const WEB = {
   resaleBuy: { en: 'Buy', vi: 'Mua' },
   resaleMine: { en: 'Yours', vi: 'Vé của bạn' },
   resaleFace: { en: 'Face value {p}', vi: 'Giá gốc {p}' },
-  resaleFee: { en: '+{p}% service fee', vi: '+{p}% phí dịch vụ' },
   resaleSell: { en: 'Pass on your ticket', vi: 'Pass vé của bạn' },
   hype: { en: 'Hype', vi: 'Hype' },
   hypeIt: { en: 'Hype it', vi: 'Hype ngay' },

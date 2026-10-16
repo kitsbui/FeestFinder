@@ -173,7 +173,7 @@ function ResaleBlock({ lang }: { lang: Lang }) {
   return (
     <Accordion small summary={T.resale} aside={r ? r.count : ev.resale?.count ?? 0} className="border-t border-line">
       <div className="flex flex-col gap-2">
-        <span className="kd-m">{T.resaleCap} · {fill(T.resaleFee, { p: ev.resale?.feePct ?? 5 })}</span>
+        <span className="kd-m">{T.resaleCap}</span>
         {r && r.items.length ? r.items.map((it) => (
           <div key={it.id} className="kd-lrow">
             <span className="flex min-w-0 flex-1 flex-col">
