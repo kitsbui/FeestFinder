@@ -7,6 +7,9 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { XIcon } from '@phosphor-icons/react/ssr';
 import { cx } from '../cx';
 
+/** A field the person types into, inside the sheet's body. */
+const TEXT_FIELD = ['text', 'search', 'email', 'tel', 'url', 'number', 'password'].map((t) => `[data-sheet-body] input[type="${t}"]:not([disabled])`).concat('[data-sheet-body] input:not([type]):not([disabled])', '[data-sheet-body] textarea:not([disabled])').join(', ');
+
 export function Sheet({ open = true, onClose, title, children, closeLabel, wide, className }: {
   open?: boolean; onClose: () => void; title: ReactNode; children: ReactNode; closeLabel: string; wide?: boolean; className?: string;
 }) {
@@ -14,7 +17,12 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
+    if (open && !d.open) {
+      d.showModal();
+      // showModal puts focus on the first focusable element, the close button: a sheet that asks
+      // for text (search, a new collection, feedback) gets it in its first text field instead.
+      d.querySelector<HTMLElement>(TEXT_FIELD)?.focus();
+    }
     if (!open && d.open) d.close();
   }, [open]);
   return (
@@ -36,7 +44,7 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
           <XIcon size={18} aria-hidden="true" />
         </button>
       </div>
-      <div className="px-5 pb-[calc(20px+env(safe-area-inset-bottom))]">{children}</div>
+      <div data-sheet-body className="px-5 pb-[calc(20px+env(safe-area-inset-bottom))]">{children}</div>
     </dialog>
   );
 }

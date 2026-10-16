@@ -37,7 +37,7 @@ export async function HomePage({ lang }: { lang: Lang }) {
   return (
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} current="explore" styleCounts={feed.facets?.style} />
+        <WebNav lang={lang} current="explore" />
         <main className="flex flex-col">
           <HomeBrowser lang={lang} initial={feed} cities={meta?.cities ?? []} defaultCity={city} />
 

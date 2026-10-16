@@ -87,6 +87,7 @@ test.describe('Studio, signed in', () => {
     await page.getByRole('checkbox').check();
     await send.click();
     await expect(page.getByText('Đã gửi duyệt')).toBeVisible();
+    await expect(page.getByText('Nháp · tự lưu'), 'sent: no longer a draft').toHaveCount(0);
     const { items } = await (await page.request.get('/organizer/events')).json();
     const made = items.find((e: { title: string }) => e.title === title);
     expect(made.status).toBe('in_review');
@@ -181,6 +182,15 @@ test.describe('Studio, signed in', () => {
     await expect(page.getByText(title)).toBeVisible();
     await page.getByText(title).click();
     await expect(page.getByText('Chưa có hồ sơ')).toBeVisible();
+  });
+
+  test('"Mời nghệ sĩ" offers only artists who run their profile, who can read the request', async ({ page }) => {
+    await open(page, '/studio/gigs');
+    const pick = page.getByRole('combobox', { name: 'Nghệ sĩ' });
+    await pick.fill('mie');
+    await expect(page.getByRole('option', { name: /DJ Mie/ })).toHaveCount(0);
+    await pick.fill('slim');
+    await expect(page.getByRole('option', { name: /SlimV/ })).toBeVisible();
   });
 
   test('business details save', async ({ page }) => {

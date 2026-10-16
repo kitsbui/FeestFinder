@@ -243,7 +243,9 @@ export function Wizard() {
     if (!(await persist(f))) { setBusy(false); return; }
     if (live) { setBusy(false); reload(); return; }
     try {
-      await FF.post('/organizer/events/' + id.current + '/submit');
+      // The listing it became (in review, or live for the team): the header stops saying "Nháp".
+      const out = await FF.post('/organizer/events/' + id.current + '/submit');
+      setDraft((d) => ({ ...(d ?? {}), ...out } as Draft));
       setSent({ boost: 'none' });
       reload();
     } catch (e) { kd.toast(FF.errorText(e, lang)); }

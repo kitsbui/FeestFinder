@@ -105,8 +105,11 @@ export async function publishByTeam(q: Queryable, s: UserSession, ev: any, now: 
 }
 
 /** Two venue names are probably the same place when most of their longer words match. */
+/** Words that name no place: "The Warehouse" and "The Reverie" share nothing. */
+const VENUE_STOP = new Set(['the', 'and', 'club', 'bar', 'cua', 'tai']);
+
 export function venueLikeness(a: string, b: string): number {
-  const words = (s: string) => new Set(searchNormalize(s).split(/[^a-z0-9]+/).filter((w) => w.length >= 3 || /^\d+$/.test(w)));
+  const words = (s: string) => new Set(searchNormalize(s).split(/[^a-z0-9]+/).filter((w) => !VENUE_STOP.has(w) && (w.length >= 3 || /^\d+$/.test(w))));
   const A = words(a), B = words(b);
   if (!A.size || !B.size) return 0;
   let common = 0;

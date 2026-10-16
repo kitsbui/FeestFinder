@@ -114,7 +114,8 @@ function EventBody({ lang }: { lang: Lang }) {
               <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
             </a>
           ) : null}
-          {!ev.past ? (
+          {/* Only when the guide can answer: a row that opens "đang tạm nghỉ" is a dead end. */}
+          {!ev.past && ev.guide ? (
             <a className="kd-lrow min-h-13" href={'/app/guide/' + ev.slug}>
               <CompassIcon size={18} className="text-fog" aria-hidden="true" />
               <span className="kd-t flex-1 text-paper">{T.guideRow}</span>

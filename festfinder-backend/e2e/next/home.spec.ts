@@ -52,10 +52,13 @@ test.describe('the home page', () => {
     await page.getByRole('button', { name: 'Dòng nhạc' }).click();
     // Styles only: the price is a filter, not a style.
     await expect(page.getByRole('menuitem', { name: /Miễn phí/ })).toHaveCount(0);
+    // It leads to every upcoming event of that style (the list), the same events its count counts.
+    const counted = Number(((await page.getByRole('menuitem', { name: /House/ }).innerText()).match(/\d+/) ?? ['0'])[0]);
     await page.getByRole('menuitem', { name: /House/ }).click();
-    await expect(page).toHaveURL(/\/\?style=house$/);
-    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /House/ })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: /Miễn phí/ })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/list\?style=house$/);
+    await expect(page.getByText('Không có sự kiện nào khớp')).toHaveCount(0);
+    const listed = (await (await page.request.get('/events?time=all&upcoming=1&style=house&limit=1')).json()).total;
+    expect(listed).toBe(counted);
   });
 
   test('free stands apart from the styles and narrows the one chosen', async ({ page }) => {

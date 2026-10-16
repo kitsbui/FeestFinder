@@ -94,6 +94,7 @@ describe('public discovery (Web + App, signed out)', () => {
   it('returns event detail with tier ladder, refund policy and timetable', async () => {
     const r = await env.as().get('/events/ravo');
     assert.equal(r.status, 200);
+    assert.equal(r.body.guide, false, 'no guide runs in the tests and none was written: the app offers no guide row');
     assert.deepEqual(r.body.tickets.tiers.map((t: any) => [t.key, t.state]), [['early', 'soldout'], ['ga', 'last'], ['vip', 'onsale'], ['table', 'soon']]);
     assert.equal(r.body.tickets.urgency.en, 'Price rises to 1,450,000₫ on 18 Sep');
     assert.match(r.body.tickets.refundPolicy.en, /Refunds up to 7 days/);

@@ -56,7 +56,7 @@ export interface ArtistData {
     similar: { id: string; slug: string; name: string; score: number }[];
   };
   gear: { id: string; slug: string; name: string; brand: string | null; category: string; categoryLabel: Pair; url: string | null; usedForLabel?: Pair }[];
-  availability: { from: string; to: string; kind: 'available' | 'busy' | string; city: string | null; cityLabel: Pair | null }[];
+  availability: { from: string; to: string; kind: 'available' | 'unavailable'; city: string | null; cityLabel: Pair | null }[];
   badges?: BadgeView[];
   moments?: Moment[];
   mixes?: Mix[];
@@ -251,7 +251,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                           <li key={w.from + w.kind} className="kd-lrow min-h-11">
                             <span className="kd-mb kd-num">{w.from === w.to ? dm(w.from) : `${dm(w.from)} – ${dm(w.to)}`}</span>
                             <span className="kd-s flex-1">{text(w.cityLabel, lang)}</span>
-                            <Status tone={w.kind === 'busy' ? 'none' : 'ok'}>{w.kind === 'busy' ? T.busy : T.free}</Status>
+                            <Status tone={w.kind === 'unavailable' ? 'none' : 'ok'}>{w.kind === 'unavailable' ? T.busy : T.free}</Status>
                           </li>
                         ))}
                       </ul>

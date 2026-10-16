@@ -80,6 +80,8 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   discussion: { total: number; faqCount: number } | null;
   faq: { question: string; answer: string }[];
   resale: { enabled: boolean; count: number; fromPrice: number | null } | null;
+  /** The AI local guide can answer for this event (it runs, or wrote its guide before). */
+  guide?: boolean;
   ambassadors: { name: string; initials: string; visits: number }[];
   updates: { id: string; kind: string; kindLabel: Pair | null; body: string; createdAt: string }[];
   description: Pair | null;

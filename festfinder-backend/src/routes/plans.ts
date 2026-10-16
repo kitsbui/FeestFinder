@@ -122,7 +122,7 @@ export default async function planRoutes(app: FastifyInstance) {
           userId: f.friend_id, topic: 'friends', kind: 'plan_invite',
           title: fill(L('{n} invited you', '{n} đã mời bạn'), { n: me.name || 'A friend' }),
           body: { en: ev.title, vi: ev.title },
-          link: { screen: 'plan', planId: plan.id },
+          link: { screen: 'plan', planId: plan.id, eventId: plan.event_id },
           dedupeKey: `plan-invite:${plan.id}:${f.friend_id}`,
         });
       }
@@ -162,7 +162,7 @@ export default async function planRoutes(app: FastifyInstance) {
         await notifyUser(q, now, {
           userId: plan.owner_id, topic: 'friends', kind: 'plan_accepted',
           title: fill(L('{n} is in', '{n} đã tham gia'), { n: me.name }), body: { en: plan.title, vi: plan.title },
-          link: { screen: 'plan', planId },
+          link: { screen: 'plan', planId, eventId: plan.event_id },
         });
       }
     });
@@ -217,7 +217,7 @@ export default async function planRoutes(app: FastifyInstance) {
         userId: memberId, topic: 'friends', kind: 'plan_payment_reminder',
         title: L('Ticket money reminder', 'Nhắc tiền vé'),
         body: fill(L('{v} for {e}', '{v} cho {e}'), { v: vnd(unit, 'en'), e: plan.title }),
-        link: { screen: 'plan', planId },
+        link: { screen: 'plan', planId, eventId: plan.event_id },
       });
     });
     return { ok: true, message: fill(L('Reminder sent to {n}', 'Đã nhắc {n}'), { n: m.name }) };
@@ -241,7 +241,7 @@ export default async function planRoutes(app: FastifyInstance) {
       for (const o of others) {
         await notifyUser(q, now, {
           userId: o.user_id, topic: null, kind: 'plan_message', inApp: false,
-          title: { en: plan.title, vi: plan.title }, body: { en: body.slice(0, 120), vi: body.slice(0, 120) }, link: { screen: 'plan', planId },
+          title: { en: plan.title, vi: plan.title }, body: { en: body.slice(0, 120), vi: body.slice(0, 120) }, link: { screen: 'plan', planId, eventId: plan.event_id },
         });
       }
       return m;
@@ -287,7 +287,7 @@ export default async function planRoutes(app: FastifyInstance) {
         for (const u of unpaid) {
           await notifyUser(q, now, {
             userId: u.user_id, topic: 'friends', kind: 'plan_payment_request',
-            title: L('Ticket money request', 'Yêu cầu tiền vé'), body: chatLine, link: { screen: 'plan', planId },
+            title: L('Ticket money request', 'Yêu cầu tiền vé'), body: chatLine, link: { screen: 'plan', planId, eventId: plan.event_id },
           });
         }
       }

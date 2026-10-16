@@ -26,13 +26,14 @@ export type WebSection = 'explore' | 'list' | 'artists' | 'projects' | 'none';
 /** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
 const LANG_KEY = 'ff_lang';
 
-/** Where a style leads: the home page filtered to it. Only music styles: price is a filter, not a style. */
-export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/?style=${k}`, lang);
+/** Where a style leads: every upcoming event of it (the list), the same events its count counts. Only music styles: price is a filter, not a style. */
+export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/list?style=${k}`, lang);
 
-export function WebNav({ lang, current = 'none', styleCounts }: { lang: Lang; current?: WebSection; styleCounts?: Record<string, number> | null }) {
+export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSection }) {
   const kd = useKd();
   const T = pick(WEB, lang);
-  const [counts, setCounts] = useState<Record<string, number> | null>(styleCounts ?? null);
+  // Counted over every upcoming event on every page, as the links lead to all of them.
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [me, setMe] = useState<{ tickets: number; saved: number; handle: string } | null>(null);
   const [search, setSearch] = useState(false);
   const [post, setPost] = useState(false);
