@@ -13,7 +13,7 @@ import { one } from './db/index.ts';
 import { AppError, readOnlySession } from './lib/errors.ts';
 import { langFrom, type Lang } from './lib/i18n.ts';
 import { vnDate } from './lib/time.ts';
-import { resolveSession, type SessionInfo } from './http/session.ts';
+import { resolveSession, SESSION_COOKIE, type SessionInfo } from './http/session.ts';
 
 import authRoutes from './routes/auth.ts';
 import catalogRoutes from './routes/catalog.ts';
@@ -86,6 +86,14 @@ export function isInternal(ip: string): boolean {
   if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(v4)) return true;
   return ip === '::1' || /^f[cd][0-9a-f]{2}:/i.test(ip) || /^fe[89ab][0-9a-f]:/i.test(ip);
 }
+
+/**
+ * Reads that answer every visitor without a session alike, which the CDN may keep for a minute.
+ * One path segment after the prefix at most, so nothing nested (a ticket, a plan) is ever public.
+ */
+const PUBLIC_READS = [/^\/events$/, /^\/events\/map$/, /^\/events\/[^/]+$/, /^\/artists$/, /^\/artists\/[^/]+$/, /^\/organizers\/[^/]+$/, /^\/collections\/[^/]+$/, /^\/shelves$/];
+export const isPublicRead = (url: string) => PUBLIC_READS.some((r) => r.test(url.split('?')[0]));
+const hasSessionCookie = (req: FastifyRequest) => (req.headers.cookie ?? '').split(';').some((c) => c.trim().startsWith(SESSION_COOKIE + '='));
 
 /** The rate-limit key of the web app's server renders (no visitor behind them). */
 const WEB_RENDER = 'web-render';
@@ -248,8 +256,16 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   });
 
   // Whatever answers a signed-in person, or signs one in, is theirs alone: no shared cache keeps it.
+  // The public reads a visitor without a session makes (the lists, an event, an artist, an
+  // organiser, a collection) are the same for everyone, so the CDN keeps them for a minute and
+  // serves a stale copy while it refreshes. Vary: Cookie keeps a signed-in request off that copy.
   app.addHook('onSend', async (req, reply, payload) => {
-    if (!reply.hasHeader('cache-control') && (req.session || reply.hasHeader('set-cookie'))) reply.header('cache-control', 'private, no-store');
+    if (reply.hasHeader('cache-control')) return payload;
+    if (req.session || reply.hasHeader('set-cookie')) reply.header('cache-control', 'private, no-store');
+    else if (req.method === 'GET' && reply.statusCode === 200 && !hasSessionCookie(req) && isPublicRead(req.url)) {
+      reply.header('cache-control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
+      reply.header('vary', 'cookie, x-lang, accept-language');
+    }
     return payload;
   });
 

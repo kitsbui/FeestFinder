@@ -13,6 +13,22 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal(r.body.ok, true);
   });
 
+  it('public reads without a session are kept by the CDN for a minute; anything signed in stays private', async () => {
+    for (const url of ['/events?limit=5', '/events/map', '/events/ravo', '/artists', '/organizers/ravoent']) {
+      const r = await env.as().get(url);
+      assert.equal(r.status, 200, url);
+      assert.equal(r.headers['cache-control'], 'public, max-age=0, s-maxage=60, stale-while-revalidate=300', url);
+      assert.match(String(r.headers.vary), /cookie/, `${url} varies by cookie`);
+    }
+    const token = await env.attendee();
+    assert.equal((await env.as(token).get('/events?limit=5')).headers['cache-control'], 'private, no-store', 'signed in: never shared');
+    const withCookie = await env.as().get('/events?limit=5', { cookie: 'ff_session=whatever' });
+    assert.notEqual(withCookie.headers['cache-control'], 'public, max-age=0, s-maxage=60, stale-while-revalidate=300', 'a session cookie, even a stale one, is never served a shared copy');
+    assert.equal((await env.as().get('/events/ravo/resale')).headers['cache-control']?.includes('s-maxage=60') ?? false, false, 'nothing nested is public');
+    assert.equal((await env.as().get('/me/tickets')).status, 401);
+    assert.equal((await env.as().get('/map/style.json')).headers['cache-control'], 'public, max-age=300, s-maxage=3600');
+  });
+
   it('lists this weekend by default, with time facet counts and a featured hero', async () => {
     const r = await env.as().get('/events?limit=20');
     assert.equal(r.status, 200);
