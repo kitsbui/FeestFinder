@@ -4,7 +4,7 @@ import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
 import { crc16, parseTlv } from '../src/lib/vietqr.ts';
 import type { Guide, GuideEvent, GuideGenerator } from '../src/services/guide.ts';
-import { many } from '../src/db/index.ts';
+import { many, one } from '../src/db/index.ts';
 
 class FakeGuide implements GuideGenerator {
   readonly model = 'fake';
@@ -211,6 +211,10 @@ describe('attendee (Web + App, signed in)', () => {
       return createSession(q, env.clock.now(), { kind: 'user', userId: env.ids.friend.f3, method: 'password' });
     })).token;
     const accepted = await env.as(friendToken).post(`/plans/${planId}/respond`, { status: 'going' });
+    // The owner's notice opens the plan of its event in the app (it used to land on /app).
+    const accept = await one<any>(env.ctx.db, `select link from notifications where kind = 'plan_accepted' order by created_at desc limit 1`);
+    assert.equal(accept.link.screen, 'plan');
+    assert.ok(accept.link.eventId, 'the link carries the event');
     assert.equal(accepted.body.members.find((m: any) => m.name === 'Đức Nguyễn').status, 'going');
 
     const spot = await env.as(token).patch(`/plans/${planId}`, { meetSpot: 'cafe' });
