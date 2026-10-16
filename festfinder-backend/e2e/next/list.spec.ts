@@ -100,7 +100,7 @@ test.describe('the list', () => {
     await page.getByRole('button', { name: 'Menu' }).click();
     const sheet = page.getByRole('dialog', { name: 'Menu' });
     await expect(sheet.getByRole('link', { name: 'Sự kiện', exact: true })).toHaveAttribute('aria-current', 'page');
-    await expect(sheet.getByRole('link', { name: /^Techno/ })).toHaveAttribute('href', '/?style=techno');
+    await expect(sheet.getByRole('link', { name: /^Techno/ })).toHaveAttribute('href', '/list?style=techno');
     await expect(sheet.getByRole('link', { name: 'Dự án' })).toHaveCount(0);
     await expect(sheet.getByRole('button', { name: 'Đăng sự kiện' })).toBeVisible();
     await sheet.getByRole('link', { name: 'Nghệ sĩ' }).click();
