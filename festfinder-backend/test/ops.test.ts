@@ -173,20 +173,29 @@ describe('operations back office', () => {
     assert.equal(tiers.sold, 0);
   });
 
-  it('finds accounts and changes roles, but never the admin’s own', async () => {
+  it('finds accounts; the Console can never grant or take away admin', async () => {
     const found = await env.as(admin).get('/admin/users?q=minh%40example.com');
     assert.equal(found.body.items[0].email, 'minh@example.com');
     const id = found.body.items[0].id;
     const detail = await env.as(admin).get(`/admin/users/${id}`);
     assert.ok(detail.body.counts.saves >= 0);
+    // Admin comes only from the ADMIN_EMAIL allowlist on a Google sign-in (CLAUDE.md): no route changes a role.
     const promote = await env.as(admin).patch(`/admin/users/${id}`, { role: 'admin' });
-    assert.equal(promote.status, 200);
+    assert.equal(promote.status, 404);
+    assert.equal((await env.as(admin).get(`/admin/users/${id}`)).body.role, 'user');
     const admins = await env.as(admin).get('/admin/users?kind=admin');
-    assert.ok(admins.body.items.some((u: any) => u.id === id));
-    await env.as(admin).patch(`/admin/users/${id}`, { role: 'user' });
-    const me = await env.as(admin).get('/auth/session');
-    const self = await env.as(admin).patch(`/admin/users/${me.body.user.id}`, { role: 'user' });
-    assert.equal(self.body.error.code, 'own_role');
+    assert.ok(!admins.body.items.some((u: any) => u.id === id));
+  });
+
+  it('every catalogue route split out of admin/ops refuses anyone but the team', async () => {
+    const fan = await env.attendee();
+    const anyId = '00000000-0000-4000-8000-000000000000';
+    for (const path of ['/admin/events', '/admin/venues', `/admin/organizers/${anyId}`, '/admin/users', `/admin/users/${anyId}`, '/admin/orders', `/admin/orders/${anyId}`, '/admin/overview']) {
+      for (const token of [fan, organizer]) {
+        const r = await env.as(token).get(path);
+        assert.equal(r.status, 403, `${path} must be admin only`);
+      }
+    }
   });
 
   it('looks orders up and refunds one, with the reason in the audit log', async () => {
