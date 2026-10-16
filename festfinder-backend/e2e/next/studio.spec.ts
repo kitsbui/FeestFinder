@@ -87,6 +87,7 @@ test.describe('Studio, signed in', () => {
     await page.getByRole('checkbox').check();
     await send.click();
     await expect(page.getByText('Đã gửi duyệt')).toBeVisible();
+    await expect(page.getByText('Nháp · tự lưu'), 'sent: no longer a draft').toHaveCount(0);
     const { items } = await (await page.request.get('/organizer/events')).json();
     const made = items.find((e: { title: string }) => e.title === title);
     expect(made.status).toBe('in_review');
