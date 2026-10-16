@@ -71,3 +71,14 @@ export async function ensureOrigin(q: Queryable, ev: any, now: Date): Promise<vo
                    provider_confidence = excluded.provider_confidence, last_seen_at = excluded.last_seen_at`,
     [ev.id, provider, authority, url, hostOf(url), authority === 'official' ? 90 : authority === 'community' ? 40 : 60, now, ev.published_at, ev.submitted_by]);
 }
+
+/** The columns behind REVIEWED_FIELDS (a venue also moves its address, area, pin and city), as they were before a change. */
+export const REVIEW_COLUMNS = ['title', 'starts_on', 'ends_on', 'start_time', 'end_time', 'venue_id', 'venue_name', 'address', 'area', 'lat', 'lng', 'city', 'entry_mode', 'price_from', 'cover_url', 'cover_sha256'] as const;
+export function reviewSnapshot(ev: any): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const c of REVIEW_COLUMNS) {
+    const v = ev[c];
+    out[c] = v instanceof Date ? v.toISOString().slice(0, 10) : v ?? null;
+  }
+  return out;
+}

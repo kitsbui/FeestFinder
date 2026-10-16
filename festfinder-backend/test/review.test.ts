@@ -47,14 +47,50 @@ describe('review of listings', () => {
     assert.ok((await env.as(admin).get('/admin/queue')).body.items.some((x: any) => x.id === draft.body.id));
   });
 
-  it('a change to a live listing goes back to review, and the admins hear it is to review again', async () => {
-    const live = await one<{ id: string }>(env.ctx.db, `select e.id from events e join organizers o on o.id = e.organizer_id where o.slug = 'ravoent' and e.status = 'live' limit 1`);
+  it('a change to a live listing waits for review while the listing stays live, and the admins hear it is to review again', async () => {
+    const live = await one<{ id: string; slug: string; start_time: string }>(env.ctx.db, `select e.id, e.slug, e.start_time from events e join organizers o on o.id = e.organizer_id where o.slug = 'ravoent' and e.status = 'live' limit 1`);
     const before = (await reviewNotes()).length;
-    const r = await env.as(organizer).patch(`/organizer/events/${live!.id}`, { startTime: '19:00' });
-    assert.equal(r.body.status, 'in_review');
+    const r = await env.as(organizer).patch(`/organizer/events/${live!.id}`, { startTime: '18:45' });
+    assert.equal(r.body.status, 'live', 'the listing stays live');
+    assert.deepEqual(r.body.reviewPending.fields, ['startTime']);
+    assert.equal((await env.as().get(`/events/${live!.slug}`)).status, 200, 'the event page stays up');
     const notes = await reviewNotes();
     assert.equal(notes.length, before + 1);
     assert.ok(notes.some((n) => n.title.vi.startsWith('Đã sửa, cần duyệt lại: ') && n.link.url === `/console?id=${live!.id}`));
+    const item = (await env.as(admin).get('/admin/queue')).body.items.find((x: any) => x.id === live!.id);
+    assert.equal(item.kind, 'revision');
+    assert.ok(item.changes.some((c: any) => c.field === 'start_time' && String(c.before).startsWith(live!.start_time.slice(0, 5)) && String(c.after).startsWith('18:45')));
+    assert.ok((await env.as(admin).get('/admin/counts')).body.queue >= 1);
+
+    // The team accepts: the flag clears, the change stays.
+    assert.equal((await env.as(admin).post('/admin/listings/approve', { ids: [live!.id] })).status, 200);
+    const ok = await one<any>(env.ctx.db, 'select status, start_time, needs_review_at from events where id = $1', [live!.id]);
+    assert.equal(ok.status, 'live');
+    assert.equal(ok.needs_review_at, null);
+    assert.ok(String(ok.start_time).startsWith('18:45'));
+    assert.ok(!(await env.as(admin).get('/admin/queue')).body.items.some((x: any) => x.id === live!.id));
+  });
+
+  it('a change the team sends back returns the listing to what it showed, still live', async () => {
+    const live = await one<{ id: string; slug: string; title: string }>(env.ctx.db, `select e.id, e.slug, e.title from events e join organizers o on o.id = e.organizer_id where o.slug = 'ravoent' and e.status = 'live' order by e.starts_at desc limit 1`);
+    await env.as(organizer).patch(`/organizer/events/${live!.id}`, { title: 'Totally Different Party' });
+    await env.as(organizer).patch(`/organizer/events/${live!.id}`, { priceFrom: 999_000 });
+    const item = (await env.as(admin).get('/admin/queue')).body.items.find((x: any) => x.id === live!.id);
+    assert.equal(item.kind, 'revision');
+    assert.ok(item.changes.some((c: any) => c.field === 'title' && c.before === live!.title), 'the first “before” is kept across two edits');
+    const sentBack = await env.as(admin).post('/admin/listings/reject', { ids: [live!.id], code: Object.keys((await env.as(admin).get('/admin/reject-reasons')).body.items.reduce((m: any, x: any) => ({ ...m, [x.code]: 1 }), {}))[0] });
+    assert.equal(sentBack.status, 200, JSON.stringify(sentBack.body));
+    const back = await one<any>(env.ctx.db, 'select status, title, needs_review_at from events where id = $1', [live!.id]);
+    assert.equal(back.status, 'live');
+    assert.equal(back.title, live!.title);
+    assert.equal(back.needs_review_at, null);
+    assert.equal((await env.as().get(`/events/${live!.slug}`)).status, 200);
+  });
+
+  it('saving a form that leaves the reviewed fields as they were is not a change', async () => {
+    const live = await one<any>(env.ctx.db, `select e.id, e.title from events e join organizers o on o.id = e.organizer_id where o.slug = 'ravoent' and e.status = 'live' and e.needs_review_at is null limit 1`);
+    const r = await env.as(organizer).patch(`/organizer/events/${live.id}`, { title: live.title, description: { en: 'Only the text', vi: 'Chỉ đổi mô tả' } });
+    assert.equal(r.body.reviewPending, null);
   });
 
   it('a community listing waits for review too, and the admins are told', async () => {

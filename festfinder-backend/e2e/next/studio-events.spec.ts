@@ -65,15 +65,25 @@ test.describe('Studio events', () => {
     await expect.poll(async () => (await (await page.request.get('/organizer/events/' + id)).json()).description.en).toBe(text);
     expect((await (await page.request.get('/organizer/events/' + id)).json()).status).toBe('live');
 
-    // The date sends a live listing back to review: the editor asks, and cancelling keeps it live.
+    // A date change waits for the team's review: the editor names it and asks; cancelling changes nothing.
     await page.getByLabel('Ngày', { exact: true }).fill('2026-09-25');
     await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
     const dialog = page.getByRole('alertdialog');
-    await expect(dialog.getByRole('heading', { name: 'Gửi duyệt lại tin đang đăng?' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Lưu và gửi thay đổi để duyệt?' })).toBeVisible();
+    await expect(dialog.getByText('Bạn đã sửa: ngày. Trang vẫn hiện trong lúc đội FeestFinder duyệt.')).toBeVisible();
     await dialog.getByRole('button', { name: 'Huỷ' }).click();
     const after = await (await page.request.get('/organizer/events/' + id)).json();
     expect(after.status).toBe('live');
     expect(after.startsOn).toBe('2026-09-18');
+
+    // Saved: the listing stays live and its page stays up, with the change waiting for review.
+    await page.getByRole('button', { name: 'Lưu thay đổi', exact: true }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Lưu', exact: true }).click();
+    await expect(page.getByText('Thay đổi đang chờ duyệt')).toBeVisible();
+    const saved = await (await page.request.get('/organizer/events/' + id)).json();
+    expect(saved.status).toBe('live');
+    expect(saved.startsOn).toBe('2026-09-25');
+    expect((await page.request.get('/events/' + saved.slug)).status()).toBe(200);
     expect(problems).toEqual([]);
   });
 

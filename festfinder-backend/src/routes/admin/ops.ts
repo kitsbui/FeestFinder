@@ -70,7 +70,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     const today = vnDate(now);
     const dayStart = atVn(today);
     const [queue, counts, decided, orders, upcoming, activity] = await Promise.all([
-      many<any>(ctx.db, `select submitted_at, flag, risk_score from events where status = 'in_review'`),
+      many<any>(ctx.db, `select coalesce(needs_review_at, submitted_at) as submitted_at, flag, risk_score from events where status = 'in_review' or (status = 'live' and needs_review_at is not null)`),
       one<any>(ctx.db,
         `select (select count(distinct event_id)::int from listing_reports where resolved_at is null) as reports,
                 (select count(*)::int from appeals where state in ('open','replied') and closes_at > $1) as appeals,
