@@ -20,7 +20,9 @@ import { isCutOver } from './kd/cutover';
 /** Where the FeestFinder API runs (as in next.config.ts). */
 const API = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
 const SECRET = process.env.VERCEL === '1' ? (process.env.WEB_PROXY_SECRET ?? '').trim() : '';
-const OURS = ['x-ff-web-secret', 'x-ff-client-ip', 'x-ff-client-country', 'x-ff-web-origin'];
+const OURS = ['x-ff-web-secret', 'x-ff-client-ip', 'x-ff-client-country', 'x-ff-web-origin', 'x-ff-session'];
+/** The API's session cookie (`SESSION_COOKIE` in festfinder-backend/src/http/session.ts). */
+const SESSION = /(?:^|;\s*)ff_session=/;
 /** Hop-by-hop and framing headers, which the fetch sets for itself. */
 const HOP = ['host', 'connection', 'keep-alive', 'proxy-connection', 'transfer-encoding', 'te', 'trailer', 'upgrade', 'expect', 'content-length'];
 
@@ -39,6 +41,10 @@ export async function proxy(request: NextRequest) {
   // Only this proxy speaks these headers; Vercel's own (its OIDC token among them) stay here.
   for (const h of [...OURS, ...HOP]) headers.delete(h);
   for (const h of [...headers.keys()]) if (h.startsWith('x-vercel-') || h.startsWith('x-middleware-')) headers.delete(h);
+  // Whether the visitor is signed in, as one yes: the API's public reads vary on this header for
+  // the CDN (Vercel does not cache a response that varies on Cookie), so a signed-in visitor never
+  // gets the shared copy of a list that marks what they saved.
+  if (SESSION.test(request.headers.get('cookie') ?? '')) headers.set('x-ff-session', '1');
   // Unencoded, so the body passes through as it came (fetch would decode it and keep the header).
   headers.set('accept-encoding', 'identity');
   // Vercel sets X-Forwarded-For to the visitor's address and overwrites anything a client sent.

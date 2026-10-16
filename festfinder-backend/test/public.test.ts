@@ -17,14 +17,20 @@ describe('public discovery (Web + App, signed out)', () => {
     for (const url of ['/events?limit=5', '/events/map', '/events/ravo', '/artists', '/organizers/ravoent']) {
       const r = await env.as().get(url);
       assert.equal(r.status, 200, url);
-      assert.equal(r.headers['cache-control'], 'public, max-age=0, s-maxage=60, stale-while-revalidate=300', url);
-      assert.match(String(r.headers.vary), /cookie/, `${url} varies by cookie`);
+      assert.equal(r.headers['vercel-cdn-cache-control'], 'max-age=60, stale-while-revalidate=300', url);
+      assert.equal(r.headers['cache-control'], 'public, max-age=0, must-revalidate', `${url}: the browser never reuses a stale copy`);
+      assert.match(String(r.headers.vary), /x-ff-session/, `${url} varies by whether the visitor is signed in`);
+      assert.doesNotMatch(String(r.headers.vary), /cookie/i, `${url}: Vercel never caches a response that varies on Cookie`);
     }
     const token = await env.attendee();
-    assert.equal((await env.as(token).get('/events?limit=5')).headers['cache-control'], 'private, no-store', 'signed in: never shared');
+    const signedIn = await env.as(token).get('/events?limit=5');
+    assert.equal(signedIn.headers['cache-control'], 'private, no-store', 'signed in: never shared');
+    assert.equal(signedIn.headers['vercel-cdn-cache-control'], undefined);
     const withCookie = await env.as().get('/events?limit=5', { cookie: 'ff_session=whatever' });
-    assert.notEqual(withCookie.headers['cache-control'], 'public, max-age=0, s-maxage=60, stale-while-revalidate=300', 'a session cookie, even a stale one, is never served a shared copy');
-    assert.equal((await env.as().get('/events/ravo/resale')).headers['cache-control']?.includes('s-maxage=60') ?? false, false, 'nothing nested is public');
+    assert.equal(withCookie.headers['vercel-cdn-cache-control'], undefined, 'a session cookie, even a stale one, is never served a shared copy');
+    const flagged = await env.as().get('/events?limit=5', { 'x-ff-session': '1' });
+    assert.equal(flagged.headers['vercel-cdn-cache-control'], undefined, 'nothing is stored under the signed-in key');
+    assert.equal((await env.as().get('/events/ravo/resale')).headers['vercel-cdn-cache-control'], undefined, 'nothing nested is public');
     assert.equal((await env.as().get('/me/tickets')).status, 401);
     assert.equal((await env.as().get('/map/style.json')).headers['cache-control'], 'public, max-age=300, s-maxage=3600');
   });
