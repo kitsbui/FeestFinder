@@ -265,7 +265,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   app.addHook('onSend', async (req, reply, payload) => {
     if (reply.hasHeader('cache-control')) return payload;
     if (req.session || reply.hasHeader('set-cookie')) reply.header('cache-control', 'private, no-store');
-    else if (req.method === 'GET' && reply.statusCode === 200 && !hasSessionCookie(req) && !req.headers['x-ff-session'] && isPublicRead(req.url)) {
+    else if ((req.method === 'GET' || req.method === 'HEAD') && reply.statusCode === 200 && !hasSessionCookie(req) && !req.headers['x-ff-session'] && isPublicRead(req.url)) {
       // Only Vercel's CDN keeps the copy (it reads this header and passes it on to nobody); the
       // browser asks again every time, so signing in never shows a stale anonymous answer.
       reply.header('cache-control', 'public, max-age=0, must-revalidate');

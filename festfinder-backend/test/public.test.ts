@@ -23,6 +23,8 @@ describe('public discovery (Web + App, signed out)', () => {
       assert.doesNotMatch(String(r.headers.vary), /cookie/i, `${url}: Vercel never caches a response that varies on Cookie`);
     }
     const token = await env.attendee();
+    const head = await env.app.inject({ method: 'HEAD', url: '/events?limit=5' });
+    assert.equal(head.headers['vercel-cdn-cache-control'], 'max-age=60, stale-while-revalidate=300', 'HEAD answers like GET (curl -I)');
     const signedIn = await env.as(token).get('/events?limit=5');
     assert.equal(signedIn.headers['cache-control'], 'private, no-store', 'signed in: never shared');
     assert.equal(signedIn.headers['vercel-cdn-cache-control'], undefined);
