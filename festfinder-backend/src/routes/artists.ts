@@ -55,6 +55,7 @@ import { artistKind, label, styleItem } from '../services/artists.ts';
 import { badgesOf } from '../services/badges.ts';
 import { momentsOf } from './moments.ts';
 import { mixesOf } from '../services/mixes.ts';
+import { confirmLineup, disputeLineup, lineupOf } from '../services/lineup.ts';
 
 
 
@@ -87,8 +88,10 @@ export default async function artistRoutes(app: FastifyInstance) {
     const userId = req.session?.user?.id ?? null;
     const [rows, past, follows, styles, organizers, venues, lineups, similar] = await Promise.all([
       many<any>(ctx.db,
+        // A profile an artist runs shows the shows they confirmed (anyone can type a name into a lineup).
         `select ${CARD_COLUMNS} from event_artists ea join events e on e.id = ea.event_id join organizers o on o.id = e.organizer_id
-          where ea.artist_id = $1 and e.status = 'live' and not e.held_for_reports and (e.ends_at is null or e.ends_at >= $2) order by e.starts_at limit 60`, [a.id, now]),
+          where ea.artist_id = $1 and e.status = 'live' and not e.held_for_reports and (e.ends_at is null or e.ends_at >= $2)
+            and ($3::boolean or ea.confirmed_at is not null) order by e.starts_at limit 60`, [a.id, now, !a.owner_user_id]),
       many<any>(ctx.db,
         `select e.id, e.slug, e.title, e.starts_on::text as starts_on, e.city, e.venue_name from event_artists ea join events e on e.id = ea.event_id
           where ea.artist_id = $1 and e.status = 'live' and not e.held_for_reports and e.ends_at < $2 order by e.starts_at desc limit 20`, [a.id, now]),
@@ -275,6 +278,30 @@ export default async function artistRoutes(app: FastifyInstance) {
     }
     void ctx.analytics.capture('gig_reported', personId(s.user.id), { outcome: out.outcome });
     return { ...out, message: out.outcome === 'merged' ? L('Added to the event already listed', 'Đã gắn vào sự kiện đang có') : L('Sent for review', 'Đã gửi để kiểm duyệt') };
+  });
+
+  // ---- the lineup handshake (D13): the shows that list this artist, and their answer ----------
+
+  app.get('/me/artist/lineup', async (req) => {
+    const s = requireUser(req);
+    const a = await owned(s.user.id);
+    return { items: await lineupOf(ctx.db, a.id, ctx.clock.now()) };
+  });
+
+  app.post<{ Params: { eventId: string } }>('/me/artist/lineup/:eventId/confirm', async (req) => {
+    const s = requireUser(req);
+    const a = await owned(s.user.id);
+    if (!(await confirmLineup(ctx.db, a.id, parse(uuid, req.params.eventId), ctx.clock.now()))) throw notFound(L('You are not on this lineup', 'Bạn không có trong lineup này'));
+    return { ok: true, message: L('Confirmed · it shows on your profile', 'Đã xác nhận · show hiện trên hồ sơ của bạn') };
+  });
+
+  app.post<{ Params: { eventId: string } }>('/me/artist/lineup/:eventId/dispute', async (req) => {
+    const s = requireUser(req);
+    const a = await owned(s.user.id);
+    const { note } = parse(z.object({ note: z.string().trim().max(500).optional() }), req.body ?? {});
+    const done = await ctx.db.tx((q) => disputeLineup(q, a.id, parse(uuid, req.params.eventId), note || null, ctx.clock.now()));
+    if (!done) throw notFound(L('You are not on this lineup', 'Bạn không có trong lineup này'));
+    return { ok: true, message: L('Unlinked · the organiser is told', 'Đã gỡ liên kết · nhà tổ chức đã được báo') };
   });
 
   app.get('/me/artist/gigs', async (req) => {

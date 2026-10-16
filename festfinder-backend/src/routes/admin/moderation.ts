@@ -19,6 +19,7 @@ import { notifySubmitter } from '../../services/community.ts';
 import { queueIndexNow } from '../../services/seo.ts';
 import { refreshDerived, REVIEW_COLUMNS } from '../../services/events.ts';
 import { openReportWeight, REPORT_HOLD_THRESHOLD } from '../event-actions.ts';
+import { askArtistsToConfirm } from '../../services/lineup.ts';
 
 const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 
@@ -117,6 +118,7 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
   });
   if (!ev.published_at) await announceNewListing(q, ev.id, now);
   await refreshConfidence(q, now, [ev.id]);
+  await askArtistsToConfirm(q, ev.id, now);
   await notifySubmitter(q, ev, now, 'live');
   await queueIndexNow(q, ctx, ev.slug);
   return ev;

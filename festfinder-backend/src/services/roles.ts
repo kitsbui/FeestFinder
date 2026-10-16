@@ -8,6 +8,7 @@ import { PROFILE_ARTS } from '../lib/format.ts';
 import { cityOf } from '../lib/places.ts';
 import type { OrganizerType } from '../lib/network.ts';
 import { artistKey, ensureArtists, adoptNameFollows } from './artists.ts';
+import { announceTakeover } from './lineup.ts';
 
 /*
  * Personas. Every account attends: buys tickets, saves, follows. On top of that it has at most one
@@ -130,6 +131,7 @@ export async function startArtistProfile(q: Queryable, userId: string, a: NewArt
     [id, userId, a.stageName.trim(), a.roles, city?.slug ?? null, city?.countryCode ?? null, a.styles, now]);
   // Anyone who followed or asked to be told about this name now follows the profile.
   await adoptNameFollows(q, id);
+  await announceTakeover(q, id, now);
   await setRole(q, userId, 'artist', 'active', now);
   return row!;
 }
