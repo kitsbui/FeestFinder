@@ -219,6 +219,8 @@ test.describe('the artist studio, signed in', () => {
     await page.getByLabel('Địa điểm', { exact: true }).fill(`Kho ${stamp()}`);
     await page.getByRole('button', { name: 'Gửi', exact: true }).click();
     await expect(page.getByRole('row').filter({ hasText: gig }).first()).toContainText('Có tên bạn');
+    // Still in review: no link to a page that would answer 404.
+    await expect(page.getByRole('row').filter({ hasText: gig }).first().getByRole('link', { name: gig })).toHaveCount(0);
 
     await open(page, '/studio/artist/gear');
     const item = `Owl Box ${stamp()}`;

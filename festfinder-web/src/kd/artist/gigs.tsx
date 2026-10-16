@@ -267,7 +267,8 @@ function Reported({ lang }: { lang: Lang }) {
               {items.map((r) => (
                 <Row key={r.id} cols={REP_COLS} className="py-3">
                   <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-                    {r.event ? <KdLink className="kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug}>{r.event.title}</KdLink> : <span className="kd-hs kd-ell">{r.report.title}</span>}
+                    {/* Only a public listing has a page: one still in review would answer 404. */}
+                    {r.event?.status === 'live' ? <KdLink className="kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug}>{r.event.title}</KdLink> : <span className="kd-hs kd-ell">{r.event?.title ?? r.report.title}</span>}
                     <span className="kd-s kd-num">{[dayMonth(r.event?.startsOn ?? r.report.startsOn, lang), r.report.venueName].filter(Boolean).join(' · ')}</span>
                   </span>
                   <span role="cell">{r.event ? <Status tone={r.event.status === 'live' ? 'ok' : r.event.status === 'in_review' ? 'warn' : r.event.status === 'rejected' ? 'bad' : 'none'}>{statusLabel(r.event.status)}</Status> : <Status tone="bad">{T.notTaken}</Status>}</span>
