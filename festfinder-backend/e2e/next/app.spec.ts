@@ -145,14 +145,15 @@ test.describe('the app', () => {
     const vip = ev.tickets.tiers.find((t: { name: { en: string } }) => t.name.en === 'VIP');
     const problems = await open(page, `/app/checkout/ravo?tier=${vip.id}&qty=2`);
     await expect(page.getByRole('radio', { name: /^VIP/ })).toHaveAttribute('aria-checked', 'true');
-    // 2 × 2.400.000₫ and the 5% service fee.
-    await expect(page.getByRole('button', { name: 'Thanh toán 5.040.000₫' })).toBeVisible();
+    // 2 × 2.400.000₫, no fee on top.
+    await expect(page.getByRole('button', { name: 'Thanh toán 4.800.000₫' })).toBeVisible();
+    await expect(page.getByText('Phí dịch vụ')).toHaveCount(0);
     await page.getByRole('textbox', { name: 'Mã giảm giá' }).fill('NOPE');
     await page.getByRole('button', { name: 'Áp dụng' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Mã này không dùng được' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Mã giảm giá' }).fill('rave10');
     await page.getByRole('button', { name: 'Áp dụng' }).click();
-    await page.getByRole('button', { name: 'Thanh toán 4.536.000₫' }).click();
+    await page.getByRole('button', { name: 'Thanh toán 4.320.000₫' }).click();
     await expect(page).toHaveURL(/\/app\/tickets$/);
     await expect(page.getByRole('article', { name: 'Ravolution Music Festival' }).filter({ hasText: 'VIP' })).toBeVisible();
     expect(problems).toEqual([]);
@@ -164,7 +165,9 @@ test.describe('the app', () => {
     const listing = (await (await page.request.get('/events/rapviet/resale')).json()).items[0];
     await open(page, `/app/checkout/rapviet?listing=${listing.id}`);
     await expect(page.getByText(/Vé pass · /)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Thanh toán 682.500₫' })).toBeVisible();
+    // The seller's price, no fee on top.
+    await expect(page.getByRole('button', { name: 'Thanh toán 650.000₫' })).toBeVisible();
+    await expect(page.getByText('Phí dịch vụ')).toHaveCount(0);
   });
 
   test('the profile tab: passport, Wrapped, following, and the language this device keeps', async ({ page }) => {

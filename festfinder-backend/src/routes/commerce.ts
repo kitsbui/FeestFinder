@@ -17,7 +17,6 @@ import { fulfilOrder, qrToken } from '../services/tickets.ts';
 import { fulfilResale } from '../services/resale.ts';
 import { notifyUser } from '../services/notify.ts';
 
-export const SERVICE_FEE_PCT = Number(process.env.SERVICE_FEE_PCT ?? 5);
 const HOLD_MINUTES = 15;
 
 const CheckoutInput = z.object({
@@ -55,8 +54,9 @@ async function quote(ctx: Ctx, q: Queryable, input: z.infer<typeof CheckoutInput
   }
   const subtotal = tier.price * input.qty;
   const discount = promo ? Math.round((subtotal * promo.pct) / 100) : 0;
-  const fee = Math.round(((subtotal - discount) * SERVICE_FEE_PCT) / 100);
-  const total = subtotal - discount + fee;
+  // FeestFinder charges buyers no fee: they pay the ticket price, less any promo code.
+  const fee = 0;
+  const total = subtotal - discount;
   return {
     ev, tier, promo,
     body: {
@@ -68,12 +68,10 @@ async function quote(ctx: Ctx, q: Queryable, input: z.infer<typeof CheckoutInput
       discount,
       promo: promo ? { code: promo.code, pct: promo.pct } : null,
       fee,
-      feeLabel: L(`Service fee ${SERVICE_FEE_PCT}%`, `Phí dịch vụ ${SERVICE_FEE_PCT}%`),
       total,
       lines: [
         { label: L(`${input.qty} × ${tier.name.en}`, `${input.qty} × ${tier.name.vi}`), amount: subtotal },
         ...(discount ? [{ label: L(`Code ${promo.code} (−${promo.pct}%)`, `Mã ${promo.code} (−${promo.pct}%)`), amount: -discount }] : []),
-        { label: L('Service fee', 'Phí dịch vụ'), amount: fee },
       ],
       refundPolicy: REFUND_POLICY,
     },

@@ -14,7 +14,7 @@ import { appendAudit } from '../services/audit.ts';
 import { notifyUser } from '../services/notify.ts';
 import { nameOf, phaseOf } from '../services/community.ts';
 import {
-  alertWatchers, assertMovable, checkResalePrice, closeListingFor, fulfilResale, loadTicket, moveTicket, resaleCode, RESALE_FEE_PCT, RESALE_HOLD_MINUTES,
+  alertWatchers, assertMovable, checkResalePrice, closeListingFor, fulfilResale, loadTicket, moveTicket, resaleCode, RESALE_HOLD_MINUTES,
 } from '../services/resale.ts';
 
 const firstName = (name: string) => nameOf(name).split(/\s+/).slice(-1)[0];
@@ -65,7 +65,6 @@ export default async function resaleRoutes(app: FastifyInstance) {
       count: rows.length,
       fromPrice: rows.length ? rows[0].price : null,
       watching: !!watching,
-      feePct: RESALE_FEE_PCT,
       items: rows.map((r) => ({
         id: r.id, price: r.price, faceValue: r.face_value, tier: r.tier_name, listedAt: r.created_at,
         seller: { name: firstName(r.seller_name), initials: initialsOf(nameOf(r.seller_name)) },
@@ -170,10 +169,8 @@ export default async function resaleRoutes(app: FastifyInstance) {
 
   // ---- the buyer's side --------------------------------------------------------------------
 
-  const priceOf = (price: number) => {
-    const fee = Math.round((price * RESALE_FEE_PCT) / 100);
-    return { price, fee, total: price + fee };
-  };
+  // No fee on a resale either: the buyer pays the seller's price.
+  const priceOf = (price: number) => ({ price, fee: 0, total: price });
 
   app.post<{ Params: { listingId: string } }>('/resale/:listingId/quote', async (req) => {
     requireUser(req);
@@ -186,7 +183,6 @@ export default async function resaleRoutes(app: FastifyInstance) {
       ...p, faceValue: l.face_value, tier: l.tier_name, event: { id: l.event_id, title: l.title },
       lines: [
         { label: L(`Resale ticket · ${l.tier_name?.en ?? 'GA'}`, `Vé pass · ${l.tier_name?.vi ?? 'GA'}`), amount: p.price },
-        { label: L(`Service fee ${RESALE_FEE_PCT}%`, `Phí dịch vụ ${RESALE_FEE_PCT}%`), amount: p.fee },
       ],
       holdMinutes: RESALE_HOLD_MINUTES,
     };

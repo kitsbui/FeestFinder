@@ -6,8 +6,6 @@ import { randomCode } from '../lib/crypto.ts';
 import { vnd } from '../lib/format.ts';
 import { notifyUser } from './notify.ts';
 
-/** What a buyer pays on top of the seller's price, the same rate as a first-hand ticket. */
-export const RESALE_FEE_PCT = Number(process.env.SERVICE_FEE_PCT ?? 5);
 /** How long a buyer has to pay before the ticket goes back on the list. */
 export const RESALE_HOLD_MINUTES = 10;
 /** Sellers are paid this long after the event ends, once it is clear it happened. */

@@ -48,7 +48,9 @@ describe('passing tickets on', () => {
     const cursor = manifest.body.cursor;
 
     const quote = await env.as(buyer).post(`/resale/${before.listing.id}/quote`);
-    assert.equal(quote.body.total, 1_100_000 + 55_000);
+    assert.equal(quote.body.fee, 0, 'no fee on a resale');
+    assert.equal(quote.body.total, 1_100_000, 'the buyer pays the seller’s price');
+    assert.equal(quote.body.lines.length, 1);
     assert.equal((await env.as(minh).post(`/resale/${before.listing.id}/orders`, { paymentMethod: 'momo' })).body.error.code, 'own_listing');
     const bought = await env.as(buyer).post(`/resale/${before.listing.id}/orders`, { paymentMethod: 'momo' });
     assert.equal(bought.status, 201);
