@@ -10,6 +10,7 @@ import { limit, parse, uuid } from '../lib/validate.ts';
 import { imageChange } from '../services/remote-images.ts';
 import { BANKS } from '../lib/vietqr.ts';
 import { artistKey } from '../services/artists.ts';
+import { isUuid } from '../http/sql.ts';
 import { requireUser } from '../http/guards.ts';
 import { decodeCursor, page } from '../http/sql.ts';
 import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
@@ -205,18 +206,41 @@ export default async function meRoutes(app: FastifyInstance) {
     return { following: false, message: fill(L('Unfollowed {n}', 'Đã bỏ theo dõi {n}'), { n: org.name }) };
   });
 
+  /**
+   * The artist a follow is about: its id, its slug, or (for older screens) a name or alias it is
+   * listed under. Null when no record matches.
+   */
+  const artistByRef = async (ref: string) => {
+    const r = ref.trim();
+    if (isUuid(r)) return one<any>(ctx.db, 'select id, name, slug, owner_user_id, verified from artists where id = $1', [r]);
+    const bySlug = await one<any>(ctx.db, 'select id, name, slug, owner_user_id, verified from artists where slug = $1', [r]);
+    if (bySlug) return bySlug;
+    const key = artistKey(r);
+    return one<any>(ctx.db, 'select id, name, slug, owner_user_id, verified from artists where normalized_name = $1 or $1 = any(alias_keys) limit 1', [key]);
+  };
+
+  // A follow is of a profile an artist runs (D13): an unclaimed name is followed through Smart
+  // Alerts ("Nhắc khi có show") instead, and nobody follows their own profile.
   app.put<{ Params: { artist: string } }>('/me/follows/artists/:artist', async (req) => {
     const s = requireUser(req);
-    const artist = parse(z.string().min(1).max(100), decodeURIComponent(req.params.artist)).trim();
-    await ctx.db.query('insert into artist_follows (user_id, artist) values ($1,$2) on conflict do nothing', [s.user.id, artist]);
-    return { following: true, message: fill(L('Following {n}', 'Đang theo dõi {n}'), { n: artist }) };
+    const ref = parse(z.string().min(1).max(100), decodeURIComponent(req.params.artist));
+    const a = await artistByRef(ref);
+    if (!a) throw notFound(L('Artist not found', 'Không tìm thấy nghệ sĩ'));
+    if (a.owner_user_id === s.user.id) throw conflict('own_profile', L('This is your own profile', 'Đây là hồ sơ của chính bạn'));
+    if (!a.owner_user_id && !a.verified) throw badRequest('not_claimed', L('Nobody runs this profile yet: ask to be told when they have a show instead', 'Hồ sơ này chưa có người quản lý: hãy chọn "Nhắc khi có show"'));
+    await ctx.db.query(
+      `insert into artist_follows (user_id, artist, artist_id) values ($1,$2,$3)
+       on conflict (user_id, artist) do update set artist_id = excluded.artist_id`, [s.user.id, a.name, a.id]);
+    return { following: true, message: fill(L('Following {n}', 'Đang theo dõi {n}'), { n: a.name }) };
   });
 
   app.delete<{ Params: { artist: string } }>('/me/follows/artists/:artist', async (req) => {
     const s = requireUser(req);
-    const artist = decodeURIComponent(req.params.artist).trim();
-    await ctx.db.query('delete from artist_follows where user_id = $1 and artist = $2', [s.user.id, artist]);
-    return { following: false, message: fill(L('Unfollowed {n}', 'Đã bỏ theo dõi {n}'), { n: artist }) };
+    const ref = decodeURIComponent(req.params.artist).trim();
+    const a = await artistByRef(ref);
+    // Unfollowing always works, by profile or by the name an older follow kept.
+    await ctx.db.query('delete from artist_follows where user_id = $1 and (artist = $2 or ($3::uuid is not null and artist_id = $3))', [s.user.id, ref, a?.id ?? null]);
+    return { following: false, message: fill(L('Unfollowed {n}', 'Đã bỏ theo dõi {n}'), { n: a?.name ?? ref }) };
   });
 
   /** Organisers panel: followed first, then others to discover, each with their next event. */
@@ -235,6 +259,13 @@ export default async function meRoutes(app: FastifyInstance) {
            or exists (select 1 from organizer_follows f where f.user_id = $1 and f.organizer_id = o.id)
         order by events desc, o.name`, [s.user.id, now]);
     const artists = await many<any>(ctx.db, 'select artist, created_at from artist_follows where user_id = $1 order by created_at desc', [s.user.id]);
+    // The profiles followed (migration 041), each with its next show.
+    const profiles = await many<any>(ctx.db,
+      `select a.id, a.slug, a.name, a.image_url,
+              (select json_build_object('slug', e.slug, 'title', e.title, 'startsOn', e.starts_on)
+                 from event_artists ea join events e on e.id = ea.event_id
+                where ea.artist_id = a.id and e.status = 'live' and not e.held_for_reports and e.ends_at >= $2 order by e.starts_at limit 1) as next
+         from artist_follows f join artists a on a.id = f.artist_id where f.user_id = $1 order by f.created_at desc`, [s.user.id, now]);
     const shape = (o: any) => ({
       id: o.id, slug: o.slug, name: o.name, initials: o.initials, art: o.art, logoUrl: o.logo_url,
       verified: o.verification_state === 'verified', followersCount: o.followers_count,
@@ -248,6 +279,7 @@ export default async function meRoutes(app: FastifyInstance) {
     return {
       organizers: { following: orgs.filter((o) => o.following).map(shape), discover: orgs.filter((o) => !o.following).map(shape) },
       artists: artists.map((a) => a.artist),
+      profiles: profiles.map((a) => ({ id: a.id, slug: a.slug, name: a.name, imageUrl: a.image_url, next: a.next })),
       artistPages: artists.map((a, i) => ({ name: a.artist, slug: slugOf(keys[i]) })),
     };
   });

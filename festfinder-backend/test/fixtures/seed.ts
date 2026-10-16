@@ -14,6 +14,7 @@ import { addDays, atVn } from '../../src/lib/time.ts';
 import { sha256 } from '../../src/lib/crypto.ts';
 import { appendAudit } from '../../src/services/audit.ts';
 import { refreshDerived } from '../../src/services/events.ts';
+import { artistKey, backfillArtistFollows } from '../../src/services/artists.ts';
 import { assessRisk } from '../../src/services/risk.ts';
 
 const ART = {
@@ -423,6 +424,19 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query(`update events e set save_count = (select count(*) from saves s where s.event_id = e.id)`);
     for (const slug of ['ravoent', 'hozoco', 'momangco']) await q.query('insert into organizer_follows (user_id, organizer_id) values ($1,$2)', [demo.id, ids.org[slug]]);
     await q.query(`insert into artist_follows (user_id, artist) values ($1,'Hoaprox')`, [demo.id]);
+
+    // Two artists who run their own profile (D13: the directory lists only those). Everyone else
+    // on a lineup stays unclaimed, so the claim flows have names to claim.
+    for (const [name, email, bio, city] of [
+      ['Trần Duy', 'tranduy@example.com', L('House and disco edits, Saigon nights since 2016.', 'House và disco edit, chơi đêm Sài Gòn từ 2016.'), 'ho-chi-minh'],
+      ['SlimV', 'slimv@example.com', L('Producer and DJ: big-room and progressive.', 'Producer và DJ: big-room và progressive.'), 'ho-chi-minh'],
+    ] as const) {
+      const u = await one<any>(q, `insert into users (name, email, password_hash, signup_method, city, created_at) values ($1,$2,$3,'email','TP.HCM',$4) returning id`, [name, email, demoHash, hours(24 * 300)]);
+      await q.query(`insert into user_roles (user_id, role, status) values ($1,'artist','active')`, [u.id]);
+      await q.query(`update artists set owner_user_id = $2, bio = $3, artist_roles = '{dj,producer}', based_city = $4, based_country = 'VN'
+                      where normalized_name = $1`, [artistKey(name), u.id, json(bio), city]);
+    }
+    await q.query(`insert into artist_follows (user_id, artist, artist_id) select $1, name, id from artists where owner_user_id is not null and name = 'SlimV'`, [demo.id]);
     await q.query(`insert into smart_alerts (user_id, enabled, genres, styles, areas, price_cap) values ($1, true, '{EDM}', '{house}', '{Quận 1,Quận 3}', 1000000)`, [demo.id]);
 
     // ---- timetables & site maps ----
@@ -667,6 +681,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
 
     // The demo accounts are past the role picker; organiser members organise.
     await q.query('update users set onboarded_at = created_at, email_verified_at = case when email is not null then created_at end');
+    // As the boot does on real data: follows made by name join the profile they name (migration 041).
+    await backfillArtistFollows(q);
     await q.query(`insert into user_roles (user_id, role, status) select distinct user_id, 'organizer', 'active' from organizer_members on conflict do nothing`);
 
     const counts = await one<any>(q,
