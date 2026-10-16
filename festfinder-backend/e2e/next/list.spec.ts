@@ -14,6 +14,17 @@ async function open(page: Page, path: string) {
 }
 
 test.describe('the list', () => {
+  test('a phone opens the list on cards, not on a table wider than the screen', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const problems = await open(page, '/list');
+    await expect(page.getByRole('link', { name: 'Ravolution Music Festival' }).first()).toBeVisible();
+    await expect(page.getByRole('row')).toHaveCount(0);
+    // An address that names the table keeps it.
+    await open(page, '/list?view=table');
+    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    expect(problems).toEqual([]);
+  });
+
   test('shows every event as a table or a grid, by city', async ({ page }) => {
     const problems = await open(page, '/list');
     await expect(page.getByRole('heading', { level: 1, name: 'Tất cả sự kiện' })).toBeVisible();

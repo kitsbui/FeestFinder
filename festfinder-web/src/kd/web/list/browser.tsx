@@ -146,7 +146,10 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
 
   // The address decides; then the list asks the API.
   useEffect(() => {
-    const next = readFilters(new URLSearchParams(location.search), meta);
+    const q = new URLSearchParams(location.search);
+    const next = readFilters(q, meta);
+    // A phone opens on cards: the table needs a desktop's width. An address that names a view keeps it.
+    if (!q.has('view') && matchMedia('(max-width: 759px)').matches) next.view = 'grid';
     setF(next);
     setReady(true);
     const same = JSON.stringify({ ...next, view: 'table', bbox: null }) === JSON.stringify({ ...DEFAULT });
