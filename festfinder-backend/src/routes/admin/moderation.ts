@@ -18,6 +18,7 @@ import { moderationThread } from '../organizer/inbox.ts';
 import { notifySubmitter } from '../../services/community.ts';
 import { queueIndexNow } from '../../services/seo.ts';
 import { refreshDerived, REVIEW_COLUMNS } from '../../services/events.ts';
+import { openReportWeight, REPORT_HOLD_THRESHOLD } from '../event-actions.ts';
 
 const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 
@@ -391,14 +392,16 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
     const rows = await many<any>(ctx.db,
       `select r.event_id, r.code, r.note, r.created_at, r.user_id, e.title, e.status, e.held_for_reports
          from listing_reports r join events e on e.id = r.event_id where r.resolved_at is null order by r.created_at`);
+    // One case per listing: every reason inside it, each reporter counted once.
     const groups = new Map<string, any>();
     for (const r of rows) {
       const category = REPORT_CATEGORY[r.code];
-      const key = `${r.event_id}:${category}`;
-      const g = groups.get(key) ?? { id: key, eventId: r.event_id, category, subject: r.title, eventStatus: r.status, heldFromFeed: r.held_for_reports, reporters: new Set<string>(), oldest: r.created_at, quote: null };
+      const g = groups.get(r.event_id) ?? { id: r.event_id, eventId: r.event_id, subject: r.title, eventStatus: r.status, heldFromFeed: r.held_for_reports, reporters: new Set<string>(), byCategory: new Map<string, Set<string>>(), oldest: r.created_at, quote: null };
       g.reporters.add(r.user_id);
+      if (!g.byCategory.has(category)) g.byCategory.set(category, new Set());
+      g.byCategory.get(category).add(r.user_id);
       if (r.note) g.quote = r.note;
-      groups.set(key, g);
+      groups.set(r.event_id, g);
     }
     const stats = await many<any>(ctx.db, `select code, count(*)::int as n from listing_reports where created_at > $1 group by code`, [new Date(now.getTime() - 30 * 86400_000)]);
     const byCat: Record<string, number> = { refund: 0, wrong: 0, price: 0, safety: 0 };
@@ -406,20 +409,23 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
     return {
       items: [...groups.values()]
         .sort((a, b) => b.reporters.size - a.reporters.size)
-        .map((g) => ({
-          id: g.id, eventId: g.eventId, category: g.category, categoryLabel: CATEGORY_LABEL[g.category], subject: g.subject,
+        .map((g) => {
+          const categories = [...g.byCategory.entries()].map(([category, who]: [string, Set<string>]) => ({ category, label: CATEGORY_LABEL[category], count: who.size })).sort((a, b) => b.count - a.count);
+          return {
+          id: g.id, eventId: g.eventId, category: categories[0].category, categoryLabel: categories[0].label, categories, subject: g.subject,
           eventStatus: g.eventStatus, heldFromFeed: g.heldFromFeed, count: g.reporters.size, quote: g.quote,
           ageMinutes: Math.round((now.getTime() - new Date(g.oldest).getTime()) / 60000),
-        })),
+          };
+        }),
       last30Days: Object.entries(byCat).map(([category, count]) => ({ category, label: CATEGORY_LABEL[category], count })),
     };
   });
 
-  const resolveReports = async (q: Queryable, eventId: string, category: string | null, resolution: string, now: Date) => {
-    const codes = category ? Object.entries(REPORT_CATEGORY).filter(([, c]) => c === category).map(([k]) => k) : Object.keys(REPORT_CATEGORY);
-    const res = await many(q, `update listing_reports set resolved_at = $3, resolution = $4 where event_id = $1 and code = any($2::text[]) and resolved_at is null returning 1`, [eventId, codes, now, resolution]);
+  /** Closes every open report on a listing (a decision is about the listing, not one reason), and lifts the hold when what is left weighs too little. */
+  const resolveReports = async (q: Queryable, eventId: string, resolution: string, now: Date) => {
+    const res = await many(q, `update listing_reports set resolved_at = $2, resolution = $3 where event_id = $1 and resolved_at is null returning 1`, [eventId, now, resolution]);
     const open = await one<any>(q, 'select count(*)::int as n from listing_reports where event_id = $1 and resolved_at is null', [eventId]);
-    if (open.n === 0) await q.query('update events set held_for_reports = false where id = $1', [eventId]);
+    if ((await openReportWeight(q, eventId, now)) < REPORT_HOLD_THRESHOLD) await q.query('update events set held_for_reports = false where id = $1', [eventId]);
     return { resolved: res.length, stillOpen: open.n };
   };
 
@@ -434,7 +440,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
       if (ev.status === 'removed') throw conflict('already_removed', L('This listing is already down', 'Tin này đã bị hạ'));
       const open = await one<any>(q, 'select count(*)::int as n from listing_reports where event_id = $1 and resolved_at is null', [eventId]);
       await q.query(`update events set status = 'removed', decided_at = $2 where id = $1`, [eventId, now]);
-      await resolveReports(q, eventId, null, 'taken_down', now);
+      await resolveReports(q, eventId, 'taken_down', now);
       await q.query(`insert into moderation_decisions (event_id, decision, reason_code, decided_by, decided_at) values ($1,'taken_down',$2,$3,$4)`, [eventId, code ?? null, s.user.id, now]);
       await notifyOrganizer(q, now, {
         organizerId: ev.organizer_id, topic: 'moderation', kind: 'reject',
@@ -453,14 +459,17 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
   app.post<{ Params: { eventId: string } }>('/admin/reports/:eventId/warn', async (req) => {
     const s = requireAdmin(req);
     const eventId = parse(uuid, req.params.eventId);
-    const { category } = parse(z.object({ category: z.enum(['refund', 'wrong', 'price', 'safety']).optional() }), req.body ?? {});
     const now = ctx.clock.now();
     const strikes = await ctx.db.tx(async (q) => {
-      const ev = await one<any>(q, 'select e.*, o.name as org_name, o.strikes from events e join organizers o on o.id = e.organizer_id where e.id = $1', [eventId]);
+      const ev = await one<any>(q, 'select e.*, o.name as org_name, o.strikes, o.is_community from events e join organizers o on o.id = e.organizer_id where e.id = $1', [eventId]);
       if (!ev) throw notFound();
+      // The community and Radar placeholder is FeestFinder's own: a warning there would punish nobody.
+      if (ev.is_community) throw badRequest('community_listing', L('Nobody runs this listing to warn: take it down or dismiss the reports', 'Tin này không có nhà tổ chức để cảnh cáo: hãy hạ tin hoặc bỏ qua báo cáo'));
+      // One warning per case, whatever the number of reasons in it.
+      const r = await resolveReports(q, eventId, 'warned', now);
+      if (!r.resolved) throw badRequest('no_open_reports', L('No open reports to act on', 'Không có báo cáo nào đang mở'));
       const next = ev.strikes + 1;
       await q.query(`update organizers set strikes = $2, suspended_at = case when $2 >= 3 then coalesce(suspended_at, $3::timestamptz) else suspended_at end where id = $1`, [ev.organizer_id, next, now]);
-      await resolveReports(q, eventId, category ?? null, 'warned', now);
       await notifyOrganizer(q, now, {
         organizerId: ev.organizer_id, topic: 'moderation', kind: 'reject',
         title: L('Warning from FeestFinder', 'Cảnh báo từ FeestFinder'),
@@ -479,12 +488,11 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
   app.post<{ Params: { eventId: string } }>('/admin/reports/:eventId/dismiss', async (req) => {
     const s = requireAdmin(req);
     const eventId = parse(uuid, req.params.eventId);
-    const { category } = parse(z.object({ category: z.enum(['refund', 'wrong', 'price', 'safety']).optional() }), req.body ?? {});
     const now = ctx.clock.now();
     const out = await ctx.db.tx(async (q) => {
       const ev = await one<any>(q, 'select id, title from events where id = $1', [eventId]);
       if (!ev) throw notFound();
-      const r = await resolveReports(q, eventId, category ?? null, 'dismissed', now);
+      const r = await resolveReports(q, eventId, 'dismissed', now);
       if (!r.resolved) throw badRequest('no_open_reports', L('No open reports to dismiss', 'Không có báo cáo nào để bỏ qua'));
       await appendAudit(q, {
         at: now, ...actor(s), action: 'report.dismissed', targetType: 'event', targetId: eventId, targetLabel: ev.title,

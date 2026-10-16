@@ -25,7 +25,7 @@ import { MOD } from './moderation/copy';
 import { useConsole } from './root';
 
 interface Photo { id: string; url: string; caption: string | null; reports: number; reasons: { key: string; label: Pair }[]; owner: { kind: string; name: string | null; href: string | null } }
-interface Report { id: string; eventId: string; category: string; categoryLabel: Pair; subject: string; eventStatus: string; heldFromFeed: boolean; count: number; quote: string | null; ageMinutes: number }
+interface Report { id: string; eventId: string; category: string; categoryLabel: Pair; categories: { category: string; label: Pair; count: number }[]; subject: string; eventStatus: string; heldFromFeed: boolean; count: number; quote: string | null; ageMinutes: number }
 interface Reports { items: Report[]; last30Days: { category: string; label: Pair; count: number }[] }
 interface MixComment {
   id: string; body: string; hidden: boolean; reports: number; createdAt: string; author: string | null;
@@ -81,19 +81,21 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
   const options = useOptions();
   const load = useLoad<Reports>('/admin/reports');
   const cat = params.get('cat') ?? '';
+  // A notification about a listing hidden by reports opens its case (/console/reports?event=<id>).
+  const only = params.get('event');
   const sort = params.get('sort') === 'age' ? 'age' : 'count';
   const statusLabel = (s: string) => options?.statuses?.find((x: { value: string; label: Pair }) => x.value === s)?.label[lang] ?? s;
   const needle = q.trim().toLowerCase();
   const rows = useMemo(() => (load.data?.items ?? [])
-    .filter((r) => (!cat || r.category === cat) && (!needle || r.subject.toLowerCase().includes(needle)))
-    .sort((a, b) => (sort === 'age' ? b.ageMinutes - a.ageMinutes : b.count - a.count)), [load.data, cat, sort, needle]);
+    .filter((r) => (!only || r.eventId === only) && (!cat || r.categories.some((c) => c.category === cat)) && (!needle || r.subject.toLowerCase().includes(needle)))
+    .sort((a, b) => (sort === 'age' ? b.ageMinutes - a.ageMinutes : b.count - a.count)), [load.data, only, cat, sort, needle]);
 
   const decide = async (r: Report, kind: 'dismiss' | 'warn' | 'take-down') => {
     const ok = kind === 'dismiss' ? await ask({ title: M.dismissAsk, body: M.dismissBody, confirm: T.dismiss })
       : kind === 'warn' ? await ask({ title: M.warnAsk, body: M.warnBody, confirm: M.warnGo, danger: true })
       : await ask({ title: M.takeDownTitle, body: r.subject, confirm: T.takeDown, danger: true });
     if (!ok) return;
-    const out = await act(kd, lang, () => FF.post(`/admin/reports/${r.eventId}/${kind}`, kind === 'take-down' ? {} : { category: r.category }));
+    const out = await act(kd, lang, () => FF.post(`/admin/reports/${r.eventId}/${kind}`, {}));
     if (out) { load.reload(); refreshCounts(); }
   };
 
@@ -101,12 +103,12 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
     <Loaded load={load}>
       {(data) => (
         <>
-          <FilterBar onReset={cat ? () => setParams({ cat: null }) : null}>
+          <FilterBar onReset={cat || only ? () => setParams({ cat: null, event: null }) : null}>
             <Choice
               label={M.category}
               value={cat}
               onChange={(v) => setParams({ cat: v })}
-              options={data.last30Days.map((c) => ({ value: c.category, label: c.label[lang], aside: <span className="kd-num">{data.items.filter((x) => x.category === c.category).length}</span> }))}
+              options={data.last30Days.map((c) => ({ value: c.category, label: c.label[lang], aside: <span className="kd-num">{data.items.filter((x) => x.categories.some((y) => y.category === c.category)).length}</span> }))}
             />
             <Choice
               label={M.sort}
@@ -128,7 +130,7 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
                       <h2 className="kd-h">{r.subject}</h2>
                     </div>
                     <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      <Status tone={CAT_TONE[r.category] ?? 'none'}>{r.categoryLabel[lang]}</Status>
+                      {r.categories.map((c) => <Status key={c.category} tone={CAT_TONE[c.category] ?? 'none'}>{r.categories.length > 1 ? `${c.label[lang]} · ${c.count}` : c.label[lang]}</Status>)}
                       <Status tone={r.eventStatus === 'live' ? 'live' : r.eventStatus === 'removed' ? 'bad' : 'none'}>{statusLabel(r.eventStatus)}</Status>
                       {r.heldFromFeed ? <Status tone="warn">{T.heldFromFeed}</Status> : null}
                     </div>

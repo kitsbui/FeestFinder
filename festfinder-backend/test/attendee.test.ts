@@ -1,6 +1,7 @@
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
+import { emailUser } from './people.ts';
 import { crc16, parseTlv } from '../src/lib/vietqr.ts';
 import type { Guide, GuideEvent, GuideGenerator } from '../src/services/guide.ts';
 import { many } from '../src/db/index.ts';
@@ -129,6 +130,21 @@ describe('attendee (Web + App, signed in)', () => {
     assert.equal(second.body.heldFromFeed, true);
     const feed = await env.as().get('/events?time=tonight&limit=20');
     assert.ok(!feed.body.items.some((e: any) => e.slug === 'blues'));
+  });
+
+  it('two brand-new accounts cannot hide a listing on their own, and the team hears when one is hidden', async () => {
+    const id = env.ids.event.hozo;
+    const fresh1 = await emailUser(env, 'fresh-reporter-1@example.com');
+    const fresh2 = await emailUser(env, 'fresh-reporter-2@example.com');
+    assert.equal((await env.as(fresh1).post(`/events/${id}/reports`, { code: 'scam' })).body.heldFromFeed, false);
+    assert.equal((await env.as(fresh2).post(`/events/${id}/reports`, { code: 'scam' })).body.heldFromFeed, false, 'two accounts under a week old weigh one report');
+    const veteran = await env.login('team@ravolution.vn', 'ravolution2026');
+    assert.equal((await env.as(veteran).post(`/events/${id}/reports`, { code: 'wrong' })).body.heldFromFeed, true);
+    const told = await many<any>(env.ctx.db, `select n.link from notifications n join users u on u.id = n.user_id where u.role = 'admin' and n.kind = 'listing_hidden'`);
+    assert.ok(told.some((n) => n.link.url === `/console/reports?event=${id}`));
+    // Back as it was, for the tests after this one.
+    await env.ctx.db.query('update listing_reports set resolved_at = now() where event_id = $1 and resolved_at is null', [id]);
+    await env.ctx.db.query('update events set held_for_reports = false where id = $1', [id]);
   });
 
   it('checks out with a promo code and gets signed tickets', async () => {
