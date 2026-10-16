@@ -19,10 +19,13 @@ app.listen({ port: config.port, host: config.host }).then(
 );
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.once(signal, async () => {
+  process.once(signal, () => {
     stopJobs();
-    await app.close();
-    await ctx.db.close();
-    process.exit(0);
+    app.close()
+      .then(() => ctx.db.close())
+      .then(() => process.exit(0), (e: unknown) => {
+        console.error('shutdown failed', e);
+        process.exit(1);
+      });
   });
 }

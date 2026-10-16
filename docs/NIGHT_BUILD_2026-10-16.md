@@ -23,7 +23,7 @@ Plan: `docs/NIGHT_BUILD_PLAN_2026-10-16.md` · Xuất phát: main `cebeb3d` · N
 - D8: báo admin khi tin bị ẩn; báo cáo của tài khoản dưới 7 ngày tính nửa.
 
 ## Bỏ dở
-- N10 phía API: không có linter type-aware cho TypeScript 7; cần chủ SP chọn hướng.
+- N10 phía API: đã xong ngày 17/10 bằng oxlint type-aware (nhánh `night/2026-10-16-lint-api`), 0 lỗi, ngân sách 1.325 cảnh báo.
 
 ## Kết quả cuối (N12)
 Trên `night/2026-10-16`, 17/10:
@@ -41,3 +41,9 @@ Trên `night/2026-10-16`, 17/10:
 4. Việc của chủ SP: xoá `SERVICE_FEE_PCT` trên Vercel nếu có; sau khi ship, `curl -sI https://feestfinder.com/events?limit=5` hai lần để xem `x-vercel-cache: HIT`; chọn hướng linter cho API (TECH_DEBT #15); xác nhận "owned" gồm cả hồ sơ đội đã xác minh.
 5. Ổn: "commit all merge main redeploy". Một việc hỏng: "revert N<k>", phần còn lại vẫn ship.
 6. Ban ngày: ba màn của bắt tay lineup, bộ lọc Có chủ · Chưa nhận · Radar trong `/console/artists`.
+
+## Sáng 17/10: việc của chủ SP
+- `SERVICE_FEE_PCT`: không có trên cả hai project Vercel (kiểm bằng `vercel env ls`), không cần xoá.
+- Linter API: chọn oxlint type-aware, đã thêm vào CI.
+- "Hồ sơ có chủ" gồm cả hồ sơ đội đã xác minh: chủ SP xác nhận.
+- Kiểm CDN: chờ ship.

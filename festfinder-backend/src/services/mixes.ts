@@ -29,6 +29,8 @@ export const fakeOembed: OembedFetcher = async (endpoint) => {
   if (/missing/.test(url)) throw new PageUnavailable('upstream', 'fake network: not found');
   const name = decodeURIComponent(url.split('/').filter(Boolean).pop() ?? 'set').replace(/[-_]+/g, ' ');
   if (endpoint.startsWith('https://soundcloud.com/oembed')) {
+    // Hashes code points on purpose: the made-up id must not change.
+    // oxlint-disable-next-line typescript/no-misused-spread
     const id = String([...url].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 1_000_000_007, 7));
     const what = /\/sets\//.test(url) ? 'playlists' : url.split('/').filter(Boolean).length <= 3 ? 'users' : 'tracks';
     return {
