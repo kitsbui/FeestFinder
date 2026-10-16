@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import type { Queryable } from '../db/index.ts';
 import { one } from '../db/index.ts';
 import { AppError, badRequest, conflict, notFound, tooMany } from '../lib/errors.ts';
 import { L, REPORT_CODES } from '../lib/i18n.ts';
@@ -7,10 +8,22 @@ import { imageUrl, parse, uuid } from '../lib/validate.ts';
 import { requireUser } from '../http/guards.ts';
 import { appendAudit } from '../services/audit.ts';
 import { GuideUnavailable, trimGuide } from '../services/guide.ts';
-import { notifyOrganizer } from '../services/notify.ts';
+import { notifyAdmins, notifyOrganizer } from '../services/notify.ts';
 
 /** Listings with this many separate reporters are pulled from the feed while moderators check. */
 export const REPORT_HOLD_THRESHOLD = 2;
+
+/**
+ * How much the open reports on a listing weigh: one per reporter, half for an account under a
+ * week old, so two brand-new accounts cannot pull a live listing from the feed on their own.
+ */
+export async function openReportWeight(q: Queryable, eventId: string, now: Date): Promise<number> {
+  const r = await one<{ w: string | number }>(q,
+    `select coalesce(sum(case when u.created_at > $2 then 0.5 else 1 end), 0) as w
+       from listing_reports r join users u on u.id = r.user_id where r.event_id = $1 and r.resolved_at is null`,
+    [eventId, new Date(now.getTime() - 7 * 86400_000)]);
+  return Number(r?.w ?? 0);
+}
 const GUIDE_TTL_MS = 24 * 3600_000;
 
 const icsEscape = (s: string) => s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
@@ -40,7 +53,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
          on conflict (event_id, user_id) do nothing returning 1`, [ev.id, s.user.id, body.code, body.note.trim(), now]);
       if (!ins) throw conflict('already_reported', L('You already reported this listing', 'Bạn đã báo cáo tin này'));
       const open = await one<any>(q, 'select count(distinct user_id)::int as n from listing_reports where event_id = $1 and resolved_at is null', [ev.id]);
-      if (open.n >= REPORT_HOLD_THRESHOLD && !ev.held_for_reports) {
+      if ((await openReportWeight(q, ev.id, now)) >= REPORT_HOLD_THRESHOLD && !ev.held_for_reports) {
         await q.query('update events set held_for_reports = true where id = $1', [ev.id]);
         await appendAudit(q, {
           at: now, actorType: 'system', actorId: null, actorLabel: 'System', action: 'listing.held_by_reports',
@@ -54,6 +67,13 @@ export default async function eventActionRoutes(app: FastifyInstance) {
             `${ev.title} bị ${open.n} người báo cáo và tạm ẩn khỏi feed cho tới khi được kiểm duyệt.`),
           cta: L('Open moderation thread', 'Mở thư kiểm duyệt'),
           link: { screen: 'inbox' }, dedupeKey: `held:${ev.id}`,
+        });
+        // The team hears at once: a hidden listing is the one report that cannot wait for the morning.
+        await notifyAdmins(q, now, {
+          kind: 'listing_hidden', dedupeKey: `hidden:${ev.id}:${now.getTime()}`,
+          title: L(`Hidden by reports: ${ev.title}`, `Tạm ẩn do báo cáo: ${ev.title}`),
+          body: L(`${open.n} reports · it stays out of the feed until someone decides`, `${open.n} báo cáo · tin ẩn khỏi feed tới khi có người quyết`),
+          cta: L('Check the reports', 'Xem báo cáo'), link: { url: `/console/reports?event=${ev.id}` },
         });
         return true;
       }

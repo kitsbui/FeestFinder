@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { many, one } from '../src/db/index.ts';
+import { communityOrganizerId } from '../src/services/community.ts';
 
 describe('internal admin', () => {
   let env: TestEnv;
@@ -115,24 +116,46 @@ describe('internal admin', () => {
     assert.equal(row.organizer_unread, true);
   });
 
-  it('handles user reports: dismiss, warn and take down', async () => {
+  it('handles user reports: one case per listing, one warning per case, dismiss and take down', async () => {
     const reports = await env.as(admin).get('/admin/reports');
     const bus = reports.body.items.find((r: any) => r.subject === 'EDM Beach Bus — Mũi Né');
     assert.equal(bus.category, 'refund');
     assert.ok(bus.count >= 2);
     assert.equal(bus.heldFromFeed, true);
 
+    // The warehouse rave was reported for wrong details and for safety: one case, both reasons inside.
     const rave = env.ids.event['warehouse-rave-q4'];
-    const dismissed = await env.as(admin).post(`/admin/reports/${rave}/dismiss`, { category: 'wrong' });
-    assert.equal(dismissed.body.stillOpen, 2, 'safety reports remain');
-    const warned = await env.as(admin).post(`/admin/reports/${rave}/warn`, { category: 'safety' });
+    const cases = reports.body.items.filter((r: any) => r.eventId === rave);
+    assert.equal(cases.length, 1, 'one case per listing');
+    assert.deepEqual(cases[0].categories.map((c: any) => c.category).sort(), ['safety', 'wrong']);
+    assert.equal(cases[0].count, cases[0].categories.reduce((n: number, c: any) => n + c.count, 0), 'each reporter counted once');
+
+    const warned = await env.as(admin).post(`/admin/reports/${rave}/warn`, {});
     assert.equal(warned.body.strikes, 1);
+    assert.equal((await env.as(admin).post(`/admin/reports/${rave}/warn`, {})).body.error.code, 'no_open_reports', 'one warning per case, not per reason');
     const ev = await one<any>(env.ctx.db, 'select held_for_reports from events where id = $1', [rave]);
-    assert.equal(ev.held_for_reports, false, 'back in the feed once nothing is open');
+    assert.equal(ev.held_for_reports, false, 'back in the feed once the case is decided');
+
+    const priced = (await env.as(admin).get('/admin/reports')).body.items.find((r: any) => r.categories.some((c: any) => c.category === 'price'));
+    const dismissed = await env.as(admin).post(`/admin/reports/${priced.eventId}/dismiss`, {});
+    assert.equal(dismissed.body.stillOpen, 0);
+    assert.equal((await one<any>(env.ctx.db, 'select held_for_reports from events where id = $1', [priced.eventId])).held_for_reports, false, 'dismissed: it shows again');
 
     const down = await env.as(admin).post(`/admin/reports/${env.ids.event['edm-beach-bus-mui-ne']}/take-down`, { code: 'policy' });
     assert.equal(down.status, 200);
     assert.equal((await env.as().get(`/events/${env.ids.event['edm-beach-bus-mui-ne']}`)).status, 404);
+  });
+
+  it('never warns the community placeholder: nobody runs those listings', async () => {
+    // A listing on the placeholder (as the community form and Radar file them), for this test only.
+    const community = { id: await communityOrganizerId(env.ctx.db) };
+    const ev = await one<any>(env.ctx.db, `select id, organizer_id from events where status = 'live' and organizer_id <> $1 limit 1`, [community.id]);
+    await env.ctx.db.query('update events set organizer_id = $2 where id = $1', [ev.id, community.id]);
+    const someone = await one<any>(env.ctx.db, `select id from users where role <> 'admin' limit 1`);
+    await env.ctx.db.query(`insert into listing_reports (event_id, user_id, code, note, created_at) values ($1,$2,'wrong','',now()) on conflict do nothing`, [ev.id, someone.id]);
+    assert.equal((await env.as(admin).post(`/admin/reports/${ev.id}/warn`, {})).body.error.code, 'community_listing');
+    await env.ctx.db.query('update listing_reports set resolved_at = now() where event_id = $1 and resolved_at is null', [ev.id]);
+    await env.ctx.db.query('update events set organizer_id = $2 where id = $1', [ev.id, ev.organizer_id]);
   });
 
   it('verifies organisers and needs an ID document first', async () => {
