@@ -88,7 +88,7 @@ function Wallet({ lang }: { lang: Lang }) {
         <Panel role="status" className="mx-4 flex flex-col items-start gap-2 px-5 py-7">
           <span className="kd-h">{T.ticketsEmpty}</span>
           <span className="kd-s">{T.ticketsEmptyBody}</span>
-          <a className={buttonClass({ size: 'sm' }, 'mt-1')} href="/app">{T.tabExplore}</a>
+          <a className={buttonClass({ size: 'sm' }, 'mt-1')} href="/">{T.findEvents}</a>
         </Panel>
       )}
       {which === 'up' && w?.resold.length ? (

@@ -13,8 +13,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { rewrite } from './tokens-v2.ts';
 
-/** Arbitrary px values in src (2026-10-17, design phase 0). Lower it when you fix some; never raise it. */
-const PX_BUDGET = 148;
+/** Arbitrary px values in src (148 at design phase 0, 130 after phase 4 removed the app's discovery screens). Lower it when you fix some; never raise it. */
+const PX_BUDGET = 130;
 
 const WEB = join(import.meta.dirname, '..');
 const SRC = join(WEB, 'src');

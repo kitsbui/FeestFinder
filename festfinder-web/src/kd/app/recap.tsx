@@ -36,7 +36,7 @@ export function RecapScreen({ lang, ev }: { lang: Lang; ev: EventDetail }) {
   return (
     <>
       <AppBar>
-        <BackLink className="kd-ib -ml-2" href="/app/profile" label={T.back}><XIcon size={22} aria-hidden="true" /></BackLink>
+        <BackLink className="kd-ib -ml-2" href="/profile" label={T.back}><XIcon size={22} aria-hidden="true" /></BackLink>
         <span className="kd-hs kd-ell ml-1">{ev.title}</span>
       </AppBar>
       {kd.session === undefined ? <div className="kd-skel mx-4 h-60" aria-hidden="true" /> : kd.user ? <RecapForm lang={lang} ev={ev} /> : <SignInCard lang={lang} note={T.gateMe} />}
@@ -138,7 +138,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       <Button tone="acc" size="lg" block onClick={submit} disabled={busy}>{T.postRating}</Button>
 
       {r.next ? (
-        <a href={'/app/e/' + r.next.slug} className="flex flex-col gap-2">
+        <a href={'/e/' + r.next.slug} className="flex flex-col gap-2">
           <span className="kd-m">{r.next.label[lang]}</span>
           <Panel className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-3 p-2">
             <Art title={ev.title} family={fam} className="h-14 rounded-lg" />

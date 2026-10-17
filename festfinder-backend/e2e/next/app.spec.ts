@@ -2,9 +2,11 @@ import { expect, test, type Page } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 
 /*
- * The app in Kính đêm (festfinder-web/src/kd/app): Explore and onboarding, the event, the map,
- * Saved, Tickets and the profile tab, phone-sized. What the compiled app's tests checked, on
- * the rebuilt screens, plus their own parts.
+ * The app (festfinder-web/src/kd/app) after design v2 phase 4: it is the site. Its discovery, map,
+ * saved, profile and event moved into the site's pages and their old addresses lead there with
+ * their query; the installed app opens on the home page and asks a new device its city and styles;
+ * the screens left (tickets, checkout, the plan, the guide, notifications) wear the site's frame,
+ * so buying from the list never changes frame. Phone-sized.
  */
 
 const ATTENDEE = { identifier: 'minh@example.com', password: 'festfinder123' };
@@ -23,107 +25,73 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
+/** The site's frame: its nav on top and, on a phone, its tab bar. */
+async function inFrame(page: Page) {
+  await expect(page.getByRole('banner').getByRole('link', { name: 'FeestFinder, trang chủ' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Tôi' })).toBeVisible();
+}
+
 test.describe('the app', () => {
-  test('a first visit asks what you like and where, then opens on Explore', async ({ page }) => {
-    const problems = await open(page, '/app');
-    await expect(page.getByRole('heading', { level: 1, name: 'Có gì quanh bạn?' })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Điều hướng chính' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Techno' }).click();
-    await expect(page.getByRole('button', { name: 'Techno' })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Chọn thành phố khác' }).click();
-    await page.getByRole('button', { name: 'TP.HCM' }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('có gì chơi?');
-    // One style picked: Explore opens on it.
-    await expect(page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: 'Techno' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('navigation', { name: 'Điều hướng chính' }).getByRole('link', { name: 'Khám phá' })).toHaveAttribute('aria-current', 'page');
-    // The choice stays on the device.
-    await page.reload();
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('có gì chơi?');
+  test('the old app addresses lead into the site, with their query', async ({ request }) => {
+    const to = async (path: string) => {
+      const res = await request.get(path, { maxRedirects: 0 });
+      expect([301, 308], path).toContain(res.status());
+      return res.headers().location;
+    };
+    expect(await to('/app?city=ha-noi')).toMatch(/\/\?city=ha-noi$/);
+    expect(await to('/app/list?style=techno')).toMatch(/\/\?view=map&style=techno$/);
+    expect(await to('/app/map')).toMatch(/\/\?view=map$/);
+    expect(await to('/app/saved?c=abc')).toMatch(/\/saved\?c=abc$/);
+    expect(await to('/app/profile')).toMatch(/\/profile$/);
+    expect(await to('/app/e/ravo?ride=1')).toMatch(/\/e\/ravo\?ride=1$/);
+  });
+
+  test('the installed app asks a new device two things, then opens the list on them; a browser asks nothing', async ({ page }) => {
+    // In a browser: the list is the first screen.
+    await open(page, '/');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    // The installed app starts at /?source=app.
+    const problems = await open(page, '/?source=app');
+    const city = page.getByRole('dialog', { name: 'Bạn ở thành phố nào?' });
+    await expect(city.getByText('Bước 1/2')).toBeVisible();
+    await city.getByRole('group', { name: 'Thành phố' }).getByRole('button', { name: 'TP.HCM' }).click();
+    const styles = page.getByRole('dialog', { name: 'Bạn thích nghe gì?' });
+    await styles.getByRole('button', { name: 'Techno' }).click();
+    await styles.getByRole('button', { name: 'Xem sự kiện' }).click();
+    await expect(page).toHaveURL(/city=ho-chi-minh/);
+    await expect(page).toHaveURL(/style=techno/);
+    // The device keeps the city: the app opens on it next time, without asking again.
+    await page.goto('/?source=app');
+    await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+    await expect(page).toHaveURL(/city=ho-chi-minh/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).active?.scriptURL)).toMatch(/\/sw\.js$/);
     expect(problems).toEqual([]);
   });
 
-  test('Explore: the time in the headline and the style chips change the events', async ({ page }) => {
+  test('buying from the list reaches /go and the checkout without changing frame', async ({ page }) => {
     await returning(page);
-    await open(page, '/app');
-    const line = page.getByText(/\d+ sự kiện$/).first();
-    await expect(line).toBeVisible();
-    const n = async () => Number((await line.textContent())!.match(/(\d+) sự kiện$/)![1]);
-    const weekend = await n();
-    await page.getByRole('button', { name: /Cuối tuần này/ }).click();
-    await page.getByRole('menuitemradio', { name: /Tháng này/ }).click();
-    await expect.poll(n).toBeGreaterThanOrEqual(weekend);
-    await page.getByRole('group', { name: 'Dòng nhạc' }).getByRole('button', { name: 'Techno' }).click();
-    await expect(page.getByRole('link', { name: /Ravolution Music Festival/ }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /HOZO Super Fest/ })).toHaveCount(0);
-    await page.getByRole('link', { name: /Ravolution Music Festival/ }).first().click();
-    await expect(page).toHaveURL(/\/app\/e\/ravo$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Ravolution Music Festival' })).toBeVisible();
-  });
-
-  test('the event carries the organiser’s updates, the FAQ, the discussion and the tickets', async ({ page }) => {
-    await returning(page);
-    const problems = await open(page, '/app/e/ravo');
-    await expect(page.getByRole('heading', { level: 2, name: 'Từ ban tổ chức' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Câu hỏi thường gặp' })).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2, name: /^Hỏi đáp/ })).toBeVisible();
-    await page.getByRole('link', { name: 'Mua vé', exact: true }).click();
-    await expect(page.locator('#tickets')).toBeInViewport();
-    await expect(page.locator('#tickets').getByRole('link', { name: /Mua 1 vé/ })).toHaveAttribute('href', /^\/go\/ravo\?src=tier&tier=/);
-    // Back, from an event opened from outside the app, goes to Explore.
-    await expect(page.getByRole('link', { name: 'Quay lại' })).toHaveAttribute('href', '/app');
-    expect(problems).toEqual([]);
-  });
-
-  test('the map asks for the events once, and again only on "search this area"; the list shows the same', async ({ page }) => {
-    await returning(page);
-    const asked: string[] = [];
-    page.on('request', (r) => { if (r.url().includes('/events/map?')) asked.push(r.url()); });
-    await open(page, '/app/list');
-    const map = page.locator('[data-kd-map]');
-    await expect(map.locator('canvas')).toBeVisible();
-    await expect.poll(() => asked.length).toBe(1);
-    const box = (await map.boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 - 120, box.y + box.height / 2 - 40, { steps: 10 });
-    await page.mouse.up();
-    await expect(page.getByRole('button', { name: 'Tìm trong khu vực này' })).toBeVisible();
-    expect(asked).toHaveLength(1);
-    await page.getByRole('button', { name: 'Tìm trong khu vực này' }).click();
-    await expect.poll(() => asked.length).toBe(2);
-    await page.getByRole('button', { name: 'Danh sách' }).click();
-    await expect(page.getByRole('link', { name: /Ravolution Music Festival/ }).first()).toBeVisible();
-    // A search from Explore lands on the rows.
-    await page.goto('/app/list?q=ravolution');
-    await expect(page.getByText('Kết quả cho “ravolution”')).toBeVisible();
-    await expect(page.getByRole('link', { name: /Ravolution Music Festival/ }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /HOZO/ })).toHaveCount(0);
-  });
-
-  test('Saved asks for sign-in, then lists saves and collections with their public link', async ({ page }) => {
-    await returning(page);
-    await open(page, '/app/saved');
-    await page.getByRole('button', { name: 'Đăng nhập' }).first().click();
-    await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();
-    await page.keyboard.press('Escape');
     await signInWith(page, ATTENDEE);
-    const ravo = await (await page.request.get('/events/ravo')).json();
-    const col = await (await page.request.post('/me/collections', { data: { name: 'Rave nights', eventId: ravo.id } })).json();
-    await open(page, '/app/saved');
-    await expect(page.getByRole('link', { name: /Ravolution Music Festival/ }).first()).toBeVisible();
-    await page.getByRole('button', { name: /Rave nights/ }).click();
-    const sw = page.getByRole('switch', { name: 'Link công khai' });
-    await expect(sw).toHaveAttribute('aria-checked', 'false');
-    await sw.click();
-    await expect(sw).toHaveAttribute('aria-checked', 'true');
-    await expect.poll(async () => (await (await page.request.get('/me/collections/' + col.id)).json()).collection.isPublic).toBe(true);
-    await page.request.delete('/me/collections/' + col.id);
+    const problems = await open(page, '/');
+    await inFrame(page);
+    await page.getByRole('main').getByRole('link', { name: 'Ravolution Music Festival' }).first().click();
+    await expect(page).toHaveURL(/\/e\/ravo$/);
+    await inFrame(page);
+    const buy = page.locator('#tickets').getByRole('link', { name: /^Mua 1 vé/ });
+    await expect(buy).toHaveAttribute('href', /^\/go\/ravo\?/);
+    await buy.click();
+    await expect(page).toHaveURL(/\/app\/checkout\/ravo\?/);
+    await inFrame(page);
+    await expect(page.getByRole('button', { name: /^Thanh toán / })).toBeVisible();
+    expect(problems).toEqual([]);
   });
 
   test('Tickets: a real QR per ticket, the doors countdown, and resale at no more than face value', async ({ page }) => {
     await returning(page);
     await signInWith(page, ATTENDEE);
     await open(page, '/app/tickets');
+    await inFrame(page);
+    await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Tôi' })).toHaveAttribute('aria-current', 'page');
     const card = page.getByRole('article', { name: 'Ravolution Music Festival' });
     await expect(card.getByRole('img', { name: 'Mã QR của vé FF-RAVO-DEM1' })).toBeVisible();
     await expect(card.getByText(/Mở cửa sau \d+ ngày/)).toBeVisible();
@@ -170,28 +138,21 @@ test.describe('the app', () => {
     await expect(page.getByText('Phí dịch vụ')).toHaveCount(0);
   });
 
-  test('the profile tab: passport, Wrapped, following, and the language this device keeps', async ({ page }) => {
+  test('"Tôi" is /profile: passport, Wrapped, the language, signing out', async ({ page }) => {
     await returning(page);
     await signInWith(page, ATTENDEE);
     await open(page, '/app/profile');
+    await expect(page).toHaveURL(/\/profile$/);
     await expect(page.getByText('5 đêm · 3 dòng nhạc · 1 thành phố')).toBeVisible();
     await page.getByRole('button', { name: /^Wrapped 20\d\d$/ }).click();
     await expect(page.getByRole('dialog', { name: /^Wrapped 20\d\d$/ }).getByText('đêm đi chơi')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('heading', { name: 'Đang theo dõi' })).toBeVisible();
-    await page.getByRole('button', { name: 'English' }).click();
+    const hub = page.getByRole('navigation', { name: 'Tôi' });
+    await expect(hub.getByRole('link', { name: /^Cảnh báo thông minh/ })).toHaveAttribute('href', '/app/alerts');
+    await hub.getByRole('link', { name: /^Ngôn ngữ/ }).click();
+    await expect(page).toHaveURL(/\/profile\?lang=en$/);
     await expect(page.getByRole('heading', { name: 'Raver passport' })).toBeVisible();
-    await page.reload();
-    await expect(page.getByRole('heading', { name: 'Raver passport' })).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Me' })).toHaveAttribute('aria-current', 'page');
-    await page.getByRole('button', { name: 'Tiếng Việt' }).click();
-    await page.getByRole('button', { name: 'Đăng xuất' }).click();
-    await expect(page.getByText('Đăng nhập để có hộ chiếu, cảnh báo và cài đặt')).toBeVisible();
-  });
-
-  test('the app still installs its service worker', async ({ page }) => {
-    await returning(page);
-    await open(page, '/app');
-    expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).active?.scriptURL)).toMatch(/\/sw\.js$/);
+    await page.getByRole('navigation', { name: 'Me' }).getByRole('button', { name: 'Sign out' }).click();
+    await expect(page.getByRole('button', { name: 'Log in' }).first()).toBeVisible();
   });
 });

@@ -53,7 +53,7 @@ interface Plan {
 export function PlanScreen({ lang, ev }: { lang: Lang; ev: EventDetail }) {
   return (
     <>
-      <Head lang={lang} title={ev.title} back={'/app/e/' + ev.slug} sub={pick(APP, lang).plan} />
+      <Head lang={lang} title={ev.title} back={'/e/' + ev.slug} sub={pick(APP, lang).plan} />
       <Gate lang={lang}><PlanBody lang={lang} ev={ev} /></Gate>
     </>
   );
@@ -246,7 +246,7 @@ export function ChatScreen({ lang, friendId }: { lang: Lang; friendId: string })
   }, [friendId]);
   return (
     <>
-      <Head lang={lang} title={name || T.planChat} back="/app/profile" />
+      <Head lang={lang} title={name || T.planChat} back="/profile" />
       <Gate lang={lang}><div className="px-4 pb-8"><Thread lang={lang} url={'/me/chats/' + friendId} placeholder={T.dmPh} /></div></Gate>
     </>
   );
@@ -263,7 +263,7 @@ export function Hyped({ lang }: { lang: Lang }) {
   const past = (items ?? []).filter((e) => e.past);
   return (
     <>
-      <Head lang={lang} title={T.hypedTitle} back="/app/profile" />
+      <Head lang={lang} title={T.hypedTitle} back="/profile" />
       <Gate lang={lang}>
         {!items ? <div className="kd-skel mx-4 h-40" aria-hidden="true" /> : items.length ? (
           <div className="flex flex-col px-4">
@@ -299,7 +299,7 @@ export function Following({ lang }: { lang: Lang }) {
   };
   return (
     <>
-      <Head lang={lang} title={T.followingTitle} back="/app/profile" />
+      <Head lang={lang} title={T.followingTitle} back="/profile" />
       <Gate lang={lang}>
         {!f ? <div className="kd-skel mx-4 h-40" aria-hidden="true" /> : (
           <div className="flex flex-col gap-6 px-4 pb-8">

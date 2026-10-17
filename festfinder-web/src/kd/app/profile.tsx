@@ -1,127 +1,28 @@
 'use client';
 /**
- * /app/profile, the "Tôi" tab, in Kính đêm (design/Profile-Fan-App): who you are, how many nights
- * you went to and have coming, the tickets coming up, the raver passport (a stamp per scanned
- * ticket, filtered by family) and Wrapped, your sound, your photos (Moments), your badges, who
- * you follow, and settings. Private: it is the signed-in person's own (owner decision 2).
+ * The parts of a fan's own profile that /profile (web/fan/page.tsx) draws: the raver passport (a
+ * stamp per scanned ticket, filtered by family) and Wrapped, and the sheet that edits who you are.
+ * The app's own profile screen went with design v2 phase 4: /app/profile leads to /profile.
  */
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { CaretRightIcon, GearSixIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
-import { dayMonth, weekdayShort } from '../format';
+import { dayMonth } from '../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../genre';
 import { inLang } from '../link';
-import { isTeam } from '../craft';
 import { useKd } from '../runtime';
 import { Button, Chip } from '../ui/actions';
-import { FieldError, FieldLabel, Input, Segmented, Select } from '../ui/forms';
-import { Accordion, Art, Avatar, Stamp, Stat } from '../ui/parts';
-import { AppBar } from '../ui/shell';
+import { FieldError, FieldLabel, Input } from '../ui/forms';
+import { Stamp } from '../ui/parts';
 import { ImageLinkField } from '../ui/image-link';
-import { FollowManager, FollowStats, type Follows } from '../ui/follows';
 import { Sheet } from '../ui/sheet';
-import { MomentsSection } from '../moments';
-import { Badges, type BadgeView } from '../ui/badges';
-import type { Moment } from '../ui/moments';
 import { APP } from './copy';
-import { useCity, useDiscovery } from './explore';
-import { useApp } from './root';
-import { SignInCard } from './row';
 
 export interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
 export interface Passport { stats: { nights: number; events: number; styles: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
 export type { Follows } from '../ui/follows';
 export interface Order { id: string; status: string; event: { slug: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; area: string | null; genre: string | null; endsAt: string | null }; tickets: unknown[] }
-
-export function Profile({ lang }: { lang: Lang }) {
-  const T = pick(APP, lang);
-  const kd = useKd();
-  return (
-    <>
-      <AppBar className="pr-1.5">
-        <span className="kd-m">{T.myProfile}</span>
-        <a className="kd-ib ml-auto" href="#settings" aria-label={T.settings}><GearSixIcon size={22} aria-hidden="true" /></a>
-      </AppBar>
-      {kd.session === undefined ? <div className="kd-skel mx-4 mt-2 h-40" aria-hidden="true" /> : kd.user ? <Mine lang={lang} /> : <SignInCard lang={lang} note={T.gateMe} />}
-      <Settings lang={lang} />
-    </>
-  );
-}
-
-function Mine({ lang }: { lang: Lang }) {
-  const T = pick(APP, lang);
-  const [me, setMe] = useState<Me | null>(null);
-  const [pp, setPp] = useState<Passport | null>(null);
-  const [orders, setOrders] = useState<Order[] | null>(null);
-  const [follows, setFollows] = useState<Follows | null>(null);
-  const [badges, setBadges] = useState<BadgeView[] | null>(null);
-  const [moments, setMoments] = useState<Moment[] | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [wrapped, setWrapped] = useState(false);
-  const { clockReady } = useKd();
-  useEffect(() => {
-    FF.maybe(FF.get('/me'), null).then(setMe);
-    FF.maybe(FF.get('/me/passport'), null).then(setPp);
-    FF.maybe(FF.get('/me/tickets'), { items: [] }).then((w: { items: Order[] }) => setOrders(w.items));
-    FF.maybe(FF.get('/me/follows'), null).then(setFollows);
-    FF.maybe(FF.get('/me/badges'), null).then((b: { items: BadgeView[] } | null) => setBadges(b?.items ?? []));
-    FF.maybe(FF.get('/me/moments'), null).then((m: { items: Moment[] } | null) => setMoments(m?.items ?? []));
-  }, []);
-  const now = FF.now().getTime();
-  const coming = (clockReady ? orders ?? [] : []).filter((o) => o.status === 'paid' && o.tickets.length && !(o.event.endsAt && Date.parse(o.event.endsAt) < now));
-  const u = me?.user;
-  const year = new Date(FF.now()).getFullYear();
-
-  return (
-    <div className="flex flex-col">
-      <section className="flex flex-col gap-4 px-4 pt-1" aria-label={T.myProfile}>
-        <div className="flex items-center gap-3.5">
-          <Avatar name={u?.name || u?.email || '?'} src={u?.photoUrl} size={72} acc />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h1 className="kd-d3 kd-ell">{u?.name || '…'}</h1>
-            <span className="kd-m kd-ell normal-case">{[u?.email || u?.phone, u?.city].filter(Boolean).join(' · ')}</span>
-          </div>
-          <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
-        </div>
-        <div className="grid grid-cols-2 gap-y-3.5 border-y border-line-1 py-3.5">
-          <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
-          <Stat value={orders ? coming.length : '–'} label={T.going} />
-          <FollowStats lang={lang} f={follows} />
-        </div>
-      </section>
-
-      {coming.length ? (
-        <section className="flex flex-col gap-2.5 px-4 pt-7" aria-labelledby="pf-going">
-          <div className="flex items-baseline justify-between"><h2 id="pf-going" className="kd-h">{T.going}</h2><a className="kd-s text-fg-2" href="/app/tickets">{T.allTickets}</a></div>
-          {coming.slice(0, 3).map((o, i) => {
-            const fam = familyOf(o.event.genre);
-            return (
-              <a key={o.id} href="/app/tickets" className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)_auto] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
-                <Art family={fam} title={o.event.title} className="h-19 rounded-lg" />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="kd-m kd-num">{weekdayShort(o.event.startsOn, lang)} {dayMonth(o.event.startsOn, lang)}</span>
-                  <span className="kd-hs kd-ell">{o.event.title}</span>
-                  <span className="kd-s kd-ell">{[o.event.venueName, o.event.area, o.event.startTime ? fill(T.doorsAt, { t: o.event.startTime }) : null].filter(Boolean).join(' · ')}</span>
-                </span>
-                <span className="kd-tag bg-on-inverse text-inverse">{fill(T.nTickets, { n: o.tickets.length })}</span>
-              </a>
-            );
-          })}
-        </section>
-      ) : null}
-
-      {pp ? <PassportSection lang={lang} pp={pp} year={year} onWrapped={() => setWrapped(true)} /> : null}
-      {moments ? <MomentsSection lang={lang} as="user" items={moments} owner compact className="px-4 pt-8" /> : null}
-      <Badges lang={lang} items={badges} who={{ vi: 'người dùng', en: 'people' }} own compact className="px-4 pt-8" />
-      {follows ? <FollowManager lang={lang} f={follows} /> : null}
-
-      {editing && u ? <EditSheet lang={lang} me={u} onClose={() => setEditing(false)} onSaved={(n) => { setMe((m) => m && { ...m, user: { ...m.user, ...n } }); setEditing(false); }} /> : null}
-      {wrapped ? <WrappedSheet lang={lang} year={year} onClose={() => setWrapped(false)} /> : null}
-    </div>
-  );
-}
 
 export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = true }: { lang: Lang; pp: Passport; year: number; onWrapped: () => void; flush?: boolean; appLinks?: boolean }) {
   const T = pick(APP, lang);
@@ -146,7 +47,7 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
             <ul className="mt-1 grid grid-cols-4 gap-x-2 @2xl:grid-cols-8 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
-                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/app/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
+                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
                 </li>
               ))}
             </ul>
@@ -170,47 +71,6 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
         </section>
       ) : null}
     </>
-  );
-}
-
-function Settings({ lang }: { lang: Lang }) {
-  const T = pick(APP, lang);
-  const kd = useKd();
-  const { setLang } = useApp();
-  const meta = useDiscovery();
-  const [city, setCity] = useCity(meta);
-  const pickLang = (l: Lang) => {
-    setLang(l);
-    if (kd.user) FF.fire(FF.patch('/me', { locale: l }));
-  };
-  return (
-    <div id="settings" className="scroll-mt-4 px-4 pb-6 pt-6">
-      <Accordion summary={T.settings} open className="border-t border-line-1">
-        <div className="flex flex-col">
-          {/* The team's way into the Console. */}
-          {isTeam(kd.user) ? (
-            <a className="kd-lrow" href="/console"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.console}</span><span className="kd-s">{T.consoleSub}</span></span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></a>
-          ) : null}
-          {kd.user ? (
-            <>
-              <a className="kd-lrow" href="/app/alerts"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.alerts}</span><span className="kd-s">{T.alertsSub}</span></span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></a>
-              <a className="kd-lrow" href="/app/settings"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.notifSettings}</span><span className="kd-s">{T.notifSub}</span></span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></a>
-            </>
-          ) : null}
-          <div className="kd-lrow">
-            <label htmlFor="pf-city" className="kd-hs flex-1">{T.city}</label>
-            <Select id="pf-city" value={city ?? ''} onChange={(e) => setCity(e.target.value)} boxClass="h-10 w-44">
-              {(meta?.cities ?? []).map((c) => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}
-            </Select>
-          </div>
-          <div className="kd-lrow">
-            <span className="kd-hs flex-1">{T.language}</span>
-            <Segmented label={T.language} value={lang} onChange={pickLang} options={[{ value: 'vi', label: 'Tiếng Việt' }, { value: 'en', label: 'English' }]} />
-          </div>
-          {kd.user ? <button type="button" className="kd-lrow w-full text-left text-[15px] text-fg-3" onClick={() => kd.signOut()}>{T.signOut}</button> : null}
-        </div>
-      </Accordion>
-    </div>
   );
 }
 

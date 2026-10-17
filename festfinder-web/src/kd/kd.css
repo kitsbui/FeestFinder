@@ -244,29 +244,20 @@
     body:has(.kd-buy-dock) { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
   }
   .kd-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
-  /* The app: a phone column, centred on wider screens; the bars stay over it. */
-  .kd-app { position: relative; width: 100%; max-width: 560px; min-height: 100dvh; margin: 0 auto; padding-top: env(safe-area-inset-top); }
-  .kd-app-tabs { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-  .kd-app ~ .kd-tabbar, .kd-app .kd-tabbar { left: max(12px, calc(50% - 268px)); right: max(12px, calc(50% - 268px)); }
+  /* The app's screens (/app/…) in the site's frame (app/root.tsx): a phone column, centred on a tablet, the full width on a computer. */
+  .kd-app { position: relative; width: 100%; max-width: 560px; min-height: 100dvh; margin: 0 auto; }
   .kd-app .kd-dock { left: max(0px, calc(50% - 280px)); right: max(0px, calc(50% - 280px)); }
   @media (min-width: 560px) { .kd-app .kd-dock { border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; } }
   /* Over the menu scrim (25), like the web nav: their menus open above it. */
   .kd-app .kd-bar { position: relative; z-index: 27; }
-  /* On desktop the app fills the page; its tab bar becomes a side rail, like Studio's. */
+  /* On a phone a screen's dock (checkout, the ticket's pay bar) sits on the site's tab bar. */
+  @media (max-width: 899px) {
+    body:has(.kd-tabbar-edge) .kd-dock { bottom: calc(56px + env(safe-area-inset-bottom)); padding-bottom: 12px; }
+    body:has(.kd-tabbar-edge):has(.kd-dock) { padding-bottom: calc(136px + env(safe-area-inset-bottom)); }
+  }
   @media (min-width: 900px) {
     .kd-app { max-width: none; margin: 0; }
-    .kd-app.kd-app-tabs { width: auto; margin-left: 240px; padding-bottom: env(safe-area-inset-bottom); }
-    /* Under the site’s nav (64px and its 1px line), which the app shows on a computer (app/root.tsx). */
-    .kd-app ~ .kd-tabbar {
-      top: 65px; bottom: 0; left: 0; right: auto; width: 240px; height: auto; border-radius: 0;
-      grid-template-columns: none; grid-auto-rows: 44px; align-content: start; gap: 2px; padding: 16px 12px;
-      background: var(--color-surface-1); box-shadow: inset -1px 0 0 var(--color-line-1);
-    }
-    .kd-app ~ .kd-tabbar .kd-tb { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; }
-    .kd-app ~ .kd-tabbar .kd-tb:hover { background: rgba(255, 255, 255, 0.04); }
-    .kd-app ~ .kd-tabbar .kd-tb[aria-current='page']::before { top: 12px; left: 0; width: 3px; height: 20px; }
     .kd-app .kd-dock { left: 0; right: 0; border-radius: 0; }
-    .kd-app-tabs .kd-dock { left: 240px; }
   }
 
   /* ---- web ---- */

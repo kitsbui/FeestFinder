@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, FunnelSimpleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { registerServiceWorker } from '@/runtime/pwa';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { cx } from '../../cx';
 import { moneyShort, todayIn, whenShort, count as fmtCount } from '../../format';
@@ -26,6 +27,8 @@ import type { Card } from '../../types';
 import { ORIGIN, RadarTag, type Origin } from '../../ui/origin';
 import { Sheet } from '../../ui/sheet';
 import { DayGrid, ListRail, groupByDay } from './days';
+import { FirstRun, fromApp } from './first-run';
+import { place } from '../../app/place';
 import { LIST } from './copy';
 import { warmKdMap, type Box } from '../../map/kd-map';
 import { MapView } from './map-view';
@@ -124,6 +127,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const [at, setAt] = useState<Date | null>(null);
   const [ready, setReady] = useState(false);
   const [sheet, setSheet] = useState(false);
+  const [firstRun, setFirstRun] = useState(false);
+  const openedByApp = useRef(false);
   const seq = useRef(0);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
@@ -150,6 +155,15 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const next = readFilters(q, meta);
+    // The installed app opens on the city this device chose (its onboarding, below), as its feed did.
+    // Read before the list rewrites its address, which drops ?source=app.
+    openedByApp.current = fromApp();
+    // The installed app keeps its tickets working offline from its first screen on.
+    if (openedByApp.current) registerServiceWorker();
+    if (!q.has('city') && openedByApp.current) {
+      const c = place.city();
+      if (c && meta.cities.some((x) => x.slug === c)) next.city = c;
+    }
     setF(next);
     setReady(true);
     const same = JSON.stringify({ ...next, view: 'grid', bbox: null }) === JSON.stringify({ ...DEFAULT });
@@ -158,7 +172,15 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   }, []);
 
   // When it was read, by the API's clock (it is pinned in the tests).
-  const { clockReady } = useKd();
+  const kd = useKd();
+  const { clockReady } = kd;
+  // The installed app's first run: a device it has never seen, nobody signed in (first-run.tsx).
+  const asked = useRef(false);
+  useEffect(() => {
+    if (kd.session === undefined || asked.current) return;
+    asked.current = true;
+    if (openedByApp.current && !place.known() && !kd.user) setFirstRun(true);
+  }, [kd.session, kd.user]);
   useEffect(() => { if (clockReady) setAt(FF.now()); }, [clockReady]);
 
   // Every minute while the list is on screen (not more pages: they would be dropped).
@@ -395,6 +417,16 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           <Button className="self-center" disabled={busy} onClick={() => load(f, 'more', page.nextCursor)}>{T.more}</Button>
         ) : null}
       </main>
+      {firstRun ? (
+        <FirstRun
+          lang={lang}
+          cities={meta.cities}
+          onDone={(city, styles) => {
+            setFirstRun(false);
+            if (city || styles.length === 1) set({ ...(city ? { city } : {}), ...(styles.length === 1 ? { style: styles[0], type: null } : {}) });
+          }}
+        />
+      ) : null}
       {sheet ? (
         <FilterSheet
           lang={lang}

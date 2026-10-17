@@ -4,7 +4,7 @@
  * and answers, structured data); the personal and interactive parts hydrate on top.
  */
 import { KdLink as Link, inLang } from '../../link';
-import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
+import { BroadcastIcon, CalendarBlankIcon, CaretRightIcon, CompassIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon, UsersThreeIcon } from '@phosphor-icons/react/ssr';
 import type { ReactNode } from 'react';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick } from '../../copy';
@@ -154,6 +154,22 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                         <HandshakeIcon size={18} className="text-fg-3" aria-hidden="true" />
                         <span className="kd-t flex-1 text-fg-1"><span className="text-fg-3">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
                       </div>
+                    ) : null}
+                    {/* The night with friends and the guide: from the app's event screen, which this page replaced (design v2 phase 4). */}
+                    {!ev.past ? (
+                      <a className="kd-lrow min-h-13" href={'/app/plan/' + enc(ev.slug)}>
+                        <UsersThreeIcon size={18} className="text-fg-3" aria-hidden="true" />
+                        <span className="kd-t flex-1 text-fg-1">{T.goTogether}</span>
+                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
+                      </a>
+                    ) : null}
+                    {/* Only when the guide can answer: a row that opens "đang tạm nghỉ" is a dead end. */}
+                    {!ev.past && ev.guide ? (
+                      <a className="kd-lrow min-h-13" href={'/app/guide/' + enc(ev.slug)}>
+                        <CompassIcon size={18} className="text-fg-3" aria-hidden="true" />
+                        <span className="kd-t flex-1 text-fg-1">{T.guideRow}</span>
+                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
+                      </a>
                     ) : null}
                   </div>
                   <CommunityLine lang={lang} />

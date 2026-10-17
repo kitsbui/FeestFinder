@@ -42,8 +42,7 @@ const track = (kind: string, surface: string) => () => FF.track('nav_click', { k
 const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform);
 const never = () => () => {};
 
-/** `tabs={false}`: the app (/app) keeps its own tab bar until it folds into the site (design phase 4). */
-export function WebNav({ lang, current = 'none', tabs = true }: { lang: Lang; current?: WebSection; tabs?: boolean }) {
+export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSection }) {
   const kd = useKd();
   const T = pick(WEB, lang);
   const [search, setSearch] = useState(false);
@@ -106,7 +105,7 @@ export function WebNav({ lang, current = 'none', tabs = true }: { lang: Lang; cu
           </div>
         </div>
       </header>
-      {tabs ? <WebTabs lang={lang} current={current} onSearch={() => { track('search', 'tabs')(); setSearch(true); }} /> : null}
+      <WebTabs lang={lang} current={current} onSearch={() => { track('search', 'tabs')(); setSearch(true); }} />
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
     </>
   );

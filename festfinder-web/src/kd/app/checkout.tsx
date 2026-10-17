@@ -43,7 +43,7 @@ export function Checkout({ lang, slug }: { lang: Lang; slug: string }) {
   return (
     <>
       <AppBar>
-        <BackLink className="kd-ib -ml-2" href={'/app/e/' + encodeURIComponent(slug)} label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></BackLink>
+        <BackLink className="kd-ib -ml-2" href={'/e/' + encodeURIComponent(slug)} label={T.back}><ArrowLeftIcon size={22} aria-hidden="true" /></BackLink>
         <h1 className="kd-h ml-1">{T.checkoutTitle}</h1>
       </AppBar>
       {ev === undefined || kd.session === undefined ? <div className="kd-skel mx-4 mt-2 h-60" aria-hidden="true" />

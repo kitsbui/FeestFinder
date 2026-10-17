@@ -68,6 +68,13 @@ export const LIST = {
   anyPrice: { en: 'Any price', vi: 'Mọi giá' },
   done: { en: 'Show events', vi: 'Xem sự kiện' },
   clearQuery: { en: 'Clear the search “{q}”', vi: 'Bỏ tìm “{q}”' },
+  // the installed app's first run (first-run.tsx)
+  obCity: { en: 'Which city are you in?', vi: 'Bạn ở thành phố nào?' },
+  obStyles: { en: 'What do you like?', vi: 'Bạn thích nghe gì?' },
+  obStep: { en: 'Step {n} of 2', vi: 'Bước {n}/2' },
+  obLocate: { en: 'Use my location', vi: 'Dùng vị trí của tôi' },
+  obNoLocation: { en: 'Could not get your location: pick a city', vi: 'Không lấy được vị trí: hãy chọn thành phố' },
+  obSkip: { en: 'Skip', vi: 'Bỏ qua' },
   // the home page's highlight, banner and questions
   flagship: { en: 'World-class festivals', vi: 'Lễ hội lớn thế giới' },
   adHide: { en: 'Hide this ad', vi: 'Ẩn quảng cáo' },

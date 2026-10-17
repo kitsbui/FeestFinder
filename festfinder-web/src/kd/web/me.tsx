@@ -43,6 +43,7 @@ function places(lang: Lang, me: MeCounts | null): Place[] {
     { key: 'following', label: T.following, href: '/app/following' },
     { key: 'projects', label: T.myProjects, href: inLang('/p/mine', lang) },
     { key: 'notifications', label: T.notifications, href: '/app/notifications' },
+    { key: 'alerts', label: T.alerts, href: '/app/alerts' },
   ];
 }
 

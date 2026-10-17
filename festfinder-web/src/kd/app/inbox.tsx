@@ -22,7 +22,7 @@ import { APP } from './copy';
 import { ago } from '../web/event/community';
 import { SignInCard } from './row';
 
-function Head({ lang, title, back = '/app/profile', aside }: { lang: Lang; title: string; back?: string; aside?: React.ReactNode }) {
+function Head({ lang, title, back = '/profile', aside }: { lang: Lang; title: string; back?: string; aside?: React.ReactNode }) {
   const T = pick(APP, lang);
   return (
     <AppBar className="pr-1.5">
@@ -52,11 +52,11 @@ function hrefOf(n: Note): string {
     if (l.screen === 'live') return '/app/live/' + l.eventId;
     if (l.screen === 'recap') return '/app/recap/' + l.eventId;
     if (l.screen === 'plan') return '/app/plan/' + l.eventId;
-    return '/app/e/' + l.eventId;
+    return '/e/' + l.eventId;
   }
   if (l.screen === 'tickets') return '/app/tickets';
   if (l.screen === 'chat' && l.friendId) return '/app/chat/' + l.friendId;
-  return '/app';
+  return '/';
 }
 
 export function Notifications({ lang }: { lang: Lang }) {
@@ -74,7 +74,7 @@ export function Notifications({ lang }: { lang: Lang }) {
   const open = (n: Note) => { if (n.unread) FF.fire(FF.post('/me/notifications/' + n.id + '/read')); };
   return (
     <>
-      <Head lang={lang} title={T.notifTitle} back="/app" aside={items?.some((n) => n.unread) ? <Button size="sm" tone="ghost" onClick={readAll}>{T.readAll}</Button> : null} />
+      <Head lang={lang} title={T.notifTitle} back="/" aside={items?.some((n) => n.unread) ? <Button size="sm" tone="ghost" onClick={readAll}>{T.readAll}</Button> : null} />
       <Gate lang={lang} note={T.gateNotif}>
         {!items ? <div className="kd-skel mx-4 h-40" aria-hidden="true" /> : items.length ? (
           <ul className="flex flex-col px-4">

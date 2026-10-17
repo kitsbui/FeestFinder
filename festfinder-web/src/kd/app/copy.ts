@@ -60,6 +60,7 @@ export const APP = {
   fromOrg: { en: 'From the organiser', vi: 'Từ ban tổ chức' },
   buy: { en: 'Buy tickets', vi: 'Mua vé' },
   goTogether: { en: 'Go with friends', vi: 'Đi cùng bạn bè' },
+  findEvents: { en: 'Find events', vi: 'Tìm sự kiện' },
   daysLeft: { en: '{n} days to go', vi: 'Còn {n} ngày' },
   fromPrice: { en: 'from {p}', vi: 'từ {p}' },
   freeEntry: { en: 'Free entry', vi: 'Vào cửa tự do' },

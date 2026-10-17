@@ -159,7 +159,12 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - "Đây là tôi" and "Tôi là nghệ sĩ" send `role_picker_shown` {role, surface}: the phase's gate (more profiles claimed) can be read in PostHog next to the claims the Console approves.
   - `OriginTabs` is gone (nothing used it after phase 2). `e2e/next/people.spec.ts` checks the tabs, the phone's first names, the artist's tabs and /p's empty state.
   - [ ] Later: a booking request from an artist's page ("Đặt lịch" in the mockup) needs an API of its own; "Mở cho brand" as a directory filter.
-- [ ] Phase 4: the app folded into the web. Owner, 2026-10-17: the app's Khám phá (`/app`) merges into `/` (tech debt #18), redirects keep the query.
+- [x] Phase 4: the app folded into the web (branch `design/phase-4`). Owner, 2026-10-17: the app's Khám phá (`/app`) merges into `/` (tech debt #18), redirects keep the query.
+  - One surface to discover on: `/app` → `/`, `/app/list` (and `/app/map`) → `/?view=map`, `/app/saved` → `/saved`, `/app/profile` → `/profile`, `/app/e/<slug>` → `/e/<slug>`, permanent and with every query (`kd/app/moved.ts`). The app's Explore, map, saved, profile and event screens are gone; the event page took their group plan and guide rows, the "Tôi" hub took Smart Alerts.
+  - One frame: the screens left (tickets, checkout, notifications, settings, alerts, plan, chat, guide, live, recap, hyped, following) are drawn by `kd/app/root.tsx` inside the site's nav and, on a phone, its edge-to-edge tab bar (the app's floating bar and desktop rail are gone); a screen's dock sits on the tab bar. Buying from the list (`/` → `/e/…` → `/go/…` → `/app/checkout/…`) keeps the frame (`e2e/next/app.spec.ts`). The app honours `?lang=` like the site.
+  - The installed app opens on `/?source=app` (manifest `start_url`; `id` stays `/app`): a device seen for the first time, nobody signed in, is asked two things in a sheet (its city, by position or from the list; the styles it likes), then sees the list of that city and style; afterwards it opens on its city. The service worker is registered there, keeps the site's pages the app moved into (`/`, `/e/…`, `/saved`, `/profile`) working offline with the tickets as the fallback, and opens a notification in any open window of the site (`public/sw.js`, cache `ff-3`).
+  - Notification links name the event page (`/e/<slug>`) and the home page directly (`services/messaging.ts` `linkUrl`, `kd/app/inbox.tsx`).
+  - Budgets lowered with the screens removed: ESLint warnings 48, arbitrary px values 130.
 - [ ] Phase 5: Studio and the Console
 - [ ] Phase 6: QA and governance (continuous)
 
@@ -258,3 +263,4 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-17: Design v2 phase 1 (navigation): four places and a search in the bar, a tab bar on phones, the "Tôi" hub and the workspace switcher, "Đăng sự kiện" straight to the wizard, logo pack v2, no floating feedback button, breadcrumbs without EDM.
 - 2026-10-17: Design v2 phase 2 (home and event page): the list by day with a lead and rows, a sticky filter bar and "Lọc" on phones, the week and cities rail, the questions on /about, the event's facts grid, tickets after the hero and a "Mua vé" bar on phones, one Hỏi đáp, v2 share pictures.
 - 2026-10-17: Design v2 phase 3 (artists and projects): the directory's tabs and square cards, an artist's page in tabs with the latest mix, /p's empty state, claims counted.
+- 2026-10-17: Design v2 phase 4 (the app folded into the web): one surface (old app addresses redirect with their query), one frame for the app's screens, the installed app's two-step first run, notifications to the site's pages.
