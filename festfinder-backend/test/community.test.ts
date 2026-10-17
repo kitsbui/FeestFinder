@@ -187,7 +187,7 @@ describe('community event pages', () => {
 
     const queue = await env.as(admin).get('/admin/queue');
     const item = queue.body.items.find((i: any) => i.id === sent.body.id);
-    assert.equal(item.organizer.name, 'Feest Radar');
+    assert.equal(item.organizer.name, 'Cộng đồng FeestFinder', 'what people send in waits with the community, not with Feest Radar');
 
     const approve = await env.as(admin).post('/admin/listings/approve', { ids: [sent.body.id] });
     assert.equal(approve.status, 200);

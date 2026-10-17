@@ -90,10 +90,12 @@ test.describe('"Đặt xe" on an iPhone', () => {
   });
 });
 
-test('the organiser of Radar’s finds is Feest Radar, and its old address leads there', async ({ page }) => {
-  await page.goto('/o/cong-dong');
-  await expect(page).toHaveURL(/\/o\/feest-radar$/);
+test('Radar’s finds and what the community sends in have an organiser page each', async ({ page }) => {
+  await page.goto('/o/feest-radar');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Feest Radar');
+  await page.goto('/o/cong-dong');
+  await expect(page).toHaveURL(/\/o\/cong-dong$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cộng đồng FeestFinder');
 });
 
 test('the review queue filters by source and fit, and sorts by fit', async ({ page }) => {

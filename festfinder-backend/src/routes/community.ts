@@ -255,7 +255,7 @@ export default async function communityRoutes(app: FastifyInstance) {
       `select e.id, e.slug, e.title, e.status, e.starts_on, e.start_time, e.venue_name, e.created_at, e.published_at,
               (select d.reason_code from moderation_decisions d where d.event_id = e.id order by d.decided_at desc limit 1) as reason_code,
               (select d.message from moderation_decisions d where d.event_id = e.id order by d.decided_at desc limit 1) as decision_message,
-              (e.organizer_id <> (select id from organizers where is_community limit 1)) as claimed
+              not exists (select 1 from organizers o where o.id = e.organizer_id and o.is_community) as claimed
          from events e where e.submitted_by = $1 order by e.created_at desc limit 50`, [s.user.id]);
     return {
       items: rows.map((r) => ({

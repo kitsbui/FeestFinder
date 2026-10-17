@@ -31,7 +31,7 @@ Found in the 2026-10-05 audit, ranked by how much each item blocks the Asia even
 | 18 | The app keeps its own "Khám phá" tab (`/app`) | `kd/app/explore.tsx`, `kd/app/root.tsx` | The web's Khám phá page was removed on 2026-10-17; the app's feed tab was left as it is until the owner says whether it goes the same way (to `/app/list`). |
 | 19 | Ultra's and Tomorrowland's sites carry no event data | `services/ingest/starter.ts` | Checked 2026-10-17: their Asian editions reach Radar only through ticket sites or the team. A custom reader per site would break with every redesign; ask them for a feed or use a ticketing partner. |
 | 20 | Festival cities without detailed map tiles | `lib/places.ts`, `scripts/build-tiles.sh` | Pattaya, Phú Quốc, Incheon and Chiba (and Phuket) are known, not launched: a festival there shows on the overview map only until the tiles are cut again with them (skill `feestfinder-add-city`). |
-| 21 | Community submissions share Feest Radar | `services/community.ts` | The organiser that holds Radar finds also holds what people send in, so a community listing's organiser reads "Feest Radar" (its origin still says posted). Split into two organisers if the owner wants them apart. |
+| 21 | Community submissions shared Feest Radar | `services/community.ts` | Resolved on 2026-10-17 (migration 044): Feest Radar holds ingestion's finds, Cộng đồng FeestFinder (`/o/cong-dong` again) what people send in; the events someone posted moved back to the community. |
 
 ## Resolved on 2026-10-05
 

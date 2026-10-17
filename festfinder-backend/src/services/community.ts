@@ -5,28 +5,51 @@ import { L, type Localized } from '../lib/i18n.ts';
 import { randomCode } from '../lib/crypto.ts';
 import { notifyOrganizer, notifyUser } from './notify.ts';
 
-/**
- * Feest Radar (migration 043): the organiser that holds what ingestion finds and what the
- * community submits, until their real organiser claims them.
+/*
+ * The two organisers that hold events nobody runs yet (migration 044), until their real organiser
+ * claims them: Feest Radar holds what ingestion finds, Cộng đồng FeestFinder what people send in
+ * (the community form, an artist's gig report). Both are placeholders (is_community); each is
+ * made with its first event, never on an empty database.
  */
-export const COMMUNITY_ORG = {
-  slug: 'feest-radar',
-  name: 'Feest Radar',
-  initials: 'FR',
-  bio: L('Electronic nights and festivals Feest Radar found on public pages, and the ones people sent in. A moderator checks each one before it goes live.',
-    'Đêm nhạc điện tử và lễ hội do Feest Radar tìm thấy trên các trang công khai, cùng tin mọi người gửi lên. Mỗi tin đều được kiểm duyệt trước khi lên sóng.'),
-  art: 'linear-gradient(135deg,#0AE448,#ABFF84)',
+export type Placeholder = 'community' | 'radar';
+
+interface PlaceholderSpec { slug: string; name: string; initials: string; bio: Localized; art: string }
+
+export const PLACEHOLDER_ORGS: Record<Placeholder, PlaceholderSpec> = {
+  community: {
+    slug: 'cong-dong',
+    name: 'Cộng đồng FeestFinder',
+    initials: 'CĐ',
+    bio: L('Events people found and sent in. Each one is checked by a moderator before it goes live.',
+      'Sự kiện do mọi người phát hiện và gửi lên. Mỗi tin đều được kiểm duyệt trước khi lên sóng.'),
+    art: 'linear-gradient(135deg,#0AE448,#ABFF84)',
+  },
+  radar: {
+    slug: 'feest-radar',
+    name: 'Feest Radar',
+    initials: 'FR',
+    bio: L('Electronic nights and festivals Feest Radar found on public pages. A moderator checks each one before it goes live.',
+      'Đêm nhạc điện tử và lễ hội do Feest Radar tìm thấy trên các trang công khai. Mỗi tin đều được kiểm duyệt trước khi lên sóng.'),
+    art: 'linear-gradient(135deg,#8C6BFF,#2AC4E8)',
+  },
 };
 
-export async function communityOrganizerId(q: Queryable): Promise<string> {
-  const found = await one<{ id: string }>(q, 'select id from organizers where is_community limit 1');
+/** The organiser that holds one kind of event nobody runs yet, made the first time it is needed. */
+export async function placeholderOrganizerId(q: Queryable, kind: Placeholder): Promise<string> {
+  const found = await one<{ id: string }>(q, 'select id from organizers where placeholder = $1', [kind]);
   if (found) return found.id;
+  const spec = PLACEHOLDER_ORGS[kind];
   const row = await one<{ id: string }>(q,
-    `insert into organizers (slug, name, initials, type, bio, art, is_community) values ($1,$2,$3,'public',$4,$5,true)
-     on conflict (slug) do update set is_community = true returning id`,
-    [COMMUNITY_ORG.slug, COMMUNITY_ORG.name, COMMUNITY_ORG.initials, JSON.stringify(COMMUNITY_ORG.bio), COMMUNITY_ORG.art]);
+    `insert into organizers (slug, name, initials, type, bio, art, is_community, placeholder) values ($1,$2,$3,'public',$4,$5,true,$6)
+     on conflict (slug) do update set is_community = true, placeholder = excluded.placeholder returning id`,
+    [spec.slug, spec.name, spec.initials, JSON.stringify(spec.bio), spec.art, kind]);
   return row!.id;
 }
+
+/** Where what people send in waits for its organiser. */
+export const communityOrganizerId = (q: Queryable) => placeholderOrganizerId(q, 'community');
+/** Where what Feest Radar finds waits for its organiser. */
+export const radarOrganizerId = (q: Queryable) => placeholderOrganizerId(q, 'radar');
 
 // ---- where the event is in its life -------------------------------------------------
 

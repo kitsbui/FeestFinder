@@ -119,9 +119,6 @@ const config: NextConfig = {
       { source: '/p/:slug/en', destination: '/p/:slug?lang=en', permanent: true },
       { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
-      // The organiser that holds Radar finds is Feest Radar (migration 043).
-      { source: '/o/cong-dong', destination: '/o/feest-radar', permanent: true },
-      { source: '/o/cong-dong.md', destination: '/o/feest-radar.md', permanent: true },
       // The map is a view of the list.
       { source: '/map', destination: '/?view=map', permanent: false },
       { source: '/app/map', destination: '/app/list', permanent: true },

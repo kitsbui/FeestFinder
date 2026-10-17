@@ -457,7 +457,8 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
   const cities = cityKeys.map((c) => text(cityLabel(c), lang));
   const mainCity = cityKeys[0] ?? cityOf(null).slug;
   const verified = org.verification_state === 'verified';
-  const kind = org.is_community ? (vi ? 'trang cộng đồng' : 'community page') : text(ORG_TYPE[org.type] ?? ORG_TYPE.promoter, lang);
+  const kind = org.placeholder === 'radar' ? (vi ? 'trang của Feest Radar' : 'Feest Radar’s page')
+    : org.is_community ? (vi ? 'trang cộng đồng' : 'community page') : text(ORG_TYPE[org.type] ?? ORG_TYPE.promoter, lang);
   const about = text(org.bio, lang);
   const next = upcoming[0];
   const n = (x: number) => x.toLocaleString(vi ? 'vi-VN' : 'en-US');

@@ -15,7 +15,7 @@ import { sha256 } from '../../src/lib/crypto.ts';
 import { appendAudit } from '../../src/services/audit.ts';
 import { refreshDerived } from '../../src/services/events.ts';
 import { artistKey, backfillArtistFollows } from '../../src/services/artists.ts';
-import { communityOrganizerId } from '../../src/services/community.ts';
+import { communityOrganizerId, radarOrganizerId } from '../../src/services/community.ts';
 import { assessRisk } from '../../src/services/risk.ts';
 
 const ART = {
@@ -686,7 +686,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query('update users set onboarded_at = created_at, email_verified_at = case when email is not null then created_at end');
     // As the boot does on real data: follows made by name join the profile they name (migration 041).
     await backfillArtistFollows(q);
-    // Feest Radar's page, as production has it (created by the first import or submission).
+    // Feest Radar's and the community's pages, as production has them (each made by its first event).
+    await radarOrganizerId(q);
     await communityOrganizerId(q);
     await q.query(`insert into user_roles (user_id, role, status) select distinct user_id, 'organizer', 'active' from organizer_members on conflict do nothing`);
 

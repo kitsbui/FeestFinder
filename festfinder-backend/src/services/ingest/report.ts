@@ -87,7 +87,7 @@ export async function reportGig(ctx: Ctx, artist: { id: string; name: string }, 
     } else {
       // FeestFinder lists electronic music only: a new night of another genre is not filed.
       if (n.otherGenre) return { outcome: 'rejected' as const, reportId: await record('rejected', null, match?.score ?? null, match?.reason ?? null, 'other_genre'), reason: 'other_genre' };
-      eventId = await createCandidate(q, { name: `${artist.name} (artist report)`, url: null }, n, venue, match, now);
+      eventId = await createCandidate(q, { name: `${artist.name} (artist report)`, url: null }, n, venue, match, now, 'community');
       outcome = 'created';
     }
     const reportId = await record(outcome, eventId, match?.score ?? null, match?.reason ?? null, null);

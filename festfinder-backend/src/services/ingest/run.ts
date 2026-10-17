@@ -6,7 +6,7 @@ import { randomCode, sha256 } from '../../lib/crypto.ts';
 import { haversineKm } from '../../lib/geo.ts';
 import { L } from '../../lib/i18n.ts';
 import { appendAudit } from '../audit.ts';
-import { communityOrganizerId } from '../community.ts';
+import { placeholderOrganizerId, type Placeholder } from '../community.ts';
 import { refreshDerived } from '../events.ts';
 import { assessRisk } from '../risk.ts';
 import { refreshConfidence } from './confidence.ts';
@@ -301,9 +301,12 @@ export async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, 
   await refreshDerived(q, eventId, now);
 }
 
-/** A new event in the review queue, held by the community organiser until someone claims it. */
-export async function createCandidate(q: Queryable, source: Pick<IngestSource, 'name' | 'url'>, n: NormalizedEvent, venue: any, match: Match | null, now: Date): Promise<string> {
-  const organizerId = await communityOrganizerId(q);
+/**
+ * A new event in the review queue, held until someone claims it: by Feest Radar when ingestion
+ * found it, by the community organiser when a person reported it (an artist's gig report).
+ */
+export async function createCandidate(q: Queryable, source: Pick<IngestSource, 'name' | 'url'>, n: NormalizedEvent, venue: any, match: Match | null, now: Date, holder: Placeholder = 'radar'): Promise<string> {
+  const organizerId = await placeholderOrganizerId(q, holder);
   const slug = `${slugify(n.title) || 'event'}-${randomCode(4).toLowerCase()}`;
   const paid = !n.free;
   const row = await one<{ id: string }>(q,

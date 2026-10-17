@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { setup, type TestEnv } from './helpers.ts';
 import { one } from '../src/db/index.ts';
+import { migrate } from '../src/db/migrate.ts';
 import { festivalOf } from '../src/lib/festivals.ts';
 import { knownOnLineup, stylesOfLineup } from '../src/lib/known-artists.ts';
 import { classifyStyles, STYLES } from '../src/lib/styles.ts';
@@ -189,3 +190,54 @@ describe('Feest Radar, running', () => {
     assert.equal(org.body.name, 'Feest Radar');
   });
 });
+
+describe('Feest Radar and the community, two organisers (migration 044)', () => {
+  let env: TestEnv;
+  before(async () => { env = await setup(); });
+  after(async () => { await env.close(); });
+
+  it('splits the one organiser production had: Radar keeps its finds, the community gets back what people posted', async () => {
+    const db = env.ctx.db;
+    const idOf = async (slug: string) => (await one<{ id: string }>(db, 'select id from organizers where slug = $1', [slug]))!.id;
+    // Production before 043: one placeholder, "Cộng đồng FeestFinder" at /o/cong-dong, holding both kinds.
+    const community = await idOf('cong-dong');
+    await db.query(`delete from organizers where slug = 'feest-radar'`);
+    await db.query('update organizers set placeholder = null where id = $1', [community]);
+    const [found, posted] = (await db.query<{ id: string }>(`select id from events where status = 'live' order by starts_at limit 2`)).rows;
+    await db.query(`update events set organizer_id = $1, origin = 'radar' where id = $2`, [community, found.id]);
+    await db.query(`update events set organizer_id = $1, origin = 'posted' where id = $2`, [community, posted.id]);
+
+    await db.query(`delete from schema_migrations where name in ('043_feest_radar.sql', '044_split_community_radar.sql')`);
+    assert.deepEqual(await migrate(db), ['043_feest_radar.sql', '044_split_community_radar.sql']);
+
+    const orgs = (await db.query<{ slug: string; name: string; placeholder: string; is_community: boolean }>(
+      'select slug, name, placeholder, is_community from organizers where is_community order by placeholder')).rows;
+    assert.deepEqual(orgs.map((o) => [o.placeholder, o.slug, o.name]), [['community', 'cong-dong', 'Cộng đồng FeestFinder'], ['radar', 'feest-radar', 'Feest Radar']]);
+    const holder = async (id: string) => (await one<{ slug: string }>(db, 'select o.slug from events e join organizers o on o.id = e.organizer_id where e.id = $1', [id]))!.slug;
+    assert.equal(await holder(found.id), 'feest-radar');
+    assert.equal(await holder(posted.id), 'cong-dong');
+    assert.equal((await env.as().get('/organizers/cong-dong')).body.name, 'Cộng đồng FeestFinder');
+    assert.equal((await env.as().get('/organizers/feest-radar')).body.name, 'Feest Radar');
+    // Run again, nothing moves.
+    await db.query(`delete from schema_migrations where name in ('043_feest_radar.sql', '044_split_community_radar.sql')`);
+    await migrate(db);
+    assert.equal(await holder(found.id), 'feest-radar');
+    assert.equal(await holder(posted.id), 'cong-dong');
+  });
+
+  it('sends a new Radar find to Feest Radar and an artist’s report or a community submission to the community', async () => {
+    const { createCandidate } = await import('../src/services/ingest/run.ts');
+    const n = {
+      title: 'Split test night', description: null, startsOn: '2026-10-20', endsOn: '2026-10-20', startTime: '22:00', endTime: null, city: 'ho-chi-minh',
+      venueName: 'Somewhere', address: null, area: null, lat: null, lng: null, lineup: [], genre: 'EDM' as const, styles: ['techno'], otherGenre: null,
+      eventType: 'club' as const, imageUrl: null, ticketUrl: null, eventUrl: null, priceFrom: null, free: null, cancelled: false, organizerName: null, festival: null,
+    };
+    const src = { name: 'Test', url: null };
+    const radar = await env.ctx.db.tx((q) => createCandidate(q, src, n, null, null, NOW));
+    const person = await env.ctx.db.tx((q) => createCandidate(q, src, { ...n, title: 'Split test report' }, null, null, NOW, 'community'));
+    const slugOf = async (id: string) => (await one<{ slug: string }>(env.ctx.db, 'select o.slug from events e join organizers o on o.id = e.organizer_id where e.id = $1', [id]))!.slug;
+    assert.equal(await slugOf(radar), 'feest-radar');
+    assert.equal(await slugOf(person), 'cong-dong');
+  });
+});
+
