@@ -19,6 +19,7 @@ import { Input } from '../ui/forms';
 import { Menu, MenuItem, Picker } from '../ui/menu';
 import { Art, Card as Panel, Marker } from '../ui/parts';
 import { AppBar } from '../ui/shell';
+import { Logo } from '../ui/logo';
 import { Sheet } from '../ui/sheet';
 import type { Card } from '../types';
 import { cardTag } from '../web/card';
@@ -321,7 +322,7 @@ function Onboarding({ lang, meta, onDone }: { lang: Lang; meta: { defaultCity: s
   return (
     <div className="flex min-h-dvh flex-col desk:mx-auto desk:w-full desk:max-w-[640px] pb-[calc(20px+env(safe-area-inset-bottom))]">
       <AppBar className="pr-1.5">
-        <img src="/kd/ff-mark.svg" alt="FeestFinder" width={16} height={28} />
+        <Logo lang={lang} mark height={28} />
         <button type="button" className={buttonClass({ tone: 'ghost', size: 'sm' }, 'ml-auto')} onClick={() => finish(meta.defaultCity)}>{T.skip}</button>
       </AppBar>
       {matching != null ? <span className="kd-tag kd-tag-acc kd-num mx-4 mt-4 self-start">{fill(T.obCount, { n: matching })}</span> : null}

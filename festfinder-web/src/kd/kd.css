@@ -230,6 +230,13 @@
   .kd-tb:hover { color: var(--color-fg-1); }
   .kd-tb[aria-current='page'] { color: var(--color-fg-1); }
   .kd-tb[aria-current='page']::before { content: ''; position: absolute; top: 6px; width: 18px; height: 3px; border-radius: 2px; background: var(--color-info); }
+  /* The site's tab bar (web/chrome.tsx, design v2): solid and edge to edge on a phone; the nav takes over from 900px. */
+  .kd-tabbar-edge { left: 0; right: 0; bottom: 0; height: auto; padding: 2px 4px env(safe-area-inset-bottom); border-radius: 0; background: var(--color-surface-1); box-shadow: inset 0 1px 0 var(--color-line-1); }
+  .kd-tabbar-edge .kd-tb { height: 54px; border: 0; background: transparent; font: inherit; font-size: 11px; color: var(--color-fg-3); cursor: pointer; }
+  .kd-tabbar-edge .kd-tb[aria-current='page'] { color: var(--color-fg-1); }
+  .kd-tabbar-edge .kd-tb[aria-current='page']::before { top: 0; }
+  @media (max-width: 899px) { body:has(.kd-tabbar-edge) { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }
+  @media (min-width: 900px) { .kd-tabbar-edge { display: none; } }
   .kd-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
   /* The app: a phone column, centred on wider screens; the bars stay over it. */
   .kd-app { position: relative; width: 100%; max-width: 560px; min-height: 100dvh; margin: 0 auto; padding-top: env(safe-area-inset-top); }
@@ -258,7 +265,9 @@
 
   /* ---- web ---- */
   .kd-wrap { width: 100%; padding-inline: var(--kd-gutter); }
-  .kd-nav { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+  .kd-nav { position: sticky; top: 0; z-index: 30; background: var(--color-surface-1); border-bottom: 1px solid var(--color-line-1); }
+  /* A keyboard shortcut named in a field (the nav's ⌘K). */
+  .kd-kbd { flex-shrink: 0; padding: 1px 5px; border-radius: var(--radius-tag); box-shadow: inset 0 0 0 1px var(--color-line-1); font: inherit; font-size: 11px; color: var(--color-fg-3); }
   .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
   .kd-nl:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.05); }
   .kd-nl[aria-current='page'] { color: var(--color-fg-1); }
@@ -419,27 +428,12 @@
   /* ---- toast ---- */
   .kd-toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 60; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); min-height: 44px; padding: 0 8px 0 16px; border-radius: var(--radius-card); font-size: 14px; color: var(--color-fg-1); }
 
-  /* ---- the feedback button (kd/feedback/widget.tsx): in the corner, above the app's tab bar,
-     the ticket dock and the map's controls; gone while a sheet is open ---- */
-  .kd-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 19; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: var(--color-fg-1); cursor: pointer; }
-  .kd-fab:hover { color: var(--color-info); }
-  body:has(.kd-tabbar) .kd-fab { bottom: calc(88px + env(safe-area-inset-bottom)); }
-  body:has(.kd-dock) .kd-fab { bottom: calc(104px + env(safe-area-inset-bottom)); }
-  body:has(.kd-tabbar):has(.kd-dock) .kd-fab { bottom: calc(176px + env(safe-area-inset-bottom)); }
-  /* Over a map the corner belongs to the map's own controls: the button goes (the footer and menus keep "Góp ý"). */
-  body:has(.maplibregl-map) .kd-fab { display: none; }
-  body:has(dialog[open]) .kd-fab { display: none; }
-  @media (min-width: 900px) {
-    body:has(.kd-app ~ .kd-tabbar) .kd-fab { bottom: calc(24px + env(safe-area-inset-bottom)); }
-    body:has(.kd-dock) .kd-fab { bottom: calc(104px + env(safe-area-inset-bottom)); }
-  }
-
   /* ---- skeleton while a client part loads ---- */
   .kd-skel { border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); }
 }
 
 @media print {
-  .kd-nav, .kd-tabbar, .kd-dock, .kd-scrim, .kd-fab { display: none !important; }
+  .kd-nav, .kd-tabbar, .kd-dock, .kd-scrim { display: none !important; }
 }
 
 /* The sheet's backdrop: the page dims behind a modal. */

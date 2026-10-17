@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: Props) {
   return (
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} />
+        <WebNav lang={lang} current="me" />
         <FanProfile lang={lang} />
         <div className="mt-auto"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/profile?lang=en', label: 'English' } : { href: '/profile', label: 'Tiếng Việt' }} /></div>
       </div>

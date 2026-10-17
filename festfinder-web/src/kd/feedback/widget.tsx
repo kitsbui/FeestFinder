@@ -1,16 +1,15 @@
 'use client';
 /**
- * Feedback and bug reports from any page: a small glass button in the corner (above the app's
- * tab bar and the ticket dock, hidden while a sheet is open and on the door scanner) opens a
- * sheet: what it is about, a title and details, how bad (bugs), steps, a score, up to two
+ * Feedback and bug reports from any page: "Góp ý" in the footer, the account menu, the "Tôi" hub
+ * and every back office's rail sends `ff:feedback`, which opens a sheet (no floating button since
+ * design v2 phase 1: it covered the tab bar, the dock and the map's controls): what it is about, a title and details, how bad (bugs), steps, a score, up to two
  * screenshots (picked, dropped or pasted; made smaller in the browser), an email for guests,
  * and what the page attaches by itself, listed. The API answers with a ticket
  * (festfinder-backend routes/feedback.ts). It lives in the root layout, outside the pages'
  * KdProvider, so it reads the session and the language itself. `ff:feedback` opens it.
  */
 import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from 'react';
-import { usePathname } from 'next/navigation';
-import { BugIcon, ChatTextIcon, LightbulbIcon, PaintBrushIcon, QuestionIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { BugIcon, LightbulbIcon, PaintBrushIcon, QuestionIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
@@ -27,9 +26,6 @@ const KINDS: { key: Kind; icon: typeof BugIcon }[] = [
   { key: 'bug', icon: BugIcon }, { key: 'ui_ux', icon: PaintBrushIcon }, { key: 'feature', icon: LightbulbIcon }, { key: 'support', icon: QuestionIcon },
 ];
 const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'critical'];
-/** Screens where a floating button would be in the way. */
-const HIDDEN = [/^\/studio\/door/, /^\/kit/];
-
 /** The language the page is in: ?lang=en, or a part of the page marked English. */
 const pageLang = (): Lang => (new URLSearchParams(location.search).get('lang') === 'en' || document.querySelector('[lang="en"]') ? 'en' : 'vi');
 
@@ -50,7 +46,6 @@ async function shrink(file: File): Promise<Blob> {
 }
 
 export function FeedbackWidget() {
-  const path = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => {
     installErrorLog();
@@ -58,15 +53,7 @@ export function FeedbackWidget() {
     window.addEventListener('ff:feedback', show);
     return () => window.removeEventListener('ff:feedback', show);
   }, []);
-  if (HIDDEN.some((r) => r.test(path ?? ''))) return null;
-  return (
-    <>
-      <button type="button" className="kd-fab kd-glass" aria-label={pick(FEEDBACK, 'vi').open + ' / ' + pick(FEEDBACK, 'en').open} onClick={() => setOpen(true)}>
-        <ChatTextIcon size={20} aria-hidden="true" />
-      </button>
-      {open ? <FeedbackSheet onClose={() => setOpen(false)} /> : null}
-    </>
-  );
+  return open ? <FeedbackSheet onClose={() => setOpen(false)} /> : null;
 }
 
 function FeedbackSheet({ onClose }: { onClose: () => void }) {

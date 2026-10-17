@@ -164,9 +164,12 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     return () => clearInterval(t);
   }, [ready, f, page.nextCursor, load]);
 
-  // The address follows the choices, so a copied link opens the same list.
+  // The address follows the choices, so a copied link opens the same list; the nav's tab bar and
+  // language link read it again (web/lang.ts).
   useEffect(() => {
-    if (ready) history.replaceState(history.state, '', address(f, lang));
+    if (!ready) return;
+    history.replaceState(history.state, '', address(f, lang));
+    window.dispatchEvent(new Event('kd:url'));
   }, [f, ready, lang]);
   // From the map, after each search: whatever else was chosen meanwhile stays.
   const onBbox = useCallback((bbox: Box) => setF((cur) => ({ ...cur, bbox })), []);

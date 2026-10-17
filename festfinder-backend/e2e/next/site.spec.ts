@@ -247,8 +247,8 @@ test.describe('scrollbars', () => {
     await page.setViewportSize({ width: 375, height: 700 });
     await page.goto('/');
     await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-    await page.getByRole('button', { name: 'Menu' }).click();
-    const sheet = page.getByRole('dialog', { name: 'Menu' });
+    await page.getByRole('navigation', { name: 'Chính' }).getByRole('button', { name: 'Tìm' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Tìm kiếm' });
     await expect(sheet).toBeVisible();
     // A long box in the sheet, scrolled: its thumb sits on its right edge and is what is on top there.
     const edge = await sheet.evaluate((d) => {
@@ -270,9 +270,10 @@ test.describe('scrollbars', () => {
 
 test.describe('sheets', () => {
   test('a sheet that asks for text puts the cursor in its field, so typing goes there at once', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-    await page.getByRole('button', { name: 'Tìm kiếm', exact: true }).first().click();
+    await page.getByRole('navigation', { name: 'Chính' }).getByRole('button', { name: 'Tìm' }).click();
     const dialog = page.getByRole('dialog', { name: 'Tìm kiếm' });
     await expect(dialog).toBeVisible();
     await page.keyboard.type('ravo');

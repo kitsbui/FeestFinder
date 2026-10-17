@@ -65,11 +65,12 @@ test.describe('the event page', () => {
 
   test('remembers English: a Vietnamese address moves to the English one, and back', async ({ page }) => {
     await open(page, '/e/ravo');
-    await page.getByRole('link', { name: 'English' }).click();
+    // The footer's link (the bar's VI · EN does the same).
+    await page.getByRole('contentinfo').getByRole('link', { name: 'English' }).click();
     await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
     await page.goto('/e/ravo');
     await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
-    await page.getByRole('link', { name: 'Tiếng Việt' }).click();
+    await page.getByRole('contentinfo').getByRole('link', { name: 'Tiếng Việt' }).click();
     await expect(page).toHaveURL(/\/e\/ravo$/);
     await expect(page.getByText('Câu hỏi thường gặp').first()).toBeVisible();
   });

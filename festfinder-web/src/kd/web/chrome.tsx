@@ -1,209 +1,122 @@
 'use client';
 /**
- * The public site's frame: the sticky glass nav (Khám phá, Sự kiện, the Thể loại menu with live
- * counts, search, "Đăng sự kiện" and the account menu; below desk width a Menu button opens the
- * same pages, styles and "Đăng sự kiện" in a sheet), and the one-line footer.
+ * The public site's frame (design v2 phase 1, artboard 03 of the design review): one frame for
+ * every public page, the same addresses.
+ * - A computer: one bar with the logo, the four places (Sự kiện, Nghệ sĩ, Dự án, Nhà tổ chức), the
+ *   search field (⌘K or Ctrl+K; an icon below 1200px), VI · EN, "Đăng sự kiện" (straight to the
+ *   wizard) and the account menu, "Tôi" (web/me.tsx).
+ * - A phone: the logo and "Đăng sự kiện" on top, and the tab bar at the bottom: Sự kiện, Bản đồ,
+ *   Tìm (a sheet with the search, the other places and the styles), Đã lưu, Tôi (/profile, the hub).
+ * - The one-line footer, and the breadcrumbs of a detail page.
+ * Styles are filters of the list, not a place: the list's bar and the search sheet offer them.
  */
 import { KdLink as Link, inLang } from '../link';
-import { useEffect, useState, type FormEvent } from 'react';
-import { CalendarPlusIcon, CaretDownIcon, CaretRightIcon, LightbulbIcon, ListIcon, MagnifyingGlassIcon, ShieldCheckIcon } from '@phosphor-icons/react/ssr';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type RefObject } from 'react';
+import { CalendarBlankIcon, CaretRightIcon, HeartIcon, MagnifyingGlassIcon, MapTrifoldIcon, UserIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
+import { cx } from '../cx';
 import { g, styleChips, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { buttonClass, IconButton } from '../ui/actions';
-import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
+import { Menu } from '../ui/menu';
 import { Avatar } from '../ui/parts';
 import { Sheet } from '../ui/sheet';
 import { Input } from '../ui/forms';
-import { POST_HREF } from '../ui/post-kind';
-import { CRAFT, WORKSPACE, isTeam, otherCraft } from '../craft';
+import { Logo } from '../ui/logo';
+import { TabBar } from '../ui/shell';
 import { WEB } from './copy';
+import { LANG_KEY, rememberLang, useHere, useOtherLang } from './lang';
+import { MeMenuItems } from './me';
 
-/** Which nav link is the current page: 'list' is Sự kiện, the home page, in each of its views (table, grid, map). */
-export type WebSection = 'list' | 'artists' | 'projects' | 'none';
-
-/** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
-const LANG_KEY = 'ff_lang';
+/** Which place the page is: it marks the nav link and the tab. */
+export type WebSection = 'list' | 'artists' | 'projects' | 'saved' | 'me' | 'none';
 
 /** Where a style leads: every upcoming event of it (the list), the same events its count counts. Only music styles: price is a filter, not a style. */
 export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/?style=${k}`, lang);
 
-export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSection }) {
+/** Which ways in people use (the design funnel): the nav, the tab bar, the search sheet, the footer. */
+const track = (kind: string, surface: string) => () => FF.track('nav_click', { kind, surface });
+
+/** Whether this is a Mac (⌘K) or not (Ctrl K); the server says ⌘. */
+const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform);
+const never = () => () => {};
+
+/** `tabs={false}`: the app (/app) keeps its own tab bar until it folds into the site (design phase 4). */
+export function WebNav({ lang, current = 'none', tabs = true }: { lang: Lang; current?: WebSection; tabs?: boolean }) {
   const kd = useKd();
   const T = pick(WEB, lang);
-  // Counted over every upcoming event on every page, as the links lead to all of them.
-  const [counts, setCounts] = useState<Record<string, number> | null>(null);
-  const [me, setMe] = useState<{ tickets: number; saved: number; handle: string } | null>(null);
   const [search, setSearch] = useState(false);
-  const [post, setPost] = useState(false);
-  const [menu, setMenu] = useState(false);
-
-  const loadCounts = () => {
-    if (counts) return;
-    FF.once('kd:style-counts', () => FF.maybe(FF.get('/events?time=all&upcoming=1&limit=1'), null)).then((r: any) => {
-      if (r?.facets?.style) setCounts(r.facets.style);
-    });
-  };
-  useEffect(() => {
-    if (!kd.user) { setMe(null); return; }
-    FF.once('kd:me', () => FF.maybe(FF.get('/me'), null)).then((r: any) => {
-      if (r) setMe({ tickets: r.counts.tickets, saved: r.counts.saved, handle: r.user.email || r.user.phone || '' });
-    });
-  }, [kd.user]);
-
-  /** Which ways in people use (the design funnel): the nav, its phone menu, the footer. */
-  const nav = (kind: string, surface = 'nav') => () => FF.track('nav_click', { kind, surface });
+  const field = useRef<HTMLInputElement>(null);
   const user = kd.user;
-  const K = pick(CRAFT, lang);
-  const roles = kd.session?.roles;
-  const craft = kd.session?.craft ?? null;
+
+  // ⌘K / Ctrl+K: the bar's field when it is there, else the search sheet.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'k') return;
+      e.preventDefault();
+      if (field.current && field.current.offsetParent !== null) field.current.focus();
+      else setSearch(true);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const place = (key: WebSection, href: string, label: string, kind: string) => (
+    <Link className="kd-nl" href={inLang(href, lang)} aria-current={current === key ? 'page' : undefined} onClick={track(kind, 'nav')}>{label}</Link>
+  );
   return (
-    <header className="kd-nav kd-glass">
-      <div className="kd-wrap flex h-16 items-center gap-3">
-        <Link href={inLang('/', lang)} aria-label={T.home} className="flex h-11 items-center">
-          <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={127} height={22} />
-        </Link>
-        <nav aria-label={T.mainNav} className="ml-3 hidden items-center gap-0.5 desk:flex">
-          <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'list' ? 'page' : undefined} onClick={nav('events')}>{T.events}</Link>
-          <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined} onClick={nav('artists')}>{T.artists}</Link>
-          <Menu
-            label={T.genres}
-            trigger={(p) => (
-              <button type="button" {...p} ref={p.ref} className="kd-nl" onPointerEnter={loadCounts} onFocus={loadCounts}>
-                {T.genres}
-                <CaretDownIcon size={14} className="kd-chev" aria-hidden="true" />
-              </button>
-            )}
-          >
-            {styleChips(counts, 10).map((k) => (
-              <MenuItem key={k} href={styleHref(k, lang)} external aside={counts?.[k] ?? null} icon={<span className={`kd-mk ${g('edm')}`} aria-hidden="true" />}>
-                {styleLabel(k, lang)}
-              </MenuItem>
-            ))}
-          </Menu>
-        </nav>
-        <div className="ml-auto flex items-center gap-1.5">
-          <IconButton label={T.search} onClick={() => { nav('search')(); setSearch(true); }}>
-            <MagnifyingGlassIcon size={20} aria-hidden="true" />
-          </IconButton>
-          {/* The team's way into the Console. */}
-          {isTeam(user) ? (
-            <a className={buttonClass({ size: 'sm', pill: true }, 'hidden desk:inline-flex')} href="/console"><ShieldCheckIcon size={16} aria-hidden="true" />{K.console}</a>
-          ) : null}
-          {/* Outlined: the page's own action is the one primary on the screen. */}
-          <button type="button" className={buttonClass({ size: 'sm' }, 'hidden desk:inline-flex')} aria-haspopup="dialog" onClick={() => { nav('post')(); setPost(true); }}>{T.listEvent}</button>
-          {user ? (
-            <Menu
-              label={T.account}
-              align="end"
-              trigger={(p) => (
-                <button type="button" {...p} ref={p.ref} aria-label={T.account} className="flex h-11 w-11 items-center justify-center rounded-full">
-                  <Avatar name={user.name || user.email || '?'} size={32} acc />
-                </button>
-              )}
-            >
-              <MenuHeader>
-                <span className="flex flex-col gap-0.5 border-b border-line-1 pb-2.5">
-                  <span className="kd-hs kd-ell">{user.name || T.you}</span>
-                  {me?.handle ? <span className="kd-m kd-ell normal-case">{me.handle}</span> : null}
-                </span>
-              </MenuHeader>
-              {isTeam(user) ? (
-                <>
-                  <MenuHeader><span className="kd-m">{K.team}</span></MenuHeader>
-                  <MenuItem href="/console" external icon={<ShieldCheckIcon size={16} aria-hidden="true" />}>{K.console}</MenuItem>
-                  <MenuSeparator />
-                </>
-              ) : null}
-              {/* Attending here; the one craft (if any) has its workspace; the other is a switch. */}
-              <MenuHeader><span className="kd-m">{K.roles}</span></MenuHeader>
-              <MenuItem checked onSelect={() => {}}>{K.attendee}</MenuItem>
-              {craft ? (
-                <MenuItem checked={false} href={WORKSPACE[craft]} external aside={roles?.[craft] === 'pending' ? K.waiting : null}>{K[craft]}</MenuItem>
-              ) : (
-                <MenuItem onSelect={() => kd.openRolePicker()}>{K.add}</MenuItem>
-              )}
-              {craft ? <MenuItem onSelect={() => kd.openRolePicker(otherCraft(craft))}>{fill(K.switchTo, { r: K[otherCraft(craft)] })}</MenuItem> : null}
-              <MenuSeparator />
-              <MenuItem href={inLang('/profile', lang)}>{T.myProfile}</MenuItem>
-              <MenuItem href={inLang('/p/mine', lang)}>{T.myProjects}</MenuItem>
-              <MenuItem href="/app/tickets" external aside={me ? me.tickets : null}>{T.myTickets}</MenuItem>
-              <MenuItem href={inLang('/saved', lang)} external aside={me ? me.saved : null}>{T.saved}</MenuItem>
-              <MenuSeparator />
-              <MenuItem onSelect={() => kd.signOut()}>{T.signOut}</MenuItem>
-            </Menu>
-          ) : kd.session === undefined ? (
-            <span className="h-11 w-11" aria-hidden="true" />
-          ) : (
-            <button type="button" className={buttonClass({ size: 'sm', tone: 'ghost' })} onClick={() => { nav('sign-in')(); kd.openSignIn(); }}>{T.signIn}</button>
-          )}
-          <IconButton label={T.menu} className="desk:hidden" aria-haspopup="dialog" aria-expanded={menu} onClick={() => { nav('menu')(); loadCounts(); setMenu(true); }}>
-            <ListIcon size={22} aria-hidden="true" />
-          </IconButton>
-        </div>
-      </div>
-      {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
-      {post ? <PostSheet lang={lang} onClose={() => setPost(false)} /> : null}
-      {menu ? (
-        <Sheet title={T.menu} closeLabel={T.close} onClose={() => setMenu(false)}>
-          <nav aria-label={T.mainNav} className="flex flex-col gap-0.5 pt-1">
-            {([['list', '/', T.events], ['artists', '/a', T.artists]] as const).map(([k, href, label]) => (
-              <Link
-                key={k}
-                href={inLang(href, lang)}
-                aria-current={current === k ? 'page' : undefined}
-                onClick={() => { nav(k, 'menu')(); setMenu(false); }}
-                className="kd-h flex min-h-13 items-center rounded-opt px-3 text-fg-2 hover:bg-white/[0.04] aria-[current=page]:bg-white/[0.06] aria-[current=page]:text-fg-1"
-              >
-                {label}
-              </Link>
-            ))}
+    <>
+      <header className="kd-nav">
+        <div className="kd-wrap flex h-14 items-center gap-2 desk:h-16">
+          <Logo lang={lang} height={20} className="mr-2 desk:mr-3" />
+          <nav aria-label={T.mainNav} className="hidden items-center gap-0.5 desk:flex">
+            {place('list', '/', T.events, 'events')}
+            {place('artists', '/a', T.artists, 'artists')}
+            {place('projects', '/p', T.projects, 'projects')}
+            <a className="kd-nl" href="/studio" onClick={track('organisers', 'nav')}>{T.organisers}</a>
           </nav>
-          <h3 className="kd-m mt-5 mb-2.5 px-3">{T.genres}</h3>
-          <div className="flex flex-wrap gap-2 px-1">
-            {styleChips(counts, 10).map((k) => (
-              <a key={k} href={styleHref(k, lang)} className="kd-chip">
-                <span className={`kd-mk ${g('edm')}`} aria-hidden="true" />{styleLabel(k, lang)}
-                {counts?.[k] != null ? <span className="kd-num text-fg-3">{counts[k]}</span> : null}
-              </a>
-            ))}
+          <NavSearch lang={lang} field={field} />
+          <div className="ml-auto flex items-center gap-1.5">
+            <IconButton label={T.search} className="hidden desk:inline-flex wide:hidden" aria-haspopup="dialog" onClick={() => { track('search', 'nav')(); setSearch(true); }}>
+              <MagnifyingGlassIcon size={20} aria-hidden="true" />
+            </IconButton>
+            <LangSwitch lang={lang} className="hidden desk:inline-flex" />
+            {/* Straight to the wizard (owner, 2026-10-17); a project starts from /p. Outlined: the page's own action is the one primary on the screen. */}
+            <Link className={buttonClass({ size: 'sm' })} href="/studio/new" onClick={track('post', 'nav')}>{T.listEvent}</Link>
+            {user ? (
+              <div className="hidden desk:block">
+              <Menu
+                label={T.account}
+                align="end"
+                trigger={(p) => (
+                  <button type="button" {...p} ref={p.ref} aria-label={T.account} className="flex h-11 w-11 items-center justify-center rounded-full">
+                    <Avatar name={user.name || user.email || '?'} size={32} acc />
+                  </button>
+                )}
+              >
+                <MeMenuItems lang={lang} name={user.name || T.you} />
+              </Menu>
+              </div>
+            ) : kd.session === undefined ? (
+              <span className="hidden h-11 w-11 desk:block" aria-hidden="true" />
+            ) : (
+              <button type="button" className={buttonClass({ size: 'sm', tone: 'ghost' }, 'hidden desk:inline-flex')} onClick={() => { track('sign-in', 'nav')(); kd.openSignIn(); }}>{T.signIn}</button>
+            )}
           </div>
-          <button type="button" className={buttonClass({ tone: 'acc', block: true }, 'mt-6')} aria-haspopup="dialog" onClick={() => { nav('post', 'menu')(); setMenu(false); setPost(true); }}>{T.listEvent}</button>
-          {isTeam(user) ? <a href="/console" className={buttonClass({ block: true }, 'mt-2')}><ShieldCheckIcon size={16} aria-hidden="true" />{K.console}</a> : null}
-        </Sheet>
-      ) : null}
-    </header>
+        </div>
+      </header>
+      {tabs ? <WebTabs lang={lang} current={current} onSearch={() => { track('search', 'tabs')(); setSearch(true); }} /> : null}
+      {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
+    </>
   );
 }
 
-/** "Đăng sự kiện": an event (a date and a venue) or a project (an idea looking for backers). */
-function PostSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
-  const T = pick(WEB, lang);
-  const rows = [
-    { kind: 'event' as const, icon: CalendarPlusIcon, title: T.postEvent, sub: T.postEventSub },
-    { kind: 'project' as const, icon: LightbulbIcon, title: T.postProject, sub: T.postProjectSub },
-  ];
-  return (
-    <Sheet title={T.listEvent} closeLabel={T.close} onClose={onClose}>
-      <div className="flex flex-col gap-2 pt-1">
-        {rows.map(({ kind, icon: Icon, title, sub }) => (
-          <a key={kind} href={POST_HREF[kind] + (lang === 'en' && kind === 'project' ? '?lang=en' : '')}
-            className="kd-lrow min-h-16 rounded-card border-b-0 px-3.5 shadow-[inset_0_0_0_1px_var(--color-line-2)] hover:bg-white/[0.04]">
-            <Icon size={22} className="text-fg-1" aria-hidden="true" />
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="kd-h">{title}</span><span className="kd-s">{sub}</span></span>
-            <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
-          </a>
-        ))}
-        <Link href={inLang('/p', lang)} className="kd-nl mt-2 self-start" onClick={onClose}>{T.browseProjects}</Link>
-      </div>
-    </Sheet>
-  );
-}
-
-function SearchSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+/** The search field in the bar (from 1200px): a search of the list, named by the shortcut that reaches it. */
+function NavSearch({ lang, field }: { lang: Lang; field: RefObject<HTMLInputElement | null> }) {
   const T = pick(WEB, lang);
   const [q, setQ] = useState('');
+  const mac = useSyncExternalStore(never, isMac, () => true);
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const v = q.trim();
@@ -211,6 +124,87 @@ function SearchSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
     FF.track('search', { screen: 'nav' });
     location.assign(inLang('/?q=' + encodeURIComponent(v), lang));
   };
+  return (
+    <form role="search" aria-label={T.search} onSubmit={submit} className="hidden min-w-0 flex-1 justify-center px-6 wide:flex">
+      <Input
+        ref={field}
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder={T.searchPh}
+        aria-label={T.search}
+        aria-keyshortcuts="Meta+K Control+K"
+        boxClass="h-10 min-h-0 w-full max-w-md"
+        className="text-sm"
+        icon={<MagnifyingGlassIcon size={16} className="text-fg-3" aria-hidden="true" />}
+        end={<kbd className="kd-kbd" aria-hidden="true">{mac ? '⌘K' : 'Ctrl K'}</kbd>}
+      />
+    </form>
+  );
+}
+
+/** VI · EN: the same page in the other language, the current one lit. */
+function LangSwitch({ lang, className }: { lang: Lang; className?: string }) {
+  const other = useOtherLang(lang);
+  const next: Lang = lang === 'vi' ? 'en' : 'vi';
+  return (
+    <a className={cx('kd-nl', className)} href={other} hrefLang={next} onClick={() => { FF.track('nav_click', { kind: 'lang', surface: 'nav' }); rememberLang(next); }}>
+      <span className={lang === 'vi' ? 'text-fg-1' : 'text-fg-3'}>VI</span>
+      <span aria-hidden="true" className="text-fg-3">·</span>
+      <span className={lang === 'en' ? 'text-fg-1' : 'text-fg-3'}>EN</span>
+      <span className="sr-only">{lang === 'vi' ? ', English' : ', Tiếng Việt'}</span>
+    </a>
+  );
+}
+
+/** The phone's tab bar: below 900px, on every public page. */
+function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection; onSearch: () => void }) {
+  const T = pick(WEB, lang);
+  const here = useHere();
+  const onMap = current === 'list' && /[?&]view=map\b/.test(here);
+  const tab = current === 'list' ? (onMap ? 'map' : 'events') : current === 'saved' ? 'saved' : current === 'me' ? 'me' : '';
+  const i = (Icon: typeof UserIcon) => <Icon size={22} aria-hidden="true" />;
+  return (
+    <TabBar
+      edge
+      label={T.mainNav}
+      current={tab}
+      items={[
+        // The list's own views: a full load, so the list reads its address again.
+        { key: 'events', label: T.events, href: inLang('/', lang), external: true, icon: i(CalendarBlankIcon), onClick: track('events', 'tabs') },
+        { key: 'map', label: T.map, href: inLang('/?view=map', lang), external: true, icon: i(MapTrifoldIcon), onClick: track('map', 'tabs') },
+        { key: 'search', label: T.searchTab, icon: i(MagnifyingGlassIcon), onClick: onSearch, dialog: true },
+        { key: 'saved', label: T.saved, href: inLang('/saved', lang), icon: i(HeartIcon), onClick: track('saved', 'tabs') },
+        { key: 'me', label: T.me, href: inLang('/profile', lang), icon: i(UserIcon), onClick: track('me', 'tabs') },
+      ]}
+    />
+  );
+}
+
+/** "Tìm": the search, then the places the tab bar has no room for, then the styles (filters of the list). */
+function SearchSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const T = pick(WEB, lang);
+  const [q, setQ] = useState('');
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    // Counted over every upcoming event, as the links lead to all of them.
+    FF.once('kd:style-counts', () => FF.maybe(FF.get('/events?time=all&upcoming=1&limit=1'), null)).then((r: { facets?: { style?: Record<string, number> } } | null) => {
+      if (r?.facets?.style) setCounts(r.facets.style);
+    });
+  }, []);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const v = q.trim();
+    if (!v) return;
+    FF.track('search', { screen: 'nav' });
+    location.assign(inLang('/?q=' + encodeURIComponent(v), lang));
+  };
+  const go = ([kind, href, label]: readonly [string, string, string]) => (
+    <a key={kind} href={href} onClick={track(kind, 'search')} className="kd-lrow min-h-13">
+      <span className="kd-h min-w-0 flex-1">{label}</span>
+      <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
+    </a>
+  );
   return (
     <Sheet title={T.search} closeLabel={T.close} onClose={onClose}>
       <form role="search" onSubmit={submit} className="flex flex-col gap-3 pt-2">
@@ -225,11 +219,23 @@ function SearchSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
         />
         <button type="submit" className={buttonClass({ tone: 'acc', block: true })}>{T.searchGo}</button>
       </form>
+      <nav aria-label={T.goTo} className="mt-5 flex flex-col">
+        {([['artists', inLang('/a', lang), T.artists], ['projects', inLang('/p', lang), T.projects], ['organisers', '/studio', T.organisers]] as const).map(go)}
+      </nav>
+      <h3 className="kd-m mb-2.5 mt-5">{T.genres}</h3>
+      <div className="flex flex-wrap gap-2">
+        {styleChips(counts, 10).map((k) => (
+          <a key={k} href={styleHref(k, lang)} className="kd-chip" onClick={track('style', 'search')}>
+            <span className={`kd-mk ${g('edm')}`} aria-hidden="true" />{styleLabel(k, lang)}
+            {counts?.[k] != null ? <span className="kd-num text-fg-3">{counts[k]}</span> : null}
+          </a>
+        ))}
+      </div>
     </Sheet>
   );
 }
 
-/** The one-line footer: the wordmark, a few links, the other language, the company line. */
+/** The one-line footer: the logo, a few links, the other language, the company line. */
 export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href: string; label: string } | null }) {
   const T = pick(WEB, lang);
   // The language picked before on this device: a page in Vietnamese by default moves to its
@@ -240,20 +246,20 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
     try { saved = localStorage.getItem(LANG_KEY); } catch { /* storage blocked */ }
     if (saved === 'en') location.replace(otherLang.href);
   }, [lang, otherLang]);
-  const remember = () => { try { localStorage.setItem(LANG_KEY, lang === 'vi' ? 'en' : 'vi'); } catch { /* storage blocked */ } };
-  const foot = (kind: string) => () => FF.track('nav_click', { kind, surface: 'footer' });
+  const foot = (kind: string) => track(kind, 'footer');
   return (
     <footer className="mt-14 border-t border-line-1 tab:mt-24">
       <div className="kd-wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-6">
-        <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
+        <Logo lang={lang} height={18} />
         <nav aria-label={T.footerNav} className="-mx-2.5 flex flex-wrap items-center gap-0.5">
           <a className="kd-nl" href="/studio" onClick={foot('organisers')}>{T.forOrganisers}</a>
+          <a className="kd-nl" href={inLang('/p', lang)} onClick={foot('projects')}>{T.projects}</a>
           <a className="kd-nl" href={inLang('/about', lang)} onClick={foot('about')}>{T.about}</a>
           <a className="kd-nl" href={inLang('/advertise', lang)} onClick={foot('advertise')}>{T.advertise}</a>
           {/* Opens the feedback sheet (kd/feedback/widget.tsx). */}
           <button type="button" className="kd-nl" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{T.feedback}</button>
           <a className="kd-nl" href="mailto:hello@feestfinder.com">hello@feestfinder.com</a>
-          {otherLang ? <a className="kd-nl" href={otherLang.href} hrefLang={lang === 'vi' ? 'en' : 'vi'} onClick={remember}>{otherLang.label}</a> : null}
+          {otherLang ? <a className="kd-nl" href={otherLang.href} hrefLang={lang === 'vi' ? 'en' : 'vi'} onClick={() => rememberLang(lang === 'vi' ? 'en' : 'vi')}>{otherLang.label}</a> : null}
         </nav>
         <span className="kd-m">{fill(T.company, { y: new Date().getFullYear() })}</span>
       </div>
@@ -261,14 +267,19 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
   );
 }
 
-/** Where a page sits: Khám phá / family / the page. */
+/**
+ * Where a detail page sits: its list, then the page ("Sự kiện ở TP.HCM › Ravolution"). The home
+ * crumb the search engines get (services/seo.ts) is the logo here; a page one step from home shows none.
+ */
 export function Crumbs({ items, label }: { items: { name: string; href?: string }[]; label: string }) {
+  const shown = items.filter((c, i) => !(i === 0 && c.name === 'FeestFinder'));
+  if (shown.length < 2) return null;
   return (
     <nav aria-label={label} className="kd-wrap flex min-h-12 flex-wrap items-center gap-2 kd-s">
-      {items.map((c, i) => (
-        <span key={i} className="flex items-center gap-2">
-          {i ? <span aria-hidden="true">/</span> : null}
-          {c.href ? <Link href={c.href} className="text-fg-3 hover:text-fg-1">{c.name}</Link> : <span className="text-fg-2" aria-current="page">{c.name}</span>}
+      {shown.map((c, i) => (
+        <span key={i} className="flex min-w-0 items-center gap-2">
+          {i ? <CaretRightIcon size={12} className="shrink-0 text-fg-3" aria-hidden="true" /> : null}
+          {c.href ? <Link href={c.href} className="text-fg-3 hover:text-fg-1">{c.name}</Link> : <span className="kd-ell text-fg-2" aria-current="page">{c.name}</span>}
         </span>
       ))}
     </nav>

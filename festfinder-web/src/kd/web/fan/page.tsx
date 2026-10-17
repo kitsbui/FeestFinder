@@ -1,6 +1,7 @@
 'use client';
 /**
- * /profile in Kính đêm (design/Profile-Fan-Web): the signed-in person's own profile on the web.
+ * /profile in Kính đêm (design/Profile-Fan-Web): the signed-in person's own profile on the web,
+ * and on a phone the "Tôi" hub the tab bar leads to (their places, workspaces, language, sign out).
  * At the side, who they are (edit), their numbers, their photos (Moments); in the main column the
  * nights coming up, the passport (a stamp per night they were there) and their sound, badges, and
  * who they follow. Private (owner decision 2): no public fan page yet, never indexed.
@@ -20,6 +21,7 @@ import { Art, Avatar, Card as Panel, Stat } from '../../ui/parts';
 import { APP } from '../../app/copy';
 import { EditSheet, PassportSection, WrappedSheet, type Me, type Order, type Passport } from '../../app/profile';
 import { FollowManager, FollowStats, type Follows } from '../../ui/follows';
+import { MeHub } from '../me';
 
 export function FanProfile({ lang }: { lang: Lang }) {
   const kd = useKd();
@@ -78,7 +80,8 @@ function Mine({ lang }: { lang: Lang }) {
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
-              <a className={buttonClass({ size: 'sm', tone: 'ghost' })} href="/app/settings">{T.notifSettings}</a>
+              {/* On a phone the hub below has "Cài đặt". */}
+              <a className={buttonClass({ size: 'sm', tone: 'ghost' }, 'hidden desk:inline-flex')} href="/app/settings">{T.notifSettings}</a>
             </div>
             <div className="grid grid-cols-2 gap-y-3.5 border-y border-line-1 py-3.5">
               <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
@@ -86,6 +89,8 @@ function Mine({ lang }: { lang: Lang }) {
               <FollowStats lang={lang} f={follows} />
             </div>
           </div>
+          {/* "Tôi" on a phone: the tab bar leads here, and the account menu's places are a page (web/me.tsx). */}
+          <MeHub lang={lang} className="desk:hidden" />
           {moments ? <MomentsSection lang={lang} as="user" items={moments} owner compact /> : null}
         </aside>
 

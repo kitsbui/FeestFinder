@@ -16,7 +16,6 @@ import { useKd } from '../../runtime';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { FieldError, FieldLabel, Input, Select, TextArea } from '../../ui/forms';
 import { ImageLinkField } from '../../ui/image-link';
-import { PostKindSwitch } from '../../ui/post-kind';
 import { Card as Panel, Status, type StatusTone } from '../../ui/parts';
 import { PROJ } from './copy';
 import { SEEKING, SEEKING_LABEL, text, type Package, type Project, type Seeking } from './model';
@@ -72,7 +71,6 @@ function Manage({ lang, slug }: { lang: Lang; slug: string | null }) {
   return (
     <div className="flex flex-col gap-10">
       {/* "Đăng sự kiện" posts an event or a project: a new one can still be an event. */}
-      {!p ? <PostKindSwitch lang={lang} current="project" className="self-start" /> : null}
       <div className="kd-sec items-end">
         <h1 className="kd-d2">{p ? p.title : T.newTitle}</h1>
         {p && ['open', 'realized', 'closed'].includes(p.status) ? <LinkButton href={inLang('/p/' + encodeURIComponent(p.slug), lang)}>{T.view}</LinkButton> : null}

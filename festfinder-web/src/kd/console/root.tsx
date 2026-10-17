@@ -10,8 +10,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ChatTextIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, GuitarIcon, HandWavingIcon,
-  HandshakeIcon, LightbulbIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon, StorefrontIcon,
+  ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ChatTextIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, HandWavingIcon,
+  HandshakeIcon, LightbulbIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon,
   TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
@@ -26,6 +26,8 @@ import { Shell, type SideItem } from '../ui/shell';
 import { AskHost } from './kit';
 import { CONSOLE } from './copy';
 import { Rail } from '../ui/rail';
+import { Logo } from '../ui/logo';
+import { WorkspaceSwitch } from '../ui/workspaces';
 
 export type ConsoleTab =
   | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports' | 'feedback'
@@ -66,7 +68,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
         <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-          <span className="flex items-center gap-2.5"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /><span className="kd-m text-fg-1">{T.console}</span></span>
+          <span className="flex items-center gap-2.5"><Logo lang={lang} mark height={24} /><span className="kd-m text-fg-1">{T.console}</span></span>
           <h1 className="kd-d3">{!user ? T.gate : user.adminNeedsGoogle ? T.needsGoogle : T.notAdmin}</h1>
           {!user
             ? <button type="button" className={buttonClass({ tone: 'acc' })} onClick={() => kd.openSignIn(T.gate)}>{T.signIn}</button>
@@ -110,7 +112,6 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   };
   const initials = name.split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   const n = (v: number | undefined) => (v ? v : null);
-  const session = kd.session as { organizers?: unknown[]; roles?: { artist?: string } } | null | undefined;
   const i = (Icon: typeof GaugeIcon) => <Icon size={18} aria-hidden="true" />;
   // The page's name, for the rail folded into a bar on a phone.
   const railLabel = ({ overview: T.tabOverview, queue: T.tabQueue, claims: T.tabClaims, reports: T.tabReports, feedback: T.tabFeedback, events: T.tabEvents,
@@ -131,10 +132,9 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
 
   const nav = (
     <Rail label={T.console} current={railLabel}>
-      <div className="kd-sn-hide flex items-center gap-2.5 px-2.5 pb-2 pt-1.5">
-        <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
-        <span className="kd-m">{T.console}</span>
-      </div>
+      {/* The logo leads home; the switcher to every other workspace (ui/workspaces.tsx). */}
+      <Logo lang={lang} height={18} className="px-2.5" />
+      <WorkspaceSwitch lang={lang} current="console" className="mb-1 w-full" />
       {group(T.navWork, [
         { key: 'overview', label: T.tabOverview, href: '/console/overview', icon: i(GaugeIcon) },
         { key: 'queue', label: T.tabQueue, href: '/console', icon: i(TrayIcon), count: n(counts?.queue) },
@@ -163,9 +163,8 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
         { key: 'audit', label: T.tabAudit, href: '/console/audit', icon: i(ClockCounterClockwiseIcon) },
       ])}
       <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
-        {session?.organizers?.length ? <a className="kd-sn" href="/studio">{i(StorefrontIcon)}{T.toStudio}</a> : null}
-        {session?.roles?.artist === 'active' ? <a className="kd-sn" href="/studio/artist">{i(GuitarIcon)}{T.toArtist}</a> : null}
         <a className="kd-sn" href="/" target="_blank" rel="noopener">{i(ArrowSquareOutIcon)}{T.toSite}</a>
+        <button type="button" className="kd-sn w-full text-left" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{i(ChatTextIcon)}{T.feedbackLink}</button>
       </div>
     </Rail>
   );

@@ -296,10 +296,10 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const imageAlt = `${ev.title} · ${venueLine}`;
 
   const listPath = `/?city=${cityOf(ev.city).slug}`;
+  // Home, the city's list, the night: every event is EDM, so a genre level would say nothing (design v2 phase 1).
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
     { name: `${t('eventsIn', lang)} ${cityName}`, path: inLang(listPath, lang) },
-    ...(ev.genre ? [{ name: ev.genre, path: inLang(`${listPath}&genre=${encodeURIComponent(ev.genre)}`, lang) }] : []),
     { name: ev.title, path: inLang(path, lang) },
   ];
 

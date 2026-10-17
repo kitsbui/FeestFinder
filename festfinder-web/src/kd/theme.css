@@ -103,6 +103,7 @@
   /* ---- layout ---- */
   --breakpoint-tab: 760px;     /* page gutters 16 → 32 → 64 */
   --breakpoint-desk: 900px;    /* hide-sm / show-sm, side nav becomes a column */
+  --breakpoint-wide: 1200px;    /* the nav's search field (web/chrome.tsx) */
   --container-read: 760px;     /* max-w-read: reading measure */
 
   /* ---- motion ---- */

@@ -22,6 +22,7 @@ import {
 } from './ui/parts';
 import { Sheet } from './ui/sheet';
 import { Row, SideNav, Table, Tabs } from './ui/shell';
+import { Logo } from './ui/logo';
 
 const FAMILIES: Exclude<Family, 'free'>[] = ['fest', 'live', 'edm', 'cult'];
 
@@ -68,7 +69,7 @@ export function Kit() {
     <main className="kd-wrap flex flex-col gap-18 py-16 tab:py-18">
       <header className="grid grid-cols-1 gap-12 desk:grid-cols-2 desk:items-end">
         <div className="flex flex-col gap-5">
-          <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={162} height={28} />
+          <Logo height={28} className="self-start" />
           <span className="kd-m">Hệ thống thiết kế · Kính đêm</span>
           <h1 className="kd-d0">Kính đêm</h1>
         </div>

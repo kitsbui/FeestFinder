@@ -42,7 +42,7 @@ export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang)
           pages, the account menu), so moving from the web to "My tickets" or a checkout never
           leaves the person without their way around. Phones keep the app's tab bar alone.
         */}
-        <div className="hidden desk:contents"><WebNav lang={lang} current={tab === 'map' ? 'list' : 'none'} /></div>
+        <div className="hidden desk:contents"><WebNav lang={lang} current={tab === 'map' ? 'list' : 'none'} tabs={false} /></div>
         <main className={tab && tabs ? 'kd-app kd-app-tabs' : 'kd-app'} lang={lang}>
           {children(lang)}
         </main>

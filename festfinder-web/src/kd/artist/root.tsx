@@ -9,16 +9,18 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  CalendarCheckIcon, HeadphonesIcon, MegaphoneIcon, MicrophoneStageIcon, SignOutIcon, StorefrontIcon, TicketIcon, WaveformIcon,
+  CalendarCheckIcon, ChatTextIcon, HeadphonesIcon, MegaphoneIcon, MicrophoneStageIcon, SignOutIcon, WaveformIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { COMMON, fill, pick, type Lang } from '../copy';
 import { CRAFT } from '../craft';
 import { KdProvider, useKd } from '../runtime';
 import { place } from '../app/place';
 import { buttonClass } from '../ui/actions';
 import { Avatar, Card as Panel } from '../ui/parts';
+import { Logo } from '../ui/logo';
 import { Shell, SideNav } from '../ui/shell';
+import { WorkspaceSwitch } from '../ui/workspaces';
 import { AskHost } from '../console/kit';
 import { ARTIST } from './copy';
 
@@ -65,7 +67,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
       <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-        <span className="flex items-center gap-2.5"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /><span className="kd-m text-fg-1">{T.studio}</span></span>
+        <span className="flex items-center gap-2.5"><Logo lang={lang} mark height={24} /><span className="kd-m text-fg-1">{T.studio}</span></span>
         <h1 className="kd-d3">{!s?.user ? T.gate : state === 'pending' ? T.pending : organizes ? T.asOrganizer : state === 'disabled' ? T.disabled : T.noArtist}</h1>
         {organizes ? <p className="kd-s">{fill(K.oneBody, { a: K.organizer, b: K.artist })}</p> : null}
         <div className="flex flex-wrap gap-2">
@@ -96,10 +98,9 @@ function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; chi
       current={current}
       head={(
         <>
-          <div className="kd-sn-hide flex items-center gap-2.5 px-2.5 pb-3.5 pt-1.5">
-            <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
-            <span className="kd-m">{T.studio}</span>
-          </div>
+          {/* The logo leads home; the switcher to every other workspace (ui/workspaces.tsx). */}
+          <Logo lang={lang} height={18} className="px-2.5" />
+          <WorkspaceSwitch lang={lang} current="artist" className="mb-3 w-full" />
           <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line-1)]" href={'/a/' + artist.slug}>
             <Avatar name={artist.name} size={30} />
             <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell text-sm">{artist.name}</span><span className="kd-s text-xs">{T.publicProfile}</span></span>
@@ -115,9 +116,7 @@ function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; chi
       ]}
       footer={(
         <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
-          {/* The other roles: attending (the site), or organising instead of performing. */}
-          <a className="kd-sn" href="/">{i(TicketIcon)}{K.attendee}</a>
-          <button type="button" className="kd-sn w-full text-left" onClick={() => kd.openRolePicker('organizer')}>{i(StorefrontIcon)}{fill(K.switchTo, { r: K.organizer })}</button>
+          <button type="button" className="kd-sn w-full text-left" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{i(ChatTextIcon)}{pick(COMMON, lang).feedback}</button>
           <button type="button" className="kd-sn w-full text-left" onClick={async () => { await kd.signOut(); location.assign('/studio/artist'); }}>{i(SignOutIcon)}{T.signOut}</button>
         </div>
       )}

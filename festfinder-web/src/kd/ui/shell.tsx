@@ -58,15 +58,20 @@ export function AppBar({ children, className }: { children: ReactNode; className
   return <header className={cx('kd-bar', className)}>{children}</header>;
 }
 
-export interface TabBarItem { key: string; label: string; href: string; icon: ReactNode; external?: boolean }
+export interface TabBarItem { key: string; label: string; href?: string; icon: ReactNode; external?: boolean; onClick?: () => void; dialog?: boolean }
 
-/** The floating glass tab bar: five tabs, the current one marked with a turquoise tick. */
-export function TabBar({ items, current, label }: { items: TabBarItem[]; current: string; label: string }) {
+/**
+ * The bottom tab bar: five tabs, the current one marked with a turquoise tick. `edge` is the site's
+ * (design v2): solid and edge to edge, hidden from 900px where the nav takes over; without it, the
+ * app's floating glass bar. A tab without `href` is a button (the site's "Tìm" opens a sheet).
+ */
+export function TabBar({ items, current, label, edge }: { items: TabBarItem[]; current: string; label: string; edge?: boolean }) {
   return (
-    <nav aria-label={label} className="kd-tabbar kd-glass">
+    <nav aria-label={label} className={edge ? 'kd-tabbar kd-tabbar-edge' : 'kd-tabbar kd-glass'}>
       {items.map((t) => {
-        const props = { className: 'kd-tb', 'aria-current': t.key === current ? ('page' as const) : undefined };
         const body = (<>{t.icon}<span>{t.label}</span></>);
+        if (!t.href) return <button key={t.key} type="button" className="kd-tb" aria-haspopup={t.dialog ? 'dialog' : undefined} onClick={t.onClick}>{body}</button>;
+        const props = { className: 'kd-tb', 'aria-current': t.key === current ? ('page' as const) : undefined, onClick: t.onClick };
         return t.external
           ? <a key={t.key} href={t.href} {...props}>{body}</a>
           : <Link key={t.key} href={t.href} {...props}>{body}</Link>;
