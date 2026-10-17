@@ -61,7 +61,7 @@ export function Lineup({ lang }: { lang: Lang }) {
         {head.set ? <span className="kd-s kd-num">{hhmm(head.set.startMin)}{head.stage ? ' · ' + head.stage : ''}</span> : null}
       </span>
       <span className="kd-tag kd-tag-bone">{T.headline}</span>
-      {headSlug ? <CaretRightIcon size={16} className="text-fog" aria-hidden="true" /> : null}
+      {headSlug ? <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /> : null}
     </>
   ) : null;
 
@@ -73,9 +73,9 @@ export function Lineup({ lang }: { lang: Lang }) {
       </div>
       {head ? (
         headSlug ? (
-          <Link href={'/a/' + headSlug} className={cx('kd-lrow min-h-[68px] border-t border-line', g(fam))}>{headBody}</Link>
+          <Link href={'/a/' + headSlug} className={cx('kd-lrow min-h-[68px] border-t border-line-1', g(fam))}>{headBody}</Link>
         ) : (
-          <div className={cx('kd-lrow min-h-[68px] border-t border-line', g(fam))}>{headBody}</div>
+          <div className={cx('kd-lrow min-h-[68px] border-t border-line-1', g(fam))}>{headBody}</div>
         )
       ) : null}
       <ShowMore
@@ -152,7 +152,7 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
     <div className="flex flex-col gap-4">
       {signedIn && picked.size ? (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="kd-s text-mist">{fill(T.planCount, { n: picked.size })}</span>
+          <span className="kd-s text-fg-2">{fill(T.planCount, { n: picked.size })}</span>
           <label className="flex items-center gap-2 kd-s">
             <Switch checked={remind} onChange={(v) => patch({ remindAll: v })} label={T.planRemind} />
             {T.planRemind}
@@ -191,10 +191,10 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
                         aria-pressed={on}
                         aria-label={fill(on ? T.planDrop : T.planPick, { a: s.artist }) + ' · ' + hhmm(s.startMin) + '–' + hhmm(s.endMin)}
                         onClick={() => toggle(s)}
-                        className={cx('kd-lrow min-h-12 w-full text-left', on && 'text-paper')}
+                        className={cx('kd-lrow min-h-12 w-full text-left', on && 'text-fg-1')}
                       >
                         <span className="kd-m kd-num w-24 shrink-0">{hhmm(s.startMin)}–{hhmm(s.endMin)}</span>
-                        <span className={cx('kd-t kd-ell flex-1', s.artist === headName ? 'font-medium text-paper' : 'text-mist')}>{s.artist}</span>
+                        <span className={cx('kd-t kd-ell flex-1', s.artist === headName ? 'font-medium text-fg-1' : 'text-fg-2')}>{s.artist}</span>
                         {on ? <span className="kd-st kd-ok shrink-0">{T.planPicked}</span> : null}
                       </button>
                     );
@@ -230,9 +230,9 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
                             onClick={() => toggle(s)}
                             className={cx(
                               'absolute inset-y-0 flex items-center justify-between gap-2 overflow-hidden whitespace-nowrap rounded-btn px-2.5 text-left text-[13px] transition-[box-shadow,background-color] duration-150 ease-ff',
-                              hl ? 'bg-bone font-medium text-ink' : 'bg-obsidian text-mist shadow-[inset_0_0_0_1px_var(--color-line)] hover:shadow-[inset_0_0_0_1px_var(--color-line2)]',
-                              on && 'shadow-[inset_0_0_0_1.5px_var(--color-acc)]',
-                              on && !hl && 'bg-acc/[0.06] text-paper',
+                              hl ? 'bg-inverse font-medium text-on-inverse' : 'bg-surface-2 text-fg-2 shadow-[inset_0_0_0_1px_var(--color-line-1)] hover:shadow-[inset_0_0_0_1px_var(--color-line-2)]',
+                              on && 'shadow-[inset_0_0_0_1.5px_var(--color-info)]',
+                              on && !hl && 'bg-info/[0.06] text-fg-1',
                             )}
                             style={{ left: `${left}%`, width: `calc(${width}% - 3px)` }}
                           >

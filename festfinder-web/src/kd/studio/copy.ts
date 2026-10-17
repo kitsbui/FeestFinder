@@ -116,7 +116,7 @@ export const STUDIO = {
   fLogoLinkHint: { en: 'Image link · square, from 256 × 256', vi: 'Link ảnh · ảnh vuông, từ 256 × 256' },
   fCoverLinkHint: { en: 'Image link · landscape, from 1200 px wide', vi: 'Link ảnh · ảnh ngang, rộng từ 1200 px' },
   fCover: { en: 'Cover', vi: 'Ảnh bìa' },
-  fCoverHint: { en: '1600 × 900. Left empty, the genre\'s shapes are the cover.', vi: '1600 × 900. Bỏ trống thì dùng bìa hình khối theo thể loại.' },
+  fCoverHint: { en: "1600 × 900. Left empty, the event's name is the cover.", vi: '1600 × 900. Bỏ trống thì bìa là tên sự kiện.' },
   fUpload: { en: 'Upload', vi: 'Tải lên' },
   fChange: { en: 'Change', vi: 'Đổi' },
   fRemove: { en: 'Remove', vi: 'Xoá' },

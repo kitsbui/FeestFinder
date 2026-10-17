@@ -97,19 +97,19 @@ export function Dashboard() {
               <span className="kd-m">{T.views}</span>
               <span className="kd-d2 kd-num">{count(perf.period.views, lang)}</span>
               <span className="kd-s flex items-center gap-1.5">
-                {delta === null ? T.noBefore : <>{delta >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-hot" aria-hidden="true" />}{fill(T.vsBefore, { d: (delta > 0 ? '+' : '') + delta + '%' })}</>}
+                {delta === null ? T.noBefore : <>{delta >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-bad" aria-hidden="true" />}{fill(T.vsBefore, { d: (delta > 0 ? '+' : '') + delta + '%' })}</>}
               </span>
             </Panel>
             <Panel className="kd-kpi"><span className="kd-m">{T.saves}</span><span className="kd-d2 kd-num">{count(perf.period.saves, lang)}</span><span className="kd-s kd-num">{fill(T.ofViews, { p: pct(perf.period.saves, perf.period.views) })}</span></Panel>
             <Panel className="kd-kpi"><span className="kd-m">{free ? T.registerClicks : T.clicks}</span><span className="kd-d2 kd-num">{count(perf.period.clicks, lang)}</span><span className="kd-s kd-num">{fill(T.ofViews, { p: pct(perf.period.clicks, perf.period.views) })}</span></Panel>
-            <div className="kd-bonecard kd-kpi">
+            <Panel className="kd-kpi kd-kpi-hi">
               <span className="kd-m">{free ? T.registered : T.sold}</span>
               <span className="flex items-baseline gap-1.5"><span className="kd-d2 kd-num">{count(perf.sold, lang)}</span><span className="kd-s kd-num">/ {count(perf.capacity, lang)}</span></span>
               <div className="flex items-center gap-2.5">
-                <div className="h-2 flex-1 overflow-hidden rounded bg-[#d4d4d4]"><div className="h-full rounded-r bg-ink" style={{ width: `${Math.min(100, perf.soldPct)}%` }} /></div>
-                <span className="kd-mb kd-num text-ink">{pct(perf.sold, perf.capacity)}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded bg-white/[0.06]"><div className="h-full rounded-r bg-info" style={{ width: `${Math.min(100, perf.soldPct)}%` }} /></div>
+                <span className="kd-mb kd-num">{pct(perf.sold, perf.capacity)}</span>
               </div>
-            </div>
+            </Panel>
           </div>
 
           <div className="kd-split gap-3">
@@ -119,13 +119,13 @@ export function Dashboard() {
             </Panel>
             {event && !isPast(event) ? <Panel as="section" className="kd-side flex flex-col gap-4 p-5" aria-label={T.pace}>
               <div className="flex items-center justify-between"><span className="kd-h">{T.pace}</span><Status tone={perf.verdict.key === 'on_pace' ? 'ok' : 'warn'}>{perf.verdict.key === 'on_pace' ? T.onPace : T.behind}</Status></div>
-              <div className="flex items-baseline gap-2.5"><span className="kd-d1 kd-num">{perf.daysLeft}</span><span className="kd-t text-fog">{T.daysToDoors}</span></div>
+              <div className="flex items-baseline gap-2.5"><span className="kd-d1 kd-num">{perf.daysLeft}</span><span className="kd-t text-fg-3">{T.daysToDoors}</span></div>
               <div className="mt-auto flex flex-col gap-3.5">
                 <BarRow label={T.needPerDay} value={perf.needPerDay} max={Math.max(perf.needPerDay, perf.pacePerDay, 1)} display={count(perf.needPerDay, lang)} />
                 <BarRow label={T.ratePerDay} value={perf.pacePerDay} max={Math.max(perf.needPerDay, perf.pacePerDay, 1)} display={count(perf.pacePerDay, lang)} />
               </div>
               {perf.verdict.key === 'behind' || perf.boost ? (
-                <div className="flex items-center justify-between gap-2.5 border-t border-line pt-3">
+                <div className="flex items-center justify-between gap-2.5 border-t border-line-1 pt-3">
                   <span className="kd-s">{T.boostLine}</span>
                   {perf.boost?.status === 'open' ? <Status tone="warn">{T.boostAsked}</Status>
                     : perf.boost?.status === 'done' || perf.boost?.status === 'approved' ? <Status tone="ok">{T.boostDone}</Status>
@@ -145,7 +145,7 @@ export function Dashboard() {
             {events.map((e) => {
               const body = (
                 <>
-                  <span role="cell" className={cx('kd-hs kd-ell flex items-center gap-2.5', e.status === 'draft' && 'text-fog', g(familyOf(e.genre)))}><Marker family={familyOf(e.genre)} />{e.title}</span>
+                  <span role="cell" className={cx('kd-hs kd-ell flex items-center gap-2.5', e.status === 'draft' && 'text-fg-3', g(familyOf(e.genre)))}><Marker family={familyOf(e.genre)} />{e.title}</span>
                   <span role="cell" className="kd-s kd-num">{e.startsOn ? dayMonth(e.startsOn, lang) : '—'}</span>
                   <span role="cell"><Status tone={statusTone(e.status)}>{e.statusLabel[lang]}</Status></span>
                   <span role="cell" className="kd-mb kd-num text-right">
@@ -178,7 +178,7 @@ export function Dashboard() {
             <Panel as="section" className="flex flex-col gap-3 p-5" aria-label={T.clicks30}>
               <div className="flex items-baseline justify-between gap-3"><span className="kd-h">{T.clicks30}</span><span className="kd-d3 kd-num">{count(clicks.clicks, lang)}</span></div>
               {([[T.byEvent, clicks.byEvent.map((r) => ({ key: r.title, n: r.n }))], [T.byPlacement, clicks.byPlacement], [T.byDevice, clicks.byDevice], [T.byCountry, clicks.byCountry]] as [string, Tally[]][]).map(([title, rows]) => rows.length ? (
-                <div key={title} className="flex flex-col gap-1.5 border-t border-line pt-3">
+                <div key={title} className="flex flex-col gap-1.5 border-t border-line-1 pt-3">
                   <span className="kd-m">{title}</span>
                   {rows.slice(0, 4).map((r) => <BarRow key={String(r.key)} label={r.key ?? '—'} value={r.n} max={rows[0].n} display={count(r.n, lang)} />)}
                 </div>
@@ -191,18 +191,18 @@ export function Dashboard() {
                 <ul className="flex flex-col gap-2.5">
                   {sentBack.map((e) => (
                     <li key={'r' + e.id} className="kd-s">
-                      <KdLink className="hover:text-paper" href={'/studio/events/' + e.id}>{fill(T.todoSentBack, { t: e.title, r: e.lastDecision?.reason?.[lang] ?? T.evRejected })}</KdLink>
+                      <KdLink className="hover:text-fg-1" href={'/studio/events/' + e.id}>{fill(T.todoSentBack, { t: e.title, r: e.lastDecision?.reason?.[lang] ?? T.evRejected })}</KdLink>
                     </li>
                   ))}
                   {gaps ? (
                     <li className="kd-s">
-                      <KdLink className="hover:text-paper" href="/studio/profile">{gaps.length ? fill(T.todoVerify, { m: gaps.join(', ') }) : T.todoVerifyWait}</KdLink>
+                      <KdLink className="hover:text-fg-1" href="/studio/profile">{gaps.length ? fill(T.todoVerify, { m: gaps.join(', ') }) : T.todoVerifyWait}</KdLink>
                     </li>
                   ) : null}
                   {todo.map((t, i) => (
                     <li key={i} className="kd-s">
                       {events.some((e) => e.id === t.eventId && (e.status === 'draft' || e.status === 'rejected'))
-                        ? <a className="hover:text-paper" href={'/studio/new?draft=' + t.eventId}>{t.text[lang]}</a>
+                        ? <a className="hover:text-fg-1" href={'/studio/new?draft=' + t.eventId}>{t.text[lang]}</a>
                         : t.text[lang]}
                     </li>
                   ))}
@@ -213,12 +213,12 @@ export function Dashboard() {
           {search?.items.length ? (
             <Panel as="section" className="flex flex-col gap-3 p-5" aria-label={T.searchTitle}>
               <div className="flex items-baseline justify-between gap-3"><span className="kd-h">{T.searchTitle}</span><span className="kd-d3 kd-num">{search.average}<span className="kd-s"> / 100</span></span></div>
-              <ul className="flex flex-col gap-2 border-t border-line pt-3">
+              <ul className="flex flex-col gap-2 border-t border-line-1 pt-3">
                 {search.items.slice(0, 3).map((x) => (
                   <li key={x.id}>
-                    <KdLink className="flex flex-col gap-0.5 hover:text-paper" href={'/studio/events/' + x.id}>
-                      <span className="kd-s flex justify-between gap-3 text-mist"><span className="kd-ell">{x.title}</span><span className="kd-mb kd-num">{x.score}</span></span>
-                      {x.missing[0] ? <span className="kd-s text-xs text-fog">{x.missing[0][lang]}</span> : null}
+                    <KdLink className="flex flex-col gap-0.5 hover:text-fg-1" href={'/studio/events/' + x.id}>
+                      <span className="kd-s flex justify-between gap-3 text-fg-2"><span className="kd-ell">{x.title}</span><span className="kd-mb kd-num">{x.score}</span></span>
+                      {x.missing[0] ? <span className="kd-s text-xs text-fg-3">{x.missing[0][lang]}</span> : null}
                     </KdLink>
                   </li>
                 ))}

@@ -39,58 +39,72 @@
 
 @layer components {
   /* ---- type: size, leading, tracking, weight and colour in one ---- */
-  .kd-d0 { font-size: var(--text-d0); line-height: 0.96; letter-spacing: -0.045em; font-weight: 500; color: var(--color-paper); text-wrap: balance; }
-  .kd-d1 { font-size: var(--text-d1); line-height: 1; letter-spacing: -0.04em; font-weight: 500; color: var(--color-paper); text-wrap: balance; }
-  .kd-d2 { font-size: 32px; line-height: 1.06; letter-spacing: -0.035em; font-weight: 500; color: var(--color-paper); text-wrap: balance; }
-  .kd-d3 { font-size: 24px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 500; color: var(--color-paper); text-wrap: balance; }
-  .kd-h { font-size: 17px; line-height: 1.3; letter-spacing: -0.015em; font-weight: 500; color: var(--color-paper); }
-  .kd-hs { font-size: 15px; line-height: 1.35; letter-spacing: -0.01em; font-weight: 500; color: var(--color-paper); }
-  .kd-t { font-size: 15px; line-height: 1.55; color: var(--color-mist); text-wrap: pretty; }
-  .kd-tl { font-size: 17px; line-height: 1.55; color: var(--color-mist); text-wrap: pretty; }
-  .kd-s { font-size: 13px; line-height: 1.4; color: var(--color-fog); }
+  .kd-d0 { font-size: var(--text-d0); line-height: 0.96; letter-spacing: -0.045em; font-weight: 700; color: var(--color-fg-1); text-wrap: balance; }
+  .kd-d1 { font-size: var(--text-d1); line-height: 1; letter-spacing: -0.04em; font-weight: 700; color: var(--color-fg-1); text-wrap: balance; }
+  .kd-d2 { font-size: 32px; line-height: 1.06; letter-spacing: -0.035em; font-weight: 700; color: var(--color-fg-1); text-wrap: balance; }
+  .kd-d3 { font-size: 24px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; color: var(--color-fg-1); text-wrap: balance; }
+  .kd-h { font-size: 17px; line-height: 1.3; letter-spacing: -0.015em; font-weight: 600; color: var(--color-fg-1); }
+  .kd-hs { font-size: 15px; line-height: 1.35; letter-spacing: -0.01em; font-weight: 600; color: var(--color-fg-1); }
+  .kd-t { font-size: 15px; line-height: 1.55; color: var(--color-fg-2); text-wrap: pretty; }
+  .kd-tl { font-size: 17px; line-height: 1.55; color: var(--color-fg-2); text-wrap: pretty; }
+  .kd-s { font-size: 13px; line-height: 1.4; color: var(--color-fg-3); }
   .kd-num { font-variant-numeric: tabular-nums; }
   .kd-ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .kd-clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .kd-clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-  /* ---- buttons ---- */
+  /*
+   * ---- buttons: four tones ----
+   * default  the secondary: an outline, as many as needed, beside the primary
+   * acc      the primary: the turquoise → lime gradient, at most one per screen; kd-btn-glow makes it breathe
+   * ghost    a text action inside a row (Thêm lịch, Chỉ đường)
+   * danger   only inside a confirm dialog
+   */
   .kd-btn {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     height: 44px; padding: 0 16px; border: 0; border-radius: var(--radius-btn);
     font-size: 14px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; cursor: pointer;
-    color: var(--color-paper); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--color-line);
+    color: var(--color-fg-1); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--color-line-1);
     transition: background-color 0.15s var(--ease-ff), box-shadow 0.15s var(--ease-ff), color 0.15s var(--ease-ff);
   }
-  .kd-btn:hover { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px var(--color-line2); }
-  .kd-btn-acc { background: var(--color-acc); color: var(--color-acc-ink); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2); }
-  .kd-btn-acc:hover { background: var(--color-acc-hi); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2); }
-  .kd-btn-light { background: var(--color-bone); color: var(--color-ink); box-shadow: none; }
-  .kd-btn-light:hover { background: #ffffff; box-shadow: none; }
-  .kd-btn-dark { background: var(--color-ink); color: var(--color-bone); box-shadow: none; }
-  .kd-btn-dark:hover { background: #26231f; box-shadow: none; }
-  .kd-btn-ghost { background: transparent; box-shadow: none; color: var(--color-mist); }
-  .kd-btn-ghost:hover { background: rgba(255, 255, 255, 0.06); box-shadow: none; color: var(--color-paper); }
-  .kd-btn-danger { background: var(--color-hot); color: var(--color-void); box-shadow: none; }
-  .kd-btn-danger:hover { background: #f07272; box-shadow: none; }
+  .kd-btn:hover { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px var(--color-line-2); }
+  .kd-btn-acc { background: var(--gradient-accent); color: var(--color-on-accent); font-weight: 600; box-shadow: none; }
+  .kd-btn-acc:hover { background: var(--gradient-accent); box-shadow: none; filter: brightness(1.06) saturate(1.05); }
+  .kd-btn-glow { animation: var(--animate-kd-glow); }
+  /* Not a tone: the one button on a warning bar (the Console's "viewing as"), dark on the amber. */
+  .kd-btn-dark { background: var(--color-on-inverse); color: var(--color-inverse); box-shadow: none; }
+  .kd-btn-dark:hover { background: color-mix(in srgb, var(--color-on-inverse) 86%, var(--color-white)); box-shadow: none; }
+  .kd-btn-ghost { background: transparent; box-shadow: none; color: var(--color-fg-2); }
+  .kd-btn-ghost:hover { background: rgba(255, 255, 255, 0.06); box-shadow: none; color: var(--color-fg-1); }
+  .kd-btn-danger { background: var(--color-bad); color: var(--color-surface-0); box-shadow: none; }
+  .kd-btn-danger:hover { background: var(--color-bad); box-shadow: none; filter: brightness(1.08); }
+  /* Not a tone either: a button that floats over a map or a photo (glass is only for those). */
   .kd-btn-glass { background: rgba(15, 16, 17, 0.5); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.07); }
   .kd-btn-sm { height: 36px; padding: 0 12px; font-size: 13px; }
   .kd-btn-lg { height: 52px; padding: 0 22px; font-size: 15px; }
   .kd-btn-pill { border-radius: 9999px; }
   .kd-btn-block { display: flex; width: 100%; }
   .kd-btn:disabled, .kd-btn[aria-disabled='true'] { opacity: 0.38; cursor: default; }
-  .kd-btn-sm::after, .kd-chip::after, .kd-ib-sm::after, .kd-seg > button::after { content: ''; position: absolute; inset: -4px 0; }
+  /* A primary that cannot act yet: a quiet surface, not a murky gradient. */
+  .kd-btn-acc:disabled, .kd-btn-acc[aria-disabled='true'] { opacity: 1; background: var(--color-surface-2); color: var(--color-fg-3); box-shadow: inset 0 0 0 1px var(--color-line-1); filter: none; animation: none; }
+  .kd-btn-sm::after, .kd-chip::after, .kd-ib-sm::after { content: ''; position: absolute; inset: -4px 0; }
+  /* 32px segments and 36px steppers keep a 44px hit area. */
+  .kd-seg > button::after { content: ''; position: absolute; inset: -6px 0; }
+  .kd-qty > button::after { content: ''; position: absolute; inset: -4px; }
+  /* A focus ring stays visible inside a box that clips (an ellipsis, a row in a card): drawn inside. */
+  .kd-ell a:focus-visible, a.kd-ell:focus-visible, a.kd-tr:focus-visible, button.kd-tr:focus-visible, .kd-lrow:focus-visible, .kd-card a:focus-visible { outline-offset: -2px; }
 
   .kd-ib {
     position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
     width: 44px; height: 44px; padding: 0; border: 0; border-radius: 9999px; cursor: pointer;
-    color: var(--color-mist); background: transparent;
+    color: var(--color-fg-2); background: transparent;
     transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff);
   }
-  .kd-ib:hover { background: rgba(255, 255, 255, 0.08); color: var(--color-paper); }
-  .kd-ib-line { box-shadow: inset 0 0 0 1px var(--color-line); }
+  .kd-ib:hover { background: rgba(255, 255, 255, 0.08); color: var(--color-fg-1); }
+  .kd-ib-line { box-shadow: inset 0 0 0 1px var(--color-line-1); }
   .kd-ib-sm { width: 36px; height: 36px; }
   .kd-ib-sm::after { inset: -4px; }
-  .kd-ib[aria-pressed='true'], .kd-ib-on { color: var(--color-acc); }
+  .kd-ib[aria-pressed='true'], .kd-ib-on { color: var(--color-info); }
   .kd-ib:disabled { opacity: 0.38; cursor: default; }
   /* Over art or a map: the glass, not the transparent default. */
   .kd-ib.kd-glass { background: rgba(15, 16, 17, 0.5); }
@@ -99,71 +113,71 @@
   /* ---- chips, tags ---- */
   .kd-chip {
     position: relative; display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
-    height: 36px; padding: 0 14px; border: 0; border-radius: 9999px; cursor: pointer; white-space: nowrap;
-    font-size: 13px; color: var(--color-mist); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    height: 36px; max-width: 100%; min-width: 0; overflow: hidden; padding: 0 12px; border: 0; border-radius: var(--radius-btn); cursor: pointer; white-space: nowrap;
+    font-size: 13px; color: var(--color-fg-2); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
     transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff);
   }
-  .kd-chip:hover { background: rgba(255, 255, 255, 0.09); color: var(--color-paper); }
-  .kd-chip[aria-pressed='true'], .kd-chip-on { background: var(--color-paper); color: var(--color-void); box-shadow: none; }
+  .kd-chip:hover { background: rgba(255, 255, 255, 0.09); color: var(--color-fg-1); }
+  /* Chosen is information: a turquoise tint and edge, like the chosen tab. */
+  .kd-chip[aria-pressed='true'], .kd-chip-on { background: color-mix(in srgb, var(--color-info) 14%, transparent); color: var(--color-fg-1); box-shadow: inset 0 0 0 1px var(--color-info); }
   .kd-chip .kd-chip-n { font-size: 11px; opacity: 0.6; font-variant-numeric: tabular-nums; }
 
   .kd-tag {
     display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--radius-tag); white-space: nowrap;
-    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-mist); font-variant-numeric: tabular-nums;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-2); font-variant-numeric: tabular-nums;
     background: rgba(255, 255, 255, 0.06);
   }
   .kd-tag-glass { background: rgba(8, 9, 10, 0.42); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%); }
-  .kd-tag-acc { background: var(--color-acc); color: var(--color-acc-ink); }
-  .kd-tag-bone { background: var(--color-bone); color: var(--color-ink); }
-  .kd-tag-line { background: transparent; box-shadow: inset 0 0 0 1px var(--color-line2); }
-  .kd-tag-hot { background: rgba(235, 87, 87, 0.16); color: #ff9a9a; }
+  /* acc: information (new, chosen, free); featured: the gradient, only for Nổi bật and a flagship festival. */
+  .kd-tag-acc { background: var(--color-info); color: var(--color-on-accent); }
+  .kd-tag-featured { background: var(--gradient-accent); color: var(--color-on-accent); font-weight: 500; }
+  /* Was the light tag: now an information tag (headline, the team's badge). */
+  .kd-tag-bone { background: color-mix(in srgb, var(--color-info) 14%, transparent); color: var(--color-info); }
+  .kd-tag-line { background: transparent; box-shadow: inset 0 0 0 1px var(--color-line-2); }
+  /* Status on a tag is a dot and a word, never a red fill. */
+  .kd-tag-bad::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--color-bad); flex-shrink: 0; }
 
-  /* A marker with its own family (Marker's data-f) beats the family of any ancestor. */
-  .kd-mk[data-f] { width: 10px; height: 10px; border-radius: 0; clip-path: none; background: var(--g); }
-  .kd-mk[data-f='fest'] { --g: var(--color-fest); border-radius: 50%; }
-  .kd-mk[data-f='free'] { --g: var(--color-acc); border-radius: 50%; }
-  .kd-mk[data-f='live'] { --g: var(--color-live); width: 9px; height: 9px; border-radius: 1px; }
-  .kd-mk[data-f='edm'] { --g: var(--color-edm); width: 11px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-  .kd-mk[data-f='cult'] { --g: var(--color-cult); width: 12px; height: 6px; border-radius: 12px 12px 0 0; }
+  /* A marker with its own family (Marker's data-f): every family is the information colour now. */
+  .kd-mk[data-f] { --g: var(--color-info); }
 
-  .kd-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--color-hot); flex-shrink: 0; animation: var(--animate-kd-pulse); }
+  .kd-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--color-bad); flex-shrink: 0; animation: var(--animate-kd-pulse); }
   .kd-st.kd-st-plain::before { display: none; }
 
   /* ---- fields ---- */
   .kd-field {
-    display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 14px; border-radius: var(--radius-btn); color: var(--color-fog);
+    display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 14px; border-radius: var(--radius-btn); color: var(--color-fg-3);
     background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     transition: box-shadow 0.15s var(--ease-ff);
   }
-  .kd-field:focus-within { box-shadow: inset 0 0 0 1px var(--color-mist); }
-  .kd-field[data-invalid='true'] { box-shadow: inset 0 0 0 1px var(--color-hot); }
+  .kd-field:focus-within { box-shadow: inset 0 0 0 2px var(--color-lime); }
+  .kd-field[data-invalid='true'] { box-shadow: inset 0 0 0 1px var(--color-bad); }
   .kd-field-glass { background: rgba(15, 16, 17, 0.5); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%); }
   .kd-field-tall { height: auto; padding: 12px 14px; align-items: flex-start; }
   .kd-field input, .kd-field textarea, .kd-field select {
-    flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: var(--color-paper); resize: none;
+    flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; color: var(--color-fg-1); resize: none;
   }
   .kd-field select { appearance: none; height: 100%; cursor: pointer; }
-  .kd-field select option { background: var(--color-obsidian); color: var(--color-paper); }
+  .kd-field select option { background: var(--color-surface-2); color: var(--color-fg-1); }
   /* iOS zooms into fields under 16px. */
   @media (hover: none) and (pointer: coarse) {
     .kd-field input, .kd-field textarea, .kd-field select { font-size: 16px; }
   }
-  .kd-flabel { font-size: 13px; font-weight: 500; color: var(--color-mist); }
-  .kd-check { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--color-acc); }
+  .kd-flabel { font-size: 13px; font-weight: 500; color: var(--color-fg-2); }
+  .kd-check { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--color-info); }
 
   .kd-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-seg); background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
-  .kd-seg > button { position: relative; height: 32px; padding: 0 12px; border: 0; border-radius: var(--radius-btn); background: transparent; color: var(--color-fog); font-size: 13px; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
-  .kd-seg > button:hover { color: var(--color-paper); }
-  .kd-seg > button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.1); color: var(--color-paper); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .kd-seg > button { position: relative; height: 32px; padding: 0 12px; border: 0; border-radius: calc(var(--radius-seg) - 3px); background: transparent; color: var(--color-fg-3); font-size: 13px; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-seg > button:hover { color: var(--color-fg-1); }
+  .kd-seg > button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.1); color: var(--color-fg-1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
   .kd-seg-full { display: flex; }
   .kd-seg-full > button { flex: 1; }
 
   /* ---- surfaces ---- */
-  .kd-card { background: var(--color-carbon); border-radius: var(--radius-card); box-shadow: inset 0 0 0 1px var(--color-line); }
-  .kd-bonecard { background: var(--color-bone); color: var(--color-ink); border-radius: var(--radius-card); }
-  .kd-bonecard :is(.kd-h, .kd-hs, .kd-d1, .kd-d2, .kd-d3) { color: var(--color-ink); }
-  .kd-bonecard :is(.kd-s, .kd-m, .kd-t) { color: var(--color-ink2); }
-  .kd-hr { height: 1px; background: var(--color-line); border: 0; }
+  .kd-card { background: var(--color-surface-1); border-radius: var(--radius-card); box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  .kd-bonecard { background: var(--color-inverse); color: var(--color-on-inverse); border-radius: var(--radius-card); }
+  .kd-bonecard :is(.kd-h, .kd-hs, .kd-d1, .kd-d2, .kd-d3) { color: var(--color-on-inverse); }
+  .kd-bonecard :is(.kd-s, .kd-m, .kd-t) { color: var(--color-on-inverse-2); }
+  .kd-hr { height: 1px; background: var(--color-line-1); border: 0; }
   .kd-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
   /* A cover that failed to load (ui/covers.tsx): the art under it shows. */
   .kd-cover[data-broken] { display: none; }
@@ -173,50 +187,49 @@
   .kd-opt {
     display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px;
     width: 100%; min-height: 56px; padding: 10px 14px; border: 0; border-radius: var(--radius-opt); text-align: left; cursor: pointer; color: inherit;
-    background: rgba(255, 255, 255, 0.03); box-shadow: inset 0 0 0 1px var(--color-line);
+    background: rgba(255, 255, 255, 0.03); box-shadow: inset 0 0 0 1px var(--color-line-1);
     transition: box-shadow 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff);
   }
-  .kd-opt:hover { box-shadow: inset 0 0 0 1px var(--color-line2); }
-  .kd-opt[aria-checked='true'] { background: rgba(228, 242, 34, 0.06); box-shadow: inset 0 0 0 1.5px var(--color-acc); }
-  .kd-opt:disabled, .kd-opt[aria-disabled='true'] { opacity: 0.45; cursor: default; box-shadow: inset 0 0 0 1px var(--color-line); }
+  .kd-opt:hover { box-shadow: inset 0 0 0 1px var(--color-line-2); }
+  .kd-opt[aria-checked='true'] { background: color-mix(in srgb, var(--color-info) 8%, transparent); box-shadow: inset 0 0 0 1.5px var(--color-info); }
+  .kd-opt:disabled, .kd-opt[aria-disabled='true'] { opacity: 0.45; cursor: default; box-shadow: inset 0 0 0 1px var(--color-line-1); }
 
   /* ---- quantity stepper ---- */
-  .kd-qty { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: var(--radius-seg); box-shadow: inset 0 0 0 1px var(--color-line); }
-  .kd-qty > button { position: relative; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); color: var(--color-paper); }
+  .kd-qty { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: var(--radius-seg); box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  .kd-qty > button { position: relative; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: calc(var(--radius-seg) - 3px); background: rgba(255, 255, 255, 0.05); color: var(--color-fg-1); }
   .kd-qty > button:hover { background: rgba(255, 255, 255, 0.1); }
   .kd-qty > button:disabled { opacity: 0.38; cursor: default; }
-  .kd-qty > output { min-width: 32px; text-align: center; font-size: 15px; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  .kd-qty > output { min-width: 32px; text-align: center; font-size: 15px; font-weight: 500; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
 
   /* ---- map ---- */
   .kd-ppin {
     position: relative; display: inline-flex; align-items: center; gap: 6px;
     height: 30px; padding: 0 10px 0 9px; border: 0; border-radius: 9999px; cursor: pointer; white-space: nowrap;
-    font-size: 12px; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums;
+    font-size: 12px; font-weight: 500; color: var(--color-fg-1); font-variant-numeric: tabular-nums;
     background: rgba(15, 16, 17, 0.5); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.07);
     transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff), transform 0.15s var(--ease-ff);
   }
   .kd-ppin::after { content: ''; position: absolute; inset: -7px -2px; }
   .kd-ppin:hover { transform: scale(1.05); }
-  .kd-ppin[aria-pressed='true'] { z-index: 3; background: var(--color-paper); color: var(--color-void); box-shadow: 0 0 0 4px rgba(247, 248, 248, 0.14); transform: scale(1.08); }
-  .kd-me { width: 16px; height: 16px; border-radius: 50%; background: var(--color-acc); box-shadow: 0 0 0 4px rgba(228, 242, 34, 0.22), 0 0 0 10px rgba(228, 242, 34, 0.08); }
-  .kd-area { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #5d6168; white-space: nowrap; pointer-events: none; }
+  .kd-ppin[aria-pressed='true'] { z-index: 3; background: var(--color-info); color: var(--color-on-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-info) 22%, transparent); transform: scale(1.08); }
+  .kd-me { width: 16px; height: 16px; border-radius: 50%; background: var(--color-info); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-info) 22%, transparent), 0 0 0 10px color-mix(in srgb, var(--color-info) 8%, transparent); }
+  .kd-area { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); white-space: nowrap; pointer-events: none; }
 
   /* ---- lists ---- */
-  .kd-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; padding: 8px 0; border-bottom: 1px solid var(--color-line); color: inherit; }
+  .kd-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; padding: 8px 0; border-bottom: 1px solid var(--color-line-1); color: inherit; }
   .kd-row .kd-art { width: 52px; height: 52px; border-radius: var(--radius-seg); }
-  .kd-lrow { display: flex; align-items: center; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--color-line); color: inherit; }
-  /* A row of chips or cards that scrolls inside itself: its fading edge says there is more (never the page). */
-  .kd-hscroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
-  .kd-hscroll::-webkit-scrollbar { display: none; }
+  .kd-lrow { display: flex; align-items: center; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--color-line-1); color: inherit; }
+  /* A row of chips: it wraps to a second line rather than scroll sideways (nothing scrolls sideways, anywhere). */
+  .kd-hscroll { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 
   /* ---- mobile shell ---- */
   .kd-bar { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px 0 16px; }
   .kd-tabbar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 20; height: 64px; padding: 0 4px; border-radius: var(--radius-sheet); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .kd-tb { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--color-fog); transition: color 0.15s var(--ease-ff); }
-  .kd-tb:hover { color: var(--color-paper); }
-  .kd-tb[aria-current='page'] { color: var(--color-paper); }
-  .kd-tb[aria-current='page']::before { content: ''; position: absolute; top: 6px; width: 18px; height: 3px; border-radius: 2px; background: var(--color-acc); }
+  .kd-tb { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--color-fg-3); transition: color 0.15s var(--ease-ff); }
+  .kd-tb:hover { color: var(--color-fg-1); }
+  .kd-tb[aria-current='page'] { color: var(--color-fg-1); }
+  .kd-tb[aria-current='page']::before { content: ''; position: absolute; top: 6px; width: 18px; height: 3px; border-radius: 2px; background: var(--color-info); }
   .kd-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
   /* The app: a phone column, centred on wider screens; the bars stay over it. */
   .kd-app { position: relative; width: 100%; max-width: 560px; min-height: 100dvh; margin: 0 auto; padding-top: env(safe-area-inset-top); }
@@ -234,7 +247,7 @@
     .kd-app ~ .kd-tabbar {
       top: 65px; bottom: 0; left: 0; right: auto; width: 240px; height: auto; border-radius: 0;
       grid-template-columns: none; grid-auto-rows: 44px; align-content: start; gap: 2px; padding: 16px 12px;
-      background: var(--color-carbon); box-shadow: inset -1px 0 0 var(--color-line);
+      background: var(--color-surface-1); box-shadow: inset -1px 0 0 var(--color-line-1);
     }
     .kd-app ~ .kd-tabbar .kd-tb { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; }
     .kd-app ~ .kd-tabbar .kd-tb:hover { background: rgba(255, 255, 255, 0.04); }
@@ -246,13 +259,13 @@
   /* ---- web ---- */
   .kd-wrap { width: 100%; padding-inline: var(--kd-gutter); }
   .kd-nav { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
-  .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-mist); white-space: nowrap; transition: color 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
-  .kd-nl:hover { color: var(--color-paper); background: rgba(255, 255, 255, 0.05); }
-  .kd-nl[aria-current='page'] { color: var(--color-paper); }
-  .kd-nl[aria-current='page']::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 6px; height: 2px; border-radius: 2px; background: var(--color-acc); }
+  .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
+  .kd-nl:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.05); }
+  .kd-nl[aria-current='page'] { color: var(--color-fg-1); }
+  .kd-nl[aria-current='page']::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 6px; height: 2px; border-radius: 2px; background: var(--color-info); }
   .kd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 28px 16px; }
   .kd-ev { display: flex; flex-direction: column; gap: 12px; color: inherit; }
-  .kd-ev .kd-art { aspect-ratio: 4 / 3; }
+  .kd-ev .kd-art { aspect-ratio: 16 / 10; }
   .kd-ev:hover .kd-h { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
   .kd-sec { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .kd-split { display: flex; flex-wrap: wrap; gap: 32px; }
@@ -261,34 +274,34 @@
 
   /* ---- app shell (studio, console) ---- */
   .kd-shell { display: flex; flex-wrap: wrap; align-content: flex-start; min-height: 100dvh; }
-  .kd-side-nav { flex: 1 1 240px; max-width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 16px 12px; border-right: 1px solid var(--color-line); background: var(--color-carbon); }
+  .kd-side-nav { flex: 1 1 240px; max-width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 16px 12px; border-right: 1px solid var(--color-line-1); background: var(--color-surface-1); }
   .kd-shell > .kd-content { flex: 999 1 640px; min-width: 0; }
-  .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fog); transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
-  .kd-sn:hover { color: var(--color-paper); background: rgba(255, 255, 255, 0.04); }
-  .kd-sn[aria-current='page'] { color: var(--color-paper); background: rgba(255, 255, 255, 0.07); }
-  .kd-sn .kd-count { margin-left: auto; font-size: 11px; color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fg-3); transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-sn:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.04); }
+  .kd-sn[aria-current='page'] { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.07); }
+  .kd-sn .kd-count { margin-left: auto; font-size: 11px; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
   /* The rail's phone bar and its menu (ui/rail.tsx): on a desktop the bar is not there and the body is the column. */
   .kd-sn-bar { display: none; }
   .kd-sn-body { display: contents; }
   @media (max-width: 899px) {
-    .kd-side-nav { flex: 1 1 100%; flex-direction: column; align-items: stretch; gap: 0; padding: 0; border-right: 0; border-bottom: 1px solid var(--color-line); position: sticky; top: 0; z-index: 30; }
+    .kd-side-nav { flex: 1 1 100%; flex-direction: column; align-items: stretch; gap: 0; padding: 0; border-right: 0; border-bottom: 1px solid var(--color-line-1); position: sticky; top: 0; z-index: 30; }
     .kd-sn-bar { display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 12px 0 16px; }
     .kd-sn-body { display: none; flex-direction: column; gap: 2px; padding: 4px 12px 16px; max-height: calc(100dvh - 56px); overflow-y: auto; }
     .kd-side-nav[data-open] .kd-sn-body { display: flex; }
   }
   .kd-kpi { display: flex; flex-direction: column; gap: 8px; padding: 20px; min-width: 0; }
-  /* A row of tabs may scroll inside itself on a phone; its fading edge says there is more (never the page). */
-  .kd-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--color-line); }
-  @media (max-width: 759px) { .kd-tabs { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); } }
-  .kd-tabs::-webkit-scrollbar { display: none; }
-  .kd-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; color: var(--color-fog); white-space: nowrap; cursor: pointer; transition: color 0.15s var(--ease-ff); }
-  .kd-tab:hover { color: var(--color-paper); }
-  .kd-tab[aria-selected='true'], .kd-tab[aria-current='page'], .kd-tab[aria-current='true'] { color: var(--color-paper); }
-  .kd-tab[aria-selected='true']::after, .kd-tab[aria-current='page']::after, .kd-tab[aria-current='true']::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--color-paper); }
-  .kd-tab .kd-c { font-size: 11px; color: var(--color-fog); font-variant-numeric: tabular-nums; }
+  /* A row of tabs wraps to a second line on a narrow screen rather than scroll sideways. */
+  /* Each tab carries its own hairline, so a wrapped second row keeps the chosen one's underline on a line. */
+  .kd-tabs { display: flex; flex-wrap: wrap; min-width: 0; }
+  .kd-tabs > .kd-tab { box-shadow: inset 0 -1px 0 var(--color-line-1); }
+  .kd-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; color: var(--color-fg-3); white-space: nowrap; cursor: pointer; transition: color 0.15s var(--ease-ff); }
+  .kd-tab:hover { color: var(--color-fg-1); }
+  .kd-tab[aria-selected='true'], .kd-tab[aria-current='page'], .kd-tab[aria-current='true'] { color: var(--color-fg-1); }
+  .kd-tab[aria-selected='true']::after, .kd-tab[aria-current='page']::after, .kd-tab[aria-current='true']::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--color-info); }
+  .kd-tab .kd-c { font-size: 11px; color: var(--color-fg-3); font-variant-numeric: tabular-nums; }
   /* Tables never push past their box: the columns shrink (ui/shell.tsx shrinkable), and a box under 640px wide shows each row as a card. */
   .kd-tbl { container-type: inline-size; }
-  .kd-tr { display: grid; align-items: center; gap: 16px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--color-line); min-width: 0; }
+  .kd-tr { display: grid; align-items: center; gap: 16px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--color-line-1); min-width: 0; }
   .kd-tr > * { min-width: 0; }
   @container (max-width: 639px) {
     .kd-tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px; }
@@ -298,88 +311,123 @@
     .kd-tr-head { display: none; }
   }
   .kd-tr-head { min-height: 40px; }
+  /*
+   * A table with many fixed columns folds into cards earlier than 640px, at the width where its name
+   * column would otherwise shrink to nothing: data-fold on .kd-tbl (Table's `fold`).
+   */
+  @container (max-width: 899px) {
+    .kd-tbl[data-fold='md'] .kd-tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px; }
+    .kd-tbl[data-fold='md'] .kd-tr > * { max-width: 100%; }
+    .kd-tbl[data-fold='md'] .kd-tr > :first-child { flex: 1 1 100%; }
+    .kd-tbl[data-fold='md'] .kd-tr-head { display: none; }
+  }
+  @container (max-width: 999px) {
+    .kd-tbl[data-fold='lg'] .kd-tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px; }
+    .kd-tbl[data-fold='lg'] .kd-tr > * { max-width: 100%; }
+    .kd-tbl[data-fold='lg'] .kd-tr > :first-child { flex: 1 1 100%; }
+    .kd-tbl[data-fold='lg'] .kd-tr-head { display: none; }
+  }
+  @container (max-width: 1159px) {
+    .kd-tbl[data-fold='xl'] .kd-tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px; }
+    .kd-tbl[data-fold='xl'] .kd-tr > * { max-width: 100%; }
+    .kd-tbl[data-fold='xl'] .kd-tr > :first-child { flex: 1 1 100%; }
+    .kd-tbl[data-fold='xl'] .kd-tr-head { display: none; }
+  }
   button.kd-tr, a.kd-tr { width: 100%; text-align: left; border-top: 0; border-left: 0; border-right: 0; background: transparent; color: inherit; transition: background-color 0.15s var(--ease-ff); }
   button.kd-tr:hover, a.kd-tr:hover { background: rgba(255, 255, 255, 0.03); }
 
   /* ---- charts ---- */
   .kd-bar-track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
-  .kd-bar-fill { height: 100%; border-radius: 0 4px 4px 0; background: var(--color-mist); }
+  .kd-bar-fill { height: 100%; border-radius: 0 4px 4px 0; background: var(--color-fg-2); }
   .kd-tip { position: absolute; z-index: 5; pointer-events: none; padding: 8px 10px; border-radius: var(--radius-seg); min-width: 120px; transform: translate(-50%, -100%); }
   .kd-tip.kd-tip-under { transform: translate(-50%, 12px); }
 
   /* ---- profiles ---- */
-  .kd-av { display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: var(--color-bone); color: var(--color-ink); font-weight: 500; letter-spacing: -0.03em; }
+  .kd-av { display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: var(--color-inverse); color: var(--color-on-inverse); font-weight: 500; letter-spacing: -0.03em; }
   .kd-av { position: relative; }
   .kd-av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* Initials are drawn, not text: a button around an avatar is named by its label alone. */
+  .kd-av-i::before { content: attr(data-i); }
   /* A linked photo that does not open (ui/covers.tsx marks it) leaves the initials under it. */
   .kd-av img[data-broken], .kd-mtile img[data-broken], .kd-fthumb img[data-broken] { display: none; }
   .kd-av-sq { border-radius: var(--radius-org); }
-  .kd-av-ring { position: relative; z-index: 5; box-shadow: 0 0 0 4px var(--color-void); }
-  .kd-av-acc { background: var(--color-acc); color: var(--color-acc-ink); }
-  .kd-stat { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 0 16px; border-left: 1px solid var(--color-line); }
-  .kd-stat:first-child { padding-left: 0; border-left: 0; }
-  .kd-stat .kd-v { font-size: 22px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
-  .kd-dblk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 56px; height: 60px; flex-shrink: 0; border-radius: var(--radius-seg); background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px var(--color-line); }
-  .kd-dblk .kd-dd { font-size: 22px; line-height: 1; font-weight: 500; letter-spacing: -0.03em; color: var(--color-paper); font-variant-numeric: tabular-nums; }
-  .kd-dblk .kd-mm { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fog); }
-  .kd-dblk-hi { background: var(--color-bone); box-shadow: none; }
-  .kd-dblk-hi .kd-dd { color: var(--color-ink); }
-  .kd-dblk-hi .kd-mm { color: var(--color-ink2); }
+  .kd-av-ring { position: relative; z-index: 5; box-shadow: 0 0 0 4px var(--color-surface-0); }
+  .kd-av-acc { background: var(--color-info); color: var(--color-on-accent); }
+  /* Stats sit apart by space, not dividers: a divider on the first of a wrapped line would hang. */
+  .kd-stat { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-right: 32px; }
+  .kd-stat .kd-v { font-size: 22px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 500; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
+  .kd-dblk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 56px; height: 60px; flex-shrink: 0; border-radius: var(--radius-seg); background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  .kd-dblk .kd-dd { font-size: 22px; line-height: 1; font-weight: 500; letter-spacing: -0.03em; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
+  .kd-dblk .kd-mm { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); }
+  /* The next show, today: marked with the information edge, not a light block. */
+  .kd-dblk-hi { box-shadow: inset 0 0 0 1.5px var(--color-info); }
+  .kd-dblk-hi .kd-mm { color: var(--color-info); }
+  /* On a light (bone) card, the words take the card's ink: turquoise text fails on it. */
+  .kd-bonecard .kd-dblk .kd-dd { color: var(--color-on-inverse); }
+  .kd-bonecard .kd-dblk .kd-mm { color: var(--color-on-inverse-2); }
+  /* A KPI that leads its row (Studio): the same edge. */
+  .kd-kpi-hi { box-shadow: inset 0 0 0 1px var(--color-info); }
   .kd-stamp { display: flex; flex-direction: column; gap: 6px; min-width: 0; transition: opacity 0.15s var(--ease-ff); }
-  .kd-stamp .kd-tile { position: relative; aspect-ratio: 1; border-radius: var(--radius-opt); display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.03); box-shadow: inset 0 0 0 1px var(--color-line); }
-  .kd-stamp .kd-tile::after { content: ''; position: absolute; inset: 6px; border-radius: 6px; border: 1px dashed var(--color-line2); }
+  .kd-stamp .kd-tile { position: relative; aspect-ratio: 1; border-radius: var(--radius-opt); display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.03); box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  .kd-stamp .kd-tile::after { content: ''; position: absolute; inset: 6px; border-radius: 6px; border: 1px dashed var(--color-line-2); }
   .kd-stamp .kd-tile .kd-mk { width: 28px; height: 28px; }
-  .kd-stamp.kd-g-live .kd-tile .kd-mk { width: 25px; height: 25px; border-radius: 2px; }
-  .kd-stamp.kd-g-edm .kd-tile .kd-mk { width: 30px; height: 27px; }
-  .kd-stamp.kd-g-cult .kd-tile .kd-mk { width: 34px; height: 17px; border-radius: 34px 34px 0 0; }
   .kd-stamp.kd-dim { opacity: 0.22; }
-  .kd-bdg { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 8px 12px; border: 0; border-radius: var(--radius-card); text-align: center; cursor: pointer; color: inherit; background: var(--color-carbon); box-shadow: inset 0 0 0 1px var(--color-line); transition: box-shadow 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
-  .kd-bdg:hover { box-shadow: inset 0 0 0 1px var(--color-line2); }
-  .kd-bdg[aria-pressed='true'] { background: var(--color-obsidian); box-shadow: inset 0 0 0 1.5px var(--color-paper); }
+  .kd-bdg { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 8px 12px; border: 0; border-radius: var(--radius-card); text-align: center; cursor: pointer; color: inherit; background: var(--color-surface-1); box-shadow: inset 0 0 0 1px var(--color-line-1); transition: box-shadow 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
+  .kd-bdg:hover { box-shadow: inset 0 0 0 1px var(--color-line-2); }
+  .kd-bdg[aria-pressed='true'] { background: var(--color-surface-2); box-shadow: inset 0 0 0 1.5px var(--color-fg-1); }
 
   /* ---- disclosure ---- */
   /* Its own type wherever it opens: inside a display heading it would take the heading's tracking and leading. */
   .kd-menu { position: absolute; z-index: 40; min-width: 220px; padding: 6px; display: flex; flex-direction: column; gap: 2px; font-family: var(--font-sans); font-size: 14px; font-weight: 400; line-height: 1.4; letter-spacing: normal; text-transform: none; text-wrap: nowrap; }
-  .kd-mi { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: var(--radius-seg); background: transparent; color: var(--color-mist); font-size: 14px; text-align: left; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
-  .kd-mi:hover, .kd-mi:focus-visible { background: rgba(255, 255, 255, 0.07); color: var(--color-paper); outline: none; }
-  .kd-mi[aria-checked='true'] { color: var(--color-paper); }
+  .kd-mi { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: var(--radius-seg); background: transparent; color: var(--color-fg-2); font-size: 14px; text-align: left; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  @media (pointer: coarse) { .kd-mi { min-height: 44px; } }
+  .kd-mi:hover, .kd-mi:focus-visible { background: rgba(255, 255, 255, 0.07); color: var(--color-fg-1); }
+  .kd-mi:hover { outline: none; }
+  .kd-mi:focus-visible { outline: 2px solid var(--color-lime); outline-offset: -2px; }
+
+  /* The skip link (ui/skip-link.tsx): above the page, in view only while it has focus. */
+  .kd-skip { position: fixed; left: var(--kd-gutter, 16px); top: 8px; z-index: 200; padding: 10px 16px; border-radius: var(--radius-btn); background: var(--color-surface-2); color: var(--color-fg-1); box-shadow: inset 0 0 0 1px var(--color-line-2); font-weight: 600; transform: translateY(calc(-100% - 16px)); }
+  .kd-skip:focus { transform: none; }
+  main[tabindex='-1']:focus { outline: none; }
+  .kd-mi[aria-checked='true'] { color: var(--color-fg-1); }
   .kd-mi:disabled, .kd-mi[aria-disabled='true'] { opacity: 0.45; cursor: default; background: transparent; }
-  .kd-mi .kd-tick { margin-left: auto; color: var(--color-acc); }
-  .kd-mi .kd-aside { margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fog); }
-  .kd-mi-sep { height: 1px; margin: 4px 6px; background: var(--color-line); }
+  .kd-mi .kd-tick { margin-left: auto; color: var(--color-info); }
+  .kd-mi .kd-aside { margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); }
+  .kd-mi-sep { height: 1px; margin: 4px 6px; background: var(--color-line-1); }
   .kd-scrim { position: fixed; inset: 0; z-index: 25; padding: 0; border: 0; background: transparent; cursor: default; }
-  .kd-dd { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line2); text-decoration-thickness: 2px; text-underline-offset: 6px; transition: text-decoration-color 0.15s var(--ease-ff); }
-  .kd-dd:hover, .kd-dd[aria-expanded='true'] { text-decoration-color: var(--color-acc); }
+  .kd-dd { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line-2); text-decoration-thickness: 2px; text-underline-offset: 6px; transition: text-decoration-color 0.15s var(--ease-ff); }
+  .kd-dd:hover, .kd-dd[aria-expanded='true'] { text-decoration-color: var(--color-info); }
   /* In a heading the word flows with the sentence, chevron and all. */
   .kd-dd-inline { display: inline; text-align: inherit; }
   .kd-dd-inline > .kd-chev { display: inline-block; vertical-align: middle; margin-left: 0.12em; }
   .kd-chev { transition: transform 0.15s var(--ease-ff); }
   [aria-expanded='true'] > .kd-chev { transform: rotate(180deg); }
-  .kd-acc > summary:hover .kd-chev { color: var(--color-paper); }
+  .kd-acc > summary:hover .kd-chev { color: var(--color-fg-1); }
   .kd-acc .kd-acc-b { padding: 0 0 18px; }
-  .kd-more { position: relative; display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 32px; padding: 0; border: 0; background: transparent; color: var(--color-mist); font-size: 13px; cursor: pointer; }
+  .kd-more { position: relative; display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 32px; padding: 0; border: 0; background: transparent; color: var(--color-fg-2); font-size: 13px; cursor: pointer; }
   .kd-more::after { content: ''; position: absolute; inset: -6px -4px; }
-  .kd-more:hover { color: var(--color-paper); }
+  .kd-more:hover { color: var(--color-fg-1); }
 
   /* ---- moments ---- */
   .kd-mgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 720px; }
-  .kd-mtile { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: var(--radius-tag); overflow: hidden; cursor: zoom-in; background: var(--color-carbon); }
+  .kd-mtile { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: var(--radius-tag); overflow: hidden; cursor: zoom-in; background: var(--color-surface-1); }
   .kd-mtile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .kd-mtile .kd-art { position: absolute; inset: 0; border-radius: 0; }
-  .kd-mplus { aspect-ratio: 1; padding: 0; border: 1px dashed var(--color-line2); border-radius: var(--radius-tag); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: transparent; color: var(--color-fog); font: inherit; cursor: pointer; transition: border-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
-  .kd-mplus:hover { border-color: var(--color-fog); color: var(--color-paper); }
+  .kd-mplus { aspect-ratio: 1; padding: 0; border: 1px dashed var(--color-line-2); border-radius: var(--radius-tag); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: transparent; color: var(--color-fg-3); font: inherit; cursor: pointer; transition: border-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-mplus:hover { border-color: var(--color-fg-3); color: var(--color-fg-1); }
 
   /* ---- toast ---- */
-  .kd-toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 60; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); min-height: 44px; padding: 0 8px 0 16px; border-radius: var(--radius-card); font-size: 14px; color: var(--color-paper); }
+  .kd-toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 60; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); min-height: 44px; padding: 0 8px 0 16px; border-radius: var(--radius-card); font-size: 14px; color: var(--color-fg-1); }
 
   /* ---- the feedback button (kd/feedback/widget.tsx): in the corner, above the app's tab bar,
      the ticket dock and the map's controls; gone while a sheet is open ---- */
-  .kd-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 19; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: var(--color-paper); cursor: pointer; }
-  .kd-fab:hover { color: var(--color-acc); }
+  .kd-fab { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 19; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: var(--color-fg-1); cursor: pointer; }
+  .kd-fab:hover { color: var(--color-info); }
   body:has(.kd-tabbar) .kd-fab { bottom: calc(88px + env(safe-area-inset-bottom)); }
   body:has(.kd-dock) .kd-fab { bottom: calc(104px + env(safe-area-inset-bottom)); }
   body:has(.kd-tabbar):has(.kd-dock) .kd-fab { bottom: calc(176px + env(safe-area-inset-bottom)); }
-  body:has(.maplibregl-ctrl-bottom-right) .kd-fab { bottom: calc(56px + env(safe-area-inset-bottom)); }
+  /* Over a map the corner belongs to the map's own controls: the button goes (the footer and menus keep "Góp ý"). */
+  body:has(.maplibregl-map) .kd-fab { display: none; }
   body:has(dialog[open]) .kd-fab { display: none; }
   @media (min-width: 900px) {
     body:has(.kd-app ~ .kd-tabbar) .kd-fab { bottom: calc(24px + env(safe-area-inset-bottom)); }

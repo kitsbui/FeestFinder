@@ -66,7 +66,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
         <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-          <span className="flex items-center gap-2.5"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /><span className="kd-m text-paper">{T.console}</span></span>
+          <span className="flex items-center gap-2.5"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /><span className="kd-m text-fg-1">{T.console}</span></span>
           <h1 className="kd-d3">{!user ? T.gate : user.adminNeedsGoogle ? T.needsGoogle : T.notAdmin}</h1>
           {!user
             ? <button type="button" className={buttonClass({ tone: 'acc' })} onClick={() => kd.openSignIn(T.gate)}>{T.signIn}</button>
@@ -162,7 +162,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
         { key: 'insights', label: T.tabInsights, href: '/console/insights', icon: i(ChartLineIcon) },
         { key: 'audit', label: T.tabAudit, href: '/console/audit', icon: i(ClockCounterClockwiseIcon) },
       ])}
-      <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line pt-4">
+      <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
         {session?.organizers?.length ? <a className="kd-sn" href="/studio">{i(StorefrontIcon)}{T.toStudio}</a> : null}
         {session?.roles?.artist === 'active' ? <a className="kd-sn" href="/studio/artist">{i(GuitarIcon)}{T.toArtist}</a> : null}
         <a className="kd-sn" href="/" target="_blank" rel="noopener">{i(ArrowSquareOutIcon)}{T.toSite}</a>
@@ -175,11 +175,11 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
       <AskHost lang={lang}>
         <Shell nav={nav}>
           <div className="flex min-h-dvh flex-col">
-            <header className="flex h-15 items-center gap-3.5 border-b border-line px-[var(--kd-gutter)]">
+            <header className="flex h-15 items-center gap-3.5 border-b border-line-1 px-[var(--kd-gutter)]">
               <Input
                 boxClass="h-[38px] min-h-0 flex-[0_1_420px]"
                 className="text-sm"
-                icon={<MagnifyingGlassIcon size={16} className="text-fog" aria-hidden="true" />}
+                icon={<MagnifyingGlassIcon size={16} className="text-fg-3" aria-hidden="true" />}
                 type="search"
                 value={q}
                 placeholder={T.search}
@@ -191,8 +191,8 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
                 label={T.account}
                 className="ml-auto"
                 trigger={(p) => (
-                  <button type="button" {...p} ref={p.ref} aria-label={name} className="kd-mb ml-auto flex size-8 shrink-0 items-center justify-center rounded-full bg-acc text-xs text-acc-ink" onClick={() => { p.onClick(); if (!options) FF.maybe(FF.get('/admin/impersonation/options'), { items: [] }).then((o: { items: NonNullable<typeof options> }) => setOptions(o.items)); }}>
-                    {initials}
+                  <button type="button" {...p} ref={p.ref} aria-label={name} className="kd-mb ml-auto flex size-8 shrink-0 items-center justify-center rounded-full bg-info text-xs text-on-accent" onClick={() => { p.onClick(); if (!options) FF.maybe(FF.get('/admin/impersonation/options'), { items: [] }).then((o: { items: NonNullable<typeof options> }) => setOptions(o.items)); }}>
+                    <span className="kd-av-i" data-i={initials} aria-hidden="true" />
                   </button>
                 )}
               >
@@ -203,8 +203,8 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
               </Menu>
             </header>
             {viewing ? (
-              <div className="flex items-center gap-3 bg-warn px-4 py-2 text-ink" role="status">
-                <span className="kd-hs text-ink">{fill(T.viewingAs, { n: viewing })}</span>
+              <div className="flex items-center gap-3 bg-warn px-4 py-2 text-on-inverse" role="status">
+                <span className="kd-hs text-on-inverse">{fill(T.viewingAs, { n: viewing })}</span>
                 <button type="button" className="kd-btn kd-btn-sm kd-btn-dark ml-auto" onClick={endViewAs}>{T.viewAsExit}</button>
               </div>
             ) : null}

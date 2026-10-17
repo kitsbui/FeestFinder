@@ -1,6 +1,6 @@
 /**
  * Every screen, by who can open it: the routes the layout and health checks walk
- * (layout.spec.ts, health.spec.ts). Add a screen here when you add it.
+ * (layout.spec.ts, wcag.spec.ts, health.spec.ts). Add a screen here when you add it.
  */
 export const ACCOUNTS = {
   fan: { identifier: 'minh@example.com', password: 'festfinder123' },

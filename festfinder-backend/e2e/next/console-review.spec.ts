@@ -52,7 +52,8 @@ test.describe('the review queue', () => {
     await expect(page).not.toHaveURL(/risk=/);
 
     // Happening soonest first.
-    await list.getByRole('button', { name: 'Sắp xếp', exact: true }).click();
+    // The chip's name starts with its label, then the order it shows ("Sắp xếp: Mới nhất").
+    await list.getByRole('button', { name: /^Sắp xếp:/ }).click();
     await page.getByRole('menuitemradio', { name: 'Diễn ra sớm nhất' }).click();
     const soonest = [...items].filter((i) => i.startsOn).sort((a, b) => a.startsOn!.localeCompare(b.startsOn!))[0];
     await expect(rows.first()).toContainText(soonest.title);

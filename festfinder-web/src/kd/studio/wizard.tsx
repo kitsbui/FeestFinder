@@ -271,16 +271,16 @@ export function Wizard() {
     const on = open === n;
     const ok = n < 3 && done[n];
     return (
-      <section className="border-b border-line">
+      <section className="border-b border-line-1">
         <button type="button" className="group flex min-h-18 w-full items-center gap-3.5 text-left" aria-expanded={on} onClick={() => setOpen(on ? -1 : n)}>
-          <span className={cx('kd-mb flex size-7 shrink-0 items-center justify-center rounded-full text-xs', on ? 'bg-paper text-ink' : ok ? 'bg-ok text-ink' : 'text-fog shadow-[inset_0_0_0_1px_var(--color-line2)]')}>
+          <span className={cx('kd-mb flex size-7 shrink-0 items-center justify-center rounded-full text-xs', on ? 'bg-fg-1 text-on-inverse' : ok ? 'bg-ok text-on-inverse' : 'text-fg-3 shadow-[inset_0_0_0_1px_var(--color-line-2)]')}>
             {ok && !on ? <CheckIcon size={14} weight="bold" aria-hidden="true" /> : n + 1}
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="kd-h">{label}</span>
             {!on && sums[n] ? <span className="kd-s kd-ell">{sums[n]}</span> : null}
           </span>
-          <CaretDownIcon size={18} className={cx('text-fog transition-transform group-hover:text-paper', on && 'rotate-180')} aria-hidden="true" />
+          <CaretDownIcon size={18} className={cx('text-fg-3 transition-transform group-hover:text-fg-1', on && 'rotate-180')} aria-hidden="true" />
         </button>
         {on ? <div className="flex flex-col gap-5 pb-7 sm:pl-[42px]">{body}</div> : null}
       </section>
@@ -290,11 +290,11 @@ export function Wizard() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-line">
+      <header className="border-b border-line-1">
         <div className="kd-wrap flex h-16 items-center gap-3.5">
           <KdLink href="/studio" aria-label={T.backToDash} className="flex h-11 items-center"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /></KdLink>
           <span className="kd-hs">{T.wTitle}</span>
-          <span className={cx('kd-m max-sm:hidden', save.state === 'error' && 'text-hot normal-case')} role="status" aria-live="polite">
+          <span className={cx('kd-m kd-ell min-w-0', save.state === 'error' && 'text-bad normal-case')} role="status" aria-live="polite">
             {save.state === 'saving' ? T.wSaving : save.state === 'saved' ? fill(T.wSaved, { t: save.at ?? '' }) : save.state === 'error' ? fill(T.wNotSaved, { m: save.error ?? '' }) : editable ? T.wDraft : draft?.statusLabel[lang]}
           </span>
           {/* Closing returns where the person came from (the site's "Đăng sự kiện", the dashboard), else the dashboard. */}
@@ -307,7 +307,7 @@ export function Wizard() {
         {!draft ? <PostKindSwitch lang={lang} current="event" className="mb-6" /> : null}
         <div className="kd-split gap-[clamp(24px,4vw,56px)]">
           <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-            <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
+            <div className="flex items-baseline justify-between gap-3 border-b border-line-1 pb-2">
               <h1 className="kd-d2">{draft ? (editable ? T.wNew : T.wEdit) : T.wNew}</h1>
               <span className="kd-m kd-num">{fill(T.wDone, { n: done.filter(Boolean).length })}</span>
             </div>
@@ -342,7 +342,7 @@ export function Wizard() {
                   {f.eventUrl.trim() && !url(f.eventUrl) ? <FieldError>{T.fUrlRule}</FieldError> : null}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <FieldLabel htmlFor="evDesc">{T.fDesc} <span className="font-normal text-fog">{T.optional}</span></FieldLabel>
+                  <FieldLabel htmlFor="evDesc">{T.fDesc} <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel>
                   <TextArea id="evDesc" rows={3} value={f.description} placeholder={T.fDescPh} maxLength={4000} onChange={(e) => set({ description: e.target.value })} />
                 </div>
                 <Lineup lang={lang} value={f.lineup} onChange={(lineup) => set({ lineup })} />
@@ -401,7 +401,7 @@ export function Wizard() {
                   </>
                 ) : (
                   <>
-                    <div className="border-t border-line"><SwitchRow label={T.fRegister} checked={f.register} onChange={(v) => set({ register: v })} /></div>
+                    <div className="border-t border-line-1"><SwitchRow label={T.fRegister} checked={f.register} onChange={(v) => set({ register: v })} /></div>
                     {f.register ? (
                       <div className="flex flex-col gap-2">
                         <FieldLabel htmlFor="evReg">{T.fRegisterUrl}</FieldLabel>
@@ -420,12 +420,12 @@ export function Wizard() {
                 <Status tone="ok">{T.sent}</Status>
                 <span className="kd-h">{fill(T.sentLine, { t: f.title.trim() })}</span>
                 <span className="kd-s">{T.sentNote}</span>
-                <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+                <div className="flex items-center justify-between gap-3 border-t border-line-1 pt-3">
                   <span className="kd-s">{T.boostOffer}</span>
                   {sent.boost === 'open' ? <Status tone="warn">{T.boostAsked}</Status> : <Button size="sm" disabled={sent.boost === 'busy'} onClick={boost}><RocketLaunchIcon size={14} aria-hidden="true" />{T.boost}</Button>}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <KdLink className={buttonClass({ tone: 'light' })} href="/studio">{T.backToDash}</KdLink>
+                  <KdLink className={buttonClass({})} href="/studio">{T.backToDash}</KdLink>
                   <a className={buttonClass({})} href="/studio/new">{T.listAnother}</a>
                 </div>
               </Panel>
@@ -442,7 +442,7 @@ export function Wizard() {
                   </Panel>
                 ) : null}
                 <label className="flex cursor-pointer items-start gap-3">
-                  <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-acc" />
+                  <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-info" />
                   <span className="kd-t">{T.agree}</span>
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
@@ -457,8 +457,8 @@ export function Wizard() {
             <span className="kd-m">{T.preview}</span>
             <article className={cx('kd-ev', g('edm'))}>
               <div className="relative">
-                <Art family="edm" cover={f.coverUrl} />
-                <span className="kd-tag kd-tag-glass absolute left-2.5 top-2.5 text-paper">{T.justListed}</span>
+                <Art title={f.title || T.fNamePh} family="edm" cover={f.coverUrl} />
+                <span className="kd-tag kd-tag-glass absolute left-2.5 top-2.5 text-fg-1">{T.justListed}</span>
               </div>
               <div className="flex flex-col gap-1">
                 <span className="kd-h">{f.title.trim() || T.noTitle}</span>
@@ -469,7 +469,7 @@ export function Wizard() {
                 {(() => {
                   const p = f.sellHere && tierRows(f).length ? Math.min(...tierRows(f).map((t) => int(t.price))) : int(f.price);
                   if (f.entryMode !== 'free' && !p) return null;
-                  return <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-acc')}>{f.entryMode === 'free' ? T.free : priceLine({ isFree: false, entryMode: 'paid', priceFrom: p, currency }, lang)}</span>;
+                  return <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-info')}>{f.entryMode === 'free' ? T.free : priceLine({ isFree: false, entryMode: 'paid', priceFrom: p, currency }, lang)}</span>;
                 })()}
                 {f.styles.length ? <span className="kd-m">{f.styles.map((k) => styleLabel(k, lang)).join(' · ')}</span> : null}
               </div>
@@ -534,7 +534,7 @@ export function Lineup({ lang, value, onChange }: { lang: Lang; value: string[];
   };
   return (
     <div className="flex flex-col gap-2">
-      <FieldLabel htmlFor="evLineup">{T.fLineup} <span className="font-normal text-fog">{T.optional}</span></FieldLabel>
+      <FieldLabel htmlFor="evLineup">{T.fLineup} <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel>
       {value.length ? (
         <ul className="flex flex-wrap gap-1.5">
           {value.map((a) => (
@@ -562,7 +562,7 @@ export function VenueField({ lang, venues, recent, value, onChange }: {
       <div className="relative">
         <Input
           id="evVenue"
-          icon={<MapPinIcon size={18} className="text-fog" aria-hidden="true" />}
+          icon={<MapPinIcon size={18} className="text-fg-3" aria-hidden="true" />}
           value={value.name}
           placeholder={T.fVenuePh}
           role="combobox"
@@ -615,12 +615,12 @@ export function Upload({ lang, kind, label, hint, value, onChange, required }: {
     setBusy(false);
   };
   return (
-    <div className="flex min-h-16 w-full flex-wrap items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
+    <div className="flex min-h-16 w-full flex-wrap items-center gap-3 rounded-[10px] border border-dashed border-line-2 px-4 py-3">
       {value
         ? <FramedThumb src={value} className={kind === 'logo' ? 'size-11 rounded-lg' : 'h-11 w-[78px] rounded-md'} />
-        : <ImageSquareIcon size={22} className="shrink-0 text-fog" aria-hidden="true" />}
+        : <ImageSquareIcon size={22} className="shrink-0 text-fg-3" aria-hidden="true" />}
       <span className="flex min-w-0 flex-1 basis-40 flex-col gap-0.5">
-        <span className="kd-hs">{label} {required ? null : <span className="font-normal text-fog">{T.optional}</span>}</span>
+        <span className="kd-hs">{label} {required ? null : <span className="font-normal text-fg-3">{T.optional}</span>}</span>
         <span className="kd-s">{busy ? T.fUploading : hint}</span>
       </span>
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) void send(file); e.target.value = ''; }} />

@@ -80,7 +80,7 @@ function Mine({ lang }: { lang: Lang }) {
               <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
               <a className={buttonClass({ size: 'sm', tone: 'ghost' })} href="/app/settings">{T.notifSettings}</a>
             </div>
-            <div className="grid grid-cols-2 gap-y-3.5 border-y border-line py-3.5">
+            <div className="grid grid-cols-2 gap-y-3.5 border-y border-line-1 py-3.5">
               <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
               <Stat value={orders ? coming.length : '–'} label={T.going} />
               <FollowStats lang={lang} f={follows} />
@@ -97,13 +97,13 @@ function Mine({ lang }: { lang: Lang }) {
                 const fam = familyOf(o.event.genre);
                 return (
                   <a key={o.id} href={'/e/' + o.event.slug + en} className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)_auto] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
-                    <Art family={fam} bone={i % 2 === 1} className="h-19 rounded-lg" />
+                    <Art family={fam} title={o.event.title} className="h-19 rounded-lg" />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="kd-m kd-num">{weekdayShort(o.event.startsOn, lang)} {dayMonth(o.event.startsOn, lang)}</span>
                       <span className="kd-hs kd-ell">{o.event.title}</span>
                       <span className="kd-s kd-ell">{[o.event.venueName, o.event.area, o.event.startTime ? fill(T.doorsAt, { t: o.event.startTime }) : null].filter(Boolean).join(' · ')}</span>
                     </span>
-                    <span className="kd-tag bg-ink text-[#eeeeee]">{fill(T.nTickets, { n: o.tickets.length })}</span>
+                    <span className="kd-tag bg-on-inverse text-inverse">{fill(T.nTickets, { n: o.tickets.length })}</span>
                   </a>
                 );
               })}

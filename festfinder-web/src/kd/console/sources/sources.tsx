@@ -55,7 +55,7 @@ function RunLine({ r, lang }: { r: RunCounts | null; lang: Lang }) {
   if (!r) return <span className="kd-s">{T.notRun}</span>;
   return (
     <span className="flex min-w-0 flex-col">
-      <span className="kd-num text-sm text-paper">{fill(T.runTop, { c: count(r.created, lang), m: count(r.merged, lang) })}</span>
+      <span className="kd-num text-sm text-fg-1">{fill(T.runTop, { c: count(r.created, lang), m: count(r.merged, lang) })}</span>
       <span className="kd-s kd-num text-xs">
         {fill(T.runSub, { f: count(r.fetched, lang), r: count(r.rejected, lang) })}
         {r.failed ? ' · ' + fill(T.runFailed, { n: count(r.failed, lang) }) : ''}
@@ -98,10 +98,10 @@ export function Sources() {
             <>
               {d.cancelledBySource.length ? (
                 <Panel as="section" aria-label={T.cancelled} className="flex flex-col gap-2 p-5">
-                  <h2 className="kd-h flex items-center gap-2"><WarningIcon size={18} className="text-hot" aria-hidden="true" />{T.cancelled}</h2>
+                  <h2 className="kd-h flex items-center gap-2"><WarningIcon size={18} className="text-bad" aria-hidden="true" />{T.cancelled}</h2>
                   <ul className="flex flex-col">
                     {d.cancelledBySource.map((c) => (
-                      <li key={c.id} className="flex flex-col gap-0.5 border-t border-line py-2">
+                      <li key={c.id} className="flex flex-col gap-0.5 border-t border-line-1 py-2">
                         <Link className="kd-hs hover:underline" href={`/console/events/${c.id}?tab=sources`}>{c.title}</Link>
                         <span className="kd-s kd-num">{[c.startsOn, c.host].filter(Boolean).join(' · ')}</span>
                       </li>
@@ -117,22 +117,22 @@ export function Sources() {
                 <Table label={T.title} cols={COLS} head={[T.colSource, T.colCity, T.colAuthority, <span key="e" className="block text-right">{T.colEvents}</span>, T.colLast, T.colNext, '']}>
                   {d.items.map((s) => (
                     <Row key={s.id} cols={COLS} className="py-2" current={s.id === openId}>
-                      <span className="flex min-w-0 flex-col">
+                      <span role="cell" className="flex min-w-0 flex-col">
                         <span className="flex min-w-0 items-center gap-2">
                           <button type="button" className="kd-hs kd-ell text-left hover:underline" aria-label={fill(T.open, { n: s.name })} onClick={() => setParams({ id: s.id })}>{s.name}</button>
                           {s.enabled ? null : <Pill>{T.off}</Pill>}
                         </span>
                         <span className="kd-s kd-ell text-xs">{[T[s.adapter] ?? s.adapter, host(s.url)].filter(Boolean).join(' · ')}</span>
                       </span>
-                      <span className="kd-s kd-ell">{s.cityLabel ? FF.text(s.cityLabel, lang) : '—'}</span>
-                      <span className="kd-s kd-ell">{authority(s.authority)}</span>
-                      <span className="kd-num text-right text-sm text-paper">{count(s.events, lang)}</span>
-                      <span className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span role="cell" className="kd-s kd-ell">{s.cityLabel ? FF.text(s.cityLabel, lang) : '—'}</span>
+                      <span role="cell" className="kd-s kd-ell">{authority(s.authority)}</span>
+                      <span role="cell" className="kd-num text-right text-sm text-fg-1">{count(s.events, lang)}</span>
+                      <span role="cell" className="flex min-w-0 flex-wrap items-center gap-2">
                         <RunLine r={s.lastRun} lang={lang} />
                         {s.lastError ? <span title={s.lastError}><Pill tone="bad">{T.error}</Pill></span> : null}
                       </span>
-                      <span className="kd-s kd-num text-xs">{s.enabled ? stamp(s.nextRunAt, lang) : '—'}</span>
-                      <IconButton size="sm" label={fill(T.editOne, { n: s.name })} onClick={() => setForm({ source: s })}><PencilSimpleIcon size={16} aria-hidden="true" /></IconButton>
+                      <span role="cell" className="kd-s kd-num text-xs">{s.enabled ? stamp(s.nextRunAt, lang) : '—'}</span>
+                      <span role="cell"><IconButton size="sm" label={fill(T.editOne, { n: s.name })} onClick={() => setForm({ source: s })}><PencilSimpleIcon size={16} aria-hidden="true" /></IconButton></span>
                     </Row>
                   ))}
                 </Table>
@@ -212,7 +212,7 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
     >
       {/* The kind is fixed once a source exists: the API does not change it. */}
       <Field label={T.kind}>
-        {editing ? <span className="text-sm text-paper">{T[f.adapter]}</span>
+        {editing ? <span className="text-sm text-fg-1">{T[f.adapter]}</span>
           : <Segmented label={T.kind} value={f.adapter} onChange={(v) => { set('adapter')(v); setUrlError(null); }} options={ADAPTERS.map((a) => ({ value: a, label: T[a] }))} />}
       </Field>
       <Field label={T.name} htmlFor="cs-name">
@@ -315,9 +315,9 @@ function SourceDetail({ lang, source, onClose, onChanged }: { lang: Lang; source
       </>}
     >
       {source.lastError ? (
-        <div role="alert" className="flex items-start gap-2 rounded-lg p-3 shadow-[inset_0_0_0_1px_var(--color-hot)]">
-          <WarningIcon size={18} className="mt-0.5 shrink-0 text-hot" aria-hidden="true" />
-          <span className="kd-s min-w-0 break-words text-mist">{source.lastError}</span>
+        <div role="alert" className="flex items-start gap-2 rounded-lg p-3 shadow-[inset_0_0_0_1px_var(--color-bad)]">
+          <WarningIcon size={18} className="mt-0.5 shrink-0 text-bad" aria-hidden="true" />
+          <span className="kd-s min-w-0 break-words text-fg-2">{source.lastError}</span>
         </div>
       ) : null}
       <Tabs
@@ -332,12 +332,12 @@ function SourceDetail({ lang, source, onClose, onChanged }: { lang: Lang; source
             <Table label={T.runs} cols={RUN_COLS} head={[T.colWhen, T.colResult, T.colErrors]}>
               {d.items.map((r) => (
                 <Row key={r.id} cols={RUN_COLS} className="py-2">
-                  <span className="flex flex-col">
-                    <span className="kd-num text-sm text-paper">{stamp(r.startedAt, lang)}</span>
+                  <span role="cell" className="flex flex-col">
+                    <span className="kd-num text-sm text-fg-1">{stamp(r.startedAt, lang)}</span>
                     <span className="kd-s text-xs">{r.trigger === 'manual' ? T.manual : T.scheduled}</span>
                   </span>
-                  <RunLine r={r} lang={lang} />
-                  <span className="kd-s min-w-0 break-words text-xs">{r.errors?.length ? r.errors.slice(0, 2).join(' · ') : '—'}</span>
+                  <span role="cell"><RunLine r={r} lang={lang} /></span>
+                  <span role="cell" className="kd-s min-w-0 break-words text-xs">{r.errors?.length ? r.errors.slice(0, 2).join(' · ') : '—'}</span>
                 </Row>
               ))}
             </Table>
@@ -355,12 +355,12 @@ function SourceDetail({ lang, source, onClose, onChanged }: { lang: Lang; source
                 const name = r.event ? r.event.title : r.externalId.replace(/^https?:\/\//, '').slice(0, 80);
                 return (
                   <Row key={r.id} cols={RAW_COLS} className="py-2">
-                    <span><Pill tone={look.tone}>{T[look.key]}</Pill></span>
-                    <span className="flex min-w-0 flex-col">
+                    <span role="cell"><Pill tone={look.tone}>{T[look.key]}</Pill></span>
+                    <span role="cell" className="flex min-w-0 flex-col">
                       {r.event ? <Link className="kd-hs kd-ell hover:underline" href={'/console/events/' + r.event.id}>{name}</Link> : <span className="kd-hs kd-ell">{name}</span>}
                       <span className="kd-s kd-ell text-xs">{[r.error, r.matchReason ? `${r.matchScore} · ${r.matchReason}` : null].filter(Boolean).join(' · ') || ago(r.fetchedAt, lang)}</span>
                     </span>
-                    <IconButton size="sm" label={fill(T.rawOf, { n: name })} onClick={() => setRawId(r.id)}><CodeIcon size={16} aria-hidden="true" /></IconButton>
+                    <span role="cell"><IconButton size="sm" label={fill(T.rawOf, { n: name })} onClick={() => setRawId(r.id)}><CodeIcon size={16} aria-hidden="true" /></IconButton></span>
                   </Row>
                 );
               })}
@@ -383,7 +383,7 @@ function RawSheet({ lang, id, onClose }: { lang: Lang; id: string; onClose: () =
         {(d) => (
           <div className="flex flex-col gap-2">
             <p className="kd-s break-all">{[d.externalId, d.error].filter(Boolean).join(' · ')}</p>
-            <pre className="kd-num max-h-[60dvh] overflow-auto rounded-lg bg-black/30 p-3 text-xs leading-relaxed text-mist" aria-label={T.raw} tabIndex={0}>{JSON.stringify(d.payload, null, 2)}</pre>
+            <pre className="kd-num max-h-[60dvh] overflow-auto rounded-lg bg-black/30 p-3 text-xs leading-relaxed text-fg-2" aria-label={T.raw} tabIndex={0}>{JSON.stringify(d.payload, null, 2)}</pre>
           </div>
         )}
       </Loaded>

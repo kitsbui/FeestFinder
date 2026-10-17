@@ -72,16 +72,16 @@ export function Verification() {
                     {o.strikes ? ' · ' + fill(T.strikes, { n: o.strikes }) : ''}
                     {o.suspended ? ' · ' + T.suspended : ''}
                   </span>
-                  <div className="flex flex-col border-t border-line">
+                  <div className="flex flex-col border-t border-line-1">
                     {docs.map((d) => (
-                      <div key={d.key} className="flex min-h-11 items-center justify-between gap-3 border-b border-line">
-                        <span className="kd-s text-mist">{d.label}</span>
+                      <div key={d.key} className="flex min-h-11 items-center justify-between gap-3 border-b border-line-1">
+                        <span className="kd-s text-fg-2">{d.label}</span>
                         <Switch checked={o.docs[d.key]} label={`${d.label} · ${o.name}`} onChange={(v) => patch(o, { docs: { [d.key]: v } })} />
                       </div>
                     ))}
                     {o.bankOnFile ? (
-                      <div className="flex min-h-11 items-center justify-between gap-3 border-b border-line">
-                        <span className="kd-s text-mist">{T.bankOk}</span>
+                      <div className="flex min-h-11 items-center justify-between gap-3 border-b border-line-1">
+                        <span className="kd-s text-fg-2">{T.bankOk}</span>
                         <Switch checked={o.bankVerified} label={`${T.bankOk} · ${o.name}`} onChange={(v) => patch(o, { bankVerified: v })} />
                       </div>
                     ) : null}

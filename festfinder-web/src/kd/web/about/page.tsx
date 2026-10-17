@@ -56,7 +56,7 @@ export async function AboutPage({ lang }: { lang: Lang }) {
           </header>
 
           {/* ---- numbers: the API's, or only the fee when it does not answer ---- */}
-          <section aria-label={T.numbers} className="mt-10 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
+          <section aria-label={T.numbers} className="mt-10 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line-1 py-4.5">
             {reach ? <Stat value={count(reach.events, lang)} label={T.statEvents} /> : null}
             {reach ? <Stat value={count(reach.withEvents, lang)} label={T.statCities} /> : null}
             <Stat value="0" label={T.statFee} />
@@ -70,12 +70,13 @@ export async function AboutPage({ lang }: { lang: Lang }) {
                 {reach.cities.map((c) => (
                   <li key={c.slug}>
                     {c.n ? (
-                      <Link className="kd-chip" href={inLang('/?city=' + encodeURIComponent(c.slug), lang)} aria-label={fill(T.cityEvents, { c: c.name[lang], n: c.n })}>
+                      <Link className="kd-chip" href={inLang('/?city=' + encodeURIComponent(c.slug), lang)}>
                         {c.name[lang]}
                         <span className="kd-chip-n">{count(c.n, lang)}</span>
+                        <span className="sr-only"> {T.upcomingEvents}</span>
                       </Link>
                     ) : (
-                      <span className="kd-chip pointer-events-none text-fog">
+                      <span className="kd-chip pointer-events-none text-fg-3">
                         {c.name[lang]}
                         <span className="kd-chip-n opacity-100">{T.soon}</span>
                       </span>
@@ -93,7 +94,7 @@ export async function AboutPage({ lang }: { lang: Lang }) {
               {CONTACTS.map(({ title, body, email, Icon, advertise }) => (
                 <li key={email} className="kd-card flex flex-col gap-3 p-5">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-obsidian text-mist" aria-hidden="true">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-fg-2" aria-hidden="true">
                       <Icon size={20} />
                     </span>
                     <h3 className="kd-h">{T[title]}</h3>
@@ -135,10 +136,10 @@ export async function AboutPage({ lang }: { lang: Lang }) {
           {/* ---- office and support ---- */}
           <section aria-labelledby="ab-details" className="mt-12 flex flex-col gap-4">
             <h2 id="ab-details" className="kd-d3">{T.details}</h2>
-            <dl className="grid gap-5 border-y border-line py-5 tab:grid-cols-3">
+            <dl className="grid gap-5 border-y border-line-1 py-5 tab:grid-cols-3">
               <Fact label={T.office}>{T.officeValue}</Fact>
               <Fact label={T.hotline}>
-                <a className="kd-num underline decoration-line2 underline-offset-4 hover:text-paper" href={HOTLINE.tel}>{HOTLINE.label}</a>
+                <a className="kd-num underline decoration-line-2 underline-offset-4 hover:text-fg-1" href={HOTLINE.tel}>{HOTLINE.label}</a>
                 {' · '}{T.hotlineValue}
               </Fact>
               <Fact label={T.hours}>{T.hoursValue}</Fact>

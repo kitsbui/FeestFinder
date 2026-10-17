@@ -134,7 +134,11 @@ export function Queue() {
   const selId = idParam && !hidden.has(idParam) && (visible.some((i) => i.id === idParam) || (items && !items.some((i) => i.id === idParam)))
     ? idParam : visible[0]?.id ?? null;
   const sel = visible.find((i) => i.id === selId) ?? null;
-  const open = useCallback((id: string | null) => setParams({ id }), [setParams]);
+  // On a narrow screen the listing renders under the whole queue: a tap scrolls to it, or it would seem to do nothing.
+  const open = useCallback((id: string | null) => {
+    setParams({ id });
+    if (id && matchMedia('(max-width: 899px)').matches) requestAnimationFrame(() => document.getElementById('q-detail')?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+  }, [setParams]);
 
   const decide = (verb: Verb, ids: string[], reason: Reason | null = null, extra: { message?: string; allowAppeal?: boolean } = {}) => {
     if (!ids.length) return;
@@ -195,7 +199,7 @@ export function Queue() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-wrap">
-      <aside className="flex max-w-full flex-[1_1_360px] flex-col gap-3 border-r border-line p-4 max-[899px]:border-b max-[899px]:border-r-0" aria-label={T.queue}>
+      <aside className="flex max-w-full flex-[1_1_360px] flex-col gap-3 border-r border-line-1 p-4 max-[899px]:border-b max-[899px]:border-r-0" aria-label={T.queue}>
         <div className="flex items-center justify-between gap-2">
           <h2 className="kd-hs">{T.queue}</h2>
           <span className="flex items-center gap-1">
@@ -205,7 +209,7 @@ export function Queue() {
         </div>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label={R.views}>
           {VIEWS.map((v) => (
-            <Chip key={v} on={!appealsOn && view === v} count={v === 'all' ? live.length : n((i) => inView(i, v))} className={cx(v === 'breach' && n((i) => i.sla.state === 'breach') > 0 && 'text-hot')} onClick={() => setParams({ view: v === 'all' ? null : v, filter: null })}>
+            <Chip key={v} on={!appealsOn && view === v} count={v === 'all' ? live.length : n((i) => inView(i, v))}  onClick={() => setParams({ view: v === 'all' ? null : v, filter: null })}>
               {viewLabel[v]}
             </Chip>
           ))}
@@ -239,15 +243,18 @@ export function Queue() {
           <ul className="flex flex-col gap-0.5">
             {visible.map((i) => (
               <li key={i.id} id={'q-' + i.id} className={cx('group relative flex items-center gap-1 rounded-lg', selId === i.id && 'bg-white/[0.05]')}>
-                <input
-                  type="checkbox"
-                  className="ml-1.5 size-4 shrink-0 accent-acc"
-                  checked={picked.includes(i.id)}
-                  aria-label={fill(T.selectRow, { t: i.title })}
-                  onChange={(e) => setPicked((p) => (e.target.checked ? [...p, i.id] : p.filter((x) => x !== i.id)))}
-                />
-                <button type="button" aria-pressed={selId === i.id} className={cx('flex min-w-0 flex-1 items-center gap-3 rounded-lg p-2 text-left hover:bg-white/[0.03]', g(familyOf(i.genre)))} onClick={() => open(i.id)}>
-                  <Art family={familyOf(i.genre)} cover={i.coverUrl} className="size-12 shrink-0 rounded-lg" />
+                {/* A 44px box around the 16px box: the whole square toggles it. */}
+                <label className="flex size-11 shrink-0 cursor-pointer items-center justify-center">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-info"
+                    checked={picked.includes(i.id)}
+                    aria-label={fill(T.selectRow, { t: i.title })}
+                    onChange={(e) => setPicked((p) => (e.target.checked ? [...p, i.id] : p.filter((x) => x !== i.id)))}
+                  />
+                </label>
+                <button type="button" aria-pressed={selId === i.id} className={cx('flex min-w-0 flex-1 flex-wrap items-center gap-3 rounded-lg p-2 text-left hover:bg-white/[0.03] tab:flex-nowrap', g(familyOf(i.genre)))} onClick={() => open(i.id)}>
+                  <Art title={i.title} family={familyOf(i.genre)} cover={i.coverUrl} className="size-12 shrink-0 rounded-lg" />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="kd-hs kd-ell">{i.title}</span>
                     {i.kind === 'revision' ? <span className="kd-m text-warn">{R.revisionTag}</span> : null}
@@ -258,7 +265,8 @@ export function Queue() {
                     </span>
                     <span className="kd-m kd-ell kd-num">{[i.startsOn ? whenShort(i, lang) : null, i.venueName].filter(Boolean).join(' · ')}</span>
                   </span>
-                  <span className="flex flex-col items-end gap-1">
+                  {/* On a phone the statuses go under the title, so the title keeps the row. */}
+                  <span className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 pl-15 tab:basis-auto tab:flex-col tab:items-end tab:pl-0">
                     <Status tone={i.sla.state === 'breach' ? 'bad' : i.sla.state === 'soon' ? 'warn' : 'none'}>{i.sla.label[lang]}</Status>
                     {i.festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
                     {i.fit ? <Status tone={FIT_TONE[i.fit.band]}>{fill(R.fitN, { n: i.fit.score })}</Status> : null}
@@ -285,11 +293,12 @@ export function Queue() {
           {held ? (
             <Panel className="flex items-center gap-3 py-2.5 pl-4 pr-2.5">
               <Status tone={held.verb === 'approve' ? 'ok' : held.verb === 'fix' ? 'warn' : 'bad'}>{verbLabel[held.verb]}</Status>
-              <span className="kd-s kd-ell flex-1 text-mist">{held.title}{held.reason ? ' · ' + held.reason.label[lang] : ''}</span>
+              <span className="kd-s kd-ell flex-1 text-fg-2">{held.title}{held.reason ? ' · ' + held.reason.label[lang] : ''}</span>
               <Button size="sm" tone="ghost" onClick={undo}>{T.undo}</Button>
             </Panel>
           ) : null}
         </div>
+        <span id="q-detail" className="block scroll-mt-16" aria-hidden="true" />
         {appealsOn ? <Appeals lang={lang} appeals={appeals} onDone={load} />
           : selId && items ? (
             <Detail

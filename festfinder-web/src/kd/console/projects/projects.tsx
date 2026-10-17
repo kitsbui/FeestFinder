@@ -69,7 +69,7 @@ export function ConsoleProjects() {
                   </button>
                 </Cell>
                 <Cell className="kd-s kd-ell">{[p.owner.name, p.ownerEmail].filter(Boolean).join(' · ')}</Cell>
-                <Cell end className="kd-num text-sm text-paper">{p.offers}</Cell>
+                <Cell end className="kd-num text-sm text-fg-1">{p.offers}</Cell>
               </Row>
             ))}
           </Table>
@@ -106,11 +106,11 @@ function Review({ lang, p, onClose }: { lang: Lang; p: Item; onClose: (changed: 
     >
       <div className="flex flex-col gap-4">
         <span className="flex flex-wrap gap-1.5">{p.seeking.map((s) => <Pill key={s.key}>{FF.text(s.label, lang)}</Pill>)}</span>
-        {p.pitch ? <p className="kd-t text-paper">{p.pitch}</p> : null}
+        {p.pitch ? <p className="kd-t text-fg-1">{p.pitch}</p> : null}
         <p className="kd-s whitespace-pre-line">{p.story}</p>
         <dl className="grid grid-cols-2 gap-3">
-          {p.budget != null ? <div><dt className="kd-m">{T.budget}</dt><dd className="kd-num text-paper">{money(p.budget, p.currency, lang)}</dd></div> : null}
-          {p.raiseAmount != null ? <div><dt className="kd-m">{T.raise}</dt><dd className="kd-num text-paper">{money(p.raiseAmount, p.currency, lang)}</dd></div> : null}
+          {p.budget != null ? <div><dt className="kd-m">{T.budget}</dt><dd className="kd-num text-fg-1">{money(p.budget, p.currency, lang)}</dd></div> : null}
+          {p.raiseAmount != null ? <div><dt className="kd-m">{T.raise}</dt><dd className="kd-num text-fg-1">{money(p.raiseAmount, p.currency, lang)}</dd></div> : null}
         </dl>
         {p.status !== 'in_review' ? <a className="kd-s underline" href={`/p/${encodeURIComponent(p.slug)}`} target="_blank" rel="noopener">{T.view}</a> : null}
         {p.status === 'in_review' ? (

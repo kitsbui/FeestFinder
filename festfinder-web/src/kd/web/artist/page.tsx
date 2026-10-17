@@ -123,23 +123,23 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
         const free = e.isFree || e.entryMode === 'free';
         const tickets = !free && !e.soldOut && !e.past;
         return (
-          <li key={e.id} className={cx('grid min-h-22 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line', g(fam))}>
+          <li key={e.id} className={cx('grid min-h-22 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1', g(fam))}>
             {e.startsOn ? <DateBlock hi={i === 0} top={weekdayShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} /> : <span />}
             <span className="flex min-w-0 flex-col gap-1">
               <Link href={inLang('/e/' + e.slug, lang)} className="kd-h kd-ell hover:underline">{e.title}</Link>
               <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{[e.venue.name, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
             </span>
             <span className="flex items-center gap-3.5">
-              <span className={cx('kd-mb kd-num hidden tab:inline', free && 'text-acc')}>
+              <span className={cx('kd-mb kd-num hidden tab:inline', free && 'text-info')}>
                 {free ? T.freeEntry : e.soldOut ? T.soldOut : fill(T.fromPrice, { p: money(e.priceFrom, e.currency, lang) })}
               </span>
-              {tickets ? <a className={buttonClass({ size: 'sm', tone: i === 0 ? 'acc' : 'default' })} href={`/go/${enc(e.slug)}?src=artist`}>{T.buy}</a> : null}
+              {tickets ? <a className={buttonClass({ size: 'sm' })} href={`/go/${enc(e.slug)}?src=artist`}>{T.buy}</a> : null}
             </span>
           </li>
         );
       })}
     </ol>
-  ) : <p className="kd-t pt-5 text-fog">{T.noShows}</p>;
+  ) : <p className="kd-t pt-5 text-fg-3">{T.noShows}</p>;
 
   return (
     <>
@@ -154,9 +154,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
             {a.coverUrl ? (
               <Art family={tiles[0]} cover={a.coverUrl} className="h-[clamp(140px,17vw,240px)]" />
             ) : (
-              <div className="grid h-[clamp(140px,17vw,240px)] grid-cols-[2fr_1fr_1fr] gap-2">
-                {tiles.map((f, i) => <Art key={f} family={f} bone={i === 1} />)}
-              </div>
+              <Art family={tiles[0]} title={a.name} layout="banner" className="h-[clamp(140px,17vw,240px)]" />
             )}
           </div>
 
@@ -168,7 +166,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 <div className="flex min-w-0 flex-col gap-2">
                   <h1 className="kd-d1">
                     {a.name}
-                    {a.verified ? <SealCheckIcon size={28} weight="fill" className="ml-3 inline-block align-[-0.05em] text-acc" role="img" aria-label={T.artistVerified} /> : null}
+                    {a.verified ? <SealCheckIcon size={28} weight="fill" className="ml-3 inline-block align-[-0.05em] text-info" role="img" aria-label={T.artistVerified} /> : null}
                   </h1>
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
                     <span className="kd-m">{meta}</span>
@@ -195,7 +193,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 <ShareProfile lang={lang} title={a.name} />
               </div>
             </div>
-            <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-y-4 border-y border-line py-4.5 tab:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
+            <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-y-4 border-y border-line-1 py-4.5 tab:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
               {unclaimed ? null : <FollowersStat lang={lang} kind="art" id={a.id} source={source} served={a.followers} />}
               {a.claimed ? <Stat value={count(a.followingCount ?? 0, lang)} label={T.followingN} /> : null}
               <Stat value={count(data.upcoming.length, lang)} label={T.shows} />
@@ -224,7 +222,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 {bio || links.length ? (
                   <div className="flex flex-col gap-2">
                     <span className="kd-m">{T.about}</span>
-                    {bio ? <Clamp lines={3} more={T.more} less={T.less} className="kd-t whitespace-pre-line text-paper">{bio}</Clamp> : null}
+                    {bio ? <Clamp lines={3} more={T.more} less={T.less} className="kd-t whitespace-pre-line text-fg-1">{bio}</Clamp> : null}
                     {links.length ? <ProfileLinks links={links} lang={lang} label={T.listen} /> : null}
                   </div>
                 ) : null}
@@ -239,13 +237,13 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                           <span className="kd-hs kd-ell">{x.name}</span>
                           <span className="kd-s">{x.line}</span>
                         </span>
-                        <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
                       </Link>
                     ))}
                   </div>
                 ) : null}
 
-                <div className="flex flex-col border-t border-line">
+                <div className="flex flex-col border-t border-line-1">
                   {data.availability.length ? (
                     <Accordion small summary={T.dates} aside={data.availability.length}>
                       <ul className="flex flex-col">
@@ -275,7 +273,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                     <Accordion small summary={T.similar} aside={rel.similar.length}>
                       <ul className="flex flex-col">
                         {rel.similar.map((x) => (
-                          <li key={x.id}><Link className="kd-lrow" href={inLang('/a/' + x.slug, lang)}><Avatar name={x.name} size={32} /><span className="kd-hs kd-ell flex-1">{x.name}</span><CaretRightIcon size={16} className="text-fog" aria-hidden="true" /></Link></li>
+                          <li key={x.id}><Link className="kd-lrow" href={inLang('/a/' + x.slug, lang)}><Avatar name={x.name} size={32} /><span className="kd-hs kd-ell flex-1">{x.name}</span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></Link></li>
                         ))}
                       </ul>
                     </Accordion>
@@ -314,7 +312,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                         {seo.page.facts.map((f) => (
                           <div key={f.label} className="flex flex-col gap-0.5">
                             <dt className="kd-m">{f.label}</dt>
-                            <dd className="kd-s text-mist">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line2 underline-offset-4 hover:text-paper">{f.value}</a> : f.value}</dd>
+                            <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
                           </div>
                         ))}
                       </dl>

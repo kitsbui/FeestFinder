@@ -52,6 +52,8 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
     });
   }, [kd.user]);
 
+  /** Which ways in people use (the design funnel): the nav, its phone menu, the footer. */
+  const nav = (kind: string, surface = 'nav') => () => FF.track('nav_click', { kind, surface });
   const user = kd.user;
   const K = pick(CRAFT, lang);
   const roles = kd.session?.roles;
@@ -63,8 +65,8 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={127} height={22} />
         </Link>
         <nav aria-label={T.mainNav} className="ml-3 hidden items-center gap-0.5 desk:flex">
-          <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'list' ? 'page' : undefined}>{T.events}</Link>
-          <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined}>{T.artists}</Link>
+          <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'list' ? 'page' : undefined} onClick={nav('events')}>{T.events}</Link>
+          <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined} onClick={nav('artists')}>{T.artists}</Link>
           <Menu
             label={T.genres}
             trigger={(p) => (
@@ -82,14 +84,15 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           </Menu>
         </nav>
         <div className="ml-auto flex items-center gap-1.5">
-          <IconButton label={T.search} onClick={() => setSearch(true)}>
+          <IconButton label={T.search} onClick={() => { nav('search')(); setSearch(true); }}>
             <MagnifyingGlassIcon size={20} aria-hidden="true" />
           </IconButton>
           {/* The team's way into the Console. */}
           {isTeam(user) ? (
             <a className={buttonClass({ size: 'sm', pill: true }, 'hidden desk:inline-flex')} href="/console"><ShieldCheckIcon size={16} aria-hidden="true" />{K.console}</a>
           ) : null}
-          <button type="button" className={buttonClass({ tone: 'light', size: 'sm', pill: true }, 'hidden desk:inline-flex')} aria-haspopup="dialog" onClick={() => setPost(true)}>{T.listEvent}</button>
+          {/* Outlined: the page's own action is the one primary on the screen. */}
+          <button type="button" className={buttonClass({ size: 'sm' }, 'hidden desk:inline-flex')} aria-haspopup="dialog" onClick={() => { nav('post')(); setPost(true); }}>{T.listEvent}</button>
           {user ? (
             <Menu
               label={T.account}
@@ -101,7 +104,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
               )}
             >
               <MenuHeader>
-                <span className="flex flex-col gap-0.5 border-b border-line pb-2.5">
+                <span className="flex flex-col gap-0.5 border-b border-line-1 pb-2.5">
                   <span className="kd-hs kd-ell">{user.name || T.you}</span>
                   {me?.handle ? <span className="kd-m kd-ell normal-case">{me.handle}</span> : null}
                 </span>
@@ -133,9 +136,9 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           ) : kd.session === undefined ? (
             <span className="h-11 w-11" aria-hidden="true" />
           ) : (
-            <button type="button" className={buttonClass({ size: 'sm', tone: 'ghost' })} onClick={() => kd.openSignIn()}>{T.signIn}</button>
+            <button type="button" className={buttonClass({ size: 'sm', tone: 'ghost' })} onClick={() => { nav('sign-in')(); kd.openSignIn(); }}>{T.signIn}</button>
           )}
-          <IconButton label={T.menu} className="desk:hidden" aria-haspopup="dialog" aria-expanded={menu} onClick={() => { loadCounts(); setMenu(true); }}>
+          <IconButton label={T.menu} className="desk:hidden" aria-haspopup="dialog" aria-expanded={menu} onClick={() => { nav('menu')(); loadCounts(); setMenu(true); }}>
             <ListIcon size={22} aria-hidden="true" />
           </IconButton>
         </div>
@@ -150,8 +153,8 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
                 key={k}
                 href={inLang(href, lang)}
                 aria-current={current === k ? 'page' : undefined}
-                onClick={() => setMenu(false)}
-                className="kd-h flex min-h-13 items-center rounded-opt px-3 text-mist hover:bg-white/[0.04] aria-[current=page]:bg-white/[0.06] aria-[current=page]:text-paper"
+                onClick={() => { nav(k, 'menu')(); setMenu(false); }}
+                className="kd-h flex min-h-13 items-center rounded-opt px-3 text-fg-2 hover:bg-white/[0.04] aria-[current=page]:bg-white/[0.06] aria-[current=page]:text-fg-1"
               >
                 {label}
               </Link>
@@ -162,11 +165,11 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
             {styleChips(counts, 10).map((k) => (
               <a key={k} href={styleHref(k, lang)} className="kd-chip">
                 <span className={`kd-mk ${g('edm')}`} aria-hidden="true" />{styleLabel(k, lang)}
-                {counts?.[k] != null ? <span className="kd-num text-fog">{counts[k]}</span> : null}
+                {counts?.[k] != null ? <span className="kd-num text-fg-3">{counts[k]}</span> : null}
               </a>
             ))}
           </div>
-          <button type="button" className={buttonClass({ tone: 'light', block: true }, 'mt-6')} aria-haspopup="dialog" onClick={() => { setMenu(false); setPost(true); }}>{T.listEvent}</button>
+          <button type="button" className={buttonClass({ tone: 'acc', block: true }, 'mt-6')} aria-haspopup="dialog" onClick={() => { nav('post', 'menu')(); setMenu(false); setPost(true); }}>{T.listEvent}</button>
           {isTeam(user) ? <a href="/console" className={buttonClass({ block: true }, 'mt-2')}><ShieldCheckIcon size={16} aria-hidden="true" />{K.console}</a> : null}
         </Sheet>
       ) : null}
@@ -186,10 +189,10 @@ function PostSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
       <div className="flex flex-col gap-2 pt-1">
         {rows.map(({ kind, icon: Icon, title, sub }) => (
           <a key={kind} href={POST_HREF[kind] + (lang === 'en' && kind === 'project' ? '?lang=en' : '')}
-            className="kd-lrow min-h-16 rounded-card border-b-0 px-3.5 shadow-[inset_0_0_0_1px_var(--color-line2)] hover:bg-white/[0.04]">
-            <Icon size={22} className="text-paper" aria-hidden="true" />
+            className="kd-lrow min-h-16 rounded-card border-b-0 px-3.5 shadow-[inset_0_0_0_1px_var(--color-line-2)] hover:bg-white/[0.04]">
+            <Icon size={22} className="text-fg-1" aria-hidden="true" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="kd-h">{title}</span><span className="kd-s">{sub}</span></span>
-            <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+            <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
           </a>
         ))}
         <Link href={inLang('/p', lang)} className="kd-nl mt-2 self-start" onClick={onClose}>{T.browseProjects}</Link>
@@ -238,14 +241,15 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
     if (saved === 'en') location.replace(otherLang.href);
   }, [lang, otherLang]);
   const remember = () => { try { localStorage.setItem(LANG_KEY, lang === 'vi' ? 'en' : 'vi'); } catch { /* storage blocked */ } };
+  const foot = (kind: string) => () => FF.track('nav_click', { kind, surface: 'footer' });
   return (
-    <footer className="mt-14 border-t border-line tab:mt-24">
+    <footer className="mt-14 border-t border-line-1 tab:mt-24">
       <div className="kd-wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-6">
         <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
-        <nav aria-label={T.footerNav} className="flex flex-wrap items-center gap-0.5">
-          <a className="kd-nl" href="/studio">{T.forOrganisers}</a>
-          <a className="kd-nl" href={inLang('/about', lang)}>{T.about}</a>
-          <a className="kd-nl" href={inLang('/advertise', lang)}>{T.advertise}</a>
+        <nav aria-label={T.footerNav} className="-mx-2.5 flex flex-wrap items-center gap-0.5">
+          <a className="kd-nl" href="/studio" onClick={foot('organisers')}>{T.forOrganisers}</a>
+          <a className="kd-nl" href={inLang('/about', lang)} onClick={foot('about')}>{T.about}</a>
+          <a className="kd-nl" href={inLang('/advertise', lang)} onClick={foot('advertise')}>{T.advertise}</a>
           {/* Opens the feedback sheet (kd/feedback/widget.tsx). */}
           <button type="button" className="kd-nl" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{T.feedback}</button>
           <a className="kd-nl" href="mailto:hello@feestfinder.com">hello@feestfinder.com</a>
@@ -264,7 +268,7 @@ export function Crumbs({ items, label }: { items: { name: string; href?: string 
       {items.map((c, i) => (
         <span key={i} className="flex items-center gap-2">
           {i ? <span aria-hidden="true">/</span> : null}
-          {c.href ? <Link href={c.href} className="text-fog hover:text-paper">{c.name}</Link> : <span className="text-mist" aria-current="page">{c.name}</span>}
+          {c.href ? <Link href={c.href} className="text-fg-3 hover:text-fg-1">{c.name}</Link> : <span className="text-fg-2" aria-current="page">{c.name}</span>}
         </span>
       ))}
     </nav>

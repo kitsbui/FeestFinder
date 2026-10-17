@@ -15,7 +15,8 @@ import { FAMILY_LABEL, familyOf, g, styleLabel } from '../genre';
 import { KdLink as Link } from '../link';
 import { createKdMap, type Box, type KdMap } from '../map/kd-map';
 import { useKd } from '../runtime';
-import { Button, Chip, IconButton } from '../ui/actions';
+import { Button, IconButton } from '../ui/actions';
+import { Picker } from '../ui/menu';
 import { Art, Marker } from '../ui/parts';
 import { APP } from './copy';
 import { useCity, useDiscovery, type City } from './explore';
@@ -155,7 +156,8 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
   const timeLabel = (k: Time) => ({ all: T.anyTime, tonight: T.tonight, weekend: T.weekend, '7days': T.next7 })[k];
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#0b0c0d]">
+    <div className="absolute inset-0 overflow-hidden bg-map">
+      <h1 className="sr-only">{T.tabMap}</h1>
       <section aria-label={T.mapLabel} className={cx('absolute inset-0', view === 'list' && 'invisible')}>
         {/* MapLibre makes its container position: relative, so the box is a wrapper. */}
         <div className="absolute inset-0"><div ref={el} className="h-full w-full" data-kd-map /></div>
@@ -168,64 +170,61 @@ function MapBody({ lang, cities, city }: { lang: Lang; cities: City[]; city: str
             <input type="search" placeholder={T.placePh} aria-label={T.place} value={text} onChange={(e) => setText(e.target.value)} />
             <span className="kd-m kd-num pr-2">{fill(T.nEvents, { n: rows.length })}</span>
           </label>
-          <IconButton glass label={view === 'map' ? T.asList : T.asMap} className="h-12 w-12 text-paper" onClick={() => setView(view === 'map' ? 'list' : 'map')}>
+          <IconButton glass label={view === 'map' ? T.asList : T.asMap} className="h-12 w-12 text-fg-1" onClick={() => setView(view === 'map' ? 'list' : 'map')}>
             {view === 'map' ? <ListIcon size={20} aria-hidden="true" /> : <MapTrifoldIcon size={20} aria-hidden="true" />}
           </IconButton>
         </div>
         {q ? (
           <div className="flex items-center gap-2">
-            <span className="kd-tag kd-tag-glass text-paper">{fill(T.results, { q })}</span>
-            <a className="kd-tag kd-tag-glass text-paper" href="/app/list" aria-label={T.clearSearch}><XIcon size={12} aria-hidden="true" /></a>
+            <span className="kd-tag kd-tag-glass text-fg-1">{fill(T.results, { q })}</span>
+            <a className="kd-tag kd-tag-glass text-fg-1" href="/app/list" aria-label={T.clearSearch}><XIcon size={12} aria-hidden="true" /></a>
           </div>
         ) : null}
-        <div className="kd-hscroll" role="group" aria-label={T.genres}>
-          {(['all', 'tonight', 'weekend', '7days'] as Time[]).map((k) => (
-            <Chip key={k} on={time === k} className="kd-glass" onClick={() => setTime(k)}>{timeLabel(k)}</Chip>
-          ))}
-          {CHIPS.map((f) => (
-            <Chip key={f} family={f === 'free' ? 'free' : 'edm'} on={family === f} className="kd-glass" onClick={() => setFamily(family === f ? null : f)}>{f === 'free' ? FAMILY_LABEL.free[lang] : styleLabel(f, lang)}</Chip>
-          ))}
+        {/* One row over the map, on any phone: the time and the style are two menus, not eleven chips that would wrap over the list. */}
+        <div className="flex flex-wrap gap-2" role="group" aria-label={T.genres}>
+          <span className="kd-glass rounded-btn"><Picker label={T.anyTime} value={time} onChange={(v) => setTime(v)} options={(['all', 'tonight', 'weekend', '7days'] as Time[]).map((k) => ({ value: k, label: timeLabel(k) }))} /></span>
+          <span className="kd-glass rounded-btn"><Picker label={T.genres} value={family ?? ''} onChange={(v) => setFamily(v || null)} options={[{ value: '', label: T.allGenres }, ...CHIPS.map((f) => ({ value: f, label: f === 'free' ? FAMILY_LABEL.free[lang] : styleLabel(f, lang) }))]} /></span>
         </div>
       </div>
 
       {view === 'map' ? (
         <>
           {dirty && ready && !busy ? (
-            <button type="button" className="kd-btn kd-btn-sm kd-btn-glass kd-btn-pill absolute left-1/2 top-[calc(126px+env(safe-area-inset-top))] z-[4] -translate-x-1/2 text-paper" onClick={() => search()}>
+            <button type="button" className="kd-btn kd-btn-sm kd-btn-glass kd-btn-pill absolute left-1/2 top-[calc(126px+env(safe-area-inset-top))] z-[4] -translate-x-1/2 text-fg-1" onClick={() => search()}>
               <MagnifyingGlassIcon size={16} aria-hidden="true" />{T.mapSearch}
             </button>
           ) : null}
-          {note ? <span role="status" className="kd-tag kd-tag-glass absolute left-3 top-[calc(126px+env(safe-area-inset-top))] z-[3] text-paper">{note}</span> : null}
-          <IconButton glass label={T.locate} className={cx('absolute right-3 z-[4] text-paper', chosen ? 'bottom-[calc(214px+env(safe-area-inset-bottom))]' : 'bottom-[calc(100px+env(safe-area-inset-bottom))]')} onClick={locate}>
+          {note ? <span role="status" className="kd-tag kd-tag-glass absolute left-3 top-[calc(126px+env(safe-area-inset-top))] z-[3] text-fg-1">{note}</span> : null}
+          <IconButton glass label={T.locate} className={cx('absolute right-3 z-[4] text-fg-1', chosen ? 'bottom-[calc(214px+env(safe-area-inset-bottom))]' : 'bottom-[calc(100px+env(safe-area-inset-bottom))]')} onClick={locate}>
             <CrosshairIcon size={20} aria-hidden="true" />
           </IconButton>
           {chosen ? (
             <Link href={'/app/e/' + chosen.slug} className={cx('kd-glass absolute inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] desk:bottom-4 desk:right-auto desk:w-[420px] z-[4] grid grid-cols-[84px_minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] p-2.5', g(familyOf(chosen.genre)))}>
-              <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} className="h-21 w-21 rounded-lg" />
+              <Art title={chosen.title} family={familyOf(chosen.genre)} cover={chosen.coverUrl} className="h-21 w-21 rounded-lg" />
               <span className="flex min-w-0 flex-col gap-1">
-                <span className="kd-m flex items-center gap-1.5 text-mist"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[familyOf(chosen.genre)][lang]}</span>
+                <span className="kd-m flex items-center gap-1.5 text-fg-2"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[familyOf(chosen.genre)][lang]}</span>
                 <span className="kd-hs kd-ell">{chosen.title}</span>
-                <span className="kd-s kd-ell text-mist">{whenShort(chosen, lang)}{chosen.d != null ? ' · ' + km(chosen.d, lang) : chosen.area ? ' · ' + chosen.area : ''}</span>
-                <span className={cx('kd-mb kd-num', chosen.isFree && 'text-acc')}>{chosen.isFree ? T.free : fill(T.fromPrice, { p: money(chosen.priceFrom, chosen.currency, lang) })}</span>
+                <span className="kd-s kd-ell text-fg-2">{whenShort(chosen, lang)}{chosen.d != null ? ' · ' + km(chosen.d, lang) : chosen.area ? ' · ' + chosen.area : ''}</span>
+                <span className={cx('kd-mb kd-num', chosen.isFree && 'text-info')}>{chosen.isFree ? T.free : fill(T.fromPrice, { p: money(chosen.priceFrom, chosen.currency, lang) })}</span>
               </span>
-              <CaretRightIcon size={18} className="text-fog" aria-label={T.open} />
+              <CaretRightIcon size={18} className="text-fg-3" aria-label={T.open} />
             </Link>
           ) : null}
         </>
       ) : (
-        <ul className="absolute inset-x-0 bottom-0 top-[calc(120px+env(safe-area-inset-top))] z-[3] flex flex-col overflow-y-auto bg-void px-4 pb-[calc(96px+env(safe-area-inset-bottom))] pt-2" aria-label={T.mapLabel}>
+        <ul className="absolute inset-x-0 bottom-0 top-[calc(120px+env(safe-area-inset-top))] z-[3] flex flex-col overflow-y-auto bg-surface-0 px-4 pb-[calc(96px+env(safe-area-inset-bottom))] pt-2" aria-label={T.mapLabel}>
           {rows.map((x) => {
             const fam = familyOf(x.genre);
             return (
               <li key={x.id}>
                 <Link className={cx('kd-row', g(fam))} href={'/app/e/' + x.slug}>
-                  <Art family={fam} cover={x.coverUrl} off={x.soldOut} />
+                  <Art title={x.title} family={fam} cover={x.coverUrl} off={x.soldOut} />
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="kd-hs kd-ell">{x.title}</span>
                     <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{whenShort(x, lang)}{x.area ? ' · ' + x.area : ''}</span>
                   </span>
                   <span className="flex flex-col items-end gap-0.5">
-                    <span className={cx('kd-mb kd-num', x.isFree && 'text-acc')}>{x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang)}</span>
+                    <span className={cx('kd-mb kd-num', x.isFree && 'text-info')}>{x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang)}</span>
                     {x.d != null ? <span className="kd-s kd-num">{km(x.d, lang)}</span> : null}
                   </span>
                 </Link>

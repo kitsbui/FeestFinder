@@ -26,9 +26,9 @@ export async function ListPage({ lang }: { lang: Lang }) {
   ]);
   const highlight = flagship.items.length ? (
     // Keyed: it is handed to ListBrowser, a client component, which places it among its own children.
-    <section key="flagship" aria-labelledby="flagship-h" className="flex flex-col gap-3">
+    <section key="flagship" aria-labelledby="flagship-h" data-surface="flagship" className="flex flex-col gap-3">
       <h2 id="flagship-h" className="kd-d3">{T.flagship}</h2>
-      <div className="kd-cards">{flagship.items.map((e, i) => <EventCard key={e.id} e={e} i={i} lang={lang} />)}</div>
+      <div className="kd-cards">{flagship.items.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div>
     </section>
   ) : null;
   const faq = (['1', '2', '3', '4'] as const).map((n) => ({ q: T[`q${n}`], a: T[`a${n}`] }));
@@ -41,10 +41,10 @@ export async function ListPage({ lang }: { lang: Lang }) {
         <section aria-labelledby="faq-h" className="kd-wrap pt-[clamp(56px,7vw,96px)]">
           <div className="flex max-w-read flex-col gap-1.5">
             <h2 id="faq-h" className="kd-m">{T.faq}</h2>
-            <div className="border-t border-line">
+            <div className="border-t border-line-1">
               {faq.map((x) => (
                 <Accordion key={x.q} small name="faq" summary={x.q}>
-                  <p className="kd-t pr-6 text-fog">{x.a}</p>
+                  <p className="kd-t pr-6 text-fg-3">{x.a}</p>
                 </Accordion>
               ))}
             </div>

@@ -18,7 +18,7 @@ import { useKd } from '../../runtime';
 import { buttonClass, LinkButton } from '../../ui/actions';
 import { Input } from '../../ui/forms';
 import { Menu, MenuItem } from '../../ui/menu';
-import { Art } from '../../ui/parts';
+import { Art, Status } from '../../ui/parts';
 import { Row, Table } from '../../ui/shell';
 import {
   AsyncPick, Body, Choice, Empty, ErrorBox, FilterBar, Loading, MultiChoice, PageHead, Pager, Pill, qs, SearchField, useLoad, useOptions, useQuery, type PickItem,
@@ -28,7 +28,7 @@ import { EVENTS } from './copy';
 import { statusTone, usePlaces, type EventRow } from './model';
 import { errorLine, statusItems, useStatusActions } from './status';
 
-const COLS = '76px minmax(220px,2.2fr) minmax(140px,1fr) 150px 110px 90px 90px 44px';
+const COLS = '76px minmax(160px,2.2fr) minmax(100px,1fr) 150px 110px 90px 90px 44px';
 
 /** Organisers for the filter and the form: name, kind of organiser and how many listings. */
 export async function loadOrganizers(q: string, lang: Lang): Promise<PickItem[]> {
@@ -134,26 +134,26 @@ export function EventList() {
 
         {load.error ? <ErrorBox error={load.error} retry={load.reload} /> : null}
         {!data ? (load.error ? null : <Loading />) : !data.items.length ? <Empty title={T.noEvents} /> : (
-          <Table label={T.title} cols={COLS} head={[T.cDate, T.cListing, T.cOrg, T.cStatus, T.cPrice, T.cSold, T.cHype, <span key="a" className="sr-only">{T.cActions}</span>]}>
+          <Table label={T.title} cols={COLS} fold="lg" head={[T.cDate, T.cListing, T.cOrg, T.cStatus, T.cPrice, T.cSold, T.cHype, <span key="a" className="sr-only">{T.cActions}</span>]}>
             {data.items.map((e) => (
               <Row key={e.id} cols={COLS} className={['removed', 'cancelled'].includes(e.status) ? 'opacity-60' : undefined}>
                 <span role="cell" className="kd-m kd-num">{e.startsOn ? <>{whenShort(e, lang)}<br />{e.startTime ?? ''}</> : '—'}</span>
                 <span role="cell" className="flex min-w-0 items-center gap-3 py-2">
-                  <Art family="edm" cover={e.coverUrl} className="h-9 w-16 shrink-0 rounded-md" />
+                  <Art title={e.title} family="edm" cover={e.coverUrl} className="h-9 w-16 shrink-0 rounded-md" />
                   <span className="flex min-w-0 flex-col">
                     <KdLink href={'/console/events/' + e.id} className="kd-hs kd-ell hover:underline">
-                      {e.featured ? <StarIcon size={14} weight="fill" className="mr-1 inline text-acc" aria-label={T.featured} /> : null}{e.title}
+                      {e.featured ? <StarIcon size={14} weight="fill" className="mr-1 inline text-info" aria-label={T.featured} /> : null}{e.title}
                     </KdLink>
                     <span className="kd-s kd-ell">{[e.genre, e.venueName, e.area].filter(Boolean).join(' · ') || '—'}</span>
                   </span>
                 </span>
                 <span role="cell" className="kd-s kd-ell flex items-center gap-1">
-                  {e.organizer.name}{e.organizer.verified ? <SealCheckIcon size={14} weight="fill" className="shrink-0 text-acc" aria-label={T.verifiedOrg} /> : null}
+                  {e.organizer.name}{e.organizer.verified ? <SealCheckIcon size={14} weight="fill" className="shrink-0 text-info" aria-label={T.verifiedOrg} /> : null}
                 </span>
                 <span role="cell" className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <Pill tone={statusTone(e.status)}>{e.statusLabel[lang]}</Pill>
-                  {!e.venueResolved && e.venueName ? <span className="kd-m text-warn" title={T.tUnpinned}>{T.noPin}</span> : null}
-                  {e.openReports ? <span className="kd-m text-hot">{fill(T.reportsN, { n: e.openReports })}</span> : null}
+                  {!e.venueResolved && e.venueName ? <Status tone="warn">{T.noPin}</Status> : null}
+                  {e.openReports ? <Status tone="bad">{fill(T.reportsN, { n: e.openReports })}</Status> : null}
                   {e.badge ? <span className="kd-m">{e.badge.replace('_', ' ')}</span> : null}
                 </span>
                 <span role="cell" className="kd-num text-right text-sm">

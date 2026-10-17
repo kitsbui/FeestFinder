@@ -12,7 +12,7 @@ export default function NotFound() {
       <p className="kd-tl max-w-[560px]">Sự kiện có thể đã kết thúc, bị gỡ, hoặc đường dẫn bị gõ sai.</p>
       <p lang="en" className="kd-s">This page does not exist: the event may have ended or been taken down.</p>
       <p className="pt-2">
-        <a className={buttonClass({ tone: 'light' })} href="/">Xem sự kiện</a>
+        <a className={buttonClass({ tone: 'acc' })} href="/">Xem sự kiện</a>
       </p>
     </main>
   );

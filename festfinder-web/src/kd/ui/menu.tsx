@@ -19,7 +19,7 @@ interface TriggerProps {
   id: string;
   'aria-haspopup': 'menu';
   'aria-expanded': boolean;
-  'aria-controls': string;
+  'aria-controls'?: string;
   onClick: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLElement>) => void;
   ref: (el: HTMLElement | null) => void;
@@ -65,25 +65,32 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
     return () => window.removeEventListener(OPEN_EVENT, other);
   }, [id]);
 
-  // Inside a scrolling table the box would clip the menu: there it is placed against the
-  // window instead, and closes when anything scrolls.
+  // Inside a table the box would clip the menu: there it is placed against the window instead, on
+  // the side of the trigger with more room (a row near the foot of a phone opens upwards), no taller
+  // than that room (it scrolls inside), and it closes when the page scrolls.
   const [fixedAt, setFixedAt] = useState<CSSProperties | null>(null);
   useLayoutEffect(() => {
     const t = triggerRef.current;
     if (!open || !t?.closest('.kd-tbl')) { setFixedAt(null); return; }
     const r = t.getBoundingClientRect();
+    const below = innerHeight - r.bottom - 16, above = r.top - 16;
+    const goUp = up || (below < 320 && above > below);
     setFixedAt({
       position: 'fixed',
-      ...(up ? { bottom: innerHeight - r.top + 8 } : { top: r.bottom + 8 }),
+      ...(goUp ? { bottom: innerHeight - r.top + 8, maxHeight: above - 8 } : { top: r.bottom + 8, maxHeight: below - 8 }),
+      overflowY: 'auto',
       ...(align === 'end' ? { right: innerWidth - r.right } : { left: r.left }),
     });
-    const onScroll = () => close(false);
-    addEventListener('scroll', onScroll, { capture: true, once: true });
+    const onScroll = (e: Event) => { if (!menuRef.current?.contains(e.target as Node)) close(false); };
+    addEventListener('scroll', onScroll, { capture: true });
     return () => removeEventListener('scroll', onScroll, { capture: true });
   }, [open, up, align, close]);
 
   useEffect(() => {
     if (!open) return;
+    // A menu in a table moves to the page's root once it is placed: focus its items there, not in
+    // the copy that is about to go (focus would fall to the body).
+    if (!fixedAt && triggerRef.current?.closest('.kd-tbl')) return;
     window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: id }));
     const list = items(menuRef.current);
     const which = focusOnOpen.current;
@@ -102,7 +109,7 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onDown);
     };
-  }, [open, id, close]);
+  }, [open, id, close, fixedAt]);
 
   const onTriggerKey = (e: KeyboardEvent<HTMLElement>) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -150,7 +157,8 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
         id: id + '-t',
         'aria-haspopup': 'menu',
         'aria-expanded': open,
-        'aria-controls': id + '-m',
+        // Only while the menu is open: the list is not in the page when it is shut.
+        'aria-controls': open ? id + '-m' : undefined,
         onClick: () => { if (!open) focusOnOpen.current = null; setOpen((o) => !o); },
         onKeyDown: onTriggerKey,
         ref: (el) => { triggerRef.current = el; },
@@ -161,7 +169,7 @@ export function Menu({ trigger, children, align = 'start', label, width, classNa
   );
 }
 
-/** A menu item: a choice (with a lime tick when chosen), an action, or a link. */
+/** A menu item: a choice (with a turquoise tick when chosen), an action, or a link. */
 export function MenuItem({ children, onSelect, checked, aside, href, disabled, external, icon }: {
   children: ReactNode;
   onSelect?: () => void;
@@ -220,8 +228,8 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
   width?: number;
 }) {
   const current = options.find((o) => o.value === value);
-  // A screen reader hears what is chosen too: "Thời gian: Cuối tuần này".
-  const chosen = typeof current?.label === 'string' ? current.label : null;
+  // A screen reader hears the field and what is chosen: "Thời gian: Cuối tuần này". The field name is
+  // read before the visible words (not instead of them), so the name contains what is on screen (WCAG 2.5.3).
   return (
     <Menu
       label={label}
@@ -233,7 +241,6 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
           type="button"
           {...p}
           ref={p.ref}
-          aria-label={tone === 'inline' ? undefined : chosen ? `${label}: ${chosen}` : label}
           className={cx(
             tone === 'chip' && 'kd-chip',
             tone === 'button' && 'kd-btn',
@@ -242,6 +249,7 @@ export function Picker<T extends string>({ value, options, onChange, label, disp
             open && tone === 'chip' && 'kd-chip-on',
           )}
         >
+          {tone === 'inline' ? null : <span className="sr-only">{label}: </span>}
           {display ?? current?.label}
           <CaretDownIcon size={tone === 'inline' ? 18 : 14} weight={tone === 'inline' ? 'bold' : 'regular'} className="kd-chev" aria-hidden="true" />
         </button>

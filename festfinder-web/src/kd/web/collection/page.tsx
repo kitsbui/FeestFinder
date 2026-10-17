@@ -1,6 +1,6 @@
 /**
  * /c/<slug> (and ?lang=en) in Kính đêm: a collection someone made public. Not drawn; built from
- * Profile-Org-Web's parts: a mosaic of its events' art, the name and who made it, the lime
+ * Profile-Org-Web's parts: a mosaic of its events' art, the name and who made it, the primary
  * "Chia sẻ", its numbers, the upcoming events as cards with the past ones folded below, and at
  * the side what it holds and the facts. The server renders it all with its structured data;
  * saving an event and sharing come in the browser.
@@ -73,8 +73,8 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
   const shown = [...upcoming, ...col.items.filter((e) => e.past)].slice(0, 4);
   const fill4: Family[] = [...mix.map((x) => x.f), ...CHART_ORDER].filter((f, i, a) => a.indexOf(f) === i);
   const tiles = [
-    ...shown.map((e) => ({ key: e.id, family: familyOf(e.genre), cover: e.coverUrl })),
-    ...fill4.slice(0, 4 - shown.length).map((f) => ({ key: f, family: f, cover: null })),
+    ...shown.map((e) => ({ key: e.id, family: familyOf(e.genre), cover: e.coverUrl, title: e.title })),
+    ...(shown.length ? [] : [{ key: 'name', family: fill4[0] ?? 'edm', cover: null, title: col.name }]),
   ];
   const story = {
     genre: col.items[0]?.genre ?? undefined,
@@ -94,8 +94,8 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
           <main className="flex flex-col">
             {/* ---- cover ---- */}
             <div className="kd-wrap" aria-hidden="true">
-              <div className="grid h-[clamp(96px,12vw,168px)] grid-cols-4 gap-2">
-                {tiles.map((x, i) => <Art key={x.key} family={x.family} cover={x.cover} bone={i % 2 === 1} />)}
+              <div className="grid h-[clamp(96px,12vw,168px)] gap-2" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0, 1fr))` }}>
+                {tiles.map((x) => <Art key={x.key} family={x.family} cover={x.cover} title={x.title} />)}
               </div>
             </div>
 
@@ -113,7 +113,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                 </div>
                 <ShareCollection lang={lang} name={col.name} url={inLang(col.url, lang)} slug={col.slug} story={story} />
               </div>
-              <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
+              <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line-1 py-4.5">
                 <Stat value={count(col.items.length, lang)} label={T.events} />
                 <Stat value={count(upcoming.length, lang)} label={T.upcoming} />
                 {cities.length ? <Stat value={count(cities.length, lang)} label={T.cities} /> : null}
@@ -128,17 +128,17 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                     <SectionHead id="col-up" title={T.upcoming} aside={<span className="kd-m kd-num">{upcoming.length}</span>} />
                     {upcoming.length ? (
                       <MoreCards className="kd-cards pt-5" first={FIRST} more={T.moreN} less={T.less}>
-                        {upcoming.map((e, i) => <EventCard key={e.id} e={e} i={i} lang={lang} />)}
+                        {upcoming.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}
                       </MoreCards>
                     ) : (
                       <div className="flex flex-col items-start gap-4 pt-5">
-                        <p className="kd-t text-fog">{col.items.length ? T.noUpcoming : T.empty}</p>
-                        <LinkButton tone="light" href={inLang('/', lang)}>{T.explore}</LinkButton>
+                        <p className="kd-t text-fg-3">{col.items.length ? T.noUpcoming : T.empty}</p>
+                        <LinkButton tone="acc" href={inLang('/', lang)}>{T.explore}</LinkButton>
                       </div>
                     )}
                   </section>
                   {past.length ? (
-                    <section aria-label={T.past} className="mt-10 border-t border-line">
+                    <section aria-label={T.past} className="mt-10 border-t border-line-1">
                       <Accordion summary={T.past} aside={past.length} open={!upcoming.length}>
                         <PastList lang={lang} items={past} />
                       </Accordion>
@@ -157,7 +157,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                       </div>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                         {mix.map((x) => (
-                          <span key={x.f} className={cx('kd-s flex items-center gap-2 text-mist', g(x.f))}>
+                          <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}>
                             <span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{Math.round((x.n / mixTotal) * 100)}%</span>
                           </span>
                         ))}
@@ -165,7 +165,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                     </div>
                   ) : null}
 
-                  <div className="flex flex-col border-t border-line">
+                  <div className="flex flex-col border-t border-line-1">
                     <Accordion small summary={seo.headings.facts}>
                       <div className="flex flex-col gap-3">
                         <p className="kd-s">{seo.page.summary}</p>
@@ -173,7 +173,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                           {seo.page.facts.map((f) => (
                             <div key={f.label} className="flex flex-col gap-0.5">
                               <dt className="kd-m">{f.label}</dt>
-                              <dd className="kd-s text-mist">{f.value}</dd>
+                              <dd className="kd-s text-fg-2">{f.value}</dd>
                             </div>
                           ))}
                         </dl>

@@ -1,5 +1,5 @@
 /**
- * An artist in the directory: their cover (or the family's shapes) with their photo or initials
+ * An artist in the directory: their cover (or a text tile with their name) with their photo or initials
  * over it (the profile's cover and avatar, small), then the name, what they do and where, their styles,
  * the next show, and whether they take bookings. The whole of it comes from GET /artists;
  * follower counts are not part of it.
@@ -20,7 +20,7 @@ const text = (v: Pair | null | undefined, lang: Lang) => (v ? v[lang] || v.vi ||
 
 const BOOKING_TONE: Record<string, StatusTone> = { available: 'ok', limited: 'warn', touring: 'live' };
 
-export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang }) {
+export function ArtistCard({ a, lang }: { a: DirArtist; lang: Lang }) {
   const T = pick(DIR, lang);
   const href = inLang('/a/' + encodeURIComponent(a.slug), lang);
   // The art takes the family of the genre they play most (the API's `genre`), else of their first
@@ -39,7 +39,7 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
     <article className="flex min-w-0 flex-col" aria-labelledby={id}>
       <div className="relative">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
-          {fam || a.coverUrl ? <Art family={fam ?? 'free'} cover={a.coverUrl} bone={i % 2 === 1} className="h-24" /> : <div className="kd-art h-24" />}
+          <Art family={fam ?? 'free'} cover={a.coverUrl} className="h-24" />
         </Link>
         {a.origin === 'radar' ? <RadarTag lang={lang} glass className="pointer-events-none absolute right-2.5 top-2.5" /> : null}
       </div>
@@ -51,7 +51,7 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
       <div className="flex min-w-0 flex-col gap-1.5 pt-3">
         <h2 id={id} className="kd-h flex min-w-0 items-center gap-2">
           <Link href={href} className="kd-ell hover:underline">{a.name}</Link>
-          {a.verified ? <SealCheckIcon size={18} weight="fill" className="shrink-0 text-acc" role="img" aria-label={T.verified} /> : null}
+          {a.verified ? <SealCheckIcon size={18} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.verified} /> : null}
         </h2>
         {line ? <span className="kd-s kd-ell">{line}</span> : null}
         {a.styles.length ? (
@@ -71,15 +71,15 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
         {a.source?.kind === 'lineup' ? (
           <span className="kd-s kd-ell">
             {fill(T.fromLineup, { t: '' })}
-            <Link href={inLang('/e/' + encodeURIComponent(a.source.event.slug), lang)} className="text-mist hover:underline">{a.source.event.title}</Link>
+            <Link href={inLang('/e/' + encodeURIComponent(a.source.event.slug), lang)} className="text-fg-2 underline decoration-line-2 underline-offset-2 hover:decoration-fg-2">{a.source.event.title}</Link>
           </span>
         ) : null}
         {next ? (
           <span className="kd-s flex min-w-0 items-center gap-1.5 pt-0.5">
-            <CalendarCheckIcon size={16} className="shrink-0 text-fog" aria-hidden="true" />
+            <CalendarCheckIcon size={16} className="shrink-0 text-fg-3" aria-hidden="true" />
             <span className="kd-ell">
               {T.next}{' '}
-              <Link href={inLang('/e/' + encodeURIComponent(next.slug), lang)} className="text-mist hover:underline">{next.title}</Link>
+              <Link href={inLang('/e/' + encodeURIComponent(next.slug), lang)} className="text-fg-2 underline decoration-line-2 underline-offset-2 hover:decoration-fg-2">{next.title}</Link>
               <span className="kd-num">{' · ' + whenShort({ startsOn: next.startsOn }, lang)}</span>
               {next.cityLabel ? ' · ' + text(next.cityLabel, lang) : ''}
             </span>

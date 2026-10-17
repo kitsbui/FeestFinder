@@ -63,7 +63,7 @@ function List({ lang, data, onChange }: { lang: Lang; data: Data; onChange: () =
       {data.items.map((m, i) => (
         <Row key={m.id} cols={COLS}>
           <span className="flex min-w-0 items-center gap-3">
-            <span className="relative size-11 shrink-0 overflow-hidden rounded-tag"><Art family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" /></span>
+            <span className="relative size-11 shrink-0 overflow-hidden rounded-tag"><Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" /></span>
             <span className="flex min-w-0 flex-col">
               <a className="kd-hs kd-ell hover:underline" href={m.url} target="_blank" rel="noopener">{m.title}</a>
               <span className="kd-s kd-ell">{m.event ? `${T.mixRecordedAt} ${m.event.title}` : m.authorName ?? ''}</span>
@@ -118,7 +118,7 @@ function AddDrawer({ lang, nights, onClose, onAdded }: { lang: Lang; nights: Nig
           <div className="flex flex-col gap-2">
             <span className="kd-hs">{preview.title}</span>
             <iframe title={`${preview.providerLabel}: ${preview.title}`} src={preview.embedSrc} height={preview.height} loading="lazy"
-              allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture" className="w-full rounded-card border-0 bg-carbon" />
+              allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture" className="w-full rounded-card border-0 bg-surface-1" />
           </div>
         ) : null}
         {nights.length ? (

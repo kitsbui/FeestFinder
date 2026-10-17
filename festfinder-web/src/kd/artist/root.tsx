@@ -65,7 +65,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
   return (
     <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
       <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-        <span className="flex items-center gap-2.5"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /><span className="kd-m text-paper">{T.studio}</span></span>
+        <span className="flex items-center gap-2.5"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /><span className="kd-m text-fg-1">{T.studio}</span></span>
         <h1 className="kd-d3">{!s?.user ? T.gate : state === 'pending' ? T.pending : organizes ? T.asOrganizer : state === 'disabled' ? T.disabled : T.noArtist}</h1>
         {organizes ? <p className="kd-s">{fill(K.oneBody, { a: K.organizer, b: K.artist })}</p> : null}
         <div className="flex flex-wrap gap-2">
@@ -100,7 +100,7 @@ function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; chi
             <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
             <span className="kd-m">{T.studio}</span>
           </div>
-          <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line)]" href={'/a/' + artist.slug}>
+          <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line-1)]" href={'/a/' + artist.slug}>
             <Avatar name={artist.name} size={30} />
             <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell text-sm">{artist.name}</span><span className="kd-s text-xs">{T.publicProfile}</span></span>
           </a>
@@ -114,7 +114,7 @@ function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; chi
         { key: 'gear', label: T.gear, href: '/studio/artist/gear', icon: i(HeadphonesIcon) },
       ]}
       footer={(
-        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line pt-4">
+        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
           {/* The other roles: attending (the site), or organising instead of performing. */}
           <a className="kd-sn" href="/">{i(TicketIcon)}{K.attendee}</a>
           <button type="button" className="kd-sn w-full text-left" onClick={() => kd.openRolePicker('organizer')}>{i(StorefrontIcon)}{fill(K.switchTo, { r: K.organizer })}</button>

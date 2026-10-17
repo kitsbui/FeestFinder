@@ -158,10 +158,10 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
           <Menu
             label={T.city}
             trigger={(p) => (
-              <button type="button" {...p} ref={p.ref} className={buttonClass({ tone: 'ghost', size: 'sm' }, '-ml-2 gap-1.5 px-2 text-paper')}>
-                <MapPinIcon size={18} className="text-acc" aria-hidden="true" />
+              <button type="button" {...p} ref={p.ref} className={buttonClass({ tone: 'ghost', size: 'sm' }, '-ml-2 gap-1.5 px-2 text-fg-1')}>
+                <MapPinIcon size={18} className="text-info" aria-hidden="true" />
                 {cityRow?.name[lang] ?? T.city}
-                <CaretDownIcon size={16} className="kd-chev text-fog" aria-hidden="true" />
+                <CaretDownIcon size={16} className="kd-chev text-fg-3" aria-hidden="true" />
               </button>
             )}
           >
@@ -177,7 +177,7 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
         <IconButton label={T.search} className="ml-auto" onClick={() => setSearching(true)}><MagnifyingGlassIcon size={22} aria-hidden="true" /></IconButton>
         <a className="kd-ib relative" href="/app/notifications" aria-label={unread ? fill(T.notificationsNew, { n: unread }) : T.notifications}>
           <BellIcon size={22} aria-hidden="true" />
-          {unread ? <span className="absolute right-[11px] top-[11px] h-[7px] w-[7px] rounded-full bg-hot shadow-[0_0_0_2px_var(--color-void)]" aria-hidden="true" /> : null}
+          {unread ? <span className="absolute right-[11px] top-[11px] h-[7px] w-[7px] rounded-full bg-bad shadow-[0_0_0_2px_var(--color-surface-0)]" aria-hidden="true" /> : null}
         </a>
       </AppBar>
 
@@ -204,7 +204,7 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
           <Featured e={hero} lang={lang} km={at ? hero.distanceKm ?? distanceKm(at, hero.venue) : null} />
           <div className="flex items-center justify-between px-4 pb-1 pt-5">
             <span className="kd-m">{fill(at ? T.nearYou : T.soonest, { n: rest.length })}</span>
-            <Link className="kd-s inline-flex min-h-8 items-center gap-1 text-mist" href="/app/list">{T.seeMap}<ArrowRightIcon size={14} aria-hidden="true" /></Link>
+            <Link className="kd-s inline-flex min-h-11 items-center gap-1 text-fg-2" href="/app/list">{T.seeMap}<ArrowRightIcon size={14} aria-hidden="true" /></Link>
           </div>
           <ul className={cx('flex flex-col px-4 transition-opacity', busy && 'opacity-60')}>
             {rest.map(({ e, d }) => {
@@ -212,13 +212,13 @@ function Feed({ lang, meta }: { lang: Lang; meta: { defaultCity: string; cities:
               return (
                 <li key={e.id}>
                   <Link className={cx('kd-row', g(fam))} href={'/app/e/' + e.slug}>
-                    <Art family={fam} cover={e.coverUrl} off={e.soldOut} />
+                    <Art title={e.title} family={fam} cover={e.coverUrl} off={e.soldOut} />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="kd-hs kd-ell">{e.title}</span>
                       <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{whenShort(e, lang)}{e.venue.area ? ' · ' + e.venue.area : ''}</span>
                     </span>
                     <span className="flex flex-col items-end gap-0.5">
-                      <span className={cx('kd-mb kd-num', e.isFree && 'text-acc')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
+                      <span className={cx('kd-mb kd-num', e.isFree && 'text-info')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
                       {d != null ? <span className="kd-s kd-num">{km(d, lang)}</span> : null}
                     </span>
                   </Link>
@@ -249,17 +249,17 @@ function Featured({ e, lang, km: d }: { e: Card; lang: Lang; km: number | null }
   const tag = cardTag(e, lang) ?? T.featured;
   return (
     <article className={cx('relative mx-4 mt-4 h-57', g(fam))}>
-      <Art family={fam} cover={e.coverUrl} className="absolute inset-0" />
+      <Art title={e.title} family={fam} cover={e.coverUrl} className="absolute inset-0" />
       <div className="absolute inset-x-2.5 top-2.5 z-[1] flex items-center justify-between">
-        <span className="kd-tag kd-tag-glass text-paper">{tag}</span>
+        <span className="kd-tag kd-tag-glass text-fg-1">{tag}</span>
         <SaveToggle id={e.id} label={T.saveEvent} />
       </div>
       <Link href={'/app/e/' + e.slug} className={cx('kd-glass absolute inset-x-2.5 bottom-2.5 z-[1] grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-3 gap-y-1 rounded-[10px] px-3.5 py-3', g(fam))}>
-        <span className="kd-m flex items-center gap-1.5 text-mist"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[fam][lang]}</span>
+        <span className="kd-m flex items-center gap-1.5 text-fg-2"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[fam][lang]}</span>
         <span />
         <span className="kd-h kd-ell">{e.title}</span>
-        <span className={cx('kd-mb kd-num', e.isFree && 'text-acc')}>{e.isFree ? T.free : fill(T.fromPrice, { p: money(e.priceFrom, e.currency, lang) })}</span>
-        <span className="kd-s kd-ell text-mist">{whenShort(e, lang)}{d != null ? ' · ' + km(d, lang) : e.venue.name ? ' · ' + e.venue.name : ''}</span>
+        <span className={cx('kd-mb kd-num', e.isFree && 'text-info')}>{e.isFree ? T.free : fill(T.fromPrice, { p: money(e.priceFrom, e.currency, lang) })}</span>
+        <span className="kd-s kd-ell text-fg-2">{whenShort(e, lang)}{d != null ? ' · ' + km(d, lang) : e.venue.name ? ' · ' + e.venue.name : ''}</span>
       </Link>
     </article>
   );
@@ -324,15 +324,10 @@ function Onboarding({ lang, meta, onDone }: { lang: Lang; meta: { defaultCity: s
         <img src="/kd/ff-mark.svg" alt="FeestFinder" width={16} height={28} />
         <button type="button" className={buttonClass({ tone: 'ghost', size: 'sm' }, 'ml-auto')} onClick={() => finish(meta.defaultCity)}>{T.skip}</button>
       </AppBar>
-      <div className="relative mx-4 mt-2">
-        <div className="grid grid-cols-4 gap-1.5" aria-hidden="true">
-          {Array.from({ length: 12 }, (_, i) => <Art key={i} family="edm" bone={i % 3 === 1} className="aspect-square rounded-[10px]" />)}
-        </div>
-        {matching != null ? <span className="kd-tag kd-tag-glass kd-num absolute bottom-2.5 left-2.5 h-7 px-2.5 text-paper">{fill(T.obCount, { n: matching })}</span> : null}
-      </div>
+      {matching != null ? <span className="kd-tag kd-tag-acc kd-num mx-4 mt-4 self-start">{fill(T.obCount, { n: matching })}</span> : null}
       <div className="flex flex-col gap-2.5 px-4 pt-6">
         <h1 className="kd-d2 text-[42px] leading-none tracking-[-0.04em]">{T.obTitle}</h1>
-        <p className="kd-t text-fog">{T.obBody}</p>
+        <p className="kd-t text-fg-3">{T.obBody}</p>
       </div>
       <div className="flex flex-col gap-2.5 px-4 pt-5.5" role="group" aria-label={T.obLike}>
         <span className="kd-m">{T.obLike}</span>

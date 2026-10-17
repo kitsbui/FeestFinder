@@ -26,6 +26,7 @@ export const COMMON = {
   loggedIn: { en: 'Logged in', vi: 'Đã đăng nhập' },
   welcome: { en: 'Account created — welcome', vi: 'Đã tạo tài khoản — chào bạn' },
   close: { en: 'Close', vi: 'Đóng' },
+  skip: { en: 'Skip to content', vi: 'Bỏ qua tới nội dung' },
   back: { en: 'Back', vi: 'Quay lại' },
   more: { en: 'Show more', vi: 'Xem thêm' },
   less: { en: 'Show less', vi: 'Thu gọn' },

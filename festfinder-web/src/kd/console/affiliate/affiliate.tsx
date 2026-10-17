@@ -175,7 +175,7 @@ function LinkForm({ lang, link, kinds, onClose, onSaved }: { lang: Lang; link?: 
             {KINDS.map((k) => <option key={k} value={k}>{kinds[k]}</option>)}
           </Select>
         </Field>
-        <label className="flex min-h-12 items-center gap-3 kd-s text-mist">
+        <label className="flex min-h-12 items-center gap-3 kd-s text-fg-2">
           <Switch checked={f.enabled} label={T.fOn} onChange={(v) => upd({ enabled: v })} />{T.fOn}
         </label>
       </form>
@@ -227,10 +227,10 @@ function Payouts({ lang }: { lang: Lang }) {
         <Table label={T.payoutsTable} cols={COLS} head={[T.cPartner, T.cPeriod, T.cOrders, T.cCommission, '', '']}>
           {load.data.items.map((p) => (
             <Row key={p.id} cols={COLS}>
-              <Cell className="kd-ell text-sm text-paper">{p.partner.name}</Cell>
+              <Cell className="kd-ell text-sm text-fg-1">{p.partner.name}</Cell>
               <Cell className="kd-s kd-num">{period(p)}</Cell>
               <Cell end className="kd-num text-sm">{nf(p.conversions, lang)}</Cell>
-              <Cell end className="kd-num text-sm text-paper">{money(p.commission, p.currency, lang)}</Cell>
+              <Cell end className="kd-num text-sm text-fg-1">{money(p.commission, p.currency, lang)}</Cell>
               <Cell end>
                 <a className={buttonClass({ size: 'sm' })} href={`/admin/affiliate/payouts/${p.id}/export.csv`} download aria-label={fill(T.csvLabel, { p: p.partner.name, d: period(p) })}>
                   <DownloadSimpleIcon size={14} aria-hidden="true" />CSV

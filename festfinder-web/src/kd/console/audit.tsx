@@ -33,18 +33,18 @@ const AREA_KEY: Record<(typeof AREAS)[number], keyof typeof MOD> = {
 export function AuditRows({ lang, items }: { lang: Lang; items: AuditItem[] }) {
   const icon = (t: string) => {
     const I = t === 'admin' ? ShieldCheckIcon : t === 'organizer' ? StorefrontIcon : GearIcon;
-    return <I size={16} className="mt-0.5 text-fog" aria-hidden="true" />;
+    return <I size={16} className="mt-0.5 text-fg-3" aria-hidden="true" />;
   };
   return (
     <ul className="flex flex-col">
       {items.map((a) => (
-        <li key={a.seq} className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-line px-4 py-3 sm:grid-cols-[20px_minmax(0,1fr)_230px]">
+        <li key={a.seq} className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-line-1 px-4 py-3 sm:grid-cols-[20px_minmax(0,1fr)_230px]">
           {icon(a.actorType)}
           <span className="flex min-w-0 flex-col gap-1">
-            <span className="kd-t"><span className="text-paper">{a.actor[lang]}</span> · {a.label[lang]} · <span className="text-paper">{a.target.label}</span></span>
+            <span className="kd-t"><span className="text-fg-1">{a.actor[lang]}</span> · {a.label[lang]} · <span className="text-fg-1">{a.target.label}</span></span>
             {a.diff.map((d, i) => (
               <span key={i} className="kd-s kd-num flex flex-wrap items-center gap-1.5">
-                <code className="kd-m">{d.field}</code><span>{d.before}</span><ArrowRightIcon size={12} aria-hidden="true" /><span className="text-paper">{d.after}</span>
+                <code className="kd-m">{d.field}</code><span>{d.before}</span><ArrowRightIcon size={12} aria-hidden="true" /><span className="text-fg-1">{d.after}</span>
               </span>
             ))}
           </span>
@@ -110,7 +110,7 @@ export function Audit() {
         {data === null ? (error ? null : <Loading className="h-60" />) : !data.items.length ? <Empty title={M.nothing} /> : (
           <Panel as="section" aria-label={T.tabAudit}>
             <AuditRows lang={lang} items={data.items} />
-            {data.nextCursor ? <div className="border-t border-line px-4 py-3"><Button tone="ghost" size="sm" disabled={more} onClick={loadMore}>{M.more}</Button></div> : null}
+            {data.nextCursor ? <div className="border-t border-line-1 px-4 py-3"><Button tone="ghost" size="sm" disabled={more} onClick={loadMore}>{M.more}</Button></div> : null}
           </Panel>
         )}
         {error && data ? <ErrorBox error={error} retry={load} /> : null}

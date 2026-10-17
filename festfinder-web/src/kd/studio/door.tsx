@@ -49,7 +49,7 @@ export function Door() {
   const list = events.filter((e) => e.status === 'live');
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="kd-bar sticky top-0 z-20 gap-2 border-b border-line bg-void pl-1">
+      <header className="kd-bar sticky top-0 z-20 gap-2 border-b border-line-1 bg-surface-0 pl-1">
         <KdLink className="kd-ib" href="/studio" aria-label={T.backToStudio}><ArrowLeftIcon size={20} aria-hidden="true" /></KdLink>
         <div className="flex min-w-0 flex-col">
           <h1 className="kd-hs">{T.door}</h1>
@@ -58,7 +58,7 @@ export function Door() {
               label={T.pickEvent}
               width={320}
               trigger={(p) => (
-                <button type="button" {...p} ref={p.ref} className="kd-m kd-ell flex items-center gap-1 text-left hover:text-paper">
+                <button type="button" {...p} ref={p.ref} className="kd-m kd-ell flex items-center gap-1 text-left hover:text-fg-1">
                   {event.title}{event.startsOn ? ' · ' + dayMonth(event.startsOn, lang) : ''}<CaretDownIcon size={12} aria-hidden="true" />
                 </button>
               )}
@@ -186,7 +186,7 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
   const R = result ? {
     valid: { bg: 'bg-ok', icon: <CheckIcon size={26} weight="bold" aria-hidden="true" />, shape: 'rounded-full', color: 'text-ok', title: T.rValid },
     duplicate: { bg: 'bg-warn', icon: <WarningIcon size={26} weight="bold" aria-hidden="true" />, shape: 'rounded-xl', color: 'text-warn', title: T.rUsed },
-    invalid: { bg: 'bg-hot', icon: <XIcon size={26} weight="bold" aria-hidden="true" />, shape: 'rounded-sm', color: 'text-hot', title: T.rInvalid },
+    invalid: { bg: 'bg-bad', icon: <XIcon size={26} weight="bold" aria-hidden="true" />, shape: 'rounded-sm', color: 'text-bad', title: T.rInvalid },
   }[result.result] : null;
   const gates: { value: Gate; label: string }[] = [{ value: 'main', label: T.gateMain }, { value: 'vip', label: T.gateVip }, { value: 'side', label: T.gateSide }];
 
@@ -206,8 +206,8 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
         </form>
         <div role="status" aria-live="polite">
           {result && R ? (
-            <div className={cx('flex items-center gap-3.5 rounded-xl p-4 text-ink', R.bg)}>
-              <span className={cx('flex size-13 shrink-0 items-center justify-center bg-void', R.shape, R.color)}>{R.icon}</span>
+            <div className={cx('flex items-center gap-3.5 rounded-xl p-4 text-on-inverse', R.bg)}>
+              <span className={cx('flex size-13 shrink-0 items-center justify-center bg-surface-0', R.shape, R.color)}>{R.icon}</span>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="kd-num text-[11px] uppercase tracking-[0.03em]">{result.time} · {gates.find((x) => x.value === result.gate)?.label}{result.queued ? ' · ' + T.queued : ''}</span>
                 <span className="text-[26px] font-medium leading-[1.1] tracking-[-0.03em]">{R.title}</span>
@@ -225,10 +225,10 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
             <BarTrack value={sum.inside} max={Math.max(sum.capacity, 1)} label={fill(T.inside, { n: sum.capacity })} />
           </div>
         ) : <div className="kd-skel h-12" aria-hidden="true" />}
-        <section className="flex flex-col border-t border-line" aria-label={T.recentScans}>
+        <section className="flex flex-col border-t border-line-1" aria-label={T.recentScans}>
           <span className="kd-m pb-1 pt-3">{T.recentScans}</span>
           {sum?.recent.length ? sum.recent.map((x, i) => (
-            <div key={i} className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line">
+            <div key={i} className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line-1">
               <div className="flex min-w-0 flex-col">
                 <span className="kd-hs kd-ell">{x.name}</span>
                 <span className="kd-m kd-num kd-ell">{x.tier ?? x.detail[lang]}</span>
@@ -280,16 +280,16 @@ function Viewfinder({ lang, onCode }: { lang: Lang; onCode: (code: string) => vo
     })();
     return () => { stop = true; clearTimeout(timer); stream?.getTracks().forEach((t) => t.stop()); };
   }, [on, onCode]);
-  const corner = 'absolute size-7 border-paper';
+  const corner = 'absolute size-7 border-fg-1';
   return (
-    <div className="relative h-[184px] overflow-hidden rounded-xl bg-carbon shadow-[inset_0_0_0_1px_var(--color-line)]" role="region" aria-label={T.viewfinder}>
+    <div className="relative h-[184px] overflow-hidden rounded-xl bg-surface-1 shadow-[inset_0_0_0_1px_var(--color-line-1)]" role="region" aria-label={T.viewfinder}>
       {on ? <video ref={video} className="absolute inset-0 size-full object-cover" muted playsInline aria-hidden="true" /> : null}
       <div className="absolute inset-y-6 left-1/2 w-[136px] -translate-x-1/2">
         <span className={cx(corner, 'left-0 top-0 rounded-tl-md border-l-[3px] border-t-[3px]')} />
         <span className={cx(corner, 'right-0 top-0 rounded-tr-md border-r-[3px] border-t-[3px]')} />
         <span className={cx(corner, 'bottom-0 left-0 rounded-bl-md border-b-[3px] border-l-[3px]')} />
         <span className={cx(corner, 'bottom-0 right-0 rounded-br-md border-b-[3px] border-r-[3px]')} />
-        <span className="absolute inset-x-2 h-0.5 animate-kd-scan rounded-sm bg-acc shadow-[0_0_12px_rgba(228,242,34,0.6)]" aria-hidden="true" />
+        <span className="absolute inset-x-2 h-0.5 animate-kd-scan rounded-sm bg-info shadow-[0_0_12px_color-mix(in_srgb,var(--color-info)_60%,transparent)]" aria-hidden="true" />
       </div>
       <div className="absolute inset-x-0 bottom-1.5 flex flex-col items-center gap-1.5">
         {can ? (
@@ -324,7 +324,7 @@ function Crew({ lang, eventId, staff, active, onChange }: { lang: Lang; eventId:
       <div className="flex items-baseline justify-between gap-3"><h2 className="kd-h">{T.crew}</h2><span className="kd-m kd-num">{fill(T.crewActive, { n: active })}</span></div>
       <Panel className="flex flex-col px-4">
         {staff.map((p) => (
-          <div key={p.id} className="flex min-h-14 items-center gap-3 border-b border-line last:border-b-0">
+          <div key={p.id} className="flex min-h-14 items-center gap-3 border-b border-line-1 last:border-b-0">
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="kd-hs kd-ell">{p.name}</span>
               <span className="kd-s kd-num kd-ell">{[p.phone, gateLabel[p.gate], p.role === 'lead' ? T.crewLead : T.crewScanner, fill(T.crewScans, { n: p.scanCount })].join(' · ')}</span>

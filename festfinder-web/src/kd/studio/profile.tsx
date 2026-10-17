@@ -52,7 +52,7 @@ export function BusinessProfile() {
           <div className="flex min-w-0 flex-col gap-1">
             <span className="kd-m">{T.business}</span>
             <h1 className="kd-d2 kd-ell">{p.name}</h1>
-            {p.verified ? <span className="kd-s flex items-center gap-1.5"><SealCheckIcon size={16} weight="fill" className="text-acc" aria-hidden="true" />{T.bizVerified}</span> : <Status>{T.bizUnverified}</Status>}
+            {p.verified ? <span className="kd-s flex items-center gap-1.5"><SealCheckIcon size={16} weight="fill" className="text-info" aria-hidden="true" />{T.bizVerified}</span> : <Status>{T.bizUnverified}</Status>}
           </div>
         </div>
         <a className={buttonClass({ size: 'sm' })} href={'/o/' + p.slug}>{T.publicProfile}<ArrowUpRightIcon size={14} aria-hidden="true" /></a>
@@ -65,7 +65,7 @@ export function BusinessProfile() {
         <Block className="kd-side self-start" title={T.bizTeam}>
           <ul className="flex flex-col">
             {p.members.map((m) => (
-              <li key={m.id} className="flex min-h-13 items-center gap-3 border-b border-line last:border-b-0">
+              <li key={m.id} className="flex min-h-13 items-center gap-3 border-b border-line-1 last:border-b-0">
                 <Avatar name={m.name} size={32} />
                 <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell">{m.name}</span><span className="kd-s kd-ell">{m.email}</span></span>
                 <span className="kd-m">{m.role === 'owner' ? T.roleOwner : T.roleMember}</span>
@@ -123,7 +123,7 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzType">{T.bizType}</FieldLabel><Select id="bzType" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{TYPES.map(([k, l]) => <option key={k} value={k}>{l[lang]}</option>)}</Select></div>
         </div>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzBio">{T.bizBio}</FieldLabel><TextArea id="bzBio" rows={3} maxLength={4000} value={f.bioVi} onChange={(e) => setF({ ...f, bioVi: e.target.value })} /></div>
-        <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzBioEn">{T.bizBio} (English) <span className="font-normal text-fog">{T.optional}</span></FieldLabel><TextArea id="bzBioEn" rows={2} maxLength={4000} value={f.bioEn} onChange={(e) => setF({ ...f, bioEn: e.target.value })} /></div>
+        <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzBioEn">{T.bizBio} (English) <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel><TextArea id="bzBioEn" rows={2} maxLength={4000} value={f.bioEn} onChange={(e) => setF({ ...f, bioEn: e.target.value })} /></div>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzWeb">{T.bizWebsite}</FieldLabel><Input id="bzWeb" type="url" inputMode="url" placeholder="https://" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} /></div>
         <fieldset className="flex flex-col gap-2">
           <legend className="kd-flabel mb-2">{T.bizMarkets}</legend>
@@ -132,7 +132,7 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
           </div>
         </fieldset>
         <fieldset className="flex flex-col gap-2">
-          <legend className="kd-flabel mb-2">{T.bizStyles} <span className="font-normal text-fog">{T.bizStylesMax}</span></legend>
+          <legend className="kd-flabel mb-2">{T.bizStyles} <span className="font-normal text-fg-3">{T.bizStylesMax}</span></legend>
           <div className="flex flex-wrap gap-1.5">
             {Object.keys(STYLE_LABEL).map((k) => {
               const on = f.styles.includes(k);
@@ -148,7 +148,7 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
             ))}
           </div>
         </fieldset>
-        <div className="border-t border-line"><SwitchRow label={T.bizOpen} checked={f.open} onChange={(v) => setF({ ...f, open: v })} /></div>
+        <div className="border-t border-line-1"><SwitchRow label={T.bizOpen} checked={f.open} onChange={(v) => setF({ ...f, open: v })} /></div>
         <Button tone="acc" type="submit" className="self-start" disabled={busy}>{T.save}</Button>
       </form>
     </Block>

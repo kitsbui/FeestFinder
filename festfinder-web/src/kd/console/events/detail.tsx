@@ -51,7 +51,7 @@ export function EventDetail({ id }: { id: string }) {
           <>
             <PageHead
               eyebrow={<>
-                <KdLink href="/console/events" className="kd-m inline-flex items-center gap-1 hover:text-paper"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>
+                <KdLink href="/console/events" className="kd-m inline-flex items-center gap-1 hover:text-fg-1"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>
                 <Pill tone={statusTone(ev.status)}>{ev.statusLabel[lang]}</Pill>
                 {ev.featured ? <Pill tone="live">{T.featured}</Pill> : null}
                 {ev.heldForReports ? <Pill tone="bad">{T.held}</Pill> : null}
@@ -61,7 +61,7 @@ export function EventDetail({ id }: { id: string }) {
                 {org ? <>
                   <Avatar org name={org.name} src={org.logoUrl} size={20} />
                   <KdLink className="hover:underline" href={'/console/organizers/' + org.id}>{org.name}</KdLink>
-                  {org.verified ? <SealCheckIcon size={14} weight="fill" className="text-acc" aria-label={T.verifiedOrg} /> : null}
+                  {org.verified ? <SealCheckIcon size={14} weight="fill" className="text-info" aria-label={T.verifiedOrg} /> : null}
                   <span aria-hidden="true">·</span>
                 </> : null}
                 <span>{fill(T.createdEdited, { c: stamp(ev.createdAt, lang), e: ago(ev.updatedAt, lang) })}</span>
@@ -106,7 +106,7 @@ export function EventDetail({ id }: { id: string }) {
                     orgName={org?.name ?? null}
                     banner={ev.status === 'rejected' ? (
                       <Panel role="status" className="flex items-center gap-2 p-4">
-                        <ArrowArcLeftIcon size={18} className="text-hot" aria-hidden="true" />
+                        <ArrowArcLeftIcon size={18} className="text-bad" aria-hidden="true" />
                         <span className="kd-hs">{T.sentBack}</span>
                         {ev.decisions[0]?.reason ? <span className="kd-s">· {ev.decisions[0].reason[lang]}</span> : null}
                       </Panel>
@@ -134,8 +134,8 @@ function History({ ev, lang }: { ev: Detail; lang: Lang }) {
         {ev.decisions.length ? (
           <ul className="flex flex-col">
             {ev.decisions.map((d) => (
-              <li key={d.id} className="flex flex-col gap-1 border-t border-line py-3 first:border-t-0">
-                <span className="text-sm text-paper">
+              <li key={d.id} className="flex flex-col gap-1 border-t border-line-1 py-3 first:border-t-0">
+                <span className="text-sm text-fg-1">
                   <span className={`kd-st ${ok(d.decision) ? 'kd-ok' : 'kd-bad'}`}><strong>{d.decision}</strong></span>
                   {d.reason ? ` · ${d.reason[lang]}` : ''} — {d.by ?? 'FeestFinder'}
                 </span>
@@ -145,20 +145,20 @@ function History({ ev, lang }: { ev: Detail; lang: Lang }) {
             ))}
           </ul>
         ) : <p className="kd-s">{T.noDecisions}</p>}
-        {ev.appeal ? <p className="kd-s border-l-2 border-line2 pl-3">{fill(T.appeal, { s: ev.appeal.state })}{ev.appeal.reply ? ` — “${ev.appeal.reply}”` : ''}</p> : null}
+        {ev.appeal ? <p className="kd-s border-l-2 border-line-2 pl-3">{fill(T.appeal, { s: ev.appeal.state })}{ev.appeal.reply ? ` — “${ev.appeal.reply}”` : ''}</p> : null}
       </Panel>
       <Panel as="section" aria-label={T.changeLog} className="flex flex-col gap-3 p-5">
         <h2 className="kd-h">{T.changeLog}</h2>
         {ev.history.length ? (
           <ul className="flex flex-col">
             {ev.history.map((a) => (
-              <li key={a.seq} className="flex flex-col gap-1 border-t border-line py-3 first:border-t-0">
-                <span className="text-sm text-paper"><strong>{a.actor}</strong> · {a.label[lang]}</span>
+              <li key={a.seq} className="flex flex-col gap-1 border-t border-line-1 py-3 first:border-t-0">
+                <span className="text-sm text-fg-1"><strong>{a.actor}</strong> · {a.label[lang]}</span>
                 {a.diff.length ? (
                   <ul className="flex flex-col gap-0.5">
                     {a.diff.slice(0, 6).map((d, i) => (
                       <li key={i} className="kd-s kd-num flex flex-wrap items-center gap-1.5">
-                        <code className="kd-m">{d.field}</code><span className="line-through decoration-line2">{d.before}</span><ArrowRightIcon size={12} aria-hidden="true" /><span className="text-paper">{d.after}</span>
+                        <code className="kd-m">{d.field}</code><span className="line-through decoration-line-2">{d.before}</span><ArrowRightIcon size={12} aria-hidden="true" /><span className="text-fg-1">{d.after}</span>
                       </li>
                     ))}
                   </ul>

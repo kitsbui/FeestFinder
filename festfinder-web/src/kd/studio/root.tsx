@@ -194,7 +194,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
             <span className="kd-m">{T.studio}</span>
           </div>
           {org ? (
-            <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line)]" href={'/o/' + org.slug}>
+            <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line-1)]" href={'/o/' + org.slug}>
               <Avatar org name={org.name} src={org.logoUrl} size={30} />
               <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell text-sm">{org.name}</span><span className="kd-s text-xs">{T.publicProfile}</span></span>
             </a>
@@ -231,7 +231,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
         { key: 'gigs', label: T.gigs, href: '/studio/gigs', icon: i(MicrophoneStageIcon) },
       ]}
       footer={(
-        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line pt-4">
+        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
           <a className="kd-sn" href="/studio/profile" aria-current={current === 'profile' ? 'page' : undefined}>{i(BuildingsIcon)}{T.business}</a>
           {/* The other roles: attending (the site), or performing instead of organising. */}
           <a className="kd-sn" href="/">{i(TicketIcon)}{K.attendee}</a>

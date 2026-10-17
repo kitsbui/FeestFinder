@@ -8,7 +8,7 @@
  * /vi/… and /en/… redirects keep landing on the right list. The list re-reads itself every
  * minute while it is open.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../../copy';
@@ -234,7 +234,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       <Menu
         label={T.kind}
         trigger={(p) => (
-          <button type="button" {...p} ref={p.ref} className={cx('kd-chip', kindLabel && 'kd-chip-on')} aria-label={T.kind}>
+          <button type="button" {...p} ref={p.ref} className={cx('kd-chip', kindLabel && 'kd-chip-on')} aria-label={`${kindLabel ?? T.anyKind}, ${T.kind}`}>
             {kindLabel ?? T.anyKind}
           </button>
         )}
@@ -253,8 +253,17 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     </div>
   );
 
+  /** An event opened from the list, in any view: the step between the list and the event page (the design funnel). */
+  const openCard = (ev: MouseEvent) => {
+    const a = (ev.target as Element).closest?.('a[href]');
+    const slug = a?.getAttribute('href')?.match(/^\/e\/([^/?#]+)/)?.[1];
+    if (!a || !slug) return;
+    FF.track('card_open', { slug: decodeURIComponent(slug), surface: a.closest('[data-surface]')?.getAttribute('data-surface') ?? f.view });
+  };
+
   if (f.view === 'map') {
     return (
+      <div className="contents" onClickCapture={openCard}>
       <MapView
         lang={lang}
         meta={meta}
@@ -266,13 +275,14 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
         toolbar={filters}
         tabs={originTabs(false)}
       />
+      </div>
     );
   }
 
   const head = (label: string, by?: 'date' | 'price' | 'hype') => by ? (
     <button
       type="button"
-      className="kd-m inline-flex items-center gap-1 text-left hover:text-paper"
+      className="kd-m inline-flex items-center gap-1 text-left hover:text-fg-1"
       aria-label={fill(T.sortBy, { c: label })}
       aria-pressed={sort.by === by}
       onClick={() => setSort((s) => (s.by === by ? { by, desc: !s.desc } : { by, desc: by !== 'date' }))}
@@ -294,7 +304,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const COLS = '120px 64px minmax(200px,2fr) minmax(160px,1.4fr) 120px 120px 96px 132px';
 
   return (
-    <main className="kd-wrap flex flex-col gap-5 py-8">
+    <main className="kd-wrap flex flex-col gap-5 py-8" onClickCapture={openCard}>
       <div className="kd-sec items-center">
         <h1 className="kd-d1">{T.title}</h1>
         {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. */}
@@ -308,10 +318,10 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       {sorted.length ? (
         f.view === 'grid' ? (
           <div className={cx('kd-cards mt-2 transition-opacity', busy && 'opacity-60')}>
-            {sorted.map((e, i) => <EventCard key={e.id} e={e} i={i} lang={lang} />)}
+            {sorted.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}
           </div>
         ) : (
-          <div className={cx('kd-tbl -mx-4 tab:mx-0 transition-opacity', busy && 'opacity-60')} role="table" aria-label={T.title}>
+          <div className={cx('kd-tbl -mx-4 tab:mx-0 transition-opacity', busy && 'opacity-60')} role="table" aria-label={T.title} data-fold="xl">
             <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: shrinkable(COLS) }}>
               <span role="columnheader">{head(T.colDate, 'date')}</span>
               <span role="columnheader" className="kd-m">{T.colTime}</span>
@@ -326,13 +336,13 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
               const st = status(e);
               return (
                 <Link key={e.id} role="row" href={inLang('/e/' + e.slug, lang)} className="kd-tr hover:bg-white/[0.03]" style={{ gridTemplateColumns: shrinkable(COLS) }}>
-                  <span role="cell" className="kd-s kd-num text-mist">{whenShort(e, lang)}</span>
+                  <span role="cell" className="kd-s kd-num text-fg-2">{whenShort(e, lang)}</span>
                   <span role="cell" className="kd-mb kd-num">{e.startTime ?? ''}</span>
                   <span role="cell" className="kd-hs flex min-w-0 items-center gap-2"><Marker family={familyOf(e.genre)} /><span className="kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
                   <span role="cell" className="kd-s kd-ell">{[e.venue.name, e.venue.area].filter(Boolean).join(' · ')}</span>
                   <span role="cell" className="kd-s kd-ell">{cityName(e.city)}</span>
-                  <span role="cell" className={cx('kd-mb kd-num', e.isFree && 'text-acc')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
-                  <span role="cell" className="kd-mb kd-num text-mist">{fmtCount(e.saveCount, lang)}</span>
+                  <span role="cell" className={cx('kd-mb kd-num', e.isFree && 'text-info')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
+                  <span role="cell" className="kd-mb kd-num text-fg-2">{fmtCount(e.saveCount, lang)}</span>
                   <span role="cell"><Status tone={st.tone}>{st.text}</Status></span>
                 </Link>
               );

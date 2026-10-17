@@ -20,7 +20,7 @@ export function MoreRows({ rows, first, label, more, less }: {
   const id = useId();
   return (
     <>
-      <ul id={id} aria-label={label} className="border-t border-line">
+      <ul id={id} aria-label={label} className="border-t border-line-1">
         {rows.map((r, i) => <li key={r.key} hidden={!open && i >= first}>{r.node}</li>)}
       </ul>
       {rows.length > first ? (

@@ -34,6 +34,13 @@ describe('analytics', () => {
     assert.equal(sink.events.length, n, 'unknown names, Do Not Track, GPC, robots and anonymous calls are dropped');
   });
 
+  it('takes the design funnel events with their listed properties only', async () => {
+    await collect({ name: 'nav_click', anonId: 'abcdef0123456789abcd', props: { path: '/', kind: 'artists', surface: 'nav', email: 'no@example.com' } });
+    assert.deepEqual(sink.events.at(-1), { event: 'nav_click', distinctId: 'a_abcdef0123456789abcd', props: { path: '/', kind: 'artists', surface: 'nav' } });
+    await collect({ name: 'card_open', anonId: 'abcdef0123456789abcd', props: { path: '/', slug: 'ravo', surface: 'grid' } });
+    assert.deepEqual(sink.events.at(-1), { event: 'card_open', distinctId: 'a_abcdef0123456789abcd', props: { path: '/', slug: 'ravo', surface: 'grid' } });
+  });
+
   it('knows a signed-in person only by a hash, and records server events the same way', async () => {
     const token = await emailUser(env, 'tracked@example.com');
     await env.as(token).post('/analytics/collect', { name: 'search', props: { city: 'ho-chi-minh' } });

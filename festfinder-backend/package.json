@@ -16,7 +16,8 @@
     "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "test:screens": "playwright test -c playwright.next.config.ts",
     "lint": "oxlint --type-aware --quiet --max-warnings 1322 src test e2e index.ts",
-    "lint:warnings": "oxlint --type-aware src test e2e index.ts"
+    "lint:warnings": "oxlint --type-aware src test e2e index.ts",
+    "test:visual": "FF_VISUAL=1 playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -35,6 +36,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.13.6",
     "@types/nodemailer": "^8.0.2",

@@ -16,7 +16,7 @@ export function ProjectCard({ p, i, lang }: { p: Project; i: number; lang: Lang 
   const where = [text(p.city.label, lang) || p.city.slug, p.targetOn ? `${T.target.toLowerCase()} ${dayMonth(p.targetOn, lang)}` : ''].filter(Boolean).join(' · ');
   return (
     <article className={`kd-ev ${g('edm')}`}>
-      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={p.coverUrl} bone={i % 2 === 1} /></Link>
+      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={p.coverUrl} title={p.title} /></Link>
       <div className="flex flex-col gap-1.5">
         <Link href={href} className="kd-h">{p.title}</Link>
         {p.pitch ? <span className="kd-s line-clamp-2">{p.pitch}</span> : null}

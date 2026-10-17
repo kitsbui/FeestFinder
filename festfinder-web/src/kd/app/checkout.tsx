@@ -116,7 +116,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
   return (
     <div className="flex flex-col gap-5 px-4 desk:max-w-[640px] pb-[calc(110px+env(safe-area-inset-bottom))] pt-2">
       <div className={`grid grid-cols-[64px_minmax(0,1fr)] items-center gap-3 ${g(fam)}`}>
-        <Art family={fam} cover={ev.coverUrl} className="h-16 rounded-lg" />
+        <Art title={ev.title} family={fam} cover={ev.coverUrl} className="h-16 rounded-lg" />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="kd-hs kd-ell">{ev.title}</span>
           <span className="kd-s kd-ell">{whenShort(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''} · {ev.venue.name}</span>
@@ -151,7 +151,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       )}
 
       {quote ? (
-        <dl className="flex flex-col border-t border-line">
+        <dl className="flex flex-col border-t border-line-1">
           {quote.lines.map((l) => (
             <div key={l.label.en} className="kd-lrow min-h-11"><dt className="kd-s flex-1">{l.label[lang]}</dt><dd className="kd-mb kd-num">{money(l.amount, 'VND', lang)}</dd></div>
           ))}
@@ -160,7 +160,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       ) : null}
       {err ? <FieldError>{err}</FieldError> : null}
       <span className="kd-s">{T.payBy}</span>
-      {quote?.refundPolicy ? <Accordion small summary={T.refund} className="border-t border-line"><p className="kd-s">{quote.refundPolicy[lang]}</p></Accordion> : null}
+      {quote?.refundPolicy ? <Accordion small summary={T.refund} className="border-t border-line-1"><p className="kd-s">{quote.refundPolicy[lang]}</p></Accordion> : null}
 
       <Dock>
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -204,7 +204,7 @@ function Transfer({ lang, pending, onCancelled }: { lang: Lang; pending: { id: s
           <QrCode value={p.qrPayload} size={220} label={fill(T.transferQr, { p: money(p.amount ?? 0, 'VND', lang) })} />
         </div>
       ) : null}
-      <dl className="flex flex-col border-t border-line">
+      <dl className="flex flex-col border-t border-line-1">
         {p.bank ? <Row k={T.bankName} v={p.bank.name} /> : null}
         {p.bank ? <Row k={T.accountNo} v={p.bank.accountNo} /> : null}
         {p.bank ? <Row k={T.holder} v={p.bank.accountName} /> : null}

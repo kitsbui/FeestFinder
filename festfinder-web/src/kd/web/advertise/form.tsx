@@ -181,7 +181,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4 border-t border-line pt-5">
+      <fieldset className="flex flex-col gap-4 border-t border-line-1 pt-5">
         <legend className="kd-m pb-1">{T.secContact}</legend>
         <div className="grid gap-4 tab:grid-cols-2">
           <div className="flex flex-col gap-2">
@@ -201,7 +201,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4 border-t border-line pt-5">
+      <fieldset className="flex flex-col gap-4 border-t border-line-1 pt-5">
         <legend className="kd-m pb-1">{T.secCampaign}</legend>
         <div className="flex flex-col gap-2">
           <FieldLabel htmlFor="ad-budget" hint={minBudgetLabel(T, lang)}>{fill(T.budgetAmount, { c: AD_CURRENCY })}</FieldLabel>
@@ -219,13 +219,13 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
           {PLACEMENTS.map((p) => (
             <label key={p.key} className="flex min-h-11 cursor-pointer items-center gap-3">
               <input type="checkbox" className="kd-check" checked={places[p.key]} onChange={(e) => setPlaces({ ...places, [p.key]: e.target.checked })} />
-              <span className="kd-t text-paper">{T[p.label]}</span>
+              <span className="kd-t text-fg-1">{T[p.label]}</span>
             </label>
           ))}
         </fieldset>
         {allCities.length ? (
           <fieldset className="flex flex-col gap-2">
-            <legend className="kd-flabel pb-1">{T.citiesLabel} <span className="font-normal text-fog">· {T.citiesAll}</span></legend>
+            <legend className="kd-flabel pb-1">{T.citiesLabel} <span className="font-normal text-fg-3">· {T.citiesAll}</span></legend>
             <div className="flex flex-wrap gap-1.5">
               {allCities.map((c) => (
                 <Chip key={c.slug} on={cities.includes(c.slug)} onClick={() => setCities((xs) => (xs.includes(c.slug) ? xs.filter((x) => x !== c.slug) : [...xs, c.slug]))}>{c.name[lang]}</Chip>
@@ -235,7 +235,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
         ) : null}
         <label className="flex min-h-11 cursor-pointer items-center gap-3">
           <input type="checkbox" className="kd-check" checked={alcohol} onChange={(e) => setAlcohol(e.target.checked)} />
-          <span className="kd-t text-paper">{T.alcohol}</span>
+          <span className="kd-t text-fg-1">{T.alcohol}</span>
         </label>
         <div className="flex flex-col gap-2">
           <FieldLabel htmlFor="ad-msg">{T.msgLabel}</FieldLabel>
@@ -265,9 +265,9 @@ function MyRequests({ lang }: { lang: Lang }) {
   return (
     <section aria-labelledby="ad-mine-h" className="flex flex-col">
       <h2 id="ad-mine-h" className="kd-m pb-1.5">{T.mine}</h2>
-      <ul className="flex flex-col border-t border-line">
+      <ul className="flex flex-col border-t border-line-1">
         {items.map((r) => (
-          <li key={r.id} className="flex flex-col gap-1 border-b border-line py-3">
+          <li key={r.id} className="flex flex-col gap-1 border-b border-line-1 py-3">
             <span className="flex items-center justify-between gap-3">
               <span className="kd-hs kd-ell">{r.brand}</span>
               <Status tone={TONE[r.status]}>{status[r.status]}</Status>
@@ -275,7 +275,7 @@ function MyRequests({ lang }: { lang: Lang }) {
             <span className="kd-s kd-num">
               {[r.budgetAmount != null ? money(r.budgetAmount, r.currency, lang) : null, r.startsOn && r.endsOn ? `${dayMonth(r.startsOn, lang)} – ${dayMonth(r.endsOn, lang)}` : null].filter(Boolean).join(' · ')}
             </span>
-            {r.reply ? <span className="kd-s text-mist">{fill(T.reply, { r: r.reply })}</span> : null}
+            {r.reply ? <span className="kd-s text-fg-2">{fill(T.reply, { r: r.reply })}</span> : null}
           </li>
         ))}
       </ul>

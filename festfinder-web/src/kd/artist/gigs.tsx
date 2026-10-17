@@ -136,14 +136,14 @@ function Requests({ lang }: { lang: Lang }) {
                 <Row key={i.id} cols={REQ_COLS} className="py-3">
                   <span role="cell" className="flex min-w-0 items-center gap-1.5">
                     {i.organizer ? <KdLink className="kd-hs kd-ell hover:underline" href={'/o/' + i.organizer.slug}>{who}</KdLink> : <span className="kd-hs">{who}</span>}
-                    {i.organizer?.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-acc" role="img" aria-label={T.verified} /> : null}
+                    {i.organizer?.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.verified} /> : null}
                   </span>
                   <span role="cell" className="kd-s kd-num">{[dayMonth(i.eventOn, lang), i.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
                   <span role="cell" className="flex min-w-0 flex-col gap-1">
-                    <span className="kd-s whitespace-pre-line text-mist">{i.message}</span>
-                    {i.reply ? <span className="kd-s border-l-2 border-line2 pl-3">{T.yourReply}: {i.reply}</span> : null}
+                    <span className="kd-s whitespace-pre-line text-fg-2">{i.message}</span>
+                    {i.reply ? <span className="kd-s border-l-2 border-line-2 pl-3">{T.yourReply}: {i.reply}</span> : null}
                   </span>
-                  <span role="cell" className="kd-num text-right text-paper">{feeText(i.feeOffer, null, i.currency, lang)}</span>
+                  <span role="cell" className="kd-num text-right text-fg-1">{feeText(i.feeOffer, null, i.currency, lang)}</span>
                   <span role="cell" className="flex justify-end">
                     {i.status === 'sent'
                       ? <Button size="sm" tone="acc" onClick={() => { setReply(''); setAnswer(i); }} aria-label={`${T.answer} · ${who}`}>{T.answer}</Button>
@@ -159,8 +159,8 @@ function Requests({ lang }: { lang: Lang }) {
         <Sheet title={answer.organizer?.name ?? T.answer} closeLabel={T.close} onClose={() => setAnswer(null)}>
           <div className="flex flex-col gap-4 pt-1">
             <span className="kd-s kd-num">{[dayMonth(answer.eventOn, lang), answer.cityLabel?.[lang], answer.feeOffer != null ? feeText(answer.feeOffer, null, answer.currency, lang) : null].filter(Boolean).join(' · ')}</span>
-            <p className="kd-s whitespace-pre-line text-mist">{answer.message}</p>
-            <Field label={<>{T.reply} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="ar-reply">
+            <p className="kd-s whitespace-pre-line text-fg-2">{answer.message}</p>
+            <Field label={<>{T.reply} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="ar-reply">
               <TextArea id="ar-reply" rows={4} maxLength={2000} value={reply} onChange={(e) => setReply(e.target.value)} />
             </Field>
             <div className="flex justify-end gap-2">
@@ -200,7 +200,7 @@ function Availability({ lang }: { lang: Lang }) {
       <form className="flex flex-col gap-3" onSubmit={save}>
         {!rows.length ? <span className="kd-s">{T.noDates}</span> : null}
         {rows.map((r, i) => (
-          <div key={i} className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-3 border-b border-line pb-3" role="group" aria-label={`${T.tabDates} ${i + 1}`}>
+          <div key={i} className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-end gap-3 border-b border-line-1 pb-3" role="group" aria-label={`${T.tabDates} ${i + 1}`}>
             <Field label={T.dateFrom} htmlFor={`av-from-${i}`}><Input id={`av-from-${i}`} type="date" required value={r.from} onChange={(e) => set(i, { from: e.target.value })} /></Field>
             <Field label={T.dateTo} htmlFor={`av-to-${i}`}><Input id={`av-to-${i}`} type="date" required min={r.from || undefined} value={r.to} onChange={(e) => set(i, { to: e.target.value })} /></Field>
             <Field label={T.status} htmlFor={`av-kind-${i}`}>
@@ -293,9 +293,9 @@ function Reported({ lang }: { lang: Lang }) {
             </Select>
           </Field>
           <Field label={T.venue} htmlFor="rg-venue"><Input id="rg-venue" required maxLength={160} value={f.venueName} onChange={(e) => set('venueName')(e.target.value)} /></Field>
-          <Field label={<>{T.address} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="rg-address"><Input id="rg-address" maxLength={240} value={f.address} onChange={(e) => set('address')(e.target.value)} /></Field>
-          <Field label={<>{T.ticketLink} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="rg-link"><Input id="rg-link" type="url" inputMode="url" placeholder="https://" maxLength={500} value={f.ticketUrl} onChange={(e) => set('ticketUrl')(e.target.value)} /></Field>
-          <Field label={<>{T.playingWith} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="rg-with" hint={T.playingWithHint}><Input id="rg-with" value={f.with} onChange={(e) => set('with')(e.target.value)} /></Field>
+          <Field label={<>{T.address} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="rg-address"><Input id="rg-address" maxLength={240} value={f.address} onChange={(e) => set('address')(e.target.value)} /></Field>
+          <Field label={<>{T.ticketLink} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="rg-link"><Input id="rg-link" type="url" inputMode="url" placeholder="https://" maxLength={500} value={f.ticketUrl} onChange={(e) => set('ticketUrl')(e.target.value)} /></Field>
+          <Field label={<>{T.playingWith} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="rg-with" hint={T.playingWithHint}><Input id="rg-with" value={f.with} onChange={(e) => set('with')(e.target.value)} /></Field>
           <Button tone="acc" type="submit" className="self-start" disabled={busy || !ok}>{T.send}</Button>
         </form>
       </Block>

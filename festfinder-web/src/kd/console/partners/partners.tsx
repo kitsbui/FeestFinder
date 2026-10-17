@@ -74,8 +74,8 @@ export function Partners() {
                 <h2 className="kd-hs pb-2">{T.uncovered}</h2>
                 <ul className="flex flex-col">
                   {load.data.topUncovered.map((x) => (
-                    <li key={x.host} className="flex min-h-11 items-center gap-3 border-b border-line last:border-b-0">
-                      <span className="kd-ell flex-1 text-sm text-paper">{x.host}</span>
+                    <li key={x.host} className="flex min-h-11 items-center gap-3 border-b border-line-1 last:border-b-0">
+                      <span className="kd-ell flex-1 text-sm text-fg-1">{x.host}</span>
                       <span className="kd-s kd-num">{fill(T.nClicks, { n: n(x.n) })}</span>
                       <Button size="sm" aria-label={fill(T.addHostLabel, { h: x.host })} onClick={() => setForm({ hosts: [x.host] })}><PlusIcon size={14} aria-hidden="true" />{T.addHost}</Button>
                     </li>
@@ -91,7 +91,7 @@ export function Partners() {
                     <Cell end className="kd-num text-sm">{p.commissionPct}%</Cell>
                     <Cell end className="kd-num text-sm">{n(p.clicks30)}</Cell>
                     <Cell end className="kd-num text-sm">{n(p.totals.reduce((a, x) => a + x.orders, 0))}</Cell>
-                    <Cell end className="kd-num text-sm text-paper">
+                    <Cell end className="kd-num text-sm text-fg-1">
                       {p.totals.length ? p.totals.map((x) => (
                         <span key={x.currency} className="block">
                           {money(x.earned, x.currency, lang)}
@@ -214,7 +214,7 @@ function PartnerForm({ lang, partner, presetHosts, onClose, onSaved }: {
               <Input id="pf-pct" inputMode="decimal" className="kd-num" value={f.pct} invalid={!pctOk} onChange={(e) => upd({ pct: e.target.value })} />
             </Field>
           </div>
-          <label className="flex min-h-12 items-center gap-3 kd-s text-mist">
+          <label className="flex min-h-12 items-center gap-3 kd-s text-fg-2">
             <Switch checked={f.enabled} label={T.enabled} onChange={(v) => upd({ enabled: v })} />{T.enabled}
           </label>
         </div>
@@ -290,9 +290,9 @@ function PartnerDetail({ lang, partner, onClose, onEdit, onChanged }: { lang: La
                 <Row key={c.id} cols={SALE_COLS}>
                   <Cell><Two title={<span className="kd-num text-xs">{stamp(c.occurredAt, lang)}</span>} sub={c.orderRef} /></Cell>
                   <Cell>{c.event
-                    ? <KdLink className="kd-ell block text-sm text-paper hover:underline" href={'/console/events/' + c.event.id}>{c.event.title}</KdLink>
+                    ? <KdLink className="kd-ell block text-sm text-fg-1 hover:underline" href={'/console/events/' + c.event.id}>{c.event.title}</KdLink>
                     : <span className="kd-s">{T.noMatch}</span>}</Cell>
-                  <Cell end className="kd-num text-sm text-paper"><Two title={money(c.amount, c.currency, lang)} sub={money(c.commission, c.currency, lang)} /></Cell>
+                  <Cell end className="kd-num text-sm text-fg-1"><Two title={money(c.amount, c.currency, lang)} sub={money(c.commission, c.currency, lang)} /></Cell>
                   <Cell>
                     <Select boxClass="h-10 min-h-0" aria-label={fill(T.statusOf, { o: c.orderRef })} value={c.status} onChange={(e) => settle(c, e.target.value as ConvStatus)}>
                       {STATUSES.map((s) => <option key={s} value={s}>{label[s]}</option>)}
@@ -307,7 +307,7 @@ function PartnerDetail({ lang, partner, onClose, onEdit, onChanged }: { lang: La
         <Table label={T.tTop} cols={TOP_COLS} head={[T.cEvent, T.cClicks]}>
           {top.map((e) => (
             <Row key={e.id} cols={TOP_COLS}>
-              <Cell><KdLink className="kd-ell block text-sm text-paper hover:underline" href={'/console/events/' + e.id}>{e.title}</KdLink></Cell>
+              <Cell><KdLink className="kd-ell block text-sm text-fg-1 hover:underline" href={'/console/events/' + e.id}>{e.title}</KdLink></Cell>
               <Cell end className="kd-num text-sm">{e.clicks.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}</Cell>
             </Row>
           ))}

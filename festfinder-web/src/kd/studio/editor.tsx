@@ -277,13 +277,13 @@ export function EventEditor({ id }: { id: string }) {
     <Page>
       <div className="kd-sec items-end pb-2">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <KdLink href="/studio/events" className="kd-m flex items-center gap-1.5 hover:text-paper"><ArrowLeftIcon size={14} aria-hidden="true" />{T.myEvents}</KdLink>
+          <KdLink href="/studio/events" className="kd-m flex items-center gap-1.5 hover:text-fg-1"><ArrowLeftIcon size={14} aria-hidden="true" />{T.myEvents}</KdLink>
           <h1 className="kd-d2 kd-ell">{f.title.trim() || T.noTitle}</h1>
           <span className="kd-s flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <Status tone={statusTone(d.status)}>{d.statusLabel[lang]}</Status>
             {d.reviewPending ? <Status tone="warn">{T.reviewPending}</Status> : null}
             {d.submittedAt ? <span className="kd-num">{fill(T.submittedOn, { t: stamp(d.submittedAt, lang) })}</span> : null}
-            <span role="status" aria-live="polite" className={cx(save.state === 'error' && 'text-hot')}>{saveLine}</span>
+            <span role="status" aria-live="polite" className={cx(save.state === 'error' && 'text-bad')}>{saveLine}</span>
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -323,7 +323,7 @@ export function EventEditor({ id }: { id: string }) {
               </div>
             </fieldset>
             <div className={grid}>
-              {field('edType', <>{T.fType} <span className="font-normal text-fog">{T.optional}</span></>, (
+              {field('edType', <>{T.fType} <span className="font-normal text-fg-3">{T.optional}</span></>, (
                 <Select id="edType" value={f.eventType} onChange={(e) => set({ eventType: e.target.value })}>
                   <option value="">—</option>
                   {(opts?.eventTypes ?? []).map((t) => <option key={t.value} value={t.value}>{t.label[lang]}</option>)}
@@ -336,7 +336,7 @@ export function EventEditor({ id }: { id: string }) {
               ))}
             </div>
             {field('edDescVi', T.fDescVi, <TextArea id="edDescVi" rows={5} maxLength={4000} placeholder={T.fDescPh} value={f.descVi} onChange={(e) => set({ descVi: e.target.value })} />, undefined, `${f.descVi.length} / 4000`)}
-            {field('edDescEn', <>{T.fDescEn} <span className="font-normal text-fog">{T.optional}</span></>, <TextArea id="edDescEn" rows={3} maxLength={4000} value={f.descEn} onChange={(e) => set({ descEn: e.target.value })} />)}
+            {field('edDescEn', <>{T.fDescEn} <span className="font-normal text-fg-3">{T.optional}</span></>, <TextArea id="edDescEn" rows={3} maxLength={4000} value={f.descEn} onChange={(e) => set({ descEn: e.target.value })} />)}
           </Block>
 
           <Block title={T.sWhen} aside={tag('when')}>
@@ -379,9 +379,9 @@ export function EventEditor({ id }: { id: string }) {
               {f.entryMode === 'paid' && !(f.sellHere && canSellHere)
                 ? field('edPrice', fill(T.fPrice, { c: currency === 'VND' ? '₫' : currency }), <Input id="edPrice" className="kd-num" inputMode="numeric" value={f.price ? int(f.price).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') : ''} onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, '') })} />)
                 : null}
-              {field('edCap', <>{T.fCapacity} <span className="font-normal text-fog">{T.optional}</span></>, <Input id="edCap" className="kd-num" inputMode="numeric" value={f.capacity} onChange={(e) => set({ capacity: e.target.value.replace(/[^0-9]/g, '') })} />)}
+              {field('edCap', <>{T.fCapacity} <span className="font-normal text-fg-3">{T.optional}</span></>, <Input id="edCap" className="kd-num" inputMode="numeric" value={f.capacity} onChange={(e) => set({ capacity: e.target.value.replace(/[^0-9]/g, '') })} />)}
             </div>
-            {field('edTicket', f.entryMode === 'paid' ? T.fTicketUrl : <>{T.fRegisterUrl} <span className="font-normal text-fog">{T.optional}</span></>, (
+            {field('edTicket', f.entryMode === 'paid' ? T.fTicketUrl : <>{T.fRegisterUrl} <span className="font-normal text-fg-3">{T.optional}</span></>, (
               <Input id="edTicket" type="url" inputMode="url" placeholder="https://" invalid={!!errors.ticketUrl} value={f.ticketUrl} onChange={(e) => set({ ticketUrl: e.target.value })} />
             ), errors.ticketUrl)}
           </Block>
@@ -395,7 +395,7 @@ export function EventEditor({ id }: { id: string }) {
             <Upload lang={lang} kind="logo" label={T.fLogo} hint={T.fLogoHint} value={f.logoUrl} onChange={(v) => set({ logoUrl: v })} required />
             <div className={grid}>
               {field('edPage', T.fEventUrl, <Input id="edPage" type="url" inputMode="url" placeholder={T.fEventUrlPh} invalid={!!errors.eventUrl} value={f.eventUrl} onChange={(e) => set({ eventUrl: e.target.value })} />, errors.eventUrl)}
-              {field('edBrand', <>{T.fBrandUrl} <span className="font-normal text-fog">{T.optional}</span></>, <Input id="edBrand" type="url" inputMode="url" placeholder="https://" invalid={!!errors.brandUrl} value={f.brandUrl} onChange={(e) => set({ brandUrl: e.target.value })} />, errors.brandUrl)}
+              {field('edBrand', <>{T.fBrandUrl} <span className="font-normal text-fg-3">{T.optional}</span></>, <Input id="edBrand" type="url" inputMode="url" placeholder="https://" invalid={!!errors.brandUrl} value={f.brandUrl} onChange={(e) => set({ brandUrl: e.target.value })} />, errors.brandUrl)}
             </div>
           </Block>
         </fieldset>
@@ -405,13 +405,13 @@ export function EventEditor({ id }: { id: string }) {
             <span className="kd-m">{T.quality}</span>
             <span className="flex items-baseline gap-2"><span className="kd-d2 kd-num">{d.quality.score}</span><span className="kd-s">/ 100 · {d.quality.bandLabel[lang]}</span></span>
             {draftLike ? (missing.length ? (
-              <div className="flex flex-col gap-1 border-t border-line pt-3">
+              <div className="flex flex-col gap-1 border-t border-line-1 pt-3">
                 <span className="kd-hs">{T.missingHead}</span>
                 <span className="kd-s">{missingText(missing, lang)}</span>
               </div>
-            ) : <span className="kd-s text-ok border-t border-line pt-3">{T.readyToSubmit}</span>) : null}
+            ) : <span className="kd-s text-ok border-t border-line-1 pt-3">{T.readyToSubmit}</span>) : null}
             {d.quality.checks.some((c) => !c.ok) ? (
-              <ul className="flex flex-col gap-1.5 border-t border-line pt-3">
+              <ul className="flex flex-col gap-1.5 border-t border-line-1 pt-3">
                 {d.quality.checks.filter((c) => !c.ok).map((c) => (
                   <li key={c.key} className="kd-s flex justify-between gap-3"><span>{c.label[lang]}</span><span className="kd-mb kd-num">+{c.points}</span></li>
                 ))}
@@ -515,7 +515,7 @@ function LiveUpdates({ lang, eventId }: { lang: Lang; eventId: string }) {
       {items === null ? <div className="kd-skel h-12" aria-hidden="true" /> : !items.length ? <span className="kd-s">{T.updNone}</span> : (
         <ul className="flex flex-col">
           {items.map((u) => (
-            <li key={u.id} className="flex items-start gap-3 border-t border-line py-3">
+            <li key={u.id} className="flex items-start gap-3 border-t border-line-1 py-3">
               <Status tone={u.kind === 'safety' || u.kind === 'delay' ? 'warn' : 'none'}>{u.kindLabel[lang]}</Status>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="kd-t whitespace-pre-wrap">{u.body}</span>
@@ -549,7 +549,7 @@ function SearchCard({ lang, eventId, saved }: { lang: Lang; eventId: string; sav
   const go = (field: string) => {
     if (field === 'profile') { location.assign('/studio/profile'); return; }
     const el = document.getElementById(field);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
     el?.focus({ preventScroll: true });
   };
   const missing = s.checks.filter((c) => !c.ok);
@@ -558,17 +558,17 @@ function SearchCard({ lang, eventId, saved }: { lang: Lang; eventId: string; sav
       <span className="kd-m">{T.searchTitle}</span>
       <span className="flex items-baseline gap-2"><span className="kd-d2 kd-num">{s.score}</span><span className="kd-s">/ 100</span></span>
       {missing.length ? (
-        <ul className="flex flex-col gap-1 border-t border-line pt-3">
+        <ul className="flex flex-col gap-1 border-t border-line-1 pt-3">
           {missing.map((c) => (
             <li key={c.key}>
               <button type="button" className="flex w-full flex-col gap-0.5 rounded-seg px-1.5 py-1.5 text-left hover:bg-white/[0.04]" onClick={() => go(c.field)}>
-                <span className="kd-s flex w-full justify-between gap-3 text-mist"><span>{c.label[lang]}</span><span className="kd-mb kd-num">+{c.points}</span></span>
-                <span className="kd-s text-xs text-fog">{c.why[lang]}</span>
+                <span className="kd-s flex w-full justify-between gap-3 text-fg-2"><span>{c.label[lang]}</span><span className="kd-mb kd-num">+{c.points}</span></span>
+                <span className="kd-s text-xs text-fg-3">{c.why[lang]}</span>
               </button>
             </li>
           ))}
         </ul>
-      ) : <span className="kd-s text-ok border-t border-line pt-3">{T.searchDone}</span>}
+      ) : <span className="kd-s text-ok border-t border-line-1 pt-3">{T.searchDone}</span>}
     </Panel>
   );
 }

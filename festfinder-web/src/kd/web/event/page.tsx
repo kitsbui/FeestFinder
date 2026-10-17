@@ -50,7 +50,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   const fam = familyOf(ev.genre);
   const free = ev.isFree || ev.entryMode === 'free';
   const status = ev.past ? null : ev.soldOut ? T.soldOut : ev.badge ? ev.badge.label[lang] : null;
-  const statusTone = ev.soldOut ? 'bg-hot' : ev.badge?.key === 'low_tickets' || ev.badge?.key === 'selling_fast' ? 'bg-warn' : 'bg-ok';
+  const statusTone = ev.soldOut ? 'bg-bad' : ev.badge?.key === 'low_tickets' || ev.badge?.key === 'selling_fast' ? 'bg-warn' : 'bg-ok';
   const familyLine = [FAMILY_LABEL[fam][lang], ev.eventType ? EVENT_TYPE[ev.eventType]?.[lang] : null, ev.cityLabel?.[lang]].filter(Boolean).join(' · ');
   const tiers = ev.tickets?.tiers ?? [];
   const openTiers = tiers.filter((t) => t.state === 'onsale' || t.state === 'last');
@@ -86,11 +86,11 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             <section className="kd-wrap">
               <div className="grid grid-cols-1 items-start gap-6 desk:grid-cols-2 desk:gap-14">
                 <div className="relative">
-                  <Art family={fam} cover={ev.coverUrl} alt={ev.title} className="h-[clamp(260px,32vw,440px)]" off={ev.past} />
+                  <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" className="h-[clamp(260px,32vw,440px)]" off={ev.past} />
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
-                    {ev.age ? <span className="kd-tag kd-tag-glass text-paper">{ev.age}</span> : null}
-                    {status ? <span className="kd-tag kd-tag-glass text-paper"><span className={cx('h-[7px] w-[7px] rounded-full', statusTone)} aria-hidden="true" />{status}</span> : null}
-                    {ev.festival?.flagship && ev.festival.label && !ev.past ? <span className="kd-tag bg-acc text-acc-ink">{ev.festival.label[lang]}</span> : null}
+                    {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}
+                    {status ? <span className="kd-tag kd-tag-glass text-fg-1"><span className={cx('h-[7px] w-[7px] rounded-full', statusTone)} aria-hidden="true" />{status}</span> : null}
+                    {ev.festival?.flagship && ev.festival.label && !ev.past ? <span className="kd-tag kd-tag-featured">{ev.festival.label[lang]}</span> : null}
                     {ev.origin === 'radar' ? <RadarTag lang={lang} glass /> : null}
                   </div>
                   <Countdown lang={lang} />
@@ -100,10 +100,10 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{familyLine}</span>
                     <h1 className="kd-d1">{ev.title}</h1>
                   </div>
-                  <div className="border-t border-line">
+                  <div className="border-t border-line-1">
                     {ev.origin === 'radar' ? (
                       <div className="kd-lrow min-h-15">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-paper" aria-hidden="true"><BroadcastIcon size={18} /></span>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-fg-1" aria-hidden="true"><BroadcastIcon size={18} /></span>
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="kd-hs kd-ell">Feest Radar</span>
                           {radarHosts ? <span className="kd-s kd-ell">{fill(T.radarFound, { s: radarHosts })}</span> : null}
@@ -114,38 +114,38 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                         <Link href={inLang('/o/' + org.slug, lang)} className="flex min-w-0 flex-1 items-center gap-3">
                           <Avatar name={org.name} src={org.logoUrl} size={36} org />
                           <span className="kd-hs kd-ell">{org.name}</span>
-                          {org.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-acc" role="img" aria-label={T.verifiedOrg} /> : null}
+                          {org.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.verifiedOrg} /> : null}
                         </Link>
                         <FollowOrg lang={lang} />
                       </div>
                     ) : null}
                     {ev.sponsors?.length ? (
                       <div className="kd-lrow min-h-13">
-                        <HandshakeIcon size={18} className="text-fog" aria-hidden="true" />
-                        <span className="kd-t flex-1 text-paper"><span className="text-fog">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
+                        <HandshakeIcon size={18} className="text-fg-3" aria-hidden="true" />
+                        <span className="kd-t flex-1 text-fg-1"><span className="text-fg-3">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
                       </div>
                     ) : null}
                     <div className="kd-lrow min-h-13">
-                      <CalendarBlankIcon size={18} className="text-fog" aria-hidden="true" />
-                      <span className="kd-t kd-num flex-1 text-paper">
+                      <CalendarBlankIcon size={18} className="text-fg-3" aria-hidden="true" />
+                      <span className="kd-t kd-num flex-1 text-fg-1">
                         {whenLong(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''}
                       </span>
                       <CalendarButton lang={lang} className="-mr-3" />
                     </div>
                     <div className="kd-lrow min-h-13">
-                      <MapPinIcon size={18} className="text-fog" aria-hidden="true" />
-                      <span className="kd-t flex-1 text-paper">{ev.venue.name}{ev.venue.area ? <span className="text-fog"> · {ev.venue.area}</span> : null}</span>
+                      <MapPinIcon size={18} className="text-fg-3" aria-hidden="true" />
+                      <span className="kd-t flex-1 text-fg-1">{ev.venue.name}{ev.venue.area ? <span className="text-fg-3"> · {ev.venue.area}</span> : null}</span>
                       <RideButton lang={lang} fromLink />
                       <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {hasTickets ? (
-                      <a className={buttonClass({ tone: 'acc', size: 'lg' }, 'w-full tab:w-auto')} href="#tickets">
+                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#tickets">
                         {openTiers.length ? fill(T.chooseTickets, { p: money(cheapest, ev.currency, lang) }) : T.buyTickets}
                       </a>
                     ) : free && !ev.past ? (
-                      <a className={buttonClass({ tone: 'acc', size: 'lg' }, 'w-full tab:w-auto')} href="#venue">{T.freeEntry}</a>
+                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#venue">{T.freeEntry}</a>
                     ) : null}
                     <SaveWithCount lang={lang} />
                     <ShareButton lang={lang} />
@@ -164,12 +164,12 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                       <h2 id="upd-h" className="kd-m">{T.updates}</h2>
                       <ul className="flex flex-col">
                         {ev.updates.map((u) => (
-                          <li key={u.id} className="flex flex-col gap-1 border-t border-line py-3">
+                          <li key={u.id} className="flex flex-col gap-1 border-t border-line-1 py-3">
                             <span className="kd-m flex items-center gap-2">
                               <span className={cx('h-[7px] w-[7px] rounded-full', u.kind === 'safety' || u.kind === 'delay' ? 'bg-warn' : 'bg-ok')} aria-hidden="true" />
                               {u.kindLabel?.[lang]}
                             </span>
-                            <p className="kd-t text-paper">{u.body}</p>
+                            <p className="kd-t text-fg-1">{u.body}</p>
                           </li>
                         ))}
                       </ul>
@@ -179,25 +179,25 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <section id="about" aria-labelledby="about-h" className="flex max-w-read scroll-mt-32 flex-col gap-3">
                     <h2 id="about-h" className="kd-m">{T.about2}</h2>
                     {description ? (
-                      <Clamp lines={3} more={pick({ m: { vi: 'Xem thêm', en: 'Show more' } }, lang).m} less={pick({ l: { vi: 'Thu gọn', en: 'Show less' } }, lang).l} className="kd-tl max-w-[680px] whitespace-pre-line text-paper">
+                      <Clamp lines={3} more={pick({ m: { vi: 'Xem thêm', en: 'Show more' } }, lang).m} less={pick({ l: { vi: 'Thu gọn', en: 'Show less' } }, lang).l} className="kd-tl max-w-[680px] whitespace-pre-line text-fg-1">
                         {description}
                       </Clamp>
                     ) : null}
                     {facts.length ? <div className="flex flex-wrap gap-1.5">{facts.map((f) => <Tag key={f} tone="line">{f}</Tag>)}</div> : null}
-                    <Accordion small summary={seo.headings.facts} className="border-t border-line">
+                    <Accordion small summary={seo.headings.facts} className="border-t border-line-1">
                       <div className="flex flex-col gap-3">
                         <p className="kd-s">{seo.page.summary}</p>
                         <dl className="grid grid-cols-1 gap-x-6 gap-y-2 tab:grid-cols-2">
                           {seo.page.facts.map((f) => (
                             <div key={f.label} className="flex flex-col gap-0.5">
                               <dt className="kd-m">{f.label}</dt>
-                              <dd className="kd-s text-mist">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line2 underline-offset-4 hover:text-paper">{f.value}</a> : f.value}</dd>
+                              <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
                             </div>
                           ))}
                         </dl>
                         {ev.sources.length ? (
                           <p className="kd-s">{T.sources}: {ev.sources.map((s, i) => (
-                            <span key={i}>{i ? ' · ' : ''}{s.url ? <a href={s.url} rel="noopener nofollow" className="underline decoration-line2 underline-offset-4">{s.label[lang]}</a> : s.label[lang]}</span>
+                            <span key={i}>{i ? ' · ' : ''}{s.url ? <a href={s.url} rel="noopener nofollow" className="underline decoration-line-2 underline-offset-4">{s.label[lang]}</a> : s.label[lang]}</span>
                           ))}</p>
                         ) : null}
                       </div>
@@ -211,10 +211,10 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   {ev.faq.length ? (
                     <section aria-labelledby="faq-h" className="flex max-w-read flex-col">
                       <h2 id="faq-h" className="kd-m pb-1.5">{seo.headings.faq}</h2>
-                      <div className="border-t border-line">
+                      <div className="border-t border-line-1">
                         {ev.faq.map((f) => (
                           <Accordion key={f.question} small name="faq" summary={f.question}>
-                            <p className="kd-t text-fog">{f.answer}</p>
+                            <p className="kd-t text-fg-3">{f.answer}</p>
                           </Accordion>
                         ))}
                       </div>
@@ -245,15 +245,15 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     {address ? <CopyAddress lang={lang} text={[ev.venue.name, address].filter(Boolean).join(', ')} /> : null}
                   </div>
                   {ev.travel || ev.entryRules ? (
-                    <div className="mt-2 border-t border-line">
-                      {ev.travel ? <Accordion small summary={T.travel}><p className="kd-t text-fog">{ev.travel}</p></Accordion> : null}
-                      {ev.entryRules ? <Accordion small summary={T.entryRules}><p className="kd-t text-fog">{ev.entryRules}</p></Accordion> : null}
+                    <div className="mt-2 border-t border-line-1">
+                      {ev.travel ? <Accordion small summary={T.travel}><p className="kd-t text-fg-3">{ev.travel}</p></Accordion> : null}
+                      {ev.entryRules ? <Accordion small summary={T.entryRules}><p className="kd-t text-fg-3">{ev.entryRules}</p></Accordion> : null}
                     </div>
                   ) : null}
                 </div>
                 {ev.venue.lat != null && ev.venue.lng != null ? (
-                  <a className="kd-main kd-card relative min-h-80 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-card after:shadow-[inset_0_0_0_1px_var(--color-line)] after:content-['']" href={inLang(`/?view=map&city=${enc(ev.city)}`, lang)} aria-label={T.onMap}>
-                    <VenueMap lat={ev.venue.lat} lng={ev.venue.lng} family={fam} label={(ev.venue.name ?? ev.title).split(' — ')[0]} className="absolute inset-0 bg-[#0b0c0d]" />
+                  <a className="kd-main kd-card relative min-h-80 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-card after:shadow-[inset_0_0_0_1px_var(--color-line-1)] after:content-['']" href={inLang(`/?view=map&city=${enc(ev.city)}`, lang)} aria-label={T.onMap}>
+                    <VenueMap lat={ev.venue.lat} lng={ev.venue.lng} family={fam} label={(ev.venue.name ?? ev.title).split(' — ')[0]} className="absolute inset-0 bg-map" />
                   </a>
                 ) : null}
               </div>
@@ -270,7 +270,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   {alsoIsOrg && org ? <Link className={buttonClass({ size: 'sm' })} href={inLang('/o/' + org.slug, lang)}>{T.viewProfile}</Link> : null}
                 </div>
                 <div className="kd-cards">
-                  {also.map((e, i) => <EventCard key={e.id} e={e} i={i + 1} lang={lang} />)}
+                  {also.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}
                 </div>
               </section>
             ) : null}

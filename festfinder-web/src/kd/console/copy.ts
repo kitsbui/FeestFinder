@@ -147,6 +147,7 @@ export const CONSOLE = {
   boostShelf: { en: 'Approve + shelf', vi: 'Duyệt + lên kệ' },
   replyPh: { en: 'Reply (optional)', vi: 'Lời nhắn (tuỳ chọn)' },
   adContact: { en: 'Contact', vi: 'Liên hệ' },
+  adImage: { en: 'Product image {n}', vi: 'Ảnh sản phẩm {n}' },
   adAlcohol: { en: 'Alcohol · 18+', vi: 'Có cồn · 18+' },
   ads: { en: 'Ads & partners', vi: 'Quảng cáo & đối tác' },
   adInquiries: { en: 'Enquiries', vi: 'Yêu cầu mới' },

@@ -23,7 +23,7 @@ export const ORIGIN = {
 export function RadarTag({ lang, glass, className }: { lang: Lang; glass?: boolean; className?: string }) {
   const T = pick(ORIGIN, lang);
   return (
-    <span className={cx('kd-tag shrink-0', glass && 'kd-tag-glass text-paper', className)} title={T.radarLong}>
+    <span className={cx('kd-tag shrink-0', glass && 'kd-tag-glass text-fg-1', className)} title={T.radarLong}>
       <BroadcastIcon size={12} aria-hidden="true" />
       <span aria-hidden="true">{T.radar}</span>
       <span className="sr-only">{T.radarLong}</span>

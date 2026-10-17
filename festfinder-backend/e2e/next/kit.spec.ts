@@ -10,7 +10,7 @@ test('the kit renders every part and loads cleanly', async ({ page }) => {
   const problems = watch(page);
   await page.goto('/kit');
   await expect(page.getByRole('heading', { level: 1, name: 'Kính đêm' })).toBeVisible();
-  for (const name of ['Màu', 'Thể loại = màu + hình', 'Chữ', 'Thành phần', 'Kính', 'Mở & gập', 'Điều hướng', 'Hồ sơ', 'Biểu đồ']) {
+  for (const name of ['Màu', 'Ảnh và tile chữ', 'Chữ', 'Thành phần', 'Kính', 'Mở & gập', 'Điều hướng', 'Hồ sơ', 'Biểu đồ']) {
     await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible();
   }
   // Nothing wider than a phone.

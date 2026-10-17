@@ -22,7 +22,7 @@ export const ABOUT = {
   // cities
   cities: { en: 'Cities', vi: 'Thành phố' },
   soon: { en: 'Coming soon', vi: 'Sắp có' },
-  cityEvents: { en: '{c}: {n} upcoming events', vi: '{c}: {n} sự kiện sắp diễn ra' },
+  upcomingEvents: { en: 'upcoming events', vi: 'sự kiện sắp diễn ra' },
 
   // contact
   contact: { en: 'Contact', vi: 'Liên hệ' },

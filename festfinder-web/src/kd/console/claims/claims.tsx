@@ -43,7 +43,7 @@ function Ext({ href, children }: { href: string; children: ReactNode }) {
 function Note({ note, proofUrl, extra }: { note: string; proofUrl: string | null; extra?: ReactNode }) {
   return (
     <span role="cell" className="flex min-w-0 flex-col gap-1">
-      <span className="kd-s whitespace-pre-wrap text-mist">{note || '—'}</span>
+      <span className="kd-s whitespace-pre-wrap text-fg-2">{note || '—'}</span>
       {proofUrl ? <span className="kd-s kd-ell"><Ext href={proofUrl}>{proofUrl.replace(/^https?:\/\//, '').slice(0, 48)}</Ext></span> : null}
       {extra}
     </span>

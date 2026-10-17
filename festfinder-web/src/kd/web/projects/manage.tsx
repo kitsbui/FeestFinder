@@ -108,7 +108,7 @@ function StatusBar({ lang, p, onChange }: { lang: Lang; p: Project; onChange: (p
           {p.status === 'open' ? <Button onClick={() => act('close')}>{T.close}</Button> : null}
         </div>
       </div>
-      {p.decisionNote && p.status === 'rejected' ? <p className="kd-s text-paper">{fill(T.teamNote, { n: p.decisionNote })}</p> : null}
+      {p.decisionNote && p.status === 'rejected' ? <p className="kd-s text-fg-1">{fill(T.teamNote, { n: p.decisionNote })}</p> : null}
       {p.missing?.length ? <p className="kd-s">{fill(T.missing, { m: p.missing.map((m) => text(m, lang)).join(', ') })}</p> : null}
       <FieldError>{err}</FieldError>
     </Panel>
@@ -253,8 +253,8 @@ function Offers({ lang, p }: { lang: Lang; p: Project }) {
                 ) : <Status tone={o.status === 'accepted' ? 'ok' : 'none'}>{o.status === 'accepted' ? T.accepted : T.declined}</Status>}
               </div>
               {o.package || o.amount != null ? <span className="kd-s">{[o.package, o.amount != null ? money(o.amount, o.currency, lang) : ''].filter(Boolean).join(' · ')}</span> : null}
-              {o.message ? <p className="kd-s whitespace-pre-line text-mist">{o.message}</p> : null}
-              {o.contact ? <span className="kd-s text-paper">{T.contact}: {[o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
+              {o.message ? <p className="kd-s whitespace-pre-line text-fg-2">{o.message}</p> : null}
+              {o.contact ? <span className="kd-s text-fg-1">{T.contact}: {[o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
             </li>
           ))}
         </ul>
@@ -328,7 +328,7 @@ function Mine({ lang }: { lang: Lang }) {
                   <Link href={inLang('/p/' + encodeURIComponent(o.project.slug), lang)} className="kd-hs hover:underline">{o.project.title}</Link>
                   <span className="kd-s">· {({ accepted: T.accepted, sent: T.waiting, declined: T.declined, withdrawn: T.withdrawn } as Record<string, string>)[o.status] ?? o.status}</span>
                 </span>
-                {o.contact ? <span className="kd-s text-paper">{T.contact}: {[o.contact.name, o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
+                {o.contact ? <span className="kd-s text-fg-1">{T.contact}: {[o.contact.name, o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
               </li>
             ))}
           </ul>

@@ -91,7 +91,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
         <h1 className="kd-d2">{T.recapTitle}</h1>
         <p className="kd-s">{T.recapSub}</p>
       </div>
-      <section aria-label={T.yourNight} className={cx('grid grid-cols-3 border-y border-line py-3.5', g(fam))}>
+      <section aria-label={T.yourNight} className={cx('grid grid-cols-3 border-y border-line-1 py-3.5', g(fam))}>
         <Stat value={at} label={T.checkedInAt} />
         <Stat value={r.stats.setsSeen} label={T.setsSeen} />
         <Stat value={r.stats.friendsThere} label={T.friendsThere} />
@@ -101,7 +101,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
         <span className="kd-hs" id="recap-stars">{T.howWasIt}</span>
         <div role="radiogroup" aria-labelledby="recap-stars" className="flex gap-1">
           {[1, 2, 3, 4, 5].map((n) => (
-            <button key={n} type="button" role="radio" aria-checked={stars === n} aria-label={fill(T.stars, { n })} onClick={() => { setStars(n); setErr(''); }} className={cx('kd-ib', n <= stars ? 'text-acc' : 'text-fog')}>
+            <button key={n} type="button" role="radio" aria-checked={stars === n} aria-label={fill(T.stars, { n })} onClick={() => { setStars(n); setErr(''); }} className={cx('kd-ib', n <= stars ? 'text-info' : 'text-fg-3')}>
               <StarIcon size={28} weight={n <= stars ? 'fill' : 'regular'} aria-hidden="true" />
             </button>
           ))}
@@ -122,7 +122,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
             <div key={u} className="kd-mtile relative">
               { }
               <img src={u} alt="" />
-              <button type="button" className="kd-ib kd-ib-sm kd-glass absolute right-1 top-1 text-paper" aria-label={T.removePhoto} onClick={() => setPhotos((xs) => xs.filter((x) => x !== u))}><XIcon size={14} aria-hidden="true" /></button>
+              <button type="button" className="kd-ib kd-ib-sm kd-glass absolute right-1 top-1 text-fg-1" aria-label={T.removePhoto} onClick={() => setPhotos((xs) => xs.filter((x) => x !== u))}><XIcon size={14} aria-hidden="true" /></button>
             </div>
           ))}
           {photos.length < 3 ? (
@@ -141,7 +141,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
         <a href={'/app/e/' + r.next.slug} className="flex flex-col gap-2">
           <span className="kd-m">{r.next.label[lang]}</span>
           <Panel className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-3 p-2">
-            <Art family={fam} className="h-14 rounded-lg" />
+            <Art title={ev.title} family={fam} className="h-14 rounded-lg" />
             <span className="flex min-w-0 flex-col"><span className="kd-hs kd-ell">{r.next.title}</span><span className="kd-s kd-num">{weekdayShort(r.next.startsOn, lang)} {dayMonth(r.next.startsOn, lang)}</span></span>
           </Panel>
         </a>

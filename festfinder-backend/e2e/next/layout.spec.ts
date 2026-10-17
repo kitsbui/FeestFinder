@@ -3,14 +3,14 @@ import { signInWith } from '../checks.ts';
 import { ACCOUNTS, ROUTES } from './routes.ts';
 
 /*
- * Every screen fills the width and never scrolls sideways (the owner's rule, 2026-10-16), on a
- * phone (390) and a desktop (1440), for every role that has screens: no page wider than the
- * window, and no box inside it that scrolls sideways behind a hidden scrollbar (kd.css hides them
- * all, so nobody would know) unless it fades at its edge: a row of tabs (.kd-tabs), of chips
- * (.kd-hscroll) or anything marked data-scroll-x. Each test walks its routes and lists every offender, so one run shows them all.
+ * Every screen fits the width of the device and nothing scrolls sideways, anywhere (the owner's rule,
+ * 2026-10-16, made absolute 2026-10-17): on a phone (390), a tablet (768) and a desktop (1440), for
+ * every role that has screens, no page is wider than the window and no box inside it scrolls
+ * sideways, not even a row of tabs or chips (they wrap). Each test walks its routes and lists every
+ * offender, so one run shows them all.
  */
 
-/** What overflows on this page: the page itself, and boxes that scroll sideways without saying so. */
+/** What overflows on this page: the page itself, and any box that scrolls sideways. */
 async function overflow(page: Page): Promise<string[]> {
   return page.evaluate(() => {
     const W = window.innerWidth;
@@ -35,7 +35,7 @@ async function overflow(page: Page): Promise<string[]> {
     for (const el of Array.from(document.body.querySelectorAll<HTMLElement>('*'))) {
       const s = getComputedStyle(el);
       if (!(s.overflowX === 'auto' || s.overflowX === 'scroll')) continue;
-      if (el.scrollWidth <= el.clientWidth + 1 || el.closest('[data-scroll-x], .kd-tabs, .kd-hscroll')) continue;
+      if (el.scrollWidth <= el.clientWidth + 1) continue;
       if (el.tagName === 'TEXTAREA' || el.tagName === 'PRE' || el.closest('dialog:not([open])')) continue;
       const label = el.getAttribute('aria-label') || el.getAttribute('role') || '';
       out.push(`scrolls sideways: ${el.tagName.toLowerCase()}.${String(el.className).split(' ').slice(0, 3).join('.')}${label ? ` [${label}]` : ''} ${el.scrollWidth}px in ${el.clientWidth}px`);
@@ -45,7 +45,7 @@ async function overflow(page: Page): Promise<string[]> {
 }
 
 for (const [role, routes] of Object.entries(ROUTES) as [keyof typeof ROUTES, string[]][]) {
-  for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop', width: 1440, height: 900 }]) {
+  for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'tablet', width: 768, height: 1024 }, { name: 'desktop', width: 1440, height: 900 }]) {
     test(`${role} · ${size.name}: no screen scrolls sideways`, async ({ page }) => {
       test.setTimeout(240_000);
       await page.setViewportSize({ width: size.width, height: size.height });

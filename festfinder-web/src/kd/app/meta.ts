@@ -14,5 +14,5 @@ export const appViewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
-  themeColor: '#08090a',
+  themeColor: '#08090a', // tokens-ok: metadata needs a literal (theme.css surface-0)
 };

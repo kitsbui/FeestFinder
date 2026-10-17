@@ -312,7 +312,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
     { label: T.tAllDay, s: '09:00', e: '21:00' }, { label: T.tAllNight, s: '22:00', e: '04:00' },
   ];
   const err = (k: string) => errors[k];
-  const opt = <span className="font-normal text-fog">{T.optional}</span>;
+  const opt = <span className="font-normal text-fg-3">{T.optional}</span>;
   const sec = (k: Sec) => ({ basics: T.secBasics, when: T.secWhen, where: T.secWhere, tickets: T.secTickets, lineup: T.secLineup, media: T.secMedia, team: T.secTeam }[k]);
   const entryModes = (o.entryModes ?? []) as { value: Entry; label: Pair; hint: Pair }[];
   const partner = partnerOf(f.ticketUrl);
@@ -457,14 +457,14 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
                 <Input id="evTicket" type="url" inputMode="url" value={f.ticketUrl} placeholder="https://ticketbox.vn/…" invalid={!!err('ticketUrl')}
                   onChange={(e) => set({ ticketUrl: e.target.value })} onBlur={() => set({ ticketUrl: withScheme(f.ticketUrl) })} />
               </Field>
-              <div className="border-t border-line">
+              <div className="border-t border-line-1">
                 <SwitchRow label={T.tiersSwitch} note={!id ? T.tiersNeedDraft : !canTier ? T.tiersVndOnly : undefined} checked={showTiers}
                   disabled={!id || (!canTier && !showTiers)} onChange={(v) => setShowTiers(v)} />
               </div>
               {showTiers && id ? (
                 <TierEditor lang={lang} rows={f.tiers} onChange={(rows) => set({ tiers: rows })} presets={(o.tierPresets ?? []) as { key: string; name: Pair }[]} priceFrom={f.priceFrom} currency={currency} />
               ) : null}
-              {err('tiers') ? <p role="alert" className="kd-s text-hot">{err('tiers')}</p> : null}
+              {err('tiers') ? <p role="alert" className="kd-s text-bad">{err('tiers')}</p> : null}
             </>
           ) : null}
         </Section>
@@ -491,7 +491,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
         </Section>
 
         <Section id="team" n={7} title={sec('team')} done={false} doneLabel={T.done}>
-          <div className="flex flex-col border-t border-line">
+          <div className="flex flex-col border-t border-line-1">
             <SwitchRow label={T.featuredSwitch} checked={f.featured} onChange={(v) => set({ featured: v })} />
             {!id ? <SwitchRow label={T.publishOnCreate} checked={publishNow} onChange={setPublishNow} /> : null}
           </div>
@@ -507,7 +507,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
       <aside className="kd-side flex flex-col gap-4 self-start md:sticky md:top-6" aria-label={T.quality}>
         <Panel className="flex flex-col gap-4 p-5">
           <div className="flex items-center gap-3">
-            <span className={cx('kd-d3 kd-num', q.band === 'strong' ? 'text-ok' : q.band === 'passable' ? 'text-paper' : 'text-warn')}>{q.score}</span>
+            <span className={cx('kd-d3 kd-num', q.band === 'strong' ? 'text-ok' : q.band === 'passable' ? 'text-fg-1' : 'text-warn')}>{q.score}</span>
             <span className="flex flex-col gap-0.5">
               <span className="kd-m">{T.quality}</span>
               <Status tone={q.band === 'strong' ? 'ok' : q.band === 'passable' ? 'none' : 'warn'}>{q.band === 'strong' ? T.qStrong : q.band === 'passable' ? T.qPassable : T.qAtRisk}</Status>
@@ -523,7 +523,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
             <ul className="flex flex-col">
               {boosts.map((c) => (
                 <li key={c.key}>
-                  <button type="button" className="flex w-full items-center gap-2 border-t border-line py-2 text-left text-sm hover:text-paper" onClick={() => jump(c.sec)}>
+                  <button type="button" className="flex w-full items-center gap-2 border-t border-line-1 py-2 text-left text-sm hover:text-fg-1" onClick={() => jump(c.sec)}>
                     <span className="min-w-0 flex-1">{T[c.label]}</span><span className="kd-m kd-num">+{c.pts}</span>
                   </button>
                 </li>
@@ -538,12 +538,12 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
         </Panel>
         <span className="kd-m">{T.preview}</span>
         <article className="kd-ev kd-g-edm">
-          <Art family="edm" cover={f.coverUrl} />
+          <Art title={f.title.trim() || T.noTitle} family="edm" cover={f.coverUrl} />
           <div className="flex flex-col gap-1">
             <span className="kd-s kd-num">{f.startsOn ? `${whenShort({ startsOn: f.startsOn }, lang)}${f.startTime ? ' · ' + f.startTime : ''}` : T.noDate}</span>
             <span className="kd-h">{f.title.trim() || T.noTitle}</span>
             <span className="kd-s flex min-w-0 items-center gap-1.5"><span className="kd-mk" aria-hidden="true" /><span className="kd-ell">{[where, area].filter(Boolean).join(' · ') || T.noVenue}</span></span>
-            <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-acc')}>
+            <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-info')}>
               {f.entryMode === 'donation' ? T.donation : f.entryMode === 'free' || f.priceFrom ? priceLine({ isFree: f.entryMode === 'free', entryMode: f.entryMode, priceFrom: f.priceFrom, currency }, lang) : T.noPrice}
             </span>
             {orgName ?? organizer?.label ? <span className="kd-m">{orgName ?? organizer?.label}</span> : null}

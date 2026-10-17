@@ -127,7 +127,7 @@ function FeedbackSheet({ onClose }: { onClose: () => void }) {
     <Sheet onClose={onClose} title={ticket ? T.thanks : T.title} closeLabel={T.close} wide>
       {ticket ? (
         <div className="flex flex-col items-start gap-4 pt-1">
-          <p className="kd-t text-paper">{fill(T.ticket, { t: ticket })}</p>
+          <p className="kd-t text-fg-1">{fill(T.ticket, { t: ticket })}</p>
           <Button onClick={onClose}>{T.close}</Button>
         </div>
       ) : !kind ? (
@@ -135,8 +135,8 @@ function FeedbackSheet({ onClose }: { onClose: () => void }) {
           <legend className="kd-flabel mb-1">{T.kind}</legend>
           <div className="grid grid-cols-1 gap-2 tab:grid-cols-2">
             {KINDS.map(({ key, icon: Icon }) => (
-              <button key={key} type="button" className="kd-lrow min-h-14 rounded-card border-b-0 px-3.5 text-left shadow-[inset_0_0_0_1px_var(--color-line2)] hover:bg-white/[0.04]" onClick={() => setKind(key)}>
-                <Icon size={20} className="text-paper" aria-hidden="true" />
+              <button key={key} type="button" className="kd-lrow min-h-14 rounded-card border-b-0 px-3.5 text-left shadow-[inset_0_0_0_1px_var(--color-line-2)] hover:bg-white/[0.04]" onClick={() => setKind(key)}>
+                <Icon size={20} className="text-fg-1" aria-hidden="true" />
                 <span className="kd-hs flex-1">{T[key]}</span>
               </button>
             ))}
@@ -202,7 +202,7 @@ function FeedbackSheet({ onClose }: { onClose: () => void }) {
           ) : null}
           {/* For bots only: people never see it. */}
           <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="sr-only" value={trap} onChange={(e) => setTrap(e.target.value)} />
-          <Accordion small summary={T.attached} className="border-t border-line">
+          <Accordion small summary={T.attached} className="border-t border-line-1">
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5">
               <dt className="kd-m">{T.page}</dt><dd className="kd-s kd-ell">{telemetry.pagePath}</dd>
               <dt className="kd-m">{T.browser}</dt><dd className="kd-s kd-ell">{telemetry.userAgent}</dd>

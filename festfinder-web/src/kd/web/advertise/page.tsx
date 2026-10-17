@@ -53,7 +53,7 @@ export async function AdvertisePage({ lang }: { lang: Lang }) {
                     {PLACEMENTS.map((p) => (
                       <div key={p.key} className="kd-lrow justify-between">
                         <dt className="kd-hs">{T[p.label]}</dt>
-                        <dd className="kd-mb kd-num text-paper">{fill(T.cpm, { p: money(card.rates[p.key], card.currency, lang) })}</dd>
+                        <dd className="kd-mb kd-num text-fg-1">{fill(T.cpm, { p: money(card.rates[p.key], card.currency, lang) })}</dd>
                       </div>
                     ))}
                   </dl>

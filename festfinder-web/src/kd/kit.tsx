@@ -28,7 +28,7 @@ const FAMILIES: Exclude<Family, 'free'>[] = ['fest', 'live', 'edm', 'cult'];
 function Section({ n, title, aside, children }: { n: string; title: string; aside?: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex items-baseline gap-4 border-t border-line pt-4">
+      <div className="flex items-baseline gap-4 border-t border-line-1 pt-4">
         <span className="kd-m">{n}</span>
         <h2 className="kd-d3">{title}</h2>
         {aside ? <span className="kd-s ml-auto hidden desk:inline">{aside}</span> : null}
@@ -41,7 +41,7 @@ function Section({ n, title, aside, children }: { n: string; title: string; asid
 function Swatch({ color, name, note, ring }: { color: string; name: string; note: string; ring?: boolean }) {
   return (
     <div className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-2.5">
-      <span className="h-10 rounded-btn" style={{ background: color, boxShadow: ring ? 'inset 0 0 0 1px var(--color-line2)' : undefined }} />
+      <span className="h-10 rounded-btn" style={{ background: color, boxShadow: ring ? 'inset 0 0 0 1px var(--color-line-2)' : undefined }} />
       <span className="kd-s"><span className="kd-hs">{name}</span> {note}</span>
     </div>
   );
@@ -72,56 +72,54 @@ export function Kit() {
           <span className="kd-m">Hệ thống thiết kế · Kính đêm</span>
           <h1 className="kd-d0">Kính đêm</h1>
         </div>
-        <p className="kd-tl max-w-[520px]">Nền tối, đường kẻ mảnh, một màu cho hành động. Điểm nhấn đến từ màu và hình khối của từng thể loại; kính mờ chỉ đặt trên khối màu hoặc bản đồ.</p>
+        <p className="kd-tl max-w-[560px]">Nền tối, đường kẻ mảnh. Màu nói một câu: turquoise là thông tin, dải turquoise → lime là hành động chính, trạng thái chỉ là chấm kèm chữ. Kính mờ chỉ đặt trên ảnh hoặc bản đồ.</p>
       </header>
 
       <Section n="01" title="Màu">
         <div className="grid grid-cols-1 gap-8 tab:grid-cols-2 desk:grid-cols-4">
           <div className="flex flex-col gap-2.5">
-            <span className="kd-m">Nền &amp; đường kẻ</span>
-            <Swatch color="var(--color-void)" name="Void" note="#08090a · nền" ring />
-            <Swatch color="var(--color-carbon)" name="Carbon" note="#0f1011 · thẻ" ring />
-            <Swatch color="var(--color-obsidian)" name="Obsidian" note="#161718 · nổi" />
-            <Swatch color="var(--color-line)" name="Line" note="#23252a · kẻ" />
+            <span className="kd-m">Bề mặt &amp; đường kẻ</span>
+            <Swatch color="var(--color-surface-0)" name="surface-0" note="nền trang" ring />
+            <Swatch color="var(--color-surface-1)" name="surface-1" note="nav, rail, panel, thẻ" ring />
+            <Swatch color="var(--color-surface-2)" name="surface-2" note="ô nhập, chip, tile chữ" />
+            <Swatch color="var(--color-line-1)" name="line-1" note="kẻ, viền panel" />
+            <Swatch color="var(--color-line-2)" name="line-2" note="nút phụ, viền khi hover" />
           </div>
           <div className="flex flex-col gap-2.5">
             <span className="kd-m">Chữ</span>
-            <Swatch color="var(--color-paper)" name="Paper" note="#f7f8f8 · tiêu đề" />
-            <Swatch color="var(--color-mist)" name="Mist" note="#d0d6e0 · nội dung" />
-            <Swatch color="var(--color-fog)" name="Fog" note="#8a8f98 · phụ" />
-            <Swatch color="var(--color-ash)" name="Ash" note="#62666d · chỉ icon" />
+            <Swatch color="var(--color-fg-1)" name="fg-1" note="tiêu đề, giá, tên" />
+            <Swatch color="var(--color-fg-2)" name="fg-2" note="nội dung" />
+            <Swatch color="var(--color-fg-3)" name="fg-3" note="meta, nhãn, icon trang trí" />
           </div>
           <div className="flex flex-col gap-2.5">
-            <span className="kd-m">Nhấn</span>
-            <Swatch color="var(--color-acc)" name="Lime" note="#e4f222 · hành động chính" />
-            <Swatch color="var(--color-bone)" name="Bone" note="#eeeeee · thẻ nổi" />
+            <span className="kd-m">Thông tin &amp; hành động</span>
+            <Swatch color="var(--color-info)" name="info" note="style, link, mục đang chọn, số đếm" />
+            <Swatch color="var(--gradient-accent)" name="gradient-accent" note="một nút chính, tag Nổi bật, cờ logo" />
+            <Swatch color="var(--color-lime)" name="lime" note="focus ring, glow" />
+            <Swatch color="var(--color-inverse)" name="inverse" note="avatar, thẻ vé" />
           </div>
           <div className="flex flex-col gap-2.5">
             <span className="kd-m">Trạng thái · luôn kèm chữ</span>
-            <Swatch color="var(--color-ok)" name="Ổn" note="#46c37b" />
-            <Swatch color="var(--color-warn)" name="Lưu ý" note="#f0b429" />
-            <Swatch color="var(--color-hot)" name="Trực tiếp · lỗi" note="#eb5757" />
+            <Swatch color="var(--color-ok)" name="ok" note="ổn, đã đăng" />
+            <Swatch color="var(--color-warn)" name="warn" note="lưu ý, sắp hết vé" />
+            <Swatch color="var(--color-bad)" name="bad" note="lỗi, trực tiếp, hết" />
           </div>
         </div>
       </Section>
 
-      <Section n="02" title="Thể loại = màu + hình" aside="Thứ tự cố định, đã kiểm tra mù màu trên nền tối">
+      <Section n="02" title="Ảnh và tile chữ" aside="Không có ảnh: tên đặt lớn; dưới 160px: hai chữ cái">
         <div className="grid grid-cols-1 gap-4 tab:grid-cols-2 desk:grid-cols-4">
-          {FAMILIES.map((f) => (
-            <div key={f} className={`kd-g-${f} flex flex-col gap-3`}>
-              <div className="grid h-[200px] grid-cols-[2fr_1fr] gap-1.5">
-                <Art family={f} />
-                <Art family={f} bone />
-              </div>
-              <span className="kd-h flex items-center gap-2.5"><Marker family={f} />{FAMILY_LABEL[f].vi}</span>
-              <span className="kd-m">{f}</span>
-            </div>
-          ))}
+          <div className="flex flex-col gap-2"><Art family="edm" title="Headsmasher 5" kicker="Hard techno" meta="T7 24.10" className="aspect-[16/10]" /><span className="kd-m">Thẻ 16:10</span></div>
+          <div className="flex flex-col gap-2"><Art family="edm" title="Asia Tech produced by 2K21 Records Japan" kicker="Techno" meta="WOMB" className="aspect-[16/10]" /><span className="kd-m">Tên dài · 3 dòng</span></div>
+          <div className="flex flex-col gap-2"><Art family="edm" title="Zamna" kicker="Melodic techno" meta="Bali" off className="aspect-[16/10]" /><span className="kd-m">Hết vé · off</span></div>
+          <div className="flex items-end gap-3">
+            <div className="flex flex-col gap-2"><Art family="edm" title="Headsmasher 5" kicker="Hard" className="size-19" /><span className="kd-m">Thumb</span></div>
+            <div className="flex flex-col gap-2"><Art family="edm" title="Zamna Bali October 2026" className="size-12" /><span className="kd-m">48</span></div>
+          </div>
         </div>
-        <div className="grid grid-cols-3 gap-4 tab:grid-cols-6">
-          <div className="flex flex-col gap-2"><Art family="free" className="aspect-[4/3]" /><span className="kd-m">Miễn phí</span></div>
-          <div className="flex flex-col gap-2"><Art family="edm" off className="aspect-[4/3]" /><span className="kd-m">Hết vé · off</span></div>
-          <div className="flex flex-col gap-2"><Art family="cult" bone off className="aspect-[4/3]" /><span className="kd-m">Đã qua</span></div>
+        <div className="flex flex-wrap items-center gap-4">
+          {FAMILIES.map((f) => <span key={f} className="kd-s flex items-center gap-2"><Marker family={f} />{FAMILY_LABEL[f].vi}</span>)}
+          <span className="kd-s">Mọi thể loại cùng một màu thông tin: FeestFinder chỉ có EDM.</span>
         </div>
       </Section>
 
@@ -135,10 +133,10 @@ export function Kit() {
             ['Tiêu đề thẻ · 17', <span key="h" className="kd-h">Tên sự kiện trên thẻ</span>],
             ['Nội dung · 15', <span key="t" className="kd-t">Mở cửa 16:00, set cuối 02:00. Vé cho phép ra vào lại đến 22:00.</span>],
             ['Phụ · 13', <span key="s" className="kd-s">T7 19.09 · Địa điểm · Quận 7</span>],
-            ['Nhãn · 11', <span key="m" className="kd-m text-mist">Cuối tuần · 28 sự kiện · ABC-26-4F8K</span>],
+            ['Nhãn · 11', <span key="m" className="kd-m text-fg-2">Cuối tuần · 28 sự kiện · ABC-26-4F8K</span>],
             ['Số · 13', <span key="mb" className="kd-mb kd-num">1.200.000₫</span>],
           ].map(([k, v]) => (
-            <div key={k as string} className="grid grid-cols-1 items-baseline gap-2 border-b border-line py-3.5 desk:grid-cols-[220px_minmax(0,1fr)] desk:gap-6">
+            <div key={k as string} className="grid grid-cols-1 items-baseline gap-2 border-b border-line-1 py-3.5 desk:grid-cols-[220px_minmax(0,1fr)] desk:gap-6">
               <span className="kd-m">{k}</span>
               {v}
             </div>
@@ -149,19 +147,21 @@ export function Kit() {
       <Section n="04" title="Thành phần">
         <div className="grid grid-cols-1 gap-10 desk:grid-cols-3">
           <div className="flex flex-col gap-3.5">
-            <span className="kd-m">Nút · bo 6 · cao 44 / 36 / 52</span>
+            <span className="kd-m">Nút · 4 giọng · bo 8 · cao 44 / 36 / 52</span>
             <div className="flex flex-wrap gap-2">
-              <Button tone="acc">Mua vé</Button>
+              <Button tone="acc" glow>Mua vé</Button>
               <Button>Chỉ đường</Button>
-              <Button tone="light">Đăng sự kiện</Button>
+              <Button tone="ghost">Thêm lịch</Button>
+              <Button tone="danger">Xoá</Button>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button size="sm" tone="acc">Đăng sự kiện</Button>
               <Button size="sm">Theo dõi</Button>
               <Button size="sm" tone="ghost">Lưu nháp</Button>
               <Button size="sm" disabled>Quay lại</Button>
-              <Button size="sm" tone="dark">Tối</Button>
             </div>
             <Button tone="acc" size="lg" block>Mua 2 vé · 2.400.000₫</Button>
+            <span className="kd-s">Một nút chính mỗi màn hình; glow chỉ ở nút dẫn đầu trang.</span>
             <div className="flex gap-2">
               <IconButton label={saved ? 'Đã lưu' : 'Lưu'} line pressed={saved} onClick={() => setSaved((s) => !s)}>
                 <HeartIcon size={20} weight={saved ? 'fill' : 'regular'} aria-hidden="true" />
@@ -179,7 +179,7 @@ export function Kit() {
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Tag>18+</Tag><Tag tone="line">Trong nhà</Tag><Tag tone="bone">Mới đăng</Tag><Tag tone="acc">Nổi bật</Tag><Tag tone="hot">Sắp hết vé</Tag>
+              <Tag>18+</Tag><Tag tone="line">Trong nhà</Tag><Tag tone="bone">Mới đăng</Tag><Tag tone="acc">Mới</Tag><Tag tone="featured">Nổi bật</Tag><Tag tone="bad">Sắp hết vé</Tag>
             </div>
             <div className="flex flex-wrap gap-4">
               <Status tone="ok">Đang đăng</Status><Status tone="warn">Đang duyệt</Status><Status tone="bad">Quá mốc</Status><Status tone="live">Trực tiếp</Status><Status>Nháp</Status>
@@ -236,9 +236,9 @@ export function Kit() {
       <Section n="05" title="Kính">
         <div className="grid grid-cols-1 gap-12 desk:grid-cols-2">
           <div className="relative h-[280px]">
-            <Art family="edm" className="absolute inset-0" />
+            <Art family="edm" title="Headsmasher 5" kicker="Hard techno" meta="My House" className="absolute inset-0" />
             <div className="kd-glass absolute inset-x-4 bottom-4 flex flex-col gap-1.5 rounded-card p-4">
-              <span className="kd-m text-mist">Công thức</span>
+              <span className="kd-m text-fg-2">Công thức</span>
               <span className="kd-hs">rgba(15, 16, 17, .5) · blur 22 · saturate 170%</span>
             </div>
             <div className="absolute left-4 top-4 flex gap-2">
@@ -246,7 +246,7 @@ export function Kit() {
               <span className="kd-tag kd-tag-glass"><span className="kd-pulse" />Còn 3 ngày</span>
             </div>
           </div>
-          <div className="relative h-[280px] overflow-hidden rounded-card bg-[#0b0c0d]">
+          <div className="relative h-[280px] overflow-hidden rounded-card bg-map">
             <span className="kd-area absolute left-[20%] top-[18%]">Quận 1</span>
             <span className="kd-area absolute left-[62%] top-[70%]">Thủ Đức</span>
             {[{ x: 30, y: 40, t: '350K', f: 'live' }, { x: 55, y: 30, t: 'Miễn phí', f: 'free' }, { x: 70, y: 55, t: '1,2TR', f: 'edm' }].map((p, i) => (
@@ -261,7 +261,7 @@ export function Kit() {
                 <span className="kd-mk" aria-hidden="true" />{p.t}
               </button>
             ))}
-            <span className="kd-me absolute left-[42%] top-[62%]" aria-label="Vị trí của bạn" />
+            <span className="kd-me absolute left-[42%] top-[62%]" role="img" aria-label="Vị trí của bạn" />
           </div>
         </div>
       </Section>
@@ -272,10 +272,10 @@ export function Kit() {
             ['Bo góc', '4 nhãn · 6 nút, ô nhập · 8 đoạn chọn · 10 lựa chọn · 12 thẻ · 14 nhà tổ chức · 20 thanh tab · tròn cho chip'],
             ['Khoảng cách', '4 · 8 · 12 · 16 · 24 · 32 · 48 · 96'],
             ['Lề', '16 px · 32 px từ 760 px · vùng chạm tối thiểu 44 px'],
-            ['Đổ bóng', 'Không. Tách lớp bằng đường kẻ và nền Bone.'],
+            ['Đổ bóng', 'Không, trừ glow của nút chính. Tách lớp bằng bề mặt và đường kẻ 1px.'],
             ['Chuyển động', '150 ms, cubic-bezier(.4, 0, .2, 1). Tắt khi bật giảm chuyển động.'],
           ].map(([k, v]) => (
-            <div key={k} className="grid grid-cols-1 gap-1 border-b border-line py-3 desk:grid-cols-[160px_minmax(0,1fr)] desk:gap-4">
+            <div key={k} className="grid grid-cols-1 gap-1 border-b border-line-1 py-3 desk:grid-cols-[160px_minmax(0,1fr)] desk:gap-4">
               <span className="kd-m">{k}</span>
               <span className="kd-t">{v}</span>
             </div>
@@ -315,7 +315,7 @@ export function Kit() {
           </div>
           <div className="flex flex-col gap-3.5">
             <span className="kd-m">Accordion · nội dung phụ</span>
-            <div className="border-t border-line">
+            <div className="border-t border-line-1">
               <Accordion summary="Đã diễn" aside="41 show" open name="kit-acc"><span className="kd-s">Danh sách chỉ hiện khi mở.</span></Accordion>
               <Accordion summary="Cài đặt" name="kit-acc"><span className="kd-s">Thông báo, quyền riêng tư, thành phố.</span></Accordion>
               <Accordion summary="Quy định vào cổng" small><span className="kd-s">Mang giấy tờ tuỳ thân.</span></Accordion>
@@ -333,7 +333,7 @@ export function Kit() {
       <Section n="08" title="Điều hướng">
         <Tabs label="Ví dụ tab" current={tab} onSelect={setTab} items={[{ key: 'upcoming', label: 'Sắp diễn', count: 4 }, { key: 'past', label: 'Đã diễn', count: 41 }]} />
         <div className="grid grid-cols-1 gap-8 desk:grid-cols-2">
-          <div className="overflow-hidden rounded-card shadow-[inset_0_0_0_1px_var(--color-line)]">
+          <div className="overflow-hidden rounded-card shadow-[inset_0_0_0_1px_var(--color-line-1)]">
             <SideNav
               label="Ví dụ side nav"
               current="dash"
@@ -347,7 +347,7 @@ export function Kit() {
             />
           </div>
           <div className="relative h-[180px] overflow-hidden rounded-card">
-            <Art family="fest" className="absolute inset-0" />
+            <Art family="edm" title="Zamna Bali" className="absolute inset-0" />
             <nav aria-label="Ví dụ thanh tab" className="kd-tabbar kd-glass !absolute">
               {[['Khám phá', CompassIcon], ['Bản đồ', MapTrifoldIcon], ['Đã lưu', HeartIcon], ['Vé', TicketIcon], ['Tôi', UserIcon]].map(([l, I], i) => {
                 const Icon = I as typeof CompassIcon;
@@ -358,16 +358,16 @@ export function Kit() {
         </div>
         <Table cols="minmax(0,2fr) 1fr 1fr 120px" head={['Sự kiện', 'Ngày', 'Trạng thái', '']} label="Ví dụ bảng">
           <Row cols="minmax(0,2fr) 1fr 1fr 120px" onClick={() => {}} current>
-            <span className="kd-hs kd-ell flex items-center gap-2"><Marker family="edm" />Đêm EDM ngoài trời</span>
-            <span className="kd-s kd-num">19/09</span>
-            <Status tone="ok">Đang đăng</Status>
-            <span className="kd-mb kd-num text-right">412 / 600</span>
+            <span role="cell" className="kd-hs kd-ell flex items-center gap-2"><Marker family="edm" />Đêm EDM ngoài trời</span>
+            <span role="cell" className="kd-s kd-num">19/09</span>
+            <span role="cell"><Status tone="ok">Đang đăng</Status></span>
+            <span role="cell" className="kd-mb kd-num text-right">412 / 600</span>
           </Row>
           <Row cols="minmax(0,2fr) 1fr 1fr 120px">
-            <span className="kd-hs kd-ell flex items-center gap-2"><Marker family="cult" />Chợ đêm cuối tuần</span>
-            <span className="kd-s kd-num">27/09</span>
-            <Status>Nháp</Status>
-            <span className="text-right"><Button size="sm">Tiếp tục</Button></span>
+            <span role="cell" className="kd-hs kd-ell flex items-center gap-2"><Marker family="edm" />Chợ đêm cuối tuần</span>
+            <span role="cell" className="kd-s kd-num">27/09</span>
+            <span role="cell"><Status>Nháp</Status></span>
+            <span role="cell" className="text-right"><Button size="sm">Tiếp tục</Button></span>
           </Row>
         </Table>
       </Section>
@@ -422,7 +422,7 @@ export function Kit() {
         </div>
         <div className="grid grid-cols-1 gap-4 desk:grid-cols-2">
           <BoneCard className="flex items-center gap-4 p-4">
-            <DateBlock top="T7" day={19} bottom="Th9" hi className="!bg-white" />
+            <DateBlock top="T7" day={19} bottom="Th9" hi />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="kd-m">Vé · Phổ thông</span>
               <span className="kd-h kd-ell">Vé trên thẻ Bone</span>
@@ -432,8 +432,8 @@ export function Kit() {
           </BoneCard>
           <Card className="flex flex-col gap-3 p-4">
             <span className="kd-m">Thẻ · hairline</span>
-            <div className="flex items-center gap-3"><CalendarBlankIcon size={18} className="text-ash" aria-hidden="true" /><span className="kd-t">Icon trang trí dùng màu Ash</span></div>
-            <div className="flex items-center gap-3"><BellIcon size={18} className="text-ash" aria-hidden="true" /><span className="kd-s">Không có đổ bóng</span></div>
+            <div className="flex items-center gap-3"><CalendarBlankIcon size={18} className="text-fg-3" aria-hidden="true" /><span className="kd-t">Icon trang trí dùng màu fg-3</span></div>
+            <div className="flex items-center gap-3"><BellIcon size={18} className="text-fg-3" aria-hidden="true" /><span className="kd-s">Không có đổ bóng</span></div>
           </Card>
         </div>
       </Section>

@@ -107,7 +107,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
   return (
     <form onSubmit={save} noValidate>
       <PageHead
-        eyebrow={me.profile.verified ? <span className="kd-s flex items-center gap-1.5"><SealCheckIcon size={16} weight="fill" className="text-acc" aria-hidden="true" />{T.verified}</span> : null}
+        eyebrow={me.profile.verified ? <span className="kd-s flex items-center gap-1.5"><SealCheckIcon size={16} weight="fill" className="text-info" aria-hidden="true" />{T.verified}</span> : null}
         title={f.name || T.profile}
         actions={(
           <>
@@ -141,7 +141,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
               <Field label={T.bioVi} htmlFor="ar-bio" hint={`${f.bioVi.length}/1200`}>
                 <TextArea id="ar-bio" rows={4} maxLength={1200} value={f.bioVi} onChange={(e) => set('bioVi')(e.target.value)} />
               </Field>
-              <Field label={<>{T.bioEn} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="ar-bio-en">
+              <Field label={<>{T.bioEn} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="ar-bio-en">
                 <TextArea id="ar-bio-en" rows={3} maxLength={1200} value={f.bioEn} onChange={(e) => set('bioEn')(e.target.value)} />
               </Field>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
@@ -188,7 +188,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
             </Field>
             <ChipPick label={T.gigTypes} options={opt(me.options.gigs)} value={f.gigTypes} onChange={set('gigTypes')} max={9} />
             <ChipPick label={T.setLengths} options={opt(me.options.setLengths)} value={f.setLengths} onChange={set('setLengths')} max={5} />
-            <div className="border-t border-line"><SwitchRow label={T.openToBrands} checked={f.openToBrands} onChange={set('openToBrands')} /></div>
+            <div className="border-t border-line-1"><SwitchRow label={T.openToBrands} checked={f.openToBrands} onChange={set('openToBrands')} /></div>
           </Block>
         </div>
       </Body>

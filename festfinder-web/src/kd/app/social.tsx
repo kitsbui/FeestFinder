@@ -86,7 +86,7 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       {tab === 'chat' ? <Thread lang={lang} url={'/plans/' + plan.id + '/messages'} initial={plan.messages} placeholder={T.chatPh} /> : (
         <>
           <span className="kd-m">{plan.headsLine[lang]}</span>
-          <ul className="flex flex-col border-t border-line">
+          <ul className="flex flex-col border-t border-line-1">
             {plan.members.map((m) => (
               <li key={m.userId} className="kd-lrow min-h-15">
                 <Avatar name={m.name} src={m.photoUrl} size={40} acc={m.userId === kd.user?.id} />
@@ -95,7 +95,7 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
                   <Status tone={m.status === 'going' ? 'ok' : m.status === 'declined' ? 'none' : 'warn'}>{m.status === 'going' ? T.stGoing : m.status === 'declined' ? T.stDeclined : T.stPending}</Status>
                 </span>
                 {plan.isOwner && !m.owner && m.status === 'going' ? (
-                  <button type="button" role="switch" aria-checked={m.paid} aria-label={fill(T.markPaid, { n: m.name })} className={cx('kd-chip', m.paid && 'kd-chip-on')}
+                  <button type="button" role="switch" aria-checked={m.paid} aria-label={`${m.paid ? T.paid : T.unpaid}, ${m.name}`} className={cx('kd-chip', m.paid && 'kd-chip-on')}
                     onClick={() => act(() => FF.patch('/plans/' + plan.id + '/members/' + m.userId, { paid: !m.paid }))}>
                     {m.paid ? <><CheckIcon size={14} aria-hidden="true" />{T.paid}</> : T.unpaid}
                   </button>
@@ -179,7 +179,7 @@ function Invite({ lang, ev, onDone }: { lang: Lang; ev: EventDetail; onDone: () 
                 <button key={f.id} type="button" aria-pressed={on} className="kd-lrow w-full text-left" onClick={() => setPicked((xs) => (on ? xs.filter((x) => x !== f.id) : [...xs, f.id]))}>
                   <Avatar name={f.name} src={f.photoUrl} size={40} />
                   <span className="kd-hs flex-1">{f.name}</span>
-                  <span className={cx('flex h-6 w-6 items-center justify-center rounded-full border', on ? 'border-acc bg-acc text-void' : 'border-line2')}>{on ? <CheckIcon size={14} aria-hidden="true" /> : null}</span>
+                  <span className={cx('flex h-6 w-6 items-center justify-center rounded-full border', on ? 'border-info bg-info text-surface-0' : 'border-line-2')}>{on ? <CheckIcon size={14} aria-hidden="true" /> : null}</span>
                 </button>
               );
             })}
@@ -223,14 +223,14 @@ function Thread({ lang, url, initial, placeholder }: { lang: Lang; url: string; 
           {msgs.map((m) => (
             <li key={m.id} className={cx('flex max-w-[min(82%,560px)] flex-col gap-0.5', m.fromMe ? 'self-end items-end' : 'self-start')}>
               {!m.fromMe && m.author ? <span className="kd-m">{m.author}</span> : null}
-              <span className={cx('rounded-card px-3.5 py-2.5 text-[15px]', m.fromMe ? 'bg-paper text-void' : 'kd-card text-paper')}>{m.body}</span>
+              <span className={cx('rounded-card px-3.5 py-2.5 text-[15px]', m.fromMe ? 'bg-fg-1 text-surface-0' : 'kd-card text-fg-1')}>{m.body}</span>
               {m.payload?.qrPayload ? <span className="rounded-card bg-white p-2"><QrCode value={m.payload.qrPayload} size={140} label={m.payload.reference ?? ''} /></span> : null}
             </li>
           ))}
         </ol>
       ) : <span className="kd-s">{T.chatEmpty}</span>}
       <div ref={end} />
-      <form onSubmit={send} className="sticky bottom-0 flex gap-2 bg-void pb-[calc(8px+env(safe-area-inset-bottom))] pt-2">
+      <form onSubmit={send} className="sticky bottom-0 flex gap-2 bg-surface-0 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2">
         <Input aria-label={placeholder} placeholder={placeholder} value={text} onChange={(e) => setText(e.target.value)} boxClass="flex-1" maxLength={1000} />
         <Button type="submit" tone="acc">{T.send}</Button>
       </form>

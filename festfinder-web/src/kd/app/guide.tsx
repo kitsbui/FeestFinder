@@ -52,7 +52,7 @@ function GuideBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
     <section className="flex flex-col" aria-label={title}>
       <h2 className="kd-m pb-1.5">{title}</h2>
       {xs.map((s) => (
-        <div key={s.name} className="flex flex-col gap-0.5 border-t border-line py-3">
+        <div key={s.name} className="flex flex-col gap-0.5 border-t border-line-1 py-3">
           <span className="flex items-baseline justify-between gap-3"><span className="kd-hs">{s.name}</span><span className="kd-m kd-num shrink-0">{s.walk}</span></span>
           <span className="kd-s">{s.why}</span>
         </div>
@@ -68,7 +68,7 @@ function GuideBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
         <h2 className="kd-m">{T.guideWear}</h2>
         <span className="kd-hs">{g.wear.headline}</span>
         <ul className="kd-s list-disc pl-5">{g.wear.items.map((x) => <li key={x}>{x}</li>)}</ul>
-        <span className="kd-s"><span className="text-paper">{T.guideAvoid}:</span> {g.wear.avoid}</span>
+        <span className="kd-s"><span className="text-fg-1">{T.guideAvoid}:</span> {g.wear.avoid}</span>
       </section>
       <Panel className="p-4"><span className="kd-t">{g.tip}</span></Panel>
       <span className="kd-s">{T.guideAi}</span>

@@ -85,7 +85,7 @@ function Mine({ lang }: { lang: Lang }) {
           </div>
           <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
         </div>
-        <div className="grid grid-cols-2 gap-y-3.5 border-y border-line py-3.5">
+        <div className="grid grid-cols-2 gap-y-3.5 border-y border-line-1 py-3.5">
           <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
           <Stat value={orders ? coming.length : '–'} label={T.going} />
           <FollowStats lang={lang} f={follows} />
@@ -94,18 +94,18 @@ function Mine({ lang }: { lang: Lang }) {
 
       {coming.length ? (
         <section className="flex flex-col gap-2.5 px-4 pt-7" aria-labelledby="pf-going">
-          <div className="flex items-baseline justify-between"><h2 id="pf-going" className="kd-h">{T.going}</h2><a className="kd-s text-mist" href="/app/tickets">{T.allTickets}</a></div>
+          <div className="flex items-baseline justify-between"><h2 id="pf-going" className="kd-h">{T.going}</h2><a className="kd-s text-fg-2" href="/app/tickets">{T.allTickets}</a></div>
           {coming.slice(0, 3).map((o, i) => {
             const fam = familyOf(o.event.genre);
             return (
               <a key={o.id} href="/app/tickets" className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)_auto] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
-                <Art family={fam} bone={i % 2 === 1} className="h-19 rounded-lg" />
+                <Art family={fam} title={o.event.title} className="h-19 rounded-lg" />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="kd-m kd-num">{weekdayShort(o.event.startsOn, lang)} {dayMonth(o.event.startsOn, lang)}</span>
                   <span className="kd-hs kd-ell">{o.event.title}</span>
                   <span className="kd-s kd-ell">{[o.event.venueName, o.event.area, o.event.startTime ? fill(T.doorsAt, { t: o.event.startTime }) : null].filter(Boolean).join(' · ')}</span>
                 </span>
-                <span className="kd-tag bg-ink text-[#eeeeee]">{fill(T.nTickets, { n: o.tickets.length })}</span>
+                <span className="kd-tag bg-on-inverse text-inverse">{fill(T.nTickets, { n: o.tickets.length })}</span>
               </a>
             );
           })}
@@ -164,7 +164,7 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             {mix.map((x) => (
-              <span key={x.f} className={cx('kd-s flex items-center gap-2 text-mist', g(x.f))}><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{x.n}</span></span>
+              <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{x.n}</span></span>
             ))}
           </div>
         </section>
@@ -185,16 +185,16 @@ function Settings({ lang }: { lang: Lang }) {
   };
   return (
     <div id="settings" className="scroll-mt-4 px-4 pb-6 pt-6">
-      <Accordion summary={T.settings} open className="border-t border-line">
+      <Accordion summary={T.settings} open className="border-t border-line-1">
         <div className="flex flex-col">
           {/* The team's way into the Console. */}
           {isTeam(kd.user) ? (
-            <a className="kd-lrow" href="/console"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.console}</span><span className="kd-s">{T.consoleSub}</span></span><CaretRightIcon size={16} className="text-fog" aria-hidden="true" /></a>
+            <a className="kd-lrow" href="/console"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.console}</span><span className="kd-s">{T.consoleSub}</span></span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></a>
           ) : null}
           {kd.user ? (
             <>
-              <a className="kd-lrow" href="/app/alerts"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.alerts}</span><span className="kd-s">{T.alertsSub}</span></span><CaretRightIcon size={16} className="text-fog" aria-hidden="true" /></a>
-              <a className="kd-lrow" href="/app/settings"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.notifSettings}</span><span className="kd-s">{T.notifSub}</span></span><CaretRightIcon size={16} className="text-fog" aria-hidden="true" /></a>
+              <a className="kd-lrow" href="/app/alerts"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.alerts}</span><span className="kd-s">{T.alertsSub}</span></span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></a>
+              <a className="kd-lrow" href="/app/settings"><span className="flex flex-1 flex-col"><span className="kd-hs">{T.notifSettings}</span><span className="kd-s">{T.notifSub}</span></span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></a>
             </>
           ) : null}
           <div className="kd-lrow">
@@ -207,7 +207,7 @@ function Settings({ lang }: { lang: Lang }) {
             <span className="kd-hs flex-1">{T.language}</span>
             <Segmented label={T.language} value={lang} onChange={pickLang} options={[{ value: 'vi', label: 'Tiếng Việt' }, { value: 'en', label: 'English' }]} />
           </div>
-          {kd.user ? <button type="button" className="kd-lrow w-full text-left text-[15px] text-fog" onClick={() => kd.signOut()}>{T.signOut}</button> : null}
+          {kd.user ? <button type="button" className="kd-lrow w-full text-left text-[15px] text-fg-3" onClick={() => kd.signOut()}>{T.signOut}</button> : null}
         </div>
       </Accordion>
     </div>

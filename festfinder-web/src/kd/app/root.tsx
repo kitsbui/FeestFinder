@@ -43,9 +43,9 @@ export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang)
           leaves the person without their way around. Phones keep the app's tab bar alone.
         */}
         <div className="hidden desk:contents"><WebNav lang={lang} current={tab === 'map' ? 'list' : 'none'} /></div>
-        <div className={tab && tabs ? 'kd-app kd-app-tabs' : 'kd-app'} lang={lang}>
+        <main className={tab && tabs ? 'kd-app kd-app-tabs' : 'kd-app'} lang={lang}>
           {children(lang)}
-        </div>
+        </main>
         {tab && tabs ? <AppTabs lang={lang} current={tab} /> : null}
       </KdProvider>
     </ChromeCtx.Provider>

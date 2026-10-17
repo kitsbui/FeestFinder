@@ -59,14 +59,14 @@ export function Hype({ lang }: { lang: Lang }) {
         <span className="kd-mb kd-num whitespace-nowrap">{fill(T.hypeCount, { n: count(H.count, lang) })}</span>
         {H.last24h ? <span className="kd-s whitespace-nowrap">{fill(T.hype24, { n: H.last24h })}</span> : null}
         <Button size="sm" className="ml-auto" aria-pressed={hyped} onClick={toggle}>
-          <FireIcon size={16} weight={hyped ? 'fill' : 'regular'} className={hyped ? 'text-acc' : undefined} aria-hidden="true" />
+          <FireIcon size={16} weight={hyped ? 'fill' : 'regular'} className={hyped ? 'text-info' : undefined} aria-hidden="true" />
           {hyped ? T.hyped : T.hypeIt}
         </Button>
       </div>
       {H.next ? (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="kd-s text-mist">{H.next.reward[lang]}</span>
+            <span className="kd-s text-fg-2">{H.next.reward[lang]}</span>
             <span className="kd-m kd-num">{fill(T.hypeLeft, { n: count(H.next.left, lang) })}</span>
           </div>
           <BarTrack value={Math.round(H.next.progress * 100)} max={100} label={H.next.reward[lang]} />
@@ -75,10 +75,10 @@ export function Hype({ lang }: { lang: Lang }) {
       {H.goals.length ? (
         <ul className="flex flex-col">
           {H.goals.map((x) => (
-            <li key={x.threshold} className="flex items-center gap-2.5 border-t border-line py-2 kd-s">
-              {x.reached ? <CheckCircleIcon size={16} weight="fill" className="text-ok" aria-hidden="true" /> : <LockSimpleIcon size={16} className="text-ash" aria-hidden="true" />}
+            <li key={x.threshold} className="flex items-center gap-2.5 border-t border-line-1 py-2 kd-s">
+              {x.reached ? <CheckCircleIcon size={16} weight="fill" className="text-ok" aria-hidden="true" /> : <LockSimpleIcon size={16} className="text-fg-3" aria-hidden="true" />}
               <span className="kd-mb kd-num w-16">{count(x.threshold, lang)}</span>
-              <span className={x.reached ? 'text-mist' : undefined}>{x.reward[lang]}</span>
+              <span className={x.reached ? 'text-fg-2' : undefined}>{x.reward[lang]}</span>
             </li>
           ))}
         </ul>
@@ -264,10 +264,10 @@ function Thread({ lang, post, replies, hasMore, onMore, team, replyOpen, onReply
 }) {
   const T = pick(WEB, lang);
   return (
-    <li className="flex flex-col gap-3 border-t border-line py-4">
+    <li className="flex flex-col gap-3 border-t border-line-1 py-4">
       <PostView lang={lang} post={post} team={team} write={write} reload={reload} onReply={post.removed ? undefined : onReply} />
       {replies.length || hasMore || replyOpen ? (
-        <div className="ml-11 flex flex-col gap-3 border-l border-line pl-4">
+        <div className="ml-11 flex flex-col gap-3 border-l border-line-1 pl-4">
           {replies.map((r) => <PostView key={r.id} lang={lang} post={r} team={team} write={write} reload={reload} />)}
           {hasMore ? <button type="button" className="kd-more" onClick={onMore}>{fill(T.discMore, { n: post.replyCount - (post.replies ?? []).length })}</button> : null}
           {replyOpen ? <Composer lang={lang} kind={post.kind} parentId={post.id} onPosted={reload} write={write} /> : null}
@@ -301,7 +301,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
           <span className="kd-s">{ago(p.createdAt, lang)}</span>
         </div>
         {p.set || p.heardAt ? <span className="kd-m">{[p.set?.artist, p.heardAt].filter(Boolean).join(' · ')}</span> : null}
-        <p className={cx('kd-t whitespace-pre-line', p.removed && 'text-fog')}>{p.removed ? T.discRemoved : p.body}</p>
+        <p className={cx('kd-t whitespace-pre-line', p.removed && 'text-fg-3')}>{p.removed ? T.discRemoved : p.body}</p>
         {p.photoUrl ? (
            
           <img src={p.photoUrl} alt="" loading="lazy" className="max-h-80 w-auto max-w-full rounded-card object-cover" />
@@ -315,7 +315,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
               disabled={mine}
               onClick={() => act(() => (p.me?.helped ? FF.del : FF.put)('/posts/' + p.id + '/helpful'))}
             >
-              <ThumbsUpIcon size={16} weight={p.me?.helped ? 'fill' : 'regular'} className={p.me?.helped ? 'text-acc' : undefined} aria-hidden="true" />
+              <ThumbsUpIcon size={16} weight={p.me?.helped ? 'fill' : 'regular'} className={p.me?.helped ? 'text-info' : undefined} aria-hidden="true" />
               {T.discHelpful}{p.helpfulCount ? <span className="kd-num"> {p.helpfulCount}</span> : null}
             </button>
             {onReply ? <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost" onClick={onReply}><ArrowBendUpLeftIcon size={16} aria-hidden="true" />{T.discReply}</button> : null}
@@ -382,7 +382,7 @@ export function Ambassadors({ lang }: { lang: Lang }) {
         {ev.ambassadors.map((a) => (
           <li key={a.name + a.initials} className="flex items-center gap-2">
             <Avatar name={a.initials} size={28} />
-            <span className="kd-s text-mist">{a.name}</span>
+            <span className="kd-s text-fg-2">{a.name}</span>
             <span className="kd-m kd-num">{fill(T.ambVisits, { n: a.visits })}</span>
           </li>
         ))}

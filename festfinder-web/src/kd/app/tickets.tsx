@@ -149,7 +149,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
     <div className="flex flex-col gap-2 px-4 desk:max-w-[480px]">
       <article className={cx('kd-bonecard overflow-hidden', g(fam))} aria-label={o.event.title}>
         <Art family={fam} className="relative h-33 rounded-none">
-          {doors ? <span className="kd-tag kd-tag-glass kd-num absolute bottom-3 left-3 h-7 text-paper"><span className="h-2 w-2 rounded-full bg-acc" aria-hidden="true" />{doors}</span> : null}
+          {doors ? <span className="kd-tag kd-tag-glass kd-num absolute bottom-3 left-3 h-7 text-fg-1"><span className="h-2 w-2 rounded-full bg-info" aria-hidden="true" />{doors}</span> : null}
         </Art>
         <div className="flex flex-col gap-1.5 px-4.5 pt-4">
           <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[fam][lang]} · {fill(T.ticketN, { i: i + 1, n: o.tickets.length })}</span>
@@ -157,9 +157,9 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
           <span className="kd-s kd-num">{whenShort(o.event, lang)}{o.event.venueName ? ' · ' + o.event.venueName : ''}{o.event.area ? ' · ' + o.event.area : ''}</span>
         </div>
         <div className="relative mt-2.5 h-6" aria-hidden="true">
-          <span className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-void" />
-          <span className="absolute -right-3 top-0 h-6 w-6 rounded-full bg-void" />
-          <span className="absolute inset-x-4.5 top-3 border-t-[1.5px] border-dashed border-[#c4c4c4]" />
+          <span className="absolute -left-3 top-0 h-6 w-6 rounded-full bg-surface-0" />
+          <span className="absolute -right-3 top-0 h-6 w-6 rounded-full bg-surface-0" />
+          <span className="absolute inset-x-4.5 top-3 border-t-[1.5px] border-dashed border-on-inverse/25" />
         </div>
         <div className="grid grid-cols-3 gap-3 px-4.5 pt-1.5">
           <div className="flex flex-col gap-0.5"><span className="kd-m">{T.tier}</span><span className="kd-h">{o.tier.name[lang]}</span></div>
@@ -169,7 +169,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
         <div className={cx('flex justify-center pt-4', used && 'opacity-30')}>
           <QrCode value={t.qr} size={184} label={fill(T.qrLabel, { c: t.code })} />
         </div>
-        <div className="kd-num pt-2.5 text-center text-[15px] font-medium tracking-[0.12em] text-[#101010]">{t.code}</div>
+        <div className="kd-num pt-2.5 text-center text-[15px] font-medium tracking-[0.12em] text-on-inverse">{t.code}</div>
         <div className="flex items-center justify-between py-1.5 pl-4.5 pr-2">
           <span className="kd-s">
             {used ? T.checkedIn : t.listing ? fill(T.listed, { p: money(t.listing.price, 'VND', lang) }) : o.received ? T.received : offline ? T.offlineNow : T.offlineReady}
@@ -178,7 +178,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
             <span className="flex items-center">
               {o.tickets.map((x, k) => (
                 <button key={x.id} type="button" aria-label={fill(T.showTicket, { i: k + 1 })} aria-pressed={k === i} onClick={() => setI(k)} className="flex h-11 w-8 items-center justify-center">
-                  <span className={cx('block h-2 rounded-full transition-all', k === i ? 'w-5 bg-[#101010]' : 'w-2 bg-[#101010]/30')} />
+                  <span className={cx('block h-2 rounded-full transition-all', k === i ? 'w-5 bg-on-inverse' : 'w-2 bg-on-inverse/30')} />
                 </button>
               ))}
             </span>

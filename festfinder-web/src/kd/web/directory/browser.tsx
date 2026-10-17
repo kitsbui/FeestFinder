@@ -291,7 +291,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
 
         {list.items.length ? (
           <ul className={cx('kd-cards mt-2 transition-opacity', busy && 'opacity-60')} aria-label={T.results} aria-busy={busy}>
-            {list.items.map((a, i) => <li key={a.id} className="min-w-0"><ArtistCard a={a} i={i} lang={lang} /></li>)}
+            {list.items.map((a) => <li key={a.id} className="min-w-0"><ArtistCard a={a} lang={lang} /></li>)}
           </ul>
         ) : busy ? (
           <div className="kd-skel h-40" aria-hidden="true" />

@@ -77,7 +77,7 @@ export function FollowButton({ lang, kind, id, name, source, className }: {
   };
   return (
     // Until the page's own answer is in, whether this person follows is not known yet.
-    <button type="button" aria-pressed={on} onClick={toggle} disabled={!v} aria-busy={!v} className={buttonClass({ tone: on ? 'default' : 'acc' }, cx('min-w-[148px]', className))}>
+    <button type="button" aria-pressed={on} onClick={toggle} disabled={!v} aria-busy={!v} className={buttonClass({ tone: on ? 'ghost' : 'default' }, cx('min-w-[148px]', className))}>
       {on ? T.following : T.follow}
     </button>
   );
@@ -96,7 +96,7 @@ export function OwnerLink({ lang, source, href }: { lang: Lang; source: Source; 
   const T = pick(PROFILE, lang);
   const v = useViewer(source);
   if (!v?.owner) return null;
-  return <a className={buttonClass({ tone: 'acc' })} href={href}>{T.edit}</a>;
+  return <a className={buttonClass({})} href={href}>{T.edit}</a>;
 }
 
 export function ShareProfile({ lang, title }: { lang: Lang; title: string }) {
@@ -130,7 +130,7 @@ export function ClaimLink({ lang, kind, name, source }: { lang: Lang; kind: 'org
 }
 
 /**
- * "Đây là tôi" as the page's one lime action, on a profile nobody runs yet (D13): sign in, then
+ * "Đây là tôi" on a profile nobody runs yet (D13), outlined beside the page's one action: sign in, then
  * the role picker offers this listing to claim.
  */
 export function ClaimButton({ lang, kind, name, size, className }: { lang: Lang; kind: 'organizer' | 'artist'; name: string; size?: 'sm'; className?: string }) {
@@ -140,7 +140,7 @@ export function ClaimButton({ lang, kind, name, size, className }: { lang: Lang;
     if (!kd.requireSignIn(undefined, T.gateClaim)) return;
     kd.openRolePicker(kind, name);
   };
-  return <button type="button" onClick={go} className={buttonClass({ tone: 'acc', size }, className)}>{T.thisIsMe}</button>;
+  return <button type="button" onClick={go} className={buttonClass({ size }, className)}>{T.thisIsMe}</button>;
 }
 
 /**
@@ -209,7 +209,7 @@ export function PastList({ lang, items, first = 10 }: { lang: Lang; items: PastI
         <section key={yr.y} aria-label={yr.y} className="flex flex-col">
           <span className="kd-m kd-num pb-1.5 pt-4.5">{yr.y}</span>
           {yr.items.map((e) => (
-            <Link key={e.slug} href={inLang('/e/' + e.slug, lang)} className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line hover:bg-white/[0.03]', g(familyOf(e.genre)))}>
+            <Link key={e.slug} href={inLang('/e/' + e.slug, lang)} className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1 hover:bg-white/[0.03]', g(familyOf(e.genre)))}>
               <DateBlock day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} />
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="kd-hs kd-ell">{e.title}</span>

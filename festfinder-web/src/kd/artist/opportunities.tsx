@@ -96,7 +96,7 @@ function Open({ lang }: { lang: Lang }) {
                     </span>
                     {g.description ? <span className="kd-s line-clamp-2 whitespace-pre-line">{g.description}</span> : null}
                   </span>
-                  <span role="cell" className="kd-num text-right text-paper" title={g.match?.unavailable ? T.busyThatDay : undefined}>
+                  <span role="cell" className="kd-num text-right text-fg-1" title={g.match?.unavailable ? T.busyThatDay : undefined}>
                     {g.match ? `${g.match.score}/100` : '—'}
                     {g.match?.unavailable ? <span className="sr-only"> · {T.busyThatDay}</span> : null}
                   </span>
@@ -114,7 +114,7 @@ function Open({ lang }: { lang: Lang }) {
         <Sheet title={applying.title} closeLabel={T.close} onClose={() => setApplying(null)}>
           <div className="flex flex-col gap-4 pt-1">
             <span className="kd-s kd-num">{[applying.organizer?.name, dayMonth(applying.startsOn, lang), applying.cityLabel?.[lang], feeText(applying.feeMin, applying.feeMax, applying.currency, lang)].filter(Boolean).join(' · ')}</span>
-            <Field label={<>{T.message} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="op-msg">
+            <Field label={<>{T.message} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="op-msg">
               <TextArea id="op-msg" rows={4} maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} />
             </Field>
             <div className="flex justify-end gap-2">
@@ -185,7 +185,7 @@ function Brands({ lang }: { lang: Lang }) {
       {writing ? (
         <Sheet title={`${writing.brandName} · ${writing.title}`} closeLabel={T.close} onClose={() => setWriting(null)}>
           <div className="flex flex-col gap-4 pt-1">
-            <Field label={<>{T.message} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="br-msg">
+            <Field label={<>{T.message} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="br-msg">
               <TextArea id="br-msg" rows={4} maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} />
             </Field>
             <div className="flex justify-end gap-2">

@@ -12,8 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     // Any way up: tablets and unfolded foldables are often held sideways.
     orientation: 'any',
-    background_color: '#0E100F',
-    theme_color: '#0E100F',
+    background_color: '#08090a', // tokens-ok: the manifest needs a literal (theme.css surface-0)
+    theme_color: '#08090a', // tokens-ok
     lang: 'vi',
     categories: ['entertainment', 'music', 'lifestyle'],
     icons: [

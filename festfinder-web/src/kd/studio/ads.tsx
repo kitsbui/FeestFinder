@@ -121,7 +121,7 @@ function AskDrawer({ lang, data, eventId, onClose, onSent }: { lang: Lang; data:
               <label key={p.key} className="flex min-h-11 cursor-pointer items-center gap-3">
                 <input type="checkbox" className="kd-check" checked={places.includes(p.key)}
                   onChange={(e) => setPlaces((xs) => (e.target.checked ? [...xs, p.key] : xs.filter((x) => x !== p.key)))} />
-                <span className="kd-t text-paper">{p.label[lang]}</span>
+                <span className="kd-t text-fg-1">{p.label[lang]}</span>
               </label>
             ))}
           </fieldset>

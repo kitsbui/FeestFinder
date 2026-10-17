@@ -3,7 +3,7 @@
  * with its side nav and tables. Server-safe; current state is aria-current / aria-selected.
  */
 import { KdLink as Link } from '../link';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { cx } from '../cx';
 import { Rail } from './rail';
 
@@ -15,9 +15,23 @@ export interface TabItem { key: string; label: ReactNode; count?: number | null;
 export function Tabs({ items, current, onSelect, label, className }: {
   items: TabItem[]; current: string; onSelect?: (key: string) => void; label: string; className?: string;
 }) {
+  const Box = onSelect ? 'div' : 'nav';
+  // A tablist takes one Tab stop (the chosen tab); the arrows, Home and End move along it and choose.
+  const anyOn = items.some((t) => t.key === current);
+  const onKey = onSelect ? (e: KeyboardEvent<HTMLElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const tabs = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    e.preventDefault();
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (at + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    tabs[n].focus();
+    onSelect(items[n].key);
+  } : undefined;
   return (
-    <div role={onSelect ? 'tablist' : undefined} aria-label={label} className={cx('kd-tabs', className)}>
-      {items.map((t) => {
+    // Tabs that are links are a small navigation (a landmark with its name); tabs that switch panels are a tablist.
+    <Box role={onSelect ? 'tablist' : undefined} aria-label={label} className={cx('kd-tabs', className)} onKeyDown={onKey}>
+      {items.map((t, i) => {
         const on = t.key === current;
         const body = (
           <>
@@ -29,12 +43,12 @@ export function Tabs({ items, current, onSelect, label, className }: {
           return <Link key={t.key} href={t.href} scroll={false} aria-current={on ? 'page' : undefined} className="kd-tab">{body}</Link>;
         }
         return (
-          <button key={t.key} type="button" role="tab" aria-selected={on} className="kd-tab" onClick={() => onSelect?.(t.key)}>
+          <button key={t.key} type="button" role="tab" aria-selected={on} tabIndex={on || (!anyOn && i === 0) ? 0 : -1} className="kd-tab" onClick={() => onSelect?.(t.key)}>
             {body}
           </button>
         );
       })}
-    </div>
+    </Box>
   );
 }
 
@@ -46,7 +60,7 @@ export function AppBar({ children, className }: { children: ReactNode; className
 
 export interface TabBarItem { key: string; label: string; href: string; icon: ReactNode; external?: boolean }
 
-/** The floating glass tab bar: five tabs, the current one marked with a lime tick. */
+/** The floating glass tab bar: five tabs, the current one marked with a turquoise tick. */
 export function TabBar({ items, current, label }: { items: TabBarItem[]; current: string; label: string }) {
   return (
     <nav aria-label={label} className="kd-tabbar kd-glass">
@@ -108,9 +122,13 @@ export const shrinkable = (cols: string) =>
   cols.replace(/minmax\(\s*[^,()]+,/g, 'minmax(0,').replace(/(^|\s)(\d+(?:\.\d+)?(?:px|rem))(?=\s|$)/g, '$1minmax(0,$2)');
 
 /** A table built from grid rows; `cols` is the grid-template-columns of every row. */
-export function Table({ cols, head, children, label }: { cols: string; head: ReactNode[]; children: ReactNode; label?: string }) {
+/**
+ * `fold`: the container width under which rows become cards, for a table whose fixed columns leave its
+ * name column nothing below that width (md 900, lg 1000, xl 1160; every table folds under 640).
+ */
+export function Table({ cols, head, children, label, fold }: { cols: string; head: ReactNode[]; children: ReactNode; label?: string; fold?: 'md' | 'lg' | 'xl' }) {
   return (
-    <div className="kd-tbl" role="table" aria-label={label}>
+    <div className="kd-tbl" role="table" aria-label={label} data-fold={fold}>
       <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: shrinkable(cols) }}>
         {head.map((h, i) => <span role="columnheader" key={i} className="kd-m">{h}</span>)}
       </div>

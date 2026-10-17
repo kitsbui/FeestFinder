@@ -91,7 +91,7 @@ function SavedList({ lang }: { lang: Lang }) {
       ) : null}
 
       {col ? (
-        <div className="mx-4 mt-3 flex items-center gap-3 border-b border-line pb-3">
+        <div className="mx-4 mt-3 flex items-center gap-3 border-b border-line-1 pb-3">
           <span className="kd-s flex-1">{T.colPublic}</span>
           {col.url ? <IconButton size="sm" label={T.copyLink} onClick={copy}><LinkIcon size={18} aria-hidden="true" /></IconButton> : null}
           <Switch checked={col.isPublic} onChange={setPublic} label={T.colPublic} />
