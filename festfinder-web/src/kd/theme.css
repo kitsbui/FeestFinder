@@ -214,8 +214,8 @@
   /* A person or an artist without a photo: their initials, large and centred, at any size (the directory's square cards). */
   .kd-art-mono .kd-art-t { display: none; }
   /* A hero without a picture (Art `poster`): the date set large over a field of the information colour, the style and the rest under it. */
-  .kd-art-p { position: absolute; inset: 0; z-index: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 64px 20px 60px; background: radial-gradient(110% 85% at 0% 100%, color-mix(in srgb, var(--color-info) 16%, transparent), transparent 64%); }
-  .kd-art-p b { font-size: clamp(44px, 17cqi, 128px); line-height: 0.92; letter-spacing: -0.045em; font-weight: 700; color: var(--color-fg-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kd-art-p { position: absolute; inset: 0; z-index: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 44px 20px 54px; background: radial-gradient(110% 85% at 0% 100%, color-mix(in srgb, var(--color-info) 16%, transparent), transparent 64%); }
+  .kd-art-p b { font-size: clamp(36px, 14cqi, 120px); line-height: 0.92; letter-spacing: -0.045em; font-weight: 700; color: var(--color-fg-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .kd-art-p b::before { content: attr(data-t); }
   .kd-art-p i { font-style: normal; font-size: clamp(13px, 2.6cqi, 16px); line-height: 1.35; color: var(--color-fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .kd-art-p i::before { content: attr(data-k); color: var(--color-info); }
