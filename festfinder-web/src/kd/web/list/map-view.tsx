@@ -181,7 +181,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
               aria-pressed={x.id === sel}
               onClick={() => setSel(x.id)}
               className={cx(
-                'grid min-h-16 grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-opt border-0 bg-transparent px-2 py-2 text-left transition-colors duration-150 hover:bg-white/[0.04]',
+                'grid min-h-16 grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-opt border-0 bg-transparent px-2 py-2 text-left transition-colors duration-(--dur-1) hover:bg-white/[0.04]',
                 x.id === sel && 'bg-white/[0.06] shadow-[inset_0_0_0_1px_var(--color-line-2)]',
                 g(familyOf(x.genre)),
               )}

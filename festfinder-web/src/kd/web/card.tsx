@@ -6,6 +6,7 @@
  * - `lead`: the first night of a day on the home page, its art 16:9 and its name larger;
  * - `row`: a thumbnail beside the words, the tags in the line under the price.
  */
+import { ViewTransition } from 'react';
 import { KdLink as Link, inLang } from '../link';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
@@ -36,7 +37,11 @@ export function priceLine(e: Pick<Card, 'isFree' | 'priceFrom' | 'currency' | 'e
 
 export type CardLook = 'card' | 'lead' | 'row';
 
-export function EventCard({ e, lang, look = 'card' }: { e: Card; lang: Lang; look?: CardLook }) {
+/**
+ * `morph`: the picture becomes the event page's hero when it opens (React's ViewTransition, design v2
+ * phase 8). Only where an event appears once on the page (the list's days): two of one name would clash.
+ */
+export function EventCard({ e, lang, look = 'card', morph = false }: { e: Card; lang: Lang; look?: CardLook; morph?: boolean }) {
   const T = pick(WEB, lang);
   const fam = familyOf(e.genre);
   const tag = cardTag(e, lang);
@@ -44,11 +49,14 @@ export function EventCard({ e, lang, look = 'card' }: { e: Card; lang: Lang; loo
   const lead = !e.past && !e.soldOut && e.status !== 'cancelled' && (!!e.festival?.flagship || (!e.badge && e.featured));
   const href = inLang('/e/' + e.slug, lang);
   const radar = e.origin === 'radar';
+  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} />;
   return (
     <article className={cx('kd-ev', look !== 'card' && `kd-ev-${look}`, g(fam))}>
       <div className="kd-ev-art relative">
         <Link href={href} tabIndex={-1} aria-hidden="true">
-          <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} />
+          {morph ? (
+            <ViewTransition name={'ev-' + e.slug} share="morph" default="none">{art}</ViewTransition>
+          ) : art}
         </Link>
         {tag ? <span className={cx('kd-ev-tag kd-tag pointer-events-none absolute left-2.5 top-2.5', lead ? 'kd-tag-featured' : 'kd-tag-glass text-fg-1')}>{tag}</span> : null}
         {radar ? <RadarTag lang={lang} glass className="kd-ev-radar pointer-events-none absolute bottom-2.5 left-2.5" /> : null}

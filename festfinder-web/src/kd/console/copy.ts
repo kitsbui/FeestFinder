@@ -161,6 +161,8 @@ export const CONSOLE = {
   noAds: { en: 'Nothing waiting', vi: 'Không có gì đang chờ' },
   // insights
   kLive: { en: 'Live listings', vi: 'Sự kiện đang đăng' },
+  kCovers: { en: 'With a real cover', vi: 'Có ảnh thật' },
+  kCoversOf: { en: 'of {n} coming listings', vi: 'trên {n} tin sắp diễn' },
   kLiveNew: { en: '+{n} this week', vi: '+{n} tuần này' },
   kUsers: { en: 'New accounts', vi: 'Người dùng mới' },
   kClicks: { en: 'Ticket clicks', vi: 'Bấm mua vé' },

@@ -18,7 +18,7 @@ import { buttonClass } from '../ui/actions';
 import { AskHost } from '../console/kit';
 import { Menu, MenuItem } from '../ui/menu';
 import { Avatar, Card as Panel } from '../ui/parts';
-import { Logo } from '../ui/logo';
+import { FlagLoader, Logo } from '../ui/logo';
 import { Shell, SideNav } from '../ui/shell';
 import { WorkspaceSwitch } from '../ui/workspaces';
 import { place } from '../app/place';
@@ -114,7 +114,7 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
     history.replaceState(history.state, '', location.pathname + (q.size ? '?' + q : ''));
     setPicked(id);
   }, []);
-  if (kd.session === undefined) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>;
+  if (kd.session === undefined) return <FlagLoader lang={lang} />;
   // "Đăng sự kiện" opens the form at once: signing in (and making the organiser) waits for the submit step.
   if ((!kd.user || !orgs.length) && current === 'new') {
     return (

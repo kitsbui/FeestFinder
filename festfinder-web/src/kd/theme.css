@@ -106,7 +106,11 @@
   --breakpoint-wide: 1200px;    /* the nav's search field (web/chrome.tsx) */
   --container-read: 760px;     /* max-w-read: reading measure */
 
-  /* ---- motion ---- */
+  /* ---- motion (design v2 phase 8): three durations, one curve. dur-1 a state (hover, press, a colour),
+     dur-2 a part that moves (a menu, a sheet, a dock, a step), dur-3 the page (a card becoming its event). ---- */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
   --ease-ff: cubic-bezier(0.4, 0, 0.2, 1);
   --animate-kd-pulse: kd-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   --animate-kd-scan: kd-scan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -209,6 +213,14 @@
   .kd-art-hero .kd-art-t { padding: 72px 20px 60px; }
   /* A person or an artist without a photo: their initials, large and centred, at any size (the directory's square cards). */
   .kd-art-mono .kd-art-t { display: none; }
+  /* A hero without a picture (Art `poster`): the date set large over a field of the information colour, the style and the rest under it. */
+  .kd-art-p { position: absolute; inset: 0; z-index: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 64px 20px 60px; background: radial-gradient(110% 85% at 0% 100%, color-mix(in srgb, var(--color-info) 16%, transparent), transparent 64%); }
+  .kd-art-p b { font-size: clamp(44px, 17cqi, 128px); line-height: 0.92; letter-spacing: -0.045em; font-weight: 700; color: var(--color-fg-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kd-art-p b::before { content: attr(data-t); }
+  .kd-art-p i { font-style: normal; font-size: clamp(13px, 2.6cqi, 16px); line-height: 1.35; color: var(--color-fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kd-art-p i::before { content: attr(data-k); color: var(--color-info); }
+  .kd-art-p i::after { content: attr(data-m); }
+  .kd-art.kd-off .kd-art-p b, .kd-art.kd-off .kd-art-p i::before { color: var(--color-fg-3); }
   .kd-art-mono .kd-art-m { display: flex; }
   .kd-art-mono .kd-art-m b { font-size: clamp(18px, 22cqi, 64px); }
   .kd-art-m i { font-size: 10px; }
@@ -223,6 +235,8 @@
   /* emblem: a badge = a marker or a number on a ring of the information colour */
   .kd-emb { position: relative; flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--color-surface-2); box-shadow: inset 0 0 0 2px var(--g, var(--color-info)); }
   .kd-emb .kd-mk { width: 20px; height: 20px; border-radius: 4px; }
+  .kd-emb-i { display: flex; color: var(--color-info); }
+  .kd-emb.kd-off .kd-emb-i { color: var(--color-fg-3); }
   .kd-emb .kd-n { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
   .kd-emb.kd-off { box-shadow: inset 0 0 0 2px var(--color-line-2); }
   .kd-emb.kd-off .kd-mk { background: var(--color-line-2); }
@@ -241,9 +255,9 @@
   .kd-st.kd-live::before { background: var(--color-bad); animation: var(--animate-kd-pulse); }
 
   /* switch: state is track colour AND knob position */
-  .kd-switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; padding: 0; border: 0; border-radius: 9999px; background: var(--color-line-2); cursor: pointer; transition: background-color 0.15s var(--ease-ff); }
+  .kd-switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; padding: 0; border: 0; border-radius: 9999px; background: var(--color-line-2); cursor: pointer; transition: background-color var(--dur-1) var(--ease-ff); }
   .kd-switch::before { content: ""; position: absolute; inset: -9px 0; }
-  .kd-switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--color-fg-1); transition: transform 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
+  .kd-switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--color-fg-1); transition: transform var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
   .kd-switch[aria-checked="true"] { background: var(--color-info); }
   .kd-switch[aria-checked="true"]::after { transform: translateX(18px); background: var(--color-surface-0); }
 
@@ -251,7 +265,7 @@
   .kd-acc { border-bottom: 1px solid var(--color-line-1); }
   .kd-acc > summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 56px; cursor: pointer; color: var(--color-fg-1); font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
   .kd-acc > summary::-webkit-details-marker { display: none; }
-  .kd-acc > summary .kd-chev { margin-left: auto; color: var(--color-fg-3); transition: transform 0.15s var(--ease-ff); }
+  .kd-acc > summary .kd-chev { margin-left: auto; color: var(--color-fg-3); transition: transform var(--dur-1) var(--ease-ff); }
   .kd-acc[open] > summary .kd-chev { transform: rotate(180deg); }
   .kd-acc.kd-sm > summary { min-height: 48px; font-size: 15px; }
 

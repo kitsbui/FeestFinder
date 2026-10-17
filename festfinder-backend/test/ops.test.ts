@@ -160,7 +160,7 @@ describe('operations back office', () => {
   it('lists what an organiser still has to fill in, and duplicates a listing into a new draft', async () => {
     const list = await env.as(organizer).get('/organizer/events');
     const bus = list.body.items.find((e: any) => e.status === 'draft' && e.title.startsWith('Ravolution Bus'));
-    assert.deepEqual(bus.missing, ['price', 'logo', 'eventUrl']);
+    assert.deepEqual(bus.missing, ['price', 'logo', 'cover', 'eventUrl']);
     assert.equal(bus.genre, 'EDM');
     const ravo = list.body.items.find((e: any) => e.slug === 'ravolution-music-festival' || e.title === 'Ravolution Music Festival');
     const copy = await env.as(organizer).post(`/organizer/events/${ravo.id}/duplicate`);

@@ -180,6 +180,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
             {waiting != null ? <Status tone={waiting >= 240 ? 'bad' : waiting >= 120 ? 'warn' : 'none'}>{fill(R.waitingFor, { d: duration(waiting, lang) })}</Status> : null}
             {item?.festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
             {item?.fit ? <Status tone={FIT_TONE[item.fit.band]}>{fill(R.fitN, { n: item.fit.score })}</Status> : null}
+            {ev && !ev.coverUrl ? <Status tone="warn">{R.noCover}</Status> : null}
             {ev ? <Status tone={BAND_TONE[ev.risk.band]}>{fill(ev.risk.band === 'high' ? R.riskHigh : ev.risk.band === 'medium' ? R.riskMedium : R.riskLow, { n: ev.risk.score })}</Status> : null}
           </div>
         </div>

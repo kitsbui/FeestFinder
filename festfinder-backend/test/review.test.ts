@@ -13,7 +13,7 @@ const READY = (title: string) => ({
   title, startsOn: '2026-10-10', startTime: '20:00', endTime: '02:00', venueName: 'Kho Số 9', city: 'ho-chi-minh',
   description: { en: 'A long night of techno with two rooms and the full production crew back for the closing of the season.', vi: '' },
   entryMode: 'paid', priceFrom: 300000, ticketUrl: 'https://ticketbox.vn/night', eventUrl: 'https://example.com/night',
-  logoUrl: 'https://assets.feestfinder.com/logos/ravoent.png', lineup: ['Hoaprox'], age: '18+',
+  logoUrl: 'https://assets.feestfinder.com/logos/ravoent.png', coverUrl: 'https://assets.feestfinder.com/covers/night.jpg', lineup: ['Hoaprox'], age: '18+',
 });
 
 describe('review of listings', () => {

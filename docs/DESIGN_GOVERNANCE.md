@@ -15,7 +15,7 @@ Design v2 phase 6 ("QA và quản trị", continuous). The design review canvas 
 | Screens | `visual.yml` | the main screens look different from the base branch's and nobody accepted it |
 | Checklist | `design-checklist.yml` | a PR that touches `festfinder-web` or `festfinder-frontend` has an unticked box in its "Thiết kế" checklist |
 
-The last two run only on pull requests. To make them, and CI, a condition of merging, the owner protects `main` on GitHub (Settings → Branches: require a pull request and the checks `Design checklist`, `Visual (PR vs base)`, `Screens (next)`, `Web (Next.js)` and the two `API` jobs); until then the ship skill (`.claude/skills/feestfinder-ship`) sends every change to the front through a pull request.
+The last two run only on pull requests. To make them, and CI, a condition of merging, the owner protects `main` on GitHub (Settings → Branches: require a pull request and the checks `Design checklist`, `Visual (PR vs base)`, the three `Screens (next n/3)`, `Web (Next.js)` and the two `API` jobs); until then the ship skill (`.claude/skills/feestfinder-ship`) sends every change to the front through a pull request.
 
 ### Screens: accepting a visual change
 

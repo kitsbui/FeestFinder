@@ -66,6 +66,9 @@ test.describe('Studio, signed in', () => {
     await page.getByRole('button', { name: 'EDM', exact: true }).click();
     await page.locator('input[type=file]').first().setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: png(400, 400) });
     await expect(page.getByRole('button', { name: 'Đổi · Logo' })).toBeVisible();
+    // A cover is asked for before sending (design v2 phase 8).
+    await page.locator('input[type=file]').nth(1).setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: png(1600, 900) });
+    await expect(page.getByRole('button', { name: 'Đổi · Ảnh bìa' })).toBeVisible();
     await page.getByLabel('Trang sự kiện').fill('https://example.com/dem-thu');
     await expect(page.getByRole('status').filter({ hasText: /Đã lưu/ })).toBeVisible();
     await expect(page).toHaveURL(/\?draft=/);

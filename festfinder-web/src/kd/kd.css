@@ -65,7 +65,7 @@
     height: 44px; padding: 0 16px; border: 0; border-radius: var(--radius-btn);
     font-size: 14px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; cursor: pointer;
     color: var(--color-fg-1); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--color-line-1);
-    transition: background-color 0.15s var(--ease-ff), box-shadow 0.15s var(--ease-ff), color 0.15s var(--ease-ff);
+    transition: background-color var(--dur-1) var(--ease-ff), box-shadow var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff);
   }
   .kd-btn:hover { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px var(--color-line-2); }
   .kd-btn-acc { background: var(--gradient-accent); color: var(--color-on-accent); font-weight: 600; box-shadow: none; }
@@ -98,7 +98,7 @@
     position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
     width: 44px; height: 44px; padding: 0; border: 0; border-radius: 9999px; cursor: pointer;
     color: var(--color-fg-2); background: transparent;
-    transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff);
+    transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff);
   }
   .kd-ib:hover { background: rgba(255, 255, 255, 0.08); color: var(--color-fg-1); }
   .kd-ib-line { box-shadow: inset 0 0 0 1px var(--color-line-1); }
@@ -115,7 +115,7 @@
     position: relative; display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
     height: 36px; max-width: 100%; min-width: 0; overflow: hidden; padding: 0 12px; border: 0; border-radius: var(--radius-btn); cursor: pointer; white-space: nowrap;
     font-size: 13px; color: var(--color-fg-2); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
-    transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff);
+    transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff);
   }
   .kd-chip:hover { background: rgba(255, 255, 255, 0.09); color: var(--color-fg-1); }
   /* Chosen is information: a turquoise tint and edge, like the chosen tab. */
@@ -147,7 +147,7 @@
   .kd-field {
     display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 14px; border-radius: var(--radius-btn); color: var(--color-fg-3);
     background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-    transition: box-shadow 0.15s var(--ease-ff);
+    transition: box-shadow var(--dur-1) var(--ease-ff);
   }
   .kd-field:focus-within { box-shadow: inset 0 0 0 2px var(--color-lime); }
   .kd-field[data-invalid='true'] { box-shadow: inset 0 0 0 1px var(--color-bad); }
@@ -168,7 +168,7 @@
   .kd-check { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--color-info); }
 
   .kd-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-seg); background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
-  .kd-seg > button { position: relative; height: 32px; padding: 0 12px; border: 0; border-radius: calc(var(--radius-seg) - 3px); background: transparent; color: var(--color-fg-3); font-size: 13px; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-seg > button { position: relative; height: 32px; padding: 0 12px; border: 0; border-radius: calc(var(--radius-seg) - 3px); background: transparent; color: var(--color-fg-3); font-size: 13px; cursor: pointer; white-space: nowrap; transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff); }
   .kd-seg > button:hover { color: var(--color-fg-1); }
   .kd-seg > button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.1); color: var(--color-fg-1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
   .kd-seg-full { display: flex; }
@@ -190,7 +190,7 @@
     display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px;
     width: 100%; min-height: 56px; padding: 10px 14px; border: 0; border-radius: var(--radius-opt); text-align: left; cursor: pointer; color: inherit;
     background: rgba(255, 255, 255, 0.03); box-shadow: inset 0 0 0 1px var(--color-line-1);
-    transition: box-shadow 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff);
+    transition: box-shadow var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff);
   }
   .kd-opt:hover { box-shadow: inset 0 0 0 1px var(--color-line-2); }
   .kd-opt[aria-checked='true'] { background: color-mix(in srgb, var(--color-info) 8%, transparent); box-shadow: inset 0 0 0 1.5px var(--color-info); }
@@ -210,7 +210,7 @@
     font-size: 12px; font-weight: 500; color: var(--color-fg-1); font-variant-numeric: tabular-nums;
     background: rgba(15, 16, 17, 0.5); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-    transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff), transform 0.15s var(--ease-ff);
+    transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff), transform var(--dur-1) var(--ease-ff);
   }
   .kd-ppin::after { content: ''; position: absolute; inset: -7px -2px; }
   .kd-ppin:hover { transform: scale(1.05); }
@@ -228,7 +228,7 @@
   /* ---- mobile shell ---- */
   .kd-bar { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px 0 16px; }
   .kd-tabbar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 20; height: 64px; padding: 0 4px; border-radius: var(--radius-sheet); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .kd-tb { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--color-fg-3); transition: color 0.15s var(--ease-ff); }
+  .kd-tb { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; color: var(--color-fg-3); transition: color var(--dur-1) var(--ease-ff); }
   .kd-tb:hover { color: var(--color-fg-1); }
   .kd-tb[aria-current='page'] { color: var(--color-fg-1); }
   .kd-tb[aria-current='page']::before { content: ''; position: absolute; top: 6px; width: 18px; height: 3px; border-radius: 2px; background: var(--color-info); }
@@ -240,7 +240,7 @@
   @media (max-width: 899px) { body:has(.kd-tabbar-edge) { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }
   @media (min-width: 900px) { .kd-tabbar-edge { display: none; } }
   /* The event page's buy bar on a phone (web/event/dock.tsx): above the tab bar; it steps aside while the ticket panel is on screen. */
-  .kd-buy-dock { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 19; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--color-surface-1); box-shadow: inset 0 1px 0 var(--color-line-1); transition: transform 0.2s var(--ease-ff), opacity 0.2s var(--ease-ff); }
+  .kd-buy-dock { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 19; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--color-surface-1); box-shadow: inset 0 1px 0 var(--color-line-1); transition: transform var(--dur-2) var(--ease-ff), opacity var(--dur-2) var(--ease-ff); }
   .kd-buy-dock[data-away] { transform: translateY(100%); opacity: 0; pointer-events: none; }
   @media (max-width: 899px) {
     body:has(.kd-buy-dock) { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
@@ -270,7 +270,7 @@
   @media (min-width: 900px) { .kd-cmd { top: 65px; } }
   /* A keyboard shortcut named in a field (the nav's ⌘K). */
   .kd-kbd { flex-shrink: 0; padding: 1px 5px; border-radius: var(--radius-tag); box-shadow: inset 0 0 0 1px var(--color-line-1); font: inherit; font-size: 11px; color: var(--color-fg-3); }
-  .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
+  .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
   .kd-nl:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.05); }
   .kd-nl[aria-current='page'] { color: var(--color-fg-1); }
   .kd-nl[aria-current='page']::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 6px; height: 2px; border-radius: 2px; background: var(--color-info); }
@@ -297,7 +297,13 @@
   .kd-day-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px 32px; align-items: start; }
   .kd-day-stack { display: flex; flex-direction: column; }
   .kd-day-stack > .kd-ev-row:first-child { padding-top: 0; }
+  /* One night: across the width, the picture beside the words. Two: two leads side by side. */
+  .kd-day-solo .kd-ev { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: center; gap: 16px 32px; }
+  /* The save button stays on the picture's corner: the words' column is 2 of 5 parts, after a 32px gap. */
+  .kd-day-solo .kd-ev-save { right: calc((100% - 32px) * 0.4 + 42px); }
+  .kd-day-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; align-items: start; }
   @container days (max-width: 599px) {
+    .kd-day-pair { grid-template-columns: minmax(0, 1fr); gap: 0; }
     .kd-day-top { grid-template-columns: minmax(0, 1fr); gap: 0; }
     .kd-days .kd-cards { grid-template-columns: minmax(0, 1fr); gap: 0; }
     .kd-days .kd-ev { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; column-gap: 14px; padding: 12px 52px 12px 0; border-bottom: 1px solid var(--color-line-1); }
@@ -317,12 +323,12 @@
   .kd-shell { display: flex; flex-wrap: wrap; align-content: flex-start; min-height: 100dvh; }
   .kd-side-nav { flex: 1 1 240px; max-width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 16px 12px; border-right: 1px solid var(--color-line-1); background: var(--color-surface-1); }
   .kd-shell > .kd-content { flex: 999 1 640px; min-width: 0; }
-  .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fg-3); transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fg-3); transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff); }
   .kd-sn:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.04); }
   .kd-sn[aria-current='page'] { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.07); }
   /* The Studio wizard's stepper (studio/wizard.tsx): a progress bar in the accent, then one button per step. */
   .kd-steps-bar { display: block; height: 4px; border-radius: var(--radius-pill); background: var(--color-surface-2); overflow: hidden; }
-  .kd-steps-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--gradient-accent); transition: width 0.3s var(--ease-ff); }
+  .kd-steps-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--gradient-accent); transition: width var(--dur-3) var(--ease-ff); }
   .kd-step { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-fg-3); text-align: left; cursor: pointer; }
   .kd-step:hover, .kd-step[aria-current='step'] { color: var(--color-fg-1); }
   .kd-step-dot { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--color-line-2); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -346,7 +352,7 @@
   /* Each tab carries its own hairline, so a wrapped second row keeps the chosen one's underline on a line. */
   .kd-tabs { display: flex; flex-wrap: wrap; min-width: 0; }
   .kd-tabs > .kd-tab { box-shadow: inset 0 -1px 0 var(--color-line-1); }
-  .kd-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; color: var(--color-fg-3); white-space: nowrap; cursor: pointer; transition: color 0.15s var(--ease-ff); }
+  .kd-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; color: var(--color-fg-3); white-space: nowrap; cursor: pointer; transition: color var(--dur-1) var(--ease-ff); }
   .kd-tab:hover { color: var(--color-fg-1); }
   .kd-tab[aria-selected='true'], .kd-tab[aria-current='page'], .kd-tab[aria-current='true'] { color: var(--color-fg-1); }
   .kd-tab[aria-selected='true']::after, .kd-tab[aria-current='page']::after, .kd-tab[aria-current='true']::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--color-info); }
@@ -385,7 +391,7 @@
     .kd-tbl[data-fold='xl'] .kd-tr > :first-child { flex: 1 1 100%; }
     .kd-tbl[data-fold='xl'] .kd-tr-head { display: none; }
   }
-  button.kd-tr, a.kd-tr { width: 100%; text-align: left; border-top: 0; border-left: 0; border-right: 0; background: transparent; color: inherit; transition: background-color 0.15s var(--ease-ff); }
+  button.kd-tr, a.kd-tr { width: 100%; text-align: left; border-top: 0; border-left: 0; border-right: 0; background: transparent; color: inherit; transition: background-color var(--dur-1) var(--ease-ff); }
   button.kd-tr:hover, a.kd-tr:hover { background: rgba(255, 255, 255, 0.03); }
 
   /* ---- charts ---- */
@@ -419,19 +425,26 @@
   .kd-bonecard .kd-dblk .kd-mm { color: var(--color-on-inverse-2); }
   /* A KPI that leads its row (Studio): the same edge. */
   .kd-kpi-hi { box-shadow: inset 0 0 0 1px var(--color-info); }
-  .kd-stamp { display: flex; flex-direction: column; gap: 6px; min-width: 0; transition: opacity 0.15s var(--ease-ff); }
+  .kd-stamp { display: flex; flex-direction: column; gap: 6px; min-width: 0; transition: opacity var(--dur-1) var(--ease-ff); }
   .kd-stamp .kd-tile { position: relative; aspect-ratio: 1; border-radius: var(--radius-opt); display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.03); box-shadow: inset 0 0 0 1px var(--color-line-1); }
-  .kd-stamp .kd-tile::after { content: ''; position: absolute; inset: 6px; border-radius: 6px; border: 1px dashed var(--color-line-2); }
-  .kd-stamp .kd-tile .kd-mk { width: 28px; height: 28px; }
+  .kd-stamp .kd-tile::after { content: ''; position: absolute; z-index: 2; inset: 6px; border-radius: 6px; border: 1px dashed var(--color-line-2); }
+  /* Each stamp its own (ui/parts.tsx Stamp): a turn, the cover in the information colour, or the initials; the city along the foot. */
+  .kd-stamp .kd-tile { overflow: hidden; container-type: inline-size; transform: rotate(var(--tilt, 0deg)); }
+  .kd-stamp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.15) brightness(0.75); }
+  .kd-stamp .kd-tile:has(.kd-stamp-img)::before { content: ''; position: absolute; z-index: 1; inset: 0; background: color-mix(in srgb, var(--color-info) 38%, transparent); mix-blend-mode: color; }
+  .kd-stamp-mono { position: relative; font-size: clamp(18px, 32cqi, 44px); line-height: 1; letter-spacing: -0.03em; font-weight: 700; color: var(--color-info); }
+  .kd-stamp-mono::before { content: attr(data-t); }
+  .kd-stamp-city { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 11px; font-style: normal; font-size: 9px; line-height: 1; letter-spacing: 0.12em; text-transform: uppercase; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-fg-1); }
+  .kd-stamp-city::before { content: attr(data-c); }
   .kd-stamp.kd-dim { opacity: 0.22; }
-  .kd-bdg { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 8px 12px; border: 0; border-radius: var(--radius-card); text-align: center; cursor: pointer; color: inherit; background: var(--color-surface-1); box-shadow: inset 0 0 0 1px var(--color-line-1); transition: box-shadow 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
+  .kd-bdg { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 8px 12px; border: 0; border-radius: var(--radius-card); text-align: center; cursor: pointer; color: inherit; background: var(--color-surface-1); box-shadow: inset 0 0 0 1px var(--color-line-1); transition: box-shadow var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
   .kd-bdg:hover { box-shadow: inset 0 0 0 1px var(--color-line-2); }
   .kd-bdg[aria-pressed='true'] { background: var(--color-surface-2); box-shadow: inset 0 0 0 1.5px var(--color-fg-1); }
 
   /* ---- disclosure ---- */
   /* Its own type wherever it opens: inside a display heading it would take the heading's tracking and leading. */
   .kd-menu { position: absolute; z-index: 40; min-width: 220px; padding: 6px; display: flex; flex-direction: column; gap: 2px; font-family: var(--font-sans); font-size: 14px; font-weight: 400; line-height: 1.4; letter-spacing: normal; text-transform: none; text-wrap: nowrap; }
-  .kd-mi { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: var(--radius-seg); background: transparent; color: var(--color-fg-2); font-size: 14px; text-align: left; cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-mi { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: var(--radius-seg); background: transparent; color: var(--color-fg-2); font-size: 14px; text-align: left; cursor: pointer; white-space: nowrap; transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff); }
   @media (pointer: coarse) { .kd-mi { min-height: 44px; } }
   .kd-mi:hover, .kd-mi:focus-visible { background: rgba(255, 255, 255, 0.07); color: var(--color-fg-1); }
   .kd-mi:hover { outline: none; }
@@ -447,12 +460,12 @@
   .kd-mi .kd-aside { margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); }
   .kd-mi-sep { height: 1px; margin: 4px 6px; background: var(--color-line-1); }
   .kd-scrim { position: fixed; inset: 0; z-index: 25; padding: 0; border: 0; background: transparent; cursor: default; }
-  .kd-dd { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line-2); text-decoration-thickness: 2px; text-underline-offset: 6px; transition: text-decoration-color 0.15s var(--ease-ff); }
+  .kd-dd { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line-2); text-decoration-thickness: 2px; text-underline-offset: 6px; transition: text-decoration-color var(--dur-1) var(--ease-ff); }
   .kd-dd:hover, .kd-dd[aria-expanded='true'] { text-decoration-color: var(--color-info); }
   /* In a heading the word flows with the sentence, chevron and all. */
   .kd-dd-inline { display: inline; text-align: inherit; }
   .kd-dd-inline > .kd-chev { display: inline-block; vertical-align: middle; margin-left: 0.12em; }
-  .kd-chev { transition: transform 0.15s var(--ease-ff); }
+  .kd-chev { transition: transform var(--dur-1) var(--ease-ff); }
   [aria-expanded='true'] > .kd-chev { transform: rotate(180deg); }
   .kd-acc > summary:hover .kd-chev { color: var(--color-fg-1); }
   .kd-acc .kd-acc-b { padding: 0 0 18px; }
@@ -465,7 +478,7 @@
   .kd-mtile { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: var(--radius-tag); overflow: hidden; cursor: zoom-in; background: var(--color-surface-1); }
   .kd-mtile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .kd-mtile .kd-art { position: absolute; inset: 0; border-radius: 0; }
-  .kd-mplus { aspect-ratio: 1; padding: 0; border: 1px dashed var(--color-line-2); border-radius: var(--radius-tag); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: transparent; color: var(--color-fg-3); font: inherit; cursor: pointer; transition: border-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
+  .kd-mplus { aspect-ratio: 1; padding: 0; border: 1px dashed var(--color-line-2); border-radius: var(--radius-tag); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: transparent; color: var(--color-fg-3); font: inherit; cursor: pointer; transition: border-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff); }
   .kd-mplus:hover { border-color: var(--color-fg-3); color: var(--color-fg-1); }
 
   /* ---- toast ---- */
@@ -515,16 +528,16 @@ ff-scrollbars {
 .ff-sb {
   position: absolute; top: 0; left: 0; display: block; width: 12px; height: 12px;
   opacity: 0; pointer-events: none; will-change: transform, opacity;
-  transition: opacity 0.45s var(--ease-ff);
+  transition: opacity var(--dur-3) var(--ease-ff);
 }
 .ff-sb[hidden] { display: none; }
 .ff-sb::after {
   content: ''; position: absolute; border-radius: 999px; background: rgba(247, 248, 248, 0.34);
-  transition: width 0.15s var(--ease-ff), height 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff);
+  transition: width var(--dur-1) var(--ease-ff), height var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff);
 }
 .ff-sb-y::after { top: 0; bottom: 0; right: 2px; width: 3px; }
 .ff-sb-x::after { left: 0; right: 0; bottom: 2px; height: 3px; }
-.ff-sb.on { opacity: 1; transition-duration: 0.12s; }
+.ff-sb.on { opacity: 1; transition-duration: var(--dur-1); }
 @media (pointer: fine) {
   .ff-sb.on { pointer-events: auto; cursor: default; }
   .ff-sb-y:hover::after, .ff-sb-y.drag::after { width: 6px; background: rgba(247, 248, 248, 0.56); }
@@ -532,6 +545,13 @@ ff-scrollbars {
 }
 @media (prefers-reduced-motion: reduce) {
   .ff-sb, .ff-sb::after { transition: none; }
+}
+
+/* A card's picture becoming its event's hero (web/card.tsx, web/event/page.tsx: React's ViewTransition, share "morph"),
+   at the page's duration; nothing moves for someone who asks for less motion. */
+::view-transition-group(.morph) { animation-duration: var(--dur-3); animation-timing-function: var(--ease-ff); }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 
 /* The page's own box (app/(kd)/layout.tsx). */

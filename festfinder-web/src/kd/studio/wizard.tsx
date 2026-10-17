@@ -134,6 +134,7 @@ function check(f: Form) {
   if (!p.title) missing.push({ key: 'mTitle', step: 0 });
   if (!f.styles.length) missing.push({ key: 'mGenre', step: 0 });
   if (!f.logoUrl) missing.push({ key: 'mLogo', step: 0 });
+  if (!f.coverUrl) missing.push({ key: 'mCover', step: 0 });
   if (!p.eventUrl) missing.push({ key: 'mEventUrl', step: 0 });
   if (!f.date || !f.start || !f.end) missing.push({ key: 'mDates', step: 1 });
   if (!p.venueName) missing.push({ key: 'mVenue', step: 1 });

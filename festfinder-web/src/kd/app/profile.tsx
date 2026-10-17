@@ -20,14 +20,25 @@ import { Sheet } from '../ui/sheet';
 import { APP } from './copy';
 
 export interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
-export interface Passport { stats: { nights: number; events: number; styles: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
+export interface Passport { stats: { nights: number; events: number; styles: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null; coverUrl?: string | null; city?: { vi: string; en: string } | string | null }[] }
 export type { Follows } from '../ui/follows';
 export interface Order { id: string; status: string; event: { slug: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; area: string | null; genre: string | null; endsAt: string | null }; tickets: unknown[] }
 
 export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = true }: { lang: Lang; pp: Passport; year: number; onWrapped: () => void; flush?: boolean; appLinks?: boolean }) {
   const T = pick(APP, lang);
+  const kd = useKd();
   const [only, setOnly] = useState<Family | null>(null);
   const [all, setAll] = useState(false);
+  // The passport as a story picture (design v2 phase 8): the nights, the last three stamps, the styles and cities.
+  const share = async () => {
+    const how = await FF.shareStory({
+      genre: 'EDM', kicker: T.passport, title: `${pp.stats.nights} ${T.wrNights}`,
+      lines: pp.stamps.slice(0, 3).map((s) => `${dayMonth(s.date, lang)} · ${s.title}`),
+      stats: [{ value: pp.stats.styles, label: T.ppStyles }, { value: pp.stats.cities, label: T.ppCities }],
+      url: location.host,
+    }, 'passport').catch((e: unknown) => { kd.toast(FF.errorText(e, lang)); return null; });
+    if (how === 'saved') kd.toast(T.storySaved);
+  };
   const mix = useMemo(() => {
     const n = new Map<Family, number>();
     for (const s of pp.stamps) { const f = familyOf(s.genre); if (f !== 'free') n.set(f, (n.get(f) ?? 0) + 1); }
@@ -47,14 +58,17 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
             <ul className="mt-1 grid grid-cols-4 gap-x-2 @2xl:grid-cols-8 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
-                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
+                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} cover={s.coverUrl} city={typeof s.city === 'string' ? s.city : s.city?.[lang]} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
                 </li>
               ))}
             </ul>
             {pp.stamps.length > 8 ? <button type="button" className="kd-more" onClick={() => setAll(!all)} aria-expanded={all}>{all ? T.showLess : fill(T.seeAll, { n: pp.stamps.length - 8 })}</button> : null}
           </>
         ) : <p className="kd-s">{T.noStamps}</p>}
-        <Button size="sm" className="self-start" onClick={onWrapped}>{fill(T.wrapped, { y: year })}</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={onWrapped}>{fill(T.wrapped, { y: year })}</Button>
+          {pp.stamps.length ? <Button size="sm" tone="ghost" onClick={share}>{T.sharePassport}</Button> : null}
+        </div>
       </section>
 
       {mix.length ? (

@@ -38,8 +38,8 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
   });
 
   /**
-   * The Console's numbers board: live listings, new accounts, ticket clicks and decisions inside
-   * the review promise, each this week against the week before; new listings per genre for each
+   * The Console's numbers board: live listings (and the share with a real cover), new accounts,
+   * ticket clicks and decisions inside the review promise, each this week against the week before; new listings per genre for each
    * of the last eight weeks (oldest first); and the areas with the most live listings.
    */
   const boardNumbers = async (now: Date) => {
@@ -47,7 +47,8 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
     const at = (weeksAgo: number) => new Date(now.getTime() - weeksAgo * week);
     const [live, users, clicks, sla, weekly, areas] = await Promise.all([
       one<any>(ctx.db,
-        `select count(*)::int as n, count(*) filter (where published_at > $2)::int as new7
+        `select count(*)::int as n, count(*) filter (where published_at > $2)::int as new7,
+                count(*) filter (where coalesce(cover_url, '') <> '')::int as covered
            from events where status = 'live' and not held_for_reports and ends_at >= $1`, [now, at(1)]),
       one<any>(ctx.db,
         `select count(*) filter (where created_at > $1)::int as n7, count(*) filter (where created_at > $2 and created_at <= $1)::int as prev7
@@ -71,7 +72,8 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
           group by area order by n desc, area limit 6`, [now]),
     ]);
     return {
-      live: { n: live.n, new7: live.new7 },
+      // How many coming listings have a real picture (design v2 phase 8: 80%, then 90%).
+      live: { n: live.n, new7: live.new7, coveredPct: live.n ? pct(live.covered, live.n) : null },
       newUsers: { n7: users.n7, prev7: users.prev7 },
       ticketClicks: { n7: clicks.n7, prev7: clicks.prev7 },
       withinPromise: { hours: SLA_HOURS, pct7: sla.n7 ? pct(sla.in7, sla.n7) : null, prevPct7: sla.prev7 ? pct(sla.inprev7, sla.prev7) : null },

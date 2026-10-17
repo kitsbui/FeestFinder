@@ -187,6 +187,15 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - Previews: the proxy and the server's reads send the API's protection bypass secret when `FF_API_BYPASS` is set, so a preview of the web can reach a preview of the API (README, step 6); `vercel.json` keeps building `main` only until the owner sets the Preview variables.
   - [ ] The owner: set `SENTRY_DSN` on the API, the Preview variables of the web project, then let `vercel.json` build every branch; save a PostHog insight of `web_vital` p75 by kind.
   - [ ] Later: the event page (227 KB) and `/a` (204 KB) are over the 200 KB first step; the event page's discussion could load when it nears the screen, at the cost of its server-rendered text.
+- [x] Phase 8: pictures and motion (branch `design/phase-8`; artboard 23).
+  - No name printed twice: the event page's hero without a cover is a poster of its date (`Art` `poster`: the day set large over a field of the information colour, the weekday, the time, the city, the style first); an organiser without a cover has no banner (as an artist's page since phase 3).
+  - Real pictures: an organiser's listing needs a 16:9 cover before it is sent (`missingForSubmit`; the wizard asks for it on its first step; the team may publish without one); the Console's numbers show the share of coming listings with a real cover ("Có ảnh thật", the gate: 80%, then 90%), and a listing without one says so in the queue. Radar already takes a source's own picture (JSON-LD `image`, Ticketmaster's 16:9).
+  - The home page on a computer: a day of one night shows it across the row (the picture beside the words), a day of two shows two leads side by side; on a phone every night is still a row.
+  - Motion: three durations in `theme.css` (`--dur-1` 120 ms, `--dur-2` 200 ms, `--dur-3` 320 ms), every transition uses them and `check-tokens` refuses one with its own time; a card of the list morphs into the event page's hero (React's `ViewTransition`, share "morph", off under reduced motion); the back offices wait on the waving flag of logo pack v2 (`FlagLoader`, still under reduced motion).
+  - The passport: every stamp its own (the night's cover in the information colour, or its initials; the city along its foot; a turn of its own), "Chia sẻ thành story" draws it as a story picture; every badge has its own icon.
+  - `e2e/next/views.spec.ts`: no name twice, quiet days fill the row, stamps and badges, the story button, the Console's cover share.
+  - CI runs the browser checks in three shards (`ci.yml`, `--shard=n/3`): each runner builds and seeds its own copy, so a pull request hears back in about a third of the time.
+  - [ ] Later: the 80% gate is read in production from the Console; the event page's hero could use the lineup's photos when there is no cover.
 
 ## What the team does next in production
 
@@ -287,3 +296,4 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-17: Design v2 phase 5 (Studio and the Console): seven-entry rails with folding groups, "Hôm nay" with actions on every to-do, the four-step wizard open before signing in, the Console's split queue with the bar for the rows picked and the listing's tabs.
 - 2026-10-18: Design v2 phase 6 (QA and governance): every target 44px on a phone on every role's screens (checked), screens compared with the base branch on every PR (`visual-ok` accepts), the design checklist as a merge condition, `docs/DESIGN_GOVERNANCE.md`.
 - 2026-10-18: Design v2 phase 7 (fast and solid): no screen's layout jumps while it loads (CLS ≤ 0.018, was up to 0.47), rarely opened sheets load on open, a performance gate in the browser checks, Web Vitals and browser errors reported, previews of the web made possible.
+- 2026-10-18: Design v2 phase 8 (pictures and motion): a poster instead of a second name, covers asked for and counted, quiet days fill the row, three motion durations and the card-to-event morph, the waving flag while back offices load, a passport of stamps each its own and badges with icons.

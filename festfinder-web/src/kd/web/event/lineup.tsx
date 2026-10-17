@@ -232,7 +232,7 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
                             aria-label={fill(on ? T.planDrop : T.planPick, { a: s.artist }) + ' · ' + hhmm(s.startMin) + '–' + hhmm(s.endMin)}
                             onClick={() => toggle(s)}
                             className={cx(
-                              'absolute inset-y-0 flex items-center justify-between gap-2 overflow-hidden whitespace-nowrap rounded-btn px-2.5 text-left text-[13px] transition-[box-shadow,background-color] duration-150 ease-ff',
+                              'absolute inset-y-0 flex items-center justify-between gap-2 overflow-hidden whitespace-nowrap rounded-btn px-2.5 text-left text-[13px] transition-[box-shadow,background-color] duration-(--dur-1) ease-ff',
                               hl ? 'bg-inverse font-medium text-on-inverse' : 'bg-surface-2 text-fg-2 shadow-[inset_0_0_0_1px_var(--color-line-1)] hover:shadow-[inset_0_0_0_1px_var(--color-line-2)]',
                               on && 'shadow-[inset_0_0_0_1.5px_var(--color-info)]',
                               on && !hl && 'bg-info/[0.06] text-fg-1',

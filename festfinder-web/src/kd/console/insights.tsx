@@ -20,7 +20,7 @@ import { AuditRows, type AuditItem } from './audit';
 import { useConsole } from './root';
 
 interface Board {
-  live: { n: number; new7: number };
+  live: { n: number; new7: number; coveredPct: number | null };
   newUsers: { n7: number; prev7: number };
   ticketClicks: { n7: number; prev7: number };
   withinPromise: { hours: number; pct7: number | null; prevPct7: number | null };
@@ -62,6 +62,7 @@ export function InsightsScreen() {
     <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(210px,100%),1fr))] gap-3">
         <Panel className="kd-kpi"><span className="kd-m">{T.kLive}</span><span className="kd-d2 kd-num">{count(b.live.n, lang)}</span><span className="kd-s">{fill(T.kLiveNew, { n: b.live.new7 })}</span></Panel>
+        <Panel className="kd-kpi"><span className="kd-m">{T.kCovers}</span><span className="kd-d2 kd-num">{b.live.coveredPct == null ? '—' : nf(b.live.coveredPct) + '%'}</span><span className="kd-s">{fill(T.kCoversOf, { n: b.live.n })}</span></Panel>
         <Kpi lang={lang} label={T.kUsers} now={b.newUsers.n7} before={b.newUsers.prev7} />
         <Kpi lang={lang} label={T.kClicks} now={b.ticketClicks.n7} before={b.ticketClicks.prev7} />
         <Panel className="kd-kpi">

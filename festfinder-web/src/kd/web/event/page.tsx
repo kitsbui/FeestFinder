@@ -5,12 +5,12 @@
  */
 import { KdLink as Link, inLang } from '../../link';
 import { BroadcastIcon, CalendarBlankIcon, CaretRightIcon, CompassIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon, UsersThreeIcon } from '@phosphor-icons/react/ssr';
-import type { ReactNode } from 'react';
+import { ViewTransition, type ReactNode } from 'react';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick } from '../../copy';
 import { cx } from '../../cx';
-import { count, money, timeRange, whenLong } from '../../format';
-import { FAMILY_LABEL, familyOf, g } from '../../genre';
+import { count, dayMonth, money, timeRange, weekdayLong, whenLong, whenShort } from '../../format';
+import { FAMILY_LABEL, familyOf, g, styleLabel } from '../../genre';
 import { KdProvider } from '../../runtime';
 import { buttonClass } from '../../ui/actions';
 import { Clamp } from '../../ui/clamp';
@@ -53,6 +53,12 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   const free = ev.isFree || ev.entryMode === 'free';
   const status = ev.past ? null : ev.soldOut ? T.soldOut : ev.badge ? ev.badge.label[lang] : null;
   const statusTone = ev.soldOut ? 'bg-bad' : ev.badge?.key === 'low_tickets' || ev.badge?.key === 'selling_fast' ? 'bg-warn' : 'bg-ok';
+  // The hero's poster when there is no cover: the day (or the days) large, then the weekday, the time and the city.
+  const several = !!ev.startsOn && !!ev.endsOn && ev.endsOn !== ev.startsOn;
+  const poster = ev.startsOn ? {
+    big: several ? whenShort(ev, lang) : dayMonth(ev.startsOn, lang),
+    line: [several ? null : weekdayLong(ev.startsOn, lang), ev.startTime, ev.cityLabel?.[lang]].filter(Boolean).join(' · '),
+  } : null;
   const familyLine = [FAMILY_LABEL[fam][lang], ev.eventType ? EVENT_TYPE[ev.eventType]?.[lang] : null, ev.cityLabel?.[lang]].filter(Boolean).join(' · ');
   const tiers = ev.tickets?.tiers ?? [];
   const openTiers = tiers.filter((t) => t.state === 'onsale' || t.state === 'last');
@@ -88,7 +94,10 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             <section className="kd-wrap">
               <div className="grid grid-cols-1 items-start gap-6 desk:grid-cols-2 desk:gap-14">
                 <div className="relative">
-                  <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" className="aspect-video w-full" off={ev.past} />
+                  {/* Without a cover, a poster of the date: the name is the H1 beside it, never twice. */}
+                  <ViewTransition name={'ev-' + ev.slug} share="morph" default="none">
+                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
+                  </ViewTransition>
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}
                     {status ? <span className="kd-tag kd-tag-glass text-fg-1"><span className={cx('h-[7px] w-[7px] rounded-full', statusTone)} aria-hidden="true" />{status}</span> : null}

@@ -63,7 +63,11 @@ export function groupByDay(items: Card[], lang: Lang, today: string | null): Day
   return [...groups.values()];
 }
 
-/** The groups: a day's first night leads (a featured one first), the next three sit beside it as rows. */
+/**
+ * The groups: a day's first night leads (a featured one first), the next three sit beside it as rows.
+ * A day of one night shows it across the width, its picture beside its words; a day of two, two
+ * leads side by side (design v2 phase 8), so a quiet day never leaves the row half empty.
+ */
 export function DayGrid({ groups, lang, className }: { groups: DayGroup[]; lang: Lang; className?: string }) {
   return (
     <div className={cx('kd-days flex flex-col gap-10', className)}>
@@ -80,13 +84,17 @@ export function DayGrid({ groups, lang, className }: { groups: DayGroup[]; lang:
               {g.title}
               {g.note ? <span className="kd-s font-normal">{g.note}</span> : null}
             </h2>
-            {lead ? (
+            {g.byDay && g.items.length === 1 ? (
+              <div className="kd-day-solo"><EventCard e={g.items[0]} lang={lang} look="lead" morph /></div>
+            ) : g.byDay && g.items.length === 2 ? (
+              <div className="kd-day-pair">{g.items.map((e) => <EventCard key={e.id} e={e} lang={lang} look="lead" morph />)}</div>
+            ) : lead ? (
               <div className="kd-day-top">
-                <EventCard e={lead} lang={lang} look="lead" />
-                <div className="kd-day-stack">{stack.map((e) => <EventCard key={e.id} e={e} lang={lang} look="row" />)}</div>
+                <EventCard e={lead} lang={lang} look="lead" morph />
+                <div className="kd-day-stack">{stack.map((e) => <EventCard key={e.id} e={e} lang={lang} look="row" morph />)}</div>
               </div>
             ) : null}
-            {rest.length ? <div className="kd-cards">{rest.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div> : null}
+            {rest.length && !(g.byDay && g.items.length <= 2) ? <div className="kd-cards">{rest.map((e) => <EventCard key={e.id} e={e} lang={lang} morph />)}</div> : null}
           </section>
         );
       })}

@@ -8,6 +8,9 @@
  * 3. Arbitrary pixel values in class names (h-[38px], text-[13px]) are counted against PX_BUDGET,
  *    which only goes down: use the spacing scale and the type tokens, and lower the budget when
  *    you remove some.
+ * 4. A transition takes its time from the motion tokens (theme.css `--dur-1/2/3`, design v2 phase 8):
+ *    no `transition` with a time of its own in a stylesheet, no `duration-<n>` class (use
+ *    `duration-(--dur-1)`). Looping animations (a pulse, a glow) keep their own.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -31,6 +34,9 @@ function* files(dir: string): Generator<string> {
 /** A colour written in hex: #rgb, #rgba, #rrggbb or #rrggbbaa, not part of a longer word (#about, #add-on). */
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})(?![\w-])/gi;
 const PX = /\[-?\d+(?:\.\d+)?px\]/g;
+/** A transition with a time of its own, or a Tailwind duration class with a number. */
+const RAW_TRANSITION = /\btransition(?:-duration)?\s*:[^;{}]*?(?<![\w-])\d*\.?\d+m?s\b/;
+const RAW_DURATION = /(?<![\w-])duration-\d+\b/;
 
 const problems: string[] = [];
 let px = 0;
@@ -43,6 +49,8 @@ for (const p of files(SRC)) {
     text.split('\n').forEach((line, i) => {
       if (line.includes('tokens-ok')) return;
       for (const m of line.matchAll(HEX)) problems.push(`${rel}:${i + 1}  hex colour ${m[0]}: use a token from src/kd/theme.css`);
+      if (p.endsWith('.css') && RAW_TRANSITION.test(line)) problems.push(`${rel}:${i + 1}  a transition's own time: use var(--dur-1), var(--dur-2) or var(--dur-3)`);
+      if (!p.endsWith('.css') && RAW_DURATION.test(line)) problems.push(`${rel}:${i + 1}  a duration-<n> class: use duration-(--dur-1), -(--dur-2) or -(--dur-3)`);
     });
   }
   if (rewrite(text) !== text) problems.push(`${rel}  old token names: run node scripts/tokens-v2.ts`);

@@ -209,6 +209,9 @@ describe('internal admin', () => {
     // The Console's numbers board.
     const b = r.body.board;
     assert.ok(b.live.n > 0);
+    // The share of coming listings with a real cover (design v2 phase 8).
+    const covered = await one<{ n: number }>(env.ctx.db, `select count(*)::int as n from events where status = 'live' and not held_for_reports and ends_at >= $1 and coalesce(cover_url, '') <> ''`, [env.ctx.clock.now()]);
+    assert.equal(b.live.coveredPct, Math.round((covered!.n / b.live.n) * 1000) / 10);
     assert.equal(b.weekly.length, 8);
     assert.ok(b.weekly[0].startsOn < b.weekly[7].startsOn, 'oldest week first');
     assert.ok(b.withinPromise.hours > 0);

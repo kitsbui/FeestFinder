@@ -68,6 +68,8 @@ export function missingForSubmit(ev: any): string[] {
   if (!ev.venue_name) missing.push('venue');
   if (ev.entry_mode === 'paid' && (!ev.price_from || !ev.ticket_url)) missing.push('price');
   if (!ev.logo_url) missing.push('logo');
+  // A real picture on every listing someone sends in (design v2 phase 8: the art direction asks for a 16:9 cover).
+  if (!ev.cover_url) missing.push('cover');
   if (!ev.event_url) missing.push('eventUrl');
   return missing;
 }

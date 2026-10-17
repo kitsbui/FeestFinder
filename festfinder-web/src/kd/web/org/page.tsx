@@ -91,20 +91,18 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
           <WebNav lang={lang} />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
-          {/* ---- cover ---- */}
-          <div className="kd-wrap" aria-hidden="true">
-            {org.coverUrl ? (
+          {/* ---- cover: only a real one; a tile would print the name above the name (design v2 phase 8) ---- */}
+          {org.coverUrl ? (
+            <div className="kd-wrap" aria-hidden="true">
               <Art family={tiles[0] ?? 'free'} cover={org.coverUrl} className="h-[clamp(120px,15vw,210px)]" />
-            ) : (
-              <Art family={tiles[0] ?? 'free'} title={org.name} layout="banner" className="h-[clamp(120px,15vw,210px)]" />
-            )}
-          </div>
+            </div>
+          ) : null}
 
           {/* ---- who ---- */}
           <section className="kd-wrap" aria-label={T.orgKind}>
             <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5 pl-[clamp(0px,2vw,24px)]">
               <div className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-4">
-                <Avatar org ring name={org.name} src={org.logoUrl} size={128} className="-mt-12 h-24! w-24! rounded-[16px]! text-[34px]! tab:-mt-16 tab:h-32! tab:w-32! tab:rounded-[20px]! tab:text-[44px]!" />
+                <Avatar org ring name={org.name} src={org.logoUrl} size={128} className={cx('h-24! w-24! rounded-[16px]! text-[34px]! tab:h-32! tab:w-32! tab:rounded-[20px]! tab:text-[44px]!', org.coverUrl ? '-mt-12 tab:-mt-16' : 'mt-2')} />
                 <div className="flex min-w-0 flex-col gap-2">
                   <h1 className="kd-d1">
                     {org.name}

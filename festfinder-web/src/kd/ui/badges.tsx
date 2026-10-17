@@ -26,6 +26,14 @@ const COPY = {
   close: { en: 'Close', vi: 'Đóng' },
 };
 
+/**
+ * Each badge its own sign (design v2 phase 8), from one sprite of Phosphor's Regular icons
+ * (public/kd/badges.svg), so the pages that show badges carry no icon code. The badges counted in
+ * numbers show their number instead.
+ */
+const SIGNS = new Set(['first', 'doors', 'four_styles', 'local', 'night_owl', 'spread', 'superfan', 'closer', 'debut', 'sold_out', 'touring', 'all_styles', 'sold_out_5', 'verified']);
+const sign = (code: string, size: number) => (SIGNS.has(code) ? <svg width={size} height={size} aria-hidden="true"><use href={'/kd/badges.svg#' + code} /></svg> : undefined);
+
 // One zone for the server's HTML and the browser's, so the day never differs between them.
 const date = (iso: string, lang: Lang) => new Date(iso).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
 
@@ -45,7 +53,7 @@ export function Badges({ lang, items, who, own, compact, className }: { lang: La
         <div className="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-2">
           {got.map((b) => (
             <button key={b.code} type="button" className="kd-bdg" aria-pressed={open === b.code} onClick={() => setOpen(open === b.code ? null : b.code)}>
-              <Emblem family={b.family} n={b.emblem === 'num' ? b.ring : null} />
+              <Emblem family={b.family} n={b.emblem === 'num' ? b.ring : null} icon={sign(b.code, 24)} />
               <span className="kd-hs text-[13px] leading-tight">{b.label[lang]}</span>
               {b.earnedAt ? <span className="kd-m kd-num text-[10px]">{date(b.earnedAt, lang)}</span> : null}
               {own && b.isNew ? <span className="kd-tag kd-tag-acc absolute right-1.5 top-1.5 h-[18px] px-1.5 text-[10px]">{T.isNew}</span> : null}
@@ -68,7 +76,7 @@ export function Badges({ lang, items, who, own, compact, className }: { lang: La
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(240px,100%),1fr))] gap-5">
             {todo.map((b) => (
               <div key={b.code} className="grid grid-cols-[40px_minmax(0,1fr)] items-start gap-3">
-                <Emblem family={b.family} n={b.emblem === 'num' ? b.ring : null} off small />
+                <Emblem family={b.family} n={b.emblem === 'num' ? b.ring : null} icon={sign(b.code, 18)} off small />
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex items-baseline justify-between gap-2"><span className="kd-hs text-sm">{b.label[lang]}</span><span className="kd-m kd-num">{nf(b.value)} / {nf(b.threshold)}</span></div>
                   <span className="kd-bar-track block h-1"><span className="kd-bar-fill block h-full" style={{ width: `${Math.round((b.value / b.threshold) * 100)}%` }} /></span>

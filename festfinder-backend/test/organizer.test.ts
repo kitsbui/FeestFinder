@@ -189,6 +189,10 @@ describe('organizer back office (Ravolution)', () => {
     assert.equal(filled.body.venue.resolved, true);
     assert.equal(filled.body.quality.score, 80, 'everything but the cover');
     assert.equal(filled.body.quality.band, 'passable');
+    // A cover is asked for before sending (design v2 phase 8).
+    const noCover = await env.as(token).post(`/organizer/events/${draft.body.id}/submit`);
+    assert.deepEqual(noCover.body.error.details.missing, ['cover']);
+    await env.as(token).patch(`/organizer/events/${draft.body.id}`, { coverUrl: 'https://assets.feestfinder.com/covers/ravo-closing.jpg' });
 
     await env.as(token).put(`/organizer/events/${draft.body.id}/tiers`, { tiers: [
       { key: 'ga', name: { en: 'General admission', vi: 'Vé thường' }, price: 600000, capacity: 2000 },

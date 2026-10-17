@@ -22,7 +22,7 @@ import { Card as Panel } from '../ui/parts';
 import { Shell, SideNav, type SideItem } from '../ui/shell';
 import { AskHost } from './kit';
 import { CONSOLE } from './copy';
-import { Logo } from '../ui/logo';
+import { FlagLoader, Logo } from '../ui/logo';
 import { WorkspaceSwitch } from '../ui/workspaces';
 
 export type ConsoleTab =
@@ -59,7 +59,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
   const kd = useKd();
   const T = pick(CONSOLE, lang);
   const user = kd.user;
-  if (kd.session === undefined) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>;
+  if (kd.session === undefined) return <FlagLoader lang={lang} />;
   if (!user || user.role !== 'admin') {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>

@@ -161,7 +161,7 @@ function EventRow({ e, i, lang }: { e: Card; i: number; lang: Lang }) {
   const fam = familyOf(e.genre);
   const free = e.isFree || e.entryMode === 'free';
   return (
-    <Link href={inLang('/e/' + e.slug, lang)} className={cx('kd-row transition-colors duration-150 hover:bg-white/[0.03]', g(fam))}>
+    <Link href={inLang('/e/' + e.slug, lang)} className={cx('kd-row transition-colors duration-(--dur-1) hover:bg-white/[0.03]', g(fam))}>
       <Art family={fam} cover={e.coverUrl} title={e.title} off={e.soldOut} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="kd-hs kd-ell">{e.title}</span>
