@@ -50,7 +50,7 @@ export function Resale({ lang, params, set }: { lang: Lang; params: URLSearchPar
     const b = r.seller.bank;
     const ok = await ask({
       title: fill(T.rPayAsk, { m: m(r.price), n: r.seller.name }),
-      body: b ? <span className="kd-num text-paper">{b.name} · {b.accountNo} · {b.accountName}</span> : T.rPayNoBank,
+      body: b ? <span className="kd-num text-fg-1">{b.name} · {b.accountNo} · {b.accountName}</span> : T.rPayNoBank,
       confirm: T.rPayConfirm, note: 'required', noteLabel: T.rPayRef,
     });
     if (ok) void run(r.id, () => FF.post(`/admin/resale/${r.id}/payout`, { reference: ok.note }));
@@ -73,15 +73,15 @@ export function Resale({ lang, params, set }: { lang: Lang; params: URLSearchPar
         <Table label={T.rTable} cols={COLS} head={[T.rCode, T.rEvent, T.rPeople, T.rGets, state === 'paid_out' ? T.rPaidCol : T.rDueCol, '']}>
           {load.data.items.map((r) => (
             <Row key={r.id} cols={COLS}>
-              <Cell className="kd-num text-xs text-paper">{r.code}</Cell>
+              <Cell className="kd-num text-xs text-fg-1">{r.code}</Cell>
               <Cell>
                 <span className="flex min-w-0 flex-col items-start gap-1">
-                  <span className="kd-ell text-sm text-paper">{r.event.title}</span>
+                  <span className="kd-ell text-sm text-fg-1">{r.event.title}</span>
                   {r.event.cancelled ? <Pill tone="bad">{T.rCancelled}</Pill> : null}
                 </span>
               </Cell>
               <Cell><Two title={`${r.seller.name} → ${r.buyer.name}`} sub={r.seller.bank ? `${r.seller.bank.name} · ${r.seller.bank.accountNo}` : T.rNoBank} /></Cell>
-              <Cell end className="kd-num text-sm text-paper">{m(r.price)}</Cell>
+              <Cell end className="kd-num text-sm text-fg-1">{m(r.price)}</Cell>
               <Cell className="kd-s kd-num text-xs">{stamp(r.paidOutAt ?? r.payoutDueAt ?? r.paidAt, lang)}</Cell>
               <Cell end>
                 {state === 'due' && !r.event.cancelled

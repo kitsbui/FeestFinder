@@ -79,7 +79,7 @@ export function Attendees() {
               <div className="flex flex-wrap gap-1.5" role="group" aria-label={T.colState}>
                 {filters.map((f) => <Chip key={f.key} on={filter === f.key} count={data.filters[f.key]} onClick={() => setFilter(f.key)}>{f.label}</Chip>)}
               </div>
-              <Input boxClass="ml-auto w-full max-w-[280px]" icon={<MagnifyingGlassIcon size={16} className="text-fog" aria-hidden="true" />} type="search" value={q} placeholder={T.attSearch} aria-label={T.search} onChange={(e) => setQ(e.target.value)} />
+              <Input boxClass="ml-auto w-full max-w-[280px]" icon={<MagnifyingGlassIcon size={16} className="text-fg-3" aria-hidden="true" />} type="search" value={q} placeholder={T.attSearch} aria-label={T.search} onChange={(e) => setQ(e.target.value)} />
             </div>
             <div>
               <div>

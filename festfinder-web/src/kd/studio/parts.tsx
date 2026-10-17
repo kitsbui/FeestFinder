@@ -27,7 +27,8 @@ export function Kpi({ label, value, note, bone, children }: { label: string; val
       {children}
     </>
   );
-  return bone ? <div className="kd-bonecard kd-kpi">{body}</div> : <Panel className="kd-kpi">{body}</Panel>;
+  // `bone`: the KPI that leads its row, marked with the information edge (no light surfaces in the back office).
+  return <Panel className={bone ? 'kd-kpi kd-kpi-hi' : 'kd-kpi'}>{body}</Panel>;
 }
 
 /** A section card with a heading row. */

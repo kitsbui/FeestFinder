@@ -121,7 +121,7 @@ const config: NextConfig = {
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
       // The map is a view of the list.
       { source: '/map', destination: '/?view=map', permanent: false },
-      { source: '/app/map', destination: '/app/list', permanent: true },
+      { source: '/app/map', destination: '/?view=map', permanent: true },
     ];
   },
 };

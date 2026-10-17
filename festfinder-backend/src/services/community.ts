@@ -66,7 +66,7 @@ export const POST_KINDS = ['qa', 'talk', 'crew', 'trackid', 'memory'] as const;
 export type PostKind = (typeof POST_KINDS)[number];
 
 export const KIND_LABEL: Record<PostKind, Localized> = {
-  qa: L('Questions', 'Hỏi đáp'),
+  qa: L('Questions', 'Câu hỏi'),
   talk: L('Talk', 'Bàn luận'),
   crew: L('Find a crew', 'Tìm crew'),
   trackid: L('Track ID', 'Track ID'),

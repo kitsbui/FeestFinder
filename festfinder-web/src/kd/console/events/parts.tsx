@@ -25,7 +25,7 @@ export function Section({ id, n, title, done, sub, doneLabel, children }: {
   return (
     <Panel as="section" id={'sec-' + id} aria-labelledby={'sec-' + id + '-h'} className="flex scroll-mt-6 flex-col gap-5 p-5 sm:p-6">
       <div className="flex items-start gap-3">
-        <span className={cx('kd-mb flex size-7 shrink-0 items-center justify-center rounded-full text-xs', done ? 'bg-ok text-ink' : 'text-fog shadow-[inset_0_0_0_1px_var(--color-line2)]')}>
+        <span className={cx('kd-mb flex size-7 shrink-0 items-center justify-center rounded-full text-xs', done ? 'bg-ok text-on-inverse' : 'text-fg-3 shadow-[inset_0_0_0_1px_var(--color-line-2)]')}>
           {done ? <CheckIcon size={14} weight="bold" aria-label={doneLabel} /> : n}
         </span>
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -42,7 +42,7 @@ export function Section({ id, n, title, done, sub, doneLabel, children }: {
 export function jump(id: string) {
   const el = document.getElementById('sec-' + id);
   if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   el.querySelector<HTMLElement>('input, select, textarea, button:not([disabled])')?.focus({ preventScroll: true });
 }
 
@@ -116,14 +116,14 @@ export function Upload({ lang, purpose, label, value, onChange, disabled }: {
     <div className="flex flex-col gap-2">
       <span className="kd-flabel">{label}</span>
       <div
-        className={cx('flex min-h-20 flex-wrap items-center gap-3 rounded-[10px] border border-dashed px-4 py-3', drag ? 'border-acc' : 'border-line2')}
+        className={cx('flex min-h-20 flex-wrap items-center gap-3 rounded-[10px] border border-dashed px-4 py-3', drag ? 'border-info' : 'border-line-2')}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); if (!disabled) void take(e.dataTransfer.files[0]); }}
       >
         {value
           ? <FramedThumb src={value} className={purpose === 'logo' ? 'size-12 rounded-lg' : 'h-12 w-[86px] rounded-md'} />
-          : <ImageSquareIcon size={22} className="shrink-0 text-fog" aria-hidden="true" />}
+          : <ImageSquareIcon size={22} className="shrink-0 text-fg-3" aria-hidden="true" />}
         <span className="kd-s min-w-0 flex-1 basis-40">{busy ? T.uploading : purpose === 'cover' ? T.coverRule : T.logoRule}</span>
         <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { void take(e.target.files?.[0]); e.target.value = ''; }} />
         <FrameButton lang={lang} value={value} disabled={disabled} shapes={purpose === 'logo' ? ['square', 'round'] : ['banner', 'card', 'square']} onChange={onChange} />
@@ -228,7 +228,7 @@ export function TierEditor({ lang, rows, onChange, presets, priceFrom, currency,
           <div className="flex flex-col gap-2">
             <div className={cx(cols, 'kd-m hidden @min-[600px]:grid')}><span>{T.tier}</span><span>{T.tierName}</span><span>{price}</span><span>{T.tierQty}</span><span /></div>
             {rows.map((r, i) => (
-              <div key={i} className={cx(cols, 'border-b border-line pb-2 @min-[600px]:border-0 @min-[600px]:pb-0')}>
+              <div key={i} className={cx(cols, 'border-b border-line-1 pb-2 @min-[600px]:border-0 @min-[600px]:pb-0')}>
                 <Select aria-label={`${T.tier} ${i + 1}`} disabled={r.sold > 0 || disabled}
                   value={presets.some((p) => p.key === r.key) ? r.key : '__custom'}
                   onChange={(e) => {

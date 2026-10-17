@@ -14,10 +14,14 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
   open?: boolean; onClose: () => void; title: ReactNode; children: ReactNode; closeLabel: string; wide?: boolean; className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // What had focus before the sheet opened: focus goes back there when it closes, also when the
+  // caller unmounts the sheet while it is open (the dialog then never gets to restore it itself).
+  const back = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (open && !d.open) {
+      back.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       d.showModal();
       // showModal puts focus on the first focusable element, the close button: a sheet that asks
       // for text (search, a new collection, feedback) gets it in its first text field instead.
@@ -25,6 +29,10 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
     }
     if (!open && d.open) d.close();
   }, [open]);
+  useEffect(() => () => {
+    const el = back.current;
+    if (el?.isConnected) requestAnimationFrame(() => { if (document.activeElement === document.body || !document.activeElement) el.focus(); });
+  }, []);
   return (
     <dialog
       ref={ref}
@@ -32,7 +40,7 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
       aria-labelledby="kd-sheet-title"
       className={cx(
-        'kd-sheet m-0 mt-auto w-full max-w-none max-h-[92dvh] overflow-y-auto rounded-t-sheet bg-carbon p-0 text-mist shadow-[inset_0_0_0_1px_var(--color-line2)]',
+        'kd-sheet m-0 mt-auto w-full max-w-none max-h-[92dvh] overflow-y-auto rounded-t-sheet bg-surface-1 p-0 text-fg-2 shadow-[inset_0_0_0_1px_var(--color-line-2)]',
         'tab:m-auto tab:rounded-sheet',
         wide ? 'tab:max-w-[640px]' : 'tab:max-w-[420px]',
         className,

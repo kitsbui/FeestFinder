@@ -1,0 +1,119 @@
+name: Visual
+
+# The design v2 phase 6 gate "chụp so sánh mỗi PR": a pull request that touches the front has its
+# main screens (festfinder-backend/e2e/next/visual.spec.ts) shot on its base branch and on itself,
+# on the same runner, and compared. A difference fails the check and leaves the expected, actual and
+# diff images in the "visual-diff" artifact; the "visual-ok" label accepts it. A new push takes the
+# label off, so an approval is always of the latest screens. Docs: docs/DESIGN_GOVERNANCE.md.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    name: Visual (PR vs base)
+    # Other labels change nothing here.
+    if: (github.event.action != 'labeled' && github.event.action != 'unlabeled') || github.event.label.name == 'visual-ok'
+    runs-on: ubuntu-latest
+    # On the job, not the workflow: a run skipped for another label must not cancel a comparison.
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      # Only to take a stale "visual-ok" off after a new push.
+      pull-requests: write
+    env:
+      BASE: ${{ github.event.pull_request.base.sha }}
+      NEXT_TELEMETRY_DISABLED: '1'
+      # The label counts unless this run is for a new push (which takes it off).
+      ACCEPTED: ${{ contains(github.event.pull_request.labels.*.name, 'visual-ok') && github.event.action != 'synchronize' }}
+    steps:
+      - name: Accepted
+        if: github.event.action == 'labeled'
+        run: echo "The screens' changes were accepted with the visual-ok label."
+
+      - name: A new push needs a new look
+        if: github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'visual-ok')
+        run: gh pr edit "$PR" --repo "$REPO" --remove-label visual-ok || true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+
+      - uses: actions/checkout@v7
+        if: github.event.action != 'labeled'
+        with:
+          path: head
+          fetch-depth: 0
+
+      - name: Did the front change?
+        id: front
+        if: github.event.action != 'labeled'
+        working-directory: head
+        run: |
+          if git diff --quiet "$BASE" HEAD -- festfinder-web festfinder-frontend festfinder-backend/e2e/next/visual.spec.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"; echo "Nothing on screen changed."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.front.outputs.changed == 'true'
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - uses: actions/setup-node@v7
+        if: steps.front.outputs.changed == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            head/festfinder-backend/package-lock.json
+            head/festfinder-web/package-lock.json
+            base/festfinder-backend/package-lock.json
+            base/festfinder-web/package-lock.json
+
+      - name: Install
+        if: steps.front.outputs.changed == 'true'
+        run: |
+          for d in base/festfinder-backend base/festfinder-web head/festfinder-backend head/festfinder-web; do (cd "$d" && npm ci); done
+          cd head/festfinder-backend && npx playwright install --with-deps chromium
+
+      # The PR's own check and config, so both sides shoot the same screens the same way.
+      - name: Shoot the base branch
+        if: steps.front.outputs.changed == 'true'
+        run: |
+          cp head/festfinder-backend/e2e/next/visual.spec.ts base/festfinder-backend/e2e/next/visual.spec.ts
+          cp head/festfinder-backend/playwright.next.config.ts base/festfinder-backend/playwright.next.config.ts
+          cd base/festfinder-backend
+          FF_VISUAL=1 FF_SNAPSHOT_DIR="$RUNNER_TEMP/visual" npx playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts --update-snapshots
+
+      - name: Compare the pull request
+        id: compare
+        if: steps.front.outputs.changed == 'true'
+        continue-on-error: true
+        working-directory: head/festfinder-backend
+        run: FF_VISUAL=1 FF_SNAPSHOT_DIR="$RUNNER_TEMP/visual" npx playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts --reporter=list,html
+
+      - name: Keep the images
+        if: steps.compare.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-diff
+          path: |
+            head/festfinder-backend/test-results/
+            head/festfinder-backend/playwright-report/
+          retention-days: 14
+
+      - name: Verdict
+        if: steps.compare.outcome == 'failure'
+        run: |
+          if [ "$ACCEPTED" = true ]; then echo "::notice::The screens changed; accepted with the visual-ok label."; exit 0; fi
+          echo "::error::The screens changed. Look at the visual-diff artifact (expected, actual, diff); if the change is intended, add the label visual-ok."
+          exit 1

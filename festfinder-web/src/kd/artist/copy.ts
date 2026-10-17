@@ -79,7 +79,7 @@ export const ARTIST = {
   photo: { en: 'Photo', vi: 'Ảnh đại diện' },
   cover: { en: 'Cover', vi: 'Ảnh bìa' },
   photoHint: { en: 'Image link · square, from 400 px', vi: 'Link ảnh · ảnh vuông, từ 400 px' },
-  coverHint: { en: 'Image link · landscape, from 1200 px wide', vi: 'Link ảnh · ảnh ngang, rộng từ 1200 px' },
+  coverHint: { en: 'Image link · 16:9, from 1600 px wide', vi: 'Link ảnh · 16:9, rộng từ 1600 px' },
   listen: { en: 'Listen and follow', vi: 'Nghe và theo dõi' },
   website: { en: 'Website', vi: 'Website' },
   bookings: { en: 'Bookings', vi: 'Booking' },

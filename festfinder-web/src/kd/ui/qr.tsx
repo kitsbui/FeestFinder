@@ -13,8 +13,8 @@ export function QrCode({ value, size = 176, label, className }: { value: string;
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.isDark(y, x)) d += `M${x} ${y}h1v1h-1z`;
   return (
     <svg viewBox={`-3 -3 ${n + 6} ${n + 6}`} width={size} height={size} role="img" aria-label={label} shapeRendering="crispEdges" className={className}>
-      <rect x={-3} y={-3} width={n + 6} height={n + 6} fill="#ffffff" />
-      <path d={d} fill="#101010" />
+      <rect x={-3} y={-3} width={n + 6} height={n + 6} className="fill-white" />
+      <path d={d} className="fill-on-inverse" />
     </svg>
   );
 }

@@ -33,7 +33,7 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, onReport, reasons, 
         {items.slice(0, MOMENTS_MAX).map((m, i) => (
           <button key={m.id} type="button" className="kd-mtile" aria-label={m.caption ? `${labels.open}: ${m.caption}` : labels.open} onClick={() => setOpen(i)}>
             {/* The art under the photo shows when a linked photo does not open (ui/covers.tsx). */}
-            <Art family={familyOf(m.genre)} bone={i % 2 === 1} />
+            <Art family={familyOf(m.genre)} />
             {m.url ? (
                
               <img src={m.url} alt={m.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
@@ -85,7 +85,7 @@ function Lightbox({ items, index, onIndex, onClose, onRemove, onReport, reasons,
     <dialog
       ref={ref}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
-      className="kd-sheet m-0 h-dvh max-h-none w-screen max-w-none bg-void p-0"
+      className="kd-sheet m-0 h-dvh max-h-none w-screen max-w-none bg-surface-0 p-0"
       aria-label={m.caption ?? `${index + 1} / ${n}`}
     >
       <div className="relative flex h-full w-full items-center justify-center">
@@ -93,7 +93,7 @@ function Lightbox({ items, index, onIndex, onClose, onRemove, onReport, reasons,
            
           <img src={m.url} alt={m.caption ?? ''} referrerPolicy="no-referrer" className="max-h-full max-w-full object-contain" />
         ) : (
-          <Art family={familyOf(m.genre)} className="aspect-square w-[min(90vw,90vh)]" />
+          <Art family={familyOf(m.genre)} title={m.caption} className="aspect-square w-[min(90vw,90vh)]" />
         )}
         <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-3">
           <span className="kd-tag kd-tag-glass kd-num">{index + 1} / {n}</span>
@@ -134,7 +134,7 @@ function Lightbox({ items, index, onIndex, onClose, onRemove, onReport, reasons,
         {m.caption || m.takenOn ? (
           <div className="kd-glass absolute inset-x-3 bottom-3 flex flex-col gap-1 rounded-card p-3">
             {m.takenOn ? <span className="kd-m">{m.takenOn}</span> : null}
-            {m.caption ? <span className="kd-t text-paper">{m.caption}</span> : null}
+            {m.caption ? <span className="kd-t text-fg-1">{m.caption}</span> : null}
           </div>
         ) : null}
       </div>

@@ -76,7 +76,7 @@ export function Users() {
                 <Cell>
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar name={u.name || u.email || '?'} src={u.photoUrl} size={32} />
-                    <Two title={u.name || <span className="text-fog">{T.noName}</span>} sub={[u.email, phone(u.phone)].filter(Boolean).join(' · ')} />
+                    <Two title={u.name || <span className="text-fg-3">{T.noName}</span>} sub={[u.email, phone(u.phone)].filter(Boolean).join(' · ')} />
                   </span>
                 </Cell>
                 <Cell>
@@ -88,7 +88,7 @@ export function Users() {
                 </Cell>
                 <Cell className="kd-s">{u.signupLabel}</Cell>
                 <Cell className="kd-s kd-ell">{u.city || '—'}</Cell>
-                <Cell end className="kd-num text-sm text-paper">{u.tickets} · {u.saves}</Cell>
+                <Cell end className="kd-num text-sm text-fg-1">{u.tickets} · {u.saves}</Cell>
                 <Cell className="kd-s text-xs">{ago(u.lastActiveAt, lang)}</Cell>
                 <Cell className="kd-s kd-num text-xs">{monthYear(u.createdAt, lang)}</Cell>
               </Row>
@@ -148,8 +148,8 @@ function UserDrawer({ id, lang, onClose }: { id: string; lang: Lang; onClose: ()
             <Section title={T.teams}>
               <ul className="flex flex-col">
                 {u.organizers.map((o) => (
-                  <li key={o.id} className="flex min-h-11 items-center gap-3 border-b border-line">
-                    <KdLink className="kd-ell flex-1 text-sm text-paper hover:underline" href={'/console/organizers?id=' + o.id}>{o.name}</KdLink>
+                  <li key={o.id} className="flex min-h-11 items-center gap-3 border-b border-line-1">
+                    <KdLink className="kd-ell flex-1 text-sm text-fg-1 hover:underline" href={'/console/organizers?id=' + o.id}>{o.name}</KdLink>
                     <Pill>{o.role === 'owner' ? T.owner : T.manager}</Pill>
                   </li>
                 ))}
@@ -160,11 +160,11 @@ function UserDrawer({ id, lang, onClose }: { id: string; lang: Lang; onClose: ()
             {u.orders.length ? (
               <ul className="flex flex-col">
                 {u.orders.map((o) => (
-                  <li key={o.id} className="border-b border-line">
+                  <li key={o.id} className="border-b border-line-1">
                     <KdLink className="flex items-center gap-3 py-2.5 hover:bg-white/[0.03]" href={'/console/orders?id=' + o.id}>
                       <Two title={o.event} sub={fill(T.orderLine, { c: o.code, d: stamp(o.createdAt, lang), n: o.qty })} />
                       <span className="ml-auto flex shrink-0 items-center gap-2">
-                        <span className="kd-num text-sm text-paper">{money(o.total, CHECKOUT_CURRENCY, lang)}</span>
+                        <span className="kd-num text-sm text-fg-1">{money(o.total, CHECKOUT_CURRENCY, lang)}</span>
                         <Pill tone={STATUS_TONE[o.status] ?? 'none'}>{o.statusLabel[lang]}</Pill>
                       </span>
                     </KdLink>

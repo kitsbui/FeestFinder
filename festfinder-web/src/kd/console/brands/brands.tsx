@@ -56,12 +56,14 @@ export function Brands() {
                 {load.data.items.map((c) => (
                   <Row key={c.id} cols={COLS} current={open?.id === c.id}>
                     <Cell>
-                      <button type="button" className="flex w-full min-w-0 flex-col text-left hover:underline" aria-label={fill(T.openLabel, { t: c.title })} onClick={() => setOpen(c)}>
+                      <button type="button" className="flex min-h-11 w-full min-w-0 flex-col justify-center text-left hover:underline" onClick={() => setOpen(c)}>
                         <Two title={c.title} sub={[c.brandName, c.cities.map((x) => FF.text(x.label, lang) || x.slug).join(', '), c.closesOn ? fill(T.closes, { d: day(c.closesOn, lang) }) : ''].filter(Boolean).join(' · ')} />
+                        {/* The name starts with what the row shows (WCAG 2.5.3); what it opens comes after. */}
+                        <span className="sr-only">, {T.openWhat}</span>
                       </button>
                     </Cell>
                     <Cell end className="kd-num text-sm">{fee(c)}</Cell>
-                    <Cell end className="kd-num text-sm text-paper">{c.interests ?? 0}</Cell>
+                    <Cell end className="kd-num text-sm text-fg-1">{c.interests ?? 0}</Cell>
                     <Cell><Pill tone={TONE[c.status]}>{status[c.status]}</Pill></Cell>
                     <Cell end>
                       <Button size="sm" aria-label={fill(T.editLabel, { t: c.title })} onClick={() => setForm({ campaign: c })}><PencilSimpleIcon size={14} aria-hidden="true" />{T.edit}</Button>
@@ -191,7 +193,7 @@ function Interests({ lang, campaign, onClose }: { lang: Lang; campaign: Campaign
             <Row key={i.id} cols={COLS} className="py-2">
               <Cell>
                 <span className="flex min-w-0 flex-col">
-                  <a className="kd-ell text-sm text-paper hover:underline" href={'/a/' + i.artist.slug} target="_blank" rel="noopener">{i.artist.name}</a>
+                  <a className="kd-ell text-sm text-fg-1 hover:underline" href={'/a/' + i.artist.slug} target="_blank" rel="noopener">{i.artist.name}</a>
                   <span className="kd-s text-xs">{[i.artist.basedIn ? FF.text(i.artist.basedIn, lang) : '', i.artist.styles.map((s) => FF.text(s.label, lang)).join(', '), i.artist.email].filter(Boolean).join(' · ')}</span>
                 </span>
               </Cell>

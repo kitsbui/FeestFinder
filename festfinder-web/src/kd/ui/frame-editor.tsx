@@ -39,7 +39,7 @@ const SHAPE: Record<FrameShape, string> = {
 /** A small picture drawn with its framing, clipped to its box (previews in forms and here). */
 export function FramedThumb({ src, className, alt = '' }: { src: string; className?: string; alt?: string }) {
   return (
-    <span className={cx('kd-fthumb relative block shrink-0 overflow-hidden bg-obsidian', className)}>
+    <span className={cx('kd-fthumb relative block shrink-0 overflow-hidden bg-surface-2', className)}>
       <img src={src} alt={alt} referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover" style={frameStyle(src)} />
     </span>
   );
@@ -98,7 +98,7 @@ export function FrameEditor({ lang, src, shapes, onClose, onDone }: {
             aria-label={T.point}
             aria-valuetext={`${Math.round(f.x)}% · ${Math.round(f.y)}%`}
             aria-valuenow={Math.round(f.x)}
-            className="relative flex cursor-crosshair touch-none select-none items-center justify-center rounded-card bg-obsidian p-2 outline-none focus-visible:shadow-[0_0_0_2px_var(--color-acc)]"
+            className="relative flex cursor-crosshair touch-none select-none items-center justify-center rounded-card bg-surface-2 p-2 outline-none focus-visible:shadow-[0_0_0_2px_var(--color-lime)]"
             onPointerDown={(e) => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); moveTo(e); }}
             onPointerMove={(e) => { if (dragging.current) moveTo(e); }}
             onPointerUp={() => { dragging.current = false; }}
@@ -109,7 +109,7 @@ export function FrameEditor({ lang, src, shapes, onClose, onDone }: {
                       <img src={src} alt="" referrerPolicy="no-referrer" draggable={false} className="block max-h-[52vh] max-w-full rounded-seg" />
               <span aria-hidden="true" className="pointer-events-none absolute inset-0">
                 <span
-                  className="absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-acc bg-acc/30 shadow-[0_0_0_2px_rgb(0_0_0/0.6)]"
+                  className="absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-info bg-info/30 shadow-[0_0_0_2px_rgb(0_0_0/0.6)]"
                   style={{ left: `${f.x}%`, top: `${f.y}%` }}
                 />
               </span>
@@ -129,7 +129,7 @@ export function FrameEditor({ lang, src, shapes, onClose, onDone }: {
               <input
                 type="range" min={1} max={MAX_ZOOM} step={0.05} value={f.z}
                 onChange={(e) => setF((cur) => ({ ...cur, z: Number(e.target.value) }))}
-                className="w-full accent-acc"
+                className="w-full accent-info"
               />
             </label>
           </div>

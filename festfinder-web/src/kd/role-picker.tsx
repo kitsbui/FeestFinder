@@ -119,7 +119,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
 
   const card = (label: string, sub: string, icon: ReactNode, go: () => void) => (
     <button type="button" className="kd-opt grid-cols-[auto_minmax(0,1fr)] gap-x-3.5 py-3.5" onClick={go}>
-      <span className="row-span-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-paper">{icon}</span>
+      <span className="row-span-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-fg-1">{icon}</span>
       <span className="kd-hs">{label}</span>
       <span className="kd-s">{sub}</span>
     </button>

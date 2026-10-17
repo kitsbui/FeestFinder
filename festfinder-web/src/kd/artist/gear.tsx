@@ -88,7 +88,7 @@ function List({ lang, served, categories, onSaved }: {
           <form className="flex flex-col gap-3" onSubmit={addNew}>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
               <Field label={T.gearName} htmlFor="gr-name"><Input id="gr-name" required maxLength={80} value={fresh.name} onChange={(e) => setFresh({ ...fresh, name: e.target.value })} /></Field>
-              <Field label={<>{T.brand} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="gr-brand"><Input id="gr-brand" maxLength={60} value={fresh.brand} onChange={(e) => setFresh({ ...fresh, brand: e.target.value })} /></Field>
+              <Field label={<>{T.brand} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="gr-brand"><Input id="gr-brand" maxLength={60} value={fresh.brand} onChange={(e) => setFresh({ ...fresh, brand: e.target.value })} /></Field>
               <Field label={T.category} htmlFor="gr-cat">
                 <Select id="gr-cat" value={fresh.category} onChange={(e) => setFresh({ ...fresh, category: e.target.value })}>
                   {categories.length ? categories.map((c) => <option key={c.key} value={c.key}>{c.label[lang]}</option>) : <option value="other">—</option>}

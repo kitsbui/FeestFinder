@@ -5,7 +5,7 @@ import { openDb } from '../src/db/index.ts';
 import { migrate } from '../src/db/migrate.ts';
 import { seed } from './fixtures/seed.ts';
 import { fixedClock } from '../src/lib/time.ts';
-import { NoopReporter } from '../src/services/errors.ts';
+import { NoopReporter, type ErrorReporter } from '../src/services/errors.ts';
 import { NoopAnalytics, type Analytics } from '../src/services/analytics.ts';
 import { ConsoleTransport } from '../src/services/messaging.ts';
 import { MemoryStorage } from '../src/services/storage.ts';
@@ -44,7 +44,7 @@ async function freshDatabaseUrl(): Promise<string | null> {
  * A test API on a fresh database. With `seed: false` the database has the migrations only,
  * the way production starts; otherwise it holds the demo data from fixtures/seed.ts.
  */
-export async function setup(opts: { now?: string; guide?: GuideGenerator; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; config?: Partial<Config>; seed?: boolean } = {}) {
+export async function setup(opts: { now?: string; guide?: GuideGenerator; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; errors?: ErrorReporter; config?: Partial<Config>; seed?: boolean } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
@@ -58,7 +58,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; prefil
   const transport = new ConsoleTransport(() => {});
   const ctx: Ctx = {
     config, db, clock, transport, storage: new MemoryStorage(),
-    errors: new NoopReporter(),
+    errors: opts.errors ?? new NoopReporter(),
     analytics: opts.analytics ?? new NoopAnalytics(),
     guide: opts.guide ?? new DisabledGuide(),
     prefill: opts.prefill ?? new DisabledPrefill(),

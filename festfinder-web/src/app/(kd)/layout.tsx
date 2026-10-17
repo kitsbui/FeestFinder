@@ -14,8 +14,10 @@ import { siteMetadata } from '@/lib/site';
 import { ExtensionGuardRelease, ExtensionGuardScript } from '@/components/extension-guard';
 import { BrokenCovers } from '@/kd/ui/covers';
 import { Scrollbars } from '@/kd/ui/scrollbars';
+import { SkipLink } from '@/kd/ui/skip-link';
 import { ScriptFonts } from '@/kd/ui/script-fonts';
 import { FeedbackWidget } from '@/kd/feedback/widget';
+import { Vitals } from '@/kd/ui/vitals';
 
 export const metadata: Metadata = siteMetadata;
 
@@ -23,7 +25,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#08090a',
+  themeColor: '#08090a', // tokens-ok: metadata needs a literal (theme.css surface-0)
   colorScheme: 'dark',
 };
 
@@ -36,11 +38,13 @@ export default function KdLayout({ children }: { children: ReactNode }) {
       <body>
         {/* The page's own box, so no <div> of ours sits directly in <body>: see extension-guard.tsx. */}
         <ff-app>
+          <SkipLink />
           {children}
           <Scrollbars />
           <ScriptFonts />
           <BrokenCovers />
           <FeedbackWidget />
+          <Vitals />
           <ExtensionGuardRelease />
         </ff-app>
       </body>

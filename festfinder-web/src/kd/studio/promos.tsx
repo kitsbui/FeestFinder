@@ -64,9 +64,9 @@ export function Promos() {
                 {promos.items.length ? (
                   <ul className="flex flex-col">
                     {promos.items.map((p) => (
-                      <li key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-line py-3 first:pt-0">
+                      <li key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-line-1 py-3 first:pt-0">
                         <span className="flex min-w-0 items-baseline gap-2.5">
-                          <span className="kd-mb kd-num text-paper">{p.code}</span>
+                          <span className="kd-mb kd-num text-fg-1">{p.code}</span>
                           <span className="kd-s kd-num">{p.value[lang]}</span>
                           {p.nearlyUsedUp ? <Status tone="warn">{T.promoNearly}</Status> : null}
                         </span>
@@ -79,7 +79,7 @@ export function Promos() {
                     ))}
                   </ul>
                 ) : <span className="kd-s">{T.promoNone}</span>}
-                <form className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] items-end gap-3 border-t border-line pt-4" onSubmit={addCode} aria-label={T.promoNew}>
+                <form className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] items-end gap-3 border-t border-line-1 pt-4" onSubmit={addCode} aria-label={T.promoNew}>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="pCode">{T.promoCode}</FieldLabel><Input id="pCode" required minLength={3} maxLength={24} className="kd-num uppercase" value={code.code} onChange={(e) => setCode({ ...code, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="pPct">{T.promoPct}</FieldLabel><Input id="pPct" required inputMode="numeric" className="kd-num" value={code.pct} onChange={(e) => setCode({ ...code, pct: e.target.value.replace(/\D/g, '').slice(0, 3) })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="pCap">{T.promoCap}</FieldLabel><Input id="pCap" inputMode="numeric" className="kd-num" placeholder="500" value={code.cap} onChange={(e) => setCode({ ...code, cap: e.target.value.replace(/\D/g, '') })} /></div>
@@ -94,7 +94,7 @@ export function Promos() {
                 {guests.items.length ? (
                   <ul className="flex flex-col">
                     {guests.items.map((g) => (
-                      <li key={g.id} className="flex min-h-13 items-center gap-3 border-b border-line">
+                      <li key={g.id} className="flex min-h-13 items-center gap-3 border-b border-line-1">
                         <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell">{g.name}</span><span className="kd-s kd-num">{fill(T.guestSeats + ': {n}', { n: g.seats })}</span></span>
                         <Switch checked={g.checkedIn} label={fill(T.guestIn, { n: g.name })} onChange={(v) => act(() => FF.patch(`${base}/guests/${g.id}`, { checkedIn: v }))} />
                         <IconButton size="sm" label={fill(T.guestRemove, { n: g.name })} onClick={() => act(() => FF.del(`${base}/guests/${g.id}`))}><TrashIcon size={16} aria-hidden="true" /></IconButton>

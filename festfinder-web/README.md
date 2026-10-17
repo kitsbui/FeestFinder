@@ -64,7 +64,10 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
    - `CORS_ORIGINS` += this site's origin (sign-in may return only to listed origins).
 4. **Google Cloud console** → the OAuth client → add the authorised redirect URI `<this site>/auth/oauth/google/return` (and the same for Facebook and Instagram if they are on).
 5. **Check.** `<this site>/health` answers `"webProxy":"visitor"` (the API sees each visitor; `false` means the secret is missing or differs, and the API logs a warning when it differs); sign in with Google; `/list` and an event page load.
-6. **Previews.** The API's preview deployments sit behind Vercel Authentication, so this project builds `main` only: `vercel.json` turns Git deployments off for every other branch (`git.deploymentEnabled`). Leave Settings → Git → Ignored Build Step empty; a command reading `$VERCEL_ENV` there skipped `main` too.
+6. **Previews.** Off until their variables exist: `vercel.json` builds `main` only (`git.deploymentEnabled`); leave Settings → Git → Ignored Build Step empty, as a command reading `$VERCEL_ENV` there skipped `main` too. A preview of this app talks to a preview of the API on the staging database, which Vercel Authentication guards, so to turn previews on for pull requests (design v2 phase 7, `docs/DESIGN_GOVERNANCE.md`):
+   1. On the API project: Settings → Deployment Protection → Protection Bypass for Automation → add a secret, and give the API's staging branch a stable address (Settings → Domains, a branch domain).
+   2. On this project, for the Preview environment only: `FF_API_ORIGIN` = that staging address, `FF_API_BYPASS` = the secret (the proxy and the server's reads send it as `x-vercel-protection-bypass`; never set it for Production), `WEB_PROXY_SECRET` = the staging API's value, `MAP_*` = the API's.
+   3. Then let `vercel.json` build every branch (`"**": true`) in a pull request of its own, and check a preview: a page, an event, signing in.
 
 
 ### Moving feestfinder.com to this project
@@ -115,9 +118,9 @@ public/sw.js                 the service worker
 
 The tokens are in [`src/kd/theme.css`](src/kd/theme.css). `/kit` shows every part.
 
-- **Surface.** A near-black `void` (`#08090a`) with glass panels (`carbon`, `obsidian`, `slate`) and hairlines (`line`, `line2`). Type is `paper` and `mist`, quiet text `fog`.
-- **One lime action.** The accent `acc` (`#e4f222`, ink `#08090a`) is for the one thing a screen is for; everything else is a quiet button.
-- **Colour is genre.** Lễ hội `fest` `#ee6018`, Nhạc sống `live` `#0aa5b8`, EDM `edm` `#8b5cf6`, Văn hoá `cult` `#d6589e`. `familyOf(genre)` and `g(family)` (`src/kd/genre.ts`) set them on a card or a chart.
+- **Colour by role.** Tokens are named for what they do: `surface-0/1/2` (`#08090a` page, panels, raised parts), `line-1/2`, `fg-1/2/3` for text, `inverse` / `on-inverse` for the light surface, `ok` / `warn` / `bad` for status, `map` under a map. `theme.css` is the only file that writes a hex colour (`npm run lint` runs `scripts/check-tokens.ts`; `npm run tokens:rename` rewrites the old material names).
+- **Colour says one sentence.** Turquoise `info` (`#00d9d0`) is information: style names, links, the chosen tab, chip, row or pin, counts, "free". The turquoise → lime gradient (`--gradient-accent`) is the one action a screen exists for (`buttonClass({ tone: 'acc', glow })`), the featured tag and the logo's flags. Lime alone (`#e4f222`) is the focus ring and the glow. Status is a dot with a word.
+- **Shape.** Four button tones (`acc`, `default`, `ghost`, `danger`); radii 4 / 8 / 16 and the pill; glass only over a photo or a map. An event without a cover is a text tile (`Art` with `title`), never shapes. Nothing scrolls sideways: rows of tabs and chips wrap.
 - **Type.** One family, Noto Sans (variable weight), for words, numbers, dates and labels, served from this site from `@fontsource-variable/noto-sans`; the browser fetches only the scripts a page uses. Noto Sans Thai and Noto Sans JP cover Thai and Japanese titles. No monospace face: numbers use tabular figures (`kd-num`, `kd-mb`).
 - **Motion and access.** Animations stop under `prefers-reduced-motion`; menus close on Escape and outside clicks; toggles carry `aria-pressed` or `aria-expanded`.
 

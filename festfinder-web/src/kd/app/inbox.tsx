@@ -22,7 +22,7 @@ import { APP } from './copy';
 import { ago } from '../web/event/community';
 import { SignInCard } from './row';
 
-function Head({ lang, title, back = '/app/profile', aside }: { lang: Lang; title: string; back?: string; aside?: React.ReactNode }) {
+function Head({ lang, title, back = '/profile', aside }: { lang: Lang; title: string; back?: string; aside?: React.ReactNode }) {
   const T = pick(APP, lang);
   return (
     <AppBar className="pr-1.5">
@@ -52,11 +52,11 @@ function hrefOf(n: Note): string {
     if (l.screen === 'live') return '/app/live/' + l.eventId;
     if (l.screen === 'recap') return '/app/recap/' + l.eventId;
     if (l.screen === 'plan') return '/app/plan/' + l.eventId;
-    return '/app/e/' + l.eventId;
+    return '/e/' + l.eventId;
   }
   if (l.screen === 'tickets') return '/app/tickets';
   if (l.screen === 'chat' && l.friendId) return '/app/chat/' + l.friendId;
-  return '/app';
+  return '/';
 }
 
 export function Notifications({ lang }: { lang: Lang }) {
@@ -74,16 +74,16 @@ export function Notifications({ lang }: { lang: Lang }) {
   const open = (n: Note) => { if (n.unread) FF.fire(FF.post('/me/notifications/' + n.id + '/read')); };
   return (
     <>
-      <Head lang={lang} title={T.notifTitle} back="/app" aside={items?.some((n) => n.unread) ? <Button size="sm" tone="ghost" onClick={readAll}>{T.readAll}</Button> : null} />
+      <Head lang={lang} title={T.notifTitle} back="/" aside={items?.some((n) => n.unread) ? <Button size="sm" tone="ghost" onClick={readAll}>{T.readAll}</Button> : null} />
       <Gate lang={lang} note={T.gateNotif}>
         {!items ? <div className="kd-skel mx-4 h-40" aria-hidden="true" /> : items.length ? (
           <ul className="flex flex-col px-4">
             {items.map((n) => (
               <li key={n.id}>
                 <a className="kd-lrow min-h-17 items-start py-3" href={hrefOf(n)} onClick={() => open(n)}>
-                  <span className={cx('mt-1.5 h-2 w-2 shrink-0 rounded-full', n.unread ? 'bg-acc' : 'bg-transparent')} aria-hidden="true" />
+                  <span className={cx('mt-1.5 h-2 w-2 shrink-0 rounded-full', n.unread ? 'bg-info' : 'bg-transparent')} aria-hidden="true" />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className={cx('kd-hs', !n.unread && 'text-mist')}>{n.title[lang]}</span>
+                    <span className={cx('kd-hs', !n.unread && 'text-fg-2')}>{n.title[lang]}</span>
                     {n.body ? <span className="kd-s">{n.body[lang]}</span> : null}
                   </span>
                   <span className="kd-m kd-num shrink-0">{ago(n.createdAt, lang)}</span>
@@ -152,7 +152,7 @@ function AlertForm({ lang }: { lang: Lang }) {
   const capLabel = (c: number | null) => (c === null ? T.alertAny : c === 0 ? T.alertFreeOnly : money(c, 'VND', lang));
   return (
     <div className="flex flex-col gap-6 px-4 pb-8">
-      <div className="flex items-center gap-4 border-b border-line pb-4">
+      <div className="flex items-center gap-4 border-b border-line-1 pb-4">
         <span className="flex flex-1 flex-col gap-0.5"><span className="kd-hs">{T.alertOn}</span><span className="kd-s">{T.alertSub}</span></span>
         <Switch checked={a.enabled} onChange={(on) => save({ ...a, enabled: on })} label={T.alertOn} />
       </div>
@@ -229,13 +229,13 @@ function PrefsMatrix({ lang }: { lang: Lang }) {
   return (
     <div className="flex flex-col gap-4 px-4 pb-8">
       <div role="table" aria-label={T.notifTitle} className="flex flex-col">
-        <div role="row" className="grid grid-cols-[minmax(0,1fr)_repeat(3,52px)] items-center gap-1 border-b border-line pb-2">
+        <div role="row" className="grid grid-cols-[minmax(0,1fr)_repeat(3,52px)] items-center gap-1 border-b border-line-1 pb-2">
           <span role="columnheader" />
           {cols.map(([c, l]) => <span key={c} role="columnheader" className="kd-m text-center">{l}</span>)}
         </div>
         {rows.map(([topic, label]) => (
-          <div key={topic} role="row" className="grid min-h-14 grid-cols-[minmax(0,1fr)_repeat(3,52px)] items-center gap-1 border-b border-line">
-            <span role="rowheader" className="kd-s text-paper">{label}</span>
+          <div key={topic} role="row" className="grid min-h-14 grid-cols-[minmax(0,1fr)_repeat(3,52px)] items-center gap-1 border-b border-line-1">
+            <span role="rowheader" className="kd-s text-fg-1">{label}</span>
             {cols.map(([c, l]) => (
               <span key={c} role="cell" className="flex justify-center">
                 <Switch checked={!!p.matrix[topic]?.[c]} onChange={(on) => set(topic, c, on)} label={`${label} · ${l}`} />

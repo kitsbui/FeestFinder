@@ -88,8 +88,8 @@ test('the team finds the Console from the site; a fan does not', async ({ page }
   await page.setViewportSize({ width: 1280, height: 800 });
   await signInWith(page, ADMIN);
   await open(page, '/');
-  const nav = page.getByRole('banner');
-  await expect(nav.getByRole('link', { name: 'Console' })).toHaveAttribute('href', '/console');
+  // The Console is a workspace (design v2 phase 1): in the account menu, not in the bar.
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Console' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Tài khoản' }).click();
   await expect(page.getByRole('menuitem', { name: 'Console' })).toHaveAttribute('href', '/console');
   await page.keyboard.press('Escape');

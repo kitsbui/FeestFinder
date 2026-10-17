@@ -108,12 +108,12 @@ export function CollectSheet({ lang, event, onClose, onChanged }: {
                 className="kd-lrow w-full cursor-pointer border-x-0 border-t-0 bg-transparent text-left disabled:cursor-default"
                 onClick={() => toggle(c)}
               >
-                <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-tag shadow-[inset_0_0_0_1px_var(--color-line2)]', c.has && 'bg-acc text-acc-ink shadow-none')}>
+                <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-tag shadow-[inset_0_0_0_1px_var(--color-line-2)]', c.has && 'bg-info text-on-accent shadow-none')}>
                   {c.has ? <CheckIcon size={14} weight="bold" aria-hidden="true" /> : null}
                 </span>
                 <span className="kd-hs kd-ell min-w-0 flex-1">{c.name}</span>
                 <span className="kd-m kd-num">{c.count}</span>
-                <span className="flex text-fog" title={c.isPublic ? T.isPublic : T.isPrivate}>
+                <span className="flex text-fg-3" title={c.isPublic ? T.isPublic : T.isPrivate}>
                   {c.isPublic ? <GlobeHemisphereWestIcon size={16} aria-hidden="true" /> : <LockSimpleIcon size={16} aria-hidden="true" />}
                   <span className="sr-only">{c.isPublic ? T.isPublic : T.isPrivate}</span>
                 </span>

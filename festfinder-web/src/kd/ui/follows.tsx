@@ -119,7 +119,7 @@ export function FollowManager({ lang, f, flush }: { lang: Lang; f: Follows; flus
             return (
               <li key={r.kind + ':' + r.id} className="kd-lrow min-h-16">
                 {r.href ? (
-                  <a className="flex min-w-0 flex-1 items-center gap-3" href={r.href}>{who}<CaretRightIcon size={16} className="shrink-0 text-fog" aria-hidden="true" /></a>
+                  <a className="flex min-w-0 flex-1 items-center gap-3" href={r.href}>{who}<CaretRightIcon size={16} className="shrink-0 text-fg-3" aria-hidden="true" /></a>
                 ) : <span className="flex min-w-0 flex-1 items-center gap-3">{who}</span>}
                 <Button size="sm" tone={isOn ? 'default' : 'acc'} aria-pressed={isOn} aria-label={`${isOn ? T.following : r.back ? T.followBack : T.follow} · ${r.name}`}
                   onClick={() => void kd.setFollow(r.kind, r.id, !isOn)}>

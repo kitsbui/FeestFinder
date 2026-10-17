@@ -33,7 +33,7 @@ describe('the lineup handshake', () => {
   async function listing(lineup: string[]) {
     const src = (await one<{ id: string }>(env.ctx.db, `select id from events where slug = 'ravo-warmup'`))!.id;
     const copy = (await env.as(organizer).post(`/organizer/events/${src}/duplicate`)).body;
-    await env.as(organizer).patch(`/organizer/events/${copy.id}`, { startsOn: '2026-10-24', endsOn: '2026-10-24', lineup });
+    await env.as(organizer).patch(`/organizer/events/${copy.id}`, { startsOn: '2026-10-24', endsOn: '2026-10-24', lineup, coverUrl: 'https://assets.feestfinder.com/covers/warmup.jpg' });
     const sent = await env.as(organizer).post(`/organizer/events/${copy.id}/submit`);
     assert.equal(sent.status, 200, JSON.stringify(sent.body));
     return copy.id as string;

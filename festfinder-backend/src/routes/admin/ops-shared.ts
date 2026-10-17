@@ -82,9 +82,9 @@ export function diffRows(before: any, after: any): DiffRow[] {
   return rows;
 }
 
-/** What the team needs before a listing may go live without the organiser's own submit (the logo and event page are optional here). */
+/** What the team needs before a listing may go live without the organiser's own submit (the logo, the cover and the event page are optional here: a Radar find often has no picture). */
 export function missingForPublish(ev: any): string[] {
-  return missingForSubmit(ev).filter((m) => m !== 'logo' && m !== 'eventUrl');
+  return missingForSubmit(ev).filter((m) => m !== 'logo' && m !== 'cover' && m !== 'eventUrl');
 }
 
 export async function publishByTeam(q: Queryable, s: UserSession, ev: any, now: Date) {

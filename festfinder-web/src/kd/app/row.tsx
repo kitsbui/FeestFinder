@@ -16,14 +16,14 @@ export function EventRow({ e, lang, d, dim }: { e: Card; lang: Lang; d?: number 
   const T = pick(APP, lang);
   const fam = familyOf(e.genre);
   return (
-    <Link className={cx('kd-row', g(fam), dim && 'opacity-60')} href={'/app/e/' + e.slug}>
-      <Art family={fam} cover={e.coverUrl} off={e.soldOut || e.past} />
+    <Link className={cx('kd-row', g(fam), dim && 'opacity-60')} href={'/e/' + e.slug}>
+      <Art title={e.title} family={fam} cover={e.coverUrl} off={e.soldOut || e.past} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex min-w-0 items-center gap-2"><span className="kd-hs kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
         <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{whenShort(e, lang)}{e.venue.area ? ' · ' + e.venue.area : ''}</span>
       </span>
       <span className="flex flex-col items-end gap-0.5">
-        <span className={cx('kd-mb kd-num', e.isFree && 'text-acc')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
+        <span className={cx('kd-mb kd-num', e.isFree && 'text-info')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
         {d != null ? <span className="kd-s kd-num">{km(d, lang)}</span> : null}
       </span>
     </Link>

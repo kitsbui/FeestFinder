@@ -68,14 +68,14 @@ export function Gigs() {
             {inq === null ? <div className="kd-skel h-16" aria-hidden="true" /> : !inq.length ? <span className="kd-s">{T.inqNone}</span> : (
               <ul className="flex flex-col">
                 {inq.map((i) => (
-                  <li key={i.id} className="flex flex-col gap-1 border-b border-line py-3 first:pt-0 last:border-b-0">
+                  <li key={i.id} className="flex flex-col gap-1 border-b border-line-1 py-3 first:pt-0 last:border-b-0">
                     <span className="flex items-center justify-between gap-3">
-                      {i.artist ? <KdLink className="kd-hs hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
+                      {i.artist ? <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
                       <Status tone={i.status === 'accepted' ? 'ok' : i.status === 'declined' ? 'bad' : 'warn'}>{i.status === 'accepted' ? T.inqAccepted : i.status === 'declined' ? T.inqDeclined : T.inqPending}</Status>
                     </span>
                     <span className="kd-m kd-num">{[dayMonth(i.eventOn, lang), i.cityLabel?.[lang], i.feeOffer != null ? money(i.feeOffer, i.currency, lang) : null].filter(Boolean).join(' · ')}</span>
                     <span className="kd-s">{i.message}</span>
-                    {i.reply ? <span className="kd-s border-l-2 border-line2 pl-3 text-mist">{i.reply}</span> : null}
+                    {i.reply ? <span className="kd-s border-l-2 border-line-2 pl-3 text-fg-2">{i.reply}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -107,9 +107,9 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
           {apps === null ? <div className="kd-skel h-12" aria-hidden="true" /> : !apps.length ? <span className="kd-s">{T.appsNone}</span> : (
             <ul className="flex flex-col">
               {apps.map((a) => (
-                <li key={a.id} className="flex flex-col gap-1.5 border-b border-line py-3 last:border-b-0">
+                <li key={a.id} className="flex flex-col gap-1.5 border-b border-line-1 py-3 last:border-b-0">
                   <span className="flex flex-wrap items-center justify-between gap-2">
-                    <KdLink className="kd-hs hover:underline" href={'/a/' + a.artist.slug}>{a.artist.name}</KdLink>
+                    <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + a.artist.slug}>{a.artist.name}</KdLink>
                     <Status tone={a.status === 'booked' ? 'ok' : a.status === 'shortlisted' ? 'warn' : a.status === 'declined' ? 'bad' : 'none'}>
                       {a.status === 'booked' ? T.appBooked : a.status === 'shortlisted' ? T.appShortlisted : a.status === 'declined' ? T.appDeclined : T.appNew}
                     </Status>
@@ -177,7 +177,7 @@ function NewGig({ lang, cities, onPosted }: { lang: Lang; cities: City[]; onPost
           <div className="col-span-2 flex flex-col gap-2"><FieldLabel htmlFor="gCloses">{T.gigCloses}</FieldLabel><Input id="gCloses" type="date" className="kd-num" value={f.closesOn} onChange={(e) => setF({ ...f, closesOn: e.target.value })} /></div>
         </div>
         <fieldset className="flex flex-col gap-2">
-          <legend className="kd-flabel mb-2">{T.fGenre} <span className="font-normal text-fog">{T.optional}</span></legend>
+          <legend className="kd-flabel mb-2">{T.fGenre} <span className="font-normal text-fg-3">{T.optional}</span></legend>
           <div className="flex flex-wrap gap-1.5">
             {Object.keys(STYLE_LABEL).map((k) => {
               const on = f.styles.includes(k);
@@ -188,8 +188,8 @@ function NewGig({ lang, cities, onPosted }: { lang: Lang; cities: City[]; onPost
         {upcoming.length ? (
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="gEvent">{T.gigEvent}</FieldLabel><Select id="gEvent" value={f.eventId} onChange={(e) => setF({ ...f, eventId: e.target.value })}><option value="">{T.gigNoEvent}</option>{upcoming.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</Select></div>
         ) : null}
-        <div className="border-t border-line"><SwitchRow label={T.gigTravel} checked={f.travelCovered} onChange={(v) => setF({ ...f, travelCovered: v })} /></div>
-        <div className="flex flex-col gap-2"><FieldLabel htmlFor="gDesc">{T.gigDesc} <span className="font-normal text-fog">{T.optional}</span></FieldLabel><TextArea id="gDesc" rows={3} maxLength={3000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
+        <div className="border-t border-line-1"><SwitchRow label={T.gigTravel} checked={f.travelCovered} onChange={(v) => setF({ ...f, travelCovered: v })} /></div>
+        <div className="flex flex-col gap-2"><FieldLabel htmlFor="gDesc">{T.gigDesc} <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel><TextArea id="gDesc" rows={3} maxLength={3000} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
         <Button tone="acc" type="submit" className="self-start" disabled={busy || !city}>{T.gigPost}</Button>
       </form>
     </Block>

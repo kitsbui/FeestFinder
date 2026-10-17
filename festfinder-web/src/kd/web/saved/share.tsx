@@ -84,8 +84,8 @@ export function ShareSheet({ lang, name, url, events, onClose }: {
 
   const tile = (channel: Channel, label: string, icon: ReactNode) => (
     <button key={channel} type="button" className="kd-btn kd-btn-ghost h-auto flex-col gap-2 py-3" onClick={() => go(channel)}>
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 shadow-[inset_0_0_0_1px_var(--color-line)]">{icon}</span>
-      <span className="kd-s text-mist">{label}</span>
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 shadow-[inset_0_0_0_1px_var(--color-line-1)]">{icon}</span>
+      <span className="kd-s text-fg-2">{label}</span>
     </button>
   );
   return (
@@ -106,7 +106,7 @@ export function ShareSheet({ lang, name, url, events, onClose }: {
         </div>
         {video?.making ? <p className="kd-s" role="status">{t.videoMaking}</p> : null}
         {video?.file ? (
-          <Button tone="light" block onClick={async () => { const how = await FF.shareFile(video.file!, name); if (how === 'saved') kd.toast(t.videoSaved); setVideo(null); }}>
+          <Button tone="acc" block onClick={async () => { const how = await FF.shareFile(video.file!, name); if (how === 'saved') kd.toast(t.videoSaved); setVideo(null); }}>
             {t.videoReady}
           </Button>
         ) : null}

@@ -64,7 +64,7 @@ export function UpcomingCards({ lang, items }: { lang: Lang; items: Card[] }) {
             options={[{ value: 'soonest', label: T.soonest }, { value: 'festivals', label: T.festivals }, { value: 'interest', label: T.interest }]} />
         </div>
       ) : null}
-      {shown.length ? <div className="kd-cards">{shown.map((e, i) => <EventCard key={e.id} e={e} i={i} lang={lang} />)}</div> : <p className="kd-t text-fog">{T.none}</p>}
+      {shown.length ? <div className="kd-cards">{shown.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div> : <p className="kd-t text-fg-3">{T.none}</p>}
     </div>
   );
 }

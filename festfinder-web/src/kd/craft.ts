@@ -28,6 +28,8 @@ export const CRAFT = {
   waiting: { en: 'Waiting', vi: 'Chờ duyệt' },
   team: { en: 'FeestFinder team', vi: 'Đội FeestFinder' },
   console: { en: 'Console', vi: 'Console' },
+  workspaces: { en: 'Workspaces', vi: 'Không gian làm việc' },
+  workspace: { en: 'Workspace', vi: 'Không gian' },
   oneTitle: { en: 'One craft per account', vi: 'Mỗi tài khoản một vai nghề' },
   oneBody: {
     en: 'Besides attending, an account performs or organises. Switch from {a} to {b}? Your {a} profile stays, and you can switch back any time.',

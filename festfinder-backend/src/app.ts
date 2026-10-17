@@ -59,6 +59,7 @@ import adminAffiliateRoutes from './routes/admin/affiliate.ts';
 import gearRoutes from './routes/gear.ts';
 import gigRoutes from './routes/gigs.ts';
 import analyticsRoutes from './routes/analytics.ts';
+import clientErrorRoutes from './routes/client-errors.ts';
 import brandRoutes from './routes/brands.ts';
 import momentRoutes from './routes/moments.ts';
 import mixRoutes from './routes/mixes.ts';
@@ -366,6 +367,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(gearRoutes);
   await app.register(gigRoutes);
   await app.register(analyticsRoutes);
+  await app.register(clientErrorRoutes);
   await app.register(brandRoutes);
   await app.register(projectRoutes);
   await app.register(momentRoutes);

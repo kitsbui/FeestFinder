@@ -1,6 +1,7 @@
 'use client';
 /**
- * /profile in Kính đêm (design/Profile-Fan-Web): the signed-in person's own profile on the web.
+ * /profile in Kính đêm (design/Profile-Fan-Web): the signed-in person's own profile on the web,
+ * and on a phone the "Tôi" hub the tab bar leads to (their places, workspaces, language, sign out).
  * At the side, who they are (edit), their numbers, their photos (Moments); in the main column the
  * nights coming up, the passport (a stamp per night they were there) and their sound, badges, and
  * who they follow. Private (owner decision 2): no public fan page yet, never indexed.
@@ -20,6 +21,7 @@ import { Art, Avatar, Card as Panel, Stat } from '../../ui/parts';
 import { APP } from '../../app/copy';
 import { EditSheet, PassportSection, WrappedSheet, type Me, type Order, type Passport } from '../../app/profile';
 import { FollowManager, FollowStats, type Follows } from '../../ui/follows';
+import { MeHub } from '../me';
 
 export function FanProfile({ lang }: { lang: Lang }) {
   const kd = useKd();
@@ -78,14 +80,17 @@ function Mine({ lang }: { lang: Lang }) {
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
-              <a className={buttonClass({ size: 'sm', tone: 'ghost' })} href="/app/settings">{T.notifSettings}</a>
+              {/* On a phone the hub below has "Cài đặt". */}
+              <a className={buttonClass({ size: 'sm', tone: 'ghost' }, 'hidden desk:inline-flex')} href="/app/settings">{T.notifSettings}</a>
             </div>
-            <div className="grid grid-cols-2 gap-y-3.5 border-y border-line py-3.5">
+            <div className="grid grid-cols-2 gap-y-3.5 border-y border-line-1 py-3.5">
               <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
               <Stat value={orders ? coming.length : '–'} label={T.going} />
               <FollowStats lang={lang} f={follows} />
             </div>
           </div>
+          {/* "Tôi" on a phone: the tab bar leads here, and the account menu's places are a page (web/me.tsx). */}
+          <MeHub lang={lang} className="desk:hidden" />
           {moments ? <MomentsSection lang={lang} as="user" items={moments} owner compact /> : null}
         </aside>
 
@@ -97,13 +102,13 @@ function Mine({ lang }: { lang: Lang }) {
                 const fam = familyOf(o.event.genre);
                 return (
                   <a key={o.id} href={'/e/' + o.event.slug + en} className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)_auto] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
-                    <Art family={fam} bone={i % 2 === 1} className="h-19 rounded-lg" />
+                    <Art family={fam} title={o.event.title} className="h-19 rounded-lg" />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="kd-m kd-num">{weekdayShort(o.event.startsOn, lang)} {dayMonth(o.event.startsOn, lang)}</span>
                       <span className="kd-hs kd-ell">{o.event.title}</span>
                       <span className="kd-s kd-ell">{[o.event.venueName, o.event.area, o.event.startTime ? fill(T.doorsAt, { t: o.event.startTime }) : null].filter(Boolean).join(' · ')}</span>
                     </span>
-                    <span className="kd-tag bg-ink text-[#eeeeee]">{fill(T.nTickets, { n: o.tickets.length })}</span>
+                    <span className="kd-tag bg-on-inverse text-inverse">{fill(T.nTickets, { n: o.tickets.length })}</span>
                   </a>
                 );
               })}

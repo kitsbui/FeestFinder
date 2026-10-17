@@ -73,7 +73,7 @@ describe('background jobs', () => {
       { lang: 'vi', title: { en: 'Doors open', vi: 'Mở cửa' }, body: { en: 'b', vi: 'Vào thôi' }, link: { screen: 'event', eventId: env.ids.event.ravo } }, env.clock.now());
     await enqueue(env.ctx.db, user.id, 'push', 'native-device-token-2', 'native-test', { lang: 'vi' }, env.clock.now());
     await deliverDue(env.ctx.db, env.clock, transport);
-    assert.deepEqual(JSON.parse(calls[0]), { title: 'Mở cửa', body: 'Vào thôi', url: `/app/e/${env.ids.event.ravo}`, tag: 'gone-test' });
+    assert.deepEqual(JSON.parse(calls[0]), { title: "Mở cửa", body: "Vào thôi", url: `/e/${env.ids.event.ravo}`, tag: "gone-test" });
     const row = await one<any>(env.ctx.db, `select status, attempts from outbox where template = 'gone-test'`);
     assert.equal(row.status, 'failed');
     assert.equal(row.attempts, 1);

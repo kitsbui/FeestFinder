@@ -127,7 +127,7 @@ export function Announce() {
             {sent === null ? <div className="kd-skel h-24" aria-hidden="true" /> : !sent.length ? <span className="kd-s">{T.annNone}</span> : (
               <ul className="flex flex-col">
                 {sent.map((a) => (
-                  <li key={a.id} className="flex flex-col gap-1 border-b border-line py-3 first:pt-0 last:border-b-0">
+                  <li key={a.id} className="flex flex-col gap-1 border-b border-line-1 py-3 first:pt-0 last:border-b-0">
                     <span className="flex items-center justify-between gap-3">
                       <Status tone={a.status === 'sent' ? 'ok' : 'warn'}>{a.status === 'sent' ? T.annSentSt : T.annScheduled}</Status>
                       <span className="kd-m kd-num">{when(a.sendAt)}</span>

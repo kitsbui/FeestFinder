@@ -93,7 +93,7 @@ export function ConsoleFeedback() {
             {load.data.items.map((r) => (
               <Row key={r.id} cols={COLS} current={open === r.id}>
                 <Cell>
-                  <button type="button" className="flex w-full min-w-0 flex-col text-left hover:underline" onClick={() => setOpen(r.id)}>
+                  <button type="button" className="flex min-h-11 w-full min-w-0 flex-col justify-center text-left hover:underline" onClick={() => setOpen(r.id)}>
                     <Two title={r.title} sub={[r.ticketId, FF.text(r.typeLabel, lang), r.severity ? fill(T.severity, { s: r.severity }) : null, stamp(r.createdAt, lang)].filter(Boolean).join(' · ')} />
                   </button>
                 </Cell>
@@ -149,7 +149,7 @@ function ReportDrawer({ lang, id, onClose }: { lang: Lang; id: string; onClose: 
             {r.csat ? <Pill>{fill(T.csat, { n: r.csat })}</Pill> : null}
             <span className="kd-s">{r.from.kind === 'guest' ? `${T.guest} · ${[r.from.name, r.from.email].filter(Boolean).join(' · ')}` : [r.from.name, r.from.email].filter(Boolean).join(' · ')} · {stamp(r.createdAt, lang)}</span>
           </div>
-          <p className="kd-t whitespace-pre-line text-paper">{r.description}</p>
+          <p className="kd-t whitespace-pre-line text-fg-1">{r.description}</p>
           {r.steps ? <Field label={T.steps}><p className="kd-s whitespace-pre-line">{r.steps}</p></Field> : null}
           <Field label={T.setStatus} htmlFor="fb-status">
             <Select id="fb-status" value={r.status} disabled={busy} onChange={(e) => setStatus(e.target.value as St)}>
@@ -162,7 +162,7 @@ function ReportDrawer({ lang, id, onClose }: { lang: Lang; id: string; onClose: 
                 {r.attachments.map((a) => (
                   <a key={a.n} href={a.url} target="_blank" rel="noopener">
                     { }
-                    <img src={a.url} alt={`${T.shots} ${a.n}`} className="h-40 w-auto rounded-seg object-contain shadow-[inset_0_0_0_1px_var(--color-line)]" />
+                    <img src={a.url} alt={`${T.shots} ${a.n}`} className="h-40 w-auto rounded-seg object-contain shadow-[inset_0_0_0_1px_var(--color-line-1)]" />
                   </a>
                 ))}
               </div>

@@ -48,11 +48,11 @@ export function StatFilter({ label, value, on, tone, onClick }: { label: string;
       aria-pressed={on}
       onClick={onClick}
       className={cx(
-        'flex min-w-0 flex-col items-start gap-1 rounded-lg px-4 py-3 text-left shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-white/[0.03]',
-        on && 'bg-white/[0.06] shadow-[inset_0_0_0_1px_var(--color-line2)]',
+        'flex min-w-0 flex-col items-start gap-1 rounded-lg px-4 py-3 text-left shadow-[inset_0_0_0_1px_var(--color-line-1)] transition-colors hover:bg-white/[0.03]',
+        on && 'bg-white/[0.06] shadow-[inset_0_0_0_1px_var(--color-line-2)]',
       )}
     >
-      <span className={cx('kd-num text-[22px] font-medium leading-tight', value && tone === 'warn' ? 'text-warn' : value && tone === 'bad' ? 'text-hot' : tone === 'ok' ? 'text-ok' : 'text-paper')}>{value}</span>
+      <span className={cx('kd-num text-[22px] font-medium leading-tight', value && tone === 'warn' ? 'text-warn' : value && tone === 'bad' ? 'text-bad' : tone === 'ok' ? 'text-ok' : 'text-fg-1')}>{value}</span>
       <span className="kd-m">{label}</span>
     </button>
   );

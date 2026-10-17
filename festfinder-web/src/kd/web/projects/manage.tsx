@@ -16,7 +16,6 @@ import { useKd } from '../../runtime';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { FieldError, FieldLabel, Input, Select, TextArea } from '../../ui/forms';
 import { ImageLinkField } from '../../ui/image-link';
-import { PostKindSwitch } from '../../ui/post-kind';
 import { Card as Panel, Status, type StatusTone } from '../../ui/parts';
 import { PROJ } from './copy';
 import { SEEKING, SEEKING_LABEL, text, type Package, type Project, type Seeking } from './model';
@@ -72,7 +71,6 @@ function Manage({ lang, slug }: { lang: Lang; slug: string | null }) {
   return (
     <div className="flex flex-col gap-10">
       {/* "Đăng sự kiện" posts an event or a project: a new one can still be an event. */}
-      {!p ? <PostKindSwitch lang={lang} current="project" className="self-start" /> : null}
       <div className="kd-sec items-end">
         <h1 className="kd-d2">{p ? p.title : T.newTitle}</h1>
         {p && ['open', 'realized', 'closed'].includes(p.status) ? <LinkButton href={inLang('/p/' + encodeURIComponent(p.slug), lang)}>{T.view}</LinkButton> : null}
@@ -108,7 +106,7 @@ function StatusBar({ lang, p, onChange }: { lang: Lang; p: Project; onChange: (p
           {p.status === 'open' ? <Button onClick={() => act('close')}>{T.close}</Button> : null}
         </div>
       </div>
-      {p.decisionNote && p.status === 'rejected' ? <p className="kd-s text-paper">{fill(T.teamNote, { n: p.decisionNote })}</p> : null}
+      {p.decisionNote && p.status === 'rejected' ? <p className="kd-s text-fg-1">{fill(T.teamNote, { n: p.decisionNote })}</p> : null}
       {p.missing?.length ? <p className="kd-s">{fill(T.missing, { m: p.missing.map((m) => text(m, lang)).join(', ') })}</p> : null}
       <FieldError>{err}</FieldError>
     </Panel>
@@ -242,7 +240,7 @@ function Offers({ lang, p }: { lang: Lang; p: Project }) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="kd-tag">{text(o.kindLabel, lang)}</span>
-                  <span className="kd-hs kd-ell">{o.artist ? <Link href={inLang('/a/' + encodeURIComponent(o.artist.slug), lang)} className="hover:underline">{o.artist.name}</Link> : o.from}</span>
+                  <span className="kd-hs kd-ell">{o.artist ? <Link href={inLang('/a/' + encodeURIComponent(o.artist.slug), lang)} className="kd-hit hover:underline">{o.artist.name}</Link> : o.from}</span>
                   {o.from && o.person && o.from !== o.person ? <span className="kd-s kd-ell">· {o.person}</span> : null}
                 </span>
                 {o.status === 'sent' ? (
@@ -253,8 +251,8 @@ function Offers({ lang, p }: { lang: Lang; p: Project }) {
                 ) : <Status tone={o.status === 'accepted' ? 'ok' : 'none'}>{o.status === 'accepted' ? T.accepted : T.declined}</Status>}
               </div>
               {o.package || o.amount != null ? <span className="kd-s">{[o.package, o.amount != null ? money(o.amount, o.currency, lang) : ''].filter(Boolean).join(' · ')}</span> : null}
-              {o.message ? <p className="kd-s whitespace-pre-line text-mist">{o.message}</p> : null}
-              {o.contact ? <span className="kd-s text-paper">{T.contact}: {[o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
+              {o.message ? <p className="kd-s whitespace-pre-line text-fg-2">{o.message}</p> : null}
+              {o.contact ? <span className="kd-s text-fg-1">{T.contact}: {[o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
             </li>
           ))}
         </ul>
@@ -325,10 +323,10 @@ function Mine({ lang }: { lang: Lang }) {
               <li key={o.id} className="kd-card flex flex-col gap-1 p-4">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="kd-tag">{text(o.kindLabel, lang)}</span>
-                  <Link href={inLang('/p/' + encodeURIComponent(o.project.slug), lang)} className="kd-hs hover:underline">{o.project.title}</Link>
+                  <Link href={inLang('/p/' + encodeURIComponent(o.project.slug), lang)} className="kd-hit kd-hs hover:underline">{o.project.title}</Link>
                   <span className="kd-s">· {({ accepted: T.accepted, sent: T.waiting, declined: T.declined, withdrawn: T.withdrawn } as Record<string, string>)[o.status] ?? o.status}</span>
                 </span>
-                {o.contact ? <span className="kd-s text-paper">{T.contact}: {[o.contact.name, o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
+                {o.contact ? <span className="kd-s text-fg-1">{T.contact}: {[o.contact.name, o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}
               </li>
             ))}
           </ul>

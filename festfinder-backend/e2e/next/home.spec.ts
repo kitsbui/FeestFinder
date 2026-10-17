@@ -16,11 +16,10 @@ async function open(page: Page, path = '/') {
 }
 
 test.describe('the home page', () => {
-  test('arrives as HTML with every event, the questions and its other language', async ({ request }) => {
+  test('arrives as HTML with every event and its other language (the questions are on /about)', async ({ request }) => {
     const html = await (await request.get('/')).text();
     expect(html).toMatch(/<h1[^>]*>Tất cả sự kiện<\/h1>/);
     for (const title of ['HOZO Super Fest', 'Ravolution Music Festival']) expect(html).toContain(title);
-    expect(html).toContain('Câu hỏi thường gặp');
     expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="[^"]*\/\?lang=en"/);
     expect(html).toMatch(/<link rel="canonical" href="https?:\/\/[^/"]+\/?"/);
     const en = await (await request.get('/?lang=en')).text();
@@ -35,11 +34,10 @@ test.describe('the home page', () => {
     await expect(nav.getByRole('link', { name: 'Khám phá' })).toHaveCount(0);
     await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('href', '/');
     await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('aria-current', 'page');
+    // On a phone the tab bar is the nav.
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.getByRole('button', { name: 'Menu' }).click();
-    const sheet = page.getByRole('dialog', { name: 'Menu' });
-    await expect(sheet.getByRole('link', { name: 'Khám phá' })).toHaveCount(0);
-    await expect(sheet.getByRole('link', { name: 'Sự kiện', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(nav.getByRole('link', { name: 'Khám phá' })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Sự kiện', exact: true })).toHaveAttribute('aria-current', 'page');
     expect(problems).toEqual([]);
   });
 
@@ -54,14 +52,27 @@ test.describe('the home page', () => {
     await expect(page).toHaveURL(/\/\?view=map$/);
   });
 
-  test('the nav’s style menu and search land on the home page’s list', async ({ page }) => {
+  test('the search and its styles land on the home page’s list', async ({ page }) => {
+    // A computer: the bar's field, reached with Ctrl+K (⌘K on a Mac).
     await page.setViewportSize({ width: 1280, height: 800 });
     await open(page, '/a');
-    await page.getByRole('button', { name: 'Dòng nhạc' }).click();
-    await expect(page.getByRole('menuitem', { name: /Miễn phí/ })).toHaveCount(0);
-    const counted = Number(((await page.getByRole('menuitem', { name: /House/ }).innerText()).match(/\d+/) ?? ['0'])[0]);
-    await page.getByRole('menuitem', { name: /House/ }).click();
-    await expect(page).toHaveURL(/\/\?style=house$/);
+    await page.keyboard.press('Control+k');
+    const field = page.getByRole('banner').getByRole('searchbox', { name: 'Tìm kiếm' });
+    await expect(field).toBeFocused();
+    await field.fill('ravolution');
+    await field.press('Enter');
+    await expect(page).toHaveURL(/\/\?q=ravolution$/);
+    // A phone: "Tìm" in the tab bar; its styles count every upcoming event.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, '/a');
+    await page.getByRole('navigation', { name: 'Chính' }).getByRole('button', { name: 'Tìm' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Tìm kiếm' });
+    const house = sheet.getByRole('link', { name: /^House\b/ });
+    await expect(house).toContainText(/\d/);
+    const counted = Number(((await house.innerText()).match(/\d+/) ?? ['0'])[0]);
+    await house.click();
+    // A phone opens the list on its cards, and the address says so.
+    await expect(page).toHaveURL(/\/\?style=house(&view=grid)?$/);
     await expect(page.getByText('Không có sự kiện nào khớp')).toHaveCount(0);
     const listed = (await (await page.request.get('/events?time=all&upcoming=1&style=house&limit=1')).json()).total;
     expect(listed).toBe(counted);

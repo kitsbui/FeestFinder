@@ -16,8 +16,9 @@ export default async function Page({ searchParams }: Props) {
   return (
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} />
-        <FanProfile lang={lang} />
+        <WebNav lang={lang} current="me" />
+        {/* A screen's height before the footer: the profile arrives after the first paint and must not push the footer away (CLS). */}
+        <main className="min-h-dvh"><FanProfile lang={lang} /></main>
         <div className="mt-auto"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/profile?lang=en', label: 'English' } : { href: '/profile', label: 'Tiếng Việt' }} /></div>
       </div>
     </KdProvider>

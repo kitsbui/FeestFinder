@@ -117,14 +117,14 @@ export const isWebPushToken = (token: string) => token.startsWith('{') && token.
 /** A path on this site. `//host/…` and `/\\host/…` are other sites to a browser. */
 const isSitePath = (url: unknown): url is string => typeof url === 'string' && /^\/(?![/\\])/.test(url);
 
-/** Where a notification's link opens in the attendee app. */
+/** Where a notification's link opens: the event page and the home page are the site's since design v2 phase 4, the rest the app's screens. */
 export function linkUrl(link: any): string {
-  if (!link || typeof link !== 'object') return '/app';
+  if (!link || typeof link !== 'object') return '/';
   if (isSitePath(link.url)) return link.url;
   const ev = link.slug ?? link.eventId;
   if (link.screen === 'live' && ev) return `/app/live/${encodeURIComponent(ev)}`;
   if (link.screen === 'tickets') return '/app/tickets';
-  if (link.screen === 'event' && ev) return `/app/e/${encodeURIComponent(ev)}`;
+  if (link.screen === 'event' && ev) return `/e/${encodeURIComponent(ev)}`;
   return '/app/notifications';
 }
 

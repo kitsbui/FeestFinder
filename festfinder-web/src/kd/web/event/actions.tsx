@@ -53,7 +53,7 @@ export function FollowOrg({ lang }: { lang: Lang }) {
     <button
       type="button"
       aria-pressed={on}
-      className={buttonClass({ size: 'sm', pill: true, tone: on ? 'default' : 'light' })}
+      className={buttonClass({ size: 'sm', tone: on ? 'ghost' : 'default' })}
       onClick={() => kd.setFollow('org', org.id, !on)}
     >
       {on ? C.following : C.follow}
@@ -141,8 +141,8 @@ export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void 
   const brought = personal?.mine?.broughtVisits ?? 0;
   const tile = (channel: Channel, label: string, icon: React.ReactNode) => (
     <button key={channel} type="button" className="kd-btn kd-btn-ghost h-auto flex-col gap-2 py-3" onClick={() => go(channel)}>
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 shadow-[inset_0_0_0_1px_var(--color-line)]">{icon}</span>
-      <span className="kd-s text-mist">{label}</span>
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 shadow-[inset_0_0_0_1px_var(--color-line-1)]">{icon}</span>
+      <span className="kd-s text-fg-2">{label}</span>
     </button>
   );
   return (
@@ -164,7 +164,7 @@ export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void 
           video.making ? (
             <p className="kd-s" role="status">{t.videoMaking}</p>
           ) : video.file ? (
-            <Button tone="light" block onClick={async () => { await FF.shareFile(video.file!, ev.title); setVideo(null); }}>{t.videoReady}</Button>
+            <Button tone="acc" block onClick={async () => { await FF.shareFile(video.file!, ev.title); setVideo(null); }}>{t.videoReady}</Button>
           ) : null
         ) : null}
         {brought ? <p className="kd-s">{fill(pick({ b: { en: 'Your links brought {n} people here', vi: 'Link của bạn đã mang về {n} người' } }, lang).b, { n: brought })}</p> : null}
@@ -223,11 +223,11 @@ function CollectRow({ lang }: { lang: Lang }) {
     setBusy(false);
   };
   return (
-    <div className="flex flex-col gap-2 border-t border-line pt-4">
+    <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
       <span className="kd-m">{t.collect}</span>
       {items?.map((c) => (
         <button key={c.id} type="button" role="checkbox" aria-checked={!!c.has} className="kd-lrow w-full border-x-0 border-t-0 bg-transparent text-left" onClick={() => toggle(c)}>
-          <span className={cx('flex h-5 w-5 items-center justify-center rounded-tag shadow-[inset_0_0_0_1px_var(--color-line2)]', c.has && 'bg-acc text-acc-ink shadow-none')}>
+          <span className={cx('flex h-5 w-5 items-center justify-center rounded-tag shadow-[inset_0_0_0_1px_var(--color-line-2)]', c.has && 'bg-info text-on-accent shadow-none')}>
             {c.has ? <CheckIcon size={14} weight="bold" aria-hidden="true" /> : null}
           </span>
           <span className="kd-hs min-w-0 flex-1 kd-ell">{c.name}</span>
@@ -313,7 +313,7 @@ export function ReportLink({ lang }: { lang: Lang }) {
               {Object.entries(REPORT_CODES).map(([k, l]) => (
                 <label key={k} className="kd-lrow min-h-11 cursor-pointer">
                   <input type="radio" name="code" value={k} checked={code === k} onChange={() => setCode(k)} className="kd-check" />
-                  <span className="kd-t text-paper">{l[lang]}</span>
+                  <span className="kd-t text-fg-1">{l[lang]}</span>
                 </label>
               ))}
             </fieldset>
@@ -408,6 +408,6 @@ export function Countdown({ lang, inline }: { lang: Lang; inline?: boolean }) {
     return () => clearInterval(id);
   }, [ev, clockReady, t.onNow, t.daysLeft, t.tomorrow, t.today]);
   if (!text) return null;
-  if (inline) return <span className="kd-tag kd-tag-glass kd-num text-paper">{text}</span>;
-  return <span className="kd-tag kd-tag-glass kd-num absolute bottom-3.5 left-3.5 z-[1] h-8 px-3 text-paper">{text}</span>;
+  if (inline) return <span className="kd-tag kd-tag-glass kd-num text-fg-1">{text}</span>;
+  return <span className="kd-tag kd-tag-glass kd-num absolute bottom-3.5 left-3.5 z-[1] h-8 px-3 text-fg-1">{text}</span>;
 }

@@ -1,7 +1,7 @@
 'use client';
 /**
  * The open collection, above its events: its name (renamed in place), how many it holds and
- * whether it is public, the "Link công khai" switch, the lime "Chia sẻ" once public, rename,
+ * whether it is public, the "Link công khai" switch, the primary "Chia sẻ" once public, rename,
  * and delete (a second tap confirms).
  */
 import { useEffect, useId, useState, type FormEvent } from 'react';
@@ -82,7 +82,7 @@ export function CollectionBar({ lang, col, events, onChange, onDeleted }: {
   };
 
   return (
-    <section aria-labelledby={nameId} className="flex flex-col gap-4 border-b border-line pb-5">
+    <section aria-labelledby={nameId} className="flex flex-col gap-4 border-b border-line-1 pb-5">
       {editing !== null ? (
         <form onSubmit={rename} className="flex flex-wrap items-center gap-2">
           <h2 id={nameId} className="sr-only">{col.name}</h2>
@@ -95,7 +95,7 @@ export function CollectionBar({ lang, col, events, onChange, onDeleted }: {
             onChange={(e) => setEditing(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setEditing(null); } }}
           />
-          <Button type="submit" tone="light" disabled={!editing.trim() || busy}>{T.saveName}</Button>
+          <Button type="submit" tone="acc" disabled={!editing.trim() || busy}>{T.saveName}</Button>
           <Button tone="ghost" onClick={() => setEditing(null)}>{T.cancel}</Button>
         </form>
       ) : (
@@ -110,7 +110,7 @@ export function CollectionBar({ lang, col, events, onChange, onDeleted }: {
       <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
         <span className="mr-2 flex items-center gap-3">
           <Switch id={switchId} checked={col.isPublic} label={T.publicLink} disabled={busy} onChange={(on) => patch({ isPublic: on }, on ? T.publicOn : T.publicOff)} />
-          <label htmlFor={switchId} className="kd-s cursor-pointer text-mist">{T.publicLink}</label>
+          <label htmlFor={switchId} className="kd-s cursor-pointer text-fg-2">{T.publicLink}</label>
         </span>
         {col.isPublic && col.url ? (
           <Button tone="acc" size="sm" onClick={() => setSharing(true)}>
@@ -120,7 +120,7 @@ export function CollectionBar({ lang, col, events, onChange, onDeleted }: {
         <Button tone="ghost" size="sm" onClick={() => { setEditing(col.name); setArmed(false); }} disabled={editing !== null}>
           <PencilSimpleIcon size={16} aria-hidden="true" />{T.rename}
         </Button>
-        <Button tone="ghost" size="sm" className={cx(armed && 'text-hot hover:text-hot')} onClick={remove} disabled={busy}>
+        <Button tone="ghost" size="sm" className={cx(armed && 'text-bad hover:text-bad')} onClick={remove} disabled={busy}>
           <TrashIcon size={16} aria-hidden="true" />{armed ? T.delArm : T.del}
         </Button>
       </div>

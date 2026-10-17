@@ -85,7 +85,7 @@ export function CalendarButton({ lang, className }: { lang: Lang; className?: st
         {T.add}
       </a>
       <Menu label={T.more} align="end" trigger={(p) => (
-        <button type="button" {...p} ref={p.ref} className={buttonClass({ tone: 'ghost', size: 'sm' }, 'px-2')} aria-label={T.more}>
+        <button type="button" {...p} ref={p.ref} className={buttonClass({ tone: 'ghost', size: 'sm' }, 'min-w-11 px-2')} aria-label={T.more}>
           <CaretDownIcon size={14} aria-hidden="true" />
         </button>
       )}>

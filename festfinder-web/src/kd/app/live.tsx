@@ -93,20 +93,20 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       {!d ? <div className="kd-skel mx-4 h-60" aria-hidden="true" /> : (
         <>
           <section className={cx('relative mx-4 h-60', g(fam))} aria-label={now ? fill(T.onNow, { s: st!.name[lang] }) : T.nothingLive}>
-            <Art family={fam} cover={ev.coverUrl} className="absolute inset-0" />
+            <Art title={ev.title} family={fam} cover={ev.coverUrl} className="absolute inset-0" />
             <div className="kd-glass absolute inset-x-2.5 bottom-2.5 flex flex-col gap-2.5 rounded-[10px] p-3.5">
               <div className="flex flex-col gap-1">
-                <span className="kd-m text-mist">{lead ? fill(now ? T.onNow : T.upNext, { s: st!.name[lang] }) : T.nothingLive}</span>
+                <span className="kd-m text-fg-2">{lead ? fill(now ? T.onNow : T.upNext, { s: st!.name[lang] }) : T.nothingLive}</span>
                 {lead ? <span className="kd-d3">{lead.artist}</span> : null}
               </div>
               {now ? (
                 <>
                   <div className="h-1 overflow-hidden rounded bg-white/15" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label={fill(T.minLeft, { n: left })}>
-                    <div className="h-full rounded bg-paper" style={{ width: `${progress * 100}%` }} />
+                    <div className="h-full rounded bg-fg-1" style={{ width: `${progress * 100}%` }} />
                   </div>
-                  <div className="kd-m kd-num flex justify-between text-mist"><span>{now.time}</span><span>{fill(T.minLeft, { n: left })}</span><span>{endTime(now.endsAt)}</span></div>
+                  <div className="kd-m kd-num flex justify-between text-fg-2"><span>{now.time}</span><span>{fill(T.minLeft, { n: left })}</span><span>{endTime(now.endsAt)}</span></div>
                 </>
-              ) : lead ? <span className="kd-m kd-num text-mist">{fill(T.startsAt, { t: lead.time })}</span> : null}
+              ) : lead ? <span className="kd-m kd-num text-fg-2">{fill(T.startsAt, { t: lead.time })}</span> : null}
             </div>
           </section>
 
@@ -116,10 +116,10 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
               {upcoming.filter((x) => x !== now).map((s) => {
                 const on = reminds[s.setId] ?? s.reminded;
                 return (
-                  <div key={s.setId} className={cx('grid min-h-15 grid-cols-[56px_minmax(0,1fr)_44px] items-center gap-2.5 border-b border-line', g(fam))}>
+                  <div key={s.setId} className={cx('grid min-h-15 grid-cols-[56px_minmax(0,1fr)_44px] items-center gap-2.5 border-b border-line-1', g(fam))}>
                     <span className="kd-mb kd-num text-[15px]">{s.time}</span>
                     <span className="flex min-w-0 flex-col gap-0.5"><span className="kd-hs kd-ell">{s.artist}</span><span className="kd-s flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{st!.name[lang]}</span></span>
-                    <button type="button" className={cx('kd-ib', on && 'text-acc')} aria-pressed={on} aria-label={fill(T.remindMe, { n: s.artist })} onClick={() => remind(s)}>
+                    <button type="button" className={cx('kd-ib', on && 'text-info')} aria-pressed={on} aria-label={fill(T.remindMe, { n: s.artist })} onClick={() => remind(s)}>
                       {on ? <BellRingingIcon size={20} weight="fill" aria-hidden="true" /> : <BellIcon size={20} aria-hidden="true" />}
                     </button>
                   </div>
@@ -135,7 +135,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
                 return (
                   <span key={z.id} className={cx('absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1', g(zf))} style={{ left: z.x + '%', top: z.y + '%' }}>
                     <span className="kd-mk h-5 w-5" aria-hidden="true" />
-                    <span className="kd-m whitespace-nowrap text-mist">{z.label}</span>
+                    <span className="kd-m whitespace-nowrap text-fg-2">{z.label}</span>
                   </span>
                 );
               })}
@@ -152,7 +152,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
           {d.updates.length ? (
             <section className="flex flex-col px-4" aria-labelledby="live-upd">
               <h2 id="live-upd" className="kd-m pb-1.5">{T.fromOrg}</h2>
-              {d.updates.map((u) => <p key={u.id} className="kd-t border-t border-line py-3 text-paper">{u.body}</p>)}
+              {d.updates.map((u) => <p key={u.id} className="kd-t border-t border-line-1 py-3 text-fg-1">{u.body}</p>)}
             </section>
           ) : null}
 

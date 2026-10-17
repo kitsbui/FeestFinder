@@ -121,7 +121,7 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
         {step === 'method' ? (
           <>
             {ways?.google !== false ? (
-              <Button tone="light" size="lg" block onClick={() => social('google')} disabled={busy}>
+              <Button size="lg" block onClick={() => social('google')} disabled={busy}>
                 <GoogleLogoIcon size={18} weight="bold" aria-hidden="true" />
                 {C.withGoogle}
               </Button>

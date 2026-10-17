@@ -95,13 +95,13 @@ function TakeDown({ ev, onClose, onDone }: { ev: Target; onClose: () => void; on
     <Sheet onClose={onClose} title={T.tdTitle} closeLabel={T.close}>
       <div className="flex flex-col gap-4">
         <p className="kd-hs">{ev.title}</p>
-        <Field label={<>{T.tdReason} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="tdCode">
+        <Field label={<>{T.tdReason} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="tdCode">
           <Select id="tdCode" value={code} onChange={(e) => setCode(e.target.value)}>
             <option value="">{T.tdNoReason}</option>
             {(o?.rejectReasons ?? []).map((r: { code: string; label: { vi: string; en: string } }) => <option key={r.code} value={r.code}>{r.label[lang]}</option>)}
           </Select>
         </Field>
-        <Field label={<>{T.tdMessage} <span className="font-normal text-fog">{T.optional}</span></>} htmlFor="tdMsg">
+        <Field label={<>{T.tdMessage} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="tdMsg">
           <TextArea id="tdMsg" rows={4} maxLength={2000} value={message} onChange={(e) => setMessage(e.target.value)} />
         </Field>
         <div className="flex justify-end gap-2">

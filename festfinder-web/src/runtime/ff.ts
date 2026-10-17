@@ -30,14 +30,12 @@ export class ApiError extends Error {
   }
 }
 
-// Colour is genre: Lễ hội orange, EDM blue, Nhạc sống lilac (indie, hip-hop, pop, jazz),
-// Văn hoá pink (food, culture), and FeestFinder green for anything else. Each genre's art is
-// a two-hue body with a lit sphere of the neighbouring hue; the API's OG images
-// (services/ogimage.ts) draw the same stops.
+// Every event is EDM (design v2): its hue is the information turquoise (theme.css `info`). The other
+// genres' tones stay for old links; the story art below is v2's dark ground with the accent's glow.
 const GENRE_TONE: Record<string, string> = { Festival: 'fest', EDM: 'edm', Indie: 'live', Rock: 'live', 'Hip-Hop': 'live', Pop: 'live', Jazz: 'live', Food: 'culture', Culture: 'culture' };
 const TONES: Record<string, { hue: string; art: string }> = {
   fest: { hue: '#FF8709', art: 'radial-gradient(circle at 76% 72%,#FFF1FE 0,#FEC5FB 12%,#F100CB 30%,rgba(241,0,203,0) 30.5%),linear-gradient(150deg,#FFD29C 0%,#FF8709 48%,#E8388A 118%)' },
-  edm: { hue: '#00BAE2', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#FEC5FB 12%,#9D95FF 30%,rgba(157,149,255,0) 30.5%),linear-gradient(150deg,#BFF3FF 0%,#00BAE2 48%,#5A62E0 120%)' },
+  edm: { hue: '#00D9D0', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#FEC5FB 12%,#9D95FF 30%,rgba(157,149,255,0) 30.5%),linear-gradient(150deg,#BFF3FF 0%,#00BAE2 48%,#5A62E0 120%)' },
   live: { hue: '#9D95FF', art: 'radial-gradient(circle at 76% 72%,#E9FCFF 0,#7FE3F5 12%,#00BAE2 30%,rgba(0,186,226,0) 30.5%),linear-gradient(150deg,#E4E1FF 0%,#9D95FF 48%,#C22FCF 120%)' },
   culture: { hue: '#FEC5FB', art: 'radial-gradient(circle at 76% 72%,#FFF3DF 0,#FFB35C 12%,#FF8709 30%,rgba(255,135,9,0) 30.5%),linear-gradient(150deg,#FFF1FE 0%,#FEC5FB 45%,#E86FD8 120%)' },
   brand: { hue: '#0AE448', art: 'radial-gradient(circle at 76% 72%,#FFFCE1 0,#DFFFD1 12%,#00BAE2 30%,rgba(0,186,226,0) 30.5%),linear-gradient(150deg,#DFFFD1 0%,#ABFF84 35%,#0AE448 75%,#00BAE2 130%)' },
@@ -187,14 +185,10 @@ FF.loadMap = function loadMap() {
 
 interface StorySpec { genre?: string; kicker?: string; title: string; lines?: string[]; stats?: { value: string | number; label: string }[]; url?: string }
 
-// The genre art as canvas stops: the body's three hues and the lit sphere's three.
-const STORY_TONES: Record<string, { body: string[]; ball: string[] }> = {
-  fest: { body: ['#FFD29C', '#FF8709', '#E8388A'], ball: ['#FFF1FE', '#FEC5FB', '#F100CB'] },
-  edm: { body: ['#BFF3FF', '#00BAE2', '#5A62E0'], ball: ['#FFFCE1', '#FEC5FB', '#9D95FF'] },
-  live: { body: ['#E4E1FF', '#9D95FF', '#C22FCF'], ball: ['#E9FCFF', '#7FE3F5', '#00BAE2'] },
-  culture: { body: ['#FFF1FE', '#FEC5FB', '#E86FD8'], ball: ['#FFF3DF', '#FFB35C', '#FF8709'] },
-  brand: { body: ['#DFFFD1', '#ABFF84', '#0AE448'], ball: ['#FFFCE1', '#DFFFD1', '#00BAE2'] },
-};
+// The story art as canvas stops (design v2, logo pack v2): a dark body and a glow of the accent,
+// lime at its heart through mint to turquoise, fading out at its edge.
+const V2_ART = { body: ['#161718', '#0D1A1A', '#08090A'], ball: ['#E4F222', '#72E679', 'rgba(0,217,208,0)'] };
+const STORY_TONES: Record<string, { body: string[]; ball: string[] }> = { edm: V2_ART, brand: V2_ART };
 const wrapLines = (x: CanvasRenderingContext2D, text: unknown, width: number, max: number) => {
   const words = String(text || '').split(/\s+/), out: string[] = [];
   let line = '';
@@ -208,7 +202,7 @@ const wrapLines = (x: CanvasRenderingContext2D, text: unknown, width: number, ma
 };
 const storyFont = (w: number, px: number) => w + ' ' + px + 'px "Noto Sans Variable", "Noto Sans Thai Variable", "Noto Sans JP Variable", "Noto Sans", system-ui, sans-serif';
 const storyFonts = async () => {
-  try { await Promise.all([document.fonts.load(storyFont(600, 96)), document.fonts.load(storyFont(500, 44))]); } catch { /* the system font will do */ }
+  try { await Promise.all([document.fonts.load(storyFont(700, 96)), document.fonts.load(storyFont(500, 44))]); } catch { /* the system font will do */ }
 };
 const ease = (a: number, b: number, p: number) => { const k = Math.max(0, Math.min(1, (p - a) / (b - a))); return 1 - Math.pow(1 - k, 3); };
 
@@ -221,7 +215,7 @@ function drawStory(x: CanvasRenderingContext2D, spec: StorySpec, p: number, drif
   const W = 1080, H = 1920, t = STORY_TONES[FF.tone(spec.genre)] || STORY_TONES.brand;
   const font = storyFont;
   x.globalAlpha = 1;
-  x.fillStyle = '#0E100F'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#08090A'; x.fillRect(0, 0, W, H);
   const ax = 72, ay = 140, aw = W - 144, ah = spec.stats ? 640 : 860;
   x.save();
   x.beginPath(); x.roundRect(ax, ay, aw, ah, 40); x.clip();
@@ -240,7 +234,7 @@ function drawStory(x: CanvasRenderingContext2D, spec: StorySpec, p: number, drif
   x.textBaseline = 'alphabetic';
   if (spec.kicker) { const o = block(0.1, 0.4); x.font = font(600, 40); x.fillStyle = FF.genreHue(spec.genre); x.fillText(String(spec.kicker).toUpperCase(), ax, y + o); y += 96; }
   let o = block(0.2, 0.55);
-  x.font = font(600, 92); x.fillStyle = '#FFFCE1';
+  x.font = font(700, 92); x.fillStyle = '#F7F8F8';
   for (const l of wrapLines(x, spec.title, aw, 3)) { x.fillText(l, ax, y + o); y += 104; }
   y += 18;
   o = block(0.4, 0.75);
@@ -248,18 +242,18 @@ function drawStory(x: CanvasRenderingContext2D, spec: StorySpec, p: number, drif
     const col = aw / 2;
     spec.stats.slice(0, 4).forEach((st, i) => {
       const sx = ax + (i % 2) * col, sy = y + Math.floor(i / 2) * 190 + o;
-      x.font = font(600, 84); x.fillStyle = '#ABFF84'; x.fillText(String(st.value), sx, sy + 60);
-      x.font = font(500, 36); x.fillStyle = '#A5A493';
+      x.font = font(700, 84); x.fillStyle = '#E4F222'; x.fillText(String(st.value), sx, sy + 60);
+      x.font = font(500, 36); x.fillStyle = '#8A8F98';
       x.fillText(wrapLines(x, st.label, col - 30, 1)[0] || '', sx, sy + 116);
     });
     y += Math.ceil(Math.min(4, spec.stats.length) / 2) * 190;
   }
-  x.font = font(500, 44); x.fillStyle = '#E6E3C8';
+  x.font = font(500, 44); x.fillStyle = '#D0D6E0';
   for (const l of spec.lines || []) for (const w of wrapLines(x, l, aw, 2)) { if (y > H - 260) break; x.fillText(w, ax, y + o); y += 62; }
   block(0.55, 0.9);
-  x.fillStyle = 'rgba(255,252,225,.19)'; x.fillRect(ax, H - 210, aw, 2);
-  x.font = font(600, 48); x.fillStyle = '#FFFCE1'; x.fillText('FeestFinder', ax, H - 120);
-  if (spec.url) { x.font = font(500, 34); x.fillStyle = '#ABFF84'; x.textAlign = 'right'; x.fillText(String(spec.url).replace(/^https?:\/\//, ''), ax + aw, H - 122); x.textAlign = 'left'; }
+  x.fillStyle = 'rgba(255,255,255,.12)'; x.fillRect(ax, H - 210, aw, 2);
+  x.font = font(700, 48); x.fillStyle = '#F7F8F8'; x.fillText('FeestFinder', ax, H - 120);
+  if (spec.url) { x.font = font(500, 34); x.fillStyle = '#00D9D0'; x.textAlign = 'right'; x.fillText(String(spec.url).replace(/^https?:\/\//, ''), ax + aw, H - 122); x.textAlign = 'left'; }
   x.globalAlpha = 1;
 }
 const storyCanvas = () => { const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; return c; };

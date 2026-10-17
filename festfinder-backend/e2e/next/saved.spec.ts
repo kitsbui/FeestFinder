@@ -271,6 +271,6 @@ test('in English at ?lang=en, and every address keeps it', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/saved\\?c=${c.id}&lang=en$`));
   await expect(page.getByText('Nothing in this collection yet')).toBeVisible();
   await expect(page.getByRole('switch', { name: 'Public link' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('href', `/saved?c=${c.id}`);
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('href', `/saved?c=${c.id}`);
   expect(problems).toEqual([]);
 });

@@ -62,15 +62,16 @@ test.describe('the artist directory', () => {
     await expect(page.getByRole('button', { name: `Phong cách: ${style.label.vi}` })).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByRole('navigation', { name: 'Đường dẫn' }).getByRole('link', { name: 'Nghệ sĩ', exact: true })).toHaveAttribute('href', '/a');
 
-    const booking = page.getByRole('button', { name: 'Nhận booking' });
-    await expect(booking).toHaveAttribute('aria-pressed', 'false');
+    // Taking bookings is a tab (design v2 phase 3), and keeps the style.
+    const booking = page.getByRole('navigation', { name: 'Ai quản lý hồ sơ' }).getByRole('link', { name: 'Nhận booking' });
+    await expect(booking).not.toHaveAttribute('aria-current', 'page');
     await booking.click();
-    await expect(booking).toHaveAttribute('aria-pressed', 'true');
+    await expect(booking).toHaveAttribute('aria-current', 'page');
     await expect(page).toHaveURL(new RegExp(`/a\\?style=${style.key}&booking=1$`));
 
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`/a/style/${style.key}$`));
-    await expect(booking).toHaveAttribute('aria-pressed', 'false');
+    await expect(booking).not.toHaveAttribute('aria-current', 'page');
 
     await page.getByRole('button', { name: 'Bỏ lọc' }).first().click();
     await expect(page).toHaveURL(/\/a$/);
@@ -102,7 +103,7 @@ test.describe('the artist directory', () => {
     await expect(page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' })).toHaveValue('slim');
     await expect(results(page).getByRole('listitem')).toHaveCount(1);
     // Nobody in the demo data takes bookings yet.
-    await page.getByRole('button', { name: 'Nhận booking' }).click();
+    await page.getByRole('navigation', { name: 'Ai quản lý hồ sơ' }).getByRole('link', { name: 'Nhận booking' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Không có nghệ sĩ nào khớp' })).toBeVisible();
     await expect(page).toHaveURL(/\/a\?q=slim&booking=1&upcoming=1$/);
   });
@@ -126,8 +127,10 @@ test.describe('the artist directory', () => {
 
   test('names nobody runs wait apart at /a/radar, each with where it was seen and "Đây là tôi"', async ({ page }) => {
     const problems = await open(page, '/a');
-    await expect(page.getByRole('tablist', { name: 'Nguồn đăng' })).toHaveCount(0);
-    await page.getByRole('link', { name: /tên từ lineup và Radar chưa có người quản lý/ }).click();
+    // A tab with its count, not a line explaining it (design v2 phase 3).
+    const tabs = page.getByRole('navigation', { name: 'Ai quản lý hồ sơ' });
+    await expect(page.getByText(/tên từ lineup và Radar chưa có người quản lý/)).toHaveCount(0);
+    await tabs.getByRole('link', { name: /^Từ Radar\s*\d+/ }).click();
     await expect(page).toHaveURL(/\/a\/radar$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Chưa có người quản lý');
     const card = results(page).getByRole('article', { name: 'Hoaprox' });
@@ -135,7 +138,7 @@ test.describe('the artist directory', () => {
     await card.getByRole('button', { name: 'Đây là tôi' }).click();
     await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();
     await page.keyboard.press('Escape');
-    await page.getByRole('link', { name: 'Nghệ sĩ trên FeestFinder' }).click();
+    await tabs.getByRole('link', { name: /^Có hồ sơ/ }).click();
     await expect(page).toHaveURL(/\/a$/);
 
     // A name searched in the directory may be one nobody runs yet.

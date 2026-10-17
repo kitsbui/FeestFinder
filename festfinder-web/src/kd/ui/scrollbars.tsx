@@ -14,7 +14,7 @@
 import { useEffect, useRef } from 'react';
 
 /** How long a thumb stays after the last scroll. */
-const IDLE = 900;
+const IDLE = 600;
 /** The shortest a thumb gets. */
 const MIN = 28;
 /** Room left at each end of the edge. */

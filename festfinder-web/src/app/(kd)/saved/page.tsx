@@ -19,7 +19,7 @@ export default async function Page({ searchParams }: Props) {
   return (
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} />
+        <WebNav lang={lang} current="saved" />
         <SavedPage lang={lang} initial={c} />
       </div>
     </KdProvider>

@@ -29,8 +29,11 @@ describe('event pages for search engines and AI assistants', () => {
     assert.ok(s.page.faq.length > 0, 'the organiser’s answers');
     assert.ok(s.page.updates.some((u: any) => /Cổng số 3/.test(u.body)), 'the organiser’s updates');
     assert.ok(s.page.related.length > 0 && s.page.related.every((x: any) => x.path !== '/e/ravo'));
-    assert.deepEqual(s.page.crumbs.map((c: any) => c.path), ['/', '/?city=ho-chi-minh', '/?city=ho-chi-minh&genre=EDM', '/e/ravo']);
-    assert.equal(s.image.url, 'http://test.local/og/v1/edm.png', 'genre art when there is no cover');
+    assert.deepEqual(s.page.crumbs.map((c: any) => c.path), ['/', '/?city=ho-chi-minh', '/e/ravo']);
+    assert.equal(s.image.url, 'http://test.local/ui/assets/og.png', 'the logo pack v2 share picture when there is no cover');
+    const og = await env.app.inject({ method: 'GET', url: '/ui/assets/og.png' });
+    assert.equal(og.statusCode, 200);
+    assert.match(String(og.headers['content-type']), /image\/png/);
     assert.equal((await env.as().get('/seo/events/no-such-event')).status, 404);
     assert.equal((await env.as().get('/seo/events/ravo?lang=fr')).status, 400);
   });

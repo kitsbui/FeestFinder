@@ -20,7 +20,7 @@ import { AuditRows, type AuditItem } from './audit';
 import { useConsole } from './root';
 
 interface Board {
-  live: { n: number; new7: number };
+  live: { n: number; new7: number; coveredPct: number | null };
   newUsers: { n7: number; prev7: number };
   ticketClicks: { n7: number; prev7: number };
   withinPromise: { hours: number; pct7: number | null; prevPct7: number | null };
@@ -44,7 +44,7 @@ export function InsightsScreen() {
     FF.maybe(FF.get('/admin/audit?limit=6'), { items: [] }).then((a: { items: AuditItem[] }) => setAudit(a.items));
     FF.maybe(FF.get('/admin/audit/verify'), null).then((v: { ok: boolean } | null) => setChain(v ? v.ok : null));
   }, []);
-  if (!data) return <div className="kd-skel m-6 h-80" aria-hidden="true" />;
+  if (!data) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-80" /></div>;
   const b = data.board;
   const nf = (n: number) => n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US');
   const weeks = b.weekly.map((w) => {
@@ -62,6 +62,7 @@ export function InsightsScreen() {
     <div className="flex flex-col gap-3 p-[clamp(16px,3vw,32px)]">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(210px,100%),1fr))] gap-3">
         <Panel className="kd-kpi"><span className="kd-m">{T.kLive}</span><span className="kd-d2 kd-num">{count(b.live.n, lang)}</span><span className="kd-s">{fill(T.kLiveNew, { n: b.live.new7 })}</span></Panel>
+        <Panel className="kd-kpi"><span className="kd-m">{T.kCovers}</span><span className="kd-d2 kd-num">{b.live.coveredPct == null ? '—' : nf(b.live.coveredPct) + '%'}</span><span className="kd-s">{fill(T.kCoversOf, { n: b.live.n })}</span></Panel>
         <Kpi lang={lang} label={T.kUsers} now={b.newUsers.n7} before={b.newUsers.prev7} />
         <Kpi lang={lang} label={T.kClicks} now={b.ticketClicks.n7} before={b.ticketClicks.prev7} />
         <Panel className="kd-kpi">
@@ -113,7 +114,7 @@ export function InsightsScreen() {
         <Panel as="section" className="kd-side flex flex-col gap-3 self-start p-5" aria-label={T.people}>
           <span className="kd-h">{T.people}</span>
           {([[T.pAccounts, count(data.users.accounts, lang)], [T.pWeekly, `${count(data.users.weeklyActive, lang)} · ${nf(data.users.weeklyActivePct)}%`], [T.pReturn, `${nf(data.users.sevenDayReturnPct)}%`], [T.pSaves, nf(data.users.savesPerUser)]] as [string, string][]).map(([k, v]) => (
-            <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line pb-2 last:border-b-0"><span className="kd-s">{k}</span><span className="kd-mb kd-num">{v}</span></div>
+            <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line-1 pb-2 last:border-b-0"><span className="kd-s">{k}</span><span className="kd-mb kd-num">{v}</span></div>
           ))}
         </Panel>
       </div>
@@ -135,7 +136,7 @@ function Kpi({ lang, label, now, before }: { lang: Lang; label: string; now: num
 function Trend({ lang, d, line }: { lang: Lang; d: number; line: string }) {
   return (
     <span className="kd-s flex items-center gap-1.5">
-      {d >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-hot" aria-hidden="true" />}
+      {d >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-bad" aria-hidden="true" />}
       {fill(line, { d: (d > 0 ? '+' : '') + d.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') })}
     </span>
   );

@@ -2,7 +2,7 @@
 /**
  * /list?view=map (design/Web-Map): the list column (the view switch, the list's own search and
  * filters plus Dưới 5 km, rows nearest first) and the map (glass pins, zoom, my location, the
- * chosen event's card).
+ * chosen event's card). On a phone the map is on top at 55% of the screen and the list under it.
  * Selecting a row or a pin selects both. The map asks /events/map when it opens and when
  * someone presses "Tìm trong khu vực này", never on a pan (CLAUDE.md).
  */
@@ -163,8 +163,8 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
   const home = () => { const box = cityBox(f.city); map.current?.fit(box); void search(box); };
 
   return (
-    <main className="flex min-h-[calc(100dvh-64px)] flex-wrap desk:h-[calc(100dvh-64px)]">
-      <aside className="flex max-h-full min-w-0 flex-[1_1_340px] flex-col overflow-y-auto border-line desk:border-r">
+    <main className="flex min-h-[calc(100dvh-64px)] flex-wrap content-start desk:h-[calc(100dvh-64px)]">
+      <aside className="flex max-h-full min-w-0 flex-[1_1_340px] flex-col overflow-y-auto border-line-1 desk:border-r">
         <div className="flex flex-col gap-3 px-4 pb-2.5 pt-4.5">
           {/* The nav names the page (Sự kiện) and the switch the view: no third label. */}
           <h1 className="sr-only">{T.title}</h1>
@@ -174,26 +174,26 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
           <div className="relative z-[27]">{toolbar(<Chip on={near} onClick={() => setNear((x) => !x)}>{T.within5}</Chip>)}</div>
         </div>
         <div className="flex flex-col gap-0.5 px-2 pb-4" data-map-rows>
-          {rows.map((x, i) => (
+          {rows.map((x) => (
             <button
               key={x.id}
               type="button"
               aria-pressed={x.id === sel}
               onClick={() => setSel(x.id)}
               className={cx(
-                'grid min-h-16 grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-opt border-0 bg-transparent px-2 py-2 text-left transition-colors duration-150 hover:bg-white/[0.04]',
-                x.id === sel && 'bg-white/[0.06] shadow-[inset_0_0_0_1px_var(--color-line2)]',
+                'grid min-h-16 grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-opt border-0 bg-transparent px-2 py-2 text-left transition-colors duration-(--dur-1) hover:bg-white/[0.04]',
+                x.id === sel && 'bg-white/[0.06] shadow-[inset_0_0_0_1px_var(--color-line-2)]',
                 g(familyOf(x.genre)),
               )}
             >
-              <Art family={familyOf(x.genre)} cover={x.coverUrl} bone={i % 2 === 1} off={x.soldOut} className="h-12 w-12 rounded-seg" />
+              <Art family={familyOf(x.genre)} cover={x.coverUrl} title={x.title} off={x.soldOut} className="h-12 w-12 rounded-seg" />
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex min-w-0 items-center gap-2"><span className="kd-hs kd-ell">{x.title}</span>{x.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
                 <span className="kd-s flex min-w-0 items-center gap-1.5"><span className="kd-mk" aria-hidden="true" /><span className="kd-ell">{whenShort(x, lang)}{x.area ? ' · ' + x.area : ''}</span></span>
               </span>
               <span className="flex flex-col items-end gap-0.5">
                 {x.d != null ? <span className="kd-mb kd-num text-xs">{km(x.d, lang)}</span> : null}
-                <span className={cx('kd-m', x.isFree && 'text-acc')}>{x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang)}</span>
+                <span className={cx('kd-m', x.isFree && 'text-info')}>{x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang)}</span>
               </span>
             </button>
           ))}
@@ -206,31 +206,33 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
         </div>
       </aside>
 
-      <section aria-label={T.mapLabel} className="relative min-h-[480px] min-w-0 flex-[999_1_560px] overflow-hidden bg-[#0b0c0d]">
+      {/* On a phone the map comes first, at a fixed height: it is what this view is for, and the rows that load
+          under it never move it (CLS). */}
+      <section aria-label={T.mapLabel} className="relative h-[55dvh] min-h-80 min-w-0 flex-[999_1_560px] overflow-hidden bg-map max-desk:order-first desk:h-auto desk:min-h-[480px]">
         {/* MapLibre makes its container position: relative, so the box is a wrapper. */}
         <div className="absolute inset-0"><div ref={el} className="h-full w-full" data-kd-map /></div>
         <div className="absolute right-4 top-4 z-[2] flex flex-col gap-1.5">
-          <IconButton label={T.zoomIn} glass className="text-paper" onClick={() => map.current?.zoom(1)}><PlusIcon size={18} aria-hidden="true" /></IconButton>
-          <IconButton label={T.zoomOut} glass className="text-paper" onClick={() => map.current?.zoom(-1)}><MinusIcon size={18} aria-hidden="true" /></IconButton>
-          <IconButton label={T.locate} glass className="mt-1.5 text-paper" onClick={locate}><CrosshairIcon size={18} aria-hidden="true" /></IconButton>
+          <IconButton label={T.zoomIn} glass className="text-fg-1" onClick={() => map.current?.zoom(1)}><PlusIcon size={18} aria-hidden="true" /></IconButton>
+          <IconButton label={T.zoomOut} glass className="text-fg-1" onClick={() => map.current?.zoom(-1)}><MinusIcon size={18} aria-hidden="true" /></IconButton>
+          <IconButton label={T.locate} glass className="mt-1.5 text-fg-1" onClick={locate}><CrosshairIcon size={18} aria-hidden="true" /></IconButton>
         </div>
         {dirty && ready && !busy ? (
           <button type="button" className="kd-btn kd-btn-sm kd-btn-glass kd-btn-pill absolute left-1/2 top-4 z-[2] -translate-x-1/2" onClick={() => search()}>
             <MagnifyingGlassIcon size={16} aria-hidden="true" />{T.mapSearch}
           </button>
         ) : null}
-        {note ? <span role="status" className="kd-tag kd-tag-glass absolute bottom-4 right-4 z-[2] text-paper">{note}</span> : null}
+        {note ? <span role="status" className="kd-tag kd-tag-glass absolute bottom-4 right-4 z-[2] text-fg-1">{note}</span> : null}
         {chosen ? (
           <div className={cx('kd-glass absolute bottom-4 left-4 z-[3] grid w-[min(380px,calc(100%-32px))] grid-cols-[76px_minmax(0,1fr)] items-center gap-3 rounded-org p-3', g(familyOf(chosen.genre)))}>
-            <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} className="h-[76px] w-[76px] rounded-seg" />
+            <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} title={chosen.title} className="h-19 w-19 rounded-seg" />
             <div className="flex min-w-0 flex-col gap-1">
               <span className="flex items-start gap-2">
                 <span className="kd-hs kd-ell flex-1">{chosen.title}</span>
-                <button type="button" className="-mr-1 -mt-1 text-fog hover:text-paper" aria-label={T.close} onClick={() => setSel(null)}><XIcon size={16} aria-hidden="true" /></button>
+                <button type="button" className="-mr-1 -mt-1 text-fg-3 hover:text-fg-1" aria-label={T.close} onClick={() => setSel(null)}><XIcon size={16} aria-hidden="true" /></button>
               </span>
-              <span className="kd-s kd-ell text-mist">{whenShort(chosen, lang)}{chosen.venue ? ' · ' + chosen.venue : ''}</span>
+              <span className="kd-s kd-ell text-fg-2">{whenShort(chosen, lang)}{chosen.venue ? ' · ' + chosen.venue : ''}</span>
               <span className="mt-0.5 flex items-center justify-between gap-2">
-                <span className={cx('kd-mb kd-num', chosen.isFree && 'text-acc')}>{chosen.isFree ? T.free : fill(T.fromPrice, { p: money(chosen.priceFrom, chosen.currency, lang) })}</span>
+                <span className={cx('kd-mb kd-num', chosen.isFree && 'text-info')}>{chosen.isFree ? T.free : fill(T.fromPrice, { p: money(chosen.priceFrom, chosen.currency, lang) })}</span>
                 <Link href={inLang('/e/' + chosen.slug, lang)} className={buttonClass({ size: 'sm' })}>{T.details}</Link>
               </span>
             </div>

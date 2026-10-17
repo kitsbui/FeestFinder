@@ -67,10 +67,10 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                   {data.sources.map((s) => {
                     const Icon = ICON[s.provider] ?? LinkIcon;
                     return (
-                      <li key={s.id} className="flex items-start gap-3 border-t border-line py-3 first:border-t-0">
+                      <li key={s.id} className="flex items-start gap-3 border-t border-line-1 py-3 first:border-t-0">
                         <span className={`kd-st mt-1 ${s.conflicts.length || s.cancelled ? 'kd-bad' : 'kd-ok'}`} aria-hidden="true" />
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
-                          <span className="flex flex-wrap items-center gap-2 text-sm text-paper">
+                          <span className="flex flex-wrap items-center gap-2 text-sm text-fg-1">
                             <Icon size={16} aria-hidden="true" />
                             <strong>{s.providerLabel[lang]}</strong>
                             {s.host ? (s.url
@@ -79,7 +79,7 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                             {s.matchReason ? <span className="kd-m" title={T.pMatch}>{s.matchScore} · {s.matchReason}</span> : null}
                             {s.cancelled ? <Pill tone="bad">{T.pCancelled}</Pill> : null}
                           </span>
-                          {s.conflicts.map((x, i) => <span key={i} className="kd-s text-hot">{x.field}: {x.source} ≠ {x.event}</span>)}
+                          {s.conflicts.map((x, i) => <span key={i} className="kd-s text-bad">{x.field}: {x.source} ≠ {x.event}</span>)}
                           <span className="kd-m">
                             {fill(T.pSeen, { a: stamp(s.firstSeenAt, lang), b: ago(s.lastSeenAt, lang) })}{s.ingestSource ? ` · ${s.ingestSource.name}` : ''}
                           </span>
@@ -96,7 +96,7 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                 </ul>
               )}
               <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (isLink(url)) void add(); }}>
-                <Input boxClass="flex-1" type="url" aria-label={T.pAddLabel} placeholder={T.pAddPh} value={url} icon={<LinkIcon size={16} className="text-fog" aria-hidden="true" />} onChange={(e) => setUrl(e.target.value)} />
+                <Input boxClass="flex-1" type="url" aria-label={T.pAddLabel} placeholder={T.pAddPh} value={url} icon={<LinkIcon size={16} className="text-fg-3" aria-hidden="true" />} onChange={(e) => setUrl(e.target.value)} />
                 <Button type="submit" disabled={busy || !isLink(url)}><PlusIcon size={16} aria-hidden="true" />{T.pAdd}</Button>
               </form>
             </Panel>
@@ -110,7 +110,7 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                   </div>
                   <ul className="flex flex-col">
                     {c.breakdown.map((l) => (
-                      <li key={l.rule} className={`flex justify-between gap-3 border-t border-line py-2 text-sm ${l.points < 0 ? 'text-hot' : ''}`}>
+                      <li key={l.rule} className={`flex justify-between gap-3 border-t border-line-1 py-2 text-sm ${l.points < 0 ? 'text-bad' : ''}`}>
                         <span>{l.label[lang]}</span><span className="kd-num">{(l.points > 0 ? '+' : '') + l.points}</span>
                       </li>
                     ))}
@@ -139,7 +139,7 @@ export function RawRecord({ id, onClose }: { id: string; onClose: () => void }) 
       {load.error ? <ErrorBox error={load.error} retry={load.reload} /> : !load.data ? <Loading /> : (
         <div className="flex flex-col gap-2">
           <span className="kd-s break-all">{[load.data.externalId, load.data.error].filter(Boolean).join(' · ')}</span>
-          <pre className="kd-num max-h-[60dvh] overflow-auto rounded-lg bg-ink p-3 text-xs text-mist">{JSON.stringify(load.data.payload, null, 2)}</pre>
+          <pre className="kd-num max-h-[60dvh] overflow-auto rounded-lg bg-on-inverse p-3 text-xs text-fg-2">{JSON.stringify(load.data.payload, null, 2)}</pre>
         </div>
       )}
     </Sheet>

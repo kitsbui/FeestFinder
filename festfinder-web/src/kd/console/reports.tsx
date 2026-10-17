@@ -134,13 +134,13 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
                       <Status tone={r.eventStatus === 'live' ? 'live' : r.eventStatus === 'removed' ? 'bad' : 'none'}>{statusLabel(r.eventStatus)}</Status>
                       {r.heldFromFeed ? <Status tone="warn">{T.heldFromFeed}</Status> : null}
                     </div>
-                    {r.quote ? <p className="kd-s border-l-2 border-line2 pl-3 text-mist">“{r.quote}”</p> : null}
+                    {r.quote ? <p className="kd-s border-l-2 border-line-2 pl-3 text-fg-2">“{r.quote}”</p> : null}
                     <div className="flex flex-wrap gap-2">
                       <LinkButton size="sm" tone="ghost" href={`/console/events/${r.eventId}`}><EyeIcon size={14} aria-hidden="true" />{M.openListing}</LinkButton>
                       <span className="flex-1" />
                       <Button size="sm" onClick={() => decide(r, 'dismiss')}>{T.dismiss}</Button>
                       <Button size="sm" onClick={() => decide(r, 'warn')}>{T.warn}</Button>
-                      {r.eventStatus !== 'removed' ? <Button size="sm" tone="ghost" className="text-hot" onClick={() => decide(r, 'take-down')}>{T.takeDown}</Button> : null}
+                      {r.eventStatus !== 'removed' ? <Button size="sm" tone="ghost" className="text-bad" onClick={() => decide(r, 'take-down')}>{T.takeDown}</Button> : null}
                     </div>
                   </Panel>
                 </li>
@@ -179,7 +179,7 @@ function PostsTab({ lang }: { lang: Lang }) {
             {rows.map((p) => (
               <Row key={p.id} cols={POST_COLS} className="py-3">
                 <span role="cell" className="flex min-w-0 flex-col gap-1">
-                  <span className="text-sm text-paper">“{p.body}”</span>
+                  <span className="text-sm text-fg-1">“{p.body}”</span>
                   <span className="kd-s">{p.author.name || M.member} · {p.kindLabel[lang]} · {stamp(p.createdAt, lang)}</span>
                 </span>
                 <span role="cell" className="min-w-0">
@@ -190,12 +190,12 @@ function PostsTab({ lang }: { lang: Lang }) {
                 <span role="cell" className="flex flex-wrap gap-x-3 gap-y-1">
                   {p.codes.map((c) => <Status key={c} tone={c === 'scalping' || c === 'drugs' ? 'bad' : 'warn'}>{CODE[c] ? M[CODE[c]] : c}</Status>)}
                 </span>
-                <span role="cell" className="kd-num text-paper">{p.reports}</span>
+                <span role="cell" className="kd-num text-fg-1">{p.reports}</span>
                 <span role="cell">{p.status === 'hidden' ? <Status tone="bad">{M.hidden}</Status> : <Status tone="ok">{M.visible}</Status>}</span>
                 <span role="cell" className="flex flex-wrap justify-end gap-2">
                   <Button size="sm" onClick={() => run(p, 'keep')}>{M.keep}</Button>
                   {p.status === 'hidden' ? null : <Button size="sm" onClick={() => run(p, 'hide')}>{M.hide}</Button>}
-                  <Button size="sm" tone="ghost" className="text-hot" onClick={() => run(p, 'remove')}>{M.remove}</Button>
+                  <Button size="sm" tone="ghost" className="text-bad" onClick={() => run(p, 'remove')}>{M.remove}</Button>
                 </span>
               </Row>
             ))}
@@ -261,7 +261,7 @@ function MixCommentsTab({ lang }: { lang: Lang }) {
           {data.items.map((c) => (
             <Row key={c.id} cols={MIX_COLS} className="py-3">
               <span role="cell" className="flex min-w-0 flex-col gap-1">
-                <span className="text-sm text-paper">“{c.body}”</span>
+                <span className="text-sm text-fg-1">“{c.body}”</span>
                 <span className="kd-s">{c.author || M.member} · {stamp(c.createdAt, lang)}</span>
               </span>
               <span role="cell" className="min-w-0">
@@ -270,11 +270,11 @@ function MixCommentsTab({ lang }: { lang: Lang }) {
                 </a>
               </span>
               <span role="cell" className="flex flex-wrap gap-x-3 gap-y-1">{c.reasons.map((r) => <Status key={r.key} tone="warn">{r.label[lang]}</Status>)}</span>
-              <span role="cell" className="kd-num text-paper">{c.reports}</span>
+              <span role="cell" className="kd-num text-fg-1">{c.reports}</span>
               <span role="cell">{c.hidden ? <Status tone="bad">{M.hidden}</Status> : <Status tone="ok">{M.visible}</Status>}</span>
               <span role="cell" className="flex flex-wrap justify-end gap-2">
                 <Button size="sm" onClick={() => decide(c.id, 'keep')}>{M.keepComment}</Button>
-                <Button size="sm" tone="ghost" className="text-hot" onClick={() => decide(c.id, 'remove')}>{M.remove}</Button>
+                <Button size="sm" tone="ghost" className="text-bad" onClick={() => decide(c.id, 'remove')}>{M.remove}</Button>
               </span>
             </Row>
           ))}

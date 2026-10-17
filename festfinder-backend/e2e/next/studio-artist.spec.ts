@@ -67,8 +67,9 @@ test('one craft per account: from performing to organising and back, both profil
   await sheet.getByLabel('Tên nhà tổ chức').fill(`Owl Nights ${stamp()}`);
   await sheet.getByRole('button', { name: 'Tạo hồ sơ' }).click();
   await expect(page).toHaveURL(/\/studio$/);
-  // From Studio's rail back to performing: one step, the artist profile is still there.
-  await page.getByRole('button', { name: 'Đổi sang Nghệ sĩ' }).click();
+  // From the workspace switcher at the head of Studio's rail back to performing: the artist profile is still there.
+  await page.getByRole('navigation', { name: 'Studio' }).getByRole('button', { name: /Không gian/ }).click();
+  await page.getByRole('menu', { name: 'Không gian làm việc' }).getByRole('menuitem', { name: 'Đổi sang Nghệ sĩ' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Đổi sang Nghệ sĩ' }).click();
   await expect(page).toHaveURL(/\/studio\/artist$/);
   await expect(page.getByText(me.name).first()).toBeVisible();

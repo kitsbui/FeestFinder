@@ -1,6 +1,6 @@
 'use client';
 /**
- * Tickets: the tiers with their state, the quantity, and the one lime "Mua n vé · total".
+ * Tickets: the tiers with their state, the quantity, and the one primary "Mua n vé · total" (the accent gradient, glowing).
  * Every ticket button goes through /go/<event> (routes/outbound.ts), which counts the click
  * and opens FeestFinder's checkout or the seller. Below it: refunds and resale.
  */
@@ -16,6 +16,7 @@ import { Accordion, Status, type StatusTone } from '../../ui/parts';
 import type { Resale, Tier } from '../../types';
 import { WEB } from '../copy';
 import { useEvent } from './context';
+import { directionsUrl } from './directions';
 
 /** FeestFinder's checkout sells at most this many per order (routes/commerce.ts). */
 const MAX_PER_ORDER = 6;
@@ -78,7 +79,8 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
       <div id="tickets" className="kd-card flex scroll-mt-32 flex-col gap-3 p-4">
         <div className="flex items-center justify-between"><h2 className="kd-h">{T.tickets}</h2><span className="kd-tag kd-tag-acc">{T.free}</span></div>
         <p className="kd-s">{T.freeNote}</p>
-        <a className={buttonClass({ tone: 'acc', size: 'lg', block: true })} href="#venue">{T.directions}</a>
+        {/* Chỉ đường opens the route in Google Maps at once (CLAUDE.md "Event actions"), never an anchor on the page. */}
+        <a className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true })} href={directionsUrl(ev.venue, [ev.venue.address, ev.venue.area, ev.cityLabel?.[lang]].filter(Boolean).join(', '))} target="_blank" rel="noopener">{T.directions}</a>
       </div>
     );
   }
@@ -127,7 +129,7 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
         <p className="kd-s">{T.eventEnded}</p>
       ) : buyHref ? (
         <a
-          className={buttonClass({ tone: 'acc', size: 'lg', block: true })}
+          className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true })}
           href={buyHref}
           onClick={() => FF.track('ticket_click', { slug: ev.slug, source: tier ? 'tier' : 'detail' })}
         >
@@ -143,7 +145,7 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
         {sellsHere ? fill(T.soldHere, { n: MAX_PER_ORDER }) : ticketHost ? fill(T.soldVia, { h: ticketHost, n: MAX_PER_ORDER }) : ev.ticketNote[lang]}
       </p>
       {ev.tickets?.refundPolicy ? (
-        <Accordion small summary={T.refund} className="border-t border-line">
+        <Accordion small summary={T.refund} className="border-t border-line-1">
           <p className="kd-s">{ev.tickets.refundPolicy[lang]}</p>
         </Accordion>
       ) : null}
@@ -171,7 +173,7 @@ function ResaleBlock({ lang }: { lang: Lang }) {
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   return (
-    <Accordion small summary={T.resale} aside={r ? r.count : ev.resale?.count ?? 0} className="border-t border-line">
+    <Accordion small summary={T.resale} aside={r ? r.count : ev.resale?.count ?? 0} className="border-t border-line-1">
       <div className="flex flex-col gap-2">
         <span className="kd-m">{T.resaleCap}</span>
         {r && r.items.length ? r.items.map((it) => (

@@ -5,9 +5,10 @@
  */
 import { useEffect, useState } from 'react';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { pick, type Lang, type Pair } from '../../copy';
+import { inLang } from '../../link';
 import { cx } from '../../cx';
-import { Button } from '../../ui/actions';
+import { Button, LinkButton } from '../../ui/actions';
 import { Picker } from '../../ui/menu';
 import { Card as Panel } from '../../ui/parts';
 import { Tabs } from '../../ui/shell';
@@ -77,10 +78,16 @@ export function ProjectsBrowser({ lang, first, cities }: { lang: Lang; first: Pr
       </div>
       {list.items.length ? (
         <div className={cx('kd-cards transition-opacity', busy && 'opacity-60')}>
-          {list.items.map((p, i) => <ProjectCard key={p.id} p={p} i={i} lang={lang} />)}
+          {list.items.map((p) => <ProjectCard key={p.id} p={p} lang={lang} />)}
         </div>
       ) : busy ? <div className="kd-skel h-40" aria-hidden="true" /> : (
-        <Panel role="status" className="p-7"><span className="kd-h">{T.empty}</span></Panel>
+        // One line and the one thing to do (design v2 phase 3): narrow less, or start the first project.
+        <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">
+          <span className="kd-h">{f.seeking || f.city ? T.empty : T.none}</span>
+          {f.seeking || f.city
+            ? <Button onClick={() => set({ seeking: null, city: '' })}>{T.clear}</Button>
+            : <LinkButton href={inLang('/p/new', lang)}>{T.start}</LinkButton>}
+        </Panel>
       )}
       {list.nextOffset != null ? <Button className="self-center" disabled={busy} onClick={() => load(f, list.nextOffset!)}>{T.more}</Button> : null}
     </div>

@@ -106,17 +106,17 @@ export function VenueDrawer({ lang, venue, preset, onClose, onSaved }: {
           <Input id="v-lng" required inputMode="decimal" value={f.lng} onChange={set('lng')} invalid={has && !coordsOk} />
         </Field>
         <div className="flex flex-col gap-2 tab:col-span-2">
-          <div className="relative h-56 overflow-hidden rounded-lg bg-[#0b0c0d] shadow-[inset_0_0_0_1px_var(--color-line)]" role="img" aria-label={shown ? `${T.pinMap}: ${shown.lat}, ${shown.lng}` : T.noPin}>
+          <div className="relative h-56 overflow-hidden rounded-lg bg-map shadow-[inset_0_0_0_1px_var(--color-line-1)]" role="img" aria-label={shown ? `${T.pinMap}: ${shown.lat}, ${shown.lng}` : T.noPin}>
             {shown
               ? <VenueMap key={`${shown.lat},${shown.lng}`} lat={shown.lat} lng={shown.lng} family="edm" label={f.name || T.pinMap} className="absolute inset-0" />
               : <span className="kd-s absolute inset-0 flex items-center justify-center gap-2"><MapPinIcon size={18} aria-hidden="true" />{T.noPin}</span>}
           </div>
           <div className="flex flex-wrap gap-4">
-            <a className="kd-s inline-flex items-center gap-1.5 hover:text-paper" href={`https://www.google.com/maps/search/?api=1&query=${query}`} target="_blank" rel="noopener noreferrer">
+            <a className="kd-s inline-flex items-center gap-1.5 hover:text-fg-1" href={`https://www.google.com/maps/search/?api=1&query=${query}`} target="_blank" rel="noopener noreferrer">
               <MagnifyingGlassIcon size={14} aria-hidden="true" />{T.find}
             </a>
             {coordsOk ? (
-              <a className="kd-s inline-flex items-center gap-1.5 hover:text-paper" href={`https://www.google.com/maps?q=${lat},${lng}`} target="_blank" rel="noopener noreferrer">
+              <a className="kd-s inline-flex items-center gap-1.5 hover:text-fg-1" href={`https://www.google.com/maps?q=${lat},${lng}`} target="_blank" rel="noopener noreferrer">
                 <ArrowSquareOutIcon size={14} aria-hidden="true" />{T.openPin}
               </a>
             ) : null}

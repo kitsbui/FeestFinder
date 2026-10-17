@@ -10,7 +10,7 @@ export const BRANDS = {
   closes: { en: 'closes {d}', vi: 'hạn {d}' },
   edit: { en: 'Edit', vi: 'Sửa' },
   editLabel: { en: 'Edit {t}', vi: 'Sửa {t}' },
-  openLabel: { en: 'Interested artists: {t}', vi: 'Nghệ sĩ quan tâm: {t}' },
+  openWhat: { en: 'interested artists', vi: 'nghệ sĩ quan tâm' },
   none: { en: 'No campaigns yet', vi: 'Chưa có chiến dịch' },
   sDraft: { en: 'Draft', vi: 'Nháp' },
   sOpen: { en: 'Open', vi: 'Đang mở' },

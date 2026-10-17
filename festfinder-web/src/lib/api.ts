@@ -14,6 +14,9 @@ export const API_ORIGIN = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
  */
 const SECRET = (process.env.WEB_PROXY_SECRET ?? '').trim();
 const SIGNED: Record<string, string> = SECRET.length >= 32 ? { 'x-ff-web-secret': SECRET } : {};
+/** A preview reaching a preview of the API through Vercel Authentication (src/proxy.ts, FF_API_BYPASS). */
+const BYPASS = (process.env.FF_API_BYPASS ?? '').trim();
+if (BYPASS) SIGNED['x-vercel-protection-bypass'] = BYPASS;
 export const SITE_URL = (process.env.SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
 export type Lang = 'en' | 'vi';

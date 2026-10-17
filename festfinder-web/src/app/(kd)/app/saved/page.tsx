@@ -1,9 +1,8 @@
-import { appMetadata, appViewport } from '@/kd/app/meta';
-import { SavedScreen } from '@/kd/app/screens';
+import { moved } from '@/kd/app/moved';
 
-export const metadata = appMetadata;
-export const viewport = appViewport;
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export default function Page() {
-  return <SavedScreen />;
+// Saved events and collections live at /saved.
+export default async function Page({ searchParams }: Props) {
+  await moved('/saved', searchParams);
 }

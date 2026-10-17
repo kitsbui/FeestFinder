@@ -3,7 +3,7 @@
  * with its side nav and tables. Server-safe; current state is aria-current / aria-selected.
  */
 import { KdLink as Link } from '../link';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { cx } from '../cx';
 import { Rail } from './rail';
 
@@ -15,9 +15,23 @@ export interface TabItem { key: string; label: ReactNode; count?: number | null;
 export function Tabs({ items, current, onSelect, label, className }: {
   items: TabItem[]; current: string; onSelect?: (key: string) => void; label: string; className?: string;
 }) {
+  const Box = onSelect ? 'div' : 'nav';
+  // A tablist takes one Tab stop (the chosen tab); the arrows, Home and End move along it and choose.
+  const anyOn = items.some((t) => t.key === current);
+  const onKey = onSelect ? (e: KeyboardEvent<HTMLElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const tabs = [...e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+    if (at < 0) return;
+    e.preventDefault();
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (at + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    tabs[n].focus();
+    onSelect(items[n].key);
+  } : undefined;
   return (
-    <div role={onSelect ? 'tablist' : undefined} aria-label={label} className={cx('kd-tabs', className)}>
-      {items.map((t) => {
+    // Tabs that are links are a small navigation (a landmark with its name); tabs that switch panels are a tablist.
+    <Box role={onSelect ? 'tablist' : undefined} aria-label={label} className={cx('kd-tabs', className)} onKeyDown={onKey}>
+      {items.map((t, i) => {
         const on = t.key === current;
         const body = (
           <>
@@ -29,12 +43,12 @@ export function Tabs({ items, current, onSelect, label, className }: {
           return <Link key={t.key} href={t.href} scroll={false} aria-current={on ? 'page' : undefined} className="kd-tab">{body}</Link>;
         }
         return (
-          <button key={t.key} type="button" role="tab" aria-selected={on} className="kd-tab" onClick={() => onSelect?.(t.key)}>
+          <button key={t.key} type="button" role="tab" aria-selected={on} tabIndex={on || (!anyOn && i === 0) ? 0 : -1} className="kd-tab" onClick={() => onSelect?.(t.key)}>
             {body}
           </button>
         );
       })}
-    </div>
+    </Box>
   );
 }
 
@@ -44,15 +58,20 @@ export function AppBar({ children, className }: { children: ReactNode; className
   return <header className={cx('kd-bar', className)}>{children}</header>;
 }
 
-export interface TabBarItem { key: string; label: string; href: string; icon: ReactNode; external?: boolean }
+export interface TabBarItem { key: string; label: string; href?: string; icon: ReactNode; external?: boolean; onClick?: () => void; dialog?: boolean }
 
-/** The floating glass tab bar: five tabs, the current one marked with a lime tick. */
-export function TabBar({ items, current, label }: { items: TabBarItem[]; current: string; label: string }) {
+/**
+ * The bottom tab bar: five tabs, the current one marked with a turquoise tick. `edge` is the site's
+ * (design v2): solid and edge to edge, hidden from 900px where the nav takes over; without it, the
+ * app's floating glass bar. A tab without `href` is a button (the site's "Tìm" opens a sheet).
+ */
+export function TabBar({ items, current, label, edge }: { items: TabBarItem[]; current: string; label: string; edge?: boolean }) {
   return (
-    <nav aria-label={label} className="kd-tabbar kd-glass">
+    <nav aria-label={label} className={edge ? 'kd-tabbar kd-tabbar-edge' : 'kd-tabbar kd-glass'}>
       {items.map((t) => {
-        const props = { className: 'kd-tb', 'aria-current': t.key === current ? ('page' as const) : undefined };
         const body = (<>{t.icon}<span>{t.label}</span></>);
+        if (!t.href) return <button key={t.key} type="button" className="kd-tb" aria-haspopup={t.dialog ? 'dialog' : undefined} onClick={t.onClick}>{body}</button>;
+        const props = { className: 'kd-tb', 'aria-current': t.key === current ? ('page' as const) : undefined, onClick: t.onClick };
         return t.external
           ? <a key={t.key} href={t.href} {...props}>{body}</a>
           : <Link key={t.key} href={t.href} {...props}>{body}</Link>;
@@ -68,22 +87,39 @@ export function Dock({ children, className }: { children: ReactNode; className?:
 
 // ---- back offices -------------------------------------------------------------------
 
-export interface SideItem { key: string; label: string; href: string; icon?: ReactNode; count?: number | null; hideSmall?: boolean; external?: boolean }
+export interface SideItem { key: string; label: string; href: string; icon?: ReactNode; count?: number | null; hideSmall?: boolean; external?: boolean; sub?: SideItem[] }
 
+/**
+ * A back office's rail (design v2 phase 5: at most seven entries in sight). An entry with `sub` is a
+ * group: it leads to its first page, and its pages show under it while one of them is the current one.
+ */
 export function SideNav({ items, current, head, label, footer }: { items: SideItem[]; current: string; head?: ReactNode; label: string; footer?: ReactNode }) {
+  const all = items.flatMap((i) => [i, ...(i.sub ?? [])]);
+  const entry = (i: SideItem, on: boolean, nested?: boolean) => {
+    const props = { className: cx('kd-sn', i.hideSmall && 'kd-sn-hide', nested && 'kd-sn-sub'), 'aria-current': on ? ('page' as const) : undefined };
+    const body = (
+      <>
+        {i.icon}
+        <span className="kd-ell">{i.label}</span>
+        {i.count ? <span className="kd-count kd-num">{i.count}</span> : null}
+      </>
+    );
+    return i.external ? <a key={i.key} href={i.href} {...props}>{body}</a> : <Link key={i.key} href={i.href} {...props}>{body}</Link>;
+  };
   return (
-    <Rail label={label} current={items.find((i) => i.key === current)?.label as string ?? ''}>
+    <Rail label={label} current={all.find((i) => i.key === current)?.label ?? ''}>
       {head}
       {items.map((i) => {
-        const props = { className: cx('kd-sn', i.hideSmall && 'kd-sn-hide'), 'aria-current': i.key === current ? ('page' as const) : undefined };
-        const body = (
-          <>
-            {i.icon}
-            <span className="kd-ell">{i.label}</span>
-            {i.count ? <span className="kd-count kd-num">{i.count}</span> : null}
-          </>
+        if (!i.sub?.length) return entry(i, i.key === current);
+        const inside = i.sub.some((s) => s.key === current);
+        // The group's own count is its pages' (an inbox inside it, say).
+        const count = i.count ?? (i.sub.reduce((n, s) => n + (s.count ?? 0), 0) || null);
+        return (
+          <div key={i.key} className="flex flex-col gap-0.5">
+            {entry({ ...i, href: i.sub[0].href, count: inside ? null : count }, false)}
+            {inside ? i.sub.map((s) => entry(s, s.key === current, true)) : null}
+          </div>
         );
-        return i.external ? <a key={i.key} href={i.href} {...props}>{body}</a> : <Link key={i.key} href={i.href} {...props}>{body}</Link>;
       })}
       {footer}
     </Rail>
@@ -108,9 +144,13 @@ export const shrinkable = (cols: string) =>
   cols.replace(/minmax\(\s*[^,()]+,/g, 'minmax(0,').replace(/(^|\s)(\d+(?:\.\d+)?(?:px|rem))(?=\s|$)/g, '$1minmax(0,$2)');
 
 /** A table built from grid rows; `cols` is the grid-template-columns of every row. */
-export function Table({ cols, head, children, label }: { cols: string; head: ReactNode[]; children: ReactNode; label?: string }) {
+/**
+ * `fold`: the container width under which rows become cards, for a table whose fixed columns leave its
+ * name column nothing below that width (md 900, lg 1000, xl 1160; every table folds under 640).
+ */
+export function Table({ cols, head, children, label, fold }: { cols: string; head: ReactNode[]; children: ReactNode; label?: string; fold?: 'md' | 'lg' | 'xl' }) {
   return (
-    <div className="kd-tbl" role="table" aria-label={label}>
+    <div className="kd-tbl" role="table" aria-label={label} data-fold={fold}>
       <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: shrinkable(cols) }}>
         {head.map((h, i) => <span role="columnheader" key={i} className="kd-m">{h}</span>)}
       </div>

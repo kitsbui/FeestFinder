@@ -45,7 +45,7 @@ test.describe('the about page', () => {
 
     // The cities come from the API; one with events leads to the list filtered to it.
     const cities = page.getByRole('region', { name: 'Thành phố' });
-    await expect(cities.getByRole('link', { name: /^TP\.HCM: \d+ sự kiện sắp diễn ra$/ })).toHaveAttribute('href', '/?city=ho-chi-minh');
+    await expect(cities.getByRole('link', { name: /^TP\.HCM\s*\d+\s*sự kiện sắp diễn ra$/ })).toHaveAttribute('href', '/?city=ho-chi-minh');
 
     const contact = page.getByRole('region', { name: 'Liên hệ' });
     await expect(contact.getByRole('heading', { level: 3 })).toHaveText(['Cho người đi chơi', 'Cho nhà tổ chức', 'Cho thương hiệu & báo chí']);
@@ -70,7 +70,7 @@ test.describe('the about page', () => {
   test('opens in English at ?lang=en, and its links stay in English', async ({ page }) => {
     const problems = await open(page, '/about?lang=en');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('One place to see what is on tonight');
-    await expect(page.getByRole('region', { name: 'Cities' }).getByRole('link', { name: /^Ho Chi Minh City: \d+ upcoming events$/ }))
+    await expect(page.getByRole('region', { name: 'Cities' }).getByRole('link', { name: /^Ho Chi Minh City\s*\d+\s*upcoming events$/ }))
       .toHaveAttribute('href', '/?city=ho-chi-minh&lang=en');
     await expect(page.getByRole('navigation', { name: 'Footer' }).getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('href', '/about');
     await page.getByRole('region', { name: 'Contact' }).getByRole('link', { name: 'Advertise' }).click();

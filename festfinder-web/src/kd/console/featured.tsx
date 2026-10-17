@@ -119,7 +119,7 @@ function BoostRow({ lang, b, shelves, act }: { lang: Lang; b: Boost; shelves: Sh
   const yes = b.status === 'approved' || b.status === 'done';
   const answer = (status: 'approved' | 'declined') => FF.post('/admin/boosts/' + b.id, { status, reply: reply.trim() || undefined });
   return (
-    <div className="flex flex-col gap-2 border-b border-line py-3 last:border-b-0">
+    <div className="flex flex-col gap-2 border-b border-line-1 py-3 last:border-b-0">
       <span className="flex items-center justify-between gap-2">
         <span className="kd-hs kd-ell">{b.event.title}</span>
         <Status tone={yes ? 'ok' : b.status === 'declined' ? 'bad' : 'warn'}>{yes ? T.boostApproved : b.status === 'declined' ? T.boostDeclined : T.boostOpen}</Status>
@@ -130,8 +130,8 @@ function BoostRow({ lang, b, shelves, act }: { lang: Lang; b: Boost; shelves: Sh
           {[b.placements.map((p) => p.label[lang]).join(', '), b.budget != null ? money(b.budget, b.currency, lang) : null, b.startsOn && b.endsOn ? `${dayMonth(b.startsOn, lang)} – ${dayMonth(b.endsOn, lang)}` : null].filter(Boolean).join(' · ')}
         </span>
       ) : null}
-      {b.message ? <span className="kd-s text-mist">“{b.message}”</span> : null}
-      {b.reply ? <span className="kd-s text-mist">↳ {b.reply}</span> : null}
+      {b.message ? <span className="kd-s text-fg-2">“{b.message}”</span> : null}
+      {b.reply ? <span className="kd-s text-fg-2">↳ {b.reply}</span> : null}
       {b.status === 'open' ? (
         <>
           <Input aria-label={T.replyPh} placeholder={T.replyPh} maxLength={1000} value={reply} onChange={(e) => setReply(e.target.value)} />
@@ -230,9 +230,9 @@ function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChan
       {items.length ? (
         <ol className="flex flex-col">
           {items.map((e, i) => (
-            <li key={e.id} className="flex min-h-14 items-center gap-3 border-b border-line py-1.5">
+            <li key={e.id} className="flex min-h-14 items-center gap-3 border-b border-line-1 py-1.5">
               <span className="kd-m kd-num w-5">{i + 1}</span>
-              <Art family="edm" cover={e.coverUrl} className="h-10 w-16 shrink-0 rounded-md" />
+              <Art title={e.title} family="edm" cover={e.coverUrl} className="h-10 w-16 shrink-0 rounded-md" />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="kd-hs kd-ell">{e.title}</span>
                 <span className="kd-s kd-ell">{[whenShort(e, lang), e.venue?.name ?? e.venueName].filter(Boolean).join(' · ')}</span>
@@ -290,7 +290,7 @@ function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<
   const [reply, setReply] = useState('');
   const links = [...(i.website ? [['web', i.website]] : []), ...Object.entries(i.links ?? {})] as [string, string][];
   return (
-    <div className="flex flex-col gap-2 border-b border-line pb-3 last:border-b-0">
+    <div className="flex flex-col gap-2 border-b border-line-1 pb-3 last:border-b-0">
       <span className="flex items-center gap-3">
         { }
         {i.logoUrl ? <img src={i.logoUrl} alt="" referrerPolicy="no-referrer" className="size-10 shrink-0 rounded-lg object-cover" /> : null}
@@ -306,17 +306,16 @@ function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<
       <span className="kd-s">{T.adContact}: {[i.contactName, i.email, i.phone].filter(Boolean).join(' · ')}</span>
       {links.length ? (
         <span className="flex flex-wrap gap-x-3 gap-y-1">
-          {links.map(([k, u]) => <a key={k} className="kd-s underline decoration-line2 underline-offset-4" href={u} target="_blank" rel="noopener nofollow">{k === 'web' ? u.replace(/^https?:\/\/(www\.)?/, '') : k}</a>)}
+          {links.map(([k, u]) => <a key={k} className="kd-s kd-hit underline decoration-line-2 underline-offset-4" href={u} target="_blank" rel="noopener nofollow">{k === 'web' ? u.replace(/^https?:\/\/(www\.)?/, '') : k}</a>)}
         </span>
       ) : null}
-      {i.description ? <span className="kd-s text-mist">{i.description}</span> : null}
+      {i.description ? <span className="kd-s text-fg-2">{i.description}</span> : null}
       {i.productImages.length ? (
         <span className="flex flex-wrap gap-2">
-          { }
-          {i.productImages.map((u) => <a key={u} href={u} target="_blank" rel="noopener nofollow"><img src={u} alt="" referrerPolicy="no-referrer" className="h-16 w-16 rounded-seg object-cover" /></a>)}
+          {i.productImages.map((u, n) => <a key={u} href={u} target="_blank" rel="noopener nofollow"><img src={u} alt={fill(T.adImage, { n: n + 1 })} referrerPolicy="no-referrer" className="h-16 w-16 rounded-seg object-cover" /></a>)}
         </span>
       ) : null}
-      {i.message ? <span className="kd-s text-mist">“{i.message}”</span> : null}
+      {i.message ? <span className="kd-s text-fg-2">“{i.message}”</span> : null}
       <Input aria-label={T.replyPh} placeholder={T.replyPh} maxLength={1000} value={reply} onChange={(e) => setReply(e.target.value)} />
       <span className="flex gap-2">
         <Button size="sm" tone="acc" onClick={() => act(() => FF.post(`/admin/ads/inquiries/${i.id}/approve`, { reply: reply.trim() || undefined }))}>{T.adApprove}</Button>
@@ -339,7 +338,7 @@ function AdsBlock({ lang, ads, act }: { lang: Lang; ads: Ads; act: ReturnType<ty
           {!ads.inquiries.length ? <span className="kd-s">{T.noAds}</span> : ads.inquiries.map((i) => <InquiryRow key={i.id} lang={lang} i={i} act={act} />)}
           <span className="kd-m pt-2">{T.adCampaigns}</span>
           {ads.campaigns.map((c) => (
-            <div key={c.id} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
+            <div key={c.id} className="flex items-center gap-3 border-b border-line-1 py-2 last:border-b-0">
               <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs">{c.brand} · {c.placement}</span><span className="kd-s kd-num">{fill(T.adLine, { i: count(c.impressions, lang), c: count(c.clicks, lang), p: m(c.spend) })}</span></span>
               <Switch checked={c.active} label={fill(T.adActive, { b: c.brand })} onChange={(v) => act(() => FF.patch('/admin/ads/campaigns/' + c.id, { active: v }))} />
             </div>

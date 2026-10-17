@@ -26,7 +26,7 @@ export function Toast({ msg, onDone, closeLabel }: { msg: ToastMsg | null; onDon
         <div key={msg.id} ref={box} popover="manual" className="kd-toast kd-glass">
           <span className="min-w-0">{msg.text}</span>
           {msg.action ? (
-            <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost text-acc" onClick={() => { msg.action!.run(); onDone(); }}>
+            <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost text-info" onClick={() => { msg.action!.run(); onDone(); }}>
               {msg.action.label}
             </button>
           ) : null}

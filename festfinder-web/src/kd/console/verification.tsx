@@ -62,7 +62,7 @@ export function Verification() {
                   <div className="flex items-start gap-3">
                     <Avatar org name={o.name} src={o.logoUrl} size={44} />
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <a className="kd-h kd-ell hover:underline" href={'/o/' + o.slug}>{o.name}</a>
+                      <a className="kd-h kd-ell kd-hit hover:underline" href={'/o/' + o.slug}>{o.name}</a>
                       <span className="kd-s kd-ell">{[o.legalName, o.taxCode, o.email, o.hotline].filter(Boolean).join(' · ') || '—'}</span>
                     </div>
                     <Status tone={o.state === 'verified' ? 'ok' : o.state === 'flagged' ? 'bad' : 'warn'}>{o.state === 'verified' ? T.vVerified : o.state === 'flagged' ? T.vFlagged : T.vPending}</Status>
@@ -72,16 +72,16 @@ export function Verification() {
                     {o.strikes ? ' · ' + fill(T.strikes, { n: o.strikes }) : ''}
                     {o.suspended ? ' · ' + T.suspended : ''}
                   </span>
-                  <div className="flex flex-col border-t border-line">
+                  <div className="flex flex-col border-t border-line-1">
                     {docs.map((d) => (
-                      <div key={d.key} className="flex min-h-11 items-center justify-between gap-3 border-b border-line">
-                        <span className="kd-s text-mist">{d.label}</span>
+                      <div key={d.key} className="flex min-h-11 items-center justify-between gap-3 border-b border-line-1">
+                        <span className="kd-s text-fg-2">{d.label}</span>
                         <Switch checked={o.docs[d.key]} label={`${d.label} · ${o.name}`} onChange={(v) => patch(o, { docs: { [d.key]: v } })} />
                       </div>
                     ))}
                     {o.bankOnFile ? (
-                      <div className="flex min-h-11 items-center justify-between gap-3 border-b border-line">
-                        <span className="kd-s text-mist">{T.bankOk}</span>
+                      <div className="flex min-h-11 items-center justify-between gap-3 border-b border-line-1">
+                        <span className="kd-s text-fg-2">{T.bankOk}</span>
                         <Switch checked={o.bankVerified} label={`${T.bankOk} · ${o.name}`} onChange={(v) => patch(o, { bankVerified: v })} />
                       </div>
                     ) : null}
