@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from 'react';
 import { BugIcon, LightbulbIcon, PaintBrushIcon, QuestionIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { fill, pageLang, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { Button } from '../ui/actions';
 import { FieldError, FieldLabel, Input, TextArea } from '../ui/forms';
@@ -24,8 +24,6 @@ const KINDS: { key: Kind; icon: typeof BugIcon }[] = [
   { key: 'bug', icon: BugIcon }, { key: 'ui_ux', icon: PaintBrushIcon }, { key: 'feature', icon: LightbulbIcon }, { key: 'support', icon: QuestionIcon },
 ];
 const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'critical'];
-/** The language the page is in: ?lang=en, or a part of the page marked English. */
-const pageLang = (): Lang => (new URLSearchParams(location.search).get('lang') === 'en' || document.querySelector('[lang="en"]') ? 'en' : 'vi');
 
 /** A screenshot made smaller in the browser: JPEG, 1600 px on the long side at most. */
 async function shrink(file: File): Promise<Blob> {

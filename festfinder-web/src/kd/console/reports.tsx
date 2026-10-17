@@ -13,7 +13,7 @@
 import { useMemo } from 'react';
 import { ArrowSquareOutIcon, EyeIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { count } from '../format';
 import { useKd } from '../runtime';
 import { Button, LinkButton } from '../ui/actions';
@@ -84,7 +84,7 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
   // A notification about a listing hidden by reports opens its case (/console/reports?event=<id>).
   const only = params.get('event');
   const sort = params.get('sort') === 'age' ? 'age' : 'count';
-  const statusLabel = (s: string) => options?.statuses?.find((x: { value: string; label: Pair }) => x.value === s)?.label[lang] ?? s;
+  const statusLabel = (s: string) => tx<string>(options?.statuses?.find((x: { value: string; label: Pair }) => x.value === s)?.label, lang) ?? s;
   const needle = q.trim().toLowerCase();
   const rows = useMemo(() => (load.data?.items ?? [])
     .filter((r) => (!only || r.eventId === only) && (!cat || r.categories.some((c) => c.category === cat)) && (!needle || r.subject.toLowerCase().includes(needle)))
@@ -108,7 +108,7 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
               label={M.category}
               value={cat}
               onChange={(v) => setParams({ cat: v })}
-              options={data.last30Days.map((c) => ({ value: c.category, label: c.label[lang], aside: <span className="kd-num">{data.items.filter((x) => x.categories.some((y) => y.category === c.category)).length}</span> }))}
+              options={data.last30Days.map((c) => ({ value: c.category, label: tx(c.label, lang), aside: <span className="kd-num">{data.items.filter((x) => x.categories.some((y) => y.category === c.category)).length}</span> }))}
             />
             <Choice
               label={M.sort}
@@ -118,7 +118,7 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
               options={[{ value: 'count', label: M.sortCount }, { value: 'age', label: M.sortAge }]}
             />
             <span className="kd-m ml-auto">{T.reports30}</span>
-            {data.last30Days.map((c) => <span key={c.category} className="kd-s kd-num">{c.label[lang]} {count(c.count, lang)}</span>)}
+            {data.last30Days.map((c) => <span key={c.category} className="kd-s kd-num">{tx(c.label, lang)} {count(c.count, lang)}</span>)}
           </FilterBar>
           {!rows.length ? <Empty title={T.noReports} /> : (
             <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(420px,100%),1fr))] items-start gap-3">
@@ -130,7 +130,7 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
                       <h2 className="kd-h">{r.subject}</h2>
                     </div>
                     <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      {r.categories.map((c) => <Status key={c.category} tone={CAT_TONE[c.category] ?? 'none'}>{r.categories.length > 1 ? `${c.label[lang]} · ${c.count}` : c.label[lang]}</Status>)}
+                      {r.categories.map((c) => <Status key={c.category} tone={CAT_TONE[c.category] ?? 'none'}>{r.categories.length > 1 ? `${tx(c.label, lang)} · ${c.count}` : tx(c.label, lang)}</Status>)}
                       <Status tone={r.eventStatus === 'live' ? 'live' : r.eventStatus === 'removed' ? 'bad' : 'none'}>{statusLabel(r.eventStatus)}</Status>
                       {r.heldFromFeed ? <Status tone="warn">{T.heldFromFeed}</Status> : null}
                     </div>
@@ -180,7 +180,7 @@ function PostsTab({ lang }: { lang: Lang }) {
               <Row key={p.id} cols={POST_COLS} className="py-3">
                 <span role="cell" className="flex min-w-0 flex-col gap-1">
                   <span className="text-sm text-fg-1">“{p.body}”</span>
-                  <span className="kd-s">{p.author.name || M.member} · {p.kindLabel[lang]} · {stamp(p.createdAt, lang)}</span>
+                  <span className="kd-s">{p.author.name || M.member} · {tx(p.kindLabel, lang)} · {stamp(p.createdAt, lang)}</span>
                 </span>
                 <span role="cell" className="min-w-0">
                   <a className="kd-s inline-flex items-center gap-1 hover:underline" href={`/e/${p.event.slug}#thao-luan`} target="_blank" rel="noopener">
@@ -228,7 +228,7 @@ function MomentsTab({ lang }: { lang: Lang }) {
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     {p.caption ? <span className="kd-hs">{p.caption}</span> : null}
                     <span className="kd-s">{p.owner.href ? <a className="hover:underline" href={p.owner.href}>{fill(T.photoOn, { n: p.owner.name ?? '' })}</a> : T.photoFan}</span>
-                    <span className="kd-m">{p.reasons.map((r) => r.label[lang]).join(' · ')} · {fill(T.reporters, { n: p.reports })}</span>
+                    <span className="kd-m">{p.reasons.map((r) => tx(r.label, lang)).join(' · ')} · {fill(T.reporters, { n: p.reports })}</span>
                     <div className="mt-auto flex gap-2 pt-1">
                       <Button size="sm" onClick={() => decide(p.id, 'remove')}>{T.photoRemove}</Button>
                       <Button size="sm" tone="ghost" onClick={() => decide(p.id, 'keep')}>{T.photoKeep}</Button>
@@ -269,7 +269,7 @@ function MixCommentsTab({ lang }: { lang: Lang }) {
                   <span className="kd-ell">{c.mix.artist} · {c.mix.title}</span><ArrowSquareOutIcon size={12} aria-hidden="true" />
                 </a>
               </span>
-              <span role="cell" className="flex flex-wrap gap-x-3 gap-y-1">{c.reasons.map((r) => <Status key={r.key} tone="warn">{r.label[lang]}</Status>)}</span>
+              <span role="cell" className="flex flex-wrap gap-x-3 gap-y-1">{c.reasons.map((r) => <Status key={r.key} tone="warn">{tx(r.label, lang)}</Status>)}</span>
               <span role="cell" className="kd-num text-fg-1">{c.reports}</span>
               <span role="cell">{c.hidden ? <Status tone="bad">{M.hidden}</Status> : <Status tone="ok">{M.visible}</Status>}</span>
               <span role="cell" className="flex flex-wrap justify-end gap-2">

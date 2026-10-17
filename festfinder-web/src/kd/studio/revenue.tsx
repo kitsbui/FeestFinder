@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Pair } from '../copy';
+import { fill, pick, type Pair, tx } from '../copy';
 import { BANKS } from '../banks';
 import { count, dayMonth, money } from '../format';
 import { useKd } from '../runtime';
@@ -76,7 +76,7 @@ export function RevenueScreen() {
             <Block className="kd-side" title={T.byTier}>
               <div className="flex flex-col gap-3.5">
                 {r.tiers.map((t) => (
-                  <BarRow key={t.id ?? 'guest'} label={t.name[lang] + (t.price ? ' · ' + m(t.price) : '')} value={t.sold} max={maxTier} display={count(t.sold, lang)} />
+                  <BarRow key={t.id ?? 'guest'} label={tx(t.name, lang) + (t.price ? ' · ' + m(t.price) : '')} value={t.sold} max={maxTier} display={count(t.sold, lang)} />
                 ))}
               </div>
             </Block>
@@ -87,13 +87,13 @@ export function RevenueScreen() {
                 {r.payouts.map((p) => (
                   <Accordion
                     key={p.kind}
-                    summary={<span className="flex flex-wrap items-center gap-x-3 gap-y-1"><span className="kd-hs">{p.period[lang]}</span><Status tone={status[p.status].tone}>{status[p.status].label}</Status></span>}
+                    summary={<span className="flex flex-wrap items-center gap-x-3 gap-y-1"><span className="kd-hs">{tx(p.period, lang)}</span><Status tone={status[p.status].tone}>{status[p.status].label}</Status></span>}
                     aside={m(p.net)}
                   >
                     <div className="flex flex-col gap-2 pb-2">
-                      <span className="kd-s">{p.settles[lang]}{p.reference ? ' · ' + p.reference : ''}</span>
+                      <span className="kd-s">{tx(p.settles, lang)}{p.reference ? ' · ' + p.reference : ''}</span>
                       {p.lines.map((l) => (
-                        <div key={l.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{l.label[lang]}</span><span className="kd-num text-fg-2">{m(l.amount)}</span></div>
+                        <div key={l.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{tx(l.label, lang)}</span><span className="kd-num text-fg-2">{m(l.amount)}</span></div>
                       ))}
                       <div className="flex items-baseline justify-between gap-3 border-t border-line-1 pt-2"><span className="kd-hs">{T.net}</span><span className="kd-mb kd-num">{m(p.net)}</span></div>
                       <a className="kd-more" href={`/organizer/events/${event.id}/payouts/${p.kind}/statement.csv`} download><DownloadSimpleIcon size={14} aria-hidden="true" />{T.statement}</a>
@@ -105,7 +105,7 @@ export function RevenueScreen() {
             <div className="kd-side flex flex-col gap-3">
               <Block title={T.fees}>
                 <div className="flex flex-col gap-2">
-                  {r.fees.map((f) => <div key={f.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{f.label[lang]}</span><span className="kd-num text-fg-2">{m(f.amount)}</span></div>)}
+                  {r.fees.map((f) => <div key={f.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{tx(f.label, lang)}</span><span className="kd-num text-fg-2">{m(f.amount)}</span></div>)}
                 </div>
               </Block>
               <BankAccount account={r.account} onSaved={load} />
@@ -138,7 +138,7 @@ function BankAccount({ account, onSaved }: { account: Revenue['account']; onSave
           <span className="kd-hs">{account.bankName}</span>
           <span className="kd-s kd-num">{account.accountMasked} · {account.accountName}</span>
           <Status tone={account.verified ? 'ok' : 'warn'}>{account.verified ? T.verified : T.unverified}</Status>
-          <span className="kd-s mt-1">{account.note[lang]}</span>
+          <span className="kd-s mt-1">{tx(account.note, lang)}</span>
         </div>
       ) : edit ? (
         <form className="flex flex-col gap-3" onSubmit={save}>

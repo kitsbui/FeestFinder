@@ -4,7 +4,7 @@
  * Each shows what FeestFinder wrote beside the organiser's reply, the reason, the days left, and
  * uphold (the send-back stands) or overturn (the listing goes live now), each confirmed.
  */
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { familyOf } from '../../genre';
 import { useKd } from '../../runtime';
 import { Button, LinkButton } from '../../ui/actions';
@@ -40,8 +40,8 @@ export function Appeals({ lang, appeals, onDone }: { lang: Lang; appeals: Appeal
                 <h2 className="kd-h kd-ell">{a.title}</h2>
                 <span className="kd-s">{a.organizer} · {fill(R.sentBackOn, { d: stamp(a.rejectedAt, lang, false) })}</span>
                 <span className="flex flex-wrap gap-2">
-                  {a.reason ? <Status tone="bad">{a.reason[lang]}</Status> : null}
-                  <Status tone={a.state === 'replied' ? 'warn' : 'none'}>{a.stateLabel[lang]}</Status>
+                  {a.reason ? <Status tone="bad">{tx(a.reason, lang)}</Status> : null}
+                  <Status tone={a.state === 'replied' ? 'warn' : 'none'}>{tx(a.stateLabel, lang)}</Status>
                   <Status>{fill(R.daysLeft, { n: a.closesInDays })}</Status>
                 </span>
               </div>

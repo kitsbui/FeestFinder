@@ -79,7 +79,7 @@ export const WEB = {
   places: { en: '{n} places', vi: '{n} chỗ' },
   lineup: { en: 'Line-up · {n} artists', vi: 'Line-up · {n} nghệ sĩ' },
   listenFirst: { en: 'Listen first', vi: 'Nghe trước' },
-  listenTo: { en: '{t} by {a}, play', vi: '{t} của {a}, nghe' },
+  listenPlay: { en: 'play', vi: 'nghe' },
   moreFrom: { en: 'More from {a}', vi: 'Thêm của {a}' },
   stages: { en: '{n} stages', vi: '{n} sân khấu' },
   headline: { en: 'Headline', vi: 'Headline' },

@@ -8,12 +8,13 @@
  */
 import { useEffect, useState } from 'react';
 import { CaretDownIcon } from '@phosphor-icons/react/ssr';
-import { pick, type Lang } from '../../copy';
+import { pick, type Lang, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { buttonClass } from '../../ui/actions';
 import { Menu, MenuItem } from '../../ui/menu';
 import type { EventDetail } from '../../types';
 import { useEvent } from './context';
+import { inLang } from '../../link';
 
 const COPY = {
   add: { en: 'Add to calendar', vi: 'Thêm lịch' },
@@ -31,9 +32,9 @@ export interface CalendarFields { title: string; startMs: number | null; endMs: 
 
 /** What every calendar gets: the night's name, when, where, and the way back to it. */
 export function calendarFields(ev: EventDetail, lang: Lang, origin: string): CalendarFields {
-  const place = [ev.venue.name, ev.venue.address, ev.cityLabel?.[lang]].filter((x, i, all) => x && all.indexOf(x) === i).join(', ');
-  const about = (ev.description?.[lang] || ev.description?.vi || ev.description?.en || '').trim();
-  const link = `${origin}/e/${encodeURIComponent(ev.slug)}${lang === 'en' ? '?lang=en' : ''}`;
+  const place = [ev.venue.name, ev.venue.address, tx(ev.cityLabel, lang)].filter((x, i, all) => x && all.indexOf(x) === i).join(', ');
+  const about = (tx(ev.description, lang) || ev.description?.vi || ev.description?.en || '').trim();
+  const link = origin + inLang(`/e/${encodeURIComponent(ev.slug)}`, lang);
   const details = [about.length > 300 ? about.slice(0, 297) + '…' : about, link].filter(Boolean).join('\n\n');
   const timed = !!(ev.startsAt && ev.startTime);
   const dates = timed

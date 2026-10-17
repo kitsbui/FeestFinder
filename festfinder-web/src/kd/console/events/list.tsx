@@ -11,7 +11,7 @@ import {
 } from '@phosphor-icons/react/ssr';
 import { useRouter } from 'next/navigation';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { INTL, fill, pick, type Lang, tx } from '../../copy';
 import { count, money, todayIn, whenShort } from '../../format';
 import { KdLink } from '../../link';
 import { useKd } from '../../runtime';
@@ -107,7 +107,7 @@ export function EventList() {
         <FilterBar onReset={active ? () => reset({ q: null, status: null, when: null, from: null, to: null, genre: null, area: null, org: null, orgName: null, entry: null, traits: null }) : null}>
           <SearchField label={T.searchLabel} placeholder={T.search} value={text} onChange={setText} />
           <MultiChoice label={T.fStatus} values={split('status')} onChange={(v) => reset({ status: v.join(',') })}
-            options={(o?.statuses ?? []).map((s: { value: string; label: { vi: string; en: string } }) => ({ value: s.value, label: s.label[lang], aside: data?.facets.status[s.value] ?? undefined }))} />
+            options={(o?.statuses ?? []).map((s: { value: string; label: { vi: string; en: string } }) => ({ value: s.value, label: tx(s.label, lang), aside: data?.facets.status[s.value] ?? undefined }))} />
           <Choice label={T.fWhen} value={when === 'all' ? '' : when} options={whenOptions}
             onChange={(v) => reset({ when: v || 'all', ...(v === 'range' ? { from: get('from') || today(), to: get('to') || today() } : { from: null, to: null }) })} />
           {when === 'range' ? (
@@ -118,15 +118,15 @@ export function EventList() {
             </span>
           ) : null}
           {(o?.genres.length ?? 0) > 1 ? (
-            <MultiChoice label={T.fGenre} values={split('genre')} onChange={(v) => reset({ genre: v.join(',') })} options={(o?.genres ?? []).map((g) => ({ value: g.value, label: g.label[lang] }))} />
+            <MultiChoice label={T.fGenre} values={split('genre')} onChange={(v) => reset({ genre: v.join(',') })} options={(o?.genres ?? []).map((g) => ({ value: g.value, label: tx(g.label, lang) }))} />
           ) : null}
           <MultiChoice label={T.fArea} values={split('area', '|')} onChange={(v) => reset({ area: v.join('|') })}
-            options={(o?.areaGroups ?? []).flatMap((g) => g.areas.map((a) => ({ value: a, label: a, aside: g.label[lang] })))} />
+            options={(o?.areaGroups ?? []).flatMap((g) => g.areas.map((a) => ({ value: a, label: a, aside: tx(g.label, lang) })))} />
           <div className="w-[260px] max-w-full">
             <AsyncPick label={T.fOrg} placeholder={T.fOrgPh} value={org} load={findOrganizers} onPick={(i) => reset({ org: i?.value ?? null, orgName: i?.label ?? null })} />
           </div>
           <MultiChoice label={T.fEntry} values={split('entry')} onChange={(v) => reset({ entry: v.join(',') })}
-            options={(o?.entryModes ?? []).map((m: { value: string; label: { vi: string; en: string } }) => ({ value: m.value, label: m.label[lang] }))} />
+            options={(o?.entryModes ?? []).map((m: { value: string; label: { vi: string; en: string } }) => ({ value: m.value, label: tx(m.label, lang) }))} />
           <MultiChoice label={T.fTraits} values={traits} onChange={(v) => reset({ traits: v.join(',') })}
             options={[{ value: 'featured', label: T.tFeatured }, { value: 'reported', label: T.tReported }, { value: 'unpinned', label: T.tUnpinned }]} />
           <Choice label={T.fSort} any={false} value={filters.sort} options={sorts} onChange={(v) => reset({ sort: v === 'date' ? null : v })} />
@@ -151,13 +151,13 @@ export function EventList() {
                   {e.organizer.name}{e.organizer.verified ? <SealCheckIcon size={14} weight="fill" className="shrink-0 text-info" aria-label={T.verifiedOrg} /> : null}
                 </span>
                 <span role="cell" className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <Pill tone={statusTone(e.status)}>{e.statusLabel[lang]}</Pill>
+                  <Pill tone={statusTone(e.status)}>{tx(e.statusLabel, lang)}</Pill>
                   {!e.venueResolved && e.venueName ? <Status tone="warn">{T.noPin}</Status> : null}
                   {e.openReports ? <Status tone="bad">{fill(T.reportsN, { n: e.openReports })}</Status> : null}
                   {e.badge ? <span className="kd-m">{e.badge.replace('_', ' ')}</span> : null}
                 </span>
                 <span role="cell" className="kd-num text-right text-sm">
-                  {e.entryMode === 'free' ? T.free : e.entryMode === 'donation' ? T.donation : e.priceFrom ? (e.currency ? money(e.priceFrom, e.currency, lang) : e.priceFrom.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')) : '—'}
+                  {e.entryMode === 'free' ? T.free : e.entryMode === 'donation' ? T.donation : e.priceFrom ? (e.currency ? money(e.priceFrom, e.currency, lang) : e.priceFrom.toLocaleString(INTL[lang])) : '—'}
                 </span>
                 <span role="cell" className={`kd-num text-right text-sm ${e.capacity && e.sold / e.capacity > 0.9 ? 'text-warn' : ''}`}>
                   {e.capacity ? `${count(e.sold, lang)} / ${count(e.capacity, lang)}` : e.sold ? count(e.sold, lang) : '—'}

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRightIcon, RocketLaunchIcon, TrendDownIcon, TrendUpIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Pair } from '../copy';
+import { INTL, fill, pick, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { count, dayMonth } from '../format';
 import { familyOf, g } from '../genre';
@@ -68,7 +68,7 @@ export function Dashboard() {
   const sentBack = events.filter((e) => e.status === 'rejected');
 
   const free = event?.entryMode === 'free';
-  const pct = (a: number, b: number) => (b ? `${(Math.round((a / b) * 1000) / 10).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}%` : '0%');
+  const pct = (a: number, b: number) => (b ? `${(Math.round((a / b) * 1000) / 10).toLocaleString(INTL[lang])}%` : '0%');
   const delta = perf ? (perf.period.viewsBefore ? Math.round(((perf.period.views - perf.period.viewsBefore) / perf.period.viewsBefore) * 100) : null) : null;
   const srcLabel: Record<string, string> = { feed: T.srcFeed, shelf: T.srcShelf, shared: T.srcShared, search: T.srcSearch, own: T.srcOwn, ads: T.srcAds, map: T.srcMap, list: T.srcList, artist: T.srcArtist };
   // "Đẩy tin" asks for advertising: the form opens on this event.
@@ -159,7 +159,7 @@ export function Dashboard() {
                 <>
                   <span role="cell" className={cx('kd-hs kd-ell flex items-center gap-2.5', e.status === 'draft' && 'text-fg-3', g(familyOf(e.genre)))}><Marker family={familyOf(e.genre)} />{e.title}</span>
                   <span role="cell" className="kd-s kd-num">{e.startsOn ? dayMonth(e.startsOn, lang) : '—'}</span>
-                  <span role="cell"><Status tone={statusTone(e.status)}>{e.statusLabel[lang]}</Status></span>
+                  <span role="cell"><Status tone={statusTone(e.status)}>{tx(e.statusLabel, lang)}</Status></span>
                   <span role="cell" className="kd-mb kd-num text-right">
                     {e.status === 'draft' || e.status === 'rejected'
                       ? <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={'/studio/new?draft=' + e.id} onClick={(x) => x.stopPropagation()}>{T.continue}</a>
@@ -204,7 +204,7 @@ export function Dashboard() {
               <ul className="flex flex-col">
                 {sentBack.map((e) => (
                   <li key={'r' + e.id} className="kd-lrow min-h-12 gap-3">
-                    <span className="kd-s flex-1 text-fg-2">{fill(T.todoSentBack, { t: e.title, r: e.lastDecision?.reason?.[lang] ?? T.evRejected })}</span>
+                    <span className="kd-s flex-1 text-fg-2">{fill(T.todoSentBack, { t: e.title, r: tx(e.lastDecision?.reason, lang) ?? T.evRejected })}</span>
                     <KdLink className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href={'/studio/events/' + e.id}>{T.todoFix}</KdLink>
                   </li>
                 ))}
@@ -218,7 +218,7 @@ export function Dashboard() {
                   const draftish = events.some((e) => e.id === t.eventId && (e.status === 'draft' || e.status === 'rejected'));
                   return (
                     <li key={i} className="kd-lrow min-h-12 gap-3 last:border-b-0">
-                      <span className="kd-s flex-1 text-fg-2">{t.text[lang]}</span>
+                      <span className="kd-s flex-1 text-fg-2">{tx(t.text, lang)}</span>
                       <a className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href={draftish ? '/studio/new?draft=' + t.eventId : '/studio/events/' + t.eventId}>{draftish ? T.continue : T.todoFix}</a>
                     </li>
                   );
@@ -234,7 +234,7 @@ export function Dashboard() {
                   <li key={x.id}>
                     <KdLink className="flex min-h-11 flex-col justify-center gap-0.5 hover:text-fg-1" href={'/studio/events/' + x.id}>
                       <span className="kd-s flex justify-between gap-3 text-fg-2"><span className="kd-ell">{x.title}</span><span className="kd-mb kd-num">{x.score}</span></span>
-                      {x.missing[0] ? <span className="kd-s text-xs text-fg-3">{x.missing[0][lang]}</span> : null}
+                      {x.missing[0] ? <span className="kd-s text-xs text-fg-3">{tx(x.missing[0], lang)}</span> : null}
                     </KdLink>
                   </li>
                 ))}

@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { CheckIcon, PencilSimpleIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { dayMonth, money } from '../../format';
 import { useKd } from '../../runtime';
 import { Button } from '../../ui/actions';
@@ -50,7 +50,7 @@ export function Brands() {
       <Body>
         {load.error && !load.data ? <ErrorBox error={load.error} retry={load.reload} /> : !load.data ? <Loading /> : (
           <>
-            <Tiles><Tile label={T.openArtists} value={load.data.artistsOpenToBrands.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')} /></Tiles>
+            <Tiles><Tile label={T.openArtists} value={load.data.artistsOpenToBrands.toLocaleString(INTL[lang])} /></Tiles>
             {!load.data.items.length ? <Empty title={T.none} /> : (
               <Table label={T.table} cols={COLS} head={[T.cCampaign, T.cFee, T.cInterested, '', '']}>
                 {load.data.items.map((c) => (
@@ -121,8 +121,8 @@ function CampaignForm({ lang, campaign, status, onClose, onSaved }: { lang: Lang
   const upd = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
   const feeOk = f.feeMin === '' || f.feeMax === '' || Number(f.feeMax) >= Number(f.feeMin);
   const ok = f.brandName.trim().length >= 2 && f.title.trim().length >= 3 && feeOk;
-  const cityOpts = (opts?.cities ?? []).map((c) => ({ value: c.value, label: c.label[lang] + (c.currency ? ` · ${c.currency}` : '') }));
-  const styleOpts = (opts?.styles ?? []).map((s) => ({ value: s.value, label: s.label[lang] }));
+  const cityOpts = (opts?.cities ?? []).map((c) => ({ value: c.value, label: tx(c.label, lang) + (c.currency ? ` · ${c.currency}` : '') }));
+  const styleOpts = (opts?.styles ?? []).map((s) => ({ value: s.value, label: tx(s.label, lang) }));
   const save = async () => {
     setBusy(true);
     const body = {

@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react';
 import { ArrowCounterClockwiseIcon, ProhibitIcon, RocketLaunchIcon, XCircleIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../../fresh';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { Button } from '../../ui/actions';
 import { Select, TextArea } from '../../ui/forms';
@@ -98,7 +98,7 @@ function TakeDown({ ev, onClose, onDone }: { ev: Target; onClose: () => void; on
         <Field label={<>{T.tdReason} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="tdCode">
           <Select id="tdCode" value={code} onChange={(e) => setCode(e.target.value)}>
             <option value="">{T.tdNoReason}</option>
-            {(o?.rejectReasons ?? []).map((r: { code: string; label: { vi: string; en: string } }) => <option key={r.code} value={r.code}>{r.label[lang]}</option>)}
+            {(o?.rejectReasons ?? []).map((r: { code: string; label: { vi: string; en: string } }) => <option key={r.code} value={r.code}>{tx(r.label, lang)}</option>)}
           </Select>
         </Field>
         <Field label={<>{T.tdMessage} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="tdMsg">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { KdProvider } from '@/kd/runtime';
 import { WebFooter, WebNav } from '@/kd/web/chrome';
 import { FanProfile } from '@/kd/web/fan/page';
+import { langOf } from '@/kd/copy';
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -12,7 +13,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function Page({ searchParams }: Props) {
-  const lang = (await searchParams).lang === 'en' ? 'en' : 'vi';
+  const lang = langOf((await searchParams).lang);
   return (
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>

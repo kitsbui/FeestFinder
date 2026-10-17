@@ -7,7 +7,7 @@ import { KdLink as Link, inLang } from '../../link';
 import { BroadcastIcon, CalendarBlankIcon, CaretRightIcon, CompassIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
 import { ViewTransition, type ReactNode } from 'react';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
-import { fill, pick } from '../../copy';
+import { fill, pick, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, dayMonth, money, timeRange, weekdayLong, whenLong, whenShort } from '../../format';
 import { FAMILY_LABEL, familyOf, g, styleLabel } from '../../genre';
@@ -32,13 +32,14 @@ import { TicketsPanel } from './tickets';
 import { CalendarButton } from './calendar';
 import { directionsUrl } from './directions';
 import { BuyDock } from './dock';
+import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
 
 export async function loadEvent(slug: string, lang: Lang) {
   const [ev, seo] = await Promise.all([
     api<EventDetail>(`/events/${enc(slug)}`, { lang }),
-    api<EventSeo>(`/seo/events/${enc(slug)}${lang === 'en' ? '?lang=en' : ''}`, { lang }),
+    api<EventSeo>(`/seo/events/${enc(slug)}${lang === 'vi' ? '' : '?lang=en'}`, { lang }),
   ]);
   return ev && seo ? { ev, seo } : null;
 }
@@ -53,23 +54,23 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   const T = pick(WEB, lang);
   const fam = familyOf(ev.genre);
   const free = ev.isFree || ev.entryMode === 'free';
-  const status = ev.past ? null : ev.soldOut ? T.soldOut : ev.badge ? ev.badge.label[lang] : null;
+  const status = ev.past ? null : ev.soldOut ? T.soldOut : ev.badge ? tx(ev.badge.label, lang) : null;
   const statusTone = ev.soldOut ? 'bg-bad' : ev.badge?.key === 'low_tickets' || ev.badge?.key === 'selling_fast' ? 'bg-warn' : 'bg-ok';
   // The hero's poster when there is no cover: the day (or the days) large, then the weekday, the time and the city.
   const several = !!ev.startsOn && !!ev.endsOn && ev.endsOn !== ev.startsOn;
   const poster = ev.startsOn ? {
     big: several ? whenShort(ev, lang) : dayMonth(ev.startsOn, lang),
-    line: [several ? null : weekdayLong(ev.startsOn, lang), ev.startTime, ev.cityLabel?.[lang]].filter(Boolean).join(' · '),
+    line: [several ? null : weekdayLong(ev.startsOn, lang), ev.startTime, tx(ev.cityLabel, lang)].filter(Boolean).join(' · '),
   } : null;
-  const familyLine = [FAMILY_LABEL[fam][lang], ev.eventType ? EVENT_TYPE[ev.eventType]?.[lang] : null, ev.cityLabel?.[lang]].filter(Boolean).join(' · ');
+  const familyLine = [tx(FAMILY_LABEL[fam], lang), ev.eventType ? tx(EVENT_TYPE[ev.eventType], lang) : null, tx(ev.cityLabel, lang)].filter(Boolean).join(' · ');
   const tiers = ev.tickets?.tiers ?? [];
   const openTiers = tiers.filter((t) => t.state === 'onsale' || t.state === 'last');
   const cheapest = openTiers.length ? Math.min(...openTiers.map((t) => t.price)) : ev.priceFrom;
   const hasTickets = !free && !ev.past && (openTiers.length > 0 || !!ev.links.go);
-  const address = [ev.venue.address, ev.venue.area, ev.cityLabel?.[lang]].filter(Boolean).join(', ');
+  const address = [ev.venue.address, ev.venue.area, tx(ev.cityLabel, lang)].filter(Boolean).join(', ');
   const mapsHref = directionsUrl(ev.venue, address);
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? T.english : T.vietnamese };
-  const description = ev.description?.[lang] || ev.description?.vi || ev.description?.en || '';
+  const description = tx(ev.description, lang) || ev.description?.vi || ev.description?.en || '';
   const facts = [
     ev.age,
     ev.capacity ? fill(T.places, { n: count(ev.capacity, lang) }) : null,
@@ -77,14 +78,14 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   ].filter((x): x is string => !!x);
   const org = ev.organizer;
   // Nobody posted a Radar event: it is Feest Radar's find, not its placeholder organiser's.
-  const radarHosts = [...new Set(ev.sources.map((s) => s.host || s.label[lang]).filter(Boolean))].join(', ');
+  const radarHosts = [...new Set(ev.sources.map((s) => s.host || tx(s.label, lang)).filter(Boolean))].join(', ');
   const orgData = org ? await api<{ upcoming: Card[] }>(`/organizers/${enc(org.slug)}`, { lang }).catch(() => null) : null;
   const more = (orgData?.upcoming ?? []).filter((x) => x.id !== ev.id).slice(0, 3);
   const also = more.length ? more : ev.similar.slice(0, 3);
   const alsoIsOrg = more.length > 0;
 
   return (
-    <>
+    <InLang lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <KdProvider lang={lang}>
         <EventClientProvider ev={ev}>
@@ -103,7 +104,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}
                     {status ? <span className="kd-tag kd-tag-glass text-fg-1"><span className={cx('h-[7px] w-[7px] rounded-full', statusTone)} aria-hidden="true" />{status}</span> : null}
-                    {ev.festival?.flagship && ev.festival.label && !ev.past ? <span className="kd-tag kd-tag-featured">{ev.festival.label[lang]}</span> : null}
+                    {ev.festival?.flagship && ev.festival.label && !ev.past ? <span className="kd-tag kd-tag-featured">{tx(ev.festival.label, lang)}</span> : null}
                     {ev.origin === 'radar' ? <RadarTag lang={lang} glass /> : null}
                   </div>
                   <Countdown lang={lang} />
@@ -196,7 +197,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                           <li key={u.id} className="flex flex-col gap-1 border-t border-line-1 py-3">
                             <span className="kd-m flex items-center gap-2">
                               <span className={cx('h-[7px] w-[7px] rounded-full', u.kind === 'safety' || u.kind === 'delay' ? 'bg-warn' : 'bg-ok')} aria-hidden="true" />
-                              {u.kindLabel?.[lang]}
+                              {tx(u.kindLabel, lang)}
                             </span>
                             <p className="kd-t text-fg-1">{u.body}</p>
                           </li>
@@ -226,7 +227,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                         </dl>
                         {ev.sources.length ? (
                           <p className="kd-s">{T.sources}: {ev.sources.map((s, i) => (
-                            <span key={i}>{i ? ' · ' : ''}{s.url ? <a href={s.url} rel="noopener nofollow" className="underline decoration-line-2 underline-offset-4">{s.label[lang]}</a> : s.label[lang]}</span>
+                            <span key={i}>{i ? ' · ' : ''}{s.url ? <a href={s.url} rel="noopener nofollow" className="underline decoration-line-2 underline-offset-4">{tx(s.label, lang)}</a> : tx(s.label, lang)}</span>
                           ))}</p>
                         ) : null}
                       </div>
@@ -306,7 +307,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
           </div>
         </EventClientProvider>
       </KdProvider>
-    </>
+    </InLang>
   );
 }
 

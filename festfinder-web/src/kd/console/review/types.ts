@@ -1,5 +1,5 @@
 /** What the review queue reads from the API (/admin/queue, /admin/events/:id, /admin/appeals, /admin/reject-reasons). */
-import type { Pair } from '../../copy';
+import type { Lang, Pair } from '../../copy';
 
 export type Sla = 'ok' | 'soon' | 'breach';
 export type Band = 'low' | 'medium' | 'high';
@@ -61,5 +61,5 @@ export type Verb = 'approve' | 'reject' | 'fix';
 export interface Held { verb: Verb; ids: string[]; title: string; reason: Reason | null; message?: string; allowAppeal?: boolean; timer: number }
 
 /** Minutes as "45 phút" / "3 giờ 05 phút". */
-export const duration = (min: number, lang: 'vi' | 'en') =>
+export const duration = (min: number, lang: Lang) =>
   min < 60 ? `${min} ${lang === 'vi' ? 'phút' : 'min'}` : `${Math.floor(min / 60)}${lang === 'vi' ? ' giờ' : 'h'} ${min % 60}${lang === 'vi' ? ' phút' : 'm'}`;

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRightIcon, DownloadSimpleIcon, GearIcon, ShieldCheckIcon, ShieldWarningIcon, StorefrontIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { count } from '../format';
 import { Button, buttonClass, Chip } from '../ui/actions';
 import { Card as Panel, Status } from '../ui/parts';
@@ -41,7 +41,7 @@ export function AuditRows({ lang, items }: { lang: Lang; items: AuditItem[] }) {
         <li key={a.seq} className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-line-1 px-4 py-3 sm:grid-cols-[20px_minmax(0,1fr)_230px]">
           {icon(a.actorType)}
           <span className="flex min-w-0 flex-col gap-1">
-            <span className="kd-t"><span className="text-fg-1">{a.actor[lang]}</span> · {a.label[lang]} · <span className="text-fg-1">{a.target.label}</span></span>
+            <span className="kd-t"><span className="text-fg-1">{tx(a.actor, lang)}</span> · {tx(a.label, lang)} · <span className="text-fg-1">{a.target.label}</span></span>
             {a.diff.map((d, i) => (
               <span key={i} className="kd-s kd-num flex flex-wrap items-center gap-1.5">
                 <code className="kd-m">{d.field}</code><span>{d.before}</span><ArrowRightIcon size={12} aria-hidden="true" /><span className="text-fg-1">{d.after}</span>

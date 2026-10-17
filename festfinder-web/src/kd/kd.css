@@ -273,6 +273,10 @@
   .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
   .kd-nl:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.05); }
   .kd-nl[aria-current='page'] { color: var(--color-fg-1); }
+  /* A language named in its own script (the footer's ไทย, 日本語): the system's face draws it, so a page in
+     another language fetches no Thai or Japanese font for one word, and ScriptFonts never sees it. */
+  .kd-own-script { min-width: 44px; justify-content: center; }
+  .kd-own-script::before { content: attr(data-name); font-family: system-ui, sans-serif; }
   .kd-nl[aria-current='page']::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 6px; height: 2px; border-radius: 2px; background: var(--color-info); }
   .kd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 28px 16px; }
   /* The artist directory's square cards (web/directory): two to a row on a phone, then as many as fit 220px. */

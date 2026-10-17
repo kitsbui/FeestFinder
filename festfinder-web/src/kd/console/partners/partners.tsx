@@ -10,7 +10,7 @@
 import { useState } from 'react';
 import { CheckIcon, CopyIcon, KeyIcon, PencilSimpleIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { INTL, fill, pick, type Lang } from '../../copy';
 import { money } from '../../format';
 import { KdLink } from '../../link';
 import { useKd } from '../../runtime';
@@ -54,7 +54,7 @@ export function Partners() {
   const items = load.data?.items ?? [];
   const open = items.find((p) => p.id === openId) ?? null;
   const out = load.data?.outbound ?? {};
-  const n = (v: number) => v.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US');
+  const n = (v: number) => v.toLocaleString(INTL[lang]);
   const addButton = <Button tone="acc" onClick={() => setForm({})}><PlusIcon size={16} aria-hidden="true" />{T.add}</Button>;
 
   return (
@@ -270,7 +270,7 @@ function PartnerDetail({ lang, partner, onClose, onEdit, onChanged }: { lang: La
     >
       <KV rows={[
         [T.kPct, `${partner.commissionPct}%`],
-        [T.kClicks, partner.clicks30.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')],
+        [T.kClicks, partner.clicks30.toLocaleString(INTL[lang])],
         [T.kExample, <code key="e" className="kd-num text-xs break-all">{partner.example}</code>],
         [T.kPostback, <code key="p" className="kd-num text-xs break-all">{partner.postbackUrl}</code>],
       ]} />
@@ -308,7 +308,7 @@ function PartnerDetail({ lang, partner, onClose, onEdit, onChanged }: { lang: La
           {top.map((e) => (
             <Row key={e.id} cols={TOP_COLS}>
               <Cell><KdLink className="kd-ell block text-sm text-fg-1 hover:underline" href={'/console/events/' + e.id}>{e.title}</KdLink></Cell>
-              <Cell end className="kd-num text-sm">{e.clicks.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}</Cell>
+              <Cell end className="kd-num text-sm">{e.clicks.toLocaleString(INTL[lang])}</Cell>
             </Row>
           ))}
         </Table>

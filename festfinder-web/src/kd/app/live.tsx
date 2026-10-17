@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BellIcon, BellRingingIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { familyOf, g, type Family } from '../genre';
 import { useKd } from '../runtime';
@@ -86,17 +86,17 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
 
       {d && d.stages.length > 1 ? (
         <div className="kd-hscroll px-4">
-          <Segmented label={T.stages} value={String(stage)} onChange={(v) => setStage(Number(v))} options={d.stages.map((s, i) => ({ value: String(i), label: s.name[lang] }))} />
+          <Segmented label={T.stages} value={String(stage)} onChange={(v) => setStage(Number(v))} options={d.stages.map((s, i) => ({ value: String(i), label: tx(s.name, lang) }))} />
         </div>
       ) : null}
 
       {!d ? <div className="kd-skel mx-4 h-60" aria-hidden="true" /> : (
         <>
-          <section className={cx('relative mx-4 h-60', g(fam))} aria-label={now ? fill(T.onNow, { s: st!.name[lang] }) : T.nothingLive}>
+          <section className={cx('relative mx-4 h-60', g(fam))} aria-label={now ? fill(T.onNow, { s: tx(st!.name, lang) }) : T.nothingLive}>
             <Art title={ev.title} family={fam} cover={ev.coverUrl} className="absolute inset-0" />
             <div className="kd-glass absolute inset-x-2.5 bottom-2.5 flex flex-col gap-2.5 rounded-[10px] p-3.5">
               <div className="flex flex-col gap-1">
-                <span className="kd-m text-fg-2">{lead ? fill(now ? T.onNow : T.upNext, { s: st!.name[lang] }) : T.nothingLive}</span>
+                <span className="kd-m text-fg-2">{lead ? fill(now ? T.onNow : T.upNext, { s: tx(st!.name, lang) }) : T.nothingLive}</span>
                 {lead ? <span className="kd-d3">{lead.artist}</span> : null}
               </div>
               {now ? (
@@ -118,7 +118,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
                 return (
                   <div key={s.setId} className={cx('grid min-h-15 grid-cols-[56px_minmax(0,1fr)_44px] items-center gap-2.5 border-b border-line-1', g(fam))}>
                     <span className="kd-mb kd-num text-[15px]">{s.time}</span>
-                    <span className="flex min-w-0 flex-col gap-0.5"><span className="kd-hs kd-ell">{s.artist}</span><span className="kd-s flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{st!.name[lang]}</span></span>
+                    <span className="flex min-w-0 flex-col gap-0.5"><span className="kd-hs kd-ell">{s.artist}</span><span className="kd-s flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{tx(st!.name, lang)}</span></span>
                     <button type="button" className={cx('kd-ib', on && 'text-info')} aria-pressed={on} aria-label={fill(T.remindMe, { n: s.artist })} onClick={() => remind(s)}>
                       {on ? <BellRingingIcon size={20} weight="fill" aria-hidden="true" /> : <BellIcon size={20} aria-hidden="true" />}
                     </button>
@@ -145,7 +145,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
           {d.friendsOnSite.length ? (
             <section className="flex flex-col px-4" aria-labelledby="live-friends">
               <h2 id="live-friends" className="kd-m pb-1.5">{T.friendsInside}</h2>
-              <span className="kd-s">{d.friendsLine[lang]}</span>
+              <span className="kd-s">{tx(d.friendsLine, lang)}</span>
             </section>
           ) : null}
 
@@ -156,7 +156,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
             </section>
           ) : null}
 
-          <Panel className="mx-4 p-3.5"><span className="kd-s">{offline ? d.offline.offline[lang] : d.offline.online[lang]}</span></Panel>
+          <Panel className="mx-4 p-3.5"><span className="kd-s">{offline ? tx(d.offline.offline, lang) : tx(d.offline.online, lang)}</span></Panel>
         </>
       )}
     </div>

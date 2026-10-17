@@ -1,5 +1,6 @@
 /** What /saved reads from the API (festfinder-backend/src/routes/collections.ts and me.ts). */
 import type { Card } from '../../types';
+import type { Lang } from '@/kd/copy';
 
 /** One of my collections (present() in routes/collections.ts). `has` only when asked about one event. */
 export interface Collection {
@@ -32,7 +33,7 @@ export function byDate<T extends Card>(items: T[]): T[] {
 }
 
 /** /saved's address for a collection (or all saved), in the reader's language. */
-export function savedHref(id: string | null, lang: 'vi' | 'en'): string {
-  const q = [id ? 'c=' + encodeURIComponent(id) : '', lang === 'en' ? 'lang=en' : ''].filter(Boolean).join('&');
+export function savedHref(id: string | null, lang: Lang): string {
+  const q = [id ? 'c=' + encodeURIComponent(id) : '', lang === 'vi' ? '' : 'lang=' + lang].filter(Boolean).join('&');
   return '/saved' + (q ? '?' + q : '');
 }

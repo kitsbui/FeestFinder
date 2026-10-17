@@ -13,6 +13,7 @@ import { WebFooter, WebNav } from '../chrome';
 import { AdBanner, type Ad } from './ad';
 import { ListBrowser, type Meta } from './browser';
 import { LIST } from './copy';
+import { InLang } from '@/kd/ui/in-lang';
 
 export async function ListPage({ lang }: { lang: Lang }) {
   const T = pick(LIST, lang);
@@ -31,13 +32,15 @@ export async function ListPage({ lang }: { lang: Lang }) {
     </section>
   ) : null;
   return (
-    <KdProvider lang={lang}>
-      <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} current="list" />
-        <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} />
-        {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
-        <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
-      </div>
-    </KdProvider>
+    <InLang lang={lang}>
+      <KdProvider lang={lang}>
+        <div className="flex min-h-dvh flex-col" lang={lang}>
+          <WebNav lang={lang} current="list" />
+          <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} />
+          {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
+          <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
+        </div>
+      </KdProvider>
+    </InLang>
   );
 }

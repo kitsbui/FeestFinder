@@ -8,7 +8,7 @@
  */
 import { ViewTransition } from 'react';
 import { KdLink as Link, inLang } from '../link';
-import { fill, pick, type Lang } from '../copy';
+import { fill, pick, type Lang, tx } from '../copy';
 import { cx } from '../cx';
 import { count, money, whenShort } from '../format';
 import { familyOf, g, styleLabel } from '../genre';
@@ -23,8 +23,8 @@ export function cardTag(e: Card, lang: Lang): string | null {
   if (e.status === 'cancelled') return T.cancelled;
   if (e.past) return T.ended;
   if (e.soldOut) return T.soldOut;
-  if (e.festival?.flagship && e.festival.label) return e.festival.label[lang];
-  if (e.badge) return e.badge.label[lang];
+  if (e.festival?.flagship && e.festival.label) return tx(e.festival.label, lang);
+  if (e.badge) return tx(e.badge.label, lang);
   if (e.featured) return T.featured;
   return null;
 }
@@ -66,7 +66,7 @@ export function EventCard({ e, lang, look = 'card', morph = false }: { e: Card; 
         <Link href={href} className="kd-h kd-ev-title">{e.title}</Link>
         <span className="kd-s flex min-w-0 items-center gap-1.5">
           <span className="kd-mk" aria-hidden="true" />
-          <span className="kd-ell">{whenShort(e, lang)}{e.startTime ? ' · ' + e.startTime : ''}{e.venue.name ? ' · ' + e.venue.name : ''} · {e.cityLabel[lang]}</span>
+          <span className="kd-ell">{whenShort(e, lang)}{e.startTime ? ' · ' + e.startTime : ''}{e.venue.name ? ' · ' + e.venue.name : ''} · {tx(e.cityLabel, lang)}</span>
         </span>
         <span className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className={cx('kd-mb kd-num', (e.isFree || e.entryMode === 'free') && 'text-info')}>{priceLine(e, lang)}</span>

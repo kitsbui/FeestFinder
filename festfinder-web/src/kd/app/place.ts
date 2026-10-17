@@ -4,6 +4,7 @@
  * onboarding. Storage can be blocked; every read falls back to nothing.
  */
 import { STYLE_LABEL } from '../genre';
+import { LANGS, type Lang } from '@/kd/copy';
 
 const KEY = { city: 'ff_city', at: 'ff_at', likes: 'ff_likes', lang: 'ff_lang' } as const;
 
@@ -32,8 +33,8 @@ export const place = {
   setLikes: (f: string[]) => write(KEY.likes, JSON.stringify(f)),
   /** Whether this device has been through onboarding (a city or a position). */
   known: () => !!(read(KEY.city) || read(KEY.at)),
-  lang: (): 'vi' | 'en' | null => { const v = read(KEY.lang); return v === 'en' || v === 'vi' ? v : null; },
-  setLang: (l: 'vi' | 'en') => write(KEY.lang, l),
+  lang: (): Lang | null => { const v = read(KEY.lang); return v && (LANGS as readonly string[]).includes(v) ? (v as Lang) : null; },
+  setLang: (l: Lang) => write(KEY.lang, l),
 };
 
 /** Kilometres between two points. */

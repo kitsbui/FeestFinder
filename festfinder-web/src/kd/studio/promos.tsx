@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { TrashIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Pair } from '../copy';
+import { fill, pick, type Pair, tx } from '../copy';
 import { count, money } from '../format';
 import { useKd } from '../runtime';
 import { Button, IconButton } from '../ui/actions';
@@ -67,7 +67,7 @@ export function Promos() {
                       <li key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-line-1 py-3 first:pt-0">
                         <span className="flex min-w-0 items-baseline gap-2.5">
                           <span className="kd-mb kd-num text-fg-1">{p.code}</span>
-                          <span className="kd-s kd-num">{p.value[lang]}</span>
+                          <span className="kd-s kd-num">{tx(p.value, lang)}</span>
                           {p.nearlyUsedUp ? <Status tone="warn">{T.promoNearly}</Status> : null}
                         </span>
                         <Switch checked={p.active} label={fill(T.promoOn, { c: p.code })} onChange={(v) => act(() => FF.patch(`${base}/promos/${p.id}`, { active: v }))} />
@@ -88,7 +88,7 @@ export function Promos() {
               </>
             )}
           </Block>
-          <Block className="kd-side self-start" title={T.guests} aside={guests ? <span className="kd-m kd-num">{guests.countLine[lang]}</span> : null}>
+          <Block className="kd-side self-start" title={T.guests} aside={guests ? <span className="kd-m kd-num">{tx(guests.countLine, lang)}</span> : null}>
             {guests === null ? <div className="kd-skel h-24" aria-hidden="true" /> : (
               <>
                 {guests.items.length ? (

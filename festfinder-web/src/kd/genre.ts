@@ -2,6 +2,7 @@
  * Genre families: Kính đêm's taxonomy, one colour and one shape each (README §3.3). The
  * grouping is GENRE_TONE in src/runtime/ff.ts, where `culture` is `cult` here.
  */
+import { tx, type Lang } from '@/kd/copy';
 export type Family = 'fest' | 'live' | 'edm' | 'cult' | 'free';
 
 const FAMILY: Record<string, Exclude<Family, 'free'>> = {
@@ -51,7 +52,7 @@ export const STYLE_LABEL: Record<string, { vi: string; en: string }> = Object.fr
   ['edm', 'EDM'], ['mainstage', 'Mainstage'],
 ] as const).map(([k, l]) => [k, { vi: l, en: l }]));
 
-export const styleLabel = (key: string, lang: 'vi' | 'en') => STYLE_LABEL[key]?.[lang] ?? key;
+export const styleLabel = (key: string, lang: Lang) => tx(STYLE_LABEL[key], lang) ?? key;
 
 /** The styles worth a chip: those with events under the other filters, most first. */
 export function styleChips(counts: Record<string, number> | null | undefined, max = 8): string[] {

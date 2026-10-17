@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaretDownIcon, FolderSimplePlusIcon, HeartIcon, LockSimpleIcon, PlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { COMMON, fill, pick, type Lang } from '../../copy';
+import { COMMON, fill, pick, type Lang, tx } from '../../copy';
 import { cx } from '../../cx';
 import { monthShort } from '../../format';
 import { familyOf, g } from '../../genre';
@@ -304,7 +304,7 @@ function PastRow({ e, lang, saved, onSave, onCollect, folderLabel }: {
         <Link href={inLang('/e/' + e.slug, lang)} className="kd-hit kd-hs kd-ell hover:underline">{e.title}</Link>
         <span className="kd-s kd-ell flex items-center gap-1.5">
           <Marker family={fam} />
-          {[e.venue.name, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}
+          {[e.venue.name, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}
         </span>
       </span>
       <span className="flex items-center gap-0.5">

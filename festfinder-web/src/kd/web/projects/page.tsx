@@ -17,6 +17,7 @@ import { ProjectsBrowser } from './browser';
 import { PROJ } from './copy';
 import { text, type Project, type ProjectList } from './model';
 import { OfferBox } from './offer';
+import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
 
@@ -28,22 +29,24 @@ export async function ProjectsPage({ lang }: { lang: Lang }) {
     apiOr<{ cities: { slug: string; name: { vi: string; en: string } }[] }>('/meta/discovery', { cities: [] }, { revalidate: 300 }),
   ]);
   return (
-    <KdProvider lang={lang}>
-      <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} current="projects" />
-        <main className="kd-wrap flex flex-col gap-5 py-8">
-          <div className="kd-sec items-end">
-            <h1 className="kd-d2">{T.title}</h1>
-            <div className="flex flex-wrap gap-2">
-              <LinkButton href={inLang('/p/mine', lang)}>{T.mine}</LinkButton>
-              <LinkButton tone="acc" href={inLang('/p/new', lang)}>{T.start}</LinkButton>
+    <InLang lang={lang}>
+      <KdProvider lang={lang}>
+        <div className="flex min-h-dvh flex-col" lang={lang}>
+          <WebNav lang={lang} current="projects" />
+          <main className="kd-wrap flex flex-col gap-5 py-8">
+            <div className="kd-sec items-end">
+              <h1 className="kd-d2">{T.title}</h1>
+              <div className="flex flex-wrap gap-2">
+                <LinkButton href={inLang('/p/mine', lang)}>{T.mine}</LinkButton>
+                <LinkButton tone="acc" href={inLang('/p/new', lang)}>{T.start}</LinkButton>
+              </div>
             </div>
-          </div>
-          <ProjectsBrowser lang={lang} first={first} cities={meta.cities.map((c) => ({ slug: c.slug, name: c.name }))} />
-        </main>
-        <div className="mt-auto"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/p?lang=en', label: W.english } : { href: '/p', label: W.vietnamese }} /></div>
-      </div>
-    </KdProvider>
+            <ProjectsBrowser lang={lang} first={first} cities={meta.cities.map((c) => ({ slug: c.slug, name: c.name }))} />
+          </main>
+          <div className="mt-auto"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/p?lang=en', label: W.english } : { href: '/p', label: W.vietnamese }} /></div>
+        </div>
+      </KdProvider>
+    </InLang>
   );
 }
 
@@ -51,7 +54,7 @@ export async function ProjectsPage({ lang }: { lang: Lang }) {
 export async function loadProject(slug: string, lang: Lang) {
   const [p, seo] = await Promise.all([
     api<Project>(`/projects/${enc(slug)}`, { lang }),
-    api<ProjectSeo>(`/seo/projects/${enc(slug)}${lang === 'en' ? '?lang=en' : ''}`),
+    api<ProjectSeo>(`/seo/projects/${enc(slug)}${lang === 'vi' ? '' : '?lang=en'}`),
   ]);
   return p && seo ? { p, seo } : null;
 }
@@ -63,7 +66,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
   const onBoard = Object.values(p.onBoard).reduce((a, b) => a + b, 0);
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? W.english : W.vietnamese };
   return (
-    <>
+    <InLang lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
@@ -151,6 +154,6 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
           <div className="mt-auto"><WebFooter lang={lang} otherLang={otherLang} /></div>
         </div>
       </KdProvider>
-    </>
+    </InLang>
   );
 }

@@ -8,7 +8,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircleIcon, CircleIcon, UserPlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { useKd } from '../../runtime';
 import { Button } from '../../ui/actions';
@@ -44,7 +44,7 @@ export function Organizers() {
   const current = params.get('id');
   const items = load.data?.items ?? [];
   const types: { value: string; label: Pair }[] = opts?.organizerTypes ?? [];
-  const typeLabel = (v: string) => types.find((t) => t.value === v)?.label[lang] ?? v;
+  const typeLabel = (v: string) => tx(types.find((t) => t.value === v)?.label, lang) ?? v;
 
   const rows = useMemo(() => {
     const needle = fold(q.trim());
@@ -57,7 +57,7 @@ export function Organizers() {
   }, [items, state, type, params.get('standing'), q]);
   const n = (s: OrgState) => items.filter((o) => o.state === s).length;
   const toggleState = (s: OrgState) => setQuery({ state: state === s ? null : s });
-  const joined = (iso: string) => new Date(iso).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', { month: '2-digit', year: 'numeric' });
+  const joined = (iso: string) => new Date(iso).toLocaleDateString((lang === 'en' ? 'en-GB' : INTL[lang]), { month: '2-digit', year: 'numeric' });
 
   return (
     <>
@@ -75,7 +75,7 @@ export function Organizers() {
             label={T.type}
             value={type}
             onChange={(v) => setQuery({ type: v })}
-            options={types.map((t) => ({ value: t.value, label: t.label[lang], aside: String(items.filter((o) => o.type === t.value).length) }))}
+            options={types.map((t) => ({ value: t.value, label: tx(t.label, lang), aside: String(items.filter((o) => o.type === t.value).length) }))}
           />
           <MultiChoice
             label={T.standing}
@@ -183,7 +183,7 @@ function Onboard({ lang, onClose, onDone }: { lang: Lang; onClose: () => void; o
         <Field label={T.brandName} htmlFor="ob-name"><Input id="ob-name" required minLength={2} maxLength={80} autoFocus value={f.name} onChange={set('name')} placeholder={T.namePh} /></Field>
         <Field label={T.orgType} htmlFor="ob-type">
           <Select id="ob-type" value={f.type} onChange={set('type')}>
-            {types.length ? types.map((t) => <option key={t.value} value={t.value}>{t.label[lang]}</option>) : <option value={f.type}>{f.type}</option>}
+            {types.length ? types.map((t) => <option key={t.value} value={t.value}>{tx(t.label, lang)}</option>) : <option value={f.type}>{f.type}</option>}
           </Select>
         </Field>
         <Field label={T.ownerEmail} htmlFor="ob-email"><Input id="ob-email" type="email" required value={f.ownerEmail} onChange={set('ownerEmail')} placeholder="booking@brand.vn" /></Field>

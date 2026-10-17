@@ -10,7 +10,7 @@ import {
 } from '@phosphor-icons/react/ssr';
 import { useRouter } from 'next/navigation';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { count, money } from '../../format';
 import { KdLink } from '../../link';
 import { useKd } from '../../runtime';
@@ -52,7 +52,7 @@ export function EventDetail({ id }: { id: string }) {
             <PageHead
               eyebrow={<>
                 <KdLink href="/console/events" className="kd-m kd-hit inline-flex items-center gap-1 hover:text-fg-1"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>
-                <Pill tone={statusTone(ev.status)}>{ev.statusLabel[lang]}</Pill>
+                <Pill tone={statusTone(ev.status)}>{tx(ev.statusLabel, lang)}</Pill>
                 {ev.featured ? <Pill tone="live">{T.featured}</Pill> : null}
                 {ev.heldForReports ? <Pill tone="bad">{T.held}</Pill> : null}
               </>}
@@ -108,7 +108,7 @@ export function EventDetail({ id }: { id: string }) {
                       <Panel role="status" className="flex items-center gap-2 p-4">
                         <ArrowArcLeftIcon size={18} className="text-bad" aria-hidden="true" />
                         <span className="kd-hs">{T.sentBack}</span>
-                        {ev.decisions[0]?.reason ? <span className="kd-s">· {ev.decisions[0].reason[lang]}</span> : null}
+                        {ev.decisions[0]?.reason ? <span className="kd-s">· {tx(ev.decisions[0].reason, lang)}</span> : null}
                       </Panel>
                     ) : null}
                     primary={['draft', 'rejected', 'in_review'].includes(ev.status) ? { label: ev.status === 'in_review' ? T.approvePublish : T.publishNow, run: publish } : null}
@@ -137,7 +137,7 @@ function History({ ev, lang }: { ev: Detail; lang: Lang }) {
               <li key={d.id} className="flex flex-col gap-1 border-t border-line-1 py-3 first:border-t-0">
                 <span className="text-sm text-fg-1">
                   <span className={`kd-st ${ok(d.decision) ? 'kd-ok' : 'kd-bad'}`}><strong>{d.decision}</strong></span>
-                  {d.reason ? ` · ${d.reason[lang]}` : ''} — {d.by ?? 'FeestFinder'}
+                  {d.reason ? ` · ${tx(d.reason, lang)}` : ''} — {d.by ?? 'FeestFinder'}
                 </span>
                 {d.message ? <span className="kd-s whitespace-pre-wrap">{d.message}</span> : null}
                 <span className="kd-m">{stamp(d.at, lang)}</span>
@@ -153,7 +153,7 @@ function History({ ev, lang }: { ev: Detail; lang: Lang }) {
           <ul className="flex flex-col">
             {ev.history.map((a) => (
               <li key={a.seq} className="flex flex-col gap-1 border-t border-line-1 py-3 first:border-t-0">
-                <span className="text-sm text-fg-1"><strong>{a.actor}</strong> · {a.label[lang]}</span>
+                <span className="text-sm text-fg-1"><strong>{a.actor}</strong> · {tx(a.label, lang)}</span>
                 {a.diff.length ? (
                   <ul className="flex flex-col gap-0.5">
                     {a.diff.slice(0, 6).map((d, i) => (

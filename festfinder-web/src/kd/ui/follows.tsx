@@ -47,7 +47,7 @@ const SHOWN = 12;
 /** The rows a person follows, as the API listed them. */
 function followingRows(f: Follows, lang: Lang): Row[] {
   const T = pick(COPY, lang);
-  const en = lang === 'en' ? '?lang=en' : '';
+  const en = lang === 'vi' ? '' : '?lang=' + lang;
   const nextLine = (kind: string, n: { startsOn: string } | null) => (n ? `${kind} · ${fill(T.next, { d: dayMonth(n.startsOn, lang) })}` : kind);
   const profiles = f.profiles ?? [];
   const names = new Set(profiles.map((p) => p.name.toLowerCase()));

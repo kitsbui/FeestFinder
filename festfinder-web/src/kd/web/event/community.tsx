@@ -9,7 +9,7 @@ import {
   ArrowBendUpLeftIcon, CameraIcon, CheckCircleIcon, FireIcon, FlagIcon, LockSimpleIcon, PushPinIcon, ThumbsUpIcon, TrashIcon, EyeSlashIcon, XIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count } from '../../format';
 import { PhoneSheet } from '../../phone';
@@ -66,10 +66,10 @@ export function Hype({ lang }: { lang: Lang }) {
       {H.next ? (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="kd-s text-fg-2">{H.next.reward[lang]}</span>
+            <span className="kd-s text-fg-2">{tx(H.next.reward, lang)}</span>
             <span className="kd-m kd-num">{fill(T.hypeLeft, { n: count(H.next.left, lang) })}</span>
           </div>
-          <BarTrack value={Math.round(H.next.progress * 100)} max={100} label={H.next.reward[lang]} />
+          <BarTrack value={Math.round(H.next.progress * 100)} max={100} label={tx(H.next.reward, lang)} />
         </div>
       ) : null}
       {H.goals.length ? (
@@ -78,7 +78,7 @@ export function Hype({ lang }: { lang: Lang }) {
             <li key={x.threshold} className="flex items-center gap-2.5 border-t border-line-1 py-2 kd-s">
               {x.reached ? <CheckCircleIcon size={16} weight="fill" className="text-ok" aria-hidden="true" /> : <LockSimpleIcon size={16} className="text-fg-3" aria-hidden="true" />}
               <span className="kd-mb kd-num w-16">{count(x.threshold, lang)}</span>
-              <span className={x.reached ? 'text-fg-2' : undefined}>{x.reward[lang]}</span>
+              <span className={x.reached ? 'text-fg-2' : undefined}>{tx(x.reward, lang)}</span>
             </li>
           ))}
         </ul>
@@ -153,7 +153,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
         <div className="kd-hscroll" role="group" aria-label={T.discussion}>
           {kinds.map((k) => (
             <Chip key={k.kind} on={k.kind === kind} count={k.count || null} onClick={() => { setKind(k.kind); setReplyTo(null); void load(k.kind, sort); }}>
-              {k.label[lang]}
+              {tx(k.label, lang)}
             </Chip>
           ))}
         </div>
@@ -170,7 +170,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
       {d?.rules ? (
         <div className="flex flex-col gap-1.5">
           <button type="button" className="kd-more self-start" aria-expanded={rules} onClick={() => setRules((r) => !r)}>{T.discRules}</button>
-          {rules ? <p className="kd-s">{d.rules[lang]}</p> : null}
+          {rules ? <p className="kd-s">{tx(d.rules, lang)}</p> : null}
         </div>
       ) : null}
       {d ? (
@@ -215,7 +215,7 @@ function Composer({ lang, kind, onPosted, write, parentId, onDone }: {
   const [heard, setHeard] = useState('');
   const photoOk = !parentId && (kind === 'memory' || kind === 'talk');
   const sets = !parentId && kind === 'trackid' && ev.timetable
-    ? ev.timetable.days.flatMap((d) => d.stages.flatMap((st) => st.sets.map((s) => ({ id: s.id, label: s.artist + ' · ' + st.name[lang] }))))
+    ? ev.timetable.days.flatMap((d) => d.stages.flatMap((st) => st.sets.map((s) => ({ id: s.id, label: s.artist + ' · ' + tx(st.name, lang) }))))
     : [];
   const send = async (e: FormEvent) => {
     e.preventDefault();
@@ -314,7 +314,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="kd-hs">{p.removed ? T.discRemoved : p.author?.name || T.discMember}</span>
-          {p.author?.badges.map((b) => <Tag key={b.key} tone={b.key === 'team' || b.key === 'ff' ? 'bone' : 'line'}>{b.label[lang]}</Tag>)}
+          {p.author?.badges.map((b) => <Tag key={b.key} tone={b.key === 'team' || b.key === 'ff' ? 'bone' : 'line'}>{tx(b.label, lang)}</Tag>)}
           {p.official ? <Tag tone="line">{T.discOfficial}</Tag> : null}
           {p.pinned ? <Tag>{T.discPinned}</Tag> : null}
           {p.hidden ? <Tag tone="line">{T.discHidden}</Tag> : null}

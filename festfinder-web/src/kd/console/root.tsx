@@ -12,7 +12,7 @@ import {
   ArrowSquareOutIcon, CalendarDotsIcon, ChatTextIcon, FlagIcon, GaugeIcon, HandWavingIcon, HandshakeIcon, MagnifyingGlassIcon, SlidersHorizontalIcon, TrayIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { KdProvider, useKd } from '../runtime';
 import { place } from '../app/place';
 import { buttonClass } from '../ui/actions';
@@ -189,7 +189,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
                 )}
               >
                 <MenuHeader><span className="kd-m">{T.viewAs}</span></MenuHeader>
-                {(options ?? []).map((o) => <MenuItem key={o.id} aside={o.role[lang]} onSelect={() => startViewAs(o)}>{o.name}</MenuItem>)}
+                {(options ?? []).map((o) => <MenuItem key={o.id} aside={tx(o.role, lang)} onSelect={() => startViewAs(o)}>{o.name}</MenuItem>)}
                 <MenuSeparator />
                 <MenuItem onSelect={async () => { await kd.signOut(); location.assign('/console'); }}>{T.signOut}</MenuItem>
               </Menu>

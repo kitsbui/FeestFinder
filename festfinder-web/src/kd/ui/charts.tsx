@@ -6,7 +6,7 @@
  */
 import { useId, useState, type ReactNode } from 'react';
 import { CHART_ORDER, FAMILY_LABEL, type Family } from '../genre';
-import type { Lang } from '../copy';
+import { type Lang, tx } from '../copy';
 
 export interface Point { label: string; value: number }
 
@@ -96,7 +96,7 @@ export function StackedBars({ weeks, height = 180, lang, label, legend = true }:
                 {CHART_ORDER.map((f) => (
                   <span key={f} className={`kd-g-${f} flex items-center gap-2 kd-s text-fg-2`}>
                     <span className="kd-mk" aria-hidden="true" />
-                    {FAMILY_LABEL[f][lang]}
+                    {tx(FAMILY_LABEL[f], lang)}
                     <span className="kd-mb kd-num ml-auto">{w.values[f] ?? 0}</span>
                   </span>
                 ))}
@@ -110,7 +110,7 @@ export function StackedBars({ weeks, height = 180, lang, label, legend = true }:
       </div>
       {legend ? <Legend lang={lang} /> : null}
       <table className="sr-only">
-        <thead><tr><th scope="col" />{CHART_ORDER.map((f) => <th scope="col" key={f}>{FAMILY_LABEL[f][lang]}</th>)}</tr></thead>
+        <thead><tr><th scope="col" />{CHART_ORDER.map((f) => <th scope="col" key={f}>{tx(FAMILY_LABEL[f], lang)}</th>)}</tr></thead>
         <tbody>{weeks.map((w) => <tr key={w.label}><th scope="row">{w.label}</th>{CHART_ORDER.map((f) => <td key={f}>{w.values[f] ?? 0}</td>)}</tr>)}</tbody>
       </table>
     </figure>
@@ -123,7 +123,7 @@ export function Legend({ lang, families = CHART_ORDER }: { lang: Lang; families?
       {families.map((f) => (
         <span key={f} className={`kd-g-${f} inline-flex items-center gap-2 kd-s`}>
           <span className="kd-mk" aria-hidden="true" />
-          {FAMILY_LABEL[f][lang]}
+          {tx(FAMILY_LABEL[f], lang)}
         </span>
       ))}
     </div>

@@ -9,7 +9,7 @@ import {
   PaperPlaneTiltIcon, PlusIcon, ShareNetworkIcon, XLogoIcon, ThreadsLogoIcon, ChatCircleIcon, DotsThreeIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { cx } from '../../cx';
 import { useKd, useSaved } from '../../runtime';
 import { Button, IconButton, buttonClass } from '../../ui/actions';
@@ -313,7 +313,7 @@ export function ReportLink({ lang }: { lang: Lang }) {
               {Object.entries(REPORT_CODES).map(([k, l]) => (
                 <label key={k} className="kd-lrow min-h-11 cursor-pointer">
                   <input type="radio" name="code" value={k} checked={code === k} onChange={() => setCode(k)} className="kd-check" />
-                  <span className="kd-t text-fg-1">{l[lang]}</span>
+                  <span className="kd-t text-fg-1">{tx(l, lang)}</span>
                 </label>
               ))}
             </fieldset>

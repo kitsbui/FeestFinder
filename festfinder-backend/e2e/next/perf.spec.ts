@@ -20,7 +20,7 @@ type Who = 'visitor' | 'fan' | 'organizer' | 'admin';
 const CLS_MAX = 0.05;
 /** KB of gzipped boot JS per screen (2026-10-18: React and Next are about 127 of them). */
 const SCREENS: [Who, string, number][] = [
-  ['visitor', '/', 198], ['visitor', '/e/ravo', 227], ['visitor', '/a', 204], ['visitor', '/a/slimv', 198],
+  ['visitor', '/', 198], ['visitor', '/e/ravo', 222], ['visitor', '/a', 204], ['visitor', '/a/slimv', 198],
   ['visitor', '/o/ravoent', 197], ['visitor', '/p', 183], ['visitor', '/?view=map', 198], ['visitor', '/about', 176],
   ['fan', '/profile', 199], ['fan', '/app/tickets', 231], ['fan', '/saved', 199],
   ['organizer', '/studio', 202], ['organizer', '/studio/new', 216], ['admin', '/console', 203],

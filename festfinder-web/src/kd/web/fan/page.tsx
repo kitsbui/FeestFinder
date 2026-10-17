@@ -64,7 +64,7 @@ function Mine({ lang }: { lang: Lang }) {
   const coming = (clockReady ? orders ?? [] : []).filter((o) => o.status === 'paid' && o.tickets.length && !(o.event.endsAt && Date.parse(o.event.endsAt) < now));
   const u = me?.user;
   const year = new Date(FF.now()).getFullYear();
-  const en = lang === 'en' ? '?lang=en' : '';
+  const en = lang === 'vi' ? '' : '?lang=' + lang;
 
   return (
     <div className="kd-wrap pb-16 pt-8">

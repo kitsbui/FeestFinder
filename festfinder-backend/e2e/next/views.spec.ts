@@ -129,7 +129,8 @@ test('an event page: hear the lineup first, the player only on play; friends goi
   const listen = page.getByRole('region', { name: 'Nghe trước' });
   await expect(listen).toBeVisible();
   await expect(listen.locator('iframe'), 'nothing from the service before play').toHaveCount(0);
-  await listen.getByRole('button', { name: new RegExp(`của ${artist.name}, nghe$`) }).first().click();
+  // Named by what it shows (the set, the artist, the service), then "nghe" for a screen reader.
+  await listen.getByRole('button', { name: new RegExp(`${artist.name} · SoundCloud.* nghe$`) }).first().click();
   await expect(listen.locator('iframe').first()).toHaveAttribute('src', /^https:\/\/w\.soundcloud\.com\/player\/.*auto_play=true/);
   const mine = await (await page.request.get('/events/ravo')).json();
   const going = mine.friends?.going?.length ?? 0;

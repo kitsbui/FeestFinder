@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { HeadphonesIcon, MicrophoneStageIcon, StorefrontIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { COMMON, fill, pick, type Lang } from './copy';
+import { COMMON, fill, pick, type Lang, tx } from './copy';
 import { CRAFT, WORKSPACE } from './craft';
 import { useKd } from './runtime';
 import { Button, Chip } from './ui/actions';
@@ -185,7 +185,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
             <fieldset className="flex flex-col gap-2">
               <legend className="kd-flabel mb-2">{t.city}</legend>
               <div className="flex flex-wrap gap-2">
-                {cities.map((c) => <Chip key={c.slug} on={city === c.slug} onClick={() => setCity(city === c.slug ? '' : c.slug)}>{c.name[lang]}</Chip>)}
+                {cities.map((c) => <Chip key={c.slug} on={city === c.slug} onClick={() => setCity(city === c.slug ? '' : c.slug)}>{tx(c.name, lang)}</Chip>)}
               </div>
             </fieldset>
           ) : null}

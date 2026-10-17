@@ -64,18 +64,28 @@ const config: NextConfig = {
         { source: '/a.md', destination: `${API}/a.md` },
         { source: '/p/:file([^/]+\\.md)', destination: `${API}/p/:file` },
         { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
-        // The home page in English is /?lang=en: a cached page of its own.
+        // The home page in English is /?lang=en: a cached page of its own; in Thai, Japanese and
+        // Indonesian /?lang=th|ja|id (design v2 phase 10), each its own too.
         { source: '/', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/en' },
+        { source: '/', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/:lang' },
         // An event or organiser page in English is /e/<slug>?lang=en: a cached page of its own.
         { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/e/:slug/en' },
+        { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/e/:slug/:lang' },
         { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/o/:slug/en' },
+        { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/o/:slug/:lang' },
         { source: '/c/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/c/:slug/en' },
+        { source: '/c/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/c/:slug/:lang' },
         { source: '/a/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:slug/en' },
+        { source: '/a/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/a/:slug/:lang' },
         { source: '/a', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/en' },
+        { source: '/a', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/a/:lang' },
         // The slug first: a rewritten path is matched again by the rules after it (/p → /p/en must not become /p/en/en).
         { source: '/p/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/:slug/en' },
+        { source: '/p/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/p/:slug/:lang' },
         { source: '/p', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/en' },
+        { source: '/p', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/p/:lang' },
         { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:by/:slug/en' },
+        { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/a/:by/:slug/:lang' },
       ],
       afterFiles: [],
       // Anything that is not one of this app's pages is the API: same origin for the
@@ -119,6 +129,17 @@ const config: NextConfig = {
       { source: '/p/:slug/en', destination: '/p/:slug?lang=en', permanent: true },
       { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
+      // The same for Thai, Japanese and Indonesian (design v2 phase 10).
+      { source: '/:lang(th|ja|id)', destination: '/?lang=:lang', permanent: true },
+      { source: '/list/:lang(th|ja|id)', destination: '/?lang=:lang', permanent: true },
+      { source: '/e/:slug/:lang(th|ja|id)', destination: '/e/:slug?lang=:lang', permanent: true },
+      { source: '/o/:slug/:lang(th|ja|id)', destination: '/o/:slug?lang=:lang', permanent: true },
+      { source: '/c/:slug/:lang(th|ja|id)', destination: '/c/:slug?lang=:lang', permanent: true },
+      { source: '/a/:lang(th|ja|id)', destination: '/a?lang=:lang', permanent: true },
+      { source: '/p/:lang(th|ja|id)', destination: '/p?lang=:lang', permanent: true },
+      { source: '/p/:slug/:lang(th|ja|id)', destination: '/p/:slug?lang=:lang', permanent: true },
+      { source: '/a/:slug/:lang(th|ja|id)', destination: '/a/:slug?lang=:lang', permanent: true },
+      { source: '/a/:by(style|city)/:slug/:lang(th|ja|id)', destination: '/a/:by/:slug?lang=:lang', permanent: true },
       // The map is a view of the list.
       { source: '/map', destination: '/?view=map', permanent: false },
       { source: '/app/map', destination: '/?view=map', permanent: true },

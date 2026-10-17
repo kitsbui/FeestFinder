@@ -10,7 +10,7 @@
 import { useState } from 'react';
 import { CheckIcon, CopyIcon, DownloadSimpleIcon, PlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { INTL, fill, pick, type Lang } from '../../copy';
 import { dayMonth, money } from '../../format';
 import { useKd } from '../../runtime';
 import { Button, buttonClass } from '../../ui/actions';
@@ -38,7 +38,7 @@ interface Summary {
 interface Payout { id: string; partner: { id: string; name: string }; from: string; to: string; currency: string; conversions: number; commission: number; status: 'open' | 'paid'; paidAt: string | null }
 
 const KINDS: Kind[] = ['artist', 'product', 'brand', 'campaign', 'partner'];
-const nf = (n: number, lang: Lang) => n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US');
+const nf = (n: number, lang: Lang) => n.toLocaleString(INTL[lang]);
 
 export function Affiliate() {
   const { lang } = useConsole();

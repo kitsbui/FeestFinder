@@ -15,7 +15,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type
 import { CalendarBlankIcon, CaretRightIcon, HeartIcon, MagnifyingGlassIcon, MapTrifoldIcon, UserIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { LANG_NAME, LANGS, fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { useKd } from '../runtime';
 import { buttonClass, IconButton } from '../ui/actions';
@@ -144,16 +144,21 @@ function NavSearch({ lang, field }: { lang: Lang; field: RefObject<HTMLInputElem
   );
 }
 
-/** VI · EN: the same page in the other language, the current one lit. */
+/**
+ * VI · EN: the same page in the other language, the current one lit. On a page in Thai, Japanese or
+ * Indonesian (design v2 phase 10) its code comes first, lit, and the link leads to Vietnamese; the
+ * footer lists every language.
+ */
 function LangSwitch({ lang, className }: { lang: Lang; className?: string }) {
   const other = useOtherLang(lang);
   const next: Lang = lang === 'vi' ? 'en' : 'vi';
+  const own = lang === 'vi' || lang === 'en' ? null : lang.toUpperCase();
   return (
     <a className={cx('kd-nl', className)} href={other} hrefLang={next} onClick={() => { FF.track('nav_click', { kind: 'lang', surface: 'nav' }); rememberLang(next); }}>
-      <span className={lang === 'vi' ? 'text-fg-1' : 'text-fg-3'}>VI</span>
+      <span className={lang === 'vi' || own ? 'text-fg-1' : 'text-fg-3'}>{own ?? 'VI'}</span>
       <span aria-hidden="true" className="text-fg-3">·</span>
-      <span className={lang === 'en' ? 'text-fg-1' : 'text-fg-3'}>EN</span>
-      <span className="sr-only">{lang === 'vi' ? ', English' : ', Tiếng Việt'}</span>
+      <span className={lang === 'en' ? 'text-fg-1' : 'text-fg-3'}>{own ? 'VI' : 'EN'}</span>
+      <span className="sr-only">{next === 'en' ? ', English' : ', Tiếng Việt'}</span>
     </a>
   );
 }
@@ -161,7 +166,7 @@ function LangSwitch({ lang, className }: { lang: Lang; className?: string }) {
 /** The phone's tab bar: below 900px, on every public page. */
 function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection; onSearch: () => void }) {
   const T = pick(WEB, lang);
-  const here = useHere();
+  const here = useHere(lang);
   const onMap = current === 'list' && /[?&]view=map\b/.test(here);
   const tab = current === 'list' ? (onMap ? 'map' : 'events') : current === 'saved' ? 'saved' : current === 'me' ? 'me' : '';
   const i = (Icon: typeof UserIcon) => <Icon size={22} aria-hidden="true" />;
@@ -183,15 +188,27 @@ function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection;
 }
 
 /** The one-line footer: the logo, a few links, the other language, the company line. */
+/** The languages whose names are in a script of their own, which the page's font files do not carry. */
+const OWN_SCRIPT = new Set<Lang>(['th', 'ja']);
+
 export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href: string; label: string } | null }) {
   const T = pick(WEB, lang);
   // The language picked before on this device: a page in Vietnamese by default moves to its
   // English address. An address that says ?lang=en is never moved back.
+  // Every language of this page (design v2 phase 10), each named in itself.
+  const here = useHere(lang);
+  const at = (l: Lang) => {
+    const u = new URL(here, 'http://x');
+    if (l === 'vi') u.searchParams.delete('lang');
+    else u.searchParams.set('lang', l);
+    return u.pathname + u.search;
+  };
   useEffect(() => {
     if (!otherLang || lang !== 'vi') return;
     let saved: string | null = null;
     try { saved = localStorage.getItem(LANG_KEY); } catch { /* storage blocked */ }
-    if (saved === 'en') location.replace(otherLang.href);
+    if (saved && saved !== 'vi' && (LANGS as readonly string[]).includes(saved)) location.replace(saved === 'en' ? otherLang.href : at(saved as Lang));
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, for the address the page opened at
   }, [lang, otherLang]);
   const foot = (kind: string) => track(kind, 'footer');
   return (
@@ -206,7 +223,12 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
           {/* Opens the feedback sheet (kd/feedback/widget.tsx). */}
           <button type="button" className="kd-nl" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{T.feedback}</button>
           <a className="kd-nl" href="mailto:hello@feestfinder.com">hello@feestfinder.com</a>
-          {otherLang ? <a className="kd-nl" href={otherLang.href} hrefLang={lang === 'vi' ? 'en' : 'vi'} onClick={() => rememberLang(lang === 'vi' ? 'en' : 'vi')}>{otherLang.label}</a> : null}
+          {otherLang ? LANGS.filter((l) => l !== lang).map((l) => (
+            OWN_SCRIPT.has(l)
+              // Thai and Japanese drawn by kd.css from data-name in the system's face: a page in another language fetches no font for one word.
+              ? <a key={l} className="kd-nl kd-own-script" href={at(l)} hrefLang={l} lang={l} aria-label={LANG_NAME[l]} data-name={LANG_NAME[l]} onClick={() => rememberLang(l)} />
+              : <a key={l} className="kd-nl" href={at(l)} hrefLang={l} lang={l} onClick={() => rememberLang(l)}>{LANG_NAME[l]}</a>
+          )) : null}
         </nav>
         <span className="kd-m">{fill(T.company, { y: new Date().getFullYear() })}</span>
       </div>

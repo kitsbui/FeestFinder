@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Pair } from '../copy';
+import { fill, pick, type Pair, tx } from '../copy';
 import { count, dayMonth } from '../format';
 import { useKd } from '../runtime';
 import { Button, Chip } from '../ui/actions';
@@ -135,7 +135,7 @@ export function Announce() {
                     <span className="kd-hs">{a.subject}</span>
                     <span className="kd-s">{a.body}</span>
                     <span className="kd-m kd-num">
-                      {[a.audienceLabel[lang], a.channels.map((c) => chLabel[c]).join(' + '), a.reach != null ? fill(T.annPeople, { n: count(a.reach, lang) }) : null, a.openedPct != null ? fill(T.annOpened, { p: a.openedPct }) : null].filter(Boolean).join(' · ')}
+                      {[tx(a.audienceLabel, lang), a.channels.map((c) => chLabel[c]).join(' + '), a.reach != null ? fill(T.annPeople, { n: count(a.reach, lang) }) : null, a.openedPct != null ? fill(T.annOpened, { p: a.openedPct }) : null].filter(Boolean).join(' · ')}
                     </span>
                     {a.status === 'scheduled' ? <Button tone="ghost" size="sm" className="-ml-3 self-start" onClick={() => cancel(a.id)}>{T.annCancel}</Button> : null}
                   </li>

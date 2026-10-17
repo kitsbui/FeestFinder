@@ -3,7 +3,7 @@
  * src/services/projects.ts presentProject): an idea for a night, what it is looking for, and
  * who offered. FeestFinder connects; it never handles the money.
  */
-import type { Dict, Pair } from '../../copy';
+import { type Dict, type Lang, type Pair, tx } from '../../copy';
 
 export interface Keyed { key: string; label: Pair }
 export interface Package { id: string; title: string; amount: number; perks: string; slots: number | null }
@@ -62,4 +62,4 @@ export const OFFER_LABEL = {
   partner: { en: 'Run it together', vi: 'Cùng tổ chức' },
 } satisfies Dict;
 
-export const text = (v: Pair | null | undefined, lang: 'vi' | 'en') => (v ? v[lang] || v.vi || v.en || '' : '');
+export const text = (v: Pair | null | undefined, lang: Lang) => (v ? tx(v, lang) || v.vi || v.en || '' : '');

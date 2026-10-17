@@ -39,7 +39,6 @@ export function ListenFirst({ lang }: { lang: Lang }) {
               <button
                 type="button"
                 className="group flex min-w-0 items-center gap-3.5 text-left"
-                aria-label={fill(T.listenTo, { t: m.title, a: m.artist.name })}
                 onClick={() => { setPlaying(m.id); FF.track('mix_play', { kind: m.provider, surface: 'event' }); }}
               >
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-tag">
@@ -50,6 +49,7 @@ export function ListenFirst({ lang }: { lang: Lang }) {
                   <span className="kd-h kd-ell">{m.title}</span>
                   <span className="kd-s kd-ell">{[m.artist.name, m.providerLabel, m.durationS ? clock(m.durationS) : null].filter(Boolean).join(' · ')}</span>
                 </span>
+                <span className="sr-only">{T.listenPlay}</span>
               </button>
             )}
             {playing === m.id ? <Link href={inLang('/a/' + m.artist.slug + '#mix', lang)} className="kd-s kd-hit self-start hover:text-fg-1">{fill(T.moreFrom, { a: m.artist.name })}</Link> : null}

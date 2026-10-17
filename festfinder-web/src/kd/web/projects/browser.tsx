@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../../copy';
+import { pick, type Lang, type Pair, tx } from '../../copy';
 import { inLang } from '../../link';
 import { cx } from '../../cx';
 import { Button, LinkButton } from '../../ui/actions';
@@ -53,7 +53,7 @@ export function ProjectsBrowser({ lang, first, cities }: { lang: Lang; first: Pr
     const q = new URLSearchParams();
     if (next.seeking) q.set('seeking', next.seeking);
     if (next.city) q.set('city', next.city);
-    if (lang === 'en') q.set('lang', 'en');
+    if (lang !== 'vi') q.set('lang', lang);
     history.replaceState(history.state, '', '/p' + (q.size ? '?' + q : ''));
     void load(next);
   };
@@ -72,8 +72,8 @@ export function ProjectsBrowser({ lang, first, cities }: { lang: Lang; first: Pr
           label={T.city}
           value={f.city || 'all'}
           onChange={(v) => set({ city: v === 'all' ? '' : v })}
-          options={[{ value: 'all', label: T.allCities }, ...cities.map((c) => ({ value: c.slug, label: c.name[lang] }))]}
-          display={f.city ? cities.find((c) => c.slug === f.city)?.name[lang] : T.allCities}
+          options={[{ value: 'all', label: T.allCities }, ...cities.map((c) => ({ value: c.slug, label: tx(c.name, lang) }))]}
+          display={f.city ? tx(cities.find((c) => c.slug === f.city)?.name, lang) : T.allCities}
         />
       </div>
       {list.items.length ? (

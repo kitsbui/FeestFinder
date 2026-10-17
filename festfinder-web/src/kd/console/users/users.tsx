@@ -7,7 +7,7 @@
  * the API refuses); the ADMIN_EMAIL allowlist still decides on every boot who keeps it.
  */
 import { useCallback } from 'react';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { money } from '../../format';
 import { KdLink } from '../../link';
 import { Avatar, Stat, StatRow } from '../../ui/parts';
@@ -31,7 +31,7 @@ interface UserDetail extends Omit<UserRow, 'tickets' | 'saves'> {
 
 /** Vietnamese numbers read the way people write them (0901 234 567); others stay as stored. */
 const phone = (p: string | null) => (p ? p.replace(/^\+84/, '0').replace(/^(0\d{3})(\d{3})(\d+)$/, '$1 $2 $3') : null);
-const monthYear = (iso: string, lang: Lang) => new Date(iso).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB', { month: '2-digit', year: 'numeric' });
+const monthYear = (iso: string, lang: Lang) => new Date(iso).toLocaleDateString((lang === 'en' ? 'en-GB' : INTL[lang]), { month: '2-digit', year: 'numeric' });
 const COLS = 'minmax(240px,1.6fr) minmax(150px,1fr) 120px 120px 110px 120px 90px';
 
 export function Users() {
@@ -165,7 +165,7 @@ function UserDrawer({ id, lang, onClose }: { id: string; lang: Lang; onClose: ()
                       <Two title={o.event} sub={fill(T.orderLine, { c: o.code, d: stamp(o.createdAt, lang), n: o.qty })} />
                       <span className="ml-auto flex shrink-0 items-center gap-2">
                         <span className="kd-num text-sm text-fg-1">{money(o.total, CHECKOUT_CURRENCY, lang)}</span>
-                        <Pill tone={STATUS_TONE[o.status] ?? 'none'}>{o.statusLabel[lang]}</Pill>
+                        <Pill tone={STATUS_TONE[o.status] ?? 'none'}>{tx(o.statusLabel, lang)}</Pill>
                       </span>
                     </KdLink>
                   </li>

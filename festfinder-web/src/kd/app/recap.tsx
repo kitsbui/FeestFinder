@@ -8,7 +8,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { ImageIcon, StarIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { dayMonth, weekdayShort } from '../format';
 import { familyOf, g } from '../genre';
@@ -139,7 +139,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
 
       {r.next ? (
         <a href={'/e/' + r.next.slug} className="flex flex-col gap-2">
-          <span className="kd-m">{r.next.label[lang]}</span>
+          <span className="kd-m">{tx(r.next.label, lang)}</span>
           <Panel className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-3 p-2">
             <Art title={ev.title} family={fam} className="h-14 rounded-lg" />
             <span className="flex min-w-0 flex-col"><span className="kd-hs kd-ell">{r.next.title}</span><span className="kd-s kd-num">{weekdayShort(r.next.startsOn, lang)} {dayMonth(r.next.startsOn, lang)}</span></span>

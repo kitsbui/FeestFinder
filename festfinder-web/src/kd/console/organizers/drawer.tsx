@@ -8,7 +8,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowSquareOutIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../../fresh';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { count, money, whenShort } from '../../format';
 import { useKd } from '../../runtime';
 import { Button, IconButton, LinkButton } from '../../ui/actions';
@@ -228,7 +228,7 @@ function ProfileForm({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChang
       <Field label={T.brandName} htmlFor="org-name"><Input id="org-name" required minLength={2} maxLength={80} value={f.name} onChange={set('name')} /></Field>
       <Field label={T.orgType} htmlFor="org-type">
         <Select id="org-type" value={f.type} onChange={set('type')}>
-          {types.length ? types.map((t) => <option key={t.value} value={t.value}>{t.label[lang]}</option>) : <option value={f.type}>{FF.text(o.typeLabel, lang) || f.type}</option>}
+          {types.length ? types.map((t) => <option key={t.value} value={t.value}>{tx(t.label, lang)}</option>) : <option value={f.type}>{FF.text(o.typeLabel, lang) || f.type}</option>}
         </Select>
       </Field>
       <div className="tab:col-span-2"><Field label={T.aboutVi} htmlFor="org-bio-vi"><TextArea id="org-bio-vi" rows={3} value={f.bioVi} onChange={set('bioVi')} /></Field></div>

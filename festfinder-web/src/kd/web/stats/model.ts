@@ -3,7 +3,7 @@
  * the venues with something on), the filters the address carries (the legacy screen's
  * "current filters": time, genre, search, and the city), and the addresses between them.
  */
-import type { Lang, Pair } from '../../copy';
+import { langOf as langFrom, type Lang, type Pair } from '../../copy';
 import type { Card } from '../../types';
 
 export const STAT_KEYS = ['free', 'weekend', 'venues'] as const;
@@ -57,7 +57,7 @@ const one = (sp: Search, k: string) => {
 };
 
 /** ?lang=en opens the English page; anything else is Vietnamese. */
-export const langOf = (sp: Search): Lang => (one(sp, 'lang') === 'en' ? 'en' : 'vi');
+export const langOf = (sp: Search): Lang => langFrom(one(sp, 'lang'));
 
 /**
  * The address's filters, kept only when the API takes them: a city it lists, a style or a
@@ -99,7 +99,7 @@ export function statHref(key: StatKey, f: StatFilters, lang: Lang): string {
   if (f.style) q.set('style', f.style);
   if (f.genre) q.set('genre', f.genre);
   if (f.q) q.set('q', f.q);
-  if (lang === 'en') q.set('lang', 'en');
+  if (lang !== 'vi') q.set('lang', lang);
   const s = q.toString();
   return '/stats/' + key + (s ? '?' + s : '');
 }

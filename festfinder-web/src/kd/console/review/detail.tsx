@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ArrowSquareOutIcon, CaretDownIcon, CheckIcon, PencilSimpleIcon, EyeIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../../fresh';
-import { fill, pick, type Lang, type Pair, type Strings } from '../../copy';
+import { fill, pick, type Lang, type Pair, type Strings, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, money, whenShort, whenLong, timeRange } from '../../format';
 import { FAMILY_LABEL, familyOf, g } from '../../genre';
@@ -46,7 +46,7 @@ const loadVenues = async (q: string): Promise<PickItem[]> => {
   return (out.items as { id: string; name: string; address: string; area: string }[]).map((v) => ({ value: v.id, label: v.name, sub: [v.address, v.area].filter(Boolean).join(' · ') }));
 };
 
-const text = (v: Pair | string | null | undefined, lang: Lang) => (v == null ? '' : typeof v === 'string' ? v : v[lang]);
+const text = (v: Pair | string | null | undefined, lang: Lang) => (v == null ? '' : typeof v === 'string' ? v : tx(v, lang));
 
 function Section({ title, aside, children }: { title: ReactNode; aside?: ReactNode; children: ReactNode }) {
   return (
@@ -128,7 +128,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
       trigger={(p) => <button type="button" {...p} ref={p.ref} className="kd-btn">{label}<CaretDownIcon size={14} aria-hidden="true" /></button>}
     >
       <MenuHeader><span className="kd-m">{head}</span></MenuHeader>
-      {list.map((r) => <MenuItem key={r.code} onSelect={() => onDecide(verb, [id], r)}>{r.label[lang]}</MenuItem>)}
+      {list.map((r) => <MenuItem key={r.code} onSelect={() => onDecide(verb, [id], r)}>{tx(r.label, lang)}</MenuItem>)}
       <MenuSeparator />
       <MenuItem onSelect={() => onSendBack([id], [title], list[0]?.code ?? null)}>{R.writeMessage}</MenuItem>
     </Menu>
@@ -160,7 +160,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
     <>
       <div className="kd-sec">
         <div className="flex min-w-0 flex-col gap-2.5">
-          <span className="kd-m flex items-center gap-1.5"><Marker family={fam} />{waiting != null ? fill(T.submittedAgo, { g: FAMILY_LABEL[fam][lang], a: duration(waiting, lang) }) : FAMILY_LABEL[fam][lang]}</span>
+          <span className="kd-m flex items-center gap-1.5"><Marker family={fam} />{waiting != null ? fill(T.submittedAgo, { g: tx(FAMILY_LABEL[fam], lang), a: duration(waiting, lang) }) : tx(FAMILY_LABEL[fam], lang)}</span>
           <h1 className="kd-d2">{title}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {org ? (
@@ -175,7 +175,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
             {ev?.sourceUrl ? <a className="kd-s inline-flex items-center gap-1 hover:underline" href={ev.sourceUrl} target="_blank" rel="noopener noreferrer">{R.source}<ArrowSquareOutIcon size={13} aria-hidden="true" /></a> : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {ev && !inReview ? <Status>{ev.statusLabel[lang]}</Status> : null}
+            {ev && !inReview ? <Status>{tx(ev.statusLabel, lang)}</Status> : null}
             {item?.kind === 'revision' ? <Status tone="warn">{R.revisionTag}</Status> : null}
             {waiting != null ? <Status tone={waiting >= 240 ? 'bad' : waiting >= 120 ? 'warn' : 'none'}>{fill(R.waitingFor, { d: duration(waiting, lang) })}</Status> : null}
             {item?.festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
@@ -244,7 +244,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
                         [R.genre, (
                           <Select key={ev.genre ?? ''} aria-label={R.genre} boxClass="h-11 min-h-0 max-w-[260px]" value={ev.genre ?? ''} disabled={busy} onChange={(e) => quick({ genre: e.target.value || null }, R.genreChanged)}>
                             <option value="">{R.pickGenre}</option>
-                            {(opts?.genres ?? []).map((x) => <option key={x.value} value={x.value}>{x.label[lang]}</option>)}
+                            {(opts?.genres ?? []).map((x) => <option key={x.value} value={x.value}>{tx(x.label, lang)}</option>)}
                           </Select>
                         )],
                         [R.venue, (
@@ -298,11 +298,11 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
                     <Section title={fill(R.quality, { s: ev.quality.score })}>
                       <div className="flex flex-col">
                         {fails.map((c) => (
-                          <div key={c.key} className="flex min-h-11 items-center justify-between gap-3 border-b border-line-1"><span className="kd-t text-fg-1">{c.label[lang]}</span><span className="flex items-center gap-2"><span className="kd-m kd-num">+{c.points}</span><Status tone="warn">{T.review}</Status></span></div>
+                          <div key={c.key} className="flex min-h-11 items-center justify-between gap-3 border-b border-line-1"><span className="kd-t text-fg-1">{tx(c.label, lang)}</span><span className="flex items-center gap-2"><span className="kd-m kd-num">+{c.points}</span><Status tone="warn">{T.review}</Status></span></div>
                         ))}
                         {passes.length ? (
                           <Accordion small summary={<span className="kd-s">{fill(R.checksPass, { n: passes.length })}</span>}>
-                            {passes.map((c) => <div key={c.key} className="flex min-h-9 items-center justify-between gap-3"><span className="kd-s">{c.label[lang]}</span><span className="flex items-center gap-2"><span className="kd-m kd-num">+{c.points}</span><Status tone="ok">{T.pass}</Status></span></div>)}
+                            {passes.map((c) => <div key={c.key} className="flex min-h-9 items-center justify-between gap-3"><span className="kd-s">{tx(c.label, lang)}</span><span className="flex items-center gap-2"><span className="kd-m kd-num">+{c.points}</span><Status tone="ok">{T.pass}</Status></span></div>)}
                           </Accordion>
                         ) : null}
                       </div>
@@ -313,10 +313,10 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
                     <Section title={R.riskSignals} aside={<Button size="sm" tone="ghost" disabled={rechecking} onClick={recheck}>{rechecking ? R.rechecking : R.recheck}</Button>}>
                       <ul className="flex flex-col">
                         {ev.risk.signals.map((s, i) => (
-                          <li key={'s' + i} className="flex min-h-10 items-center justify-between gap-3 border-b border-line-1"><span className="kd-s text-fg-2">{s.label[lang]}</span><Status tone={s.ok ? 'ok' : 'warn'}>{s.ok ? T.pass : T.review}</Status></li>
+                          <li key={'s' + i} className="flex min-h-10 items-center justify-between gap-3 border-b border-line-1"><span className="kd-s text-fg-2">{tx(s.label, lang)}</span><Status tone={s.ok ? 'ok' : 'warn'}>{s.ok ? T.pass : T.review}</Status></li>
                         ))}
                         {badFactors.map((f, i) => (
-                          <li key={'f' + i} className="flex min-h-10 items-center justify-between gap-3 border-b border-line-1"><span className="kd-s text-fg-1">{f.label[lang]}</span><span className="kd-m kd-num text-bad">+{f.weight}</span></li>
+                          <li key={'f' + i} className="flex min-h-10 items-center justify-between gap-3 border-b border-line-1"><span className="kd-s text-fg-1">{tx(f.label, lang)}</span><span className="kd-m kd-num text-bad">+{f.weight}</span></li>
                         ))}
                       </ul>
                     </Section>
@@ -335,7 +335,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
                       <ul className="flex flex-col gap-2.5">
                         {ev.decisions.map((d) => (
                           <li key={d.id} className="flex flex-col gap-0.5">
-                            <span className="kd-t"><span className="text-fg-1">{d.by ?? 'FeestFinder'}</span> · {decisionLabel(d.decision, R)}{d.reason ? ' · ' + d.reason[lang] : ''}</span>
+                            <span className="kd-t"><span className="text-fg-1">{d.by ?? 'FeestFinder'}</span> · {decisionLabel(d.decision, R)}{d.reason ? ' · ' + tx(d.reason, lang) : ''}</span>
                             <span className="kd-m kd-num">{stamp(d.at, lang)}</span>
                           </li>
                         ))}
@@ -353,7 +353,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
 
 function entryLabel(opts: ReturnType<typeof useOptions>, mode: string, lang: Lang): string {
   const m = (opts?.entryModes as { value: string; label: Pair }[] | undefined)?.find((x) => x.value === mode);
-  return m ? m.label[lang] : mode;
+  return m ? tx(m.label, lang) : mode;
 }
 
 function decisionLabel(d: string, R: Strings<typeof REVIEW>): string {
@@ -386,14 +386,14 @@ function Thread({ lang, eventId, n }: { lang: Lang; eventId: string; n: number }
         {data && !data.messages.length ? <span className="kd-s">{R.noMsgs}</span> : null}
         {(data?.messages ?? []).map((m) => (
           <div key={m.id} className={cx('flex max-w-[85%] flex-col gap-1', m.fromAdmin ? 'self-end items-end' : 'self-start')}>
-            <span className={cx('whitespace-pre-line rounded-xl px-3 py-2 text-sm', m.fromAdmin ? 'bg-fg-1 text-on-inverse' : 'bg-white/[0.06] text-fg-1')}>{m.body[lang]}</span>
+            <span className={cx('whitespace-pre-line rounded-xl px-3 py-2 text-sm', m.fromAdmin ? 'bg-fg-1 text-on-inverse' : 'bg-white/[0.06] text-fg-1')}>{tx(m.body, lang)}</span>
             <span className="kd-m kd-num">{m.fromAdmin ? 'FeestFinder' : R.orgWord} · {agoIso(m.createdAt, lang)}</span>
           </div>
         ))}
         {data?.quickAsks.length ? (
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={R.quickAsk}>
             <span className="kd-m">{R.quickAsk}</span>
-            {data.quickAsks.map((q) => <Chip key={q.key} onClick={() => setBody(q.text[lang])}>{q.label[lang]}</Chip>)}
+            {data.quickAsks.map((q) => <Chip key={q.key} onClick={() => setBody(tx(q.text, lang))}>{tx(q.label, lang)}</Chip>)}
           </div>
         ) : null}
         <TextArea rows={3} maxLength={2000} value={body} placeholder={T.threadPh} aria-label={T.thread} onChange={(e) => setBody(e.target.value)} />
@@ -433,13 +433,13 @@ function FitPanel({ lang, fit, festival }: { lang: Lang; fit: NonNullable<Item['
     <section className="flex w-full flex-col gap-2" aria-label={R.fitHead}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="kd-m">{R.fitHead}</span>
-        <Status tone={tone}>{`${fit.score} · ${fit.bandLabel[lang]}`}</Status>
+        <Status tone={tone}>{`${fit.score} · ${tx(fit.bandLabel, lang)}`}</Status>
         {festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
       </div>
       <ul className="flex flex-col">
         {fit.reasons.map((r) => (
           <li key={r.key} className="kd-s flex items-baseline justify-between gap-3 border-t border-line-1 py-1.5">
-            <span className="min-w-0">{r.label[lang]}</span>
+            <span className="min-w-0">{tx(r.label, lang)}</span>
             <span className={cx('kd-num shrink-0', r.points > 0 ? 'text-fg-1' : r.points < 0 ? 'text-bad' : 'text-fg-3')}>{r.points > 0 ? `+${r.points}` : r.points || '·'}</span>
           </li>
         ))}

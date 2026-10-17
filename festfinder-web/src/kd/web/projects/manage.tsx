@@ -9,7 +9,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { CheckIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../../fresh';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { money } from '../../format';
 import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
@@ -150,12 +150,12 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
       <div className="flex flex-col gap-2 tab:col-span-2"><FieldLabel htmlFor="pj-pitch">{T.fPitch}</FieldLabel><Input id="pj-pitch" maxLength={200} value={f.pitch} disabled={!editable} onChange={(e) => setF({ ...f, pitch: e.target.value })} /></div>
       <div className="flex flex-col gap-2 tab:col-span-2"><FieldLabel htmlFor="pj-story" hint={T.fStoryHint}>{T.fStory}</FieldLabel><TextArea id="pj-story" rows={7} maxLength={6000} value={f.story} disabled={!editable} onChange={(e) => setF({ ...f, story: e.target.value })} /></div>
       <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-city">{T.fCity}</FieldLabel>
-        <Select id="pj-city" value={f.city} disabled={!editable} onChange={(e) => setF({ ...f, city: e.target.value })}>{meta.cities.map((c) => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}</Select>
+        <Select id="pj-city" value={f.city} disabled={!editable} onChange={(e) => setF({ ...f, city: e.target.value })}>{meta.cities.map((c) => <option key={c.slug} value={c.slug}>{tx(c.name, lang)}</option>)}</Select>
       </div>
       <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-type">{T.fType}</FieldLabel>
         <Select id="pj-type" value={f.eventType} disabled={!editable} onChange={(e) => setF({ ...f, eventType: e.target.value })}>
           <option value="">{T.anyType}</option>
-          {meta.eventTypes.map((t) => <option key={t.key} value={t.key}>{t.label[lang]}</option>)}
+          {meta.eventTypes.map((t) => <option key={t.key} value={t.key}>{tx(t.label, lang)}</option>)}
         </Select>
       </div>
       <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-date">{T.fDate}</FieldLabel><Input id="pj-date" type="date" className="kd-num" value={f.targetOn} disabled={!editable} onChange={(e) => setF({ ...f, targetOn: e.target.value })} /></div>
@@ -168,7 +168,7 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
       </fieldset>
       <fieldset className="flex flex-col gap-2 tab:col-span-2" disabled={!editable}>
         <legend className="kd-flabel mb-2">{T.fStyles}</legend>
-        <div className="flex flex-wrap gap-2">{meta.styles.map((s) => <Chip key={s.key} family="edm" on={f.styles.includes(s.key)} onClick={() => toggle('styles', s.key)}>{s.label[lang]}</Chip>)}</div>
+        <div className="flex flex-wrap gap-2">{meta.styles.map((s) => <Chip key={s.key} family="edm" on={f.styles.includes(s.key)} onClick={() => toggle('styles', s.key)}>{tx(s.label, lang)}</Chip>)}</div>
       </fieldset>
       {/* A project's cover is a link (only event media is uploaded), checked as it is pasted. */}
       {editable ? (

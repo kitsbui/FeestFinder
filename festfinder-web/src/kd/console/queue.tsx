@@ -20,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../fresh';
-import { fill, pick } from '../copy';
+import { fill, pick, tx } from '../copy';
 import { cx } from '../cx';
 import { whenShort } from '../format';
 import { familyOf, g } from '../genre';
@@ -229,8 +229,8 @@ export function Queue() {
             <Choice label={R.fSource} value={source} onChange={(v) => setParams({ source: v })} options={[{ value: 'radar', label: R.srcRadar }, { value: 'posted', label: R.srcPosted }]} />
             <Choice label={R.fFit} value={fit} onChange={(v) => setParams({ fit: v })} options={[{ value: 'recommend', label: R.fitRecommend }, { value: 'consider', label: R.fitConsider }, { value: 'skip', label: R.fitSkip }]} />
             <Choice label={R.fRisk} value={risk} onChange={(v) => setParams({ risk: v })} options={[{ value: 'high', label: R.high }, { value: 'medium', label: R.medium }, { value: 'low', label: R.low }]} />
-            <Choice label={R.fFlag} value={flag} onChange={(v) => setParams({ flag: v })} options={[...((opts?.rejectReasons ?? []) as Reason[]).map((r) => ({ value: r.code, label: r.label[lang] })), { value: 'none', label: R.notFlagged }]} />
-            <MultiChoice label={R.fGenre} values={genres} onChange={(v) => setParams({ genre: v.join(',') })} options={(opts?.genres ?? []).map((x) => ({ value: x.value, label: x.label[lang], aside: String(live.filter((i) => i.genre === x.value).length) }))} />
+            <Choice label={R.fFlag} value={flag} onChange={(v) => setParams({ flag: v })} options={[...((opts?.rejectReasons ?? []) as Reason[]).map((r) => ({ value: r.code, label: tx(r.label, lang) })), { value: 'none', label: R.notFlagged }]} />
+            <MultiChoice label={R.fGenre} values={genres} onChange={(v) => setParams({ genre: v.join(',') })} options={(opts?.genres ?? []).map((x) => ({ value: x.value, label: tx(x.label, lang), aside: String(live.filter((i) => i.genre === x.value).length) }))} />
             <MultiChoice label={R.fArea} values={areas} onChange={(v) => setParams({ area: v.join('|') })} options={areaOptions} />
             <Choice label={R.sort} any={false} value={sort} onChange={(v) => setParams({ sort: v === 'age' ? null : v })} options={[{ value: 'age', label: R.sAge }, { value: 'fit', label: R.sFit }, { value: 'risk', label: R.sRisk }, { value: 'date', label: R.sDate }, { value: 'new', label: R.sNew }]} />
           </FilterBar>
@@ -268,11 +268,11 @@ export function Queue() {
                   </span>
                   {/* On a phone the statuses go under the title, so the title keeps the row. */}
                   <span className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 pl-15 tab:basis-auto tab:flex-col tab:items-end tab:pl-0">
-                    <Status tone={i.sla.state === 'breach' ? 'bad' : i.sla.state === 'soon' ? 'warn' : 'none'}>{i.sla.label[lang]}</Status>
+                    <Status tone={i.sla.state === 'breach' ? 'bad' : i.sla.state === 'soon' ? 'warn' : 'none'}>{tx(i.sla.label, lang)}</Status>
                     {i.festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
                     {i.fit ? <Status tone={FIT_TONE[i.fit.band]}>{fill(R.fitN, { n: i.fit.score })}</Status> : null}
                     <Status tone={i.riskBand === 'high' ? 'bad' : i.riskBand === 'medium' ? 'warn' : 'ok'}>{fill(R.riskN, { n: i.riskScore })}</Status>
-                    {i.flagged ? <Status tone="bad">{i.flag?.label[lang] ?? T.flagged}</Status> : null}
+                    {i.flagged ? <Status tone="bad">{tx(i.flag?.label, lang) ?? T.flagged}</Status> : null}
                     {i.threadMessages ? <span className="kd-m kd-num">{fill(R.msgsN, { n: i.threadMessages })}</span> : null}
                   </span>
                 </button>
@@ -305,7 +305,7 @@ export function Queue() {
             {held ? (
               <Panel className="flex items-center gap-3 py-2.5 pl-4 pr-2.5">
                 <Status tone={held.verb === 'approve' ? 'ok' : held.verb === 'fix' ? 'warn' : 'bad'}>{verbLabel[held.verb]}</Status>
-                <span className="kd-s kd-ell flex-1 text-fg-2">{held.title}{held.reason ? ' · ' + held.reason.label[lang] : ''}</span>
+                <span className="kd-s kd-ell flex-1 text-fg-2">{held.title}{held.reason ? ' · ' + tx(held.reason.label, lang) : ''}</span>
                 <Button size="sm" tone="ghost" onClick={undo}>{T.undo}</Button>
               </Panel>
             ) : null}

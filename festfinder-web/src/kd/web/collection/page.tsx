@@ -6,7 +6,7 @@
  * saving an event and sharing come in the browser.
  */
 import { api, jsonLdHtml, type CollectionSeo, type Lang } from '@/lib/api';
-import { fill, pick } from '../../copy';
+import { fill, pick, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, whenShort } from '../../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../../genre';
@@ -22,6 +22,7 @@ import { PastList } from '../profile/parts';
 import { COLLECTION } from './copy';
 import { MoreCards } from './more';
 import { ShareCollection } from './share';
+import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
 
@@ -44,7 +45,7 @@ export async function loadCollection(slug: string, lang: Lang) {
   const [col, seo] = await Promise.all([
     api<PublicCollection>(`/collections/${enc(slug)}`, { lang }),
     // The same request as the head's (seoMetadata's load()), so the two share one fetch.
-    api<CollectionSeo>(`/seo/collections/${enc(slug)}${lang === 'en' ? '?lang=en' : ''}`),
+    api<CollectionSeo>(`/seo/collections/${enc(slug)}${lang === 'vi' ? '' : '?lang=en'}`),
   ]);
   return col && seo ? { col, seo } : null;
 }
@@ -66,7 +67,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
   const past = col.items.filter((e) => e.past && e.startsOn).reverse()
     .map((e) => ({ slug: e.slug, title: e.title, startsOn: e.startsOn!, venue: e.venue.name, cityLabel: e.cityLabel ?? null, genre: e.genre, saveCount: e.saveCount }));
   const owner = col.owner.name || T.member;
-  const cities = [...new Set(col.items.map((e) => e.cityLabel?.[lang] || e.city).filter(Boolean))];
+  const cities = [...new Set(col.items.map((e) => tx(e.cityLabel, lang) || e.city).filter(Boolean))];
   const mix = familyMix(col.items);
   const mixTotal = mix.reduce((s, x) => s + x.n, 0);
   // The cover: the art of what it holds, upcoming first, filled out with the families.
@@ -84,7 +85,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? W.english : W.vietnamese };
 
   return (
-    <>
+    <InLang lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
@@ -150,7 +151,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                   {mix.length ? (
                     <div className="flex flex-col gap-3">
                       <div className="flex items-baseline justify-between"><span className="kd-m">{T.families}</span><span className="kd-m kd-num">{fill(T.nEvents, { n: count(mixTotal, lang) })}</span></div>
-                      <div className="flex h-2.5 gap-0.5" role="img" aria-label={mix.map((x) => `${FAMILY_LABEL[x.f][lang]} ${x.n}`).join(', ')}>
+                      <div className="flex h-2.5 gap-0.5" role="img" aria-label={mix.map((x) => `${tx(FAMILY_LABEL[x.f], lang)} ${x.n}`).join(', ')}>
                         {mix.map((x, i) => (
                           <i key={x.f} className={cx(g(x.f), 'bg-[var(--g)]', i === 0 && 'rounded-l', i === mix.length - 1 && 'rounded-r')} style={{ flex: `${x.n} 1 0` }} />
                         ))}
@@ -158,7 +159,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                         {mix.map((x) => (
                           <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}>
-                            <span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{Math.round((x.n / mixTotal) * 100)}%</span>
+                            <span className="kd-mk" aria-hidden="true" />{tx(FAMILY_LABEL[x.f], lang)}<span className="kd-mb kd-num ml-auto">{Math.round((x.n / mixTotal) * 100)}%</span>
                           </span>
                         ))}
                       </div>
@@ -190,6 +191,6 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
           </div>
         </div>
       </KdProvider>
-    </>
+    </InLang>
   );
 }

@@ -6,7 +6,7 @@
  */
 import { CaretRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { api, jsonLdHtml, type Lang, type OrganizerSeo } from '@/lib/api';
-import { fill, pick, type Pair } from '../../copy';
+import { fill, pick, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count } from '../../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../../genre';
@@ -23,6 +23,7 @@ import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
 import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, ShareProfile, type Source } from '../profile/parts';
 import { UpcomingCards } from './upcoming';
+import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
 
@@ -47,12 +48,12 @@ export interface Org {
 export async function loadOrg(slug: string, lang: Lang) {
   const [org, seo] = await Promise.all([
     api<Org>(`/organizers/${enc(slug)}`, { lang }),
-    api<OrganizerSeo>(`/seo/organizers/${enc(slug)}${lang === 'en' ? '?lang=en' : ''}`, { lang }),
+    api<OrganizerSeo>(`/seo/organizers/${enc(slug)}${lang === 'vi' ? '' : '?lang=en'}`, { lang }),
   ]);
   return org && seo ? { org, seo } : null;
 }
 
-const text = (v: Pair | string | null | undefined, lang: Lang) => (!v ? '' : typeof v === 'string' ? v : v[lang] || v.vi || v.en || '');
+const text = (v: Pair | string | null | undefined, lang: Lang) => (!v ? '' : typeof v === 'string' ? v : tx(v, lang) || v.vi || v.en || '');
 
 /** Each family's share of what it has listed, biggest first; unknown genres are left out. */
 function familyMix(events: Card[]) {
@@ -84,7 +85,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
   const past = org.past.filter((e) => e.startsOn).map((e) => ({ slug: e.slug, title: e.title, startsOn: e.startsOn!, venue: e.venue.name, cityLabel: e.cityLabel ?? null, genre: e.genre, saveCount: e.saveCount }));
 
   return (
-    <>
+    <InLang lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
@@ -161,7 +162,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 {mix.length ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-baseline justify-between"><span className="kd-m">{T.families}</span><span className="kd-m kd-num">{fill(T.nEvents, { n: count(all.length, lang) })}</span></div>
-                    <div className="flex h-2.5 gap-0.5" role="img" aria-label={mix.map((x) => `${FAMILY_LABEL[x.f][lang]} ${x.n}`).join(', ')}>
+                    <div className="flex h-2.5 gap-0.5" role="img" aria-label={mix.map((x) => `${tx(FAMILY_LABEL[x.f], lang)} ${x.n}`).join(', ')}>
                       {mix.map((x, i) => (
                         <i key={x.f} className={cx(g(x.f), 'bg-[var(--g)]', i === 0 && 'rounded-l', i === mix.length - 1 && 'rounded-r')} style={{ flex: `${x.n} 1 0` }} />
                       ))}
@@ -169,7 +170,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       {mix.map((x) => (
                         <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}>
-                          <span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{Math.round((x.n / mixTotal) * 100)}%</span>
+                          <span className="kd-mk" aria-hidden="true" />{tx(FAMILY_LABEL[x.f], lang)}<span className="kd-mb kd-num ml-auto">{Math.round((x.n / mixTotal) * 100)}%</span>
                         </span>
                       ))}
                     </div>
@@ -243,7 +244,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
           </div>
         </div>
       </KdProvider>
-    </>
+    </InLang>
   );
 }
 
