@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 import { DotsThreeIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
-import { cx } from '../cx';
 import { count, dayMonth } from '../format';
 import { KdLink } from '../link';
 import { useKd } from '../runtime';

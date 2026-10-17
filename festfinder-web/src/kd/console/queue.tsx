@@ -4,8 +4,11 @@
  * counts, the views (Tất cả, Quá hạn, Sắp quá hạn, Bị gắn cờ, NTC mới, Khiếu nại), the risk, flag,
  * genre and district filters and the sort (all kept in the address), and the rows (art, title,
  * organiser or community submitter · wait, SLA, risk, flag, messages), with a checkbox each for
- * approving or sending back several at once. The top bar's search matches title, organiser,
- * submitter and venue. Right, the listing in full (review/detail.tsx), or the appeals.
+ * approving or sending back several at once ("Đã chọn n · Duyệt · Trả lại… · Bỏ chọn", a bar that
+ * stays at the bottom of the list). The top bar's search matches title, organiser, submitter and
+ * venue. Right, the listing in full (review/detail.tsx, its tab kept from one listing to the next),
+ * or the appeals. From 1200px the list and the listing sit side by side, each scrolling on its own
+ * (design v2 phase 5); narrower, the listing comes under the list.
  *
  * Every decision is held for five seconds before it is sent (the owner's choice: a client-side
  * hold, not a revert endpoint): the status line offers "Hoàn tác", and the next listing opens.
@@ -29,7 +32,7 @@ import { Choice, ErrorBox, FilterBar, MultiChoice, useAsk, useOptions, useQuery 
 import { useConsole } from './root';
 import { Appeals } from './review/appeals';
 import { REVIEW } from './review/copy';
-import { Detail, FIXABLE } from './review/detail';
+import { Detail, FIXABLE, type DetailTab } from './review/detail';
 import { SendBack } from './review/send-back';
 import { duration, type Appeal, type Held, type Item, type Reason, type Verb } from './review/types';
 
@@ -37,6 +40,8 @@ type View = 'all' | 'breach' | 'soon' | 'flagged' | 'new';
 const VIEWS: View[] = ['all', 'breach', 'soon', 'flagged', 'new'];
 const FIT_TONE = { recommend: 'ok', consider: 'warn', skip: 'bad' } as const;
 const HOLD_MS = 5000;
+/** Under this width the listing renders under the list (kd.css `wide`). */
+const STACKED = '(max-width: 1199px)';
 
 const inView = (i: Item, v: View) => v === 'all' || (v === 'flagged' ? i.flagged : v === 'new' ? i.organizer.newOrganizer : i.sla.state === v);
 
@@ -56,6 +61,8 @@ export function Queue() {
   const [picked, setPicked] = useState<string[]>([]);
   const [held, setHeld] = useState<Held | null>(null);
   const [sendBack, setSendBack] = useState<{ ids: string[]; titles: string[]; code: string | null } | null>(null);
+  const [tab, setTab] = useState<DetailTab | null>(null);
+  const detailRef = useRef<HTMLElement>(null);
   const heldRef = useRef<Held | null>(null);
   heldRef.current = held;
 
@@ -137,8 +144,10 @@ export function Queue() {
   // On a narrow screen the listing renders under the whole queue: a tap scrolls to it, or it would seem to do nothing.
   const open = useCallback((id: string | null) => {
     setParams({ id });
-    if (id && matchMedia('(max-width: 899px)').matches) requestAnimationFrame(() => document.getElementById('q-detail')?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+    if (id && matchMedia(STACKED).matches) requestAnimationFrame(() => document.getElementById('q-detail')?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
   }, [setParams]);
+  // Side by side, the listing's column scrolls on its own: the next listing starts at its top.
+  useEffect(() => { detailRef.current?.scrollTo({ top: 0 }); }, [selId]);
 
   const decide = (verb: Verb, ids: string[], reason: Reason | null = null, extra: { message?: string; allowAppeal?: boolean } = {}) => {
     if (!ids.length) return;
@@ -198,8 +207,8 @@ export function Queue() {
   }, [live, areas]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-wrap">
-      <aside className="flex max-w-full flex-[1_1_360px] flex-col gap-3 border-r border-line-1 p-4 max-[899px]:border-b max-[899px]:border-r-0" aria-label={T.queue}>
+    <div className="flex min-h-0 flex-1 flex-col wide:h-[calc(100dvh_-_var(--spacing)*15)] wide:flex-row">
+      <aside className="flex min-w-0 flex-col gap-3 border-b border-line-1 p-4 wide:w-100 wide:shrink-0 wide:overflow-y-auto wide:border-r wide:border-b-0" aria-label={T.queue}>
         <div className="flex items-center justify-between gap-2">
           <h2 className="kd-hs">{T.queue}</h2>
           <span className="flex items-center gap-1">
@@ -229,14 +238,6 @@ export function Queue() {
         {!appealsOn && visible.length ? (
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" tone="ghost" onClick={() => setPicked(allPicked ? [] : visible.map((i) => i.id))}>{allPicked ? T.clear : fill(R.selectAll, { n: visible.length })}</Button>
-          </div>
-        ) : null}
-        {picked.length && !appealsOn ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2" role="status">
-            <span className="kd-s flex-1">{fill(T.selected, { n: picked.length })}</span>
-            <Button size="sm" tone="ghost" onClick={() => setPicked([])}>{T.clear}</Button>
-            <Button size="sm" onClick={() => startSendBack(picked, titlesOf(picked))}>{R.sendBack}</Button>
-            <Button size="sm" tone="acc" onClick={() => approveMany(picked)}>{fill(T.approveN, { n: picked.length })}</Button>
           </div>
         ) : null}
         {appealsOn ? null : error && !items ? <ErrorBox error={error} retry={load} /> : items === null ? <div className="kd-skel h-60" aria-hidden="true" /> : (
@@ -285,10 +286,18 @@ export function Queue() {
             ) : null}
           </ul>
         )}
-        <span className="kd-m mt-auto pt-2 max-[899px]:hidden">{R.shortcuts}</span>
+        <span className="kd-m mt-auto pt-2 max-desk:hidden">{R.shortcuts}</span>
+        {picked.length && !appealsOn ? (
+          <div className="kd-bulk" role="group" aria-label={R.bulk}>
+            <span className="kd-hs kd-num flex-1" aria-live="polite">{fill(T.selected, { n: picked.length })}</span>
+            <Button size="sm" tone="acc" onClick={() => approveMany(picked)}>{fill(T.approveN, { n: picked.length })}</Button>
+            <Button size="sm" onClick={() => startSendBack(picked, titlesOf(picked))}>{R.sendBack}</Button>
+            <Button size="sm" tone="ghost" onClick={() => setPicked([])}>{T.clear}</Button>
+          </div>
+        ) : null}
       </aside>
 
-      <section className={cx('flex min-w-0 flex-[999_1_560px] flex-col gap-6 p-[clamp(16px,3vw,32px)]', sel && g(familyOf(sel.genre)))} aria-label={appealsOn ? T.fAppeals : sel?.title ?? T.queue}>
+      <section ref={detailRef} className={cx('flex min-w-0 flex-1 flex-col gap-6 p-[clamp(16px,3vw,32px)] wide:overflow-y-auto', sel && g(familyOf(sel.genre)))} aria-label={appealsOn ? T.fAppeals : sel?.title ?? T.queue}>
         <div role="status" aria-live="polite">
           {held ? (
             <Panel className="flex items-center gap-3 py-2.5 pl-4 pr-2.5">
@@ -307,6 +316,8 @@ export function Queue() {
               id={selId}
               item={sel}
               reasons={reasons}
+              tab={tab}
+              onTab={setTab}
               onDecide={(v, ids, r) => decide(v, ids, r ?? null)}
               onSendBack={startSendBack}
               onChanged={load}

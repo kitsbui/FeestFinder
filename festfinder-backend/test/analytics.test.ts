@@ -39,6 +39,9 @@ describe('analytics', () => {
     assert.deepEqual(sink.events.at(-1), { event: 'nav_click', distinctId: 'a_abcdef0123456789abcd', props: { path: '/', kind: 'artists', surface: 'nav' } });
     await collect({ name: 'card_open', anonId: 'abcdef0123456789abcd', props: { path: '/', slug: 'ravo', surface: 'grid' } });
     assert.deepEqual(sink.events.at(-1), { event: 'card_open', distinctId: 'a_abcdef0123456789abcd', props: { path: '/', slug: 'ravo', surface: 'grid' } });
+    // The Studio wizard's steps: the draft-to-submit rate (design v2 phase 5).
+    await collect({ name: 'wizard_step', anonId: 'abcdef0123456789abcd', props: { path: '/studio/new', kind: 'submitted', role: 'organizer' } });
+    assert.deepEqual(sink.events.at(-1), { event: 'wizard_step', distinctId: 'a_abcdef0123456789abcd', props: { path: '/studio/new', kind: 'submitted', role: 'organizer' } });
   });
 
   it('knows a signed-in person only by a hash, and records server events the same way', async () => {

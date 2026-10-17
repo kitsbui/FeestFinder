@@ -27,6 +27,7 @@ export const CONSOLE = {
   tabUsers: { en: 'Accounts', vi: 'Tài khoản' },
   tabOrders: { en: 'Orders', vi: 'Đơn hàng' },
   navWork: { en: 'To do', vi: 'Việc cần làm' },
+  navSignals: { en: 'Reports and feedback', vi: 'Báo cáo và góp ý' },
   navCatalogue: { en: 'Catalogue', vi: 'Danh mục' },
   navPartners: { en: 'Partners', vi: 'Đối tác' },
   navPlatform: { en: 'Platform', vi: 'Nền tảng' },

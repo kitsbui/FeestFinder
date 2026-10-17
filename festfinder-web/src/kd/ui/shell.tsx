@@ -87,22 +87,39 @@ export function Dock({ children, className }: { children: ReactNode; className?:
 
 // ---- back offices -------------------------------------------------------------------
 
-export interface SideItem { key: string; label: string; href: string; icon?: ReactNode; count?: number | null; hideSmall?: boolean; external?: boolean }
+export interface SideItem { key: string; label: string; href: string; icon?: ReactNode; count?: number | null; hideSmall?: boolean; external?: boolean; sub?: SideItem[] }
 
+/**
+ * A back office's rail (design v2 phase 5: at most seven entries in sight). An entry with `sub` is a
+ * group: it leads to its first page, and its pages show under it while one of them is the current one.
+ */
 export function SideNav({ items, current, head, label, footer }: { items: SideItem[]; current: string; head?: ReactNode; label: string; footer?: ReactNode }) {
+  const all = items.flatMap((i) => [i, ...(i.sub ?? [])]);
+  const entry = (i: SideItem, on: boolean, nested?: boolean) => {
+    const props = { className: cx('kd-sn', i.hideSmall && 'kd-sn-hide', nested && 'kd-sn-sub'), 'aria-current': on ? ('page' as const) : undefined };
+    const body = (
+      <>
+        {i.icon}
+        <span className="kd-ell">{i.label}</span>
+        {i.count ? <span className="kd-count kd-num">{i.count}</span> : null}
+      </>
+    );
+    return i.external ? <a key={i.key} href={i.href} {...props}>{body}</a> : <Link key={i.key} href={i.href} {...props}>{body}</Link>;
+  };
   return (
-    <Rail label={label} current={items.find((i) => i.key === current)?.label as string ?? ''}>
+    <Rail label={label} current={all.find((i) => i.key === current)?.label ?? ''}>
       {head}
       {items.map((i) => {
-        const props = { className: cx('kd-sn', i.hideSmall && 'kd-sn-hide'), 'aria-current': i.key === current ? ('page' as const) : undefined };
-        const body = (
-          <>
-            {i.icon}
-            <span className="kd-ell">{i.label}</span>
-            {i.count ? <span className="kd-count kd-num">{i.count}</span> : null}
-          </>
+        if (!i.sub?.length) return entry(i, i.key === current);
+        const inside = i.sub.some((s) => s.key === current);
+        // The group's own count is its pages' (an inbox inside it, say).
+        const count = i.count ?? (i.sub.reduce((n, s) => n + (s.count ?? 0), 0) || null);
+        return (
+          <div key={i.key} className="flex flex-col gap-0.5">
+            {entry({ ...i, href: i.sub[0].href, count: inside ? null : count }, false)}
+            {inside ? i.sub.map((s) => entry(s, s.key === current, true)) : null}
+          </div>
         );
-        return i.external ? <a key={i.key} href={i.href} {...props}>{body}</a> : <Link key={i.key} href={i.href} {...props}>{body}</Link>;
       })}
       {footer}
     </Rail>

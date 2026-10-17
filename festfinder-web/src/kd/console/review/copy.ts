@@ -51,6 +51,13 @@ export const REVIEW = {
   approveAll: { en: 'Approve all', vi: 'Duyệt tất cả' },
   shortcuts: { en: 'j / k move · a approve · r send back · e edit · x select', vi: 'j / k chuyển · a duyệt · r trả lại · e sửa · x chọn' },
   pickOne: { en: 'Pick a listing to review', vi: 'Chọn một tin để xem' },
+  bulk: { en: 'Selected listings', vi: 'Tin đã chọn' },
+  // the listing's tabs
+  parts: { en: 'Listing sections', vi: 'Các phần của tin' },
+  tChanges: { en: 'Changes', vi: 'Thay đổi' },
+  tListing: { en: 'Whole listing', vi: 'Toàn bộ tin' },
+  tEvidence: { en: 'Source and evidence', vi: 'Nguồn và bằng chứng' },
+  tHistory: { en: 'History', vi: 'Lịch sử' },
   // send back
   writeMessage: { en: 'With a message…', vi: 'Kèm lời nhắn…' },
   sbOne: { en: 'Send the listing back', vi: 'Trả lại tin cho nhà tổ chức' },

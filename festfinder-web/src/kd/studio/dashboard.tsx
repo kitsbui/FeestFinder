@@ -13,11 +13,10 @@ import { cx } from '../cx';
 import { count, dayMonth } from '../format';
 import { familyOf, g } from '../genre';
 import { KdLink } from '../link';
-import { useKd } from '../runtime';
 import { Button, buttonClass } from '../ui/actions';
 import { BarRow, LineChart } from '../ui/charts';
 import { Segmented } from '../ui/forms';
-import { Accordion, Card as Panel, Marker, Status } from '../ui/parts';
+import { Card as Panel, Marker, Status } from '../ui/parts';
 import { Row, Table } from '../ui/shell';
 import { STUDIO } from './copy';
 import { StudioHead, statusTone } from './head';
@@ -41,7 +40,6 @@ interface Tally { key: string | null; n: number }
 export function Dashboard() {
   const { lang, org, events, event, setEvent } = useStudio();
   const T = pick(STUDIO, lang);
-  const kd = useKd();
   const [range, setRange] = useState<Range>('14d');
   const [perf, setPerf] = useState<Perf | null | undefined>(undefined);
   const [todo, setTodo] = useState<{ eventId: string; text: Pair }[]>([]);
@@ -80,7 +78,7 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-3 p-[clamp(20px,3vw,32px)]">
       <StudioHead
-        label={T.dash}
+        label={T.today}
         right={(
           <>
             <Segmented label={T.range} value={range} onChange={setRange} options={(['7d', '14d', '30d'] as Range[]).map((r) => ({ value: r, label: fill(T.days, { n: r.slice(0, -1) }) }))} />
@@ -186,28 +184,32 @@ export function Dashboard() {
             </Panel>
           ) : null}
           {todo.length || sentBack.length || gaps ? (
-            <Panel className="px-5 py-1">
-              <Accordion small summary={T.todo} aside={todo.length + sentBack.length + (gaps ? 1 : 0)} open>
-                <ul className="flex flex-col gap-2.5">
-                  {sentBack.map((e) => (
-                    <li key={'r' + e.id} className="kd-s">
-                      <KdLink className="hover:text-fg-1" href={'/studio/events/' + e.id}>{fill(T.todoSentBack, { t: e.title, r: e.lastDecision?.reason?.[lang] ?? T.evRejected })}</KdLink>
+            // One row per thing to do, each with the action that does it (design v2 phase 5).
+            <Panel as="section" className="flex flex-col p-5 pb-2" aria-labelledby="todo-h">
+              <h2 id="todo-h" className="kd-h pb-2">{T.todo}<span className="kd-s kd-num"> · {todo.length + sentBack.length + (gaps ? 1 : 0)}</span></h2>
+              <ul className="flex flex-col">
+                {sentBack.map((e) => (
+                  <li key={'r' + e.id} className="kd-lrow min-h-12 gap-3">
+                    <span className="kd-s flex-1 text-fg-2">{fill(T.todoSentBack, { t: e.title, r: e.lastDecision?.reason?.[lang] ?? T.evRejected })}</span>
+                    <KdLink className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href={'/studio/events/' + e.id}>{T.todoFix}</KdLink>
+                  </li>
+                ))}
+                {gaps ? (
+                  <li className="kd-lrow min-h-12 gap-3">
+                    <span className="kd-s flex-1 text-fg-2">{gaps.length ? fill(T.todoVerify, { m: gaps.join(', ') }) : T.todoVerifyWait}</span>
+                    <KdLink className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href="/studio/profile">{T.todoAdd}</KdLink>
+                  </li>
+                ) : null}
+                {todo.map((t, i) => {
+                  const draftish = events.some((e) => e.id === t.eventId && (e.status === 'draft' || e.status === 'rejected'));
+                  return (
+                    <li key={i} className="kd-lrow min-h-12 gap-3 last:border-b-0">
+                      <span className="kd-s flex-1 text-fg-2">{t.text[lang]}</span>
+                      <a className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href={draftish ? '/studio/new?draft=' + t.eventId : '/studio/events/' + t.eventId}>{draftish ? T.continue : T.todoFix}</a>
                     </li>
-                  ))}
-                  {gaps ? (
-                    <li className="kd-s">
-                      <KdLink className="hover:text-fg-1" href="/studio/profile">{gaps.length ? fill(T.todoVerify, { m: gaps.join(', ') }) : T.todoVerifyWait}</KdLink>
-                    </li>
-                  ) : null}
-                  {todo.map((t, i) => (
-                    <li key={i} className="kd-s">
-                      {events.some((e) => e.id === t.eventId && (e.status === 'draft' || e.status === 'rejected'))
-                        ? <a className="hover:text-fg-1" href={'/studio/new?draft=' + t.eventId}>{t.text[lang]}</a>
-                        : t.text[lang]}
-                    </li>
-                  ))}
-                </ul>
-              </Accordion>
+                  );
+                })}
+              </ul>
             </Panel>
           ) : null}
           {search?.items.length ? (

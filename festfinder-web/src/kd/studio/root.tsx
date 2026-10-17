@@ -8,7 +8,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, ChatTextIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, RocketLaunchIcon, SignOutIcon, SquaresFourIcon, TagIcon, TrayIcon, UsersIcon,
+  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, ChatTextIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, SignOutIcon, SquaresFourIcon, TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { COMMON, fill, pick, type Lang, type Pair } from '../copy';
@@ -48,8 +48,15 @@ interface StudioCtx {
   /** Every organiser this account belongs to, and switching between them. */
   seats: OrgSeat[];
   switchOrg: (id: string) => void;
+  /**
+   * The wizard before signing in (design v2 phase 5): someone without an organiser fills the form
+   * first, kept on this device, and signs in at the submit step.
+   */
+  guest?: boolean;
 }
 const Ctx = createContext<StudioCtx | null>(null);
+/** What the wizard reads while nobody has signed in yet: no organiser, no events. */
+const GUEST_ORG: OrgProfile = { id: '', slug: '', name: '', logoUrl: null, verified: false, myRole: '' };
 export function useStudio(): StudioCtx {
   const v = useContext(Ctx);
   if (!v) throw new Error('useStudio outside StudioRoot');
@@ -108,6 +115,14 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
     setPicked(id);
   }, []);
   if (kd.session === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
+  // "Đăng sự kiện" opens the form at once: signing in (and making the organiser) waits for the submit step.
+  if ((!kd.user || !orgs.length) && current === 'new') {
+    return (
+      <Ctx.Provider value={{ lang, org: GUEST_ORG, events: [], event: null, setEvent: () => {}, reload: async () => {}, seats: [], switchOrg: () => {}, guest: true }}>
+        {children}
+      </Ctx.Provider>
+    );
+  }
   if (!kd.user || !orgs.length) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
@@ -218,16 +233,25 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
           <a className={buttonClass({ tone: 'acc', size: 'sm' }, 'mb-3 shrink-0')} href="/studio/new"><PlusIcon size={16} aria-hidden="true" />{T.newEvent}</a>
         </>
       )}
+      // Seven entries in sight (design v2 phase 5); the guests and the promotion pages fold under theirs.
       items={[
-        { key: 'dash', label: T.dash, href: '/studio', icon: i(SquaresFourIcon) },
+        { key: 'dash', label: T.today, href: '/studio', icon: i(SquaresFourIcon) },
         { key: 'events', label: T.events, href: '/studio/events', icon: i(CalendarDotsIcon) },
-        { key: 'attendees', label: T.attendees, href: '/studio/attendees', icon: i(UsersIcon) },
-        { key: 'door', label: T.door, href: '/studio/door', icon: i(QrCodeIcon) },
+        {
+          key: 'guests', label: T.guestsDoor, href: '/studio/attendees', icon: i(UsersIcon), sub: [
+            { key: 'attendees', label: T.attendees, href: '/studio/attendees' },
+            { key: 'door', label: T.door, href: '/studio/door' },
+          ],
+        },
         { key: 'revenue', label: T.revenue, href: '/studio/revenue', icon: i(CoinsIcon) },
+        {
+          key: 'promote', label: T.promote, href: '/studio/announce', icon: i(MegaphoneIcon), sub: [
+            { key: 'announce', label: T.announce, href: '/studio/announce' },
+            { key: 'promos', label: T.promos, href: '/studio/promos' },
+            { key: 'ads', label: T.ads, href: '/studio/ads' },
+          ],
+        },
         { key: 'inbox', label: T.inbox, href: '/studio/inbox', icon: i(TrayIcon), count: unread || null },
-        { key: 'announce', label: T.announce, href: '/studio/announce', icon: i(MegaphoneIcon) },
-        { key: 'promos', label: T.promos, href: '/studio/promos', icon: i(TagIcon) },
-        { key: 'ads', label: T.ads, href: '/studio/ads', icon: i(RocketLaunchIcon) },
         { key: 'gigs', label: T.gigs, href: '/studio/gigs', icon: i(MicrophoneStageIcon) },
       ]}
       footer={(

@@ -2,17 +2,14 @@
 /**
  * The Console (/console/…) in Kính đêm: the team's whole back office (it took over /ops). One
  * root for every screen: the admin gate (an admin session only; admin comes from the allowlist
- * on a Google sign-in, never from here), the side rail with the screens in four groups and
- * their counts, the top bar with the search and the account menu (View as, log out), and the
- * confirm dialog every screen asks through.
+ * on a Google sign-in, never from here), the side rail (seven entries: the work, then the groups
+ * that unfold while one of their pages is open) with the counts, the top bar with the search and
+ * the account menu (View as, log out), and the confirm dialog every screen asks through.
  */
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import {
-  ArrowSquareOutIcon, BuildingsIcon, CalendarDotsIcon, ChartLineIcon, ChatTextIcon, ClockCounterClockwiseIcon, FlagIcon, GaugeIcon, HandWavingIcon,
-  HandshakeIcon, LightbulbIcon, LinkSimpleIcon, MagnifyingGlassIcon, MapPinIcon, MegaphoneIcon, MicrophoneStageIcon, PlugsIcon, ReceiptIcon, StarIcon,
-  TrayIcon, UsersIcon,
+  ArrowSquareOutIcon, CalendarDotsIcon, ChatTextIcon, FlagIcon, GaugeIcon, HandWavingIcon, HandshakeIcon, MagnifyingGlassIcon, SlidersHorizontalIcon, TrayIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
@@ -22,10 +19,9 @@ import { buttonClass } from '../ui/actions';
 import { Input } from '../ui/forms';
 import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
 import { Card as Panel } from '../ui/parts';
-import { Shell, type SideItem } from '../ui/shell';
+import { Shell, SideNav, type SideItem } from '../ui/shell';
 import { AskHost } from './kit';
 import { CONSOLE } from './copy';
-import { Rail } from '../ui/rail';
 import { Logo } from '../ui/logo';
 import { WorkspaceSwitch } from '../ui/workspaces';
 
@@ -113,60 +109,57 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   const initials = name.split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   const n = (v: number | undefined) => (v ? v : null);
   const i = (Icon: typeof GaugeIcon) => <Icon size={18} aria-hidden="true" />;
-  // The page's name, for the rail folded into a bar on a phone.
-  const railLabel = ({ overview: T.tabOverview, queue: T.tabQueue, claims: T.tabClaims, reports: T.tabReports, feedback: T.tabFeedback, events: T.tabEvents,
-    organizers: T.tabOrganizers, venues: T.tabVenues, artists: T.tabArtists, sources: T.tabSources, partners: T.tabPartners, affiliate: T.tabAffiliate,
-    brands: T.tabBrands, projects: T.tabProjects, featured: T.tabFeatured, users: T.tabUsers, orders: T.tabOrders, insights: T.tabInsights, audit: T.tabAudit } as Record<string, string>)[current] ?? T.console;
-  const group = (label: string, items: SideItem[]) => (
-    <div className="flex flex-col gap-0.5" key={label}>
-      <span className="kd-m kd-sn-hide px-2.5 pt-3 pb-1">{label}</span>
-      {items.map((it) => (
-        <Link key={it.key} href={it.href} className="kd-sn" aria-current={it.key === current ? 'page' : undefined}>
-          {it.icon}
-          <span className="kd-ell">{it.label}</span>
-          {it.count ? <span className="kd-count kd-num">{it.count}</span> : null}
-        </Link>
-      ))}
-    </div>
-  );
+  // Seven entries in sight (design v2 phase 5): the work, then three groups whose pages unfold
+  // under their entry while one of them is open; a folded group shows its pages' counts.
+  const items: SideItem[] = [
+    { key: 'overview', label: T.tabOverview, href: '/console/overview', icon: i(GaugeIcon) },
+    { key: 'queue', label: T.tabQueue, href: '/console', icon: i(TrayIcon), count: n(counts?.queue) },
+    { key: 'claims', label: T.tabClaims, href: '/console/claims', icon: i(HandWavingIcon), count: n(counts?.allClaims) },
+    { key: 'signals', label: T.navSignals, href: '/console/reports', icon: i(FlagIcon), sub: [
+      { key: 'reports', label: T.tabReports, href: '/console/reports', count: n(counts?.reports) },
+      { key: 'feedback', label: T.tabFeedback, href: '/console/feedback' },
+    ] },
+    { key: 'catalogue', label: T.navCatalogue, href: '/console/events', icon: i(CalendarDotsIcon), sub: [
+      { key: 'events', label: T.tabEvents, href: '/console/events' },
+      { key: 'organizers', label: T.tabOrganizers, href: '/console/organizers', count: n(counts?.verification) },
+      { key: 'venues', label: T.tabVenues, href: '/console/venues', count: n(counts?.unresolvedVenues) },
+      { key: 'artists', label: T.tabArtists, href: '/console/artists' },
+      { key: 'sources', label: T.tabSources, href: '/console/sources' },
+    ] },
+    { key: 'partnersG', label: T.navPartners, href: '/console/partners', icon: i(HandshakeIcon), sub: [
+      { key: 'partners', label: T.tabPartners, href: '/console/partners' },
+      { key: 'affiliate', label: T.tabAffiliate, href: '/console/affiliate' },
+      { key: 'brands', label: T.tabBrands, href: '/console/brands' },
+      { key: 'projects', label: T.tabProjects, href: '/console/projects', count: n(counts?.projects) },
+    ] },
+    { key: 'platform', label: T.navPlatform, href: '/console/featured', icon: i(SlidersHorizontalIcon), sub: [
+      { key: 'featured', label: T.tabFeatured, href: '/console/featured', count: n(counts?.ads) },
+      { key: 'users', label: T.tabUsers, href: '/console/users' },
+      { key: 'orders', label: T.tabOrders, href: '/console/orders' },
+      { key: 'insights', label: T.tabInsights, href: '/console/insights' },
+      { key: 'audit', label: T.tabAudit, href: '/console/audit' },
+    ] },
+  ];
 
   const nav = (
-    <Rail label={T.console} current={railLabel}>
-      {/* The logo leads home; the switcher to every other workspace (ui/workspaces.tsx). */}
-      <Logo lang={lang} height={18} className="px-2.5" />
-      <WorkspaceSwitch lang={lang} current="console" className="mb-1 w-full" />
-      {group(T.navWork, [
-        { key: 'overview', label: T.tabOverview, href: '/console/overview', icon: i(GaugeIcon) },
-        { key: 'queue', label: T.tabQueue, href: '/console', icon: i(TrayIcon), count: n(counts?.queue) },
-        { key: 'claims', label: T.tabClaims, href: '/console/claims', icon: i(HandWavingIcon), count: n(counts?.allClaims) },
-        { key: 'reports', label: T.tabReports, href: '/console/reports', icon: i(FlagIcon), count: n(counts?.reports) },
-        { key: 'feedback', label: T.tabFeedback, href: '/console/feedback', icon: i(ChatTextIcon) },
-      ])}
-      {group(T.navCatalogue, [
-        { key: 'events', label: T.tabEvents, href: '/console/events', icon: i(CalendarDotsIcon) },
-        { key: 'organizers', label: T.tabOrganizers, href: '/console/organizers', icon: i(BuildingsIcon), count: n(counts?.verification) },
-        { key: 'venues', label: T.tabVenues, href: '/console/venues', icon: i(MapPinIcon), count: n(counts?.unresolvedVenues) },
-        { key: 'artists', label: T.tabArtists, href: '/console/artists', icon: i(MicrophoneStageIcon) },
-        { key: 'sources', label: T.tabSources, href: '/console/sources', icon: i(PlugsIcon) },
-      ])}
-      {group(T.navPartners, [
-        { key: 'partners', label: T.tabPartners, href: '/console/partners', icon: i(HandshakeIcon) },
-        { key: 'affiliate', label: T.tabAffiliate, href: '/console/affiliate', icon: i(LinkSimpleIcon) },
-        { key: 'brands', label: T.tabBrands, href: '/console/brands', icon: i(MegaphoneIcon) },
-        { key: 'projects', label: T.tabProjects, href: '/console/projects', icon: i(LightbulbIcon), count: n(counts?.projects) },
-      ])}
-      {group(T.navPlatform, [
-        { key: 'featured', label: T.tabFeatured, href: '/console/featured', icon: i(StarIcon), count: n(counts?.ads) },
-        { key: 'users', label: T.tabUsers, href: '/console/users', icon: i(UsersIcon) },
-        { key: 'orders', label: T.tabOrders, href: '/console/orders', icon: i(ReceiptIcon) },
-        { key: 'insights', label: T.tabInsights, href: '/console/insights', icon: i(ChartLineIcon) },
-        { key: 'audit', label: T.tabAudit, href: '/console/audit', icon: i(ClockCounterClockwiseIcon) },
-      ])}
-      <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
-        <a className="kd-sn" href="/" target="_blank" rel="noopener">{i(ArrowSquareOutIcon)}{T.toSite}</a>
-        <button type="button" className="kd-sn w-full text-left" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{i(ChatTextIcon)}{T.feedbackLink}</button>
-      </div>
-    </Rail>
+    <SideNav
+      label={T.console}
+      current={current}
+      items={items}
+      head={(
+        <>
+          {/* The logo leads home; the switcher to every other workspace (ui/workspaces.tsx). */}
+          <Logo lang={lang} height={18} className="px-2.5" />
+          <WorkspaceSwitch lang={lang} current="console" className="mb-1 w-full" />
+        </>
+      )}
+      footer={(
+        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
+          <a className="kd-sn" href="/" target="_blank" rel="noopener">{i(ArrowSquareOutIcon)}{T.toSite}</a>
+          <button type="button" className="kd-sn w-full text-left" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{i(ChatTextIcon)}{T.feedbackLink}</button>
+        </div>
+      )}
+    />
   );
 
   return (

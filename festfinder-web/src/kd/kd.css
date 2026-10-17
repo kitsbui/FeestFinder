@@ -318,6 +318,17 @@
   .kd-sn { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: var(--radius-btn); font-size: 14px; color: var(--color-fg-3); transition: background-color 0.15s var(--ease-ff), color 0.15s var(--ease-ff); }
   .kd-sn:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.04); }
   .kd-sn[aria-current='page'] { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.07); }
+  /* The Studio wizard's stepper (studio/wizard.tsx): a progress bar in the accent, then one button per step. */
+  .kd-steps-bar { display: block; height: 4px; border-radius: var(--radius-pill); background: var(--color-surface-2); overflow: hidden; }
+  .kd-steps-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--gradient-accent); transition: width 0.3s var(--ease-ff); }
+  .kd-step { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-fg-3); text-align: left; cursor: pointer; }
+  .kd-step:hover, .kd-step[aria-current='step'] { color: var(--color-fg-1); }
+  .kd-step-dot { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--color-line-2); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .kd-step[aria-current='step'] .kd-step-dot { background: var(--color-fg-1); color: var(--color-on-inverse); box-shadow: none; }
+  /* The Console queue's bar for the rows picked (console/queue.tsx): it stays at the bottom of the list. */
+  .kd-bulk { position: sticky; bottom: 12px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-radius: var(--radius-card); background: rgba(22, 23, 24, 0.97); box-shadow: inset 0 0 0 1px var(--color-line-2), 0 8px 24px rgba(0, 0, 0, 0.5); }
+  /* A page of a rail's group, under its entry (ui/shell.tsx SideNav). */
+  .kd-sn-sub { height: 36px; padding-left: 38px; font-size: 13px; }
   .kd-sn .kd-count { margin-left: auto; font-size: 11px; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
   /* The rail's phone bar and its menu (ui/rail.tsx): on a desktop the bar is not there and the body is the column. */
   .kd-sn-bar { display: none; }
