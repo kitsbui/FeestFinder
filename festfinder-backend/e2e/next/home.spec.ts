@@ -16,11 +16,10 @@ async function open(page: Page, path = '/') {
 }
 
 test.describe('the home page', () => {
-  test('arrives as HTML with every event, the questions and its other language', async ({ request }) => {
+  test('arrives as HTML with every event and its other language (the questions are on /about)', async ({ request }) => {
     const html = await (await request.get('/')).text();
     expect(html).toMatch(/<h1[^>]*>Tất cả sự kiện<\/h1>/);
     for (const title of ['HOZO Super Fest', 'Ravolution Music Festival']) expect(html).toContain(title);
-    expect(html).toContain('Câu hỏi thường gặp');
     expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="[^"]*\/\?lang=en"/);
     expect(html).toMatch(/<link rel="canonical" href="https?:\/\/[^/"]+\/?"/);
     const en = await (await request.get('/?lang=en')).text();

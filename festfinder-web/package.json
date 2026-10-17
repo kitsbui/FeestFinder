@@ -13,7 +13,7 @@
     "build": "npm run copy-ui && next build",
     "start": "next start --port 3000",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint . --max-warnings 51 && node scripts/check-tokens.ts",
+    "lint": "eslint . --max-warnings 50 && node scripts/check-tokens.ts",
     "tokens:rename": "node scripts/tokens-v2.ts"
   },
   "dependencies": {

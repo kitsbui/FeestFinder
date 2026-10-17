@@ -17,7 +17,7 @@ import { useKd } from '../../runtime';
 import { Button, Chip } from '../../ui/actions';
 import { TextArea, Input } from '../../ui/forms';
 import { Picker } from '../../ui/menu';
-import { Avatar, BarTrack, Tag } from '../../ui/parts';
+import { Accordion, Avatar, BarTrack, Tag } from '../../ui/parts';
 import type { Discussion, Post } from '../../types';
 import { WEB } from '../copy';
 import { useEvent } from './context';
@@ -55,7 +55,7 @@ export function Hype({ lang }: { lang: Lang }) {
   return (
     <section aria-labelledby="hype-h" className="kd-card flex max-w-read flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="hype-h" className="kd-m">{T.hype}</h2>
+        <h2 id="hype-h" className="kd-d3">{T.hype}</h2>
         <span className="kd-mb kd-num whitespace-nowrap">{fill(T.hypeCount, { n: count(H.count, lang) })}</span>
         {H.last24h ? <span className="kd-s whitespace-nowrap">{fill(T.hype24, { n: H.last24h })}</span> : null}
         <Button size="sm" className="ml-auto" aria-pressed={hyped} onClick={toggle}>
@@ -99,6 +99,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
   const [more, setMore] = useState<Record<string, Post[]>>({});
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [phoneFor, setPhoneFor] = useState<(() => void) | null>(null);
+  const [rules, setRules] = useState(false);
 
   const load = useCallback(async (k = kind, s = sort) => {
     const qs = 'sort=' + s + (k ? '&kind=' + k : '');
@@ -135,6 +136,19 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
           options={[{ value: 'top', label: T.discTop }, { value: 'new', label: T.discNew }]}
         />
       </div>
+      {/* The organiser's answers lead (they were a section of their own until design v2 phase 2). */}
+      {ev.faq.length ? (
+        <div className="flex flex-col">
+          <h3 className="kd-hs pb-1.5">{T.orgAnswers}</h3>
+          <div className="border-t border-line-1">
+            {ev.faq.map((f) => (
+              <Accordion key={f.question} small name="faq" summary={f.question}>
+                <p className="kd-t text-fg-3">{f.answer}</p>
+              </Accordion>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {kinds.length ? (
         <div className="kd-hscroll" role="group" aria-label={T.discussion}>
           {kinds.map((k) => (
@@ -151,6 +165,13 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
         ) : gate === 'verify_phone' ? (
           <Button onClick={() => setPhoneFor(() => () => load())}>{T.discVerify}</Button>
         ) : null
+      ) : null}
+      {/* The rules behind a link beside the field, not a line telling everyone off (design v2 phase 2). */}
+      {d?.rules ? (
+        <div className="flex flex-col gap-1.5">
+          <button type="button" className="kd-more self-start" aria-expanded={rules} onClick={() => setRules((r) => !r)}>{T.discRules}</button>
+          {rules ? <p className="kd-s">{d.rules[lang]}</p> : null}
+        </div>
       ) : null}
       {d ? (
         d.items.length ? (
@@ -176,7 +197,6 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
           </ul>
         ) : <p className="kd-s">{T.discEmpty}</p>
       ) : <div className="kd-skel h-24" aria-hidden="true" />}
-      {d?.rules ? <p className="kd-s">{d.rules[lang]}</p> : null}
       {phoneFor ? <PhoneSheet lang={lang} onClose={() => setPhoneFor(null)} onDone={() => { const f = phoneFor; setPhoneFor(null); f(); }} /> : null}
     </section>
   );
@@ -226,8 +246,8 @@ function Composer({ lang, kind, onPosted, write, parentId, onDone }: {
       <TextArea
         rows={parentId ? 2 : 3}
         maxLength={4000}
-        placeholder={parentId ? T.discReplyPh : T.discWritePh}
-        aria-label={parentId ? T.discReplyPh : T.discWritePh}
+        placeholder={parentId ? T.discReplyPh : kind === 'qa' ? T.discAskPh : T.discWritePh}
+        aria-label={parentId ? T.discReplyPh : kind === 'qa' ? T.discAskPh : T.discWritePh}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onFocus={() => kd.requireSignIn(undefined, T.discSignin)}
@@ -358,7 +378,7 @@ export function PhotoWall({ lang }: { lang: Lang }) {
   if (!items?.length) return null;
   return (
     <section aria-labelledby="photos-h" className="flex flex-col gap-3">
-      <h2 id="photos-h" className="kd-m">{T.photos}</h2>
+      <h2 id="photos-h" className="kd-d3">{T.photos}</h2>
       <div className="kd-mgrid">
         {items.slice(0, 9).map((x) => (
           <figure key={x.url} className="kd-mtile m-0 cursor-default">
@@ -377,7 +397,7 @@ export function Ambassadors({ lang }: { lang: Lang }) {
   if (!ev.ambassadors.length) return null;
   return (
     <section aria-labelledby="amb-h" className="flex flex-col gap-2">
-      <h2 id="amb-h" className="kd-m">{T.ambassadors}</h2>
+      <h2 id="amb-h" className="kd-d3">{T.ambassadors}</h2>
       <ul className="flex flex-wrap gap-x-5 gap-y-2">
         {ev.ambassadors.map((a) => (
           <li key={a.name + a.initials} className="flex items-center gap-2">

@@ -4,7 +4,8 @@
  * and answers, structured data); the personal and interactive parts hydrate on top.
  */
 import { KdLink as Link, inLang } from '../../link';
-import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon } from '@phosphor-icons/react/ssr';
+import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
+import type { ReactNode } from 'react';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick } from '../../copy';
 import { cx } from '../../cx';
@@ -28,6 +29,7 @@ import { RideButton } from './ride';
 import { TicketsPanel } from './tickets';
 import { CalendarButton } from './calendar';
 import { directionsUrl } from './directions';
+import { BuyDock } from './dock';
 
 const enc = encodeURIComponent;
 
@@ -86,7 +88,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             <section className="kd-wrap">
               <div className="grid grid-cols-1 items-start gap-6 desk:grid-cols-2 desk:gap-14">
                 <div className="relative">
-                  <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" className="h-[clamp(260px,32vw,440px)]" off={ev.past} />
+                  <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" className="aspect-video w-full" off={ev.past} />
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}
                     {status ? <span className="kd-tag kd-tag-glass text-fg-1"><span className={cx('h-[7px] w-[7px] rounded-full', statusTone)} aria-hidden="true" />{status}</span> : null}
@@ -99,6 +101,34 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <div className="flex flex-col gap-2.5">
                     <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{familyLine}</span>
                     <h1 className="kd-d1">{ev.title}</h1>
+                  </div>
+                  {/* The four facts (design v2 phase 2): a grid of two on a computer, rows on a phone. */}
+                  <div data-facts className="grid grid-cols-1 border-t border-line-1 desk:grid-cols-2 desk:gap-x-6">
+                    <FactCell icon={<CalendarBlankIcon size={18} aria-hidden="true" />} label={T.factWhen} action={<CalendarButton lang={lang} className="-mr-3" />}>
+                      <span className="kd-num">{whenLong(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''}</span>
+                    </FactCell>
+                    <FactCell icon={<MapPinIcon size={18} aria-hidden="true" />} label={T.factWhere} action={<a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>}>
+                      {ev.venue.name}{ev.venue.area ? <span className="text-fg-3"> · {ev.venue.area}</span> : null}
+                    </FactCell>
+                    {free || cheapest > 0 ? (
+                      <FactCell icon={<TicketIcon size={18} aria-hidden="true" />} label={T.factPrice}>
+                        <span className={cx('kd-num', free && 'text-info')}>{free ? T.free : fill(T.fromPrice, { p: money(cheapest, ev.currency, lang) })}</span>
+                      </FactCell>
+                    ) : null}
+                    {ev.age ? (
+                      <FactCell icon={<IdentificationBadgeIcon size={18} aria-hidden="true" />} label={T.factAge}>{ev.age}</FactCell>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {hasTickets ? (
+                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#tickets">
+                        {openTiers.length ? fill(T.chooseTickets, { p: money(cheapest, ev.currency, lang) }) : T.buyTickets}
+                      </a>
+                    ) : free && !ev.past ? (
+                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#venue">{T.freeEntry}</a>
+                    ) : null}
+                    <SaveWithCount lang={lang} />
+                    <ShareButton lang={lang} />
                   </div>
                   <div className="border-t border-line-1">
                     {ev.origin === 'radar' ? (
@@ -125,30 +155,6 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                         <span className="kd-t flex-1 text-fg-1"><span className="text-fg-3">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
                       </div>
                     ) : null}
-                    <div className="kd-lrow min-h-13">
-                      <CalendarBlankIcon size={18} className="text-fg-3" aria-hidden="true" />
-                      <span className="kd-t kd-num flex-1 text-fg-1">
-                        {whenLong(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''}
-                      </span>
-                      <CalendarButton lang={lang} className="-mr-3" />
-                    </div>
-                    <div className="kd-lrow min-h-13">
-                      <MapPinIcon size={18} className="text-fg-3" aria-hidden="true" />
-                      <span className="kd-t flex-1 text-fg-1">{ev.venue.name}{ev.venue.area ? <span className="text-fg-3"> · {ev.venue.area}</span> : null}</span>
-                      <RideButton lang={lang} fromLink />
-                      <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {hasTickets ? (
-                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#tickets">
-                        {openTiers.length ? fill(T.chooseTickets, { p: money(cheapest, ev.currency, lang) }) : T.buyTickets}
-                      </a>
-                    ) : free && !ev.past ? (
-                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#venue">{T.freeEntry}</a>
-                    ) : null}
-                    <SaveWithCount lang={lang} />
-                    <ShareButton lang={lang} />
                   </div>
                   <CommunityLine lang={lang} />
                 </div>
@@ -161,7 +167,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                 <div className="kd-main flex flex-col gap-11">
                   {ev.updates.length ? (
                     <section aria-labelledby="upd-h" className="flex max-w-read flex-col gap-2">
-                      <h2 id="upd-h" className="kd-m">{T.updates}</h2>
+                      <h2 id="upd-h" className="kd-d3">{T.updates}</h2>
                       <ul className="flex flex-col">
                         {ev.updates.map((u) => (
                           <li key={u.id} className="flex flex-col gap-1 border-t border-line-1 py-3">
@@ -177,7 +183,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   ) : null}
 
                   <section id="about" aria-labelledby="about-h" className="flex max-w-read scroll-mt-32 flex-col gap-3">
-                    <h2 id="about-h" className="kd-m">{T.about2}</h2>
+                    <h2 id="about-h" className="kd-d3">{T.about2}</h2>
                     {description ? (
                       <Clamp lines={3} more={pick({ m: { vi: 'Xem thêm', en: 'Show more' } }, lang).m} less={pick({ l: { vi: 'Thu gọn', en: 'Show less' } }, lang).l} className="kd-tl max-w-[680px] whitespace-pre-line text-fg-1">
                         {description}
@@ -208,25 +214,14 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
 
                   <Hype lang={lang} />
 
-                  {ev.faq.length ? (
-                    <section aria-labelledby="faq-h" className="flex max-w-read flex-col">
-                      <h2 id="faq-h" className="kd-m pb-1.5">{seo.headings.faq}</h2>
-                      <div className="border-t border-line-1">
-                        {ev.faq.map((f) => (
-                          <Accordion key={f.question} small name="faq" summary={f.question}>
-                            <p className="kd-t text-fg-3">{f.answer}</p>
-                          </Accordion>
-                        ))}
-                      </div>
-                    </section>
-                  ) : null}
-
+                  {/* Hỏi đáp: the organiser's answers first, then everyone's questions and talk (owner, 2026-10-17). */}
                   <DiscussionSection lang={lang} />
                   <PhotoWall lang={lang} />
                   <Ambassadors lang={lang} />
                 </div>
 
-                <aside data-sticky-col className="kd-side self-start desk:sticky desk:top-32">
+                {/* On a phone the tickets come right after the hero (design v2 phase 2); on a computer they stay beside the page. */}
+                <aside data-sticky-col className="kd-side self-start max-desk:order-first desk:sticky desk:top-32">
                   <TicketsPanel lang={lang} />
                 </aside>
               </div>
@@ -241,7 +236,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   {address ? <p className="kd-t">{address}</p> : null}
                   <div className="mt-1 flex flex-wrap gap-2">
                     <a className={buttonClass({})} href={mapsHref} target="_blank" rel="noopener">{T.directions}<ArrowUpRightIcon size={16} aria-hidden="true" /></a>
-                    <RideButton lang={lang} size="md" tone="default" />
+                    <RideButton lang={lang} size="md" tone="default" fromLink />
                     {address ? <CopyAddress lang={lang} text={[ev.venue.name, address].filter(Boolean).join(', ')} /> : null}
                   </div>
                   {ev.travel || ev.entryRules ? (
@@ -275,6 +270,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
               </section>
             ) : null}
 
+            {hasTickets ? <BuyDock lang={lang} price={openTiers.length ? money(cheapest, ev.currency, lang) : null} /> : null}
             <div className="mt-auto">
               <WebFooter lang={lang} otherLang={otherLang} />
               <div className="kd-wrap -mt-4 flex flex-wrap gap-1 pb-6">
@@ -286,5 +282,19 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
         </EventClientProvider>
       </KdProvider>
     </>
+  );
+}
+
+/** One fact of the hero: a label, the value, and the action that goes with it (add to the calendar, directions). */
+function FactCell({ icon, label, action, children }: { icon: ReactNode; label: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="kd-lrow min-h-15 gap-3">
+      <span className="text-fg-3">{icon}</span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="kd-m">{label}</span>
+        <span className="kd-t text-fg-1">{children}</span>
+      </div>
+      {action}
+    </div>
   );
 }

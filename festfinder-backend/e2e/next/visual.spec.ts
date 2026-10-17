@@ -12,12 +12,12 @@ import { expect, test } from '@playwright/test';
  */
 test.skip(!process.env.FF_VISUAL, 'set FF_VISUAL=1 (npm run test:visual)');
 
-/** The home page in its default view, then in the other one (a phone opens the grid, a wider screen the table). */
-const screens = (width: number) => ['/', width < 760 ? '/?view=table' : '/?view=grid', '/e/ravo', '/a', '/kit'];
+/** The home page by day (its default view) and as a table, the event page, the artists, the kit. */
+const screens = ['/', '/?view=table', '/e/ravo', '/a', '/kit'];
 const SIZES = [{ name: 'phone', width: 390, height: 844 }, { name: 'tablet', width: 768, height: 1024 }, { name: 'desktop', width: 1440, height: 900 }];
 
 for (const size of SIZES) {
-  for (const path of screens(size.width)) {
+  for (const path of screens) {
     test(`${path} · ${size.name}`, async ({ page }) => {
       test.setTimeout(60_000);
       await page.setViewportSize({ width: size.width, height: size.height });

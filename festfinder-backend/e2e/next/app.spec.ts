@@ -65,7 +65,7 @@ test.describe('the app', () => {
     const problems = await open(page, '/app/e/ravo');
     await expect(page.getByRole('heading', { level: 2, name: 'Từ ban tổ chức' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Câu hỏi thường gặp' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Thảo luận' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: /^Hỏi đáp/ })).toBeVisible();
     await page.getByRole('link', { name: 'Mua vé', exact: true }).click();
     await expect(page.locator('#tickets')).toBeInViewport();
     await expect(page.locator('#tickets').getByRole('link', { name: /Mua 1 vé/ })).toHaveAttribute('href', /^\/go\/ravo\?src=tier&tier=/);

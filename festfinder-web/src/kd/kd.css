@@ -237,6 +237,12 @@
   .kd-tabbar-edge .kd-tb[aria-current='page']::before { top: 0; }
   @media (max-width: 899px) { body:has(.kd-tabbar-edge) { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }
   @media (min-width: 900px) { .kd-tabbar-edge { display: none; } }
+  /* The event page's buy bar on a phone (web/event/dock.tsx): above the tab bar; it steps aside while the ticket panel is on screen. */
+  .kd-buy-dock { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 19; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--color-surface-1); box-shadow: inset 0 1px 0 var(--color-line-1); transition: transform 0.2s var(--ease-ff), opacity 0.2s var(--ease-ff); }
+  .kd-buy-dock[data-away] { transform: translateY(100%); opacity: 0; pointer-events: none; }
+  @media (max-width: 899px) {
+    body:has(.kd-buy-dock) { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
+  }
   .kd-dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
   /* The app: a phone column, centred on wider screens; the bars stay over it. */
   .kd-app { position: relative; width: 100%; max-width: 560px; min-height: 100dvh; margin: 0 auto; padding-top: env(safe-area-inset-top); }
@@ -266,6 +272,9 @@
   /* ---- web ---- */
   .kd-wrap { width: 100%; padding-inline: var(--kd-gutter); }
   .kd-nav { position: sticky; top: 0; z-index: 30; background: var(--color-surface-1); border-bottom: 1px solid var(--color-line-1); }
+  /* The list's sticky filter bar (web/list/browser.tsx), under the nav: 57px high on a phone, 65px from 900px. Over the menu scrim (25), like the nav. */
+  .kd-cmd { position: sticky; top: 57px; z-index: 27; background: var(--color-surface-0); border-bottom: 1px solid var(--color-line-1); }
+  @media (min-width: 900px) { .kd-cmd { top: 65px; } }
   /* A keyboard shortcut named in a field (the nav's ⌘K). */
   .kd-kbd { flex-shrink: 0; padding: 1px 5px; border-radius: var(--radius-tag); box-shadow: inset 0 0 0 1px var(--color-line-1); font: inherit; font-size: 11px; color: var(--color-fg-3); }
   .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
@@ -273,9 +282,36 @@
   .kd-nl[aria-current='page'] { color: var(--color-fg-1); }
   .kd-nl[aria-current='page']::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 6px; height: 2px; border-radius: 2px; background: var(--color-info); }
   .kd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 28px 16px; }
-  .kd-ev { display: flex; flex-direction: column; gap: 12px; color: inherit; }
+  /* An event (web/card.tsx): a card, the lead of a day (16:9, a larger name) or a row (a thumbnail beside the words). */
+  .kd-ev { position: relative; display: flex; flex-direction: column; gap: 12px; min-width: 0; color: inherit; }
   .kd-ev .kd-art { aspect-ratio: 16 / 10; }
   .kd-ev:hover .kd-h { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .kd-ev-save { position: absolute; z-index: 2; top: 10px; right: 10px; }
+  .kd-ev-inline { display: none; }
+  .kd-ev-lead .kd-art { aspect-ratio: 16 / 9; }
+  .kd-ev-lead .kd-ev-title { font-size: 24px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; }
+  .kd-ev-row { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; column-gap: 14px; padding: 12px 52px 12px 0; border-bottom: 1px solid var(--color-line-1); }
+  .kd-ev-row .kd-art { width: 88px; aspect-ratio: 1; }
+  .kd-ev-row :is(.kd-ev-tag, .kd-ev-radar, .kd-ev-hype) { display: none; }
+  .kd-ev-row .kd-ev-inline { display: inline-flex; }
+  .kd-ev-row .kd-ev-save { top: 50%; right: 0; transform: translateY(-50%); }
+  .kd-ev-row .kd-ev-title { font-size: 16px; }
+  /* The list's days (web/list/days.tsx): a lead with rows beside it, then cards; in a box narrower than 600px every event is a row. */
+  .kd-days { container: days / inline-size; }
+  .kd-day-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px 32px; align-items: start; }
+  .kd-day-stack { display: flex; flex-direction: column; }
+  .kd-day-stack > .kd-ev-row:first-child { padding-top: 0; }
+  @container days (max-width: 599px) {
+    .kd-day-top { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .kd-days .kd-cards { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .kd-days .kd-ev { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; column-gap: 14px; padding: 12px 52px 12px 0; border-bottom: 1px solid var(--color-line-1); }
+    .kd-days .kd-ev .kd-art { width: 88px; aspect-ratio: 1; }
+    .kd-days .kd-ev :is(.kd-ev-tag, .kd-ev-radar, .kd-ev-hype) { display: none; }
+    .kd-days .kd-ev .kd-ev-inline { display: inline-flex; }
+    .kd-days .kd-ev .kd-ev-save { top: 50%; right: 0; transform: translateY(-50%); }
+    .kd-days .kd-ev .kd-ev-title { font-size: 16px; line-height: 1.3; letter-spacing: -0.015em; font-weight: 600; }
+    .kd-day-stack > .kd-ev-row:first-child { padding-top: 12px; }
+  }
   .kd-sec { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .kd-split { display: flex; flex-wrap: wrap; gap: 32px; }
   .kd-split > .kd-main { flex: 999 1 560px; min-width: 0; }
@@ -445,6 +481,8 @@
 }
 /* The toast is a popover (top layer): drop the browser's popover box. */
 .kd-toast[popover] { inset: auto; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); margin: 0; border: 0; overflow: visible; }
+/* Above the event page's buy bar on a phone (web/event/dock.tsx). */
+@media (max-width: 899px) { body:has(.kd-buy-dock) .kd-toast[popover] { bottom: calc(136px + env(safe-area-inset-bottom)); } }
 /* The Console's side drawer: from the right edge, the page behind dimmed. */
 dialog.kd-drawer { border-radius: 0; }
 

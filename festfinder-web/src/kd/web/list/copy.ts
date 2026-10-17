@@ -53,28 +53,22 @@ export const LIST = {
   details: { en: 'See details', vi: 'Xem chi tiết' },
   close: { en: 'Close', vi: 'Đóng' },
   fromPrice: { en: 'from {p}', vi: 'từ {p}' },
+  // the days and the rail (days.tsx), the filter bar
+  today: { en: 'today', vi: 'hôm nay' },
+  tomorrow: { en: 'tomorrow', vi: 'ngày mai' },
+  noDate: { en: 'Date to be announced', vi: 'Chưa có ngày' },
+  rail: { en: 'The week and the cities', vi: 'Tuần tới và các thành phố' },
+  cities: { en: 'Cities', vi: 'Thành phố' },
+  seeMap: { en: 'See on the map', vi: 'Xem trên bản đồ' },
+  filters: { en: 'Filters', vi: 'Lọc' },
+  filtersBar: { en: 'Filters', vi: 'Bộ lọc' },
+  source: { en: 'Source', vi: 'Nguồn' },
+  anySource: { en: 'Every source', vi: 'Mọi nguồn' },
+  price: { en: 'Price', vi: 'Giá' },
+  anyPrice: { en: 'Any price', vi: 'Mọi giá' },
+  done: { en: 'Show events', vi: 'Xem sự kiện' },
+  clearQuery: { en: 'Clear the search “{q}”', vi: 'Bỏ tìm “{q}”' },
   // the home page's highlight, banner and questions
   flagship: { en: 'World-class festivals', vi: 'Lễ hội lớn thế giới' },
   adHide: { en: 'Hide this ad', vi: 'Ẩn quảng cáo' },
-  faq: { en: 'Questions', vi: 'Câu hỏi thường gặp' },
-  q1: { en: 'What is FeestFinder?', vi: 'FeestFinder là gì?' },
-  a1: {
-    en: 'One place to see what is on tonight: EDM club nights, raves and festivals. Every listing is checked before it goes live.',
-    vi: 'Một nơi để biết tối nay có gì: club, rave và lễ hội EDM. Mọi tin đều được kiểm tra trước khi lên sóng.',
-  },
-  q2: { en: 'Who sells the tickets?', vi: 'Ai bán vé?' },
-  a2: {
-    en: 'The organiser, or FeestFinder’s own checkout for the events it sells. FeestFinder adds no booking fee.',
-    vi: 'Nhà tổ chức, hoặc FeestFinder với các sự kiện bán vé tại đây. FeestFinder không thu thêm phí đặt vé.',
-  },
-  q3: { en: 'Is listing an event free?', vi: 'Đăng sự kiện có mất phí không?' },
-  a3: {
-    en: 'Publishing is free. Get verified once and your events keep the badge, with ticket clicks and saves in your dashboard.',
-    vi: 'Đăng tin miễn phí. Xác minh một lần là sự kiện của bạn giữ nhãn đã xác minh, kèm lượt bấm mua vé và lượt lưu trong bảng điều khiển.',
-  },
-  q4: { en: 'Something is wrong on a listing', vi: 'Tin đăng có thông tin sai' },
-  a4: {
-    en: 'Use “Report this listing” at the bottom of the event page, or write to hello@feestfinder.com. We usually correct it the same day.',
-    vi: 'Bấm “Báo cáo tin này” cuối trang sự kiện, hoặc gửi về hello@feestfinder.com. Thường sửa trong ngày.',
-  },
 } satisfies Dict;

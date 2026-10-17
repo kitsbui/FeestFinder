@@ -152,16 +152,7 @@ function EventBody({ lang }: { lang: Lang }) {
           <Lineup lang={lang} />
           <Hype lang={lang} />
           <TicketsPanel lang={lang} />
-          {ev.faq.length ? (
-            <section aria-labelledby="app-faq-h" className="flex flex-col">
-              <h2 id="app-faq-h" className="kd-m pb-1.5">{pick({ f: { vi: 'Câu hỏi thường gặp', en: 'Frequently asked' } }, lang).f}</h2>
-              <div className="border-t border-line-1">
-                {ev.faq.map((f) => (
-                  <Accordion key={f.question} small name="faq" summary={f.question}><p className="kd-t text-fg-3">{f.answer}</p></Accordion>
-                ))}
-              </div>
-            </section>
-          ) : null}
+          {/* The organiser's answers are part of Hỏi đáp (web/event/community.tsx). */}
           <DiscussionSection lang={lang} />
           <PhotoWall lang={lang} />
           <Ambassadors lang={lang} />

@@ -26,7 +26,8 @@ test.describe('the event page', () => {
     expect(html).toMatch(/<title>Ravolution Music Festival[^<]*<\/title>/);
     expect(html).toMatch(/<link rel="canonical" href="http:\/\/localhost:\d+\/e\/ravo"/);
     expect(html).toMatch(/<link rel="alternate" hrefLang="en" href="http:\/\/localhost:\d+\/e\/ravo\?lang=en"/);
-    expect(html).toMatch(/<meta property="og:image" content="http:\/\/localhost:\d+\/og\/v1\/edm\.png"/);
+    // No cover: logo pack v2's share picture.
+    expect(html).toMatch(/<meta property="og:image" content="http:\/\/localhost:\d+\/ui\/assets\/og\.png"/);
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
     const types = blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']));
     for (const t of ['MusicEvent', 'FAQPage', 'WebPage', 'BreadcrumbList']) expect(types).toContain(t);
@@ -45,8 +46,9 @@ test.describe('the event page', () => {
     for (const text of [/Tin từ BTC/i, /Cổng số 3 mở sớm/, /Công bố nghệ sĩ bí mật/, /Câu hỏi thường gặp/i, /Đại sứ/i]) {
       await expect(page.getByText(text).first()).toBeVisible();
     }
-    await expect(page.getByRole('heading', { name: /Thảo luận/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Hỏi đáp\s*3/ })).toHaveAttribute('aria-pressed', 'true');
+    // One "Hỏi đáp": the organiser's answers, then the questions thread (design v2 phase 2).
+    await expect(page.getByRole('heading', { level: 2, name: /^Hỏi đáp/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Câu hỏi\s*3/ })).toHaveAttribute('aria-pressed', 'true');
     // Resale folds under the tickets.
     await page.locator('summary', { hasText: 'Pass vé' }).click();
     await expect(page.getByText('1.050.000₫').first()).toBeVisible();
@@ -161,11 +163,11 @@ test.describe('the event page', () => {
   test('a signed-in attendee posts a question', async ({ page }) => {
     await signInWith(page, ATTENDEE);
     await open(page, '/e/ravo');
-    const box = page.getByRole('textbox', { name: 'Viết gì đó…' });
+    const box = page.getByRole('textbox', { name: 'Hỏi nhà tổ chức hoặc người đi' });
     await box.fill('Có tủ gửi đồ cho balo không ạ?');
     await page.getByRole('button', { name: 'Đăng', exact: true }).click();
     await expect(page.getByText('Có tủ gửi đồ cho balo không ạ?').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Hỏi đáp\s*4/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Câu hỏi\s*4/ })).toBeVisible();
   });
 
   test('picks sets into a plan from the stage timeline, and flags a clash', async ({ page }) => {
@@ -185,7 +187,7 @@ test.describe('the event page', () => {
 
   test('signs up with Google, comes back to the page, and a new account picks a role', async ({ page }) => {
     await open(page, '/e/ravo');
-    await page.getByRole('textbox', { name: 'Viết gì đó…' }).click();
+    await page.getByRole('textbox', { name: 'Hỏi nhà tổ chức hoặc người đi' }).click();
     // The test API's Google stand-in answers at once; the real one asks which account.
     await page.getByRole('button', { name: 'Tiếp tục với Google' }).click();
     await expect(page.getByText(/Đã tạo tài khoản|Đã đăng nhập/).first()).toBeVisible();

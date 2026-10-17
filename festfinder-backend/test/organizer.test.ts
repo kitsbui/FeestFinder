@@ -266,7 +266,7 @@ describe('organizer back office (Ravolution)', () => {
     assert.equal(summary.body.recent.length, 6);
     // A tier is its English name, as in a scan's answer: the door screen prints it as it comes.
     for (const r of summary.body.recent) assert.ok(r.tier === null || typeof r.tier === 'string', `tier ${JSON.stringify(r.tier)}`);
-    assert.ok(summary.body.recent.some((r: any) => typeof r.tier === 'string'));
+    assert.ok(summary.body.recent.some((r: { tier: unknown }) => typeof r.tier === 'string'));
     assert.ok(summary.body.lastSyncedAt);
     const staff = summary.body.staff.find((p: any) => p.name === 'Võ Minh Thư');
     assert.equal(staff.status, 'scanning');

@@ -68,7 +68,7 @@ export function Lineup({ lang }: { lang: Lang }) {
   return (
     <section id="lineup" aria-labelledby="lineup-h" className="flex scroll-mt-32 flex-col">
       <div className="flex items-baseline justify-between pb-1.5">
-        <h2 id="lineup-h" className="kd-m">{fill(T.lineup, { n: all.length })}</h2>
+        <h2 id="lineup-h" className="kd-d3">{fill(T.lineup, { n: all.length })}</h2>
         {stages > 1 ? <span className="kd-m kd-num">{fill(T.stages, { n: stages })}</span> : null}
       </div>
       {head ? (

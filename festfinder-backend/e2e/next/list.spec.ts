@@ -2,8 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { watch } from '../checks.ts';
 
 /*
- * The home page (festfinder-web/src/kd/web/list; /list redirects here): every upcoming event as a
- * table, a grid or a map, with the legacy address (city, genre, time, style, type, view, bbox, q).
+ * The home page (festfinder-web/src/kd/web/list; /list redirects here): every upcoming event by
+ * day (the default since design v2 phase 2), as a table or on a map, with the legacy address (city,
+ * genre, time, style, type, view, bbox, q).
  */
 
 async function open(page: Page, path: string) {
@@ -13,8 +14,11 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
+/** The events the list shows by day (not the highlight of world festivals above it). */
+const cards = (page: Page) => page.getByRole('main').locator('.kd-days:not([data-surface]) article.kd-ev');
+
 test.describe('the list, the home page', () => {
-  test('a phone opens the list on cards, not on a table wider than the screen', async ({ page }) => {
+  test('a phone opens the list on its rows by day, not on a table wider than the screen', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const problems = await open(page, '/');
     await expect(page.getByRole('link', { name: 'Ravolution Music Festival' }).first()).toBeVisible();
@@ -25,14 +29,14 @@ test.describe('the list, the home page', () => {
     expect(problems).toEqual([]);
   });
 
-  test('shows every event as a table or a grid, by city', async ({ page }) => {
+  test('shows every event by day or as a table, by city', async ({ page }) => {
     const problems = await open(page, '/');
     await expect(page.getByRole('heading', { level: 1, name: 'Tất cả sự kiện' })).toBeVisible();
-    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await page.getByRole('button', { name: 'Lưới', exact: true }).click();
-    await expect(page).toHaveURL(/\/\?view=grid$/);
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
     await expect(page.getByRole('row')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Ravolution Music Festival' })).toBeVisible();
+    await page.getByRole('button', { name: 'Bảng', exact: true }).click();
+    await expect(page).toHaveURL(/\/\?view=table$/);
+    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
     await page.getByRole('button', { name: /^Thành phố/ }).click();
     await page.getByRole('menuitemradio', { name: /Hà Nội/ }).click();
     await expect(page.getByText('Không có sự kiện nào khớp')).toBeVisible();
@@ -45,29 +49,32 @@ test.describe('the list, the home page', () => {
     await page.getByRole('button', { name: 'Kiểu đêm' }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
     await expect(page).toHaveURL(/style=techno/);
-    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await expect(page.getByRole('row').filter({ hasText: 'HOZO' })).toHaveCount(0);
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Kiểu đêm' }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
-    await expect(page.getByRole('row').filter({ hasText: 'HOZO' })).toHaveCount(1);
+    await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(1);
   });
 
   test('the old city landing pages land on the list with their filters', async ({ page }) => {
     await page.goto('/vi/ho-chi-minh/edm/this-weekend');
     await expect(page).toHaveURL(/\/\?city=ho-chi-minh&genre=EDM&time=weekend(&lang=vi)?$/);
     // Every event is EDM: the genre narrows nothing.
-    const rows = page.getByRole('row');
-    await expect(rows.filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await expect(rows.filter({ hasText: 'HOZO' })).toHaveCount(1);
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(1);
     await page.goto('/vi/ho-chi-minh/night-market');
     await expect(page).toHaveURL(/\/\?city=ho-chi-minh(&lang=vi)?$/);
   });
 
-  test('a search from anywhere lands here with the words in the address', async ({ page }) => {
+  test('a search from anywhere lands here with the words in the address, as a choice to take back', async ({ page }) => {
     await open(page, '/?q=ravolution');
-    await expect(page.getByRole('searchbox', { name: 'Tìm sự kiện' })).toHaveValue('ravolution');
-    await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await expect(page.getByRole('row').filter({ hasText: 'HOZO' })).toHaveCount(0);
+    const chip = page.getByRole('group', { name: 'Bộ lọc' }).getByRole('button', { name: /Bỏ tìm “ravolution”/ });
+    await expect(chip).toBeVisible();
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(0);
+    await chip.click();
+    await expect(page).not.toHaveURL(/q=/);
+    await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(1);
   });
 
   test('is Sự kiện in the nav in every view, and a filter stays chosen and shown on the map', async ({ page }) => {
@@ -122,24 +129,26 @@ test.describe('the list, the home page', () => {
 
   test('splits what someone posted from what Feest Radar found, and tags the Radar ones', async ({ page }) => {
     await open(page, '/');
-    const tabs = page.getByRole('tablist', { name: 'Nguồn đăng' });
-    await expect(tabs.getByRole('tab', { name: /^Tất cả/ })).toHaveAttribute('aria-selected', 'true');
+    const source = page.getByRole('group', { name: 'Bộ lọc' }).getByRole('button', { name: /^Nguồn/ });
+    await expect(source).toContainText('Mọi nguồn');
     // The demo data is all posted; a Radar find as the API sends one: the first event, found on another site.
     await page.route(/\/events\?.*origin=radar/, async (route) => {
       const real = await route.fetch({ url: route.request().url().replace('origin=radar', 'origin=posted') });
       const body = await real.json();
       await route.fulfill({ json: { ...body, total: 1, items: body.items.slice(0, 1).map((e: any) => ({ ...e, origin: 'radar' })) } });
     });
-    await tabs.getByRole('tab', { name: /^Radar/ }).click();
+    await source.click();
+    await page.getByRole('menuitemradio', { name: /^Radar/ }).click();
     await expect(page).toHaveURL(/origin=radar/);
-    await expect(tabs.getByRole('tab', { name: /^Radar/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(source).toContainText('Radar');
+    await expect(cards(page).first().getByText('Do Feest Radar tìm thấy').first()).toBeAttached();
+    await page.getByRole('button', { name: 'Bảng', exact: true }).click();
     await expect(page.getByRole('row').nth(1).getByText('Do Feest Radar tìm thấy')).toBeAttached();
-    await page.getByRole('button', { name: 'Lưới', exact: true }).click();
-    await expect(page.locator('.kd-ev').first().getByText('Do Feest Radar tìm thấy')).toBeAttached();
-    // The address keeps the tab; "Tất cả" drops it.
+    // The address keeps the choice; "Mọi nguồn" drops it.
     await page.goto('/?origin=posted');
-    await expect(page.getByRole('tablist', { name: 'Nguồn đăng' }).getByRole('tab', { name: /^Đã đăng/ })).toHaveAttribute('aria-selected', 'true');
-    await page.getByRole('tablist', { name: 'Nguồn đăng' }).getByRole('tab', { name: /^Tất cả/ }).click();
+    await expect(source).toContainText('Đã đăng');
+    await source.click();
+    await page.getByRole('menuitemradio', { name: /^Mọi nguồn/ }).click();
     await expect(page).not.toHaveURL(/origin=/);
   });
 
@@ -202,9 +211,10 @@ test.describe('the list, the home page', () => {
   test('in English at ?lang=en, and its links stay in English', async ({ page }) => {
     await open(page, '/?lang=en');
     await expect(page.getByRole('heading', { level: 1, name: 'Every event' })).toBeVisible();
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' }).getByRole('link', { name: 'Ravolution Music Festival' })).toHaveAttribute('href', '/e/ravo?lang=en');
+    await page.getByRole('button', { name: 'Table', exact: true }).click();
+    await expect(page).toHaveURL(/\/\?view=table&lang=en$/);
     await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveAttribute('href', '/e/ravo?lang=en');
-    await page.getByRole('button', { name: 'Grid', exact: true }).click();
-    await expect(page).toHaveURL(/\/\?view=grid&lang=en$/);
     await expect(page.locator('link[rel="alternate"][hreflang="vi"]')).toHaveAttribute('href', /^https?:\/\/[^/]+\/?$/);
   });
 });

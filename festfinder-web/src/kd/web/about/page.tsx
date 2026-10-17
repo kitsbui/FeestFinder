@@ -15,7 +15,8 @@ import { count } from '../../format';
 import { KdLink as Link, inLang } from '../../link';
 import { KdProvider } from '../../runtime';
 import { buttonClass, LinkButton } from '../../ui/actions';
-import { Fact, Stat } from '../../ui/parts';
+import { Accordion, Fact, Stat } from '../../ui/parts';
+import { jsonLdHtml } from '@/lib/api';
 import { WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { ABOUT } from './copy';
@@ -43,6 +44,7 @@ export async function AboutPage({ lang }: { lang: Lang }) {
   const W = pick(WEB, lang);
   const reach = await loadReach();
   const otherLang = lang === 'vi' ? { href: '/about?lang=en', label: W.english } : { href: '/about', label: W.vietnamese };
+  const faq = (['1', '2', '3', '4'] as const).map((n) => ({ q: T[`q${n}`], a: T[`a${n}`] }));
 
   return (
     <KdProvider lang={lang}>
@@ -131,6 +133,22 @@ export async function AboutPage({ lang }: { lang: Lang }) {
                 </li>
               ))}
             </ul>
+          </section>
+
+          {/* ---- the questions, with their FAQPage JSON-LD (from the home page, owner 2026-10-17) ---- */}
+          <section id="faq" aria-labelledby="ab-faq" className="mt-12 flex max-w-read scroll-mt-24 flex-col gap-1.5">
+            <h2 id="ab-faq" className="kd-d3 mb-2">{T.faq}</h2>
+            <div className="border-t border-line-1">
+              {faq.map((x) => (
+                <Accordion key={x.q} small name="faq" summary={x.q}>
+                  <p className="kd-t pr-6 text-fg-3">{x.a}</p>
+                </Accordion>
+              ))}
+            </div>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml({
+              '@context': 'https://schema.org', '@type': 'FAQPage',
+              mainEntity: faq.map((x) => ({ '@type': 'Question', name: x.q, acceptedAnswer: { '@type': 'Answer', text: x.a } })),
+            }) }} />
           </section>
 
           {/* ---- office and support ---- */}
