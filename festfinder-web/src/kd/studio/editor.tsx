@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon, ArrowUpRightIcon, DotsThreeIcon, TrashIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../fresh';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { STYLE_LABEL, styleLabel } from '../genre';
 import { KdLink } from '../link';
@@ -27,7 +27,8 @@ import { missingText } from './events';
 import { statusTone } from './head';
 import { Block, Page } from './parts';
 import { useStudio } from './root';
-import { Appeal, Lineup, newTier, Tiers, Upload, VenueField, type Tier, type Venue } from './wizard';
+import { Appeal, Lineup, newTier, Tiers, Upload, VenueField } from './fields';
+import type { Tier, Venue } from './wizard-model';
 
 const STYLES = Object.keys(STYLE_LABEL);
 const STYLE_MAX = 5;
@@ -199,7 +200,7 @@ export function EventEditor({ id }: { id: string }) {
       setD(out);
       // The public page shows the change at once, not after its cache.
       if (out.slug) void freshen('e', out.slug);
-      setSave({ state: 'saved', at: new Date().toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) });
+      setSave({ state: 'saved', at: new Date().toLocaleTimeString((lang === 'en' ? 'en-GB' : INTL[lang]), { hour: '2-digit', minute: '2-digit' }) });
       if (!quiet && !changed.length) kd.toast(T.saved);
       if (out.status !== d.status || changed.includes('title')) void reload();
       return out;
@@ -280,7 +281,7 @@ export function EventEditor({ id }: { id: string }) {
           <KdLink href="/studio/events" className="kd-m kd-hit flex items-center gap-1.5 hover:text-fg-1"><ArrowLeftIcon size={14} aria-hidden="true" />{T.myEvents}</KdLink>
           <h1 className="kd-d2 kd-ell">{f.title.trim() || T.noTitle}</h1>
           <span className="kd-s flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <Status tone={statusTone(d.status)}>{d.statusLabel[lang]}</Status>
+            <Status tone={statusTone(d.status)}>{tx(d.statusLabel, lang)}</Status>
             {d.reviewPending ? <Status tone="warn">{T.reviewPending}</Status> : null}
             {d.submittedAt ? <span className="kd-num">{fill(T.submittedOn, { t: stamp(d.submittedAt, lang) })}</span> : null}
             <span role="status" aria-live="polite" className={cx(save.state === 'error' && 'text-bad')}>{saveLine}</span>
@@ -301,7 +302,7 @@ export function EventEditor({ id }: { id: string }) {
 
       {d.status === 'rejected' ? (
         <Panel role="status" className="flex flex-col gap-1 p-4">
-          <Status tone="bad">{d.moderation?.reason ? fill(T.sentBack, { r: d.moderation.reason[lang] }) : T.evRejected}</Status>
+          <Status tone="bad">{d.moderation?.reason ? fill(T.sentBack, { r: tx(d.moderation.reason, lang) }) : T.evRejected}</Status>
           {d.moderation?.decidedAt ? <span className="kd-m kd-num">{stamp(d.moderation.decidedAt, lang)}</span> : null}
           {d.moderation?.message ? <span className="kd-s whitespace-pre-line">{d.moderation.message}</span> : null}
           {appealOpen ? <Appeal lang={lang} eventId={d.id} /> : d.moderation?.appeal?.state === 'replied' ? <Status tone="ok">{T.appealSent}</Status> : null}
@@ -326,7 +327,7 @@ export function EventEditor({ id }: { id: string }) {
               {field('edType', <>{T.fType} <span className="font-normal text-fg-3">{T.optional}</span></>, (
                 <Select id="edType" value={f.eventType} onChange={(e) => set({ eventType: e.target.value })}>
                   <option value="">—</option>
-                  {(opts?.eventTypes ?? []).map((t) => <option key={t.value} value={t.value}>{t.label[lang]}</option>)}
+                  {(opts?.eventTypes ?? []).map((t) => <option key={t.value} value={t.value}>{tx(t.label, lang)}</option>)}
                 </Select>
               ))}
               {field('edAge', T.fAge, (
@@ -355,7 +356,7 @@ export function EventEditor({ id }: { id: string }) {
               <div className={grid}>
                 {field('edCity', T.fCity, (
                   <Select id="edCity" value={f.city} onChange={(e) => set({ city: e.target.value })}>
-                    {(opts?.cities ?? []).map((c) => <option key={c.value} value={c.value}>{c.label[lang]}</option>)}
+                    {(opts?.cities ?? []).map((c) => <option key={c.value} value={c.value}>{tx(c.label, lang)}</option>)}
                   </Select>
                 ))}
                 {field('edArea', T.fArea, (
@@ -370,14 +371,14 @@ export function EventEditor({ id }: { id: string }) {
           </Block>
 
           <Block title={T.sTickets} aside={tag('tickets')}>
-            <Segmented className="max-w-[420px]" full label={T.fMode} value={f.entryMode} onChange={(v) => set({ entryMode: v })} options={(opts?.entryModes as { value: Form['entryMode']; label: Pair }[] | undefined)?.map((m) => ({ value: m.value, label: m.label[lang] })) ?? [{ value: 'paid' as const, label: T.paid }, { value: 'free' as const, label: T.free }]} />
+            <Segmented className="max-w-[420px]" full label={T.fMode} value={f.entryMode} onChange={(v) => set({ entryMode: v })} options={(opts?.entryModes as { value: Form['entryMode']; label: Pair }[] | undefined)?.map((m) => ({ value: m.value, label: tx(m.label, lang) })) ?? [{ value: 'paid' as const, label: T.paid }, { value: 'free' as const, label: T.free }]} />
             {f.entryMode === 'paid' && canSellHere ? (
               <SwitchRow label={T.fSellHere} note={T.fSellNote} checked={f.sellHere} disabled={!!d.tiers?.some((t) => t.sold > 0)} onChange={(v) => set({ sellHere: v, tiers: v && !f.tiers.length ? [newTier(f.price)] : f.tiers })} />
             ) : null}
             {f.entryMode === 'paid' && f.sellHere && canSellHere ? <Tiers lang={lang} currency={currency} rows={f.tiers} onChange={(t) => set({ tiers: t })} /> : null}
             <div className={grid}>
               {f.entryMode === 'paid' && !(f.sellHere && canSellHere)
-                ? field('edPrice', fill(T.fPrice, { c: currency === 'VND' ? '₫' : currency }), <Input id="edPrice" className="kd-num" inputMode="numeric" value={f.price ? int(f.price).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') : ''} onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, '') })} />)
+                ? field('edPrice', fill(T.fPrice, { c: currency === 'VND' ? '₫' : currency }), <Input id="edPrice" className="kd-num" inputMode="numeric" value={f.price ? int(f.price).toLocaleString(INTL[lang]) : ''} onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, '') })} />)
                 : null}
               {field('edCap', <>{T.fCapacity} <span className="font-normal text-fg-3">{T.optional}</span></>, <Input id="edCap" className="kd-num" inputMode="numeric" value={f.capacity} onChange={(e) => set({ capacity: e.target.value.replace(/[^0-9]/g, '') })} />)}
             </div>
@@ -403,7 +404,7 @@ export function EventEditor({ id }: { id: string }) {
         <aside className="kd-side flex flex-col gap-3 self-start md:sticky md:top-6" aria-label={T.quality}>
           <Panel className="flex flex-col gap-3 p-5">
             <span className="kd-m">{T.quality}</span>
-            <span className="flex items-baseline gap-2"><span className="kd-d2 kd-num">{d.quality.score}</span><span className="kd-s">/ 100 · {d.quality.bandLabel[lang]}</span></span>
+            <span className="flex items-baseline gap-2"><span className="kd-d2 kd-num">{d.quality.score}</span><span className="kd-s">/ 100 · {tx(d.quality.bandLabel, lang)}</span></span>
             {draftLike ? (missing.length ? (
               <div className="flex flex-col gap-1 border-t border-line-1 pt-3">
                 <span className="kd-hs">{T.missingHead}</span>
@@ -413,7 +414,7 @@ export function EventEditor({ id }: { id: string }) {
             {d.quality.checks.some((c) => !c.ok) ? (
               <ul className="flex flex-col gap-1.5 border-t border-line-1 pt-3">
                 {d.quality.checks.filter((c) => !c.ok).map((c) => (
-                  <li key={c.key} className="kd-s flex justify-between gap-3"><span>{c.label[lang]}</span><span className="kd-mb kd-num">+{c.points}</span></li>
+                  <li key={c.key} className="kd-s flex justify-between gap-3"><span>{tx(c.label, lang)}</span><span className="kd-mb kd-num">+{c.points}</span></li>
                 ))}
               </ul>
             ) : null}
@@ -452,7 +453,7 @@ function HypeGoals({ lang, eventId }: { lang: Lang; eventId: string }) {
   };
   const cols = 'grid grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 max-sm:grid-cols-[80px_minmax(0,1fr)_auto]';
   return (
-    <Block title={T.hypeGoals} aside={<span className="kd-m kd-num">{fill(T.hypeNow, { n: data.hypeCount.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') })}</span>}>
+    <Block title={T.hypeGoals} aside={<span className="kd-m kd-num">{fill(T.hypeNow, { n: data.hypeCount.toLocaleString(INTL[lang]) })}</span>}>
       {list.map((r, i) => (
         <div key={i} className={cols}>
           <Input className="kd-num" inputMode="numeric" placeholder="500" aria-label={T.hypeCount} value={r.threshold} onChange={(e) => edit(i, { threshold: e.target.value.replace(/\D/g, '') })} />
@@ -516,7 +517,7 @@ function LiveUpdates({ lang, eventId }: { lang: Lang; eventId: string }) {
         <ul className="flex flex-col">
           {items.map((u) => (
             <li key={u.id} className="flex items-start gap-3 border-t border-line-1 py-3">
-              <Status tone={u.kind === 'safety' || u.kind === 'delay' ? 'warn' : 'none'}>{u.kindLabel[lang]}</Status>
+              <Status tone={u.kind === 'safety' || u.kind === 'delay' ? 'warn' : 'none'}>{tx(u.kindLabel, lang)}</Status>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="kd-t whitespace-pre-wrap">{u.body}</span>
                 <span className="kd-m kd-num">{stamp(u.createdAt, lang)}{u.notified ? ' · ' + T.updNotified : ''}</span>
@@ -562,8 +563,8 @@ function SearchCard({ lang, eventId, saved }: { lang: Lang; eventId: string; sav
           {missing.map((c) => (
             <li key={c.key}>
               <button type="button" className="flex w-full flex-col gap-0.5 rounded-seg px-1.5 py-1.5 text-left hover:bg-white/[0.04]" onClick={() => go(c.field)}>
-                <span className="kd-s flex w-full justify-between gap-3 text-fg-2"><span>{c.label[lang]}</span><span className="kd-mb kd-num">+{c.points}</span></span>
-                <span className="kd-s text-xs text-fg-3">{c.why[lang]}</span>
+                <span className="kd-s flex w-full justify-between gap-3 text-fg-2"><span>{tx(c.label, lang)}</span><span className="kd-mb kd-num">+{c.points}</span></span>
+                <span className="kd-s text-xs text-fg-3">{tx(c.why, lang)}</span>
               </button>
             </li>
           ))}
