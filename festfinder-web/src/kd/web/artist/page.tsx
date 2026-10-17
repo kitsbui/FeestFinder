@@ -148,7 +148,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
           <li key={e.id} className={cx('grid min-h-22 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1', g(fam))}>
             {e.startsOn ? <DateBlock hi={i === 0} top={weekdayShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} /> : <span />}
             <span className="flex min-w-0 flex-col gap-1">
-              <Link href={inLang('/e/' + e.slug, lang)} className="kd-h kd-ell hover:underline">{e.title}</Link>
+              <Link href={inLang('/e/' + e.slug, lang)} className="kd-h kd-ell kd-hit hover:underline">{e.title}</Link>
               <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{[e.venue.name, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
             </span>
             <span className="flex items-center gap-3.5">
@@ -311,7 +311,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                         {data.gear.map((x) => (
                           <li key={x.id} className="kd-lrow">
                             <span className="flex min-w-0 flex-1 flex-col">
-                              {x.url ? <a href={x.url} rel="noopener sponsored" className="kd-hs kd-ell hover:underline">{[x.brand, x.name].filter(Boolean).join(' ')}</a> : <span className="kd-hs kd-ell">{[x.brand, x.name].filter(Boolean).join(' ')}</span>}
+                              {x.url ? <a href={x.url} rel="noopener sponsored" className="kd-hit kd-hs kd-ell hover:underline">{[x.brand, x.name].filter(Boolean).join(' ')}</a> : <span className="kd-hs kd-ell">{[x.brand, x.name].filter(Boolean).join(' ')}</span>}
                               <span className="kd-s">{[text(x.categoryLabel, lang), text(x.usedForLabel, lang)].filter(Boolean).join(' · ')}</span>
                             </span>
                           </li>

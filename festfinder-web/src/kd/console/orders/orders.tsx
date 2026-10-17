@@ -101,9 +101,9 @@ function OrderList({ lang, params, set }: { lang: Lang; params: URLSearchParams;
             onPick={(i) => reset({ event: i?.value ?? null, eventLabel: i?.label ?? null })} />
         </div>
         <span className="flex items-center gap-1.5">
-          <Input type="date" boxClass="h-10 min-h-0" className="kd-num" aria-label={T.from} value={from} max={to || undefined} onChange={(e) => reset({ from: e.target.value })} />
+          <Input type="date" boxClass="h-11 min-h-0" className="kd-num" aria-label={T.from} value={from} max={to || undefined} onChange={(e) => reset({ from: e.target.value })} />
           <span className="kd-s" aria-hidden="true">→</span>
-          <Input type="date" boxClass="h-10 min-h-0" className="kd-num" aria-label={T.to} value={to} min={from || undefined} onChange={(e) => reset({ to: e.target.value })} />
+          <Input type="date" boxClass="h-11 min-h-0" className="kd-num" aria-label={T.to} value={to} min={from || undefined} onChange={(e) => reset({ to: e.target.value })} />
         </span>
       </FilterBar>
       {load.error ? <ErrorBox error={load.error} retry={load.reload} /> : null}

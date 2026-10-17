@@ -174,7 +174,12 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - `e2e/next/backoffice.spec.ts`: both rails, the guest wizard (axe included), the split queue, the bar and the tabs, the phone's stacked queue.
   - Budgets: arbitrary px values 126 (ESLint warnings stay 48).
   - [ ] Later: a booking flow ("Đặt lịch") and the organiser's own calendar view are not in the API yet; number keys for the listing's tabs if reviewers ask.
-- [ ] Phase 6: QA and governance (continuous)
+- [x] Phase 6: QA and governance (continuous; branch `design/phase-6`). `docs/DESIGN_GOVERNANCE.md` holds the three columns of a 9: the gates of every pull request, five people at every major phase, the numbers every two weeks.
+  - Touch targets: `e2e/next/targets.spec.ts` measures everything one taps on every role's screens at 390px with touch (its own box, the hit area its `::before` / `::after` draws, minus what an ancestor clips; WCAG's inline, equivalent and label exceptions). The first run found 498 targets under 44px; all fixed: fields take the tap over their whole height, `kd-btn`, `kd-chip`, `kd-tab` and segments are at least 44px wide, the skip link 44px tall, `kd-hit` (a line of text 44px tall without moving the lines around it) on row titles, crumbs, back links, fact and pin links, `kd-tap` on the Console's avatar, the Console's search and date fields 44px, the ticket dots 44px, the lineup's names carry their own ellipsis.
+  - Screens on every pull request: `.github/workflows/visual.yml` shoots `visual.spec.ts`'s screens on the base branch and on the PR, on the same runner (`FF_SNAPSHOT_DIR`), and compares; a difference fails with the `visual-diff` artifact until the label `visual-ok` accepts it, and a new push takes the label off.
+  - The design checklist as a merge condition: `.github/pull_request_template.md` ("Thiết kế": one primary, fits three widths, lean copy in both languages, three states, accessibility, routes listed, screens seen) and `.github/workflows/design-checklist.yml` with `.github/scripts/design-checklist.mjs` (tested in `test/design-checklist.test.ts`) on every PR that touches the front. The ship skill sends front changes through a pull request.
+  - Five people per major phase (2 who go out, 2 organisers, 1 artist; ≥ 4/5 finish the main task without a hint, first event on a phone under 10 s) and the two-weekly numbers (list → event → ticket, `nav_click`, `wizard_step`, review time, claims) are written down in `DESIGN_GOVERNANCE.md`.
+  - [ ] The owner: protect `main` on GitHub with the checks required; run the first five-person test on phases 1–5 and save the PostHog insights of the numbers.
 
 ## What the team does next in production
 
@@ -273,3 +278,4 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-17: Design v2 phase 3 (artists and projects): the directory's tabs and square cards, an artist's page in tabs with the latest mix, /p's empty state, claims counted.
 - 2026-10-17: Design v2 phase 4 (the app folded into the web): one surface (old app addresses redirect with their query), one frame for the app's screens, the installed app's two-step first run, notifications to the site's pages.
 - 2026-10-17: Design v2 phase 5 (Studio and the Console): seven-entry rails with folding groups, "Hôm nay" with actions on every to-do, the four-step wizard open before signing in, the Console's split queue with the bar for the rows picked and the listing's tabs.
+- 2026-10-18: Design v2 phase 6 (QA and governance): every target 44px on a phone on every role's screens (checked), screens compared with the base branch on every PR (`visual-ok` accepts), the design checklist as a merge condition, `docs/DESIGN_GOVERNANCE.md`.

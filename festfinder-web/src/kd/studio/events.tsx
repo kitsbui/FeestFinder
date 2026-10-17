@@ -124,7 +124,7 @@ export function EventsList() {
                       {e.startsOn ? <>{dayMonth(e.startsOn, lang)}{e.startsOn.slice(0, 4) !== year ? <span className="kd-s block">{e.startsOn.slice(0, 4)}</span> : null}</> : <span className="kd-s">{T.noDateCell}</span>}
                     </span>
                     <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-                      <KdLink className="kd-hs kd-ell hover:underline" href={'/studio/events/' + e.id}>{e.title}</KdLink>
+                      <KdLink className="kd-hs kd-ell kd-hit hover:underline" href={'/studio/events/' + e.id}>{e.title}</KdLink>
                       <span className="kd-s kd-ell">{e.meta[lang]}</span>
                     </span>
                     <span role="cell" className="flex min-w-0 flex-col gap-1">

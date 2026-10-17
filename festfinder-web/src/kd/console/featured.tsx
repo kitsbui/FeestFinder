@@ -306,7 +306,7 @@ function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<
       <span className="kd-s">{T.adContact}: {[i.contactName, i.email, i.phone].filter(Boolean).join(' · ')}</span>
       {links.length ? (
         <span className="flex flex-wrap gap-x-3 gap-y-1">
-          {links.map(([k, u]) => <a key={k} className="kd-s underline decoration-line-2 underline-offset-4" href={u} target="_blank" rel="noopener nofollow">{k === 'web' ? u.replace(/^https?:\/\/(www\.)?/, '') : k}</a>)}
+          {links.map(([k, u]) => <a key={k} className="kd-s kd-hit underline decoration-line-2 underline-offset-4" href={u} target="_blank" rel="noopener nofollow">{k === 'web' ? u.replace(/^https?:\/\/(www\.)?/, '') : k}</a>)}
         </span>
       ) : null}
       {i.description ? <span className="kd-s text-fg-2">{i.description}</span> : null}

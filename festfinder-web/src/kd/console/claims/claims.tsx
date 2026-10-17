@@ -99,7 +99,7 @@ function EventClaims({ lang, status }: { lang: Lang; status: State }) {
           {d.items.map((c) => (
             <Row key={c.id} cols={EVENT_COLS}>
               <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-                <a href={`/e/${c.event.slug}`} target="_blank" rel="noopener" className="kd-hs hover:underline">{c.event.title}</a>
+                <a href={`/e/${c.event.slug}`} target="_blank" rel="noopener" className="kd-hit kd-hs hover:underline">{c.event.title}</a>
                 <span className="kd-s">{[c.event.startsOn ? dayMonth(c.event.startsOn, lang) : null, c.event.submittedBy ? fill(C.sentBy, { n: c.event.submittedBy }) : null].filter(Boolean).join(' · ')}</span>
               </span>
               <span role="cell" className="flex min-w-0 flex-col gap-1">
@@ -146,7 +146,7 @@ function ProfileClaims({ lang, status }: { lang: Lang; status: State }) {
               <span role="cell" className="flex min-w-0 flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
                   <Status tone={c.kind === 'artist' ? 'live' : 'none'}>{c.kind === 'artist' ? C.artist : C.organiser}</Status>
-                  <a href={c.kind === 'artist' ? `/a/${c.target.slug}` : `/o/${c.target.slug}`} target="_blank" rel="noopener" className="kd-hs hover:underline">{c.target.name}</a>
+                  <a href={c.kind === 'artist' ? `/a/${c.target.slug}` : `/o/${c.target.slug}`} target="_blank" rel="noopener" className="kd-hit kd-hs hover:underline">{c.target.name}</a>
                 </span>
                 <span className="kd-s">
                   {c.kind === 'artist'

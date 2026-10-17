@@ -213,7 +213,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                           {seo.page.facts.map((f) => (
                             <div key={f.label} className="flex flex-col gap-0.5">
                               <dt className="kd-m">{f.label}</dt>
-                              <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
+                              <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="kd-hit underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
                             </div>
                           ))}
                         </dl>

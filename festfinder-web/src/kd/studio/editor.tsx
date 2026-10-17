@@ -277,7 +277,7 @@ export function EventEditor({ id }: { id: string }) {
     <Page>
       <div className="kd-sec items-end pb-2">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <KdLink href="/studio/events" className="kd-m flex items-center gap-1.5 hover:text-fg-1"><ArrowLeftIcon size={14} aria-hidden="true" />{T.myEvents}</KdLink>
+          <KdLink href="/studio/events" className="kd-m kd-hit flex items-center gap-1.5 hover:text-fg-1"><ArrowLeftIcon size={14} aria-hidden="true" />{T.myEvents}</KdLink>
           <h1 className="kd-d2 kd-ell">{f.title.trim() || T.noTitle}</h1>
           <span className="kd-s flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <Status tone={statusTone(d.status)}>{d.statusLabel[lang]}</Status>

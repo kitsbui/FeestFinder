@@ -136,7 +136,7 @@ function Registry({ lang, items, params, setQuery, onOpen }: {
               // A row holds a link and a button, so it is not itself a button: the name opens the drawer.
               <Row key={v.id} cols={COLS}>
                 <span role="cell" className="flex min-w-0 flex-col py-2">
-                  <button type="button" className="kd-hs kd-ell text-left hover:underline" onClick={() => onOpen(v)}>{v.name}</button>
+                  <button type="button" className="kd-hs kd-ell kd-hit text-left hover:underline" onClick={() => onOpen(v)}>{v.name}</button>
                   <span className="kd-s kd-ell">{v.address}</span>
                 </span>
                 <span role="cell" className="flex min-w-0 flex-col">
@@ -149,7 +149,7 @@ function Registry({ lang, items, params, setQuery, onOpen }: {
                 </span>
                 <span role="cell" className="kd-num text-sm"><strong className="text-fg-1">{v.upcoming}</strong> · {v.events}</span>
                 <span role="cell">
-                  <a className="kd-s inline-flex items-center gap-1 kd-num hover:text-fg-1" href={`https://www.google.com/maps?q=${v.lat},${v.lng}`} target="_blank" rel="noopener noreferrer">
+                  <a className="kd-s kd-hit inline-flex items-center gap-1 kd-num hover:text-fg-1" href={`https://www.google.com/maps?q=${v.lat},${v.lng}`} target="_blank" rel="noopener noreferrer">
                     {Number(v.lat).toFixed(4)}, {Number(v.lng).toFixed(4)}<span className="sr-only"> · {fill(T.openPinOf, { n: v.name })}</span><ArrowSquareOutIcon size={12} aria-hidden="true" />
                   </a>
                 </span>
@@ -181,7 +181,7 @@ function UnresolvedList({ lang, items, onLink, onCreate }: {
           <Panel as="article" className="flex flex-col gap-4 p-5" aria-label={e.title}>
             <div className="flex items-start gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <a className="kd-h hover:underline" href={'/console/events/' + e.id}>{e.title}</a>
+                <a className="kd-hit kd-h hover:underline" href={'/console/events/' + e.id}>{e.title}</a>
                 <span className="kd-s">{[e.organizer, e.startsOn ? whenShort({ startsOn: e.startsOn }, lang) : null].filter(Boolean).join(' · ')}</span>
               </div>
               <Pill tone={e.status === 'live' ? 'live' : 'warn'}>{FF.text(e.statusLabel, lang) || e.status}</Pill>

@@ -81,7 +81,7 @@ function Catalogue({ lang }: { lang: Lang }) {
           <Table label={T.title} cols={COLS} head={[T.colArtist, T.colVerified, T.colAliases, T.colOwner, T.colAnchors, <span key="e" className="block text-right">{T.colEvents}</span>, '']}>
             {d.items.map((a) => (
               <Row key={a.id} cols={COLS}>
-                <span role="cell" className="kd-ell"><a className="kd-hs hover:underline" href={'/a/' + a.slug} target="_blank" rel="noopener">{a.name}</a></span>
+                <span role="cell" className="min-w-0"><a className="kd-hs kd-ell kd-hit block hover:underline" href={'/a/' + a.slug} target="_blank" rel="noopener">{a.name}</a></span>
                 <span role="cell">{a.verified ? <Pill tone="ok"><SealCheckIcon size={12} aria-hidden="true" />{T.verified}</Pill> : <span className="kd-s">—</span>}</span>
                 <span role="cell" className="kd-s kd-ell">{a.aliases.length ? a.aliases.join(', ') : '—'}</span>
                 <span role="cell" className="kd-s kd-ell">{a.owner?.email ?? '—'}</span>
@@ -199,7 +199,7 @@ function GearList({ lang }: { lang: Lang }) {
                   </span>
                   <span className="kd-num text-right text-sm text-fg-1">{count(g.artists, lang)}</span>
                   <Select
-                    boxClass="h-10 min-h-0"
+                    boxClass="h-11 min-h-0"
                     aria-label={fill(T.linkFor, { n: name })}
                     value={g.affiliateLinkId ?? ''}
                     disabled={busy === g.id}

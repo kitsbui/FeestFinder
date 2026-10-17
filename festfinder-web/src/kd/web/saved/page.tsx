@@ -301,7 +301,7 @@ function PastRow({ e, lang, saved, onSave, onCollect, folderLabel }: {
     <li className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1', g(fam))}>
       {e.startsOn ? <DateBlock top={monthShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={e.startsOn.slice(0, 4)} /> : <span />}
       <span className="flex min-w-0 flex-col gap-1">
-        <Link href={inLang('/e/' + e.slug, lang)} className="kd-hs kd-ell hover:underline">{e.title}</Link>
+        <Link href={inLang('/e/' + e.slug, lang)} className="kd-hit kd-hs kd-ell hover:underline">{e.title}</Link>
         <span className="kd-s kd-ell flex items-center gap-1.5">
           <Marker family={fam} />
           {[e.venue.name, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}

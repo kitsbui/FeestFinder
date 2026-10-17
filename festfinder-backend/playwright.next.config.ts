@@ -14,6 +14,9 @@ const WEB = `http://localhost:${WEB_PORT}`;
 
 export default defineConfig({
   testDir: './e2e/next',
+  // CI compares a pull request's screens with its base branch's, both taken on the same machine
+  // (.github/workflows/visual.yml); locally the baselines stay next to visual.spec.ts.
+  ...(process.env.FF_SNAPSHOT_DIR ? { snapshotPathTemplate: `${process.env.FF_SNAPSHOT_DIR}/{arg}{ext}` } : {}),
   timeout: 30_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

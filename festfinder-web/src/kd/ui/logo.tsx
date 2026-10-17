@@ -13,7 +13,7 @@ const RATIO = 5560 / 1080;
 
 export function Logo({ lang = 'vi', height = 22, mark = false, className }: { lang?: Lang; height?: number; mark?: boolean; className?: string }) {
   return (
-    <Link href={inLang('/', lang)} aria-label={pick(COMMON, lang).homeLink} className={cx('inline-flex h-11 shrink-0 items-center', className)}>
+    <Link href={inLang('/', lang)} aria-label={pick(COMMON, lang).homeLink} className={cx('inline-flex h-11 min-w-11 shrink-0 items-center', className)}>
       {mark
         ? <img src="/kd/ff-mark.svg" alt="" width={height} height={height} />
         : <img src="/kd/ff-wordmark.svg" alt="" width={Math.round(height * RATIO)} height={height} />}

@@ -188,7 +188,7 @@ function VenueRow({ v, lang }: { v: StatVenue; lang: Lang }) {
   const where = [v.area, v.distanceKm != null ? km(v.distanceKm, lang) : null].filter(Boolean).join(' · ');
   const event = (x: StatVenue['events'][number]) => (
     <li key={x.id}>
-      <Link href={inLang('/e/' + x.slug, lang)} className="kd-s flex min-h-8 min-w-0 items-center gap-1.5 hover:text-fg-1">
+      <Link href={inLang('/e/' + x.slug, lang)} className="kd-s flex min-h-11 min-w-0 items-center gap-1.5 hover:text-fg-1">
         <Marker family={familyOf(x.genre)} />
         <span className="kd-ell">{[x.title, whenShort(x, lang), x.startTime].filter(Boolean).join(' · ')}</span>
       </Link>

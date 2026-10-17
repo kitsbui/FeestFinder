@@ -218,7 +218,7 @@ export function Dashboard() {
               <ul className="flex flex-col gap-2 border-t border-line-1 pt-3">
                 {search.items.slice(0, 3).map((x) => (
                   <li key={x.id}>
-                    <KdLink className="flex flex-col gap-0.5 hover:text-fg-1" href={'/studio/events/' + x.id}>
+                    <KdLink className="flex min-h-11 flex-col justify-center gap-0.5 hover:text-fg-1" href={'/studio/events/' + x.id}>
                       <span className="kd-s flex justify-between gap-3 text-fg-2"><span className="kd-ell">{x.title}</span><span className="kd-mb kd-num">{x.score}</span></span>
                       {x.missing[0] ? <span className="kd-s text-xs text-fg-3">{x.missing[0][lang]}</span> : null}
                     </KdLink>

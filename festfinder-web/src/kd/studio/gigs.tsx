@@ -70,7 +70,7 @@ export function Gigs() {
                 {inq.map((i) => (
                   <li key={i.id} className="flex flex-col gap-1 border-b border-line-1 py-3 first:pt-0 last:border-b-0">
                     <span className="flex items-center justify-between gap-3">
-                      {i.artist ? <KdLink className="kd-hs hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
+                      {i.artist ? <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
                       <Status tone={i.status === 'accepted' ? 'ok' : i.status === 'declined' ? 'bad' : 'warn'}>{i.status === 'accepted' ? T.inqAccepted : i.status === 'declined' ? T.inqDeclined : T.inqPending}</Status>
                     </span>
                     <span className="kd-m kd-num">{[dayMonth(i.eventOn, lang), i.cityLabel?.[lang], i.feeOffer != null ? money(i.feeOffer, i.currency, lang) : null].filter(Boolean).join(' · ')}</span>
@@ -109,7 +109,7 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
               {apps.map((a) => (
                 <li key={a.id} className="flex flex-col gap-1.5 border-b border-line-1 py-3 last:border-b-0">
                   <span className="flex flex-wrap items-center justify-between gap-2">
-                    <KdLink className="kd-hs hover:underline" href={'/a/' + a.artist.slug}>{a.artist.name}</KdLink>
+                    <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + a.artist.slug}>{a.artist.name}</KdLink>
                     <Status tone={a.status === 'booked' ? 'ok' : a.status === 'shortlisted' ? 'warn' : a.status === 'declined' ? 'bad' : 'none'}>
                       {a.status === 'booked' ? T.appBooked : a.status === 'shortlisted' ? T.appShortlisted : a.status === 'declined' ? T.appDeclined : T.appNew}
                     </Status>

@@ -64,7 +64,7 @@ export function ConsoleProjects() {
             {load.data.items.map((p) => (
               <Row key={p.id} cols={COLS} current={open?.id === p.id}>
                 <Cell>
-                  <button type="button" className="flex w-full min-w-0 flex-col text-left hover:underline" aria-label={fill(T.openLabel, { t: p.title })} onClick={() => setOpen(p)}>
+                  <button type="button" className="flex min-h-11 w-full min-w-0 flex-col justify-center text-left hover:underline" aria-label={fill(T.openLabel, { t: p.title })} onClick={() => setOpen(p)}>
                     <Two title={p.title} sub={[FF.text(p.city.label, lang), p.seeking.map((s) => FF.text(s.label, lang)).join(', ')].filter(Boolean).join(' · ')} />
                   </button>
                 </Cell>

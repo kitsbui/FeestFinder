@@ -85,11 +85,14 @@ export function Lineup({ lang }: { lang: Lang }) {
         less={C.less}
         render={(a) => {
           const slug = slugOf(a.name);
-          const name = slug ? <Link href={'/a/' + slug} className="hover:underline">{a.name}</Link> : a.name;
+          // The link carries the ellipsis itself, so nothing clips its 44px hit area.
+          const name = slug
+            ? <Link href={'/a/' + slug} className="kd-hs kd-ell kd-hit min-w-0 flex-1 hover:underline">{a.name}</Link>
+            : <span className="kd-hs kd-ell min-w-0 flex-1">{a.name}</span>;
           return (
             <div key={(a.set?.id ?? '') + a.name} className="kd-lrow min-h-13">
               <span className="kd-mb kd-num w-13">{a.set ? hhmm(a.set.startMin) : ''}</span>
-              <span className="kd-hs min-w-0 flex-1 kd-ell">{name}</span>
+              {name}
               {a.stage ? <span className="kd-s flex items-center gap-1.5"><Marker family={fam} />{a.stage}</span> : null}
             </div>
           );

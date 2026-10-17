@@ -240,7 +240,7 @@ function Offers({ lang, p }: { lang: Lang; p: Project }) {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="kd-tag">{text(o.kindLabel, lang)}</span>
-                  <span className="kd-hs kd-ell">{o.artist ? <Link href={inLang('/a/' + encodeURIComponent(o.artist.slug), lang)} className="hover:underline">{o.artist.name}</Link> : o.from}</span>
+                  <span className="kd-hs kd-ell">{o.artist ? <Link href={inLang('/a/' + encodeURIComponent(o.artist.slug), lang)} className="kd-hit hover:underline">{o.artist.name}</Link> : o.from}</span>
                   {o.from && o.person && o.from !== o.person ? <span className="kd-s kd-ell">· {o.person}</span> : null}
                 </span>
                 {o.status === 'sent' ? (
@@ -323,7 +323,7 @@ function Mine({ lang }: { lang: Lang }) {
               <li key={o.id} className="kd-card flex flex-col gap-1 p-4">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="kd-tag">{text(o.kindLabel, lang)}</span>
-                  <Link href={inLang('/p/' + encodeURIComponent(o.project.slug), lang)} className="kd-hs hover:underline">{o.project.title}</Link>
+                  <Link href={inLang('/p/' + encodeURIComponent(o.project.slug), lang)} className="kd-hit kd-hs hover:underline">{o.project.title}</Link>
                   <span className="kd-s">· {({ accepted: T.accepted, sent: T.waiting, declined: T.declined, withdrawn: T.withdrawn } as Record<string, string>)[o.status] ?? o.status}</span>
                 </span>
                 {o.contact ? <span className="kd-s text-fg-1">{T.contact}: {[o.contact.name, o.contact.email, o.contact.phone].filter(Boolean).join(' · ')}</span> : null}

@@ -523,7 +523,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
             <ul className="flex flex-col">
               {boosts.map((c) => (
                 <li key={c.key}>
-                  <button type="button" className="flex w-full items-center gap-2 border-t border-line-1 py-2 text-left text-sm hover:text-fg-1" onClick={() => jump(c.sec)}>
+                  <button type="button" className="flex min-h-11 w-full items-center gap-2 border-t border-line-1 py-2 text-left text-sm hover:text-fg-1" onClick={() => jump(c.sec)}>
                     <span className="min-w-0 flex-1">{T[c.label]}</span><span className="kd-m kd-num">+{c.pts}</span>
                   </button>
                 </li>

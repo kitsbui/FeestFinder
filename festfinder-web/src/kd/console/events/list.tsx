@@ -112,9 +112,9 @@ export function EventList() {
             onChange={(v) => reset({ when: v || 'all', ...(v === 'range' ? { from: get('from') || today(), to: get('to') || today() } : { from: null, to: null }) })} />
           {when === 'range' ? (
             <span className="flex items-center gap-2">
-              <Input boxClass="h-10 min-h-0 w-[160px]" type="date" className="kd-num" aria-label={T.fFrom} value={get('from')} onChange={(e) => reset({ from: e.target.value })} />
+              <Input boxClass="h-11 min-h-0 w-[160px]" type="date" className="kd-num" aria-label={T.fFrom} value={get('from')} onChange={(e) => reset({ from: e.target.value })} />
               <span aria-hidden="true">→</span>
-              <Input boxClass="h-10 min-h-0 w-[160px]" type="date" className="kd-num" aria-label={T.fTo} min={get('from') || undefined} value={get('to')} onChange={(e) => reset({ to: e.target.value })} />
+              <Input boxClass="h-11 min-h-0 w-[160px]" type="date" className="kd-num" aria-label={T.fTo} min={get('from') || undefined} value={get('to')} onChange={(e) => reset({ to: e.target.value })} />
             </span>
           ) : null}
           {(o?.genres.length ?? 0) > 1 ? (
@@ -141,7 +141,7 @@ export function EventList() {
                 <span role="cell" className="flex min-w-0 items-center gap-3 py-2">
                   <Art title={e.title} family="edm" cover={e.coverUrl} className="h-9 w-16 shrink-0 rounded-md" />
                   <span className="flex min-w-0 flex-col">
-                    <KdLink href={'/console/events/' + e.id} className="kd-hs kd-ell hover:underline">
+                    <KdLink href={'/console/events/' + e.id} className="kd-hs kd-ell kd-hit hover:underline">
                       {e.featured ? <StarIcon size={14} weight="fill" className="mr-1 inline text-info" aria-label={T.featured} /> : null}{e.title}
                     </KdLink>
                     <span className="kd-s kd-ell">{[e.genre, e.venueName, e.area].filter(Boolean).join(' · ') || '—'}</span>

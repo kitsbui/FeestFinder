@@ -51,7 +51,7 @@ export function EventDetail({ id }: { id: string }) {
           <>
             <PageHead
               eyebrow={<>
-                <KdLink href="/console/events" className="kd-m inline-flex items-center gap-1 hover:text-fg-1"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>
+                <KdLink href="/console/events" className="kd-m kd-hit inline-flex items-center gap-1 hover:text-fg-1"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>
                 <Pill tone={statusTone(ev.status)}>{ev.statusLabel[lang]}</Pill>
                 {ev.featured ? <Pill tone="live">{T.featured}</Pill> : null}
                 {ev.heldForReports ? <Pill tone="bad">{T.held}</Pill> : null}

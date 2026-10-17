@@ -58,7 +58,7 @@ export function Door() {
               label={T.pickEvent}
               width={320}
               trigger={(p) => (
-                <button type="button" {...p} ref={p.ref} className="kd-m kd-ell flex items-center gap-1 text-left hover:text-fg-1">
+                <button type="button" {...p} ref={p.ref} className="kd-m kd-ell kd-hit flex items-center gap-1 text-left hover:text-fg-1">
                   {event.title}{event.startsOn ? ' · ' + dayMonth(event.startsOn, lang) : ''}<CaretDownIcon size={12} aria-hidden="true" />
                 </button>
               )}

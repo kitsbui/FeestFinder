@@ -93,7 +93,7 @@ export function ConsoleFeedback() {
             {load.data.items.map((r) => (
               <Row key={r.id} cols={COLS} current={open === r.id}>
                 <Cell>
-                  <button type="button" className="flex w-full min-w-0 flex-col text-left hover:underline" onClick={() => setOpen(r.id)}>
+                  <button type="button" className="flex min-h-11 w-full min-w-0 flex-col justify-center text-left hover:underline" onClick={() => setOpen(r.id)}>
                     <Two title={r.title} sub={[r.ticketId, FF.text(r.typeLabel, lang), r.severity ? fill(T.severity, { s: r.severity }) : null, stamp(r.createdAt, lang)].filter(Boolean).join(' · ')} />
                   </button>
                 </Cell>

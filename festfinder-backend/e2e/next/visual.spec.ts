@@ -2,11 +2,13 @@ import { expect, test } from '@playwright/test';
 
 /*
  * Visual baselines of the main screens at a phone, a tablet and a desktop width (design phase 0).
- * Opt-in: fonts and image decoding differ between machines, so these run where the baselines were
- * made, not in CI.
+ * Opt-in: fonts and image decoding differ between machines, so the baselines here are for the
+ * machine that made them. CI does not use them: on every pull request that touches the front it
+ * shoots these screens on the base branch and on the PR, on the same runner, and compares
+ * (.github/workflows/visual.yml, the design v2 phase 6 gate); the "visual-ok" label accepts a change.
  *
  *   npm run test:visual                       compare with the baselines
- *   npm run test:visual -- --update-snapshots make new baselines after an intended change
+ *   npm run test:visual -- --update-snapshots make new baselines after an intended change (fresh build)
  *
  * A diff is reviewed in the PR like code: the report shows the expected, actual and diff images.
  */

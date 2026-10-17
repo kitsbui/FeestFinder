@@ -169,7 +169,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
           <div className="flex min-h-dvh flex-col">
             <header className="flex h-15 items-center gap-3.5 border-b border-line-1 px-[var(--kd-gutter)]">
               <Input
-                boxClass="h-[38px] min-h-0 flex-[0_1_420px]"
+                boxClass="h-11 min-h-0 flex-[0_1_420px] desk:h-[38px]"
                 className="text-sm"
                 icon={<MagnifyingGlassIcon size={16} className="text-fg-3" aria-hidden="true" />}
                 type="search"
@@ -183,7 +183,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
                 label={T.account}
                 className="ml-auto"
                 trigger={(p) => (
-                  <button type="button" {...p} ref={p.ref} aria-label={name} className="kd-mb ml-auto flex size-8 shrink-0 items-center justify-center rounded-full bg-info text-xs text-on-accent" onClick={() => { p.onClick(); if (!options) FF.maybe(FF.get('/admin/impersonation/options'), { items: [] }).then((o: { items: NonNullable<typeof options> }) => setOptions(o.items)); }}>
+                  <button type="button" {...p} ref={p.ref} aria-label={name} className="kd-mb kd-tap ml-auto flex size-8 shrink-0 items-center justify-center rounded-full bg-info text-xs text-on-accent" onClick={() => { p.onClick(); if (!options) FF.maybe(FF.get('/admin/impersonation/options'), { items: [] }).then((o: { items: NonNullable<typeof options> }) => setOptions(o.items)); }}>
                     <span className="kd-av-i" data-i={initials} aria-hidden="true" />
                   </button>
                 )}

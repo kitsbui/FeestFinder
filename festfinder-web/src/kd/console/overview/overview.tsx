@@ -119,7 +119,7 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
           <Panel as="section" aria-labelledby="ov-up" className="flex flex-col">
             <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-4">
               <h2 id="ov-up" className="kd-h">{O.upcoming}</h2>
-              <Link href="/console/events?when=week&status=live" className="kd-s inline-flex items-center gap-1 hover:text-fg-1">{O.next7}<CaretRightIcon size={14} aria-hidden="true" /></Link>
+              <Link href="/console/events?when=week&status=live" className="kd-s kd-hit inline-flex items-center gap-1 hover:text-fg-1">{O.next7}<CaretRightIcon size={14} aria-hidden="true" /></Link>
             </div>
             {d.upcoming.length ? (
               <ul className="flex flex-col">
@@ -149,7 +149,7 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
         <Panel as="section" aria-labelledby="ov-act" className="flex flex-col">
           <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-4">
             <h2 id="ov-act" className="kd-h">{O.activity}</h2>
-            <Link href="/console/audit" className="kd-s inline-flex items-center gap-1 hover:text-fg-1">{O.auditLog}<CaretRightIcon size={14} aria-hidden="true" /></Link>
+            <Link href="/console/audit" className="kd-s kd-hit inline-flex items-center gap-1 hover:text-fg-1">{O.auditLog}<CaretRightIcon size={14} aria-hidden="true" /></Link>
           </div>
           {d.activity.length ? (
             <ul className="flex flex-col">

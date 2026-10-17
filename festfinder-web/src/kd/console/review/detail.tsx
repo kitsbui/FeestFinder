@@ -60,7 +60,7 @@ function Section({ title, aside, children }: { title: ReactNode; aside?: ReactNo
 function Ext({ href }: { href: string | null }) {
   if (!href) return <span className="kd-s">—</span>;
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-center gap-1 text-sm text-fg-1 hover:underline">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="kd-hit inline-flex min-w-0 items-center gap-1 text-sm text-fg-1 hover:underline">
       <span className="kd-ell">{href.replace(/^https?:\/\//, '')}</span><ArrowSquareOutIcon size={13} aria-hidden="true" />
     </a>
   );
@@ -164,7 +164,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
           <h1 className="kd-d2">{title}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {org ? (
-              <Link href={`/console/organizers?id=${org.id}`} className="kd-t flex items-center gap-2 text-fg-1 hover:underline"><Avatar org name={org.name} src={org.logoUrl} size={24} />{org.name}</Link>
+              <Link href={`/console/organizers?id=${org.id}`} className="kd-t kd-hit flex items-center gap-2 text-fg-1 hover:underline"><Avatar org name={org.name} src={org.logoUrl} size={24} />{org.name}</Link>
             ) : <span className="kd-t">{item?.organizer.name}</span>}
             {org?.verified ?? item?.organizer.verified ? <Status tone="ok">{T.verified}</Status>
               : org?.state === 'flagged' ? <Status tone="bad">{R.flaggedOrg}</Status> : <Status tone="warn">{T.unverified}</Status>}
@@ -241,7 +241,7 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
                       <KV rows={[
                         [R.when, ev.startsOn ? <span className="kd-num">{whenLong(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''}</span> : <span className="text-bad">{R.noDate}</span>],
                         [R.genre, (
-                          <Select key={ev.genre ?? ''} aria-label={R.genre} boxClass="h-10 min-h-0 max-w-[260px]" value={ev.genre ?? ''} disabled={busy} onChange={(e) => quick({ genre: e.target.value || null }, R.genreChanged)}>
+                          <Select key={ev.genre ?? ''} aria-label={R.genre} boxClass="h-11 min-h-0 max-w-[260px]" value={ev.genre ?? ''} disabled={busy} onChange={(e) => quick({ genre: e.target.value || null }, R.genreChanged)}>
                             <option value="">{R.pickGenre}</option>
                             {(opts?.genres ?? []).map((x) => <option key={x.value} value={x.value}>{x.label[lang]}</option>)}
                           </Select>

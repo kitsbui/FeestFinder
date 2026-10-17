@@ -102,7 +102,7 @@ export function Sources() {
                   <ul className="flex flex-col">
                     {d.cancelledBySource.map((c) => (
                       <li key={c.id} className="flex flex-col gap-0.5 border-t border-line-1 py-2">
-                        <Link className="kd-hs hover:underline" href={`/console/events/${c.id}?tab=sources`}>{c.title}</Link>
+                        <Link className="kd-hit kd-hs hover:underline" href={`/console/events/${c.id}?tab=sources`}>{c.title}</Link>
                         <span className="kd-s kd-num">{[c.startsOn, c.host].filter(Boolean).join(' · ')}</span>
                       </li>
                     ))}
@@ -119,7 +119,7 @@ export function Sources() {
                     <Row key={s.id} cols={COLS} className="py-2" current={s.id === openId}>
                       <span role="cell" className="flex min-w-0 flex-col">
                         <span className="flex min-w-0 items-center gap-2">
-                          <button type="button" className="kd-hs kd-ell text-left hover:underline" aria-label={fill(T.open, { n: s.name })} onClick={() => setParams({ id: s.id })}>{s.name}</button>
+                          <button type="button" className="kd-hit kd-hs kd-ell text-left hover:underline" aria-label={fill(T.open, { n: s.name })} onClick={() => setParams({ id: s.id })}>{s.name}</button>
                           {s.enabled ? null : <Pill>{T.off}</Pill>}
                         </span>
                         <span className="kd-s kd-ell text-xs">{[T[s.adapter] ?? s.adapter, host(s.url)].filter(Boolean).join(' · ')}</span>
@@ -357,7 +357,7 @@ function SourceDetail({ lang, source, onClose, onChanged }: { lang: Lang; source
                   <Row key={r.id} cols={RAW_COLS} className="py-2">
                     <span role="cell"><Pill tone={look.tone}>{T[look.key]}</Pill></span>
                     <span role="cell" className="flex min-w-0 flex-col">
-                      {r.event ? <Link className="kd-hs kd-ell hover:underline" href={'/console/events/' + r.event.id}>{name}</Link> : <span className="kd-hs kd-ell">{name}</span>}
+                      {r.event ? <Link className="kd-hit kd-hs kd-ell hover:underline" href={'/console/events/' + r.event.id}>{name}</Link> : <span className="kd-hs kd-ell">{name}</span>}
                       <span className="kd-s kd-ell text-xs">{[r.error, r.matchReason ? `${r.matchScore} · ${r.matchReason}` : null].filter(Boolean).join(' · ') || ago(r.fetchedAt, lang)}</span>
                     </span>
                     <span role="cell"><IconButton size="sm" label={fill(T.rawOf, { n: name })} onClick={() => setRawId(r.id)}><CodeIcon size={16} aria-hidden="true" /></IconButton></span>

@@ -294,7 +294,7 @@ function PartnerDetail({ lang, partner, onClose, onEdit, onChanged }: { lang: La
                     : <span className="kd-s">{T.noMatch}</span>}</Cell>
                   <Cell end className="kd-num text-sm text-fg-1"><Two title={money(c.amount, c.currency, lang)} sub={money(c.commission, c.currency, lang)} /></Cell>
                   <Cell>
-                    <Select boxClass="h-10 min-h-0" aria-label={fill(T.statusOf, { o: c.orderRef })} value={c.status} onChange={(e) => settle(c, e.target.value as ConvStatus)}>
+                    <Select boxClass="h-11 min-h-0" aria-label={fill(T.statusOf, { o: c.orderRef })} value={c.status} onChange={(e) => settle(c, e.target.value as ConvStatus)}>
                       {STATUSES.map((s) => <option key={s} value={s}>{label[s]}</option>)}
                     </Select>
                   </Cell>

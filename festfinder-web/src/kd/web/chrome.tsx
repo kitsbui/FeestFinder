@@ -278,7 +278,7 @@ export function Crumbs({ items, label }: { items: { name: string; href?: string 
       {shown.map((c, i) => (
         <span key={i} className="flex min-w-0 items-center gap-2">
           {i ? <CaretRightIcon size={12} className="shrink-0 text-fg-3" aria-hidden="true" /> : null}
-          {c.href ? <Link href={c.href} className="text-fg-3 hover:text-fg-1">{c.name}</Link> : <span className="kd-ell text-fg-2" aria-current="page">{c.name}</span>}
+          {c.href ? <Link href={c.href} className="kd-hit text-fg-3 hover:text-fg-1">{c.name}</Link> : <span className="kd-ell text-fg-2" aria-current="page">{c.name}</span>}
         </span>
       ))}
     </nav>

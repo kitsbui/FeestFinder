@@ -214,7 +214,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     <dl className="flex flex-col">
                       <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.businessType}</dt><dd className="kd-hs">{text(org.typeLabel, lang) || T.orgKind}</dd></div>
                       {org.markets.length ? <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.markets}</dt><dd className="kd-hs text-right">{org.markets.map((m) => text(m.label, lang) || m.slug).join(', ')}</dd></div> : null}
-                      {org.website ? <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.website}</dt><dd className="kd-hs"><a href={org.website} rel="noopener nofollow" className="hover:underline">{host(org.website)}</a></dd></div> : null}
+                      {org.website ? <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.website}</dt><dd className="kd-hs"><a href={org.website} rel="noopener nofollow" className="kd-hit hover:underline">{host(org.website)}</a></dd></div> : null}
                       <div className="kd-lrow min-h-11 border-b-0"><dt className="kd-s flex-1">{T.verified}</dt><dd className="kd-hs">{org.verified ? T.checked : T.unchecked}</dd></div>
                     </dl>
                   </Accordion>

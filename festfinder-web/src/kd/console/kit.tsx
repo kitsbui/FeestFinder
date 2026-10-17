@@ -200,7 +200,7 @@ export function MultiChoice({ label, values, options, onChange }: {
 
 /** A search field for a filter bar. */
 export function SearchField({ value, onChange, label, placeholder }: { value: string; onChange: (v: string) => void; label: string; placeholder?: string }) {
-  return <Input boxClass="h-10 min-h-0 flex-[0_1_300px]" type="search" value={value} aria-label={label} placeholder={placeholder ?? label} onChange={(e) => onChange(e.target.value)} />;
+  return <Input boxClass="h-11 min-h-0 flex-[0_1_300px]" type="search" value={value} aria-label={label} placeholder={placeholder ?? label} onChange={(e) => onChange(e.target.value)} />;
 }
 
 export function Loading({ className }: { className?: string }) {

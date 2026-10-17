@@ -120,7 +120,7 @@ function Links({ lang }: { lang: Lang }) {
           {load.data.items.map((l) => (
             <Row key={l.id} cols={COLS}>
               <Cell>
-                <button type="button" className="flex w-full min-w-0 flex-col text-left hover:underline" aria-label={fill(T.editLink, { l: l.label })} onClick={() => setForm({ link: l })}>
+                <button type="button" className="flex min-h-11 w-full min-w-0 flex-col justify-center text-left hover:underline" aria-label={fill(T.editLink, { l: l.label })} onClick={() => setForm({ link: l })}>
                   <Two title={l.label} sub={l.destinationUrl.replace(/^https:\/\//, '').slice(0, 60)} />
                 </button>
               </Cell>

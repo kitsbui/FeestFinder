@@ -177,7 +177,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
           {o.tickets.length > 1 ? (
             <span className="flex items-center">
               {o.tickets.map((x, k) => (
-                <button key={x.id} type="button" aria-label={fill(T.showTicket, { i: k + 1 })} aria-pressed={k === i} onClick={() => setI(k)} className="flex h-11 w-8 items-center justify-center">
+                <button key={x.id} type="button" aria-label={fill(T.showTicket, { i: k + 1 })} aria-pressed={k === i} onClick={() => setI(k)} className="flex size-11 items-center justify-center">
                   <span className={cx('block h-2 rounded-full transition-all', k === i ? 'w-5 bg-on-inverse' : 'w-2 bg-on-inverse/30')} />
                 </button>
               ))}

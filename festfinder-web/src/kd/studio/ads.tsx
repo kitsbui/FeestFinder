@@ -59,7 +59,7 @@ export function StudioAds() {
             {data.items.map((r) => (
               <Row key={r.id} cols={COLS}>
                 <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-                  <a className="kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug} target="_blank" rel="noopener">{r.event.title}</a>
+                  <a className="kd-hit kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug} target="_blank" rel="noopener">{r.event.title}</a>
                   {r.reply ? <span className="kd-s">{fill(T.adReply, { r: r.reply })}</span> : r.message ? <span className="kd-s kd-ell">{r.message}</span> : null}
                 </span>
                 <span role="cell" className="kd-s">{r.placements.map((p) => p.label[lang]).join(', ')}</span>

@@ -135,7 +135,7 @@ function Requests({ lang }: { lang: Lang }) {
               return (
                 <Row key={i.id} cols={REQ_COLS} className="py-3">
                   <span role="cell" className="flex min-w-0 items-center gap-1.5">
-                    {i.organizer ? <KdLink className="kd-hs kd-ell hover:underline" href={'/o/' + i.organizer.slug}>{who}</KdLink> : <span className="kd-hs">{who}</span>}
+                    {i.organizer ? <KdLink className="kd-hit kd-hs kd-ell hover:underline" href={'/o/' + i.organizer.slug}>{who}</KdLink> : <span className="kd-hs">{who}</span>}
                     {i.organizer?.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.verified} /> : null}
                   </span>
                   <span role="cell" className="kd-s kd-num">{[dayMonth(i.eventOn, lang), i.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
@@ -268,7 +268,7 @@ function Reported({ lang }: { lang: Lang }) {
                 <Row key={r.id} cols={REP_COLS} className="py-3">
                   <span role="cell" className="flex min-w-0 flex-col gap-0.5">
                     {/* Only a public listing has a page: one still in review would answer 404. */}
-                    {r.event?.status === 'live' ? <KdLink className="kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug}>{r.event.title}</KdLink> : <span className="kd-hs kd-ell">{r.event?.title ?? r.report.title}</span>}
+                    {r.event?.status === 'live' ? <KdLink className="kd-hit kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug}>{r.event.title}</KdLink> : <span className="kd-hs kd-ell">{r.event?.title ?? r.report.title}</span>}
                     <span className="kd-s kd-num">{[dayMonth(r.event?.startsOn ?? r.report.startsOn, lang), r.report.venueName].filter(Boolean).join(' · ')}</span>
                   </span>
                   <span role="cell">{r.event ? <Status tone={r.event.status === 'live' ? 'ok' : r.event.status === 'in_review' ? 'warn' : r.event.status === 'rejected' ? 'bad' : 'none'}>{statusLabel(r.event.status)}</Status> : <Status tone="bad">{T.notTaken}</Status>}</span>

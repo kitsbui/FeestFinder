@@ -56,7 +56,7 @@ export function Brands() {
                 {load.data.items.map((c) => (
                   <Row key={c.id} cols={COLS} current={open?.id === c.id}>
                     <Cell>
-                      <button type="button" className="flex w-full min-w-0 flex-col text-left hover:underline" onClick={() => setOpen(c)}>
+                      <button type="button" className="flex min-h-11 w-full min-w-0 flex-col justify-center text-left hover:underline" onClick={() => setOpen(c)}>
                         <Two title={c.title} sub={[c.brandName, c.cities.map((x) => FF.text(x.label, lang) || x.slug).join(', '), c.closesOn ? fill(T.closes, { d: day(c.closesOn, lang) }) : ''].filter(Boolean).join(' · ')} />
                         {/* The name starts with what the row shows (WCAG 2.5.3); what it opens comes after. */}
                         <span className="sr-only">, {T.openWhat}</span>

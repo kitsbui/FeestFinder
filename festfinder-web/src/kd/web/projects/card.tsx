@@ -18,7 +18,7 @@ export function ProjectCard({ p, lang }: { p: Project; lang: Lang }) {
     <article className={`kd-ev ${g('edm')}`}>
       <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={p.coverUrl} title={p.title} /></Link>
       <div className="flex flex-col gap-1.5">
-        <Link href={href} className="kd-h">{p.title}</Link>
+        <Link href={href} className="kd-hit kd-h">{p.title}</Link>
         {p.pitch ? <span className="kd-s line-clamp-2">{p.pitch}</span> : null}
         <span className="kd-m">{where}</span>
         {p.seeking.length ? (

@@ -65,7 +65,7 @@ function List({ lang, data, onChange }: { lang: Lang; data: Data; onChange: () =
           <span className="flex min-w-0 items-center gap-3">
             <span className="relative size-11 shrink-0 overflow-hidden rounded-tag"><Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" /></span>
             <span className="flex min-w-0 flex-col">
-              <a className="kd-hs kd-ell hover:underline" href={m.url} target="_blank" rel="noopener">{m.title}</a>
+              <a className="kd-hit kd-hs kd-ell hover:underline" href={m.url} target="_blank" rel="noopener">{m.title}</a>
               <span className="kd-s kd-ell">{m.event ? `${T.mixRecordedAt} ${m.event.title}` : m.authorName ?? ''}</span>
             </span>
             {m.pinned ? <Status tone="ok">{T.mixPinned}</Status> : null}
