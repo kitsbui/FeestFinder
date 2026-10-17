@@ -59,7 +59,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
   const kd = useKd();
   const T = pick(CONSOLE, lang);
   const user = kd.user;
-  if (kd.session === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
+  if (kd.session === undefined) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>;
   if (!user || user.role !== 'admin') {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>

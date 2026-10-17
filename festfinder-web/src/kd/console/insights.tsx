@@ -44,7 +44,7 @@ export function InsightsScreen() {
     FF.maybe(FF.get('/admin/audit?limit=6'), { items: [] }).then((a: { items: AuditItem[] }) => setAudit(a.items));
     FF.maybe(FF.get('/admin/audit/verify'), null).then((v: { ok: boolean } | null) => setChain(v ? v.ok : null));
   }, []);
-  if (!data) return <div className="kd-skel m-6 h-80" aria-hidden="true" />;
+  if (!data) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-80" /></div>;
   const b = data.board;
   const nf = (n: number) => n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US');
   const weeks = b.weekly.map((w) => {

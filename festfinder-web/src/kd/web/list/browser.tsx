@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, FunnelSimpleIcon, XIcon } from '@phosphor-icons/react/ssr';
+import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { registerServiceWorker } from '@/runtime/pwa';
 import { fill, pick, type Lang, type Pair } from '../../copy';
@@ -27,12 +28,15 @@ import type { Card } from '../../types';
 import { ORIGIN, RadarTag, type Origin } from '../../ui/origin';
 import { Sheet } from '../../ui/sheet';
 import { DayGrid, ListRail, groupByDay } from './days';
-import { FirstRun, fromApp } from './first-run';
+import { fromApp } from './from-app';
 import { place } from '../../app/place';
 import { LIST } from './copy';
 import { warmKdMap, type Box } from '../../map/kd-map';
 import { MapView } from './map-view';
 import { shrinkable } from '../../ui/shell';
+
+/** The installed app's first run is a sheet few ever see: it loads when it opens (first-run.tsx). */
+const FirstRun = dynamic(() => import('./first-run').then((m) => m.FirstRun), { ssr: false });
 
 export type View = 'table' | 'grid' | 'map';
 export type Time = 'all' | 'tonight' | 'weekend' | '7days' | 'month';

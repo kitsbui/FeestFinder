@@ -114,7 +114,7 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
     history.replaceState(history.state, '', location.pathname + (q.size ? '?' + q : ''));
     setPicked(id);
   }, []);
-  if (kd.session === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
+  if (kd.session === undefined) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>;
   // "Đăng sự kiện" opens the form at once: signing in (and making the organiser) waits for the submit step.
   if ((!kd.user || !orgs.length) && current === 'new') {
     return (
@@ -179,15 +179,17 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
     void reload();
   }, [reload]);
 
-  // The event the screens are about: the address, else the last one picked in this tab, else the next live one.
-  useEffect(() => {
-    if (!events) return;
+  // The event the screens are about: the one picked here, else the address, else the last one picked in this
+  // tab, else the next live one. Worked out in the render that has the events, so the first frame already
+  // shows it (an effect would draw the page once without it and then move everything down: CLS).
+  const fallbackId = useMemo(() => {
+    if (!events) return null;
     let saved: string | null = null;
     try { saved = sessionStorage.getItem(KEY); } catch { /* storage blocked */ }
     const asked = new URLSearchParams(location.search).get('event');
     const ok = (id: string | null) => !!id && events.some((e) => e.id === id);
     const next = events.filter((e) => e.status === 'live' && !isPast(e)).sort((a, b) => (a.startsOn ?? '').localeCompare(b.startsOn ?? ''));
-    setEventId(ok(asked) ? asked : ok(saved) ? saved : next[0]?.id ?? events.find((e) => e.status === 'live')?.id ?? events[0]?.id ?? null);
+    return ok(asked) ? asked : ok(saved) ? saved : next[0]?.id ?? events.find((e) => e.status === 'live')?.id ?? events[0]?.id ?? null;
   }, [events]);
   const setEvent = useCallback((id: string) => {
     setEventId(id);
@@ -197,7 +199,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
     history.replaceState(history.state, '', location.pathname + '?' + q);
   }, []);
 
-  const event = useMemo(() => events?.find((e) => e.id === eventId) ?? null, [events, eventId]);
+  const event = useMemo(() => events?.find((e) => e.id === eventId) ?? events?.find((e) => e.id === fallbackId) ?? null, [events, eventId, fallbackId]);
   const i = (Icon: typeof SquaresFourIcon) => <Icon size={18} aria-hidden="true" />;
   const nav = (
     <SideNav
@@ -265,7 +267,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
   );
   // The wizard and the door are pages of their own (Studio-Wizard, Studio-Checkin): no side nav, their own top bar.
   const frame = (body: ReactNode) => (current === 'new' || current === 'door' ? body : <Shell nav={nav}>{body}</Shell>);
-  if (!org || !events) return frame(<div className="kd-skel m-6 h-60" aria-hidden="true" />);
+  if (!org || !events) return frame(<div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>);
   return (
     <Ctx.Provider value={{ lang, org, events, event, setEvent, reload, seats, switchOrg }}>
       {frame(children)}

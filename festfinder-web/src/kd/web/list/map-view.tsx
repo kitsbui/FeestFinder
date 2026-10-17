@@ -2,7 +2,7 @@
 /**
  * /list?view=map (design/Web-Map): the list column (the view switch, the list's own search and
  * filters plus Dưới 5 km, rows nearest first) and the map (glass pins, zoom, my location, the
- * chosen event's card).
+ * chosen event's card). On a phone the map is on top at 55% of the screen and the list under it.
  * Selecting a row or a pin selects both. The map asks /events/map when it opens and when
  * someone presses "Tìm trong khu vực này", never on a pan (CLAUDE.md).
  */
@@ -163,7 +163,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
   const home = () => { const box = cityBox(f.city); map.current?.fit(box); void search(box); };
 
   return (
-    <main className="flex min-h-[calc(100dvh-64px)] flex-wrap desk:h-[calc(100dvh-64px)]">
+    <main className="flex min-h-[calc(100dvh-64px)] flex-wrap content-start desk:h-[calc(100dvh-64px)]">
       <aside className="flex max-h-full min-w-0 flex-[1_1_340px] flex-col overflow-y-auto border-line-1 desk:border-r">
         <div className="flex flex-col gap-3 px-4 pb-2.5 pt-4.5">
           {/* The nav names the page (Sự kiện) and the switch the view: no third label. */}
@@ -206,7 +206,9 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
         </div>
       </aside>
 
-      <section aria-label={T.mapLabel} className="relative min-h-[480px] min-w-0 flex-[999_1_560px] overflow-hidden bg-map">
+      {/* On a phone the map comes first, at a fixed height: it is what this view is for, and the rows that load
+          under it never move it (CLS). */}
+      <section aria-label={T.mapLabel} className="relative h-[55dvh] min-h-80 min-w-0 flex-[999_1_560px] overflow-hidden bg-map max-desk:order-first desk:h-auto desk:min-h-[480px]">
         {/* MapLibre makes its container position: relative, so the box is a wrapper. */}
         <div className="absolute inset-0"><div ref={el} className="h-full w-full" data-kd-map /></div>
         <div className="absolute right-4 top-4 z-[2] flex flex-col gap-1.5">

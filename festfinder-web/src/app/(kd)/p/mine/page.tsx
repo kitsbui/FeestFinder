@@ -11,7 +11,7 @@ export default async function Page() {
     <KdProvider lang="vi">
       <div className="flex min-h-dvh flex-col" lang="vi">
         <WebNav lang="vi" current="projects" />
-        <main className="kd-wrap py-8"><MyProjects lang="vi" /></main>
+        <main className="kd-wrap min-h-dvh py-8"><MyProjects lang="vi" /></main>
         <div className="mt-auto"><WebFooter lang="vi" /></div>
       </div>
     </KdProvider>

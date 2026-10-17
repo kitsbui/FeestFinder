@@ -9,11 +9,16 @@
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
 } from 'react';
+import dynamic from 'next/dynamic';
 import { FF, type Session } from '@/runtime/ff';
 import { COMMON, pick, type Lang } from './copy';
-import { RolePicker, type RoleStep } from './role-picker';
-import { SignInSheet } from './sign-in';
+import type { RoleStep } from './role-picker';
 import { Toast } from './ui/toast';
+
+// The sign-in sheet and the role picker load the first time one opens (design v2 phase 7): most
+// visits never open them, and every page would carry them otherwise.
+const SignInSheet = dynamic(() => import('./sign-in').then((m) => m.SignInSheet), { ssr: false });
+const RolePicker = dynamic(() => import('./role-picker').then((m) => m.RolePicker), { ssr: false });
 
 /** Something the visitor was doing when sign-in got in the way, done once they are in. */
 export type Intent =

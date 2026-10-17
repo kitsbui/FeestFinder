@@ -10,6 +10,7 @@ Design v2 phase 6 ("QA và quản trị", continuous). The design review canvas 
 | Layout | `e2e/next/layout.spec.ts` | any screen of any role scrolls sideways at 390, 768 or 1440px |
 | Accessibility | `e2e/next/wcag.spec.ts` | axe finds a serious or critical WCAG 2.1 AA violation on any screen of any role at 390 or 1440px |
 | Touch targets | `e2e/next/targets.spec.ts` | anything one taps on a phone (390px, touch) is under 44 × 44px |
+| Performance | `e2e/next/perf.spec.ts` | on a phone with a slow CPU (4×) and 4G, a screen's layout jumps (CLS) more than 0.05 while it loads, or the JS it boots with (the chunks its HTML names, gzipped) is over its budget. Budgets only go down. |
 | Flows | the rest of `e2e/next/` | a flow breaks |
 | Screens | `visual.yml` | the main screens look different from the base branch's and nobody accepted it |
 | Checklist | `design-checklist.yml` | a PR that touches `festfinder-web` or `festfinder-frontend` has an unticked box in its "Thiết kế" checklist |
@@ -21,6 +22,10 @@ The last two run only on pull requests. To make them, and CI, a condition of mer
 `visual.yml` shoots the screens of `e2e/next/visual.spec.ts` (the home page by day and as a table, the event page, the artists, the kit; at 390, 768 and 1440px) on the base branch and on the pull request, on the same runner, and compares them. When they differ the check fails and the `visual-diff` artifact holds the expected, actual and diff images (and Playwright's HTML report). Look at them; if the change is the one intended, add the label `visual-ok` to the pull request. A new push takes the label off, so an approval is always of the latest screens. Pull requests that change nothing under `festfinder-web` or `festfinder-frontend` skip the comparison.
 
 The baselines committed next to `visual.spec.ts` are for local runs only (`npm run test:visual`, from a fresh build; never with `WEB_SKIP_BUILD`).
+
+### Performance
+
+`perf.spec.ts` loads each screen it lists on a throttled phone and adds up how far things moved (CLS) and the JS the screen boots with. When it fails it names what moved. The usual causes: a box that arrives after the first paint without its space held (give the skeleton the final size, or let the server render it), a footer that shows on a short loading page (the content holds the screen's height, `min-h-dvh`), a margin on the first box of a page (it moves `<body>`), a choice made in an effect after the first render (make it in the render). Something few people open (a sheet, a picker, a first-run screen) loads when it opens (`next/dynamic`), as the sign-in sheet, the role picker, the search sheet and the feedback sheet do.
 
 ### Touch targets
 
@@ -67,6 +72,8 @@ A 30-minute review every second week. Read the same numbers each time, against t
 | Review time | Console → Số liệu: "Đã duyệt" (median minutes from submission to decision) and the promise kept (`withinPromise`, 7 days against the 7 before) | going down |
 | Claims | PostHog: `role_picker_shown` (`surface`) → server `profile_claimed`; Console → Yêu cầu nhận | more profiles claimed |
 | First event on a phone | the five-person test's stopwatch; `e2e/next/pages.spec.ts` checks it is in the first screen | under 10 seconds |
+| Speed for real people | PostHog: `web_vital` broken down by `kind` (LCP, INP, CLS), its `value` at the 75th percentile, by `path` | LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1 (the 9.5 of artboard 23: LCP ≤ 2.0 s, CLS ≤ 0.05) |
+| Errors | Sentry: the API's own (`SENTRY_DSN`) and the browsers' (`WebError`, through `POST /client-errors`) | under 0.1% of sessions with an error |
 
 PostHog receives events only where `POSTHOG_KEY` is set (`services/analytics.ts`); names and properties are the fixed lists there, never an email, a name or an IP.
 

@@ -20,6 +20,12 @@ import { isCutOver } from './kd/cutover';
 /** Where the FeestFinder API runs (as in next.config.ts). */
 const API = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
 const SECRET = process.env.VERCEL === '1' ? (process.env.WEB_PROXY_SECRET ?? '').trim() : '';
+/**
+ * A preview of this app talks to a preview of the API, which Vercel Authentication guards: the
+ * API project's "Protection Bypass for Automation" secret lets this server through (README, Deploy
+ * on Vercel, step 6). Never set in production, never sent to a browser.
+ */
+const BYPASS = (process.env.FF_API_BYPASS ?? '').trim();
 const OURS = ['x-ff-web-secret', 'x-ff-client-ip', 'x-ff-client-country', 'x-ff-web-origin', 'x-ff-session'];
 /** The API's session cookie (`SESSION_COOKIE` in festfinder-backend/src/http/session.ts). */
 const SESSION = /(?:^|;\s*)ff_session=/;
@@ -41,6 +47,7 @@ export async function proxy(request: NextRequest) {
   // Only this proxy speaks these headers; Vercel's own (its OIDC token among them) stay here.
   for (const h of [...OURS, ...HOP]) headers.delete(h);
   for (const h of [...headers.keys()]) if (h.startsWith('x-vercel-') || h.startsWith('x-middleware-')) headers.delete(h);
+  if (BYPASS) headers.set('x-vercel-protection-bypass', BYPASS);
   // Whether the visitor is signed in, as one yes: the API's public reads vary on this header for
   // the CDN (Vercel does not cache a response that varies on Cookie), so a signed-in visitor never
   // gets the shared copy of a list that marks what they saved.

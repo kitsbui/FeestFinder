@@ -42,6 +42,9 @@ describe('analytics', () => {
     // The Studio wizard's steps: the draft-to-submit rate (design v2 phase 5).
     await collect({ name: 'wizard_step', anonId: 'abcdef0123456789abcd', props: { path: '/studio/new', kind: 'submitted', role: 'organizer' } });
     assert.deepEqual(sink.events.at(-1), { event: 'wizard_step', distinctId: 'a_abcdef0123456789abcd', props: { path: '/studio/new', kind: 'submitted', role: 'organizer' } });
+    // How fast pages are for real people (design v2 phase 7): the metric, its value and its rating.
+    await collect({ name: 'web_vital', anonId: 'abcdef0123456789abcd', props: { path: '/e/ravo', kind: 'LCP', value: 1834, rating: 'good' } });
+    assert.deepEqual(sink.events.at(-1), { event: 'web_vital', distinctId: 'a_abcdef0123456789abcd', props: { path: '/e/ravo', kind: 'LCP', value: 1834, rating: 'good' } });
   });
 
   it('knows a signed-in person only by a hash, and records server events the same way', async () => {

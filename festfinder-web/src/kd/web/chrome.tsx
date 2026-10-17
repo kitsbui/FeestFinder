@@ -13,21 +13,23 @@
 import { KdLink as Link, inLang } from '../link';
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type RefObject } from 'react';
 import { CalendarBlankIcon, CaretRightIcon, HeartIcon, MagnifyingGlassIcon, MapTrifoldIcon, UserIcon } from '@phosphor-icons/react/ssr';
+import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
 import { cx } from '../cx';
-import { g, styleChips, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { buttonClass, IconButton } from '../ui/actions';
 import { Menu } from '../ui/menu';
 import { Avatar } from '../ui/parts';
-import { Sheet } from '../ui/sheet';
 import { Input } from '../ui/forms';
 import { Logo } from '../ui/logo';
 import { TabBar } from '../ui/shell';
 import { WEB } from './copy';
 import { LANG_KEY, rememberLang, useHere, useOtherLang } from './lang';
 import { MeMenuItems } from './me';
+
+/** The "Tìm" sheet loads the first time it opens (search-sheet.tsx). */
+const SearchSheet = dynamic(() => import('./search-sheet'), { ssr: false });
 
 /** Which place the page is: it marks the nav link and the tab. */
 export type WebSection = 'list' | 'artists' | 'projects' | 'saved' | 'me' | 'none';
@@ -36,7 +38,7 @@ export type WebSection = 'list' | 'artists' | 'projects' | 'saved' | 'me' | 'non
 export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/?style=${k}`, lang);
 
 /** Which ways in people use (the design funnel): the nav, the tab bar, the search sheet, the footer. */
-const track = (kind: string, surface: string) => () => FF.track('nav_click', { kind, surface });
+export const track = (kind: string, surface: string) => () => FF.track('nav_click', { kind, surface });
 
 /** Whether this is a Mac (⌘K) or not (Ctrl K); the server says ⌘. */
 const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform);
@@ -177,60 +179,6 @@ function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection;
         { key: 'me', label: T.me, href: inLang('/profile', lang), icon: i(UserIcon), onClick: track('me', 'tabs') },
       ]}
     />
-  );
-}
-
-/** "Tìm": the search, then the places the tab bar has no room for, then the styles (filters of the list). */
-function SearchSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
-  const T = pick(WEB, lang);
-  const [q, setQ] = useState('');
-  const [counts, setCounts] = useState<Record<string, number> | null>(null);
-  useEffect(() => {
-    // Counted over every upcoming event, as the links lead to all of them.
-    FF.once('kd:style-counts', () => FF.maybe(FF.get('/events?time=all&upcoming=1&limit=1'), null)).then((r: { facets?: { style?: Record<string, number> } } | null) => {
-      if (r?.facets?.style) setCounts(r.facets.style);
-    });
-  }, []);
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const v = q.trim();
-    if (!v) return;
-    FF.track('search', { screen: 'nav' });
-    location.assign(inLang('/?q=' + encodeURIComponent(v), lang));
-  };
-  const go = ([kind, href, label]: readonly [string, string, string]) => (
-    <a key={kind} href={href} onClick={track(kind, 'search')} className="kd-lrow min-h-13">
-      <span className="kd-h min-w-0 flex-1">{label}</span>
-      <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
-    </a>
-  );
-  return (
-    <Sheet title={T.search} closeLabel={T.close} onClose={onClose}>
-      <form role="search" onSubmit={submit} className="flex flex-col gap-3 pt-2">
-        <Input
-          type="search"
-          autoFocus
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={T.searchPh}
-          aria-label={T.search}
-          icon={<MagnifyingGlassIcon size={18} aria-hidden="true" />}
-        />
-        <button type="submit" className={buttonClass({ tone: 'acc', block: true })}>{T.searchGo}</button>
-      </form>
-      <nav aria-label={T.goTo} className="mt-5 flex flex-col">
-        {([['artists', inLang('/a', lang), T.artists], ['projects', inLang('/p', lang), T.projects], ['organisers', '/studio', T.organisers]] as const).map(go)}
-      </nav>
-      <h3 className="kd-m mb-2.5 mt-5">{T.genres}</h3>
-      <div className="flex flex-wrap gap-2">
-        {styleChips(counts, 10).map((k) => (
-          <a key={k} href={styleHref(k, lang)} className="kd-chip" onClick={track('style', 'search')}>
-            <span className={`kd-mk ${g('edm')}`} aria-hidden="true" />{styleLabel(k, lang)}
-            {counts?.[k] != null ? <span className="kd-num text-fg-3">{counts[k]}</span> : null}
-          </a>
-        ))}
-      </div>
-    </Sheet>
   );
 }
 

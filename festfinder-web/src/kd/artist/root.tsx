@@ -52,7 +52,7 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
   const T = pick(ARTIST, lang);
   const [busy, setBusy] = useState(false);
   const s = kd.session;
-  if (s === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
+  if (s === undefined) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>;
   const state = s?.roles?.artist ?? null;
   if (s?.user && state === 'active' && s.artist) return <Studio lang={lang} artist={s.artist}>{children}</Studio>;
 

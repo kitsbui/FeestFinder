@@ -240,7 +240,7 @@ export function Queue() {
             <Button size="sm" tone="ghost" onClick={() => setPicked(allPicked ? [] : visible.map((i) => i.id))}>{allPicked ? T.clear : fill(R.selectAll, { n: visible.length })}</Button>
           </div>
         ) : null}
-        {appealsOn ? null : error && !items ? <ErrorBox error={error} retry={load} /> : items === null ? <div className="kd-skel h-60" aria-hidden="true" /> : (
+        {appealsOn ? null : error && !items ? <ErrorBox error={error} retry={load} /> : items === null ? <div className="kd-skel h-dvh wide:h-60" aria-hidden="true" /> : (
           <ul className="flex flex-col gap-0.5">
             {visible.map((i) => (
               <li key={i.id} id={'q-' + i.id} className={cx('group relative flex items-center gap-1 rounded-lg', selId === i.id && 'bg-white/[0.05]')}>
@@ -297,33 +297,37 @@ export function Queue() {
         ) : null}
       </aside>
 
-      <section ref={detailRef} className={cx('flex min-w-0 flex-1 flex-col gap-6 p-[clamp(16px,3vw,32px)] wide:overflow-y-auto', sel && g(familyOf(sel.genre)))} aria-label={appealsOn ? T.fAppeals : sel?.title ?? T.queue}>
-        <div role="status" aria-live="polite">
-          {held ? (
-            <Panel className="flex items-center gap-3 py-2.5 pl-4 pr-2.5">
-              <Status tone={held.verb === 'approve' ? 'ok' : held.verb === 'fix' ? 'warn' : 'bad'}>{verbLabel[held.verb]}</Status>
-              <span className="kd-s kd-ell flex-1 text-fg-2">{held.title}{held.reason ? ' · ' + held.reason.label[lang] : ''}</span>
-              <Button size="sm" tone="ghost" onClick={undo}>{T.undo}</Button>
-            </Panel>
-          ) : null}
-        </div>
-        <span id="q-detail" className="block scroll-mt-16" aria-hidden="true" />
-        {appealsOn ? <Appeals lang={lang} appeals={appeals} onDone={load} />
-          : selId && items ? (
-            <Detail
-              key={selId}
-              lang={lang}
-              id={selId}
-              item={sel}
-              reasons={reasons}
-              tab={tab}
-              onTab={setTab}
-              onDecide={(v, ids, r) => decide(v, ids, r ?? null)}
-              onSendBack={startSendBack}
-              onChanged={load}
-            />
-          ) : null}
-      </section>
+      {/* Drawn once the queue is known: on a phone it sits under the list, and a list that arrives after
+          it would move it (CLS); a part added later moves nothing. */}
+      {items === null && !error ? null : (
+        <section ref={detailRef} className={cx('flex min-w-0 flex-1 flex-col gap-6 p-[clamp(16px,3vw,32px)] wide:overflow-y-auto', sel && g(familyOf(sel.genre)))} aria-label={appealsOn ? T.fAppeals : sel?.title ?? T.queue}>
+          <div role="status" aria-live="polite">
+            {held ? (
+              <Panel className="flex items-center gap-3 py-2.5 pl-4 pr-2.5">
+                <Status tone={held.verb === 'approve' ? 'ok' : held.verb === 'fix' ? 'warn' : 'bad'}>{verbLabel[held.verb]}</Status>
+                <span className="kd-s kd-ell flex-1 text-fg-2">{held.title}{held.reason ? ' · ' + held.reason.label[lang] : ''}</span>
+                <Button size="sm" tone="ghost" onClick={undo}>{T.undo}</Button>
+              </Panel>
+            ) : null}
+          </div>
+          <span id="q-detail" className="block scroll-mt-16" aria-hidden="true" />
+          {appealsOn ? <Appeals lang={lang} appeals={appeals} onDone={load} />
+            : selId && items ? (
+              <Detail
+                key={selId}
+                lang={lang}
+                id={selId}
+                item={sel}
+                reasons={reasons}
+                tab={tab}
+                onTab={setTab}
+                onDecide={(v, ids, r) => decide(v, ids, r ?? null)}
+                onSendBack={startSendBack}
+                onChanged={load}
+              />
+            ) : null}
+        </section>
+      )}
 
       {sendBack ? (
         <SendBack

@@ -22,11 +22,6 @@ const LIKE_STYLES = ['techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 
 
 interface City { slug: string; name: { vi: string; en: string }; center: [number, number] | null }
 
-/** Whether the list was opened by the installed app: its start address, or a standalone window. */
-export function fromApp(): boolean {
-  if (new URLSearchParams(location.search).get('source') === 'app') return true;
-  try { return matchMedia('(display-mode: standalone)').matches; } catch { return false; }
-}
 
 export function FirstRun({ lang, cities, onDone }: { lang: Lang; cities: City[]; onDone: (city: string | null, styles: string[]) => void }) {
   const T = pick(LIST, lang);

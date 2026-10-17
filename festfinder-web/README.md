@@ -64,7 +64,10 @@ This app is its own Vercel project, next to the API's (`feestfinder`, Root Direc
    - `CORS_ORIGINS` += this site's origin (sign-in may return only to listed origins).
 4. **Google Cloud console** → the OAuth client → add the authorised redirect URI `<this site>/auth/oauth/google/return` (and the same for Facebook and Instagram if they are on).
 5. **Check.** `<this site>/health` answers `"webProxy":"visitor"` (the API sees each visitor; `false` means the secret is missing or differs, and the API logs a warning when it differs); sign in with Google; `/list` and an event page load.
-6. **Previews.** The API's preview deployments sit behind Vercel Authentication, so this project builds `main` only: `vercel.json` turns Git deployments off for every other branch (`git.deploymentEnabled`). Leave Settings → Git → Ignored Build Step empty; a command reading `$VERCEL_ENV` there skipped `main` too.
+6. **Previews.** Off until their variables exist: `vercel.json` builds `main` only (`git.deploymentEnabled`); leave Settings → Git → Ignored Build Step empty, as a command reading `$VERCEL_ENV` there skipped `main` too. A preview of this app talks to a preview of the API on the staging database, which Vercel Authentication guards, so to turn previews on for pull requests (design v2 phase 7, `docs/DESIGN_GOVERNANCE.md`):
+   1. On the API project: Settings → Deployment Protection → Protection Bypass for Automation → add a secret, and give the API's staging branch a stable address (Settings → Domains, a branch domain).
+   2. On this project, for the Preview environment only: `FF_API_ORIGIN` = that staging address, `FF_API_BYPASS` = the secret (the proxy and the server's reads send it as `x-vercel-protection-bypass`; never set it for Production), `WEB_PROXY_SECRET` = the staging API's value, `MAP_*` = the API's.
+   3. Then let `vercel.json` build every branch (`"**": true`) in a pull request of its own, and check a preview: a page, an event, signing in.
 
 
 ### Moving feestfinder.com to this project

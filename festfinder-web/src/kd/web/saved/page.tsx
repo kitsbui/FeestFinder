@@ -59,10 +59,10 @@ export function SavedPage({ lang, initial }: { lang: Lang; initial: string | nul
 
   let body;
   if (kd.session === undefined) {
-    body = <div className="kd-wrap py-8"><div className="kd-skel h-80" aria-hidden="true" /></div>;
+    body = <main className="kd-wrap min-h-dvh py-8"><div className="kd-skel h-80" aria-hidden="true" /></main>;
   } else if (!kd.user) {
     body = (
-      <main className="kd-wrap flex justify-center py-16" data-ff-gate>
+      <main className="kd-wrap flex min-h-dvh justify-center py-16" data-ff-gate>
         <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
           <h1 className="kd-d3">{T.title}</h1>
           <p className="kd-s">{T.gate}</p>
@@ -185,7 +185,7 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
   const folderLabel = (e: Card) => fill(T.collectEvent, { t: e.title });
 
   return (
-    <main className="kd-wrap flex flex-col gap-5 pb-8 pt-8">
+    <main className="kd-wrap flex min-h-dvh flex-col gap-5 pb-8 pt-8">
       <h1 className="kd-d1">{T.title}</h1>
 
       <div className="kd-hscroll" role="group" aria-label={T.collections}>

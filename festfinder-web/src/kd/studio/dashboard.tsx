@@ -88,7 +88,13 @@ export function Dashboard() {
         )}
       />
 
-      {perf === undefined ? <div className="kd-skel h-32" aria-hidden="true" /> : perf ? (
+      {/* The numbers and the chart's own heights while they load, so nothing under them moves when they come. */}
+      {perf === undefined ? (
+        <div className="flex flex-col gap-3" aria-hidden="true">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(150px,100%),1fr))] gap-3">{[0, 1, 2, 3].map((i) => <div key={i} className="kd-skel h-32" />)}</div>
+          <div className="kd-skel h-75" />
+        </div>
+      ) : perf ? (
         <>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(150px,100%),1fr))] gap-3">
             <Panel className="kd-kpi">

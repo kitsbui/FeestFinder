@@ -257,7 +257,7 @@ export function Wizard() {
     return events.map((e) => e.venueName).filter((n): n is string => !!n && !seen.has(n) && !!seen.add(n)).slice(0, 4);
   }, [events]);
 
-  if (draft === undefined || !f) return <div className="kd-skel m-6 h-80" aria-hidden="true" />;
+  if (draft === undefined || !f) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-80" /></div>;
 
   const { missing, done } = check(f);
   const ready = !missing.length && agree;
