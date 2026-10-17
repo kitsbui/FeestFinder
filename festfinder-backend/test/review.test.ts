@@ -93,6 +93,18 @@ describe('review of listings', () => {
     assert.equal(r.body.reviewPending, null);
   });
 
+  it('framing a live listing’s cover anew is not a change to review; a new cover is', async () => {
+    const live = await one<{ id: string }>(env.ctx.db, `select e.id from events e join organizers o on o.id = e.organizer_id where o.slug = 'ravoent' and e.status = 'live' and e.needs_review_at is null limit 1`);
+    const cover = '/files/cover/ab/' + 'd'.repeat(64) + '.jpg';
+    await env.ctx.db.query('update events set cover_url = $2 where id = $1', [live!.id, cover]);
+    const framed = await env.as(organizer).patch(`/organizer/events/${live!.id}`, { coverUrl: cover + '#ff=30,70,1.4' });
+    assert.equal(framed.status, 200, JSON.stringify(framed.body));
+    assert.equal(framed.body.reviewPending, null);
+    assert.equal(framed.body.coverUrl, cover + '#ff=30,70,1.4');
+    const other = await env.as(organizer).patch(`/organizer/events/${live!.id}`, { coverUrl: '/files/cover/ab/' + 'e'.repeat(64) + '.jpg' });
+    assert.deepEqual(other.body.reviewPending?.fields, ['coverUrl']);
+  });
+
   it('a community listing waits for review too, and the admins are told', async () => {
     const scout = await phoneUser(env, '0915 222 333');
     const before = (await reviewNotes()).length;

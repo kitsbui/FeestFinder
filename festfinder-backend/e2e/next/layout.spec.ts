@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signInWith } from '../checks.ts';
+import { ACCOUNTS, ROUTES } from './routes.ts';
 
 /*
  * Every screen fills the width and never scrolls sideways (the owner's rule, 2026-10-16), on a
@@ -8,26 +9,6 @@ import { signInWith } from '../checks.ts';
  * all, so nobody would know) unless it fades at its edge: a row of tabs (.kd-tabs), of chips
  * (.kd-hscroll) or anything marked data-scroll-x. Each test walks its routes and lists every offender, so one run shows them all.
  */
-
-const ACCOUNTS = {
-  fan: { identifier: 'minh@example.com', password: 'festfinder123' },
-  organizer: { identifier: 'team@ravolution.vn', password: 'ravolution2026' },
-  artist: { identifier: 'slimv@example.com', password: 'festfinder123' },
-  admin: { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' },
-};
-
-const ROUTES: Record<'visitor' | keyof typeof ACCOUNTS, string[]> = {
-  visitor: ['/', '/list', '/list?view=table', '/list?view=grid', '/e/ravo', '/a', '/a/radar', '/a/slimv', '/a/hoaprox', '/a/style/techno', '/a/city/ho-chi-minh',
-    '/o/ravoent', '/about', '/advertise', '/p', '/stats/venues', '/kit'],
-  fan: ['/profile', '/saved', '/app', '/app/list', '/app/saved', '/app/tickets', '/app/profile', '/app/notifications', '/app/alerts', '/app/settings',
-    '/app/following', '/app/hyped', '/app/e/ravo', '/app/checkout/ravo', '/app/plan/ravo', '/app/guide/ravo', '/app/live/hozo', '/app/recap/ravo-2025', '/p/mine', '/p/new'],
-  organizer: ['/studio', '/studio/events', '/studio/new', '/studio/attendees', '/studio/door', '/studio/revenue', '/studio/inbox', '/studio/announce',
-    '/studio/promos', '/studio/ads', '/studio/gigs', '/studio/profile', '/studio/events/:first'],
-  artist: ['/studio/artist', '/studio/artist/mixes', '/studio/artist/gigs', '/studio/artist/opportunities', '/studio/artist/gear'],
-  admin: ['/console', '/console/overview', '/console/claims', '/console/reports', '/console/feedback', '/console/events', '/console/events/new',
-    '/console/organizers', '/console/venues', '/console/artists', '/console/sources', '/console/partners', '/console/affiliate', '/console/brands',
-    '/console/projects', '/console/featured', '/console/users', '/console/orders', '/console/insights', '/console/audit', '/console/verification'],
-};
 
 /** What overflows on this page: the page itself, and boxes that scroll sideways without saying so. */
 async function overflow(page: Page): Promise<string[]> {

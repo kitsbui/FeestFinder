@@ -20,6 +20,13 @@ import { queueIndexNow } from '../../services/seo.ts';
 import { refreshDerived, REVIEW_COLUMNS } from '../../services/events.ts';
 import { openReportWeight, REPORT_HOLD_THRESHOLD } from '../event-actions.ts';
 import { askArtistsToConfirm } from '../../services/lineup.ts';
+import { festivalByKey } from '../../lib/festivals.ts';
+import { bandOf, FIT_BAND_LABEL, type FitReason } from '../../services/ingest/fit.ts';
+
+const queueFestival = (key: string | null) => {
+  const b = festivalByKey(key);
+  return b ? { key: b.key, name: b.name, flagship: b.tier === 'world' } : null;
+};
 
 const hm = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 
@@ -34,6 +41,7 @@ const QUEUE_SQL = `
          e.genre, e.area, e.currency, e.age, e.entry_mode, e.price_from, e.quality_score, e.logo_url, (e.venue_id is not null or e.lat is not null) as venue_resolved,
          e.organizer_id, o.name as org_name, o.verification_state, o.is_community, e.submitted_by, su.name as submitter_name,
          e.status, e.needs_review_at, e.needs_review_fields, e.needs_review_before, e.city, e.address, e.lat, e.lng, e.venue_id,
+         e.origin, e.festival, e.fit_score, e.fit_reasons,
          not exists (select 1 from events e2 where e2.organizer_id = e.organizer_id and e2.published_at is not null and e2.id <> e.id) as new_org,
          (select count(*)::int from inbox_messages m join inbox_threads t on t.id = m.thread_id where t.event_id = e.id and t.topic = 'moderation') as thread_messages
     from events e join organizers o on o.id = e.organizer_id left join users su on su.id = e.submitted_by
@@ -146,7 +154,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
 
   app.get('/admin/queue', async (req) => {
     requireAdmin(req);
-    const f = parse(z.object({ filter: z.enum(['all', 'breach', 'flagged', 'new', 'clean']).default('all'), sort: z.enum(['age', 'risk', 'new']).default('age') }), req.query);
+    const f = parse(z.object({ filter: z.enum(['all', 'breach', 'flagged', 'new', 'clean', 'radar']).default('all'), sort: z.enum(['age', 'risk', 'new', 'fit']).default('age') }), req.query);
     const now = ctx.clock.now();
     const rows = await many<any>(ctx.db, QUEUE_SQL, []);
     const items = rows.map((r) => {
@@ -166,6 +174,10 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         signals: (r.signals ?? []).slice(0, 3), threadMessages: r.thread_messages,
         genre: r.genre, area: r.area, entryMode: r.entry_mode, priceFrom: r.price_from, qualityScore: r.quality_score,
         logoUrl: r.logo_url, venueResolved: r.venue_resolved,
+        // Feest Radar's finds and how well each suits FeestFinder (services/ingest/fit.ts).
+        origin: r.origin === 'radar' ? 'radar' as const : 'posted' as const,
+        festival: queueFestival(r.festival),
+        fit: r.fit_score == null ? null : { score: r.fit_score as number, band: bandOf(r.fit_score), bandLabel: FIT_BAND_LABEL[bandOf(r.fit_score)], reasons: (r.fit_reasons ?? []) as FitReason[] },
       };
     });
     const keep = {
@@ -174,9 +186,13 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
       flagged: (i: any) => i.flagged,
       new: (i: any) => i.organizer.newOrganizer,
       clean: (i: any) => !i.flagged,
+      radar: (i: { origin: string }) => i.origin === 'radar',
     };
     const sorted = items.filter(keep[f.filter]).sort((a, b) =>
-      f.sort === 'age' ? b.waitingMinutes - a.waitingMinutes : f.sort === 'risk' ? b.riskScore - a.riskScore : a.waitingMinutes - b.waitingMinutes);
+      f.sort === 'age' ? b.waitingMinutes - a.waitingMinutes : f.sort === 'risk' ? b.riskScore - a.riskScore
+        // The world's biggest festivals first, then the best fit.
+        : f.sort === 'fit' ? Number(!!b.festival?.flagship) - Number(!!a.festival?.flagship) || (b.fit?.score ?? -1) - (a.fit?.score ?? -1)
+          : a.waitingMinutes - b.waitingMinutes);
     const buckets = [60, 120, SLA_HOURS * 60, Infinity];
     let lo = 0;
     const ageBuckets = buckets.map((max, i) => {

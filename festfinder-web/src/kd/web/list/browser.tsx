@@ -47,7 +47,7 @@ export interface Filters {
   q: string;
   view: View;
   bbox: [number, number, number, number] | null;
-  /** Posted, or found by FeestFinder Radar; null is both. */
+  /** Posted, or found by Feest Radar; null is both. */
   origin: Origin | null;
 }
 
@@ -104,12 +104,12 @@ function address(f: Filters, lang: Lang) {
   if (f.view === 'map' && f.bbox) q.set('bbox', f.bbox.join(','));
   if (lang === 'en') q.set('lang', 'en');
   const s = q.toString();
-  return '/list' + (s ? '?' + s : '');
+  return '/' + (s ? '?' + s : '');
 }
 
 interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; origin?: { posted: number; radar: number } } }
 
-export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; initial: Page }) {
+export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode }) {
   const T = pick(LIST, lang);
   const [f, setF] = useState<Filters>(DEFAULT);
   const [page, setPage] = useState<Page>(initial);
@@ -117,7 +117,6 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
   const [busy, setBusy] = useState(false);
   const [sort, setSort] = useState<{ by: 'date' | 'price' | 'hype'; desc: boolean }>({ by: 'date', desc: false });
   const [at, setAt] = useState<Date | null>(null);
-  const [added, setAdded] = useState(0);
   const [ready, setReady] = useState(false);
   const seq = useRef(0);
   const rowsRef = useRef(rows);
@@ -137,10 +136,6 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
     if (!out) return;
     setAt(FF.now());
     if (mode === 'more') { setRows((r) => [...r, ...out.items]); setPage((p) => ({ ...p, nextCursor: out.nextCursor })); return; }
-    if (mode === 'refresh') {
-      const known = new Set(rowsRef.current.map((e) => e.id));
-      setAdded(out.items.filter((e) => !known.has(e.id)).length);
-    } else setAdded(0);
     setPage(out);
     setRows(out.items);
   }, []);
@@ -190,7 +185,6 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
   }, [rows, sort]);
 
   const cityCounts = page.facets?.city ?? {};
-  const tz = meta.cities.find((c) => c.slug === f.city)?.timezone ?? meta.cities[0]?.timezone ?? 'UTC';
   const allCount = Object.values(cityCounts).reduce((n, x) => n + x, 0);
   const cityName = (slug: string) => meta.cities.find((c) => c.slug === slug)?.name[lang] ?? '';
   const timeLabel = (t: Time) => ({ all: T.anyTime, tonight: T.tonight, weekend: T.weekend, '7days': T.next7, month: T.month })[t];
@@ -290,6 +284,7 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
 
   const status = (e: Card): { tone: StatusTone; text: string } => {
     if (e.soldOut) return { tone: 'bad', text: T.stSold };
+    if (e.festival?.flagship && e.festival.label) return { tone: 'live', text: e.festival.label[lang] };
     const today = at ? new Intl.DateTimeFormat('en-CA', { timeZone: e.timezone || 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(at) : null;
     if (today && e.startsOn && e.startsOn <= today && (e.endsOn ?? e.startsOn) >= today) return { tone: 'live', text: T.stTonight };
     if (e.badge) return { tone: 'warn', text: e.badge.label[lang] };
@@ -301,17 +296,12 @@ export function ListBrowser({ lang, meta, initial }: { lang: Lang; meta: Meta; i
   return (
     <main className="kd-wrap flex flex-col gap-5 py-8">
       <div className="kd-sec items-center">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="kd-d1">{T.title}</h1>
-          <span className="kd-m kd-num" aria-live="polite">
-            {fill(T.count, { n: page.nextCursor ? page.total : sorted.length })}
-            {at ? ' · ' + fill(T.updated, { t: new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(at) }) : ''}
-            {added ? ' · ' + fill(T.added, { n: added }) : ''}
-          </span>
-        </div>
+        <h1 className="kd-d1">{T.title}</h1>
         {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. */}
         <div onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
       </div>
+      {/* The world's biggest festivals, always first, while nothing narrows the list. */}
+      {highlight && JSON.stringify({ ...f, view: 'table', bbox: null }) === JSON.stringify(DEFAULT) ? highlight : null}
       {originTabs(true)}
       {searchBox}
       {filters()}

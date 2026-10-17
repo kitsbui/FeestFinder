@@ -24,6 +24,8 @@ import { recordShareVisit } from './community.ts';
 import { badgesOf } from '../services/badges.ts';
 import { sponsorsOf } from '../services/projects.ts';
 import { momentsOf } from './moments.ts';
+import { organizerCounts } from '../services/follows.ts';
+import { FESTIVAL_BRANDS } from '../lib/festivals.ts';
 
 const PRICE_BANDS = ['free', 'under', 'over'] as const;
 const BBOX = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$/;
@@ -58,11 +60,13 @@ const ExploreQuery = z.object({
   venue: uuid.optional(),
   confidenceMin: z.coerce.number().int().min(0).max(100).optional(),
   source: z.string().regex(/^[a-z_]{2,30}$/).optional(),
-  /** Posted by someone on FeestFinder, or found by FeestFinder Radar. */
+  /** Posted by someone on FeestFinder, or found by Feest Radar. */
   origin: z.enum(['posted', 'radar']).optional(),
   bbox: z.string().regex(BBOX, 'minLng,minLat,maxLng,maxLat').optional(),
   /** Only events that have not ended. */
   upcoming: bool.optional(),
+  /** Only the world's biggest festivals (lib/festivals.ts), for the highlight on the home page. */
+  flagship: bool.optional(),
   organizer: z.string().max(80).optional(),
   friendsOnly: bool.optional(),
   sort: z.enum(['date', 'hype', 'price', 'relevance']).default('date'),
@@ -87,8 +91,10 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
   if (f.artist) where.push(`${sql.p(f.artist)} = any(e.artists)`);
   if (f.area) where.push(`e.area = ${sql.p(f.area)}`);
   if (opts.city !== false && f.city) where.push(`e.city = ${sql.p(f.city)}`);
-  // Only listed cities appear in discovery, whatever the country filter says.
-  where.push(`e.city = any(${sql.p(launchedCities().map((c) => c.slug))}::text[])`);
+  // Only listed cities appear in discovery, whatever the country filter says; the festivals Feest
+  // Radar watches appear wherever in Asia they land (lib/festivals.ts).
+  where.push(`(e.city = any(${sql.p(launchedCities().map((c) => c.slug))}::text[]) or e.festival is not null)`);
+  if (f.flagship) where.push(`e.festival = any(${sql.p(FESTIVAL_BRANDS.filter((b) => b.tier === 'world').map((b) => b.key))}::text[])`);
   if (f.country) where.push(`e.city in (select slug from cities where country_code = ${sql.p(f.country)})`);
   if (opts.style !== false && f.style?.length) where.push(`e.styles && ${sql.p(f.style)}::text[]`);
   if (f.type?.length) where.push(`e.event_type = any(${sql.p(f.type)}::text[])`);
@@ -316,8 +322,9 @@ export default async function catalogRoutes(app: FastifyInstance) {
       sources: await loadPublicSources(ctx.db, ev.id),
       artistLinks: await artistLinks(ctx.db, ev.id),
       sponsors: await sponsorsOf(ctx.db, ev.id),
-      // Whether the AI local guide can answer: it runs, or it wrote this event's guide before.
-      guide: ctx.guide.model !== 'none' || !!(await one(ctx.db, 'select 1 from ai_guides where event_id = $1', [ev.id])),
+      // Whether the AI local guide can answer in this language: it runs, or it wrote this guide before
+      // (routes/event-actions.ts serves a kept guide while it is off).
+      guide: ctx.guide.model !== 'none' || !!(await one(ctx.db, 'select 1 from ai_guides where event_id = $1 and lang = $2', [ev.id, req.lang])),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
       age: ev.age,
@@ -428,13 +435,14 @@ export default async function catalogRoutes(app: FastifyInstance) {
         where e.organizer_id = $1 and e.status = 'live' and not e.held_for_reports order by e.starts_at`, [org.id]);
     const viewer = await loadViewer(ctx.db, userId, rows.map((r) => r.id));
     const cards = rows.map((r) => presentCard(r, { now, viewer }));
-    const [following, artists, venues, member, badges, moments] = await Promise.all([
+    const [following, artists, venues, member, badges, moments, counts] = await Promise.all([
       userId ? one(ctx.db, 'select 1 from organizer_follows where user_id = $1 and organizer_id = $2', [userId, org.id]) : null,
       organizerArtists(ctx.db, org.id),
       organizerVenues(ctx.db, org.id),
       userId ? one(ctx.db, 'select 1 from organizer_members where user_id = $1 and organizer_id = $2', [userId, org.id]) : null,
       badgesOf(ctx.db, 'organizer', org.id, now),
       momentsOf(ctx.db, 'organizer', org.id),
+      organizerCounts(ctx.db, org.id),
     ]);
     // The styles it runs: what its profile says, then what its events say.
     const played = [...cards.flatMap((c) => c.styles).reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>())]
@@ -449,7 +457,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
       styles: styles.map((k) => ({ key: k, label: styleByKey(k)?.label ?? L(k, k) })),
       openForSubmissions: org.open_for_submissions,
       links: presentOrgLinks(org),
-      stats: { events: cards.length, followers: org.followers_count, since: org.since_year, artists: artists.length },
+      // Real follows only (services/follows.ts), never the stored counter.
+      stats: { events: cards.length, followers: counts.followers, following: counts.following, since: org.since_year, artists: artists.length },
       upcoming: cards.filter((c) => !c.past),
       past: cards.filter((c) => c.past).reverse(),
       artists, venues, badges, moments,

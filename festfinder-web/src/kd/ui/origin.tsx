@@ -1,6 +1,6 @@
 /**
  * Two kinds of listing, so nobody mistakes one for the other: posted (by an organiser, the
- * community, the team or an artist) and found by FeestFinder Radar on another site, which nobody
+ * community, the team or an artist) and found by Feest Radar on another site, which nobody
  * on FeestFinder has posted yet (the API's `origin`, migration 032). Radar ones wear RadarTag; the
  * event and artist directories split them with OriginTabs.
  */
@@ -13,7 +13,7 @@ export type Origin = 'posted' | 'radar';
 
 export const ORIGIN = {
   radar: { en: 'Radar', vi: 'Radar' },
-  radarLong: { en: 'Found by FeestFinder Radar', vi: 'Do FeestFinder Radar tìm thấy' },
+  radarLong: { en: 'Found by Feest Radar', vi: 'Do Feest Radar tìm thấy' },
   all: { en: 'All', vi: 'Tất cả' },
   posted: { en: 'Posted', vi: 'Đã đăng' },
   tabs: { en: 'Who listed it', vi: 'Nguồn đăng' },

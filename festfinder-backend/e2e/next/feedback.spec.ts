@@ -20,7 +20,7 @@ async function open(page: Page, path: string) {
 const fab = (page: Page) => page.getByRole('button', { name: 'Góp ý / Feedback' });
 
 test('the button is on the site, the app and the back offices', async ({ page }) => {
-  for (const path of ['/', '/e/ravo', '/a/hoaprox', '/list']) {
+  for (const path of ['/', '/e/ravo', '/a/hoaprox', '/?view=grid']) {
     await open(page, path);
     await expect(fab(page), path).toBeVisible();
   }

@@ -5,13 +5,16 @@ import { L, type Localized } from '../lib/i18n.ts';
 import { randomCode } from '../lib/crypto.ts';
 import { notifyOrganizer, notifyUser } from './notify.ts';
 
-/** The organiser that holds events the community submits, until their real organiser claims them. */
+/**
+ * Feest Radar (migration 043): the organiser that holds what ingestion finds and what the
+ * community submits, until their real organiser claims them.
+ */
 export const COMMUNITY_ORG = {
-  slug: 'cong-dong',
-  name: 'Cộng đồng FeestFinder',
-  initials: 'CĐ',
-  bio: L('Events people found and sent in. Each one is checked by a moderator before it goes live.',
-    'Sự kiện do mọi người phát hiện và gửi lên. Mỗi tin đều được kiểm duyệt trước khi lên sóng.'),
+  slug: 'feest-radar',
+  name: 'Feest Radar',
+  initials: 'FR',
+  bio: L('Electronic nights and festivals Feest Radar found on public pages, and the ones people sent in. A moderator checks each one before it goes live.',
+    'Đêm nhạc điện tử và lễ hội do Feest Radar tìm thấy trên các trang công khai, cùng tin mọi người gửi lên. Mỗi tin đều được kiểm duyệt trước khi lên sóng.'),
   art: 'linear-gradient(135deg,#0AE448,#ABFF84)',
 };
 

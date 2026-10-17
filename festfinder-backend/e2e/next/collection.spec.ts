@@ -188,7 +188,7 @@ test.describe('a public collection', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(EMPTY);
     await expect(page.getByText('Bộ sưu tập chưa có sự kiện', { exact: true })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Đã qua' })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Khám phá sự kiện' })).toHaveAttribute('href', '/');
+    await expect(page.getByRole('link', { name: 'Xem sự kiện' })).toHaveAttribute('href', '/');
     expect(problems).toEqual([]);
   });
 });

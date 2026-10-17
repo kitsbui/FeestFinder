@@ -14,6 +14,7 @@ import { isEmail, normalizeEmail, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { vnd } from '../../lib/format.ts';
 import { atVn, toMinutes, addDays, vnDate } from '../../lib/time.ts';
+import { baseOf } from '../../lib/frame.ts';
 import { dateStr, imageUrl, localized, parse, timeStr, uuid } from '../../lib/validate.ts';
 import { imageChange } from '../../services/remote-images.ts';
 import { BANKS } from '../../lib/vietqr.ts';
@@ -36,6 +37,8 @@ export const STATUS_LABEL: Record<string, Localized> = {
   rejected: L('Sent back', 'Bị trả lại'),
   removed: L('Taken down', 'Đã hạ'),
   cancelled: L('Cancelled', 'Đã huỷ'),
+  // A Feest Radar find cleared a day after it ended (services/ingest/expire.ts).
+  expired: L('Ended · cleared by Radar', 'Đã qua · Radar dọn'),
 };
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -107,6 +110,11 @@ const FIELD_COLUMN: Record<string, string> = {
 /** Whether an edit leaves a reviewed field as it was (an unchanged field sent along with the form is not a change). */
 function sameValue(ev: any, field: string, value: unknown): boolean {
   const cur = ev[FIELD_COLUMN[field]];
+  // A cover framed anew is the same picture: nothing for the team to look at again.
+  if (field === 'coverUrl') {
+    const base = (v: unknown) => (typeof v === 'string' && v ? baseOf(v) : null);
+    return base(cur) === base(value);
+  }
   const a = cur instanceof Date ? cur.toISOString().slice(0, 10) : cur == null ? null : String(cur).slice(0, field === 'startTime' || field === 'endTime' ? 5 : undefined);
   const b = value == null || value === '' ? null : String(value);
   return a === b;
@@ -139,7 +147,7 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
     }
   }
   if (body.coverUrl !== undefined) {
-    const up = body.coverUrl ? await one<any>(q, 'select sha256 from uploads where url = $1', [body.coverUrl]) : null;
+    const up = body.coverUrl ? await one<{ sha256: string }>(q, 'select sha256 from uploads where url = $1', [baseOf(body.coverUrl)]) : null;
     set.cover_sha256 = up?.sha256 ?? null;
   }
   if (body.ticketUrl !== undefined) set.ticket_link_status = body.ticketUrl ? 'unchecked' : null;

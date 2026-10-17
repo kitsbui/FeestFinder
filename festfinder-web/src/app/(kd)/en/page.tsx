@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { HomePage } from '@/kd/web/home/page';
+import { ListPage } from '@/kd/web/list/page';
 
 // /?lang=en, rewritten here in next.config.ts.
 export const revalidate = 60;
@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <HomePage lang="en" />;
+  return <ListPage lang="en" />;
 }

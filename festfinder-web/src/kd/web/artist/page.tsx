@@ -40,12 +40,13 @@ export interface ArtistData {
     languages: string[]; activeSince: number | null;
     booking: Keyed | null; travel: Keyed | null; gigTypes: Keyed[]; setLengths: Keyed[];
     links: ProfileLink[]; openToBrands: boolean; verified: boolean; claimed: boolean;
-    /** 'radar': known only from events FeestFinder Radar found, and nobody runs the profile. */
+    /** 'radar': known only from events Feest Radar found, and nobody runs the profile. */
     origin?: 'posted' | 'radar';
     /** 'owned': the artist runs it (or the team verified it); otherwise a name nobody runs yet (D13). */
     kind?: 'owned' | 'unclaimed' | 'radar';
     cities: { slug: string; label: Pair | null }[];
     followers: number;
+    followingCount?: number;
   };
   upcoming: Card[];
   past: { id: string; slug: string; title: string; startsOn: string; city: string; cityLabel: Pair | null; venue: string | null }[];
@@ -194,8 +195,9 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 <ShareProfile lang={lang} title={a.name} />
               </div>
             </div>
-            <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
+            <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-y-4 border-y border-line py-4.5 tab:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
               {unclaimed ? null : <FollowersStat lang={lang} kind="art" id={a.id} source={source} served={a.followers} />}
+              {a.claimed ? <Stat value={count(a.followingCount ?? 0, lang)} label={T.followingN} /> : null}
               <Stat value={count(data.upcoming.length, lang)} label={T.shows} />
               {a.cities.length ? <Stat value={count(a.cities.length, lang)} label={T.cities} /> : null}
               {data.past.length ? <Stat value={data.past.length >= 20 ? '20+' : count(data.past.length, lang)} label={T.playedN} /> : null}

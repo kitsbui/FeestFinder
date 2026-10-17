@@ -172,9 +172,8 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
           {tabs}
           {searchBox}
           <div className="relative z-[27]">{toolbar(<Chip on={near} onClick={() => setNear((x) => !x)}>{T.within5}</Chip>)}</div>
-          <span className="kd-m kd-num" aria-live="polite">{fill(T.nearest, { n: rows.length })}</span>
         </div>
-        <div className="flex flex-col gap-0.5 px-2 pb-4">
+        <div className="flex flex-col gap-0.5 px-2 pb-4" data-map-rows>
           {rows.map((x, i) => (
             <button
               key={x.id}

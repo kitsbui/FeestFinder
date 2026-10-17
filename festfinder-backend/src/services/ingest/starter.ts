@@ -40,6 +40,11 @@ const megatix = (name: string, url: string): StarterSource => ({
   config: { follow: '^/events/[^/]+$', maxPages: 30, skip: NOT_A_NIGHT_OUT, wallClock: true },
 });
 
+/** A festival's own site, read once a day: its edition is on the page itself. */
+const edc = (name: string, url: string): StarterSource => ({
+  adapter: 'website', name, url, city: null, authority: 'official', intervalMinutes: 1440, config: { eventType: 'festival' },
+});
+
 export const STARTER_SOURCES: StarterSource[] = [
   megatix('Megatix Singapore', 'https://megatix.com.sg/'),
   megatix('Megatix Indonesia', 'https://megatix.co.id/'),
@@ -57,6 +62,13 @@ export const STARTER_SOURCES: StarterSource[] = [
     adapter: 'website', name: 'TicketGo · Âm nhạc', url: 'https://ticketgo.vn/event/category/am-nhac', city: null, authority: 'ticketing', intervalMinutes: 720,
     config: { follow: '^/event/[a-z0-9-]+$', maxPages: 20, requireStyle: true },
   },
+  // The world's biggest festivals in Asia (owner, 2026-10-17): Insomniac's EDC sites carry their
+  // edition as schema.org Festival data on the home page (checked 2026-10-17, robots.txt allows it).
+  // Ultra's and Tomorrowland's sites carry none: their editions come from the ticket sites above,
+  // or the team posts them; Feest Radar recognises and highlights them either way (lib/festivals.ts).
+  edc('EDC Thailand', 'https://thailand.electricdaisycarnival.com/'),
+  edc('EDC Korea', 'https://korea.electricdaisycarnival.com/'),
+  edc('EDC Japan', 'https://japan.electricdaisycarnival.com/'),
   {
     adapter: 'ticketmaster', name: 'Ticketmaster Singapore', url: null, city: 'singapore', authority: 'ticketing', intervalMinutes: 360,
     config: { countryCode: 'SG', pages: 2, requireStyle: true }, needs: 'TICKETMASTER_API_KEY',

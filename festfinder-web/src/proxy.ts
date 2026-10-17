@@ -26,8 +26,8 @@ const SESSION = /(?:^|;\s*)ff_session=/;
 /** Hop-by-hop and framing headers, which the fetch sets for itself. */
 const HOP = ['host', 'connection', 'keep-alive', 'proxy-connection', 'transfer-encoding', 'te', 'trailer', 'upgrade', 'expect', 'content-length'];
 
-/** This app's own paths besides its pages: Next's, the sitemap and robots, the old landing URLs it redirects. */
-const OWN = /^\/(_next\/|__next|sitemap\.xml$|robots\.txt$|(vi|en)\/)/;
+/** This app's own paths besides its pages: Next's, the sitemap and robots, its page refresh (kd-fresh), the old landing URLs it redirects. */
+const OWN = /^\/(_next\/|__next|sitemap\.xml$|robots\.txt$|kd-fresh$|(vi|en)\/)/;
 
 /** Whether this app answers a path itself. The Markdown versions of its pages are the API's. */
 function isOwn(path: string): boolean {

@@ -14,8 +14,8 @@ export const MIN_EVENT_AD_BUDGET = 500_000;
 export const EVENT_AD_PLACEMENTS = ['featured', 'banner', 'social'] as const;
 export type EventAdPlacement = (typeof EVENT_AD_PLACEMENTS)[number];
 export const EVENT_AD_PLACEMENT_LABEL: Record<EventAdPlacement, Localized> = {
-  featured: L('Featured shelf on Explore', 'Kệ Nổi bật trang Khám phá'),
-  banner: L('Explore banner', 'Banner trang Khám phá'),
+  featured: L('Featured shelf', 'Kệ Nổi bật'),
+  banner: L('Home page banner', 'Banner trang chủ'),
   social: L('FeestFinder’s social channels', 'Kênh mạng xã hội của FeestFinder'),
 };
 
@@ -32,7 +32,7 @@ export const AD_CATEGORY_LABEL: Record<AdCategory | 'Event', Localized> = {
 export const BRAND_AD_PLACEMENTS = ['feed', 'banner', 'live'] as const;
 export type BrandAdPlacement = (typeof BRAND_AD_PLACEMENTS)[number];
 export const BRAND_AD_PLACEMENT_LABEL: Record<BrandAdPlacement, Localized> = {
-  feed: L('Feed card', 'Thẻ trong feed'), banner: L('Explore banner', 'Banner trang Khám phá'), live: L('In-event (live mode)', 'Trong sự kiện (chế độ trực tiếp)'),
+  feed: L('Feed card', 'Thẻ trong feed'), banner: L('Home page banner', 'Banner trang chủ'), live: L('In-event (live mode)', 'Trong sự kiện (chế độ trực tiếp)'),
 };
 
 /** A brand's own channels, by a fixed list of keys. */

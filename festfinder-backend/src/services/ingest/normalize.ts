@@ -2,6 +2,7 @@ import { cityAt, cityBySlug, cityFromText, countryCodeOf, plainText } from '../.
 import { classifyStyles, genreFromStyles, inferEventType, otherGenreOf } from '../../lib/styles.ts';
 import { addDays, dateIn, daysBetween, timeIn, toMinutes } from '../../lib/time.ts';
 import type { NormalizedEvent, Rejection } from './types.ts';
+import { festivalOf } from '../../lib/festivals.ts';
 
 /*
  * What every adapter does to a record once it has read its fields: clean the text, put the
@@ -169,7 +170,9 @@ export function finalize(d: Draft, opts: { now: Date; fallbackCity?: string | nu
   const lng = coord(d.lng, 180);
   const slug = resolveCity({ lat, lng, texts: [d.address, ...(d.cityTexts ?? []), d.venueName], fallback: opts.fallbackCity, country: d.country });
   const city = cityBySlug(slug);
-  if (!city || (opts.requireLaunched !== false && !city.launched)) return { rejected: 'out_of_area', detail: [d.address, ...(d.cityTexts ?? [])].filter(Boolean).join(' · ').slice(0, 200) };
+  // The festivals Feest Radar watches are kept wherever in Asia FeestFinder knows the city, launched or not.
+  const festival = festivalOf(title);
+  if (!city || (opts.requireLaunched !== false && !city.launched && !festival)) return { rejected: 'out_of_area', detail: [d.address, ...(d.cityTexts ?? [])].filter(Boolean).join(' · ').slice(0, 200) };
 
   const start = localParts(d.start, city.timezone, opts.wallClock);
   if (!start) return { rejected: 'bad_date', detail: String(d.start).slice(0, 60) };
@@ -208,7 +211,8 @@ export function finalize(d: Draft, opts: { now: Date; fallbackCity?: string | nu
     styles,
     // EDM wins: a night that names an EDM style is never dropped, even if it also says "hip hop".
     otherGenre: styles.length ? null : otherGenreOf({ tags: d.tags, title, description, lineup }),
-    eventType: inferEventType({ schemaType: d.schemaType, title, description, startTime: start.time, endTime: end?.time ?? null }),
+    eventType: festival ? 'festival' : inferEventType({ schemaType: d.schemaType, title, description, startTime: start.time, endTime: end?.time ?? null }),
+    festival: festival?.key ?? null,
     imageUrl: cleanUrl(d.imageUrl),
     ticketUrl: cleanUrl(d.ticketUrl),
     eventUrl: cleanUrl(d.eventUrl),

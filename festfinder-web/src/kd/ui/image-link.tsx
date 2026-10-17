@@ -12,8 +12,18 @@ import { pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { Button } from './actions';
 import { FieldError, Input } from './forms';
+import { baseOf } from '../frame';
+import { FrameButton, FramedThumb, type FrameShape } from './frame-editor';
 
 export type ImagePurpose = 'avatar' | 'logo' | 'profile_cover' | 'moment';
+
+/** Where each kind of picture is shown, for the framing previews. */
+const SHAPES: Record<ImagePurpose, FrameShape[]> = {
+  avatar: ['round', 'square'],
+  logo: ['square', 'round'],
+  profile_cover: ['banner', 'card'],
+  moment: ['card', 'square'],
+};
 
 const COPY = {
   checking: { en: 'Checking…', vi: 'Đang kiểm tra…' },
@@ -26,18 +36,19 @@ export function ImageLinkField({ lang, purpose, label, hint, value, onChange, cl
 }) {
   const T = pick(COPY, lang);
   const id = useId();
-  const [text, setText] = useState(value ?? '');
+  // The field shows the link itself; its framing (kd/frame.ts) is set with "Căn khung".
+  const [text, setText] = useState(value ? baseOf(value) : '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   // A newer value from the screen (a reload, a removal) replaces what is typed.
   const [seen, setSeen] = useState(value);
-  if (value !== seen) { setSeen(value); setText(value ?? ''); setErr(''); }
+  if (value !== seen) { setSeen(value); setText(value ? baseOf(value) : ''); setErr(''); }
 
   const check = async (raw: string) => {
     const url = raw.trim();
     setErr('');
     if (!url) { if (value) onChange(null); return; }
-    if (url === value || busy) return;
+    if ((value && url === baseOf(value)) || busy) return;
     setBusy(true);
     try {
       const out = await FF.post('/images/check', { url, purpose });
@@ -52,15 +63,13 @@ export function ImageLinkField({ lang, purpose, label, hint, value, onChange, cl
   const round = purpose === 'avatar';
   return (
     <div className={cx('flex flex-col gap-2 rounded-[10px] border border-dashed border-line2 px-4 py-3', className)}>
-      <div className="flex min-h-11 items-center gap-3">
-        {value ? (
-           
-          <img src={value} alt="" referrerPolicy="no-referrer" className={cx('shrink-0 object-cover', round ? 'size-11 rounded-full' : purpose === 'profile_cover' ? 'h-11 w-[78px] rounded-md' : 'size-11 rounded-lg')} />
-        ) : null}
-        <label htmlFor={id} className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex min-h-11 flex-wrap items-center gap-3">
+        {value ? <FramedThumb src={value} className={round ? 'size-11 rounded-full' : purpose === 'profile_cover' ? 'h-11 w-[78px] rounded-md' : 'size-11 rounded-lg'} /> : null}
+        <label htmlFor={id} className="flex min-w-0 flex-1 basis-40 flex-col gap-0.5">
           <span className="kd-hs">{label}</span>
           <span className="kd-s">{busy ? T.checking : hint}</span>
         </label>
+        <FrameButton lang={lang} value={value} shapes={SHAPES[purpose]} onChange={onChange} />
         {value ? <Button size="sm" tone="ghost" onClick={() => { setText(''); setErr(''); onChange(null); }} aria-label={`${T.remove} · ${label}`}>{T.remove}</Button> : null}
       </div>
       <div className="flex items-center gap-2">
@@ -81,7 +90,7 @@ export function ImageLinkField({ lang, purpose, label, hint, value, onChange, cl
           onBlur={() => { void check(text); }}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void check(text); } }}
         />
-        {text.trim() && text.trim() !== value ? <Button size="sm" disabled={busy} onClick={() => void check(text)}>{T.use}</Button> : null}
+        {text.trim() && text.trim() !== (value ? baseOf(value) : '') ? <Button size="sm" disabled={busy} onClick={() => void check(text)}>{T.use}</Button> : null}
       </div>
       <FieldError>{err}</FieldError>
     </div>

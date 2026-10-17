@@ -6,6 +6,13 @@ import { BADGES, L, TIER_NAMES, type Localized } from '../lib/i18n.ts';
 import { cityOf } from '../lib/places.ts';
 import { brandOf, CONFIDENCE_LABEL, freshness, type ConfidenceLabel } from '../services/ingest/confidence.ts';
 import { PROVIDER_LABEL } from '../services/ingest/providers.ts';
+import { festivalByKey, FLAGSHIP_LABEL } from '../lib/festivals.ts';
+
+/** A festival brand on a card: its name, and the highlight a world festival wears. */
+function festivalCard(key: string | null | undefined) {
+  const b = festivalByKey(key);
+  return b ? { key: b.key, name: b.name, flagship: b.tier === 'world', label: b.tier === 'world' ? FLAGSHIP_LABEL : null } : null;
+}
 
 /** Organiser columns a card shows. Alias the organizers table as `o`. */
 export const ORG_COLUMNS = `
@@ -18,7 +25,7 @@ export const CARD_COLUMNS = `
   e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at,
   e.venue_id, e.venue_name, e.area, e.address, e.lat, e.lng, e.city,
   e.entry_mode, e.price_from, e.currency, e.hype_count, e.save_count, e.lineup, e.artists, e.organizer_id,
-  e.styles, e.event_type, e.confidence_score, e.confidence, e.source_count, e.last_verified_at, e.origin, ${ORG_COLUMNS}`;
+  e.styles, e.event_type, e.confidence_score, e.confidence, e.source_count, e.last_verified_at, e.origin, e.festival, ${ORG_COLUMNS}`;
 
 export interface FriendFace { id: string; name: string; initials: string; photoUrl: string | null; source: string }
 
@@ -112,8 +119,10 @@ export function presentCard(r: any, o: PresentOpts) {
     styles: (r.styles ?? []) as string[],
     eventType: (r.event_type ?? null) as string | null,
     confidence: presentConfidence(r, o.now),
-    /** 'radar': found by FeestFinder Radar on another site, not posted by anyone here (migration 032). */
+    /** 'radar': found by Feest Radar on another site, not posted by anyone here (migration 032). */
     origin: (r.origin === 'radar' ? 'radar' : 'posted') as 'posted' | 'radar',
+    /** The festival brand it belongs to; `flagship` for the world's biggest, which the site always highlights. */
+    festival: festivalCard(r.festival),
     isFree: r.entry_mode === 'free' || r.price_from === 0,
     hypeCount: r.hype_count as number,
     saveCount: r.save_count as number,

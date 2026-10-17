@@ -74,7 +74,6 @@ export function ProjectsBrowser({ lang, first, cities }: { lang: Lang; first: Pr
           options={[{ value: 'all', label: T.allCities }, ...cities.map((c) => ({ value: c.slug, label: c.name[lang] }))]}
           display={f.city ? cities.find((c) => c.slug === f.city)?.name[lang] : T.allCities}
         />
-        <span className="kd-m kd-num" aria-live="polite">{fill(T.count, { n: list.total })}</span>
       </div>
       {list.items.length ? (
         <div className={cx('kd-cards transition-opacity', busy && 'opacity-60')}>

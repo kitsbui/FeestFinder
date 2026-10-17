@@ -19,7 +19,7 @@ export function legacyListPath(lang: 'vi' | 'en', city: string, facets: string[]
   }
   q.set('lang', lang);
   const qs = q.toString();
-  return '/list' + (qs ? `?${qs}` : '');
+  return '/' + (qs ? `?${qs}` : '');
 }
 
 type Ctx = { params: Promise<{ city: string; facets?: string[] }> };

@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../fresh';
 import { fill, pick } from '../copy';
 import { cx } from '../cx';
 import { whenShort } from '../format';
@@ -34,6 +35,7 @@ import { duration, type Appeal, type Held, type Item, type Reason, type Verb } f
 
 type View = 'all' | 'breach' | 'soon' | 'flagged' | 'new';
 const VIEWS: View[] = ['all', 'breach', 'soon', 'flagged', 'new'];
+const FIT_TONE = { recommend: 'ok', consider: 'warn', skip: 'bad' } as const;
 const HOLD_MS = 5000;
 
 const inView = (i: Item, v: View) => v === 'all' || (v === 'flagged' ? i.flagged : v === 'new' ? i.organizer.newOrganizer : i.sla.state === v);
@@ -63,6 +65,8 @@ export function Queue() {
   const areas = useMemo(() => (params.get('area') ?? '').split('|').filter(Boolean), [params]);
   const risk = params.get('risk') ?? '';
   const flag = params.get('flag') ?? '';
+  const source = params.get('source') ?? '';
+  const fit = params.get('fit') ?? '';
   const sort = params.get('sort') ?? 'age';
 
   const load = useCallback(async () => {
@@ -79,6 +83,8 @@ export function Queue() {
     FF.maybe(FF.get('/admin/reject-reasons'), { items: [] }).then((r: { items: Reason[] }) => setReasons(r.items));
   }, [load]);
 
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
   /** Sends a held decision. `beacon` is for a page that is going away: the request outlives it. */
   const send = useCallback(async (h: Held, beacon = false) => {
     const path = h.verb === 'approve' ? '/admin/listings/approve' : '/admin/listings/reject';
@@ -88,7 +94,10 @@ export function Queue() {
       fetch(path, { method: 'POST', keepalive: true, credentials: 'same-origin', headers: { 'content-type': 'application/json', 'x-lang': lang }, body: JSON.stringify(body) }).catch(() => {});
       return;
     }
-    try { await FF.post(path, body); } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    try {
+      await FF.post(path, body);
+      for (const id of h.ids) { const slug = itemsRef.current?.find((i) => i.id === id)?.slug; if (slug) void freshen('e', slug); }
+    } catch (e) { kd.toast(FF.errorText(e, lang)); }
     void load();
   }, [kd, lang, load]);
   const sendRef = useRef(send);
@@ -109,12 +118,15 @@ export function Queue() {
     .filter((i) => !areas.length || areas.includes(i.area ?? ''))
     .filter((i) => !risk || i.riskBand === risk)
     .filter((i) => !flag || (flag === 'none' ? !i.flag : i.flag?.code === flag))
+    .filter((i) => !source || (i.origin ?? 'posted') === source)
+    .filter((i) => !fit || i.fit?.band === fit)
     .filter((i) => !needle || `${i.title} ${i.organizer.name} ${i.submittedBy?.name ?? ''} ${i.venueName ?? ''} ${i.slug}`.toLowerCase().includes(needle))
-    .sort((a, b) => sort === 'risk' ? b.riskScore - a.riskScore
+    .sort((a, b) => sort === 'fit' ? Number(!!b.festival?.flagship) - Number(!!a.festival?.flagship) || (b.fit?.score ?? -1) - (a.fit?.score ?? -1)
+      : sort === 'risk' ? b.riskScore - a.riskScore
       : sort === 'new' ? a.waitingMinutes - b.waitingMinutes
         : sort === 'date' ? (a.startsOn ?? '9999').localeCompare(b.startsOn ?? '9999')
           : b.waitingMinutes - a.waitingMinutes),
-  [live, view, genres, areas, risk, flag, needle, sort]);
+  [live, view, genres, areas, risk, flag, source, fit, needle, sort]);
 
   // The open listing: the one in the address when it is shown (or not in the queue at all: a
   // deep link to a decided listing), else the first row.
@@ -173,7 +185,7 @@ export function Queue() {
 
   const viewLabel: Record<View, string> = { all: T.fAll, breach: R.vBreach, soon: R.vSoon, flagged: T.fFlagged, new: R.vNew };
   const verbLabel = { approve: T.didApprove, reject: T.didReject, fix: T.didFix };
-  const active = !!(genres.length || areas.length || risk || flag);
+  const active = !!(genres.length || areas.length || risk || flag || source || fit);
   const n = (pred: (i: Item) => boolean) => live.filter(pred).length;
   const allPicked = visible.length > 0 && visible.every((i) => picked.includes(i.id));
   const areaOptions = useMemo(() => {
@@ -200,12 +212,14 @@ export function Queue() {
           <Chip on={appealsOn} count={appeals?.length ?? counts?.appeals ?? 0} onClick={() => setParams({ filter: 'appeals', view: null, id: null })}>{T.fAppeals}</Chip>
         </div>
         {!appealsOn ? (
-          <FilterBar onReset={active ? () => setParams({ genre: null, area: null, risk: null, flag: null }) : null}>
+          <FilterBar onReset={active ? () => setParams({ genre: null, area: null, risk: null, flag: null, source: null, fit: null }) : null}>
+            <Choice label={R.fSource} value={source} onChange={(v) => setParams({ source: v })} options={[{ value: 'radar', label: R.srcRadar }, { value: 'posted', label: R.srcPosted }]} />
+            <Choice label={R.fFit} value={fit} onChange={(v) => setParams({ fit: v })} options={[{ value: 'recommend', label: R.fitRecommend }, { value: 'consider', label: R.fitConsider }, { value: 'skip', label: R.fitSkip }]} />
             <Choice label={R.fRisk} value={risk} onChange={(v) => setParams({ risk: v })} options={[{ value: 'high', label: R.high }, { value: 'medium', label: R.medium }, { value: 'low', label: R.low }]} />
             <Choice label={R.fFlag} value={flag} onChange={(v) => setParams({ flag: v })} options={[...((opts?.rejectReasons ?? []) as Reason[]).map((r) => ({ value: r.code, label: r.label[lang] })), { value: 'none', label: R.notFlagged }]} />
             <MultiChoice label={R.fGenre} values={genres} onChange={(v) => setParams({ genre: v.join(',') })} options={(opts?.genres ?? []).map((x) => ({ value: x.value, label: x.label[lang], aside: String(live.filter((i) => i.genre === x.value).length) }))} />
             <MultiChoice label={R.fArea} values={areas} onChange={(v) => setParams({ area: v.join('|') })} options={areaOptions} />
-            <Choice label={R.sort} any={false} value={sort} onChange={(v) => setParams({ sort: v === 'age' ? null : v })} options={[{ value: 'age', label: R.sAge }, { value: 'risk', label: R.sRisk }, { value: 'date', label: R.sDate }, { value: 'new', label: R.sNew }]} />
+            <Choice label={R.sort} any={false} value={sort} onChange={(v) => setParams({ sort: v === 'age' ? null : v })} options={[{ value: 'age', label: R.sAge }, { value: 'fit', label: R.sFit }, { value: 'risk', label: R.sRisk }, { value: 'date', label: R.sDate }, { value: 'new', label: R.sNew }]} />
           </FilterBar>
         ) : null}
         {!appealsOn && visible.length ? (
@@ -246,6 +260,8 @@ export function Queue() {
                   </span>
                   <span className="flex flex-col items-end gap-1">
                     <Status tone={i.sla.state === 'breach' ? 'bad' : i.sla.state === 'soon' ? 'warn' : 'none'}>{i.sla.label[lang]}</Status>
+                    {i.festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
+                    {i.fit ? <Status tone={FIT_TONE[i.fit.band]}>{fill(R.fitN, { n: i.fit.score })}</Status> : null}
                     <Status tone={i.riskBand === 'high' ? 'bad' : i.riskBand === 'medium' ? 'warn' : 'ok'}>{fill(R.riskN, { n: i.riskScore })}</Status>
                     {i.flagged ? <Status tone="bad">{i.flag?.label[lang] ?? T.flagged}</Status> : null}
                     {i.threadMessages ? <span className="kd-m kd-num">{fill(R.msgsN, { n: i.threadMessages })}</span> : null}

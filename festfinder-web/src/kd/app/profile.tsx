@@ -20,6 +20,7 @@ import { FieldError, FieldLabel, Input, Segmented, Select } from '../ui/forms';
 import { Accordion, Art, Avatar, Stamp, Stat } from '../ui/parts';
 import { AppBar } from '../ui/shell';
 import { ImageLinkField } from '../ui/image-link';
+import { FollowManager, FollowStats, type Follows } from '../ui/follows';
 import { Sheet } from '../ui/sheet';
 import { MomentsSection } from '../moments';
 import { Badges, type BadgeView } from '../ui/badges';
@@ -31,11 +32,7 @@ import { SignInCard } from './row';
 
 export interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
 export interface Passport { stats: { nights: number; events: number; styles: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null }[] }
-export interface Follows {
-  organizers: { following: { id: string; slug: string; name: string; logoUrl: string | null; next: { slug: string; title: string; startsOn: string } | null }[] };
-  artists: string[];
-  artistPages?: { name: string; slug: string | null }[];
-}
+export type { Follows } from '../ui/follows';
 export interface Order { id: string; status: string; event: { slug: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; area: string | null; genre: string | null; endsAt: string | null }; tickets: unknown[] }
 
 export function Profile({ lang }: { lang: Lang }) {
@@ -88,9 +85,10 @@ function Mine({ lang }: { lang: Lang }) {
           </div>
           <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
         </div>
-        <div className="grid grid-cols-2 border-y border-line py-3.5">
+        <div className="grid grid-cols-2 gap-y-3.5 border-y border-line py-3.5">
           <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
           <Stat value={orders ? coming.length : '–'} label={T.going} />
+          <FollowStats lang={lang} f={follows} />
         </div>
       </section>
 
@@ -117,7 +115,7 @@ function Mine({ lang }: { lang: Lang }) {
       {pp ? <PassportSection lang={lang} pp={pp} year={year} onWrapped={() => setWrapped(true)} /> : null}
       {moments ? <MomentsSection lang={lang} as="user" items={moments} owner compact className="px-4 pt-8" /> : null}
       <Badges lang={lang} items={badges} who={{ vi: 'người dùng', en: 'people' }} own compact className="px-4 pt-8" />
-      {follows ? <FollowingSection lang={lang} f={follows} /> : null}
+      {follows ? <FollowManager lang={lang} f={follows} /> : null}
 
       {editing && u ? <EditSheet lang={lang} me={u} onClose={() => setEditing(false)} onSaved={(n) => { setMe((m) => m && { ...m, user: { ...m.user, ...n } }); setEditing(false); }} /> : null}
       {wrapped ? <WrappedSheet lang={lang} year={year} onClose={() => setWrapped(false)} /> : null}
@@ -172,36 +170,6 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
         </section>
       ) : null}
     </>
-  );
-}
-
-export function FollowingSection({ lang, f, flush }: { lang: Lang; f: Follows; flush?: boolean }) {
-  const T = pick(APP, lang);
-  const rows = [
-    ...(f.artistPages ?? f.artists.map((name) => ({ name, slug: null }))).map((a) => ({ key: 'a:' + a.name, href: a.slug ? '/a/' + a.slug : null, name: a.name, org: false, logo: null as string | null, line: T.artistRole })),
-    ...f.organizers.following.map((o) => ({
-      key: 'o:' + o.id, href: '/o/' + o.slug, name: o.name, org: true, logo: o.logoUrl,
-      line: o.next ? fill(T.orgNext, { d: dayMonth(o.next.startsOn, lang) }) : T.orgNone,
-    })),
-  ];
-  if (!rows.length) return null;
-  return (
-    <section className={cx('flex flex-col pt-8', !flush && 'px-4')} aria-labelledby="pf-follow">
-      <div className="flex items-baseline justify-between pb-1.5"><h2 id="pf-follow" className="kd-h">{T.followingTitle}</h2><span className="kd-m kd-num">{rows.length}</span></div>
-      {rows.slice(0, 6).map((r) => {
-        const body = (
-          <>
-            <Avatar name={r.name} src={r.logo} size={44} org={r.org} />
-            <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell">{r.name}</span><span className="kd-s kd-ell">{r.line}</span></span>
-            {r.href ? <CaretRightIcon size={16} className="text-fog" aria-hidden="true" /> : null}
-          </>
-        );
-        // A followed name nobody is listed under yet has no page to open.
-        return r.href
-          ? <a key={r.key} className="kd-lrow min-h-16" href={r.href + (lang === 'en' ? '?lang=en' : '')}>{body}</a>
-          : <div key={r.key} className="kd-lrow min-h-16">{body}</div>;
-      })}
-    </section>
   );
 }
 

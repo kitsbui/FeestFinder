@@ -66,7 +66,6 @@ const config: NextConfig = {
         { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
         // The home page in English is /?lang=en: a cached page of its own.
         { source: '/', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/en' },
-        { source: '/list', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/list/en' },
         // An event or organiser page in English is /e/<slug>?lang=en: a cached page of its own.
         { source: '/e/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/e/:slug/en' },
         { source: '/o/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/o/:slug/en' },
@@ -109,7 +108,9 @@ const config: NextConfig = {
       { source: '/admin', destination: '/console', permanent: false },
       // The English pages' one address is ?lang=en.
       { source: '/en', destination: '/?lang=en', permanent: true },
-      { source: '/list/en', destination: '/list?lang=en', permanent: true },
+      // The list is the home page (owner, 2026-10-17): its old address keeps its filters.
+      { source: '/list', destination: '/', permanent: true },
+      { source: '/list/en', destination: '/?lang=en', permanent: true },
       { source: '/e/:slug/en', destination: '/e/:slug?lang=en', permanent: true },
       { source: '/o/:slug/en', destination: '/o/:slug?lang=en', permanent: true },
       { source: '/c/:slug/en', destination: '/c/:slug?lang=en', permanent: true },
@@ -118,8 +119,11 @@ const config: NextConfig = {
       { source: '/p/:slug/en', destination: '/p/:slug?lang=en', permanent: true },
       { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
+      // The organiser that holds Radar finds is Feest Radar (migration 043).
+      { source: '/o/cong-dong', destination: '/o/feest-radar', permanent: true },
+      { source: '/o/cong-dong.md', destination: '/o/feest-radar.md', permanent: true },
       // The map is a view of the list.
-      { source: '/map', destination: '/list?view=map', permanent: false },
+      { source: '/map', destination: '/?view=map', permanent: false },
       { source: '/app/map', destination: '/app/list', permanent: true },
     ];
   },

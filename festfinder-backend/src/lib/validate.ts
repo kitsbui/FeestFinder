@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { badRequest } from './errors.ts';
+import { baseOf, fragmentIsFrame } from './frame.ts';
 import { L } from './i18n.ts';
 
 /** Parses input or throws a 400 listing every failing field. */
@@ -17,8 +18,11 @@ export const localized = z.object({ en: z.string().max(4000), vi: z.string().max
 /** The path POST /uploads gives an image it keeps in the database (see DbStorage). */
 export const UPLOAD_PATH = /^\/files\/(cover|logo|avatar|recap|moment)\/[0-9a-f]{2}\/[0-9a-f]{64}\.(png|jpg|webp)$/;
 const anyUrl = z.string().url();
-/** An image: a full URL, or the path of an upload kept in the database, the same in every environment. */
-export const imageUrl = z.string().max(2048).refine((v) => UPLOAD_PATH.test(v) || anyUrl.safeParse(v).success, 'Invalid URL');
+/**
+ * An image: a full URL, or the path of an upload kept in the database, the same in every
+ * environment; either may carry its framing (lib/frame.ts) and no other fragment.
+ */
+export const imageUrl = z.string().max(2048).refine((v) => fragmentIsFrame(v) && (UPLOAD_PATH.test(baseOf(v)) || anyUrl.safeParse(v).success), 'Invalid URL');
 export const limit = (max = 50, def = 20) => z.coerce.number().int().min(1).max(max).default(def);
 export const bool = z.union([z.boolean(), z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1')]);
 /** Comma-separated list in a query string. */

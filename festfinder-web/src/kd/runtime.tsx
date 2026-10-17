@@ -20,10 +20,12 @@ export type Intent =
   | { kind: 'save'; id: string }
   | { kind: 'follow-org'; id: string }
   | { kind: 'follow-artist'; name: string }
+  | { kind: 'follow-person'; id: string }
   | { kind: 'go'; href: string };
 
 const encodeIntent = (i: Intent) =>
-  i.kind === 'save' ? 'save:' + i.id : i.kind === 'follow-org' ? 'org:' + i.id : i.kind === 'follow-artist' ? 'art:' + i.name : 'go:' + i.href;
+  i.kind === 'save' ? 'save:' + i.id : i.kind === 'follow-org' ? 'org:' + i.id : i.kind === 'follow-artist' ? 'art:' + i.name
+    : i.kind === 'follow-person' ? 'person:' + i.id : 'go:' + i.href;
 function decodeIntent(s: string | null | undefined): Intent | null {
   if (!s) return null;
   const at = s.indexOf(':');
@@ -32,9 +34,13 @@ function decodeIntent(s: string | null | undefined): Intent | null {
   if (k === 'save') return { kind: 'save', id: v };
   if (k === 'org') return { kind: 'follow-org', id: v };
   if (k === 'art') return { kind: 'follow-artist', name: v };
+  if (k === 'person') return { kind: 'follow-person', id: v };
   if (k === 'go' && v.startsWith('/')) return { kind: 'go', href: v };
   return null;
 }
+
+/** What a follow is of: an organiser's page, an artist's profile, a person. */
+export type FollowKind = 'org' | 'art' | 'person';
 
 export interface ToastMsg { text: string; action?: { label: string; run: () => void }; id: number }
 
@@ -49,7 +55,7 @@ interface Kd {
   /** Overrides for follow state the page loaded: 'org:<id>' / 'art:<name>'. */
   follows: ReadonlyMap<string, boolean>;
   toggleSave: (id: string) => Promise<boolean | null>;
-  setFollow: (key: 'org' | 'art', id: string, on: boolean) => Promise<boolean | null>;
+  setFollow: (key: FollowKind, id: string, on: boolean) => Promise<boolean | null>;
   /** True when signed in; otherwise opens the sign-in sheet and returns false. */
   requireSignIn: (intent?: Intent, note?: string) => boolean;
   openSignIn: (note?: string) => void;
@@ -133,6 +139,9 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     } else if (i.kind === 'follow-artist') {
       await FF.fire(FF.put('/me/follows/artists/' + encodeURIComponent(i.name)));
       setFollows((prev) => new Map(prev).set('art:' + i.name, true));
+    } else if (i.kind === 'follow-person') {
+      await FF.fire(FF.put('/me/follows/people/' + i.id));
+      setFollows((prev) => new Map(prev).set('person:' + i.id, true));
     } else if (i.kind === 'go') {
       location.assign(i.href);
     }
@@ -199,12 +208,12 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     }
   }, [saved, requireSignIn, toast, lang, C.gateSave]);
 
-  const setFollow = useCallback(async (key: 'org' | 'art', id: string, on: boolean) => {
-    const intent: Intent = key === 'org' ? { kind: 'follow-org', id } : { kind: 'follow-artist', name: id };
+  const setFollow = useCallback(async (key: FollowKind, id: string, on: boolean) => {
+    const intent: Intent = key === 'org' ? { kind: 'follow-org', id } : key === 'person' ? { kind: 'follow-person', id } : { kind: 'follow-artist', name: id };
     if (!requireSignIn(intent, C.gateFollow)) return null;
     const k = key + ':' + id;
     setFollows((prev) => new Map(prev).set(k, on));
-    const path = key === 'org' ? '/me/follows/organizers/' + id : '/me/follows/artists/' + encodeURIComponent(id);
+    const path = key === 'org' ? '/me/follows/organizers/' + id : key === 'person' ? '/me/follows/people/' + id : '/me/follows/artists/' + encodeURIComponent(id);
     try {
       await (on ? FF.put(path) : FF.del(path));
       return on;

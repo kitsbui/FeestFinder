@@ -8,7 +8,6 @@ export const WEB = {
   // frame
   home: { en: 'FeestFinder, home', vi: 'FeestFinder, trang chủ' },
   mainNav: { en: 'Main', vi: 'Chính' },
-  explore: { en: 'Explore', vi: 'Khám phá' },
   events: { en: 'Events', vi: 'Sự kiện' },
   projects: { en: 'Projects', vi: 'Dự án' },
   myProjects: { en: 'My projects', vi: 'Dự án của tôi' },
@@ -54,11 +53,6 @@ export const WEB = {
   featured: { en: 'Featured', vi: 'Nổi bật' },
 
   // event page
-  sectionNav: { en: 'On this page', vi: 'Mục trên trang' },
-  tabAbout: { en: 'About', vi: 'Giới thiệu' },
-  tabLineup: { en: 'Line-up', vi: 'Line-up' },
-  tabTickets: { en: 'Tickets', vi: 'Vé' },
-  tabVenue: { en: 'Venue', vi: 'Địa điểm' },
   buyTickets: { en: 'Get tickets', vi: 'Mua vé' },
   chooseTickets: { en: 'Choose tickets · from {p}', vi: 'Chọn vé · từ {p}' },
   freeEntry: { en: 'Free entry', vi: 'Vào cửa miễn phí' },

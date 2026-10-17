@@ -7,6 +7,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowSquareOutIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../../fresh';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { count, money, whenShort } from '../../format';
 import { useKd } from '../../runtime';
@@ -212,6 +213,7 @@ function ProfileForm({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChang
     let website = f.website.trim();
     if (website && !/^https?:\/\//i.test(website)) website = 'https://' + website;
     const out = await act(kd, lang, () => FF.patch(`/admin/organizers/${o.id}/profile`, { ...rest, website, logoUrl: logoUrl || null, bio: { vi: bioVi, en: bioEn } }));
+    if (out) void freshen('o', o.slug);
     setBusy(false);
     if (out) onChanged();
   };

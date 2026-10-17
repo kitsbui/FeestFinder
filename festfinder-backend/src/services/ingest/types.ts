@@ -56,10 +56,12 @@ export interface NormalizedEvent {
   free: boolean | null;
   cancelled: boolean;
   organizerName: string | null;
+  /** The festival brand the title names, if Feest Radar watches it (lib/festivals.ts). */
+  festival: string | null;
 }
 
 export type Rejection = { rejected: RejectReason; detail?: string };
-export type RejectReason = 'no_title' | 'no_date' | 'bad_date' | 'past' | 'out_of_area' | 'too_long' | 'cancelled' | 'skipped';
+export type RejectReason = 'no_title' | 'no_date' | 'bad_date' | 'past' | 'out_of_area' | 'too_long' | 'cancelled' | 'skipped' | 'low_fit';
 
 export const isRejection = (x: NormalizedEvent | Rejection): x is Rejection => 'rejected' in x;
 

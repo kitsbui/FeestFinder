@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon, ArrowUpRightIcon, DotsThreeIcon, TrashIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../fresh';
 import { fill, pick, type Lang, type Pair } from '../copy';
 import { cx } from '../cx';
 import { STYLE_LABEL, styleLabel } from '../genre';
@@ -196,6 +197,8 @@ export function EventEditor({ id }: { id: string }) {
         out = await FF.get('/organizer/events/' + d.id);
       }
       setD(out);
+      // The public page shows the change at once, not after its cache.
+      if (out.slug) void freshen('e', out.slug);
       setSave({ state: 'saved', at: new Date().toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) });
       if (!quiet && !changed.length) kd.toast(T.saved);
       if (out.status !== d.status || changed.includes('title')) void reload();

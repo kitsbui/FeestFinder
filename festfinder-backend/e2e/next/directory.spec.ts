@@ -84,7 +84,6 @@ test.describe('the artist directory', () => {
     await page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' }).fill('slim');
     await expect(page).toHaveURL(/\/a\?q=slim$/);
     await expect(results(page).getByRole('listitem')).toHaveCount(1);
-    await expect(page.getByText('1 nghệ sĩ', { exact: true })).toBeVisible();
     await results(page).getByRole('link', { name: 'SlimV', exact: true }).click();
     await expect(page).toHaveURL(/\/a\/slimv$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('SlimV');

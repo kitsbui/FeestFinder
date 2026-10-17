@@ -20,14 +20,14 @@ import { POST_HREF } from '../ui/post-kind';
 import { CRAFT, WORKSPACE, isTeam, otherCraft } from '../craft';
 import { WEB } from './copy';
 
-/** Which nav link is the current page: 'list' is Sự kiện, in each of its views (table, grid, map). */
-export type WebSection = 'explore' | 'list' | 'artists' | 'projects' | 'none';
+/** Which nav link is the current page: 'list' is Sự kiện, the home page, in each of its views (table, grid, map). */
+export type WebSection = 'list' | 'artists' | 'projects' | 'none';
 
 /** Where the chosen language is kept: the old web screen's key, so a visitor's choice carries over. */
 const LANG_KEY = 'ff_lang';
 
 /** Where a style leads: every upcoming event of it (the list), the same events its count counts. Only music styles: price is a filter, not a style. */
-export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/list?style=${k}`, lang);
+export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/?style=${k}`, lang);
 
 export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSection }) {
   const kd = useKd();
@@ -63,8 +63,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={127} height={22} />
         </Link>
         <nav aria-label={T.mainNav} className="ml-3 hidden items-center gap-0.5 desk:flex">
-          <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'explore' ? 'page' : undefined}>{T.explore}</Link>
-          <Link className="kd-nl" href={inLang('/list', lang)} aria-current={current === 'list' ? 'page' : undefined}>{T.events}</Link>
+          <Link className="kd-nl" href={inLang('/', lang)} aria-current={current === 'list' ? 'page' : undefined}>{T.events}</Link>
           <Link className="kd-nl" href={inLang('/a', lang)} aria-current={current === 'artists' ? 'page' : undefined}>{T.artists}</Link>
           <Menu
             label={T.genres}
@@ -146,7 +145,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
       {menu ? (
         <Sheet title={T.menu} closeLabel={T.close} onClose={() => setMenu(false)}>
           <nav aria-label={T.mainNav} className="flex flex-col gap-0.5 pt-1">
-            {([['explore', '/', T.explore], ['list', '/list', T.events], ['artists', '/a', T.artists]] as const).map(([k, href, label]) => (
+            {([['list', '/', T.events], ['artists', '/a', T.artists]] as const).map(([k, href, label]) => (
               <Link
                 key={k}
                 href={inLang(href, lang)}
@@ -207,7 +206,7 @@ function SearchSheet({ lang, onClose }: { lang: Lang; onClose: () => void }) {
     const v = q.trim();
     if (!v) return;
     FF.track('search', { screen: 'nav' });
-    location.assign(inLang('/list?q=' + encodeURIComponent(v), lang));
+    location.assign(inLang('/?q=' + encodeURIComponent(v), lang));
   };
   return (
     <Sheet title={T.search} closeLabel={T.close} onClose={onClose}>

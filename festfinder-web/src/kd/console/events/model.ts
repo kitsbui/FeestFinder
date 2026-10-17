@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { FF } from '@/runtime/ff';
 import type { Pair } from '../../copy';
 
-export type Status = 'draft' | 'in_review' | 'live' | 'rejected' | 'removed' | 'cancelled';
+export type Status = 'draft' | 'in_review' | 'live' | 'rejected' | 'removed' | 'cancelled' | 'expired';
 
 /** A catalogue row (presentRow in routes/admin/ops.ts). */
 export interface EventRow {
@@ -76,4 +76,4 @@ export function useLeaveGuard(dirty: boolean, message: string) {
 }
 
 /** The status tone for a pill. */
-export const statusTone = (s: Status) => (s === 'live' ? 'ok' : s === 'in_review' ? 'warn' : s === 'draft' ? 'none' : 'bad');
+export const statusTone = (s: Status) => (s === 'live' ? 'ok' : s === 'in_review' ? 'warn' : s === 'draft' || s === 'expired' ? 'none' : 'bad');

@@ -196,6 +196,22 @@ describe('attendee (Web + App, signed in)', () => {
     }
   });
 
+  it('a code that takes the whole price issues the tickets at once, even when payment is a bank transfer', async () => {
+    const detail = await env.as(token).get('/events/momang');
+    const tier = detail.body.tickets.tiers.find((t: { price: number; state?: string }) => t.price > 0 && t.state !== 'soldout');
+    await env.ctx.db.query(`insert into promo_codes (event_id, code, pct, cap, note) values ($1, 'ALLFREE', 100, 5, '{"en":"","vi":""}')`, [env.ids.event.momang]);
+    env.ctx.config.paymentProvider = 'vietqr';
+    try {
+      const r = await env.as(token).post('/orders', { eventId: env.ids.event.momang, tierId: tier.id, qty: 1, paymentMethod: 'vietqr', promoCode: 'ALLFREE' });
+      assert.equal(r.status, 201, JSON.stringify(r.body));
+      assert.equal(r.body.order.total, 0);
+      assert.equal(r.body.order.status, 'paid');
+      assert.equal(r.body.payment.status, 'paid');
+    } finally {
+      env.ctx.config.paymentProvider = 'mock';
+    }
+  });
+
   it('runs a group plan: invite, accept, split the cost and request by VietQR', async () => {
     const plans = await env.as(token).get('/me/plans');
     const planId = plans.body.items[0].id;

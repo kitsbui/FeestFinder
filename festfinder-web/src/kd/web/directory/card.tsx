@@ -1,6 +1,6 @@
 /**
- * An artist in the directory: the family's shapes with their photo or initials over them (the
- * profile's cover and avatar, small), then the name, what they do and where, their styles,
+ * An artist in the directory: their cover (or the family's shapes) with their photo or initials
+ * over it (the profile's cover and avatar, small), then the name, what they do and where, their styles,
  * the next show, and whether they take bookings. The whole of it comes from GET /artists;
  * follower counts are not part of it.
  */
@@ -39,7 +39,7 @@ export function ArtistCard({ a, i, lang }: { a: DirArtist; i: number; lang: Lang
     <article className="flex min-w-0 flex-col" aria-labelledby={id}>
       <div className="relative">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
-          {fam ? <Art family={fam} bone={i % 2 === 1} className="h-24" /> : <div className="kd-art h-24" />}
+          {fam || a.coverUrl ? <Art family={fam ?? 'free'} cover={a.coverUrl} bone={i % 2 === 1} className="h-24" /> : <div className="kd-art h-24" />}
         </Link>
         {a.origin === 'radar' ? <RadarTag lang={lang} glass className="pointer-events-none absolute right-2.5 top-2.5" /> : null}
       </div>

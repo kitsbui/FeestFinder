@@ -8,6 +8,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { CheckIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../../fresh';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { money } from '../../format';
 import { KdLink as Link, inLang } from '../../link';
@@ -136,7 +137,11 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
       title: f.title, pitch: f.pitch, story: f.story, city: f.city, styles: f.styles, eventType: f.eventType || null, targetOn: f.targetOn || null,
       capacity: num(f.capacity), budget: num(f.budget), raiseAmount: num(f.raiseAmount), seeking: f.seeking, coverUrl: f.coverUrl,
     };
-    try { onSaved((await (p ? FF.patch(`/me/projects/${p.id}`, body) : FF.post('/me/projects', body))) as Project); }
+    try {
+      const out = (await (p ? FF.patch(`/me/projects/${p.id}`, body) : FF.post('/me/projects', body))) as Project;
+      if (p) void freshen('p', out.slug);
+      onSaved(out);
+    }
     catch (x) { setErr(FF.errorText(x, lang)); }
     setBusy(false);
   };

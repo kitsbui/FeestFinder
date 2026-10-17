@@ -223,7 +223,6 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
         <div className="kd-sec">
           <div className="flex min-w-0 flex-col gap-1.5">
             <h1 id="dir-title" className="kd-d1">{title}</h1>
-            <span className="kd-m kd-num" aria-live="polite">{fill(T.count, { n: count(list.total, lang) })}</span>
           </div>
           <form role="search" onSubmit={onSubmit} className="w-full tab:w-[340px]">
             <Input

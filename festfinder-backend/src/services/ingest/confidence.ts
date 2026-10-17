@@ -167,7 +167,7 @@ export async function refreshConfidence(q: Queryable, now: Date, eventIds?: stri
     const verified = [...outside, e.decided_at ? new Date(e.decided_at).getTime() : 0].filter(Boolean);
     return {
       id: e.id, score: out.score, label: out.label, breakdown: JSON.stringify(out.breakdown), count: independentSources(facts),
-      // Posted by someone here, or found by FeestFinder Radar alone (migration 032).
+      // Posted by someone here, or found by Feest Radar alone (migration 032).
       origin: !facts.length || facts.some((s) => ORIGIN_PROVIDERS.includes(s.provider)) ? 'posted' : 'radar',
       lastSeen: seen.length ? new Date(Math.max(...seen)) : null,
       lastVerified: verified.length ? new Date(Math.max(...verified)) : null,

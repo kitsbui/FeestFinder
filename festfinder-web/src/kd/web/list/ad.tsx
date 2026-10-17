@@ -9,13 +9,13 @@ import { FF } from '@/runtime/ff';
 import { pick, type Lang, type Pair } from '../../copy';
 import { useKd } from '../../runtime';
 import { buttonClass, IconButton } from '../../ui/actions';
-import { HOME } from './copy';
+import { LIST } from './copy';
 
 export interface Ad { id: string; brand: string; logo: string | null; logoUrl?: string | null; image?: string | null; headline: Pair; body: Pair; cta: Pair; url: string | null; sponsoredLabel: Pair; why: Pair }
 
 export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
   const kd = useKd();
-  const T = pick(HOME, lang);
+  const T = pick(LIST, lang);
   const [hidden, setHidden] = useState(false);
   useEffect(() => { FF.fire(FF.post('/ads/' + ad.id + '/impression')); }, [ad.id]);
   if (hidden) return null;

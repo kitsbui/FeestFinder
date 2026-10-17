@@ -38,11 +38,14 @@ function GuideBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
   const T = pick(APP, lang);
   const [g, setG] = useState<Guide | null>(null);
   const [err, setErr] = useState('');
+  // The event says when the guide is off and has nothing kept: no request, nothing to retry.
+  const off = ev.guide === false;
   const load = useCallback(async () => {
     setErr(''); setG(null);
     try { setG(await FF.get('/events/' + ev.id + '/guide?lang=' + lang)); } catch (e) { setErr(FF.errorText(e, lang)); }
   }, [ev.id, lang]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (!off) void load(); }, [load, off]);
+  if (off) return <Panel className="m-4 p-5"><span className="kd-t">{T.guideOff}</span></Panel>;
   if (err) return <Panel className="m-4 flex flex-col items-start gap-3 p-5"><span className="kd-t">{err}</span><Button size="sm" onClick={load}>{T.guideRetry}</Button></Panel>;
   if (!g) return <p className="kd-s px-4" role="status">{T.guideLoading}</p>;
   const spots = (title: string, xs: Spot[]) => xs.length ? (

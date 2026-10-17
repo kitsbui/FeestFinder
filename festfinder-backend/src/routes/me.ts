@@ -5,11 +5,12 @@ import { badRequest, conflict, notFound } from '../lib/errors.ts';
 import { fill, GENRES, L, NOTIFICATION_TOPICS, QUIET_HOURS_RULE } from '../lib/i18n.ts';
 import { launchedCity } from '../lib/places.ts';
 import { isStyle, STYLE_KEYS } from '../lib/styles.ts';
-import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
+import { initialsOf, isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
 import { limit, parse, uuid } from '../lib/validate.ts';
 import { imageChange } from '../services/remote-images.ts';
 import { BANKS } from '../lib/vietqr.ts';
 import { artistKey } from '../services/artists.ts';
+import { personCounts } from '../services/follows.ts';
 import { isUuid } from '../http/sql.ts';
 import { requireUser } from '../http/guards.ts';
 import { decodeCursor, page } from '../http/sql.ts';
@@ -185,11 +186,13 @@ export default async function meRoutes(app: FastifyInstance) {
   app.put<{ Params: { organizerId: string } }>('/me/follows/organizers/:organizerId', async (req) => {
     const s = requireUser(req);
     const id = parse(uuid, req.params.organizerId);
-    const org = await one<any>(ctx.db, 'select name from organizers where id = $1', [id]);
+    const org = await one<{ name: string; member: boolean }>(ctx.db, 'select name, exists (select 1 from organizer_members m where m.organizer_id = o.id and m.user_id = $2) as member from organizers o where id = $1', [id, s.user.id]);
     if (!org) throw notFound();
+    // Nobody follows their own page (as for artists).
+    if (org.member) throw conflict('own_profile', L('This is your own profile', 'Đây là hồ sơ của chính bạn'));
     await ctx.db.tx(async (q) => {
-      const ins = await one(q, 'insert into organizer_follows (user_id, organizer_id) values ($1,$2) on conflict do nothing returning 1', [s.user.id, id]);
-      if (ins) await q.query('update organizers set followers_count = followers_count + 1 where id = $1', [id]);
+      // The follower count follows by itself (a trigger, migration 042).
+      await q.query('insert into organizer_follows (user_id, organizer_id) values ($1,$2) on conflict do nothing', [s.user.id, id]);
     });
     return { following: true, message: fill(L('Following {n}', 'Đang theo dõi {n}'), { n: org.name }) };
   });
@@ -200,10 +203,27 @@ export default async function meRoutes(app: FastifyInstance) {
     const org = await one<any>(ctx.db, 'select name from organizers where id = $1', [id]);
     if (!org) throw notFound();
     await ctx.db.tx(async (q) => {
-      const del = await one(q, 'delete from organizer_follows where user_id = $1 and organizer_id = $2 returning 1', [s.user.id, id]);
-      if (del) await q.query('update organizers set followers_count = greatest(followers_count - 1, 0) where id = $1', [id]);
+      await q.query('delete from organizer_follows where user_id = $1 and organizer_id = $2', [s.user.id, id]);
     });
     return { following: false, message: fill(L('Unfollowed {n}', 'Đã bỏ theo dõi {n}'), { n: org.name }) };
+  });
+
+  // People follow people too (migration 042): only someone with an account, never oneself.
+  app.put<{ Params: { userId: string } }>('/me/follows/people/:userId', async (req) => {
+    const s = requireUser(req);
+    const id = parse(uuid, req.params.userId);
+    if (id === s.user.id) throw conflict('own_profile', L('You cannot follow yourself', 'Bạn không thể tự theo dõi mình'));
+    const u = await one<{ name: string | null }>(ctx.db, 'select name from users where id = $1', [id]);
+    if (!u) throw notFound(L('Person not found', 'Không tìm thấy người này'));
+    await ctx.db.query('insert into user_follows (follower_id, user_id, created_at) values ($1,$2,$3) on conflict do nothing', [s.user.id, id, ctx.clock.now()]);
+    return { following: true, message: u.name ? fill(L('Following {n}', 'Đang theo dõi {n}'), { n: u.name }) : L('Following', 'Đang theo dõi') };
+  });
+
+  app.delete<{ Params: { userId: string } }>('/me/follows/people/:userId', async (req) => {
+    const s = requireUser(req);
+    const id = parse(uuid, req.params.userId);
+    await ctx.db.query('delete from user_follows where follower_id = $1 and user_id = $2', [s.user.id, id]);
+    return { following: false, message: L('Unfollowed', 'Đã bỏ theo dõi') };
   });
 
   /**
@@ -276,11 +296,24 @@ export default async function meRoutes(app: FastifyInstance) {
     const listed = keys.length ? await many<{ slug: string; normalized_name: string; alias_keys: string[] }>(ctx.db,
       'select slug, normalized_name, alias_keys from artists where normalized_name = any($1::text[]) or alias_keys && $1::text[]', [keys]) : [];
     const slugOf = (k: string) => listed.find((a) => a.normalized_name === k || (a.alias_keys ?? []).includes(k))?.slug ?? null;
+    // People: whom they follow, and who follows them (with whether they follow back).
+    type PersonRow = { id: string; name: string | null; photo_url: string | null };
+    const people = await many<PersonRow>(ctx.db,
+      `select u.id, u.name, u.photo_url from user_follows f join users u on u.id = f.user_id
+        where f.follower_id = $1 order by f.created_at desc limit 500`, [s.user.id]);
+    const followers = await many<PersonRow & { following: boolean }>(ctx.db,
+      `select u.id, u.name, u.photo_url, exists (select 1 from user_follows b where b.follower_id = $1 and b.user_id = u.id) as following
+         from user_follows f join users u on u.id = f.follower_id
+        where f.user_id = $1 order by f.created_at desc limit 500`, [s.user.id]);
+    const person = (u: PersonRow) => ({ id: u.id, name: u.name || null, initials: initialsOf(u.name || '?'), photoUrl: u.photo_url });
     return {
       organizers: { following: orgs.filter((o) => o.following).map(shape), discover: orgs.filter((o) => !o.following).map(shape) },
       artists: artists.map((a) => a.artist),
       profiles: profiles.map((a) => ({ id: a.id, slug: a.slug, name: a.name, imageUrl: a.image_url, next: a.next })),
       artistPages: artists.map((a, i) => ({ name: a.artist, slug: slugOf(keys[i]) })),
+      people: people.map(person),
+      followers: followers.map((u) => ({ ...person(u), following: !!u.following })),
+      counts: await personCounts(ctx.db, s.user.id),
     };
   });
 

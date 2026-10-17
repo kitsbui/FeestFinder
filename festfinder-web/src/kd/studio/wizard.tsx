@@ -27,6 +27,7 @@ import { PostKindSwitch } from '../ui/post-kind';
 import { BackLink } from '../ui/back-link';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
+import { FrameButton, FramedThumb } from '../ui/frame-editor';
 
 /** The styles an organiser picks from (lib/styles.ts): at most five, the first is the main one. */
 const STYLES = Object.keys(STYLE_LABEL);
@@ -614,16 +615,16 @@ export function Upload({ lang, kind, label, hint, value, onChange, required }: {
     setBusy(false);
   };
   return (
-    <div className="flex min-h-16 w-full items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
+    <div className="flex min-h-16 w-full flex-wrap items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
       {value
-         
-        ? <img src={value} alt="" className={cx('shrink-0 object-cover', kind === 'logo' ? 'size-11 rounded-lg' : 'h-11 w-[78px] rounded-md')} />
+        ? <FramedThumb src={value} className={kind === 'logo' ? 'size-11 rounded-lg' : 'h-11 w-[78px] rounded-md'} />
         : <ImageSquareIcon size={22} className="shrink-0 text-fog" aria-hidden="true" />}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span className="flex min-w-0 flex-1 basis-40 flex-col gap-0.5">
         <span className="kd-hs">{label} {required ? null : <span className="font-normal text-fog">{T.optional}</span>}</span>
         <span className="kd-s">{busy ? T.fUploading : hint}</span>
       </span>
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) void send(file); e.target.value = ''; }} />
+      <FrameButton lang={lang} value={value} shapes={kind === 'logo' ? ['square', 'round'] : ['banner', 'card', 'square']} onChange={onChange} />
       {value && !required ? <Button tone="ghost" size="sm" onClick={() => onChange(null)}>{T.fRemove}</Button> : null}
       <Button size="sm" disabled={busy} onClick={() => input.current?.click()} aria-label={`${value ? T.fChange : T.fUpload} · ${label}`}>{value ? T.fChange : T.fUpload}</Button>
     </div>

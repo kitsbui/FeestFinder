@@ -1,5 +1,5 @@
 'use client';
-/** An event as an app row (design/Main "Gần bạn"): art, title (and "Radar" for what FeestFinder Radar found), marker + when, price and distance. */
+/** An event as an app row (design/Main "Gần bạn"): art, title (and "Radar" for what Feest Radar found), marker + when, price and distance. */
 import { pick, type Lang } from '../copy';
 import { cx } from '../cx';
 import { km, moneyShort, whenShort } from '../format';

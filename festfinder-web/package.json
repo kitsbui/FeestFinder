@@ -13,7 +13,7 @@
     "build": "npm run copy-ui && next build",
     "start": "next start --port 3000",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint . --max-warnings 56"
+    "lint": "eslint . --max-warnings 55"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans": "^5.3.0",

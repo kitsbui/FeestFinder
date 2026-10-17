@@ -17,12 +17,12 @@ import type { Moment } from '../../ui/moments';
 import { Clamp } from '../../ui/clamp';
 import { Accordion, Art, Avatar, Stat, Status, Tag } from '../../ui/parts';
 import type { Card } from '../../types';
-import { EventCard } from '../card';
 import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
 import { ClaimLink, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, ShareProfile, type Source } from '../profile/parts';
+import { UpcomingCards } from './upcoming';
 
 const enc = encodeURIComponent;
 
@@ -35,7 +35,7 @@ export interface Org {
   styles: { key: string; label: Pair }[];
   openForSubmissions: boolean;
   links: ProfileLink[];
-  stats: { events: number; followers: number; since: number | null; artists: number };
+  stats: { events: number; followers: number; following?: number; since: number | null; artists: number };
   upcoming: Card[];
   past: Card[];
   artists: ({ id: string; slug: string; name: string } & Evidence)[];
@@ -127,8 +127,9 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 <ShareProfile lang={lang} title={org.name} />
               </div>
             </div>
-            <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line py-4.5">
+            <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-y-4 border-y border-line py-4.5 tab:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
               <FollowersStat lang={lang} kind="org" id={org.id} source={source} served={org.stats.followers} />
+              <Stat value={count(org.stats.following ?? 0, lang)} label={T.followingN} />
               <Stat value={count(org.stats.events, lang)} label={T.orgEvents} />
               {org.stats.artists ? <Stat value={count(org.stats.artists, lang)} label={T.orgArtistsN} /> : null}
             </div>
@@ -143,9 +144,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                   tabs={[
                     {
                       key: 'up', label: T.upcoming, count: org.upcoming.length,
-                      panel: org.upcoming.length ? (
-                        <div className="kd-cards pt-5">{org.upcoming.map((e, i) => <EventCard key={e.id} e={e} i={i} lang={lang} />)}</div>
-                      ) : <p className="kd-t pt-5 text-fog">{T.noUpcoming}</p>,
+                      panel: org.upcoming.length ? <UpcomingCards lang={lang} items={org.upcoming} /> : <p className="kd-t pt-5 text-fog">{T.noUpcoming}</p>,
                     },
                     ...(past.length ? [{ key: 'past', label: T.past, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}

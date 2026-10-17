@@ -396,7 +396,7 @@ describe('ingestion runs (API)', () => {
     assert.equal(ev.location.address.addressCountry, 'SG');
   });
 
-  it('tells what FeestFinder Radar found from what someone posted, for events and their artists', async () => {
+  it('tells what Feest Radar found from what someone posted, for events and their artists', async () => {
     // Approved by a moderator, still nobody's post: Radar. Ravolution took an import too, and stays posted.
     const all = (await env.as().get('/events?time=all')).body;
     const radar = (await env.as().get('/events?time=all&origin=radar')).body;

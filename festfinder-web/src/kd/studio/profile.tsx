@@ -7,6 +7,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../fresh';
 import { pick, type Lang, type Pair } from '../copy';
 import { STYLE_LABEL, styleLabel } from '../genre';
 import { useKd } from '../runtime';
@@ -86,7 +87,9 @@ function useSave(lang: Lang, onSaved: (p: Profile) => void) {
     try {
       const out = await FF.patch('/organizer/profile', body);
       kd.toast(out.message ? FF.text(out.message, lang) : T.saved);
-      onSaved(await FF.get('/organizer/profile'));
+      const fresh: Profile = await FF.get('/organizer/profile');
+      void freshen('o', fresh.slug);
+      onSaved(fresh);
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
     setBusy(false);
   };

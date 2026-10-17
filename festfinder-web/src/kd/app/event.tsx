@@ -27,6 +27,8 @@ import { RideButton } from '../web/event/ride';
 import { TicketsPanel } from '../web/event/tickets';
 import { APP } from './copy';
 import { distanceKm, place } from './place';
+import { CalendarButton } from '../web/event/calendar';
+import { directionsUrl } from '../web/event/directions';
 
 const EVENT_TYPE: Record<string, { vi: string; en: string }> = {
   club: { vi: 'Club', en: 'Club night' }, festival: { vi: 'Lễ hội', en: 'Festival' }, concert: { vi: 'Concert', en: 'Concert' },
@@ -59,7 +61,7 @@ function EventBody({ lang }: { lang: Lang }) {
   const familyLine = [FAMILY_LABEL[fam][lang], ev.eventType ? EVENT_TYPE[ev.eventType]?.[lang] : null, ev.cityLabel?.[lang]].filter(Boolean).join(' · ');
   const description = ev.description?.[lang] || ev.description?.vi || ev.description?.en || '';
   const address = [ev.venue.address, ev.venue.area, ev.cityLabel?.[lang]].filter(Boolean).join(', ');
-  const mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.venue.lat != null && ev.venue.lng != null ? `${ev.venue.lat},${ev.venue.lng}` : [ev.venue.name, address].filter(Boolean).join(', '));
+  const mapsHref = directionsUrl(ev.venue, address);
   const d = at ? distanceKm(at, ev.venue) : null;
   const org = ev.organizer;
 
@@ -99,7 +101,7 @@ function EventBody({ lang }: { lang: Lang }) {
           <div className="kd-lrow min-h-13">
             <CalendarBlankIcon size={18} className="text-fog" aria-hidden="true" />
             <span className="kd-t kd-num flex-1 text-paper">{whenLong(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''}</span>
-            {!ev.past ? <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={`/events/${ev.id}/calendar.ics`} download>{T.addCalendar}</a> : null}
+            <CalendarButton lang={lang} className="-mr-3" />
           </div>
           <div className="kd-lrow min-h-13">
             <MapPinIcon size={18} className="text-fog" aria-hidden="true" />

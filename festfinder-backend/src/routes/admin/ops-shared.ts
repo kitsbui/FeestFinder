@@ -17,7 +17,7 @@ import { missingForSubmit } from '../organizer/events.ts';
  * every form and list uses, how a team edit is diffed for the audit log, and publishing by the team.
  */
 
-export const STATUSES = ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled'] as const;
+export const STATUSES = ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled', 'expired'] as const;
 
 export const GENRE_LABEL: Record<string, { label: Localized; hint: Localized }> = {
   EDM: { label: L('EDM & electronic', 'EDM & điện tử'), hint: L('Raves, club nights, DJ sets', 'Rave, club night, DJ set') },

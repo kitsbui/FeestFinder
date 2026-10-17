@@ -7,6 +7,7 @@ import { qualityScore, type DraftFacts } from './quality.ts';
 import { syncEventArtists } from './artists.ts';
 import { refreshConfidence } from './ingest/confidence.ts';
 import { hostOf } from './ingest/normalize.ts';
+import { festivalOf } from '../lib/festivals.ts';
 
 export function draftFacts(ev: any): DraftFacts {
   return {
@@ -44,8 +45,9 @@ export async function refreshDerived(q: Queryable, id: string, now = new Date())
   const bounds = instantsOf(ev, city.timezone);
   const search = searchNormalize([ev.title, ev.venue_name, ev.area, ev.genre, ...(ev.styles ?? []), ...(ev.artists ?? [])].filter(Boolean).join(' '));
   await q.query(
-    `update events set starts_at = $2, ends_at = $3, search_text = $4, quality_score = $5, currency = $6, updated_at = now() where id = $1`,
-    [id, bounds?.startsAt ?? null, bounds?.endsAt ?? null, search, qualityScore(draftFacts(ev)).score, city.currency]);
+    // The festival brand its title names (lib/festivals.ts), whoever posted it: world festivals are highlighted.
+    `update events set starts_at = $2, ends_at = $3, search_text = $4, quality_score = $5, currency = $6, festival = $7, updated_at = now() where id = $1`,
+    [id, bounds?.startsAt ?? null, bounds?.endsAt ?? null, search, qualityScore(draftFacts(ev)).score, city.currency, festivalOf(ev.title)?.key ?? null]);
   await syncEventArtists(q, id, ev.artists ?? []);
   await ensureOrigin(q, ev, now);
   await refreshConfidence(q, now, [id]);

@@ -195,7 +195,8 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     if (cached && !refresh && now.getTime() - new Date(cached.created_at).getTime() < GUIDE_TTL_MS) {
       return { ...cached.data, cached: true, generatedAt: cached.created_at };
     }
-    if (!ctx.config.aiGuideEnabled) {
+    // The same test as the event page's `guide` flag (routes/catalog.ts): a guide that runs.
+    if (ctx.guide.model === 'none') {
       if (cached) return { ...cached.data, cached: true, generatedAt: cached.created_at };
       throw new AppError(503, 'guide_unavailable', L('The local guide is taking a break. Try again later.', 'Hướng dẫn địa phương đang tạm nghỉ. Thử lại sau nhé.'));
     }

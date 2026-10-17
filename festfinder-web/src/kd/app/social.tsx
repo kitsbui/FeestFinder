@@ -20,6 +20,7 @@ import { BackLink } from '../ui/back-link';
 import type { Card, EventDetail } from '../types';
 import { APP } from './copy';
 import { EventRow, SignInCard } from './row';
+import { FollowManager, type Follows } from '../ui/follows';
 
 function Head({ lang, title, back, sub }: { lang: Lang; title: string; back: string; sub?: string }) {
   const T = pick(APP, lang);
@@ -280,7 +281,7 @@ interface OrgRow { id: string; slug: string; name: string; logoUrl: string | nul
 export function Following({ lang }: { lang: Lang }) {
   const T = pick(APP, lang);
   const kd = useKd();
-  const [f, setF] = useState<{ organizers: { following: OrgRow[]; discover: OrgRow[] }; artistPages?: { name: string; slug: string | null }[] } | null>(null);
+  const [f, setF] = useState<(Follows & { organizers: { following: OrgRow[]; discover: OrgRow[] } }) | null>(null);
   useEffect(() => { if (kd.user) FF.maybe(FF.get('/me/follows'), null).then(setF); }, [kd.user]);
   const row = (o: OrgRow) => {
     const key = 'org:' + o.id;
@@ -302,21 +303,7 @@ export function Following({ lang }: { lang: Lang }) {
       <Gate lang={lang}>
         {!f ? <div className="kd-skel mx-4 h-40" aria-hidden="true" /> : (
           <div className="flex flex-col gap-6 px-4 pb-8">
-            {(f.artistPages ?? []).length || f.organizers.following.length ? (
-              <ul className="flex flex-col">
-                {(f.artistPages ?? []).map((a) => {
-                  const on = kd.follows.has('art:' + a.name) ? !!kd.follows.get('art:' + a.name) : true;
-                  return (
-                    <li key={a.name} className="kd-lrow min-h-16">
-                      {a.slug ? <a className="flex min-w-0 flex-1 items-center gap-3" href={'/a/' + a.slug}><Avatar name={a.name} size={44} /><span className="kd-hs kd-ell">{a.name}</span></a>
-                        : <span className="flex min-w-0 flex-1 items-center gap-3"><Avatar name={a.name} size={44} /><span className="kd-hs kd-ell">{a.name}</span></span>}
-                      <Button size="sm" tone={on ? 'default' : 'acc'} aria-pressed={on} onClick={() => kd.setFollow('art', a.name, !on)}>{on ? T.followingBtn : T.follow}</Button>
-                    </li>
-                  );
-                })}
-                {f.organizers.following.map(row)}
-              </ul>
-            ) : <span className="kd-s">{T.followingEmpty}</span>}
+            <FollowManager lang={lang} f={f} flush />
             {f.organizers.discover.length ? (
               <section className="flex flex-col" aria-labelledby="fl-disc">
                 <h2 id="fl-disc" className="kd-m pb-1.5">{T.discover}</h2>

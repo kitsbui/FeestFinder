@@ -11,11 +11,15 @@ import { cityBySlug } from './places.ts';
  *             com.grabtaxi.passenger, App Store id647268330.
  *   Green SM  vn.greensm.com's download link: af_dp=xanhsm.com://homepage, Android
  *             com.gsm.customer, App Store id6446425595.
+ *   Be        be.com.vn's download link begroup.onelink.me/ZOqn/becustomerapp (checked
+ *             2026-10-17): af_dp=xyz.be.customer://home, Android xyz.be.customer, App Store
+ *             id1440565902; the OneLink path is in its apple-app-site-association, so on an
+ *             iPhone the link itself opens the app (the App Store when it is not installed).
  * Grab's destination parameters are not published: until one is checked on a phone and a
  * partner confirms it, no app claims to fill the destination (prefilled: false).
  */
 
-export const RIDE_APPS = ['grab', 'greensm'] as const;
+export const RIDE_APPS = ['grab', 'be', 'greensm'] as const;
 export type RideApp = (typeof RIDE_APPS)[number];
 
 interface RideAppSpec {
@@ -27,10 +31,13 @@ interface RideAppSpec {
   path: string;
   android: string;
   appStoreId: string;
+  /** An https link the app claims on an iPhone (a universal link): opens it with no error page when it is missing. */
+  universal?: string;
 }
 
 export const RIDE_SPECS: Record<RideApp, RideAppSpec> = {
   grab: { name: 'Grab', countries: ['VN', 'TH', 'SG', 'MY', 'ID', 'PH', 'KH', 'MM'], scheme: 'grab', path: 'open?screenType=BOOKING', android: 'com.grabtaxi.passenger', appStoreId: '647268330' },
+  be: { name: 'Be', countries: ['VN'], scheme: 'xyz.be.customer', path: 'home', android: 'xyz.be.customer', appStoreId: '1440565902', universal: 'https://begroup.onelink.me/ZOqn/becustomerapp' },
   // Green SM rides in Vietnam; Laos, Indonesia and the Philippines are added here when a listed city is served.
   greensm: { name: 'Green SM', countries: ['VN'], scheme: 'xanhsm.com', path: 'homepage', android: 'com.gsm.customer', appStoreId: '6446425595' },
 };
@@ -44,7 +51,7 @@ export interface RideOption {
   copyText: string;
   /** Android: the app by its package, or its Play Store page when it is not installed. */
   android: string;
-  ios: { app: string; store: string };
+  ios: { app: string; store: string; universal: string | null };
 }
 
 export interface RideEvent {
@@ -71,7 +78,7 @@ export function ridesFor(ev: RideEvent, lang: 'en' | 'vi' = 'vi'): RideOption[] 
       prefilled: false,
       copyText,
       android: `intent://${s.path}#Intent;scheme=${s.scheme};package=${s.android};S.browser_fallback_url=${encodeURIComponent(store)};end`,
-      ios: { app: `${s.scheme}://${s.path}`, store: `https://apps.apple.com/app/id${s.appStoreId}` },
+      ios: { app: `${s.scheme}://${s.path}`, store: `https://apps.apple.com/app/id${s.appStoreId}`, universal: s.universal ?? null },
     };
   });
 }

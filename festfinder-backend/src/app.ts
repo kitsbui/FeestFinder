@@ -10,8 +10,8 @@ import type { Ctx } from './context.ts';
 import { loadPlaces } from './lib/places.ts';
 import { mapOrigins } from './routes/frontend.ts';
 import { one } from './db/index.ts';
-import { AppError, readOnlySession } from './lib/errors.ts';
-import { langFrom, type Lang } from './lib/i18n.ts';
+import { AppError, badRequest, readOnlySession } from './lib/errors.ts';
+import { L, langFrom, type Lang } from './lib/i18n.ts';
 import { vnDate } from './lib/time.ts';
 import { resolveSession, SESSION_COOKIE, type SessionInfo } from './http/session.ts';
 
@@ -93,6 +93,13 @@ export function isInternal(ip: string): boolean {
  */
 const PUBLIC_READS = [/^\/events$/, /^\/events\/map$/, /^\/events\/[^/]+$/, /^\/artists$/, /^\/artists\/[^/]+$/, /^\/organizers\/[^/]+$/, /^\/collections\/[^/]+$/, /^\/shelves$/];
 export const isPublicRead = (url: string) => PUBLIC_READS.some((r) => r.test(url.split('?')[0]));
+/** Whether a value (a string, or one inside an object or array, a few levels deep) holds a NUL. */
+function hasNul(v: unknown, depth = 0): boolean {
+  if (typeof v === 'string') return v.includes('\u0000');
+  if (!v || typeof v !== 'object' || depth > 6 || Buffer.isBuffer(v)) return false;
+  return (Array.isArray(v) ? v : Object.values(v)).some((x) => hasNul(x, depth + 1));
+}
+
 const hasSessionCookie = (req: FastifyRequest) => (req.headers.cookie ?? '').split(';').some((c) => c.trim().startsWith(SESSION_COOKIE + '='));
 
 /** The rate-limit key of the web app's server renders (no visitor behind them). */
@@ -260,8 +267,10 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   // organiser, a collection) are the same for everyone, so the CDN keeps them for a minute and
   // serves a stale copy while it refreshes. Vercel's CDN refuses to cache a response that varies
   // on Cookie, so the web proxy says whether the visitor has a session (X-FF-Session: 1) and the
-  // copy varies on that: a signed-in request never meets the shared one. A request that carries
-  // the header gets no shared copy at all, so nobody can store an anonymous answer under it.
+  // copy varies on that: a signed-in request never meets the shared one. The web app's own server
+  // renders send X-FF-Session: render (they keep their own page cache, refreshed on every save). A
+  // request that carries the header gets no shared copy at all, so nobody can store an anonymous
+  // answer under it.
   app.addHook('onSend', async (req, reply, payload) => {
     if (reply.hasHeader('cache-control')) return payload;
     if (req.session || reply.hasHeader('set-cookie')) reply.header('cache-control', 'private, no-store');
@@ -269,10 +278,18 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
       // Only Vercel's CDN keeps the copy (it reads this header and passes it on to nobody); the
       // browser asks again every time, so signing in never shows a stale anonymous answer.
       reply.header('cache-control', 'public, max-age=0, must-revalidate');
-      reply.header('vercel-cdn-cache-control', 'max-age=60, stale-while-revalidate=300');
+      reply.header('vercel-cdn-cache-control', 'max-age=60, stale-while-revalidate=60');
       reply.header('vary', 'x-ff-session, x-lang, accept-language');
     }
     return payload;
+  });
+
+  // A NUL character is never text anyone typed, and Postgres refuses it (a 500 deep in a query):
+  // an address, a query or a body that carries one is turned away first, as bad input.
+  app.addHook('preValidation', async (req) => {
+    if (req.url.includes('%00') || req.url.includes('\u0000') || hasNul(req.params) || hasNul(req.query) || hasNul(req.body)) {
+      throw badRequest('invalid_input', L('That request has a character it cannot have', 'Yêu cầu có ký tự không hợp lệ'));
+    }
   });
 
   // Impersonated sessions are read-only, and so is the admin who opened one until they end it.

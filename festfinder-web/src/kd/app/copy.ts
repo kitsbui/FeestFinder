@@ -313,6 +313,7 @@ export const APP = {
   guideAvoid: { en: 'Skip', vi: 'Tránh' },
   guideLoading: { en: 'Reading the neighbourhood…', vi: 'Đang đọc khu vực quanh đây…' },
   guideRetry: { en: 'Try again', vi: 'Thử lại' },
+  guideOff: { en: 'The local guide is taking a break. Try again later.', vi: 'Hướng dẫn địa phương đang tạm nghỉ. Thử lại sau nhé.' },
   guideAi: { en: 'AI suggestions — check opening hours before you go.', vi: 'Gợi ý do AI tạo — kiểm tra giờ mở cửa trước khi đi.' },
   // map
   mapLabel: { en: 'Events around you', vi: 'Bản đồ sự kiện quanh bạn' },

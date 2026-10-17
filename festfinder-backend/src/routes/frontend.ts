@@ -85,7 +85,7 @@ export function legacyListPath(prefix: string, city: string, facets: string): st
   }
   if (prefix === 'en' || prefix === 'vi') q.set('lang', prefix);
   const qs = q.toString();
-  return '/list' + (qs ? `?${qs}` : '');
+  return '/' + (qs ? `?${qs}` : '');
 }
 
 const COMPRESS = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg', '.md']);

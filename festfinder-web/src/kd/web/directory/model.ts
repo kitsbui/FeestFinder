@@ -16,6 +16,7 @@ export interface DirArtist {
   slug: string;
   name: string;
   imageUrl: string | null;
+  coverUrl?: string | null;
   roles: Keyed[];
   basedIn: { city: string; label: Pair | null } | null;
   styles: (Keyed & { genre: string | null })[];
@@ -27,7 +28,7 @@ export interface DirArtist {
   /** The genre of most of their listed shows: it colours the card when no style says. */
   genre: string | null;
   nextShow: { slug: string; title: string; startsOn: string; city: string | null; cityLabel: Pair | null } | null;
-  /** 'radar': known only from events FeestFinder Radar found, and nobody runs the profile. */
+  /** 'radar': known only from events Feest Radar found, and nobody runs the profile. */
   origin?: 'posted' | 'radar';
   /** 'owned': the artist runs it (or the team verified it). The others are names nobody runs yet. */
   kind?: 'owned' | 'unclaimed' | 'radar';

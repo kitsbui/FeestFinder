@@ -42,7 +42,7 @@ test.describe('an explore stat', () => {
   test('free entry: this weekend’s free events, each to its page', async ({ page }) => {
     const problems = await open(page, '/stats/free');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Vào cửa miễn phí, không cần vé');
-    await expect(page.getByRole('navigation', { name: 'Đường dẫn' }).getByRole('link', { name: 'Khám phá' })).toHaveAttribute('href', '/');
+    await expect(page.getByRole('navigation', { name: 'Đường dẫn' }).getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('href', '/');
 
     const views = page.getByRole('navigation', { name: 'Danh sách' });
     await expect(views.getByRole('link', { name: /^Miễn phí/ })).toHaveAttribute('aria-current', 'true');

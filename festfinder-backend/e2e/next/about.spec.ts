@@ -45,7 +45,7 @@ test.describe('the about page', () => {
 
     // The cities come from the API; one with events leads to the list filtered to it.
     const cities = page.getByRole('region', { name: 'Thành phố' });
-    await expect(cities.getByRole('link', { name: /^TP\.HCM: \d+ sự kiện sắp diễn ra$/ })).toHaveAttribute('href', '/list?city=ho-chi-minh');
+    await expect(cities.getByRole('link', { name: /^TP\.HCM: \d+ sự kiện sắp diễn ra$/ })).toHaveAttribute('href', '/?city=ho-chi-minh');
 
     const contact = page.getByRole('region', { name: 'Liên hệ' });
     await expect(contact.getByRole('heading', { level: 3 })).toHaveText(['Cho người đi chơi', 'Cho nhà tổ chức', 'Cho thương hiệu & báo chí']);
@@ -71,7 +71,7 @@ test.describe('the about page', () => {
     const problems = await open(page, '/about?lang=en');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('One place to see what is on tonight');
     await expect(page.getByRole('region', { name: 'Cities' }).getByRole('link', { name: /^Ho Chi Minh City: \d+ upcoming events$/ }))
-      .toHaveAttribute('href', '/list?city=ho-chi-minh&lang=en');
+      .toHaveAttribute('href', '/?city=ho-chi-minh&lang=en');
     await expect(page.getByRole('navigation', { name: 'Footer' }).getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('href', '/about');
     await page.getByRole('region', { name: 'Contact' }).getByRole('link', { name: 'Advertise' }).click();
     await expect(page).toHaveURL(/\/advertise\?lang=en$/);
@@ -81,7 +81,7 @@ test.describe('the about page', () => {
 
   test('the nav leaves it, and back returns to it', async ({ page }) => {
     await open(page, '/about');
-    await page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Khám phá' }).click();
+    await page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Sự kiện' }).click();
     await expect(page).toHaveURL(/\/$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/about$/);
@@ -105,7 +105,7 @@ test.describe('the advertising page', () => {
     const problems = await open(page, '/advertise');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Quảng cáo trên FeestFinder');
     const rates = page.getByRole('region', { name: 'Bảng giá' });
-    for (const p of ['Thẻ trong feed', 'Banner trang Khám phá', 'Trong sự kiện (chế độ trực tiếp)']) await expect(rates.getByText(p)).toBeVisible();
+    for (const p of ['Thẻ trong feed', 'Banner trang chủ', 'Trong sự kiện (chế độ trực tiếp)']) await expect(rates.getByText(p)).toBeVisible();
     await expect(rates.getByText(/^[\d.]+₫ CPM$/)).toHaveCount(3);
 
     const gate = page.locator('[data-ff-gate]');
@@ -156,7 +156,7 @@ test.describe('the advertising page', () => {
     await expect(form.getByText('Email chưa đúng định dạng')).toBeVisible();
 
     await email.fill('brand@zenkai.vn');
-    await form.getByRole('checkbox', { name: 'Banner trang Khám phá' }).uncheck();
+    await form.getByRole('checkbox', { name: 'Banner trang chủ' }).uncheck();
     await form.getByRole('checkbox', { name: 'Trong sự kiện (chế độ trực tiếp)' }).check();
     await form.getByLabel('Thông tin thêm').fill('Lễ hội tháng 10');
 

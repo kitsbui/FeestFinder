@@ -159,7 +159,8 @@ export default async function commerceRoutes(app: FastifyInstance) {
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning id`,
         [code, s.user.id, input.eventId, tier.id, input.qty, tier.price, body.subtotal, body.discount, body.fee, body.total,
           promo?.id ?? null, provider === 'mock' ? 'mock' : input.paymentMethod, now, new Date(now.getTime() + HOLD_MINUTES * 60_000)]);
-      if (provider === 'mock') {
+      // Nothing to pay (a 100% code): the tickets are issued now, never left waiting for a 0₫ transfer.
+      if (provider === 'mock' || body.total === 0) {
         await fulfilOrder(q, o.id, now);
         await afterPaid(ctx, q, o.id);
       }

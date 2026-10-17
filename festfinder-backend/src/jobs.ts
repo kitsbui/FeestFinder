@@ -11,6 +11,8 @@ import { pingIndexNow } from './services/seo.ts';
 import { refreshConfidence } from './services/ingest/confidence.ts';
 import { awardAll } from './services/badges.ts';
 import { runDueSources } from './services/ingest/run.ts';
+import { expireRadar } from './services/ingest/expire.ts';
+import { refreshAllFit } from './services/ingest/fit.ts';
 import { checkRemoteImages } from './services/remote-images.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
 
@@ -125,6 +127,16 @@ export const jobs = {
   },
 
   /** Confidence decays when sources stop listing an event, so it is recomputed for every upcoming one. */
+  /** Feest Radar's finds go a day after they end (services/ingest/expire.ts). */
+  async expireRadar(ctx: Ctx) {
+    return ctx.db.tx((q) => expireRadar(q, ctx.clock.now()));
+  },
+
+  /** The fit of what waits for review and of upcoming Radar finds, as people's follows and alerts change. */
+  async refreshFit(ctx: Ctx) {
+    return ctx.db.tx((q) => refreshAllFit(q, ctx.clock.now()));
+  },
+
   async refreshConfidence(ctx: Ctx) {
     return refreshConfidence(ctx.db, ctx.clock.now());
   },
@@ -161,6 +173,8 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['purgeFeedbackAttachments', 4 * 60 * 60_000],
   ['pingIndexNow', 5 * 60_000],
   ['refreshConfidence', 60 * 60_000],
+  ['expireRadar', 60 * 60_000],
+  ['refreshFit', 60 * 60_000],
   ['awardBadges', 60 * 60_000],
   // Last: it spends whatever time the call has left.
   ['ingest', 5 * 60_000],

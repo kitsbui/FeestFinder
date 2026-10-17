@@ -28,7 +28,8 @@ const esc = (s: unknown) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 const baseOf = (ctx: Ctx) => ctx.config.publicBaseUrl.replace(/\/$/, '');
-const abs = (ctx: Ctx, url: string | null | undefined) => (url ? new URL(url, baseOf(ctx) + '/').href : null);
+// A picture's framing (lib/frame.ts) is for FeestFinder's screens; search engines get the file.
+const abs = (ctx: Ctx, url: string | null | undefined) => (url ? new URL(url.replace(/#ff=[^#]*$/, ''), baseOf(ctx) + '/').href : null);
 
 /** schema.org's type for an event: every event is electronic music. */
 const SCHEMA_TYPE: Record<string, string> = { EDM: 'MusicEvent' };
@@ -294,7 +295,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     : { url: `${base}/og/v1/${toneOf(ev.genre)}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const imageAlt = `${ev.title} · ${venueLine}`;
 
-  const listPath = `/list?city=${cityOf(ev.city).slug}`;
+  const listPath = `/?city=${cityOf(ev.city).slug}`;
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
     { name: `${t('eventsIn', lang)} ${cityName}`, path: inLang(listPath, lang) },
@@ -486,7 +487,7 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
 
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
-    { name: `${t('eventsIn', lang)} ${text(cityLabel(mainCity), lang)}`, path: inLang(`/list?city=${mainCity}`, lang) },
+    { name: `${t('eventsIn', lang)} ${text(cityLabel(mainCity), lang)}`, path: inLang(`/?city=${mainCity}`, lang) },
     { name: org.name, path: inLang(path, lang) },
   ];
   const facts: Fact[] = [

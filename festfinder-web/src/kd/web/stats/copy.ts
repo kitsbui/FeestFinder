@@ -37,7 +37,7 @@ export const STATS = {
   // nothing, or no answer
   empty: { en: 'Nothing matches these filters', vi: 'Không có gì khớp bộ lọc' },
   widen: { en: 'See this month', vi: 'Xem cả tháng' },
-  explore: { en: 'Explore events', vi: 'Khám phá sự kiện' },
+  explore: { en: 'See events', vi: 'Xem sự kiện' },
   failed: { en: 'This list could not load', vi: 'Không tải được danh sách' },
   retry: { en: 'Try again', vi: 'Thử lại' },
 } satisfies Dict;

@@ -4,7 +4,6 @@ import type { Dict } from '../../copy';
 export const PROJ = {
   nav: { en: 'Projects', vi: 'Dự án' },
   title: { en: 'Projects looking for backers', vi: 'Dự án đang kêu gọi' },
-  count: { en: '{n} projects', vi: '{n} dự án' },
   start: { en: 'Start a project', vi: 'Tạo dự án' },
   mine: { en: 'My projects', vi: 'Dự án của tôi' },
   all: { en: 'All', vi: 'Tất cả' },

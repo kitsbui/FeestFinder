@@ -15,6 +15,7 @@ import { sha256 } from '../../src/lib/crypto.ts';
 import { appendAudit } from '../../src/services/audit.ts';
 import { refreshDerived } from '../../src/services/events.ts';
 import { artistKey, backfillArtistFollows } from '../../src/services/artists.ts';
+import { communityOrganizerId } from '../../src/services/community.ts';
 import { assessRisk } from '../../src/services/risk.ts';
 
 const ART = {
@@ -268,7 +269,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
                                  since_year, followers_count, verification_state, doc_id, doc_tax, doc_bank, bank_name, bank_bin, bank_account_no, bank_account_name, bank_verified, bank_added_at, created_at)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) returning id`,
         [slug, o.name, o.initials, o.type, json(o.bio), o.art, o.website ?? null, o.legal ?? null, o.tax ?? null, o.address ?? null, o.email ?? null,
-          o.hotline ?? null, o.zalo ?? null, o.contactName ?? null, o.contactRole ?? null, o.since, o.followers, o.state,
+          o.hotline ?? null, o.zalo ?? null, o.contactName ?? null, o.contactRole ?? null, o.since, 0 /* counts come from real follows (migration 042) */, o.state,
           o.state === 'verified' || !!o.docs?.id, o.state === 'verified' || !!o.docs?.tax, o.state === 'verified' || !!o.docs?.bank,
           o.bank?.name ?? (o.bankRecent ? 'Techcombank' : null), o.bank?.bin ?? (o.bankRecent ? '970407' : null), o.bank?.no ?? (o.bankRecent ? '19036677889900' : null),
           o.bank?.holder ?? null, o.bank?.verified ?? false, o.bankRecent ? hours(48) : o.bank ? hours(24 * 400) : null, hours(24 * 365 * Math.max(0.1, 2026 - o.since))]);
@@ -685,6 +686,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query('update users set onboarded_at = created_at, email_verified_at = case when email is not null then created_at end');
     // As the boot does on real data: follows made by name join the profile they name (migration 041).
     await backfillArtistFollows(q);
+    // Feest Radar's page, as production has it (created by the first import or submission).
+    await communityOrganizerId(q);
     await q.query(`insert into user_roles (user_id, role, status) select distinct user_id, 'organizer', 'active' from organizer_members on conflict do nothing`);
 
     const counts = await one<any>(q,

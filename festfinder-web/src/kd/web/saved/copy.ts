@@ -31,7 +31,7 @@ export const SAVED = {
   nEvents: { en: '{n} events', vi: '{n} sự kiện' },
   empty: { en: 'Nothing saved yet', vi: 'Chưa lưu sự kiện nào' },
   colEmpty: { en: 'Nothing in this collection yet', vi: 'Bộ sưu tập chưa có sự kiện' },
-  explore: { en: 'Explore events', vi: 'Khám phá sự kiện' },
+  explore: { en: 'See events', vi: 'Xem sự kiện' },
   past: { en: 'Past', vi: 'Đã qua' },
   more: { en: 'Show more', vi: 'Xem thêm' },
   saveThis: { en: 'Save {t}', vi: 'Lưu {t}' },

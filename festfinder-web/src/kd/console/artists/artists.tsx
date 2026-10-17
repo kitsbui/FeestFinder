@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PencilSimpleIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../../fresh';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { count } from '../../format';
 import { useKd } from '../../runtime';
@@ -126,6 +127,7 @@ function ArtistDrawer({ lang, artist, onClose, onSaved }: { lang: Lang; artist: 
         musicbrainzId: f.musicbrainzId.trim().toLowerCase() || null, wikidataId: f.wikidataId.trim() || null, spotifyId: f.spotifyId.trim() || null,
       });
       kd.toast(T.saved);
+      void freshen('a', artist.slug);
       onSaved();
     } catch (e) {
       if ((e as { code?: string }).code === 'anchor_taken') setTaken(true);

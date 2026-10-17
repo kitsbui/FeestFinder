@@ -6,6 +6,7 @@ import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { CaretDownIcon } from '@phosphor-icons/react/ssr';
 import { cx } from '../cx';
 import { g, type Family } from '../genre';
+import { frameStyle } from '../frame';
 
 // ---- type ---------------------------------------------------------------------------
 
@@ -56,7 +57,7 @@ export function Art({ family, cover, bone, off, className, style, children, alt 
     <div className={cx('kd-art', g(family), bone && 'kd-b', off && 'kd-off', className)} style={style}>
       {cover ? (
          
-        <img src={cover} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} />
+        <img src={cover} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
       ) : null}
       {children}
     </div>
@@ -104,7 +105,7 @@ export function Avatar({ name, src, size = 40, org, ring, acc, className }: {
       <span aria-hidden="true">{initials}</span>
       {src ? (
          
-        <img src={src} alt={name} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+        <img src={src} alt={name} loading="lazy" decoding="async" referrerPolicy="no-referrer" style={frameStyle(src)} />
       ) : null}
     </span>
   );

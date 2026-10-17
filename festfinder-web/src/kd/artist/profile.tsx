@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../fresh';
 import { pick, type Lang, type Pair } from '../copy';
 import { count } from '../format';
 import { useKd } from '../runtime';
@@ -89,6 +90,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
         links: Object.fromEntries(me.options.links.map((l) => [l.key, (f.links[l.key] || '').trim() || null])), openToBrands: f.openToBrands,
       });
       kd.toast(out.message ? FF.text(out.message, lang) : T.saved);
+      if (out.profile?.slug) void freshen('a', out.profile.slug);
       const next = formOf(out.profile);
       setF(next);
       setBase(JSON.stringify(next));

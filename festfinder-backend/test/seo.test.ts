@@ -29,7 +29,7 @@ describe('event pages for search engines and AI assistants', () => {
     assert.ok(s.page.faq.length > 0, 'the organiser’s answers');
     assert.ok(s.page.updates.some((u: any) => /Cổng số 3/.test(u.body)), 'the organiser’s updates');
     assert.ok(s.page.related.length > 0 && s.page.related.every((x: any) => x.path !== '/e/ravo'));
-    assert.deepEqual(s.page.crumbs.map((c: any) => c.path), ['/', '/list?city=ho-chi-minh', '/list?city=ho-chi-minh&genre=EDM', '/e/ravo']);
+    assert.deepEqual(s.page.crumbs.map((c: any) => c.path), ['/', '/?city=ho-chi-minh', '/?city=ho-chi-minh&genre=EDM', '/e/ravo']);
     assert.equal(s.image.url, 'http://test.local/og/v1/edm.png', 'genre art when there is no cover');
     assert.equal((await env.as().get('/seo/events/no-such-event')).status, 404);
     assert.equal((await env.as().get('/seo/events/ravo?lang=fr')).status, 400);
@@ -101,14 +101,14 @@ describe('event pages for search engines and AI assistants', () => {
     assert.equal((await env.app.inject({ method: 'GET', url: '/og/v1/disco.png' })).statusCode, 404);
   });
 
-  it('sends the old city landing pages to the list with the same filters', async () => {
-    assert.equal(legacyListPath('vi', 'ho-chi-minh', 'this-weekend'), '/list?city=ho-chi-minh&time=weekend&lang=vi');
-    assert.equal(legacyListPath('en', 'ho-chi-minh', 'free/edm'), '/list?city=ho-chi-minh&genre=EDM&lang=en');
-    assert.equal(legacyListPath('vi', 'ho-chi-minh', 'thao-dien/night-market'), '/list?city=ho-chi-minh&lang=vi');
-    assert.equal(legacyListPath('city', 'da-lat', ''), '/list');
+  it('sends the old city landing pages to the home page’s list with the same filters', async () => {
+    assert.equal(legacyListPath('vi', 'ho-chi-minh', 'this-weekend'), '/?city=ho-chi-minh&time=weekend&lang=vi');
+    assert.equal(legacyListPath('en', 'ho-chi-minh', 'free/edm'), '/?city=ho-chi-minh&genre=EDM&lang=en');
+    assert.equal(legacyListPath('vi', 'ho-chi-minh', 'thao-dien/night-market'), '/?city=ho-chi-minh&lang=vi');
+    assert.equal(legacyListPath('city', 'da-lat', ''), '/');
     const res = await env.as().get('/city/ho-chi-minh/edm/this-weekend');
     assert.equal(res.status, 301);
-    assert.equal(res.headers.location, '/list?city=ho-chi-minh&genre=EDM&time=weekend');
+    assert.equal(res.headers.location, '/?city=ho-chi-minh&genre=EDM&time=weekend');
     // The Next front answers /vi/… and /en/… itself.
     assert.equal((await env.as().get('/vi/ho-chi-minh/edm/this-weekend')).status, 404);
     assert.equal((await env.as().get('/en/ha-noi')).status, 404);

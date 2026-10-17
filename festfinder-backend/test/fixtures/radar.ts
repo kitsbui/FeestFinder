@@ -1,5 +1,5 @@
 /**
- * FeestFinder Radar's share of the demo, for the local preview only (scripts/preview.sh sets
+ * Feest Radar's share of the demo, for the local preview only (scripts/preview.sh sets
  * SEED_RADAR=1 for test/fixtures/reset.ts; the screen tests leave it out, so their counts hold).
  * The ingestion tests' fixture pages go through the real pipeline as if Radar had read them on
  * those sites, and what it files is approved, so the Radar tabs and tags have something to show.

@@ -31,7 +31,10 @@ export async function api<T>(path: string, opts: { lang?: Lang; revalidate?: num
   let res: Response;
   try {
     res = await fetch(API_ORIGIN + path, {
-      headers: { 'x-lang': opts.lang ?? 'vi', accept: 'application/json', ...SIGNED },
+      // x-ff-session: never the CDN's shared copy (src/proxy.ts sends 1 for a signed-in visitor). A
+      // page keeps its own cache (revalidate) and a save refreshes it at once (kd/fresh.ts), so a
+      // second cache in front of the API would only show an owner their old cover for longer.
+      headers: { 'x-lang': opts.lang ?? 'vi', accept: 'application/json', 'x-ff-session': 'render', ...SIGNED },
       next: { revalidate: opts.revalidate ?? 60 },
     });
   } catch (e) {

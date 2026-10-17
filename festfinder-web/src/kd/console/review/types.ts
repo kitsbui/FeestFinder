@@ -18,7 +18,13 @@ export interface Item {
   /** 'revision': an organiser's change to a live listing, which stays live meanwhile (migration 040). */
   kind?: 'listing' | 'revision';
   changes?: { field: string; before: unknown; after: unknown }[];
+  /** Feest Radar's find, or posted here; how well it suits FeestFinder (festfinder-backend services/ingest/fit.ts). */
+  origin?: 'posted' | 'radar';
+  festival?: { key: string; name: string; flagship: boolean } | null;
+  fit?: { score: number; band: FitBand; bandLabel: Pair; reasons: { key: string; points: number; label: Pair }[] } | null;
 }
+
+export type FitBand = 'recommend' | 'consider' | 'skip';
 
 /** /admin/reject-reasons. */
 export interface Reason { code: string; label: Pair; template: Pair; appealAllowed: boolean }

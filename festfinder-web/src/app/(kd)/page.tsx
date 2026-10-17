@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { HomePage } from '@/kd/web/home/page';
+import { ListPage } from '@/kd/web/list/page';
 
+// The home page is the list of every event (owner, 2026-10-17); /list redirects here.
 export const metadata: Metadata = {
   alternates: { canonical: '/', languages: { vi: '/', en: '/?lang=en', 'x-default': '/' } },
 };
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default function Page() {
-  return <HomePage lang="vi" />;
+  return <ListPage lang="vi" />;
 }

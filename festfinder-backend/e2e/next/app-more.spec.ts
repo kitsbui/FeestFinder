@@ -109,7 +109,12 @@ test.describe('the app, signed in', () => {
     // The test API runs no guide and none was written: the event offers no row that would lead to "đang tạm nghỉ".
     await open(page, '/app/e/ravo');
     await expect(page.getByRole('link', { name: 'Trước & sau show' })).toHaveCount(0);
+    // Opened anyway: it says so without asking the guide, and offers nothing to retry.
+    const asked: string[] = [];
+    page.on('request', (r) => { if (/\/guide\?/.test(r.url())) asked.push(r.url()); });
     await open(page, '/app/guide/ravo');
-    await expect(page.getByRole('button', { name: 'Thử lại' })).toBeVisible();
+    await expect(page.getByText('Hướng dẫn địa phương đang tạm nghỉ. Thử lại sau nhé.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Thử lại' })).toHaveCount(0);
+    expect(asked).toEqual([]);
   });
 });

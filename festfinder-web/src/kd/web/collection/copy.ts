@@ -13,7 +13,7 @@ export const COLLECTION = {
   nEvents: { en: '{n} events', vi: '{n} sự kiện' },
   empty: { en: 'Nothing in this collection yet', vi: 'Bộ sưu tập chưa có sự kiện' },
   noUpcoming: { en: 'Nothing coming up in this collection', vi: 'Bộ sưu tập chưa có sự kiện sắp tới' },
-  explore: { en: 'Explore events', vi: 'Khám phá sự kiện' },
+  explore: { en: 'See events', vi: 'Xem sự kiện' },
   moreN: { en: 'Show {n} more', vi: 'Xem thêm {n}' },
   less: { en: 'Show less', vi: 'Thu gọn' },
   share: { en: 'Share', vi: 'Chia sẻ' },

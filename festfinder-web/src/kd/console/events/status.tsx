@@ -8,6 +8,7 @@
 import { useState, type ReactNode } from 'react';
 import { ArrowCounterClockwiseIcon, ProhibitIcon, RocketLaunchIcon, XCircleIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../../fresh';
 import { fill, pick, type Lang } from '../../copy';
 import { useKd } from '../../runtime';
 import { Button } from '../../ui/actions';
@@ -20,7 +21,7 @@ import { EVENTS } from './copy';
 import type { Status } from './model';
 
 type Action = 'publish' | 'take_down' | 'cancel' | 'restore';
-interface Target { id: string; title: string; status: Status }
+interface Target { id: string; slug?: string; title: string; status: Status }
 
 const MISSING: Record<string, keyof typeof EVENTS> = { title: 'rTitle', genre: 'rGenre', dates: 'rDates', venue: 'rVenue', price: 'rPrice', logo: 'rLogo', eventUrl: 'rEventUrl' };
 
@@ -49,11 +50,12 @@ export function useStatusActions(onChanged: (out: any) => void) {
     try {
       const out = await FF.post(`/admin/events/${ev.id}/status`, { action });
       kd.toast(FF.text(out.message, lang));
+      if (ev.slug) void freshen('e', ev.slug);
       refreshCounts();
       onChanged(out);
     } catch (e) { kd.toast(errorLine(e, lang)); }
   };
-  const dialog = takeDown ? <TakeDown ev={takeDown} onClose={() => setTakeDown(null)} onDone={(out) => { setTakeDown(null); refreshCounts(); onChanged(out); }} /> : null;
+  const dialog = takeDown ? <TakeDown ev={takeDown} onClose={() => setTakeDown(null)} onDone={(out) => { if (takeDown.slug) void freshen('e', takeDown.slug); setTakeDown(null); refreshCounts(); onChanged(out); }} /> : null;
   return { run, dialog };
 }
 
@@ -65,7 +67,7 @@ export function statusItems(ev: Target, run: (ev: Target, a: Action) => void, la
   if (publish && ['draft', 'in_review', 'rejected'].includes(ev.status)) {
     out.push(<MenuItem key="publish" icon={i(RocketLaunchIcon)} onSelect={() => run(ev, 'publish')}>{ev.status === 'in_review' ? T.approvePublish : T.publishNow}</MenuItem>);
   }
-  if (['removed', 'cancelled'].includes(ev.status)) out.push(<MenuItem key="restore" icon={i(ArrowCounterClockwiseIcon)} onSelect={() => run(ev, 'restore')}>{T.restore}</MenuItem>);
+  if (['removed', 'cancelled', 'expired'].includes(ev.status)) out.push(<MenuItem key="restore" icon={i(ArrowCounterClockwiseIcon)} onSelect={() => run(ev, 'restore')}>{T.restore}</MenuItem>);
   if (['live', 'in_review', 'draft'].includes(ev.status)) out.push(<MenuSeparator key="sep" />);
   if (['live', 'in_review'].includes(ev.status)) out.push(<MenuItem key="take" icon={i(ProhibitIcon)} onSelect={() => run(ev, 'take_down')}>{T.takeDown}</MenuItem>);
   if (['live', 'in_review', 'draft'].includes(ev.status)) out.push(<MenuItem key="cancel" icon={i(XCircleIcon)} onSelect={() => run(ev, 'cancel')}>{T.cancel}</MenuItem>);

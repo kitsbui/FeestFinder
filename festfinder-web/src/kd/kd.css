@@ -312,7 +312,7 @@
   .kd-av { position: relative; }
   .kd-av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   /* A linked photo that does not open (ui/covers.tsx marks it) leaves the initials under it. */
-  .kd-av img[data-broken], .kd-mtile img[data-broken] { display: none; }
+  .kd-av img[data-broken], .kd-mtile img[data-broken], .kd-fthumb img[data-broken] { display: none; }
   .kd-av-sq { border-radius: var(--radius-org); }
   .kd-av-ring { position: relative; z-index: 5; box-shadow: 0 0 0 4px var(--color-void); }
   .kd-av-acc { background: var(--color-acc); color: var(--color-acc-ink); }

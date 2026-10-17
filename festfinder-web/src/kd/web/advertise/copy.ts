@@ -10,7 +10,7 @@ export const ADVERTISE = {
   },
   metaDesc: {
     en: 'Labelled ad placements on FeestFinder: feed cards, the explore banner and in-event. The rate card, and an enquiry form for brands.',
-    vi: 'Quảng cáo có gắn nhãn trên FeestFinder: thẻ feed, banner Khám phá và trong sự kiện. Bảng giá và mẫu gửi yêu cầu cho thương hiệu.',
+    vi: 'Quảng cáo có gắn nhãn trên FeestFinder: thẻ feed, banner trang chủ và trong sự kiện. Bảng giá và mẫu gửi yêu cầu cho thương hiệu.',
   },
   reach: { en: '{e} upcoming events in {c} cities', vi: '{e} sự kiện sắp diễn ra ở {c} thành phố' },
 
@@ -62,7 +62,7 @@ export const ADVERTISE = {
   emailPh: { en: 'you@brand.com', vi: 'ban@thuonghieu.com' },
   placeLabel: { en: 'Where you want to appear', vi: 'Vị trí bạn muốn xuất hiện' },
   placeFeed: { en: 'Feed card', vi: 'Thẻ trong feed' },
-  placeBanner: { en: 'Explore banner', vi: 'Banner trang Khám phá' },
+  placeBanner: { en: 'Home page banner', vi: 'Banner trang chủ' },
   placeLive: { en: 'In-event (live mode)', vi: 'Trong sự kiện (chế độ trực tiếp)' },
   msgLabel: { en: 'Anything else', vi: 'Thông tin thêm' },
   msgPh: { en: 'Which festivals, which months, what you are launching.', vi: 'Lễ hội nào, tháng nào, bạn đang ra mắt gì.' },

@@ -381,44 +381,6 @@ export function CommunityLine({ lang }: { lang: Lang }) {
   );
 }
 
-// ---- the sticky section bar --------------------------------------------------------------
-
-/** Anchor tabs that follow the scroll, plus a small "Mua vé" on wide screens. */
-export function SectionBar({ lang, sections, buy }: { lang: Lang; sections: { id: string; label: string }[]; buy?: { href: string; label: string } | null }) {
-  const t = T(lang);
-  const [cur, setCur] = useState(sections[0]?.id ?? '');
-  useEffect(() => {
-    const els = sections.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
-    const onScroll = () => {
-      let at = els[0]?.id ?? '';
-      // Below the nav and this bar: whichever section's top has passed 140px from the top. A
-      // section in a sticky column (the ticket panel on wide screens) is always in view: skip it.
-      for (const el of els) {
-        const col = el.closest('[data-sticky-col]');
-        if (col && getComputedStyle(col).position === 'sticky') continue;
-        if (el.getBoundingClientRect().top <= 140) at = el.id;
-      }
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) at = els[els.length - 1]?.id ?? at;
-      setCur(at);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [sections]);
-  return (
-    <div className="sticky top-16 z-20 mt-8 bg-void/90 backdrop-blur-md tab:mt-13">
-      <div className="kd-wrap flex items-center gap-3 border-b border-line">
-        <nav aria-label={t.sectionNav} className="kd-tabs min-w-0 flex-1 border-b-0">
-          {sections.map((s) => (
-            <a key={s.id} href={'#' + s.id} className="kd-tab" aria-current={cur === s.id ? 'true' : undefined} onClick={() => setCur(s.id)}>{s.label}</a>
-          ))}
-        </nav>
-        {buy ? <a href={buy.href} className={buttonClass({ tone: 'acc', size: 'sm' }, 'hidden desk:inline-flex')}>{buy.label}</a> : null}
-      </div>
-    </div>
-  );
-}
-
 // ---- the countdown on the cover --------------------------------------------------------
 
 /**

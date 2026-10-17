@@ -18,7 +18,8 @@ import { Badges, type BadgeView } from '../../ui/badges';
 import type { Moment } from '../../ui/moments';
 import { Art, Avatar, Card as Panel, Stat } from '../../ui/parts';
 import { APP } from '../../app/copy';
-import { EditSheet, FollowingSection, PassportSection, WrappedSheet, type Follows, type Me, type Order, type Passport } from '../../app/profile';
+import { EditSheet, PassportSection, WrappedSheet, type Me, type Order, type Passport } from '../../app/profile';
+import { FollowManager, FollowStats, type Follows } from '../../ui/follows';
 
 export function FanProfile({ lang }: { lang: Lang }) {
   const kd = useKd();
@@ -61,7 +62,6 @@ function Mine({ lang }: { lang: Lang }) {
   const coming = (clockReady ? orders ?? [] : []).filter((o) => o.status === 'paid' && o.tickets.length && !(o.event.endsAt && Date.parse(o.event.endsAt) < now));
   const u = me?.user;
   const year = new Date(FF.now()).getFullYear();
-  const following = follows ? follows.organizers.following.length + (follows.artistPages ?? follows.artists).length : null;
   const en = lang === 'en' ? '?lang=en' : '';
 
   return (
@@ -80,10 +80,10 @@ function Mine({ lang }: { lang: Lang }) {
               <Button size="sm" onClick={() => setEditing(true)} disabled={!u}>{T.edit}</Button>
               <a className={buttonClass({ size: 'sm', tone: 'ghost' })} href="/app/settings">{T.notifSettings}</a>
             </div>
-            <div className="grid grid-cols-3 border-y border-line py-3.5">
+            <div className="grid grid-cols-2 gap-y-3.5 border-y border-line py-3.5">
               <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
               <Stat value={orders ? coming.length : '–'} label={T.going} />
-              <Stat value={following ?? '–'} label={T.followingTitle} />
+              <FollowStats lang={lang} f={follows} />
             </div>
           </div>
           {moments ? <MomentsSection lang={lang} as="user" items={moments} owner compact /> : null}
@@ -111,7 +111,7 @@ function Mine({ lang }: { lang: Lang }) {
           ) : null}
           {pp ? <PassportSection lang={lang} pp={pp} year={year} onWrapped={() => setWrapped(true)} flush appLinks={false} /> : <div className="kd-skel mt-8 h-40" aria-hidden="true" />}
           <Badges lang={lang} items={badges} who={{ vi: 'người dùng', en: 'people' }} own className="pt-12" />
-          {follows ? <FollowingSection lang={lang} f={follows} flush /> : null}
+          {follows ? <FollowManager lang={lang} f={follows} flush /> : null}
         </div>
       </div>
       {editing && u ? <EditSheet lang={lang} me={u} onClose={() => setEditing(false)} onSaved={(n) => { setMe((m) => m && { ...m, user: { ...m.user, ...n } }); setEditing(false); }} /> : null}

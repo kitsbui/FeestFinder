@@ -65,7 +65,7 @@ export async function StatPage({ statKey, lang, search }: { statKey: StatKey; la
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
         <WebNav lang={lang} />
-        <Crumbs label={W.crumbs} items={[{ name: W.explore, href: inLang('/', lang) }, { name: title }]} />
+        <Crumbs label={W.crumbs} items={[{ name: W.events, href: inLang('/', lang) }, { name: title }]} />
 
         <main className="kd-wrap flex flex-col gap-6 pt-[clamp(12px,3vw,32px)]">
           <header className="flex max-w-read flex-col gap-3">

@@ -40,12 +40,12 @@ test.describe('pages for search engines', () => {
     expect(robots).not.toMatch(/OAI-SearchBot/);
   });
 
-  test('the old landing pages redirect to the list with their filters', async ({ request }) => {
+  test('the old landing pages redirect to the home page’s list with their filters', async ({ request }) => {
     const vi = await request.get('/vi/ho-chi-minh/free/this-weekend', { maxRedirects: 0 });
     expect(vi.status()).toBe(301);
-    expect(vi.headers().location).toMatch(/\/list\?city=ho-chi-minh&time=weekend&lang=vi$/);
+    expect(vi.headers().location).toMatch(/\/\?city=ho-chi-minh&time=weekend&lang=vi$/);
     const en = await request.get('/en/ho-chi-minh/edm', { maxRedirects: 0 });
-    expect(en.headers().location).toMatch(/\/list\?city=ho-chi-minh&genre=EDM&lang=en$/);
+    expect(en.headers().location).toMatch(/\/\?city=ho-chi-minh&genre=EDM&lang=en$/);
     expect((await request.get('/e/not-a-real-event')).status()).toBe(404);
   });
 
@@ -83,7 +83,7 @@ test.describe('pages for search engines', () => {
 });
 
 test('the old back-office and map addresses lead to their pages', async ({ request }) => {
-  const moved: [string, string][] = [['/organizer', '/studio'], ['/admin', '/console'], ['/map', '/list?view=map']];
+  const moved: [string, string][] = [['/organizer', '/studio'], ['/admin', '/console'], ['/map', '/?view=map'], ['/list', '/']];
   for (const [from, to] of moved) {
     const res = await request.get(from, { maxRedirects: 0 });
     expect([307, 308], from).toContain(res.status());
@@ -158,7 +158,7 @@ test('browser extensions adding <div>s to <body> do not break hydration', async 
       document.body.append(last);
     }).observe(document, { childList: true, subtree: true });
   });
-  for (const path of ['/', '/e/ravo', '/list', '/app']) {
+  for (const path of ['/', '/e/ravo', '/?view=grid', '/app']) {
     await page.goto(path);
     // Once the page has hydrated, the extension's elements are back where it put them.
     await expect.poll(() => page.evaluate(() => ({
@@ -172,7 +172,7 @@ test('browser extensions adding <div>s to <body> do not break hydration', async 
 test.describe('full width on desktop', () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
 
-  for (const path of ['/', '/list', '/e/ravo', '/a', '/about']) {
+  for (const path of ['/', '/e/ravo', '/a', '/about']) {
     test(`${path} spans the screen, with the page gutter on both sides`, async ({ page }) => {
       await page.goto(path);
       const width = await page.evaluate(() => document.documentElement.clientWidth);
@@ -213,7 +213,7 @@ test('a cover that does not load leaves the art, not a broken image', async ({ p
     body.items[0] = { ...body.items[0], coverUrl: 'https://covers.example/gone.jpg' };
     await route.fulfill({ json: body });
   });
-  await page.goto('/list?view=grid&city=ho-chi-minh');
+  await page.goto('/?view=grid&city=ho-chi-minh');
   const cover = page.locator('.kd-ev').first().locator('img.kd-cover');
   await expect(cover).toHaveAttribute('data-broken', '');
   await expect(cover).toBeHidden();
@@ -222,7 +222,7 @@ test('a cover that does not load leaves the art, not a broken image', async ({ p
 test.describe('scrollbars', () => {
   test('take no room: a hairline over the page while it scrolls, which fades and can be dragged', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 600 });
-    await page.goto('/list');
+    await page.goto('/');
     await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
     expect(await page.evaluate(() => innerWidth - document.documentElement.clientWidth)).toBe(0);
     const thumb = page.locator('ff-scrollbars .ff-sb-y.on');
@@ -245,7 +245,7 @@ test.describe('scrollbars', () => {
 
   test('a box that scrolls inside gets its own, above an open sheet too', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 700 });
-    await page.goto('/list');
+    await page.goto('/');
     await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
     await page.getByRole('button', { name: 'Menu' }).click();
     const sheet = page.getByRole('dialog', { name: 'Menu' });

@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CheckCircleIcon, FloppyDiskIcon, MapPinIcon, PaperPlaneRightIcon, SealCheckIcon, TranslateIcon, WarningCircleIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../../fresh';
 import { fill, pick, type Pair, type Strings } from '../../copy';
 import { cx } from '../../cx';
 import { day as dayParts, todayIn, whenShort } from '../../format';
@@ -267,6 +268,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
         }
       }
       setBase(JSON.stringify(payload));
+      if (out?.slug) void freshen('e', out.slug);
       setSavedAt(new Date().toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }));
       kd.toast(out?.message ? FF.text(out.message as Pair, lang) : T.saved);
       onSaved(out, { created: !id });

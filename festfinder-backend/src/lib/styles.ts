@@ -1,4 +1,5 @@
 import { L, type Genre, type Localized } from './i18n.ts';
+import { stylesOfLineup } from './known-artists.ts';
 import { plainText } from './places.ts';
 
 /*
@@ -16,27 +17,43 @@ export interface Style { key: string; label: Localized; genre: Genre; tags: stri
 const S = (key: string, en: string, vi: string, tags: string[], phrases: string[]): Style =>
   ({ key, label: L(en, vi), genre: 'EDM', tags, phrases });
 
+// The styles FeestFinder follows, after Beatport's genres (checked 2026-10-17): the ones people
+// dance to at club nights, raves and festivals. Downtempo, electronica and DJ tools are not nights.
 export const STYLES: Style[] = [
-  S('techno', 'Techno', 'Techno', ['techno'], ['techno']),
+  S('techno', 'Techno', 'Techno', ['techno', 'peak time techno', 'driving techno', 'hypnotic techno', 'raw techno', 'deep techno', 'hardgroove'],
+    ['techno', 'peak time techno', 'hypnotic techno', 'hardgroove']),
   S('hard-techno', 'Hard techno', 'Hard techno', ['hard techno', 'schranz'], ['hard techno', 'hardtechno', 'schranz']),
   S('acid-techno', 'Acid techno', 'Acid techno', ['acid techno', 'acid'], ['acid techno']),
   S('industrial-techno', 'Industrial techno', 'Industrial techno', ['industrial techno', 'industrial'], ['industrial techno']),
-  S('house', 'House', 'House', ['house', 'afro house', 'melodic house'], ['house music', 'afro house', 'melodic house', 'organic house']),
+  S('melodic-techno', 'Melodic house & techno', 'Melodic house & techno', ['melodic house techno', 'melodic house and techno', 'melodic techno', 'melodic house', 'melodic h t'],
+    ['melodic techno', 'melodic house', 'melodic house techno']),
+  S('minimal', 'Minimal / deep tech', 'Minimal / deep tech', ['minimal', 'minimal techno', 'deep tech', 'minimal deep tech', 'minimal house'], ['minimal techno', 'deep tech', 'minimal house']),
+  S('house', 'House', 'House', ['house', 'jackin house', 'funky house', 'chicago house'], ['house music', 'jackin house', 'funky house', 'chicago house']),
   S('tech-house', 'Tech house', 'Tech house', ['tech house'], ['tech house']),
   S('deep-house', 'Deep house', 'Deep house', ['deep house'], ['deep house']),
   S('progressive-house', 'Progressive house', 'Progressive house', ['progressive house', 'progressive'], ['progressive house']),
-  S('trance', 'Trance', 'Trance', ['trance'], ['trance']),
+  S('afro-house', 'Afro house', 'Afro house', ['afro house', 'afrohouse', 'afro tech'], ['afro house', 'afrohouse', 'afro tech']),
+  S('organic-house', 'Organic house', 'Organic house', ['organic house'], ['organic house']),
+  S('bass-house', 'Bass house', 'Bass house', ['bass house'], ['bass house']),
+  S('nu-disco', 'Nu disco', 'Nu disco', ['nu disco', 'disco house', 'italo disco'], ['nu disco', 'disco house', 'italo disco']),
+  S('indie-dance', 'Indie dance', 'Indie dance', ['indie dance', 'dark disco'], ['indie dance', 'dark disco']),
+  S('amapiano', 'Amapiano', 'Amapiano', ['amapiano'], ['amapiano']),
+  S('trance', 'Trance', 'Trance', ['trance', 'uplifting trance', 'vocal trance', 'tech trance', 'progressive trance'], ['trance']),
   S('psytrance', 'Psytrance', 'Psytrance', ['psytrance', 'psy trance', 'goa'], ['psytrance', 'psy trance', 'goa trance', 'psychedelic trance']),
+  S('hard-dance', 'Hard dance', 'Hard dance', ['hard dance', 'hard house', 'hard trance', 'neo rave'], ['hard dance', 'hard house', 'hard trance', 'neo rave']),
   S('hardstyle', 'Hardstyle', 'Hardstyle', ['hardstyle'], ['hardstyle']),
   S('rawstyle', 'Rawstyle', 'Rawstyle', ['rawstyle'], ['rawstyle', 'raw hardstyle']),
-  S('hardcore', 'Hardcore', 'Hardcore', ['hardcore', 'uptempo', 'frenchcore'], ['hardcore techno', 'uptempo hardcore', 'frenchcore']),
+  S('hardcore', 'Hardcore', 'Hardcore', ['hardcore', 'uptempo', 'frenchcore', 'terror', 'happy hardcore', 'uk hardcore'], ['hardcore techno', 'uptempo hardcore', 'frenchcore', 'happy hardcore']),
   S('gabber', 'Gabber', 'Gabber', ['gabber', 'gabba'], ['gabber', 'gabba']),
-  S('dubstep', 'Dubstep', 'Dubstep', ['dubstep', 'riddim'], ['dubstep', 'riddim']),
+  S('dubstep', 'Dubstep', 'Dubstep', ['dubstep', 'riddim', '140', 'deep dubstep'], ['dubstep', 'riddim', 'deep dubstep']),
   S('drum-and-bass', 'Drum & bass', 'Drum & bass', ['drum and bass', 'drum n bass', 'dnb', 'd b', 'jungle', 'neurofunk', 'liquid'], ['drum and bass', 'drum n bass', 'drum bass', 'dnb', 'neurofunk', 'liquid dnb', 'jungle music']),
-  S('breakbeat', 'Breakbeat', 'Breakbeat', ['breakbeat', 'breaks'], ['breakbeat', 'breakbeats']),
-  S('bass', 'Bass', 'Bass', ['bass', 'bass music', 'future bass', 'uk garage', 'garage'], ['bass music', 'future bass', 'uk bass', 'uk garage', 'bass house']),
-  S('edm', 'EDM', 'EDM', ['edm', 'electronic', 'dance', 'electro house', 'electronica'], ['edm', 'electro house', 'electronic dance music', 'nhac dien tu']),
-  S('mainstage', 'Mainstage', 'Mainstage', ['mainstage', 'big room'], ['mainstage', 'big room']),
+  S('breakbeat', 'Breakbeat', 'Breakbeat', ['breakbeat', 'breaks', 'uk bass'], ['breakbeat', 'breakbeats', 'uk bass']),
+  S('uk-garage', 'UK garage', 'UK garage', ['uk garage', 'garage', 'ukg', 'bassline', 'speed garage', '2 step'], ['uk garage', 'ukg', 'speed garage', 'bassline']),
+  S('future-bass', 'Trap & future bass', 'Trap & future bass', ['future bass', 'festival trap', 'edm trap', 'trap edm'], ['future bass', 'festival trap', 'edm trap']),
+  S('bass', 'Bass', 'Bass', ['bass', 'bass music', 'bass club'], ['bass music']),
+  S('electro', 'Electro', 'Electro', ['electro', 'electro funk', 'detroit electro'], ['electro funk', 'detroit electro']),
+  S('edm', 'EDM', 'EDM', ['edm', 'electronic', 'dance', 'electro house', 'electronica', 'dance pop'], ['edm', 'electro house', 'electronic dance music', 'nhac dien tu']),
+  S('mainstage', 'Mainstage', 'Mainstage', ['mainstage', 'big room', 'big room house', 'festival progressive'], ['mainstage', 'big room']),
 ];
 
 /*
@@ -103,8 +120,11 @@ export function classifyStyles(input: StyleInput): string[] {
   const text = textOf(input);
   for (const s of STYLES) if (s.phrases.some((p) => has(text, p))) out.add(s.key);
   // "Hard techno" says techno too; listing both adds nothing.
-  for (const sub of ['hard-techno', 'acid-techno', 'industrial-techno']) if (out.has(sub)) out.delete('techno');
-  for (const sub of ['tech-house', 'deep-house', 'progressive-house']) if (out.has(sub)) out.delete('house');
+  for (const sub of ['hard-techno', 'acid-techno', 'industrial-techno', 'melodic-techno', 'minimal']) if (out.has(sub)) out.delete('techno');
+  for (const sub of ['tech-house', 'deep-house', 'progressive-house', 'afro-house', 'organic-house', 'bass-house', 'melodic-techno', 'minimal']) if (out.has(sub)) out.delete('house');
+  for (const sub of ['psytrance', 'hard-dance']) if (out.has(sub)) out.delete('trance');
+  // A lineup of artists known for a style says it when the source says nothing (lib/known-artists.ts).
+  if (!out.size) for (const k of stylesOfLineup(input.lineup ?? [])) out.add(k);
   return [...out].slice(0, 5);
 }
 

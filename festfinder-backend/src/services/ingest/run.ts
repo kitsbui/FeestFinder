@@ -16,6 +16,7 @@ import { EVENT_TYPES } from '../../lib/styles.ts';
 import { ADAPTERS, PROVIDER_CONFIDENCE } from './providers.ts';
 import { findExact, findSimilar, MATCH_RULES, venueLikeness, type Match } from './resolve.ts';
 import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent, type RawRecord } from './types.ts';
+import { FIT_FLOOR, fitOf, refreshFit } from './fit.ts';
 
 /*
  * One run of one source:
@@ -211,16 +212,25 @@ async function resolveAndApply(q: Queryable, source: IngestSource, rawId: string
   if (match && (match.exact || match.score >= MATCH_RULES.mergeAt)) {
     await attachSource(q, match.eventId, source, rawId, record, n, match, now);
     await enrich(q, match.eventId, n, now);
+    await refreshFit(q, [match.eventId], now);
     return { kind: 'merged' as const, eventId: match.eventId, match };
   }
   // A cancelled night nobody listed is not worth a moderator's time.
   if (n.cancelled) return { kind: 'rejected' as const, eventId: null, match, error: 'cancelled' };
   if (n.otherGenre) return { kind: 'rejected' as const, eventId: null, match, error: `other_genre: ${n.otherGenre}` };
   if (source.config.requireStyle === true && !n.styles.length) return { kind: 'rejected' as const, eventId: null, match, error: 'no_style' };
+  // Not worth a moderator's time (services/ingest/fit.ts), unless it is a festival Feest Radar watches.
+  const fit = await fitOf(q, {
+    title: n.title, description: n.description, styles: n.styles, lineup: n.lineup, eventType: n.eventType, imageUrl: n.imageUrl,
+    ticketUrl: n.ticketUrl, startTime: n.startTime, venueName: venue?.name ?? n.venueName, address: venue?.address ?? n.address,
+    venueId: venue?.id ?? null, priceFrom: n.priceFrom, free: n.free, city: n.city, startsOn: n.startsOn, festival: n.festival,
+  }, now);
+  if (fit.score < FIT_FLOOR && !fit.festival) return { kind: 'rejected' as const, eventId: null, match, error: `low_fit: ${fit.score}` };
   const eventId = await createCandidate(q, source, n, venue, match, now);
   await attachSource(q, eventId, source, rawId, record, n, null, now);
   await refreshDerived(q, eventId, now);
   await flagRisk(q, eventId, match, now);
+  await refreshFit(q, [eventId], now);
   return { kind: 'created' as const, eventId, match };
 }
 
@@ -299,14 +309,14 @@ export async function createCandidate(q: Queryable, source: Pick<IngestSource, '
   const row = await one<{ id: string }>(q,
     `insert into events (slug, organizer_id, title, genre, description, city, venue_id, venue_name, address, area, lat, lng,
                          starts_on, ends_on, start_time, end_time, entry_mode, price_from, ticket_url, event_url, lineup, artists,
-                         cover_url, styles, event_type, status, submitted_at, ticket_link_status, first_seen_at, created_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$21,$22,$23,$24,'in_review',$25,$26,$25,$25)
+                         cover_url, styles, event_type, status, submitted_at, ticket_link_status, first_seen_at, created_at, festival)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$21,$22,$23,$24,'in_review',$25,$26,$25,$25,$27)
      returning id`,
     [slug, organizerId, n.title, n.genre, json({ en: n.description ?? '', vi: n.description ?? '' }), n.city,
       venue?.id ?? null, venue?.name ?? n.venueName, venue?.address ?? n.address, venue?.area ?? n.area,
       venue?.lat ?? n.lat, venue?.lng ?? n.lng, n.startsOn, n.endsOn, n.startTime, n.endTime,
       paid ? 'paid' : 'free', paid ? n.priceFrom ?? 0 : 0, n.ticketUrl, n.eventUrl, n.lineup,
-      n.imageUrl, n.styles, n.eventType, now, n.ticketUrl ? 'unchecked' : null]);
+      n.imageUrl, n.styles, n.eventType, now, n.ticketUrl ? 'unchecked' : null, n.festival]);
   await appendAudit(q, {
     at: now, actorType: 'system', actorId: null, actorLabel: `Import · ${source.name}`, action: 'listing.imported',
     targetType: 'event', targetId: row!.id, targetLabel: n.title,

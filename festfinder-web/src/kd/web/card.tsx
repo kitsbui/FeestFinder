@@ -1,6 +1,6 @@
 /**
  * An event card for grids: the art (cover, or the family's shapes, plain or bone by index),
- * a glass status tag and the save toggle over it (and "Radar" below, for what FeestFinder Radar
+ * a glass status tag and the save toggle over it (and "Radar" below, for what Feest Radar
  * found), then the title, marker + when · venue · city, the price (lime when free) and "n quan tâm".
  */
 import { KdLink as Link, inLang } from '../link';
@@ -19,6 +19,7 @@ export function cardTag(e: Card, lang: Lang): string | null {
   if (e.status === 'cancelled') return T.cancelled;
   if (e.past) return T.ended;
   if (e.soldOut) return T.soldOut;
+  if (e.festival?.flagship && e.festival.label) return e.festival.label[lang];
   if (e.badge) return e.badge.label[lang];
   if (e.featured) return T.featured;
   return null;
@@ -42,7 +43,7 @@ export function EventCard({ e, i, lang }: { e: Card; i: number; lang: Lang }) {
           <Art family={fam} cover={e.coverUrl} bone={i % 2 === 1} off={e.past || e.soldOut} />
         </Link>
         <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-start justify-between">
-          {tag ? <span className="kd-tag kd-tag-glass text-paper">{tag}</span> : <span />}
+          {tag ? <span className={cx('kd-tag', e.festival?.flagship && !e.past && !e.soldOut ? 'bg-acc text-acc-ink' : 'kd-tag-glass text-paper')}>{tag}</span> : <span />}
           <span className="pointer-events-auto"><SaveToggle id={e.id} label={fill(T.saveEvent, { t: e.title })} /></span>
         </div>
         {e.origin === 'radar' ? <RadarTag lang={lang} glass className="pointer-events-none absolute bottom-2.5 left-2.5" /> : null}

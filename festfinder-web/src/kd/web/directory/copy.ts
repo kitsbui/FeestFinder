@@ -15,7 +15,6 @@ export const DIR = {
   fromLineup: { en: 'Lineup · {t}', vi: 'Lineup · {t}' },
   thisIsMe: { en: 'This is me', vi: 'Đây là tôi' },
   unclaimedTag: { en: 'Not run by anyone', vi: 'Chưa có người quản lý' },
-  count: { en: '{n} artists', vi: '{n} nghệ sĩ' },
   search: { en: 'Search artists', vi: 'Tìm nghệ sĩ' },
   filters: { en: 'Filters', vi: 'Bộ lọc' },
   role: { en: 'Role', vi: 'Vai trò' },

@@ -211,7 +211,8 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
       items: view.items.map((c, i) => ({ ...c, tag: i === 0 ? L('Featured', 'Nổi bật') : L('Picked', 'Được chọn') })),
       window: shelf.starts_on && shelf.ends_on ? L(`Shows ${dm(shelf.starts_on)} → ${dm(shelf.ends_on)}`, `Hiển thị ${dm(shelf.starts_on)} → ${dm(shelf.ends_on)}`) : L('No date window', 'Không giới hạn thời gian'),
       note: shelf.enabled
-        ? L('This is the real Explore row on app and web — it sits directly under the search bar.', 'Đúng thiết kế dãy này trên app và web — vị trí ngay dưới thanh tìm kiếm ở trang Khám phá.')
+        // No page shows shelves yet (docs/TECH_DEBT.md #17): the team is not told otherwise.
+        ? L('The shelf is on. No page of the site shows shelves yet.', 'Dãy đang bật. Hiện chưa trang nào của site hiển thị dãy này.')
         : L('The shelf is off. This is how it would look once switched on.', 'Dãy đang tắt. Đây là hình dạng nó sẽ có khi bật.'),
     };
   });

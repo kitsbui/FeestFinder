@@ -72,6 +72,11 @@ const CITY_SEEDS: CitySeed[] = [
   ['hong-kong', 'HK', 'Hong Kong', 'Hồng Kông', 22.3193, 114.1694, [113.83, 22.15, 114.44, 22.57], ['hong kong', '香港'], false],
   ['kuala-lumpur', 'MY', 'Kuala Lumpur', 'Kuala Lumpur', 3.139, 101.6869, [101.58, 3.03, 101.77, 3.25], ['kuala lumpur'], false],
   ['manila', 'PH', 'Manila', 'Manila', 14.5995, 120.9842, [120.9, 14.35, 121.15, 14.78], ['manila', 'makati', 'taguig', 'bgc'], false],
+  // Where the big festivals land in Asia (Feest Radar keeps their editions before a city launches).
+  ['pattaya', 'TH', 'Pattaya', 'Pattaya', 12.9236, 100.8825, [100.75, 12.7, 101.15, 13.15], ['pattaya', 'chonburi', 'chon buri', 'bang lamung', 'wisdom valley', 'huai yai'], false],
+  ['phu-quoc', 'VN', 'Phu Quoc', 'Phú Quốc', 10.2899, 103.984, [103.82, 9.85, 104.1, 10.48], ['phu quoc', 'duong dong', 'an thoi'], false],
+  ['incheon', 'KR', 'Incheon', 'Incheon', 37.4563, 126.7052, [126.35, 37.35, 126.8, 37.62], ['incheon', '인천', 'yeongjong', 'inspire entertainment resort', 'inspire arena'], false],
+  ['chiba', 'JP', 'Chiba', 'Chiba', 35.6074, 140.1065, [139.96, 35.5, 140.25, 35.75], ['chiba', '千葉', 'makuhari', 'zozo marine stadium', 'mihama'], false],
 ];
 
 export const BUILTIN_CITIES: City[] = CITY_SEEDS.map(([slug, countryCode, en, vi, lat, lng, bbox, aliases, launched, timezone], i) => {

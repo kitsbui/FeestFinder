@@ -41,9 +41,13 @@ export const g = (f: Family) => `kd-g-${f}`;
  */
 export const STYLE_LABEL: Record<string, { vi: string; en: string }> = Object.fromEntries(([
   ['techno', 'Techno'], ['hard-techno', 'Hard techno'], ['acid-techno', 'Acid techno'], ['industrial-techno', 'Industrial techno'],
+  ['melodic-techno', 'Melodic house & techno'], ['minimal', 'Minimal / deep tech'],
   ['house', 'House'], ['tech-house', 'Tech house'], ['deep-house', 'Deep house'], ['progressive-house', 'Progressive house'],
-  ['trance', 'Trance'], ['psytrance', 'Psytrance'], ['hardstyle', 'Hardstyle'], ['rawstyle', 'Rawstyle'], ['hardcore', 'Hardcore'],
-  ['gabber', 'Gabber'], ['dubstep', 'Dubstep'], ['drum-and-bass', 'Drum & bass'], ['breakbeat', 'Breakbeat'], ['bass', 'Bass'],
+  ['afro-house', 'Afro house'], ['organic-house', 'Organic house'], ['bass-house', 'Bass house'], ['nu-disco', 'Nu disco'],
+  ['indie-dance', 'Indie dance'], ['amapiano', 'Amapiano'],
+  ['trance', 'Trance'], ['psytrance', 'Psytrance'], ['hard-dance', 'Hard dance'], ['hardstyle', 'Hardstyle'], ['rawstyle', 'Rawstyle'], ['hardcore', 'Hardcore'],
+  ['gabber', 'Gabber'], ['dubstep', 'Dubstep'], ['drum-and-bass', 'Drum & bass'], ['breakbeat', 'Breakbeat'], ['uk-garage', 'UK garage'],
+  ['future-bass', 'Trap & future bass'], ['bass', 'Bass'], ['electro', 'Electro'],
   ['edm', 'EDM'], ['mainstage', 'Mainstage'],
 ] as const).map(([k, l]) => [k, { vi: l, en: l }]));
 

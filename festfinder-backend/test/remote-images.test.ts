@@ -7,6 +7,8 @@ import { many, one } from '../src/db/index.ts';
 import { normalizeImageUrl, previewImageOf } from '../src/lib/remote-image.ts';
 import { webImageInfo } from '../src/lib/image.ts';
 import { checkRemoteImages } from '../src/services/remote-images.ts';
+import { baseOf, frameOf, withFrame } from '../src/lib/frame.ts';
+import { imageUrl } from '../src/lib/validate.ts';
 
 const code = (fn: () => unknown) => {
   try { fn(); return null; } catch (e) { return (e as { code?: string }).code ?? 'thrown'; }
@@ -48,6 +50,27 @@ describe('image links, pure', () => {
     avif.writeUInt32BE(1920, 48); avif.writeUInt32BE(1080, 52);
     assert.deepEqual(webImageInfo(avif), { mime: 'image/avif', width: 1920, height: 1080 });
     assert.deepEqual(webImageInfo(png(10, 20)), { mime: 'image/png', width: 10, height: 20 });
+  });
+});
+
+describe('a picture’s framing, kept in its link', () => {
+  it('reads, clamps and spells a framing one way; the default leaves the link bare', () => {
+    assert.deepEqual(frameOf('https://img.test/a.jpg#ff=30,72.5,1.6'), { x: 30, y: 72.5, z: 1.6 });
+    assert.deepEqual(frameOf('https://img.test/a.jpg#ff=130,-1,9'), null, 'a minus sign is not a framing');
+    assert.deepEqual(frameOf('https://img.test/a.jpg#ff=130,40,9'), { x: 100, y: 40, z: 4 });
+    assert.equal(frameOf('https://img.test/a.jpg#top'), null);
+    assert.equal(frameOf(null), null);
+    assert.equal(withFrame('https://img.test/a.jpg#ff=1,2,3', { x: 50, y: 50, z: 1 }), 'https://img.test/a.jpg');
+    assert.equal(withFrame('https://img.test/a.jpg', { x: 20, y: 80, z: 2 }), 'https://img.test/a.jpg#ff=20,80,2');
+    assert.equal(baseOf('/files/cover/ab/x.jpg#ff=20,80,2'), '/files/cover/ab/x.jpg');
+  });
+
+  it('an image field takes a framed link or upload, and no other fragment', () => {
+    const upload = '/files/cover/ab/' + 'c'.repeat(64) + '.jpg';
+    assert.equal(imageUrl.safeParse(upload + '#ff=20,80,2').success, true);
+    assert.equal(imageUrl.safeParse('https://img.test/a.jpg#ff=20,80,2').success, true);
+    assert.equal(imageUrl.safeParse(upload + '#x').success, false);
+    assert.equal(imageUrl.safeParse('https://img.test/a.jpg#javascript:alert(1)').success, false);
   });
 });
 
@@ -105,6 +128,23 @@ describe('image links, through the API', () => {
     assert.equal(cover.statusCode, 201, cover.body);
   });
 
+  it('framing a saved picture anew keeps its checked link and fetches nothing', async () => {
+    const cover = 'https://img.test/frame.png?w=1800&h=600';
+    assert.equal((await env.as(owner).patch('/me/artist', { coverUrl: cover })).status, 200);
+    const fetched = hits.length;
+    const framed = await env.as(owner).patch('/me/artist', { coverUrl: cover + '#ff=25,60,1.5' });
+    assert.equal(framed.status, 200, JSON.stringify(framed.body));
+    assert.equal(framed.body.profile.coverUrl, cover + '#ff=25,60,1.5');
+    assert.equal(hits.length, fetched, 'the same picture is not checked again');
+    assert.equal((await env.as(owner).patch('/me/artist', { coverUrl: cover + '#evil' })).body.error.code, 'invalid_input');
+    // A new picture with a framing is checked without it and saved with it.
+    const other = await env.as(owner).patch('/me/artist', { coverUrl: 'https://img.test/other.png?w=1800&h=600#ff=10,10,1.2' });
+    assert.equal(other.body.profile.coverUrl, 'https://img.test/other.png?w=1800&h=600#ff=10,10,1.2');
+    assert.equal(hits.at(-1), 'https://img.test/other.png?w=1800&h=600');
+    const checked = await env.as(owner).post('/images/check', { url: 'https://img.test/a.png?w=800&h=800#ff=40,40,2', purpose: 'avatar' });
+    assert.equal(checked.body.url, 'https://img.test/a.png?w=800&h=800#ff=40,40,2');
+  });
+
   it('a person’s photo is a checked link too', async () => {
     const r = await env.as(owner).patch('/me', { photoUrl: 'https://img.test/face.png?w=400&h=400' });
     assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -119,7 +159,8 @@ describe('image links, through the API', () => {
     // The host starts failing (the fake network refuses any link with "broken" in it).
     const dead = url.replace('fading', 'broken');
     await env.ctx.db.query(`update remote_images set url = $2 where url = $1`, [url, dead]);
-    await env.ctx.db.query(`update artists set image_url = $2 where image_url = $1`, [url, dead]);
+    // Framed on the screens: the owner is still found by the link itself.
+    await env.ctx.db.query(`update artists set image_url = $2 || '#ff=30,40,1.5' where image_url = $1`, [url, dead]);
     for (let i = 0; i < 3; i++) {
       await env.ctx.db.query(`update remote_images set checked_at = $2 where url = $1`, [dead, monthAgo()]);
       await checkRemoteImages(env.ctx);

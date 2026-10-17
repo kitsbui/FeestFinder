@@ -101,7 +101,7 @@ export interface ArtistFilters {
 
 /**
  * Where an artist's profile comes from: 'radar' when nobody runs or vouches for it (no owner, not
- * verified) and every event it plays was found by FeestFinder Radar; 'posted' otherwise. Reads the
+ * verified) and every event it plays was found by Feest Radar; 'posted' otherwise. Reads the
  * `pl` counts of searchArtists.
  */
 const ORIGIN = `(case when a.owner_user_id is not null or a.verified or coalesce(pl.posted, 0) > 0 or coalesce(pl.events, 0) = 0 then 'posted' else 'radar' end)`;
@@ -109,7 +109,7 @@ const ORIGIN = `(case when a.owner_user_id is not null or a.verified or coalesce
 /**
  * What kind of profile an artist has (D13): 'owned' when the artist runs it (claimed or made it)
  * or the team verified it, and only those are listed in the directory and can be followed;
- * otherwise 'radar' when every event it plays was found by FeestFinder Radar, else 'unclaimed'
+ * otherwise 'radar' when every event it plays was found by Feest Radar, else 'unclaimed'
  * (a name an organiser typed into a lineup). Reads the `pl` counts of searchArtists.
  */
 const KIND = `(case when a.owner_user_id is not null or a.verified then 'owned' when coalesce(pl.events, 0) > 0 and coalesce(pl.posted, 0) = 0 then 'radar' else 'unclaimed' end)`;
@@ -207,7 +207,7 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   const from = `from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id left join gn on gn.artist_id = a.id`;
   const rows = await many<any>(q,
     `${ctes}
-     select a.id, a.slug, a.name, a.image_url, a.artist_roles, a.based_city, a.based_country, a.styles, a.booking_status, a.travel_scope,
+     select a.id, a.slug, a.name, a.image_url, a.cover_url, a.artist_roles, a.based_city, a.based_country, a.styles, a.booking_status, a.travel_scope,
             a.verified, a.owner_user_id is not null as claimed, coalesce(up.upcoming, 0) as upcoming, up.next_show, coalesce(pl.events, 0) as events,
             coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, ${ORIGIN} as origin, ${KIND} as kind, pl.last_event, count(*) over () as total
        ${from}
@@ -217,7 +217,7 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   const total = rows[0] ? Number(rows[0].total) : 0;
   return {
     items: rows.map((a) => ({
-      id: a.id as string, slug: a.slug as string, name: a.name as string, imageUrl: a.image_url as string | null,
+      id: a.id as string, slug: a.slug as string, name: a.name as string, imageUrl: a.image_url as string | null, coverUrl: a.cover_url as string | null,
       roles: (a.artist_roles as string[]).map((r) => label(ARTIST_ROLE, r as any)!),
       basedIn: a.based_city ? { city: a.based_city as string, label: cityLabel(a.based_city) } : null,
       styles: [...new Set<string>([...a.styles, ...a.played_styles])].slice(0, 4).map(styleItem),

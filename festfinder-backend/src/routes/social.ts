@@ -59,8 +59,10 @@ export default async function socialRoutes(app: FastifyInstance) {
     const interested = await one<any>(ctx.db,
       `select count(*)::int as n from saves sv join events e on e.id = sv.event_id where sv.user_id = $1 and e.ends_at >= $2`, [id, now]);
     const mutual = going.length + interested.n;
+    const follows = await one(ctx.db, 'select 1 from user_follows where follower_id = $1 and user_id = $2', [s.user.id, id]);
     return {
       id: u.id, name: u.name, initials: initialsOf(u.name), photoUrl: u.photo_url, source: u.source,
+      following: !!follows,
       online: !!u.last_active_at && now.getTime() - new Date(u.last_active_at).getTime() < ONLINE_WINDOW_MS,
       mutualLine: fill(L('{n} events in common', '{n} sự kiện chung'), { n: mutual }),
       going: going.map((e) => ({ id: e.id, slug: e.slug, title: e.title, startsOn: e.starts_on, endsOn: e.ends_on, startTime: e.start_time })),

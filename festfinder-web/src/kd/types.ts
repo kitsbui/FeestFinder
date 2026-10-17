@@ -38,8 +38,10 @@ export interface Card {
   lineup: string[];
   organizer: { id: string; slug: string; name: string; initials?: string; verified: boolean; logoUrl?: string | null };
   confidence?: { label: string; labelText: Pair; sources: number; sourcesLine: Pair | null } | null;
-  /** 'radar': found by FeestFinder Radar, nobody on FeestFinder posted it. */
+  /** 'radar': found by Feest Radar, nobody on FeestFinder posted it. */
   origin?: 'posted' | 'radar';
+  /** The festival brand it belongs to; `flagship` for the world's biggest, which the site always highlights (festfinder-backend lib/festivals.ts). */
+  festival?: { key: string; name: string; flagship: boolean; label: Pair | null } | null;
 }
 
 export interface Tier {
@@ -146,10 +148,11 @@ export interface Resale {
 
 /** A ride app an event page opens on the phone, with the address copied for its destination field. */
 export interface RideOption {
-  key: 'grab' | 'greensm';
+  key: 'grab' | 'be' | 'greensm';
   name: string;
   prefilled: boolean;
   copyText: string;
   android: string;
-  ios: { app: string; store: string };
+  /** `universal`: an https link the app claims, opened instead of its scheme (no error page when it is missing). */
+  ios: { app: string; store: string; universal?: string | null };
 }

@@ -7,6 +7,32 @@ describe('public discovery (Web + App, signed out)', () => {
   before(async () => { env = await setup(); });
   after(async () => { await env.close(); });
 
+  it('turns away a NUL character in an address, a query or a body as bad input, never a 500', async () => {
+    for (const url of ['/events/%00', '/artists/x%00y', '/organizers/%F0%9F%98%80%00', '/events?q=a%00b']) {
+      const r = await env.as().get(url);
+      assert.equal(r.status, 400, url);
+      assert.equal(r.body.error.code, 'invalid_input', url);
+    }
+    const token = await env.attendee();
+    const r = await env.as(token).patch('/me', { name: 'Minh\u0000Anh' });
+    assert.equal(r.status, 400);
+    assert.equal((await env.as(token).patch('/me', { name: 'Minh Anh' })).status, 200, 'the same field without it saves');
+  });
+
+  it('says the AI guide can answer only when it runs, or kept this event’s guide in that language', async () => {
+    const id = env.ids.event.ravo;
+    const flag = async (lang: string) => (await env.as().get('/events/ravo', { 'x-lang': lang })).body.guide;
+    assert.equal(await flag('vi'), false, 'the tests run without a guide');
+    const token = await env.attendee();
+    assert.equal((await env.as(token).get(`/events/${id}/guide?lang=vi`)).status, 503);
+    const kept = { before: [], after: [], explore: [], wear: { headline: 'Đồ thoải mái', items: [], avoid: '' }, tip: 'Đi sớm' };
+    await env.ctx.db.query(`insert into ai_guides (event_id, lang, data, model, created_at) values ($1, 'vi', $2, 'test', now())`, [id, JSON.stringify(kept)]);
+    assert.equal(await flag('vi'), true);
+    assert.equal(await flag('en'), false, 'a guide kept in Vietnamese does not answer in English');
+    assert.equal((await env.as(token).get(`/events/${id}/guide?lang=vi`)).status, 200);
+    assert.equal((await env.as(token).get(`/events/${id}/guide?lang=en`)).status, 503);
+  });
+
   it('reports health', async () => {
     const r = await env.as().get('/health');
     assert.equal(r.status, 200);
@@ -17,21 +43,23 @@ describe('public discovery (Web + App, signed out)', () => {
     for (const url of ['/events?limit=5', '/events/map', '/events/ravo', '/artists', '/organizers/ravoent']) {
       const r = await env.as().get(url);
       assert.equal(r.status, 200, url);
-      assert.equal(r.headers['vercel-cdn-cache-control'], 'max-age=60, stale-while-revalidate=300', url);
+      assert.equal(r.headers['vercel-cdn-cache-control'], 'max-age=60, stale-while-revalidate=60', url);
       assert.equal(r.headers['cache-control'], 'public, max-age=0, must-revalidate', `${url}: the browser never reuses a stale copy`);
       assert.match(String(r.headers.vary), /x-ff-session/, `${url} varies by whether the visitor is signed in`);
       assert.doesNotMatch(String(r.headers.vary), /cookie/i, `${url}: Vercel never caches a response that varies on Cookie`);
     }
     const token = await env.attendee();
     const head = await env.app.inject({ method: 'HEAD', url: '/events?limit=5' });
-    assert.equal(head.headers['vercel-cdn-cache-control'], 'max-age=60, stale-while-revalidate=300', 'HEAD answers like GET (curl -I)');
+    assert.equal(head.headers['vercel-cdn-cache-control'], 'max-age=60, stale-while-revalidate=60', 'HEAD answers like GET (curl -I)');
     const signedIn = await env.as(token).get('/events?limit=5');
     assert.equal(signedIn.headers['cache-control'], 'private, no-store', 'signed in: never shared');
     assert.equal(signedIn.headers['vercel-cdn-cache-control'], undefined);
     const withCookie = await env.as().get('/events?limit=5', { cookie: 'ff_session=whatever' });
     assert.equal(withCookie.headers['vercel-cdn-cache-control'], undefined, 'a session cookie, even a stale one, is never served a shared copy');
-    const flagged = await env.as().get('/events?limit=5', { 'x-ff-session': '1' });
-    assert.equal(flagged.headers['vercel-cdn-cache-control'], undefined, 'nothing is stored under the signed-in key');
+    for (const mark of ['1', 'render']) {
+      const flagged = await env.as().get('/events?limit=5', { 'x-ff-session': mark });
+      assert.equal(flagged.headers['vercel-cdn-cache-control'], undefined, `nothing is stored under x-ff-session: ${mark}`);
+    }
     assert.equal((await env.as().get('/events/ravo/resale')).headers['vercel-cdn-cache-control'], undefined, 'nothing nested is public');
     assert.equal((await env.as().get('/me/tickets')).status, 401);
     assert.equal((await env.as().get('/map/style.json')).headers['cache-control'], 'public, max-age=300, s-maxage=3600');

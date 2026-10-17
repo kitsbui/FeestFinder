@@ -21,7 +21,7 @@ describe('operations back office', () => {
     assert.deepEqual(r.body.genres.map((g: any) => g.value), ['EDM']);
     assert.ok(r.body.areaGroups.find((g: any) => g.key === 'central').areas.includes('Quận 1'));
     assert.ok(r.body.banks.some((b: any) => b.bin === '970436'));
-    assert.deepEqual(r.body.statuses.map((s: any) => s.value), ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled']);
+    assert.deepEqual(r.body.statuses.map((s: any) => s.value), ['draft', 'in_review', 'live', 'rejected', 'removed', 'cancelled', 'expired']);
   });
 
   it('keeps the team endpoints to admins', async () => {

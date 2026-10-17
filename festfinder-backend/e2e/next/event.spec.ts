@@ -105,7 +105,7 @@ test.describe('the event page', () => {
 
     await open(page, '/e/outcast');
     await expect(page.getByRole('link', { name: 'Vào cửa miễn phí' })).toHaveAttribute('href', '#venue');
-    await expect(page.getByRole('link', { name: 'Chỉ đường' }).last()).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=10.8065%2C106.7411');
+    await expect(page.getByRole('link', { name: 'Chỉ đường' }).last()).toHaveAttribute('href', 'https://www.google.com/maps/dir/?api=1&destination=10.8065%2C106.7411');
   });
 
   test('a line-up name opens the artist page', async ({ page, request }) => {
@@ -225,11 +225,10 @@ const { defaultBrowserType: _browser, ...PIXEL } = devices['Pixel 7'];
 test.describe('the ride button on an Android phone', () => {
   test.use(PIXEL);
 
-  test('lists Grab and Green SM for a night in Vietnam, and opens with ?ride=1', async ({ page }) => {
+  test('lists Grab, Be and Green SM for a night in Vietnam, and opens with ?ride=1', async ({ page }) => {
     await open(page, '/app/e/ravo?ride=1');
     const sheet = page.getByRole('dialog', { name: 'Đặt xe tới đây' });
-    await expect(sheet.getByRole('button', { name: 'Grab' })).toBeVisible();
-    await expect(sheet.getByRole('button', { name: 'Green SM' })).toBeVisible();
+    await expect(sheet.locator('li button .kd-h')).toHaveText(['Grab', 'Be', 'Green SM']);
     // The links themselves come from the API: the app by its package, the Play Store when it is missing.
     const rides = (await (await page.request.get('/events/ravo')).json()).rides;
     expect(rides[0].android).toMatch(/^intent:\/\/open\?screenType=BOOKING#Intent;scheme=grab;package=com\.grabtaxi\.passenger;/);

@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ArrowSquareOutIcon, CaretDownIcon, CheckIcon, PencilSimpleIcon, EyeIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
+import { freshen } from '../../fresh';
 import { fill, pick, type Lang, type Pair, type Strings } from '../../copy';
 import { cx } from '../../cx';
 import { count, money, whenShort, whenLong, timeRange } from '../../format';
@@ -101,6 +102,7 @@ export function Detail({ lang, id, item, reasons, onDecide, onSendBack, onChange
     try {
       const out = await FF.patch(`/admin/events/${id}`, body);
       load.setData(out);
+      if (out.slug) void freshen('e', out.slug);
       kd.toast(done);
       onChanged();
     } catch (e) { kd.toast(FF.errorText(e, lang)); } finally { setBusy(false); }
@@ -159,6 +161,7 @@ export function Detail({ lang, id, item, reasons, onDecide, onSendBack, onChange
           </div>
         </div>
         {item?.kind === 'revision' && item.changes?.length ? <Changes lang={lang} changes={item.changes} /> : null}
+        {item?.fit ? <FitPanel lang={lang} fit={item.fit} festival={item.festival ?? null} /> : null}
         <div className="relative z-[27] flex flex-col items-end gap-2">
           <div className="flex flex-wrap justify-end gap-2">
             <LinkButton size="sm" tone="ghost" external href={ev?.publicUrl ?? `/e/${item?.slug ?? ''}`} target="_blank" rel="noopener"><EyeIcon size={14} aria-hidden="true" />{R.preview}</LinkButton>
@@ -381,5 +384,28 @@ function Changes({ lang, changes }: { lang: Lang; changes: { field: string; befo
         </div>
       ))}
     </div>
+  );
+}
+
+/** Why a listing does or does not suit FeestFinder (festfinder-backend services/ingest/fit.ts), each reason with its points. */
+function FitPanel({ lang, fit, festival }: { lang: Lang; fit: NonNullable<Item['fit']>; festival: Item['festival'] | null }) {
+  const R = pick(REVIEW, lang);
+  const tone = fit.band === 'recommend' ? 'ok' : fit.band === 'consider' ? 'warn' : 'bad';
+  return (
+    <section className="flex w-full flex-col gap-2" aria-label={R.fitHead}>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="kd-m">{R.fitHead}</span>
+        <Status tone={tone}>{`${fit.score} · ${fit.bandLabel[lang]}`}</Status>
+        {festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
+      </div>
+      <ul className="flex flex-col">
+        {fit.reasons.map((r) => (
+          <li key={r.key} className="kd-s flex items-baseline justify-between gap-3 border-t border-line py-1.5">
+            <span className="min-w-0">{r.label[lang]}</span>
+            <span className={cx('kd-num shrink-0', r.points > 0 ? 'text-paper' : r.points < 0 ? 'text-hot' : 'text-fog')}>{r.points > 0 ? `+${r.points}` : r.points || '·'}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

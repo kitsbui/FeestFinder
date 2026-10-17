@@ -70,7 +70,7 @@ export async function AboutPage({ lang }: { lang: Lang }) {
                 {reach.cities.map((c) => (
                   <li key={c.slug}>
                     {c.n ? (
-                      <Link className="kd-chip" href={inLang('/list?city=' + encodeURIComponent(c.slug), lang)} aria-label={fill(T.cityEvents, { c: c.name[lang], n: c.n })}>
+                      <Link className="kd-chip" href={inLang('/?city=' + encodeURIComponent(c.slug), lang)} aria-label={fill(T.cityEvents, { c: c.name[lang], n: c.n })}>
                         {c.name[lang]}
                         <span className="kd-chip-n">{count(c.n, lang)}</span>
                       </Link>

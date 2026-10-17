@@ -56,6 +56,7 @@ import { badgesOf } from '../services/badges.ts';
 import { momentsOf } from './moments.ts';
 import { mixesOf } from '../services/mixes.ts';
 import { confirmLineup, disputeLineup, lineupOf } from '../services/lineup.ts';
+import { artistCounts } from '../services/follows.ts';
 
 
 
@@ -103,7 +104,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
     ]);
-    const [gear, badges, moments, kind, mixes] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistKind(ctx.db, a), mixesOf(ctx.db, a.id)]);
+    const [gear, badges, moments, kind, mixes, counts] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistKind(ctx.db, a), mixesOf(ctx.db, a.id), artistCounts(ctx.db, a.id, a.owner_user_id)]);
     const origin = kind === 'radar' ? 'radar' : 'posted';
     // Free and busy dates still to come, as the artist set them. Their notes are for them alone.
     const windows = await many<any>(ctx.db,
@@ -124,7 +125,9 @@ export default async function artistRoutes(app: FastifyInstance) {
         gigTypes: a.gig_types.map((k: any) => label(GIG_TYPE, k)), setLengths: a.set_lengths.map((k: any) => label(SET_LENGTH, k)),
         links: presentLinks(a), openToBrands: a.open_to_brands, verified: a.verified, claimed: !!a.owner_user_id, origin, kind,
         cities: rank(cards.map((c) => c.city)).map((slug) => ({ slug, label: cityLabel(slug) })),
-        followers: new Set(follows.map((f) => f.user_id)).size,
+        followers: counts.followers,
+        // What the account that runs this profile follows (services/follows.ts); none when unclaimed.
+        followingCount: counts.following,
         following: !!userId && follows.some((f) => f.user_id === userId),
         editable: !!userId && a.owner_user_id === userId,
       },

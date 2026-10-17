@@ -2,6 +2,7 @@ import type { Ctx } from '../context.ts';
 import { many, one } from '../db/index.ts';
 import { AppError, badRequest } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
+import { baseOf, fragmentIsFrame, frameOf, withFrame } from '../lib/frame.ts';
 import { webImageInfo, type WebImageMime } from '../lib/image.ts';
 import { checkDimensions, type ImagePurpose } from '../lib/image-rules.ts';
 import { normalizeImageUrl, previewImageOf } from '../lib/remote-image.ts';
@@ -76,6 +77,13 @@ async function read(ctx: Ctx, url: string): Promise<ImageFetch> {
  * not where it redirected: a redirect target can be a signed address that expires.
  */
 export async function probeImage(ctx: Ctx, raw: string, purpose: ImagePurpose): Promise<LinkedImage> {
+  // The framing (lib/frame.ts) is the screen's, not the host's: checked without it, given back with it.
+  const frame = frameOf(raw.trim());
+  const found = await probeBase(ctx, raw, purpose);
+  return { ...found, url: withFrame(found.url, frame) };
+}
+
+async function probeBase(ctx: Ctx, raw: string, purpose: ImagePurpose): Promise<LinkedImage> {
   const asked = normalizeImageUrl(raw, ownHosts(ctx));
   const now = ctx.clock.now();
   const cached = await one<any>(ctx.db,
@@ -120,6 +128,12 @@ export async function imageChange(ctx: Ctx, before: string | null | undefined, a
   if (after === undefined) return undefined;
   if (after === null || !after.trim()) return null;
   if (after === before) return undefined;
+  // The same picture framed anew: nothing to check again.
+  if (before && baseOf(after.trim()) === baseOf(before)) {
+    if (!fragmentIsFrame(after.trim())) throw badRequest('invalid_input', L('That link is not valid', 'Link này không hợp lệ'));
+    const next = withFrame(before, frameOf(after.trim()));
+    return next === before ? undefined : next;
+  }
   return (await probeImage(ctx, after, purpose)).url;
 }
 
@@ -130,14 +144,14 @@ async function tellOwners(ctx: Ctx, url: string) {
   const title = L('A picture of yours no longer opens', 'Một ảnh của bạn không còn hiển thị');
   const body = L('The link stopped working. Paste a new one.', 'Link ảnh đã hỏng. Hãy dán link mới.');
   const users = await many<{ id: string; url: string }>(ctx.db,
-    `select id, '/app/settings' as url from users where photo_url = $1
-     union select owner_user_id, '/studio/artist' from artists where owner_user_id is not null and (image_url = $1 or cover_url = $1)
-     union select owner_user_id, '/p/' || slug || '/manage' from projects where cover_url = $1
+    `select id, '/app/settings' as url from users where split_part(photo_url, '#', 1) = $1
+     union select owner_user_id, '/studio/artist' from artists where owner_user_id is not null and (split_part(image_url, '#', 1) = $1 or split_part(cover_url, '#', 1) = $1)
+     union select owner_user_id, '/p/' || slug || '/manage' from projects where split_part(cover_url, '#', 1) = $1
      union select m.owner_id, '/profile' from moments m where m.owner_kind = 'user' and m.url = $1 and m.removed_at is null
      union select a.owner_user_id, '/studio/artist' from moments m join artists a on a.id = m.owner_id
        where m.owner_kind = 'artist' and m.url = $1 and m.removed_at is null and a.owner_user_id is not null`, [url]);
   const orgs = await many<{ id: string }>(ctx.db,
-    `select id from organizers where logo_url = $1 or cover_url = $1
+    `select id from organizers where split_part(logo_url, '#', 1) = $1 or split_part(cover_url, '#', 1) = $1
      union select owner_id from moments where owner_kind = 'organizer' and url = $1 and removed_at is null`, [url]);
   for (const u of users) {
     await notifyUser(ctx.db, now, { userId: u.id, topic: null, kind: 'broken_image', title, body, link: { url: u.url }, dedupeKey: key });

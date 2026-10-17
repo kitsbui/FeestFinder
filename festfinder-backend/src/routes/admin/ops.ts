@@ -389,7 +389,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       const ev = await one<any>(q, 'select * from events where id = $1 for update', [id]);
       if (!ev) throw notFound();
       const allowed: Record<string, string[]> = {
-        publish: ['draft', 'in_review', 'rejected'], take_down: ['live', 'in_review'], cancel: ['live', 'in_review', 'draft'], restore: ['removed', 'cancelled'],
+        publish: ['draft', 'in_review', 'rejected'], take_down: ['live', 'in_review'], cancel: ['live', 'in_review', 'draft'], restore: ['removed', 'cancelled', 'expired'],
       };
       if (!allowed[body.action].includes(ev.status)) {
         throw conflict('wrong_status', L(`A listing that is ${STATUS_LABEL[ev.status].en.toLowerCase()} can't do that`, `Tin đang ở trạng thái "${STATUS_LABEL[ev.status].vi}" không làm được thao tác này`));

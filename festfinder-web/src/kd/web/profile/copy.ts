@@ -7,6 +7,7 @@ export const PROFILE = {
   followed: { en: 'Following {n}', vi: 'Đang theo dõi {n}' },
   unfollowed: { en: 'Unfollowed {n}', vi: 'Đã bỏ theo dõi {n}' },
   followers: { en: 'Followers', vi: 'Người theo dõi' },
+  followingN: { en: 'Following', vi: 'Đang theo dõi' },
   share: { en: 'Share profile', vi: 'Chia sẻ hồ sơ' },
   linkCopied: { en: 'Link copied', vi: 'Đã chép liên kết' },
   edit: { en: 'Edit profile', vi: 'Chỉnh hồ sơ' },
