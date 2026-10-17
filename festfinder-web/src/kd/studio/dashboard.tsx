@@ -119,7 +119,15 @@ export function Dashboard() {
           <div className="kd-split gap-3">
             <Panel as="section" className="kd-main flex flex-col gap-4 p-5" aria-label={T.viewsPerDay}>
               <div className="flex items-baseline justify-between gap-3"><span className="kd-h">{T.viewsPerDay}</span><span className="kd-m kd-num">{fill(T.days, { n: range.slice(0, -1) })}</span></div>
-              <LineChart label={T.viewsPerDay} height={200} points={perf.daily.map((d) => ({ label: dayMonth(d.day, lang), value: d.views }))} format={(n) => fill(T.nViews, { n: count(n, lang) })} />
+              {/* No views yet: a line on the floor says nothing; say so and offer the way to get some (design v2 phase 9), at the chart's height. */}
+              {perf.daily.some((d) => d.views > 0) ? (
+                <LineChart label={T.viewsPerDay} height={200} points={perf.daily.map((d) => ({ label: dayMonth(d.day, lang), value: d.views }))} format={(n) => fill(T.nViews, { n: count(n, lang) })} />
+              ) : (
+                <div className="flex h-50 flex-col items-start justify-center gap-3">
+                  <span className="kd-t text-fg-2">{fill(T.noViewsYet, { n: range.slice(0, -1) })}</span>
+                  {event ? <KdLink className={buttonClass({ size: 'sm' })} href={'/studio/ads?event=' + event.id}>{T.boost}</KdLink> : null}
+                </div>
+              )}
             </Panel>
             {event && !isPast(event) ? <Panel as="section" className="kd-side flex flex-col gap-4 p-5" aria-label={T.pace}>
               <div className="flex items-center justify-between"><span className="kd-h">{T.pace}</span><Status tone={perf.verdict.key === 'on_pace' ? 'ok' : 'warn'}>{perf.verdict.key === 'on_pace' ? T.onPace : T.behind}</Status></div>

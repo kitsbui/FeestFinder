@@ -186,6 +186,20 @@ describe('mixes on an artist page', () => {
     assert.match(md.body, /soundcloud\.com\/may-dem\/warehouse-set-2026/);
   });
 
+  it('an event page lets you hear its lineup first: one mix per artist, the pinned one, three at most', async () => {
+    const a = await one<{ id: string }>(env.ctx.db, `select id from artists where slug = 'may-dem'`);
+    const ev = await one<{ id: string }>(env.ctx.db, `select id from events where slug = 'ravo'`);
+    await env.ctx.db.query(`insert into event_artists (event_id, artist_id, sort) values ($1, $2, -1) on conflict do nothing`, [ev!.id, a!.id]);
+    const page = await env.as().get('/events/ravo');
+    const previews = page.body.previews as { artist: { slug: string }; pinned: boolean; playSrc: string }[];
+    const mine = previews.filter((p) => p.artist.slug === 'may-dem');
+    assert.equal(mine.length, 1, 'one mix of each artist');
+    assert.equal(mine[0].pinned, true, 'the pinned one');
+    assert.match(mine[0].playSrc, /^https:\/\/w\.soundcloud\.com\//);
+    assert.ok(previews.length <= 3);
+    assert.equal(previews[0].artist.slug, 'may-dem', 'in the lineup\u2019s order');
+  });
+
   it('the team adds a mix to a profile nobody runs, audited', async () => {
     const a = await one<{ id: string }>(env.ctx.db, `select id from artists where owner_user_id is null limit 1`);
     const r = await env.as(admin).post(`/admin/artists/${a!.id}/mixes`, { url: 'https://www.mixcloud.com/someone/radar-find/' });

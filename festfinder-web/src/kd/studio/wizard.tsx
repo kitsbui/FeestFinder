@@ -34,6 +34,8 @@ import { FrameButton, FramedThumb } from '../ui/frame-editor';
 /** The styles an organiser picks from (lib/styles.ts): at most five, the first is the main one. */
 const STYLES = Object.keys(STYLE_LABEL);
 const STYLE_MAX = 5;
+/** The styles most nights are (design v2 phase 9): shown first; the rest come with the search or "Thêm dòng nhạc". */
+const COMMON_STYLES = ['techno', 'hard-techno', 'melodic-techno', 'house', 'tech-house', 'trance', 'psytrance', 'drum-and-bass', 'edm', 'mainstage'];
 const AGES = ['All ages', '16+', '18+'] as const;
 const NAME_MAX = 60;
 /** The form filled before signing in, kept on this device until it becomes a draft. */
@@ -153,6 +155,8 @@ export function Wizard() {
   const [f, setF] = useState<Form | null>(null);
   const [open, setOpen] = useState(0);
   const [agree, setAgree] = useState(false);
+  const [styleQ, setStyleQ] = useState('');
+  const [allStyles, setAllStyles] = useState(false);
   const [save, setSave] = useState<{ state: 'idle' | 'saving' | 'saved' | 'error'; at?: string; error?: string }>({ state: 'idle' });
   const [sent, setSent] = useState<{ boost: 'none' | 'open' | 'busy' } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -261,6 +265,11 @@ export function Wizard() {
   if (draft === undefined || !f) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-80" /></div>;
 
   const { missing, done } = check(f);
+  // The common styles and the chosen ones; a search looks through them all.
+  const needle = styleQ.trim().toLowerCase();
+  const shownStyles = needle
+    ? STYLES.filter((k) => k.includes(needle) || styleLabel(k, lang).toLowerCase().includes(needle))
+    : allStyles ? STYLES : STYLES.filter((k) => COMMON_STYLES.includes(k) || f.styles.includes(k));
   const ready = !missing.length && agree;
 
   const submit = async () => {
@@ -375,11 +384,15 @@ export function Wizard() {
                 </div>
                 <fieldset className="flex flex-col gap-2">
                   <legend className="kd-flabel mb-2">{T.fGenre}</legend>
+                  <Input type="search" value={styleQ} placeholder={T.fGenreFind} aria-label={T.fGenreFind} onChange={(e) => setStyleQ(e.target.value)} />
                   <div className="flex flex-wrap gap-2">
-                    {STYLES.map((x) => {
+                    {shownStyles.map((x) => {
                       const on = f.styles.includes(x);
                       return <Chip key={x} family="edm" on={on} disabled={!on && f.styles.length >= STYLE_MAX} onClick={() => set({ styles: on ? f.styles.filter((k) => k !== x) : [...f.styles, x] })}>{styleLabel(x, lang)}</Chip>;
                     })}
+                    {!styleQ.trim() && !allStyles ? (
+                      <button type="button" className="kd-more" onClick={() => setAllStyles(true)}>{fill(T.fGenreMore, { n: STYLES.length - shownStyles.length })}</button>
+                    ) : null}
                   </div>
                 </fieldset>
                 <Upload lang={lang} kind="logo" label={T.fLogo} hint={T.fLogoHint} value={f.logoUrl} onChange={(v) => set({ logoUrl: v })} required />

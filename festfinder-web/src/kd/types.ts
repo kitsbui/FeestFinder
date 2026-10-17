@@ -72,6 +72,10 @@ export interface EventMine {
 export interface EventDetail extends Omit<Card, 'organizer'> {
   sources: { provider: string; label: Pair; host: string | null; url: string | null }[];
   artistLinks: { name: string; slug: string }[];
+  /** For a signed-in viewer: their friends going and interested (festfinder-backend presenters/event.ts). */
+  friends?: { going: { id: string; name: string; photoUrl: string | null }[]; interested: { id: string; name: string; photoUrl: string | null }[] };
+  /** "Nghe trước": a mix of each lineup artist who has a profile (festfinder-backend services/mixes.ts lineupPreviews). */
+  previews?: { id: string; provider: string; providerLabel: string; title: string; playSrc: string; height: number; thumbnailUrl: string | null; durationS: number | null; artist: { name: string; slug: string } }[];
   /** Sponsors who backed the project this night came from (festfinder-backend services/projects.ts). */
   sponsors?: { name: string }[];
   /** "Đặt xe": the ride apps of the event's country, for a night still to come (festfinder-backend lib/rides.ts). */

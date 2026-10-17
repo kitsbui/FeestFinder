@@ -132,6 +132,9 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const [ready, setReady] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [firstRun, setFirstRun] = useState(false);
+  // This device's city and styles (the installed app's first run, or "Cho bạn" asking): read once in the browser.
+  const [mine, setMine] = useState<{ city: string | null; styles: string[] }>({ city: null, styles: [] });
+  useEffect(() => { setMine({ city: place.city(), styles: place.likes() }); }, []);
   const openedByApp = useRef(false);
   const seq = useRef(0);
   const rowsRef = useRef(rows);
@@ -261,6 +264,19 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       ))}
     </Menu>
   );
+  /**
+   * "Cho bạn" (design v2 phase 9): the list of this device's city and styles; the first press asks for
+   * them (the first-run sheet), a press on it takes it back.
+   */
+  const mineStyle = mine.styles.join(',') || null;
+  const forYouOn = !!(mine.city || mineStyle) && (!mine.city || f.city === mine.city) && f.style === mineStyle;
+  const forYou = () => {
+    FF.track('nav_click', { kind: 'for_you', surface: 'list' });
+    if (forYouOn) return set({ city: 'all', style: null, type: null });
+    if (!mine.city && !mineStyle) return setFirstRun(true);
+    set({ ...(mine.city ? { city: mine.city } : {}), style: mineStyle, type: null });
+  };
+  const forYouChip = <Chip on={forYouOn} onClick={forYou}>{T.forYou}</Chip>;
   const freeChip = <Chip family="free" on={f.family === 'free'} onClick={() => set({ family: f.family === 'free' ? null : 'free', genre: null })}>{FAMILY_LABEL.free[lang]}</Chip>;
   /** Posted or found by Radar, with their counts where the list has them. */
   const sourcePicker = (
@@ -351,13 +367,13 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       <div className="kd-cmd">
         <div className="kd-wrap flex min-h-14 items-center gap-2 py-2">
           <div role="group" aria-label={T.filtersBar} className="flex min-w-0 flex-wrap items-center gap-2 max-tab:hidden">
-            {cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
+            {forYouChip}{cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
           </div>
           <div className="flex min-w-0 items-center gap-2 tab:hidden">
             <button type="button" className={cx('kd-chip', active && 'kd-chip-on')} aria-haspopup="dialog" onClick={() => setSheet(true)}>
               <FunnelSimpleIcon size={16} aria-hidden="true" />{T.filters}{active ? <span className="kd-num">{active}</span> : null}
             </button>
-            {timePicker}{kindMenu}
+            {forYouChip}{timePicker}
           </div>
           {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. On a phone the tab bar has the map. */}
           <div className="ml-auto max-tab:hidden" onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
@@ -427,7 +443,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           cities={meta.cities}
           onDone={(city, styles) => {
             setFirstRun(false);
-            if (city || styles.length === 1) set({ ...(city ? { city } : {}), ...(styles.length === 1 ? { style: styles[0], type: null } : {}) });
+            setMine({ city, styles });
+            if (city || styles.length) set({ ...(city ? { city } : {}), ...(styles.length ? { style: styles.join(','), type: null } : {}) });
           }}
         />
       ) : null}

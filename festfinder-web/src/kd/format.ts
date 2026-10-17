@@ -103,3 +103,9 @@ export function km(n: number, lang: Lang): string {
   const v = n < 10 ? n.toFixed(1) : String(Math.round(n));
   return (lang === 'vi' ? v.replace('.', ',') : v) + ' km';
 }
+
+/** 2730 → "45:30", 3725 → "1:02:05". */
+export const clock = (s: number) => {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+  return (h ? `${h}:${String(m).padStart(2, '0')}` : String(m)) + ':' + String(x).padStart(2, '0');
+};

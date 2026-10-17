@@ -196,6 +196,13 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - `e2e/next/views.spec.ts`: no name twice, quiet days fill the row, stamps and badges, the story button, the Console's cover share.
   - CI runs the browser checks in three shards (`ci.yml`, `--shard=n/3`): each runner builds and seeds its own copy, so a pull request hears back in about a third of the time.
   - [ ] Later: the 80% gate is read in production from the Console; the event page's hero could use the lineup's photos when there is no cover.
+- [x] Phase 9: your own (branch `design/phase-9`; artboard 23).
+  - "Cho bạn" leads the list's filter bar (on a phone beside "Lọc"): the list of this device's city and styles (`?style=` takes several); the first press asks for them with the first-run sheet; a second press takes it back.
+  - "Nghe trước" on the event page: one mix of each lineup artist with a profile, the pinned one, three at most (`lineupPreviews`, `previews` on `/events/:slug`, `test/mixes.test.ts`); a row until play, then the service's own player.
+  - "Đi cùng bạn bè" shows the friends going (their faces, how many), from the friendships people connected; the row keeps its height, so nothing moves.
+  - The wizard leads with the ten common styles and the chosen ones, a search finds the rest, "Thêm n dòng nhạc" shows them all; Studio's views chart without a view says so and offers "Đẩy tin".
+  - `e2e/next/views.spec.ts` covers them.
+  - [ ] Owner's decision: friends see the nights their connected friends go to today; making it private until each person turns it on (the plan's "riêng tư mặc định") hides what people see now, so it waits for the owner. Smart Alerts on the home page are for later.
 
 ## What the team does next in production
 
@@ -297,3 +304,4 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-18: Design v2 phase 6 (QA and governance): every target 44px on a phone on every role's screens (checked), screens compared with the base branch on every PR (`visual-ok` accepts), the design checklist as a merge condition, `docs/DESIGN_GOVERNANCE.md`.
 - 2026-10-18: Design v2 phase 7 (fast and solid): no screen's layout jumps while it loads (CLS ≤ 0.018, was up to 0.47), rarely opened sheets load on open, a performance gate in the browser checks, Web Vitals and browser errors reported, previews of the web made possible.
 - 2026-10-18: Design v2 phase 8 (pictures and motion): a poster instead of a second name, covers asked for and counted, quiet days fill the row, three motion durations and the card-to-event morph, the waving flag while back offices load, a passport of stamps each its own and badges with icons.
+- 2026-10-18: Design v2 phase 9 (your own): "Cho bạn" on the list, "Nghe trước" on the event page, friends going in the plan's row, the wizard's style search, Studio's empty chart with an action.
