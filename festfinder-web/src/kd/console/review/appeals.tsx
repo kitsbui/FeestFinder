@@ -35,7 +35,7 @@ export function Appeals({ lang, appeals, onDone }: { lang: Lang; appeals: Appeal
         <li key={a.id}>
           <Panel as="article" className="flex flex-col gap-4 p-5" aria-label={a.title}>
             <div className="flex items-start gap-3">
-              <Art family={familyOf('EDM')} cover={a.coverUrl} className="size-16 shrink-0 rounded-lg" />
+              <Art title={a.title} family={familyOf('EDM')} cover={a.coverUrl} className="size-16 shrink-0 rounded-lg" />
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <h2 className="kd-h kd-ell">{a.title}</h2>
                 <span className="kd-s">{a.organizer} · {fill(R.sentBackOn, { d: stamp(a.rejectedAt, lang, false) })}</span>
@@ -47,10 +47,10 @@ export function Appeals({ lang, appeals, onDone }: { lang: Lang; appeals: Appeal
               </div>
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-4">
-              <div className="flex flex-col gap-1"><span className="kd-m">{R.ffWrote}</span><p className="kd-s whitespace-pre-line border-l-2 border-line2 pl-3 text-mist">{a.message}</p></div>
+              <div className="flex flex-col gap-1"><span className="kd-m">{R.ffWrote}</span><p className="kd-s whitespace-pre-line border-l-2 border-line-2 pl-3 text-fg-2">{a.message}</p></div>
               <div className="flex flex-col gap-1">
                 <span className="kd-m">{R.orgReplied}</span>
-                {a.reply ? <p className="kd-s whitespace-pre-line border-l-2 border-acc pl-3 text-paper">{a.reply}</p> : <p className="kd-s">{R.noReply}</p>}
+                {a.reply ? <p className="kd-s whitespace-pre-line border-l-2 border-info pl-3 text-fg-1">{a.reply}</p> : <p className="kd-s">{R.noReply}</p>}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">

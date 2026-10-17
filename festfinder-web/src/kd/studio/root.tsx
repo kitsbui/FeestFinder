@@ -8,17 +8,19 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, QrCodeIcon, RocketLaunchIcon, SignOutIcon, SquaresFourIcon, TagIcon, TicketIcon, TrayIcon, UsersIcon,
+  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, ChatTextIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, SignOutIcon, SquaresFourIcon, TrayIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { COMMON, fill, pick, type Lang, type Pair } from '../copy';
 import { CRAFT } from '../craft';
 import { KdProvider, useKd } from '../runtime';
 import { buttonClass } from '../ui/actions';
 import { AskHost } from '../console/kit';
 import { Menu, MenuItem } from '../ui/menu';
 import { Avatar, Card as Panel } from '../ui/parts';
+import { Logo } from '../ui/logo';
 import { Shell, SideNav } from '../ui/shell';
+import { WorkspaceSwitch } from '../ui/workspaces';
 import { place } from '../app/place';
 import { STUDIO } from './copy';
 
@@ -46,8 +48,15 @@ interface StudioCtx {
   /** Every organiser this account belongs to, and switching between them. */
   seats: OrgSeat[];
   switchOrg: (id: string) => void;
+  /**
+   * The wizard before signing in (design v2 phase 5): someone without an organiser fills the form
+   * first, kept on this device, and signs in at the submit step.
+   */
+  guest?: boolean;
 }
 const Ctx = createContext<StudioCtx | null>(null);
+/** What the wizard reads while nobody has signed in yet: no organiser, no events. */
+const GUEST_ORG: OrgProfile = { id: '', slug: '', name: '', logoUrl: null, verified: false, myRole: '' };
 export function useStudio(): StudioCtx {
   const v = useContext(Ctx);
   if (!v) throw new Error('useStudio outside StudioRoot');
@@ -106,11 +115,19 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
     setPicked(id);
   }, []);
   if (kd.session === undefined) return <div className="kd-skel m-6 h-60" aria-hidden="true" />;
+  // "Đăng sự kiện" opens the form at once: signing in (and making the organiser) waits for the submit step.
+  if ((!kd.user || !orgs.length) && current === 'new') {
+    return (
+      <Ctx.Provider value={{ lang, org: GUEST_ORG, events: [], event: null, setEvent: () => {}, reload: async () => {}, seats: [], switchOrg: () => {}, guest: true }}>
+        {children}
+      </Ctx.Provider>
+    );
+  }
   if (!kd.user || !orgs.length) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
         <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-          <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={127} height={22} />
+          <Logo lang={lang} />
           <h1 className="kd-d3">{kd.user ? T.notOrg : T.gate}</h1>
           {kd.user
             ? <button type="button" className={buttonClass({ tone: 'acc' })} onClick={() => kd.openRolePicker('organizer')}>{T.becomeOrg}</button>
@@ -129,7 +146,7 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
     return (
       <div className="flex min-h-dvh items-center justify-center p-4" data-ff-gate>
         <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-          <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={127} height={22} />
+          <Logo lang={lang} />
           <h1 className="kd-d3">{craft === 'artist' ? T.asArtist : T.orgOff}</h1>
           {craft === 'artist' ? <p className="kd-s">{fill(K.oneBody, { a: K.artist, b: K.organizer })}</p> : null}
           <div className="flex flex-wrap gap-2">
@@ -146,7 +163,6 @@ function Gate({ lang, current, children }: { lang: Lang; current: StudioScreen; 
 
 function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; current: StudioScreen; children: ReactNode; seats: OrgSeat[]; switchOrg: (id: string) => void }) {
   const T = pick(STUDIO, lang);
-  const K = pick(CRAFT, lang);
   const kd = useKd();
   const [org, setOrg] = useState<OrgProfile | null>(null);
   const [events, setEvents] = useState<OrgEvent[] | null>(null);
@@ -189,12 +205,11 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
       current={current}
       head={(
         <>
-          <div className="kd-sn-hide flex items-center gap-2.5 px-2.5 pb-3.5 pt-1.5">
-            <img src="/kd/ff-wordmark.svg" alt="FeestFinder" width={104} height={18} />
-            <span className="kd-m">{T.studio}</span>
-          </div>
+          {/* The logo leads home; the switcher to every other workspace (ui/workspaces.tsx). */}
+          <Logo lang={lang} height={18} className="px-2.5" />
+          <WorkspaceSwitch lang={lang} current="organizer" className="mb-3 w-full" />
           {org ? (
-            <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line)]" href={'/o/' + org.slug}>
+            <a className="kd-sn-hide kd-lrow mb-2 min-h-13 rounded-lg border-b-0 px-2.5 shadow-[inset_0_0_0_1px_var(--color-line-1)]" href={'/o/' + org.slug}>
               <Avatar org name={org.name} src={org.logoUrl} size={30} />
               <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell text-sm">{org.name}</span><span className="kd-s text-xs">{T.publicProfile}</span></span>
             </a>
@@ -218,24 +233,31 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
           <a className={buttonClass({ tone: 'acc', size: 'sm' }, 'mb-3 shrink-0')} href="/studio/new"><PlusIcon size={16} aria-hidden="true" />{T.newEvent}</a>
         </>
       )}
+      // Seven entries in sight (design v2 phase 5); the guests and the promotion pages fold under theirs.
       items={[
-        { key: 'dash', label: T.dash, href: '/studio', icon: i(SquaresFourIcon) },
+        { key: 'dash', label: T.today, href: '/studio', icon: i(SquaresFourIcon) },
         { key: 'events', label: T.events, href: '/studio/events', icon: i(CalendarDotsIcon) },
-        { key: 'attendees', label: T.attendees, href: '/studio/attendees', icon: i(UsersIcon) },
-        { key: 'door', label: T.door, href: '/studio/door', icon: i(QrCodeIcon) },
+        {
+          key: 'guests', label: T.guestsDoor, href: '/studio/attendees', icon: i(UsersIcon), sub: [
+            { key: 'attendees', label: T.attendees, href: '/studio/attendees' },
+            { key: 'door', label: T.door, href: '/studio/door' },
+          ],
+        },
         { key: 'revenue', label: T.revenue, href: '/studio/revenue', icon: i(CoinsIcon) },
+        {
+          key: 'promote', label: T.promote, href: '/studio/announce', icon: i(MegaphoneIcon), sub: [
+            { key: 'announce', label: T.announce, href: '/studio/announce' },
+            { key: 'promos', label: T.promos, href: '/studio/promos' },
+            { key: 'ads', label: T.ads, href: '/studio/ads' },
+          ],
+        },
         { key: 'inbox', label: T.inbox, href: '/studio/inbox', icon: i(TrayIcon), count: unread || null },
-        { key: 'announce', label: T.announce, href: '/studio/announce', icon: i(MegaphoneIcon) },
-        { key: 'promos', label: T.promos, href: '/studio/promos', icon: i(TagIcon) },
-        { key: 'ads', label: T.ads, href: '/studio/ads', icon: i(RocketLaunchIcon) },
         { key: 'gigs', label: T.gigs, href: '/studio/gigs', icon: i(MicrophoneStageIcon) },
       ]}
       footer={(
-        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line pt-4">
+        <div className="kd-sn-hide mt-auto flex flex-col gap-0.5 border-t border-line-1 pt-4">
           <a className="kd-sn" href="/studio/profile" aria-current={current === 'profile' ? 'page' : undefined}>{i(BuildingsIcon)}{T.business}</a>
-          {/* The other roles: attending (the site), or performing instead of organising. */}
-          <a className="kd-sn" href="/">{i(TicketIcon)}{K.attendee}</a>
-          <button type="button" className="kd-sn w-full text-left" onClick={() => kd.openRolePicker('artist')}>{i(MicrophoneStageIcon)}{fill(K.switchTo, { r: K.artist })}</button>
+          <button type="button" className="kd-sn w-full text-left" onClick={() => window.dispatchEvent(new Event('ff:feedback'))}>{i(ChatTextIcon)}{pick(COMMON, lang).feedback}</button>
           <button type="button" className="kd-sn w-full text-left" onClick={async () => { await kd.signOut(); location.assign('/studio'); }}>{i(SignOutIcon)}{T.signOut}</button>
         </div>
       )}

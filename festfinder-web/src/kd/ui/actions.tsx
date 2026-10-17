@@ -1,13 +1,15 @@
 /**
  * Actions: buttons, icon buttons, chips. A button with `href` is a link styled as a button.
- * Lime (`acc`) is the one action a screen exists for; there is at most one per screen.
+ * Four tones: `acc` is the one action a screen exists for (the turquoise → lime gradient, at most
+ * one per screen, `glow` on the one that leads the page), `default` the outlined secondary,
+ * `ghost` a text action in a row, `danger` only inside a confirm dialog.
  */
 import { KdLink as Link } from '../link';
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
 import { cx } from '../cx';
 import { g, type Family } from '../genre';
 
-export type ButtonTone = 'default' | 'acc' | 'light' | 'dark' | 'ghost' | 'glass';
+export type ButtonTone = 'default' | 'acc' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonLook {
@@ -15,23 +17,26 @@ interface ButtonLook {
   size?: ButtonSize;
   pill?: boolean;
   block?: boolean;
+  /** The primary that leads the screen breathes (a soft lime halo); one per screen, never in a list. */
+  glow?: boolean;
 }
 
-export function buttonClass({ tone = 'default', size = 'md', pill, block }: ButtonLook, extra?: string) {
+export function buttonClass({ tone = 'default', size = 'md', pill, block, glow }: ButtonLook, extra?: string) {
   return cx(
     'kd-btn',
     tone !== 'default' && `kd-btn-${tone}`,
     size !== 'md' && `kd-btn-${size}`,
     pill && 'kd-btn-pill',
     block && 'kd-btn-block',
+    glow && tone === 'acc' && 'kd-btn-glow',
     extra,
   );
 }
 
 type ButtonProps = ButtonLook & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function Button({ tone, size, pill, block, className, type = 'button', ...rest }: ButtonProps) {
-  return <button type={type} className={buttonClass({ tone, size, pill, block }, className)} {...rest} />;
+export function Button({ tone, size, pill, block, glow, className, type = 'button', ...rest }: ButtonProps) {
+  return <button type={type} className={buttonClass({ tone, size, pill, block, glow }, className)} {...rest} />;
 }
 
 type LinkButtonProps = ButtonLook & AnchorHTMLAttributes<HTMLAnchorElement> & {
@@ -40,8 +45,8 @@ type LinkButtonProps = ButtonLook & AnchorHTMLAttributes<HTMLAnchorElement> & {
   external?: boolean;
 };
 
-export function LinkButton({ tone, size, pill, block, className, href, external, ...rest }: LinkButtonProps) {
-  const cls = buttonClass({ tone, size, pill, block }, className);
+export function LinkButton({ tone, size, pill, block, glow, className, href, external, ...rest }: LinkButtonProps) {
+  const cls = buttonClass({ tone, size, pill, block, glow }, className);
   if (external) return <a href={href} className={cls} {...rest} />;
   return <Link href={href} className={cls} {...rest} />;
 }
@@ -51,7 +56,7 @@ type IconButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   line?: boolean;
   size?: 'sm' | 'md';
   glass?: boolean;
-  /** A toggle (save, follow): announced as pressed, lime when on. */
+  /** A toggle (save, follow): announced as pressed, turquoise when on. */
   pressed?: boolean;
 };
 
@@ -75,7 +80,7 @@ type ChipProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   count?: number | null;
 };
 
-/** A filter chip: on = paper fill. With a family, it leads with the genre marker. */
+/** A filter chip: on = a light fill. With a family, it leads with the turquoise marker. */
 export function Chip({ on, family, count, className, children, type = 'button', ...rest }: ChipProps) {
   return (
     <button type={type} aria-pressed={!!on} className={cx('kd-chip', family && g(family), className)} {...rest}>

@@ -10,7 +10,14 @@ import { presentTiers } from '../presenters/event.ts';
 import { loadTimetable } from '../presenters/timetable.ts';
 import { faqFor } from '../routes/discussion.ts';
 import { latestUpdates } from '../routes/night.ts';
-import { OG_HEIGHT, OG_WIDTH, toneOf } from './ogimage.ts';
+import { OG_HEIGHT, OG_WIDTH } from './ogimage.ts';
+
+/**
+ * The picture a link preview shows for a page without a cover: logo pack v2's share image (the
+ * wordmark on the night ground, 1200×630), served with the site's assets. /og/v1/<tone>.png, the
+ * genre art before design v2, still answers for the previews cached with it.
+ */
+const ogFallback = (base: string) => `${base}/ui/assets/og.png`;
 import { presentLinks, searchArtists } from './artists.ts';
 import { organizerArtists } from './network.ts';
 import { mixesOf } from './mixes.ts';
@@ -292,14 +299,14 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
 
   const image = ev.cover_url
     ? { url: abs(ctx, ev.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
-    : { url: `${base}/og/v1/${toneOf(ev.genre)}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+    : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const imageAlt = `${ev.title} · ${venueLine}`;
 
   const listPath = `/?city=${cityOf(ev.city).slug}`;
+  // Home, the city's list, the night: every event is EDM, so a genre level would say nothing (design v2 phase 1).
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
     { name: `${t('eventsIn', lang)} ${cityName}`, path: inLang(listPath, lang) },
-    ...(ev.genre ? [{ name: ev.genre, path: inLang(`${listPath}&genre=${encodeURIComponent(ev.genre)}`, lang) }] : []),
     { name: ev.title, path: inLang(path, lang) },
   ];
 
@@ -484,7 +491,7 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
   const cover = upcoming.find((e) => e.cover_url) ?? events.find((e) => e.cover_url);
   const image = cover
     ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
-    : { url: `${base}/og/v1/${toneOf(genres[0])}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+    : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
 
   const crumbs = [
     { name: 'FeestFinder', path: inLang('/', lang) },
@@ -530,7 +537,7 @@ export async function buildOrganizerSeo(ctx: Ctx, slug: string, lang: Lang = 'vi
         '@type': SCHEMA_TYPE[e.genre] ?? 'Event', name: e.title, url: `${base}/e/${e.slug}${vi ? '' : '?lang=en'}`,
         startDate: e.starts_at ? isoIn(new Date(e.starts_at), cityOf(e.city).timezone) : undefined, endDate: e.ends_at ? isoIn(new Date(e.ends_at), cityOf(e.city).timezone) : undefined,
         eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : `${base}/og/v1/${toneOf(e.genre)}.png`],
+        location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : ogFallback(base)],
         organizer: { '@id': ids.org },
       })),
     },
@@ -592,7 +599,7 @@ export async function buildCollectionSeo(ctx: Ctx, slug: string, lang: Lang = 'v
   const cover = upcoming.find((e) => e.cover_url) ?? events.find((e) => e.cover_url);
   const image = cover
     ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
-    : { url: `${base}/og/v1/${toneOf(genres[0])}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+    : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: c.name, path: inLang(path, lang) }];
   const facts: Fact[] = [
     { label: t('madeBy', lang), value: owner },
@@ -687,7 +694,7 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
   const cover = a.image_url ? { cover_url: a.image_url } : upcoming.find((e) => e.cover_url) ?? events.find((e) => e.cover_url);
   const image = cover
     ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
-    : { url: `${base}/og/v1/${toneOf(genres[0])}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+    : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: lang === 'vi' ? 'Nghệ sĩ' : 'Artists', path: inLang('/a', lang) }, { name: a.name, path: inLang(path, lang) }];
   const facts: Fact[] = [
     { label: t('styles', lang), value: what },
@@ -720,7 +727,7 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
         startDate: e.starts_at ? isoIn(new Date(e.starts_at), cityOf(e.city).timezone) : undefined,
         endDate: e.ends_at ? isoIn(new Date(e.ends_at), cityOf(e.city).timezone) : undefined,
         eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : `${base}/og/v1/${toneOf(e.genre)}.png`],
+        location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : ogFallback(base)],
         performer: { '@id': ids.artist },
       })),
       // Their sets and tracks, played by each service's own player (services/mixes.ts).
@@ -793,7 +800,7 @@ export async function buildProjectSeo(ctx: Ctx, slug: string, lang: Lang = 'vi')
   const title = [`${pr.title} – ${t('project', lang).toLowerCase()} ${city}`, pr.title].find((s) => s.length <= 62) ?? clip(pr.title, 62);
   const image = pr.coverUrl
     ? { url: abs(ctx, pr.coverUrl)!, width: 1600, height: 900, type: 'image/jpeg' }
-    : { url: `${base}/og/v1/${toneOf('EDM')}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+    : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: t('projects', lang), path: inLang('/p', lang) }, { name: pr.title, path: inLang(path, lang) }];
   const facts: Fact[] = [
     { label: t('cities', lang), value: city },
@@ -880,7 +887,7 @@ export async function buildDirectorySeo(ctx: Ctx, key: string, lang: Lang = 'vi'
     : `${out.total} ${out.total === 1 ? 'artist' : 'artists'}${scope.style ? ` playing ${styleName}` : ''}${scope.city ? ` in ${cityName}` : ''} on FeestFinder, ${withShows.length} with shows coming up${names.length ? `: ${names.join(', ')}` : ''}.`;
   const description = clip(summary, 160);
   const title = clip(`${h1} – ${vi ? 'lịch diễn, booking' : 'shows and bookings'}`, 62);
-  const image = { url: `${base}/og/v1/${toneOf(scope.style ? styleByKey(scope.style)!.genre : 'EDM')}.png`, width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+  const image = { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: t('directory', lang), path: inLang('/a', lang) },
     ...(path !== '/a' ? [{ name: h1, path: inLang(path, lang) }] : [])];
   const updatedAt = out.items.map((a) => new Date(a.updatedAt)).sort((x, y) => y.getTime() - x.getTime())[0] ?? now;

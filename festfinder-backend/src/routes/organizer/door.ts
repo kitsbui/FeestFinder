@@ -319,7 +319,7 @@ export default async function doorRoutes(app: FastifyInstance) {
       inside: inside.n, capacity, insidePct: capacity ? Math.round((inside.n / capacity) * 100) : 0,
       throughputPerHour: hour.n,
       recent: recent.map((r) => ({
-        name: r.holder_name ?? '—', tier: r.tier_name ?? null, result: r.result, reason: r.reason, time: vnTime(new Date(r.scanned_at)), queued: r.was_offline,
+        name: r.holder_name ?? '—', tier: r.tier_name?.en ?? null, result: r.result, reason: r.reason, time: vnTime(new Date(r.scanned_at)), queued: r.was_offline,
         ...describe(r.result, r.reason, { tier: r.tier_name?.en, at: r.checked_in_at ? new Date(r.checked_in_at) : undefined, gate: r.checked_in_gate, queued: r.was_offline }),
       })),
       staff: staff.map((p) => presentStaff(p, now)),

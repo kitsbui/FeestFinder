@@ -6,19 +6,22 @@
  *
  *  - Next's build assets: cache-first (their names change when they do)
  *  - design assets and icons: from the cache, refreshed in the background (fixed names)
- *  - /app pages: network-first, falling back to the last copy that loaded
+ *  - the app's pages and the site's pages it moved into (/, /e/…, /saved, /profile; design v2
+ *    phase 4): network-first, falling back to the last copy that loaded, else the tickets
  *  - the signed-in person's data (tickets, saves, plan, events): network-first, falling
  *    back to the last answer, and wiped on sign-out or when someone else signs in
  *  - Web Push: shows the notification and opens its link
  */
 
-const VERSION = 'ff-2';
+const VERSION = 'ff-3';
 const STATIC = VERSION + '-static';
 const PAGES = VERSION + '-pages';
 const DATA = VERSION + '-data';
 
 /** API reads the app needs offline. Everything else goes straight to the network. */
 const DATA_PATHS = [/^\/auth\/session$/, /^\/me(\/|$)/, /^\/events(\/|$)/, /^\/genres$/, /^\/plans\//];
+/** Pages that keep working with no signal: the app's screens, and the site's pages it moved into. */
+const OFFLINE_PAGES = [/^\/app(\/|$)/, /^\/$/, /^\/e\/[^/]+$/, /^\/saved$/, /^\/profile$/];
 /** Requests after which cached personal data belongs to nobody (or someone else). */
 const SESSION_CHANGES = [/^\/auth\/session$/, /^\/auth\/login$/, /^\/auth\/otp\/verify$/, /^\/auth\/oauth\//, /^\/auth\/register$/];
 
@@ -28,7 +31,7 @@ const NETWORK_TIMEOUT_MS = 4000;
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(PAGES)
-      .then((c) => c.add(new Request('/app', { credentials: 'same-origin' })))
+      .then((c) => c.add(new Request('/app/tickets', { credentials: 'same-origin' })))
       .catch(() => {}),
   );
   self.skipWaiting();
@@ -66,7 +69,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (req.mode === 'navigate') {
-    if (url.pathname === '/app' || url.pathname.startsWith('/app/')) event.respondWith(page(req));
+    if (OFFLINE_PAGES.some((re) => re.test(url.pathname))) event.respondWith(page(req));
     return;
   }
 
@@ -95,7 +98,7 @@ async function staleWhileRevalidate(req, event) {
   return hit;
 }
 
-/** An /app page: fresh when there is signal, the last good copy (or the app's home) when not. */
+/** A page the app works offline on: fresh when there is signal, the last good copy (or the tickets) when not. */
 async function page(req) {
   const cache = await caches.open(PAGES);
   try {
@@ -103,7 +106,7 @@ async function page(req) {
     if (res.ok && res.type === 'basic') cache.put(req, res.clone());
     return res;
   } catch (err) {
-    const hit = (await cache.match(req, { ignoreSearch: true })) || (await cache.match('/app'));
+    const hit = (await cache.match(req, { ignoreSearch: true })) || (await cache.match('/app/tickets'));
     if (hit) return hit;
     throw err;
   }
@@ -155,10 +158,11 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = new URL(event.notification.data?.url || '/app', self.location.origin).href;
+  const url = new URL(event.notification.data?.url || '/', self.location.origin).href;
   event.waitUntil((async () => {
     const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const app = open.find((c) => new URL(c.url).pathname.startsWith('/app'));
+    // A window of the site already open (the app is the site since design v2 phase 4).
+    const app = open.find((c) => new URL(c.url).origin === self.location.origin);
     if (app) {
       await app.focus();
       return app.navigate(url);

@@ -56,8 +56,8 @@ export function SendBack({ lang, reasons, ids, titles, initial, onClose, onSend 
         <TextArea id="sb-message" rows={7} maxLength={2000} value={message} placeholder={R.messagePh} onChange={(e) => setMessage(e.target.value)} />
         <span className="kd-s kd-num self-end">{message.length}/2000</span>
       </div>
-      <div className="flex items-center justify-between gap-4 border-t border-line pt-3">
-        <span className="kd-t text-mist">{R.allowAppeal}</span>
+      <div className="flex items-center justify-between gap-4 border-t border-line-1 pt-3">
+        <span className="kd-t text-fg-2">{R.allowAppeal}</span>
         <Switch label={R.allowAppeal} checked={appeal && !!reason?.appealAllowed} disabled={!reason?.appealAllowed} onChange={setAppeal} />
       </div>
     </Drawer>

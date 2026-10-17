@@ -113,8 +113,9 @@ export function Organizers() {
                       <Doc ok={o.docs.tax} label={T.docTaxShort} lang={lang} />
                       <Doc ok={o.docs.bank && o.bankVerified} label={T.docBankShort} lang={lang} />
                     </span>
-                    <span role="cell" className="flex gap-1" title={fill(T.strikesOf, { n: o.strikes })} aria-label={fill(T.strikesOf, { n: o.strikes })}>
-                      {[0, 1, 2].map((i) => <span key={i} aria-hidden="true" className={cx('size-2.5 rounded-full', i < o.strikes ? 'bg-hot' : 'bg-line2')} />)}
+                    <span role="cell" className="flex gap-1" title={fill(T.strikesOf, { n: o.strikes })}>
+                      <span className="sr-only">{fill(T.strikesOf, { n: o.strikes })}</span>
+                      {[0, 1, 2].map((i) => <span key={i} aria-hidden="true" className={cx('size-2.5 rounded-full', i < o.strikes ? 'bg-bad' : 'bg-line-2')} />)}
                     </span>
                     <span role="cell" className="kd-num text-sm">{o.members ? o.members : <Pill tone="warn">{T.noTeam}</Pill>}</span>
                     <span role="cell" className="kd-s kd-num whitespace-nowrap">{joined(o.createdAt)}</span>
@@ -141,7 +142,8 @@ function Doc({ ok, label, lang }: { ok: boolean; label: string; lang: Lang }) {
   const T = pick(ORGS, lang);
   const name = fill(ok ? T.docOn : T.docOff, { d: label });
   return (
-    <span className={cx('inline-flex items-center gap-1 text-xs', ok ? 'text-ok' : 'text-fog')} title={name} aria-label={name}>
+    <span className={cx('inline-flex items-center gap-1 text-xs', ok ? 'text-ok' : 'text-fg-3')} title={name}>
+      <span className="sr-only">{name}</span>
       {ok ? <CheckCircleIcon size={14} weight="fill" aria-hidden="true" /> : <CircleIcon size={14} aria-hidden="true" />}
       <span aria-hidden="true">{label}</span>
     </span>

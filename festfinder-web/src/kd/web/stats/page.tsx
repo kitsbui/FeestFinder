@@ -162,7 +162,7 @@ function EventRow({ e, i, lang }: { e: Card; i: number; lang: Lang }) {
   const free = e.isFree || e.entryMode === 'free';
   return (
     <Link href={inLang('/e/' + e.slug, lang)} className={cx('kd-row transition-colors duration-150 hover:bg-white/[0.03]', g(fam))}>
-      <Art family={fam} cover={e.coverUrl} bone={i % 2 === 1} off={e.soldOut} />
+      <Art family={fam} cover={e.coverUrl} title={e.title} off={e.soldOut} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="kd-hs kd-ell">{e.title}</span>
         <span className="kd-s flex min-w-0 items-center gap-1.5">
@@ -171,7 +171,7 @@ function EventRow({ e, i, lang }: { e: Card; i: number; lang: Lang }) {
         </span>
       </span>
       <span className="flex flex-col items-end gap-1">
-        <span className={cx('kd-mb kd-num whitespace-nowrap', free && 'text-acc')}>{free ? W.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
+        <span className={cx('kd-mb kd-num whitespace-nowrap', free && 'text-info')}>{free ? W.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
         {e.soldOut ? (
           <Status tone="bad">{W.soldOut}</Status>
         ) : e.hypeCount ? (
@@ -188,7 +188,7 @@ function VenueRow({ v, lang }: { v: StatVenue; lang: Lang }) {
   const where = [v.area, v.distanceKm != null ? km(v.distanceKm, lang) : null].filter(Boolean).join(' · ');
   const event = (x: StatVenue['events'][number]) => (
     <li key={x.id}>
-      <Link href={inLang('/e/' + x.slug, lang)} className="kd-s flex min-h-8 min-w-0 items-center gap-1.5 hover:text-paper">
+      <Link href={inLang('/e/' + x.slug, lang)} className="kd-s flex min-h-11 min-w-0 items-center gap-1.5 hover:text-fg-1">
         <Marker family={familyOf(x.genre)} />
         <span className="kd-ell">{[x.title, whenShort(x, lang), x.startTime].filter(Boolean).join(' · ')}</span>
       </Link>
@@ -196,8 +196,8 @@ function VenueRow({ v, lang }: { v: StatVenue; lang: Lang }) {
   );
   const rest = v.events.slice(VENUE_FIRST);
   return (
-    <div className="grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 border-b border-line py-3">
-      <span className="flex h-[52px] w-[52px] items-center justify-center rounded-seg bg-obsidian text-mist shadow-[inset_0_0_0_1px_var(--color-line)]" aria-hidden="true">
+    <div className="grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 border-b border-line-1 py-3">
+      <span className="flex h-[52px] w-[52px] items-center justify-center rounded-seg bg-surface-2 text-fg-2 shadow-[inset_0_0_0_1px_var(--color-line-1)]" aria-hidden="true">
         <MapPinIcon size={22} />
       </span>
       <div className="flex min-w-0 flex-col gap-1">

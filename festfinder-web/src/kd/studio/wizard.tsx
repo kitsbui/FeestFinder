@@ -1,16 +1,18 @@
 'use client';
 /**
- * /studio/new in Kính đêm (design/Studio-Wizard): one page, four accordion steps (basics; time
- * and place; tickets; review and submit), each header with its numbered dot and, folded, a line
- * of what it holds. The draft saves itself as it changes, so closing keeps it; ?draft=<id>
- * continues one. The right column is the card as the feed will show it. What submit needs is
- * what the API asks for (missingForSubmit): name, genre, logo, the event's own page, the dates,
- * the venue, and for paid events a price and the ticket link. The success card offers to push
- * the listing to the Trending shelf.
+ * /studio/new in Kính đêm (design v2 phase 5): four steps (basics; time and place; tickets; review
+ * and submit) behind a stepper with a progress bar, one step on screen at a time. The draft saves
+ * itself as it changes, so closing keeps it; ?draft=<id> continues one. Before signing in (no
+ * organiser yet: `guest` from the Studio root) the form is kept on this device and signing in comes
+ * at the submit step (or to upload a picture); the form then carries on as the organiser's draft.
+ * The right column is the card as the feed will show it. What submit needs is what the API asks
+ * for (missingForSubmit): name, genre, logo, the event's own page, the dates, the venue, and for
+ * paid events a price and the ticket link. The success card offers to push the listing to the
+ * Trending shelf.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  ArrowRightIcon, CaretDownIcon, CheckIcon, ImageSquareIcon, MapPinIcon, PlusIcon, RocketLaunchIcon, TrashIcon, XIcon,
+  ArrowRightIcon, CheckIcon, ImageSquareIcon, MapPinIcon, PlusIcon, RocketLaunchIcon, TrashIcon, XIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../copy';
@@ -23,7 +25,7 @@ import { useKd } from '../runtime';
 import { Button, buttonClass, Chip, IconButton } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Art, Card as Panel, Status } from '../ui/parts';
-import { PostKindSwitch } from '../ui/post-kind';
+import { Logo } from '../ui/logo';
 import { BackLink } from '../ui/back-link';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
@@ -34,6 +36,15 @@ const STYLES = Object.keys(STYLE_LABEL);
 const STYLE_MAX = 5;
 const AGES = ['All ages', '16+', '18+'] as const;
 const NAME_MAX = 60;
+/** The form filled before signing in, kept on this device until it becomes a draft. */
+const LOCAL = 'ff:wizard';
+const STEP_KEYS = ['basics', 'when', 'tickets', 'review'] as const;
+function readLocal(): Partial<Form> | null {
+  try { const v = JSON.parse(localStorage.getItem(LOCAL) || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; }
+}
+function writeLocal(f: Form | null) {
+  try { if (f) localStorage.setItem(LOCAL, JSON.stringify(f)); else localStorage.removeItem(LOCAL); } catch { /* storage blocked */ }
+}
 
 interface City { slug: string; name: Pair; currency: string }
 export interface Venue { id: string; name: string; address: string | null; area: string | null }
@@ -132,7 +143,7 @@ function check(f: Form) {
 }
 
 export function Wizard() {
-  const { lang, org, events, reload } = useStudio();
+  const { lang, org, events, reload, guest } = useStudio();
   const T = pick(STUDIO, lang);
   const kd = useKd();
   const [cities, setCities] = useState<City[]>([]);
@@ -150,7 +161,7 @@ export function Wizard() {
 
   // The cities, the verified venues, and the draft named in the address.
   useEffect(() => {
-    const ask = new URLSearchParams(location.search).get('draft');
+    const ask = guest ? null : new URLSearchParams(location.search).get('draft');
     void Promise.all([
       FF.maybe(FF.get('/meta/discovery'), { cities: [], defaultCity: 'ho-chi-minh' }),
       FF.maybe(FF.get('/venues?limit=200'), { items: [] }),
@@ -158,7 +169,9 @@ export function Wizard() {
     ]).then(([meta, v, d]: [{ cities: City[]; defaultCity: string }, { items: Venue[] }, Draft | null]) => {
       setCities(meta.cities);
       setVenues(v.items);
-      const form = fromDraft(d, org.logoUrl, meta.defaultCity);
+      // A form filled before signing in carries on (as this organiser's draft once it saves).
+      const kept = d ? null : readLocal();
+      const form = kept ? { ...fromDraft(null, org.logoUrl, meta.defaultCity), ...kept } : fromDraft(d, org.logoUrl, meta.defaultCity);
       id.current = d?.id ?? null;
       base.current = d ? JSON.stringify(payload(form)) : '';
       tierBase.current = JSON.stringify(tierBody(form));
@@ -166,7 +179,7 @@ export function Wizard() {
       setF(form);
       if (d) setOpen(check(form).missing[0]?.step ?? 3);
     });
-  }, [org.logoUrl]);
+  }, [org.logoUrl, guest]);
 
   const editable = !draft || ['draft', 'rejected'].includes(draft.status);
   const live = draft?.status === 'live' || draft?.status === 'in_review';
@@ -194,6 +207,8 @@ export function Wizard() {
       if (!id.current) {
         out = await FF.post('/organizer/events', { ...body, title: body.title || undefined, brandUrl: url((org as { website?: string }).website ?? '') ?? undefined });
         id.current = out.id;
+        // It is the organiser's draft now: the copy kept on the device goes.
+        writeLocal(null);
         const q = new URLSearchParams(location.search);
         q.set('draft', out.id);
         history.replaceState(history.state, '', location.pathname + '?' + q);
@@ -218,14 +233,23 @@ export function Wizard() {
     }
   };
 
-  // Autosave a moment after the last change, drafts only.
+  // Autosave a moment after the last change, drafts only; before signing in, on this device at once.
   useEffect(() => {
     if (!f || !editable || sent) return;
     const has = !!(f.title.trim() || f.styles.length || f.date || f.venueName || f.description || f.coverUrl);
     if (!has && !id.current) return;
-    const t = setTimeout(() => { void persist(f); }, 800);
+    if (guest) { writeLocal(f); return; }
+    const t = setTimeout(() => void persist(f), 800);
     return () => clearTimeout(t);
-  }, [f, editable, sent, persist]);
+  }, [f, editable, sent, persist, guest]);
+  // Which step people reach, and how many send (the draft-to-submit rate the design plan measures).
+  useEffect(() => { FF.track('wizard_step', { kind: STEP_KEYS[open] ?? 'review', role: guest ? 'guest' : 'organizer' }); }, [open, guest]);
+  // A new step starts at its top.
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, [open]);
 
   const set = (patch: Partial<Form>) => setF((x) => (x ? { ...x, ...patch } : x));
   const recent = useMemo(() => {
@@ -239,6 +263,13 @@ export function Wizard() {
   const ready = !missing.length && agree;
 
   const submit = async () => {
+    // Before signing in: sign in now, then make the organiser profile; the form carries on afterwards.
+    if (guest) {
+      writeLocal(f);
+      FF.track('wizard_step', { kind: 'signin', role: 'guest' });
+      if (kd.requireSignIn(undefined, T.wSignSubmit)) kd.openRolePicker('organizer');
+      return;
+    }
     if (!ready || busy) return;
     setBusy(true);
     if (!(await persist(f))) { setBusy(false); return; }
@@ -248,6 +279,7 @@ export function Wizard() {
       const out = await FF.post('/organizer/events/' + id.current + '/submit');
       setDraft((d) => ({ ...(d ?? {}), ...out } as Draft));
       setSent({ boost: 'none' });
+      FF.track('wizard_step', { kind: 'submitted', role: 'organizer' });
       void reload();
     } catch (e) { kd.toast(FF.errorText(e, lang)); }
     setBusy(false);
@@ -267,35 +299,49 @@ export function Wizard() {
       : int(f.price) ? fill(T.fPrice, { c: '' }).replace(/\s*\(\)/, '') + ' ' + money(int(f.price), currency, lang) : '',
     missing.length ? fill(T.wDone, { n: done.filter(Boolean).length }) : '',
   ];
-  const step = (n: number, label: string, body: ReactNode) => {
-    const on = open === n;
-    const ok = n < 3 && done[n];
-    return (
-      <section className="border-b border-line">
-        <button type="button" className="group flex min-h-18 w-full items-center gap-3.5 text-left" aria-expanded={on} onClick={() => setOpen(on ? -1 : n)}>
-          <span className={cx('kd-mb flex size-7 shrink-0 items-center justify-center rounded-full text-xs', on ? 'bg-paper text-ink' : ok ? 'bg-ok text-ink' : 'text-fog shadow-[inset_0_0_0_1px_var(--color-line2)]')}>
-            {ok && !on ? <CheckIcon size={14} weight="bold" aria-hidden="true" /> : n + 1}
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="kd-h">{label}</span>
-            {!on && sums[n] ? <span className="kd-s kd-ell">{sums[n]}</span> : null}
-          </span>
-          <CaretDownIcon size={18} className={cx('text-fog transition-transform group-hover:text-paper', on && 'rotate-180')} aria-hidden="true" />
-        </button>
-        {on ? <div className="flex flex-col gap-5 pb-7 sm:pl-[42px]">{body}</div> : null}
-      </section>
-    );
-  };
-  const next = (n: number) => <Button tone="acc" className="self-start" onClick={() => setOpen(n + 1)}>{T.wNext}</Button>;
+  const labels = [T.s1, T.s2, T.s3, T.s4];
+  /** One step on screen at a time, under the stepper. */
+  const step = (n: number, label: string, body: ReactNode) => (open === n ? (
+    <section aria-labelledby={'wz-' + n} className="flex flex-col gap-5 pt-6">
+      <h2 id={'wz-' + n} className="kd-d3">{label}</h2>
+      {body}
+    </section>
+  ) : null);
+  // How far along: the three steps with fields, and sending.
+  const progress = (done.filter(Boolean).length + (sent ? 1 : 0)) / 4;
+  const stepper = (
+    <nav aria-label={T.wSteps} className="mt-4 flex flex-col gap-3">
+      <span className="kd-steps-bar" aria-hidden="true"><span style={{ width: Math.round(progress * 100) + '%' }} /></span>
+      <ol className="grid grid-cols-4 gap-2">
+        {labels.map((label, n) => {
+          const ok = n < 3 ? done[n] : !!sent;
+          return (
+            <li key={n} className="min-w-0">
+              <button type="button" aria-current={open === n ? 'step' : undefined} onClick={() => setOpen(n)} className="kd-step">
+                <span className="kd-step-dot">{ok && open !== n ? <CheckIcon size={13} weight="bold" aria-hidden="true" /> : n + 1}</span>
+                <span className="kd-s kd-ell max-tab:sr-only">{label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+  const next = (n: number) => (
+    <div className="flex flex-wrap gap-2">
+      {n > 0 ? <Button onClick={() => setOpen(n - 1)}>{T.wBack}</Button> : null}
+      <Button tone="acc" onClick={() => setOpen(n + 1)}>{T.wNext}</Button>
+    </div>
+  );
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-line">
+      <header className="border-b border-line-1">
         <div className="kd-wrap flex h-16 items-center gap-3.5">
-          <KdLink href="/studio" aria-label={T.backToDash} className="flex h-11 items-center"><img src="/kd/ff-mark.svg" alt="FeestFinder" width={14} height={24} /></KdLink>
+          <Logo lang={lang} mark height={24} />
           <span className="kd-hs">{T.wTitle}</span>
-          <span className={cx('kd-m max-sm:hidden', save.state === 'error' && 'text-hot normal-case')} role="status" aria-live="polite">
-            {save.state === 'saving' ? T.wSaving : save.state === 'saved' ? fill(T.wSaved, { t: save.at ?? '' }) : save.state === 'error' ? fill(T.wNotSaved, { m: save.error ?? '' }) : editable ? T.wDraft : draft?.statusLabel[lang]}
+          <span className={cx('kd-m kd-ell min-w-0', save.state === 'error' && 'text-bad normal-case')} role="status" aria-live="polite">
+            {guest ? T.wLocal : save.state === 'saving' ? T.wSaving : save.state === 'saved' ? fill(T.wSaved, { t: save.at ?? '' }) : save.state === 'error' ? fill(T.wNotSaved, { m: save.error ?? '' }) : editable ? T.wDraft : draft?.statusLabel[lang]}
           </span>
           {/* Closing returns where the person came from (the site's "Đăng sự kiện", the dashboard), else the dashboard. */}
           <BackLink href="/studio" className="kd-ib kd-ib-line ml-auto" label={T.wClose}><XIcon size={18} aria-hidden="true" /></BackLink>
@@ -304,10 +350,9 @@ export function Wizard() {
 
       <div className="kd-wrap pb-12 pt-7">
         {/* "Đăng sự kiện" posts an event or a project; a new listing can still become a project. */}
-        {!draft ? <PostKindSwitch lang={lang} current="event" className="mb-6" /> : null}
         <div className="kd-split gap-[clamp(24px,4vw,56px)]">
           <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-            <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
+            <div className="flex items-baseline justify-between gap-3 border-b border-line-1 pb-2">
               <h1 className="kd-d2">{draft ? (editable ? T.wNew : T.wEdit) : T.wNew}</h1>
               <span className="kd-m kd-num">{fill(T.wDone, { n: done.filter(Boolean).length })}</span>
             </div>
@@ -319,6 +364,7 @@ export function Wizard() {
               </div>
             ) : null}
             {live ? <p className="kd-s mt-4">{T.liveEdit}</p> : null}
+            {stepper}
 
             {step(0, T.s1, (
               <>
@@ -342,7 +388,7 @@ export function Wizard() {
                   {f.eventUrl.trim() && !url(f.eventUrl) ? <FieldError>{T.fUrlRule}</FieldError> : null}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <FieldLabel htmlFor="evDesc">{T.fDesc} <span className="font-normal text-fog">{T.optional}</span></FieldLabel>
+                  <FieldLabel htmlFor="evDesc">{T.fDesc} <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel>
                   <TextArea id="evDesc" rows={3} value={f.description} placeholder={T.fDescPh} maxLength={4000} onChange={(e) => set({ description: e.target.value })} />
                 </div>
                 <Lineup lang={lang} value={f.lineup} onChange={(lineup) => set({ lineup })} />
@@ -401,7 +447,7 @@ export function Wizard() {
                   </>
                 ) : (
                   <>
-                    <div className="border-t border-line"><SwitchRow label={T.fRegister} checked={f.register} onChange={(v) => set({ register: v })} /></div>
+                    <div className="border-t border-line-1"><SwitchRow label={T.fRegister} checked={f.register} onChange={(v) => set({ register: v })} /></div>
                     {f.register ? (
                       <div className="flex flex-col gap-2">
                         <FieldLabel htmlFor="evReg">{T.fRegisterUrl}</FieldLabel>
@@ -420,17 +466,29 @@ export function Wizard() {
                 <Status tone="ok">{T.sent}</Status>
                 <span className="kd-h">{fill(T.sentLine, { t: f.title.trim() })}</span>
                 <span className="kd-s">{T.sentNote}</span>
-                <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+                <div className="flex items-center justify-between gap-3 border-t border-line-1 pt-3">
                   <span className="kd-s">{T.boostOffer}</span>
                   {sent.boost === 'open' ? <Status tone="warn">{T.boostAsked}</Status> : <Button size="sm" disabled={sent.boost === 'busy'} onClick={boost}><RocketLaunchIcon size={14} aria-hidden="true" />{T.boost}</Button>}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <KdLink className={buttonClass({ tone: 'light' })} href="/studio">{T.backToDash}</KdLink>
+                  <KdLink className={buttonClass({})} href="/studio">{T.backToDash}</KdLink>
                   <a className={buttonClass({})} href="/studio/new">{T.listAnother}</a>
                 </div>
               </Panel>
             ) : !editable && !live ? <span className="kd-s">{T.notEditable}</span> : (
               <>
+                {/* What the three steps hold, each a step away. */}
+                <dl className="flex flex-col border-y border-line-1">
+                  {[0, 1, 2].map((n) => (
+                    <div key={n} className="kd-lrow min-h-13 gap-3 last:border-b-0">
+                      <dt className="kd-m w-28 shrink-0">{labels[n]}</dt>
+                      <dd className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="kd-s flex-1 text-fg-2">{sums[n] || '—'}</span>
+                        <Button size="sm" tone="ghost" className="-mr-2 shrink-0" onClick={() => setOpen(n)} aria-label={`${T.wEditStep} · ${labels[n]}`}>{T.wEditStep}</Button>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
                 {missing.length ? (
                   <Panel role="status" className="flex flex-col gap-2 px-4 py-3.5">
                     <span className="kd-hs flex items-center gap-2"><span className="kd-st kd-warn" aria-hidden="true" />{T.missingHead}</span>
@@ -442,12 +500,16 @@ export function Wizard() {
                   </Panel>
                 ) : null}
                 <label className="flex cursor-pointer items-start gap-3">
-                  <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-acc" />
+                  <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 size-5 accent-info" />
                   <span className="kd-t">{T.agree}</span>
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button tone="acc" size="lg" type="submit" disabled={!ready || busy}>{live ? T.saveChanges : T.submit}</Button>
-                  {live ? null : <span className="kd-s">{T.submitNote}</span>}
+                  <Button size="lg" onClick={() => setOpen(2)}>{T.wBack}</Button>
+                  {guest
+                    // Signing in (and making the organiser) is the submit step's first move.
+                    ? <Button tone="acc" size="lg" type="submit" glow>{kd.user ? T.wMakeOrg : T.wSignSubmit}</Button>
+                    : <Button tone="acc" size="lg" type="submit" glow disabled={!ready || busy}>{live ? T.saveChanges : T.submit}</Button>}
+                  {live || guest ? null : <span className="kd-s">{T.submitNote}</span>}
                 </div>
               </>
             ))}
@@ -457,8 +519,8 @@ export function Wizard() {
             <span className="kd-m">{T.preview}</span>
             <article className={cx('kd-ev', g('edm'))}>
               <div className="relative">
-                <Art family="edm" cover={f.coverUrl} />
-                <span className="kd-tag kd-tag-glass absolute left-2.5 top-2.5 text-paper">{T.justListed}</span>
+                <Art title={f.title || T.fNamePh} family="edm" cover={f.coverUrl} />
+                <span className="kd-tag kd-tag-glass absolute left-2.5 top-2.5 text-fg-1">{T.justListed}</span>
               </div>
               <div className="flex flex-col gap-1">
                 <span className="kd-h">{f.title.trim() || T.noTitle}</span>
@@ -469,7 +531,7 @@ export function Wizard() {
                 {(() => {
                   const p = f.sellHere && tierRows(f).length ? Math.min(...tierRows(f).map((t) => int(t.price))) : int(f.price);
                   if (f.entryMode !== 'free' && !p) return null;
-                  return <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-acc')}>{f.entryMode === 'free' ? T.free : priceLine({ isFree: false, entryMode: 'paid', priceFrom: p, currency }, lang)}</span>;
+                  return <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-info')}>{f.entryMode === 'free' ? T.free : priceLine({ isFree: false, entryMode: 'paid', priceFrom: p, currency }, lang)}</span>;
                 })()}
                 {f.styles.length ? <span className="kd-m">{f.styles.map((k) => styleLabel(k, lang)).join(' · ')}</span> : null}
               </div>
@@ -534,7 +596,7 @@ export function Lineup({ lang, value, onChange }: { lang: Lang; value: string[];
   };
   return (
     <div className="flex flex-col gap-2">
-      <FieldLabel htmlFor="evLineup">{T.fLineup} <span className="font-normal text-fog">{T.optional}</span></FieldLabel>
+      <FieldLabel htmlFor="evLineup">{T.fLineup} <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel>
       {value.length ? (
         <ul className="flex flex-wrap gap-1.5">
           {value.map((a) => (
@@ -562,7 +624,7 @@ export function VenueField({ lang, venues, recent, value, onChange }: {
       <div className="relative">
         <Input
           id="evVenue"
-          icon={<MapPinIcon size={18} className="text-fog" aria-hidden="true" />}
+          icon={<MapPinIcon size={18} className="text-fg-3" aria-hidden="true" />}
           value={value.name}
           placeholder={T.fVenuePh}
           role="combobox"
@@ -615,18 +677,19 @@ export function Upload({ lang, kind, label, hint, value, onChange, required }: {
     setBusy(false);
   };
   return (
-    <div className="flex min-h-16 w-full flex-wrap items-center gap-3 rounded-[10px] border border-dashed border-line2 px-4 py-3">
+    <div className="flex min-h-16 w-full flex-wrap items-center gap-3 rounded-[10px] border border-dashed border-line-2 px-4 py-3">
       {value
         ? <FramedThumb src={value} className={kind === 'logo' ? 'size-11 rounded-lg' : 'h-11 w-[78px] rounded-md'} />
-        : <ImageSquareIcon size={22} className="shrink-0 text-fog" aria-hidden="true" />}
+        : <ImageSquareIcon size={22} className="shrink-0 text-fg-3" aria-hidden="true" />}
       <span className="flex min-w-0 flex-1 basis-40 flex-col gap-0.5">
-        <span className="kd-hs">{label} {required ? null : <span className="font-normal text-fog">{T.optional}</span>}</span>
+        <span className="kd-hs">{label} {required ? null : <span className="font-normal text-fg-3">{T.optional}</span>}</span>
         <span className="kd-s">{busy ? T.fUploading : hint}</span>
       </span>
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) void send(file); e.target.value = ''; }} />
       <FrameButton lang={lang} value={value} shapes={kind === 'logo' ? ['square', 'round'] : ['banner', 'card', 'square']} onChange={onChange} />
       {value && !required ? <Button tone="ghost" size="sm" onClick={() => onChange(null)}>{T.fRemove}</Button> : null}
-      <Button size="sm" disabled={busy} onClick={() => input.current?.click()} aria-label={`${value ? T.fChange : T.fUpload} · ${label}`}>{value ? T.fChange : T.fUpload}</Button>
+      {/* Pictures go to FeestFinder: signed in first (before that the form is only on this device). */}
+      <Button size="sm" disabled={busy} onClick={() => { if (kd.requireSignIn(undefined, T.wSignUpload)) input.current?.click(); }} aria-label={`${value ? T.fChange : T.fUpload} · ${label}`}>{value ? T.fChange : T.fUpload}</Button>
     </div>
   );
 }

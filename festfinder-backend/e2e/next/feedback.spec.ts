@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 
 /*
- * The feedback button on every page (festfinder-web src/kd/feedback): it never covers the app's
- * tab bar or the ticket dock, a guest sends a bug report with an email and gets a ticket, and the
- * team finds it in the Console.
+ * Feedback (festfinder-web src/kd/feedback): no button floats over the page since design v2 phase 1.
+ * "Góp ý" is in the footer, the account menu, the "Tôi" hub on a phone and every back office's rail;
+ * a guest sends a bug report with an email and gets a ticket, and the team finds it in the Console.
  */
 
 const ATTENDEE = { identifier: 'minh@example.com', password: 'festfinder123' };
@@ -17,33 +17,39 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
-const fab = (page: Page) => page.getByRole('button', { name: 'Góp ý / Feedback' });
+/** The footer's "Góp ý", on every public page. */
+const footerFeedback = (page: Page) => page.getByRole('contentinfo').getByRole('button', { name: 'Góp ý' });
 
-test('the button is on the site, the app and the back offices', async ({ page }) => {
-  for (const path of ['/', '/e/ravo', '/a/hoaprox', '/?view=grid']) {
+test('"Góp ý" is in the footer, the account menu, the phone\'s "Tôi" and the rails; nothing floats', async ({ page }) => {
+  for (const path of ['/', '/e/ravo', '/a/hoaprox']) {
     await open(page, path);
-    await expect(fab(page), path).toBeVisible();
+    await expect(page.locator('.kd-fab'), path).toHaveCount(0);
+    await footerFeedback(page).click();
+    await expect(page.getByRole('dialog', { name: 'Góp ý' }), path).toBeVisible();
+    await page.keyboard.press('Escape');
   }
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await signInWith(page, ATTENDEE);
+  await open(page, '/');
+  await page.getByRole('button', { name: 'Tài khoản' }).click();
+  await page.getByRole('menu', { name: 'Tài khoản' }).getByRole('menuitem', { name: 'Góp ý' }).click();
+  await expect(page.getByRole('dialog', { name: 'Góp ý' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, '/profile');
+  await page.getByRole('navigation', { name: 'Tôi' }).getByRole('button', { name: 'Góp ý' }).click();
+  await expect(page.getByRole('dialog', { name: 'Góp ý' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1280, height: 800 });
   await signInWith(page, ADMIN);
   await open(page, '/console');
-  await expect(fab(page)).toBeVisible();
-});
-
-test('on a phone it sits above the ticket dock and the tab bar', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await signInWith(page, ATTENDEE);
-  for (const [path, bar] of [['/app/e/ravo', '.kd-dock'], ['/app', '.kd-tabbar']] as const) {
-    await open(page, path);
-    const button = await fab(page).boundingBox();
-    const under = await page.locator(bar).first().boundingBox();
-    expect(button && under, path).toBeTruthy();
-    expect(button!.y + button!.height, `${path}: above ${bar}`).toBeLessThanOrEqual(under!.y);
-  }
+  await page.getByRole('navigation', { name: 'Console' }).getByRole('button', { name: 'Gửi góp ý' }).click();
+  await expect(page.getByRole('dialog', { name: 'Góp ý' })).toBeVisible();
 });
 
 test('a guest sends a bug report and gets a ticket; the team finds it', async ({ page }) => {
   const problems = await open(page, '/e/ravo');
-  await fab(page).click();
+  await footerFeedback(page).click();
   const sheet = page.getByRole('dialog', { name: 'Góp ý' });
   await sheet.getByRole('button', { name: 'Báo lỗi kỹ thuật' }).click();
   await sheet.getByRole('button', { name: 'Gửi' }).click();

@@ -23,13 +23,15 @@ interface FieldLook {
   boxClass?: string;
 }
 
+/** A text field. With an icon, the box is a label, so a tap on the icon or the padding focuses the input. */
 export function Input({ icon, end, glass, invalid, boxClass, className, ...rest }: FieldLook & ComponentProps<'input'>) {
+  const Box = icon ? 'label' : 'div';
   return (
-    <div className={cx('kd-field', glass && 'kd-field-glass', boxClass)} data-invalid={invalid || undefined}>
+    <Box className={cx('kd-field', glass && 'kd-field-glass', boxClass)} data-invalid={invalid || undefined}>
       {icon}
       <input className={className} aria-invalid={invalid || undefined} {...rest} />
       {end}
-    </div>
+    </Box>
   );
 }
 
@@ -53,7 +55,7 @@ export function Select({ icon, glass, invalid, boxClass, className, children, ..
 
 export function FieldError({ children, id }: { children?: ReactNode; id?: string }) {
   if (!children) return null;
-  return <p id={id} role="alert" className="kd-s text-hot">{children}</p>;
+  return <p id={id} role="alert" className="kd-s text-bad">{children}</p>;
 }
 
 /** Two or three options. More than that is a dropdown. */
@@ -126,7 +128,7 @@ export function Switch({ checked, onChange, label, disabled, id }: { checked: bo
 export function SwitchRow({ label, note, checked, onChange, disabled }: { label: ReactNode; note?: ReactNode; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   const text = typeof label === 'string' ? label : undefined;
   return (
-    <div className="flex items-center gap-4 min-h-14 border-b border-line">
+    <div className="flex items-center gap-4 min-h-14 border-b border-line-1">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="kd-hs">{label}</span>
         {note ? <span className="kd-s">{note}</span> : null}

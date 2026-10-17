@@ -59,7 +59,7 @@ export function StudioAds() {
             {data.items.map((r) => (
               <Row key={r.id} cols={COLS}>
                 <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-                  <a className="kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug} target="_blank" rel="noopener">{r.event.title}</a>
+                  <a className="kd-hit kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug} target="_blank" rel="noopener">{r.event.title}</a>
                   {r.reply ? <span className="kd-s">{fill(T.adReply, { r: r.reply })}</span> : r.message ? <span className="kd-s kd-ell">{r.message}</span> : null}
                 </span>
                 <span role="cell" className="kd-s">{r.placements.map((p) => p.label[lang]).join(', ')}</span>
@@ -121,7 +121,7 @@ function AskDrawer({ lang, data, eventId, onClose, onSent }: { lang: Lang; data:
               <label key={p.key} className="flex min-h-11 cursor-pointer items-center gap-3">
                 <input type="checkbox" className="kd-check" checked={places.includes(p.key)}
                   onChange={(e) => setPlaces((xs) => (e.target.checked ? [...xs, p.key] : xs.filter((x) => x !== p.key)))} />
-                <span className="kd-t text-paper">{p.label[lang]}</span>
+                <span className="kd-t text-fg-1">{p.label[lang]}</span>
               </label>
             ))}
           </fieldset>

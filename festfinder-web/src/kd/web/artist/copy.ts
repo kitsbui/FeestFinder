@@ -1,6 +1,8 @@
 /** The artist page's mixes: the "Nghe" section, its likes and its comments. */
 export const MIXES = {
   title: { en: 'Listen', vi: 'Nghe' },
+  tab: { en: 'Mixes', vi: 'Mix' },
+  latest: { en: 'Latest mix', vi: 'Mix mới nhất' },
   play: { en: 'Play {t}', vi: 'Phát {t}' },
   openOn: { en: 'Open on {p}', vi: 'Mở trên {p}' },
   recordedAt: { en: 'Recorded at {e}', vi: 'Thu tại {e}' },

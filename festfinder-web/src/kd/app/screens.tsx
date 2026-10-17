@@ -6,40 +6,15 @@
 import { AppRoot } from './root';
 import type { EventDetail } from '../types';
 import { Checkout } from './checkout';
-import { AppEvent } from './event';
 import { GuideScreen as Guide } from './guide';
-import { Explore } from './explore';
 import { Alerts, Notifications, NotifSettings } from './inbox';
 import { LiveMode } from './live';
-import { AppMap } from './map';
 import { RecapScreen as Recap } from './recap';
 import { ChatScreen as Chat, Following, Hyped, PlanScreen as Plan } from './social';
-import { Profile } from './profile';
-import { Saved } from './saved';
 import { Tickets } from './tickets';
-
-export function ExploreScreen() {
-  return <AppRoot tab="explore">{(lang) => <Explore lang={lang} />}</AppRoot>;
-}
-
-export function EventScreen({ ev }: { ev: EventDetail }) {
-  return <AppRoot tab={null}>{(lang) => <AppEvent lang={lang} ev={ev} />}</AppRoot>;
-}
-
-export function MapScreen() {
-  return <AppRoot tab="map">{(lang) => <AppMap lang={lang} />}</AppRoot>;
-}
-
-export function SavedScreen() {
-  return <AppRoot tab="saved">{(lang) => <Saved lang={lang} />}</AppRoot>;
-}
 
 export function TicketsScreen() {
   return <AppRoot tab="tickets">{(lang) => <Tickets lang={lang} />}</AppRoot>;
-}
-
-export function ProfileScreen() {
-  return <AppRoot tab="me">{(lang) => <Profile lang={lang} />}</AppRoot>;
 }
 
 export function CheckoutScreen({ slug }: { slug: string }) {
@@ -55,7 +30,7 @@ export function RecapScreen({ ev }: { ev: EventDetail }) {
 }
 
 export function NotificationsScreen() {
-  return <AppRoot tab="explore">{(lang) => <Notifications lang={lang} />}</AppRoot>;
+  return <AppRoot tab="me">{(lang) => <Notifications lang={lang} />}</AppRoot>;
 }
 
 export function AlertsScreen() {

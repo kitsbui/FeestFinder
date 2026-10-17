@@ -60,7 +60,14 @@ export async function proxy(request: NextRequest) {
     if (host) headers.set('x-ff-web-origin', `${proto}://${host}`);
   }
   const method = request.method;
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await request.arrayBuffer();
+  let body: ArrayBuffer | undefined;
+  try {
+    body = method === 'GET' || method === 'HEAD' ? undefined : await request.arrayBuffer();
+  } catch (e) {
+    // The visitor went away while sending (a beacon cut off by leaving the page): nobody waits for an answer.
+    if (request.signal.aborted || (e as { code?: string })?.code === 'ECONNRESET' || (e as Error)?.message === 'aborted') return new NextResponse(null, { status: 499 });
+    throw e;
+  }
   let res: Response;
   try {
     res = await fetch(new URL(pathname + search, API), { method, headers, body, redirect: 'manual', cache: 'no-store' });

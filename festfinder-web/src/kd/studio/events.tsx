@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 import { DotsThreeIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../copy';
-import { cx } from '../cx';
 import { count, dayMonth } from '../format';
 import { KdLink } from '../link';
 import { useKd } from '../runtime';
@@ -115,22 +114,22 @@ export function EventsList() {
       ) : (
         <Panel>
           <div>
-            <Table cols={cols} label={T.myEvents} head={[T.colDate, T.colEvent, T.colStatus, T.colQuality, T.colPerf, T.colUpdated, '']}>
+            <Table cols={cols} label={T.myEvents} fold="lg" head={[T.colDate, T.colEvent, T.colStatus, T.colQuality, T.colPerf, T.colUpdated, '']}>
               {rows.map((e) => {
                 const past = ended(e);
                 const canSubmit = (e.status === 'draft' || e.status === 'rejected') && !e.missing?.length;
                 return (
-                  <Row key={e.id} cols={cols} className={cx(past && 'opacity-70')}>
+                  <Row key={e.id} cols={cols}>
                     <span role="cell" className="kd-mb kd-num">
                       {e.startsOn ? <>{dayMonth(e.startsOn, lang)}{e.startsOn.slice(0, 4) !== year ? <span className="kd-s block">{e.startsOn.slice(0, 4)}</span> : null}</> : <span className="kd-s">{T.noDateCell}</span>}
                     </span>
                     <span role="cell" className="flex min-w-0 flex-col gap-0.5">
-                      <KdLink className="kd-hs kd-ell hover:underline" href={'/studio/events/' + e.id}>{e.title}</KdLink>
+                      <KdLink className="kd-hs kd-ell kd-hit hover:underline" href={'/studio/events/' + e.id}>{e.title}</KdLink>
                       <span className="kd-s kd-ell">{e.meta[lang]}</span>
                     </span>
                     <span role="cell" className="flex min-w-0 flex-col gap-1">
                       <Status tone={past ? 'none' : statusTone(e.status)}>{past ? T.evEnded : e.statusLabel[lang]}</Status>
-                      {e.status === 'rejected' && e.lastDecision?.reason ? <span className="kd-s text-hot">{e.lastDecision.reason[lang]}</span> : null}
+                      {e.status === 'rejected' && e.lastDecision?.reason ? <span className="kd-s text-bad">{e.lastDecision.reason[lang]}</span> : null}
                       {(e.status === 'draft' || e.status === 'rejected')
                         ? (e.missing?.length ? <span className="kd-s">{fill(T.missingList, { m: missingText(e.missing, lang) })}</span> : <span className="kd-s text-ok">{T.readyToSubmit}</span>)
                         : null}

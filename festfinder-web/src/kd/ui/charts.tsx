@@ -40,13 +40,13 @@ export function LineChart({ points, height = 180, format = (n) => String(n), lab
         aria-hidden="true"
       >
         {[0, 0.5, 1].map((t) => (
-          <line key={t} x1={0} x2={W} y1={y(nice * t)} y2={y(nice * t)} stroke="var(--color-slate)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <line key={t} x1={0} x2={W} y1={y(nice * t)} y2={y(nice * t)} stroke="var(--color-surface-2)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         ))}
-        <path d={path} fill="none" stroke="var(--color-mist)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        <path d={path} fill="none" stroke="var(--color-fg-2)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
         {h ? (
           <>
-            <line x1={x(hover!)} x2={x(hover!)} y1={padT} y2={H - padB} stroke="var(--color-line2)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-            <circle cx={x(hover!)} cy={y(h.value)} r={4} fill="var(--color-paper)" vectorEffect="non-scaling-stroke" />
+            <line x1={x(hover!)} x2={x(hover!)} y1={padT} y2={H - padB} stroke="var(--color-line-2)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            <circle cx={x(hover!)} cy={y(h.value)} r={4} fill="var(--color-fg-1)" vectorEffect="non-scaling-stroke" />
           </>
         ) : null}
       </svg>
@@ -94,7 +94,7 @@ export function StackedBars({ weeks, height = 180, lang, label, legend = true }:
               <div className="kd-tip kd-glass flex flex-col gap-1" style={{ left: '50%', top: 0 }}>
                 <span className="kd-m">{w.label}</span>
                 {CHART_ORDER.map((f) => (
-                  <span key={f} className={`kd-g-${f} flex items-center gap-2 kd-s text-mist`}>
+                  <span key={f} className={`kd-g-${f} flex items-center gap-2 kd-s text-fg-2`}>
                     <span className="kd-mk" aria-hidden="true" />
                     {FAMILY_LABEL[f][lang]}
                     <span className="kd-mb kd-num ml-auto">{w.values[f] ?? 0}</span>
@@ -136,7 +136,7 @@ export function BarRow({ label, value, max, display, family }: { label: ReactNod
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="kd-s text-mist kd-ell">{label}</span>
+        <span className="kd-s text-fg-2 kd-ell">{label}</span>
         <span className="kd-mb kd-num">{display ?? value}</span>
       </div>
       <div className={'kd-bar-track' + (family ? ` kd-g-${family}` : '')}>

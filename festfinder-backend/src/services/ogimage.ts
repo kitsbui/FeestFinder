@@ -1,8 +1,9 @@
 import { crc32, deflateSync } from 'node:zlib';
 
 /*
- * The link-preview picture of an event without a cover: its genre's art, the same two-hue
- * body and lit sphere the site's genre art draws in CSS, as a 1200×630 PNG. Facebook,
+ * The genre art as a 1200×630 PNG, at /og/v1/<tone>.png: the link-preview picture of a page
+ * without a cover before design v2. Pages now name logo pack v2's share picture (services/seo.ts
+ * `ogFallback`); this still answers for the previews already cached with its addresses. Facebook,
  * Zalo and Google Discover want a raster image at least 1200 wide; there is no image
  * library on the server, so this paints the pixels and writes the PNG itself.
  */

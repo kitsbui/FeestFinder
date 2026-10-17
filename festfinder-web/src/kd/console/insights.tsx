@@ -113,7 +113,7 @@ export function InsightsScreen() {
         <Panel as="section" className="kd-side flex flex-col gap-3 self-start p-5" aria-label={T.people}>
           <span className="kd-h">{T.people}</span>
           {([[T.pAccounts, count(data.users.accounts, lang)], [T.pWeekly, `${count(data.users.weeklyActive, lang)} · ${nf(data.users.weeklyActivePct)}%`], [T.pReturn, `${nf(data.users.sevenDayReturnPct)}%`], [T.pSaves, nf(data.users.savesPerUser)]] as [string, string][]).map(([k, v]) => (
-            <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line pb-2 last:border-b-0"><span className="kd-s">{k}</span><span className="kd-mb kd-num">{v}</span></div>
+            <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line-1 pb-2 last:border-b-0"><span className="kd-s">{k}</span><span className="kd-mb kd-num">{v}</span></div>
           ))}
         </Panel>
       </div>
@@ -135,7 +135,7 @@ function Kpi({ lang, label, now, before }: { lang: Lang; label: string; now: num
 function Trend({ lang, d, line }: { lang: Lang; d: number; line: string }) {
   return (
     <span className="kd-s flex items-center gap-1.5">
-      {d >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-hot" aria-hidden="true" />}
+      {d >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-bad" aria-hidden="true" />}
       {fill(line, { d: (d > 0 ? '+' : '') + d.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') })}
     </span>
   );

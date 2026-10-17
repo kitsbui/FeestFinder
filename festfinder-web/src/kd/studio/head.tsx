@@ -34,7 +34,7 @@ export function StudioHead({ label, right, only }: { label: string; right?: Reac
                 trigger={(p) => (
                   <button type="button" {...p} ref={p.ref} className="kd-dd text-left">
                     {event.title}
-                    <CaretDownIcon size={22} className="kd-chev text-fog" aria-hidden="true" />
+                    <CaretDownIcon size={22} className="kd-chev text-fg-3" aria-hidden="true" />
                   </button>
                 )}
               >

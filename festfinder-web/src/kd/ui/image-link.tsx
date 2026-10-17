@@ -62,7 +62,7 @@ export function ImageLinkField({ lang, purpose, label, hint, value, onChange, cl
 
   const round = purpose === 'avatar';
   return (
-    <div className={cx('flex flex-col gap-2 rounded-[10px] border border-dashed border-line2 px-4 py-3', className)}>
+    <div className={cx('flex flex-col gap-2 rounded-[10px] border border-dashed border-line-2 px-4 py-3', className)}>
       <div className="flex min-h-11 flex-wrap items-center gap-3">
         {value ? <FramedThumb src={value} className={round ? 'size-11 rounded-full' : purpose === 'profile_cover' ? 'h-11 w-[78px] rounded-md' : 'size-11 rounded-lg'} /> : null}
         <label htmlFor={id} className="flex min-w-0 flex-1 basis-40 flex-col gap-0.5">
@@ -82,7 +82,7 @@ export function ImageLinkField({ lang, purpose, label, hint, value, onChange, cl
           placeholder="https://"
           maxLength={2048}
           boxClass="min-w-0 flex-1"
-          icon={<LinkSimpleIcon size={16} className="text-fog" aria-hidden="true" />}
+          icon={<LinkSimpleIcon size={16} className="text-fg-3" aria-hidden="true" />}
           invalid={!!err}
           value={text}
           onChange={(e) => setText(e.target.value)}

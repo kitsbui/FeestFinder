@@ -210,7 +210,8 @@ test.describe('the Console: accounts, orders and partners', () => {
     await expect(row).toContainText('Đang mở');
     const { items } = await (await page.request.get('/admin/brand-campaigns')).json();
     expect(items.find((c: { title: string }) => c.title === title)).toMatchObject({ brandName: 'E2E Energy', feeMin: 2000000, feeMax: 5000000, currency: cities[0].currency });
-    await page.getByRole('button', { name: `Nghệ sĩ quan tâm: ${title}` }).click();
+    // The row's button is named by what it shows (the title first), then what it opens.
+    await row.getByRole('button', { name: /nghệ sĩ quan tâm$/ }).click();
     await expect(page.getByRole('dialog', { name: title }).getByText('Chưa có nghệ sĩ quan tâm')).toBeVisible();
     expect(problems).toEqual([]);
   });

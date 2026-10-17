@@ -21,7 +21,7 @@ export function EventCreate() {
   return (
     <>
       <PageHead
-        eyebrow={<KdLink href="/console/events" className="kd-m inline-flex items-center gap-1 hover:text-paper"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>}
+        eyebrow={<KdLink href="/console/events" className="kd-m kd-hit inline-flex items-center gap-1 hover:text-fg-1"><CaretLeftIcon size={12} aria-hidden="true" />{T.back}</KdLink>}
         title={T.createTitle}
       />
       <Body>

@@ -188,7 +188,7 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
     <main className="kd-wrap flex flex-col gap-5 pb-8 pt-8">
       <h1 className="kd-d1">{T.title}</h1>
 
-      <div className="kd-hscroll -mx-4 px-4 tab:mx-0 tab:px-0" role="group" aria-label={T.collections}>
+      <div className="kd-hscroll" role="group" aria-label={T.collections}>
         <Chip on={!cur} count={savedCount} onClick={() => select(null)}>{T.all}</Chip>
         {(cols ?? []).map((c) => (
           <Chip key={c.id} on={cur === c.id} count={c.count} onClick={() => select(c.id)}>
@@ -226,12 +226,12 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
         <>
           {upcoming.length ? (
             <div className="kd-cards">
-              {cards.map((e, i) => (
+              {cards.map((e) => (
                 <div key={e.id} className="relative">
-                  <EventCard e={e} i={i} lang={lang} />
+                  <EventCard e={e} lang={lang} />
                   {/* Beside the card's heart, over its art. */}
                   <span className="absolute right-[52px] top-2.5">
-                    <IconButton size="sm" glass className="text-paper" label={folderLabel(e)} onClick={() => setCollecting(e)}>
+                    <IconButton size="sm" glass className="text-fg-1" label={folderLabel(e)} onClick={() => setCollecting(e)}>
                       <FolderSimplePlusIcon size={18} aria-hidden="true" />
                     </IconButton>
                   </span>
@@ -271,7 +271,7 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
           <span className="kd-h">{cur ? T.colEmpty : T.empty}</span>
           {cur
             ? <Button onClick={() => select(null)}>{T.all}</Button>
-            : <LinkButton tone="light" href={inLang('/', lang)}>{T.explore}</LinkButton>}
+            : <LinkButton tone="acc" href={inLang('/', lang)}>{T.explore}</LinkButton>}
         </Panel>
       )}
 
@@ -298,10 +298,10 @@ function PastRow({ e, lang, saved, onSave, onCollect, folderLabel }: {
   const T = pick(SAVED, lang);
   const fam = familyOf(e.genre);
   return (
-    <li className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line', g(fam))}>
+    <li className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1', g(fam))}>
       {e.startsOn ? <DateBlock top={monthShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={e.startsOn.slice(0, 4)} /> : <span />}
       <span className="flex min-w-0 flex-col gap-1">
-        <Link href={inLang('/e/' + e.slug, lang)} className="kd-hs kd-ell hover:underline">{e.title}</Link>
+        <Link href={inLang('/e/' + e.slug, lang)} className="kd-hit kd-hs kd-ell hover:underline">{e.title}</Link>
         <span className="kd-s kd-ell flex items-center gap-1.5">
           <Marker family={fam} />
           {[e.venue.name, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}

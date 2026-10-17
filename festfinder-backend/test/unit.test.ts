@@ -175,9 +175,9 @@ describe('notification links', () => {
   it('open the screen a notification is about', () => {
     assert.equal(linkUrl({ screen: 'live', eventId: 'ev 1' }), '/app/live/ev%201');
     assert.equal(linkUrl({ screen: 'tickets', orderId: 'o1' }), '/app/tickets');
-    assert.equal(linkUrl({ screen: 'event', eventId: 'e1' }), '/app/e/e1');
+    assert.equal(linkUrl({ screen: 'event', eventId: 'e1' }), '/e/e1');
     assert.equal(linkUrl({ url: '/app/saved' }), '/app/saved');
-    assert.equal(linkUrl(null), '/app');
+    assert.equal(linkUrl(null), '/');
   });
 
   it('never leave the site', () => {

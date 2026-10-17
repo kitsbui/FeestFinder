@@ -93,7 +93,7 @@ export function OrganizerDrawer({ id, onClose, onChanged }: { id: string; onClos
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 border-t border-line pt-4 first:border-t-0 first:pt-0" aria-label={title}>
+    <section className="flex flex-col gap-3 border-t border-line-1 pt-4 first:border-t-0 first:pt-0" aria-label={title}>
       <h3 className="kd-hs">{title}</h3>
       {children}
     </section>
@@ -141,7 +141,7 @@ function Verification({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChan
   return (
     <div className="flex flex-col gap-5">
       <Section title={T.docsOnFile}>
-        <div className="flex flex-col border-t border-line">
+        <div className="flex flex-col border-t border-line-1">
           {docRows.map(([k, label]) => <SwitchRow key={k} label={label} checked={docs[k]} disabled={busy === 'doc'} onChange={(v) => save({ docs: { [k]: v } }, 'doc')} />)}
         </div>
         <KV rows={[
@@ -271,9 +271,9 @@ function Team({ o, lang, onChanged }: { o: OrgDetail; lang: Lang; onChanged: () 
   return (
     <div className="flex flex-col gap-5">
       {o.members.length ? (
-        <ul className="flex flex-col border-t border-line" aria-label={T.dTeam}>
+        <ul className="flex flex-col border-t border-line-1" aria-label={T.dTeam}>
           {o.members.map((m) => (
-            <li key={m.id} className="flex min-h-14 flex-wrap items-center gap-3 border-b border-line py-2">
+            <li key={m.id} className="flex min-h-14 flex-wrap items-center gap-3 border-b border-line-1 py-2">
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="kd-hs kd-ell">{m.name || m.email}</span>
                 <span className="kd-s kd-ell">
@@ -312,10 +312,10 @@ function Listings({ o, lang }: { o: OrgDetail; lang: Lang }) {
   const T = pick(ORGS, lang);
   if (!o.events.length) return <Empty title={T.noListings} />;
   return (
-    <ul className="flex flex-col border-t border-line" aria-label={T.dListings}>
+    <ul className="flex flex-col border-t border-line-1" aria-label={T.dListings}>
       {o.events.map((e) => (
         <li key={e.id}>
-          <a href={'/console/events/' + e.id} className="flex min-h-14 items-center gap-3 border-b border-line py-2 hover:bg-white/[0.03]">
+          <a href={'/console/events/' + e.id} className="flex min-h-14 items-center gap-3 border-b border-line-1 py-2 hover:bg-white/[0.03]">
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="kd-hs kd-ell">{e.title}</span>
               <span className="kd-s">{[e.startsOn ? whenShort({ startsOn: e.startsOn }, lang) : T.noDate, e.genre].filter(Boolean).join(' · ')}</span>

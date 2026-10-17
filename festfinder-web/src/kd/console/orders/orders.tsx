@@ -101,9 +101,9 @@ function OrderList({ lang, params, set }: { lang: Lang; params: URLSearchParams;
             onPick={(i) => reset({ event: i?.value ?? null, eventLabel: i?.label ?? null })} />
         </div>
         <span className="flex items-center gap-1.5">
-          <Input type="date" boxClass="h-10 min-h-0" className="kd-num" aria-label={T.from} value={from} max={to || undefined} onChange={(e) => reset({ from: e.target.value })} />
+          <Input type="date" boxClass="h-11 min-h-0" className="kd-num" aria-label={T.from} value={from} max={to || undefined} onChange={(e) => reset({ from: e.target.value })} />
           <span className="kd-s" aria-hidden="true">→</span>
-          <Input type="date" boxClass="h-10 min-h-0" className="kd-num" aria-label={T.to} value={to} min={from || undefined} onChange={(e) => reset({ to: e.target.value })} />
+          <Input type="date" boxClass="h-11 min-h-0" className="kd-num" aria-label={T.to} value={to} min={from || undefined} onChange={(e) => reset({ to: e.target.value })} />
         </span>
       </FilterBar>
       {load.error ? <ErrorBox error={load.error} retry={load.reload} /> : null}
@@ -112,12 +112,12 @@ function OrderList({ lang, params, set }: { lang: Lang; params: URLSearchParams;
           {!load.data.items.length ? <Empty /> : <Table label={T.table} cols={COLS} head={[T.colCode, T.colWhen, T.colBuyer, T.colEvent, T.colMethod, T.colTotal, T.colStatus]}>
             {load.data.items.map((o) => (
               <Row key={o.id} cols={COLS} current={o.id === id} onClick={() => set({ id: o.id })}>
-                <Cell className="kd-num text-xs text-paper">{o.code}</Cell>
+                <Cell className="kd-num text-xs text-fg-1">{o.code}</Cell>
                 <Cell className="kd-s kd-num text-xs">{stamp(o.createdAt, lang)}</Cell>
                 <Cell><Two title={o.buyer.name || '—'} sub={o.buyer.email ?? o.buyer.phone ?? ''} /></Cell>
                 <Cell><Two title={o.event.title} sub={`${FF.text(o.tier, lang)} × ${o.qty}`} /></Cell>
                 <Cell className="kd-s">{o.methodLabel}</Cell>
-                <Cell end className="kd-num text-sm text-paper">{money(o.total, CHECKOUT_CURRENCY, lang)}</Cell>
+                <Cell end className="kd-num text-sm text-fg-1">{money(o.total, CHECKOUT_CURRENCY, lang)}</Cell>
                 <Cell><Pill tone={STATUS_TONE[o.status]}>{o.statusLabel[lang]}</Pill></Cell>
               </Row>
             ))}
@@ -185,8 +185,8 @@ function OrderDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang;
           <Section title={fill(T.tickets, { n: o.tickets.length })}>
             <ul className="flex flex-col">
               {o.tickets.map((x) => (
-                <li key={x.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-b border-line py-2">
-                  <span className="kd-num text-xs text-paper">{x.code}</span>
+                <li key={x.id} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-b border-line-1 py-2">
+                  <span className="kd-num text-xs text-fg-1">{x.code}</span>
                   <span className="kd-s kd-ell">{x.holder || '—'}</span>
                   <Pill tone={TICKET[x.status]?.[0] ?? 'none'}>{TICKET[x.status]?.[1] ?? x.status}</Pill>
                   {x.checkedInAt ? <span className="kd-s kd-num col-span-3 text-xs">{stamp(x.checkedInAt, lang)}{x.gate ? ' · ' + x.gate : ''}</span> : null}

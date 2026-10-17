@@ -1,39 +1,53 @@
 /*
- * FeestFinder — Kính đêm (Night Glass) for Tailwind CSS v4: the tokens as utilities, the page
+ * FeestFinder — Kính đêm (Night Glass) v2 for Tailwind CSS v4: the tokens as utilities, the page
  * defaults and the kd-* classes that need pseudo-elements or a --g custom property.
  *
  * kd.css imports this right after Tailwind, then adds the rest of the design system as kd-*
- * component classes.
+ * component classes. This file is the only place a colour is written as a hex value
+ * (scripts/check-tokens.ts, run by `npm run lint`, holds the rest of src to it).
+ *
+ * Colour says one sentence: turquoise is information, the turquoise → lime gradient is the one
+ * action a screen exists for, and status is a dot with a word.
  */
 
 @theme {
-  /* ---- colour: the tokens only (Tailwind's own palette is off) ---- */
+  /* ---- colour: named for the role, never the material (Tailwind's own palette is off) ---- */
   --color-*: initial;
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-void: #08090a;
-  --color-carbon: #0f1011;
-  --color-obsidian: #161718;
-  --color-slate: #1c1d20;
-  --color-line: #23252a;
-  --color-line2: #383b3f;
-  --color-ash: #62666d;   /* decorative icons only */
-  --color-fog: #8a8f98;
-  --color-mist: #d0d6e0;
-  --color-paper: #f7f8f8;
-  --color-bone: #eeeeee;
-  --color-ink: #101010;
-  --color-ink2: #57534f;
-  --color-acc: #e4f222;
-  --color-acc-hi: #eef75c;
-  --color-acc-ink: #08090a;
-  --color-hot: #eb5757;
-  --color-ok: #46c37b;
+
+  /* surfaces, back to front */
+  --color-surface-0: #08090a;   /* the page */
+  --color-surface-1: #0f1011;   /* nav, rails, panels, cards */
+  --color-surface-2: #161718;   /* fields, chips, text tiles, raised parts */
+  --color-map: #0b0c0d;         /* under a map, before its tiles draw */
+
+  /* lines */
+  --color-line-1: #23252a;      /* dividers, the edge of a panel */
+  --color-line-2: #383b3f;      /* secondary buttons, a hovered edge */
+
+  /* text: 1 titles, prices, names · 2 body · 3 meta and labels (6:1 on surface-0) */
+  --color-fg-1: #f7f8f8;
+  --color-fg-2: #d0d6e0;
+  --color-fg-3: #8a8f98;
+
+  /* the light surface (avatars, the ticket card) and the text on it */
+  --color-inverse: #eeeeee;
+  --color-on-inverse: #101010;
+  --color-on-inverse-2: #57534f;
+
+  /* information: style names, links, the chosen tab, row or pin, counts, "free" */
+  --color-info: #00d9d0;
+  /* the action gradient's middle stop, and its end: lime, also the focus ring and the glow */
+  --color-accent-mid: #72e679;
+  --color-lime: #e4f222;
+  /* text on info, lime or the gradient */
+  --color-on-accent: #08090a;
+
+  /* status: a dot and a word, never a fill or a border */
+  --color-ok: #2fb37a;
   --color-warn: #f0b429;
-  --color-fest: #ee6018;
-  --color-live: #0aa5b8;
-  --color-edm: #8b5cf6;
-  --color-cult: #d6589e;
+  --color-bad: #eb5757;
 
   /* ---- type ---- */
   /* One family, Noto Sans, for every word and number (numbers line up with tabular-nums, the kd-num class).
@@ -44,87 +58,97 @@
   --text-d0: clamp(44px, 6.6vw, 92px);
   --text-d0--line-height: 0.96;
   --text-d0--letter-spacing: -0.045em;
-  --text-d0--font-weight: 500;
+  --text-d0--font-weight: 700;
   --text-d1: clamp(36px, 4.6vw, 56px);
   --text-d1--line-height: 1;
   --text-d1--letter-spacing: -0.04em;
-  --text-d1--font-weight: 500;
+  --text-d1--font-weight: 700;
   --text-d2: 32px;
   --text-d2--line-height: 1.06;
   --text-d2--letter-spacing: -0.035em;
-  --text-d2--font-weight: 500;
+  --text-d2--font-weight: 700;
   --text-d3: 24px;
   --text-d3--line-height: 1.15;
   --text-d3--letter-spacing: -0.025em;
-  --text-d3--font-weight: 500;
+  --text-d3--font-weight: 700;
   --text-h: 17px;
   --text-h--line-height: 1.3;
   --text-h--letter-spacing: -0.015em;
-  --text-h--font-weight: 500;
+  --text-h--font-weight: 600;
   --text-hs: 15px;
   --text-hs--line-height: 1.35;
   --text-hs--letter-spacing: -0.01em;
-  --text-hs--font-weight: 500;
+  --text-hs--font-weight: 600;
   --text-tl: 17px;
   --text-tl--line-height: 1.55;
   --text-t: 15px;
   --text-t--line-height: 1.55;
   --text-s: 13px;
   --text-s--line-height: 1.4;
-  --text-m: 11px;              /* use with uppercase tracking-[.06em] text-fog, or the kd-m class */
+  --text-m: 11px;              /* use with uppercase tracking-[.06em] text-fg-3, or the kd-m class: table heads and tags */
   --text-m--line-height: 1.2;
-  --text-mb: 13px;             /* use with font-medium text-paper tabular-nums, or kd-mb */
+  --text-mb: 13px;             /* use with font-medium text-fg-1 tabular-nums, or kd-mb */
   --text-mb--line-height: 1.4;
 
-  /* ---- shape ---- */
-  --radius-tag: 4px;
-  --radius-btn: 6px;
+  /* ---- shape: three radii and the pill ---- */
+  --radius-tag: 4px;           /* tags, kbd */
+  --radius-btn: 8px;           /* buttons, chips, fields */
   --radius-seg: 8px;
-  --radius-opt: 10px;
-  --radius-card: 12px;
-  --radius-org: 14px;
-  --radius-sheet: 20px;
-  --radius-pill: 9999px;
+  --radius-opt: 8px;
+  --radius-card: 8px;          /* cards, panels, art */
+  --radius-org: 8px;           /* an organiser's square avatar */
+  --radius-sheet: 16px;        /* sheets, the hero cover */
+  --radius-pill: 9999px;       /* avatars, dots */
 
   /* ---- layout ---- */
   --breakpoint-tab: 760px;     /* page gutters 16 → 32 → 64 */
   --breakpoint-desk: 900px;    /* hide-sm / show-sm, side nav becomes a column */
+  --breakpoint-wide: 1200px;    /* the nav's search field (web/chrome.tsx) */
   --container-read: 760px;     /* max-w-read: reading measure */
 
   /* ---- motion ---- */
   --ease-ff: cubic-bezier(0.4, 0, 0.2, 1);
   --animate-kd-pulse: kd-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   --animate-kd-scan: kd-scan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-
+  --animate-kd-glow: kd-glow 2.4s ease-in-out infinite;
 }
 
 /* Keyframes live outside @theme so they are always emitted (the components below use them too). */
 @keyframes kd-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(235, 87, 87, 0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(235, 87, 87, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(235, 87, 87, 0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-bad) 55%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 @keyframes kd-scan {
   0% { top: 12%; }
   50% { top: 84%; }
   100% { top: 12%; }
 }
+/* The one action on a screen breathes: a soft lime halo, in and out. */
+@keyframes kd-glow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 22px 2px color-mix(in srgb, var(--color-lime) 50%, transparent); }
+}
 
 @layer base {
-  html { background: var(--color-void); color-scheme: dark; }
+  :root {
+    /* The action gradient: the primary button, the "featured" tag, the logo's flags. */
+    --gradient-accent: linear-gradient(135deg, var(--color-info), var(--color-accent-mid) 50%, var(--color-lime));
+  }
+  html { background: var(--color-surface-0); color-scheme: dark; }
   body {
     font-family: var(--font-sans);
     font-size: 15px;
     line-height: 1.5;
     letter-spacing: -0.01em;
-    color: var(--color-mist);
-    background: var(--color-void);
+    color: var(--color-fg-2);
+    background: var(--color-surface-0);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  ::selection { background: var(--color-acc); color: var(--color-acc-ink); }
-  :focus-visible { outline: 2px solid var(--color-acc); outline-offset: 2px; }
-  input::placeholder, textarea::placeholder { color: var(--color-fog); }
+  ::selection { background: var(--color-info); color: var(--color-on-accent); }
+  :focus-visible { outline: 2px solid var(--color-lime); outline-offset: 2px; }
+  input::placeholder, textarea::placeholder { color: var(--color-fg-3); }
   code, kbd, samp, pre { font-family: inherit; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -133,10 +157,10 @@
 
 @layer components {
   /* ---- type shorthands the design uses everywhere ---- */
-  .kd-m { font-size: 11px; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fog); font-weight: 400; font-variant-numeric: tabular-nums; }
-  .kd-mb { font-size: 13px; letter-spacing: 0; font-weight: 500; color: var(--color-paper); font-variant-numeric: tabular-nums; }
+  .kd-m { font-size: 11px; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .kd-mb { font-size: 13px; letter-spacing: 0; font-weight: 500; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
 
-  /* ---- glass: only over colour or a moving page ---- */
+  /* ---- glass: only over a photo or a map ---- */
   .kd-glass {
     background: rgba(15, 16, 17, 0.5);
     -webkit-backdrop-filter: blur(22px) saturate(170%);
@@ -150,82 +174,84 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   /* dropdown menus are near-opaque: a blur inside a blurred bar does not reach the page */
-  .kd-menu { background: rgba(22, 23, 24, 0.97); box-shadow: inset 0 0 0 1px var(--color-line2); border-radius: var(--radius-card); }
+  .kd-menu { background: rgba(22, 23, 24, 0.97); box-shadow: inset 0 0 0 1px var(--color-line-2); border-radius: var(--radius-card); }
 
-  /* ---- genre: colour + shape. Set the family on any ancestor. ---- */
-  .kd-g-fest { --g: var(--color-fest); }
-  .kd-g-live { --g: var(--color-live); }
-  .kd-g-edm  { --g: var(--color-edm); }
-  .kd-g-cult { --g: var(--color-cult); }
-  .kd-g-free { --g: var(--color-acc); }
+  /*
+   * Genre: every event is electronic music, so every family wears the information colour. The
+   * classes stay so genre.ts and its callers keep working; they all say the same thing now.
+   */
+  .kd-g-fest, .kd-g-live, .kd-g-edm, .kd-g-cult, .kd-g-free { --g: var(--color-info); }
 
-  /* marker: the genre's shape at text size */
-  .kd-mk { display: inline-block; flex-shrink: 0; width: 10px; height: 10px; background: var(--g, var(--color-fog)); }
-  .kd-g-fest .kd-mk, .kd-mk.kd-g-fest, .kd-g-free .kd-mk, .kd-mk.kd-g-free { border-radius: 50%; }
-  .kd-g-live .kd-mk, .kd-mk.kd-g-live { width: 9px; height: 9px; border-radius: 1px; }
-  .kd-g-edm .kd-mk, .kd-mk.kd-g-edm { width: 11px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-  .kd-g-cult .kd-mk, .kd-mk.kd-g-cult { width: 12px; height: 6px; border-radius: 12px 12px 0 0; }
+  /* marker: a small turquoise mark at text size, before a style or a kind of night */
+  .kd-mk { display: inline-block; flex-shrink: 0; width: 7px; height: 7px; border-radius: 2px; background: var(--g, var(--color-info)); }
 
-  /* art tile: the stand-in for every event without a cover (no photos, no gradients) */
-  .kd-art { position: relative; overflow: hidden; isolation: isolate; border-radius: var(--radius-card); background: var(--g, var(--color-obsidian)); transition: background-color 0.2s var(--ease-ff); }
-  .kd-art::before, .kd-art::after { content: ""; position: absolute; z-index: -1; transition: background-color 0.2s var(--ease-ff); }
-  .kd-art::before { background: var(--color-void); }
-  .kd-art::after { background: var(--color-bone); }
-  .kd-art.kd-b { background: var(--color-bone); }           /* bone variant: alternate in lists */
-  .kd-art.kd-b::before { background: var(--g); }
-  .kd-art.kd-b::after { background: var(--color-ink); }
-  .kd-art.kd-g-fest::before { width: 66%; aspect-ratio: 1; right: -10%; bottom: -26%; border-radius: 50%; }
-  .kd-art.kd-g-fest::after { width: 15%; aspect-ratio: 1; left: 11%; top: 14%; border-radius: 50%; }
-  .kd-art.kd-g-live::before { width: 34%; height: 130%; right: 14%; top: -12%; border-radius: 3px; }
-  .kd-art.kd-g-live::after { width: 17%; aspect-ratio: 1; left: 11%; top: 15%; border-radius: 2px; }
-  .kd-art.kd-g-edm::before { width: 74%; aspect-ratio: 1.05; left: 26%; bottom: -8%; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-  .kd-art.kd-g-edm::after { width: 13%; aspect-ratio: 1; left: 11%; top: 14%; border-radius: 50%; }
-  .kd-art.kd-g-cult::before { width: 84%; aspect-ratio: 2; left: 8%; bottom: 0; border-radius: 999px 999px 0 0; }
-  .kd-art.kd-g-cult::after { width: 26%; aspect-ratio: 2; left: 11%; top: 0; border-radius: 0 0 999px 999px; }
-  .kd-art.kd-g-free::before { width: 58%; aspect-ratio: 1; left: 21%; top: 21%; border-radius: 50%; }
-  .kd-art.kd-g-free::after { width: 16%; aspect-ratio: 1; right: 10%; bottom: 10%; border-radius: 2px; }
-  .kd-art.kd-off { background: var(--color-obsidian); }   /* sold out, past, not chosen */
-  .kd-art.kd-off::before { background: var(--color-line2); }
-  .kd-art.kd-off::after { background: var(--color-line); }
+  /*
+   * Art: an event's cover, or, without one, a text tile: its name set large, with its style and day
+   * under it (ui/parts.tsx Art). Below 160px wide the tile shows a two-letter monogram instead.
+   * Nothing geometric, no gradient: the photo is the picture, the type is the stand-in.
+   */
+  .kd-art { position: relative; overflow: hidden; isolation: isolate; container-type: inline-size; border-radius: var(--radius-card); background: var(--color-surface-2); box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  .kd-art-t, .kd-art-m { position: absolute; inset: 0; z-index: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-width: 0; }
+  .kd-art-t { padding: 44px 52px 14px 16px; }
+  .kd-art-t b { font-size: clamp(16px, 8cqi, 34px); line-height: 1.16; letter-spacing: -0.025em; font-weight: 700; color: var(--color-fg-1); text-wrap: balance; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .kd-art-t i, .kd-art-m i { font-style: normal; font-size: 12px; line-height: 1.3; color: var(--color-fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The tile's words come from Art's data attributes, so they are never page text twice. */
+  .kd-art-t b::before, .kd-art-m b::before { content: attr(data-t); }
+  .kd-art-t i::before, .kd-art-m i::before { content: attr(data-k); color: var(--color-info); }
+  .kd-art-t i::after { content: attr(data-m); }
+  .kd-art-m { display: none; padding: 6px; justify-content: center; align-items: center; gap: 2px; text-align: center; }
+  .kd-art-m b { font-size: clamp(14px, 26cqi, 22px); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; color: var(--color-fg-1); }
+  .kd-art-m i[data-k=''] { display: none; }
+  /* Where other parts sit on the tile: a profile cover (an avatar overlaps its foot: one line, high up)
+     and a hero (a back button above, a countdown below). Art's `layout`. */
+  .kd-art-banner .kd-art-t { padding: 20px 20px 14px; justify-content: flex-start; }
+  .kd-art-banner .kd-art-t b { -webkit-line-clamp: 1; }
+  .kd-art-hero .kd-art-t { padding: 72px 20px 60px; }
+  /* A person or an artist without a photo: their initials, large and centred, at any size (the directory's square cards). */
+  .kd-art-mono .kd-art-t { display: none; }
+  .kd-art-mono .kd-art-m { display: flex; }
+  .kd-art-mono .kd-art-m b { font-size: clamp(18px, 22cqi, 64px); }
+  .kd-art-m i { font-size: 10px; }
+  @container (max-width: 159px) {
+    .kd-art-t { display: none; }
+    .kd-art-m { display: flex; }
+  }
+  .kd-art.kd-off { box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  /* Sold out or past: the name steps back to meta grey (still 5:1 on surface-2, so it stays legible). */
+  .kd-art.kd-off :is(.kd-art-t, .kd-art-m) b, .kd-art.kd-off :is(.kd-art-t, .kd-art-m) i::before { color: var(--color-fg-3); }
 
-  /* emblem: a badge = the genre shape or a number on a ring of the genre colour */
-  .kd-emb { position: relative; flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--color-obsidian); box-shadow: inset 0 0 0 2px var(--g, var(--color-acc)); }
-  .kd-emb .kd-mk { width: 26px; height: 26px; }
-  .kd-emb.kd-g-live .kd-mk { width: 23px; height: 23px; border-radius: 2px; }
-  .kd-emb.kd-g-edm .kd-mk { width: 28px; height: 25px; }
-  .kd-emb.kd-g-cult .kd-mk { width: 30px; height: 15px; border-radius: 30px 30px 0 0; }
-  .kd-emb .kd-n { font-size: 14px; font-weight: 500; letter-spacing: -0.02em; color: var(--color-paper); font-variant-numeric: tabular-nums; }
-  .kd-emb.kd-off { box-shadow: inset 0 0 0 2px var(--color-line2); }
-  .kd-emb.kd-off .kd-mk { background: var(--color-line2); }
-  .kd-emb.kd-off .kd-n { color: var(--color-fog); }
-  .kd-emb.kd-sm { width: 40px; height: 40px; box-shadow: inset 0 0 0 1.5px var(--g, var(--color-acc)); }
-  .kd-emb.kd-sm.kd-off { box-shadow: inset 0 0 0 1.5px var(--color-line2); }
-  .kd-emb.kd-sm .kd-mk { width: 18px; height: 18px; }
-  .kd-emb.kd-sm.kd-g-live .kd-mk { width: 16px; height: 16px; }
-  .kd-emb.kd-sm.kd-g-edm .kd-mk { width: 19px; height: 17px; }
-  .kd-emb.kd-sm.kd-g-cult .kd-mk { width: 20px; height: 10px; }
+  /* emblem: a badge = a marker or a number on a ring of the information colour */
+  .kd-emb { position: relative; flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--color-surface-2); box-shadow: inset 0 0 0 2px var(--g, var(--color-info)); }
+  .kd-emb .kd-mk { width: 20px; height: 20px; border-radius: 4px; }
+  .kd-emb .kd-n { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; color: var(--color-fg-1); font-variant-numeric: tabular-nums; }
+  .kd-emb.kd-off { box-shadow: inset 0 0 0 2px var(--color-line-2); }
+  .kd-emb.kd-off .kd-mk { background: var(--color-line-2); }
+  .kd-emb.kd-off .kd-n { color: var(--color-fg-3); }
+  .kd-emb.kd-sm { width: 40px; height: 40px; box-shadow: inset 0 0 0 1.5px var(--g, var(--color-info)); }
+  .kd-emb.kd-sm.kd-off { box-shadow: inset 0 0 0 1.5px var(--color-line-2); }
+  .kd-emb.kd-sm .kd-mk { width: 14px; height: 14px; border-radius: 3px; }
   .kd-emb.kd-sm .kd-n { font-size: 11px; }
 
   /* status: a dot plus a word, never colour alone */
-  .kd-st { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-mist); }
-  .kd-st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--color-fog); flex-shrink: 0; }
+  .kd-st { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-2); }
+  .kd-st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--color-fg-3); flex-shrink: 0; }
   .kd-st.kd-ok::before { background: var(--color-ok); }
   .kd-st.kd-warn::before { background: var(--color-warn); }
-  .kd-st.kd-bad::before { background: var(--color-hot); }
-  .kd-st.kd-live::before { background: var(--color-hot); animation: var(--animate-kd-pulse); }
+  .kd-st.kd-bad::before { background: var(--color-bad); }
+  .kd-st.kd-live::before { background: var(--color-bad); animation: var(--animate-kd-pulse); }
 
   /* switch: state is track colour AND knob position */
-  .kd-switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; padding: 0; border: 0; border-radius: 9999px; background: var(--color-line2); cursor: pointer; transition: background-color 0.15s var(--ease-ff); }
+  .kd-switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; padding: 0; border: 0; border-radius: 9999px; background: var(--color-line-2); cursor: pointer; transition: background-color 0.15s var(--ease-ff); }
   .kd-switch::before { content: ""; position: absolute; inset: -9px 0; }
-  .kd-switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--color-paper); transition: transform 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
-  .kd-switch[aria-checked="true"] { background: var(--color-acc); }
-  .kd-switch[aria-checked="true"]::after { transform: translateX(18px); background: var(--color-void); }
+  .kd-switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--color-fg-1); transition: transform 0.15s var(--ease-ff), background-color 0.15s var(--ease-ff); }
+  .kd-switch[aria-checked="true"] { background: var(--color-info); }
+  .kd-switch[aria-checked="true"]::after { transform: translateX(18px); background: var(--color-surface-0); }
 
   /* accordion: native <details>, no script */
-  .kd-acc { border-bottom: 1px solid var(--color-line); }
-  .kd-acc > summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 56px; cursor: pointer; color: var(--color-paper); font-size: 17px; font-weight: 500; letter-spacing: -0.015em; }
+  .kd-acc { border-bottom: 1px solid var(--color-line-1); }
+  .kd-acc > summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 56px; cursor: pointer; color: var(--color-fg-1); font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
   .kd-acc > summary::-webkit-details-marker { display: none; }
-  .kd-acc > summary .kd-chev { margin-left: auto; color: var(--color-fog); transition: transform 0.15s var(--ease-ff); }
+  .kd-acc > summary .kd-chev { margin-left: auto; color: var(--color-fg-3); transition: transform 0.15s var(--ease-ff); }
   .kd-acc[open] > summary .kd-chev { transform: rotate(180deg); }
   .kd-acc.kd-sm > summary { min-height: 48px; font-size: 15px; }
 

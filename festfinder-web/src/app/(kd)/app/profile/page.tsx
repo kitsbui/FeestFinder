@@ -1,9 +1,8 @@
-import { appMetadata, appViewport } from '@/kd/app/meta';
-import { ProfileScreen } from '@/kd/app/screens';
+import { moved } from '@/kd/app/moved';
 
-export const metadata = appMetadata;
-export const viewport = appViewport;
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export default function Page() {
-  return <ProfileScreen />;
+// "Tôi" is /profile: the profile and, on a phone, the hub.
+export default async function Page({ searchParams }: Props) {
+  await moved('/profile', searchParams);
 }

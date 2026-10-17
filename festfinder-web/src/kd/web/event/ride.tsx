@@ -85,9 +85,9 @@ export function RideButton({ lang, row, fromLink, size = 'sm', tone = 'ghost', c
     <>
       {row ? (
         <button type="button" className="kd-lrow min-h-13 w-full text-left" onClick={tap}>
-          <CarProfileIcon size={18} className="text-fog" aria-hidden="true" />
-          <span className="kd-t flex-1 text-paper">{T.title}</span>
-          <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+          <CarProfileIcon size={18} className="text-fg-3" aria-hidden="true" />
+          <span className="kd-t flex-1 text-fg-1">{T.title}</span>
+          <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
         </button>
       ) : (
         <button type="button" className={buttonClass({ tone, size }, className)} onClick={tap}>
@@ -128,21 +128,21 @@ function RideSheet({ lang, rides, onClose }: { lang: Lang; rides: RideOption[]; 
             <span className="kd-s">{T.scan}</span>
           </div>
         ) : device ? (
-          <ul className="flex flex-col border-t border-line">
+          <ul className="flex flex-col border-t border-line-1">
             {ordered.map((r) => (
               <li key={r.key}>
                 <button type="button" className="kd-lrow min-h-14 w-full text-left" onClick={() => go(r)}>
-                  <CarProfileIcon size={20} className="text-paper" aria-hidden="true" />
+                  <CarProfileIcon size={20} className="text-fg-1" aria-hidden="true" />
                   <span className="kd-h flex-1">{r.name}</span>
                   {r.key === pref ? <span className="kd-m">{T.last}</span> : null}
-                  <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+                  <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
                 </button>
               </li>
             ))}
           </ul>
         ) : null}
         {inApp ? (
-          <div className="flex flex-col gap-2 rounded-card p-3 shadow-[inset_0_0_0_1px_var(--color-line)]">
+          <div className="flex flex-col gap-2 rounded-card p-3 shadow-[inset_0_0_0_1px_var(--color-line-1)]">
             <span className="kd-s">{T.inApp}</span>
             <Button size="sm" className="self-start" onClick={copyLink}>{T.copyLink}</Button>
           </div>

@@ -23,7 +23,7 @@ export function Cell({ children, className, end }: { children?: ReactNode; class
 export function Two({ title, sub }: { title: ReactNode; sub?: ReactNode }) {
   return (
     <span className="flex min-w-0 flex-col">
-      <span className="kd-ell text-sm text-paper">{title}</span>
+      <span className="kd-ell text-sm text-fg-1">{title}</span>
       {sub ? <span className="kd-s kd-ell text-xs">{sub}</span> : null}
     </span>
   );
@@ -34,13 +34,13 @@ export function Tile({ label, value, note, on, onClick }: { label: ReactNode; va
   const body = (
     <>
       <span className="kd-m">{label}</span>
-      <span className="kd-num text-[22px] leading-tight font-medium tracking-tight text-paper">{value}</span>
+      <span className="kd-num text-[22px] leading-tight font-medium tracking-tight text-fg-1">{value}</span>
       {note ? <span className="kd-s kd-num text-xs">{note}</span> : null}
     </>
   );
   const cls = cx(
-    'flex min-w-[160px] flex-1 flex-col items-start gap-1 rounded-lg p-4 text-left shadow-[inset_0_0_0_1px_var(--color-line)]',
-    on && 'bg-white/[0.05] shadow-[inset_0_0_0_1px_var(--color-paper)]',
+    'flex min-w-[160px] flex-1 flex-col items-start gap-1 rounded-lg p-4 text-left shadow-[inset_0_0_0_1px_var(--color-line-1)]',
+    on && 'bg-white/[0.05] shadow-[inset_0_0_0_1px_var(--color-fg-1)]',
   );
   if (!onClick) return <div className={cls}>{body}</div>;
   return <button type="button" aria-pressed={!!on} className={cx(cls, 'transition-colors hover:bg-white/[0.03]')} onClick={onClick}>{body}</button>;

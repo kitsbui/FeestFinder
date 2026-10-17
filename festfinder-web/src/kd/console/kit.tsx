@@ -168,7 +168,7 @@ export function Choice({ label, value, options, onChange, any = true }: {
   const cur = options.find((o) => o.value === value);
   return (
     <Menu label={label} trigger={(p) => (
-      <button type="button" {...p} ref={p.ref} className={cx('kd-chip', value && 'kd-chip-on')} aria-label={label}>
+      <button type="button" {...p} ref={p.ref} className={cx('kd-chip', value && 'kd-chip-on')}>
         <span className="kd-ell max-w-[220px]">{cur ? <>{label}: {cur.label}</> : label}</span>
       </button>
     )}>
@@ -186,7 +186,7 @@ export function MultiChoice({ label, values, options, onChange }: {
   const one = values.length === 1 ? options.find((o) => o.value === values[0]) : null;
   return (
     <Menu label={label} trigger={(p) => (
-      <button type="button" {...p} ref={p.ref} className={cx('kd-chip', values.length && 'kd-chip-on')} aria-label={label}>
+      <button type="button" {...p} ref={p.ref} className={cx('kd-chip', values.length && 'kd-chip-on')}>
         <span className="kd-ell max-w-[220px]">{one ? <>{label}: {one.label}</> : values.length ? <>{label}: {fill(T.nPicked, { n: values.length })}</> : label}</span>
       </button>
     )}>
@@ -200,7 +200,7 @@ export function MultiChoice({ label, values, options, onChange }: {
 
 /** A search field for a filter bar. */
 export function SearchField({ value, onChange, label, placeholder }: { value: string; onChange: (v: string) => void; label: string; placeholder?: string }) {
-  return <Input boxClass="h-10 min-h-0 flex-[0_1_300px]" type="search" value={value} aria-label={label} placeholder={placeholder ?? label} onChange={(e) => onChange(e.target.value)} />;
+  return <Input boxClass="h-11 min-h-0 flex-[0_1_300px]" type="search" value={value} aria-label={label} placeholder={placeholder ?? label} onChange={(e) => onChange(e.target.value)} />;
 }
 
 export function Loading({ className }: { className?: string }) {
@@ -211,7 +211,7 @@ export function ErrorBox({ error, retry }: { error: unknown; retry?: () => void 
   const lang = FF.lang;
   const T = pick(KIT, lang);
   return (
-    <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg p-4 shadow-[inset_0_0_0_1px_var(--color-line2)]">
+    <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg p-4 shadow-[inset_0_0_0_1px_var(--color-line-2)]">
       <span className="kd-hs">{T.failed}</span>
       <span className="kd-s">{FF.errorText(error, lang)}</span>
       {retry ? <Button size="sm" className="ml-auto" onClick={retry}>{T.retry}</Button> : null}
@@ -221,7 +221,7 @@ export function ErrorBox({ error, retry }: { error: unknown; retry?: () => void 
 
 export function Empty({ title, children }: { title?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="flex flex-col items-start gap-3 rounded-lg p-6 shadow-[inset_0_0_0_1px_var(--color-line)]">
+    <div className="flex flex-col items-start gap-3 rounded-lg p-6 shadow-[inset_0_0_0_1px_var(--color-line-1)]">
       <p className="kd-hs">{title ?? pick(KIT, FF.lang).nothing}</p>
       {children}
     </div>
@@ -246,7 +246,7 @@ export function KV({ rows, className }: { rows: [ReactNode, ReactNode][]; classN
       {rows.map(([k, v], i) => (
         <div key={i} className="contents">
           <dt className="kd-m">{k}</dt>
-          <dd className="min-w-0 break-words text-sm text-paper">{v ?? '—'}</dd>
+          <dd className="min-w-0 break-words text-sm text-fg-1">{v ?? '—'}</dd>
         </div>
       ))}
     </dl>
@@ -290,10 +290,10 @@ export function Drawer({ open = true, onClose, title, sub, children, footer, wid
       aria-labelledby={id}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      className={cx('kd-sheet kd-drawer m-0 ml-auto h-dvh max-h-none w-full max-w-none bg-carbon p-0 text-mist shadow-[inset_1px_0_0_var(--color-line2)]', wide ? 'tab:w-[760px]' : 'tab:w-[560px]')}
+      className={cx('kd-sheet kd-drawer m-0 ml-auto h-dvh max-h-none w-full max-w-none bg-surface-1 p-0 text-fg-2 shadow-[inset_1px_0_0_var(--color-line-2)]', wide ? 'tab:w-[760px]' : 'tab:w-[560px]')}
     >
       <div className="flex h-full flex-col">
-        <div className="flex items-start gap-2 border-b border-line px-5 py-4">
+        <div className="flex items-start gap-2 border-b border-line-1 px-5 py-4">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <h2 id={id} className="kd-h kd-ell">{title}</h2>
             {sub ? <p className="kd-s">{sub}</p> : null}
@@ -302,7 +302,7 @@ export function Drawer({ open = true, onClose, title, sub, children, footer, wid
         </div>
         {/* Sections keep their height and the body scrolls: a flex child would shrink and overlap the next. */}
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4 [&>*]:shrink-0">{children}</div>
-        {footer ? <div className="flex flex-wrap items-center gap-2 border-t border-line px-5 py-3">{footer}</div> : null}
+        {footer ? <div className="flex flex-wrap items-center gap-2 border-t border-line-1 px-5 py-3">{footer}</div> : null}
       </div>
     </dialog>
   );
@@ -314,7 +314,7 @@ export function Field({ label, hint, error, children, htmlFor }: { label: ReactN
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={htmlFor} hint={hint}>{label}</FieldLabel>
       {children}
-      {error ? <p role="alert" className="kd-s text-hot">{error}</p> : null}
+      {error ? <p role="alert" className="kd-s text-bad">{error}</p> : null}
     </div>
   );
 }
@@ -349,7 +349,7 @@ export function AsyncPick({ load, onPick, label, placeholder, value }: {
   if (value) {
     return (
       <div className="kd-field justify-between gap-2">
-        <span className="kd-ell text-sm text-paper">{value.label}{value.sub ? <span className="kd-s"> · {value.sub}</span> : null}</span>
+        <span className="kd-ell text-sm text-fg-1">{value.label}{value.sub ? <span className="kd-s"> · {value.sub}</span> : null}</span>
         <button type="button" className="kd-ib kd-ib-sm" aria-label={T.reset + ': ' + label} onClick={() => onPick(null)}><XIcon size={14} aria-hidden="true" /></button>
       </div>
     );
@@ -382,7 +382,7 @@ export function AsyncPick({ load, onPick, label, placeholder, value }: {
             : items.map((i, n) => (
               <li key={i.value} role="option" aria-selected={n === at}>
                 <button type="button" className={cx('flex w-full flex-col rounded-md px-3 py-2 text-left', n === at && 'bg-white/[0.07]')} onMouseDown={(e) => e.preventDefault()} onClick={() => choose(i)}>
-                  <span className="text-sm text-paper">{i.label}</span>
+                  <span className="text-sm text-fg-1">{i.label}</span>
                   {i.sub ? <span className="kd-s text-xs">{i.sub}</span> : null}
                 </button>
               </li>
@@ -432,7 +432,7 @@ export function AskHost({ lang, children }: { lang: Lang; children: ReactNode })
   return (
     <AskCtx.Provider value={ask}>
       {children}
-      <dialog ref={ref} role="alertdialog" aria-labelledby={id} onCancel={(e) => { e.preventDefault(); done(false); }} className="kd-sheet m-auto w-[calc(100%-32px)] max-w-[440px] rounded-sheet bg-carbon p-0 text-mist shadow-[inset_0_0_0_1px_var(--color-line2)]">
+      <dialog ref={ref} role="alertdialog" aria-labelledby={id} onCancel={(e) => { e.preventDefault(); done(false); }} className="kd-sheet m-auto w-[calc(100%-32px)] max-w-[440px] rounded-sheet bg-surface-1 p-0 text-fg-2 shadow-[inset_0_0_0_1px_var(--color-line-2)]">
         {cur ? (
           <form
             className="flex flex-col gap-4 p-5"

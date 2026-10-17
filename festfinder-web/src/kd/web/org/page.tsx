@@ -96,9 +96,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
             {org.coverUrl ? (
               <Art family={tiles[0] ?? 'free'} cover={org.coverUrl} className="h-[clamp(120px,15vw,210px)]" />
             ) : (
-              <div className="grid h-[clamp(120px,15vw,210px)] grid-cols-4 gap-2">
-                {tiles.map((f, i) => <Art key={f} family={f} bone={i % 2 === 1} />)}
-              </div>
+              <Art family={tiles[0] ?? 'free'} title={org.name} layout="banner" className="h-[clamp(120px,15vw,210px)]" />
             )}
           </div>
 
@@ -110,7 +108,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 <div className="flex min-w-0 flex-col gap-2">
                   <h1 className="kd-d1">
                     {org.name}
-                    {org.verified ? <SealCheckIcon size={28} weight="fill" className="ml-3 inline-block align-[-0.05em] text-acc" role="img" aria-label={T.orgVerified} /> : null}
+                    {org.verified ? <SealCheckIcon size={28} weight="fill" className="ml-3 inline-block align-[-0.05em] text-info" role="img" aria-label={T.orgVerified} /> : null}
                   </h1>
                   {meta ? <span className="kd-m">{meta}</span> : null}
                   {org.styles.length || org.openForSubmissions ? (
@@ -127,7 +125,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 <ShareProfile lang={lang} title={org.name} />
               </div>
             </div>
-            <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-y-4 border-y border-line py-4.5 tab:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
+            <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-y-4 border-y border-line-1 py-4.5 tab:grid-cols-[repeat(auto-fill,minmax(160px,200px))]">
               <FollowersStat lang={lang} kind="org" id={org.id} source={source} served={org.stats.followers} />
               <Stat value={count(org.stats.following ?? 0, lang)} label={T.followingN} />
               <Stat value={count(org.stats.events, lang)} label={T.orgEvents} />
@@ -144,7 +142,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                   tabs={[
                     {
                       key: 'up', label: T.upcoming, count: org.upcoming.length,
-                      panel: org.upcoming.length ? <UpcomingCards lang={lang} items={org.upcoming} /> : <p className="kd-t pt-5 text-fog">{T.noUpcoming}</p>,
+                      panel: org.upcoming.length ? <UpcomingCards lang={lang} items={org.upcoming} /> : <p className="kd-t pt-5 text-fg-3">{T.noUpcoming}</p>,
                     },
                     ...(past.length ? [{ key: 'past', label: T.past, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}
@@ -157,7 +155,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 {bio || links.length ? (
                   <div className="flex flex-col gap-2">
                     <span className="kd-m">{T.about}</span>
-                    {bio ? <Clamp lines={3} more={T.more} less={T.less} className="kd-t whitespace-pre-line text-paper">{bio}</Clamp> : null}
+                    {bio ? <Clamp lines={3} more={T.more} less={T.less} className="kd-t whitespace-pre-line text-fg-1">{bio}</Clamp> : null}
                     {links.length ? <ProfileLinks links={links} lang={lang} label={T.links} /> : null}
                   </div>
                 ) : null}
@@ -172,7 +170,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       {mix.map((x) => (
-                        <span key={x.f} className={cx('kd-s flex items-center gap-2 text-mist', g(x.f))}>
+                        <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}>
                           <span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{Math.round((x.n / mixTotal) * 100)}%</span>
                         </span>
                       ))}
@@ -190,13 +188,13 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                           <span className="kd-hs kd-ell">{a.name}</span>
                           <span className="kd-s">{fill(T.nEvents, { n: a.events })}</span>
                         </span>
-                        <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
                       </Link>
                     ))}
                   </div>
                 ) : null}
 
-                <div className="flex flex-col border-t border-line">
+                <div className="flex flex-col border-t border-line-1">
                   {org.venues.length ? (
                     <Accordion small summary={T.orgVenues} aside={org.venues.length}>
                       <div className="flex flex-col">
@@ -216,7 +214,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     <dl className="flex flex-col">
                       <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.businessType}</dt><dd className="kd-hs">{text(org.typeLabel, lang) || T.orgKind}</dd></div>
                       {org.markets.length ? <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.markets}</dt><dd className="kd-hs text-right">{org.markets.map((m) => text(m.label, lang) || m.slug).join(', ')}</dd></div> : null}
-                      {org.website ? <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.website}</dt><dd className="kd-hs"><a href={org.website} rel="noopener nofollow" className="hover:underline">{host(org.website)}</a></dd></div> : null}
+                      {org.website ? <div className="kd-lrow min-h-11"><dt className="kd-s flex-1">{T.website}</dt><dd className="kd-hs"><a href={org.website} rel="noopener nofollow" className="kd-hit hover:underline">{host(org.website)}</a></dd></div> : null}
                       <div className="kd-lrow min-h-11 border-b-0"><dt className="kd-s flex-1">{T.verified}</dt><dd className="kd-hs">{org.verified ? T.checked : T.unchecked}</dd></div>
                     </dl>
                   </Accordion>
@@ -227,7 +225,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                         {seo.page.facts.map((f) => (
                           <div key={f.label} className="flex flex-col gap-0.5">
                             <dt className="kd-m">{f.label}</dt>
-                            <dd className="kd-s text-mist">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line2 underline-offset-4 hover:text-paper">{f.value}</a> : f.value}</dd>
+                            <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
                           </div>
                         ))}
                       </dl>

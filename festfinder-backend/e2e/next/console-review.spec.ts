@@ -52,7 +52,8 @@ test.describe('the review queue', () => {
     await expect(page).not.toHaveURL(/risk=/);
 
     // Happening soonest first.
-    await list.getByRole('button', { name: 'Sắp xếp', exact: true }).click();
+    // The chip's name starts with its label, then the order it shows ("Sắp xếp: Mới nhất").
+    await list.getByRole('button', { name: /^Sắp xếp:/ }).click();
     await page.getByRole('menuitemradio', { name: 'Diễn ra sớm nhất' }).click();
     const soonest = [...items].filter((i) => i.startsOn).sort((a, b) => a.startsOn!.localeCompare(b.startsOn!))[0];
     await expect(rows.first()).toContainText(soonest.title);
@@ -73,12 +74,13 @@ test.describe('the review queue', () => {
     await expect(page.getByRole('combobox', { name: 'Gán địa điểm có sẵn' })).toBeVisible();
     const create = page.getByRole('link', { name: 'Tạo địa điểm mới' });
     await expect(create).toHaveAttribute('href', new RegExp(`^/console/venues\\?new=Warehouse\\+12&.*event=${w12.id}`));
-    // Images, details, links, description, quality and risk.
+    // "Toàn bộ tin": images, details, links, description; "Nguồn và bằng chứng": quality and risk.
     await expect(page.getByRole('heading', { name: 'Hình ảnh' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /^Chất lượng · \d+\/100$/ })).toBeVisible();
     await expect(page.getByText('Link bán vé')).toBeVisible();
     await page.getByRole('group', { name: 'Ngôn ngữ mô tả' }).getByRole('button', { name: 'EN' }).click();
     await expect(page.getByRole('group', { name: 'Ngôn ngữ mô tả' }).getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('tab', { name: /^Nguồn và bằng chứng/ }).click();
+    await expect(page.getByRole('heading', { name: /^Chất lượng · \d+\/100$/ })).toBeVisible();
     const recheck = page.waitForResponse((r) => r.url().includes(`/admin/listings/${w12.id}/risk`) && r.ok());
     await page.getByRole('button', { name: 'Tính lại' }).click();
     await recheck;

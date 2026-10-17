@@ -38,7 +38,8 @@ export const clock = (s: number) => {
   return (h ? `${h}:${String(m).padStart(2, '0')}` : String(m)) + ':' + String(x).padStart(2, '0');
 };
 
-export function ArtistMixes({ lang, slug, items, className }: { lang: Lang; slug: string; items: Mix[]; className?: string }) {
+/** `heading={false}`: inside the profile's Mix tab, whose name says it (the heading stays for screen readers). */
+export function ArtistMixes({ lang, slug, items, className, heading = true }: { lang: Lang; slug: string; items: Mix[]; className?: string; heading?: boolean }) {
   const T = pick(MIXES, lang);
   const kd = useKd();
   const [playing, setPlaying] = useState<string | null>(null);
@@ -78,12 +79,12 @@ export function ArtistMixes({ lang, slug, items, className }: { lang: Lang; slug
 
   return (
     <section ref={root} className={cx('flex scroll-mt-32 flex-col gap-3.5', className)} aria-labelledby="mixes-h">
-      <h2 id="mixes-h" className="kd-d3">{T.title}</h2>
+      <h2 id="mixes-h" className={heading ? 'kd-d3' : 'sr-only'}>{T.title}</h2>
       <ul className="flex flex-col">
         {items.map((m) => {
           const on = liked.has(m.id);
           return (
-            <li key={m.id} className="flex flex-col gap-3 border-b border-line py-4 first:pt-0" data-mix={m.id}>
+            <li key={m.id} className="flex flex-col gap-3 border-b border-line-1 py-4 first:pt-0" data-mix={m.id}>
               {playing === m.id ? (
                 <iframe
                   title={`${m.providerLabel}: ${m.title}`}
@@ -91,13 +92,13 @@ export function ArtistMixes({ lang, slug, items, className }: { lang: Lang; slug
                   height={m.height}
                   loading="lazy"
                   allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture"
-                  className="w-full rounded-card border-0 bg-carbon"
+                  className="w-full rounded-card border-0 bg-surface-1"
                 />
               ) : (
                 <button type="button" className="group flex min-w-0 items-center gap-3.5 text-left" onClick={() => play(m)} aria-label={fill(T.play, { t: m.title })}>
                   <span className="relative size-16 shrink-0 overflow-hidden rounded-tag">
-                    <Art family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" />
-                    <span className="absolute inset-0 grid place-items-center bg-void/30 text-paper transition-colors group-hover:bg-void/10" aria-hidden="true"><PlayIcon size={22} weight="fill" /></span>
+                    <Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" />
+                    <span className="absolute inset-0 grid place-items-center bg-surface-0/30 text-fg-1 transition-colors group-hover:bg-surface-0/10" aria-hidden="true"><PlayIcon size={22} weight="fill" /></span>
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="kd-h kd-ell">{m.title}</span>
@@ -106,7 +107,7 @@ export function ArtistMixes({ lang, slug, items, className }: { lang: Lang; slug
                 </button>
               )}
               <div className="flex items-center gap-1">
-                <Button size="sm" tone="ghost" aria-pressed={on} onClick={() => toggleLike(m)} className={on ? 'text-acc' : undefined}>
+                <Button size="sm" tone="ghost" aria-pressed={on} onClick={() => toggleLike(m)} className={on ? 'text-info' : undefined}>
                   <HeartIcon size={16} weight={on ? 'fill' : 'regular'} aria-hidden="true" />
                   <span className="kd-num">{count(likes[m.id] ?? m.likeCount, lang)}</span>
                   <span className="sr-only">{on ? T.liked : T.like}</span>
@@ -178,7 +179,7 @@ function CommentsSheet({ lang, mix, onClose, onTotal }: { lang: Lang; mix: Mix; 
   const reasons = [{ key: 'spam', label: T.rSpam }, { key: 'abuse', label: T.rAbuse }, { key: 'personal', label: T.rPersonal }, { key: 'other', label: T.rOther }];
 
   const row = (c: Comment, reply = false) => (
-    <li key={c.id} className={cx('flex gap-3 py-3', reply ? 'pl-11' : 'border-t border-line')}>
+    <li key={c.id} className={cx('flex gap-3 py-3', reply ? 'pl-11' : 'border-t border-line-1')}>
       {c.author ? <Avatar name={c.author.name ?? T.member} src={c.author.photoUrl} size={32} /> : <span className="size-8 shrink-0" />}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {c.removed ? <p className="kd-s italic">{T.removed}</p> : (
@@ -188,7 +189,7 @@ function CommentsSheet({ lang, mix, onClose, onTotal }: { lang: Lang; mix: Mix; 
               {c.atS != null ? <span className="kd-tag kd-num">{T.at} {clock(c.atS)}</span> : null}
               {c.hidden ? <span className="kd-s text-warn">{T.hidden}</span> : null}
             </span>
-            <p className="kd-t whitespace-pre-line text-paper">{c.body}</p>
+            <p className="kd-t whitespace-pre-line text-fg-1">{c.body}</p>
             <span className="flex flex-wrap items-center gap-1">
               {!reply ? <Button size="sm" tone="ghost" className="-ml-3" onClick={() => setReplyTo(c)}><ArrowBendUpLeftIcon size={14} aria-hidden="true" />{T.reply}</Button> : null}
               {c.me?.mine || c.canModerate ? <IconButton size="sm" label={T.remove} onClick={() => remove(c)}><TrashIcon size={14} aria-hidden="true" /></IconButton> : null}
@@ -210,10 +211,10 @@ function CommentsSheet({ lang, mix, onClose, onTotal }: { lang: Lang; mix: Mix; 
           <ul className="flex flex-col">
             {items.map((c) => [row(c), ...(c.replies ?? []).map((r) => row(r, true))])}
           </ul>
-        ) : <p className="kd-t text-fog">{T.none}</p>}
+        ) : <p className="kd-t text-fg-3">{T.none}</p>}
         {next ? <Button size="sm" tone="ghost" className="self-start" onClick={() => load(next)}>{T.more}</Button> : null}
         {kd.user ? (
-          <form className="flex flex-col gap-2 border-t border-line pt-3" onSubmit={send}>
+          <form className="flex flex-col gap-2 border-t border-line-1 pt-3" onSubmit={send}>
             {replyTo ? (
               <span className="kd-s flex items-center gap-2">{fill(T.replyingTo, { n: replyTo.author?.name ?? T.member })}<Button size="sm" tone="ghost" onClick={() => setReplyTo(null)}>{T.cancel}</Button></span>
             ) : null}

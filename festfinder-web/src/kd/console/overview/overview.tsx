@@ -30,7 +30,7 @@ interface Overview {
 }
 
 type Tone = 'bad' | 'warn' | 'info';
-const TONE: Record<Tone, string> = { bad: 'text-hot', warn: 'text-warn', info: 'text-live' };
+const TONE: Record<Tone, string> = { bad: 'text-bad', warn: 'text-warn', info: 'text-info' };
 
 function Tile({ label, value, note, href, valueClass }: { label: string; value: ReactNode; note: ReactNode; href?: string; valueClass?: string }) {
   const body = (
@@ -87,7 +87,7 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
         <Tile
           label={O.inQueue}
           value={<span className="inline-flex items-center gap-2"><TrayIcon size={22} aria-hidden="true" />{count(q.total, lang)}</span>}
-          valueClass={q.breach ? 'text-hot' : q.total ? 'text-warn' : 'text-ok'}
+          valueClass={q.breach ? 'text-bad' : q.total ? 'text-warn' : 'text-ok'}
           note={q.total ? fill(O.inQueueNote, { d: duration(q.oldestMinutes, lang), n: q.flagged }) : O.queueClear}
           href="/console"
         />
@@ -104,11 +104,11 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
             {todo.length ? (
               <ul className="flex flex-col">
                 {todo.map((x) => (
-                  <li key={x.href} className="border-t border-line">
+                  <li key={x.href} className="border-t border-line-1">
                     <Link href={x.href} className="flex min-h-14 items-center gap-3 px-5 py-3 hover:bg-white/[0.03]">
                       <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]', TONE[x.tone])}>{x.icon}</span>
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5"><span className="kd-hs">{x.title}</span>{x.note ? <span className="kd-s">{x.note}</span> : null}</span>
-                      <CaretRightIcon size={16} className="text-fog" aria-hidden="true" />
+                      <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
                     </Link>
                   </li>
                 ))}
@@ -119,15 +119,15 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
           <Panel as="section" aria-labelledby="ov-up" className="flex flex-col">
             <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-4">
               <h2 id="ov-up" className="kd-h">{O.upcoming}</h2>
-              <Link href="/console/events?when=week&status=live" className="kd-s inline-flex items-center gap-1 hover:text-paper">{O.next7}<CaretRightIcon size={14} aria-hidden="true" /></Link>
+              <Link href="/console/events?when=week&status=live" className="kd-s kd-hit inline-flex items-center gap-1 hover:text-fg-1">{O.next7}<CaretRightIcon size={14} aria-hidden="true" /></Link>
             </div>
             {d.upcoming.length ? (
               <ul className="flex flex-col">
                 {d.upcoming.map((e) => (
-                  <li key={e.id} className="border-t border-line">
+                  <li key={e.id} className="border-t border-line-1">
                     <Link href={`/console/events/${e.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.03]">
                       <DateBlock day={day(e.startsOn).d} top={weekdayShort(e.startsOn, lang)} bottom={monthShort(e.startsOn, lang)} />
-                      <Art family={familyOf('EDM')} cover={e.coverUrl} className="hidden size-12 shrink-0 rounded-lg sm:block" />
+                      <Art title={e.title} family={familyOf('EDM')} cover={e.coverUrl} className="hidden size-12 shrink-0 rounded-lg sm:block" />
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span className="kd-hs kd-ell">{e.title}</span>
                         <span className="kd-s kd-ell">{[e.startTime, e.organizer, e.venueName].filter(Boolean).join(' · ')}</span>
@@ -149,13 +149,13 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
         <Panel as="section" aria-labelledby="ov-act" className="flex flex-col">
           <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-4">
             <h2 id="ov-act" className="kd-h">{O.activity}</h2>
-            <Link href="/console/audit" className="kd-s inline-flex items-center gap-1 hover:text-paper">{O.auditLog}<CaretRightIcon size={14} aria-hidden="true" /></Link>
+            <Link href="/console/audit" className="kd-s kd-hit inline-flex items-center gap-1 hover:text-fg-1">{O.auditLog}<CaretRightIcon size={14} aria-hidden="true" /></Link>
           </div>
           {d.activity.length ? (
             <ul className="flex flex-col">
               {d.activity.map((a) => (
-                <li key={a.seq} className="flex flex-col gap-0.5 border-t border-line px-5 py-3">
-                  <span className="kd-t"><span className="text-paper">{a.actorType === 'system' ? O.system : a.actor}</span> · {a.label[lang]} · <span className="text-paper">{a.target.label}</span></span>
+                <li key={a.seq} className="flex flex-col gap-0.5 border-t border-line-1 px-5 py-3">
+                  <span className="kd-t"><span className="text-fg-1">{a.actorType === 'system' ? O.system : a.actor}</span> · {a.label[lang]} · <span className="text-fg-1">{a.target.label}</span></span>
                   <span className="kd-m kd-num">{ago(a.at, lang)}</span>
                 </li>
               ))}

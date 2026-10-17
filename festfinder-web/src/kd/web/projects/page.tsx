@@ -33,7 +33,7 @@ export async function ProjectsPage({ lang }: { lang: Lang }) {
         <WebNav lang={lang} current="projects" />
         <main className="kd-wrap flex flex-col gap-5 py-8">
           <div className="kd-sec items-end">
-            <h1 className="kd-d1">{T.title}</h1>
+            <h1 className="kd-d2">{T.title}</h1>
             <div className="flex flex-wrap gap-2">
               <LinkButton href={inLang('/p/mine', lang)}>{T.mine}</LinkButton>
               <LinkButton tone="acc" href={inLang('/p/new', lang)}>{T.start}</LinkButton>
@@ -70,14 +70,14 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
           <WebNav lang={lang} current="projects" />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
           <main className="flex flex-col">
-            <div className="kd-wrap"><Art family="edm" cover={p.coverUrl} alt={p.title} className="h-[clamp(200px,28vw,380px)]" /></div>
+            <div className="kd-wrap"><Art title={p.title} family="edm" cover={p.coverUrl} alt={p.title} className="h-[clamp(200px,28vw,380px)]" /></div>
 
             <section className="kd-wrap pt-7" aria-labelledby="p-h">
               <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
                 <div className={`flex min-w-0 max-w-read flex-col gap-2 ${g('edm')}`}>
                   <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{[T.kicker, text(p.city.label, lang), p.eventType ? text(p.eventType.label, lang) : ''].filter(Boolean).join(' · ')}</span>
                   <h1 id="p-h" className="kd-d1 [overflow-wrap:anywhere]">{p.title}</h1>
-                  {p.pitch ? <p className="kd-t text-mist">{p.pitch}</p> : null}
+                  {p.pitch ? <p className="kd-t text-fg-2">{p.pitch}</p> : null}
                   <span className="kd-s flex items-center gap-2 pt-1">
                     {p.owner.name ? <Avatar name={p.owner.name} size={28} /> : null}
                     {fill(T.by, { n: owner })}
@@ -85,7 +85,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                 </div>
                 <OfferBox lang={lang} slug={p.slug} status={p.status} seeking={p.seeking.map((s) => s.key)} packages={p.packages} currency={p.currency} />
               </div>
-              <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-y-4 border-y border-line py-4.5">
+              <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-y-4 border-y border-line-1 py-4.5">
                 {p.targetOn ? <Stat value={dayMonth(p.targetOn, lang) + (lang === 'vi' ? '.' : ' ') + p.targetOn.slice(0, 4)} label={T.target} /> : null}
                 {p.budget != null ? <Stat value={money(p.budget, p.currency, lang)} label={T.budget} /> : null}
                 {p.raiseAmount != null ? <Stat value={money(p.raiseAmount, p.currency, lang)} label={T.raise} /> : null}
@@ -105,7 +105,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                   ) : null}
                   <section aria-labelledby="p-idea" className="flex max-w-read flex-col gap-4">
                     <SectionHead id="p-idea" title={T.idea} />
-                    <p className="kd-t whitespace-pre-line text-mist">{p.story}</p>
+                    <p className="kd-t whitespace-pre-line text-fg-2">{p.story}</p>
                     {p.seeking.length ? (
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="kd-m">{T.seeking}</span>
@@ -120,7 +120,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                         {p.packages.map((k) => (
                           <li key={k.id} className="kd-card flex flex-col gap-1.5 p-5">
                             <span className="kd-hs">{k.title}</span>
-                            <span className="kd-mb kd-num text-paper">{money(k.amount, p.currency, lang)}</span>
+                            <span className="kd-mb kd-num text-fg-1">{money(k.amount, p.currency, lang)}</span>
                             {k.perks ? <span className="kd-s whitespace-pre-line">{k.perks}</span> : null}
                             {k.slots ? <span className="kd-m">{fill(T.slots, { n: k.slots })}</span> : null}
                           </li>
@@ -128,9 +128,9 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                       </ul>
                     </section>
                   ) : null}
-                  <p className="kd-s max-w-read border-t border-line pt-4 text-fog">{text(p.disclaimer, lang)}</p>
+                  <p className="kd-s max-w-read border-t border-line-1 pt-4 text-fg-3">{text(p.disclaimer, lang)}</p>
                 </div>
-                <aside className="kd-side flex flex-col border-t border-line">
+                <aside className="kd-side flex flex-col border-t border-line-1">
                   <Accordion small summary={seo.headings.facts} open>
                     <div className="flex flex-col gap-3">
                       <p className="kd-s">{seo.page.summary}</p>
@@ -138,7 +138,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                         {seo.page.facts.map((f) => (
                           <div key={f.label} className="flex flex-col gap-0.5">
                             <dt className="kd-m">{f.label}</dt>
-                            <dd className="kd-s text-mist">{f.value}</dd>
+                            <dd className="kd-s text-fg-2">{f.value}</dd>
                           </div>
                         ))}
                       </dl>

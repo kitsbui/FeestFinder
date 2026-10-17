@@ -77,7 +77,7 @@ export function FollowButton({ lang, kind, id, name, source, className }: {
   };
   return (
     // Until the page's own answer is in, whether this person follows is not known yet.
-    <button type="button" aria-pressed={on} onClick={toggle} disabled={!v} aria-busy={!v} className={buttonClass({ tone: on ? 'default' : 'acc' }, cx('min-w-[148px]', className))}>
+    <button type="button" aria-pressed={on} onClick={toggle} disabled={!v} aria-busy={!v} className={buttonClass({ tone: on ? 'ghost' : 'default' }, cx('min-w-[148px]', className))}>
       {on ? T.following : T.follow}
     </button>
   );
@@ -96,7 +96,7 @@ export function OwnerLink({ lang, source, href }: { lang: Lang; source: Source; 
   const T = pick(PROFILE, lang);
   const v = useViewer(source);
   if (!v?.owner) return null;
-  return <a className={buttonClass({ tone: 'acc' })} href={href}>{T.edit}</a>;
+  return <a className={buttonClass({})} href={href}>{T.edit}</a>;
 }
 
 export function ShareProfile({ lang, title }: { lang: Lang; title: string }) {
@@ -123,6 +123,8 @@ export function ClaimLink({ lang, kind, name, source }: { lang: Lang; kind: 'org
   const v = useViewer(source);
   if (v && (v.owner || v.claimed)) return null;
   const go = () => {
+    // Counted (the design plan's gate for phase 3: "Đây là tôi" leads to more profiles claimed).
+    FF.track('role_picker_shown', { role: kind, surface: 'claim' });
     if (!kd.requireSignIn(undefined, T.gateClaim)) return;
     kd.openRolePicker(kind, name);
   };
@@ -130,17 +132,19 @@ export function ClaimLink({ lang, kind, name, source }: { lang: Lang; kind: 'org
 }
 
 /**
- * "Đây là tôi" as the page's one lime action, on a profile nobody runs yet (D13): sign in, then
+ * "Đây là tôi" on a profile nobody runs yet (D13), outlined beside the page's one action: sign in, then
  * the role picker offers this listing to claim.
  */
 export function ClaimButton({ lang, kind, name, size, className }: { lang: Lang; kind: 'organizer' | 'artist'; name: string; size?: 'sm'; className?: string }) {
   const kd = useKd();
   const T = pick(PROFILE, lang);
   const go = () => {
+    // Counted (the design plan's gate for phase 3: "Đây là tôi" leads to more profiles claimed).
+    FF.track('role_picker_shown', { role: kind, surface: 'claim' });
     if (!kd.requireSignIn(undefined, T.gateClaim)) return;
     kd.openRolePicker(kind, name);
   };
-  return <button type="button" onClick={go} className={buttonClass({ tone: 'acc', size }, className)}>{T.thisIsMe}</button>;
+  return <button type="button" onClick={go} className={buttonClass({ size }, className)}>{T.thisIsMe}</button>;
 }
 
 /**
@@ -174,13 +178,30 @@ export function RemindButton({ lang, name }: { lang: Lang; name: string }) {
 }
 
 /** Upcoming / past: both panels are in the page's HTML; the tabs show one. */
-export function EventTabs({ label, tabs }: { label: string; tabs: { key: string; label: string; count: number; panel: ReactNode }[] }) {
+/**
+ * A profile's tabs (shows, mixes, the past, about). The address can open one: `#<key>` (a link on the
+ * page, "Mix mới nhất" → #mix) or `?<key>=` (a notification's link to a mix, ?mix=<id>).
+ */
+export function EventTabs({ label, tabs }: { label: string; tabs: { key: string; label: string; count?: number | null; panel: ReactNode }[] }) {
   const [cur, setCur] = useState(tabs[0]?.key ?? '');
+  const keys = tabs.map((t) => t.key).join(',');
+  useEffect(() => {
+    const open = () => {
+      const q = new URLSearchParams(location.search);
+      const key = keys.split(',').find((k) => location.hash === '#' + k || q.has(k));
+      if (!key) return;
+      setCur(key);
+      requestAnimationFrame(() => document.getElementById(key)?.scrollIntoView({ block: 'start' }));
+    };
+    open();
+    window.addEventListener('hashchange', open);
+    return () => window.removeEventListener('hashchange', open);
+  }, [keys]);
   return (
     <div className="flex flex-col">
       <Tabs label={label} current={cur} onSelect={setCur} items={tabs.map((t) => ({ key: t.key, label: t.label, count: t.count }))} />
       {tabs.map((t) => (
-        <div key={t.key} role="tabpanel" aria-label={t.label} hidden={t.key !== cur}>{t.panel}</div>
+        <div key={t.key} id={t.key} role="tabpanel" aria-label={t.label} hidden={t.key !== cur} className="scroll-mt-36">{t.panel}</div>
       ))}
     </div>
   );
@@ -209,7 +230,7 @@ export function PastList({ lang, items, first = 10 }: { lang: Lang; items: PastI
         <section key={yr.y} aria-label={yr.y} className="flex flex-col">
           <span className="kd-m kd-num pb-1.5 pt-4.5">{yr.y}</span>
           {yr.items.map((e) => (
-            <Link key={e.slug} href={inLang('/e/' + e.slug, lang)} className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line hover:bg-white/[0.03]', g(familyOf(e.genre)))}>
+            <Link key={e.slug} href={inLang('/e/' + e.slug, lang)} className={cx('grid min-h-20 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1 hover:bg-white/[0.03]', g(familyOf(e.genre)))}>
               <DateBlock day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} />
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="kd-hs kd-ell">{e.title}</span>

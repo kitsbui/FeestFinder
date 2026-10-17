@@ -115,9 +115,9 @@ public/sw.js                 the service worker
 
 The tokens are in [`src/kd/theme.css`](src/kd/theme.css). `/kit` shows every part.
 
-- **Surface.** A near-black `void` (`#08090a`) with glass panels (`carbon`, `obsidian`, `slate`) and hairlines (`line`, `line2`). Type is `paper` and `mist`, quiet text `fog`.
-- **One lime action.** The accent `acc` (`#e4f222`, ink `#08090a`) is for the one thing a screen is for; everything else is a quiet button.
-- **Colour is genre.** Lễ hội `fest` `#ee6018`, Nhạc sống `live` `#0aa5b8`, EDM `edm` `#8b5cf6`, Văn hoá `cult` `#d6589e`. `familyOf(genre)` and `g(family)` (`src/kd/genre.ts`) set them on a card or a chart.
+- **Colour by role.** Tokens are named for what they do: `surface-0/1/2` (`#08090a` page, panels, raised parts), `line-1/2`, `fg-1/2/3` for text, `inverse` / `on-inverse` for the light surface, `ok` / `warn` / `bad` for status, `map` under a map. `theme.css` is the only file that writes a hex colour (`npm run lint` runs `scripts/check-tokens.ts`; `npm run tokens:rename` rewrites the old material names).
+- **Colour says one sentence.** Turquoise `info` (`#00d9d0`) is information: style names, links, the chosen tab, chip, row or pin, counts, "free". The turquoise → lime gradient (`--gradient-accent`) is the one action a screen exists for (`buttonClass({ tone: 'acc', glow })`), the featured tag and the logo's flags. Lime alone (`#e4f222`) is the focus ring and the glow. Status is a dot with a word.
+- **Shape.** Four button tones (`acc`, `default`, `ghost`, `danger`); radii 4 / 8 / 16 and the pill; glass only over a photo or a map. An event without a cover is a text tile (`Art` with `title`), never shapes. Nothing scrolls sideways: rows of tabs and chips wrap.
 - **Type.** One family, Noto Sans (variable weight), for words, numbers, dates and labels, served from this site from `@fontsource-variable/noto-sans`; the browser fetches only the scripts a page uses. Noto Sans Thai and Noto Sans JP cover Thai and Japanese titles. No monospace face: numbers use tabular figures (`kd-num`, `kd-mb`).
 - **Motion and access.** Animations stop under `prefers-reduced-motion`; menus close on Escape and outside clicks; toggles carry `aria-pressed` or `aria-expanded`.
 

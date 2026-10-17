@@ -1,9 +1,8 @@
-import { appMetadata, appViewport } from '@/kd/app/meta';
-import { MapScreen } from '@/kd/app/screens';
+import { moved } from '@/kd/app/moved';
 
-export const metadata = appMetadata;
-export const viewport = appViewport;
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export default function Page() {
-  return <MapScreen />;
+// The app's map is the home page's map view.
+export default async function Page({ searchParams }: Props) {
+  await moved('/?view=map', searchParams);
 }

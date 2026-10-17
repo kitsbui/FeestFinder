@@ -17,7 +17,8 @@ export function Mono({ children, className, as: As = 'span', ...rest }: HTMLAttr
 
 // ---- tags and status ----------------------------------------------------------------
 
-export type TagTone = 'default' | 'glass' | 'acc' | 'bone' | 'line' | 'hot';
+/** acc: information (new, chosen, free) · featured: the gradient, only Nổi bật and a flagship festival. */
+export type TagTone = 'default' | 'glass' | 'acc' | 'featured' | 'bone' | 'line' | 'bad';
 
 export function Tag({ tone = 'default', className, children }: { tone?: TagTone; className?: string; children: ReactNode }) {
   return <span className={cx('kd-tag', tone !== 'default' && `kd-tag-${tone}`, className)}>{children}</span>;
@@ -47,16 +48,46 @@ export function BoneCard({ className, children, as: As = 'div', ...rest }: HTMLA
 }
 
 /**
- * Event art: the cover when there is one, else the family's shapes. In lists, alternate the
- * plain and bone variants by index. `off` dims it (sold out, past, not chosen).
+ * Two characters for a tile too small for a name: the first letter or digit of each of the first two
+ * words ("Headsmasher 5" → H5), or the first two of a single word ("Zamna" → ZA). Whole characters
+ * (a Vietnamese mark, a CJK character, never half an emoji); punctuation and symbols are skipped.
  */
-export function Art({ family, cover, bone, off, className, style, children, alt = '' }: {
-  family: Family; cover?: string | null; bone?: boolean; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
+const segmenter = typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+const chars = (s: string) => (segmenter ? Array.from(segmenter.segment(s), (x) => x.segment) : Array.from(s)).filter((c) => /[\p{L}\p{N}]/u.test(c));
+export function monogram(title: string): string {
+  const words = title.trim().split(/\s+/).map(chars).filter((w) => w.length);
+  const picked = words.length > 1 ? [words[0][0], words[1][0]] : (words[0] ?? []).slice(0, 2);
+  return picked.map((c) => (c.toUpperCase().length === c.length ? c.toUpperCase() : c)).join('');
+}
+
+/**
+ * Event art: the cover when there is one; under it (and alone without one) a text tile, the name
+ * set large with `meta` (a style, a day) beneath, or a monogram when the tile is under 160px wide.
+ * No shapes and no gradients stand in for a picture. `off` dims it (sold out, past, not chosen).
+ */
+export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, layout = 'card' }: {
+  family: Family; cover?: string | null; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
+  /** The name a text tile shows when there is no cover, or the cover does not load. */
+  title?: string | null;
+  /** The style, in the information colour, at the start of the line under the name ("Hard techno"). */
+  kicker?: string | null;
+  /** The rest of that line ("T7 24.10"). */
+  meta?: string | null;
+  /** Where other parts sit on the tile: `card` (a tag and the save button on top), `banner` (a profile
+   *  cover an avatar overlaps at its foot: one line, high up), `hero` (a back button above, a countdown below),
+   *  `mono` (a person without a photo: the initials, large, at any size). */
+  layout?: 'card' | 'banner' | 'hero' | 'mono';
 }) {
   return (
-    <div className={cx('kd-art', g(family), bone && 'kd-b', off && 'kd-off', className)} style={style}>
+    <div className={cx('kd-art', g(family), off && 'kd-off', layout !== 'card' && `kd-art-${layout}`, className)} style={style}>
+      {title ? (
+        <>
+          {/* Drawn by CSS from these attributes (theme.css): the name is not page text a second time beside the card's own title. */}
+          <span className="kd-art-t" aria-hidden="true"><b data-t={title} /><i data-k={kicker ?? ''} data-m={meta ? (kicker ? ' · ' : '') + meta : ''} /></span>
+          <span className="kd-art-m" aria-hidden="true"><b data-t={monogram(title)} /><i data-k={kicker ?? ''} /></span>
+        </>
+      ) : null}
       {cover ? (
-         
         <img src={cover} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
       ) : null}
       {children}
@@ -66,7 +97,7 @@ export function Art({ family, cover, bone, off, className, style, children, alt 
 
 // ---- data ---------------------------------------------------------------------------
 
-/** A day: the number, with the weekday and month in mono. `hi` = bone (the next show, today). */
+/** A day: the number, with the weekday and month in mono. `hi` = the light block (the next show, today). */
 export function DateBlock({ day, top, bottom, hi, className }: { day: string | number; top?: string; bottom?: string; hi?: boolean; className?: string }) {
   return (
     <div className={cx('kd-dblk', hi && 'kd-dblk-hi', className)}>
@@ -101,8 +132,9 @@ export function Avatar({ name, src, size = 40, org, ring, acc, className }: {
       style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}
       aria-hidden={src ? undefined : true}
     >
-      {/* Under the photo, so a link that does not open (ui/covers.tsx) leaves the initials. */}
-      <span aria-hidden="true">{initials}</span>
+      {/* Under the photo, so a link that does not open (ui/covers.tsx) leaves the initials. Drawn by CSS
+          (kd.css .kd-av-i), so a button around an avatar is named by its label alone (WCAG 2.5.3). */}
+      <span className="kd-av-i" data-i={initials} aria-hidden="true" />
       {src ? (
          
         <img src={src} alt={name} loading="lazy" decoding="async" referrerPolicy="no-referrer" style={frameStyle(src)} />
@@ -132,7 +164,7 @@ export function Accordion({ summary, aside, children, open, name, small, classNa
 
 // ---- badges and passport ------------------------------------------------------------
 
-/** A badge's emblem: the family shape, or a mono number, on a ring of the family colour. */
+/** A badge's emblem: a marker, or a number, on a ring of the information colour. */
 export function Emblem({ family = 'free', n, off, small, className }: { family?: Family; n?: string | number | null; off?: boolean; small?: boolean; className?: string }) {
   return (
     <span className={cx('kd-emb', g(family), small && 'kd-sm', off && 'kd-off', className)} aria-hidden="true">
@@ -147,7 +179,7 @@ export function Stamp({ family, date, name, dim, href }: { family: Family; date:
     <>
       <span className="kd-tile"><span className="kd-mk" aria-hidden="true" /></span>
       <span className="kd-m kd-num">{date}</span>
-      <span className="kd-s kd-ell text-mist">{name}</span>
+      <span className="kd-s kd-ell text-fg-2">{name}</span>
     </>
   );
   const cls = cx('kd-stamp', g(family), dim && 'kd-dim');
@@ -171,7 +203,7 @@ export function Fact({ label, children }: { label: ReactNode; children: ReactNod
   return (
     <div className="flex flex-col gap-1 min-w-0">
       <dt className="kd-m">{label}</dt>
-      <dd className="kd-t text-paper">{children}</dd>
+      <dd className="kd-t text-fg-1">{children}</dd>
     </div>
   );
 }

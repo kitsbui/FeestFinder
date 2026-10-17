@@ -64,7 +64,7 @@ export function Badges({ lang, items, who, own, compact, className }: { lang: La
         </Panel>
       ) : null}
       {todo.length ? (
-        <Accordion small className="border-t border-line" summary={T.inProgress} aside={todo.length}>
+        <Accordion small className="border-t border-line-1" summary={T.inProgress} aside={todo.length}>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(240px,100%),1fr))] gap-5">
             {todo.map((b) => (
               <div key={b.code} className="grid grid-cols-[40px_minmax(0,1fr)] items-start gap-3">

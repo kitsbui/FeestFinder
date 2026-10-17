@@ -93,9 +93,9 @@ export function RevenueScreen() {
                     <div className="flex flex-col gap-2 pb-2">
                       <span className="kd-s">{p.settles[lang]}{p.reference ? ' · ' + p.reference : ''}</span>
                       {p.lines.map((l) => (
-                        <div key={l.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{l.label[lang]}</span><span className="kd-num text-mist">{m(l.amount)}</span></div>
+                        <div key={l.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{l.label[lang]}</span><span className="kd-num text-fg-2">{m(l.amount)}</span></div>
                       ))}
-                      <div className="flex items-baseline justify-between gap-3 border-t border-line pt-2"><span className="kd-hs">{T.net}</span><span className="kd-mb kd-num">{m(p.net)}</span></div>
+                      <div className="flex items-baseline justify-between gap-3 border-t border-line-1 pt-2"><span className="kd-hs">{T.net}</span><span className="kd-mb kd-num">{m(p.net)}</span></div>
                       <a className="kd-more" href={`/organizer/events/${event.id}/payouts/${p.kind}/statement.csv`} download><DownloadSimpleIcon size={14} aria-hidden="true" />{T.statement}</a>
                     </div>
                   </Accordion>
@@ -105,7 +105,7 @@ export function RevenueScreen() {
             <div className="kd-side flex flex-col gap-3">
               <Block title={T.fees}>
                 <div className="flex flex-col gap-2">
-                  {r.fees.map((f) => <div key={f.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{f.label[lang]}</span><span className="kd-num text-mist">{m(f.amount)}</span></div>)}
+                  {r.fees.map((f) => <div key={f.key} className="flex items-baseline justify-between gap-3 kd-s"><span>{f.label[lang]}</span><span className="kd-num text-fg-2">{m(f.amount)}</span></div>)}
                 </div>
               </Block>
               <BankAccount account={r.account} onSaved={load} />
