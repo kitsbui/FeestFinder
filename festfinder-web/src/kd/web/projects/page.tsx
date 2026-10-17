@@ -33,7 +33,7 @@ export async function ProjectsPage({ lang }: { lang: Lang }) {
         <WebNav lang={lang} current="projects" />
         <main className="kd-wrap flex flex-col gap-5 py-8">
           <div className="kd-sec items-end">
-            <h1 className="kd-d1">{T.title}</h1>
+            <h1 className="kd-d2">{T.title}</h1>
             <div className="flex flex-wrap gap-2">
               <LinkButton href={inLang('/p/mine', lang)}>{T.mine}</LinkButton>
               <LinkButton tone="acc" href={inLang('/p/new', lang)}>{T.start}</LinkButton>

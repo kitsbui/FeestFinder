@@ -11,6 +11,8 @@ export const PROJ = {
   allCities: { en: 'All cities', vi: 'Mọi thành phố' },
   city: { en: 'City', vi: 'Thành phố' },
   empty: { en: 'No project is looking for that right now', vi: 'Chưa có dự án nào đang tìm điều này' },
+  none: { en: 'No projects yet', vi: 'Chưa có dự án nào' },
+  clear: { en: 'Clear filters', vi: 'Bỏ lọc' },
   more: { en: 'Load more', vi: 'Tải thêm' },
   kicker: { en: 'Project', vi: 'Dự án' },
   by: { en: 'Started by {n}', vi: 'Khởi xướng bởi {n}' },

@@ -1,6 +1,6 @@
 /**
- * A project in the list: its art (cover, or the EDM shapes), what it is and where, and the
- * needs it is asking for as tags.
+ * A project in the list: its art (cover, or a text tile with its name), what it is and where, and
+ * the needs it is asking for as tags.
  */
 import { pick, type Lang } from '../../copy';
 import { dayMonth } from '../../format';
@@ -10,7 +10,7 @@ import { Art } from '../../ui/parts';
 import { PROJ } from './copy';
 import { text, type Project } from './model';
 
-export function ProjectCard({ p, i, lang }: { p: Project; i: number; lang: Lang }) {
+export function ProjectCard({ p, lang }: { p: Project; lang: Lang }) {
   const T = pick(PROJ, lang);
   const href = inLang('/p/' + encodeURIComponent(p.slug), lang);
   const where = [text(p.city.label, lang) || p.city.slug, p.targetOn ? `${T.target.toLowerCase()} ${dayMonth(p.targetOn, lang)}` : ''].filter(Boolean).join(' · ');

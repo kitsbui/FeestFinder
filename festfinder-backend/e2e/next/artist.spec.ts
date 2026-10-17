@@ -116,6 +116,8 @@ test.describe('the artist page', () => {
 
     await open(page, '/a/' + slug);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(name);
+    // The bio, links and booking details are the "Giới thiệu" tab (design v2 phase 3).
+    await page.getByRole('tab', { name: 'Giới thiệu' }).click();
     await expect(page.getByText('DJ ở Sài Gòn, chơi melodic techno.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Spotify' })).toHaveAttribute('href', 'https://open.spotify.com/artist/abc123');
     await expect(page.getByText('Đang nhận booking').first()).toBeVisible();
@@ -146,6 +148,9 @@ test.describe('mixes on the artist page', () => {
     expect(added.status(), await added.text()).toBe(201);
 
     const problems = await open(page, '/a/wukong');
+    // "Mix mới nhất" beside the tabs leads into the Mix tab, where the sets play.
+    await page.getByRole('region', { name: 'Mix mới nhất' }).getByRole('link').click();
+    await expect(page.getByRole('tab', { name: /^Mix/ })).toHaveAttribute('aria-selected', 'true');
     const listen = page.getByRole('region', { name: 'Nghe' });
     await expect(listen).toBeVisible();
     await expect(listen.locator('iframe'), 'nothing from SoundCloud loads before play').toHaveCount(0);
@@ -159,6 +164,7 @@ test.describe('mixes on the artist page', () => {
   test('a fan likes a mix and opens its comments', async ({ page }) => {
     await signInWith(page, ATTENDEE);
     await open(page, '/a/wukong');
+    await page.getByRole('tab', { name: /^Mix/ }).click();
     const listen = page.getByRole('region', { name: 'Nghe' });
     // "0 Thích", then "1 Đã thích" once pressed.
     const like = listen.getByRole('button', { name: /thích/i }).first();

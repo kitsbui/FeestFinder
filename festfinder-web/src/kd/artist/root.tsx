@@ -86,7 +86,6 @@ function Gate({ lang, children }: { lang: Lang; children: ReactNode }) {
 
 function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; children: ReactNode }) {
   const T = pick(ARTIST, lang);
-  const K = pick(CRAFT, lang);
   const kd = useKd();
   const path = usePathname() ?? '/studio/artist';
   const seg = path.split('/')[3] as ArtistScreen | undefined;

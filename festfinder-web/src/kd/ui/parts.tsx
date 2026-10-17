@@ -74,8 +74,9 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
   /** The rest of that line ("T7 24.10"). */
   meta?: string | null;
   /** Where other parts sit on the tile: `card` (a tag and the save button on top), `banner` (a profile
-   *  cover an avatar overlaps at its foot: one line, high up), `hero` (a back button above, a countdown below). */
-  layout?: 'card' | 'banner' | 'hero';
+   *  cover an avatar overlaps at its foot: one line, high up), `hero` (a back button above, a countdown below),
+   *  `mono` (a person without a photo: the initials, large, at any size). */
+  layout?: 'card' | 'banner' | 'hero' | 'mono';
 }) {
   return (
     <div className={cx('kd-art', g(family), off && 'kd-off', layout !== 'card' && `kd-art-${layout}`, className)} style={style}>

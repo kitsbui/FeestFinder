@@ -38,7 +38,8 @@ export const clock = (s: number) => {
   return (h ? `${h}:${String(m).padStart(2, '0')}` : String(m)) + ':' + String(x).padStart(2, '0');
 };
 
-export function ArtistMixes({ lang, slug, items, className }: { lang: Lang; slug: string; items: Mix[]; className?: string }) {
+/** `heading={false}`: inside the profile's Mix tab, whose name says it (the heading stays for screen readers). */
+export function ArtistMixes({ lang, slug, items, className, heading = true }: { lang: Lang; slug: string; items: Mix[]; className?: string; heading?: boolean }) {
   const T = pick(MIXES, lang);
   const kd = useKd();
   const [playing, setPlaying] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export function ArtistMixes({ lang, slug, items, className }: { lang: Lang; slug
 
   return (
     <section ref={root} className={cx('flex scroll-mt-32 flex-col gap-3.5', className)} aria-labelledby="mixes-h">
-      <h2 id="mixes-h" className="kd-d3">{T.title}</h2>
+      <h2 id="mixes-h" className={heading ? 'kd-d3' : 'sr-only'}>{T.title}</h2>
       <ul className="flex flex-col">
         {items.map((m) => {
           const on = liked.has(m.id);

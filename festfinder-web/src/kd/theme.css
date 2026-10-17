@@ -207,6 +207,10 @@
   .kd-art-banner .kd-art-t { padding: 20px 20px 14px; justify-content: flex-start; }
   .kd-art-banner .kd-art-t b { -webkit-line-clamp: 1; }
   .kd-art-hero .kd-art-t { padding: 72px 20px 60px; }
+  /* A person or an artist without a photo: their initials, large and centred, at any size (the directory's square cards). */
+  .kd-art-mono .kd-art-t { display: none; }
+  .kd-art-mono .kd-art-m { display: flex; }
+  .kd-art-mono .kd-art-m b { font-size: clamp(18px, 22cqi, 64px); }
   .kd-art-m i { font-size: 10px; }
   @container (max-width: 159px) {
     .kd-art-t { display: none; }

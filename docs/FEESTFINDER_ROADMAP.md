@@ -152,7 +152,13 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - Share pictures in the v2 palette: a page without a cover names logo pack v2's picture (`/ui/assets/og.png`, `ogFallback` in `services/seo.ts`; `/og/v1/<tone>.png` still answers for cached previews); the story art is the night ground with the accent's glow (`runtime/ff.ts`).
   - Cards show the start time in their line; `e2e/next/pages.spec.ts` checks the first event in the first screen at 390 and 1440px, the table on request, the sticky bar, "Lọc", the questions on /about, the phone's tickets and dock, and Hỏi đáp.
   - [ ] Later: the map split beside the list on a computer is the map view's own (unchanged); a real basemap in the rail, "Tối nay" by the hour and English copy review are for the next pass.
-- [ ] Phase 3: artists and projects
+- [x] Phase 3: artists and projects (branch `design/phase-3`).
+  - The directory (`kd/web/directory`): tabs with their counts in place of the line that explained them (Có hồ sơ `/a` · Từ Radar `/a/radar` · Nhận booking `/a?booking=1`, the booking chip became the tab); square cards (the photo, else the cover, else the initials large: `Art` layout `mono`) with the booking status and Radar over them, what they do and where, the next show and the styles, two to a row on a phone; "Tôi là nghệ sĩ" beside the search opens the role picker (signing in first); the title at d2.
+  - An artist's page (`kd/web/artist`): no tile repeating the name when there is no cover; the name at d2 without the EDM tag; followers and following only in the row under it (the shows are counted in the tabs); tabs Sắp diễn · Mix · Đã diễn · Giới thiệu (bio, links, booking details); beside them "Mix mới nhất" (a way into the Mix tab, so one player stays on the page), who they play with most and the rest. `EventTabs` opens a tab from `#<key>` or `?<key>=` (a notification's `?mix=`).
+  - `/p`: the empty state is one line and one thing to do (clear the filters, or start a project); the title at d2; the project card's text tile and comment brought up to date.
+  - "Đây là tôi" and "Tôi là nghệ sĩ" send `role_picker_shown` {role, surface}: the phase's gate (more profiles claimed) can be read in PostHog next to the claims the Console approves.
+  - `OriginTabs` is gone (nothing used it after phase 2). `e2e/next/people.spec.ts` checks the tabs, the phone's first names, the artist's tabs and /p's empty state.
+  - [ ] Later: a booking request from an artist's page ("Đặt lịch" in the mockup) needs an API of its own; "Mở cho brand" as a directory filter.
 - [ ] Phase 4: the app folded into the web. Owner, 2026-10-17: the app's Khám phá (`/app`) merges into `/` (tech debt #18), redirects keep the query.
 - [ ] Phase 5: Studio and the Console
 - [ ] Phase 6: QA and governance (continuous)
@@ -251,3 +257,4 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-17: Design v2 phase 0: role-named tokens, the turquoise → lime accent with glow, text tiles for art, four button tones, no sideways scroll at 390/768/1440, the token check in the web lint, axe and visual checks, the nav and card funnel events.
 - 2026-10-17: Design v2 phase 1 (navigation): four places and a search in the bar, a tab bar on phones, the "Tôi" hub and the workspace switcher, "Đăng sự kiện" straight to the wizard, logo pack v2, no floating feedback button, breadcrumbs without EDM.
 - 2026-10-17: Design v2 phase 2 (home and event page): the list by day with a lead and rows, a sticky filter bar and "Lọc" on phones, the week and cities rail, the questions on /about, the event's facts grid, tickets after the hero and a "Mua vé" bar on phones, one Hỏi đáp, v2 share pictures.
+- 2026-10-17: Design v2 phase 3 (artists and projects): the directory's tabs and square cards, an artist's page in tabs with the latest mix, /p's empty state, claims counted.

@@ -10,7 +10,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { CalendarCheckIcon, CaretDownIcon, MagnifyingGlassIcon, MicrophoneStageIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { CaretDownIcon, MagnifyingGlassIcon, MicrophoneStageIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../../copy';
 import { cx } from '../../cx';
@@ -18,7 +18,8 @@ import { count } from '../../format';
 import { familyOf, type Family } from '../../genre';
 import { inLang, KdLink } from '../../link';
 import { useKd } from '../../runtime';
-import { Button, Chip } from '../../ui/actions';
+import { Button, buttonClass, Chip } from '../../ui/actions';
+import { Tabs } from '../../ui/shell';
 import { Input } from '../../ui/forms';
 import { Menu, MenuItem } from '../../ui/menu';
 import { Card as Panel, Marker } from '../../ui/parts';
@@ -52,7 +53,8 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
 }) {
   const T = pick(DIR, lang);
   const W = pick(WEB, lang);
-  const { toast } = useKd();
+  const kd = useKd();
+  const { toast } = kd;
   const roles = useMemo(() => first.filters?.roles ?? [], [first.filters]);
   const initial = useMemo(() => fromScope({ style: scope.style, city: scope.city, unclaimed: scope.unclaimed }), [scope.style, scope.city, scope.unclaimed]);
   const [f, setF] = useState<Filters>(start);
@@ -222,9 +224,12 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
       <main className="kd-wrap flex flex-col gap-5 pb-8 pt-2" aria-labelledby="dir-title">
         <div className="kd-sec">
           <div className="flex min-w-0 flex-col gap-1.5">
-            <h1 id="dir-title" className="kd-d1">{title}</h1>
+            <h1 id="dir-title" className="kd-d2">{title}</h1>
           </div>
-          <form role="search" onSubmit={onSubmit} className="w-full tab:w-[340px]">
+          <div className="flex w-full flex-wrap items-center gap-2 tab:w-auto">
+          {/* An artist not listed yet starts their own profile (the role picker; signing in first). */}
+          <button type="button" className={buttonClass({ size: 'sm' }, 'shrink-0')} onClick={() => { FF.track('role_picker_shown', { role: 'artist', surface: 'directory' }); if (kd.requireSignIn(undefined, T.iAmArtist)) kd.openRolePicker('artist'); }}>{T.iAmArtist}</button>
+          <form role="search" onSubmit={onSubmit} className="min-w-0 flex-1 tab:w-[340px] tab:flex-none">
             <Input
               type="search"
               name="q"
@@ -236,14 +241,20 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
               icon={<MagnifyingGlassIcon size={18} aria-hidden="true" />}
             />
           </form>
+          </div>
         </div>
 
-        {/* The directory is the artists who run their profile; the names nobody runs yet wait apart (D13). */}
-        {f.unclaimed ? (
-          <KdLink href={inLang('/a', lang)} className="kd-more self-start">{T.toDirectory}</KdLink>
-        ) : list.kinds && list.kinds.unclaimed + list.kinds.radar > 0 ? (
-          <KdLink href={inLang('/a/radar', lang)} className="kd-more self-start">{fill(T.toUnclaimed, { n: count(list.kinds.unclaimed + list.kinds.radar, lang) })}</KdLink>
-        ) : null}
+        {/* Who runs the profile, as tabs with their counts (design v2 phase 3): the artists who run theirs (D13),
+            the names from lineups and Radar nobody runs yet, and those taking bookings. */}
+        <Tabs
+          label={T.sources}
+          current={f.unclaimed ? 'radar' : f.booking ? 'booking' : 'owned'}
+          items={[
+            { key: 'owned', label: T.tabOwned, count: list.kinds && !f.booking ? list.kinds.owned : null, href: addressOf({ ...f, unclaimed: false, booking: false }, lang) },
+            { key: 'radar', label: T.tabRadar, count: list.kinds && !f.booking ? list.kinds.unclaimed + list.kinds.radar : null, href: addressOf({ ...f, unclaimed: true, booking: false }, lang) },
+            { key: 'booking', label: T.available, href: addressOf({ ...f, unclaimed: false, booking: true }, lang) },
+          ]}
+        />
 
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label={T.filters}>
           {roles.length ? (
@@ -280,9 +291,6 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
               ))}
             </PickChip>
           ) : null}
-          <Chip on={f.booking} onClick={() => change({ booking: !f.booking })}>
-            <CalendarCheckIcon size={16} aria-hidden="true" />{T.available}
-          </Chip>
           <Chip on={f.soon} onClick={() => change({ soon: !f.soon })}>
             <MicrophoneStageIcon size={16} aria-hidden="true" />{T.upcoming}
           </Chip>
@@ -290,7 +298,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
         </div>
 
         {list.items.length ? (
-          <ul className={cx('kd-cards mt-2 transition-opacity', busy && 'opacity-60')} aria-label={T.results} aria-busy={busy}>
+          <ul className={cx('kd-dir-cards mt-2 transition-opacity', busy && 'opacity-60')} aria-label={T.results} aria-busy={busy}>
             {list.items.map((a) => <li key={a.id} className="min-w-0"><ArtistCard a={a} lang={lang} /></li>)}
           </ul>
         ) : busy ? (
