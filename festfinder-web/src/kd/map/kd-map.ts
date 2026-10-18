@@ -14,7 +14,25 @@
 import { FF } from '@/runtime/ff';
 import type { Family } from '../genre';
 
-export interface Pin { id: string; lat: number | null; lng: number | null; family: Family; label: string; title?: string }
+/** An event on the map; `approx` when only its city is known, so its pin sits near the city's centre. */
+export interface Pin { id: string; lat: number | null; lng: number | null; family: Family; label: string; title?: string; approx?: boolean }
+
+/**
+ * Pins that share a point only because their city's centre stands for them, laid out on a small
+ * spiral around it (a few hundred metres apart), so each can be seen and tapped once zoomed in.
+ */
+function spread(items: Pin[]): Pin[] {
+  const seen = new Map<string, number>();
+  return items.map((p) => {
+    if (!p.approx || p.lat == null || p.lng == null) return p;
+    const key = `${p.lat},${p.lng}`;
+    const i = seen.get(key) ?? 0;
+    seen.set(key, i + 1);
+    if (!i) return p;
+    const r = 0.0025 * Math.sqrt(i), a = i * 2.39996;
+    return { ...p, lat: p.lat + r * Math.sin(a), lng: p.lng + r * Math.cos(a) };
+  });
+}
 export type Box = [number, number, number, number];
 
 export interface KdMapOptions {
@@ -141,7 +159,7 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
       const wrap = document.createElement('div');
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `kd-ppin kd-g-${p.family}`;
+      button.className = `kd-ppin kd-g-${p.family}${p.approx ? ' kd-ppin-approx' : ''}`;
       button.setAttribute('aria-pressed', 'false');
       button.setAttribute('aria-label', opts.pinLabel ? opts.pinLabel(p) : p.title || p.label);
       const mk = document.createElement('span');
@@ -210,7 +228,7 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
   return {
     ready,
     setEvents(next) {
-      items = next;
+      items = spread(next);
       const src = map.getSource('kd-events');
       if (src) src.setData(geo());
       for (const [id, pin] of pins) if (!next.some((x) => x.id === id)) { pin.marker.remove(); pins.delete(id); }

@@ -78,7 +78,10 @@ const ExploreQuery = z.object({
 });
 
 /** Filters shared by the Explore feed, the stat drill-downs and the facet counts. */
-function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; style?: boolean; city?: boolean; origin?: boolean }) {
+/** Where a filter reads an event's point: its own coordinates, or (the map) wherever its pin goes. */
+type At = { lat: string; lng: string };
+
+function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: string, userId: string | null, opts: { time: boolean; style?: boolean; city?: boolean; origin?: boolean; at?: At }) {
   const where = [`e.status = 'live'`, 'not e.held_for_reports'];
   const q = f.q?.trim();
   if (q) {
@@ -105,10 +108,11 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
   if (opts.origin !== false && f.origin) where.push(`e.origin = ${sql.p(f.origin)}`);
   if (f.bbox) {
     const b = parseBbox(f.bbox);
+    const at = opts.at ?? { lat: 'e.lat', lng: 'e.lng' };
     const lng = b.minLng <= b.maxLng
-      ? `e.lng between ${sql.p(b.minLng)} and ${sql.p(b.maxLng)}`
-      : `(e.lng >= ${sql.p(b.minLng)} or e.lng <= ${sql.p(b.maxLng)})`;
-    where.push(`e.lat between ${sql.p(b.minLat)} and ${sql.p(b.maxLat)} and ${lng}`);
+      ? `${at.lng} between ${sql.p(b.minLng)} and ${sql.p(b.maxLng)}`
+      : `(${at.lng} >= ${sql.p(b.minLng)} or ${at.lng} <= ${sql.p(b.maxLng)})`;
+    where.push(`${at.lat} between ${sql.p(b.minLat)} and ${sql.p(b.maxLat)} and ${lng}`);
   }
   if (f.organizer) where.push(`o.slug = ${sql.p(f.organizer)}`);
   if (f.price?.length) {
@@ -238,6 +242,10 @@ export default async function catalogRoutes(app: FastifyInstance) {
    * The map: events with a pin inside a box, under the same filters as the list. The map asks
    * once when it opens and again only when someone presses "search this area", never on every
    * pan. Pins are light; the drawer opens the full page.
+   *
+   * Every listed event has a pin, so the map never shows fewer than the list: its own point, else
+   * its venue's (by id, or a venue of its city named the same: what Radar finds often has only a
+   * venue's name), else its city's centre, marked `approx` (lib/places.ts).
    */
   app.get('/events/map', async (req) => {
     const f = parse(ExploreQuery.extend({ time: z.enum(TIME_FILTERS).default('all'), limit: limit(MAP_LIMIT, 300), free: bool.optional() }), req.query);
@@ -245,10 +253,19 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
     const sql = new SqlParams();
-    const where = feedFilters(sql, f, todayFor(f, now), userId, { time: true });
-    where.push(`(e.ends_at is null or e.ends_at >= ${sql.p(now)})`, 'e.lat is not null', 'e.lng is not null');
+    const at = { lat: 'coalesce(e.lat, pv.lat, pc.lat)', lng: 'coalesce(e.lng, pv.lng, pc.lng)' };
+    const where = feedFilters(sql, f, todayFor(f, now), userId, { time: true, at });
+    where.push(`(e.ends_at is null or e.ends_at >= ${sql.p(now)})`, `${at.lat} is not null`, `${at.lng} is not null`);
     const rows = await many<any>(ctx.db,
-      `select ${CARD_COLUMNS}, count(*) over () as total from events e join organizers o on o.id = e.organizer_id
+      `select ${CARD_COLUMNS}, ${at.lat} as pin_lat, ${at.lng} as pin_lng, (e.lat is null and pv.lat is null) as pin_approx,
+              count(*) over () as total
+         from events e join organizers o on o.id = e.organizer_id
+         left join lateral (
+           select v.lat, v.lng from venues v
+            where v.id = e.venue_id
+               or (e.venue_id is null and v.city = e.city and lower(e.venue_name) in (select lower(n) from unnest(v.name || v.aliases) n))
+            order by (v.id = e.venue_id) desc limit 1) pv on e.lat is null
+         left join cities pc on pc.slug = e.city
         where ${where.join(' and ')} order by e.starts_at, e.id limit ${sql.p(f.limit)}`, sql.values);
     const total = rows[0]?.total ?? 0;
     return {
@@ -256,7 +273,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
         const c = presentCard(r, { now, viewer: null });
         return {
           id: c.id, slug: c.slug, title: c.title, genre: c.genre, styles: c.styles, eventType: c.eventType,
-          lat: c.venue.lat, lng: c.venue.lng, venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel, origin: c.origin,
+          lat: Number(r.pin_lat), lng: Number(r.pin_lng), approx: !!r.pin_approx,
+          venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel, origin: c.origin,
           startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime,
           art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, soldOut: c.soldOut,
           lineup: c.lineup.slice(0, 6), confidence: c.confidence,

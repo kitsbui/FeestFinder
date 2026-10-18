@@ -188,6 +188,22 @@ test.describe('the list, the home page', () => {
     await expect(page).toHaveURL(/\/e\/ravo$/);
   });
 
+  test('an event only known by its city has a pin too, outlined as approximate', async ({ page }) => {
+    // As the API answers for a Radar find with a venue's name only (/events/map `approx`): the city's centre.
+    let approx = '';
+    await page.route(/\/events\/map\?/, async (route) => {
+      const body = (await (await route.fetch()).json()) as { items: { title: string; lat: number; lng: number; approx?: boolean }[] };
+      approx = body.items[0].title;
+      const items = body.items.map((e, i) => (i < 2 ? { ...e, lat: 10.7769, lng: 106.7009, approx: true } : e));
+      await route.fulfill({ json: { ...body, items } });
+    });
+    await page.goto('/?city=ho-chi-minh&view=map');
+    await expect(page.locator('[data-map-rows] > button').first()).toBeVisible();
+    // Its row comes after the ones with a distance, and choosing it lights its pin.
+    await page.locator('[data-map-rows] > button', { hasText: approx }).first().click();
+    await expect(page.locator('.kd-ppin.kd-ppin-approx[aria-pressed="true"]')).toHaveCount(1);
+  });
+
   test('free and nearby narrow the map list, and clearing brings it back', async ({ page }) => {
     await page.goto('/?city=ho-chi-minh&view=map');
     const n = () => page.locator('[data-map-rows] > button').count();

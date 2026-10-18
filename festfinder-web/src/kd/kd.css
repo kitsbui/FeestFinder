@@ -213,6 +213,8 @@
     transition: background-color var(--dur-1) var(--ease-ff), color var(--dur-1) var(--ease-ff), transform var(--dur-1) var(--ease-ff);
   }
   .kd-ppin::after { content: ''; position: absolute; inset: -7px -2px; }
+  /* Only its city is known (/events/map `approx`): the pin's outline is broken. */
+  .kd-ppin-approx { box-shadow: none; outline: 1px dashed rgba(255, 255, 255, 0.34); outline-offset: -1px; }
   .kd-ppin:hover { transform: scale(1.05); }
   .kd-ppin[aria-pressed='true'] { z-index: 3; background: var(--color-info); color: var(--color-on-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-info) 22%, transparent); transform: scale(1.08); }
   .kd-me { width: 16px; height: 16px; border-radius: 50%; background: var(--color-info); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-info) 22%, transparent), 0 0 0 10px color-mix(in srgb, var(--color-info) 8%, transparent); }
