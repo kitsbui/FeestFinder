@@ -216,6 +216,12 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - [x] P2: the event page on a phone: a free night's ticket box without a second "Chỉ đường", no "0 hype", an empty Hỏi đáp is one "Đặt câu hỏi" button, related nights as rows; the wizard names its steps on a phone and drops its technical lines there.
   - [ ] The team: remove the "SPONGE BOB" artist profile in the Console; five newcomers on their own phones (docs/DESIGN_GOVERNANCE.md).
 
+- [x] Phase 12: tinh gọn (artboard 25, owner decisions 2026-10-18: three steps, three concepts first, one way to do each thing, fold don't delete).
+  - The phone's tab bar has four places (Sự kiện, Bản đồ, Đã lưu, Tôi); search is an icon at the top; Nghệ sĩ and Dự án are in the search sheet and in "Tôi".
+  - The phone's filters: four times in one tap in the bar, the city and the styles that have nights here above the list; no "Lọc" sheet, no table on a phone; the map's column keeps the city and the time there.
+  - The event page folds going with friends, the guide, Hỏi đáp and Hype under one "Thêm"; a card wears one tag at most and no marketing badges (trending, 500+ going, just added).
+  - Tests: nav, list, pages, event and newcomer specs updated (four tabs, the search on top, the four times, "Thêm").
+
 ## What the team does next in production
 
 1. Set `TICKETMASTER_API_KEY` in Vercel if Ticketmaster is wanted (Singapore has the most coverage).

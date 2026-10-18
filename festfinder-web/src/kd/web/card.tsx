@@ -18,13 +18,17 @@ import type { Card } from '../types';
 import { WEB } from './copy';
 import { SaveToggle } from './save-toggle';
 
+/** The badges a card still shows (design v2 phase 12): the ones that change whether to go now. */
+const URGENT = new Set(['low_tickets', 'selling_fast']);
+
+/** At most one tag on a card, and only one that matters: off, sold out, a world festival, few tickets, a paid place. */
 export function cardTag(e: Card, lang: Lang): string | null {
   const T = pick(WEB, lang);
   if (e.status === 'cancelled') return T.cancelled;
   if (e.past) return T.ended;
   if (e.soldOut) return T.soldOut;
   if (e.festival?.flagship && e.festival.label) return tx(e.festival.label, lang);
-  if (e.badge) return tx(e.badge.label, lang);
+  if (e.badge && URGENT.has(e.badge.key)) return tx(e.badge.label, lang);
   if (e.featured) return T.featured;
   return null;
 }

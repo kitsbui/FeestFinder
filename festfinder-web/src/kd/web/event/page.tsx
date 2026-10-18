@@ -4,7 +4,7 @@
  * and answers, structured data); the personal and interactive parts hydrate on top.
  */
 import { KdLink as Link, inLang } from '../../link';
-import { BroadcastIcon, CalendarBlankIcon, CaretRightIcon, CompassIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
+import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
 import { ViewTransition, type ReactNode } from 'react';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick, tx } from '../../copy';
@@ -22,11 +22,11 @@ import { EventCard } from '../card';
 import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { CommunityLine, CopyAddress, Countdown, FollowOrg, ReportLink, SaveWithCount, ShareButton } from './actions';
-import { Ambassadors, DiscussionSection, Hype, PhotoWall } from './community';
+import { Ambassadors, PhotoWall } from './community';
+import { EventMore } from './more';
 import { EventClientProvider } from './context';
 import { Lineup } from './lineup';
 import { ListenFirst } from './previews';
-import { GoTogetherRow } from './friends';
 import { RideButton } from './ride';
 import { TicketsPanel } from './tickets';
 import { CalendarButton } from './calendar';
@@ -167,18 +167,6 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                         <span className="kd-t flex-1 text-fg-1"><span className="text-fg-3">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
                       </div>
                     ) : null}
-                    {/* The night with friends and the guide: from the app's event screen, which this page replaced (design v2 phase 4). */}
-                    {!ev.past ? (
-                      <GoTogetherRow lang={lang} href={'/app/plan/' + enc(ev.slug)} />
-                    ) : null}
-                    {/* Only when the guide can answer: a row that opens "đang tạm nghỉ" is a dead end. */}
-                    {!ev.past && ev.guide ? (
-                      <a className="kd-lrow min-h-13" href={'/app/guide/' + enc(ev.slug)}>
-                        <CompassIcon size={18} className="text-fg-3" aria-hidden="true" />
-                        <span className="kd-t flex-1 text-fg-1">{T.guideRow}</span>
-                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
-                      </a>
-                    ) : null}
                   </div>
                   <CommunityLine lang={lang} />
                 </div>
@@ -238,10 +226,8 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
 
                   <ListenFirst lang={lang} />
 
-                  <Hype lang={lang} />
-
-                  {/* Hỏi đáp: the organiser's answers first, then everyone's questions and talk (owner, 2026-10-17). */}
-                  <DiscussionSection lang={lang} />
+                  {/* Going with friends, the guide, Hỏi đáp and Hype, folded under "Thêm" (design v2 phase 12). */}
+                  <EventMore lang={lang} />
                   <PhotoWall lang={lang} />
                   <Ambassadors lang={lang} />
                 </div>

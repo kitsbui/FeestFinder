@@ -26,8 +26,8 @@ test('a night sold at a price nobody gave is never "free"', async ({ page }) => 
   expect(problems).toEqual([]);
 });
 
-/** The phone's city chooser (the bar's first control). */
-const cityOf = (page: import('@playwright/test').Page) => page.locator('.kd-cmd').getByRole('button', { name: /^Thành phố:/ }).locator('visible=true');
+/** The phone's city chooser (above the list since design v2 phase 12). */
+const cityOf = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Thành phố:/ }).locator('visible=true');
 
 test('the city comes first: guessed from the phone, kept when chosen, and the page never jumps', async ({ browser }) => {
   // A phone in Vietnam: the demo's nights are all in TP.HCM, more than enough for a guess.
@@ -116,6 +116,8 @@ test('an event page on a phone: the way there once in each place, an empty Hỏi
   test.skip(!quiet, 'every demo night has questions');
   await page.goto('/e/' + quiet);
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  // Under "Thêm" (design v2 phase 12): its row opens it.
+  await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
   const qa = page.getByRole('region', { name: 'Hỏi đáp' });
   await expect(qa.getByRole('button', { name: 'Đặt câu hỏi' })).toBeVisible();
   await expect(qa.getByRole('textbox')).toHaveCount(0);

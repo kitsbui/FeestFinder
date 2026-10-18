@@ -34,7 +34,8 @@ export function ago(iso: string, lang: Lang, now = FF.now().getTime()): string {
 
 // ---- hype --------------------------------------------------------------------------
 
-export function Hype({ lang }: { lang: Lang }) {
+/** `bare`: inside the page's "Thêm" (more.tsx), whose row names it. */
+export function Hype({ lang, bare }: { lang: Lang; bare?: boolean }) {
   const { ev, personal, reload } = useEvent();
   const kd = useKd();
   const T = pick(WEB, lang);
@@ -53,9 +54,9 @@ export function Hype({ lang }: { lang: Lang }) {
     } catch (e) { setOn(hyped); kd.toast(FF.errorText(e, lang)); }
   };
   return (
-    <section aria-labelledby="hype-h" className="kd-card flex max-w-read flex-col gap-3 p-4">
+    <section aria-labelledby={bare ? undefined : 'hype-h'} aria-label={bare ? T.hype : undefined} className={cx('flex max-w-read flex-col gap-3', !bare && 'kd-card p-4')}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="hype-h" className="kd-d3">{T.hype}</h2>
+        {bare ? null : <h2 id="hype-h" className="kd-d3">{T.hype}</h2>}
         {H.count ? <span className="kd-mb kd-num whitespace-nowrap">{fill(T.hypeCount, { n: count(H.count, lang) })}</span> : null}
         {H.last24h ? <span className="kd-s whitespace-nowrap">{fill(T.hype24, { n: H.last24h })}</span> : null}
         <Button size="sm" className="ml-auto" aria-pressed={hyped} onClick={toggle}>
@@ -89,7 +90,8 @@ export function Hype({ lang }: { lang: Lang }) {
 
 // ---- discussion ----------------------------------------------------------------------
 
-export function DiscussionSection({ lang }: { lang: Lang }) {
+/** `bare`: inside the page's "Thêm" (more.tsx), whose row names it. */
+export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }) {
   const { ev, reload: reloadEvent } = useEvent();
   const kd = useKd();
   const T = pick(WEB, lang);
@@ -128,17 +130,17 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
   // Nothing asked or answered yet: one button, not three tabs and an empty field (design v2 phase 11).
   if (d && !d.total && !ev.faq.length && !asking) {
     return (
-      <section id="discussion" aria-labelledby="disc-h" className="flex max-w-read scroll-mt-32 flex-wrap items-center justify-between gap-3">
-        <h2 id="disc-h" className="kd-d3">{T.discussion}</h2>
+      <section id="discussion" aria-labelledby={bare ? undefined : 'disc-h'} aria-label={bare ? T.discussion : undefined} className="flex max-w-read scroll-mt-32 flex-wrap items-center justify-between gap-3">
+        {bare ? null : <h2 id="disc-h" className="kd-d3">{T.discussion}</h2>}
         <Button onClick={() => setAsking(true)}>{T.discAsk}</Button>
       </section>
     );
   }
 
   return (
-    <section id="discussion" aria-labelledby="disc-h" className="flex max-w-read scroll-mt-32 flex-col gap-4">
-      <div className="kd-sec items-center">
-        <h2 id="disc-h" className="kd-d3">{T.discussion}{d ? <span className="kd-m kd-num ml-3 align-middle">{d.total}</span> : null}</h2>
+    <section id="discussion" aria-labelledby={bare ? undefined : 'disc-h'} aria-label={bare ? T.discussion : undefined} className="flex max-w-read scroll-mt-32 flex-col gap-4">
+      <div className={cx('kd-sec items-center', bare && 'justify-end')}>
+        {bare ? null : <h2 id="disc-h" className="kd-d3">{T.discussion}{d ? <span className="kd-m kd-num ml-3 align-middle">{d.total}</span> : null}</h2>}
         <Picker
           label={T.discSort}
           value={sort}
