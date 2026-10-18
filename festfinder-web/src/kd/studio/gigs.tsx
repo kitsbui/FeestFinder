@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { dayMonth, money } from '../format';
 import { KdLink } from '../link';
 import { STYLE_LABEL, styleLabel } from '../genre';
@@ -73,7 +73,7 @@ export function Gigs() {
                       {i.artist ? <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
                       <Status tone={i.status === 'accepted' ? 'ok' : i.status === 'declined' ? 'bad' : 'warn'}>{i.status === 'accepted' ? T.inqAccepted : i.status === 'declined' ? T.inqDeclined : T.inqPending}</Status>
                     </span>
-                    <span className="kd-m kd-num">{[dayMonth(i.eventOn, lang), i.cityLabel?.[lang], i.feeOffer != null ? money(i.feeOffer, i.currency, lang) : null].filter(Boolean).join(' · ')}</span>
+                    <span className="kd-m kd-num">{[dayMonth(i.eventOn, lang), tx(i.cityLabel, lang), i.feeOffer != null ? money(i.feeOffer, i.currency, lang) : null].filter(Boolean).join(' · ')}</span>
                     <span className="kd-s">{i.message}</span>
                     {i.reply ? <span className="kd-s border-l-2 border-line-2 pl-3 text-fg-2">{i.reply}</span> : null}
                   </li>
@@ -99,7 +99,7 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
   return (
       <Accordion
         onToggle={(open) => { if (open && apps === null) void loadApps(); }}
-        summary={<span className="flex flex-col gap-0.5"><span className="flex flex-wrap items-center gap-x-3 gap-y-1"><span className="kd-hs">{g.title}</span><Status tone={st.tone}>{st.label}</Status></span><span className="kd-s kd-num">{[dayMonth(g.startsOn, lang), g.cityLabel?.[lang], g.gigType?.label[lang], g.setLength?.label[lang], fee].filter(Boolean).join(' · ')}</span></span>}
+        summary={<span className="flex flex-col gap-0.5"><span className="flex flex-wrap items-center gap-x-3 gap-y-1"><span className="kd-hs">{g.title}</span><Status tone={st.tone}>{st.label}</Status></span><span className="kd-s kd-num">{[dayMonth(g.startsOn, lang), tx(g.cityLabel, lang), tx(g.gigType?.label, lang), tx(g.setLength?.label, lang), fee].filter(Boolean).join(' · ')}</span></span>}
         aside={g.applications != null ? fill(T.gigApps, { n: g.applications }) : undefined}
       >
         <div className="flex flex-col gap-3 pb-2">
@@ -114,7 +114,7 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
                       {a.status === 'booked' ? T.appBooked : a.status === 'shortlisted' ? T.appShortlisted : a.status === 'declined' ? T.appDeclined : T.appNew}
                     </Status>
                   </span>
-                  <span className="kd-m">{[a.matchScore != null ? fill(T.gigFit, { n: a.matchScore }) : null, a.artist.roles.map((r) => r.label[lang]).join(', '), a.artist.basedIn?.[lang]].filter(Boolean).join(' · ')}</span>
+                  <span className="kd-m">{[a.matchScore != null ? fill(T.gigFit, { n: a.matchScore }) : null, a.artist.roles.map((r) => tx(r.label, lang)).join(', '), tx(a.artist.basedIn, lang)].filter(Boolean).join(' · ')}</span>
                   {a.message ? <span className="kd-s">{a.message}</span> : null}
                   {a.status !== 'booked' && a.status !== 'declined' && g.status !== 'filled' ? (
                     <span className="flex flex-wrap gap-2">
@@ -168,10 +168,10 @@ function NewGig({ lang, cities, onPosted }: { lang: Lang; cities: City[]; onPost
       <form className="flex flex-col gap-3.5" onSubmit={post}>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="gTitle">{T.gigTitle}</FieldLabel><Input id="gTitle" required minLength={3} maxLength={120} placeholder={T.gigTitlePh} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-2"><FieldLabel htmlFor="gCity">{T.fCity}</FieldLabel><Select id="gCity" value={city} onChange={(e) => setF({ ...f, city: e.target.value })}>{cities.map((c) => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}</Select></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="gCity">{T.fCity}</FieldLabel><Select id="gCity" value={city} onChange={(e) => setF({ ...f, city: e.target.value })}>{cities.map((c) => <option key={c.slug} value={c.slug}>{tx(c.name, lang)}</option>)}</Select></div>
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="gDate">{T.gigDate}</FieldLabel><Input id="gDate" type="date" required className="kd-num" value={f.startsOn} onChange={(e) => setF({ ...f, startsOn: e.target.value })} /></div>
-          <div className="flex flex-col gap-2"><FieldLabel htmlFor="gType">{T.gigType}</FieldLabel><Select id="gType" value={f.gigType} onChange={(e) => setF({ ...f, gigType: e.target.value })}><option value="">—</option>{GIG_TYPES.map(([k, l]) => <option key={k} value={k}>{l[lang]}</option>)}</Select></div>
-          <div className="flex flex-col gap-2"><FieldLabel htmlFor="gSet">{T.gigSet}</FieldLabel><Select id="gSet" value={f.setLength} onChange={(e) => setF({ ...f, setLength: e.target.value })}><option value="">—</option>{SET_LENGTHS.map(([k, l]) => <option key={k} value={k}>{l[lang]}</option>)}</Select></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="gType">{T.gigType}</FieldLabel><Select id="gType" value={f.gigType} onChange={(e) => setF({ ...f, gigType: e.target.value })}><option value="">—</option>{GIG_TYPES.map(([k, l]) => <option key={k} value={k}>{tx(l, lang)}</option>)}</Select></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="gSet">{T.gigSet}</FieldLabel><Select id="gSet" value={f.setLength} onChange={(e) => setF({ ...f, setLength: e.target.value })}><option value="">—</option>{SET_LENGTHS.map(([k, l]) => <option key={k} value={k}>{tx(l, lang)}</option>)}</Select></div>
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="gMin">{T.gigFeeMin} ({sym})</FieldLabel><Input id="gMin" inputMode="numeric" className="kd-num" value={f.feeMin} onChange={(e) => setF({ ...f, feeMin: e.target.value.replace(/\D/g, '') })} /></div>
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="gMax">{T.gigFeeMax} ({sym})</FieldLabel><Input id="gMax" inputMode="numeric" className="kd-num" value={f.feeMax} onChange={(e) => setF({ ...f, feeMax: e.target.value.replace(/\D/g, '') })} /></div>
           <div className="col-span-2 flex flex-col gap-2"><FieldLabel htmlFor="gCloses">{T.gigCloses}</FieldLabel><Input id="gCloses" type="date" className="kd-num" value={f.closesOn} onChange={(e) => setF({ ...f, closesOn: e.target.value })} /></div>
@@ -224,7 +224,7 @@ function AskArtist({ lang, cities, onSent }: { lang: Lang; cities: City[]; onSen
         <div className="flex flex-col gap-2"><span className="kd-flabel">{T.inqArtist}</span><AsyncPick label={T.inqArtist} placeholder={T.inqFind} load={find} value={f.artist} onPick={(a) => setF({ ...f, artist: a })} /></div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-3">
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqDate">{T.inqDate}</FieldLabel><Input id="iqDate" type="date" required className="kd-num" value={f.eventOn} onChange={(e) => setF({ ...f, eventOn: e.target.value })} /></div>
-          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqCity">{T.fCity}</FieldLabel><Select id="iqCity" value={city} onChange={(e) => setF({ ...f, city: e.target.value })}>{cities.map((c) => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}</Select></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqCity">{T.fCity}</FieldLabel><Select id="iqCity" value={city} onChange={(e) => setF({ ...f, city: e.target.value })}>{cities.map((c) => <option key={c.slug} value={c.slug}>{tx(c.name, lang)}</option>)}</Select></div>
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqFee">{T.inqFee} ({cur === 'VND' ? '₫' : cur ?? ''})</FieldLabel><Input id="iqFee" inputMode="numeric" className="kd-num" value={f.feeOffer} onChange={(e) => setF({ ...f, feeOffer: e.target.value.replace(/\D/g, '') })} /></div>
         </div>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqMsg" hint={T.inqMsgRule}>{T.inqMsg}</FieldLabel><TextArea id="iqMsg" rows={3} minLength={10} maxLength={2000} required value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} /></div>

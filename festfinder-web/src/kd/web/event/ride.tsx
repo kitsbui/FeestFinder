@@ -8,13 +8,13 @@
  * with "Đổi app" in the toast; a city with one ride app opens it at once too. On a computer the
  * sheet shows a QR code that opens this sheet on the phone (?ride=1).
  */
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { CaretRightIcon, CarProfileIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../../copy';
 import { useKd } from '../../runtime';
 import { Button, buttonClass } from '../../ui/actions';
-import { QrCode } from '../../ui/qr';
 import { Sheet } from '../../ui/sheet';
 import type { RideOption } from '../../types';
 import { RIDE } from './copy';
@@ -29,6 +29,9 @@ function deviceOf(): Device {
   if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
   return 'desktop';
 }
+
+/** The QR code for a computer comes with the sheet: its generator is not part of the event page. */
+const QrCode = dynamic(() => import('../../ui/qr').then((m) => m.QrCode), { ssr: false });
 
 /** In-app browsers (Zalo, Facebook, Messenger, Instagram, TikTok) often refuse to open another app. */
 const inAppBrowser = () => /Zalo|FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\/|TikTok|musical_ly|BytedanceWebview/i.test(navigator.userAgent);

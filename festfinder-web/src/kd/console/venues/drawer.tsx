@@ -8,7 +8,7 @@
 import { useEffect, useId, useState } from 'react';
 import { ArrowSquareOutIcon, MagnifyingGlassIcon, MapPinIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { Button } from '../../ui/actions';
 import { Input, Select, SwitchRow } from '../../ui/forms';
@@ -85,13 +85,13 @@ export function VenueDrawer({ lang, venue, preset, onClose, onSaved }: {
         <div className="tab:col-span-2"><Field label={T.address} htmlFor="v-address"><Input id="v-address" required minLength={3} maxLength={240} value={f.address} onChange={set('address')} placeholder={T.addressPh} /></Field></div>
         <Field label={T.city} htmlFor="v-city">
           <Select id="v-city" value={f.city} onChange={set('city')}>
-            {cities.length ? cities.map((c) => <option key={c.value} value={c.value}>{c.label[lang]}</option>) : <option value={f.city}>{f.city}</option>}
+            {cities.length ? cities.map((c) => <option key={c.value} value={c.value}>{tx(c.label, lang)}</option>) : <option value={f.city}>{f.city}</option>}
           </Select>
         </Field>
         <Field label={T.district} htmlFor="v-area">
           <Input id="v-area" required minLength={2} maxLength={60} list={areas} value={f.area} onChange={set('area')} placeholder={T.districtPh} />
           <datalist id={areas}>
-            {groups.flatMap((g) => g.areas.map((a) => <option key={g.label.en + a} value={a} label={g.label[lang]} />))}
+            {groups.flatMap((g) => g.areas.map((a) => <option key={g.label.en + a} value={a} label={tx(g.label, lang)} />))}
           </datalist>
         </Field>
         <div className="tab:col-span-2">

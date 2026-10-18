@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { CheckCircleIcon, FloppyDiskIcon, MapPinIcon, PaperPlaneRightIcon, SealCheckIcon, TranslateIcon, WarningCircleIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../../fresh';
-import { fill, pick, type Pair, type Strings } from '../../copy';
+import { INTL, fill, pick, type Pair, type Strings, tx } from '../../copy';
 import { cx } from '../../cx';
 import { day as dayParts, todayIn, whenShort } from '../../format';
 import { useKd } from '../../runtime';
@@ -269,7 +269,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
       }
       setBase(JSON.stringify(payload));
       if (out?.slug) void freshen('e', out.slug);
-      setSavedAt(new Date().toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }));
+      setSavedAt(new Date().toLocaleTimeString((lang === 'en' ? 'en-GB' : INTL[lang]), { hour: '2-digit', minute: '2-digit' }));
       kd.toast(out?.message ? FF.text(out.message as Pair, lang) : T.saved);
       onSaved(out, { created: !id });
       return out;
@@ -339,18 +339,18 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
               <Field label={T.genre} htmlFor="evGenre">
                 <Select id="evGenre" value={f.genre} onChange={(e) => set({ genre: e.target.value })}>
                   <option value="">{T.genrePh}</option>
-                  {o.genres.map((g) => <option key={g.value} value={g.value}>{g.label[lang]}</option>)}
+                  {o.genres.map((g) => <option key={g.value} value={g.value}>{tx(g.label, lang)}</option>)}
                 </Select>
               </Field>
             ) : null}
             <Field label={T.age}>
               <Segmented label={T.age} value={f.age} onChange={(v) => set({ age: v })}
-                options={((o.ages ?? []) as { value: string; label: Pair }[]).map((a) => ({ value: a.value, label: a.value === 'All ages' ? a.label[lang] : a.value }))} />
+                options={((o.ages ?? []) as { value: string; label: Pair }[]).map((a) => ({ value: a.value, label: a.value === 'All ages' ? tx(a.label, lang) : a.value }))} />
             </Field>
             <Field label={<>{T.kind} {opt}</>} htmlFor="evType">
               <Select id="evType" value={f.eventType} onChange={(e) => set({ eventType: e.target.value })}>
                 <option value="">{T.kindPh}</option>
-                {o.eventTypes.map((t) => <option key={t.value} value={t.value}>{t.label[lang]}</option>)}
+                {o.eventTypes.map((t) => <option key={t.value} value={t.value}>{tx(t.label, lang)}</option>)}
               </Select>
             </Field>
           </div>
@@ -359,7 +359,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
             <div className="flex flex-wrap gap-2">
               {o.styles.filter((s) => !f.genre || !s.genre || s.genre === f.genre || f.styles.includes(s.value)).map((s) => {
                 const on = f.styles.includes(s.value);
-                return <Chip key={s.value} family="edm" on={on} disabled={!on && f.styles.length >= 5} onClick={() => set({ styles: on ? f.styles.filter((x) => x !== s.value) : [...f.styles, s.value] })}>{s.label[lang]}</Chip>;
+                return <Chip key={s.value} family="edm" on={on} disabled={!on && f.styles.length >= 5} onClick={() => set({ styles: on ? f.styles.filter((x) => x !== s.value) : [...f.styles, s.value] })}>{tx(s.label, lang)}</Chip>;
               })}
             </div>
           </fieldset>
@@ -418,14 +418,14 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
             <>
               <Field label={T.city} htmlFor="evCity" hint={city && city.currency !== 'VND' ? fill(T.pricesIn, { c: city.currency }) : undefined}>
                 <Select id="evCity" value={f.city} onChange={(e) => set({ city: e.target.value || defaultCity })}>
-                  {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name[lang]}</option>)}
+                  {cities.map((c) => <option key={c.slug} value={c.slug}>{tx(c.name, lang)}</option>)}
                 </Select>
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={T.venueName} htmlFor="evVname"><Input id="evVname" value={f.venueName} placeholder={T.venueNamePh} maxLength={160} onChange={(e) => set({ venueName: e.target.value })} /></Field>
                 <Field label={T.area} htmlFor="evArea">
                   <Input id="evArea" list="evAreaList" value={f.area} placeholder={T.areaPh} maxLength={60} onChange={(e) => set({ area: e.target.value })} />
-                  <datalist id="evAreaList">{o.areaGroups.flatMap((g) => g.areas.map((a) => <option key={g.label.en + a} value={a}>{g.label[lang]}</option>))}</datalist>
+                  <datalist id="evAreaList">{o.areaGroups.flatMap((g) => g.areas.map((a) => <option key={g.label.en + a} value={a}>{tx(g.label, lang)}</option>))}</datalist>
                 </Field>
               </div>
               <Field label={<>{T.address} {opt}</>} htmlFor="evAddr"><Input id="evAddr" value={f.address} placeholder={T.addressPh} maxLength={240} onChange={(e) => set({ address: e.target.value })} /></Field>
@@ -435,8 +435,8 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
         </Section>
 
         <Section id="tickets" n={4} title={sec('tickets')} done={sectionDone('tickets', f)} doneLabel={T.done}>
-          <Field label={T.entry} hint={entryModes.find((m) => m.value === f.entryMode)?.hint[lang]}>
-            <Segmented label={T.entry} className="self-start" value={f.entryMode} onChange={(v) => set({ entryMode: v })} options={entryModes.map((m) => ({ value: m.value, label: m.label[lang] }))} />
+          <Field label={T.entry} hint={tx(entryModes.find((m) => m.value === f.entryMode)?.hint, lang)}>
+            <Segmented label={T.entry} className="self-start" value={f.entryMode} onChange={(v) => set({ entryMode: v })} options={entryModes.map((m) => ({ value: m.value, label: tx(m.label, lang) }))} />
           </Field>
           {f.entryMode === 'paid' ? (
             <>
@@ -445,7 +445,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
                   <PriceInput id="evPrice" lang={lang} value={f.priceFrom} onChange={(v) => set({ priceFrom: v })} />
                   {currency === 'VND' ? (
                     <div className="flex flex-wrap gap-1.5" role="group" aria-label={T.pricePresets}>
-                      {PRICE_PRESETS.map((n) => <Chip key={n} on={f.priceFrom === n} onClick={() => set({ priceFrom: n })}>{n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}</Chip>)}
+                      {PRICE_PRESETS.map((n) => <Chip key={n} on={f.priceFrom === n} onClick={() => set({ priceFrom: n })}>{n.toLocaleString(INTL[lang])}</Chip>)}
                     </div>
                   ) : null}
                 </Field>
@@ -498,7 +498,7 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
           <Field label={<>{T.badge} {opt}</>} htmlFor="evBadge">
             <Select id="evBadge" value={f.badge} onChange={(e) => set({ badge: e.target.value })}>
               <option value="">{T.noBadge}</option>
-              {((o.badges ?? []) as { value: string; label: Pair }[]).map((b) => <option key={b.value} value={b.value}>{b.label[lang]}</option>)}
+              {((o.badges ?? []) as { value: string; label: Pair }[]).map((b) => <option key={b.value} value={b.value}>{tx(b.label, lang)}</option>)}
             </Select>
           </Field>
         </Section>

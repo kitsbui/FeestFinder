@@ -7,7 +7,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ExportIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count } from '../../format';
 import { familyOf, g } from '../../genre';
@@ -236,7 +236,7 @@ export function PastList({ lang, items, first = 10 }: { lang: Lang; items: PastI
                 <span className="kd-hs kd-ell">{e.title}</span>
                 <span className="kd-s kd-ell flex items-center gap-1.5">
                   {e.genre !== undefined ? <Marker family={familyOf(e.genre)} /> : null}
-                  {[e.venue, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}
+                  {[e.venue, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}
                 </span>
               </span>
               {e.saveCount ? <span className="kd-s kd-num hidden tab:inline">{fill(T.interested, { n: count(e.saveCount, lang) })}</span> : <span />}

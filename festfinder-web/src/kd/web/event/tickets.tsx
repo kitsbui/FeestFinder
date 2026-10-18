@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRightIcon, BellIcon, BellRingingIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { money } from '../../format';
 import { useKd } from '../../runtime';
 import { buttonClass, Button } from '../../ui/actions';
@@ -80,7 +80,7 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
         <div className="flex items-center justify-between"><h2 className="kd-h">{T.tickets}</h2><span className="kd-tag kd-tag-acc">{T.free}</span></div>
         <p className="kd-s">{T.freeNote}</p>
         {/* Chỉ đường opens the route in Google Maps at once (CLAUDE.md "Event actions"), never an anchor on the page. */}
-        <a className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true })} href={directionsUrl(ev.venue, [ev.venue.address, ev.venue.area, ev.cityLabel?.[lang]].filter(Boolean).join(', '))} target="_blank" rel="noopener">{T.directions}</a>
+        <a className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true })} href={directionsUrl(ev.venue, [ev.venue.address, ev.venue.area, tx(ev.cityLabel, lang)].filter(Boolean).join(', '))} target="_blank" rel="noopener">{T.directions}</a>
       </div>
     );
   }
@@ -102,9 +102,9 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
                   checked={t.id === tierId}
                   disabled={!can}
                   onSelect={() => setTierId(t.id)}
-                  title={t.name[lang]}
+                  title={tx(t.name, lang)}
                   price={money(t.price, ev.currency, lang)}
-                  note={t.note?.[lang]}
+                  note={tx(t.note, lang)}
                   status={<Status tone={st.tone}>{st.text}</Status>}
                 />
                 {t.state === 'soon' ? (
@@ -118,7 +118,7 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
           })}
         </div>
       ) : null}
-      {ev.tickets?.urgency ? <p className="kd-s text-warn">{ev.tickets.urgency[lang]}</p> : null}
+      {ev.tickets?.urgency ? <p className="kd-s text-warn">{tx(ev.tickets.urgency, lang)}</p> : null}
       {tier && open(tier) ? (
         <div className="flex items-center justify-between gap-3 pt-1">
           <span className="kd-s">{T.quantity}</span>
@@ -134,7 +134,7 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
           onClick={() => FF.track('ticket_click', { slug: ev.slug, source: tier ? 'tier' : 'detail' })}
         >
           {tier && open(tier)
-            ? fill(T.buyN, { n: qty, t: tierShort(tier.name[lang]), p: money(tier.price * qty, ev.currency, lang) })
+            ? fill(T.buyN, { n: qty, t: tierShort(tx(tier.name, lang)), p: money(tier.price * qty, ev.currency, lang) })
             : T.buyTickets}
           <ArrowUpRightIcon size={16} aria-hidden="true" />
         </a>
@@ -142,11 +142,11 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
         <p className="kd-s">{T.noTicketLink}</p>
       )}
       <p className="kd-s">
-        {sellsHere ? fill(T.soldHere, { n: MAX_PER_ORDER }) : ticketHost ? fill(T.soldVia, { h: ticketHost, n: MAX_PER_ORDER }) : ev.ticketNote[lang]}
+        {sellsHere ? fill(T.soldHere, { n: MAX_PER_ORDER }) : ticketHost ? fill(T.soldVia, { h: ticketHost, n: MAX_PER_ORDER }) : tx(ev.ticketNote, lang)}
       </p>
       {ev.tickets?.refundPolicy ? (
         <Accordion small summary={T.refund} className="border-t border-line-1">
-          <p className="kd-s">{ev.tickets.refundPolicy[lang]}</p>
+          <p className="kd-s">{tx(ev.tickets.refundPolicy, lang)}</p>
         </Accordion>
       ) : null}
       <ResaleBlock lang={lang} />
@@ -179,7 +179,7 @@ function ResaleBlock({ lang }: { lang: Lang }) {
         {r && r.items.length ? r.items.map((it) => (
           <div key={it.id} className="kd-lrow">
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="kd-hs kd-ell">{it.tier?.[lang] ?? 'GA'} · {it.seller.name}</span>
+              <span className="kd-hs kd-ell">{tx(it.tier, lang) ?? 'GA'} · {it.seller.name}</span>
               <span className="kd-s">{fill(T.resaleFace, { p: money(it.faceValue, ev.currency, lang) })}</span>
             </span>
             <span className="kd-mb kd-num">{money(it.price, ev.currency, lang)}</span>

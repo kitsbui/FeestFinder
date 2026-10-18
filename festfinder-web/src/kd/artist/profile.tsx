@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../fresh';
-import { pick, type Lang, type Pair } from '../copy';
+import { pick, type Lang, type Pair, tx } from '../copy';
 import { count } from '../format';
 import { useKd } from '../runtime';
 import { Button, LinkButton } from '../ui/actions';
@@ -65,9 +65,9 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
     return () => removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  const opt = (list: Opt[]) => list.map((x) => ({ value: x.key, label: x.label[lang] }));
-  const cities = useMemo(() => (options?.cities ?? []).map((c) => ({ value: c.value, label: c.label[lang] })), [options, lang]);
-  const styles = useMemo(() => (options?.styles ?? []).map((s) => ({ value: s.value, label: s.label[lang] })), [options, lang]);
+  const opt = (list: Opt[]) => list.map((x) => ({ value: x.key, label: tx(x.label, lang) }));
+  const cities = useMemo(() => (options?.cities ?? []).map((c) => ({ value: c.value, label: tx(c.label, lang) })), [options, lang]);
+  const styles = useMemo(() => (options?.styles ?? []).map((s) => ({ value: s.value, label: tx(s.label, lang) })), [options, lang]);
   // Chosen styles first, in the order picked (the first is the main one), then the rest.
   const styleChips = useMemo(() => [...f.styles.map((v) => styles.find((s) => s.value === v) ?? { value: v, label: v }), ...styles.filter((s) => !f.styles.includes(s.value))], [styles, f.styles]);
 
@@ -163,7 +163,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
                   <Input id="ar-web" type="url" inputMode="url" placeholder="https://" maxLength={500} value={f.website} invalid={!!err.website} onChange={(e) => set('website')(e.target.value)} />
                 </Field>
                 {me.options.links.map((l) => (
-                  <Field key={l.key} label={l.label[lang]} htmlFor={'ar-l-' + l.key} error={err['link:' + l.key]}>
+                  <Field key={l.key} label={tx(l.label, lang)} htmlFor={'ar-l-' + l.key} error={err['link:' + l.key]}>
                     <Input
                       id={'ar-l-' + l.key} type="url" inputMode="url" placeholder="https://" maxLength={500} value={f.links[l.key] ?? ''} invalid={!!err['link:' + l.key]}
                       onChange={(e) => setF((x) => ({ ...x, links: { ...x.links, [l.key]: e.target.value } }))}

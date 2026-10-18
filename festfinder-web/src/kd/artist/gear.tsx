@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../copy';
+import { pick, type Lang, type Pair, tx } from '../copy';
 import { useKd } from '../runtime';
 import { Button } from '../ui/actions';
 import { Input, Select } from '../ui/forms';
@@ -64,7 +64,7 @@ function List({ lang, served, categories, onSaved }: {
   };
   const search = useCallback(async (q: string): Promise<PickItem[]> => {
     const out = await FF.get('/gear' + (q ? '?q=' + encodeURIComponent(q) : ''));
-    return (out.items as Gear[]).map((g) => ({ value: g.id, label: full(g), sub: g.categoryLabel?.[lang] }));
+    return (out.items as Gear[]).map((g) => ({ value: g.id, label: full(g), sub: tx(g.categoryLabel, lang) }));
   }, [lang]);
   const addNew = async (e: FormEvent) => {
     e.preventDefault();
@@ -91,7 +91,7 @@ function List({ lang, served, categories, onSaved }: {
               <Field label={<>{T.brand} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="gr-brand"><Input id="gr-brand" maxLength={60} value={fresh.brand} onChange={(e) => setFresh({ ...fresh, brand: e.target.value })} /></Field>
               <Field label={T.category} htmlFor="gr-cat">
                 <Select id="gr-cat" value={fresh.category} onChange={(e) => setFresh({ ...fresh, category: e.target.value })}>
-                  {categories.length ? categories.map((c) => <option key={c.key} value={c.key}>{c.label[lang]}</option>) : <option value="other">—</option>}
+                  {categories.length ? categories.map((c) => <option key={c.key} value={c.key}>{tx(c.label, lang)}</option>) : <option value="other">—</option>}
                 </Select>
               </Field>
             </div>

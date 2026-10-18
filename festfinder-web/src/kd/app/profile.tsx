@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { fill, pick, type Lang, tx } from '../copy';
 import { cx } from '../cx';
 import { dayMonth } from '../format';
 import { CHART_ORDER, FAMILY_LABEL, familyOf, g, type Family } from '../genre';
@@ -53,12 +53,12 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
         {pp.stamps.length ? (
           <>
             {mix.length > 1 ? <div className="kd-hscroll" role="group" aria-label={T.genres}>
-              {mix.map(({ f }) => <Chip key={f} family={f} on={only === f} onClick={() => setOnly(only === f ? null : f)}>{FAMILY_LABEL[f][lang]}</Chip>)}
+              {mix.map(({ f }) => <Chip key={f} family={f} on={only === f} onClick={() => setOnly(only === f ? null : f)}>{tx(FAMILY_LABEL[f], lang)}</Chip>)}
             </div> : null}
             <ul className="mt-1 grid grid-cols-4 gap-x-2 @2xl:grid-cols-8 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
-                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} cover={s.coverUrl} city={typeof s.city === 'string' ? s.city : s.city?.[lang]} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
+                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} cover={s.coverUrl} city={typeof s.city === 'string' ? s.city : tx(s.city, lang)} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
                 </li>
               ))}
             </ul>
@@ -74,12 +74,12 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
       {mix.length ? (
         <section className={cx('flex flex-col gap-3.5 pt-8', !flush && 'px-4')} aria-labelledby="pf-sound">
           <div className="flex items-baseline justify-between"><h2 id="pf-sound" className="kd-h">{T.yourSound}</h2><span className="kd-m">{T.byNights}</span></div>
-          <div className="flex h-3 gap-0.5" role="img" aria-label={mix.map((x) => `${FAMILY_LABEL[x.f][lang]} ${x.n}`).join(', ')}>
+          <div className="flex h-3 gap-0.5" role="img" aria-label={mix.map((x) => `${tx(FAMILY_LABEL[x.f], lang)} ${x.n}`).join(', ')}>
             {mix.map((x, i) => <i key={x.f} className={cx(g(x.f), 'bg-[var(--g)]', i === 0 && 'rounded-l', i === mix.length - 1 && 'rounded-r')} style={{ flex: `${x.n} 1 0` }} />)}
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             {mix.map((x) => (
-              <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[x.f][lang]}<span className="kd-mb kd-num ml-auto">{x.n}</span></span>
+              <span key={x.f} className={cx('kd-s flex items-center gap-2 text-fg-2', g(x.f))}><span className="kd-mk" aria-hidden="true" />{tx(FAMILY_LABEL[x.f], lang)}<span className="kd-mb kd-num ml-auto">{x.n}</span></span>
             ))}
           </div>
         </section>
@@ -131,7 +131,7 @@ export function WrappedSheet({ lang, year, onClose }: { lang: Lang; year: number
     if (!w) return;
     const how = await FF.shareStory({
       genre: 'EDM', kicker: fill(T.wrapped, { y: w.year }), title: `${w.nights} ${T.wrNights}`,
-      lines: [w.topStyle ? `${T.wrGenre}: ${w.topStyle.label?.[lang] ?? w.topStyle.style}` : '', w.topArtist ? `${T.wrArtist}: ${w.topArtist.name}` : '', w.topVenue ? `${T.wrVenue}: ${w.topVenue.name}` : ''].filter(Boolean),
+      lines: [w.topStyle ? `${T.wrGenre}: ${tx(w.topStyle.label, lang) ?? w.topStyle.style}` : '', w.topArtist ? `${T.wrArtist}: ${w.topArtist.name}` : '', w.topVenue ? `${T.wrVenue}: ${w.topVenue.name}` : ''].filter(Boolean),
       url: location.host,
     }, 'wrapped-' + w.year).catch((e: unknown) => { kd.toast(FF.errorText(e, lang)); return null; });
     if (how === 'saved') kd.toast(T.storySaved);
@@ -142,7 +142,7 @@ export function WrappedSheet({ lang, year, onClose }: { lang: Lang; year: number
         <div className={cx('flex flex-col gap-4 pt-1', g('edm'))}>
           <div className="flex items-baseline gap-2"><span className="kd-d1 kd-num">{w.nights}</span><span className="kd-t">{T.wrNights}</span></div>
           <dl className="flex flex-col">
-            {w.topStyle ? <Row k={T.wrGenre} v={w.topStyle.label?.[lang] ?? w.topStyle.style} /> : null}
+            {w.topStyle ? <Row k={T.wrGenre} v={tx(w.topStyle.label, lang) ?? w.topStyle.style} /> : null}
             {w.topArtist ? <Row k={T.wrArtist} v={`${w.topArtist.name} · ${fill(T.wrTimes, { n: w.topArtist.times })}`} /> : null}
             {w.topVenue ? <Row k={T.wrVenue} v={`${w.topVenue.name} · ${fill(T.wrTimes, { n: w.topVenue.times })}`} /> : null}
           </dl>

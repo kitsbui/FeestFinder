@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../copy';
 import { money, timeRange, whenShort } from '../format';
 import { familyOf, g } from '../genre';
 import { useKd } from '../runtime';
@@ -132,7 +132,7 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
               const st = tierStatus(t, lang);
               return (
                 <Option key={t.id} checked={t.id === tierId} disabled={!open(t)} onSelect={() => setTierId(t.id)}
-                  title={t.name[lang]} price={money(t.price, ev.currency, lang)} note={t.note?.[lang]} status={<Status tone={st.tone}>{st.text}</Status>} />
+                  title={tx(t.name, lang)} price={money(t.price, ev.currency, lang)} note={tx(t.note, lang)} status={<Status tone={st.tone}>{st.text}</Status>} />
               );
             })}
           </div>
@@ -153,19 +153,19 @@ function Basket({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       {quote ? (
         <dl className="flex flex-col border-t border-line-1">
           {quote.lines.map((l) => (
-            <div key={l.label.en} className="kd-lrow min-h-11"><dt className="kd-s flex-1">{l.label[lang]}</dt><dd className="kd-mb kd-num">{money(l.amount, 'VND', lang)}</dd></div>
+            <div key={l.label.en} className="kd-lrow min-h-11"><dt className="kd-s flex-1">{tx(l.label, lang)}</dt><dd className="kd-mb kd-num">{money(l.amount, 'VND', lang)}</dd></div>
           ))}
           <div className="kd-lrow min-h-12 border-b-0"><dt className="kd-hs flex-1">{T.total}</dt><dd className="kd-h kd-num">{money(quote.total, 'VND', lang)}</dd></div>
         </dl>
       ) : null}
       {err ? <FieldError>{err}</FieldError> : null}
       <span className="kd-s">{T.payBy}</span>
-      {quote?.refundPolicy ? <Accordion small summary={T.refund} className="border-t border-line-1"><p className="kd-s">{quote.refundPolicy[lang]}</p></Accordion> : null}
+      {quote?.refundPolicy ? <Accordion small summary={T.refund} className="border-t border-line-1"><p className="kd-s">{tx(quote.refundPolicy, lang)}</p></Accordion> : null}
 
       <Dock>
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="kd-h kd-num">{quote ? money(quote.total, 'VND', lang) : '—'}</span>
-          <span className="kd-s kd-ell">{listing ? T.resaleTicket : tier ? `${tier.name[lang]} · ${qty}` : ''}</span>
+          <span className="kd-s kd-ell">{listing ? T.resaleTicket : tier ? `${tx(tier.name, lang)} · ${qty}` : ''}</span>
         </div>
         <Button tone="acc" size="lg" className="ml-auto" disabled={!quote || busy} onClick={pay}>{quote ? fill(T.payNow, { p: money(quote.total, 'VND', lang) }) : T.buy}</Button>
       </Dock>
@@ -195,7 +195,7 @@ function Transfer({ lang, pending, onCancelled }: { lang: Lang; pending: { id: s
   const cancel = async () => {
     try { await FF.post(base + pending.id + '/cancel'); kd.toast(T.cancelled); onCancelled(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
-  const until = p.expiresAt ? new Date(p.expiresAt).toLocaleTimeString(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) : null;
+  const until = p.expiresAt ? new Date(p.expiresAt).toLocaleTimeString((lang === 'en' ? 'en-GB' : INTL[lang]), { hour: '2-digit', minute: '2-digit' }) : null;
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 pt-2">
       <h2 className="kd-d3">{T.transferTitle}</h2>
@@ -211,7 +211,7 @@ function Transfer({ lang, pending, onCancelled }: { lang: Lang; pending: { id: s
         {p.amount != null ? <Row k={T.amount} v={money(p.amount, 'VND', lang)} /> : null}
         {p.reference ? <Row k={T.reference} v={p.reference} /> : null}
       </dl>
-      {p.note ? <p className="kd-s">{p.note[lang]}</p> : null}
+      {p.note ? <p className="kd-s">{tx(p.note, lang)}</p> : null}
       <Status tone="live">{T.waiting}</Status>
       {until ? <span className="kd-s">{fill(T.heldFor, { t: until })}</span> : null}
       <Button tone="ghost" onClick={cancel}>{T.cancelOrder}</Button>

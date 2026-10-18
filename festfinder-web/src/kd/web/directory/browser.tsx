@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { usePathname } from 'next/navigation';
 import { CaretDownIcon, MagnifyingGlassIcon, MicrophoneStageIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, langOf, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count } from '../../format';
 import { familyOf, type Family } from '../../genre';
@@ -32,7 +32,7 @@ import {
   type DirMeta, type DirPage, type Filters, type Scope,
 } from './model';
 
-const text = (v: Pair | null | undefined, lang: Lang) => (v ? v[lang] || v.vi || v.en || '' : '');
+const text = (v: Pair | null | undefined, lang: Lang) => (v ? tx(v, lang) || v.vi || v.en || '' : '');
 
 /** A directory address: /a, /a/style/<style> or /a/city/<city>. */
 const DIRECTORY_PATH = /^\/a(\/(style|city)\/[^/]+|\/radar)?\/?$/;
@@ -157,7 +157,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin || !DIRECTORY_PATH.test(url.pathname)) return;
       // The other language is a page of its own.
-      if ((url.searchParams.get('lang') === 'en') !== (lang === 'en')) return;
+      if (langOf(url.searchParams.get('lang')) !== lang) return;
       e.preventDefault();
       e.stopPropagation();
       applyRef.current(readAddress(url.pathname, url.search, { roles, meta }), 'push');

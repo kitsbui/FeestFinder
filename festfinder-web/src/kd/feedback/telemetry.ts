@@ -4,6 +4,7 @@
  * the last failed API call. Never cookies, storage, form contents or anything typed.
  */
 import { FF } from '@/runtime/ff';
+import type { Lang } from '@/kd/copy';
 
 const errors: string[] = [];
 let installed = false;
@@ -46,11 +47,11 @@ export function installErrorLog() {
 }
 
 export interface Telemetry {
-  pagePath: string; userAgent: string; screen: string; viewport: string; dpr: number; language: string; lang: 'vi' | 'en';
+  pagePath: string; userAgent: string; screen: string; viewport: string; dpr: number; language: string; lang: Lang;
   displayMode: string; buildId: string | null; errors: string[]; lastApiError: { method: string; path: string; status: number; code: string } | null;
 }
 
-export function snapshot(lang: 'vi' | 'en'): Telemetry {
+export function snapshot(lang: Lang): Telemetry {
   const standalone = window.matchMedia?.('(display-mode: standalone)').matches;
   return {
     pagePath: location.pathname,

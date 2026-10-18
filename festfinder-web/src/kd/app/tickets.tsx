@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { BroadcastIcon, CalendarBlankIcon, NavigationArrowIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { money, whenShort } from '../format';
 import { FAMILY_LABEL, familyOf, g } from '../genre';
@@ -97,7 +97,7 @@ function Wallet({ lang }: { lang: Lang }) {
           {w.resold.map((r) => (
             <div key={r.id} className="kd-lrow">
               <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell">{r.event.title}</span>
-                <span className="kd-s">{r.paidOutAt ? T.resoldPaid : r.payoutDueAt ? fill(T.resoldDue, { d: new Date(r.payoutDueAt).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-GB') }) : ''}</span></span>
+                <span className="kd-s">{r.paidOutAt ? T.resoldPaid : r.payoutDueAt ? fill(T.resoldDue, { d: new Date(r.payoutDueAt).toLocaleDateString((lang === 'en' ? 'en-GB' : INTL[lang])) }) : ''}</span></span>
               <span className="kd-mb kd-num">{money(r.price, 'VND', lang)}</span>
             </div>
           ))}
@@ -152,7 +152,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
           {doors ? <span className="kd-tag kd-tag-glass kd-num absolute bottom-3 left-3 h-7 text-fg-1"><span className="h-2 w-2 rounded-full bg-info" aria-hidden="true" />{doors}</span> : null}
         </Art>
         <div className="flex flex-col gap-1.5 px-4.5 pt-4">
-          <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{FAMILY_LABEL[fam][lang]} · {fill(T.ticketN, { i: i + 1, n: o.tickets.length })}</span>
+          <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{tx(FAMILY_LABEL[fam], lang)} · {fill(T.ticketN, { i: i + 1, n: o.tickets.length })}</span>
           <h2 className="kd-d3">{o.event.title}</h2>
           <span className="kd-s kd-num">{whenShort(o.event, lang)}{o.event.venueName ? ' · ' + o.event.venueName : ''}{o.event.area ? ' · ' + o.event.area : ''}</span>
         </div>
@@ -162,7 +162,7 @@ function OrderCard({ lang, o, offline, payee, onChanged }: { lang: Lang; o: Orde
           <span className="absolute inset-x-4.5 top-3 border-t-[1.5px] border-dashed border-on-inverse/25" />
         </div>
         <div className="grid grid-cols-3 gap-3 px-4.5 pt-1.5">
-          <div className="flex flex-col gap-0.5"><span className="kd-m">{T.tier}</span><span className="kd-h">{o.tier.name[lang]}</span></div>
+          <div className="flex flex-col gap-0.5"><span className="kd-m">{T.tier}</span><span className="kd-h">{tx(o.tier.name, lang)}</span></div>
           <div className="flex flex-col gap-0.5"><span className="kd-m">{T.doors}</span><span className="kd-h kd-num">{o.event.startTime ?? '—'}</span></div>
           <div className="flex flex-col gap-0.5"><span className="kd-m">{T.code}</span><span className="kd-h kd-num">{o.code}</span></div>
         </div>

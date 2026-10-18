@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DotsThreeIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { fill, pick, type Lang, tx } from '../copy';
 import { count, dayMonth } from '../format';
 import { KdLink } from '../link';
 import { useKd } from '../runtime';
@@ -31,7 +31,7 @@ const TABS: Tab[] = ['all', 'draft', 'in_review', 'live', 'rejected', 'past'];
 export const MISSING_KEY: Record<string, keyof typeof STUDIO> = {
   title: 'mTitle', genre: 'mGenre', dates: 'mDates', venue: 'mVenue', price: 'mPrice', logo: 'mLogo', eventUrl: 'mEventUrl',
 };
-export const missingText = (keys: string[], lang: Lang) => keys.map((k) => (MISSING_KEY[k] ? STUDIO[MISSING_KEY[k]][lang] : k)).join(', ');
+export const missingText = (keys: string[], lang: Lang) => keys.map((k) => (MISSING_KEY[k] ? tx(STUDIO[MISSING_KEY[k]], lang) : k)).join(', ');
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
 const ended = (e: OrgEvent) => e.status === 'live' && isPast(e);
@@ -125,11 +125,11 @@ export function EventsList() {
                     </span>
                     <span role="cell" className="flex min-w-0 flex-col gap-0.5">
                       <KdLink className="kd-hs kd-ell kd-hit hover:underline" href={'/studio/events/' + e.id}>{e.title}</KdLink>
-                      <span className="kd-s kd-ell">{e.meta[lang]}</span>
+                      <span className="kd-s kd-ell">{tx(e.meta, lang)}</span>
                     </span>
                     <span role="cell" className="flex min-w-0 flex-col gap-1">
-                      <Status tone={past ? 'none' : statusTone(e.status)}>{past ? T.evEnded : e.statusLabel[lang]}</Status>
-                      {e.status === 'rejected' && e.lastDecision?.reason ? <span className="kd-s text-bad">{e.lastDecision.reason[lang]}</span> : null}
+                      <Status tone={past ? 'none' : statusTone(e.status)}>{past ? T.evEnded : tx(e.statusLabel, lang)}</Status>
+                      {e.status === 'rejected' && e.lastDecision?.reason ? <span className="kd-s text-bad">{tx(e.lastDecision.reason, lang)}</span> : null}
                       {(e.status === 'draft' || e.status === 'rejected')
                         ? (e.missing?.length ? <span className="kd-s">{fill(T.missingList, { m: missingText(e.missing, lang) })}</span> : <span className="kd-s text-ok">{T.readyToSubmit}</span>)
                         : null}

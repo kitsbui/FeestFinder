@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DotsThreeIcon, DownloadSimpleIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Pair } from '../copy';
+import { INTL, fill, pick, type Pair, tx } from '../copy';
 import { count } from '../format';
 import { useKd } from '../runtime';
 import { Button, buttonClass, Chip } from '../ui/actions';
@@ -55,7 +55,7 @@ export function Attendees() {
     try { const out = await run(); if (out?.message) kd.toast(FF.text(out.message, lang)); void load(); } catch (e) { kd.toast(FF.errorText(e, lang)); }
   };
   const k = data?.kpis;
-  const pct = (n: number) => `${n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}%`;
+  const pct = (n: number) => `${n.toLocaleString(INTL[lang])}%`;
   const cols = 'minmax(160px,1.6fr) minmax(110px,1fr) minmax(90px,0.8fr) minmax(110px,1fr) 104px 44px';
   const filters: { key: Filter; label: string }[] = [
     { key: 'all', label: T.fAll }, { key: 'in', label: T.fIn }, { key: 'out', label: T.fOut }, { key: 'vip', label: T.fVip }, { key: 'refunded', label: T.fRefunded },
@@ -88,8 +88,8 @@ export function Attendees() {
                     <Row key={a.ticketId} cols={cols}>
                       <span role="cell" className="flex min-w-0 flex-col"><span className="kd-hs kd-ell">{a.name}</span><span className="kd-m kd-num">{a.ticketCode}</span></span>
                       <span role="cell" className="kd-s kd-num kd-ell">{a.phone ?? '—'}</span>
-                      <span role="cell" className="kd-s kd-ell">{a.tierName[lang]}</span>
-                      <span role="cell" className="kd-s kd-num kd-ell">{a.bought[lang]}</span>
+                      <span role="cell" className="kd-s kd-ell">{tx(a.tierName, lang)}</span>
+                      <span role="cell" className="kd-s kd-num kd-ell">{tx(a.bought, lang)}</span>
                       <span role="cell"><Status tone={a.state === 'in' ? 'ok' : a.state === 'refunded' ? 'bad' : 'none'}>{a.state === 'in' ? T.stIn : a.state === 'refunded' ? T.stRefunded : T.stOut}</Status></span>
                       <span role="cell" className="justify-self-end">
                         {a.state !== 'refunded' ? (

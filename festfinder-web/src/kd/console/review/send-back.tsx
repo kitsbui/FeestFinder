@@ -6,7 +6,7 @@
  * five seconds like any other.
  */
 import { useEffect, useState } from 'react';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { Button } from '../../ui/actions';
 import { Segmented, Select, Switch, TextArea } from '../../ui/forms';
 import { Drawer, Field, KIT } from '../kit';
@@ -26,7 +26,7 @@ export function SendBack({ lang, reasons, ids, titles, initial, onClose, onSend 
   // A reason (or the template language) fills the message with its template.
   useEffect(() => {
     if (!reason) return;
-    setMessage(reason.template[tpl]);
+    setMessage(tx(reason.template, tpl) ?? '');
     setAppeal(reason.appealAllowed);
   }, [reason, tpl]);
   const can = !!reason && !!message.trim();
@@ -45,7 +45,7 @@ export function SendBack({ lang, reasons, ids, titles, initial, onClose, onSend 
       <Field label={R.reason} htmlFor="sb-reason">
         <Select id="sb-reason" value={code} onChange={(e) => setCode(e.target.value)}>
           <option value="">{R.pickReason}</option>
-          {reasons.map((r) => <option key={r.code} value={r.code}>{r.label[lang]}{r.appealAllowed ? '' : R.noAppealTag}</option>)}
+          {reasons.map((r) => <option key={r.code} value={r.code}>{tx(r.label, lang)}{r.appealAllowed ? '' : R.noAppealTag}</option>)}
         </Select>
       </Field>
       <div className="flex flex-col gap-1.5">

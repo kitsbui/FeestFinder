@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { CaretDownIcon, CaretUpIcon, FloppyDiskIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { count, dayMonth, money, todayIn, whenShort } from '../format';
 import { useKd } from '../runtime';
 import { Button, Chip, IconButton } from '../ui/actions';
@@ -127,7 +127,7 @@ function BoostRow({ lang, b, shelves, act }: { lang: Lang; b: Boost; shelves: Sh
       <span className="kd-s">{b.organizer}{b.event.startsOn ? ' · ' + dayMonth(b.event.startsOn, lang) : ''}</span>
       {b.placements.length || b.budget != null ? (
         <span className="kd-s kd-num">
-          {[b.placements.map((p) => p.label[lang]).join(', '), b.budget != null ? money(b.budget, b.currency, lang) : null, b.startsOn && b.endsOn ? `${dayMonth(b.startsOn, lang)} – ${dayMonth(b.endsOn, lang)}` : null].filter(Boolean).join(' · ')}
+          {[b.placements.map((p) => tx(p.label, lang)).join(', '), b.budget != null ? money(b.budget, b.currency, lang) : null, b.startsOn && b.endsOn ? `${dayMonth(b.startsOn, lang)} – ${dayMonth(b.endsOn, lang)}` : null].filter(Boolean).join(' · ')}
         </span>
       ) : null}
       {b.message ? <span className="kd-s text-fg-2">“{b.message}”</span> : null}
@@ -142,7 +142,7 @@ function BoostRow({ lang, b, shelves, act }: { lang: Lang; b: Boost; shelves: Sh
                 <MenuItem key={s.id} onSelect={() => act(async () => {
                   if (!s.items.some((x) => x.id === b.event.id)) await FF.put(`/admin/shelves/${s.id}/items`, { eventIds: [b.event.id, ...s.items.map((x) => x.id)] });
                   return answer('approved');
-                })}>{s.name[lang]}</MenuItem>
+                })}>{tx(s.name, lang)}</MenuItem>
               ))}
             </Menu>
             <Button size="sm" tone="ghost" onClick={() => act(() => answer('declined'))}>{T.boostDecline}</Button>
@@ -196,7 +196,7 @@ function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChan
   const today = () => todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone, FF.now());
 
   return (
-    <Panel as="article" className="flex flex-col gap-4 p-5" aria-label={shelf.name[lang]}>
+    <Panel as="article" className="flex flex-col gap-4 p-5" aria-label={tx(shelf.name, lang)}>
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex min-w-[160px] flex-1 flex-col gap-1.5">
           <FieldLabel htmlFor={'shvi-' + shelf.id}>{M.nameVi}</FieldLabel>
@@ -209,9 +209,9 @@ function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChan
         {nameDirty ? <Button size="sm" disabled={busy || !name.vi.trim()} onClick={() => save({ name: { vi: name.vi.trim(), en: name.en.trim() || name.vi.trim() } })}>{M.saveName}</Button> : null}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <Status tone={PHASE_TONE[shelf.phase] ?? 'none'}>{shelf.phaseLabel[lang]}</Status>
+        <Status tone={PHASE_TONE[shelf.phase] ?? 'none'}>{tx(shelf.phaseLabel, lang)}</Status>
         <span className="flex-1" />
-        <Switch checked={shelf.enabled} label={fill(T.shelfOn, { n: shelf.name[lang] })} onChange={(v) => save({ enabled: v })} />
+        <Switch checked={shelf.enabled} label={fill(T.shelfOn, { n: tx(shelf.name, lang) })} onChange={(v) => save({ enabled: v })} />
       </div>
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1.5">
@@ -296,12 +296,12 @@ function InquiryRow({ lang, i, act }: { lang: Lang; i: Inquiry; act: ReturnType<
         {i.logoUrl ? <img src={i.logoUrl} alt="" referrerPolicy="no-referrer" className="size-10 shrink-0 rounded-lg object-cover" /> : null}
         <span className="flex min-w-0 flex-col">
           <span className="kd-hs">{i.brand}</span>
-          <span className="kd-s">{[i.categoryLabel?.[lang] ?? i.category, i.isAlcohol ? T.adAlcohol : null].filter(Boolean).join(' · ')}</span>
+          <span className="kd-s">{[tx(i.categoryLabel, lang) ?? i.category, i.isAlcohol ? T.adAlcohol : null].filter(Boolean).join(' · ')}</span>
         </span>
       </span>
       <span className="kd-s kd-num">
         {[i.budgetAmount != null ? money(i.budgetAmount, i.currency, lang) : i.budget, i.startsOn && i.endsOn ? `${dayMonth(i.startsOn, lang)} – ${dayMonth(i.endsOn, lang)}` : null,
-          (i.placementLabels ?? []).map((p) => p[lang]).join(', '), i.cities.map((c) => c.label?.[lang] ?? c.slug).join(', ')].filter(Boolean).join(' · ')}
+          (i.placementLabels ?? []).map((p) => tx(p, lang)).join(', '), i.cities.map((c) => tx(c.label, lang) ?? c.slug).join(', ')].filter(Boolean).join(' · ')}
       </span>
       <span className="kd-s">{T.adContact}: {[i.contactName, i.email, i.phone].filter(Boolean).join(' · ')}</span>
       {links.length ? (

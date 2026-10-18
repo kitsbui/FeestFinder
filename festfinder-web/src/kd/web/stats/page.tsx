@@ -9,7 +9,7 @@
 import type { ReactNode } from 'react';
 import { MapPinIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { apiOr } from '@/lib/api';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, km, moneyShort, whenShort } from '../../format';
 import { familyOf, g, styleLabel } from '../../genre';
@@ -92,7 +92,7 @@ export async function StatPage({ statKey, lang, search }: { statKey: StatKey; la
                   value={f.city ?? 'all'}
                   choices={[
                     { value: 'all', label: T.allCities, href: href({ city: null }) },
-                    ...meta.cities.map((c) => ({ value: c.slug, label: c.name[lang], href: href({ city: c.slug }) })),
+                    ...meta.cities.map((c) => ({ value: c.slug, label: tx(c.name, lang), href: href({ city: c.slug }) })),
                   ]}
                 />
               ) : null}

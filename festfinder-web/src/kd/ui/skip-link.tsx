@@ -4,10 +4,8 @@
  * focus to the page's <main>, past the nav or a back office's rail.
  */
 import { useSyncExternalStore, type MouseEvent } from 'react';
-import { COMMON, pick, type Lang } from '../copy';
+import { COMMON, pageLang, pick, type Lang } from '../copy';
 
-/** The language the page is in: ?lang=en, or a part of the page marked English (as the feedback widget reads it). */
-const pageLang = (): Lang => (new URLSearchParams(location.search).get('lang') === 'en' || document.querySelector('[lang="en"]') ? 'en' : 'vi');
 const never = () => () => {};
 
 export function SkipLink() {

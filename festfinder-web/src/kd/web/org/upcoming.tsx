@@ -6,7 +6,7 @@
  * already holds every upcoming event.
  */
 import { useMemo, useState } from 'react';
-import { pick, type Lang } from '../../copy';
+import { pick, type Lang, tx } from '../../copy';
 import { styleLabel } from '../../genre';
 import { Picker } from '../../ui/menu';
 import type { Card } from '../../types';
@@ -57,8 +57,8 @@ export function UpcomingCards({ lang, items }: { lang: Lang; items: Card[] }) {
           ) : null}
           {cities.length > 1 ? (
             <Picker label={T.city} value={city || 'all'} onChange={(v) => setCity(v === 'all' ? '' : v)}
-              options={[{ value: 'all', label: T.anyCity }, ...cities.map(([k, l]) => ({ value: k, label: l[lang], aside: String(items.filter((e) => e.city === k).length) }))]}
-              display={city ? cities.find(([k]) => k === city)?.[1][lang] : T.anyCity} />
+              options={[{ value: 'all', label: T.anyCity }, ...cities.map(([k, l]) => ({ value: k, label: tx(l, lang), aside: String(items.filter((e) => e.city === k).length) }))]}
+              display={city ? tx(cities.find(([k]) => k === city)?.[1], lang) : T.anyCity} />
           ) : null}
           <Picker<Sort> label={T.sort} value={sort} onChange={setSort}
             options={[{ value: 'soonest', label: T.soonest }, { value: 'festivals', label: T.festivals }, { value: 'interest', label: T.interest }]} />

@@ -8,7 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../fresh';
-import { pick, type Lang, type Pair } from '../copy';
+import { pick, type Lang, type Pair, tx } from '../copy';
 import { STYLE_LABEL, styleLabel } from '../genre';
 import { useKd } from '../runtime';
 import { Button, buttonClass, Chip } from '../ui/actions';
@@ -120,7 +120,7 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzName">{T.bizName}</FieldLabel><Input id="bzName" required maxLength={80} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-          <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzType">{T.bizType}</FieldLabel><Select id="bzType" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{TYPES.map(([k, l]) => <option key={k} value={k}>{l[lang]}</option>)}</Select></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzType">{T.bizType}</FieldLabel><Select id="bzType" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{TYPES.map(([k, l]) => <option key={k} value={k}>{tx(l, lang)}</option>)}</Select></div>
         </div>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzBio">{T.bizBio}</FieldLabel><TextArea id="bzBio" rows={3} maxLength={4000} value={f.bioVi} onChange={(e) => setF({ ...f, bioVi: e.target.value })} /></div>
         <div className="flex flex-col gap-2"><FieldLabel htmlFor="bzBioEn">{T.bizBio} (English) <span className="font-normal text-fg-3">{T.optional}</span></FieldLabel><TextArea id="bzBioEn" rows={2} maxLength={4000} value={f.bioEn} onChange={(e) => setF({ ...f, bioEn: e.target.value })} /></div>
@@ -128,7 +128,7 @@ function PublicForm({ lang, p, cities, onSaved }: { lang: Lang; p: Profile; citi
         <fieldset className="flex flex-col gap-2">
           <legend className="kd-flabel mb-2">{T.bizMarkets}</legend>
           <div className="flex flex-wrap gap-1.5">
-            {cities.map((c) => <Chip key={c.slug} on={f.markets.includes(c.slug)} onClick={() => setF({ ...f, markets: f.markets.includes(c.slug) ? f.markets.filter((x) => x !== c.slug) : [...f.markets, c.slug].slice(0, 12) })}>{c.name[lang]}</Chip>)}
+            {cities.map((c) => <Chip key={c.slug} on={f.markets.includes(c.slug)} onClick={() => setF({ ...f, markets: f.markets.includes(c.slug) ? f.markets.filter((x) => x !== c.slug) : [...f.markets, c.slug].slice(0, 12) })}>{tx(c.name, lang)}</Chip>)}
           </div>
         </fieldset>
         <fieldset className="flex flex-col gap-2">

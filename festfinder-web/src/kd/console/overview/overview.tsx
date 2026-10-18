@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import {
   AlarmIcon, CaretRightIcon, FlagIcon, GavelIcon, HourglassMediumIcon, MapPinIcon, MegaphoneIcon, PlusIcon, SealWarningIcon, TrayIcon,
 } from '@phosphor-icons/react/ssr';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, money, monthShort, weekdayShort, day } from '../../format';
 import { familyOf } from '../../genre';
@@ -155,7 +155,7 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
             <ul className="flex flex-col">
               {d.activity.map((a) => (
                 <li key={a.seq} className="flex flex-col gap-0.5 border-t border-line-1 px-5 py-3">
-                  <span className="kd-t"><span className="text-fg-1">{a.actorType === 'system' ? O.system : a.actor}</span> · {a.label[lang]} · <span className="text-fg-1">{a.target.label}</span></span>
+                  <span className="kd-t"><span className="text-fg-1">{a.actorType === 'system' ? O.system : a.actor}</span> · {tx(a.label, lang)} · <span className="text-fg-1">{a.target.label}</span></span>
                   <span className="kd-m kd-num">{ago(a.at, lang)}</span>
                 </li>
               ))}

@@ -9,7 +9,7 @@
 import { useCallback } from 'react';
 import { CalendarDotsIcon, ReceiptXIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { dayMonth, money } from '../../format';
 import { KdLink } from '../../link';
 import { useKd } from '../../runtime';
@@ -86,13 +86,13 @@ function OrderList({ lang, params, set }: { lang: Lang; params: URLSearchParams;
     <>
       <Tiles>
         {(['paid', 'pending', 'refunded'] as const).map((s) => (
-          <Tile key={s} label={T[s]} value={(sum[s]?.count ?? 0).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')} note={money(sum[s]?.total ?? 0, CHECKOUT_CURRENCY, lang)} on={status === s} onClick={() => toggle(s)} />
+          <Tile key={s} label={T[s]} value={(sum[s]?.count ?? 0).toLocaleString(INTL[lang])} note={money(sum[s]?.total ?? 0, CHECKOUT_CURRENCY, lang)} on={status === s} onClick={() => toggle(s)} />
         ))}
       </Tiles>
       <FilterBar onReset={filtered ? () => { setText(''); reset({ q: null, status: null, method: null, event: null, eventLabel: null, from: null, to: null }); } : null}>
         <SearchField value={text} onChange={setText} label={T.searchLabel} placeholder={T.search} />
         <MultiChoice label={T.status} values={statuses} onChange={(v) => reset({ status: v.join(',') })}
-          options={(opts?.orderStatuses ?? []).map((s: { value: string; label: Pair }) => ({ value: s.value, label: s.label[lang] }))} />
+          options={(opts?.orderStatuses ?? []).map((s: { value: string; label: Pair }) => ({ value: s.value, label: tx(s.label, lang) }))} />
         <MultiChoice label={T.method} values={method ? method.split(',') : []} onChange={(v) => reset({ method: v.join(',') })}
           options={(opts?.paymentMethods ?? []).map((m: { value: string; label: string }) => ({ value: m.value, label: m.label }))} />
         <div className="w-full max-w-[300px]">
@@ -118,7 +118,7 @@ function OrderList({ lang, params, set }: { lang: Lang; params: URLSearchParams;
                 <Cell><Two title={o.event.title} sub={`${FF.text(o.tier, lang)} × ${o.qty}`} /></Cell>
                 <Cell className="kd-s">{o.methodLabel}</Cell>
                 <Cell end className="kd-num text-sm text-fg-1">{money(o.total, CHECKOUT_CURRENCY, lang)}</Cell>
-                <Cell><Pill tone={STATUS_TONE[o.status]}>{o.statusLabel[lang]}</Pill></Cell>
+                <Cell><Pill tone={STATUS_TONE[o.status]}>{tx(o.statusLabel, lang)}</Pill></Cell>
               </Row>
             ))}
           </Table>}
@@ -147,7 +147,7 @@ function OrderDrawer({ id, lang, onClose, onChanged }: { id: string; lang: Lang;
   return (
     <Drawer
       title={o ? <span className="kd-num">{o.code}</span> : T.loading}
-      sub={o ? <span className="flex flex-wrap items-center gap-2"><Pill tone={STATUS_TONE[o.status]}>{o.statusLabel[lang]}</Pill><span>{o.methodLabel} · {stamp(o.createdAt, lang)}</span></span> : null}
+      sub={o ? <span className="flex flex-wrap items-center gap-2"><Pill tone={STATUS_TONE[o.status]}>{tx(o.statusLabel, lang)}</Pill><span>{o.methodLabel} · {stamp(o.createdAt, lang)}</span></span> : null}
       onClose={onClose}
       footer={o ? (
         <>

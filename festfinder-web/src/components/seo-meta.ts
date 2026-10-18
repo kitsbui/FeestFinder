@@ -4,12 +4,25 @@
  */
 import type { Metadata } from 'next';
 import { api, type ArtistSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo, type ProjectSeo } from '@/lib/api';
+import { LANGS, tx } from '@/kd/copy';
+
+/**
+ * The page in every language (design v2 phase 10): the API names the Vietnamese and English
+ * addresses; Thai, Japanese and Indonesian are the Vietnamese one with ?lang=<it>.
+ */
+const withLang = (url: string, l: Lang) => (l === 'vi' ? url : url + (url.includes('?') ? '&' : '?') + 'lang=' + l);
+/** A page's address in every language, for its hreflang links. */
+export const everyLang = (vi: string): Record<string, string> => ({ ...Object.fromEntries(LANGS.map((l) => [l, withLang(vi, l)])), 'x-default': vi });
+const OG_LOCALE: Record<Lang, string> = { vi: 'vi_VN', en: 'en_US', th: 'th_TH', ja: 'ja_JP', id: 'id_ID' };
+const ogLocales = (lang: Lang) => ({ locale: OG_LOCALE[lang], alternateLocale: LANGS.filter((l) => l !== lang).map((l) => OG_LOCALE[l]) });
+/** The home page's addresses in every language. */
+export const homeAlternates = everyLang('/');
 
 export type Kind = 'events' | 'organizers' | 'collections' | 'artists' | 'projects';
 export type Props = { params: Promise<{ slug: string }> };
 
 export const load = async (kind: Kind, slug: string, lang: Lang) =>
-  api<EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | ProjectSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'en' ? '?lang=en' : ''}`);
+  api<EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | ProjectSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'vi' ? '' : '?lang=en'}`);
 
 const MISSING = {
   events: { vi: 'Không tìm thấy sự kiện', en: 'Event not found' },
@@ -21,20 +34,20 @@ const MISSING = {
 
 export const seoMetadata = (kind: Kind, lang: Lang) => async ({ params }: Props): Promise<Metadata> => {
   const seo = await load(kind, (await params).slug, lang);
-  if (!seo) return { title: MISSING[kind][lang] };
-  const vi = seo.lang === 'vi';
+  if (!seo) return { title: tx(MISSING[kind], lang) };
+  const url = withLang(seo.alternates.vi, lang);
   return {
     title: { absolute: seo.title },
     description: seo.description,
     robots: seo.robots,
     alternates: {
-      canonical: seo.canonical,
-      languages: { vi: seo.alternates.vi, en: seo.alternates.en, 'x-default': seo.alternates['x-default'] },
+      canonical: lang === 'vi' || lang === 'en' ? seo.canonical : url,
+      languages: everyLang(seo.alternates.vi),
       types: { 'text/markdown': seo.markdown },
     },
     openGraph: {
-      type: seo.kind === 'organizer' || seo.kind === 'artist' ? 'profile' : 'website', url: seo.url, siteName: 'FeestFinder', title: seo.page.h1, description: seo.description,
-      locale: vi ? 'vi_VN' : 'en_US', alternateLocale: [vi ? 'en_US' : 'vi_VN'],
+      type: seo.kind === 'organizer' || seo.kind === 'artist' ? 'profile' : 'website', url: lang === 'vi' || lang === 'en' ? seo.url : url, siteName: 'FeestFinder', title: seo.page.h1, description: seo.description,
+      ...ogLocales(lang),
       images: [{ url: seo.image.url, width: seo.image.width, height: seo.image.height, alt: seo.image.alt, type: seo.image.type }],
     },
     twitter: { card: 'summary_large_image', title: seo.page.h1, description: seo.description, images: [{ url: seo.image.url, alt: seo.image.alt }] },
@@ -48,7 +61,7 @@ export const seoMetadata = (kind: Kind, lang: Lang) => async ({ params }: Props)
 export type DirProps = { params: Promise<{ slug?: string }> };
 export type DirKey = (slug?: string) => string;
 
-export const loadDir = (key: string, lang: Lang) => api<DirectorySeo>(`/seo/directory/${encodeURIComponent(key)}${lang === 'en' ? '?lang=en' : ''}`);
+export const loadDir = (key: string, lang: Lang) => api<DirectorySeo>(`/seo/directory/${encodeURIComponent(key)}${lang === 'vi' ? '' : '?lang=en'}`);
 
 export const directoryMetadata = (keyOf: DirKey, lang: Lang) => async ({ params }: DirProps): Promise<Metadata> => {
   const seo = await loadDir(keyOf((await params).slug), lang);
@@ -58,13 +71,13 @@ export const directoryMetadata = (keyOf: DirKey, lang: Lang) => async ({ params 
     description: seo.description,
     robots: seo.robots,
     alternates: {
-      canonical: seo.canonical,
-      languages: { vi: seo.alternates.vi, en: seo.alternates.en, 'x-default': seo.alternates['x-default'] },
+      canonical: lang === 'vi' || lang === 'en' ? seo.canonical : withLang(seo.alternates.vi, lang),
+      languages: everyLang(seo.alternates.vi),
       types: { 'text/markdown': seo.markdown },
     },
     openGraph: {
-      type: 'website', url: seo.url, siteName: 'FeestFinder', title: seo.page.h1, description: seo.description,
-      locale: seo.lang === 'vi' ? 'vi_VN' : 'en_US', alternateLocale: [seo.lang === 'vi' ? 'en_US' : 'vi_VN'],
+      type: 'website', url: lang === 'vi' || lang === 'en' ? seo.url : withLang(seo.alternates.vi, lang), siteName: 'FeestFinder', title: seo.page.h1, description: seo.description,
+      ...ogLocales(lang),
       images: [{ url: seo.image.url, width: seo.image.width, height: seo.image.height, alt: seo.image.alt, type: seo.image.type }],
     },
   };

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeftIcon, BellIcon, CheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { dayMonth, money } from '../format';
 import { useKd } from '../runtime';
@@ -21,6 +21,7 @@ import type { Card, EventDetail } from '../types';
 import { APP } from './copy';
 import { EventRow, SignInCard } from './row';
 import { FollowManager, type Follows } from '../ui/follows';
+import { inLang } from '../link';
 
 function Head({ lang, title, back, sub }: { lang: Lang; title: string; back: string; sub?: string }) {
   const T = pick(APP, lang);
@@ -85,7 +86,7 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       <Segmented label={T.planTabs} value={tab} onChange={setTab} options={[{ value: 'group', label: T.planGroup }, { value: 'chat', label: T.planChat }]} />
       {tab === 'chat' ? <Thread lang={lang} url={'/plans/' + plan.id + '/messages'} initial={plan.messages} placeholder={T.chatPh} /> : (
         <>
-          <span className="kd-m">{plan.headsLine[lang]}</span>
+          <span className="kd-m">{tx(plan.headsLine, lang)}</span>
           <ul className="flex flex-col border-t border-line-1">
             {plan.members.map((m) => (
               <li key={m.userId} className="kd-lrow min-h-15">
@@ -115,7 +116,7 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
           <div role="radiogroup" aria-label={T.meetSpot} className="flex flex-col gap-1.5">
             <span className="kd-hs">{T.meetSpot}</span>
             {plan.meetSpots.map((s) => (
-              <Option key={s.id} checked={plan.meetSpot === s.id} disabled={!plan.isOwner && plan.meetSpot !== s.id} title={s.name[lang]} price={s.time}
+              <Option key={s.id} checked={plan.meetSpot === s.id} disabled={!plan.isOwner && plan.meetSpot !== s.id} title={tx(s.name, lang)} price={s.time}
                 onSelect={() => plan.isOwner && act(() => FF.patch('/plans/' + plan.id, { meetSpot: s.id }))} />
             ))}
           </div>
@@ -137,7 +138,7 @@ function Split({ lang, plan }: { lang: Lang; plan: Plan }) {
   return (
     <Panel className="flex flex-col gap-3 p-4">
       <div className="flex items-baseline justify-between"><span className="kd-hs">{T.split}</span><span className="kd-mb kd-num">{fill(T.perHead, { p: money(s.perHead, 'VND', lang) })}</span></div>
-      <span className="kd-s">{s.paidLine[lang]}{s.owedCount ? ' · ' + s.owedLine[lang] : ''}</span>
+      <span className="kd-s">{tx(s.paidLine, lang)}{s.owedCount ? ' · ' + tx(s.owedLine, lang) : ''}</span>
       {plan.isOwner && s.owedCount && s.payeeReady ? (
         <div className="flex flex-wrap gap-2">
           {(['vietqr', 'momo', 'zalopay'] as const).map((m) => <Button key={m} size="sm" onClick={() => ask(m)}>{fill(T.askMoney, { m: m === 'vietqr' ? 'VietQR' : m === 'momo' ? 'MoMo' : 'ZaloPay' })}</Button>)}
@@ -145,9 +146,9 @@ function Split({ lang, plan }: { lang: Lang; plan: Plan }) {
       ) : null}
       {req ? (
         <div className="flex flex-col items-center gap-2 pt-1">
-          <QrCode value={req.qrPayload} size={180} label={req.title[lang]} />
+          <QrCode value={req.qrPayload} size={180} label={tx(req.title, lang)} />
           <span className="kd-s text-center">{req.payeeLine} · {money(req.amount, 'VND', lang)} · {req.reference}</span>
-          <span className="kd-s text-center">{req.note[lang]}</span>
+          <span className="kd-s text-center">{tx(req.note, lang)}</span>
         </div>
       ) : null}
     </Panel>
@@ -289,7 +290,7 @@ export function Following({ lang }: { lang: Lang }) {
     const on = kd.follows.has(key) ? !!kd.follows.get(key) : base;
     return (
       <li key={o.id} className="kd-lrow min-h-16">
-        <a className="flex min-w-0 flex-1 items-center gap-3" href={'/o/' + o.slug + (lang === 'en' ? '?lang=en' : '')}>
+        <a className="flex min-w-0 flex-1 items-center gap-3" href={inLang('/o/' + o.slug, lang)}>
           <Avatar org name={o.name} src={o.logoUrl} size={44} />
           <span className="flex min-w-0 flex-col"><span className="kd-hs kd-ell">{o.name}</span><span className="kd-s">{o.next ? fill(T.orgNext, { d: dayMonth(o.next.startsOn, lang) }) : T.orgNone}</span></span>
         </a>

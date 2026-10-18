@@ -8,7 +8,7 @@
  */
 import { CaretRightIcon, PlayIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { api, jsonLdHtml, type ArtistSeo, type Lang } from '@/lib/api';
-import { fill, pick, type Pair } from '../../copy';
+import { fill, pick, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, money, weekdayShort } from '../../format';
 import { CHART_ORDER, familyOf, g, type Family } from '../../genre';
@@ -27,6 +27,7 @@ import { ProfileLinks, type ProfileLink } from '../profile/links';
 import { ArtistMixes, clock, type Mix } from './mixes';
 import { MIXES } from './copy';
 import { ClaimButton, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
+import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
 
@@ -67,12 +68,12 @@ export interface ArtistData {
 export async function loadArtist(slug: string, lang: Lang) {
   const [data, seo] = await Promise.all([
     api<ArtistData>(`/artists/${enc(slug)}`, { lang }),
-    api<ArtistSeo>(`/seo/artists/${enc(slug)}${lang === 'en' ? '?lang=en' : ''}`, { lang }),
+    api<ArtistSeo>(`/seo/artists/${enc(slug)}${lang === 'vi' ? '' : '?lang=en'}`, { lang }),
   ]);
   return data && seo ? { data, seo } : null;
 }
 
-const text = (v: Pair | string | null | undefined, lang: Lang) => (!v ? '' : typeof v === 'string' ? v : v[lang] || v.vi || v.en || '');
+const text = (v: Pair | string | null | undefined, lang: Lang) => (!v ? '' : typeof v === 'string' ? v : tx(v, lang) || v.vi || v.en || '');
 const host = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 /** 2027-03-01 → 01/03. */
 const dm = (iso: string) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
@@ -149,7 +150,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
             {e.startsOn ? <DateBlock hi={i === 0} top={weekdayShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} /> : <span />}
             <span className="flex min-w-0 flex-col gap-1">
               <Link href={inLang('/e/' + e.slug, lang)} className="kd-h kd-ell kd-hit hover:underline">{e.title}</Link>
-              <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{[e.venue.name, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
+              <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{[e.venue.name, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}</span>
             </span>
             <span className="flex items-center gap-3.5">
               <span className={cx('kd-mb kd-num hidden tab:inline', free && 'text-info')}>
@@ -164,7 +165,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
   ) : <p className="kd-t pt-5 text-fg-3">{T.noShows}</p>;
 
   return (
-    <>
+    <InLang lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
@@ -342,7 +343,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
           </div>
         </div>
       </KdProvider>
-    </>
+    </InLang>
   );
 }
 

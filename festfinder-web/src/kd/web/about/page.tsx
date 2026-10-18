@@ -10,7 +10,7 @@ import {
   InstagramLogoIcon, MegaphoneIcon, TiktokLogoIcon,
 } from '@phosphor-icons/react/ssr';
 import type { IconProps } from '@phosphor-icons/react';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { count } from '../../format';
 import { KdLink as Link, inLang } from '../../link';
 import { KdProvider } from '../../runtime';
@@ -21,6 +21,7 @@ import { WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { ABOUT } from './copy';
 import { loadReach } from './data';
+import { InLang } from '@/kd/ui/in-lang';
 
 type Icon = ComponentType<IconProps>;
 
@@ -47,126 +48,128 @@ export async function AboutPage({ lang }: { lang: Lang }) {
   const faq = (['1', '2', '3', '4'] as const).map((n) => ({ q: T[`q${n}`], a: T[`a${n}`] }));
 
   return (
-    <KdProvider lang={lang}>
-      <div className="flex min-h-dvh flex-col" lang={lang}>
-        <WebNav lang={lang} />
-        <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
-          <header className="flex max-w-read flex-col gap-4">
-            <span className="kd-m">{T.title}</span>
-            <h1 className="kd-d1">{T.headline}</h1>
-            <p className="kd-t max-w-[620px]">{T.lede}</p>
-          </header>
+    <InLang lang={lang}>
+      <KdProvider lang={lang}>
+        <div className="flex min-h-dvh flex-col" lang={lang}>
+          <WebNav lang={lang} />
+          <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
+            <header className="flex max-w-read flex-col gap-4">
+              <span className="kd-m">{T.title}</span>
+              <h1 className="kd-d1">{T.headline}</h1>
+              <p className="kd-t max-w-[620px]">{T.lede}</p>
+            </header>
 
-          {/* ---- numbers: the API's, or only the fee when it does not answer ---- */}
-          <section aria-label={T.numbers} className="mt-10 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line-1 py-4.5">
-            {reach ? <Stat value={count(reach.events, lang)} label={T.statEvents} /> : null}
-            {reach ? <Stat value={count(reach.withEvents, lang)} label={T.statCities} /> : null}
-            <Stat value="0" label={T.statFee} />
-          </section>
+            {/* ---- numbers: the API's, or only the fee when it does not answer ---- */}
+            <section aria-label={T.numbers} className="mt-10 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line-1 py-4.5">
+              {reach ? <Stat value={count(reach.events, lang)} label={T.statEvents} /> : null}
+              {reach ? <Stat value={count(reach.withEvents, lang)} label={T.statCities} /> : null}
+              <Stat value="0" label={T.statFee} />
+            </section>
 
-          {/* ---- the listed cities (lib/places.ts), each to the list filtered to it ---- */}
-          {reach?.cities.length ? (
-            <section aria-labelledby="ab-cities" className="mt-12 flex flex-col gap-4">
-              <h2 id="ab-cities" className="kd-d3">{T.cities}</h2>
-              <ul className="flex flex-wrap gap-2">
-                {reach.cities.map((c) => (
-                  <li key={c.slug}>
-                    {c.n ? (
-                      <Link className="kd-chip" href={inLang('/?city=' + encodeURIComponent(c.slug), lang)}>
-                        {c.name[lang]}
-                        <span className="kd-chip-n">{count(c.n, lang)}</span>
-                        <span className="sr-only"> {T.upcomingEvents}</span>
-                      </Link>
-                    ) : (
-                      <span className="kd-chip pointer-events-none text-fg-3">
-                        {c.name[lang]}
-                        <span className="kd-chip-n opacity-100">{T.soon}</span>
+            {/* ---- the listed cities (lib/places.ts), each to the list filtered to it ---- */}
+            {reach?.cities.length ? (
+              <section aria-labelledby="ab-cities" className="mt-12 flex flex-col gap-4">
+                <h2 id="ab-cities" className="kd-d3">{T.cities}</h2>
+                <ul className="flex flex-wrap gap-2">
+                  {reach.cities.map((c) => (
+                    <li key={c.slug}>
+                      {c.n ? (
+                        <Link className="kd-chip" href={inLang('/?city=' + encodeURIComponent(c.slug), lang)}>
+                          {tx(c.name, lang)}
+                          <span className="kd-chip-n">{count(c.n, lang)}</span>
+                          <span className="sr-only"> {T.upcomingEvents}</span>
+                        </Link>
+                      ) : (
+                        <span className="kd-chip pointer-events-none text-fg-3">
+                          {tx(c.name, lang)}
+                          <span className="kd-chip-n opacity-100">{T.soon}</span>
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {/* ---- who to write to ---- */}
+            <section aria-labelledby="ab-contact" className="mt-12 flex flex-col gap-4">
+              <h2 id="ab-contact" className="kd-d3">{T.contact}</h2>
+              <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+                {CONTACTS.map(({ title, body, email, Icon, advertise }) => (
+                  <li key={email} className="kd-card flex flex-col gap-3 p-5">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-fg-2" aria-hidden="true">
+                        <Icon size={20} />
                       </span>
-                    )}
+                      <h3 className="kd-h">{T[title]}</h3>
+                    </div>
+                    <p className="kd-s">{T[body]}</p>
+                    <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
+                      <a className={buttonClass({ size: 'sm' }, 'min-w-0 max-w-full')} href={'mailto:' + email} aria-label={fill(T.emailTo, { e: email })}>
+                        <EnvelopeSimpleIcon size={16} aria-hidden="true" />
+                        <span className="kd-ell">{email}</span>
+                      </a>
+                      {advertise ? (
+                        <LinkButton size="sm" tone="ghost" href={inLang('/advertise', lang)}>
+                          {T.advertise}
+                          <ArrowRightIcon size={16} aria-hidden="true" />
+                        </LinkButton>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
             </section>
-          ) : null}
 
-          {/* ---- who to write to ---- */}
-          <section aria-labelledby="ab-contact" className="mt-12 flex flex-col gap-4">
-            <h2 id="ab-contact" className="kd-d3">{T.contact}</h2>
-            <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
-              {CONTACTS.map(({ title, body, email, Icon, advertise }) => (
-                <li key={email} className="kd-card flex flex-col gap-3 p-5">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-fg-2" aria-hidden="true">
-                      <Icon size={20} />
-                    </span>
-                    <h3 className="kd-h">{T[title]}</h3>
-                  </div>
-                  <p className="kd-s">{T[body]}</p>
-                  <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-                    <a className={buttonClass({ size: 'sm' }, 'min-w-0 max-w-full')} href={'mailto:' + email} aria-label={fill(T.emailTo, { e: email })}>
-                      <EnvelopeSimpleIcon size={16} aria-hidden="true" />
-                      <span className="kd-ell">{email}</span>
+            {/* ---- where to follow ---- */}
+            <section aria-labelledby="ab-social" className="mt-12 flex flex-col gap-4">
+              <h2 id="ab-social" className="kd-d3">{T.social}</h2>
+              <ul className="flex flex-wrap gap-2">
+                {SOCIAL.map(({ label, handle, href, Icon }) => (
+                  <li key={label}>
+                    <a className="kd-chip" href={href} target="_blank" rel="noopener me">
+                      <Icon size={16} aria-hidden="true" />
+                      {label}
+                      <span className="kd-chip-n">{handle}</span>
                     </a>
-                    {advertise ? (
-                      <LinkButton size="sm" tone="ghost" href={inLang('/advertise', lang)}>
-                        {T.advertise}
-                        <ArrowRightIcon size={16} aria-hidden="true" />
-                      </LinkButton>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
-          {/* ---- where to follow ---- */}
-          <section aria-labelledby="ab-social" className="mt-12 flex flex-col gap-4">
-            <h2 id="ab-social" className="kd-d3">{T.social}</h2>
-            <ul className="flex flex-wrap gap-2">
-              {SOCIAL.map(({ label, handle, href, Icon }) => (
-                <li key={label}>
-                  <a className="kd-chip" href={href} target="_blank" rel="noopener me">
-                    <Icon size={16} aria-hidden="true" />
-                    {label}
-                    <span className="kd-chip-n">{handle}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
+            {/* ---- the questions, with their FAQPage JSON-LD (from the home page, owner 2026-10-17) ---- */}
+            <section id="faq" aria-labelledby="ab-faq" className="mt-12 flex max-w-read scroll-mt-24 flex-col gap-1.5">
+              <h2 id="ab-faq" className="kd-d3 mb-2">{T.faq}</h2>
+              <div className="border-t border-line-1">
+                {faq.map((x) => (
+                  <Accordion key={x.q} small name="faq" summary={x.q}>
+                    <p className="kd-t pr-6 text-fg-3">{x.a}</p>
+                  </Accordion>
+                ))}
+              </div>
+              <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml({
+                '@context': 'https://schema.org', '@type': 'FAQPage',
+                mainEntity: faq.map((x) => ({ '@type': 'Question', name: x.q, acceptedAnswer: { '@type': 'Answer', text: x.a } })),
+              }) }} />
+            </section>
 
-          {/* ---- the questions, with their FAQPage JSON-LD (from the home page, owner 2026-10-17) ---- */}
-          <section id="faq" aria-labelledby="ab-faq" className="mt-12 flex max-w-read scroll-mt-24 flex-col gap-1.5">
-            <h2 id="ab-faq" className="kd-d3 mb-2">{T.faq}</h2>
-            <div className="border-t border-line-1">
-              {faq.map((x) => (
-                <Accordion key={x.q} small name="faq" summary={x.q}>
-                  <p className="kd-t pr-6 text-fg-3">{x.a}</p>
-                </Accordion>
-              ))}
-            </div>
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml({
-              '@context': 'https://schema.org', '@type': 'FAQPage',
-              mainEntity: faq.map((x) => ({ '@type': 'Question', name: x.q, acceptedAnswer: { '@type': 'Answer', text: x.a } })),
-            }) }} />
-          </section>
-
-          {/* ---- office and support ---- */}
-          <section aria-labelledby="ab-details" className="mt-12 flex flex-col gap-4">
-            <h2 id="ab-details" className="kd-d3">{T.details}</h2>
-            <dl className="grid gap-5 border-y border-line-1 py-5 tab:grid-cols-3">
-              <Fact label={T.office}>{T.officeValue}</Fact>
-              <Fact label={T.hotline}>
-                <a className="kd-num underline decoration-line-2 underline-offset-4 hover:text-fg-1" href={HOTLINE.tel}>{HOTLINE.label}</a>
-                {' · '}{T.hotlineValue}
-              </Fact>
-              <Fact label={T.hours}>{T.hoursValue}</Fact>
-            </dl>
-            <p className="kd-s max-w-[620px]">{T.note}</p>
-          </section>
-        </main>
-        <div className="mt-auto"><WebFooter lang={lang} otherLang={otherLang} /></div>
-      </div>
-    </KdProvider>
+            {/* ---- office and support ---- */}
+            <section aria-labelledby="ab-details" className="mt-12 flex flex-col gap-4">
+              <h2 id="ab-details" className="kd-d3">{T.details}</h2>
+              <dl className="grid gap-5 border-y border-line-1 py-5 tab:grid-cols-3">
+                <Fact label={T.office}>{T.officeValue}</Fact>
+                <Fact label={T.hotline}>
+                  <a className="kd-num underline decoration-line-2 underline-offset-4 hover:text-fg-1" href={HOTLINE.tel}>{HOTLINE.label}</a>
+                  {' · '}{T.hotlineValue}
+                </Fact>
+                <Fact label={T.hours}>{T.hoursValue}</Fact>
+              </dl>
+              <p className="kd-s max-w-[620px]">{T.note}</p>
+            </section>
+          </main>
+          <div className="mt-auto"><WebFooter lang={lang} otherLang={otherLang} /></div>
+        </div>
+      </KdProvider>
+    </InLang>
   );
 }

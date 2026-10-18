@@ -14,7 +14,7 @@ import { ArrowDownIcon, ArrowUpIcon, FunnelSimpleIcon, XIcon } from '@phosphor-i
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { registerServiceWorker } from '@/runtime/pwa';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { moneyShort, todayIn, whenShort, count as fmtCount } from '../../format';
 import { FAMILY_LABEL, familyOf, type Family } from '../../genre';
@@ -114,7 +114,7 @@ function address(f: Filters, lang: Lang) {
   if (f.origin) q.set('origin', f.origin);
   if (f.view !== 'grid') q.set('view', f.view);
   if (f.view === 'map' && f.bbox) q.set('bbox', f.bbox.join(','));
-  if (lang === 'en') q.set('lang', 'en');
+  if (lang !== 'vi') q.set('lang', lang);
   const s = q.toString();
   return '/' + (s ? '?' + s : '');
 }
@@ -132,6 +132,9 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const [ready, setReady] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [firstRun, setFirstRun] = useState(false);
+  // This device's city and styles (the installed app's first run, or "Cho bạn" asking): read once in the browser.
+  const [mine, setMine] = useState<{ city: string | null; styles: string[] }>({ city: null, styles: [] });
+  useEffect(() => { setMine({ city: place.city(), styles: place.likes() }); }, []);
   const openedByApp = useRef(false);
   const seq = useRef(0);
   const rowsRef = useRef(rows);
@@ -219,9 +222,9 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
 
   const cityCounts = page.facets?.city ?? {};
   const allCount = Object.values(cityCounts).reduce((n, x) => n + x, 0);
-  const cityName = (slug: string) => meta.cities.find((c) => c.slug === slug)?.name[lang] ?? '';
+  const cityName = (slug: string) => tx(meta.cities.find((c) => c.slug === slug)?.name, lang) ?? '';
   const timeLabel = (t: Time) => timeName(T, t);
-  const kindLabel = f.type ? meta.eventTypes.find((x) => x.key === f.type)?.label[lang] : f.style ? meta.styles.find((x) => x.key === f.style)?.label[lang] : null;
+  const kindLabel = f.type ? tx(meta.eventTypes.find((x) => x.key === f.type)?.label, lang) : f.style ? tx(meta.styles.find((x) => x.key === f.style)?.label, lang) : null;
   const filtered = f.city !== 'all' || f.time !== 'all' || !!f.family || !!f.genre || !!f.style || !!f.type || !!f.q || !!f.origin;
   const clear = () => set({ city: 'all', time: 'all', family: null, genre: null, style: null, type: null, q: '', origin: null });
 
@@ -237,7 +240,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       label={T.city}
       value={f.city}
       onChange={(v) => set({ city: v })}
-      options={[{ value: 'all', label: T.allCities, aside: allCount }, ...meta.cities.map((c) => ({ value: c.slug, label: c.name[lang], aside: cityCounts[c.slug] ?? 0 }))]}
+      options={[{ value: 'all', label: T.allCities, aside: allCount }, ...meta.cities.map((c) => ({ value: c.slug, label: tx(c.name, lang), aside: cityCounts[c.slug] ?? 0 }))]}
       display={f.city === 'all' ? T.allCities : cityName(f.city)}
     />
   );
@@ -253,15 +256,28 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     >
       <MenuItem checked={!f.type && !f.style} onSelect={() => set({ type: null, style: null })}>{T.anyKind}</MenuItem>
       {TYPE_CHIPS.map((k) => (
-        <MenuItem key={k} checked={f.type === k} onSelect={() => set({ type: f.type === k ? null : k })}>{meta.eventTypes.find((x) => x.key === k)?.label[lang] ?? k}</MenuItem>
+        <MenuItem key={k} checked={f.type === k} onSelect={() => set({ type: f.type === k ? null : k })}>{tx(meta.eventTypes.find((x) => x.key === k)?.label, lang) ?? k}</MenuItem>
       ))}
       <MenuSeparator />
       {STYLE_CHIPS.map((k) => (
-        <MenuItem key={k} checked={f.style === k} onSelect={() => set({ style: f.style === k ? null : k })}>{meta.styles.find((x) => x.key === k)?.label[lang] ?? k}</MenuItem>
+        <MenuItem key={k} checked={f.style === k} onSelect={() => set({ style: f.style === k ? null : k })}>{tx(meta.styles.find((x) => x.key === k)?.label, lang) ?? k}</MenuItem>
       ))}
     </Menu>
   );
-  const freeChip = <Chip family="free" on={f.family === 'free'} onClick={() => set({ family: f.family === 'free' ? null : 'free', genre: null })}>{FAMILY_LABEL.free[lang]}</Chip>;
+  /**
+   * "Cho bạn" (design v2 phase 9): the list of this device's city and styles; the first press asks for
+   * them (the first-run sheet), a press on it takes it back.
+   */
+  const mineStyle = mine.styles.join(',') || null;
+  const forYouOn = !!(mine.city || mineStyle) && (!mine.city || f.city === mine.city) && f.style === mineStyle;
+  const forYou = () => {
+    FF.track('nav_click', { kind: 'for_you', surface: 'list' });
+    if (forYouOn) return set({ city: 'all', style: null, type: null });
+    if (!mine.city && !mineStyle) return setFirstRun(true);
+    set({ ...(mine.city ? { city: mine.city } : {}), style: mineStyle, type: null });
+  };
+  const forYouChip = <Chip on={forYouOn} onClick={forYou}>{T.forYou}</Chip>;
+  const freeChip = <Chip family="free" on={f.family === 'free'} onClick={() => set({ family: f.family === 'free' ? null : 'free', genre: null })}>{tx(FAMILY_LABEL.free, lang)}</Chip>;
   /** Posted or found by Radar, with their counts where the list has them. */
   const sourcePicker = (
     <Picker
@@ -332,10 +348,10 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
 
   const status = (e: Card): { tone: StatusTone; text: string } => {
     if (e.soldOut) return { tone: 'bad', text: T.stSold };
-    if (e.festival?.flagship && e.festival.label) return { tone: 'live', text: e.festival.label[lang] };
+    if (e.festival?.flagship && e.festival.label) return { tone: 'live', text: tx(e.festival.label, lang) };
     const today = at ? new Intl.DateTimeFormat('en-CA', { timeZone: e.timezone || 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(at) : null;
     if (today && e.startsOn && e.startsOn <= today && (e.endsOn ?? e.startsOn) >= today) return { tone: 'live', text: T.stTonight };
-    if (e.badge) return { tone: 'warn', text: e.badge.label[lang] };
+    if (e.badge) return { tone: 'warn', text: tx(e.badge.label, lang) };
     if (e.isFree) return { tone: 'ok', text: T.stFree };
     return { tone: 'none', text: T.stOn };
   };
@@ -351,13 +367,13 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       <div className="kd-cmd">
         <div className="kd-wrap flex min-h-14 items-center gap-2 py-2">
           <div role="group" aria-label={T.filtersBar} className="flex min-w-0 flex-wrap items-center gap-2 max-tab:hidden">
-            {cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
+            {forYouChip}{cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
           </div>
           <div className="flex min-w-0 items-center gap-2 tab:hidden">
             <button type="button" className={cx('kd-chip', active && 'kd-chip-on')} aria-haspopup="dialog" onClick={() => setSheet(true)}>
               <FunnelSimpleIcon size={16} aria-hidden="true" />{T.filters}{active ? <span className="kd-num">{active}</span> : null}
             </button>
-            {timePicker}{kindMenu}
+            {forYouChip}{timePicker}
           </div>
           {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. On a phone the tab bar has the map. */}
           <div className="ml-auto max-tab:hidden" onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
@@ -375,7 +391,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
                 lang={lang}
                 items={sorted}
                 today={today}
-                cities={meta.cities.map((c) => ({ slug: c.slug, name: c.name[lang], center: c.center, count: cityCounts[c.slug] ?? 0 }))}
+                cities={meta.cities.map((c) => ({ slug: c.slug, name: tx(c.name, lang), center: c.center, count: cityCounts[c.slug] ?? 0 }))}
                 onCity={(slug) => set({ city: slug })}
                 onMap={() => set({ view: 'map' })}
               />
@@ -427,7 +443,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           cities={meta.cities}
           onDone={(city, styles) => {
             setFirstRun(false);
-            if (city || styles.length === 1) set({ ...(city ? { city } : {}), ...(styles.length === 1 ? { style: styles[0], type: null } : {}) });
+            setMine({ city, styles });
+            if (city || styles.length) set({ ...(city ? { city } : {}), ...(styles.length ? { style: styles.join(','), type: null } : {}) });
           }}
         />
       ) : null}
@@ -466,18 +483,18 @@ function FilterSheet({ lang, meta, f, counts, origins, onChange, onClear, onClos
         {group(T.city, [
           <Chip key="all" on={f.city === 'all'} onClick={() => onChange({ city: 'all' })}>{T.allCities}</Chip>,
           ...meta.cities.filter((c) => counts[c.slug] || f.city === c.slug).map((c) => (
-            <Chip key={c.slug} on={f.city === c.slug} count={counts[c.slug] ?? 0} onClick={() => onChange({ city: c.slug })}>{c.name[lang]}</Chip>
+            <Chip key={c.slug} on={f.city === c.slug} count={counts[c.slug] ?? 0} onClick={() => onChange({ city: c.slug })}>{tx(c.name, lang)}</Chip>
           )),
         ])}
         {group(T.when, TIMES.map((t) => <Chip key={t} on={f.time === t} onClick={() => onChange({ time: t })}>{timeName(T, t)}</Chip>))}
         {group(T.kind, [
           <Chip key="any" on={!f.type && !f.style} onClick={() => onChange({ type: null, style: null })}>{T.anyKind}</Chip>,
-          ...TYPE_CHIPS.map((k) => <Chip key={k} on={f.type === k} onClick={() => onChange({ type: f.type === k ? null : k, style: null })}>{meta.eventTypes.find((x) => x.key === k)?.label[lang] ?? k}</Chip>),
-          ...STYLE_CHIPS.map((k) => <Chip key={k} on={f.style === k} onClick={() => onChange({ style: f.style === k ? null : k, type: null })}>{meta.styles.find((x) => x.key === k)?.label[lang] ?? k}</Chip>),
+          ...TYPE_CHIPS.map((k) => <Chip key={k} on={f.type === k} onClick={() => onChange({ type: f.type === k ? null : k, style: null })}>{tx(meta.eventTypes.find((x) => x.key === k)?.label, lang) ?? k}</Chip>),
+          ...STYLE_CHIPS.map((k) => <Chip key={k} on={f.style === k} onClick={() => onChange({ style: f.style === k ? null : k, type: null })}>{tx(meta.styles.find((x) => x.key === k)?.label, lang) ?? k}</Chip>),
         ])}
         {group(T.price, [
           <Chip key="any" on={f.family !== 'free'} onClick={() => onChange({ family: null })}>{T.anyPrice}</Chip>,
-          <Chip key="free" family="free" on={f.family === 'free'} onClick={() => onChange({ family: 'free', genre: null })}>{FAMILY_LABEL.free[lang]}</Chip>,
+          <Chip key="free" family="free" on={f.family === 'free'} onClick={() => onChange({ family: 'free', genre: null })}>{tx(FAMILY_LABEL.free, lang)}</Chip>,
         ])}
         {group(T.source, [
           <Chip key="all" on={!f.origin} count={origins ? origins.posted + origins.radar : null} onClick={() => onChange({ origin: null })}>{T.anySource}</Chip>,

@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CheckCircleIcon, PlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { COMMON, fill, pick, type Lang, type Pair } from '../../copy';
+import { INTL, COMMON, fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { dayMonth, money } from '../../format';
 import { useKd } from '../../runtime';
 import { Button, buttonClass, Chip } from '../../ui/actions';
@@ -206,7 +206,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
         <div className="flex flex-col gap-2">
           <FieldLabel htmlFor="ad-budget" hint={minBudgetLabel(T, lang)}>{fill(T.budgetAmount, { c: AD_CURRENCY })}</FieldLabel>
           <Input id="ad-budget" inputMode="numeric" className="kd-num" invalid={!!err.budget}
-            value={budget ? Number(budget).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') : ''} onChange={(e) => setBudget(e.target.value.replace(/\D/g, '').slice(0, 12))} />
+            value={budget ? Number(budget).toLocaleString(INTL[lang]) : ''} onChange={(e) => setBudget(e.target.value.replace(/\D/g, '').slice(0, 12))} />
           <FieldError>{err.budget}</FieldError>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -228,7 +228,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
             <legend className="kd-flabel pb-1">{T.citiesLabel} <span className="font-normal text-fg-3">· {T.citiesAll}</span></legend>
             <div className="flex flex-wrap gap-1.5">
               {allCities.map((c) => (
-                <Chip key={c.slug} on={cities.includes(c.slug)} onClick={() => setCities((xs) => (xs.includes(c.slug) ? xs.filter((x) => x !== c.slug) : [...xs, c.slug]))}>{c.name[lang]}</Chip>
+                <Chip key={c.slug} on={cities.includes(c.slug)} onClick={() => setCities((xs) => (xs.includes(c.slug) ? xs.filter((x) => x !== c.slug) : [...xs, c.slug]))}>{tx(c.name, lang)}</Chip>
               ))}
             </div>
           </fieldset>

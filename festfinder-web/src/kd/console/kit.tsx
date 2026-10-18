@@ -8,7 +8,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CaretLeftIcon, CaretRightIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { INTL, fill, pick, type Lang, type Pair } from '../copy';
 import { cx } from '../cx';
 import { Button } from '../ui/actions';
 import { FieldLabel, Input, TextArea } from '../ui/forms';
@@ -123,7 +123,7 @@ export function ago(iso: string | null | undefined, lang: Lang): string {
 /** A date and time in the reader's own clock, for back-office rows (event times use the event's city). */
 export function stamp(iso: string | null | undefined, lang: Lang, withTime = true): string {
   if (!iso) return '—';
-  return new Date(iso).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-GB', withTime
+  return new Date(iso).toLocaleString((lang === 'en' ? 'en-GB' : INTL[lang]), withTime
     ? { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }
     : { day: '2-digit', month: '2-digit', year: 'numeric' });
 }

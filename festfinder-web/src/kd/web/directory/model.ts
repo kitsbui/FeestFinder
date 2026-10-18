@@ -5,7 +5,7 @@
  * The directory lists the artists who run their profile (D13); every other name events show,
  * from a lineup or from Radar, waits at /a/radar ("Chưa có người quản lý"), with the same filters.
  */
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { DIR } from './copy';
 
 type Keyed = { key: string; label: Pair };
@@ -114,7 +114,7 @@ export function addressOf(f: Filters, lang: Lang): string {
     if (f.booking) q.set('booking', '1');
     if (f.soon) q.set('upcoming', '1');
   }
-  if (lang === 'en') q.set('lang', 'en');
+  if (lang !== 'vi') q.set('lang', lang);
   const s = q.toString();
   return path + (s ? '?' + s : '');
 }
@@ -147,7 +147,7 @@ export function readAddress(pathname: string, search: string, known: { roles: Ke
   return f;
 }
 
-const text = (v: Pair | null | undefined, lang: Lang) => (v ? v[lang] || v.vi || v.en || '' : '');
+const text = (v: Pair | null | undefined, lang: Lang) => (v ? tx(v, lang) || v.vi || v.en || '' : '');
 
 /** The heading for these filters, worded as the API words its pages. */
 export function titleOf(f: Filters, lang: Lang, meta: DirMeta): string {

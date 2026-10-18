@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeftIcon, PaperPlaneRightIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Pair } from '../copy';
+import { type Lang, type Pair, pick, tx } from '../copy';
 import { cx } from '../cx';
 import { dayMonth } from '../format';
 import { KdLink } from '../link';
@@ -36,8 +36,8 @@ export function noticeHref(link: Notif['link']): string {
   return '/studio' + ev;
 }
 
-const stamp = (iso: string, lang: 'vi' | 'en') => `${dayMonth(iso.slice(0, 10), lang)} · ${FF.hhmm(iso)}`;
-const text = (b: Pair | string, lang: 'vi' | 'en') => (typeof b === 'string' ? b : FF.text(b, lang));
+const stamp = (iso: string, lang: Lang) => `${dayMonth(iso.slice(0, 10), lang)} · ${FF.hhmm(iso)}`;
+const text = (b: Pair | string, lang: Lang) => (typeof b === 'string' ? b : FF.text(b, lang));
 
 export function Inbox() {
   const { lang } = useStudio();
@@ -129,24 +129,24 @@ function Threads() {
             <li key={t.id}>
               <button type="button" className={cx('flex w-full flex-col gap-0.5 border-b border-line-1 px-4 py-3 text-left hover:bg-white/[0.03]', open === t.id && 'bg-white/[0.04]')} aria-current={open === t.id || undefined} onClick={() => pickThread(t.id)}>
                 <span className="flex items-center justify-between gap-3">
-                  <span className={cx('kd-hs kd-ell', t.unread && 'text-fg-1')}>{t.who[lang]}</span>
+                  <span className={cx('kd-hs kd-ell', t.unread && 'text-fg-1')}>{tx(t.who, lang)}</span>
                   <span className="kd-m kd-num shrink-0">{dayMonth(t.updatedAt.slice(0, 10), lang)}</span>
                 </span>
-                <span className={cx('kd-s kd-ell', t.unread && 'text-fg-2')}>{t.unread ? <span className="mr-1.5 inline-block size-2 rounded-full bg-info align-middle" aria-hidden="true" /> : null}{t.subject[lang]}</span>
+                <span className={cx('kd-s kd-ell', t.unread && 'text-fg-2')}>{t.unread ? <span className="mr-1.5 inline-block size-2 rounded-full bg-info align-middle" aria-hidden="true" /> : null}{tx(t.subject, lang)}</span>
                 {t.about ? <span className="kd-m kd-ell">{t.about.title}{t.about.startsOn ? ' · ' + dayMonth(t.about.startsOn, lang) : ''}</span> : null}
-                {t.snippet ? <span className="kd-s kd-ell text-fg-3">{t.snippet[lang]}</span> : null}
+                {t.snippet ? <span className="kd-s kd-ell text-fg-3">{tx(t.snippet, lang)}</span> : null}
               </button>
             </li>
           ))}
         </ul>
-        <span className="kd-s px-4 py-3">{list.responseNote[lang]}</span>
+        <span className="kd-s px-4 py-3">{tx(list.responseNote, lang)}</span>
       </Panel>
-      <Panel as="section" className={cx('kd-main flex min-h-[420px] flex-col', !open && 'max-[899px]:hidden')} aria-label={thread?.subject[lang] ?? T.messages}>
+      <Panel as="section" className={cx('kd-main flex min-h-[420px] flex-col', !open && 'max-[899px]:hidden')} aria-label={tx(thread?.subject, lang) ?? T.messages}>
         {thread ? (
           <>
             <div className="flex items-center gap-2 border-b border-line-1 px-2 py-2">
               <IconButton className="min-[900px]:hidden" label={T.backToList} onClick={() => pickThread(null)}><ArrowLeftIcon size={18} aria-hidden="true" /></IconButton>
-              <div className="flex min-w-0 flex-col px-2"><h2 className="kd-hs kd-ell">{thread.subject[lang]}</h2><span className="kd-m">{thread.who[lang]}</span></div>
+              <div className="flex min-w-0 flex-col px-2"><h2 className="kd-hs kd-ell">{tx(thread.subject, lang)}</h2><span className="kd-m">{tx(thread.who, lang)}</span></div>
             </div>
             <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-4">
               {thread.messages.map((m) => (
@@ -189,11 +189,11 @@ function Notices() {
             <li key={n.id}>
               <KdLink href={noticeHref(n.link)} className="flex flex-col gap-0.5 border-b border-line-1 px-4 py-3 hover:bg-white/[0.03]" onClick={() => { if (n.unread) FF.post(`/organizer/notifications/${n.id}/read`).catch(() => {}); }}>
                 <span className="flex items-center justify-between gap-3">
-                  <span className={cx('kd-hs', n.unread && 'text-fg-1')}>{n.unread ? <span className="mr-1.5 inline-block size-2 rounded-full bg-info align-middle" aria-hidden="true" /> : null}{n.title[lang]}</span>
+                  <span className={cx('kd-hs', n.unread && 'text-fg-1')}>{n.unread ? <span className="mr-1.5 inline-block size-2 rounded-full bg-info align-middle" aria-hidden="true" /> : null}{tx(n.title, lang)}</span>
                   <span className="kd-m kd-num shrink-0">{stamp(n.createdAt, lang)}</span>
                 </span>
-                <span className="kd-s">{n.body[lang]}</span>
-                {n.cta ? <span className="kd-s text-fg-2">{n.cta[lang]} →</span> : null}
+                <span className="kd-s">{tx(n.body, lang)}</span>
+                {n.cta ? <span className="kd-s text-fg-2">{tx(n.cta, lang)} →</span> : null}
               </KdLink>
             </li>
           ))}
@@ -224,7 +224,7 @@ function Topics() {
   if (!topics) return <div className="kd-skel h-60" aria-hidden="true" />;
   return (
     <Panel as="section" className="flex max-w-[640px] flex-col px-4" aria-label={T.notifSettings}>
-      {topics.map((t) => <SwitchRow key={t.key} label={names[t.key] ?? t.key} note={t.channels[lang]} checked={t.enabled} onChange={(v) => set(t.key, v)} />)}
+      {topics.map((t) => <SwitchRow key={t.key} label={names[t.key] ?? t.key} note={tx(t.channels, lang)} checked={t.enabled} onChange={(v) => set(t.key, v)} />)}
       <Button tone="ghost" size="sm" className="-ml-3 my-2 self-start" onClick={test}>{T.testPush}</Button>
     </Panel>
   );

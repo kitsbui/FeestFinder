@@ -8,7 +8,7 @@ import { KdLink as Link } from '../../link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CaretRightIcon, WarningIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, COMMON, type Lang } from '../../copy';
+import { fill, pick, COMMON, type Lang, tx } from '../../copy';
 import { cx } from '../../cx';
 import { familyOf, g } from '../../genre';
 import { useKd } from '../../runtime';
@@ -27,7 +27,7 @@ function acts(ev: EventDetail, lang: Lang): Act[] {
   const out: Act[] = [];
   if (ev.timetable) {
     for (const d of ev.timetable.days) {
-      d.stages.forEach((st) => st.sets.forEach((s) => out.push({ set: s, name: s.artist, stage: st.name[lang] })));
+      d.stages.forEach((st) => st.sets.forEach((s) => out.push({ set: s, name: s.artist, stage: tx(st.name, lang) })));
     }
     // Billing order, as the board draws it: the latest set first.
     out.sort((a, b) => new Date(b.set!.startsAt).getTime() - new Date(a.set!.startsAt).getTime());
@@ -179,12 +179,12 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
         for (let m = Math.ceil(d.window.startMin / 120) * 120; m <= d.window.endMin; m += 120) ticks.push(m);
         return (
           <div key={d.date} className="@container flex flex-col gap-2">
-            {ev.timetable!.days.length > 1 ? <span className="kd-m">{d.label[lang]}</span> : null}
+            {ev.timetable!.days.length > 1 ? <span className="kd-m">{tx(d.label, lang)}</span> : null}
             {/* Under 640px a time axis has no room: each stage is a list of its sets instead (nothing scrolls sideways). */}
             <div className="flex flex-col gap-4 @min-[640px]:hidden">
               {d.stages.map((st) => (
                 <div key={st.id} className="flex flex-col">
-                  <span className="kd-hs flex items-center gap-2 pb-1"><Marker family={fam} />{st.name[lang]}</span>
+                  <span className="kd-hs flex items-center gap-2 pb-1"><Marker family={fam} />{tx(st.name, lang)}</span>
                   {[...st.sets].sort((a, b) => a.startMin - b.startMin).map((s) => {
                     const on = picked.has(s.id);
                     return (
@@ -217,7 +217,7 @@ function Timetable({ lang, plan, onChanged, signedIn }: {
                 </div>
                 {d.stages.map((st) => (
                   <div key={st.id} className="mt-2 grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3">
-                    <span className="kd-hs flex items-center gap-2"><Marker family={fam} />{st.name[lang]}</span>
+                    <span className="kd-hs flex items-center gap-2"><Marker family={fam} />{tx(st.name, lang)}</span>
                     <div className="relative h-11">
                       {st.sets.map((s) => {
                         const left = ((s.startMin - d.window.startMin) / span) * 100;

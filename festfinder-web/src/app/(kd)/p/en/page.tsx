@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { everyLang } from '@/components/seo-meta';
 import { ProjectsPage } from '@/kd/web/projects/page';
 
 export const revalidate = 120;
@@ -7,7 +8,7 @@ export const revalidate = 120;
 export const metadata: Metadata = {
   title: { absolute: 'Projects looking for sponsors, investors and artists | FeestFinder' },
   description: 'Ideas for electronic music nights looking for sponsors, investors, artists, a venue or an organising partner. FeestFinder introduces the people and never holds money.',
-  alternates: { canonical: '/p?lang=en', languages: { vi: '/p', en: '/p?lang=en', 'x-default': '/p' } },
+  alternates: { canonical: '/p?lang=en', languages: everyLang('/p') },
 };
 
 export default function Page() {

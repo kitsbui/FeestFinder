@@ -11,7 +11,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { FF } from '@/runtime/ff';
 import { forgetDevice, registerServiceWorker } from '@/runtime/pwa';
-import type { Lang } from '../copy';
+import { LANGS, type Lang } from '../copy';
 import { KdProvider } from '../runtime';
 import { WebNav, type WebSection } from '../web/chrome';
 import { place } from './place';
@@ -29,10 +29,11 @@ const SECTION: Record<Exclude<AppTab, null>, WebSection> = { saved: 'saved', tic
 export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang) => ReactNode }) {
   const [lang, setLangState] = useState<Lang>('vi');
   useEffect(() => {
-    // The site's language link (VI · EN) says ?lang=; otherwise what this device chose before.
+    // The site's language links say ?lang=; otherwise what this device chose before.
     const asked = new URLSearchParams(location.search).get('lang');
-    if (asked === 'en' || asked === 'vi') place.setLang(asked);
-    const saved = asked === 'en' || asked === 'vi' ? asked : place.lang();
+    const named = (LANGS as readonly string[]).includes(asked ?? '') ? (asked as Lang) : null;
+    if (named) place.setLang(named);
+    const saved = named ?? place.lang();
     if (saved) setLangState(saved);
     registerServiceWorker();
     // Signing out stops this browser's notifications.

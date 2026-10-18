@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../copy';
+import { pick, type Lang, type Pair, tx } from '../copy';
 import { dayMonth } from '../format';
 import { KdLink } from '../link';
 import { useKd } from '../runtime';
@@ -92,7 +92,7 @@ function Open({ lang }: { lang: Lang }) {
                     <span className="kd-hs kd-ell">{g.title}</span>
                     <span className="kd-s kd-num">
                       {g.organizer ? <><KdLink className="hover:underline" href={'/o/' + g.organizer.slug}>{g.organizer.name}</KdLink> · </> : null}
-                      {[dayMonth(g.startsOn, lang), g.cityLabel?.[lang], g.gigType?.label[lang], g.setLength?.label[lang], g.travelCovered ? T.travelCovered : null, g.closesOn ? closesText(g.closesOn, lang) : null].filter(Boolean).join(' · ')}
+                      {[dayMonth(g.startsOn, lang), tx(g.cityLabel, lang), tx(g.gigType?.label, lang), tx(g.setLength?.label, lang), g.travelCovered ? T.travelCovered : null, g.closesOn ? closesText(g.closesOn, lang) : null].filter(Boolean).join(' · ')}
                     </span>
                     {g.description ? <span className="kd-s line-clamp-2 whitespace-pre-line">{g.description}</span> : null}
                   </span>
@@ -113,7 +113,7 @@ function Open({ lang }: { lang: Lang }) {
       {applying ? (
         <Sheet title={applying.title} closeLabel={T.close} onClose={() => setApplying(null)}>
           <div className="flex flex-col gap-4 pt-1">
-            <span className="kd-s kd-num">{[applying.organizer?.name, dayMonth(applying.startsOn, lang), applying.cityLabel?.[lang], feeText(applying.feeMin, applying.feeMax, applying.currency, lang)].filter(Boolean).join(' · ')}</span>
+            <span className="kd-s kd-num">{[applying.organizer?.name, dayMonth(applying.startsOn, lang), tx(applying.cityLabel, lang), feeText(applying.feeMin, applying.feeMax, applying.currency, lang)].filter(Boolean).join(' · ')}</span>
             <Field label={<>{T.message} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="op-msg">
               <TextArea id="op-msg" rows={4} maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} />
             </Field>
@@ -162,7 +162,7 @@ function Brands({ lang }: { lang: Lang }) {
                 <Row key={c.id} cols={BRAND_COLS} className="py-3">
                   <span role="cell" className="flex min-w-0 flex-col gap-0.5">
                     <span className="kd-hs">{name}</span>
-                    <span className="kd-s kd-num">{[c.cities.map((x) => x.label?.[lang] ?? x.slug).join(', '), c.closesOn ? closesText(c.closesOn, lang) : null].filter(Boolean).join(' · ')}</span>
+                    <span className="kd-s kd-num">{[c.cities.map((x) => tx(x.label, lang) ?? x.slug).join(', '), c.closesOn ? closesText(c.closesOn, lang) : null].filter(Boolean).join(' · ')}</span>
                     {c.brief ? <span className="kd-s whitespace-pre-line">{c.brief}</span> : null}
                   </span>
                   <span role="cell" className="kd-num text-right">{feeText(c.feeMin, c.feeMax, c.currency, lang)}</span>
@@ -215,10 +215,10 @@ function Projects({ lang }: { lang: Lang }) {
             <Row key={p.id} cols={PROJECT_COLS} className="py-3">
               <span role="cell" className="flex min-w-0 flex-col gap-0.5">
                 <span className="kd-hs kd-ell">{p.title}</span>
-                <span className="kd-s kd-num">{[p.city.label?.[lang], p.targetOn ? dayMonth(p.targetOn, lang) : null].filter(Boolean).join(' · ')}</span>
+                <span className="kd-s kd-num">{[tx(p.city.label, lang), p.targetOn ? dayMonth(p.targetOn, lang) : null].filter(Boolean).join(' · ')}</span>
                 {p.pitch ? <span className="kd-s line-clamp-2">{p.pitch}</span> : null}
               </span>
-              <span role="cell" className="kd-s kd-ell">{p.styles.map((s) => s.label[lang]).join(', ')}</span>
+              <span role="cell" className="kd-s kd-ell">{p.styles.map((s) => tx(s.label, lang)).join(', ')}</span>
               <span role="cell" className="flex justify-end"><LinkButton size="sm" tone="acc" href={'/p/' + encodeURIComponent(p.slug)}>{T.offerToPlay}</LinkButton></span>
             </Row>
           ))}

@@ -7,7 +7,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { CheckIcon, ImageSquareIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { useKd } from '../../runtime';
 import { Button, Chip, IconButton } from '../../ui/actions';
@@ -63,7 +63,7 @@ export function TimeSelect({ id, value, onChange, after, nextDay }: { id: string
 
 /** Whole units, grouped as they are typed. */
 export function PriceInput({ id, value, onChange, lang, invalid, label }: { id: string; value: number; onChange: (n: number) => void; lang: Lang; invalid?: boolean; label?: string }) {
-  const fmt = (n: number) => (n ? n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') : '');
+  const fmt = (n: number) => (n ? n.toLocaleString(INTL[lang]) : '');
   return (
     <Input id={id} aria-label={label} className="kd-num" inputMode="numeric" invalid={invalid} value={fmt(value)} placeholder="0"
       onChange={(e) => { const d = e.target.value.replace(/\D/g, '').slice(0, 9); onChange(d ? Number(d) : 0); }} />
@@ -236,7 +236,7 @@ export function TierEditor({ lang, rows, onChange, presets, priceFrom, currency,
                     if (v === '__custom') upd(i, { key: `tier-${i + 1}-${Math.random().toString(36).slice(2, 5)}` });
                     else { const p = presets.find((x) => x.key === v)!; upd(i, { key: v, nameVi: p.name.vi, nameEn: p.name.en }); }
                   }}>
-                  {presets.map((p) => <option key={p.key} value={p.key} disabled={rows.some((x, j) => j !== i && x.key === p.key)}>{p.name[lang]}</option>)}
+                  {presets.map((p) => <option key={p.key} value={p.key} disabled={rows.some((x, j) => j !== i && x.key === p.key)}>{tx(p.name, lang)}</option>)}
                   <option value="__custom">{T.tierCustom}</option>
                 </Select>
                 <Input aria-label={`${T.tierName} ${i + 1}`} boxClass="col-span-2 @min-[600px]:col-span-1" value={r.nameVi} placeholder={T.tierNamePh} maxLength={60} disabled={disabled}
@@ -253,7 +253,7 @@ export function TierEditor({ lang, rows, onChange, presets, priceFrom, currency,
       ) : null}
       <div className="flex flex-wrap items-center gap-3">
         <Button size="sm" disabled={rows.length >= 12 || disabled} onClick={add}><PlusIcon size={16} aria-hidden="true" />{T.addTier}</Button>
-        {rows.length ? <span className="kd-s kd-num">{fill(T.tierTotal, { n: total.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') })}</span> : null}
+        {rows.length ? <span className="kd-s kd-num">{fill(T.tierTotal, { n: total.toLocaleString(INTL[lang]) })}</span> : null}
       </div>
     </div>
   );

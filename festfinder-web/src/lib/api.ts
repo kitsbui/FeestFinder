@@ -19,7 +19,8 @@ const BYPASS = (process.env.FF_API_BYPASS ?? '').trim();
 if (BYPASS) SIGNED['x-vercel-protection-bypass'] = BYPASS;
 export const SITE_URL = (process.env.SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
-export type Lang = 'en' | 'vi';
+export type { Lang } from '@/kd/copy';
+import { dataLang, type Lang } from '@/kd/copy';
 export type Localized = { en: string; vi: string };
 
 /** The API did not answer, or answered with an error: not the same as "does not exist". */
@@ -37,7 +38,7 @@ export async function api<T>(path: string, opts: { lang?: Lang; revalidate?: num
       // x-ff-session: never the CDN's shared copy (src/proxy.ts sends 1 for a signed-in visitor). A
       // page keeps its own cache (revalidate) and a save refreshes it at once (kd/fresh.ts), so a
       // second cache in front of the API would only show an owner their old cover for longer.
-      headers: { 'x-lang': opts.lang ?? 'vi', accept: 'application/json', 'x-ff-session': 'render', ...SIGNED },
+      headers: { 'x-lang': dataLang(opts.lang ?? 'vi'), accept: 'application/json', 'x-ff-session': 'render', ...SIGNED },
       next: { revalidate: opts.revalidate ?? 60 },
     });
   } catch (e) {

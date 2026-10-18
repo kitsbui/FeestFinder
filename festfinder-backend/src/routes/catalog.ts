@@ -7,6 +7,7 @@ import { GENRES, L } from '../lib/i18n.ts';
 import { searchNormalize } from '../lib/contact.ts';
 import { cityBySlug, cityLabel, countryByCode, countryCode, launchedCities, launchedCity, placesForClient } from '../lib/places.ts';
 import { artistLinks } from '../services/artists.ts';
+import { lineupPreviews } from '../services/mixes.ts';
 import { countEventMetric } from '../services/partners.ts';
 import { EVENT_TYPE_LABEL, EVENT_TYPES, isStyle, styleByKey, STYLES } from '../lib/styles.ts';
 import { ORGANIZER_TYPE, type OrganizerType } from '../lib/network.ts';
@@ -321,6 +322,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       ...card,
       sources: await loadPublicSources(ctx.db, ev.id),
       artistLinks: await artistLinks(ctx.db, ev.id),
+      previews: await lineupPreviews(ctx.db, ev.id),
       sponsors: await sponsorsOf(ctx.db, ev.id),
       // Whether the AI local guide can answer in this language: it runs, or it wrote this guide before
       // (routes/event-actions.ts serves a kept guide while it is off).

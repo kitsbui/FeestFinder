@@ -6,7 +6,7 @@
  */
 import type { ReactNode } from 'react';
 import { CaretDownIcon } from '@phosphor-icons/react/ssr';
-import { pick } from '../copy';
+import { pick, tx } from '../copy';
 import { dayMonth, timeRange, whenShort } from '../format';
 import { familyOf } from '../genre';
 import { Menu, MenuItem } from '../ui/menu';
@@ -47,7 +47,7 @@ export function StudioHead({ label, right, only }: { label: string; right?: Reac
             </h1>
             <span className="kd-s flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <span className="kd-num">{[whenShort(event, lang), timeRange(event), event.venueName].filter(Boolean).join(' · ')}</span>
-              <Status tone={statusTone(event.status)}>{event.statusLabel[lang]}</Status>
+              <Status tone={statusTone(event.status)}>{tx(event.statusLabel, lang)}</Status>
             </span>
           </>
         ) : <h1 className="kd-d2">{T.noEvents}</h1>}

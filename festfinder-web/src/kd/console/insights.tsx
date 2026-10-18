@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { TrendDownIcon, TrendUpIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { INTL, fill, pick, type Lang } from '../copy';
 import { count, dayMonth } from '../format';
 import { familyOf, type Family } from '../genre';
 import { BarRow, StackedBars } from '../ui/charts';
@@ -46,7 +46,7 @@ export function InsightsScreen() {
   }, []);
   if (!data) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-80" /></div>;
   const b = data.board;
-  const nf = (n: number) => n.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US');
+  const nf = (n: number) => n.toLocaleString(INTL[lang]);
   const weeks = b.weekly.map((w) => {
     const values: Partial<Record<Exclude<Family, 'free'>, number>> = {};
     for (const [genre, n] of Object.entries(w.genres)) {
@@ -137,7 +137,7 @@ function Trend({ lang, d, line }: { lang: Lang; d: number; line: string }) {
   return (
     <span className="kd-s flex items-center gap-1.5">
       {d >= 0 ? <TrendUpIcon size={14} className="text-ok" aria-hidden="true" /> : <TrendDownIcon size={14} className="text-bad" aria-hidden="true" />}
-      {fill(line, { d: (d > 0 ? '+' : '') + d.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') })}
+      {fill(line, { d: (d > 0 ? '+' : '') + d.toLocaleString(INTL[lang]) })}
     </span>
   );
 }

@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CrosshairIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { km, money, moneyShort, whenShort } from '../../format';
 import { familyOf, g } from '../../genre';
@@ -98,7 +98,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     const start = f.bbox ?? cityBox(f.city);
     createKdMap(el.current, {
       bounds: start,
-      places: meta.cities.flatMap((c) => (c.center ? [{ name: c.name[lang], at: c.center }] : [])),
+      places: meta.cities.flatMap((c) => (c.center ? [{ name: tx(c.name, lang), at: c.center }] : [])),
       pinLabel: (p) => (p.title ?? '') + ', ' + p.label,
       onSelect: (id) => setSel(id),
       onMove: () => setDirty(true),

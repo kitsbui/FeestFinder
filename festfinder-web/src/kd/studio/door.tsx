@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeftIcon, CameraIcon, CaretDownIcon, CheckIcon, PauseIcon, PlayIcon, TrashIcon, WarningIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { count, dayMonth } from '../format';
 import { KdLink } from '../link';
@@ -211,7 +211,7 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="kd-num text-[11px] uppercase tracking-[0.03em]">{result.time} · {gates.find((x) => x.value === result.gate)?.label}{result.queued ? ' · ' + T.queued : ''}</span>
                 <span className="text-[26px] font-medium leading-[1.1] tracking-[-0.03em]">{R.title}</span>
-                <span className="text-[13px]">{[result.name !== '—' ? result.name : null, result.detail[lang]].filter(Boolean).join(' · ')}</span>
+                <span className="text-[13px]">{[result.name !== '—' ? result.name : null, tx(result.detail, lang)].filter(Boolean).join(' · ')}</span>
               </div>
             </div>
           ) : null}
@@ -231,7 +231,7 @@ function Gatekeeper({ lang, eventId }: { lang: Lang; eventId: string }) {
             <div key={i} className="grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line-1">
               <div className="flex min-w-0 flex-col">
                 <span className="kd-hs kd-ell">{x.name}</span>
-                <span className="kd-m kd-num kd-ell">{x.tier ?? x.detail[lang]}</span>
+                <span className="kd-m kd-num kd-ell">{x.tier ?? tx(x.detail, lang)}</span>
               </div>
               <Status tone={x.result === 'valid' ? 'ok' : x.result === 'duplicate' ? 'warn' : 'bad'}>{(x.result === 'valid' ? T.rValid : x.result === 'duplicate' ? T.rUsed : T.rInvalid) + ' · ' + x.time}</Status>
             </div>

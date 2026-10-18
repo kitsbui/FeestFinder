@@ -61,6 +61,7 @@ export const LIST = {
   cities: { en: 'Cities', vi: 'Thành phố' },
   seeMap: { en: 'See on the map', vi: 'Xem trên bản đồ' },
   filters: { en: 'Filters', vi: 'Lọc' },
+  forYou: { en: 'For you', vi: 'Cho bạn' },
   filtersBar: { en: 'Filters', vi: 'Bộ lọc' },
   source: { en: 'Source', vi: 'Nguồn' },
   anySource: { en: 'Every source', vi: 'Mọi nguồn' },

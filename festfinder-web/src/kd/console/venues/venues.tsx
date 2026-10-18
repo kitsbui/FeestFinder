@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowSquareOutIcon, LinkIcon, MapPinIcon, PencilSimpleIcon, PlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { whenShort } from '../../format';
 import { useKd } from '../../runtime';
 import { Button, IconButton } from '../../ui/actions';
@@ -115,7 +115,7 @@ function Registry({ lang, items, params, setQuery, onOpen }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, q, area, params.get('flags')]);
   const inUse = [...new Set(items.map((v) => v.area))].sort((a, b) => a.localeCompare(b, 'vi'));
-  const cityName = (slug: string) => opts?.cities.find((c) => c.value === slug)?.label[lang] ?? slug;
+  const cityName = (slug: string) => tx(opts?.cities.find((c) => c.value === slug)?.label, lang) ?? slug;
   return (
     <>
       <FilterBar onReset={q || area || flags.length ? () => setQuery({ q: null, area: null, flags: null }) : null}>

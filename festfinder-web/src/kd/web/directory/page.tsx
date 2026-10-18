@@ -18,6 +18,7 @@ import {
   apiQuery, fromScope, queryOf, readAddress, sameFilters, scopeKey,
   type DirMeta, type DirPage, type Filters, type Scope,
 } from './model';
+import { InLang } from '@/kd/ui/in-lang';
 
 type Search = Record<string, string | string[] | undefined>;
 
@@ -53,7 +54,7 @@ export function DirectoryPage({ data, scope, lang }: {
   lang: Lang;
 }) {
   return (
-    <>
+    <InLang lang={lang}>
       {/* /a/radar is not the directory search engines read: no structured data there. */}
       {scope.unclaimed ? null : <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(data.seo.jsonLd) }} />}
       <KdProvider lang={lang}>
@@ -62,7 +63,7 @@ export function DirectoryPage({ data, scope, lang }: {
           <DirectoryBrowser lang={lang} scope={scope} h1={scope.unclaimed ? pick(DIR, lang).titleUnclaimed : data.seo.page.h1} first={data.first} start={data.start} meta={data.meta} />
         </div>
       </KdProvider>
-    </>
+    </InLang>
   );
 }
 

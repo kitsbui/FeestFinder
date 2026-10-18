@@ -186,7 +186,7 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - Real numbers: `web_vital` {kind LCP|INP|CLS, value, rating} from every page (`kd/ui/vitals.tsx`, `ALLOWED_PROPS` gained `value` and `rating`); the browser's uncaught errors reach the API's reporter through `POST /client-errors` (`routes/client-errors.ts`, `test/client-errors.test.ts`), so Sentry sees the web too once `SENTRY_DSN` is set.
   - Previews: the proxy and the server's reads send the API's protection bypass secret when `FF_API_BYPASS` is set, so a preview of the web can reach a preview of the API (README, step 6); `vercel.json` keeps building `main` only until the owner sets the Preview variables.
   - [ ] The owner: set `SENTRY_DSN` on the API, the Preview variables of the web project, then let `vercel.json` build every branch; save a PostHog insight of `web_vital` p75 by kind.
-  - [ ] Later: the event page (227 KB) and `/a` (204 KB) are over the 200 KB first step; the event page's discussion could load when it nears the screen, at the cost of its server-rendered text.
+  - [ ] Later: the event page (227 KB; 221 KB since phase 10 loads the ride sheet's QR code with the sheet) and `/a` (204 KB) are over the 200 KB first step; the event page's discussion could load when it nears the screen, at the cost of its server-rendered text.
 - [x] Phase 8: pictures and motion (branch `design/phase-8`; artboard 23).
   - No name printed twice: the event page's hero without a cover is a poster of its date (`Art` `poster`: the day set large over a field of the information colour, the weekday, the time, the city, the style first); an organiser without a cover has no banner (as an artist's page since phase 3).
   - Real pictures: an organiser's listing needs a 16:9 cover before it is sent (`missingForSubmit`; the wizard asks for it on its first step; the team may publish without one); the Console's numbers show the share of coming listings with a real cover ("Có ảnh thật", the gate: 80%, then 90%), and a listing without one says so in the queue. Radar already takes a source's own picture (JSON-LD `image`, Ticketmaster's 16:9).
@@ -196,6 +196,19 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - `e2e/next/views.spec.ts`: no name twice, quiet days fill the row, stamps and badges, the story button, the Console's cover share.
   - CI runs the browser checks in three shards (`ci.yml`, `--shard=n/3`): each runner builds and seeds its own copy, so a pull request hears back in about a third of the time.
   - [ ] Later: the 80% gate is read in production from the Console; the event page's hero could use the lineup's photos when there is no cover.
+- [x] Phase 9: your own (branch `design/phase-9`; artboard 23).
+  - "Cho bạn" leads the list's filter bar (on a phone beside "Lọc"): the list of this device's city and styles (`?style=` takes several); the first press asks for them with the first-run sheet; a second press takes it back.
+  - "Nghe trước" on the event page: one mix of each lineup artist with a profile, the pinned one, three at most (`lineupPreviews`, `previews` on `/events/:slug`, `test/mixes.test.ts`); a row until play, then the service's own player.
+  - "Đi cùng bạn bè" shows the friends going (their faces, how many), from the friendships people connected; the row keeps its height, so nothing moves.
+  - The wizard leads with the ten common styles and the chosen ones, a search finds the rest, "Thêm n dòng nhạc" shows them all; Studio's views chart without a view says so and offers "Đẩy tin".
+  - `e2e/next/views.spec.ts` covers them.
+  - [ ] Owner's decision: friends see the nights their connected friends go to today; making it private until each person turns it on (the plan's "riêng tư mặc định") hides what people see now, so it waits for the owner. Smart Alerts on the home page are for later.
+- [x] Phase 10: Asia (branch `design/phase-10`; artboard 23).
+  - Five languages on the public pages: Vietnamese, English, Thai, Japanese and Indonesian. `?lang=th|ja|id` is rewritten to a page of its own like `?lang=en` (home, events, organisers, collections, artists and the directory, projects, /about); `/e/<slug>/th` and the like redirect to the address with `?lang=`. Every page names all five to search engines (hreflang, `og:locale` and its alternates); the footer links every other language, named in itself, and a device that chose one is taken to it.
+  - The lines: `copy/asia/{th,ja,id}.ts`, keyed by the English line (403 of the public pages' lines). Only a page in that language carries them (`kd/ui/in-lang.tsx` sends them; `tx()` reads them), so Vietnamese and English pages weigh what they did. A line without a translation, the back offices and whatever the API writes (organisers' text, SEO titles) read English.
+  - Dates and numbers the local way: weekdays and months in each language (`kd/format.ts`: "19 ก.ย.", "9月19日", "19 Sep"), `Intl` in each locale; a Japanese page brings Noto Sans JP with it.
+  - `e2e/next/languages.spec.ts`: the five alternates, a Thai list to a Thai event page, a Japanese date and font, the Indonesian directory and /about, no Thai on a Vietnamese page.
+  - [ ] A native speaker of each language reads the lines before the cities are promoted there; the API could write Thai, Japanese and Indonesian SEO text later.
 
 ## What the team does next in production
 
@@ -297,3 +310,5 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-18: Design v2 phase 6 (QA and governance): every target 44px on a phone on every role's screens (checked), screens compared with the base branch on every PR (`visual-ok` accepts), the design checklist as a merge condition, `docs/DESIGN_GOVERNANCE.md`.
 - 2026-10-18: Design v2 phase 7 (fast and solid): no screen's layout jumps while it loads (CLS ≤ 0.018, was up to 0.47), rarely opened sheets load on open, a performance gate in the browser checks, Web Vitals and browser errors reported, previews of the web made possible.
 - 2026-10-18: Design v2 phase 8 (pictures and motion): a poster instead of a second name, covers asked for and counted, quiet days fill the row, three motion durations and the card-to-event morph, the waving flag while back offices load, a passport of stamps each its own and badges with icons.
+- 2026-10-18: Design v2 phase 9 (your own): "Cho bạn" on the list, "Nghe trước" on the event page, friends going in the plan's row, the wizard's style search, Studio's empty chart with an action.
+- 2026-10-18: Design v2 phase 10 (Asia): Thai, Japanese and Indonesian on the public pages, each with its own address, the lines sent only with a page in that language, local dates and numbers.

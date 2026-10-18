@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PlusIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { INTL, fill, pick, type Lang, type Pair, tx } from '../copy';
 import { dayMonth, money } from '../format';
 import { useKd } from '../runtime';
 import { Button } from '../ui/actions';
@@ -62,10 +62,10 @@ export function StudioAds() {
                   <a className="kd-hit kd-hs kd-ell hover:underline" href={'/e/' + r.event.slug} target="_blank" rel="noopener">{r.event.title}</a>
                   {r.reply ? <span className="kd-s">{fill(T.adReply, { r: r.reply })}</span> : r.message ? <span className="kd-s kd-ell">{r.message}</span> : null}
                 </span>
-                <span role="cell" className="kd-s">{r.placements.map((p) => p.label[lang]).join(', ')}</span>
+                <span role="cell" className="kd-s">{r.placements.map((p) => tx(p.label, lang)).join(', ')}</span>
                 <span role="cell" className="kd-mb kd-num">{r.budget != null ? money(r.budget, r.currency, lang) : '—'}</span>
                 <span role="cell" className="kd-s kd-num">{when(r)}</span>
-                <span role="cell"><Status tone={TONE[r.status]}>{r.statusLabel[lang]}</Status></span>
+                <span role="cell"><Status tone={TONE[r.status]}>{tx(r.statusLabel, lang)}</Status></span>
                 <span role="cell" className="flex justify-end">{r.status === 'open' ? <Button size="sm" tone="ghost" onClick={() => withdraw(r)}>{T.adWithdraw}</Button> : null}</span>
               </Row>
             ))}
@@ -112,7 +112,7 @@ function AskDrawer({ lang, data, eventId, onClose, onSent }: { lang: Lang; data:
         <form id="ad-ask" className="flex flex-col gap-4" onSubmit={send}>
           <Field label={T.adEvent} htmlFor="ad-event">
             <Select id="ad-event" value={ev} onChange={(e) => setEv(e.target.value)}>
-              {data.events.map((e) => <option key={e.id} value={e.id}>{[e.title, e.startsOn ? dayMonth(e.startsOn, lang) : null, e.cityLabel?.[lang]].filter(Boolean).join(' · ')}</option>)}
+              {data.events.map((e) => <option key={e.id} value={e.id}>{[e.title, e.startsOn ? dayMonth(e.startsOn, lang) : null, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}</option>)}
             </Select>
           </Field>
           <fieldset className="flex flex-col">
@@ -121,12 +121,12 @@ function AskDrawer({ lang, data, eventId, onClose, onSent }: { lang: Lang; data:
               <label key={p.key} className="flex min-h-11 cursor-pointer items-center gap-3">
                 <input type="checkbox" className="kd-check" checked={places.includes(p.key)}
                   onChange={(e) => setPlaces((xs) => (e.target.checked ? [...xs, p.key] : xs.filter((x) => x !== p.key)))} />
-                <span className="kd-t text-fg-1">{p.label[lang]}</span>
+                <span className="kd-t text-fg-1">{tx(p.label, lang)}</span>
               </label>
             ))}
           </fieldset>
           <Field label={fill(T.adBudget, { c: data.currency })} hint={fill(T.adBudgetHint, { m: money(data.minBudget, data.currency, lang) })} htmlFor="ad-budget">
-            <Input id="ad-budget" inputMode="numeric" className="kd-num" value={budget ? Number(budget).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') : ''}
+            <Input id="ad-budget" inputMode="numeric" className="kd-num" value={budget ? Number(budget).toLocaleString(INTL[lang]) : ''}
               onChange={(e) => setBudget(e.target.value.replace(/\D/g, '').slice(0, 12))} />
           </Field>
           <div className="grid grid-cols-2 gap-3">

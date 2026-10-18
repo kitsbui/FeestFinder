@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { PlusIcon, SealCheckIcon, TrashIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../copy';
+import { pick, type Lang, type Pair, tx } from '../copy';
 import { dayMonth } from '../format';
 import { KdLink } from '../link';
 import { useKd } from '../runtime';
@@ -90,7 +90,7 @@ function Mine({ lang }: { lang: Lang }) {
               <Row key={a.id} cols={MINE_COLS} className="py-3">
                 <span role="cell" className="flex min-w-0 flex-col gap-0.5">
                   <span className="kd-hs kd-ell">{a.gig.title}</span>
-                  <span className="kd-s kd-num">{[a.gig.organizer?.name, dayMonth(a.gig.startsOn, lang), a.gig.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
+                  <span className="kd-s kd-num">{[a.gig.organizer?.name, dayMonth(a.gig.startsOn, lang), tx(a.gig.cityLabel, lang)].filter(Boolean).join(' · ')}</span>
                   {a.message ? <span className="kd-s kd-ell">{a.message}</span> : null}
                 </span>
                 <span role="cell"><Status tone={st.tone}>{st.label}</Status></span>
@@ -138,7 +138,7 @@ function Requests({ lang }: { lang: Lang }) {
                     {i.organizer ? <KdLink className="kd-hit kd-hs kd-ell hover:underline" href={'/o/' + i.organizer.slug}>{who}</KdLink> : <span className="kd-hs">{who}</span>}
                     {i.organizer?.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.verified} /> : null}
                   </span>
-                  <span role="cell" className="kd-s kd-num">{[dayMonth(i.eventOn, lang), i.cityLabel?.[lang]].filter(Boolean).join(' · ')}</span>
+                  <span role="cell" className="kd-s kd-num">{[dayMonth(i.eventOn, lang), tx(i.cityLabel, lang)].filter(Boolean).join(' · ')}</span>
                   <span role="cell" className="flex min-w-0 flex-col gap-1">
                     <span className="kd-s whitespace-pre-line text-fg-2">{i.message}</span>
                     {i.reply ? <span className="kd-s border-l-2 border-line-2 pl-3">{T.yourReply}: {i.reply}</span> : null}
@@ -158,7 +158,7 @@ function Requests({ lang }: { lang: Lang }) {
       {answer ? (
         <Sheet title={answer.organizer?.name ?? T.answer} closeLabel={T.close} onClose={() => setAnswer(null)}>
           <div className="flex flex-col gap-4 pt-1">
-            <span className="kd-s kd-num">{[dayMonth(answer.eventOn, lang), answer.cityLabel?.[lang], answer.feeOffer != null ? feeText(answer.feeOffer, null, answer.currency, lang) : null].filter(Boolean).join(' · ')}</span>
+            <span className="kd-s kd-num">{[dayMonth(answer.eventOn, lang), tx(answer.cityLabel, lang), answer.feeOffer != null ? feeText(answer.feeOffer, null, answer.currency, lang) : null].filter(Boolean).join(' · ')}</span>
             <p className="kd-s whitespace-pre-line text-fg-2">{answer.message}</p>
             <Field label={<>{T.reply} <span className="font-normal text-fg-3">{T.optional}</span></>} htmlFor="ar-reply">
               <TextArea id="ar-reply" rows={4} maxLength={2000} value={reply} onChange={(e) => setReply(e.target.value)} />
@@ -184,7 +184,7 @@ function Availability({ lang }: { lang: Lang }) {
   const [rows, setRows] = useState<Window[] | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (load.data) setRows(load.data.items.map((w) => ({ from: w.from, to: w.to, kind: w.kind, city: w.city ?? '', note: w.note ?? '' }))); }, [load.data]);
-  const cities = useMemo(() => (options?.cities ?? []).map((c) => ({ value: c.value, label: c.label[lang] })), [options, lang]);
+  const cities = useMemo(() => (options?.cities ?? []).map((c) => ({ value: c.value, label: tx(c.label, lang) })), [options, lang]);
   const set = (i: number, patch: Partial<Window>) => setRows((rs) => rs!.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -245,7 +245,7 @@ function Reported({ lang }: { lang: Lang }) {
   const set = (k: keyof ReturnType<typeof blank>) => (v: string) => setF((x) => ({ ...x, [k]: v }));
   const timeOk = !f.startTime || /^([01]\d|2[0-3]):[0-5]\d$/.test(f.startTime);
   const ok = f.title.trim().length >= 3 && !!f.startsOn && !!f.city && f.venueName.trim().length >= 2 && timeOk;
-  const statusLabel = (s: string) => options?.statuses?.find((x: { value: string }) => x.value === s)?.label?.[lang] ?? s;
+  const statusLabel = (s: string) => tx<string>(options?.statuses?.find((x: { value: string }) => x.value === s)?.label, lang) ?? s;
   const send = async (e: FormEvent) => {
     e.preventDefault();
     if (!ok) return;
@@ -289,7 +289,7 @@ function Reported({ lang }: { lang: Lang }) {
           <Field label={T.city} htmlFor="rg-city">
             <Select id="rg-city" required value={f.city} onChange={(e) => set('city')(e.target.value)}>
               <option value="">—</option>
-              {(options?.cities ?? []).map((c) => <option key={c.value} value={c.value}>{c.label[lang]}</option>)}
+              {(options?.cities ?? []).map((c) => <option key={c.value} value={c.value}>{tx(c.label, lang)}</option>)}
             </Select>
           </Field>
           <Field label={T.venue} htmlFor="rg-venue"><Input id="rg-venue" required maxLength={160} value={f.venueName} onChange={(e) => set('venueName')(e.target.value)} /></Field>

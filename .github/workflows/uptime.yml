@@ -1,0 +1,41 @@
+name: Uptime
+
+# The "Liên tục" item of artboard 23: feestfinder.com checked from outside Vercel every 15 minutes.
+# The site's home page, the API through the site's proxy with its database (/health), the event
+# list and the sitemap must answer 200 within the time docs/RELIABILITY.md allows; a failed run is
+# GitHub's usual email to whoever last changed this file. Read-only: nothing is written anywhere.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: feestfinder.com answers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Pages and the API
+        env:
+          SITE: https://feestfinder.com
+        run: |
+          set -u
+          failed=0
+          # path, then the most seconds it may take (the SLO's p95 is lower; this only catches an outage)
+          for check in "/ 8" "/health 5" "/events?limit=1 5" "/sitemap.xml 15"; do
+            set -- $check
+            out=$(curl -sS -o /tmp/body -w '%{http_code} %{time_total}' --retry 2 --retry-delay 10 --retry-all-errors --max-time "$2" "$SITE$1" 2>&1) || true
+            code=${out%% *}
+            echo "$1 → $out"
+            if [ "$code" != 200 ]; then failed=1; echo "::error title=$1::answered '$out'"; fi
+          done
+          # The API answers through the site with its database behind it.
+          curl -sS --max-time 5 "$SITE/health" | grep -q '"ok":true' || { failed=1; echo "::error title=/health::not ok"; }
+          exit $failed

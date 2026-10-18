@@ -1,15 +1,62 @@
 /**
  * Screen text. Every string is an {en, vi} pair; the English comes from the legacy screen's
  * logic.js when it had the same line. `pick(DICT, lang)` gives the strings of one language.
+ *
+ * The public pages speak five languages (design v2 phase 10): Vietnamese first, English, and Thai,
+ * Japanese and Indonesian for Bangkok, Tokyo and Bali. Their lines live in `copy/asia/`, keyed by
+ * the English line, and reach the browser only with a page in that language (`learn`, from
+ * kd/ui/in-lang.tsx); a pair may also carry `th`, `ja` or `id` itself. Where neither has the line
+ * the page reads English, as it does for whatever the API writes (`dataLang`: the API and the back
+ * offices write Vietnamese and English only).
  */
-export type Lang = 'vi' | 'en';
-export type Pair = { vi: string; en: string };
+export const LANGS = ['vi', 'en', 'th', 'ja', 'id'] as const;
+export type Lang = (typeof LANGS)[number];
+/** The languages the API writes in: Vietnamese, or English for every other page. */
+export type DataLang = 'vi' | 'en';
+export type Pair = { vi: string; en: string } & Partial<Record<'th' | 'ja' | 'id', string>>;
 export type Dict = Record<string, Pair>;
 export type Strings<D extends Dict> = { [K in keyof D]: string };
 
+/** What the API is asked for: Vietnamese, else English. */
+export const dataLang = (l: Lang): DataLang => (l === 'vi' ? 'vi' : 'en');
+/** A page's language from its `?lang=`: one of the five, Vietnamese when it names none of them. */
+export const langOf = (v: unknown): Lang => ((LANGS as readonly string[]).includes(v as string) ? (v as Lang) : 'vi');
+/** Each language's name in itself, for the language links. */
+export const LANG_NAME: Record<Lang, string> = { vi: 'Tiếng Việt', en: 'English', th: 'ไทย', ja: '日本語', id: 'Bahasa Indonesia' };
+/** The locale `Intl` formats numbers and dates in. */
+export const INTL: Record<Lang, string> = { vi: 'vi-VN', en: 'en-US', th: 'th-TH', ja: 'ja-JP', id: 'id-ID' };
+
+/** The Thai, Japanese and Indonesian lines this page brought, by their English line. */
+const LEARNT: Partial<Record<Lang, Record<string, string>>> = {};
+/** Keeps a language's lines for tx(); the same lines every time, so a second call changes nothing. */
+export function learn(lang: Lang, lines: Record<string, string>) {
+  LEARNT[lang] = lines;
+}
+
+/** One language of a pair, or of any record keyed by language: English when it has none. */
+export function tx<T>(p: { en: T } & Partial<Record<Lang, T>>, lang: Lang): T;
+export function tx<T>(p: ({ en: T } & Partial<Record<Lang, T>>) | null | undefined, lang: Lang): T | undefined;
+export function tx<T>(p: ({ en: T } & Partial<Record<Lang, T>>) | null | undefined, lang: Lang): T | undefined {
+  if (p == null) return undefined;
+  const own = p[lang];
+  if (own !== undefined) return own;
+  const learnt = typeof p.en === 'string' ? LEARNT[lang]?.[p.en] : undefined;
+  return (learnt as T | undefined) ?? p.en;
+}
+
+/**
+ * The language a page is in, read in the browser: its ?lang=, else the language its first part
+ * is marked in (the footer's language links carry their own, so links do not count).
+ */
+export const pageLang = (): Lang => {
+  const asked = new URLSearchParams(location.search).get('lang');
+  if ((LANGS as readonly string[]).includes(asked ?? '')) return asked as Lang;
+  return langOf(document.querySelector('body [lang]:not(a)')?.getAttribute('lang'));
+};
+
 export function pick<D extends Dict>(dict: D, lang: Lang): Strings<D> {
   const out = {} as Strings<D>;
-  for (const k of Object.keys(dict) as (keyof D)[]) out[k] = dict[k][lang];
+  for (const k of Object.keys(dict) as (keyof D)[]) out[k] = tx(dict[k], lang);
   return out;
 }
 

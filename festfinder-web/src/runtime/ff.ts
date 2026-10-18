@@ -3,8 +3,9 @@
  * clock, sign-in, analytics, the map loader, story images and the small helpers the pages
  * call as `FF.*`.
  */
+import { dataLang, tx, type Lang } from '@/kd/copy';
 
-export type Lang = 'en' | 'vi';
+export type { Lang };
 export type Localized = { en: string; vi: string };
 
 export interface Session {
@@ -68,7 +69,8 @@ export const FF: {
 FF.api = async function api(method: string, path: string, body?: unknown, opts?: { lang?: Lang }) {
   // Signing out: let the app detach this device first (push, offline copies).
   if (method === 'DELETE' && path === '/auth/session' && FF.beforeSignOut) await FF.beforeSignOut().catch(() => {});
-  const headers: Record<string, string> = { 'x-lang': opts?.lang || FF.lang };
+  // The API writes Vietnamese and English; a page in another language reads English (kd/copy dataLang).
+  const headers: Record<string, string> = { 'x-lang': dataLang(opts?.lang || FF.lang) };
   // Studio acts for one organiser at a time when the account belongs to several (http/guards.ts requireOrganizer).
   if (FF.organizerId && /^\/(organizer|door)\//.test(path)) headers['x-organizer-id'] = FF.organizerId;
   let payload: BodyInit | undefined;
@@ -165,7 +167,7 @@ FF.hmac22 = async function hmac22(key: string, message: string) {
 
 FF.tone = (genre: string) => GENRE_TONE[genre] || 'brand';
 FF.genreHue = (genre: string) => TONES[FF.tone(genre)].hue;
-FF.text = (loc: unknown, lang: Lang) => (loc && typeof loc === 'object' ? (loc as any)[lang] || (loc as any).en || '' : loc || '');
+FF.text = (loc: unknown, lang: Lang) => (loc && typeof loc === 'object' ? tx((loc as any), lang) || (loc as any).en || '' : loc || '');
 FF.errorText = (e: any, lang: Lang) => (e && e.message) || (lang === 'vi' ? 'Đã có lỗi xảy ra' : 'Something went wrong');
 /** A /ui file. Next serves public/ui as it is, without the API's version stamp. */
 FF.asset = (url: string) => url;

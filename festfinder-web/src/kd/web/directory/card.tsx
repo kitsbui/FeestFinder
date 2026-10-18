@@ -5,7 +5,7 @@
  * The whole of it comes from GET /artists; follower counts are not part of it.
  */
 import { CalendarCheckIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
-import { fill, pick, type Lang, type Pair } from '../../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { whenShort } from '../../format';
 import { familyOf } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
@@ -15,7 +15,7 @@ import { ClaimButton } from '../profile/parts';
 import { DIR } from './copy';
 import type { DirArtist } from './model';
 
-const text = (v: Pair | null | undefined, lang: Lang) => (v ? v[lang] || v.vi || v.en || '' : '');
+const text = (v: Pair | null | undefined, lang: Lang) => (v ? tx(v, lang) || v.vi || v.en || '' : '');
 
 const BOOKING_TONE: Record<string, StatusTone> = { available: 'ok', limited: 'warn', touring: 'live' };
 

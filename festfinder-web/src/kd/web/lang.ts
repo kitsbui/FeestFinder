@@ -19,15 +19,23 @@ const listen = (go: () => void) => {
 };
 const here = () => location.pathname + location.search;
 
-/** This page's address with its query (only the path while the server renders). */
-export function useHere(): string {
-  const path = usePathname() ?? '/';
-  return useSyncExternalStore(listen, here, () => path);
+/** A page in another language is rewritten to a folder of its own (/e/x/th): its address is /e/x?lang=th. */
+const LANG_DIR = /\/(en|th|ja|id)$/;
+
+/**
+ * This page's address with its query. While the server renders (and while the browser hydrates
+ * what it rendered), the path and the page's language only: the server may know the rewritten path
+ * and the browser the address, and both must draw the same links.
+ */
+export function useHere(lang: Lang): string {
+  const path = (usePathname() ?? '/').replace(LANG_DIR, '') || '/';
+  const rendered = lang === 'vi' ? path : `${path}?lang=${lang}`;
+  return useSyncExternalStore(listen, here, () => rendered);
 }
 
 /** The same page in the other language. */
 export function useOtherLang(lang: Lang): string {
-  const u = new URL(useHere(), 'http://x');
+  const u = new URL(useHere(lang), 'http://x');
   if (lang === 'vi') u.searchParams.set('lang', 'en');
   else u.searchParams.delete('lang');
   return u.pathname + u.search;

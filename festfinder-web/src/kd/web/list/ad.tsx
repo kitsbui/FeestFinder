@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRightIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang, type Pair } from '../../copy';
+import { pick, type Lang, type Pair, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { buttonClass, IconButton } from '../../ui/actions';
 import { LIST } from './copy';
@@ -28,16 +28,16 @@ export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
     }
   };
   return (
-    <aside aria-label={ad.sponsoredLabel[lang]} className="kd-card flex flex-wrap items-center gap-4 p-5">
+    <aside aria-label={tx(ad.sponsoredLabel, lang)} className="kd-card flex flex-wrap items-center gap-4 p-5">
       <span className="kd-av kd-av-sq h-12 w-12 text-base" aria-hidden="true">
         <span>{ad.logo || ad.brand.slice(0, 2)}</span>
         {/* The brand's logo is a link it gave; the initials show under it if it does not open. */}
         {ad.logoUrl ? <img src={ad.logoUrl} alt="" loading="lazy" referrerPolicy="no-referrer" /> : null}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="kd-m" title={ad.why[lang]}>{ad.sponsoredLabel[lang]} · {ad.brand}</span>
-        <span className="kd-h">{ad.headline[lang]}</span>
-        <span className="kd-s">{ad.body[lang]}</span>
+        <span className="kd-m" title={tx(ad.why, lang)}>{tx(ad.sponsoredLabel, lang)} · {ad.brand}</span>
+        <span className="kd-h">{tx(ad.headline, lang)}</span>
+        <span className="kd-s">{tx(ad.body, lang)}</span>
       </div>
       {ad.image ? (
          
@@ -45,7 +45,7 @@ export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
       ) : null}
       {ad.url ? (
         <a className={buttonClass({ size: 'sm' })} href={ad.url} target={ad.url.startsWith('/') ? undefined : '_blank'} rel={ad.url.startsWith('/') ? undefined : 'noopener sponsored'} onClick={click}>
-          {ad.cta[lang]}<ArrowUpRightIcon size={14} aria-hidden="true" />
+          {tx(ad.cta, lang)}<ArrowUpRightIcon size={14} aria-hidden="true" />
         </a>
       ) : null}
       <IconButton label={T.adHide} size="sm" onClick={hide}><XIcon size={16} aria-hidden="true" /></IconButton>

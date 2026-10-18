@@ -11,7 +11,7 @@ import { ArrowBendUpLeftIcon, ArrowUpRightIcon, ChatCircleIcon, FlagIcon, HeartI
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
-import { count } from '../../format';
+import { clock, count } from '../../format';
 import { PhoneSheet } from '../../phone';
 import { useKd } from '../../runtime';
 import { Button, IconButton } from '../../ui/actions';
@@ -32,11 +32,7 @@ interface Comment {
   me: { mine: boolean } | null; canModerate: boolean; replies?: Comment[];
 }
 
-/** 2730 → "45:30", 3725 → "1:02:05". */
-export const clock = (s: number) => {
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
-  return (h ? `${h}:${String(m).padStart(2, '0')}` : String(m)) + ':' + String(x).padStart(2, '0');
-};
+export { clock };
 
 /** `heading={false}`: inside the profile's Mix tab, whose name says it (the heading stays for screen readers). */
 export function ArtistMixes({ lang, slug, items, className, heading = true }: { lang: Lang; slug: string; items: Mix[]; className?: string; heading?: boolean }) {

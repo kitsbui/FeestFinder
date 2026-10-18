@@ -11,7 +11,7 @@ import {
   TicketIcon, UsersThreeIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, pick, type Pair } from '../../copy';
+import { fill, pick, type Pair, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { Button, IconButton } from '../../ui/actions';
 import { Input } from '../../ui/forms';
@@ -72,7 +72,7 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
                           <span className="flex flex-wrap items-center gap-2 text-sm text-fg-1">
                             <Icon size={16} aria-hidden="true" />
-                            <strong>{s.providerLabel[lang]}</strong>
+                            <strong>{tx(s.providerLabel, lang)}</strong>
                             {s.host ? (s.url
                               ? <a className="kd-s inline-flex items-center gap-1 hover:underline" href={s.url} target="_blank" rel="noopener noreferrer">{s.host}<ArrowSquareOutIcon size={12} aria-hidden="true" /></a>
                               : <span className="kd-s">{s.host}</span>) : null}
@@ -87,7 +87,7 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                         <div className="flex shrink-0 gap-1">
                           {s.rawEventId ? <IconButton size="sm" label={T.pRaw} onClick={() => setRaw(s.rawEventId)}><CodeIcon size={16} aria-hidden="true" /></IconButton> : null}
                           {['organizer', 'community', 'team'].includes(s.provider) ? null : (
-                            <IconButton size="sm" label={`${T.pDetach} · ${s.host ?? s.providerLabel[lang]}`} onClick={() => detach(s)}><LinkBreakIcon size={16} aria-hidden="true" /></IconButton>
+                            <IconButton size="sm" label={`${T.pDetach} · ${s.host ?? tx(s.providerLabel, lang)}`} onClick={() => detach(s)}><LinkBreakIcon size={16} aria-hidden="true" /></IconButton>
                           )}
                         </div>
                       </li>
@@ -106,12 +106,12 @@ export function ProvenanceTab({ eventId }: { eventId: string }) {
                 <>
                   <div className="flex items-center gap-3">
                     <strong className="kd-d3 kd-num">{c.score}</strong>
-                    <Pill tone={c.score >= 70 ? 'ok' : c.score >= 40 ? 'none' : 'warn'}>{c.labelText[lang]}</Pill>
+                    <Pill tone={c.score >= 70 ? 'ok' : c.score >= 40 ? 'none' : 'warn'}>{tx(c.labelText, lang)}</Pill>
                   </div>
                   <ul className="flex flex-col">
                     {c.breakdown.map((l) => (
                       <li key={l.rule} className={`flex justify-between gap-3 border-t border-line-1 py-2 text-sm ${l.points < 0 ? 'text-bad' : ''}`}>
-                        <span>{l.label[lang]}</span><span className="kd-num">{(l.points > 0 ? '+' : '') + l.points}</span>
+                        <span>{tx(l.label, lang)}</span><span className="kd-num">{(l.points > 0 ? '+' : '') + l.points}</span>
                       </li>
                     ))}
                   </ul>

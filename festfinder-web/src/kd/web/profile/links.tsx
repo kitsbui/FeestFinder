@@ -5,7 +5,7 @@ import {
   TiktokLogoIcon, VinylRecordIcon, WaveformIcon, XLogoIcon, YoutubeLogoIcon,
 } from '@phosphor-icons/react/ssr';
 import type { IconProps } from '@phosphor-icons/react';
-import type { Lang, Pair } from '../../copy';
+import { type Lang, type Pair, tx } from '../../copy';
 
 export interface ProfileLink { kind: string; label: Pair; url: string }
 
@@ -24,7 +24,7 @@ export function ProfileLinks({ links, lang, label }: { links: ProfileLink[]; lan
           <li key={l.kind + l.url}>
             <a className="kd-chip" href={l.url} rel="noopener nofollow me" target="_blank">
               <Icon size={16} aria-hidden="true" />
-              {l.label[lang] || l.label.en}
+              {tx(l.label, lang) || l.label.en}
             </a>
           </li>
         );

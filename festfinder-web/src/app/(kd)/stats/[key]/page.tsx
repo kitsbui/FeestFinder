@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { STATS } from '@/kd/web/stats/copy';
 import { isStatKey, langOf, type Search } from '@/kd/web/stats/model';
+import { tx } from '@/kd/copy';
 import { StatPage } from '@/kd/web/stats/page';
 
 type Props = { params: Promise<{ key: string }>; searchParams: Promise<Search> };
@@ -11,7 +12,7 @@ type Props = { params: Promise<{ key: string }>; searchParams: Promise<Search> }
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { key } = await params;
   if (!isStatKey(key)) return {};
-  return { title: STATS[key][langOf(await searchParams)], robots: { index: false, follow: true } };
+  return { title: tx(STATS[key], langOf(await searchParams)), robots: { index: false, follow: true } };
 }
 
 export default async function Page({ params, searchParams }: Props) {

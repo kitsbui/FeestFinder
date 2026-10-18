@@ -9,7 +9,7 @@
  */
 import { useState } from 'react';
 import { MapPinIcon } from '@phosphor-icons/react/ssr';
-import { fill, pick, type Lang } from '../../copy';
+import { fill, pick, type Lang, tx } from '../../copy';
 import { styleLabel } from '../../genre';
 import { useKd } from '../../runtime';
 import { Button, Chip } from '../../ui/actions';
@@ -57,7 +57,7 @@ export function FirstRun({ lang, cities, onDone }: { lang: Lang; cities: City[];
           <>
             <Button size="lg" block onClick={locate} disabled={busy}><MapPinIcon size={18} aria-hidden="true" />{T.obLocate}</Button>
             <div className="flex flex-wrap gap-2" role="group" aria-label={T.cities}>
-              {cities.map((c) => <Chip key={c.slug} on={false} onClick={() => setCity(c.slug)}>{c.name[lang]}</Chip>)}
+              {cities.map((c) => <Chip key={c.slug} on={false} onClick={() => setCity(c.slug)}>{tx(c.name, lang)}</Chip>)}
             </div>
           </>
         ) : (

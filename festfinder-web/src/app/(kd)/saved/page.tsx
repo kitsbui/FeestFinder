@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { KdProvider } from '@/kd/runtime';
 import { WebNav } from '@/kd/web/chrome';
 import { SavedPage } from '@/kd/web/saved/page';
+import { langOf } from '@/kd/copy';
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -13,7 +14,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function Page({ searchParams }: Props) {
   const q = await searchParams;
-  const lang = q.lang === 'en' ? 'en' : 'vi';
+  const lang = langOf(q.lang);
   // /saved?c=<id> opens one of the person's collections; the browser checks it is theirs.
   const c = typeof q.c === 'string' && q.c.length <= 64 ? q.c : null;
   return (

@@ -118,6 +118,24 @@ export async function mixesOf(q: Queryable, artistId: string): Promise<MixView[]
   return rows.map(presentMix);
 }
 
+/**
+ * "Nghe trước" on an event page (design v2 phase 9): one mix of each artist on the lineup who has a
+ * profile, the pinned one first, in the lineup's order, three at most. Nothing from the service
+ * loads until someone presses play (the page draws a row; the player comes on demand).
+ */
+export async function lineupPreviews(q: Queryable, eventId: string): Promise<(MixView & { artist: { name: string; slug: string } })[]> {
+  const rows = await many<Record<string, unknown> & { artist_name: string; artist_slug: string }>(q,
+    `select * from (
+       select distinct on (ea.artist_id) ${MIX_COLUMNS}, a.name as artist_name, a.slug as artist_slug, ea.sort as lineup_sort
+         from event_artists ea join artists a on a.id = ea.artist_id
+         join artist_mixes m on m.artist_id = a.id and m.removed_at is null
+         left join events e on e.id = m.event_id and e.status in ('live', 'cancelled') and e.published_at is not null
+        where ea.event_id = $1
+        order by ea.artist_id, m.pinned desc, m.sort, m.created_at
+     ) x order by lineup_sort limit 3`, [eventId]);
+  return rows.map((r) => ({ ...presentMix(r), artist: { name: r.artist_name, slug: r.artist_slug } }));
+}
+
 /** The likes and comments a mix shows, counted again from the rows after any change. */
 export async function recount(q: Queryable, mixId: string) {
   await q.query(

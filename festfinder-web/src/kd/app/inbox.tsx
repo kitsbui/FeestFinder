@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowLeftIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { enablePush } from '@/runtime/pwa';
-import { fill, pick, type Lang, type Pair } from '../copy';
+import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { cx } from '../cx';
 import { money } from '../format';
 import { useKd } from '../runtime';
@@ -83,8 +83,8 @@ export function Notifications({ lang }: { lang: Lang }) {
                 <a className="kd-lrow min-h-17 items-start py-3" href={hrefOf(n)} onClick={() => open(n)}>
                   <span className={cx('mt-1.5 h-2 w-2 shrink-0 rounded-full', n.unread ? 'bg-info' : 'bg-transparent')} aria-hidden="true" />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className={cx('kd-hs', !n.unread && 'text-fg-2')}>{n.title[lang]}</span>
-                    {n.body ? <span className="kd-s">{n.body[lang]}</span> : null}
+                    <span className={cx('kd-hs', !n.unread && 'text-fg-2')}>{tx(n.title, lang)}</span>
+                    {n.body ? <span className="kd-s">{tx(n.body, lang)}</span> : null}
                   </span>
                   <span className="kd-m kd-num shrink-0">{ago(n.createdAt, lang)}</span>
                 </a>
@@ -158,10 +158,10 @@ function AlertForm({ lang }: { lang: Lang }) {
       </div>
       <span className="kd-m kd-num" role="status">{fill(T.alertMatches, { n: a.matches })}</span>
       <Group label={T.alertCities}>
-        {meta.cities.map((c) => <Chip key={c.slug} on={a.cities.includes(c.slug)} onClick={() => toggle('cities', c.slug)}>{c.name[lang]}</Chip>)}
+        {meta.cities.map((c) => <Chip key={c.slug} on={a.cities.includes(c.slug)} onClick={() => toggle('cities', c.slug)}>{tx(c.name, lang)}</Chip>)}
       </Group>
       <Group label={T.alertStyles}>
-        {styles.map((s) => <Chip key={s.key} on={a.styles.includes(s.key)} onClick={() => toggle('styles', s.key)}>{s.label[lang]}</Chip>)}
+        {styles.map((s) => <Chip key={s.key} on={a.styles.includes(s.key)} onClick={() => toggle('styles', s.key)}>{tx(s.label, lang)}</Chip>)}
       </Group>
       <Group label={T.alertGenres}>
         {meta.genres.map((g) => <Chip key={g} on={a.genres.includes(g)} onClick={() => toggle('genres', g)}>{g}</Chip>)}
@@ -244,7 +244,7 @@ function PrefsMatrix({ lang }: { lang: Lang }) {
           </div>
         ))}
       </div>
-      <p className="kd-s">{p.quietHours.rule[lang]}</p>
+      <p className="kd-s">{tx(p.quietHours.rule, lang)}</p>
     </div>
   );
 }
