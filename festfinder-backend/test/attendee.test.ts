@@ -38,6 +38,33 @@ describe('attendee (Web + App, signed in)', () => {
     assert.ok(friendsOnly.body.items.every((e: any) => e.friends.going.length > 0));
   });
 
+  it('shows a friend\'s nights only once they said friends may see them', async () => {
+    const db = env.ctx.db;
+    const minh = (await one<{ id: string }>(db, `select id from users where name = 'Minh Trần' and phone is not null and email is null`))!;
+    type Card = { slug: string; friends: { going: { name: string }[] } };
+    const going = async () => ((await env.as(token).get('/events?limit=20')).body.items as Card[]).find((e) => e.slug === 'ravo')!.friends.going.map((f) => f.name).sort();
+    try {
+      // Not asked yet (everyone after migration 045) and "keep private" both hide them everywhere friends look.
+      for (const share of [null, false]) {
+        await db.query('update users set share_nights = $2 where id = $1', [minh.id, share]);
+        assert.deepEqual(await going(), ['Linh Phạm', 'Ngọc Anh']);
+        const friends = ((await env.as(token).get('/me/friends')).body.items as { id: string; going: unknown[]; interestedCount: number }[]).find((f) => f.id === minh.id)!;
+        assert.deepEqual([friends.going, friends.interestedCount], [[], 0]);
+        assert.deepEqual((await env.as(token).get('/friends/' + minh.id)).body.going, []);
+      }
+    } finally {
+      await db.query('update users set share_nights = true where id = $1', [minh.id]);
+    }
+    assert.deepEqual(await going(), ['Linh Phạm', 'Minh Trần', 'Ngọc Anh']);
+    // Each person answers for themselves: the session says whether they were asked, and they can change it.
+    const fresh = await emailUser(env, 'share-nights@example.com');
+    assert.equal((await env.as(fresh).get('/auth/session')).body.user.shareNights, null);
+    assert.deepEqual((await env.as(fresh).put('/me/share-nights', { share: true })).body, { shareNights: true });
+    assert.equal((await env.as(fresh).get('/auth/session')).body.user.shareNights, true);
+    assert.equal((await env.as(fresh).put('/me/share-nights', { share: 'yes' })).status, 400);
+    assert.equal((await env.as().put('/me/share-nights', { share: false })).status, 401);
+  });
+
   it('saves and unsaves, keeping the count in step', async () => {
     const id = env.ids.event.momang;
     const before = (await env.as().get('/events/momang')).body.saveCount;

@@ -211,7 +211,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       one<{ n: number }>(ctx.db, 'select count(*)::int as n from ticket_transfers where from_user = $1 and created_at between $2 and $3', [s.user.id, ...yearRange]),
       ids.length ? many<any>(ctx.db,
         `select distinct u.id, u.name from friendships f join users u on u.id = f.friend_id
-          where f.user_id = $1 and (exists (select 1 from presence p where p.user_id = u.id and p.event_id = any($2::uuid[]))
+          where f.user_id = $1 and u.share_nights and (exists (select 1 from presence p where p.user_id = u.id and p.event_id = any($2::uuid[]))
                                     or exists (select 1 from tickets t where t.user_id = u.id and t.status = 'used' and t.event_id = any($2::uuid[]))
                                     or exists (select 1 from going g where g.user_id = u.id and g.event_id = any($2::uuid[])))`, [s.user.id, ids]) : Promise.resolve([]),
     ]);

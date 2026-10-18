@@ -60,11 +60,13 @@ function Wallet({ lang }: { lang: Lang }) {
   const [which, setWhich] = useState<'up' | 'past'>('up');
   const [offline, setOffline] = useState(false);
   // Upcoming or past is by the server's clock, so the list waits for it.
-  const { clockReady } = useKd();
+  const { clockReady, askShare } = useKd();
   const load = useCallback(async () => {
     const out = await FF.maybe(FF.get('/me/tickets'), null);
     if (out) setW(out);
-  }, []);
+    // Holding a ticket is going: the first time, whether friends may see it (migration 045).
+    if ((out as Wallet | null)?.items.some((o) => o.status === 'paid')) askShare();
+  }, [askShare]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     const on = () => setOffline(!navigator.onLine);

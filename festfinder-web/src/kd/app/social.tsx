@@ -109,7 +109,7 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
           </ul>
           {me && !me.owner ? (
             <div className="grid grid-cols-2 gap-2">
-              <Button tone={me.status === 'going' ? 'acc' : 'default'} onClick={() => act(() => FF.post('/plans/' + plan.id + '/respond', { status: 'going' }))}>{T.imGoing}</Button>
+              <Button tone={me.status === 'going' ? 'acc' : 'default'} onClick={() => act(async () => { const out = await FF.post('/plans/' + plan.id + '/respond', { status: 'going' }); kd.askShare(); return out; })}>{T.imGoing}</Button>
               <Button tone="ghost" onClick={() => act(() => FF.post('/plans/' + plan.id + '/respond', { status: 'declined' }))}>{T.notGoing}</Button>
             </div>
           ) : null}

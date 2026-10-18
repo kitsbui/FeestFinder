@@ -227,13 +227,14 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     // ---- people ----
     const admin = await one<any>(q, `insert into users (name, email, password_hash, signup_method, role, city, locale, created_at) values ('FeestFinder Admin','admin@feestfinder.com',$1,'email','admin','TP.HCM','en',$2) returning id`, [adminHash, hours(24 * 400)]);
     const demo = await one<any>(q,
-      `insert into users (name, email, phone, password_hash, signup_method, city, locale, interests, birth_year, payee_bank_bin, payee_bank_name, payee_account_no, payee_account_name, created_at)
-       values ('Minh Anh','minh@example.com','+84901234567',$1,'email','TP.HCM','en','{techno,house}',1998,'970436','Vietcombank','0071008842','NGUYEN MINH ANH',$2) returning id`, [demoHash, hours(24 * 300)]);
+      `insert into users (name, email, phone, password_hash, signup_method, city, locale, interests, birth_year, payee_bank_bin, payee_bank_name, payee_account_no, payee_account_name, created_at, share_nights)
+       values ('Minh Anh','minh@example.com','+84901234567',$1,'email','TP.HCM','en','{techno,house}',1998,'970436','Vietcombank','0071008842','NGUYEN MINH ANH',$2,true) returning id`, [demoHash, hours(24 * 300)]);
     const orgUser = await one<any>(q, `insert into users (name, email, phone, password_hash, signup_method, city, created_at) values ('Trần Minh','team@ravolution.vn','+84903112884',$1,'email','TP.HCM',$2) returning id`, [orgHash, hours(24 * 500)]);
     await q.query(`insert into social_connections (user_id, provider, external_id, display_name) values ($1,'fb','fb-minh-anh','Minh Anh')`, [demo.id]);
 
     for (const [i, f] of FRIENDS.entries()) {
-      const u = await one<any>(q, `insert into users (name, phone, signup_method, city, last_active_at, created_at) values ($1,$2,$3,'TP.HCM',$4,$5) returning id`,
+      // Friends who said yes to showing friends their nights (migration 045).
+      const u = await one<any>(q, `insert into users (name, phone, signup_method, city, last_active_at, created_at, share_nights) values ($1,$2,$3,'TP.HCM',$4,$5,true) returning id`,
         [f.name, `+8490800000${i + 1}`, f.source === 'zalo' ? 'zalo' : f.source, i % 2 === 0 ? hours(0.02) : hours(30), hours(24 * 200)]);
       ids.friend[f.key] = u.id;
       await q.query(`insert into social_connections (user_id, provider, external_id, display_name) values ($1,$2,$3,$4)`, [u.id, f.source, f.source === 'zalo' ? `+8490800000${i + 1}` : `${f.source}-${f.key}`, f.name]);

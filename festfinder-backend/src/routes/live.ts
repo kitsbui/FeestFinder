@@ -44,7 +44,7 @@ export default async function liveRoutes(app: FastifyInstance) {
         `select u.id, u.name, u.photo_url, p.zone_id, z.label as zone_label, p.updated_at
            from presence p join friendships f on f.friend_id = p.user_id join users u on u.id = p.user_id
            left join site_zones z on z.id = p.zone_id
-          where f.user_id = $1 and p.event_id = $2 and p.updated_at > $3`, [s.user.id, ev.id, new Date(now.getTime() - PRESENCE_TTL_MS)]),
+          where f.user_id = $1 and p.event_id = $2 and p.updated_at > $3 and u.share_nights`, [s.user.id, ev.id, new Date(now.getTime() - PRESENCE_TTL_MS)]),
     ]);
     const days = [...new Set(sets.map((x) => x.day as string))];
     const day = days.includes(dayOf) ? dayOf : days.find((d) => d >= today) ?? days[days.length - 1];

@@ -19,6 +19,7 @@ import { Toast } from './ui/toast';
 // visits never open them, and every page would carry them otherwise.
 const SignInSheet = dynamic(() => import('./sign-in').then((m) => m.SignInSheet), { ssr: false });
 const RolePicker = dynamic(() => import('./role-picker').then((m) => m.RolePicker), { ssr: false });
+const ShareAsk = dynamic(() => import('./ui/share-ask').then((m) => m.ShareAsk), { ssr: false });
 
 /** Something the visitor was doing when sign-in got in the way, done once they are in. */
 export type Intent =
@@ -68,6 +69,8 @@ interface Kd {
   openRolePicker: (start?: RoleStep, name?: string) => void;
   signOut: () => Promise<void>;
   refresh: () => Promise<Session | null>;
+  /** Asks once whether friends may see the nights this person goes to, if they were never asked (migration 045). */
+  askShare: () => void;
   toast: (text: string, action?: ToastMsg['action']) => void;
 }
 
@@ -199,19 +202,37 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     return false;
   }, [session, runIntent]);
 
+  // Whether friends may see this person's nights: asked once per visit at most, only while unanswered.
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareAsked = useRef(false);
+  const sharePending = useRef(false);
+  const askShare = useCallback(() => {
+    // Asked before the session is read (a screen that loads at once): once it is.
+    if (session === undefined) { sharePending.current = true; return; }
+    if (shareAsked.current || !session?.user || session.user.shareNights !== null) return;
+    shareAsked.current = true;
+    setShareOpen(true);
+  }, [session]);
+  useEffect(() => {
+    if (session === undefined || !sharePending.current) return;
+    sharePending.current = false;
+    askShare();
+  }, [session, askShare]);
+
   const toggleSave = useCallback(async (id: string) => {
     if (!requireSignIn({ kind: 'save', id }, C.gateSave)) return null;
     const on = !saved.has(id);
     setSaved((prev) => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n; });
     try {
       await (on ? FF.put('/me/saves/' + id) : FF.del('/me/saves/' + id));
+      if (on) askShare();
       return on;
     } catch (e) {
       setSaved((prev) => { const n = new Set(prev); if (on) n.delete(id); else n.add(id); return n; });
       toast(FF.errorText(e, lang));
       return null;
     }
-  }, [saved, requireSignIn, toast, lang, C.gateSave]);
+  }, [saved, requireSignIn, toast, lang, C.gateSave, askShare]);
 
   const setFollow = useCallback(async (key: FollowKind, id: string, on: boolean) => {
     const intent: Intent = key === 'org' ? { kind: 'follow-org', id } : key === 'person' ? { kind: 'follow-person', id } : { kind: 'follow-artist', name: id };
@@ -240,10 +261,10 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
 
   const value = useMemo<Kd>(() => ({
     lang, clockReady, session, user: session?.user ?? null, saved, follows,
-    toggleSave, setFollow, requireSignIn, signOut, refresh, toast,
+    toggleSave, setFollow, requireSignIn, signOut, refresh, toast, askShare,
     openSignIn: (note?: string) => setSheet({ note }),
     openRolePicker: (start: RoleStep = 'menu', name?: string) => setRole({ step: start, name }),
-  }), [lang, clockReady, session, saved, follows, toggleSave, setFollow, requireSignIn, signOut, refresh, toast]);
+  }), [lang, clockReady, session, saved, follows, toggleSave, setFollow, requireSignIn, signOut, refresh, toast, askShare]);
 
   return (
     <Ctx.Provider value={value}>
@@ -265,6 +286,9 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
       ) : null}
       {role && session?.user && !sheet ? (
         <RolePicker lang={lang} start={role.step} name={role.name} onClose={() => { setRole(null); void refresh(); }} />
+      ) : null}
+      {shareOpen && session?.user && !sheet && !role ? (
+        <ShareAsk lang={lang} onDone={(share) => { setShareOpen(false); if (share !== null) void refresh(); }} />
       ) : null}
       <Toast msg={toastMsg} onDone={() => setToast(null)} closeLabel={C.close} />
     </Ctx.Provider>

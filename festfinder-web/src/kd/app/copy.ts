@@ -266,6 +266,8 @@ export const APP = {
   nrOrgs: { en: 'Organisers you follow', vi: 'Nhà tổ chức bạn theo dõi' },
   nrFriends: { en: 'What friends are going to', vi: 'Bạn bè sẽ đi đâu' },
   nrWeekly: { en: 'The weekly pick', vi: 'Gợi ý hằng tuần' },
+  privacy: { en: 'Privacy', vi: 'Riêng tư' },
+  shareNights: { en: 'Friends see the nights I go to', vi: 'Bạn bè thấy đêm tôi đi' },
   nrSets: { en: 'Set reminders on the night', vi: 'Nhắc giờ diễn trong đêm diễn' },
   chPush: { en: 'Push', vi: 'Push' },
   chZalo: { en: 'Zalo', vi: 'Zalo' },

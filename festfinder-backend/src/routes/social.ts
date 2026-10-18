@@ -25,8 +25,8 @@ export default async function socialRoutes(app: FastifyInstance) {
       `select u.id, u.name, u.photo_url, u.last_active_at, f.source,
               (select json_agg(json_build_object('id', e.id, 'slug', e.slug, 'title', e.title, 'startsOn', e.starts_on) order by e.starts_at)
                  from going g join events e on e.id = g.event_id
-                where g.user_id = u.id and e.status = 'live' and e.ends_at >= $2) as going,
-              (select count(*)::int from saves sv join events e on e.id = sv.event_id where sv.user_id = u.id and e.ends_at >= $2) as interested,
+                where g.user_id = u.id and u.share_nights and e.status = 'live' and e.ends_at >= $2) as going,
+              (select count(*)::int from saves sv join events e on e.id = sv.event_id where sv.user_id = u.id and u.share_nights and e.ends_at >= $2) as interested,
               (select json_build_object('kind', m.kind, 'body', m.body, 'fromMe', m.sender_id = $1, 'eventId', m.event_id, 'at', m.created_at)
                  from direct_messages m
                 where (m.sender_id = $1 and m.recipient_id = u.id) or (m.sender_id = u.id and m.recipient_id = $1)
@@ -51,12 +51,13 @@ export default async function socialRoutes(app: FastifyInstance) {
     await assertFriend(s.user.id, id);
     const now = ctx.clock.now();
     const u = await one<any>(ctx.db,
-      `select u.id, u.name, u.photo_url, u.last_active_at, f.source from users u join friendships f on f.friend_id = u.id
+      `select u.id, u.name, u.photo_url, u.last_active_at, u.share_nights, f.source from users u join friendships f on f.friend_id = u.id
         where u.id = $1 and f.user_id = $2`, [id, s.user.id]);
-    const going = await many<any>(ctx.db,
+    // Their nights only once they let friends see them (migration 045).
+    const going = !u?.share_nights ? [] : await many<any>(ctx.db,
       `select e.id, e.slug, e.title, e.starts_on, e.ends_on, e.start_time from going g join events e on e.id = g.event_id
         where g.user_id = $1 and e.status = 'live' and e.ends_at >= $2 order by e.starts_at`, [id, now]);
-    const interested = await one<any>(ctx.db,
+    const interested = !u?.share_nights ? { n: 0 } : await one<any>(ctx.db,
       `select count(*)::int as n from saves sv join events e on e.id = sv.event_id where sv.user_id = $1 and e.ends_at >= $2`, [id, now]);
     const mutual = going.length + interested.n;
     const follows = await one(ctx.db, 'select 1 from user_follows where follower_id = $1 and user_id = $2', [s.user.id, id]);

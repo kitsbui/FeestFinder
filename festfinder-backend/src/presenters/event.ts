@@ -49,11 +49,11 @@ export async function loadViewer(q: Queryable, userId: string | null, eventIds: 
     many<any>(q,
       `select 'going' as rel, g.event_id, u.id, u.name, u.photo_url, f.source, g.created_at
          from friendships f join going g on g.user_id = f.friend_id join users u on u.id = f.friend_id
-        where f.user_id = $1 and g.event_id = any($2::uuid[])
+        where f.user_id = $1 and g.event_id = any($2::uuid[]) and u.share_nights
        union all
        select 'saved' as rel, s.event_id, u.id, u.name, u.photo_url, f.source, s.created_at
          from friendships f join saves s on s.user_id = f.friend_id join users u on u.id = f.friend_id
-        where f.user_id = $1 and s.event_id = any($2::uuid[])
+        where f.user_id = $1 and s.event_id = any($2::uuid[]) and u.share_nights
        order by created_at`, [userId, ids]),
   ]);
   const friendsGoing = new Map<string, FriendFace[]>();

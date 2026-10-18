@@ -406,4 +406,7 @@ export const TH: Record<string, string> = {
   'The organiser, or FeestFinder’s own checkout for the events it sells. FeestFinder adds no booking fee.': 'ผู้จัดงาน หรือระบบชำระเงินของ FeestFinder สำหรับอีเวนต์ที่ขายบนเว็บ FeestFinder ไม่เก็บค่าธรรมเนียมการจอง',
   'Publishing is free. Get verified once and your events keep the badge, with ticket clicks and saves in your dashboard.': 'ลงประกาศฟรี ยืนยันตัวตนครั้งเดียว อีเวนต์ของคุณจะมีป้ายยืนยันตลอด พร้อมยอดคลิกซื้อบัตรและยอดบันทึกในแดชบอร์ด',
   'Use “Report this listing” at the bottom of the event page, or write to hello@feestfinder.com. We usually correct it the same day.': 'กด “รายงานประกาศนี้” ที่ด้านล่างของหน้าอีเวนต์ หรือเขียนถึง hello@feestfinder.com ส่วนใหญ่เราแก้ไขภายในวันเดียวกัน',
+  'Let friends see the nights you go to?': 'ให้เพื่อนเห็นไหมว่าคุณไปคืนไหนบ้าง?',
+  'Show friends': 'ให้เพื่อนเห็น',
+  'Keep private': 'เก็บเป็นส่วนตัว',
 };

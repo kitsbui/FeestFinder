@@ -101,6 +101,8 @@ export function publicUser(u: any, method?: string | null, ctx?: Ctx) {
     id: u.id, name: u.name, email: u.email, phone: u.phone, phoneVerified: !!u.phone_verified_at, city: u.city, photoUrl: u.photo_url,
     locale: u.locale, role: adminNeedsGoogle ? 'user' : u.role, adminNeedsGoogle, signupMethod: u.signup_method, interests: u.interests,
     hasPassword: !!u.password_hash, onboarded: !!u.onboarded_at,
+    // Whether friends see the nights they go to: null until asked (migration 045).
+    shareNights: (u.share_nights ?? null) as boolean | null,
   };
 }
 

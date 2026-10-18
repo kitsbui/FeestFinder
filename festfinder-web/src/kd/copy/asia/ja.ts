@@ -406,4 +406,7 @@ export const JA: Record<string, string> = {
   'The organiser, or FeestFinder’s own checkout for the events it sells. FeestFinder adds no booking fee.': '主催者、またはFeestFinderが販売するイベントではFeestFinderの決済です。FeestFinderは予約手数料をいただきません。',
   'Publishing is free. Get verified once and your events keep the badge, with ticket clicks and saves in your dashboard.': '掲載は無料です。一度認証されれば、イベントには認証バッジが付き、チケットのクリック数と保存数はダッシュボードで確認できます。',
   'Use “Report this listing” at the bottom of the event page, or write to hello@feestfinder.com. We usually correct it the same day.': 'イベントページ下部の「この掲載を報告」を使うか、hello@feestfinder.comまでご連絡ください。通常その日のうちに修正します。',
+  'Let friends see the nights you go to?': '行くイベントを友達に見せますか?',
+  'Show friends': '友達に見せる',
+  'Keep private': '非公開にする',
 };

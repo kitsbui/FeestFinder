@@ -3,7 +3,7 @@
  * A modal sheet on a native <dialog>: focus stays inside, Escape closes, the page behind is
  * inert. A bottom sheet on phones, a centred card from 760px.
  */
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { XIcon } from '@phosphor-icons/react/ssr';
 import { cx } from '../cx';
 
@@ -14,6 +14,8 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
   open?: boolean; onClose: () => void; title: ReactNode; children: ReactNode; closeLabel: string; wide?: boolean; className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Its own: two sheets open at once (a question over the role picker) each keep their name.
+  const titleId = useId();
   // What had focus before the sheet opened: focus goes back there when it closes, also when the
   // caller unmounts the sheet while it is open (the dialog then never gets to restore it itself).
   const back = useRef<HTMLElement | null>(null);
@@ -38,7 +40,7 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
       ref={ref}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      aria-labelledby="kd-sheet-title"
+      aria-labelledby={titleId}
       className={cx(
         'kd-sheet m-0 mt-auto w-full max-w-none max-h-[92dvh] overflow-y-auto rounded-t-sheet bg-surface-1 p-0 text-fg-2 shadow-[inset_0_0_0_1px_var(--color-line-2)]',
         'tab:m-auto tab:rounded-sheet',
@@ -47,7 +49,7 @@ export function Sheet({ open = true, onClose, title, children, closeLabel, wide,
       )}
     >
       <div className="flex items-center gap-2 px-5 pt-4 pb-2">
-        <h2 id="kd-sheet-title" className="kd-h min-w-0 flex-1">{title}</h2>
+        <h2 id={titleId} className="kd-h min-w-0 flex-1">{title}</h2>
         <button type="button" className="kd-ib kd-ib-sm" aria-label={closeLabel} onClick={onClose}>
           <XIcon size={18} aria-hidden="true" />
         </button>

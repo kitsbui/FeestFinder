@@ -406,4 +406,7 @@ export const ID: Record<string, string> = {
   'The organiser, or FeestFinder’s own checkout for the events it sells. FeestFinder adds no booking fee.': 'Penyelenggara, atau checkout FeestFinder sendiri untuk acara yang dijual di sini. FeestFinder tidak menambah biaya pemesanan.',
   'Publishing is free. Get verified once and your events keep the badge, with ticket clicks and saves in your dashboard.': 'Memasang acara gratis. Verifikasi sekali dan acaramu tetap berlencana, dengan klik tiket dan simpanan di dasbor.',
   'Use “Report this listing” at the bottom of the event page, or write to hello@feestfinder.com. We usually correct it the same day.': 'Gunakan “Laporkan listing ini” di bagian bawah halaman acara, atau tulis ke hello@feestfinder.com. Biasanya kami perbaiki di hari yang sama.',
+  'Let friends see the nights you go to?': 'Biarkan teman melihat malam yang kamu datangi?',
+  'Show friends': 'Tampilkan ke teman',
+  'Keep private': 'Tetap pribadi',
 };

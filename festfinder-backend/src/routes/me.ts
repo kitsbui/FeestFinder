@@ -56,6 +56,17 @@ export default async function meRoutes(app: FastifyInstance) {
     };
   });
 
+  /**
+   * Whether friends see the nights this person goes to (migration 045): asked once, the first time
+   * they save a night, join a plan or buy; changed in settings at any time.
+   */
+  app.put('/me/share-nights', async (req) => {
+    const s = requireUser(req);
+    const { share } = parse(z.object({ share: z.boolean() }), req.body);
+    await ctx.db.query('update users set share_nights = $2 where id = $1', [s.user.id, share]);
+    return { shareNights: share };
+  });
+
   app.patch('/me', async (req) => {
     const s = requireUser(req);
     const body = parse(z.object({
