@@ -168,6 +168,34 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.ok(free.body.items.every((e: any) => e.isFree));
   });
 
+  it('pins every listed event: its venue when it has no point of its own, else its city\'s centre', async () => {
+    const db = env.ctx.db;
+    const ev = (await db.query<{ id: string; venue_id: string | null; venue_name: string; lat: number; lng: number }>(
+      `select id, venue_id, venue_name, lat, lng from events where slug = 'ravo'`)).rows[0];
+    type MapPin = { slug: string; lat: number; lng: number; approx: boolean };
+    const pinOf = async (q = '') => ((await env.as().get('/events/map' + q)).body.items as MapPin[]).find((e) => e.slug === 'ravo');
+    const at = async () => pinOf().then((p) => [p?.lat, p?.lng, p?.approx]);
+    // What Feest Radar often finds: a venue's name and a city, no coordinates. A venue of the city with that name has them.
+    await db.query('update events set lat = null, lng = null, venue_id = null where id = $1', [ev.id]);
+    try {
+      assert.deepEqual(await at(), [ev.lat, ev.lng, false]);
+      // A name nobody knows: the city's centre, marked approximate; a box around it finds it.
+      await db.query(`update events set venue_name = 'Hidden Warehouse' where id = $1`, [ev.id]);
+      const centre = (await db.query<{ lat: number; lng: number }>(`select lat, lng from cities where slug = 'ho-chi-minh'`)).rows[0];
+      assert.deepEqual(await at(), [centre.lat, centre.lng, true]);
+      assert.ok(await pinOf(`?bbox=${centre.lng - 0.05},${centre.lat - 0.05},${centre.lng + 0.05},${centre.lat + 0.05}`), 'the box reads the pin');
+      // Once the team adds the venue (or the name as an alias of one), its point.
+      await db.query(`insert into venues (name, address, area, city, lat, lng, aliases) values ('Somewhere', '1 A', 'Quận 2', 'ho-chi-minh', 10.79, 106.74, $1)`, [['HIDDEN WAREHOUSE']]);
+      assert.deepEqual(await at(), [10.79, 106.74, false]);
+    } finally {
+      await db.query(`delete from venues where name = 'Somewhere'`);
+      await db.query('update events set lat = $2, lng = $3, venue_id = $4, venue_name = $5 where id = $1', [ev.id, ev.lat, ev.lng, ev.venue_id, ev.venue_name]);
+    }
+    // The list of what is still to come and the map count the same events.
+    const list = (await env.as().get('/events?time=all&upcoming=true&limit=60')).body;
+    assert.equal((await env.as().get('/events/map')).body.total, list.total);
+  });
+
   it('lists events by city', async () => {
     const all = await env.as().get('/events?time=all&limit=60');
     assert.ok(all.body.items.every((e: any) => e.city === 'ho-chi-minh' && e.cityLabel.vi === 'TP.HCM'));

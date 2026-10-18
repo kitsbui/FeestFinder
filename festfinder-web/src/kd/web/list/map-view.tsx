@@ -26,6 +26,8 @@ interface MapItem {
   id: string; slug: string; title: string; genre: string | null; lat: number; lng: number; venue: string | null; area: string | null;
   city: string; cityLabel: Pair; startsOn: string; endsOn: string | null; startTime: string | null; coverUrl: string | null;
   priceFrom: number; currency: string; isFree: boolean; soldOut: boolean; origin?: 'posted' | 'radar';
+  /** Only its city is known: the pin stands near the city's centre. */
+  approx?: boolean;
 }
 
 /** All the listed cities, when no city is chosen. */
@@ -85,7 +87,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     setTruncated(out.truncated);
     onBbox(bbox);
     m.setEvents(out.items.map((x: MapItem) => ({
-      id: x.id, lat: x.lat, lng: x.lng, family: familyOf(x.genre),
+      id: x.id, lat: x.lat, lng: x.lng, family: familyOf(x.genre), approx: x.approx,
       label: x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang), title: x.title,
     })));
     setSel((s) => (s && out.items.some((x: MapItem) => x.id === s) ? s : null));
@@ -136,7 +138,8 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     return c ? { lng: c[0], lat: c[1] } : null;
   }, [me, meta, f.city]);
   const rows = useMemo(() => items
-    .map((x) => ({ ...x, d: centre ? haversine(centre, x) : null }))
+    // A pin that stands for its city has no distance worth showing.
+    .map((x) => ({ ...x, d: centre && !x.approx ? haversine(centre, x) : null }))
     .filter((x) => !near || (x.d != null && x.d <= 5))
     .sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9)), [items, near, centre]);
   const chosen = rows.find((x) => x.id === sel) ?? items.find((x) => x.id === sel) ?? null;
