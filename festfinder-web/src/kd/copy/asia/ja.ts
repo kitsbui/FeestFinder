@@ -413,4 +413,6 @@ export const JA: Record<string, string> = {
   'Price on the ticket page': '価格はチケット販売ページで',
   'See price': '価格を見る',
   'Ask a question': '質問する',
+  'All': 'すべて',
+  'Log in to keep them on every device': 'ログインするとすべての端末に保存されます',
 };

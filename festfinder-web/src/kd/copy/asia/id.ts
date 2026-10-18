@@ -413,4 +413,6 @@ export const ID: Record<string, string> = {
   'Price on the ticket page': 'Harga di halaman tiket',
   'See price': 'Lihat harga',
   'Ask a question': 'Ajukan pertanyaan',
+  'All': 'Semua',
+  'Log in to keep them on every device': 'Masuk untuk menyimpannya di semua perangkat',
 };
