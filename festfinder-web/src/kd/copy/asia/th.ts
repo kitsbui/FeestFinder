@@ -409,4 +409,7 @@ export const TH: Record<string, string> = {
   'Let friends see the nights you go to?': 'ให้เพื่อนเห็นไหมว่าคุณไปคืนไหนบ้าง?',
   'Show friends': 'ให้เพื่อนเห็น',
   'Keep private': 'เก็บเป็นส่วนตัว',
+  'Price not given yet': 'ยังไม่ระบุราคา',
+  'Price on the ticket page': 'ดูราคาที่หน้าขายบัตร',
+  'See price': 'ดูราคา',
 };

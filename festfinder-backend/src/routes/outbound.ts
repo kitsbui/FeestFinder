@@ -59,7 +59,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
     const q = parse(GoQuery, req.query);
     const key = req.params.event;
     const ev = await one<any>(ctx.db,
-      `select id, slug, status, held_for_reports, entry_mode, ticket_url from events where ${isUuid(key) ? 'id = $1' : 'slug = $1'}`, [key]);
+      `select id, slug, status, held_for_reports, entry_mode, ticket_url, event_url from events where ${isUuid(key) ? 'id = $1' : 'slug = $1'}`, [key]);
     if (!ev) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
     reply.header('cache-control', 'no-store').header('x-robots-tag', 'noindex, nofollow');
     const page = `/e/${encodeURIComponent(ev.slug)}`;
@@ -73,7 +73,10 @@ export default async function outboundRoutes(app: FastifyInstance) {
     let target: 'checkout' | 'partner' | 'organizer';
     let location: string;
     let partner: Partner | null = null;
-    const ticketUrl = ev.entry_mode === 'paid' && /^https?:\/\//i.test(ev.ticket_url ?? '') ? String(ev.ticket_url) : null;
+    // The seller's page, else (a Radar find that names no ticket link) the page it was found on, which sells or says how.
+    const ticketUrl = ev.entry_mode !== 'paid' ? null
+      : /^https?:\/\//i.test(ev.ticket_url ?? '') ? String(ev.ticket_url)
+      : /^https?:\/\//i.test(ev.event_url ?? '') ? String(ev.event_url) : null;
     if (open.length) {
       target = 'checkout';
       const params = new URLSearchParams();

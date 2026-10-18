@@ -117,7 +117,7 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
   if (f.organizer) where.push(`o.slug = ${sql.p(f.organizer)}`);
   if (f.price?.length) {
     const bands = f.price.map((b: (typeof PRICE_BANDS)[number]) => ({
-      free: `(e.entry_mode = 'free' or e.price_from = 0)`,
+      free: `e.entry_mode = 'free'`,
       under: `(e.price_from > 0 and e.price_from < 500000)`,
       over: `(e.price_from >= 500000)`,
     })[b]);
@@ -209,7 +209,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
     const frwhere = feedFilters(fr, f, today, userId, { time: true });
     if (f.upcoming) frwhere.push(`(e.ends_at is null or e.ends_at >= ${fr.p(now)})`);
     const facetFree = await one<{ n: number }>(ctx.db,
-      `select count(*) filter (where e.entry_mode = 'free' or e.price_from = 0)::int as n
+      `select count(*) filter (where e.entry_mode = 'free')::int as n
          from events e join organizers o on o.id = e.organizer_id where ${frwhere.join(' and ')}`, fr.values);
 
     // The two kinds of listing, under every filter but that one.
@@ -276,7 +276,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
           lat: Number(r.pin_lat), lng: Number(r.pin_lng), approx: !!r.pin_approx,
           venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel, origin: c.origin,
           startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime,
-          art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, soldOut: c.soldOut,
+          art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, priceUnknown: c.priceUnknown, soldOut: c.soldOut,
           lineup: c.lineup.slice(0, 6), confidence: c.confidence,
         };
       }),
@@ -347,14 +347,16 @@ export default async function catalogRoutes(app: FastifyInstance) {
       guide: ctx.guide.model !== 'none' || !!(await one(ctx.db, 'select 1 from ai_guides where event_id = $1 and lang = $2', [ev.id, req.lang])),
       ...(await eventExtras(ctx.db, ev, userId, now)),
       description: ev.description,
-      age: ev.age,
+      // Feest Radar never reads an age, so its finds hold only the column's default: unknown, not "all ages".
+      age: ev.origin === 'radar' && ev.age === 'All ages' ? null : ev.age,
       capacity: ev.capacity,
       links: {
         event: ev.event_url ?? `${ctx.config.publicBaseUrl.replace(/\/$/, '')}/e/${ev.slug}`,
         brand: ev.brand_url,
         tickets: ev.entry_mode === 'paid' ? ev.ticket_url : null,
         // Every ticket button goes through here: counted, then to the checkout or the seller.
-        go: ev.entry_mode === 'paid' && (tierRows.length || ev.ticket_url) ? `/go/${ev.slug}` : null,
+        // /go sends a Radar find without a ticket link to the page it was found on.
+        go: ev.entry_mode === 'paid' && (tierRows.length || ev.ticket_url || ev.event_url) ? `/go/${ev.slug}` : null,
       },
       ticketNote: L('Tickets are sold by the organiser. FeestFinder does not add a booking fee.', 'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'),
       tickets: ev.entry_mode === 'paid' && tierRows.length ? presentTiers(tierRows, now) : null,

@@ -409,4 +409,7 @@ export const ID: Record<string, string> = {
   'Let friends see the nights you go to?': 'Biarkan teman melihat malam yang kamu datangi?',
   'Show friends': 'Tampilkan ke teman',
   'Keep private': 'Tetap pribadi',
+  'Price not given yet': 'Harga belum ada',
+  'Price on the ticket page': 'Harga di halaman tiket',
+  'See price': 'Lihat harga',
 };

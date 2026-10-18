@@ -20,6 +20,8 @@ export const LIST = {
   kind: { en: 'Night', vi: 'Kiểu đêm' },
   anyKind: { en: 'Any night', vi: 'Mọi kiểu' },
   free: { en: 'Free', vi: 'Miễn phí' },
+  priceUnknown: { en: 'Price not given yet', vi: 'Chưa rõ giá' },
+  seePrice: { en: 'See price', vi: 'Xem giá' },
   within5: { en: 'Under 5 km', vi: 'Dưới 5 km' },
   search: { en: 'Search events', vi: 'Tìm sự kiện' },
   searchPh: { en: 'Events, artists, venues…', vi: 'Sự kiện, nghệ sĩ, địa điểm…' },

@@ -196,6 +196,38 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal((await env.as().get('/events/map')).body.total, list.total);
   });
 
+  it('never calls a sold night free because nobody gave its price, and sends people to where it is sold', async () => {
+    const db = env.ctx.db;
+    const ev = (await db.query<{ id: string; slug: string; price_from: number; origin: string; ticket_url: string | null; event_url: string | null; age: string }>(
+      `select e.id, e.slug, e.price_from, e.origin, e.ticket_url, e.event_url, e.age from events e
+        where e.status = 'live' and e.entry_mode = 'paid' and e.ends_at >= $1 order by e.starts_at limit 1`, [env.clock.now()])).rows[0];
+    assert.ok(ev, 'a paid night');
+    const tiers = (await db.query<{ id: string; sales_open_at: Date | null }>('select id, sales_open_at from ticket_tiers where event_id = $1', [ev.id])).rows;
+    // What Feest Radar finds on a page that gives no price, no ticket link and no age (and nothing sold here).
+    await db.query(`update events set price_from = 0, origin = 'radar', ticket_url = null, event_url = 'https://club.example/night', age = 'All ages' where id = $1`, [ev.id]);
+    await db.query(`update ticket_tiers set sales_open_at = $2 where event_id = $1`, [ev.id, new Date(env.clock.now().getTime() + 90 * 86400_000)]);
+    try {
+      type Card = { slug: string; isFree: boolean; priceUnknown: boolean };
+      const card = ((await env.as().get('/events?time=all&limit=60')).body.items as Card[]).find((e) => e.slug === ev.slug)!;
+      assert.deepEqual([card.isFree, card.priceUnknown], [false, true]);
+      assert.ok(!((await env.as().get('/events?time=all&price=free&limit=60')).body.items as Card[]).some((e) => e.slug === ev.slug), 'not among the free nights');
+      const detail = (await env.as().get('/events/' + ev.slug)).body;
+      assert.equal(detail.age, null, 'Radar reads no age: none is shown');
+      assert.equal(detail.links.go, '/go/' + ev.slug);
+      const go = await env.as().get('/go/' + ev.slug);
+      assert.deepEqual([go.status, go.headers.location], [302, 'https://club.example/night']);
+      const seo = (await env.as().get('/seo/events/' + ev.slug)).body;
+      const node = (seo.jsonLd['@graph'] as { '@type': string; isAccessibleForFree?: boolean }[]).find((n) => n['@type'] === 'MusicEvent')!;
+      assert.equal(node.isAccessibleForFree, false);
+      assert.ok((seo.page.facts as { value: string }[]).some((f) => f.value === 'Giá ở trang bán vé'));
+      assert.ok(!(seo.page.facts as { value: string }[]).some((f) => f.value === 'Miễn phí' || f.value === 'Mọi lứa tuổi'));
+    } finally {
+      await db.query('update events set price_from = $2, origin = $3, ticket_url = $4, event_url = $5, age = $6 where id = $1',
+        [ev.id, ev.price_from, ev.origin, ev.ticket_url, ev.event_url, ev.age]);
+      for (const t of tiers) await db.query('update ticket_tiers set sales_open_at = $2 where id = $1', [t.id, t.sales_open_at]);
+    }
+  });
+
   it('lists events by city', async () => {
     const all = await env.as().get('/events?time=all&limit=60');
     assert.ok(all.body.items.every((e: any) => e.city === 'ho-chi-minh' && e.cityLabel.vi === 'TP.HCM'));

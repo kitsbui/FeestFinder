@@ -29,9 +29,11 @@ export function cardTag(e: Card, lang: Lang): string | null {
   return null;
 }
 
-export function priceLine(e: Pick<Card, 'isFree' | 'priceFrom' | 'currency' | 'entryMode'>, lang: Lang): string {
+export function priceLine(e: Pick<Card, 'isFree' | 'priceFrom' | 'currency' | 'entryMode' | 'priceUnknown'>, lang: Lang): string {
   const T = pick(WEB, lang);
   if (e.isFree || e.entryMode === 'free') return T.free;
+  // Sold at a price nobody gave yet: never "free" (design v2 phase 11).
+  if (e.priceUnknown) return T.priceUnknown;
   return fill(T.fromPrice, { p: money(e.priceFrom, e.currency, lang) });
 }
 

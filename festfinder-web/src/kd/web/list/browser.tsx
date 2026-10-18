@@ -216,7 +216,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   };
 
   const sorted = useMemo(() => {
-    const key = { date: (e: Card) => (e.startsAt ? Date.parse(e.startsAt) : 0), price: (e: Card) => (e.isFree ? 0 : e.priceFrom), hype: (e: Card) => e.saveCount }[sort.by];
+    const key = { date: (e: Card) => (e.startsAt ? Date.parse(e.startsAt) : 0), price: (e: Card) => (e.isFree ? 0 : e.priceUnknown ? Number.MAX_SAFE_INTEGER : e.priceFrom), hype: (e: Card) => e.saveCount }[sort.by];
     return [...rows].filter((e) => !e.past).sort((a, b) => (key(a) - key(b)) * (sort.desc ? -1 : 1));
   }, [rows, sort]);
 
@@ -417,7 +417,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
                     <span role="cell" className="kd-hs flex min-w-0 items-center gap-2"><Marker family={familyOf(e.genre)} /><span className="kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
                     <span role="cell" className="kd-s kd-ell">{[e.venue.name, e.venue.area].filter(Boolean).join(' · ')}</span>
                     <span role="cell" className="kd-s kd-ell">{cityName(e.city)}</span>
-                    <span role="cell" className={cx('kd-mb kd-num', e.isFree && 'text-info')}>{e.isFree ? T.free : moneyShort(e.priceFrom, e.currency, lang)}</span>
+                    <span role="cell" className={cx('kd-mb kd-num', e.isFree && 'text-info')}>{e.isFree ? T.free : e.priceUnknown ? T.priceUnknown : moneyShort(e.priceFrom, e.currency, lang)}</span>
                     <span role="cell" className="kd-mb kd-num text-fg-2">{fmtCount(e.saveCount, lang)}</span>
                     <span role="cell"><Status tone={st.tone}>{st.text}</Status></span>
                   </Link>
