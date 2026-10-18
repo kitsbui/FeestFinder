@@ -34,7 +34,7 @@ test('a computer: four places, the search, the languages, "Đăng sự kiện"; 
   expect(problems).toEqual([]);
 });
 
-test('a phone: the tab bar on every public screen, and the bar on top keeps the logo and "Đăng sự kiện"', async ({ page }) => {
+test('a phone: the tab bar on every public screen; the bar on top keeps the logo, "Đăng sự kiện" is in "Tôi"', async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 390, height: 844 });
   const missing: string[] = [];
@@ -45,7 +45,8 @@ test('a phone: the tab bar on every public screen, and the bar on top keeps the 
     for (const name of ['Sự kiện', 'Bản đồ', 'Tìm', 'Đã lưu', 'Tôi']) {
       if (!(await tabs.getByText(name, { exact: true }).isVisible())) missing.push(`${path}: ${name}`);
     }
-    if (!(await page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' }).isVisible())) missing.push(`${path}: Đăng sự kiện`);
+    // The top is the newcomer's on a phone (owner, 2026-10-18): "Đăng sự kiện" lives in "Tôi" and the footer.
+    if (await page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' }).isVisible()) missing.push(`${path}: Đăng sự kiện on top`);
   }
   expect(missing, missing.join('\n')).toEqual([]);
 });

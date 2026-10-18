@@ -120,12 +120,8 @@ test.describe('the event page', () => {
     await expect(page.getByText('Ravolution Music Festival').first()).toBeVisible();
   });
 
-  test('saving asks for sign-in, then saves and moves the count', async ({ page }) => {
-    await open(page, '/e/ravo');
-    await page.getByRole('button', { name: 'Lưu sự kiện' }).click();
-    const sheet = page.getByRole('dialog', { name: 'Đăng nhập' });
-    await expect(sheet.getByText('Đăng nhập để lưu sự kiện')).toBeVisible();
-    await page.keyboard.press('Escape');
+  // Before signing in a heart saves on the device (e2e/next/newcomer.spec.ts).
+  test('a signed-in heart saves to the account and moves the count', async ({ page }) => {
     await signInWith(page, ATTENDEE);
     await open(page, '/e/ravo');
     const count = async () => Number((await page.getByText(/quan tâm/i).first().innerText()).replace(/\D/g, ''));

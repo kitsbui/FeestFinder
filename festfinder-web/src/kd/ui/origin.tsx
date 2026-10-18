@@ -19,12 +19,13 @@ export const ORIGIN = {
 };
 
 /** "Radar", with its icon; read out in full. `glass` over a picture. */
-export function RadarTag({ lang, glass, className }: { lang: Lang; glass?: boolean; className?: string }) {
+export function RadarTag({ lang, glass, compact, className }: { lang: Lang; glass?: boolean; compact?: boolean; className?: string }) {
   const T = pick(ORIGIN, lang);
   return (
     <span className={cx('kd-tag shrink-0', glass && 'kd-tag-glass text-fg-1', className)} title={T.radarLong}>
       <BroadcastIcon size={12} aria-hidden="true" />
-      <span aria-hidden="true">{T.radar}</span>
+      {/* On a card only the sign (design v2 phase 11): the word is for the event's page. */}
+      {compact ? null : <span aria-hidden="true">{T.radar}</span>}
       <span className="sr-only">{T.radarLong}</span>
     </span>
   );

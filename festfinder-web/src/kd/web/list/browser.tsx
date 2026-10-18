@@ -132,9 +132,6 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const [ready, setReady] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [firstRun, setFirstRun] = useState(false);
-  // This device's city and styles (the installed app's first run, or "Cho bạn" asking): read once in the browser.
-  const [mine, setMine] = useState<{ city: string | null; styles: string[] }>({ city: null, styles: [] });
-  useEffect(() => { setMine({ city: place.city(), styles: place.likes() }); }, []);
   const openedByApp = useRef(false);
   const seq = useRef(0);
   const rowsRef = useRef(rows);
@@ -171,6 +168,10 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       const c = place.city();
       if (c && meta.cities.some((x) => x.slug === c)) next.city = c;
     }
+    // The newcomer's city, marked before the first paint (city-first.tsx): the list shows once its nights are in.
+    const first = document.documentElement.getAttribute('data-city-first');
+    if (first && !q.has('city') && meta.cities.some((x) => x.slug === first)) next.city = first;
+    else if (first) document.documentElement.removeAttribute('data-city-first');
     setF(next);
     setReady(true);
     const same = JSON.stringify({ ...next, view: 'grid', bbox: null }) === JSON.stringify({ ...DEFAULT });
@@ -189,6 +190,10 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     if (openedByApp.current && !place.known() && !kd.user) setFirstRun(true);
   }, [kd.session, kd.user]);
   useEffect(() => { if (clockReady) setAt(FF.now()); }, [clockReady]);
+  // The newcomer's city is in (or the list asked nothing): show the list city-first.tsx held back.
+  useEffect(() => {
+    if (ready && !busy) document.documentElement.removeAttribute('data-city-first');
+  }, [ready, busy, rows]);
 
   // Every minute while the list is on screen (not more pages: they would be dropped).
   useEffect(() => {
@@ -239,7 +244,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     <Picker
       label={T.city}
       value={f.city}
-      onChange={(v) => set({ city: v })}
+      // Remembered on this device: the newcomer's city next time (city-first.tsx), 'all' included.
+      onChange={(v) => { place.setCity(v); set({ city: v }); }}
       options={[{ value: 'all', label: T.allCities, aside: allCount }, ...meta.cities.map((c) => ({ value: c.slug, label: tx(c.name, lang), aside: cityCounts[c.slug] ?? 0 }))]}
       display={f.city === 'all' ? T.allCities : cityName(f.city)}
     />
@@ -264,19 +270,6 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       ))}
     </Menu>
   );
-  /**
-   * "Cho bạn" (design v2 phase 9): the list of this device's city and styles; the first press asks for
-   * them (the first-run sheet), a press on it takes it back.
-   */
-  const mineStyle = mine.styles.join(',') || null;
-  const forYouOn = !!(mine.city || mineStyle) && (!mine.city || f.city === mine.city) && f.style === mineStyle;
-  const forYou = () => {
-    FF.track('nav_click', { kind: 'for_you', surface: 'list' });
-    if (forYouOn) return set({ city: 'all', style: null, type: null });
-    if (!mine.city && !mineStyle) return setFirstRun(true);
-    set({ ...(mine.city ? { city: mine.city } : {}), style: mineStyle, type: null });
-  };
-  const forYouChip = <Chip on={forYouOn} onClick={forYou}>{T.forYou}</Chip>;
   const freeChip = <Chip family="free" on={f.family === 'free'} onClick={() => set({ family: f.family === 'free' ? null : 'free', genre: null })}>{tx(FAMILY_LABEL.free, lang)}</Chip>;
   /** Posted or found by Radar, with their counts where the list has them. */
   const sourcePicker = (
@@ -367,22 +360,26 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       <div className="kd-cmd">
         <div className="kd-wrap flex min-h-14 items-center gap-2 py-2">
           <div role="group" aria-label={T.filtersBar} className="flex min-w-0 flex-wrap items-center gap-2 max-tab:hidden">
-            {forYouChip}{cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
+            {cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
           </div>
-          <div className="flex min-w-0 items-center gap-2 tab:hidden">
+          {/* On a phone: the city first (the newcomer's question), the time, then every other filter in "Lọc". */}
+          <div className="flex min-w-0 flex-wrap items-center gap-2 tab:hidden">
+            {cityPicker}{timePicker}
             <button type="button" className={cx('kd-chip', active && 'kd-chip-on')} aria-haspopup="dialog" onClick={() => setSheet(true)}>
               <FunnelSimpleIcon size={16} aria-hidden="true" />{T.filters}{active ? <span className="kd-num">{active}</span> : null}
             </button>
-            {forYouChip}{timePicker}
           </div>
           {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. On a phone the tab bar has the map. */}
           <div className="ml-auto max-tab:hidden" onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
         </div>
       </div>
       <main className="kd-wrap flex flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
-        <h1 className="kd-d2">{heading}</h1>
+        {/* On a phone the day headings lead; the page keeps its heading for screen readers and search. */}
+        <h1 className="kd-d2 max-tab:sr-only">{heading}</h1>
         {/* The world's biggest festivals, always first, while nothing narrows the list. */}
-        {highlight && JSON.stringify({ ...f, view: 'grid', bbox: null }) === JSON.stringify(DEFAULT) ? highlight : null}
+        {highlight && JSON.stringify({ ...f, city: 'all', view: 'grid', bbox: null }) === JSON.stringify(DEFAULT) ? highlight : null}
+        {/* data-list: held back while the newcomer's city loads (city-first.tsx). */}
+        <div data-list className="contents">
         {sorted.length ? (
           f.view === 'grid' ? (
             <div className="flex items-start gap-10">
@@ -436,6 +433,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
         {page.nextCursor && sorted.length ? (
           <Button className="self-center" disabled={busy} onClick={() => load(f, 'more', page.nextCursor)}>{T.more}</Button>
         ) : null}
+        </div>
       </main>
       {firstRun ? (
         <FirstRun
@@ -443,7 +441,6 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           cities={meta.cities}
           onDone={(city, styles) => {
             setFirstRun(false);
-            setMine({ city, styles });
             if (city || styles.length) set({ ...(city ? { city } : {}), ...(styles.length ? { style: styles.join(','), type: null } : {}) });
           }}
         />

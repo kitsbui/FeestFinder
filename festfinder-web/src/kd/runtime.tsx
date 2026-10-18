@@ -21,6 +21,18 @@ const SignInSheet = dynamic(() => import('./sign-in').then((m) => m.SignInSheet)
 const RolePicker = dynamic(() => import('./role-picker').then((m) => m.RolePicker), { ssr: false });
 const ShareAsk = dynamic(() => import('./ui/share-ask').then((m) => m.ShareAsk), { ssr: false });
 
+/** Nights saved on this device before signing in (design v2 phase 11): moved to the account at sign-in. */
+const DEVICE_SAVES = 'ff:saves';
+export function deviceSaves(): string[] {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(DEVICE_SAVES) || '[]');
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, 200) : [];
+  } catch { return []; }
+}
+function keepDeviceSaves(ids: string[]) {
+  try { if (ids.length) localStorage.setItem(DEVICE_SAVES, JSON.stringify(ids)); else localStorage.removeItem(DEVICE_SAVES); } catch { /* storage blocked */ }
+}
+
 /** Something the visitor was doing when sign-in got in the way, done once they are in. */
 export type Intent =
   | { kind: 'save'; id: string }
@@ -112,7 +124,13 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   }, []);
 
   const loadPersonal = useCallback(async (s: Session | null) => {
-    if (!s?.user) { setSaved(new Set()); return; }
+    if (!s?.user) { setSaved(new Set(deviceSaves())); return; }
+    // What they saved on this device before signing in joins the account.
+    const kept = deviceSaves();
+    if (kept.length) {
+      await Promise.all(kept.map((id) => FF.fire(FF.put('/me/saves/' + id))));
+      keepDeviceSaves([]);
+    }
     // Past nights too, so their hearts read as saved (upcoming come first in the answer).
     const out = await FF.maybe(FF.get('/me/saves?limit=100'), { items: [] as { id: string }[] });
     setSaved(new Set(out.items.map((e: { id: string }) => e.id)));
@@ -220,7 +238,17 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   }, [session, askShare]);
 
   const toggleSave = useCallback(async (id: string) => {
-    if (!requireSignIn({ kind: 'save', id }, C.gateSave)) return null;
+    // Signed out, a heart saves on this device (owner, 2026-10-18); signing in moves it to the account.
+    const s = session === undefined ? await ready.current!.promise : session;
+    if (!s?.user) {
+      const kept = deviceSaves();
+      const on = !kept.includes(id);
+      const next = on ? [id, ...kept] : kept.filter((x) => x !== id);
+      keepDeviceSaves(next);
+      setSaved(new Set(next));
+      if (on) toast(C.saved, { label: C.signIn, run: () => setSheet({ note: C.gateSave }) });
+      return on;
+    }
     const on = !saved.has(id);
     setSaved((prev) => { const n = new Set(prev); if (on) n.add(id); else n.delete(id); return n; });
     try {
@@ -232,7 +260,7 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
       toast(FF.errorText(e, lang));
       return null;
     }
-  }, [saved, requireSignIn, toast, lang, C.gateSave, askShare]);
+  }, [session, saved, toast, lang, C.gateSave, C.saved, C.signIn, askShare]);
 
   const setFollow = useCallback(async (key: FollowKind, id: string, on: boolean) => {
     const intent: Intent = key === 'org' ? { kind: 'follow-org', id } : key === 'person' ? { kind: 'follow-person', id } : { kind: 'follow-artist', name: id };

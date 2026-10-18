@@ -111,7 +111,7 @@ test.describe('the list, the home page', () => {
     await expect(tabs.getByRole('link', { name: 'Bản đồ' })).toHaveAttribute('href', '/?view=map');
     await expect(tabs.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
     await expect(tabs.getByRole('link', { name: 'Tôi' })).toHaveAttribute('href', '/profile');
-    await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toBeHidden();
     await tabs.getByRole('button', { name: 'Tìm' }).click();
     const sheet = page.getByRole('dialog', { name: 'Tìm kiếm' });
     await expect(sheet.getByRole('link', { name: /^Techno/ })).toHaveAttribute('href', '/?style=techno');

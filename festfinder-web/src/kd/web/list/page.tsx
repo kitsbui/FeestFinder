@@ -14,6 +14,7 @@ import { AdBanner, type Ad } from './ad';
 import { ListBrowser, type Meta } from './browser';
 import { LIST } from './copy';
 import { InLang } from '@/kd/ui/in-lang';
+import { CityFirst } from './city-first';
 
 export async function ListPage({ lang }: { lang: Lang }) {
   const T = pick(LIST, lang);
@@ -36,6 +37,8 @@ export async function ListPage({ lang }: { lang: Lang }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="list" />
+          {/* Before the list, so the newcomer's city is known before it is drawn. */}
+          <CityFirst meta={meta} counts={initial.facets.city} />
           <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
