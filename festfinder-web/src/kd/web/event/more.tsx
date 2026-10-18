@@ -1,15 +1,16 @@
 'use client';
 /**
  * "Thêm" on an event's page (design v2 phase 12, owner 2026-10-18): what helps some people (going
- * with friends, the guide, the questions, the hype) folded under one heading, so the page first says
- * what a newcomer needs to decide and go. A link to the questions (#discussion, from a notification)
- * opens them.
+ * with friends, the guide, the calendar, the questions, the hype) folded under one heading after the
+ * venue, so the page first says what a newcomer needs to decide and go. A link to the questions
+ * (#discussion, from a notification) opens them.
  */
 import { useEffect, useState } from 'react';
 import { CaretRightIcon, CompassIcon } from '@phosphor-icons/react/ssr';
 import { pick, type Lang } from '../../copy';
 import { Accordion } from '../../ui/parts';
 import { WEB } from '../copy';
+import { CalendarRow } from './calendar';
 import { DiscussionSection, Hype } from './community';
 import { useEvent } from './context';
 import { GoTogetherRow } from './friends';
@@ -34,6 +35,7 @@ export function EventMore({ lang }: { lang: Lang }) {
             <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
           </a>
         ) : null}
+        <CalendarRow lang={lang} />
         <Accordion summary={T.discussion} aside={questions || null} open={asked || undefined}>
           <DiscussionSection lang={lang} bare />
         </Accordion>

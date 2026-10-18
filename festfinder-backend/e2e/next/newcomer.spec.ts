@@ -123,8 +123,8 @@ test('an event page on a phone: the way there once in each place, an empty Hỏi
   await expect(qa.getByRole('textbox')).toHaveCount(0);
   await qa.getByRole('button', { name: 'Đặt câu hỏi' }).click();
   await expect(page.getByRole('region', { name: /^Hỏi đáp/ }).getByRole('textbox')).toBeVisible();
-  // "Chỉ đường": in the facts and under the venue, no more.
-  expect(await page.getByRole('link', { name: /^Chỉ đường/ }).count()).toBeLessThanOrEqual(2);
+  // "Chỉ đường": under the venue, once.
+  expect(await page.getByRole('link', { name: /^Chỉ đường/ }).count()).toBeLessThanOrEqual(1);
   expect(problems).toEqual([]);
 });
 
@@ -132,4 +132,48 @@ test('posting an event on a phone names its steps', async ({ page }) => {
   await page.goto('/studio/new');
   const steps = page.getByRole('navigation', { name: 'Các bước' });
   for (const name of ['Cơ bản', 'Thời gian & địa điểm', 'Vé', 'Xem lại & gửi duyệt']) await expect(steps.getByText(name)).toBeVisible();
+});
+
+/** What one can tap in the first screen (artboard 25's count): links, buttons and fields in sight. */
+async function controlsInSight(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    const seen = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      return r.width > 1 && r.height > 1 && r.top < innerHeight && r.bottom > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && !el.closest('[aria-hidden="true"]');
+    };
+    const all = [...document.querySelectorAll('a[href],button,[role=button],input,select,summary')].filter(seen);
+    return { n: all.length, names: all.map((el) => (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30)) };
+  });
+}
+
+/*
+ * The first screens ask little (design v2 phase 12, owner 2026-10-18). The counts include the site's
+ * frame (the logo, search and four tabs); like the JS budgets they only go down.
+ */
+const IN_SIGHT = { home: 21, event: 12 };
+
+test('the first screens ask little: few controls, a time in one tap, the tickets in two', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto('/');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const card = page.locator('[data-list] article').first();
+  await expect(card).toBeVisible();
+  const home = await controlsInSight(page);
+  expect(home.n, home.names.join(' | ')).toBeLessThanOrEqual(IN_SIGHT.home);
+  // One tap: a time, from the bar.
+  await page.locator('.kd-cmd').getByRole('button', { name: 'Tối nay' }).click();
+  await expect(page).toHaveURL(/time=tonight/);
+  await page.locator('.kd-cmd').getByRole('button', { name: 'Tất cả' }).click();
+  // Two taps from a card to the tickets: the card, then the dock's "Mua vé".
+  await page.locator('[data-list] article').filter({ has: page.locator('a[href="/e/ravo"]') }).first().locator('.kd-ev-title').click();
+  await expect(page).toHaveURL(/\/e\/ravo$/);
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const event = await controlsInSight(page);
+  expect(event.n, event.names.join(' | ')).toBeLessThanOrEqual(IN_SIGHT.event);
+  // Only one way to the tickets in sight: the dock.
+  await expect(page.getByRole('link', { name: /^Chọn vé/ })).toBeHidden();
+  await page.locator('.kd-buy-dock').getByRole('link', { name: 'Mua vé' }).click();
+  await expect(page.locator('#tickets')).toBeInViewport();
+  expect(problems).toEqual([]);
 });
