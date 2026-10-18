@@ -100,7 +100,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
       label: x.isFree ? T.free : x.priceUnknown ? T.seePrice : moneyShort(x.priceFrom, x.currency, lang), title: x.title,
     })));
     setSel((s) => (s && out.items.some((x: MapItem) => x.id === s) ? s : null));
-  }, [lang, onBbox, T.free]);
+  }, [lang, onBbox, T.free, T.seePrice]);
 
   // The map, once.
   useEffect(() => {
