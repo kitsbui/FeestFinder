@@ -124,7 +124,7 @@ function feedFilters(sql: SqlParams, f: z.infer<typeof ExploreQuery>, today: str
     where.push(`(${bands.join(' or ')})`);
   }
   if (f.friendsOnly && userId) {
-    where.push(`exists (select 1 from going g join friendships fr on fr.friend_id = g.user_id where fr.user_id = ${sql.p(userId)} and g.event_id = e.id)`);
+    where.push(`exists (select 1 from going g join friendships fr on fr.friend_id = g.user_id join users fu on fu.id = g.user_id where fr.user_id = ${sql.p(userId)} and g.event_id = e.id and fu.share_nights)`);
   }
   return where;
 }

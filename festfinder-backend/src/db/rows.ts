@@ -1408,6 +1408,7 @@ export interface Rows {
     ref_code: string | null;
     onboarded_at: Date | null;
     email_verified_at: Date | null;
+    share_nights: boolean | null;
   };
   venues: {
     id: string;

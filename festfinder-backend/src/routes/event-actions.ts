@@ -139,7 +139,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
       one<any>(ctx.db, 'select checked_in_at from tickets where user_id = $1 and event_id = $2 and checked_in_at is not null order by checked_in_at limit 1', [s.user.id, ev.id]),
       one<any>(ctx.db, 'select updated_at from presence where user_id = $1 and event_id = $2', [s.user.id, ev.id]),
       one<any>(ctx.db, 'select count(*)::int as n from plan_picks p join sets st on st.id = p.set_id where p.user_id = $1 and st.event_id = $2 and st.starts_at <= $3', [s.user.id, ev.id, now]),
-      one<any>(ctx.db, 'select count(*)::int as n from friendships f join going g on g.user_id = f.friend_id where f.user_id = $1 and g.event_id = $2', [s.user.id, ev.id]),
+      one<any>(ctx.db, 'select count(*)::int as n from friendships f join going g on g.user_id = f.friend_id join users u on u.id = f.friend_id where f.user_id = $1 and g.event_id = $2 and u.share_nights', [s.user.id, ev.id]),
       one<any>(ctx.db,
         `select id, slug, title, art, starts_on, organizer_id = $2 as same_organizer from events
           where status = 'live' and id <> $1 and ends_at >= $3 order by (organizer_id = $2) desc, starts_at limit 1`, [ev.id, ev.organizer_id, now]),

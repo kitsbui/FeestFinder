@@ -14,7 +14,7 @@ import { cx } from '../cx';
 import { money } from '../format';
 import { useKd } from '../runtime';
 import { Button, Chip } from '../ui/actions';
-import { Input, Switch } from '../ui/forms';
+import { Input, Switch, SwitchRow } from '../ui/forms';
 import { Card as Panel } from '../ui/parts';
 import { AppBar } from '../ui/shell';
 import { BackLink } from '../ui/back-link';
@@ -201,8 +201,25 @@ export function NotifSettings({ lang }: { lang: Lang }) {
   return (
     <>
       <Head lang={lang} title={T.notifTitle} />
-      <Gate lang={lang} note={T.gateMe}><PrefsMatrix lang={lang} /></Gate>
+      <Gate lang={lang} note={T.gateMe}><PrefsMatrix lang={lang} /><SharePrivacy lang={lang} /></Gate>
     </>
+  );
+}
+
+/** Whether friends see the nights this person goes to (migration 045; asked once, changed here). */
+function SharePrivacy({ lang }: { lang: Lang }) {
+  const T = pick(APP, lang);
+  const kd = useKd();
+  const [on, setOn] = useState(kd.user?.shareNights === true);
+  const set = async (next: boolean) => {
+    setOn(next);
+    try { await FF.put('/me/share-nights', { share: next }); void kd.refresh(); } catch (e) { setOn(!next); kd.toast(FF.errorText(e, lang)); }
+  };
+  return (
+    <section aria-labelledby="privacy-h" className="flex flex-col gap-2 px-4 pb-8">
+      <h2 id="privacy-h" className="kd-h">{T.privacy}</h2>
+      <SwitchRow label={T.shareNights} checked={on} onChange={(v) => void set(v)} />
+    </section>
   );
 }
 
