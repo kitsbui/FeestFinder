@@ -88,32 +88,10 @@ test('the Console counts the coming listings with a real cover', async ({ page }
 });
 
 /*
- * Your own (design v2 phase 9): "Cho bạn" lists this device's city and styles, and asks for them the
- * first time; an event page lets you hear its lineup first, the player loading only on play; the
+ * Your own (design v2 phase 9; its "Cho bạn" became the city first in phase 11, newcomer.spec.ts): an
+ * event page lets you hear its lineup first, the player loading only on play; the
  * "with friends" row shows the friends going; the wizard leads with the common styles and finds the rest.
  */
-
-test('"Cho bạn": the device’s city and styles, asked for the first time', async ({ page, browser }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.addInitScript(() => {
-    try { localStorage.setItem('ff_city', 'ho-chi-minh'); localStorage.setItem('ff_likes', JSON.stringify(['techno', 'house'])); } catch { /* storage blocked */ }
-  });
-  const problems = await open(page, '/');
-  const chip = page.getByRole('group', { name: 'Bộ lọc' }).getByRole('button', { name: 'Cho bạn' });
-  await chip.click();
-  await expect(page).toHaveURL(/city=ho-chi-minh/);
-  await expect(page).toHaveURL(/style=techno(%2C|,)house/);
-  await expect(chip).toHaveAttribute('aria-pressed', 'true');
-  await chip.click();
-  await expect(page).not.toHaveURL(/style=/);
-  expect(problems).toEqual([]);
-  // A device that never said: the chip asks.
-  const fresh = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await open(fresh, '/');
-  await fresh.locator('.kd-cmd').getByRole('button', { name: 'Cho bạn' }).click();
-  await expect(fresh.getByRole('dialog', { name: 'Bạn ở thành phố nào?' })).toBeVisible();
-  await fresh.close();
-});
 
 test('an event page: hear the lineup first, the player only on play; friends going in the "with friends" row', async ({ page, request }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

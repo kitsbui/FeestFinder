@@ -87,6 +87,24 @@ function Row({ href, onClick, children, aside, hrefLang }: { href?: string; onCl
     : <button type="button" onClick={onClick} className="kd-lrow min-h-13 w-full text-left">{body}</button>;
 }
 
+/** "Tôi" before signing in (design v2 phase 11): what someone can do without an account. */
+export function GuestHub({ lang, className }: { lang: Lang; className?: string }) {
+  const T = pick(WEB, lang);
+  const other = useOtherLang(lang);
+  const next: Lang = lang === 'vi' ? 'en' : 'vi';
+  return (
+    <nav aria-label={T.me} className={className}>
+      <div className="flex flex-col">
+        <Row href={inLang('/saved', lang)}>{T.saved}</Row>
+        <Row href="/studio/new">{T.listEvent}</Row>
+        <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
+        <Row href={inLang('/about', lang)}>{T.about}</Row>
+        <Row onClick={feedback}>{T.feedback}</Row>
+      </div>
+    </nav>
+  );
+}
+
 /** The hub at the top of /profile: what the account menu holds, as a page (a phone). */
 export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
   const kd = useKd();
@@ -108,6 +126,8 @@ export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
       </div>
       <h2 className="kd-m mb-1 mt-6">{T.more}</h2>
       <div className="flex flex-col">
+        {/* The phone's top bar leaves it to "Tôi" (owner, 2026-10-18). */}
+        <Row href="/studio/new">{T.listEvent}</Row>
         <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
         <Row href="/app/settings">{T.settings}</Row>
         <Row onClick={feedback}>{T.feedback}</Row>

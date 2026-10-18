@@ -134,21 +134,20 @@ test.describe('a public collection', () => {
     expect(problems).toEqual([]);
   });
 
-  test('saving an event asks for sign-in, then saves it', async ({ page }) => {
+  test('a heart before signing in saves on the device, and signing in keeps it', async ({ page }) => {
     await open(page, '/c/' + slug);
-    await page.getByRole('button', { name: 'Lưu Saigon Outcast Night Market', exact: true }).click();
-    await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();
-    await page.keyboard.press('Escape');
+    const save = page.getByRole('button', { name: 'Lưu Saigon Outcast Night Market', exact: true });
+    await save.click();
+    await expect(save).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toHaveCount(0);
 
     await signInWith(page, ATTENDEE);
     await open(page, '/c/' + slug);
     const id = (await (await page.request.get('/events/outcast')).json()).id as string;
     const saved = async () => ((await (await page.request.get('/me/saves?limit=100')).json()).items as { id: string }[]).some((e) => e.id === id);
-    const save = page.getByRole('button', { name: 'Lưu Saigon Outcast Night Market', exact: true });
-    await expect(save).toHaveAttribute('aria-pressed', 'false');
-    await save.click();
-    await expect(save).toHaveAttribute('aria-pressed', 'true');
+    // What the device saved is in the account now.
     await expect.poll(saved).toBe(true);
+    await expect(save).toHaveAttribute('aria-pressed', 'true');
     await save.click();
     await expect(save).toHaveAttribute('aria-pressed', 'false');
     await expect.poll(saved).toBe(false);

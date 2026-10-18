@@ -25,3 +25,80 @@ test('a night sold at a price nobody gave is never "free"', async ({ page }) => 
   await expect(rows.first()).not.toContainText('Miễn phí');
   expect(problems).toEqual([]);
 });
+
+/** The phone's city chooser (the bar's first control). */
+const cityOf = (page: import('@playwright/test').Page) => page.locator('.kd-cmd').getByRole('button', { name: /^Thành phố:/ }).locator('visible=true');
+
+test('the city comes first: guessed from the phone, kept when chosen, and the page never jumps', async ({ browser }) => {
+  // A phone in Vietnam: the demo's nights are all in TP.HCM, more than enough for a guess.
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'Asia/Ho_Chi_Minh' });
+  const page = await ctx.newPage();
+  const problems = watch(page);
+  await page.addInitScript(() => {
+    const w = window as unknown as { __shift: number };
+    w.__shift = 0;
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) w.__shift += e.value;
+    }).observe({ type: 'layout-shift', buffered: true });
+  });
+  const asked: string[] = [];
+  page.on('request', (r) => { if (/\/events\?/.test(r.url())) asked.push(r.url()); });
+  await page.goto('/');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await expect(cityOf(page)).toContainText('TP.HCM');
+  expect(asked.some((u) => u.includes('city=ho-chi-minh')), asked.join('\n')).toBeTruthy();
+  await expect(page.locator('html')).not.toHaveAttribute('data-city-first', /./);
+  await expect(page.locator('[data-list] article').first()).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __shift: number }).__shift)).toBeLessThan(0.05);
+  // No "Đăng sự kiện" on the phone's top bar: the top is the newcomer's.
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toBeHidden();
+  // Every city, chosen: the next visit keeps it instead of guessing.
+  await cityOf(page).click();
+  await page.getByRole('menuitemradio', { name: /^Mọi thành phố/ }).click();
+  await page.goto('/');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await expect(cityOf(page)).toContainText('Mọi thành phố');
+  expect(problems).toEqual([]);
+  await ctx.close();
+  // A phone where no listed city keeps the time: every city, nothing held back.
+  const far = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'Europe/Paris' });
+  const other = await far.newPage();
+  await other.goto('/');
+  await other.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await expect(cityOf(other)).toContainText('Mọi thành phố');
+  await expect(other.locator('html')).not.toHaveAttribute('data-city-first', /./);
+  await far.close();
+});
+
+test('a heart works before signing in, and signing in keeps what was saved', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto('/e/ravo');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const save = page.getByRole('button', { name: /^Lưu sự kiện|^Đã lưu/ }).first();
+  await save.click();
+  await expect(save).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toHaveCount(0);
+  // Đã lưu shows it on this phone, with the way to keep it everywhere.
+  await page.goto('/saved');
+  await expect(page.getByRole('main').getByRole('link', { name: /Ravolution Music Festival/ }).first()).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Đăng nhập' })).toBeVisible();
+  // A new account: the nights saved on this phone move into it.
+  const email = `saves-${Date.now()}@example.com`;
+  const start = await (await page.request.post('/auth/otp/start', { data: { channel: 'email', identifier: email } })).json();
+  const verify = await (await page.request.post('/auth/otp/verify', { data: { challengeId: start.challengeId, code: start.devCode } })).json();
+  expect((await page.request.post('/auth/password', { data: { token: verify.signupToken, password: 'longenough1', passwordConfirm: 'longenough1' } })).ok()).toBeTruthy();
+  await page.goto('/e/ravo');
+  await page.locator('html[data-kd-session="user"]').waitFor({ state: 'attached' });
+  await expect.poll(async () => ((await (await page.request.get('/me/saves?limit=100')).json()).items as { slug: string }[]).map((e) => e.slug)).toContain('ravo');
+  expect(await page.evaluate(() => localStorage.getItem('ff:saves'))).toBeNull();
+  expect(problems).toEqual([]);
+});
+
+test('"Tôi" before signing in: signing in first, then what works without an account', async ({ page }) => {
+  await page.goto('/profile');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const hub = page.getByRole('navigation', { name: 'Tôi' });
+  await expect(page.getByRole('button', { name: 'Đăng nhập' }).first()).toBeVisible();
+  await expect(hub.getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
+  await expect(hub.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
+});

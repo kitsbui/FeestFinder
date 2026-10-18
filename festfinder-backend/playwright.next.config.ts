@@ -24,6 +24,9 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
+    // The same zone on every machine (CI runs in UTC): a phone's zone picks the newcomer's city
+    // (festfinder-web/src/kd/web/list/city-first.tsx); e2e/next/newcomer.spec.ts sets its own.
+    timezoneId: 'UTC',
     baseURL: WEB,
     ...devices['Desktop Chrome'],
     trace: 'retain-on-failure',

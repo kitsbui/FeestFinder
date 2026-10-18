@@ -4,6 +4,7 @@ import type { Dict } from '../../copy';
 export const SAVED = {
   title: { en: 'Saved', vi: 'Đã lưu' },
   gate: { en: 'Log in to keep events here', vi: 'Đăng nhập để lưu sự kiện ở đây' },
+  keep: { en: 'Log in to keep them on every device', vi: 'Đăng nhập để giữ trên mọi máy' },
   all: { en: 'All saved', vi: 'Tất cả' },
   collections: { en: 'Collections', vi: 'Bộ sưu tập' },
   newShort: { en: 'New', vi: 'Mới' },

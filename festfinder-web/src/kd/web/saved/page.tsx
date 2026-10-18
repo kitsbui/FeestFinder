@@ -4,7 +4,8 @@
  * collections. Chips pick "Tất cả" or one collection (/saved?c=<id>, a step Back undoes); "Mới"
  * makes one. An open collection has its bar (rename, public link, share, delete). Every event can
  * be put in or taken out of collections from its folder button; upcoming ones are cards with the
- * heart, the past ones fold away below. Private: signed out, a sign-in card stands in.
+ * heart, the past ones fold away below. Signed out (design v2 phase 11): the nights saved on this
+ * device, and signing in to keep them everywhere.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaretDownIcon, FolderSimplePlusIcon, HeartIcon, LockSimpleIcon, PlusIcon } from '@phosphor-icons/react/ssr';
@@ -14,8 +15,8 @@ import { cx } from '../../cx';
 import { monthShort } from '../../format';
 import { familyOf, g } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
-import { useKd } from '../../runtime';
-import { Button, Chip, IconButton, LinkButton, buttonClass } from '../../ui/actions';
+import { deviceSaves, useKd } from '../../runtime';
+import { Button, Chip, IconButton, LinkButton } from '../../ui/actions';
 import { Accordion, Card as Panel, DateBlock, Marker } from '../../ui/parts';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
@@ -25,6 +26,39 @@ import { SAVED } from './copy';
 import { byDate, savedHref, type Collection, type CollectionItems, type SavedCard, type SavesPage } from './model';
 import { CollectSheet, NewSheet } from './sheets';
 
+/** Signed out: the nights saved on this device (runtime.tsx keeps them), and how to keep them everywhere. */
+function OnDevice({ lang }: { lang: Lang }) {
+  const T = pick(SAVED, lang);
+  const kd = useKd();
+  const [cards, setCards] = useState<Card[] | null>(null);
+  // The nights as they were when the page opened; a heart taken off here empties, the card stays until the next visit.
+  const [ids] = useState(deviceSaves);
+  useEffect(() => {
+    let live = true;
+    void Promise.all(ids.map((id) => FF.maybe(FF.get('/events/' + encodeURIComponent(id)), null))).then((xs: (Card | null)[]) => {
+      if (live) setCards(xs.filter((x): x is Card => !!x));
+    });
+    return () => { live = false; };
+  }, [ids]);
+  return (
+    <main className="kd-wrap flex min-h-dvh flex-col gap-6 py-8" data-ff-gate>
+      <h1 className="kd-d2">{T.title}</h1>
+      <Panel className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <span className="kd-s">{T.keep}</span>
+        <Button tone="acc" onClick={() => kd.openSignIn(T.gate)}>{pick(COMMON, lang).signIn}</Button>
+      </Panel>
+      {cards === null ? <div className="kd-skel h-40" aria-hidden="true" />
+        : cards.length ? <div className="kd-cards">{cards.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div>
+        : (
+          <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">
+            <span className="kd-h">{T.empty}</span>
+            <LinkButton href={inLang('/', lang)}>{T.explore}</LinkButton>
+          </Panel>
+        )}
+    </main>
+  );
+}
+
 /** Cards shown before "Xem thêm N". */
 const FIRST = 12;
 
@@ -33,7 +67,6 @@ const readCol = () => new URLSearchParams(location.search).get('c') || null;
 
 export function SavedPage({ lang, initial }: { lang: Lang; initial: string | null }) {
   const kd = useKd();
-  const T = pick(SAVED, lang);
   const [cur, setCur] = useState<string | null>(initial);
 
   // Back and Forward move between collections as the chips did.
@@ -61,15 +94,7 @@ export function SavedPage({ lang, initial }: { lang: Lang; initial: string | nul
   if (kd.session === undefined) {
     body = <main className="kd-wrap min-h-dvh py-8"><div className="kd-skel h-80" aria-hidden="true" /></main>;
   } else if (!kd.user) {
-    body = (
-      <main className="kd-wrap flex min-h-dvh justify-center py-16" data-ff-gate>
-        <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
-          <h1 className="kd-d3">{T.title}</h1>
-          <p className="kd-s">{T.gate}</p>
-          <button type="button" className={buttonClass({ tone: 'acc' })} onClick={() => kd.openSignIn(T.gate)}>{pick(COMMON, lang).signIn}</button>
-        </Panel>
-      </main>
-    );
+    body = <OnDevice lang={lang} />;
   } else {
     body = <Mine lang={lang} cur={cur} select={select} />;
   }

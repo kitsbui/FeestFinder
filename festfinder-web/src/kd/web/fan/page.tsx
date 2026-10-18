@@ -21,20 +21,22 @@ import { Art, Avatar, Card as Panel, Stat } from '../../ui/parts';
 import { APP } from '../../app/copy';
 import { EditSheet, PassportSection, WrappedSheet, type Me, type Order, type Passport } from '../../app/profile';
 import { FollowManager, FollowStats, type Follows } from '../../ui/follows';
-import { MeHub } from '../me';
+import { GuestHub, MeHub } from '../me';
 
 export function FanProfile({ lang }: { lang: Lang }) {
   const kd = useKd();
   const T = pick(APP, lang);
   if (kd.session === undefined) return <div className="kd-wrap py-8"><div className="kd-skel h-80" aria-hidden="true" /></div>;
   if (!kd.user) {
+    // Signing in first, then what works without an account (design v2 phase 11).
     return (
-      <div className="kd-wrap flex justify-center py-16" data-ff-gate>
-        <Panel className="flex w-full max-w-[420px] flex-col items-start gap-4 p-7">
+      <div className="kd-wrap flex flex-col gap-6 py-8 tab:max-w-[520px]" data-ff-gate>
+        <Panel className="flex flex-col items-start gap-4 p-6">
           <h1 className="kd-d3">{T.myProfile}</h1>
           <p className="kd-s">{T.gateMe}</p>
           <button type="button" className={buttonClass({ tone: 'acc' })} onClick={() => kd.openSignIn(T.gateMe)}>{pick(COMMON, lang).signIn}</button>
         </Panel>
+        <GuestHub lang={lang} />
       </div>
     );
   }

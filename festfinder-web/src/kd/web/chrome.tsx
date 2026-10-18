@@ -83,8 +83,9 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
               <MagnifyingGlassIcon size={20} aria-hidden="true" />
             </IconButton>
             <LangSwitch lang={lang} className="hidden desk:inline-flex" />
-            {/* Straight to the wizard (owner, 2026-10-17); a project starts from /p. Outlined: the page's own action is the one primary on the screen. */}
-            <Link className={buttonClass({ size: 'sm' })} href="/studio/new" onClick={track('post', 'nav')}>{T.listEvent}</Link>
+            {/* Straight to the wizard (owner, 2026-10-17); a project starts from /p. Outlined: the page's own action is the one primary on the screen.
+                On a phone it lives in "Tôi" and the footer (owner, 2026-10-18): the top is the newcomer's. */}
+            <Link className={buttonClass({ size: 'sm' }, 'hidden desk:inline-flex')} href="/studio/new" onClick={track('post', 'nav')}>{T.listEvent}</Link>
             {user ? (
               <div className="hidden desk:block">
               <Menu

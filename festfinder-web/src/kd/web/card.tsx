@@ -61,7 +61,7 @@ export function EventCard({ e, lang, look = 'card', morph = false }: { e: Card; 
           ) : art}
         </Link>
         {tag ? <span className={cx('kd-ev-tag kd-tag pointer-events-none absolute left-2.5 top-2.5', lead ? 'kd-tag-featured' : 'kd-tag-glass text-fg-1')}>{tag}</span> : null}
-        {radar ? <RadarTag lang={lang} glass className="kd-ev-radar pointer-events-none absolute bottom-2.5 left-2.5" /> : null}
+        {radar ? <RadarTag lang={lang} glass compact className="kd-ev-radar pointer-events-none absolute bottom-2.5 left-2.5" /> : null}
       </div>
       <span className="kd-ev-save"><SaveToggle id={e.id} label={fill(T.saveEvent, { t: e.title })} /></span>
       <div className="kd-ev-text flex min-w-0 flex-col gap-1">
@@ -74,7 +74,7 @@ export function EventCard({ e, lang, look = 'card', morph = false }: { e: Card; 
           <span className={cx('kd-mb kd-num', (e.isFree || e.entryMode === 'free') && 'text-info')}>{priceLine(e, lang)}</span>
           {/* In a row the tags leave the art for this line (kd.css). */}
           {tag ? <span className={cx('kd-ev-inline kd-tag', lead && 'kd-tag-featured')}>{tag}</span> : null}
-          {radar ? <RadarTag lang={lang} className="kd-ev-inline" /> : null}
+          {radar ? <RadarTag lang={lang} compact className="kd-ev-inline" /> : null}
           {e.saveCount ? <span className="kd-ev-hype kd-m kd-num ml-auto">{fill(T.interested, { n: count(e.saveCount, lang) })}</span> : null}
         </span>
       </div>
