@@ -102,3 +102,32 @@ test('"Tôi" before signing in: signing in first, then what works without an acc
   await expect(hub.getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
   await expect(hub.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
 });
+
+test('an event page on a phone: the way there once in each place, an empty Hỏi đáp is one button', async ({ page, request }) => {
+  const problems = watch(page);
+  // A night nobody has asked about yet.
+  const items = (await (await request.get('/events?time=all&limit=60')).json()).items as { id: string; slug: string }[];
+  let quiet: string | null = null;
+  for (const e of items) {
+    const d = await (await request.get(`/events/${e.id}/discussion`)).json();
+    const ev = await (await request.get('/events/' + e.slug)).json();
+    if (!d.total && !ev.faq.length) { quiet = e.slug; break; }
+  }
+  test.skip(!quiet, 'every demo night has questions');
+  await page.goto('/e/' + quiet);
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const qa = page.getByRole('region', { name: 'Hỏi đáp' });
+  await expect(qa.getByRole('button', { name: 'Đặt câu hỏi' })).toBeVisible();
+  await expect(qa.getByRole('textbox')).toHaveCount(0);
+  await qa.getByRole('button', { name: 'Đặt câu hỏi' }).click();
+  await expect(page.getByRole('region', { name: /^Hỏi đáp/ }).getByRole('textbox')).toBeVisible();
+  // "Chỉ đường": in the facts and under the venue, no more.
+  expect(await page.getByRole('link', { name: /^Chỉ đường/ }).count()).toBeLessThanOrEqual(2);
+  expect(problems).toEqual([]);
+});
+
+test('posting an event on a phone names its steps', async ({ page }) => {
+  await page.goto('/studio/new');
+  const steps = page.getByRole('navigation', { name: 'Các bước' });
+  for (const name of ['Cơ bản', 'Thời gian & địa điểm', 'Vé', 'Xem lại & gửi duyệt']) await expect(steps.getByText(name)).toBeVisible();
+});

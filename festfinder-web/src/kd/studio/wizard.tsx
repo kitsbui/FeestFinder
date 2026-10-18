@@ -215,7 +215,7 @@ export function Wizard() {
             <li key={n} className="min-w-0">
               <button type="button" aria-current={open === n ? 'step' : undefined} onClick={() => setOpen(n)} className="kd-step">
                 <span className="kd-step-dot">{ok && open !== n ? <CheckIcon size={13} weight="bold" aria-hidden="true" /> : n + 1}</span>
-                <span className="kd-s kd-ell max-tab:sr-only">{label}</span>
+                <span className="kd-s max-tab:line-clamp-2 tab:truncate">{label}</span>
               </button>
             </li>
           );
@@ -236,7 +236,7 @@ export function Wizard() {
         <div className="kd-wrap flex h-16 items-center gap-3.5">
           <Logo lang={lang} mark height={24} />
           <span className="kd-hs">{T.wTitle}</span>
-          <span className={cx('kd-m kd-ell min-w-0', save.state === 'error' && 'text-bad normal-case')} role="status" aria-live="polite">
+          <span className={cx('kd-m kd-ell min-w-0', save.state === 'error' ? 'text-bad normal-case' : 'max-tab:sr-only')} role="status" aria-live="polite">
             {guest ? T.wLocal : save.state === 'saving' ? T.wSaving : save.state === 'saved' ? fill(T.wSaved, { t: save.at ?? '' }) : save.state === 'error' ? fill(T.wNotSaved, { m: save.error ?? '' }) : editable ? T.wDraft : tx(draft?.statusLabel, lang)}
           </span>
           {/* Closing returns where the person came from (the site's "Đăng sự kiện", the dashboard), else the dashboard. */}
@@ -250,7 +250,7 @@ export function Wizard() {
           <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
             <div className="flex items-baseline justify-between gap-3 border-b border-line-1 pb-2">
               <h1 className="kd-d2">{draft ? (editable ? T.wNew : T.wEdit) : T.wNew}</h1>
-              <span className="kd-m kd-num">{fill(T.wDone, { n: done.filter(Boolean).length })}</span>
+              <span className="kd-m kd-num max-tab:hidden">{fill(T.wDone, { n: done.filter(Boolean).length })}</span>
             </div>
             {draft?.status === 'rejected' && draft.moderation?.reason ? (
               <div className="kd-card mt-4 flex flex-col gap-1 p-4" role="status">

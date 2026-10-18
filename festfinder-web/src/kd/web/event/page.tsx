@@ -290,8 +290,9 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   </div>
                   {alsoIsOrg && org ? <Link className={buttonClass({ size: 'sm' })} href={inLang('/o/' + org.slug, lang)}>{T.viewProfile}</Link> : null}
                 </div>
-                <div className="kd-cards">
-                  {also.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}
+                {/* Rows, a column on a phone and side by side wider (design v2 phase 11): a night without a cover is no big title tile. */}
+                <div className="grid tab:grid-cols-2 tab:gap-x-8 wide:grid-cols-3">
+                  {also.map((e) => <EventCard key={e.id} e={e} lang={lang} look="row" />)}
                 </div>
               </section>
             ) : null}

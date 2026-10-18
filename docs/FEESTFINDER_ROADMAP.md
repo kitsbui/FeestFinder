@@ -213,7 +213,7 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - [ ] Phase 11: a newcomer on a phone (artboard 24, 2026-10-18: the gates are at 9 but a newcomer on a phone is at 5.5–6; owner decisions the same day).
   - [x] P0 (PR #14): a sold night with no price is never "free" (`priceUnknown`; the free filter, SEO and JSON-LD follow); /go sends a Radar find without a ticket link to the page it was found on; Radar's default age is not shown.
   - [x] P1: the city first on the home page (guessed from the phone's time zone when that city has three nights coming, remembered when chosen, never a jump: `city-first.tsx`); "Cho bạn" folded into it; "Đăng sự kiện" leaves the phone's top bar for "Tôi" and the footer; a heart saves before signing in (on the device, moved to the account at sign-in) and Đã lưu shows those nights; "Tôi" signed out lists what works without an account; the page's big heading is for screen readers on a phone; Radar's tag is its sign only on cards. `e2e/next/newcomer.spec.ts` holds the newcomer's journey.
-  - [ ] P2: the event page on a phone (one primary action, empty blocks hidden, "Chỉ đường" once, related as rows); the wizard's step names.
+  - [x] P2: the event page on a phone: a free night's ticket box without a second "Chỉ đường", no "0 hype", an empty Hỏi đáp is one "Đặt câu hỏi" button, related nights as rows; the wizard names its steps on a phone and drops its technical lines there.
   - [ ] The team: remove the "SPONGE BOB" artist profile in the Console; five newcomers on their own phones (docs/DESIGN_GOVERNANCE.md).
 
 ## What the team does next in production

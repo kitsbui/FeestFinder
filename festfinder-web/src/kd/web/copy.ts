@@ -50,6 +50,7 @@ export const WEB = {
   saveEvent: { en: 'Save {t}', vi: 'Lưu {t}' },
   interested: { en: '{n} interested', vi: '{n} quan tâm' },
   free: { en: 'Free', vi: 'Miễn phí' },
+  discAsk: { en: 'Ask a question', vi: 'Đặt câu hỏi' },
   priceUnknown: { en: 'Price not given yet', vi: 'Chưa rõ giá' },
   priceAtSeller: { en: 'Price on the ticket page', vi: 'Giá ở trang bán vé' },
   fromPrice: { en: 'from {p}', vi: 'từ {p}' },

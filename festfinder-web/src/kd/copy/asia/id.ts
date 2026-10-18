@@ -412,4 +412,5 @@ export const ID: Record<string, string> = {
   'Price not given yet': 'Harga belum ada',
   'Price on the ticket page': 'Harga di halaman tiket',
   'See price': 'Lihat harga',
+  'Ask a question': 'Ajukan pertanyaan',
 };

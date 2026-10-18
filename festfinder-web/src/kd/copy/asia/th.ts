@@ -412,4 +412,5 @@ export const TH: Record<string, string> = {
   'Price not given yet': 'ยังไม่ระบุราคา',
   'Price on the ticket page': 'ดูราคาที่หน้าขายบัตร',
   'See price': 'ดูราคา',
+  'Ask a question': 'ถามคำถาม',
 };
