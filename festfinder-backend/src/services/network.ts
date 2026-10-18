@@ -50,7 +50,7 @@ export async function sharedLineups(q: Queryable, artistId: string, max = 8) {
     `select a.id, a.slug, a.name, count(distinct e.id)::int as events, max(e.starts_on)::text as last_on, ${EXAMPLES}
        from event_artists mine join event_artists theirs on theirs.event_id = mine.event_id and theirs.artist_id <> mine.artist_id
        join events e on e.id = mine.event_id join artists a on a.id = theirs.artist_id
-      where mine.artist_id = $1 and ${PUBLIC}
+      where mine.artist_id = $1 and ${PUBLIC} and a.hidden_at is null
       group by a.id order by events desc, last_on desc limit $2`, [artistId, max]);
   return rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, ...evidence(r) }));
 }
@@ -60,7 +60,7 @@ export async function organizerArtists(q: Queryable, organizerId: string, max = 
   const rows = await many<any>(q,
     `select a.id, a.slug, a.name, count(distinct e.id)::int as events, max(e.starts_on)::text as last_on, ${EXAMPLES}
        from events e join event_artists ea on ea.event_id = e.id join artists a on a.id = ea.artist_id
-      where e.organizer_id = $1 and ${PUBLIC}
+      where e.organizer_id = $1 and ${PUBLIC} and a.hidden_at is null
       group by a.id order by events desc, last_on desc limit $2`, [organizerId, max]);
   return rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, ...evidence(r) }));
 }
@@ -163,8 +163,9 @@ export async function similarArtists(q: Queryable, artistId: string, max = 6): P
       audience: Math.round(W.audience * Math.min(overlap(target.fans, p.fans), 5) / 5),
     };
     return { id: c.id, score: Object.values(because).reduce((a, b) => a + b, 0), because };
-  }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score).slice(0, max);
-  const names = await many<{ id: string; slug: string; name: string }>(q, 'select id, slug, name from artists where id = any($1::uuid[])', [scored.map((s) => s.id)]);
+  }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
+  // A profile the team hid is never suggested.
+  const names = await many<{ id: string; slug: string; name: string }>(q, 'select id, slug, name from artists where id = any($1::uuid[]) and hidden_at is null', [scored.map((s) => s.id)]);
   const by = new Map(names.map((n) => [n.id, n]));
-  return scored.map((s) => ({ ...by.get(s.id)!, score: s.score, because: s.because }));
+  return scored.filter((s) => by.has(s.id)).slice(0, max).map((s) => ({ ...by.get(s.id)!, score: s.score, because: s.because }));
 }

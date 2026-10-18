@@ -172,6 +172,7 @@ export async function directoryPages(q: Queryable): Promise<string[]> {
        from artists a left join event_artists ea on ea.artist_id = a.id
        left join events e on e.id = ea.event_id and ${PUBLIC_EVENT}
        left join lateral unnest(e.styles) s on true
+      where a.hidden_at is null
       group by a.id having a.owner_user_id is not null or count(e.id) > 0`);
   if (rows.length < DIRECTORY_INDEX_MIN) return [];
   const count = (xs: string[]) => xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>());

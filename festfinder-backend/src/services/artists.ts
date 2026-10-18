@@ -74,10 +74,10 @@ export async function backfillArtists(q: Queryable): Promise<number> {
   return events.length;
 }
 
-/** Each listed name with its artist page, for an event's lineup; `confirmed` once the artist (or both sides) said so. */
+/** Each listed name with its artist page, for an event's lineup; `confirmed` once the artist (or both sides) said so. A hidden profile is no link. */
 export async function artistLinks(q: Queryable, eventId: string): Promise<{ name: string; slug: string; confirmed: boolean }[]> {
   return many<{ name: string; slug: string; confirmed: boolean }>(q,
-    `select a.name, a.slug, ea.confirmed_at is not null as confirmed from event_artists ea join artists a on a.id = ea.artist_id where ea.event_id = $1 order by ea.sort`, [eventId]);
+    `select a.name, a.slug, ea.confirmed_at is not null as confirmed from event_artists ea join artists a on a.id = ea.artist_id where ea.event_id = $1 and a.hidden_at is null order by ea.sort`, [eventId]);
 }
 
 // ---- the directory -----------------------------------------------------------------------
@@ -155,7 +155,8 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   const params: unknown[] = [now];
   const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
   const owned = '(a.owner_user_id is not null or a.verified)';
-  const where = [(f.kind ?? 'owned') === 'owned' ? owned : `(not ${owned} and coalesce(pl.events, 0) > 0)`];
+  // A profile the team hid (migration 046) is in no list and no count.
+  const where = [(f.kind ?? 'owned') === 'owned' ? owned : `(not ${owned} and coalesce(pl.events, 0) > 0)`, 'a.hidden_at is null'];
   if (f.q) {
     const key = artistKey(f.q);
     where.push(`(a.normalized_name like ${p(`%${key}%`)} or ${p(key)} = any(a.alias_keys))`);

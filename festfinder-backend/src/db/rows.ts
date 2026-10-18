@@ -261,6 +261,7 @@ export interface Rows {
     verified: boolean;
     updated_at: Date;
     alias_keys: string[];
+    hidden_at: Date | null;
   };
   audit_log: {
     seq: number;

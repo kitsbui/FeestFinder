@@ -130,7 +130,7 @@ export async function lineupPreviews(q: Queryable, eventId: string): Promise<(Mi
          from event_artists ea join artists a on a.id = ea.artist_id
          join artist_mixes m on m.artist_id = a.id and m.removed_at is null
          left join events e on e.id = m.event_id and e.status in ('live', 'cancelled') and e.published_at is not null
-        where ea.event_id = $1
+        where ea.event_id = $1 and a.hidden_at is null
         order by ea.artist_id, m.pinned desc, m.sort, m.created_at
      ) x order by lineup_sort limit 3`, [eventId]);
   return rows.map((r) => ({ ...presentMix(r), artist: { name: r.artist_name, slug: r.artist_slug } }));

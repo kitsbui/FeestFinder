@@ -1,8 +1,9 @@
 'use client';
 /**
  * /console/artists: the artist catalogue and the gear catalogue (?tab=gear). What only the team
- * sets lives here: the verified tick, the other names an artist goes by, and the identity
- * anchors (MusicBrainz, Wikidata, Spotify) that beat a name match when sources are merged. Gear
+ * sets lives here: the verified tick, the other names an artist goes by, the identity anchors
+ * (MusicBrainz, Wikidata, Spotify) that beat a name match when sources are merged, and hiding a
+ * profile the site should not show (a test, a joke, a duplicate; migration 046, nothing deleted). Gear
  * that artists name and the catalogue lacks waits here for approval, and an item can carry an
  * affiliate link. The search and the tab live in the address.
  */
@@ -21,7 +22,7 @@ import { useConsole } from '../root';
 import { ARTISTS } from './copy';
 
 interface Artist {
-  id: string; slug: string; name: string; aliases: string[]; verified: boolean;
+  id: string; slug: string; name: string; aliases: string[]; verified: boolean; hidden: boolean;
   musicbrainzId: string | null; wikidataId: string | null; spotifyId: string | null;
   owner: { id: string; email: string | null } | null; events: number;
 }
@@ -81,7 +82,10 @@ function Catalogue({ lang }: { lang: Lang }) {
           <Table label={T.title} cols={COLS} head={[T.colArtist, T.colVerified, T.colAliases, T.colOwner, T.colAnchors, <span key="e" className="block text-right">{T.colEvents}</span>, '']}>
             {d.items.map((a) => (
               <Row key={a.id} cols={COLS}>
-                <span role="cell" className="min-w-0"><a className="kd-hs kd-ell kd-hit block hover:underline" href={'/a/' + a.slug} target="_blank" rel="noopener">{a.name}</a></span>
+                <span role="cell" className="flex min-w-0 items-center gap-2">
+                  {a.hidden ? <span className="kd-hs kd-ell">{a.name}</span> : <a className="kd-hs kd-ell kd-hit block min-w-0 flex-1 hover:underline" href={'/a/' + a.slug} target="_blank" rel="noopener">{a.name}</a>}
+                  {a.hidden ? <Pill tone="warn" className="shrink-0">{T.hiddenTag}</Pill> : null}
+                </span>
                 <span role="cell">{a.verified ? <Pill tone="ok"><SealCheckIcon size={12} aria-hidden="true" />{T.verified}</Pill> : <span className="kd-s">—</span>}</span>
                 <span role="cell" className="kd-s kd-ell">{a.aliases.length ? a.aliases.join(', ') : '—'}</span>
                 <span role="cell" className="kd-s kd-ell">{a.owner?.email ?? '—'}</span>
@@ -106,7 +110,7 @@ function ArtistDrawer({ lang, artist, onClose, onSaved }: { lang: Lang; artist: 
   const T = pick(ARTISTS, lang);
   const kd = useKd();
   const [f, setF] = useState(() => ({
-    verified: artist.verified, aliases: artist.aliases.join(', '),
+    verified: artist.verified, hidden: artist.hidden, aliases: artist.aliases.join(', '),
     musicbrainzId: artist.musicbrainzId ?? '', wikidataId: artist.wikidataId ?? '', spotifyId: artist.spotifyId ?? '',
   }));
   const [busy, setBusy] = useState(false);
@@ -122,7 +126,7 @@ function ArtistDrawer({ lang, artist, onClose, onSaved }: { lang: Lang; artist: 
     setBusy(true);
     try {
       await FF.patch('/admin/artists/' + artist.id, {
-        verified: f.verified,
+        verified: f.verified, hidden: f.hidden,
         aliases: f.aliases.split(',').map((s) => s.trim()).filter(Boolean),
         musicbrainzId: f.musicbrainzId.trim().toLowerCase() || null, wikidataId: f.wikidataId.trim() || null, spotifyId: f.spotifyId.trim() || null,
       });
@@ -145,6 +149,7 @@ function ArtistDrawer({ lang, artist, onClose, onSaved }: { lang: Lang; artist: 
       </>}
     >
       <SwitchRow label={T.verified} checked={f.verified} onChange={set('verified')} />
+      <SwitchRow label={T.hidden} checked={f.hidden} onChange={set('hidden')} />
       <Field label={T.aliases} hint={T.aliasesHint} htmlFor="ca-aliases">
         <Input id="ca-aliases" value={f.aliases} onChange={(e) => set('aliases')(e.target.value)} placeholder="DJ Mie, Mie Mie" />
       </Field>

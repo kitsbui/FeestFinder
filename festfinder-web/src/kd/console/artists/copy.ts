@@ -16,6 +16,8 @@ export const ARTISTS = {
   colAnchors: { en: 'Anchors', vi: 'Định danh' },
   colEvents: { en: 'Events', vi: 'Sự kiện' },
   verified: { en: 'Verified', vi: 'Đã xác minh' },
+  hidden: { en: 'Hidden from the site', vi: 'Ẩn khỏi site' },
+  hiddenTag: { en: 'Hidden', vi: 'Đã ẩn' },
   edit: { en: 'Edit', vi: 'Sửa' },
   editOne: { en: 'Edit {n}', vi: 'Sửa {n}' },
   noArtists: { en: 'No artists', vi: 'Chưa có nghệ sĩ' },
