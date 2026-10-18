@@ -63,7 +63,9 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const venueLine = [ev.venue_name, ev.area, cityName].filter(Boolean).join(', ');
   const street = [ev.address, ev.address && ev.area && ev.address.includes(ev.area) ? null : ev.area].filter(Boolean).join(', ');
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.lat != null && ev.lng != null ? `${ev.lat},${ev.lng}` : [ev.venue_name, ev.address, ev.area, cityName].filter(Boolean).join(', '))}`;
-  const ageLabel = ev.age === 'All ages' ? t('allAges', lang) : ev.age;
+  // Feest Radar never reads an age: its finds' "All ages" is only the column's default.
+  const ageKnown = !(ev.origin === 'radar' && ev.age === 'All ages');
+  const ageLabel = !ageKnown ? '' : ev.age === 'All ages' ? t('allAges', lang) : ev.age;
   const startIso = zoned(ev.starts_at) ?? `${ev.starts_on}T${ev.start_time ?? '00:00'}:00`;
   const updatedAt = [ev.updated_at, ...updates.map((u) => u.createdAt)].map((d) => new Date(d)).sort((a, b) => b.getTime() - a.getTime())[0];
   const vi = lang === 'vi';
@@ -179,7 +181,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     eventStatus: cancelled ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     inLanguage: lang,
-    isAccessibleForFree: ev.entry_mode !== 'paid' || !ev.price_from,
+    isAccessibleForFree: ev.entry_mode !== 'paid',
     typicalAgeRange: ev.age === '18+' ? '18-' : ev.age === '16+' ? '16-' : undefined,
     maximumAttendeeCapacity: ev.capacity ?? undefined,
     location: {
@@ -203,9 +205,12 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
       ? { '@type': 'AggregateOffer', priceCurrency: ev.currency, lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: offers.length, offers, url: ev.ticket_url || url,
           availability: soldOut ? 'https://schema.org/SoldOut' : low ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock' }
       : offers.length ? offers[0]
-      : ev.entry_mode !== 'paid' || !ev.price_from
+      : ev.entry_mode !== 'paid'
         ? { '@type': 'Offer', price: 0, priceCurrency: ev.currency, availability: 'https://schema.org/InStock', url }
-        : { '@type': 'Offer', price: ev.price_from, priceCurrency: ev.currency, availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url: ev.ticket_url || url },
+        : ev.price_from
+          ? { '@type': 'Offer', price: ev.price_from, priceCurrency: ev.currency, availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url: ev.ticket_url || url }
+          // Sold at a price nobody gave yet: where to buy, no made-up price.
+          : { '@type': 'Offer', priceCurrency: ev.currency, availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url: ev.ticket_url || ev.event_url || url },
     interactionStatistic: { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: ev.hype_count },
   };
   const graph = [

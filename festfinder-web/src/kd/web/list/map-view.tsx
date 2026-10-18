@@ -25,7 +25,7 @@ import { LIST } from './copy';
 interface MapItem {
   id: string; slug: string; title: string; genre: string | null; lat: number; lng: number; venue: string | null; area: string | null;
   city: string; cityLabel: Pair; startsOn: string; endsOn: string | null; startTime: string | null; coverUrl: string | null;
-  priceFrom: number; currency: string; isFree: boolean; soldOut: boolean; origin?: 'posted' | 'radar';
+  priceFrom: number; currency: string; isFree: boolean; priceUnknown?: boolean; soldOut: boolean; origin?: 'posted' | 'radar';
   /** Only its city is known: the pin stands near the city's centre. */
   approx?: boolean;
 }
@@ -97,10 +97,10 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     else if (out.items.length) m.fit(boxOfPins(out.items), false);
     m.setEvents(out.items.map((x: MapItem) => ({
       id: x.id, lat: x.lat, lng: x.lng, family: familyOf(x.genre), approx: x.approx,
-      label: x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang), title: x.title,
+      label: x.isFree ? T.free : x.priceUnknown ? T.seePrice : moneyShort(x.priceFrom, x.currency, lang), title: x.title,
     })));
     setSel((s) => (s && out.items.some((x: MapItem) => x.id === s) ? s : null));
-  }, [lang, onBbox, T.free]);
+  }, [lang, onBbox, T.free, T.seePrice]);
 
   // The map, once.
   useEffect(() => {
@@ -205,7 +205,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
               </span>
               <span className="flex flex-col items-end gap-0.5">
                 {x.d != null ? <span className="kd-mb kd-num text-xs">{km(x.d, lang)}</span> : null}
-                <span className={cx('kd-m', x.isFree && 'text-info')}>{x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang)}</span>
+                <span className={cx('kd-m', x.isFree && 'text-info')}>{x.isFree ? T.free : x.priceUnknown ? T.priceUnknown : moneyShort(x.priceFrom, x.currency, lang)}</span>
               </span>
             </button>
           ))}
@@ -244,7 +244,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
               </span>
               <span className="kd-s kd-ell text-fg-2">{whenShort(chosen, lang)}{chosen.venue ? ' · ' + chosen.venue : ''}</span>
               <span className="mt-0.5 flex items-center justify-between gap-2">
-                <span className={cx('kd-mb kd-num', chosen.isFree && 'text-info')}>{chosen.isFree ? T.free : fill(T.fromPrice, { p: money(chosen.priceFrom, chosen.currency, lang) })}</span>
+                <span className={cx('kd-mb kd-num', chosen.isFree && 'text-info')}>{chosen.isFree ? T.free : chosen.priceUnknown ? T.priceUnknown : fill(T.fromPrice, { p: money(chosen.priceFrom, chosen.currency, lang) })}</span>
                 <Link href={inLang('/e/' + chosen.slug, lang)} className={buttonClass({ size: 'sm' })}>{T.details}</Link>
               </span>
             </div>

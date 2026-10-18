@@ -122,9 +122,9 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     <FactCell icon={<MapPinIcon size={18} aria-hidden="true" />} label={T.factWhere} action={<a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>}>
                       {ev.venue.name}{ev.venue.area ? <span className="text-fg-3"> · {ev.venue.area}</span> : null}
                     </FactCell>
-                    {free || cheapest > 0 ? (
+                    {free || cheapest > 0 || ev.priceUnknown ? (
                       <FactCell icon={<TicketIcon size={18} aria-hidden="true" />} label={T.factPrice}>
-                        <span className={cx('kd-num', free && 'text-info')}>{free ? T.free : fill(T.fromPrice, { p: money(cheapest, ev.currency, lang) })}</span>
+                        <span className={cx('kd-num', free && 'text-info')}>{free ? T.free : cheapest > 0 ? fill(T.fromPrice, { p: money(cheapest, ev.currency, lang) }) : T.priceAtSeller}</span>
                       </FactCell>
                     ) : null}
                     {ev.age ? (

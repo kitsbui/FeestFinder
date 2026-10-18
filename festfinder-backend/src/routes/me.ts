@@ -417,7 +417,7 @@ export default async function meRoutes(app: FastifyInstance) {
     if (alert.areas.length) cond.push(`e.area = any(${add(alert.areas)}::text[])`);
     if (alert.cities.length) cond.push(`e.city = any(${add(alert.cities)}::text[])`);
     if (alert.styles.length) cond.push(`e.styles && ${add(alert.styles)}::text[]`);
-    if (alert.price_cap === 0) cond.push(`(e.entry_mode = 'free' or e.price_from = 0)`);
+    if (alert.price_cap === 0) cond.push(`e.entry_mode = 'free'`);
     else if (alert.price_cap !== null) cond.push(`e.price_from <= ${add(alert.price_cap)}`);
     const m = await one<any>(ctx.db,
       `select count(*)::int as n from events e where e.status = 'live' and not e.held_for_reports and e.ends_at >= $1 ${cond.map((c) => `and ${c}`).join(' ')}`, params);

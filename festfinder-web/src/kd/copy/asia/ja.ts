@@ -409,4 +409,7 @@ export const JA: Record<string, string> = {
   'Let friends see the nights you go to?': '行くイベントを友達に見せますか?',
   'Show friends': '友達に見せる',
   'Keep private': '非公開にする',
+  'Price not given yet': '価格未定',
+  'Price on the ticket page': '価格はチケット販売ページで',
+  'See price': '価格を見る',
 };

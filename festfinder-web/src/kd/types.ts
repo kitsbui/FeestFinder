@@ -33,6 +33,8 @@ export interface Card {
   styles: string[];
   eventType: string | null;
   isFree: boolean;
+  /** Sold, at a price nobody gave yet (a Radar find): never shown as free (design v2 phase 11). */
+  priceUnknown?: boolean;
   hypeCount: number;
   saveCount: number;
   lineup: string[];

@@ -123,7 +123,12 @@ export function presentCard(r: any, o: PresentOpts) {
     origin: (r.origin === 'radar' ? 'radar' : 'posted') as 'posted' | 'radar',
     /** The festival brand it belongs to; `flagship` for the world's biggest, which the site always highlights. */
     festival: festivalCard(r.festival),
-    isFree: r.entry_mode === 'free' || r.price_from === 0,
+    isFree: r.entry_mode === 'free',
+    /**
+     * Sold, but nobody has said for how much yet (a Radar find whose page gives no price): never
+     * shown as free (design v2 phase 11). The page sends people to the seller instead.
+     */
+    priceUnknown: r.entry_mode === 'paid' && !r.price_from,
     hypeCount: r.hype_count as number,
     saveCount: r.save_count as number,
     lineup: r.lineup as string[],

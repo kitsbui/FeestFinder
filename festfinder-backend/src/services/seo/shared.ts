@@ -53,6 +53,7 @@ export const T = {
   genre: { vi: 'Thể loại', en: 'Genre' }, organiser: { vi: 'Ban tổ chức', en: 'Organiser' }, buy: { vi: 'Mua vé', en: 'Tickets' },
   site: { vi: 'Trang chính thức', en: 'Official site' }, free: { vi: 'Miễn phí', en: 'Free' }, from: { vi: 'Từ', en: 'From' },
   donation: { vi: 'Tuỳ tâm', en: 'Pay what you like' }, allAges: { vi: 'Mọi lứa tuổi', en: 'All ages' },
+  priceAtSeller: { vi: 'Giá ở trang bán vé', en: 'Price on the ticket page' },
   onSale: { vi: 'Còn vé', en: 'On sale' }, low: { vi: 'Sắp hết vé', en: 'Few tickets left' }, soldOut: { vi: 'Hết vé', en: 'Sold out' },
   soon: { vi: 'Sắp mở bán', en: 'On sale soon' }, cancelled: { vi: 'Đã huỷ', en: 'Cancelled' }, past: { vi: 'Đã diễn ra', en: 'Took place' },
   nextDay: { vi: 'hôm sau', en: 'next day' }, previous: { vi: 'Mùa trước', en: 'Previous edition' }, next: { vi: 'Mùa tiếp theo', en: 'Next edition' },
@@ -115,7 +116,9 @@ export function whenLine(ev: DatedRow, lang: Lang) {
 
 export function priceLine(ev: PricedRow, lang: Lang) {
   if (ev.entry_mode === 'donation') return t('donation', lang);
-  if (ev.entry_mode === 'free' || !ev.price_from) return t('free', lang);
+  if (ev.entry_mode === 'free') return t('free', lang);
+  // Sold, at a price nobody gave yet: never "free".
+  if (!ev.price_from) return t('priceAtSeller', lang);
   return `${t('from', lang)} ${formatMoney(ev.price_from, ev.currency, lang)}`;
 }
 

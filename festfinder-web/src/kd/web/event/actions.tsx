@@ -89,7 +89,7 @@ export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void 
     genre: ev.genre ?? undefined,
     kicker: (ev.genre ?? '') + (ev.hype?.count ? ' · ' + count(ev.hype.count, lang) + ' hype' : ''),
     title: ev.title,
-    lines: [when, [ev.venue.name, ev.venue.area].filter(Boolean).join(' · '), ev.isFree ? t.free : fill(t.fromPrice, { p: moneyShort(ev.priceFrom, ev.currency, lang) })],
+    lines: [when, [ev.venue.name, ev.venue.area].filter(Boolean).join(' · '), ev.isFree ? t.free : ev.priceUnknown ? null : fill(t.fromPrice, { p: moneyShort(ev.priceFrom, ev.currency, lang) })].filter((l): l is string => !!l),
     url: location.host + '/e/' + ev.slug,
   };
   const link = async (channel: Channel) => {
