@@ -16,7 +16,6 @@ import { Accordion, Status, type StatusTone } from '../../ui/parts';
 import type { Resale, Tier } from '../../types';
 import { WEB } from '../copy';
 import { useEvent } from './context';
-import { directionsUrl } from './directions';
 
 /** FeestFinder's checkout sells at most this many per order (routes/commerce.ts). */
 const MAX_PER_ORDER = 6;
@@ -78,9 +77,8 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
     return (
       <div id="tickets" className="kd-card flex scroll-mt-32 flex-col gap-3 p-4">
         <div className="flex items-center justify-between"><h2 className="kd-h">{T.tickets}</h2><span className="kd-tag kd-tag-acc">{T.free}</span></div>
+        {/* No ticket to buy: the way there is in the facts and under the venue, once each (design v2 phase 11). */}
         <p className="kd-s">{T.freeNote}</p>
-        {/* Chỉ đường opens the route in Google Maps at once (CLAUDE.md "Event actions"), never an anchor on the page. */}
-        <a className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true })} href={directionsUrl(ev.venue, [ev.venue.address, ev.venue.area, tx(ev.cityLabel, lang)].filter(Boolean).join(', '))} target="_blank" rel="noopener">{T.directions}</a>
       </div>
     );
   }

@@ -337,6 +337,8 @@
   .kd-steps-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--gradient-accent); transition: width var(--dur-3) var(--ease-ff); }
   .kd-step { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-fg-3); text-align: left; cursor: pointer; }
   .kd-step:hover, .kd-step[aria-current='step'] { color: var(--color-fg-1); }
+  /* A phone: the number over its name, both in a quarter of the width. */
+  @media (width < 760px) { .kd-step { flex-direction: column; justify-content: flex-start; gap: 4px; text-align: center; } }
   .kd-step-dot { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--color-line-2); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .kd-step[aria-current='step'] .kd-step-dot { background: var(--color-fg-1); color: var(--color-on-inverse); box-shadow: none; }
   /* The Console queue's bar for the rows picked (console/queue.tsx): it stays at the bottom of the list. */

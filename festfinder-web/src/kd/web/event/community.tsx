@@ -56,7 +56,7 @@ export function Hype({ lang }: { lang: Lang }) {
     <section aria-labelledby="hype-h" className="kd-card flex max-w-read flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 id="hype-h" className="kd-d3">{T.hype}</h2>
-        <span className="kd-mb kd-num whitespace-nowrap">{fill(T.hypeCount, { n: count(H.count, lang) })}</span>
+        {H.count ? <span className="kd-mb kd-num whitespace-nowrap">{fill(T.hypeCount, { n: count(H.count, lang) })}</span> : null}
         {H.last24h ? <span className="kd-s whitespace-nowrap">{fill(T.hype24, { n: H.last24h })}</span> : null}
         <Button size="sm" className="ml-auto" aria-pressed={hyped} onClick={toggle}>
           <FireIcon size={16} weight={hyped ? 'fill' : 'regular'} className={hyped ? 'text-info' : undefined} aria-hidden="true" />
@@ -100,6 +100,7 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [phoneFor, setPhoneFor] = useState<(() => void) | null>(null);
   const [rules, setRules] = useState(false);
+  const [asking, setAsking] = useState(false);
 
   const load = useCallback(async (k = kind, s = sort) => {
     const qs = 'sort=' + s + (k ? '&kind=' + k : '');
@@ -124,6 +125,15 @@ export function DiscussionSection({ lang }: { lang: Lang }) {
   const kinds = d?.kinds ?? [];
   const cur = kinds.find((k) => k.kind === kind);
   const gate = d?.me.canWrite ?? 'signin';
+  // Nothing asked or answered yet: one button, not three tabs and an empty field (design v2 phase 11).
+  if (d && !d.total && !ev.faq.length && !asking) {
+    return (
+      <section id="discussion" aria-labelledby="disc-h" className="flex max-w-read scroll-mt-32 flex-wrap items-center justify-between gap-3">
+        <h2 id="disc-h" className="kd-d3">{T.discussion}</h2>
+        <Button onClick={() => setAsking(true)}>{T.discAsk}</Button>
+      </section>
+    );
+  }
 
   return (
     <section id="discussion" aria-labelledby="disc-h" className="flex max-w-read scroll-mt-32 flex-col gap-4">

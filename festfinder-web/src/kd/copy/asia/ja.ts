@@ -412,4 +412,5 @@ export const JA: Record<string, string> = {
   'Price not given yet': '価格未定',
   'Price on the ticket page': '価格はチケット販売ページで',
   'See price': '価格を見る',
+  'Ask a question': '質問する',
 };
