@@ -30,6 +30,13 @@ interface MapItem {
   approx?: boolean;
 }
 
+/** The pins' own bounds, so a festival in a city not launched yet (Phuket) is on screen too. */
+function boxOfPins(items: { lat: number; lng: number }[]): Box {
+  const lats = items.map((x) => x.lat), lngs = items.map((x) => x.lng);
+  const pad = 0.05;
+  return [Math.min(...lngs) - pad, Math.min(...lats) - pad, Math.max(...lngs) + pad, Math.max(...lats) + pad];
+}
+
 /** All the listed cities, when no city is chosen. */
 function boxOfCities(meta: Meta): Box {
   const bs = meta.cities.map((c) => c.bbox).filter(Boolean) as Box[];
@@ -68,15 +75,16 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
 
   const cityBox = useCallback((slug: string): Box => meta.cities.find((c) => c.slug === slug)?.bbox ?? boxOfCities(meta), [meta]);
 
-  const search = useCallback(async (box?: Box) => {
+  /** One ask: inside `box`, inside the map's view without one, or 'all' (every city: then the map fits the pins). */
+  const search = useCallback(async (box?: Box | 'all') => {
     const m = map.current;
     if (!m) return;
-    const bbox = box ?? m.bounds();
+    const bbox = box === 'all' ? null : box ?? m.bounds();
     const n = ++seq.current;
     setBusy(true); setDirty(false);
     const q = apiQuery(fRef.current, { city: false });
     if (fRef.current.time === 'all') q.delete('time');
-    q.set('bbox', bbox.join(','));
+    if (bbox) q.set('bbox', bbox.join(','));
     q.set('limit', '500');
     const out = await FF.maybe(FF.get('/events/map?' + q), null);
     if (n !== seq.current) return;
@@ -85,7 +93,8 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     setItems(out.items);
     setTotal(out.total);
     setTruncated(out.truncated);
-    onBbox(bbox);
+    if (bbox) onBbox(bbox);
+    else if (out.items.length) m.fit(boxOfPins(out.items), false);
     m.setEvents(out.items.map((x: MapItem) => ({
       id: x.id, lat: x.lat, lng: x.lng, family: familyOf(x.genre), approx: x.approx,
       label: x.isFree ? T.free : moneyShort(x.priceFrom, x.currency, lang), title: x.title,
@@ -109,7 +118,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
       map.current = m;
       await m.ready;
       setReady(true);
-      void search(start);
+      void search(f.bbox || f.city !== 'all' ? start : 'all');
     }).catch(() => setFailed(true));
     return () => { dead = true; map.current?.destroy(); map.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,7 +133,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
     if (p.city !== f.city) {
       const box = cityBox(f.city);
       map.current.fit(box, false);
-      void search(box);
+      void search(f.city === 'all' ? 'all' : box);
     } else if (p.time !== f.time || p.family !== f.family || p.genre !== f.genre || p.style !== f.style || p.type !== f.type || p.q !== f.q || p.origin !== f.origin) {
       void search();
     }
@@ -163,7 +172,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
   // The city is where the map is, not a filter here.
   const filtered = near || f.time !== 'all' || !!f.family || !!f.genre || !!f.style || !!f.type || !!f.q || !!f.origin;
   /** From an empty corner of the world back to where the events are. */
-  const home = () => { const box = cityBox(f.city); map.current?.fit(box); void search(box); };
+  const home = () => { const box = cityBox(f.city); map.current?.fit(box); void search(f.city === 'all' ? 'all' : box); };
 
   return (
     <main className="flex min-h-[calc(100dvh-64px)] flex-wrap content-start desk:h-[calc(100dvh-64px)]">
