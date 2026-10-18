@@ -178,6 +178,19 @@ test.describe('the list, the home page', () => {
     expect(problems).toEqual([]);
   });
 
+  test('every city: one ask for every pin, and the map fits them (a festival outside the launched cities too)', async ({ page }) => {
+    const problems = watch(page);
+    const asked: string[] = [];
+    page.on('request', (r) => { if (r.url().includes('/events/map?')) asked.push(r.url()); });
+    await page.goto('/?view=map');
+    await expect(page.locator('[data-map-rows] > button').first()).toBeVisible();
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).not.toContain('bbox=');
+    // Nothing was searched by area, so the address keeps no box.
+    await expect(page).not.toHaveURL(/bbox=/);
+    expect(problems).toEqual([]);
+  });
+
   test('a row and its pin are chosen together, and the card opens the event', async ({ page }) => {
     await page.goto('/?city=ho-chi-minh&view=map');
     const row = page.getByRole('button', { name: /Ravolution Music Festival/ }).first();
