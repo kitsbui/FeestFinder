@@ -41,17 +41,21 @@ test('the table is the view to ask for; the bar keeps the filters on screen whil
   await expect(bar).toBeInViewport();
 });
 
-test('a phone filters from "Lọc", a sheet of every filter', async ({ page }) => {
+test('a phone filters with four times in one tap and the styles that have nights', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, '/');
-  await page.getByRole('button', { name: /^Lọc/ }).click();
-  const sheet = page.getByRole('dialog', { name: 'Bộ lọc' });
-  await sheet.getByRole('group', { name: 'Thời gian' }).getByRole('button', { name: 'Cuối tuần này' }).click();
+  // No "Lọc" sheet on a phone any more (design v2 phase 12, owner 2026-10-18).
+  await expect(page.getByRole('button', { name: /^Lọc/ })).toHaveCount(0);
+  const times = page.locator('.kd-cmd').getByRole('group', { name: 'Thời gian' });
+  for (const name of ['Tối nay', 'Cuối tuần này', '7 ngày tới', 'Tất cả']) await expect(times.getByRole('button', { name })).toBeVisible();
+  await times.getByRole('button', { name: 'Cuối tuần này' }).click();
   await expect(page).toHaveURL(/time=weekend/);
-  await sheet.getByRole('button', { name: 'Xem sự kiện' }).click();
-  await expect(sheet).toBeHidden();
+  await expect(times.getByRole('button', { name: 'Cuối tuần này' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cuối tuần này');
-  await expect(page.getByRole('button', { name: /^Lọc\s*1/ })).toBeVisible();
+  // The styles row offers only styles that have nights; one tap filters.
+  const styles = page.getByRole('main').getByRole('button', { name: 'Techno', exact: true });
+  await styles.click();
+  await expect(page).toHaveURL(/style=techno/);
 });
 
 test('the questions are on /about with their FAQPage JSON-LD, no longer on the home page', async ({ request }) => {
@@ -79,7 +83,7 @@ test('a phone: the facts, the tickets right after the hero, and "Mua vé" always
   await panel.scrollIntoViewIfNeeded();
   await expect(dock).toHaveAttribute('data-away', 'true');
   // Further down it is back.
-  await page.getByRole('heading', { name: /^Hỏi đáp/ }).scrollIntoViewIfNeeded();
+  await page.getByRole('heading', { name: 'Thêm', exact: true }).scrollIntoViewIfNeeded();
   await expect(dock).not.toHaveAttribute('data-away', 'true');
   await expect(dock.getByRole('link', { name: 'Mua vé' })).toBeInViewport();
   expect(problems).toEqual([]);
@@ -88,8 +92,10 @@ test('a phone: the facts, the tickets right after the hero, and "Mua vé" always
 test('one "Hỏi đáp": the organiser’s answers, then the questions; the rules behind "Quy tắc"', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, '/e/ravo');
+  // Under "Thêm" (design v2 phase 12): its row opens it.
+  await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
   const qa = page.locator('#discussion');
-  await expect(qa.getByRole('heading', { level: 2, name: /^Hỏi đáp/ })).toBeVisible();
+  await expect(qa).toBeVisible();
   await expect(qa.getByRole('heading', { level: 3, name: 'Câu hỏi thường gặp' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Thảo luận' })).toHaveCount(0);
   await expect(qa.getByText(/Hãy tử tế/)).toHaveCount(0);

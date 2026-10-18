@@ -19,10 +19,11 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
-test('"Chỉ đường" opens Google Maps’ route to the venue at once, from the top and from the venue', async ({ page }) => {
+test('"Chỉ đường" opens Google Maps’ route to the venue at once, from the venue', async ({ page }) => {
   const problems = await open(page, '/e/ravo');
+  // Once, under the venue (design v2 phase 12): the facts are facts.
   const links = page.getByRole('link', { name: 'Chỉ đường' });
-  await expect(links).toHaveCount(2);
+  await expect(links).toHaveCount(1);
   for (const link of await links.all()) {
     await expect(link).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=/);
     await expect(link).toHaveAttribute('target', '_blank');

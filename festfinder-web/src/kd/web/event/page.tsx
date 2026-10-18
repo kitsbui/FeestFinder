@@ -4,7 +4,7 @@
  * and answers, structured data); the personal and interactive parts hydrate on top.
  */
 import { KdLink as Link, inLang } from '../../link';
-import { BroadcastIcon, CalendarBlankIcon, CaretRightIcon, CompassIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
+import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
 import { ViewTransition, type ReactNode } from 'react';
 import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick, tx } from '../../copy';
@@ -22,14 +22,13 @@ import { EventCard } from '../card';
 import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { CommunityLine, CopyAddress, Countdown, FollowOrg, ReportLink, SaveWithCount, ShareButton } from './actions';
-import { Ambassadors, DiscussionSection, Hype, PhotoWall } from './community';
+import { Ambassadors, PhotoWall } from './community';
+import { EventMore } from './more';
 import { EventClientProvider } from './context';
 import { Lineup } from './lineup';
 import { ListenFirst } from './previews';
-import { GoTogetherRow } from './friends';
 import { RideButton } from './ride';
 import { TicketsPanel } from './tickets';
-import { CalendarButton } from './calendar';
 import { directionsUrl } from './directions';
 import { BuyDock } from './dock';
 import { InLang } from '@/kd/ui/in-lang';
@@ -114,12 +113,13 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{familyLine}</span>
                     <h1 className="kd-d1">{ev.title}</h1>
                   </div>
-                  {/* The four facts (design v2 phase 2): a grid of two on a computer, rows on a phone. */}
+                  {/* The four facts (design v2 phase 2): a grid of two on a computer, rows on a phone. Only facts
+                      (design v2 phase 12): "Chỉ đường" is under the venue, "Thêm lịch" under "Thêm". */}
                   <div data-facts className="grid grid-cols-1 border-t border-line-1 desk:grid-cols-2 desk:gap-x-6">
-                    <FactCell icon={<CalendarBlankIcon size={18} aria-hidden="true" />} label={T.factWhen} action={<CalendarButton lang={lang} className="-mr-3" />}>
+                    <FactCell icon={<CalendarBlankIcon size={18} aria-hidden="true" />} label={T.factWhen}>
                       <span className="kd-num">{whenLong(ev, lang)}{timeRange(ev) ? ' · ' + timeRange(ev) : ''}</span>
                     </FactCell>
-                    <FactCell icon={<MapPinIcon size={18} aria-hidden="true" />} label={T.factWhere} action={<a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={mapsHref} target="_blank" rel="noopener">{T.directions}</a>}>
+                    <FactCell icon={<MapPinIcon size={18} aria-hidden="true" />} label={T.factWhere}>
                       {ev.venue.name}{ev.venue.area ? <span className="text-fg-3"> · {ev.venue.area}</span> : null}
                     </FactCell>
                     {free || cheapest > 0 || ev.priceUnknown ? (
@@ -132,8 +132,9 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     ) : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Under 900px the dock's "Mua vé" is the one way to the tickets. */}
                     {hasTickets ? (
-                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#tickets">
+                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto max-desk:hidden')} href="#tickets">
                         {openTiers.length ? fill(T.chooseTickets, { p: money(cheapest, ev.currency, lang) }) : T.buyTickets}
                       </a>
                     ) : free && !ev.past ? (
@@ -167,18 +168,6 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                         <span className="kd-t flex-1 text-fg-1"><span className="text-fg-3">{T.sponsoredBy} </span>{ev.sponsors.map((x) => x.name).join(', ')}</span>
                       </div>
                     ) : null}
-                    {/* The night with friends and the guide: from the app's event screen, which this page replaced (design v2 phase 4). */}
-                    {!ev.past ? (
-                      <GoTogetherRow lang={lang} href={'/app/plan/' + enc(ev.slug)} />
-                    ) : null}
-                    {/* Only when the guide can answer: a row that opens "đang tạm nghỉ" is a dead end. */}
-                    {!ev.past && ev.guide ? (
-                      <a className="kd-lrow min-h-13" href={'/app/guide/' + enc(ev.slug)}>
-                        <CompassIcon size={18} className="text-fg-3" aria-hidden="true" />
-                        <span className="kd-t flex-1 text-fg-1">{T.guideRow}</span>
-                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
-                      </a>
-                    ) : null}
                   </div>
                   <CommunityLine lang={lang} />
                 </div>
@@ -205,6 +194,11 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                       </ul>
                     </section>
                   ) : null}
+
+                  {/* Who plays, before what it is (design v2 phase 12): the line-up decides a night. */}
+                  <Lineup lang={lang} />
+
+                  <ListenFirst lang={lang} />
 
                   <section id="about" aria-labelledby="about-h" className="flex max-w-read scroll-mt-32 flex-col gap-3">
                     <h2 id="about-h" className="kd-d3">{T.about2}</h2>
@@ -234,14 +228,6 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     </Accordion>
                   </section>
 
-                  <Lineup lang={lang} />
-
-                  <ListenFirst lang={lang} />
-
-                  <Hype lang={lang} />
-
-                  {/* Hỏi đáp: the organiser's answers first, then everyone's questions and talk (owner, 2026-10-17). */}
-                  <DiscussionSection lang={lang} />
                   <PhotoWall lang={lang} />
                   <Ambassadors lang={lang} />
                 </div>
@@ -278,6 +264,11 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   </a>
                 ) : null}
               </div>
+            </section>
+
+            {/* ---- the rest: going with friends, the guide, the calendar, Hỏi đáp and Hype, folded under "Thêm" (design v2 phase 12) ---- */}
+            <section className="kd-wrap pt-[clamp(56px,7vw,88px)]">
+              <EventMore lang={lang} />
             </section>
 
             {/* ---- also by the organiser ---- */}

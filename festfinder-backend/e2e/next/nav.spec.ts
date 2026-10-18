@@ -26,7 +26,7 @@ test('a computer: four places, the search, the languages, "Đăng sự kiện"; 
   await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
   await expect(page.getByRole('banner').getByRole('link', { name: /^VI\s*·?\s*EN/ })).toHaveAttribute('href', '/a?lang=en');
   // No tab bar on a computer.
-  await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('button', { name: 'Tìm' })).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Đã lưu' })).toBeHidden();
   // Between 900 and 1200px the field is an icon that opens the search sheet; ⌘K / Ctrl+K opens it too.
   await page.setViewportSize({ width: 1000, height: 800 });
   await page.keyboard.press('Control+k');
@@ -34,7 +34,7 @@ test('a computer: four places, the search, the languages, "Đăng sự kiện"; 
   expect(problems).toEqual([]);
 });
 
-test('a phone: the tab bar on every public screen; the bar on top keeps the logo, "Đăng sự kiện" is in "Tôi"', async ({ page }) => {
+test('a phone: four places in the tab bar on every public screen; the bar on top keeps the logo and the search, "Đăng sự kiện" is in "Tôi"', async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 390, height: 844 });
   const missing: string[] = [];
@@ -42,9 +42,12 @@ test('a phone: the tab bar on every public screen; the bar on top keeps the logo
   for (const path of ROUTES.visitor.filter((p) => p !== '/kit')) {
     await open(page, path);
     const tabs = page.getByRole('navigation', { name: 'Chính' });
-    for (const name of ['Sự kiện', 'Bản đồ', 'Tìm', 'Đã lưu', 'Tôi']) {
+    for (const name of ['Sự kiện', 'Bản đồ', 'Đã lưu', 'Tôi']) {
       if (!(await tabs.getByText(name, { exact: true }).isVisible())) missing.push(`${path}: ${name}`);
     }
+    // Search left the tab bar for the top (design v2 phase 12, owner 2026-10-18).
+    if (await tabs.getByText('Tìm', { exact: true }).count()) missing.push(`${path}: Tìm in the tab bar`);
+    if (!(await page.getByRole('banner').getByRole('button', { name: 'Tìm kiếm' }).isVisible())) missing.push(`${path}: search on top`);
     // The top is the newcomer's on a phone (owner, 2026-10-18): "Đăng sự kiện" lives in "Tôi" and the footer.
     if (await page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' }).isVisible()) missing.push(`${path}: Đăng sự kiện on top`);
   }
@@ -54,10 +57,10 @@ test('a phone: the tab bar on every public screen; the bar on top keeps the logo
 test('Dự án, Vé and Đã lưu are at most two taps from any page on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await signInWith(page, ACCOUNTS.fan);
-  // Dự án: Tìm, then Dự án.
+  // Dự án: the search on top, then Dự án.
   await open(page, '/e/ravo');
   const tabs = page.getByRole('navigation', { name: 'Chính' });
-  await tabs.getByRole('button', { name: 'Tìm' }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Tìm kiếm' }).click();
   await page.getByRole('dialog', { name: 'Tìm kiếm' }).getByRole('link', { name: 'Dự án' }).click();
   await expect(page).toHaveURL(/\/p$/);
   // Đã lưu: one tap.

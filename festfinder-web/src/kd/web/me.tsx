@@ -96,6 +96,9 @@ export function GuestHub({ lang, className }: { lang: Lang; className?: string }
     <nav aria-label={T.me} className={className}>
       <div className="flex flex-col">
         <Row href={inLang('/saved', lang)}>{T.saved}</Row>
+        {/* The places the phone's tab bar leaves to search (design v2 phase 12). */}
+        <Row href={inLang('/a', lang)}>{T.artists}</Row>
+        <Row href={inLang('/p', lang)}>{T.projects}</Row>
         <Row href="/studio/new">{T.listEvent}</Row>
         <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
         <Row href={inLang('/about', lang)}>{T.about}</Row>
@@ -126,7 +129,9 @@ export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
       </div>
       <h2 className="kd-m mb-1 mt-6">{T.more}</h2>
       <div className="flex flex-col">
-        {/* The phone's top bar leaves it to "Tôi" (owner, 2026-10-18). */}
+        {/* The phone's top bar leaves it to "Tôi" (owner, 2026-10-18); the tab bar leaves the places to search. */}
+        <Row href={inLang('/a', lang)}>{T.artists}</Row>
+        <Row href={inLang('/p', lang)}>{T.projects}</Row>
         <Row href="/studio/new">{T.listEvent}</Row>
         <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
         <Row href="/app/settings">{T.settings}</Row>

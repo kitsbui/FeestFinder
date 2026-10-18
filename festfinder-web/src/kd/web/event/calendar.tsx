@@ -4,10 +4,11 @@
  * filled in (title, start and end in the event's timezone, the venue, a link back), signed in as
  * the account they use here (authuser). On Android the calendar app itself opens on a new event
  * with the same fields (an INSERT intent; Google Calendar's page if no app answers). Apple
- * Calendar and Outlook take the .ics file from the menu beside it.
+ * Calendar and Outlook take the .ics file from the menu beside it. A row of "Thêm" on the event's
+ * page (design v2 phase 12).
  */
 import { useEffect, useState } from 'react';
-import { CaretDownIcon } from '@phosphor-icons/react/ssr';
+import { CalendarBlankIcon, CaretDownIcon } from '@phosphor-icons/react/ssr';
 import { pick, type Lang, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { buttonClass } from '../../ui/actions';
@@ -62,7 +63,7 @@ export function androidCalendarIntent(f: CalendarFields, fallback: string): stri
   return `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;${extras.join(';')};S.browser_fallback_url=${e(fallback)};end`;
 }
 
-export function CalendarButton({ lang, className }: { lang: Lang; className?: string }) {
+export function CalendarRow({ lang }: { lang: Lang }) {
   const T = pick(COPY, lang);
   const { ev } = useEvent();
   const kd = useKd();
@@ -73,25 +74,26 @@ export function CalendarButton({ lang, className }: { lang: Lang; className?: st
   const fields = calendarFields(ev, lang, origin);
   const google = googleCalendarUrl(fields, kd.user?.email);
   return (
-    // Two buttons side by side (each its own tap area): Google Calendar, and the menu of other calendars.
-    <span className={`inline-flex items-center ${className ?? ''}`}>
+    // Two tap areas side by side: the row opens Google Calendar, the caret the menu of other calendars.
+    <div className="kd-lrow min-h-13">
       <a
-        className={buttonClass({ tone: 'ghost', size: 'sm' }, 'pr-2')}
+        className="flex min-h-11 min-w-0 flex-1 items-center gap-3"
         href={google}
         target="_blank"
         rel="noopener"
         data-calendar="google"
         onClick={(e) => { if (android) { e.preventDefault(); location.href = androidCalendarIntent(fields, google); } }}
       >
-        {T.add}
+        <CalendarBlankIcon size={18} className="text-fg-3" aria-hidden="true" />
+        <span className="kd-t flex-1 text-fg-1">{T.add}</span>
       </a>
       <Menu label={T.more} align="end" trigger={(p) => (
-        <button type="button" {...p} ref={p.ref} className={buttonClass({ tone: 'ghost', size: 'sm' }, 'min-w-11 px-2')} aria-label={T.more}>
+        <button type="button" {...p} ref={p.ref} className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3 min-w-11 px-2')} aria-label={T.more}>
           <CaretDownIcon size={14} aria-hidden="true" />
         </button>
       )}>
         <MenuItem href={`/events/${ev.id}/calendar.ics`}>{T.ics}</MenuItem>
       </Menu>
-    </span>
+    </div>
   );
 }

@@ -3,14 +3,15 @@
  * The home page's list (Sự kiện in the nav): every upcoming event by day (the grid, the default
  * since design v2 phase 2: days.tsx), as a table (the advanced view) or on a map, by city, time,
  * kind of night and music style, price, source and text (the nav's search). The views share one
- * title, one view switch and one sticky row of filters (a "Lọc" sheet on a phone), so a choice
+ * title, one view switch and one sticky row of filters (on a phone, design v2 phase 12: four times in
+ * the bar, the city and the styles with nights here above the list, the rest on a computer), so a choice
  * made in one view is there, and visible, in the others. The address carries the choices with
  * the legacy names (city, genre, time, style, type, view, bbox, q) so old links and the
  * /vi/… and /en/… redirects keep landing on the right list. The list re-reads itself every
  * minute while it is open.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { ArrowDownIcon, ArrowUpIcon, FunnelSimpleIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { ArrowDownIcon, ArrowUpIcon, XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { registerServiceWorker } from '@/runtime/pwa';
@@ -26,7 +27,6 @@ import { Menu, MenuItem, MenuSeparator, Picker } from '../../ui/menu';
 import { Card as Panel, Marker, Status, type StatusTone } from '../../ui/parts';
 import type { Card } from '../../types';
 import { ORIGIN, RadarTag, type Origin } from '../../ui/origin';
-import { Sheet } from '../../ui/sheet';
 import { DayGrid, ListRail, groupByDay } from './days';
 import { fromApp } from './from-app';
 import { place } from '../../app/place';
@@ -64,6 +64,10 @@ const TIMES: Time[] = ['all', 'tonight', 'weekend', '7days', 'month'];
 /** The kinds of night and music styles the list offers as one picker (the legacy chips). */
 const TYPE_CHIPS = ['club', 'festival', 'concert'];
 const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass'];
+/** A phone's four times, one tap each (design v2 phase 12, owner 2026-10-18). */
+const PHONE_TIMES: Time[] = ['tonight', 'weekend', '7days', 'all'];
+/** A phone's row of styles: the ones with nights here, most first. */
+const PHONE_STYLES = 6;
 
 /** A time choice's name. */
 const timeName = (T: ReturnType<typeof pick<typeof LIST>>, t: Time) => ({ all: T.anyTime, tonight: T.tonight, weekend: T.weekend, '7days': T.next7, month: T.month })[t];
@@ -119,7 +123,7 @@ function address(f: Filters, lang: Lang) {
   return '/' + (s ? '?' + s : '');
 }
 
-interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; origin?: { posted: number; radar: number } } }
+interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
 
 export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode }) {
   const T = pick(LIST, lang);
@@ -130,7 +134,6 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const [sort, setSort] = useState<{ by: 'date' | 'price' | 'hype'; desc: boolean }>({ by: 'date', desc: false });
   const [at, setAt] = useState<Date | null>(null);
   const [ready, setReady] = useState(false);
-  const [sheet, setSheet] = useState(false);
   const [firstRun, setFirstRun] = useState(false);
   const openedByApp = useRef(false);
   const seq = useRef(0);
@@ -293,12 +296,33 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   ) : null;
   const clearButton = filtered ? <button type="button" className="kd-more ml-1" onClick={clear}><XIcon size={14} aria-hidden="true" />{T.clear}</button> : null;
   /** Every filter in a row (the bar on a computer, the map's column); the map adds its own "Dưới 5 km". */
+  // The map's column: on a phone the city and the time only (design v2 phase 12).
   const filters = (extra?: ReactNode) => (
     <div className="flex flex-wrap items-center gap-2">
-      {cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{extra}{clearButton}
+      {cityPicker}{timePicker}<span className="contents max-tab:hidden">{kindMenu}{freeChip}{sourcePicker}</span>{queryChip}{extra}{clearButton}
     </div>
   );
-  const active = [f.city !== 'all', f.time !== 'all', !!(f.type || f.style), f.family === 'free', !!f.origin, !!f.q].filter(Boolean).length;
+  /**
+   * A phone (design v2 phase 12, owner 2026-10-18): four times in one tap, and the styles that have
+   * nights here as a row of chips; price, kind, source and the table stay on a computer.
+   */
+  const phoneTimes = (
+    <Segmented
+      full
+      label={T.when}
+      value={PHONE_TIMES.includes(f.time) ? f.time : 'all'}
+      onChange={(v) => set({ time: v })}
+      options={PHONE_TIMES.map((t) => ({ value: t, label: t === 'all' ? T.allTimes : timeLabel(t) }))}
+    />
+  );
+  const styleCounts = page.facets?.style ?? {};
+  const phoneStyles = Object.entries(styleCounts).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, PHONE_STYLES).map(([k]) => k);
+  if (f.style && !phoneStyles.includes(f.style)) phoneStyles.unshift(f.style);
+  const styleRow = phoneStyles.map((k) => (
+    <Chip key={k} on={f.style === k} onClick={() => set({ style: f.style === k ? null : k, type: null })}>
+      {tx(meta.styles.find((x) => x.key === k)?.label, lang) ?? k}
+    </Chip>
+  ));
 
   /** An event opened from the list, in any view: the step between the list and the event page (the design funnel). */
   const openCard = (ev: MouseEvent) => {
@@ -362,13 +386,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           <div role="group" aria-label={T.filtersBar} className="flex min-w-0 flex-wrap items-center gap-2 max-tab:hidden">
             {cityPicker}{timePicker}{kindMenu}{freeChip}{sourcePicker}{queryChip}{clearButton}
           </div>
-          {/* On a phone: the city first (the newcomer's question), the time, then every other filter in "Lọc". */}
-          <div className="flex min-w-0 flex-wrap items-center gap-2 tab:hidden">
-            {cityPicker}{timePicker}
-            <button type="button" className={cx('kd-chip', active && 'kd-chip-on')} aria-haspopup="dialog" onClick={() => setSheet(true)}>
-              <FunnelSimpleIcon size={16} aria-hidden="true" />{T.filters}{active ? <span className="kd-num">{active}</span> : null}
-            </button>
-          </div>
+          {/* On a phone the bar holds the time; the city and the styles open the list below it. */}
+          <div className="min-w-0 flex-1 tab:hidden">{phoneTimes}</div>
           {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. On a phone the tab bar has the map. */}
           <div className="ml-auto max-tab:hidden" onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
         </div>
@@ -376,6 +395,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
       <main className="kd-wrap flex flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
         {/* On a phone the day headings lead; the page keeps its heading for screen readers and search. */}
         <h1 className="kd-d2 max-tab:sr-only">{heading}</h1>
+        {/* A phone: the city first (the newcomer's question), then the styles that have nights here. */}
+        <div className="flex flex-wrap items-center gap-2 tab:hidden">{cityPicker}{styleRow}{queryChip}</div>
         {/* The world's biggest festivals, always first, while nothing narrows the list. */}
         {highlight && JSON.stringify({ ...f, city: 'all', view: 'grid', bbox: null }) === JSON.stringify(DEFAULT) ? highlight : null}
         {/* data-list: held back while the newcomer's city loads (city-first.tsx). */}
@@ -445,64 +466,6 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           }}
         />
       ) : null}
-      {sheet ? (
-        <FilterSheet
-          lang={lang}
-          meta={meta}
-          f={f}
-          counts={cityCounts}
-          origins={origins}
-          onChange={set}
-          onClear={clear}
-          onClose={() => setSheet(false)}
-        />
-      ) : null}
     </>
-  );
-}
-
-/** "Lọc" on a phone: every filter as chips, applied at once; "Xem sự kiện" closes it. */
-function FilterSheet({ lang, meta, f, counts, origins, onChange, onClear, onClose }: {
-  lang: Lang; meta: Meta; f: Filters; counts: Record<string, number>; origins: { posted: number; radar: number } | null;
-  onChange: (patch: Partial<Filters>) => void; onClear: () => void; onClose: () => void;
-}) {
-  const T = pick(LIST, lang);
-  const O = pick(ORIGIN, lang);
-  const group = (label: string, chips: ReactNode) => (
-    <div role="group" aria-label={label} className="flex flex-col gap-2.5">
-      <h3 className="kd-m">{label}</h3>
-      <div className="flex flex-wrap gap-2">{chips}</div>
-    </div>
-  );
-  return (
-    <Sheet title={T.filtersBar} closeLabel={T.close} onClose={onClose}>
-      <div className="flex flex-col gap-5 pt-1">
-        {group(T.city, [
-          <Chip key="all" on={f.city === 'all'} onClick={() => onChange({ city: 'all' })}>{T.allCities}</Chip>,
-          ...meta.cities.filter((c) => counts[c.slug] || f.city === c.slug).map((c) => (
-            <Chip key={c.slug} on={f.city === c.slug} count={counts[c.slug] ?? 0} onClick={() => onChange({ city: c.slug })}>{tx(c.name, lang)}</Chip>
-          )),
-        ])}
-        {group(T.when, TIMES.map((t) => <Chip key={t} on={f.time === t} onClick={() => onChange({ time: t })}>{timeName(T, t)}</Chip>))}
-        {group(T.kind, [
-          <Chip key="any" on={!f.type && !f.style} onClick={() => onChange({ type: null, style: null })}>{T.anyKind}</Chip>,
-          ...TYPE_CHIPS.map((k) => <Chip key={k} on={f.type === k} onClick={() => onChange({ type: f.type === k ? null : k, style: null })}>{tx(meta.eventTypes.find((x) => x.key === k)?.label, lang) ?? k}</Chip>),
-          ...STYLE_CHIPS.map((k) => <Chip key={k} on={f.style === k} onClick={() => onChange({ style: f.style === k ? null : k, type: null })}>{tx(meta.styles.find((x) => x.key === k)?.label, lang) ?? k}</Chip>),
-        ])}
-        {group(T.price, [
-          <Chip key="any" on={f.family !== 'free'} onClick={() => onChange({ family: null })}>{T.anyPrice}</Chip>,
-          <Chip key="free" family="free" on={f.family === 'free'} onClick={() => onChange({ family: 'free', genre: null })}>{tx(FAMILY_LABEL.free, lang)}</Chip>,
-        ])}
-        {group(T.source, [
-          <Chip key="all" on={!f.origin} count={origins ? origins.posted + origins.radar : null} onClick={() => onChange({ origin: null })}>{T.anySource}</Chip>,
-          <Chip key="posted" on={f.origin === 'posted'} count={origins?.posted ?? null} onClick={() => onChange({ origin: 'posted' })}>{O.posted}</Chip>,
-          <Chip key="radar" on={f.origin === 'radar'} count={origins?.radar ?? null} onClick={() => onChange({ origin: 'radar' })}>{O.radar}</Chip>,
-        ])}
-        <div className="flex gap-2 pt-1">
-          <Button onClick={onClear}>{T.clear}</Button>
-          <Button tone="acc" className="flex-1" onClick={onClose}>{T.done}</Button>
-        </div>
-      </div>
-    </Sheet>
   );
 }

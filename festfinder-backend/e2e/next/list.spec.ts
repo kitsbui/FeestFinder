@@ -103,7 +103,7 @@ test.describe('the list, the home page', () => {
     await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
   });
 
-  test('on a phone, the tab bar holds the places, and "Tìm" the others and the styles', async ({ page }) => {
+  test('on a phone, the tab bar holds four places, and the search on top the others and the styles', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await open(page, '/');
     const tabs = page.getByRole('navigation', { name: 'Chính' });
@@ -112,7 +112,8 @@ test.describe('the list, the home page', () => {
     await expect(tabs.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
     await expect(tabs.getByRole('link', { name: 'Tôi' })).toHaveAttribute('href', '/profile');
     await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toBeHidden();
-    await tabs.getByRole('button', { name: 'Tìm' }).click();
+    await expect(tabs.getByText('Tìm', { exact: true })).toHaveCount(0);
+    await page.getByRole('banner').getByRole('button', { name: 'Tìm kiếm' }).click();
     const sheet = page.getByRole('dialog', { name: 'Tìm kiếm' });
     await expect(sheet.getByRole('link', { name: /^Techno/ })).toHaveAttribute('href', '/?style=techno');
     await expect(sheet.getByRole('link', { name: 'Dự án' })).toHaveAttribute('href', '/p');

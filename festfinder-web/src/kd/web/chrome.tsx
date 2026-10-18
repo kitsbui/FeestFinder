@@ -5,8 +5,9 @@
  * - A computer: one bar with the logo, the four places (Sự kiện, Nghệ sĩ, Dự án, Nhà tổ chức), the
  *   search field (⌘K or Ctrl+K; an icon below 1200px), VI · EN, "Đăng sự kiện" (straight to the
  *   wizard) and the account menu, "Tôi" (web/me.tsx).
- * - A phone: the logo and "Đăng sự kiện" on top, and the tab bar at the bottom: Sự kiện, Bản đồ,
- *   Tìm (a sheet with the search, the other places and the styles), Đã lưu, Tôi (/profile, the hub).
+ * - A phone: the logo and the search on top ("Tìm": a sheet with the search, the other places and the
+ *   styles; "Đăng sự kiện" is in "Tôi"), and the tab bar at the bottom: Sự kiện, Bản đồ, Đã lưu,
+ *   Tôi (/profile, the hub). Four places since design v2 phase 12 (owner, 2026-10-18).
  * - The one-line footer, and the breadcrumbs of a detail page.
  * Styles are filters of the list, not a place: the list's bar and the search sheet offer them.
  */
@@ -79,7 +80,8 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           </nav>
           <NavSearch lang={lang} field={field} />
           <div className="ml-auto flex items-center gap-1.5">
-            <IconButton label={T.search} className="hidden desk:inline-flex wide:hidden" aria-haspopup="dialog" onClick={() => { track('search', 'nav')(); setSearch(true); }}>
+            {/* Search on a phone too (design v2 phase 12, owner 2026-10-18: it left the tab bar); from 1200px the field is in the bar. */}
+            <IconButton label={T.search} className="wide:hidden" aria-haspopup="dialog" onClick={() => { track('search', 'nav')(); setSearch(true); }}>
               <MagnifyingGlassIcon size={20} aria-hidden="true" />
             </IconButton>
             <LangSwitch lang={lang} className="hidden desk:inline-flex" />
@@ -108,7 +110,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           </div>
         </div>
       </header>
-      <WebTabs lang={lang} current={current} onSearch={() => { track('search', 'tabs')(); setSearch(true); }} />
+      <WebTabs lang={lang} current={current} />
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
     </>
   );
@@ -164,8 +166,8 @@ function LangSwitch({ lang, className }: { lang: Lang; className?: string }) {
   );
 }
 
-/** The phone's tab bar: below 900px, on every public page. */
-function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection; onSearch: () => void }) {
+/** The phone's tab bar: below 900px, on every public page. Four places (design v2 phase 12): search is at the top. */
+function WebTabs({ lang, current }: { lang: Lang; current: WebSection }) {
   const T = pick(WEB, lang);
   const here = useHere(lang);
   const onMap = current === 'list' && /[?&]view=map\b/.test(here);
@@ -180,7 +182,6 @@ function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection;
         // The list's own views: a full load, so the list reads its address again.
         { key: 'events', label: T.events, href: inLang('/', lang), external: true, icon: i(CalendarBlankIcon), onClick: track('events', 'tabs') },
         { key: 'map', label: T.map, href: inLang('/?view=map', lang), external: true, icon: i(MapTrifoldIcon), onClick: track('map', 'tabs') },
-        { key: 'search', label: T.searchTab, icon: i(MagnifyingGlassIcon), onClick: onSearch, dialog: true },
         { key: 'saved', label: T.saved, href: inLang('/saved', lang), icon: i(HeartIcon), onClick: track('saved', 'tabs') },
         { key: 'me', label: T.me, href: inLang('/profile', lang), icon: i(UserIcon), onClick: track('me', 'tabs') },
       ]}
@@ -188,10 +189,10 @@ function WebTabs({ lang, current, onSearch }: { lang: Lang; current: WebSection;
   );
 }
 
-/** The one-line footer: the logo, a few links, the other language, the company line. */
 /** The languages whose names are in a script of their own, which the page's font files do not carry. */
 const OWN_SCRIPT = new Set<Lang>(['th', 'ja']);
 
+/** The one-line footer: the logo, a few links, the other language, the company line. */
 export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href: string; label: string } | null }) {
   const T = pick(WEB, lang);
   // The language picked before on this device: a page in Vietnamese by default moves to its

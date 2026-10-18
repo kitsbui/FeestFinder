@@ -62,10 +62,10 @@ test.describe('the home page', () => {
     await field.fill('ravolution');
     await field.press('Enter');
     await expect(page).toHaveURL(/\/\?q=ravolution$/);
-    // A phone: "Tìm" in the tab bar; its styles count every upcoming event.
+    // A phone: the search on top; its styles count every upcoming event.
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page, '/a');
-    await page.getByRole('navigation', { name: 'Chính' }).getByRole('button', { name: 'Tìm' }).click();
+    await page.getByRole('banner').getByRole('button', { name: 'Tìm kiếm' }).click();
     const sheet = page.getByRole('dialog', { name: 'Tìm kiếm' });
     const house = sheet.getByRole('link', { name: /^House\b/ });
     await expect(house).toContainText(/\d/);
