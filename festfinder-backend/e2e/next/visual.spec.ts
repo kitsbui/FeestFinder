@@ -14,21 +14,30 @@ import { expect, test } from '@playwright/test';
  */
 test.skip(!process.env.FF_VISUAL, 'set FF_VISUAL=1 (npm run test:visual)');
 
-/** The home page by day (its default view) and as a table, the event page, the artists, the kit. */
-const screens = ['/', '/?view=table', '/e/ravo', '/a', '/kit'];
+/**
+ * The home page by day (its default view) and as a table, the event page, the artists, the kit;
+ * and two regions on their own (design v2 phase 14), because a full page's 1 % misses a change
+ * in a small place: the event hero and the home page's filter bar.
+ */
+const screens: { path: string; region?: string; name?: string }[] = [
+  { path: '/' }, { path: '/?view=table' }, { path: '/e/ravo' }, { path: '/a' }, { path: '/kit' },
+  { path: '/e/ravo', region: 'section.kd-wrap', name: 'event-hero' },
+  { path: '/', region: '.kd-cmd', name: 'home-bar' },
+];
 const SIZES = [{ name: 'phone', width: 390, height: 844 }, { name: 'tablet', width: 768, height: 1024 }, { name: 'desktop', width: 1440, height: 900 }];
 
 for (const size of SIZES) {
-  for (const path of screens) {
-    test(`${path} · ${size.name}`, async ({ page }) => {
+  for (const { path, region, name: label } of screens) {
+    test(`${label ?? path} · ${size.name}`, async ({ page }) => {
       test.setTimeout(60_000);
       await page.setViewportSize({ width: size.width, height: size.height });
       await page.goto(path);
       await page.locator('html[data-kd-session]').waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
       await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
       await page.evaluate(() => document.fonts.ready);
-      const name = `${path === '/' ? 'home' : path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}-${size.name}.png`;
-      await expect(page).toHaveScreenshot(name, { fullPage: true, animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 });
+      const name = `${label ?? (path === '/' ? 'home' : path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, ''))}-${size.name}.png`;
+      if (region) await expect(page.locator(region).first()).toHaveScreenshot(name, { animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 });
+      else await expect(page).toHaveScreenshot(name, { fullPage: true, animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 });
     });
   }
 }

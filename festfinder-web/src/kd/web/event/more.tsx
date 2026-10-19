@@ -5,13 +5,17 @@
  * venue, so the page first says what a newcomer needs to decide and go. A link to the questions
  * (#discussion, from a notification) opens them.
  */
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { CaretRightIcon, CompassIcon } from '@phosphor-icons/react/ssr';
 import { pick, type Lang } from '../../copy';
 import { Accordion } from '../../ui/parts';
 import { WEB } from '../copy';
 import { CalendarRow } from './calendar';
-import { DiscussionSection, Hype } from './community';
+
+/** Loaded when their rows open (design v2 phase 14), never with the page. */
+const DiscussionSection = dynamic(() => import('./community').then((m) => m.DiscussionSection), { ssr: false });
+const Hype = dynamic(() => import('./community').then((m) => m.Hype), { ssr: false });
 import { useEvent } from './context';
 import { GoTogetherRow } from './friends';
 
@@ -19,6 +23,7 @@ export function EventMore({ lang }: { lang: Lang }) {
   const { ev } = useEvent();
   const T = pick(WEB, lang);
   const [asked, setAsked] = useState(false);
+  const [hype, setHype] = useState(false);
   useEffect(() => { if (location.hash === '#discussion') setAsked(true); }, []);
   const questions = (ev.discussion?.total ?? 0) + (ev.discussion?.faqCount ?? 0);
   const slug = encodeURIComponent(ev.slug);
@@ -36,12 +41,24 @@ export function EventMore({ lang }: { lang: Lang }) {
           </a>
         ) : null}
         <CalendarRow lang={lang} />
-        <Accordion summary={T.discussion} aside={questions || null} open={asked || undefined}>
-          <DiscussionSection lang={lang} bare />
+        <Accordion summary={T.discussion} aside={questions || null} open={asked || undefined} onToggle={setAsked}>
+          {asked ? <DiscussionSection lang={lang} bare /> : ev.faq.length ? (
+            // Until it opens, the organiser's answers as the server renders them (they are the page's FAQ for search engines too).
+            <div className="flex flex-col" aria-label={T.discussion} role="region">
+              <h3 className="kd-hs pb-1.5">{T.orgAnswers}</h3>
+              <div className="border-t border-line-1">
+                {ev.faq.map((f) => (
+                  <Accordion key={f.question} small name="faq" summary={f.question}>
+                    <p className="kd-t text-fg-3">{f.answer}</p>
+                  </Accordion>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </Accordion>
         {ev.hype ? (
-          <Accordion summary={T.hype} aside={ev.hype.count || null}>
-            <Hype lang={lang} bare />
+          <Accordion summary={T.hype} aside={ev.hype.count || null} onToggle={setHype}>
+            {hype ? <Hype lang={lang} bare /> : null}
           </Accordion>
         ) : null}
       </div>
