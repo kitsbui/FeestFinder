@@ -18,7 +18,11 @@ import { cx } from '../cx';
 import { money, whenShort } from '../format';
 import { g, styleLabel } from '../genre';
 import { KdLink } from '../link';
+import dynamic from 'next/dynamic';
 import { priceLine } from '../web/card';
+
+/** The last step's page preview (design v2 phase 16): loaded when that step shows, never with the form. */
+const ReviewPreview = dynamic(() => import('./wizard-preview').then((m) => m.ReviewPreview), { ssr: false });
 import { useKd } from '../runtime';
 import { Button, buttonClass, Chip } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select, SwitchRow, TextArea } from '../ui/forms';
@@ -377,6 +381,8 @@ export function Wizard() {
               </Panel>
             ) : !editable && !live ? <span className="kd-s">{T.notEditable}</span> : (
               <>
+                {/* The page as people will see it (design v2 phase 16), loaded with the last step. */}
+                <ReviewPreview lang={lang} f={f} cities={cities} currency={currency} />
                 {/* What the three steps hold, each a step away. */}
                 <dl className="flex flex-col border-y border-line-1">
                   {[0, 1, 2].map((n) => (

@@ -98,7 +98,8 @@ export async function publishByTeam(q: Queryable, s: UserSession, ev: any, now: 
     organizerId: ev.organizer_id, topic: 'moderation', kind: 'live',
     title: L(`${ev.title} is live`, `${ev.title} đã lên sóng`),
     body: L(`Published by the FeestFinder team and now showing in ${cityOf(ev.city).name.en}.`, `Đội FeestFinder đã đăng tin này, đang hiển thị tại ${cityOf(ev.city).name.vi}.`),
-    cta: L('View dashboard', 'Xem dashboard'), link: { screen: 'dash', eventId: ev.id },
+    // The page itself, to open and to share (design v2 phase 16): the share sheet there makes the story picture.
+    cta: L('Open the page and share it', 'Mở trang và chia sẻ'), link: { url: `/e/${encodeURIComponent(ev.slug)}` },
   });
   if (!ev.published_at) await announceNewListing(q, ev.id, now);
   await refreshConfidence(q, now, [ev.id]);

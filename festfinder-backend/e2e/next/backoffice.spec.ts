@@ -65,6 +65,12 @@ test.describe('Studio', () => {
     await expect(page.getByLabel('Tên sự kiện')).toHaveCount(0);
     await steps.getByRole('button').nth(3).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Xem lại & gửi duyệt' })).toBeVisible();
+    // The page as people will see it (design v2 phase 16): the name on the poster, and what still looks thin.
+    const preview = page.getByRole('region', { name: 'Trang như người xem sẽ thấy' });
+    await expect(preview).toBeVisible();
+    await expect(preview.getByText(title, { exact: true }).first()).toBeVisible();
+    await expect(preview.getByText(/Chưa có ảnh bìa/)).toBeVisible();
+    await expect(preview.getByText(/Chưa có lineup/)).toBeVisible();
     // Uploading needs an account; sending asks for one.
     await page.getByRole('button', { name: 'Đăng nhập để gửi duyệt' }).click();
     await expect(page.getByRole('dialog', { name: 'Đăng nhập' })).toBeVisible();

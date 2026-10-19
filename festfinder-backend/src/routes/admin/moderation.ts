@@ -121,8 +121,8 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
   await notifyOrganizer(q, now, {
     organizerId: ev.organizer_id, topic: 'moderation', kind: 'live',
     title: L(`${ev.title} is live`, `${ev.title} đã lên sóng`),
-    body: L(`Approved ${hours} ${hours === 1 ? 'hour' : 'hours'} after review and now showing in ${cityOf(ev.city).name.en}.`, `Được duyệt sau ${hours} giờ và đang hiển thị tại ${cityOf(ev.city).name.vi}.`),
-    cta: L('View dashboard', 'Xem dashboard'), link: { screen: 'dash', eventId: ev.id },
+    body: L(`Approved ${hours} ${hours === 1 ? 'hour' : 'hours'} after review and now showing in ${cityOf(ev.city).name.en}. Open the page to share it; its share sheet makes the story picture.`, `Được duyệt sau ${hours} giờ và đang hiển thị tại ${cityOf(ev.city).name.vi}. Mở trang để chia sẻ; sheet chia sẻ ở đó tạo ảnh story.`),
+    cta: L('Open the page and share it', 'Mở trang và chia sẻ'), link: { url: `/e/${encodeURIComponent(ev.slug)}` },
   });
   if (!ev.published_at) await announceNewListing(q, ev.id, now);
   await refreshConfidence(q, now, [ev.id]);

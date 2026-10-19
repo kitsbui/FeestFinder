@@ -197,11 +197,23 @@ export function Dashboard() {
               ) : null)}
             </Panel>
           ) : null}
-          {todo.length || sentBack.length || gaps ? (
-            // One row per thing to do, each with the action that does it (design v2 phase 5).
+          {todo.length || sentBack.length || gaps || !events.length || !org.logoUrl ? (
+            // One row per thing to do, each with the action that does it (design v2 phase 5); a new organiser's first three (phase 16).
             <Panel as="section" className="flex flex-col p-5 pb-2" aria-labelledby="todo-h">
-              <h2 id="todo-h" className="kd-h pb-2">{T.todo}<span className="kd-s kd-num"> · {todo.length + sentBack.length + (gaps ? 1 : 0)}</span></h2>
+              <h2 id="todo-h" className="kd-h pb-2">{T.todo}<span className="kd-s kd-num"> · {todo.length + sentBack.length + (gaps ? 1 : 0) + (events.length ? 0 : 1) + (org.logoUrl ? 0 : 1)}</span></h2>
               <ul className="flex flex-col">
+                {!events.length ? (
+                  <li className="kd-lrow min-h-12 gap-3">
+                    <span className="kd-s flex-1 text-fg-2">{T.firstListing}</span>
+                    <a className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href="/studio/new">{T.firstListingGo}</a>
+                  </li>
+                ) : null}
+                {!org.logoUrl ? (
+                  <li className="kd-lrow min-h-12 gap-3">
+                    <span className="kd-s flex-1 text-fg-2">{T.firstLogo}</span>
+                    <KdLink className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href="/studio/profile">{T.todoAdd}</KdLink>
+                  </li>
+                ) : null}
                 {sentBack.map((e) => (
                   <li key={'r' + e.id} className="kd-lrow min-h-12 gap-3">
                     <span className="kd-s flex-1 text-fg-2">{fill(T.todoSentBack, { t: e.title, r: tx(e.lastDecision?.reason, lang) ?? T.evRejected })}</span>
