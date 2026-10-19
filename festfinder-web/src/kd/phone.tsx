@@ -1,9 +1,9 @@
 'use client';
 /**
- * Proving a phone number with a one-time code over Zalo (or WhatsApp): what the API asks for
- * before someone writes in a discussion (`phone_unverified`).
+ * Proving a phone number with a one-time code by SMS, Zalo or WhatsApp (whichever the server has,
+ * GET /auth/providers): what the API asks for before someone writes in a discussion (`phone_unverified`).
  */
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { FF } from '@/runtime/ff';
 import { COMMON, pick, type Lang } from './copy';
 import { Button } from './ui/actions';
@@ -18,7 +18,12 @@ const P = {
 export function PhoneSheet({ lang, onDone, onClose }: { lang: Lang; onDone: () => void; onClose: () => void }) {
   const C = pick(COMMON, lang);
   const t = pick(P, lang);
-  const [via, setVia] = useState<'zalo' | 'wa'>('zalo');
+  const [via, setVia] = useState<'sms' | 'zalo' | 'wa'>('zalo');
+  const [ways, setWays] = useState<{ sms?: boolean; zalo?: boolean; wa?: boolean } | null>(null);
+  useEffect(() => {
+    FF.authProviders().then((w: { sms?: boolean; zalo?: boolean; wa?: boolean }) => { setWays(w); if (!w.zalo) setVia(w.sms ? 'sms' : 'wa'); });
+  }, []);
+  const options = [ways?.zalo !== false && { value: 'zalo' as const, label: 'Zalo' }, ways?.sms && { value: 'sms' as const, label: 'SMS' }, ways?.wa !== false && { value: 'wa' as const, label: 'WhatsApp' }].filter((o): o is { value: 'sms' | 'zalo' | 'wa'; label: string } => !!o);
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [challenge, setChallenge] = useState<string | null>(null);
@@ -35,7 +40,7 @@ export function PhoneSheet({ lang, onDone, onClose }: { lang: Lang; onDone: () =
       try {
         const out = await FF.post('/me/connections/' + via + '/start', { phone: phone.trim() });
         setChallenge(out.challengeId);
-        setSent((via === 'wa' ? C.otpSentWa : C.otpSentZalo) + ' ' + phone.trim() + (out.devCode ? ' · dev code ' + out.devCode : ''));
+        setSent((via === 'wa' ? C.otpSentWa : via === 'sms' ? C.otpSentSms : C.otpSentZalo) + ' ' + phone.trim() + (out.devCode ? ' · dev code ' + out.devCode : ''));
       } catch (x) { setErr(FF.errorText(x, lang)); }
       setBusy(false);
       return;
@@ -54,8 +59,8 @@ export function PhoneSheet({ lang, onDone, onClose }: { lang: Lang; onDone: () =
         {!challenge ? (
           <>
             <span className="kd-flabel">{t.via}</span>
-            <Segmented label={t.via} value={via} onChange={setVia} full options={[{ value: 'zalo', label: 'Zalo' }, { value: 'wa', label: 'WhatsApp' }]} />
-            <FieldLabel htmlFor="kd-phone">{via === 'wa' ? C.waLabel : C.zaloLabel}</FieldLabel>
+            <Segmented label={t.via} value={via} onChange={setVia} full options={options} />
+            <FieldLabel htmlFor="kd-phone">{via === 'wa' ? C.waLabel : via === 'sms' ? C.smsLabel : C.zaloLabel}</FieldLabel>
             <Input id="kd-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={C.phonePh} value={phone} onChange={(e) => setPhone(e.target.value)} autoFocus invalid={!!err} />
             <FieldError>{err}</FieldError>
             <Button type="submit" tone="acc" size="lg" block disabled={busy}>{C.sendCode}</Button>

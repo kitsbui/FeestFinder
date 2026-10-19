@@ -1,20 +1,20 @@
 'use client';
 /**
- * The sign-in sheet. Google first; then a one-time code by email (or Zalo / WhatsApp where the
- * server has them), which creates the account and sets a password; or a password for someone
+ * The sign-in sheet. Google first; then a one-time code by email, SMS, Zalo or WhatsApp (where the
+ * server has them, phase 17: SMS and Zalo are real providers), which creates the account and sets a password; or a password for someone
  * who already has one. Only the ways in GET /auth/providers says are configured are shown.
  */
 import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowLeftIcon, EnvelopeSimpleIcon, GoogleLogoIcon, KeyIcon, ChatCircleIcon, WhatsappLogoIcon, FacebookLogoIcon } from '@phosphor-icons/react/ssr';
+import { ArrowLeftIcon, DeviceMobileIcon, EnvelopeSimpleIcon, GoogleLogoIcon, KeyIcon, ChatCircleIcon, WhatsappLogoIcon, FacebookLogoIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { COMMON, pick, type Lang } from './copy';
 import { Button } from './ui/actions';
 import { FieldError, FieldLabel, Input } from './ui/forms';
 import { Sheet } from './ui/sheet';
 
-type Channel = 'email' | 'zalo' | 'wa';
+type Channel = 'email' | 'sms' | 'zalo' | 'wa';
 type Step = 'method' | 'id' | 'otp' | 'pass' | 'loginId' | 'loginPass';
-interface Ways { google?: boolean; fb?: boolean; ig?: boolean; zalo?: boolean; wa?: boolean; email?: boolean; password?: boolean }
+interface Ways { google?: boolean; fb?: boolean; ig?: boolean; sms?: boolean; zalo?: boolean; wa?: boolean; email?: boolean; password?: boolean }
 
 const validId = (v: string, ch: Channel) => {
   const s = v.trim();
@@ -60,7 +60,7 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
       try {
         const out = await FF.post('/auth/otp/start', { channel, identifier: id.trim() });
         setChallenge(out.challengeId);
-        const sent = channel === 'email' ? C.otpSentEmail : channel === 'wa' ? C.otpSentWa : C.otpSentZalo;
+        const sent = channel === 'email' ? C.otpSentEmail : channel === 'sms' ? C.otpSentSms : channel === 'wa' ? C.otpSentWa : C.otpSentZalo;
         setSentLine(sent + ' ' + id.trim() + (out.devCode ? ' · dev code ' + out.devCode : ''));
         setCode('');
         setBusy(false);
@@ -132,16 +132,23 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
                 {C.withFacebook}
               </Button>
             ) : null}
-            {ways?.email !== false ? (
-              <Button size="lg" block onClick={() => { setChannel('email'); setId(''); go('id'); }}>
-                <EnvelopeSimpleIcon size={18} aria-hidden="true" />
-                {C.withEmail}
-              </Button>
-            ) : null}
+            {/* The phone ways first where they exist (Vietnam signs in by phone): Zalo, then SMS; then email. */}
             {ways?.zalo ? (
               <Button size="lg" block onClick={() => { setChannel('zalo'); setId(''); go('id'); }}>
                 <ChatCircleIcon size={18} aria-hidden="true" />
                 {C.withZalo}
+              </Button>
+            ) : null}
+            {ways?.sms ? (
+              <Button size="lg" block onClick={() => { setChannel('sms'); setId(''); go('id'); }}>
+                <DeviceMobileIcon size={18} aria-hidden="true" />
+                {C.withSms}
+              </Button>
+            ) : null}
+            {ways?.email !== false ? (
+              <Button size="lg" block onClick={() => { setChannel('email'); setId(''); go('id'); }}>
+                <EnvelopeSimpleIcon size={18} aria-hidden="true" />
+                {C.withEmail}
               </Button>
             ) : null}
             {ways?.wa ? (
@@ -161,7 +168,7 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
 
         {step === 'id' ? (
           <>
-            <FieldLabel htmlFor="kd-auth-id">{channel === 'email' ? C.emailLabel : channel === 'wa' ? C.waLabel : C.zaloLabel}</FieldLabel>
+            <FieldLabel htmlFor="kd-auth-id">{channel === 'email' ? C.emailLabel : channel === 'sms' ? C.smsLabel : channel === 'wa' ? C.waLabel : C.zaloLabel}</FieldLabel>
             <Input
               id="kd-auth-id"
               type={channel === 'email' ? 'email' : 'tel'}

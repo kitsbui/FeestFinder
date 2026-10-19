@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
+import { deliverDue } from '../src/services/messaging.ts';
 
 describe('sign-up and sign-in', () => {
   let env: TestEnv;
@@ -68,6 +69,49 @@ describe('sign-up and sign-in', () => {
     assert.equal(back.body.user.id, ok.body.user.id);
   });
 
+  it('signs in by SMS code: the number is proved and kept, no app is linked, and the code goes out as SMS', async () => {
+    const api = env.as();
+    const bad = await api.post('/auth/otp/start', { channel: 'sms', identifier: '12345' });
+    assert.equal(bad.body.error.code, 'invalid_phone');
+    const start = await api.post('/auth/otp/start', { channel: 'sms', identifier: '0987 654 321' });
+    assert.equal(start.status, 200, JSON.stringify(start.body));
+    // The code is queued and sent in the background; on a slow database it may still be in the outbox here.
+    await deliverDue(env.ctx.db, env.clock, env.transport);
+    const out = env.transport.sent.find((m) => m.template === 'otp' && m.address === '+84987654321');
+    assert.ok(out, 'the code went out');
+    assert.equal(out!.channel, 'sms');
+    const ok = await api.post('/auth/otp/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    assert.equal(ok.body.created, true);
+    assert.equal(ok.body.user.phone, '+84987654321');
+    assert.equal(ok.body.user.phoneVerified, true);
+    assert.equal(ok.body.user.signupMethod, 'sms');
+    const me = await env.as(ok.body.token).get('/me');
+    assert.deepEqual(me.body.connections, [], 'SMS links no app');
+    // The same number again signs in to the same account.
+    env.clock.advance(31_000);
+    const again = await api.post('/auth/otp/start', { channel: 'sms', identifier: '+84987654321' });
+    const back = await api.post('/auth/otp/verify', { challengeId: again.body.challengeId, code: again.body.devCode });
+    assert.equal(back.body.created, false);
+    assert.equal(back.body.user.id, ok.body.user.id);
+  });
+
+  it('confirms an account\u2019s phone by SMS; a code sent for Zalo cannot confirm it as SMS', async () => {
+    const user = await emailUser(env, 'sms.confirm@example.com');
+    const me = env.as(user);
+    const start = await me.post('/me/connections/sms/start', { phone: '0905 000 777' });
+    assert.equal(start.status, 200, JSON.stringify(start.body));
+    const bad = await me.post('/me/connections/zalo/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
+    assert.equal(bad.status, 404, 'the channel of the code is the channel of the proof');
+    const ok = await me.post('/me/connections/sms/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    assert.deepEqual([ok.body.connected, ok.body.phoneVerified], ['sms', true]);
+    const profile = await me.get('/me');
+    assert.equal(profile.body.user.phone, '+84905000777');
+    assert.equal(profile.body.user.phoneVerified, true);
+    assert.deepEqual(profile.body.connections, []);
+  });
+
   it('locks a code after five wrong tries', async () => {
     const api = env.as();
     const start = await api.post('/auth/otp/start', { channel: 'wa', identifier: '+84 977 000 111' });
@@ -122,7 +166,7 @@ describe('sign-up and sign-in', () => {
 
   it('lists the ways in that work here, Google first', async () => {
     const r = await env.as().get('/auth/providers');
-    assert.deepEqual(Object.keys(r.body), ['google', 'fb', 'ig', 'zalo', 'wa', 'email', 'password']);
+    assert.deepEqual(Object.keys(r.body), ['google', 'fb', 'ig', 'sms', 'zalo', 'wa', 'email', 'password']);
     assert.equal(r.body.google, true);
   });
 

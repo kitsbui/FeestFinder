@@ -1110,6 +1110,13 @@ export interface Rows {
     active: boolean;
     created_at: Date;
   };
+  provider_tokens: {
+    provider: string;
+    access_token: string;
+    refresh_token: string;
+    expires_at: Date;
+    updated_at: Date;
+  };
   raw_events: {
     id: string;
     source_id: string;

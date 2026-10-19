@@ -123,7 +123,7 @@ Read in `src/config.ts`. Secrets are entered by the user in Vercel. Groups:
 - Database and environment: `DATABASE_URL` / `DATABASE_URL_FROM`, `FF_ENV`, `PGLITE_DIR` (tests), `FF_NOW` (tests).
 - Site: `PUBLIC_BASE_URL`, `CORS_ORIGINS`, `COOKIE_SECURE`, `TRUST_PROXY`, `RATE_LIMIT_PER_MINUTE`, `RELEASE`, `SENTRY_DSN`.
 - Jobs: `CRON_SECRET`, `JOBS_ENABLED`, `LINK_CHECKS_ENABLED`.
-- Sign-in: `ADMIN_EMAIL`, `GOOGLE_CLIENT_ID`/`SECRET`, FB/IG credentials, `MESSAGING_WEBHOOK_URL`/`SECRET`, `EXPOSE_DEV_CODES`.
+- Sign-in: `ADMIN_EMAIL`, `GOOGLE_CLIENT_ID`/`SECRET`, FB/IG credentials, `SMS_PROVIDER` (Twilio or eSMS keys), `ZALO_OA_*` (ZNS), `MESSAGING_WEBHOOK_URL`/`SECRET`, `EXPOSE_DEV_CODES`.
 - Money: `PAYMENT_PROVIDER`, `PAYMENT_WEBHOOK_SECRET`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*`.
 - Files, mail, push: `S3_*`, `UPLOAD_DIR`, `SMTP_*`, `VAPID_*`. Uploads are event media only (cover, logo, fans' photos at an event); every other picture is a checked link (`remote_images`, `services/remote-images.ts`). `FAKE_REMOTE_MEDIA` (never in production) reads linked images and music oEmbed from a fake network for the screen tests.
 - Feedback: `FEEDBACK_GITHUB_REPO` with `GITHUB_TOKEN` (the Console files an issue), `FEEDBACK_WEBHOOK_URL` (a chat told of each report).

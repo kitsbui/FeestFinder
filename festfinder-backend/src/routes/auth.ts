@@ -78,9 +78,10 @@ export async function startOtp(
  * error that follows it, and consumption is a single conditional update so a code can't
  * be redeemed twice by concurrent requests.
  */
-export async function checkOtp(ctx: Ctx, challengeId: string, code: string, purpose: string) {
+export async function checkOtp(ctx: Ctx, challengeId: string, code: string, purpose: string, channel?: OtpChannel) {
   const now = ctx.clock.now();
-  const ch = await one<any>(ctx.db, 'select * from otp_challenges where id = $1 and purpose = $2', [challengeId, purpose]);
+  // A code sent on one channel proves only that channel (looked up before anything is consumed).
+  const ch = await one<any>(ctx.db, 'select * from otp_challenges where id = $1 and purpose = $2 and ($3::text is null or channel = $3)', [challengeId, purpose, channel ?? null]);
   if (!ch || ch.consumed_at) throw notFound(L('That code has already been used. Request a new one.', 'Mã đã được dùng. Hãy yêu cầu mã mới.'));
   if (new Date(ch.expires_at) <= now) throw badRequest('otp_expired', L('That code has expired. Request a new one.', 'Mã đã hết hạn. Hãy yêu cầu mã mới.'));
   if (ch.attempts >= OTP_MAX_ATTEMPTS) throw tooMany('otp_locked', L('Too many wrong codes. Request a new one.', 'Nhập sai quá nhiều lần. Hãy yêu cầu mã mới.'));
@@ -144,9 +145,9 @@ export default async function authRoutes(app: FastifyInstance) {
     return [...ctx.config.corsOrigins, ctx.config.publicBaseUrl].some((o) => { try { return new URL(o).origin === origin; } catch { return false; } });
   };
 
-  /** Step 1 of sign-up or phone log-in: send a 6-digit code by email, Zalo or WhatsApp. */
+  /** Step 1 of sign-up or phone log-in: send a 6-digit code by email, SMS, Zalo or WhatsApp. */
   app.post('/auth/otp/start', async (req) => {
-    const body = parse(z.object({ channel: z.enum(['email', 'zalo', 'wa']), identifier: z.string().min(3).max(200) }), req.body);
+    const body = parse(z.object({ channel: z.enum(['email', 'sms', 'zalo', 'wa']), identifier: z.string().min(3).max(200) }), req.body);
     const identifier = identifierFor(body.channel, body.identifier);
     const out = await ctx.db.tx((q) => startOtp(ctx, q, { purpose: 'auth', channel: body.channel, identifier }));
     kick();
@@ -176,7 +177,8 @@ export default async function authRoutes(app: FastifyInstance) {
         [sha256(token), ch.identifier, existing?.id ?? null, new Date(now.getTime() + 30 * 60_000)]);
       return { next: 'set_password', signupToken: token };
     }
-    const method = ch.channel === 'wa' ? 'wa' : 'zalo';
+    // How the account was made: 'sms' proves the number only; Zalo and WhatsApp also link the app.
+    const method = ch.channel === 'wa' ? 'wa' : ch.channel === 'sms' ? 'sms' : 'zalo';
     const user = await ctx.db.tx(async (q) => {
       const found = await one<any>(q, 'select id, phone_verified_at from users where phone = $1', [ch.identifier]);
       if (found?.phone_verified_at) return { id: found.id, created: false };
@@ -272,7 +274,9 @@ export default async function authRoutes(app: FastifyInstance) {
     const codes = ctx.config.exposeDevCodes;
     return reply.header('cache-control', 'public, max-age=60').send({
       google: !!ctx.oauth.google, fb: !!ctx.oauth.fb, ig: !!ctx.oauth.ig,
-      zalo: !!ctx.config.messagingWebhook || codes, wa: !!ctx.config.messagingWebhook || codes,
+      // A real SMS or Zalo provider (phase 17), or the operator's webhook, or the dev codes of a preview.
+      sms: !!ctx.config.sms || !!ctx.config.messagingWebhook || codes,
+      zalo: !!ctx.config.zns || !!ctx.config.messagingWebhook || codes, wa: !!ctx.config.messagingWebhook || codes,
       email: !!ctx.config.smtp || codes, password: true,
     });
   });

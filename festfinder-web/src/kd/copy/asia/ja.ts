@@ -416,4 +416,7 @@ export const JA: Record<string, string> = {
   'All': 'すべて',
   'Log in to keep them on every device': 'ログインするとすべての端末に保存されます',
   'Elsewhere': 'その他の地域',
+  'Continue with SMS': 'SMSで続ける',
+  'Phone number': '電話番号',
+  'Sent by SMS to': 'SMSを送信しました:',
 };

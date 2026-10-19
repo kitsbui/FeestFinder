@@ -416,4 +416,7 @@ export const TH: Record<string, string> = {
   'All': 'ทั้งหมด',
   'Log in to keep them on every device': 'เข้าสู่ระบบเพื่อเก็บไว้ในทุกอุปกรณ์',
   'Elsewhere': 'ที่อื่น',
+  'Continue with SMS': 'ดำเนินการต่อด้วย SMS',
+  'Phone number': 'หมายเลขโทรศัพท์',
+  'Sent by SMS to': 'ส่ง SMS ไปที่',
 };
