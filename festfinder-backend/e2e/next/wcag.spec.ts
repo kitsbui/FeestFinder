@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { signInWith } from '../checks.ts';
-import { ACCOUNTS, ROUTES } from './routes.ts';
+import { ACCOUNTS, ROUTES, inLang } from './routes.ts';
 
 /*
  * Accessibility, by axe-core, on every screen of every role (routes.ts) at a phone and a desktop
@@ -16,12 +16,18 @@ import { ACCOUNTS, ROUTES } from './routes.ts';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
-for (const [role, routes] of Object.entries(ROUTES) as [keyof typeof ROUTES, string[]][]) {
+/** The public pages in English too (phase 15): axe reads the page's language and its labels. */
+const WALKS: [string, string[], keyof typeof ACCOUNTS | null][] = [
+  ...(Object.entries(ROUTES) as [keyof typeof ROUTES, string[]][]).map(([role, routes]) => [role, routes, role === 'visitor' ? null : role] as [string, string[], keyof typeof ACCOUNTS | null]),
+  ['visitor · en', ROUTES.visitor.filter((r) => r !== '/kit').map((r) => inLang(r, 'en')), null],
+];
+
+for (const [role, routes, account] of WALKS) {
   for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop', width: 1440, height: 900 }]) {
     test(`${role} · ${size.name}: no serious or critical accessibility violation`, async ({ page }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width: size.width, height: size.height });
-      if (role !== 'visitor') await signInWith(page, ACCOUNTS[role]);
+      if (account) await signInWith(page, ACCOUNTS[account]);
       const failures: string[] = [];
       for (let path of routes) {
         if (path.includes(':first')) {

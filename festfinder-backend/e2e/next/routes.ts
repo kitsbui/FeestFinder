@@ -10,6 +10,10 @@ export const ACCOUNTS = {
 };
 
 export type Role = 'visitor' | keyof typeof ACCOUNTS;
+/** The site's other languages: the public pages are walked in each (design v2 phase 15; English runs 20–30 % longer than Vietnamese). */
+export const OTHER_LANGS = ['en', 'th', 'ja', 'id'] as const;
+/** A route in another language (`?lang=`), whatever its query already says. */
+export const inLang = (path: string, lang: string) => path + (path.includes('?') ? '&' : '?') + 'lang=' + lang;
 export const ROUTES: Record<Role, string[]> = {
   visitor: ['/', '/?view=table', '/?view=grid', '/e/ravo', '/a', '/a/radar', '/a/slimv', '/a/hoaprox', '/a/style/techno', '/a/city/ho-chi-minh',
     '/o/ravoent', '/about', '/advertise', '/p', '/stats/venues', '/kit'],

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signInWith } from '../checks.ts';
-import { ACCOUNTS, ROUTES } from './routes.ts';
+import { ACCOUNTS, ROUTES, inLang } from './routes.ts';
 
 /*
  * Touch targets on a phone (design v2 phase 6, the "Mobile" gate of the road to 9): on every
@@ -91,10 +91,16 @@ async function small(page: Page, path: string): Promise<string[]> {
   }, { min: MIN, path });
 }
 
-for (const [role, routes] of Object.entries(ROUTES) as [keyof typeof ROUTES, string[]][]) {
+/** The public pages in English too (phase 15): a longer label must not shrink a target. */
+const WALKS: [string, string[], keyof typeof ACCOUNTS | null][] = [
+  ...(Object.entries(ROUTES) as [keyof typeof ROUTES, string[]][]).map(([role, routes]) => [role, routes, role === 'visitor' ? null : role] as [string, string[], keyof typeof ACCOUNTS | null]),
+  ['visitor · en', ROUTES.visitor.filter((r) => r !== '/kit').map((r) => inLang(r, 'en')), null],
+];
+
+for (const [role, routes, account] of WALKS) {
   test(`${role}: every target on a phone is at least 44px`, async ({ page }) => {
     test.setTimeout(300_000);
-    if (role !== 'visitor') await signInWith(page, ACCOUNTS[role]);
+    if (account) await signInWith(page, ACCOUNTS[account]);
     const found: string[] = [];
     for (let path of routes) {
       if (path.includes(':first')) {

@@ -10,6 +10,7 @@ import {
   MapTrifoldIcon, QrCodeIcon, ShareNetworkIcon, TicketIcon, TrayIcon, UserIcon, UsersIcon,
 } from '@phosphor-icons/react/ssr';
 import { familyOf, FAMILY_LABEL, type Family } from './genre';
+import { Microcopy } from './kit-microcopy';
 import { useKd } from './runtime';
 import { Button, Chip, IconButton } from './ui/actions';
 import { BarRow, LineChart, StackedBars } from './ui/charts';
@@ -476,6 +477,10 @@ export function Kit() {
             </div>
           </Sheet>
         ) : null}
+      </Section>
+
+      <Section n="10" title="Microcopy" aside="443 dòng · 5 ngôn ngữ">
+        <Microcopy />
       </Section>
     </main>
   );

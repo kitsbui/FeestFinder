@@ -93,6 +93,8 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   ambassadors: { name: string; initials: string; visits: number }[];
   updates: { id: string; kind: string; kindLabel: Pair | null; body: string; createdAt: string }[];
   description: Pair | null;
+  /** The languages of the description a machine wrote (phase 15): the page says so and keeps the original. */
+  descriptionAuto?: string[];
   age: string | null;
   capacity: number | null;
   links: { event: string; brand: string | null; tickets: string | null; go: string | null };

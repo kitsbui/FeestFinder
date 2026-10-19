@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { signInWith } from '../checks.ts';
-import { ACCOUNTS, ROUTES } from './routes.ts';
+import { ACCOUNTS, OTHER_LANGS, ROUTES, inLang } from './routes.ts';
 
 /*
  * Every screen fits the width of the device and nothing scrolls sideways, anywhere (the owner's rule,
@@ -42,6 +42,25 @@ async function overflow(page: Page): Promise<string[]> {
     }
     return out;
   });
+}
+
+/** The public pages again in every other language, at a phone, a small laptop and a desktop (phase 15: longer strings). */
+for (const lang of OTHER_LANGS) {
+  for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'laptop', width: 1280, height: 800 }, { name: 'desktop', width: 1440, height: 900 }]) {
+    test(`visitor · ${lang} · ${size.name}: no screen scrolls sideways`, async ({ page }) => {
+      test.setTimeout(240_000);
+      await page.setViewportSize({ width: size.width, height: size.height });
+      const failures: string[] = [];
+      for (const route of ROUTES.visitor.filter((r) => r !== '/kit')) {
+        const path = inLang(route, lang);
+        await page.goto(path);
+        await page.locator('html[data-kd-session]').waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
+        await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+        for (const f of await overflow(page)) failures.push(`${path}: ${f}`);
+      }
+      expect(failures, failures.join('\n')).toEqual([]);
+    });
+  }
 }
 
 for (const [role, routes] of Object.entries(ROUTES) as [keyof typeof ROUTES, string[]][]) {

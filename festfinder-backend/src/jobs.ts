@@ -12,6 +12,7 @@ import { refreshConfidence } from './services/ingest/confidence.ts';
 import { awardAll } from './services/badges.ts';
 import { runDueSources } from './services/ingest/run.ts';
 import { expireRadar } from './services/ingest/expire.ts';
+import { translatePending } from './services/translate.ts';
 import { refreshAllFit } from './services/ingest/fit.ts';
 import { checkRemoteImages } from './services/remote-images.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
@@ -127,6 +128,11 @@ export const jobs = {
   },
 
   /** Confidence decays when sources stop listing an event, so it is recomputed for every upcoming one. */
+  /** A live listing's description in the other language, machine-written and marked (services/translate.ts). */
+  async translateDescriptions(ctx: Ctx) {
+    return translatePending(ctx, 10);
+  },
+
   /** Feest Radar's finds go a day after they end (services/ingest/expire.ts). */
   async expireRadar(ctx: Ctx) {
     return ctx.db.tx((q) => expireRadar(q, ctx.clock.now()));
@@ -174,6 +180,7 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['pingIndexNow', 5 * 60_000],
   ['refreshConfidence', 60 * 60_000],
   ['expireRadar', 60 * 60_000],
+  ['translateDescriptions', 10 * 60_000],
   ['refreshFit', 60 * 60_000],
   ['awardBadges', 60 * 60_000],
   // Last: it spends whatever time the call has left.

@@ -70,6 +70,10 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   const mapsHref = directionsUrl(ev.venue, address);
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? T.english : T.vietnamese };
   const description = tx(ev.description, lang) || ev.description?.vi || ev.description?.en || '';
+  // A machine wrote this language of it (phase 15): say so, and keep the organiser's or the source's own words below.
+  const textLang = lang === 'vi' ? 'vi' : 'en';
+  const machine = !!ev.descriptionAuto?.includes(textLang) && description === (ev.description?.[textLang] ?? '').trim();
+  const original = machine ? (textLang === 'vi' ? ev.description?.en : ev.description?.vi) ?? '' : '';
   const facts = [
     ev.age,
     ev.capacity ? fill(T.places, { n: count(ev.capacity, lang) }) : null,
@@ -201,13 +205,18 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <ListenFirst lang={lang} />
 
                   <section id="about" aria-labelledby="about-h" className="flex max-w-read scroll-mt-32 flex-col gap-3">
-                    <h2 id="about-h" className="kd-d3">{T.about2}</h2>
+                    <h2 id="about-h" className="kd-d3 flex flex-wrap items-center gap-x-3 gap-y-1">{T.about2}{machine ? <Tag tone="line">{T.autoTranslated}</Tag> : null}</h2>
                     {description ? (
                       <Clamp lines={3} more={pick({ m: { vi: 'Xem thêm', en: 'Show more' } }, lang).m} less={pick({ l: { vi: 'Thu gọn', en: 'Show less' } }, lang).l} className="kd-tl max-w-[680px] whitespace-pre-line text-fg-1">
                         {description}
                       </Clamp>
                     ) : null}
                     {facts.length ? <div className="flex flex-wrap gap-1.5">{facts.map((f) => <Tag key={f} tone="line">{f}</Tag>)}</div> : null}
+                    {original ? (
+                      <Accordion small summary={T.original} className="border-t border-line-1">
+                        <p className="kd-t whitespace-pre-line text-fg-3" lang={textLang === 'vi' ? 'en' : 'vi'}>{original}</p>
+                      </Accordion>
+                    ) : null}
                     <Accordion small summary={seo.headings.facts} className="border-t border-line-1">
                       <div className="flex flex-col gap-3">
                         <p className="kd-s">{seo.page.summary}</p>
