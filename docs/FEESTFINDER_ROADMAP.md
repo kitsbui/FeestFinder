@@ -235,6 +235,26 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - [x] Phase 19: observation. Every page's Web Vitals and uncaught browser errors are kept 30 days in `web_signals` (migration 050, `services/web-signals.ts`; paths only, nobody named), so the Console's "Số liệu" reads the real p75 of LCP, INP and CLS with its rating and the browser-error rate per measured page without a PostHog or Sentry key; the hourly `webHealth` job tells every admin when an hour passes 0.1 % of errors on a hundred measured pages or more (once an hour), and forgets old reports. `scripts/posthog-insights.ts` makes or updates the four PostHog insights (the list → event → ticket funnel from `card_open`, Web Vitals p75 by kind, `nav_click` by kind, `wizard_step` by kind and role; `lib/posthog-insights.ts`) with the owner's personal key from the environment, `--dry-run` prints them; `scripts/sentry-test-error.ts` sends one test error with a DSN. The sign-in sheet's 22 own lines moved out of the boot JS (`kd/sign-in-copy.ts`), repaying phase 17's kilobyte. RELIABILITY.md names the 0.1 % line and where the numbers are read.
   - [x] Phase 13: the newcomer's country first. `city-first.tsx` guesses the country from the zone or the language (no three-night threshold): its nights lead the list under its name, the rest under "Nơi khác", every city still showing; a chosen city is kept. The phone's times are three (Tối nay · Cuối tuần · Tất cả); the style chips show once there are two. The first lead picture and the event hero load eagerly. `newcomer.spec.ts` posts a Bangkok night to prove the split and takes it down.
 
+## Growth plan (handoff 2026-10-19)
+
+Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md) (version 2, on `48b2cf3`), reviewed by the tech lead and the team on 2026-10-19 and rewritten to the design kit's rules: six jobs, none adds a control or a concept to a newcomer's first screens (measured 2026-10-19 on production: home 16 controls, event page 10, first event at 255 px, ≈ 7 concepts on the event page; `newcomer.spec.ts` budgets 20 / 12 only go down). Each job carries its 10-point proof (gates, five people, numbers after two weeks). Order 4 → 5 → 1 → 3 → 6 → 2; owner decisions D1–D6 first.
+
+- Owner decisions, 2026-10-19: **A for D1–D6**, checklists copied verbatim from the handoff:
+  - D1 · "Sự kiện từ lịch kết nối thuộc NTC đó, in_review, provider organizer + adapter; không gộp vào sự kiện của NTC khác."
+  - D2 · "Zalo OA nhận poster hoặc link → bản nháp → form cộng đồng → hàng chờ; không đăng từ Zalo; Mini App để sau."
+  - D3 · "events.ambassador_pct ≤ 20; orders.ref_user; earnings pending → payable sau sự kiện 24h → paid qua ambassador_payouts; dòng trừ trong ledger của NTC; không phí người mua."
+  - D4 · "EVENT_TYPES thêm day; inferEventType theo giờ 06–15:59 bắt đầu và kết thúc trước 21:00 hoặc từ khoá; festival thắng."
+  - D5 · "Một ô nổi bật duy nhất: kệ nếu có, không thì lễ hội; nhãn Được tài trợ khi trả tiền; không hiện trong /app."
+  - D6 · "/mcp và /list.md stateless, chỉ dữ liệu đã công khai ở /e/<slug>.md; không mua vé qua agent."
+- [ ] W0: ugly seed for the plan (a coffee rave, a shelf of three, `ambassador_pct` on ravo, an ICS and a poster fixture).
+- [ ] Card 4: event type `day` (Ban ngày), inferred by hour and keywords; no card tag (migration `048`).
+- [ ] Card 5: a paid shelf takes the home page's one highlight surface, "Được tài trợ" beside its name; closes tech debt 17.
+- [ ] Card 1: "Lịch" in Studio › Hồ sơ: the embed widget (`ui/widget/ff-widget.js`, `/embed/organizers/:slug` + `.ics`) and a connected calendar as a posted source that waits for review (migration `049`).
+- [ ] Card 3: ambassador commission on the existing "Đại sứ": `events.ambassador_pct`, `orders.ref_user`, earnings settled through `ambassador_payouts` and `/me/payee`; one "Hoa hồng" row in "Tôi" only when there is money (migration `050`).
+- [ ] Card 6: read-only MCP at `/mcp` and `/list.md`; llms.txt names them.
+- [ ] Card 2: Zalo OA turns a poster or a link into a community draft; shares phase 17's Zalo app and `provider_tokens` (migration `051`). Needs the OA webhook the owner enables.
+- Waiting on conditions (handoff §6): travel links, the Zalo Mini App, crews on `plans`, hidden venues, Track ID votes, "Vé an toàn", Night Pass, merch, brand insights, solo tables. Scouts run on Zalo and the community form with no code.
+
 ## What the team does next in production
 
 1. Set `TICKETMASTER_API_KEY` in Vercel if Ticketmaster is wanted (Singapore has the most coverage).
@@ -337,3 +357,4 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 - 2026-10-18: Design v2 phase 8 (pictures and motion): a poster instead of a second name, covers asked for and counted, quiet days fill the row, three motion durations and the card-to-event morph, the waving flag while back offices load, a passport of stamps each its own and badges with icons.
 - 2026-10-18: Design v2 phase 9 (your own): "Cho bạn" on the list, "Nghe trước" on the event page, friends going in the plan's row, the wizard's style search, Studio's empty chart with an action.
 - 2026-10-18: Design v2 phase 10 (Asia): Thai, Japanese and Indonesian on the public pages, each with its own address, the lines sent only with a page in that language, local dates and numbers.
+- 2026-10-19: Growth plan handoff, version 2: a market brainstorm (EDM industry, event tech, talent, e-commerce; 45 sources) cut to six jobs by the design kit's rules after the tech lead's review; first-screen numbers measured on production the same day. No code yet.
