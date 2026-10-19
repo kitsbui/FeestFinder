@@ -5,6 +5,7 @@ import type { ErrorReporter } from './services/errors.ts';
 import type { Transport } from './services/messaging.ts';
 import type { Storage } from './services/storage.ts';
 import type { GuideGenerator } from './services/guide.ts';
+import type { Translator } from './services/translate.ts';
 import type { OAuthProvider } from './services/oauth.ts';
 import type { PrefillGenerator } from './services/prefill.ts';
 import type { PageFetcher } from './services/fetchpage.ts';
@@ -25,6 +26,8 @@ export interface Ctx {
   /** Product analytics. A no-op unless POSTHOG_KEY is set. */
   analytics: Analytics;
   guide: GuideGenerator;
+  /** Machine translation of listings' text (phase 15). Off without ANTHROPIC_API_KEY. */
+  translator: Translator;
   /** Reads an event's details off a poster or a page for the submission form. */
   prefill: PrefillGenerator;
   /** Fetches a public page someone pasted, never one on a private network. */

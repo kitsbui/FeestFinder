@@ -11,6 +11,7 @@ import { NoopAnalytics, PostHogAnalytics } from './services/analytics.ts';
 import { NoopReporter, SentryReporter } from './services/errors.ts';
 import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
 import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
+import { ClaudeTranslator, DisabledTranslator } from './services/translate.ts';
 import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
@@ -101,6 +102,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     errors,
     analytics,
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
+    translator: hasAnthropic ? new ClaudeTranslator(config.anthropicModel) : new DisabledTranslator(),
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),
     fetchImage: config.fakeRemoteMedia ? fakeImageFetcher : fetchImageHead,

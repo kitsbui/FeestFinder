@@ -28,6 +28,8 @@ export const WEB = {
   language: { en: 'Language', vi: 'Ngôn ngữ' },
   more: { en: 'More', vi: 'Khác' },
   extras: { en: 'More', vi: 'Thêm' },
+  autoTranslated: { en: 'Machine translation', vi: 'Bản dịch tự động' },
+  original: { en: 'Original text', vi: 'Bản gốc' },
   here: { en: 'Here', vi: 'Đang ở' },
   me: { en: 'Me', vi: 'Tôi' },
   map: { en: 'Map', vi: 'Bản đồ' },

@@ -587,6 +587,7 @@ export interface Rows {
     fit_reasons: unknown;
     fit_at: Date | null;
     expired_at: Date | null;
+    auto_translated: string[];
   };
   feedback: {
     id: string;
