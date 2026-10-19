@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
+import { deliverDue } from '../src/services/messaging.ts';
 
 describe('sign-up and sign-in', () => {
   let env: TestEnv;
@@ -74,6 +75,8 @@ describe('sign-up and sign-in', () => {
     assert.equal(bad.body.error.code, 'invalid_phone');
     const start = await api.post('/auth/otp/start', { channel: 'sms', identifier: '0987 654 321' });
     assert.equal(start.status, 200, JSON.stringify(start.body));
+    // The code is queued and sent in the background; on a slow database it may still be in the outbox here.
+    await deliverDue(env.ctx.db, env.clock, env.transport);
     const out = env.transport.sent.find((m) => m.template === 'otp' && m.address === '+84987654321');
     assert.ok(out, 'the code went out');
     assert.equal(out!.channel, 'sms');
