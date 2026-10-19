@@ -225,6 +225,8 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - Tests: nav, list, pages, event, radar-actions and newcomer specs updated; `newcomer.spec.ts` counts what one can tap in the first screen (home 21, event 12 with the site's frame of six; the event page had 16), a time in one tap and the tickets in two.
 
 - [ ] Phases 13–20: to 9.5–10 (artboard 26, owner decisions 2026-10-19: country first and three times; sign-in by email link, Zalo, Facebook, Instagram, TikTok; guest checkout; merge automatically when the checks are green).
+  - [ ] Phase 17: more ways in (owner 2026-10-19: email link, Zalo, SMS, Facebook, Instagram, TikTok; guest checkout).
+    - [x] Phone by SMS and Zalo, real: `services/sms.ts` (Twilio, eSMS.vn, Zalo ZNS with rotating tokens in `provider_tokens`, migration 047) behind the outbox; `sms` as an OTP channel for signing in and for proving a phone; the sign-in sheet shows phone ways first; `test/sms.test.ts` against fake providers, `test/auth.test.ts`; `scripts/send-test-code.ts` for the owner's real check. The owner sets the provider keys in Vercel.
   - [x] Phase 13: the newcomer's country first. `city-first.tsx` guesses the country from the zone or the language (no three-night threshold): its nights lead the list under its name, the rest under "Nơi khác", every city still showing; a chosen city is kept. The phone's times are three (Tối nay · Cuối tuần · Tất cả); the style chips show once there are two. The first lead picture and the event hero load eagerly. `newcomer.spec.ts` posts a Bangkok night to prove the split and takes it down.
 
 ## What the team does next in production

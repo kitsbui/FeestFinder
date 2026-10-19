@@ -6,6 +6,7 @@ import { migrate } from './db/migrate.ts';
 import { scheduleSupabaseCron } from './jobs.ts';
 import { fixedClock, systemClock } from './lib/time.ts';
 import { ConsoleTransport, RoutingTransport, SmtpTransport, WebhookTransport, WebPushTransport } from './services/messaging.ts';
+import { DbTokenStore, EsmsTransport, TwilioSmsTransport, ZaloZnsTransport } from './services/sms.ts';
 import { NoopAnalytics, PostHogAnalytics } from './services/analytics.ts';
 import { NoopReporter, SentryReporter } from './services/errors.ts';
 import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
@@ -62,12 +63,14 @@ export async function createContext(config: Config): Promise<Ctx> {
   // Each provider is used when it is configured, and logged instead when it is not, so a
   // deployment can turn them on one at a time.
   const console_ = new ConsoleTransport(log);
-  const transport = config.smtp || config.messagingWebhook || config.webPush
+  const transport = config.smtp || config.messagingWebhook || config.webPush || config.sms || config.zns
     ? new RoutingTransport({
       email: config.smtp ? new SmtpTransport(config.smtp) : null,
       webPush: config.webPush
         ? new WebPushTransport(config.webPush, async (token) => { await db.query('delete from devices where token = $1', [token]); })
         : null,
+      sms: config.sms?.provider === 'twilio' ? new TwilioSmsTransport(config.sms) : config.sms?.provider === 'esms' ? new EsmsTransport(config.sms) : null,
+      zalo: config.zns ? new ZaloZnsTransport(config.zns, new DbTokenStore(db), fetch, () => clock.now()) : null,
       webhook: config.messagingWebhook ? new WebhookTransport(config.messagingWebhook.url, config.messagingWebhook.secret) : null,
       fallback: console_,
     })
@@ -82,7 +85,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     ? new SentryReporter(config.sentryDsn, { release: config.release, environment: config.env, log })
     : new NoopReporter();
   const analytics = config.posthog ? new PostHogAnalytics(config.posthog.key, config.posthog.host, log) : new NoopAnalytics();
-  for (const [what, on] of [['email', !!config.smtp], ['push/Zalo/SMS', !!config.messagingWebhook], ['browser push', !!config.webPush], ['error reporting', !!config.sentryDsn]] as const) {
+  for (const [what, on] of [['email', !!config.smtp], ['SMS', !!config.sms || !!config.messagingWebhook], ['Zalo', !!config.zns || !!config.messagingWebhook], ['native push', !!config.messagingWebhook], ['browser push', !!config.webPush], ['error reporting', !!config.sentryDsn]] as const) {
     if (!on && config.env === 'production') log(`warning: no ${what} provider configured`);
   }
   if (config.env === 'production' && !(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)) {

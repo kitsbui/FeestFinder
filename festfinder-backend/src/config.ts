@@ -154,6 +154,10 @@ export interface Config {
   smtp: { host: string; port: number; secure: boolean; user: string; pass: string; from: string } | null;
   /** One endpoint that forwards push, Zalo and SMS to whichever provider is in use. */
   messagingWebhook: { url: string; secret: string } | null;
+  /** Real SMS, straight from the API (phase 17): Twilio or eSMS.vn. */
+  sms: { provider: 'twilio'; accountSid: string; authToken: string; from: string } | { provider: 'esms'; apiKey: string; secretKey: string; brandname: string } | null;
+  /** Real Zalo messages through ZNS: the Official Account's app, its rotating refresh token and the approved OTP template. */
+  zns: { appId: string; secretKey: string; refreshToken: string; otpTemplateId: string } | null;
   /** VAPID keys for browser push. Without them, browser subscriptions go to the webhook too. */
   webPush: { publicKey: string; privateKey: string; subject: string } | null;
   /** Sentry-compatible DSN for unhandled errors. */
@@ -258,6 +262,14 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
       : null,
     messagingWebhook: process.env.MESSAGING_WEBHOOK_URL
       ? { url: str('MESSAGING_WEBHOOK_URL'), secret: str('MESSAGING_WEBHOOK_SECRET', '') }
+      : null,
+    sms: process.env.SMS_PROVIDER === 'twilio'
+      ? { provider: 'twilio', accountSid: str('TWILIO_ACCOUNT_SID'), authToken: str('TWILIO_AUTH_TOKEN'), from: str('TWILIO_FROM') }
+      : process.env.SMS_PROVIDER === 'esms'
+        ? { provider: 'esms', apiKey: str('ESMS_API_KEY'), secretKey: str('ESMS_SECRET_KEY'), brandname: str('ESMS_BRANDNAME') }
+        : null,
+    zns: process.env.ZALO_OA_APP_ID
+      ? { appId: str('ZALO_OA_APP_ID'), secretKey: str('ZALO_OA_SECRET_KEY'), refreshToken: str('ZALO_OA_REFRESH_TOKEN'), otpTemplateId: str('ZALO_ZNS_OTP_TEMPLATE_ID') }
       : null,
     webPush: process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
       ? { publicKey: str('VAPID_PUBLIC_KEY'), privateKey: str('VAPID_PRIVATE_KEY'), subject: str('VAPID_SUBJECT', 'mailto:hello@feestfinder.com') }

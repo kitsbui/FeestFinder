@@ -117,6 +117,32 @@ test('"Tôi" before signing in: signing in first, then what works without an acc
   await expect(hub.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
 });
 
+test('signs in with a phone number by SMS: the way is offered, the code arrives, the account is made and the number proved', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto('/profile');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await page.getByRole('button', { name: 'Đăng nhập' }).first().click();
+  const sheet = page.getByRole('dialog', { name: 'Đăng nhập' });
+  await expect(sheet).toBeVisible();
+  // The phone ways come first (phase 17): Zalo, SMS, then email.
+  const ways = await sheet.getByRole('button').allInnerTexts();
+  expect(ways.findIndex((w) => /SMS/.test(w))).toBeLessThan(ways.findIndex((w) => /email/i.test(w)));
+  await sheet.getByRole('button', { name: 'Tiếp tục bằng SMS' }).click();
+  await sheet.getByLabel('Số điện thoại').fill('0977 123 456');
+  await sheet.getByRole('button', { name: 'Gửi mã' }).click();
+  // The sheet is now titled by its step ("Nhập mã xác minh"). The preview shows the code it sent (EXPOSE_DEV_CODES); production never does.
+  const otp = page.getByRole('dialog', { name: 'Nhập mã xác minh' });
+  const line = await otp.getByText(/Đã gửi SMS tới/).innerText();
+  const code = /dev code (\d{6})/.exec(line)?.[1];
+  expect(code, line).toBeTruthy();
+  await otp.getByRole('textbox', { name: /Nhập mã xác minh/ }).fill(code!);
+  await otp.getByRole('button', { name: 'Xác minh' }).click();
+  await expect(otp).toBeHidden();
+  const me = await (await page.request.get('/me')).json();
+  expect([me.user.phone, me.user.phoneVerified, me.user.signupMethod]).toEqual(['+84977123456', true, 'sms']);
+  expect(problems).toEqual([]);
+});
+
 test('an event page on a phone: the way there once in each place, an empty Hỏi đáp is one button', async ({ page, request }) => {
   const problems = watch(page);
   // A night nobody has asked about yet.

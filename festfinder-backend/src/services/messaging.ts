@@ -175,12 +175,16 @@ export class WebPushTransport implements Transport {
 export class RoutingTransport implements Transport {
   private readonly email: Transport | null;
   private readonly webPush: Transport | null;
+  private readonly sms: Transport | null;
+  private readonly zalo: Transport | null;
   private readonly webhook: Transport | null;
   private readonly fallback: Transport;
 
-  constructor(opts: { email?: Transport | null; webPush?: Transport | null; webhook?: Transport | null; fallback: Transport }) {
+  constructor(opts: { email?: Transport | null; webPush?: Transport | null; sms?: Transport | null; zalo?: Transport | null; webhook?: Transport | null; fallback: Transport }) {
     this.email = opts.email ?? null;
     this.webPush = opts.webPush ?? null;
+    this.sms = opts.sms ?? null;
+    this.zalo = opts.zalo ?? null;
     this.webhook = opts.webhook ?? null;
     this.fallback = opts.fallback;
   }
@@ -188,6 +192,8 @@ export class RoutingTransport implements Transport {
   async send(msg: OutboundMessage) {
     const target = msg.channel === 'email' ? this.email ?? this.webhook
       : msg.channel === 'push' && isWebPushToken(msg.address) ? this.webPush ?? this.webhook
+      : msg.channel === 'sms' ? this.sms ?? this.webhook
+      : msg.channel === 'zalo' ? this.zalo ?? this.webhook
       : this.webhook;
     await (target ?? this.fallback).send(msg);
   }

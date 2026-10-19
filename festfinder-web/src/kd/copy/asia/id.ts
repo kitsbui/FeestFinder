@@ -416,4 +416,7 @@ export const ID: Record<string, string> = {
   'All': 'Semua',
   'Log in to keep them on every device': 'Masuk untuk menyimpannya di semua perangkat',
   'Elsewhere': 'Tempat lain',
+  'Continue with SMS': 'Lanjutkan dengan SMS',
+  'Phone number': 'Nomor telepon',
+  'Sent by SMS to': 'SMS dikirim ke',
 };

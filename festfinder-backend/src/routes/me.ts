@@ -502,9 +502,10 @@ export default async function meRoutes(app: FastifyInstance) {
 
   // ---- connected accounts (Zalo / WhatsApp by OTP; Facebook / Instagram via /auth/oauth) --
 
+  /** Proving a phone number with a code by SMS, Zalo or WhatsApp; the two apps are linked as connections too. */
   app.post<{ Params: { provider: string } }>('/me/connections/:provider/start', async (req) => {
     const s = requireUser(req);
-    const provider = parse(z.enum(['zalo', 'wa']), req.params.provider);
+    const provider = parse(z.enum(['sms', 'zalo', 'wa']), req.params.provider);
     const { phone } = parse(z.object({ phone: z.string().min(8).max(30) }), req.body);
     const identifier = identifierFor(provider, phone);
     const out = await ctx.db.tx((q) => startOtp(ctx, q, { purpose: 'connect', channel: provider, identifier, userId: s.user.id }));
@@ -514,19 +515,22 @@ export default async function meRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { provider: string } }>('/me/connections/:provider/verify', async (req) => {
     const s = requireUser(req);
-    const provider = parse(z.enum(['zalo', 'wa']), req.params.provider);
+    const provider = parse(z.enum(['sms', 'zalo', 'wa']), req.params.provider);
     const body = parse(z.object({ challengeId: uuid, code: z.string() }), req.body);
-    const ch = await checkOtp(ctx, body.challengeId, body.code, 'connect');
+    const ch = await checkOtp(ctx, body.challengeId, body.code, 'connect', provider);
     if (ch.user_id !== s.user.id) throw notFound();
-    const holder = await one<any>(ctx.db, 'select user_id from social_connections where provider = $1 and external_id = $2', [provider, ch.identifier]);
+    const holder = provider === 'sms' ? null : await one<any>(ctx.db, 'select user_id from social_connections where provider = $1 and external_id = $2', [provider, ch.identifier]);
     if (holder && holder.user_id !== s.user.id) {
       throw conflict('connection_taken', L('That number is already linked to another FeestFinder user', 'Số này đã liên kết với người dùng khác'));
     }
     const verified = await ctx.db.tx(async (q) => {
-      await q.query(
-        `insert into social_connections (user_id, provider, external_id) values ($1,$2,$3)
-         on conflict (user_id, provider) do update set external_id = excluded.external_id, connected_at = now()`,
-        [s.user.id, provider, ch.identifier]);
+      // SMS proves the number only; Zalo and WhatsApp also link the app.
+      if (provider !== 'sms') {
+        await q.query(
+          `insert into social_connections (user_id, provider, external_id) values ($1,$2,$3)
+           on conflict (user_id, provider) do update set external_id = excluded.external_id, connected_at = now()`,
+          [s.user.id, provider, ch.identifier]);
+      }
       // The code proved this number, so it becomes the account's number unless the account
       // already has another proven one. Whoever had only typed it in loses it.
       const me = await one<any>(q, 'select phone, phone_verified_at from users where id = $1', [s.user.id]);
@@ -539,7 +543,7 @@ export default async function meRoutes(app: FastifyInstance) {
     });
     return {
       connected: provider, phoneVerified: verified,
-      message: L(`Connected · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`, `Đã liên kết · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`),
+      message: provider === 'sms' ? L('Phone number confirmed', 'Đã xác thực số điện thoại') : L(`Connected · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`, `Đã liên kết · ${provider === 'wa' ? 'WhatsApp' : 'Zalo'}`),
     };
   });
 

@@ -360,7 +360,7 @@ FF.oauthErrorText = (code: string, lang: string) => {
 };
 
 /** Which ways in work on this server: { google, fb, ig, zalo, wa, email, password }. */
-FF.authProviders = () => FF.maybe(FF.get('/auth/providers'), { google: true, fb: false, ig: false, zalo: false, wa: false, email: true, password: true });
+FF.authProviders = () => FF.maybe(FF.get('/auth/providers'), { google: true, fb: false, ig: false, sms: false, zalo: false, wa: false, email: true, password: true });
 
 FF.refreshSession = async function refreshSession() {
   const s = await FF.maybe(FF.get('/auth/session?optional=1'), null);
