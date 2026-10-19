@@ -529,11 +529,12 @@ describe('ingestion runs (API)', () => {
     const run = await env.as(admin).post(`/admin/sources/${id}/run`);
     assert.equal(run.status, 200, JSON.stringify(run.body));
     assert.deepEqual([run.body.summary.fetched, run.body.summary.created, run.body.summary.rejected], [4, 3, 1], JSON.stringify(run.body.summary));
-    const ev = (await env.ctx.db.query<any>(`select * from events where title = 'AFTER HOURS #3: NUSHA'`)).rows[0];
+    const ev = (await env.ctx.db.query<{ status: string; city: string; venue_name: string; event_type: string; styles: string[]; price_from: number; lineup: string[]; starts_on: Date | string }>(
+      `select * from events where title = 'AFTER HOURS #3: NUSHA'`)).rows[0];
     assert.deepEqual([ev.status, ev.city, ev.venue_name, ev.event_type, ev.styles, ev.price_from, ev.lineup], ['in_review', 'ho-chi-minh', 'Ciné Saigon', 'club', ['hard-techno'], 350000, ['NUSHA']]);
     assert.equal(ev.starts_on instanceof Date ? ev.starts_on.toISOString().slice(0, 10) : String(ev.starts_on).slice(0, 10), '2026-10-17');
-    const list = (await env.as(admin).get('/admin/sources')).body.items.find((x: any) => x.id === id);
-    assert.equal(list.adapter, 'wordpress');
+    const list = ((await env.as(admin).get('/admin/sources')).body.items as { id: string; adapter: string }[]).find((x) => x.id === id);
+    assert.equal(list?.adapter, 'wordpress');
   });
 
   it('reprocesses stored records without fetching again', async () => {

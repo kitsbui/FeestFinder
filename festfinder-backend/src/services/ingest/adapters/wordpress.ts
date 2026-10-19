@@ -55,13 +55,13 @@ export function parsePosts(text: string): WpPost[] | null {
   try { data = JSON.parse(text); } catch { return null; }
   if (!Array.isArray(data)) return null;
   const out: WpPost[] = [];
-  for (const p of data as any[]) {
+  const rendered = (v: unknown) => (typeof v === 'string' ? v : typeof (v as { rendered?: unknown })?.rendered === 'string' ? (v as { rendered: string }).rendered : '');
+  for (const p of data as Record<string, unknown>[]) {
     if (!p || typeof p !== 'object' || !Number.isInteger(p.id) || typeof p.link !== 'string') continue;
-    const title = typeof p.title === 'string' ? p.title : typeof p.title?.rendered === 'string' ? p.title.rendered : '';
-    const content = typeof p.content?.rendered === 'string' ? p.content.rendered : '';
-    const media = p._embedded?.['wp:featuredmedia'];
-    const image = Array.isArray(media) && typeof media[0]?.source_url === 'string' ? media[0].source_url : null;
-    out.push({ id: p.id, link: p.link, title, date: String(p.date ?? ''), modified: p.modified ? String(p.modified) : null, content: content.slice(0, MAX_CONTENT), image });
+    const media = (p._embedded as { 'wp:featuredmedia'?: unknown } | undefined)?.['wp:featuredmedia'];
+    const first = Array.isArray(media) ? (media[0] as { source_url?: unknown } | undefined) : undefined;
+    const image = typeof first?.source_url === 'string' ? first.source_url : null;
+    out.push({ id: p.id as number, link: p.link, title: rendered(p.title), date: typeof p.date === 'string' ? p.date : '', modified: typeof p.modified === 'string' ? p.modified : null, content: rendered(p.content).slice(0, MAX_CONTENT), image });
   }
   return out;
 }

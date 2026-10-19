@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "test:screens": "playwright test -c playwright.next.config.ts",
-    "lint": "oxlint --type-aware --quiet --max-warnings 1292 src test e2e index.ts",
+    "lint": "oxlint --type-aware --quiet --max-warnings 1291 src test e2e index.ts",
     "lint:warnings": "oxlint --type-aware src test e2e index.ts",
     "test:visual": "FF_VISUAL=1 playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts"
   },
