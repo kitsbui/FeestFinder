@@ -4,7 +4,7 @@
 | --- | --- |
 | Nền code | `main` ở `48b2cf3` (design v2 phase 0–14 và 17 đã merge; migration tiếp theo `048`). Bản 1 của file này viết trên `f9baae0`, trước design v2, nên đã viết lại toàn bộ. |
 | Luật trên hết | `CLAUDE.md`, rồi `docs/DESIGN_GOVERNANCE.md`. File này không lặp lại chúng. Nguyên tắc thiết kế lấy từ design-kit (`/home/patrickstar/Desktop/design-kit`, repo `kitsbui/design-kit`): đo trước, ngân sách chỉ giảm, hai thang điểm, một màn một việc, ba khái niệm trước, một cách làm một việc, gấp chứ không bỏ, dữ liệu thử xấu như production, quyết định của chủ dự án là lựa chọn có hệ quả và được chép nguyên văn. |
-| Trạng thái | Chưa code. Tech lead và team đã duyệt hướng. **Chủ sản phẩm chọn A cho cả D1–D6 (2026-10-19)**; checklist đã chép vào roadmap, mục "Growth plan". Đối chiếu code xong (mục 7): còn **D5b và D3c** chờ chọn, mặc định A. Agent bắt đầu theo mục 5. |
+| Trạng thái | **Final, chạy như night build**: `docs/NIGHT_BUILD_PLAN_2026-10-19.md` là lịch chạy; file này là thiết kế. Chủ sản phẩm chọn A cho D1, D3–D6 (2026-10-19); **thẻ 2 Zalo OA để sau** (chủ sản phẩm, 2026-10-19: hiện chỉ cần xác minh SMS của phase 17); D5b và D3c mặc định A, đổi được sáng sau. |
 | Cách đọc | Mục 1 trong ba phút. Mỗi việc là một **thẻ** cùng khuôn ở mục 4; agent làm đúng một thẻ, một lát (P0/P1/P2) mỗi PR. Thẻ chỉ "xong" khi cột **Xong khi** có số thật. |
 
 ---
@@ -16,13 +16,12 @@
 | # | Việc | Cho ai | Người mới thấy gì thay đổi | Số đo 10 điểm sau 2 tuần | Công |
 | --- | --- | --- | --- | --- | --- |
 | 1 | **Lịch** của nhà tổ chức: nhúng vào site của họ, hoặc kết nối lịch có sẵn để sự kiện tự về Studio chờ duyệt | Venue, promoter, collective | Không gì (Studio) | 20 lịch nhúng sống · 10 lịch kết nối · 100 sự kiện đến từ lịch · Đà Nẵng hoặc Nha Trang ≥ 5 sự kiện | 2,5 ngày |
-| 2 | **Gửi sự kiện qua Zalo**: gửi poster hoặc link cho OA, nhận lại bản nháp và một link để gửi duyệt | Fan, collective, đội "scout" (chương trình vận hành, không code) | Không gì (Zalo và form cộng đồng có sẵn) | 100 bản nháp · 40% được gửi · 60% được duyệt · OA 1.000 follower | 2,5 ngày |
 | 3 | **Hoa hồng cho đại sứ**: nhà tổ chức đặt % cho vé bán qua link chia sẻ; "Đại sứ" đã có trên trang sự kiện | Fan chia sẻ, nhà tổ chức bán vé trên FeestFinder | Một dòng "Hoa hồng 10%" trong sheet chia sẻ, chỉ khi có; một hàng "Hoa hồng" trong "Tôi", chỉ khi > 0 | ≥ 1 NTC bật · ≥ 5% đơn mang ref · 0 đơn tự giới thiệu | 2,5 ngày |
 | 4 | **Ban ngày**: coffee rave, day party là một loại sự kiện; Radar tự nhận | Mọi người, cả Hà Nội đang siết club đêm | Thêm một giá trị trong menu "Kiểu đêm" trên máy tính; không tag, không chip mới trên điện thoại | ≥ 10 sự kiện ban ngày trong catalogue · ≤ 1/20 Radar gán nhầm | 1 ngày |
 | 5 | **Nổi bật có trả tiền hiện trên trang chủ**: kệ của Console chiếm đúng ô "Lễ hội lớn thế giới" đang có, không thêm hàng | Nhà tổ chức mua chỗ, brand | Cùng một ô nổi bật, có khi là lễ hội, có khi là kệ với nhãn "Được tài trợ" | ≥ 1 chỗ bán được · card_open từ ô này ≥ 3% lượt xem trang chủ · màn đầu không tăng nút | 1 ngày |
 | 6 | **Dữ liệu cho agent**: MCP server chỉ đọc và `/list.md` | ChatGPT, Claude, Gemini, người dùng của chúng | Không gì | 5/5 agent trả lời đúng "techno Sài Gòn cuối tuần" bằng dữ liệu FeestFinder · ≥ 200 lượt gọi · 0 lỗi 5xx | 1,5 ngày |
 
-Thứ tự: **4 → 5 → 1 → 3 → 6 → 2** (mục 5). Tổng ≈ 11 ngày công, 14 PR.
+Thứ tự: **4 → 5 → 6 → 1 → 3** (night build; mục 5). Tổng ≈ 8,5 ngày công. **Thẻ 2 (Zalo OA) để sau** theo chủ sản phẩm 2026-10-19: thiết kế giữ ở mục 4 và điều kiện ở mục 6; không migration cho nó trong chặng này.
 
 **Số đo hôm nay** (2026-10-19, production, iPhone 13 giả lập, vi-VN, Asia/Ho_Chi_Minh; script ở phụ lục A). Đây là ngân sách: không việc nào được làm tăng.
 
@@ -49,7 +48,7 @@ Mỗi câu hỏi 2–3 lựa chọn có hệ quả, lựa chọn đầu là khuy
 | # | Câu hỏi | Lựa chọn và hệ quả |
 | --- | --- | --- |
 | D1 | Sự kiện đến từ lịch mà nhà tổ chức tự kết nối là gì? | **A (khuyến nghị): "Đã đăng", dưới tên nhà tổ chức, chờ duyệt như mọi tin.** Hệ quả: thêm một dòng `event_sources` provider `organizer`; `origin = posted`. *Checklist: "Sự kiện từ lịch kết nối thuộc NTC đó, in_review, provider organizer + adapter; không gộp vào sự kiện của NTC khác."* · B: "Radar" dưới Feest Radar, NTC nhận sau. Hệ quả: thêm một bước cho NTC, họ thấy tin của mình gắn tên Feest Radar. · C: lên thẳng không duyệt. Không đề xuất: trái quy tắc mọi tin đều chờ duyệt. |
-| D2 | Zalo làm gì trước? | **A (khuyến nghị): OA bot gửi poster (thẻ 2). Mini App chỉ khi OA ≥ 1.000 follower và có quyết định pháp lý về số điện thoại Zalo (mục 6).** *Checklist: "Zalo OA nhận poster hoặc link → bản nháp → form cộng đồng → hàng chờ; không đăng từ Zalo; Mini App để sau."* · B: cả hai ngay. Hệ quả: +5 ngày, cần review của Zalo, CORS cho `h5.zdn.vn`. · C: chỉ Mini App. Hệ quả: mất luồng poster, là luồng có giá trị nhất. |
+| D2 | Zalo làm gì trước? | **Chủ sản phẩm 2026-10-19: để sau cả OA bot và Mini App; hiện chỉ xác minh SMS của phase 17.** Khi quay lại: A: OA bot gửi poster (thẻ 2). Mini App chỉ khi OA ≥ 1.000 follower và có quyết định pháp lý về số điện thoại Zalo (mục 6).** *Checklist: "Zalo OA nhận poster hoặc link → bản nháp → form cộng đồng → hàng chờ; không đăng từ Zalo; Mini App để sau."* · B: cả hai ngay. Hệ quả: +5 ngày, cần review của Zalo, CORS cho `h5.zdn.vn`. · C: chỉ Mini App. Hệ quả: mất luồng poster, là luồng có giá trị nhất. |
 | D3 | Hoa hồng đại sứ trả bằng cách nào? | **A (khuyến nghị): qua payout của FeestFinder, trừ khỏi payout của NTC, trả cho đại sứ bằng tài khoản `/me/payee` có sẵn; trần 20%.** Hệ quả: FeestFinder chuyển tiền cho cá nhân, cần kế toán xác nhận (mục 6). *Checklist: "events.ambassador_pct ≤ 20; orders.ref_user; earnings pending → payable sau sự kiện 24h → paid qua ambassador_payouts; dòng trừ trong ledger của NTC; không phí người mua."* · B: NTC tự trả ngoài, FeestFinder chỉ hiện số. Hệ quả: không cầm tiền, nhưng đại sứ phải tin NTC. · C: thưởng bằng vé, không tiền. Hệ quả: cần nối `guest_list`; ít hấp dẫn hơn với fan. |
 | D4 | "Ban ngày" là gì trong dữ liệu? | **A (khuyến nghị): `event_type = 'day'`.** Hệ quả: một migration nới CHECK; Studio và Console chọn được; Radar gán tự động. *Checklist: "EVENT_TYPES thêm day; inferEventType theo giờ 06–15:59 bắt đầu và kết thúc trước 21:00 hoặc từ khoá; festival thắng."* · B: cờ suy ra từ giờ, không lưu. Hệ quả: không migration, nhưng NTC không chọn được, Smart Alerts không lọc được. |
 | D5 | Kệ nổi bật hiện ở đâu và ghi gì? | **A (khuyến nghị): kệ chiếm đúng ô "Lễ hội lớn thế giới" (`data-surface="flagship"`) khi có kệ bật với ≥ 3 sự kiện; tiêu đề là tên kệ, cạnh đó chữ nhỏ "Được tài trợ" khi kệ đến từ placement trả tiền; thẻ mang tag "Nổi bật" sẵn có.** Hệ quả: không thêm hàng, màn đầu không tăng nút. *Checklist: "Một ô nổi bật duy nhất: kệ nếu có, không thì lễ hội; nhãn Được tài trợ khi trả tiền; không hiện trong /app."* · B: kệ dưới danh sách cạnh banner quảng cáo. Hệ quả: ngoài màn đầu, ít giá trị bán. · C: ngừng bán placement này. |
@@ -229,7 +228,7 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ trên mà
 
 **Xong khi.** Cổng xanh; chủ sản phẩm chạy bài 5 agent trên production và ghi 5 câu trả lời vào roadmap; `agent_call` xuất hiện trong PostHog.
 
-### Thẻ 2 · Gửi sự kiện qua Zalo
+### Thẻ 2 · Gửi sự kiện qua Zalo (để sau, chủ sản phẩm 2026-10-19; thiết kế giữ nguyên để dùng khi điều kiện ở mục 6 đúng)
 
 **Một câu.** Ai follow Zalo OA của FeestFinder gửi ảnh poster hoặc link sự kiện, nhận lại các trường đã đọc và một link "Xem và gửi" mở form cộng đồng đã điền; gửi xong vào hàng chờ duyệt như mọi tin.
 
@@ -265,9 +264,9 @@ Trên site: `/zalo/link` (một nút `Nối Zalo · Link Zalo`, xong hiện `Đ�
 
 ## 5. Nhịp làm
 
-1. **Thứ tự:** 4 → 5 → 1 → 3 → 6 → 2. Thẻ 4 và 5 nhỏ, đi trước để seed và cổng màn đầu có dữ liệu mới. Thẻ 1 và 3 độc lập, chạy song song được trên hai branch. Thẻ 2 cuối vì cần tài khoản Zalo OA (mục 6).
+1. **Thứ tự (night build):** 4 → 5 → 6 → 1 → 3: rủi ro thấp và chỉ API trước, màn hình mới sau. Lịch từng giờ, cổng từng việc và luật của đêm ở `docs/NIGHT_BUILD_PLAN_2026-10-19.md`. Thẻ 2 không làm.
 2. **Mỗi lát một PR** (`feat/<thẻ>-p<k>`), ≤ 1 ngày, theo skill `design-phase` của design-kit (chưa có trong `.claude/skills/` của repo này: W0 chép `skills/design-phase` và `skills/design-review` từ `/home/patrickstar/Desktop/design-kit/skills/` vào `.claude/skills/`): chép checklist của quyết định đã chọn vào mô tả PR; code, test và docs trong cùng commit; `npm run typecheck`, `npm run lint; echo $?` (không pipe), test khu vực, `npm run test:screens`; checklist "Thiết kế" trong PR đánh thật; `visual-diff` xem rồi mới `visual-ok`; merge khi chủ sản phẩm nói "merge".
-3. **Migration** đổi số theo thứ tự merge thật (dự kiến 048 Ban ngày, 049 Lịch, 050 Hoa hồng, 051 Zalo); bump "The next one is" trong `CLAUDE.md`; mỗi file có comment vì sao và khối RLS như `044`.
+3. **Migration:** 048 Ban ngày, 049 Lịch, 050 Hoa hồng (thứ tự của night build); Zalo không có migration trong chặng này; bump "The next one is" trong `CLAUDE.md`; mỗi file có comment vì sao và khối RLS như `044`.
 4. **Seed xấu như production** (W0, nửa ngày, trước thẻ 4): một coffee rave 09:00–13:00; một kệ bật 3 sự kiện; một sự kiện có `ambassador_pct = 10` (ravo); một ICS fixture với bản ghi thiếu `LOCATION`, múi khác, `CANCELLED`; một poster fixture không ngày. `newcomer.spec.ts` chạy trên seed này.
 5. **Sau mỗi merge:** chờ deploy bằng marker, chạy script phụ lục A trên production, ghi số vào roadmap (mục "Growth plan") cùng ngày. Số không được tăng so với bảng ở mục 1.
 6. **Tài liệu:** mỗi thẻ ghi dòng của nó vào `CLAUDE.md` (đã nêu trong "Xây"); `docs/FEESTFINDER_ROADMAP.md` mục "Growth plan" tick từng lát; `TECH_DEBT.md` 17 đóng ở thẻ 5.
@@ -279,7 +278,7 @@ Trên site: `/zalo/link` (một nút `Nối Zalo · Link Zalo`, xong hiện `Đ�
 
 **Chủ sản phẩm và team làm (agent không làm được):**
 1. Chọn D1–D6 (mục 2), chép checklist vào roadmap kèm ngày.
-2. Zalo OA: xác minh OA doanh nghiệp, bật webhook OA trỏ `https://feestfinder.com/zalo/webhook`, cấp quyền gửi tin tư vấn; app và token đã có từ phase 17 (`ZALO_OA_*` trên Vercel).
+2. Zalo OA: **để sau** (2026-10-19). Khi mở lại: xác minh OA doanh nghiệp, bật webhook trỏ `https://feestfinder.com/zalo/webhook`, cấp quyền gửi tin tư vấn; app và token đã có từ phase 17.
 3. Kế toán xác nhận cách trả hoa hồng cho cá nhân (D3) trước khi NTC thật đầu tiên bật.
 4. Danh sách 15–20 venue và collective mỗi thành phố lớn để mời dùng Lịch; 5 fan mỗi thành phố cho chương trình scout trên Zalo OA (không code).
 5. Sau mỗi thẻ: bài 5 người theo `DESIGN_GOVERNANCE.md` với nhiệm vụ ghi trong thẻ; ghi kết quả vào roadmap.
@@ -290,7 +289,8 @@ Trên site: `/zalo/link` (một nút `Nối Zalo · Link Zalo`, xong hiện `Đ�
 | Việc | Làm khi | Hình hài đã định |
 | --- | --- | --- |
 | Link du lịch "Đến <thành phố>" | ≥ 2 thành phố có ≥ 50 sự kiện sắp tới | Một hàng trong "Thêm" của trang sự kiện, chỉ khi thành phố sự kiện ≠ thành phố đã nhớ của người xem; `lib/travel.ts` theo mẫu `lib/rides.ts`; `/go/travel`; mã affiliate trong env |
-| Zalo Mini App | OA ≥ 1.000 follower và có quyết định pháp lý về số điện thoại Zalo (Nghị định 147) | Package `festfinder-zalo/`, `POST /auth/zalo-mini`, CORS cho origin Mini App |
+| Zalo OA bot (thẻ 2) | Chủ sản phẩm mở lại (2026-10-19: để sau, chỉ SMS); OA doanh nghiệp đã xác minh, webhook bật | Thiết kế đầy đủ ở thẻ 2, kể cả bốn chỗ chặn của mục 7 |
+| Zalo Mini App | Sau OA bot: OA ≥ 1.000 follower và có quyết định pháp lý về số điện thoại Zalo (Nghị định 147) | Package `festfinder-zalo/`, `POST /auth/zalo-mini`, CORS cho origin Mini App |
 | Crew vote nhiều sự kiện | Bài 5 người có ≥ 2 người hỏi | Mở rộng `plans` (ứng viên + vote), không từ mới |
 | Địa điểm công bố sau | NTC đầu tiên hỏi | `events.venue_hidden_until`; SEO chỉ thành phố; push lúc công bố |
 | Track ID xác nhận | Moments ≥ 50 bài/tháng | `post_votes`; nghệ sĩ trong lineup xác nhận; link Beatport qua `/go/link` |
