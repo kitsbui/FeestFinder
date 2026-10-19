@@ -1,7 +1,7 @@
 'use client';
 /** The listing fields the wizard and the editor share: tiers, the lineup, the venue, an upload, an appeal. */
 import { useRef, useState } from 'react';
-import { ImageSquareIcon, MapPinIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { CameraIcon, ImageSquareIcon, MapPinIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, INTL, type Lang, pick } from '../copy';
 import { cx } from '../cx';
@@ -135,6 +135,7 @@ export function Upload({ lang, kind, label, hint, value, onChange, required }: {
   const T = pick(STUDIO, lang);
   const kd = useKd();
   const input = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const send = async (file: File) => {
     setBusy(true);
@@ -156,8 +157,11 @@ export function Upload({ lang, kind, label, hint, value, onChange, required }: {
         <span className="kd-s">{busy ? T.fUploading : hint}</span>
       </span>
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) void send(file); e.target.value = ''; }} />
+      {/* A phone's camera for the cover (design v2 phase 16): the back camera opens straight away. */}
+      {kind === 'cover' ? <input ref={camera} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { const file = e.target.files?.[0]; if (file) void send(file); e.target.value = ''; }} /> : null}
       <FrameButton lang={lang} value={value} shapes={kind === 'logo' ? ['square', 'round'] : ['banner', 'card', 'square']} onChange={onChange} />
       {value && !required ? <Button tone="ghost" size="sm" onClick={() => onChange(null)}>{T.fRemove}</Button> : null}
+      {kind === 'cover' ? <Button size="sm" tone="ghost" className="hidden pointer-coarse:inline-flex" disabled={busy} onClick={() => { if (kd.requireSignIn(undefined, T.wSignUpload)) camera.current?.click(); }} aria-label={`${T.fCamera} · ${label}`}><CameraIcon size={14} aria-hidden="true" />{T.fCamera}</Button> : null}
       {/* Pictures go to FeestFinder: signed in first (before that the form is only on this device). */}
       <Button size="sm" disabled={busy} onClick={() => { if (kd.requireSignIn(undefined, T.wSignUpload)) input.current?.click(); }} aria-label={`${value ? T.fChange : T.fUpload} · ${label}`}>{value ? T.fChange : T.fUpload}</Button>
     </div>
