@@ -23,6 +23,7 @@ const PAGES: Record<string, string> = {
   'https://contact-tokyo.example/calendar.ics': fixture('tokyo.ics'),
   'https://islandpulse.example/': fixture('bali-festival.html'),
   'https://app.ticketmaster.com/discovery/v2/events.json': fixture('ticketmaster-sg.json'),
+  'https://cine-saigon.example/wp-json/wp/v2/event': fixture('wordpress-cine.json'),
 };
 
 const SOURCES = [
@@ -30,6 +31,7 @@ const SOURCES = [
   { adapter: 'ics', name: 'Contact Tokyo calendar', url: 'https://contact-tokyo.example/calendar.ics', city: 'tokyo', authority: 'listing', config: {} },
   { adapter: 'website', name: 'Island Pulse', url: 'https://islandpulse.example/', city: 'bali', authority: 'official', config: {} },
   { adapter: 'ticketmaster', name: 'Ticketmaster SG', url: null, city: 'singapore', authority: 'ticketing', config: { countryCode: 'SG' } },
+  { adapter: 'wordpress', name: 'Ciné Saigon', url: 'https://cine-saigon.example/', city: 'ho-chi-minh', authority: 'official', config: { type: 'event', venue: 'Ciné Saigon', address: '148 Cống Quỳnh, Phường Bến Thành', eventType: 'club' } },
 ];
 
 export async function seedRadar(db: Db, clock: Clock): Promise<{ radarEvents: number }> {

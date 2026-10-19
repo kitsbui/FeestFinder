@@ -22,7 +22,7 @@ import { Body, Drawer, Empty, ErrorBox, Field, Loaded, Loading, PageHead, Pill, 
 import { useConsole } from '../root';
 import { SOURCES } from './copy';
 
-type Adapter = 'website' | 'ics' | 'ticketmaster';
+type Adapter = 'website' | 'ics' | 'ticketmaster' | 'wordpress';
 type Authority = 'official' | 'ticketing' | 'listing';
 interface RunCounts { fetched: number; created: number; merged: number; rejected: number; failed: number }
 interface Source {
@@ -38,7 +38,7 @@ interface Raw {
 }
 interface List { items: Source[]; cancelledBySource: { id: string; slug: string; title: string; startsOn: string; host: string | null }[] }
 
-const ADAPTERS: Adapter[] = ['website', 'ics', 'ticketmaster'];
+const ADAPTERS: Adapter[] = ['website', 'wordpress', 'ics', 'ticketmaster'];
 const AUTHORITIES: Authority[] = ['official', 'ticketing', 'listing'];
 const RAW: Record<RawStatus, { tone: 'ok' | 'live' | 'warn' | 'bad' | 'none'; key: 'rawCreated' | 'rawMerged' | 'rawRejected' | 'rawFailed' | 'rawPending' }> = {
   created: { tone: 'ok', key: 'rawCreated' },
@@ -158,7 +158,7 @@ export function Sources() {
 // ---- the form -----------------------------------------------------------------------------
 
 /** The config keys this form sets; every other key a source carries (requireStyle, skip, eventType…) is kept as it is. */
-const FORM_KEYS = ['follow', 'maxPages', 'countryCode', 'city', 'pages'];
+const FORM_KEYS = ['follow', 'maxPages', 'countryCode', 'city', 'pages', 'type', 'query', 'venue', 'address'];
 
 function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: Source; onClose: () => void; onSaved: (s: Source) => void }) {
   const T = pick(SOURCES, lang);
@@ -166,11 +166,14 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
   const options = useOptions();
   const editing = !!source;
   const c = source?.config ?? {};
+  // A config value as the form shows it: text or a number, never an object.
+  const str = (v: unknown, fallback: string) => (typeof v === 'string' || typeof v === 'number' ? String(v) : fallback);
   const [f, setF] = useState(() => ({
     adapter: source?.adapter ?? 'website', name: source?.name ?? '', url: source?.url ?? '', city: source?.city ?? '',
     authority: source?.authority ?? 'official', hours: String(Math.round((source?.intervalMinutes ?? 720) / 60)), enabled: source?.enabled ?? true,
-    follow: String(c.follow ?? ''), maxPages: String(c.maxPages ?? 20),
-    countryCode: String(c.countryCode ?? ''), tmCity: String(c.city ?? ''), pages: String(c.pages ?? 1),
+    follow: str(c.follow, ''), maxPages: str(c.maxPages, '20'),
+    countryCode: str(c.countryCode, ''), tmCity: str(c.city, ''), pages: str(c.pages, '1'),
+    wpType: str(c.type, 'event'), wpQuery: str(c.query, ''), venue: str(c.venue, ''), address: str(c.address, ''),
   }));
   const [busy, setBusy] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -185,6 +188,7 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
     const kept = Object.fromEntries(Object.entries(c).filter(([k]) => !FORM_KEYS.includes(k)));
     const own = f.adapter === 'website' ? (f.follow.trim() ? { follow: f.follow.trim(), maxPages: Number(f.maxPages) || 20 } : {})
       : f.adapter === 'ticketmaster' ? { ...(f.countryCode.trim() ? { countryCode: f.countryCode.trim().toUpperCase() } : {}), ...(f.tmCity.trim() ? { city: f.tmCity.trim() } : {}), pages: Number(f.pages) || 1 }
+      : f.adapter === 'wordpress' ? { type: f.wpType.trim() || 'event', ...(f.wpQuery.trim() ? { query: f.wpQuery.trim() } : {}), ...(f.venue.trim() ? { venue: f.venue.trim() } : {}), ...(f.address.trim() ? { address: f.address.trim() } : {}) }
       : {};
     const body = {
       adapter: f.adapter, name: f.name.trim(), url: needsUrl ? f.url.trim() : null, city: f.city || null, authority: f.authority,
@@ -219,7 +223,7 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
         <Input id="cs-name" value={f.name} onChange={(e) => set('name')(e.target.value)} placeholder={T.namePh} autoFocus={!editing} />
       </Field>
       {needsUrl ? (
-        <Field label={f.adapter === 'ics' ? T.icsUrl : T.pageUrl} htmlFor="cs-url" error={urlError}>
+        <Field label={f.adapter === 'ics' ? T.icsUrl : f.adapter === 'wordpress' ? T.siteUrl : T.pageUrl} htmlFor="cs-url" error={urlError}>
           <Input id="cs-url" type="url" value={f.url} invalid={!!urlError} onChange={(e) => { set('url')(e.target.value); setUrlError(null); }} placeholder="https://" />
         </Field>
       ) : null}
@@ -230,6 +234,22 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
           </Field>
           <Field label={T.maxPages} htmlFor="cs-max">
             <Input id="cs-max" inputMode="numeric" value={f.maxPages} onChange={(e) => set('maxPages')(e.target.value)} />
+          </Field>
+        </>
+      ) : null}
+      {f.adapter === 'wordpress' ? (
+        <>
+          <Field label={T.wpType} hint={T.wpTypeHint} htmlFor="cs-wptype">
+            <Input id="cs-wptype" className="kd-num" value={f.wpType} onChange={(e) => set('wpType')(e.target.value)} placeholder="event" />
+          </Field>
+          <Field label={T.wpQuery} hint={T.optional} htmlFor="cs-wpquery">
+            <Input id="cs-wpquery" className="kd-num" value={f.wpQuery} onChange={(e) => set('wpQuery')(e.target.value)} placeholder="event-types=2" />
+          </Field>
+          <Field label={T.venue} htmlFor="cs-venue">
+            <Input id="cs-venue" value={f.venue} onChange={(e) => set('venue')(e.target.value)} placeholder={f.name} />
+          </Field>
+          <Field label={T.venueAddress} htmlFor="cs-address">
+            <Input id="cs-address" value={f.address} onChange={(e) => set('address')(e.target.value)} />
           </Field>
         </>
       ) : null}

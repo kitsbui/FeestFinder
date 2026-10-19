@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1729,
+    "date": "2026-10-15T19:27:28",
+    "modified": "2026-10-15T19:35:31",
+    "link": "https://1900-hanoi.example/events/1900-boys-pay-girls-extra-slay-special-guest-michael-2/",
+    "title": { "rendered": "1900 Boys Pay Girls EXTRA Slay &#8211; Special Guest: Michael" },
+    "content": {
+      "rendered": "<p>In celebration of Vietnamese Women&#8217;s Day on October 20th, 1900 Le Théâtre is teaming up with Urban Decay to bring you an unforgettable party night dedicated exclusively to the ladies!</p><p>Get ready to dress to slay and immerse yourself in an explosive set by our special guest, Michael.</p><p>🌹 Exclusive VIP gift packages for female guests booking VIP Tables, valued up to 10,000,000 VND.</p><p>💃 Free Entrance all night + Buffet Drinks before midnight for Ladies</p><p>🎫 Entrance Coupon for man: 300K (Buffet drinks included before midnight)</p>",
+      "protected": false
+    },
+    "_links": {},
+    "_embedded": { "wp:featuredmedia": [{ "id": 1727, "source_url": "https://1900-hanoi.example/wp-content/uploads/2026/10/Main-KV.png" }] }
+  },
+  {
+    "id": 1700,
+    "date": "2026-10-10T12:00:00",
+    "modified": "2026-10-10T12:00:00",
+    "link": "https://1900-hanoi.example/events/radarverse-04-nusha/",
+    "title": { "rendered": "FRIDAY (OCT 16) - TUNE IN TO RADARVERSE #04 WITH NUSHA" },
+    "content": { "rendered": "<p>Hard techno from 10pm. Free entrance before 11pm.</p>", "protected": false },
+    "_links": {},
+    "_embedded": {}
+  }
+]

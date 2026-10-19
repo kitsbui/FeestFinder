@@ -1,0 +1,48 @@
+[
+  {
+    "id": 932,
+    "date": "2026-10-07T09:24:43",
+    "modified": "2026-10-07T09:24:43",
+    "link": "https://cine-saigon.example/event/after-hours-3-nusha-saturday-17-10/",
+    "title": { "rendered": "AFTER HOURS #3: NUSHA | Saturday, 17.10" },
+    "content": {
+      "rendered": "\n<p>AFTER HOURS #3: NUSHA | Saturday, 17.10 🇷🇴</p>\n<p>Ciné Saigon tiếp tục mang sân chơi Hard Techno quay trở lại với số thứ 3. Và lần này, dẫn dắt sân chơi After Hours sẽ là Nusha &#8211; nữ DJ/Producer đến từ Romania.</p>\n<p>🍾Combo After Hours chỉ 2900K (Bao gồm 1 bottle, 2 snacks, 3 mixers)</p>\n<p>🎫EARLY BIRD COUPON: 350K (Đã bao gồm 02 beer).</p>\n<p>🎫COUPON ONLINE &amp; AT-DOOR: 400K (Đã bao gồm 02 beer).</p>\n<p>Address: 148 Cong Quynh, Ben Thanh Ward, HCMC</p>\n",
+      "protected": false
+    },
+    "_links": { "self": [{ "href": "https://cine-saigon.example/wp-json/wp/v2/event/932" }] },
+    "_embedded": { "wp:featuredmedia": [{ "id": 933, "source_url": "https://cine-saigon.example/wp-content/uploads/2026/10/NUSHA-KV.png" }] }
+  },
+  {
+    "id": 926,
+    "date": "2026-10-05T07:24:52",
+    "modified": "2026-10-05T07:24:52",
+    "link": "https://cine-saigon.example/event/official-after-party-neworld/",
+    "title": { "rendered": "OFFICIAL AFTER PARTY NEWORLD: ADAM BEYER &#038; ALEX MILLS | Friday, 02.10" },
+    "content": {
+      "rendered": "<p>Đêm after party chính thức của NEWORLD. Doors 22:00.</p><p>🎫 Vé: 500.000đ tại cửa.</p>",
+      "protected": false
+    },
+    "_links": {},
+    "_embedded": { "wp:featuredmedia": [{ "id": 927, "source_url": "https://cine-saigon.example/wp-content/uploads/2026/10/neworld.jpg" }] }
+  },
+  {
+    "id": 903,
+    "date": "2026-10-07T15:25:37",
+    "modified": "2026-10-07T15:25:37",
+    "link": "https://cine-saigon.example/event/ladies-night-every-wednesday/",
+    "title": { "rendered": "LADIES&#8217; NIGHT: NO BILL FOR HER | Every Wednesday" },
+    "content": { "rendered": "<p>Every Wednesday the ladies drink free before midnight.</p>", "protected": false },
+    "_links": {},
+    "_embedded": {}
+  },
+  {
+    "id": 880,
+    "date": "2026-12-28T10:00:00",
+    "modified": "2026-12-28T10:00:00",
+    "link": "https://cine-saigon.example/event/new-year-rave/",
+    "title": { "rendered": "NEW YEAR RAVE: CHARLOTTE DE WITTE | Saturday, 03.01" },
+    "content": { "rendered": "<p>Hard techno till sunrise. Tickets 600K.</p>", "protected": false },
+    "_links": {},
+    "_embedded": {}
+  }
+]

@@ -14,15 +14,18 @@ import { json, one } from '../../db/index.ts';
  * FeestFinder lists electronic music only. WOMB and Savaya are electronic clubs; Megatix sells
  * nightlife, and what names no style waits for review. TicketGo's music list and Ticketmaster
  * cover every kind of music, so only records naming an EDM style get through (requireStyle).
- * Hà Nội, Đà Nẵng and Nha Trang have no public electronic source with event data yet (checked
- * 2026-10-05): their nights come from organisers and the community.
+ * Ciné Saigon and 1900 Le Théâtre post their nights on their own WordPress sites, read through
+ * the REST API (checked 2026-10-19, robots.txt allows it): the first two Vietnamese sources.
+ * Đà Nẵng and Nha Trang have no public electronic source with event data yet (checked
+ * 2026-10-19: their clubs post on Facebook and Instagram only): their nights come from
+ * organisers and the community.
  */
 
 /** What a ticket seller also sells that is not a night out. */
 const NOT_A_NIGHT_OUT = 'brunch|buffet|dinner|breakfast|lunch|day ?pass|meeting|package|\\bspa\\b|yoga|kids|daycare|bird park|watersport|surf|transfer|cooking|masterclass|hotel|resort|creative space|\\btour\\b|cruise|\\bclass\\b|workshop|comedy|stand-?up|poetry';
 
 export interface StarterSource {
-  adapter: 'website' | 'ics' | 'ticketmaster';
+  adapter: 'website' | 'ics' | 'ticketmaster' | 'wordpress';
   name: string;
   url: string | null;
   city: string | null;
@@ -45,7 +48,14 @@ const edc = (name: string, url: string): StarterSource => ({
   adapter: 'website', name, url, city: null, authority: 'official', intervalMinutes: 1440, config: { eventType: 'festival' },
 });
 
+/** A club's own WordPress site: its nights are posts of one kind (design v2 phase 18, 2026-10-19). */
+const club = (name: string, url: string, city: string, config: Record<string, unknown>): StarterSource => ({
+  adapter: 'wordpress', name, url, city, authority: 'official', intervalMinutes: 360, config: { ...config, venue: name, eventType: 'club' },
+});
+
 export const STARTER_SOURCES: StarterSource[] = [
+  club('Ciné Saigon', 'https://cinesaigon.vn/', 'ho-chi-minh', { type: 'event', address: '148 Cống Quỳnh, Phường Bến Thành' }),
+  club('1900 Le Théâtre', 'https://1900club.vn/', 'ha-noi', { type: 'events', query: 'event-types=2', address: '8B Tạ Hiện, Hoàn Kiếm' }),
   megatix('Megatix Singapore', 'https://megatix.com.sg/'),
   megatix('Megatix Indonesia', 'https://megatix.co.id/'),
   megatix('Megatix Thailand', 'https://megatix.in.th/'),

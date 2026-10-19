@@ -1,6 +1,6 @@
 ---
 name: feestfinder-radar-adapter
-description: Add or change a FeestFinder Radar ingestion adapter (websites, ICS, Ticketmaster…) in festfinder-backend/src/services/ingest. Use when asked to read events from a new kind of source.
+description: Add or change a FeestFinder Radar ingestion adapter (websites, WordPress venue sites, ICS, Ticketmaster…) in festfinder-backend/src/services/ingest. Use when asked to read events from a new kind of source.
 ---
 
 # A Radar adapter
