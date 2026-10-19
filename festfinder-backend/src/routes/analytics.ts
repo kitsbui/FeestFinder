@@ -3,11 +3,14 @@ import { z } from 'zod';
 
 import { deviceOf } from '../services/partners.ts';
 import { CLIENT_EVENTS, personId } from '../services/analytics.ts';
+import { recordVital } from '../services/web-signals.ts';
 
 /*
  * POST /analytics/collect {name, props?, anonId?}: a screen's event (services/analytics.ts).
  * Always 204, whatever happens to it: dropped for robots, for "Do Not Track" and Global
- * Privacy Control, for unknown names, and when no analytics provider is configured.
+ * Privacy Control, for unknown names, and when no analytics provider is configured. A page's
+ * Web Vitals are kept here too (web_signals, 30 days, design v2 phase 19), so the Console's
+ * numbers read them with or without a provider.
  */
 
 const Body = z.object({
@@ -21,7 +24,6 @@ export default async function analyticsRoutes(app: FastifyInstance) {
 
   app.post('/analytics/collect', { bodyLimit: 4096 }, async (req, reply) => {
     reply.code(204).header('cache-control', 'no-store');
-    if (!ctx.analytics.enabled) return reply.send();
     if (req.headers.dnt === '1' || req.headers['sec-gpc'] === '1') return reply.send();
     if (!deviceOf(req.headers['user-agent'] as string | undefined)) return reply.send();
     // sendBeacon posts text/plain; the body is JSON either way.
@@ -29,6 +31,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch { return reply.send(); } }
     const b = Body.safeParse(raw);
     if (!b.success || !(CLIENT_EVENTS as readonly string[]).includes(b.data.name)) return reply.send();
+    if (b.data.name === 'web_vital') {
+      const p = b.data.props ?? {};
+      await recordVital(ctx.db, ctx.clock.now(), { kind: p.kind, value: p.value, rating: p.rating, path: p.path }).catch((e) => ctx.log(`web_vital: ${e}`));
+    }
+    if (!ctx.analytics.enabled) return reply.send();
     const userId = req.session?.user?.id;
     const distinct = userId ? personId(userId) : b.data.anonId ? `a_${b.data.anonId}` : null;
     if (!distinct) return reply.send();

@@ -27,7 +27,14 @@ interface Board {
   weekly: { startsOn: string; genres: Record<string, number> }[];
   areas: { area: string; n: number }[];
 }
+type Vital = 'LCP' | 'INP' | 'CLS';
+interface Web {
+  days: number;
+  vitals: Record<Vital, { p75: number | null; rating: 'good' | 'needs-improvement' | 'poor' | null; n: number }>;
+  errors: { n: number; pages: number; pct: number | null };
+}
 interface Insights {
+  web: Web;
   board: Board;
   organizers: { id: string; name: string; verified: boolean; live: number; views: number; ctrPct: number; reports: number }[];
   users: { accounts: number; weeklyActive: number; weeklyActivePct: number; sevenDayReturnPct: number; savesPerUser: number };
@@ -73,6 +80,26 @@ export function InsightsScreen() {
           ) : <span className="kd-s">{T.noPrev}</span>}
         </Panel>
       </div>
+
+      {/* What the browsers report (design v2 phase 19): the p75 of each vital with its rating, and errors per measured page. */}
+      <section aria-label={T.webNumbers} className="grid grid-cols-[repeat(auto-fit,minmax(min(210px,100%),1fr))] gap-3">
+        {(['LCP', 'INP', 'CLS'] as Vital[]).map((k) => {
+          const v = data.web.vitals[k];
+          const shown = v.p75 == null ? '—' : k === 'CLS' ? v.p75.toLocaleString(INTL[lang], { maximumFractionDigits: 3 }) : `${nf(v.p75)} ms`;
+          return (
+            <Panel key={k} className="kd-kpi">
+              <span className="kd-m">{fill(T.kVital, { k })}</span>
+              <span className="kd-d2 kd-num">{shown}</span>
+              {v.rating ? <Status tone={v.rating === 'good' ? 'ok' : v.rating === 'poor' ? 'bad' : 'warn'}>{T[v.rating === 'good' ? 'vGood' : v.rating === 'poor' ? 'vPoor' : 'vMid']}</Status> : <span className="kd-s">{T.noSamples}</span>}
+            </Panel>
+          );
+        })}
+        <Panel className="kd-kpi">
+          <span className="kd-m">{T.kErrors}</span>
+          <span className="kd-d2 kd-num">{data.web.errors.pct == null ? '—' : nf(data.web.errors.pct) + '%'}</span>
+          <span className="kd-s">{fill(T.kErrorsOf, { n: nf(data.web.errors.n), p: nf(data.web.errors.pages), d: data.web.days })}</span>
+        </Panel>
+      </section>
 
       <div className="kd-split gap-3">
         <Panel as="section" className="kd-main flex flex-col gap-4 p-5" aria-label={T.weekly}>

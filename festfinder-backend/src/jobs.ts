@@ -16,6 +16,7 @@ import { translatePending } from './services/translate.ts';
 import { refreshAllFit } from './services/ingest/fit.ts';
 import { checkRemoteImages } from './services/remote-images.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
+import { webHealth } from './services/web-signals.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
 export const jobs = {
@@ -158,6 +159,11 @@ export const jobs = {
     return purgeFeedbackAttachments(ctx);
   },
 
+  /** The browsers' hour: too many uncaught errors tell the admins; reports older than 30 days go (design v2 phase 19). */
+  async webHealth(ctx: Ctx) {
+    return webHealth(ctx.db, ctx.clock.now());
+  },
+
   async checkTicketLinks(ctx: Ctx) {
     if (!ctx.config.linkChecksEnabled) return 0;
     const rows = await many<any>(ctx.db,
@@ -183,6 +189,7 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['translateDescriptions', 10 * 60_000],
   ['refreshFit', 60 * 60_000],
   ['awardBadges', 60 * 60_000],
+  ['webHealth', 60 * 60_000],
   // Last: it spends whatever time the call has left.
   ['ingest', 5 * 60_000],
 ];

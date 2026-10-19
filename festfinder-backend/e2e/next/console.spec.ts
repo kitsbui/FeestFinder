@@ -135,6 +135,10 @@ test.describe('the Console, signed in', () => {
     await expect(page.getByRole('region', { name: 'Sự kiện mới theo thể loại · 8 tuần' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Khu vực nhiều sự kiện' })).toBeVisible();
     await expect(page.getByText('Chuỗi băm hợp lệ')).toBeVisible();
+    // What the browsers report (phase 19): a p75 for each vital and the error rate, '—' until a page reports.
+    const web = page.getByRole('region', { name: 'Trình duyệt báo về' });
+    await expect(web.getByText('LCP p75 · 7 ngày')).toBeVisible();
+    await expect(web.getByText('Lỗi trình duyệt')).toBeVisible();
     expect(problems).toEqual([]);
   });
 

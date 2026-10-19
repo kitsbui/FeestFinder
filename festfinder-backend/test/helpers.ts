@@ -89,7 +89,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
 
   const as = (token?: string) => ({
     get: (url: string, headers?: Record<string, string>) => call('GET', url, { token, headers }),
-    post: (url: string, body?: unknown) => call('POST', url, { token, body: body ?? {} }),
+    post: (url: string, body?: unknown, init?: { headers?: Record<string, string> }) => call('POST', url, { token, body: body ?? {}, headers: init?.headers }),
     put: (url: string, body?: unknown) => call('PUT', url, { token, body: body ?? {} }),
     patch: (url: string, body?: unknown) => call('PATCH', url, { token, body: body ?? {} }),
     delete: (url: string, body?: unknown) => call('DELETE', url, { token, body }),

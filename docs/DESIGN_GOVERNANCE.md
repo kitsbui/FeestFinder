@@ -50,7 +50,7 @@ The pull request template (`.github/pull_request_template.md`) carries it; `.git
 
 ## 2. Five people at every major phase
 
-After each major phase reaches production (or a preview of it), five target users try it, moderated, one at a time, about 30 minutes each, on their own phone unless the task is a back office.
+After each major phase reaches production (or a preview of it), five target users try it, moderated, one at a time, about 30 minutes each, on their own phone unless the task is a back office. The kit for the session is `usertest/index.html` in the design-kit repo (kitsbui/design-kit; design v2 phase 20): the script with a stopwatch per task, the outcome and hesitation sheet, the SUS form scored on the spot, the verdict by the rubric and a Markdown table to paste into the roadmap; `skills/user-test` there says how to prepare the tasks and act on the results within two days.
 
 | Who | Main task (no hints) | Second task |
 | --- | --- | --- |
