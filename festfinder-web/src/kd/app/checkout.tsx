@@ -48,9 +48,57 @@ export function Checkout({ lang, slug }: { lang: Lang; slug: string }) {
       </AppBar>
       {ev === undefined || kd.session === undefined ? <div className="kd-skel mx-4 mt-2 h-60" aria-hidden="true" />
         : !ev ? <Panel className="m-4 p-6"><span className="kd-h">{T.notFound}</span></Panel>
-        : !kd.user ? <SignInCard lang={lang} note={T.gateCheckout} />
+        : !kd.user ? <GuestOrSignIn lang={lang} />
         : <Basket lang={lang} ev={ev} />}
     </>
+  );
+}
+
+/**
+ * Signed out at the checkout (phase 17, owner 2026-10-19): an email and a phone buy without an
+ * account (the API makes one silently and signs it in), or the sign-in card. An email that already
+ * has an account is not taken: that person logs in with a code.
+ */
+function GuestOrSignIn({ lang }: { lang: Lang }) {
+  const T = pick(APP, lang);
+  const kd = useKd();
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (busy) return;
+    setErr('');
+    setBusy(true);
+    try {
+      await FF.post('/auth/guest', { email: email.trim(), phone: phone.trim() || undefined });
+      // The provider's session, not only the runtime's: the page swaps to the basket.
+      await kd.refresh();
+    } catch (x) {
+      setErr((x as { code?: string }).code === 'account_exists' ? T.guestExists : FF.errorText(x, lang));
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-4 px-4 pt-2">
+      <form onSubmit={submit} className="kd-card flex flex-col gap-3 p-5" aria-labelledby="guest-h" noValidate>
+        <h2 id="guest-h" className="kd-h">{T.guestTitle}</h2>
+        <label className="flex flex-col gap-1.5">
+          <span className="kd-flabel">{T.guestEmail}</span>
+          <Input type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} invalid={!!err} required />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="kd-flabel">{T.guestPhone}</span>
+          <Input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09xx xxx xxx" />
+        </label>
+        <FieldError>{err}</FieldError>
+        <Button type="submit" tone="acc" size="lg" block disabled={busy || !email.trim()}>{T.guestGo}</Button>
+        <span className="kd-s">{T.guestNote}</span>
+      </form>
+      <span className="kd-m text-center">{T.guestOr}</span>
+      <SignInCard lang={lang} note={T.gateCheckout} />
+    </div>
   );
 }
 

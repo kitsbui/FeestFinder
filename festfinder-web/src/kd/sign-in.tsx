@@ -5,7 +5,7 @@
  * who already has one. Only the ways in GET /auth/providers says are configured are shown.
  */
 import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowLeftIcon, DeviceMobileIcon, EnvelopeSimpleIcon, GoogleLogoIcon, KeyIcon, ChatCircleIcon, WhatsappLogoIcon, FacebookLogoIcon } from '@phosphor-icons/react/ssr';
+import { ArrowLeftIcon, DeviceMobileIcon, EnvelopeSimpleIcon, GoogleLogoIcon, InstagramLogoIcon, KeyIcon, ChatCircleIcon, TiktokLogoIcon, WhatsappLogoIcon, FacebookLogoIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { COMMON, pick, type Lang } from './copy';
 import { Button } from './ui/actions';
@@ -14,7 +14,7 @@ import { Sheet } from './ui/sheet';
 
 type Channel = 'email' | 'sms' | 'zalo' | 'wa';
 type Step = 'method' | 'id' | 'otp' | 'pass' | 'loginId' | 'loginPass';
-interface Ways { google?: boolean; fb?: boolean; ig?: boolean; sms?: boolean; zalo?: boolean; wa?: boolean; email?: boolean; password?: boolean }
+interface Ways { google?: boolean; fb?: boolean; ig?: boolean; tiktok?: boolean; sms?: boolean; zalo?: boolean; wa?: boolean; email?: boolean; password?: boolean }
 
 const validId = (v: string, ch: Channel) => {
   const s = v.trim();
@@ -44,7 +44,7 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
   const fail = (e: unknown) => { setErr(FF.errorText(e, lang)); setBusy(false); };
   const go = (s: Step) => { setErr(''); setStep(s); };
 
-  const social = (provider: 'google' | 'fb') => {
+  const social = (provider: 'google' | 'fb' | 'ig' | 'tiktok') => {
     setBusy(true);
     setErr('');
     FF.oauthStart(provider, intent).catch(fail);
@@ -58,10 +58,11 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
       if (!validId(id, channel)) return setErr(channel === 'email' ? C.errEmail : C.errPhone);
       setBusy(true);
       try {
-        const out = await FF.post('/auth/otp/start', { channel, identifier: id.trim() });
+        // The email's link comes back to this page (phase 17).
+        const out = await FF.post('/auth/otp/start', { channel, identifier: id.trim(), ...(channel === 'email' ? { redirectUri: location.href } : {}) });
         setChallenge(out.challengeId);
         const sent = channel === 'email' ? C.otpSentEmail : channel === 'sms' ? C.otpSentSms : channel === 'wa' ? C.otpSentWa : C.otpSentZalo;
-        setSentLine(sent + ' ' + id.trim() + (out.devCode ? ' · dev code ' + out.devCode : ''));
+        setSentLine(sent + ' ' + id.trim() + (out.devCode ? ' · dev code ' + out.devCode : '') + (channel === 'email' ? ' · ' + C.otpEmailLink : ''));
         setCode('');
         setBusy(false);
         go('otp');
@@ -73,8 +74,8 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
       setBusy(true);
       try {
         const out = await FF.post('/auth/otp/verify', { challengeId: challenge, code });
-        if (out.next === 'set_password') { setSignupToken(out.signupToken); setBusy(false); go('pass'); return; }
-        onDone(false);
+        // No password step (phase 17): the code made or opened the account.
+        onDone(!!out.created);
       } catch (x) { fail(x); }
       return;
     }
@@ -155,6 +156,18 @@ export function SignInSheet({ lang, note, intent, onClose, onDone }: {
               <Button size="lg" block onClick={() => { setChannel('wa'); setId(''); go('id'); }}>
                 <WhatsappLogoIcon size={18} aria-hidden="true" />
                 {C.withWa}
+              </Button>
+            ) : null}
+            {ways?.ig ? (
+              <Button size="lg" block onClick={() => social('ig')} disabled={busy}>
+                <InstagramLogoIcon size={18} aria-hidden="true" />
+                {C.withInstagram}
+              </Button>
+            ) : null}
+            {ways?.tiktok ? (
+              <Button size="lg" block onClick={() => social('tiktok')} disabled={busy}>
+                <TiktokLogoIcon size={18} aria-hidden="true" />
+                {C.withTiktok}
               </Button>
             ) : null}
             {ways?.password !== false ? (

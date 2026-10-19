@@ -74,8 +74,8 @@ export class SmtpTransport implements Transport {
       : pick(msg.payload.title) || 'FeestFinder';
     const body = msg.payload.code
       ? (lang === 'en'
-        ? `Your code is ${msg.payload.code}. It expires in 10 minutes.`
-        : `Mã của bạn là ${msg.payload.code}. Mã hết hạn sau 10 phút.`)
+        ? `Your code is ${msg.payload.code}. It expires in 10 minutes.${msg.payload.link ? `\n\nOr tap to log in: ${msg.payload.link}` : ''}`
+        : `Mã của bạn là ${msg.payload.code}. Mã hết hạn sau 10 phút.${msg.payload.link ? `\n\nHoặc bấm để đăng nhập: ${msg.payload.link}` : ''}`)
       : pick(msg.payload.body) || '';
     await this.mailer.sendMail({ from: this.cfg.from, to: msg.address, subject, text: body });
   }

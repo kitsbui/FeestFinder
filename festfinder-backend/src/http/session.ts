@@ -9,7 +9,7 @@ const USER_TTL_DAYS = 60;
 const STAFF_TTL_DAYS = 3;
 
 /** How a session was signed in. Admin rights can require 'google' (config.adminSignIn). */
-export type SignInMethod = 'google' | 'fb' | 'ig' | 'password' | 'email' | 'phone' | 'impersonation';
+export type SignInMethod = 'google' | 'fb' | 'ig' | 'tiktok' | 'password' | 'email' | 'phone' | 'guest' | 'impersonation';
 
 export interface SessionInfo {
   tokenHash: string;

@@ -440,4 +440,7 @@ export const ID: Record<string, string> = {
   'Who listed it': 'Siapa yang mencantumkan',
   'Machine translation': 'Terjemahan mesin',
   'Original text': 'Teks asli',
+  'Continue with Instagram': 'Lanjutkan dengan Instagram',
+  'Continue with TikTok': 'Lanjutkan dengan TikTok',
+  'The email also has a link that logs you in with one tap.': 'Email itu juga berisi tautan untuk masuk dengan sekali ketuk.',
 };

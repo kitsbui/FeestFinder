@@ -5,7 +5,7 @@ import { AppError, badRequest, conflict, notFound, tooMany, unauthorized } from 
 import { L } from '../lib/i18n.ts';
 import { hashPassword, randomToken, sha256, sixDigitCode, verifyPassword } from '../lib/crypto.ts';
 import { isEmail, normalizeEmail, normalizeVnPhone } from '../lib/contact.ts';
-import { parse } from '../lib/validate.ts';
+import { parse, uuid } from '../lib/validate.ts';
 import { adminMethodOk, createSession, SESSION_COOKIE, setSessionCookie, type SignInMethod } from '../http/session.ts';
 import { appendAudit } from '../services/audit.ts';
 import { requireUser } from '../http/guards.ts';
@@ -43,7 +43,7 @@ export function identifierFor(channel: OtpChannel, raw: string): string {
 /** Creates a challenge and queues the code on its channel. Enforces the resend cooldown and an hourly cap. */
 export async function startOtp(
   ctx: Ctx, q: Queryable,
-  opts: { purpose: 'auth' | 'reset' | 'connect' | 'staff'; channel: OtpChannel; identifier: string; userId?: string },
+  opts: { purpose: 'auth' | 'reset' | 'connect' | 'staff'; channel: OtpChannel; identifier: string; userId?: string; link?: (challengeId: string, code: string) => string },
 ) {
   const now = ctx.clock.now();
   const recent = await one<any>(q,
@@ -63,7 +63,8 @@ export async function startOtp(
     [opts.purpose, opts.channel, opts.identifier, sha256(`${opts.identifier}:${code}`), opts.userId ?? null,
       now, new Date(now.getTime() + OTP_TTL_MS), new Date(now.getTime() + OTP_RESEND_MS)]);
   const channel = opts.channel === 'wa' ? 'whatsapp' : opts.channel;
-  await enqueue(q, opts.userId ?? null, channel, opts.identifier, 'otp', { code, lang: 'vi' }, now);
+  // An email also carries a link that signs in with one tap (phase 17); the code stays for typing.
+  await enqueue(q, opts.userId ?? null, channel, opts.identifier, 'otp', { code, lang: 'vi', ...(opts.link ? { link: opts.link(row!.id, code) } : {}) }, now);
   return {
     challengeId: row!.id,
     resendIn: OTP_RESEND_MS / 1000,
@@ -145,37 +146,51 @@ export default async function authRoutes(app: FastifyInstance) {
     return [...ctx.config.corsOrigins, ctx.config.publicBaseUrl].some((o) => { try { return new URL(o).origin === origin; } catch { return false; } });
   };
 
-  /** Step 1 of sign-up or phone log-in: send a 6-digit code by email, SMS, Zalo or WhatsApp. */
+  /** Step 1 of sign-up or log-in: a 6-digit code by email (with a one-tap link), SMS, Zalo or WhatsApp. */
   app.post('/auth/otp/start', async (req) => {
-    const body = parse(z.object({ channel: z.enum(['email', 'sms', 'zalo', 'wa']), identifier: z.string().min(3).max(200) }), req.body);
+    const body = parse(z.object({ channel: z.enum(['email', 'sms', 'zalo', 'wa']), identifier: z.string().min(3).max(200), redirectUri: z.string().url().max(2000).optional() }), req.body);
     const identifier = identifierFor(body.channel, body.identifier);
-    const out = await ctx.db.tx((q) => startOtp(ctx, q, { purpose: 'auth', channel: body.channel, identifier }));
+    const site = siteOf(req);
+    const redirect = body.redirectUri && allowedRedirect(body.redirectUri) ? body.redirectUri : null;
+    const link = body.channel === 'email'
+      ? (id: string, code: string) => `${site}/auth/email/${id}/${code}${redirect ? '?redirect=' + encodeURIComponent(redirect) : ''}`
+      : undefined;
+    const out = await ctx.db.tx((q) => startOtp(ctx, q, { purpose: 'auth', channel: body.channel, identifier, link }));
     kick();
     return out;
   });
 
   /**
-   * Step 2. Phone channels sign in (creating the account on first use). Email sign-ups
-   * get a short-lived token for the password step; existing email accounts are signed in.
+   * A proven email signs in, or makes the account (phase 17: no password step; a password is
+   * optional, set from the profile). An address typed into someone's profile proves nothing: the
+   * person who just proved it gets it, on an account of their own. A guest's account (a ticket
+   * bought with that email, signup_method 'guest') is theirs the moment they prove the address.
    */
+  const signInByEmail = async (email: string): Promise<{ id: string; created: boolean }> => {
+    const now = ctx.clock.now();
+    return ctx.db.tx(async (q) => {
+      let existing = await one<{ id: string; email_verified_at: Date | null; signup_method: string }>(q, 'select id, email_verified_at, signup_method from users where email = $1', [email]);
+      if (existing && !existing.email_verified_at && existing.signup_method !== 'guest') {
+        await q.query('update users set email = null where id = $1', [existing.id]);
+        existing = null;
+      }
+      if (existing) {
+        if (!existing.email_verified_at) await q.query('update users set email_verified_at = $2 where id = $1', [existing.id, now]);
+        return { id: existing.id as string, created: false };
+      }
+      const made = await one<{ id: string }>(q, `insert into users (email, email_verified_at, signup_method, created_at) values ($1, $2, 'email', $2) returning id`, [email, now]);
+      return { id: made!.id as string, created: true };
+    });
+  };
+
+  /** Step 2. The code signs in, creating the account on first use: by email, SMS, Zalo or WhatsApp. */
   app.post('/auth/otp/verify', async (req, reply) => {
     const body = parse(z.object({ challengeId: z.string().uuid(), code: z.string() }), req.body);
     const ch = await checkOtp(ctx, body.challengeId, body.code, 'auth');
     const now = ctx.clock.now();
     if (ch.channel === 'email') {
-      let existing = await one<any>(ctx.db, 'select id, password_hash, email_verified_at from users where email = $1', [ch.identifier]);
-      // An address typed into someone's profile proves nothing: the person who just proved it
-      // gets it, on an account of their own.
-      if (existing && !existing.email_verified_at) {
-        await ctx.db.query('update users set email = null where id = $1', [existing.id]);
-        existing = null;
-      }
-      if (existing?.password_hash) return issue(reply, existing.id, false, 'email');
-      const token = randomToken();
-      await ctx.db.query(
-        `insert into password_tokens (token_hash, purpose, email, user_id, expires_at) values ($1, 'signup', $2, $3, $4)`,
-        [sha256(token), ch.identifier, existing?.id ?? null, new Date(now.getTime() + 30 * 60_000)]);
-      return { next: 'set_password', signupToken: token };
+      const user = await signInByEmail(ch.identifier);
+      return issue(reply, user.id, user.created, 'email');
     }
     // How the account was made: 'sms' proves the number only; Zalo and WhatsApp also link the app.
     const method = ch.channel === 'wa' ? 'wa' : ch.channel === 'sms' ? 'sms' : 'zalo';
@@ -195,7 +210,49 @@ export default async function authRoutes(app: FastifyInstance) {
     return issue(reply, user.id, user.created, 'phone');
   });
 
-  /** Step 3 for email sign-up (and password reset): set a password of 8+ characters. */
+  /** The one-tap link in the email: the same code, then the page it came from with ?auth=email&via=…. */
+  app.get<{ Params: { challenge: string; code: string }; Querystring: { redirect?: string } }>('/auth/email/:challenge/:code', async (req, reply) => {
+    const fallback = `${siteOf(req)}/`;
+    const target = req.query.redirect && allowedRedirect(req.query.redirect) ? req.query.redirect : fallback;
+    const back = (params: Record<string, string>) => {
+      const u = new URL(target);
+      for (const k of ['auth', 'via', 'auth_error']) u.searchParams.delete(k);
+      for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+      return reply.redirect(u.toString(), 302);
+    };
+    let ch;
+    try {
+      ch = await checkOtp(ctx, parse(uuid, req.params.challenge), req.params.code, 'auth', 'email');
+    } catch (e) {
+      return back({ auth_error: e instanceof AppError ? e.code : 'otp_wrong' });
+    }
+    const user = await signInByEmail(ch.identifier);
+    const { token, expiresAt } = await createSession(ctx.db, ctx.clock.now(), { kind: 'user', userId: user.id, method: 'email' });
+    setSessionCookie(ctx, reply, token, expiresAt);
+    return back({ auth: 'email', via: user.created ? 'signup' : 'signin' });
+  });
+
+  /**
+   * A guest buying a ticket (phase 17, owner 2026-10-19): an email and a phone make the account
+   * silently and sign it in, so the order has someone to belong to and the ticket an address to
+   * go to; proving the email later (a code or the link) takes the account over. An address that
+   * already has an account is not taken: that person signs in with a code instead.
+   */
+  app.post('/auth/guest', async (req, reply) => {
+    const body = parse(z.object({ email: z.string().min(3).max(200), phone: z.string().max(30).optional(), name: z.string().trim().max(80).optional() }), req.body);
+    const ip = req.ip ?? 'ip';
+    if (recentFailures(`guest:${ip}`).length >= LOGIN_MAX_FAILURES) throw tooMany('too_many_requests', L('Too many attempts. Try again later.', 'Thử quá nhiều lần. Hãy thử lại sau.'));
+    noteFailure(`guest:${ip}`);
+    const email = identifierFor('email', body.email);
+    const phone = body.phone?.trim() ? identifierFor('sms', body.phone) : null;
+    const existing = await one<{ id: string }>(ctx.db, 'select id from users where email = $1', [email]);
+    if (existing) throw conflict('account_exists', L('That email already has an account: log in with a code sent to it', 'Email này đã có tài khoản: hãy đăng nhập bằng mã gửi tới email'));
+    const now = ctx.clock.now();
+    const made = await one<{ id: string }>(ctx.db, `insert into users (name, email, phone, signup_method, created_at) values ($1, $2, $3, 'guest', $4) returning id`, [body.name ?? '', email, phone, now]);
+    return issue(reply, made!.id, true, 'guest');
+  });
+
+  /** Set a password (password reset): 8+ characters. */
   app.post('/auth/password', async (req, reply) => {
     const body = parse(z.object({ token: z.string().min(10), password: z.string().max(200), passwordConfirm: z.string().max(200).optional() }), req.body);
     if (body.password.length < 8) throw badRequest('password_too_short', L('Use at least 8 characters', 'Dùng ít nhất 8 ký tự'));
@@ -273,7 +330,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.get('/auth/providers', async (_req, reply) => {
     const codes = ctx.config.exposeDevCodes;
     return reply.header('cache-control', 'public, max-age=60').send({
-      google: !!ctx.oauth.google, fb: !!ctx.oauth.fb, ig: !!ctx.oauth.ig,
+      google: !!ctx.oauth.google, fb: !!ctx.oauth.fb, ig: !!ctx.oauth.ig, tiktok: !!ctx.oauth.tiktok,
       // A real SMS or Zalo provider (phase 17), or the operator's webhook, or the dev codes of a preview.
       sms: !!ctx.config.sms || !!ctx.config.messagingWebhook || codes,
       zalo: !!ctx.config.zns || !!ctx.config.messagingWebhook || codes, wa: !!ctx.config.messagingWebhook || codes,
@@ -282,7 +339,7 @@ export default async function authRoutes(app: FastifyInstance) {
   });
 
   const OAUTH_COOKIE = 'ff_oauth';
-  const providerOf = (raw: string) => parse(z.enum(['google', 'fb', 'ig']), raw);
+  const providerOf = (raw: string) => parse(z.enum(['google', 'fb', 'ig', 'tiktok']), raw);
   /**
    * Where each provider sends the browser back: one fixed address per provider and site, as
    * Google requires. The site is this API's own, or the web app's when its proxy signed the
@@ -374,7 +431,7 @@ export default async function authRoutes(app: FastifyInstance) {
         throw conflict('connection_taken', L('That account is already linked to another FeestFinder user', 'Tài khoản này đã liên kết với người dùng khác'));
       }
       await ctx.db.tx((q) => link(q, st.user_id));
-      if (provider !== 'google') await syncFriends(ctx, st.user_id, provider, profile.accessToken);
+      if (provider === 'fb' || provider === 'ig') await syncFriends(ctx, st.user_id, provider, profile.accessToken);
       return { via: 'connect', userId: null };
     }
 
@@ -389,7 +446,7 @@ export default async function authRoutes(app: FastifyInstance) {
       await link(q, u!.id);
       return { id: u!.id as string, created: !byEmail };
     });
-    if (provider !== 'google') await syncFriends(ctx, user.id, provider, profile.accessToken);
+    if (provider === 'fb' || provider === 'ig') await syncFriends(ctx, user.id, provider, profile.accessToken);
     // The admin allowlist: an address Google has confirmed, on the list, gets admin rights.
     if (provider === 'google' && email && ctx.config.adminEmails.includes(email)) await grantAllowlistedAdmin(ctx, user.id, email);
     return { via: user.created ? 'signup' : 'signin', userId: user.id };

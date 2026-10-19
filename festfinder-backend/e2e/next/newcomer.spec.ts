@@ -99,8 +99,9 @@ test('a heart works before signing in, and signing in keeps what was saved', asy
   // A new account: the nights saved on this phone move into it.
   const email = `saves-${Date.now()}@example.com`;
   const start = await (await page.request.post('/auth/otp/start', { data: { channel: 'email', identifier: email } })).json();
-  const verify = await (await page.request.post('/auth/otp/verify', { data: { challengeId: start.challengeId, code: start.devCode } })).json();
-  expect((await page.request.post('/auth/password', { data: { token: verify.signupToken, password: 'longenough1', passwordConfirm: 'longenough1' } })).ok()).toBeTruthy();
+  // The code alone signs the new account in (phase 17), on this browser's cookies.
+  const verify = await page.request.post('/auth/otp/verify', { data: { challengeId: start.challengeId, code: start.devCode } });
+  expect(verify.ok(), await verify.text()).toBeTruthy();
   await page.goto('/e/ravo');
   await page.locator('html[data-kd-session="user"]').waitFor({ state: 'attached' });
   await expect.poll(async () => ((await (await page.request.get('/me/saves?limit=100')).json()).items as { slug: string }[]).map((e) => e.slug)).toContain('ravo');
@@ -140,6 +141,50 @@ test('signs in with a phone number by SMS: the way is offered, the code arrives,
   await expect(otp).toBeHidden();
   const me = await (await page.request.get('/me')).json();
   expect([me.user.phone, me.user.phoneVerified, me.user.signupMethod]).toEqual(['+84977123456', true, 'sms']);
+  expect(problems).toEqual([]);
+});
+
+test('signs in by email with a code alone, no password (phase 17)', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto('/profile');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await page.getByRole('button', { name: 'Đăng nhập' }).first().click();
+  const sheet = page.getByRole('dialog', { name: 'Đăng nhập' });
+  await sheet.getByRole('button', { name: 'Tiếp tục với email' }).click();
+  await sheet.getByLabel('Email').fill('new.phone.person@example.com');
+  await sheet.getByRole('button', { name: 'Gửi mã' }).click();
+  const otp = page.getByRole('dialog', { name: 'Nhập mã xác minh' });
+  const line = await otp.getByText(/Đã gửi qua email tới/).innerText();
+  expect(line).toContain('liên kết');
+  const code = /dev code (\d{6})/.exec(line)?.[1];
+  expect(code, line).toBeTruthy();
+  await otp.getByRole('textbox', { name: /Nhập mã xác minh/ }).fill(code!);
+  await otp.getByRole('button', { name: 'Xác minh' }).click();
+  // Straight in: no "Đặt mật khẩu" step.
+  await expect(page.getByRole('dialog', { name: 'Đặt mật khẩu' })).toHaveCount(0);
+  await expect(otp).toBeHidden();
+  const me = await (await page.request.get('/me')).json();
+  expect([me.user.email, me.user.hasPassword]).toEqual(['new.phone.person@example.com', false]);
+  expect(problems).toEqual([]);
+});
+
+test('a guest buys a ticket with an email and a phone, no account first (phase 17)', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto('/app/checkout/ravo?tier=&qty=1');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const guest = page.getByRole('form', { name: 'Mua không cần tài khoản' });
+  await expect(guest).toBeVisible();
+  await guest.getByLabel('Email nhận vé').fill('guest.on.phone@example.com');
+  await guest.getByLabel('Số điện thoại').fill('0912 777 888');
+  const answered = page.waitForResponse((r) => r.url().includes('/auth/guest'));
+  await guest.getByRole('button', { name: 'Tiếp tục' }).click();
+  const res = await answered;
+  expect(res.status(), await res.text()).toBe(200);
+  // The basket opens on the same page, signed in as the guest.
+  await page.locator('html[data-kd-session="user"]').waitFor({ state: 'attached' });
+  await expect(guest).toHaveCount(0);
+  const me = await (await page.request.get('/me')).json();
+  expect([me.user.email, me.user.signupMethod]).toEqual(['guest.on.phone@example.com', 'guest']);
   expect(problems).toEqual([]);
 });
 

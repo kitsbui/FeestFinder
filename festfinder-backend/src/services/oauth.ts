@@ -2,7 +2,7 @@
  * Google, Facebook and Instagram sign-in / connect. Each provider exchanges an authorization
  * code for a profile. Without app credentials, development uses MockOAuth.
  */
-export type OAuthKind = 'google' | 'fb' | 'ig';
+export type OAuthKind = 'google' | 'fb' | 'ig' | 'tiktok';
 
 export interface OAuthProfile {
   externalId: string;
@@ -130,6 +130,46 @@ export class InstagramOAuth implements OAuthProvider {
  * Development stand-in. Authorize redirects straight back with a code of the form
  * `mock:<externalId>:<name>`; friends are whatever `mock:` ids were passed as the token.
  */
+/**
+ * TikTok's Login Kit (phase 17): an authorization code, a token, then the person's open id, name
+ * and picture. TikTok gives no email, so an account made this way is found by its open id only.
+ */
+export class TikTokOAuth implements OAuthProvider {
+  private readonly clientKey: string;
+  private readonly clientSecret: string;
+
+  constructor(clientKey: string, clientSecret: string) {
+    this.clientKey = clientKey;
+    this.clientSecret = clientSecret;
+  }
+
+  authorizeUrl(state: string, redirectUri: string) {
+    const p = new URLSearchParams({ client_key: this.clientKey, scope: 'user.info.basic', response_type: 'code', redirect_uri: redirectUri, state });
+    return `https://www.tiktok.com/v2/auth/authorize/?${p}`;
+  }
+
+  async exchange(code: string, redirectUri: string): Promise<OAuthProfile> {
+    const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_key: this.clientKey, client_secret: this.clientSecret, code, grant_type: 'authorization_code', redirect_uri: redirectUri }).toString(),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const token = await res.json().catch(() => ({})) as { access_token?: string; open_id?: string; error?: string; error_description?: string };
+    if (!res.ok || !token.access_token) throw new Error(`tiktok token ${res.status}${token.error ? ` (${token.error}: ${token.error_description ?? ''})` : ''}`);
+    const me = await getJson('https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,avatar_url', { headers: { authorization: `Bearer ${token.access_token}` } }) as { data?: { user?: { open_id?: string; display_name?: string; avatar_url?: string } } };
+    const user = me.data?.user ?? {};
+    const externalId = user.open_id ?? token.open_id;
+    if (!externalId) throw new Error('tiktok: no open id');
+    return { externalId: String(externalId), name: user.display_name ?? '', email: null, photoUrl: user.avatar_url ?? null, accessToken: token.access_token };
+  }
+
+  /** TikTok exposes no friend graph. */
+  async friendIds(): Promise<string[]> {
+    return [];
+  }
+}
+
 export class MockOAuth implements OAuthProvider {
   private readonly provider: OAuthKind;
 

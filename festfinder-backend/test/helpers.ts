@@ -68,7 +68,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
     fetchPage: opts.fetchPage ?? (async () => { throw new Error('no network in tests'); }),
     fetchImage: opts.fetchImage ?? fakeImageFetcher,
     oembed: opts.oembed ?? fakeOembed,
-    oauth: { google: new MockOAuth('google'), fb: new MockOAuth('fb'), ig: new MockOAuth('ig') },
+    oauth: { google: new MockOAuth('google'), fb: new MockOAuth('fb'), ig: new MockOAuth('ig'), tiktok: new MockOAuth('tiktok') },
     checkLink: opts.checkLink ?? (async () => 'ok'),
     // The tests never reach the internet: without fixtures, ingestion has nothing to read.
     ingestIO: opts.ingestIO ?? (() => ({ now: clock.now(), secrets: {}, fetchPage: async () => { throw new Error('no network in tests'); }, fetchText: async () => { throw new Error('no network in tests'); } })),
