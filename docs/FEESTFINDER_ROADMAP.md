@@ -237,7 +237,7 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
 
 ## Growth plan (handoff 2026-10-19)
 
-Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md) (version 2, on `48b2cf3`), reviewed by the tech lead and the team on 2026-10-19 and rewritten to the design kit's rules: six jobs, none adds a control or a concept to a newcomer's first screens (measured 2026-10-19 on production: home 16 controls, event page 10, first event at 255 px, ≈ 7 concepts on the event page; `newcomer.spec.ts` budgets 20 / 12 only go down). Each job carries its 10-point proof (gates, five people, numbers after two weeks). Order 4 → 5 → 1 → 3 → 6 → 2; owner decisions D1–D6 first.
+Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md) (version 2, on `48b2cf3`), reviewed by the tech lead and the team on 2026-10-19 and rewritten to the design kit's rules: six jobs, none adds a control or a concept to a newcomer's first screens (measured 2026-10-19 on production: home 16 controls, event page 10, first event at 255 px, ≈ 7 concepts on the event page; `newcomer.spec.ts` budgets 20 / 12 only go down). Each job carries its 10-point proof (gates, five people, numbers after two weeks). Order 4 → 5 → 6 → 1 → 3 (card 2 waits); owner decisions D1, D3–D6 = A.
 
 - Owner decisions, 2026-10-19: **A for D1–D6**, checklists copied verbatim from the handoff:
   - D1 · "Sự kiện từ lịch kết nối thuộc NTC đó, in_review, provider organizer + adapter; không gộp vào sự kiện của NTC khác."
@@ -253,7 +253,8 @@ Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md) (
 - [ ] Card 1: "Lịch" in Studio › Hồ sơ: the embed widget (`ui/widget/ff-widget.js`, `/embed/organizers/:slug` + `.ics`) and a connected calendar as a posted source that waits for review (migration `049`).
 - [ ] Card 3: ambassador commission on the existing "Đại sứ": `events.ambassador_pct`, `orders.ref_user`, earnings settled through `ambassador_payouts` and `/me/payee`; one "Hoa hồng" row in "Tôi" only when there is money (migration `050`).
 - [ ] Card 6: read-only MCP at `/mcp` and `/list.md`; llms.txt names them.
-- [ ] Card 2: Zalo OA turns a poster or a link into a community draft; shares phase 17's Zalo app and `provider_tokens` (migration `051`). Needs the OA webhook the owner enables.
+- Card 2 (Zalo OA) waits: owner 2026-10-19, SMS verification only for now; its design stays in the handoff with the four blockers of §7.
+- Night build plan: [NIGHT_BUILD_PLAN_2026-10-19.md](NIGHT_BUILD_PLAN_2026-10-19.md), order 4 → 5 → 6 → 1 → 3, branches only, no deploy; runs when the owner says "bắt đầu night build".
 - Waiting on conditions (handoff §6): travel links, the Zalo Mini App, crews on `plans`, hidden venues, Track ID votes, "Vé an toàn", Night Pass, merch, brand insights, solo tables. Scouts run on Zalo and the community form with no code.
 
 ## What the team does next in production
@@ -359,3 +360,4 @@ Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md) (
 - 2026-10-18: Design v2 phase 9 (your own): "Cho bạn" on the list, "Nghe trước" on the event page, friends going in the plan's row, the wizard's style search, Studio's empty chart with an action.
 - 2026-10-18: Design v2 phase 10 (Asia): Thai, Japanese and Indonesian on the public pages, each with its own address, the lines sent only with a page in that language, local dates and numbers.
 - 2026-10-19: Growth plan handoff, version 2: a market brainstorm (EDM industry, event tech, talent, e-commerce; 45 sources) cut to six jobs by the design kit's rules after the tech lead's review; first-screen numbers measured on production the same day. No code yet.
+- 2026-10-19: Zalo OA deferred by the owner (SMS verification only); the growth plan became a night build plan (five cards, three migrations 048–050, branches only).
