@@ -2,13 +2,15 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { deviceOf } from '../services/partners.ts';
+import { recordError } from '../services/web-signals.ts';
 
 /*
  * POST /client-errors {kind, message, source?, line?, col?, stack?}: an uncaught error or
  * rejection in someone's browser (festfinder-web kd/feedback/telemetry.ts), sent to the same
  * reporter as the API's own (Sentry when SENTRY_DSN is set). Design v2 phase 7: the web had no
  * error reporting. Paths only, never a query string; no form contents, cookies or storage.
- * Always 204, and robots are ignored.
+ * Always 204, and robots are ignored. Each one is also counted in web_signals (30 days), so the
+ * Console's numbers show the error rate and an hour above the line tells the admins.
  */
 
 const Body = z.object({
@@ -46,6 +48,7 @@ export default async function clientErrorRoutes(app: FastifyInstance) {
     let page: string | undefined;
     try { page = req.headers.referer ? new URL(req.headers.referer).pathname : undefined; } catch { /* no page */ }
     ctx.errors.capture(err, { method: b.data.kind, url: page, userId: req.session?.user?.id ?? null, requestId: req.id });
+    await recordError(ctx.db, ctx.clock.now(), b.data.kind, page).catch((e) => ctx.log(`client error count: ${e}`));
     return reply.send();
   });
 }

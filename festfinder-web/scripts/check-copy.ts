@@ -14,7 +14,7 @@ const KD = join(WEB, 'src', 'kd');
 
 /** The files behind the public pages: what a visitor reads in their language. */
 export const PUBLIC = [
-  'copy/index.ts', 'runtime.tsx', 'sign-in.tsx', 'phone.tsx',
+  'copy/index.ts', 'runtime.tsx', 'sign-in.tsx', 'sign-in-copy.ts', 'phone.tsx',
   'web/chrome.tsx', 'web/copy.ts', 'web/card.tsx', 'web/me.tsx', 'web/search-sheet.tsx', 'web/lang.ts',
   'web/list', 'web/event', 'web/artist', 'web/directory', 'web/org', 'web/about',
   'ui/origin.tsx', 'ui/parts.tsx', 'ui/covers.tsx', 'ui/share-ask.tsx', 'ui/back-link.tsx', 'ui/skip-link.tsx', 'ui/workspaces.tsx', 'feedback/widget.tsx',

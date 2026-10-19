@@ -1435,6 +1435,15 @@ export interface Rows {
     facebook: string | null;
     venue_type: string | null;
   };
+  web_signals: {
+    id: number;
+    at: Date;
+    kind: string;
+    name: string;
+    value: number | null;
+    rating: string | null;
+    path: string | null;
+  };
 }
 
 /** A table's row: `one<Row<'events'>>(q, 'select * from events where id = $1', [id])`. */

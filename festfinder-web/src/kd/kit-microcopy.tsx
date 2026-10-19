@@ -7,6 +7,7 @@
 import { useMemo } from 'react';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/ssr';
 import * as COMMON_COPY from './copy';
+import * as SIGN_IN_COPY from './sign-in-copy';
 import { ID } from './copy/asia/id';
 import { JA } from './copy/asia/ja';
 import { TH } from './copy/asia/th';
@@ -25,7 +26,7 @@ const isPair = (v: unknown): v is { en: string; vi: string } => !!v && typeof v 
 /** The dictionaries of the public pages, flattened to their lines. */
 function lines(): { en: string; vi: string; from: string }[] {
   const out = new Map<string, { en: string; vi: string; from: string }>();
-  const mods: [string, Record<string, unknown>][] = [['copy', COMMON_COPY], ['web', WEB_COPY], ['list', LIST_COPY], ['event', EVENT_COPY], ['artist', ARTIST_COPY], ['directory', DIRECTORY_COPY], ['about', ABOUT_COPY]];
+  const mods: [string, Record<string, unknown>][] = [['copy', COMMON_COPY], ['sign-in', SIGN_IN_COPY], ['web', WEB_COPY], ['list', LIST_COPY], ['event', EVENT_COPY], ['artist', ARTIST_COPY], ['directory', DIRECTORY_COPY], ['about', ABOUT_COPY]];
   for (const [from, mod] of mods) {
     for (const dict of Object.values(mod)) {
       if (!dict || typeof dict !== 'object') continue;

@@ -10,6 +10,7 @@ import { requireAdmin } from '../../http/guards.ts';
 import { createSession } from '../../http/session.ts';
 import { decodeCursor, page } from '../../http/sql.ts';
 import { actionLabel, appendAudit, verifyAuditChain } from '../../services/audit.ts';
+import { webNumbers } from '../../services/web-signals.ts';
 import { payoutLedger } from '../../services/payouts.ts';
 import { SLA_HOURS } from '../../services/risk.ts';
 
@@ -91,6 +92,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
   app.get('/admin/insights', async (req) => {
     requireAdmin(req);
     const now = ctx.clock.now();
+    const web = await webNumbers(ctx.db, now);
     const today = vnDate(now);
     const dayStart = atVn(today);
     const weekAgo = new Date(now.getTime() - 7 * 86400_000);
@@ -134,6 +136,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
     const totalCity = cities.reduce((n, c) => n + c.n, 0);
     const totalGenre = genres.reduce((n, g) => n + g.n, 0);
     return {
+      web,
       health: [
         { key: 'queue', value: queue.n, note: L(`Oldest waiting: ${Math.floor(oldestMin / 60)}h ${oldestMin % 60}m`, `Cũ nhất: ${Math.floor(oldestMin / 60)} giờ ${oldestMin % 60} phút`) },
         { key: 'approved', value: approved.n, note: L(`Median ${Math.round(approved.median ?? 0)} minutes to decision`, `Trung bình ${Math.round(approved.median ?? 0)} phút mỗi tin`) },

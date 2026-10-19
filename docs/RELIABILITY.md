@@ -10,8 +10,8 @@ Measured over 28 days, in production (`feestfinder.com`, the `feestfinder-web` a
 | --- | --- | --- |
 | The site answers | 99.5% of the 15-minute checks pass (about 3.5 hours down a month at most) | `.github/workflows/uptime.yml`: `/`, `/health` (the API and its database through the proxy), `/events?limit=1`, `/sitemap.xml` |
 | Public reads are fast | p95 under 500 ms at the API for `PUBLIC_READS` (`app.ts`), under 1.5 s for a page's HTML | Vercel Observability (the API project's route latency; the web project's function duration) |
-| Few errors | under 0.5% of API responses are 5xx; under 1% of page views report an uncaught browser error | Vercel Observability (status codes); Sentry once `SENTRY_DSN` is set (`POST /client-errors` forwards the browser's) |
-| Pages feel quick on a phone | p75 LCP under 2.5 s, INP under 200 ms, CLS under 0.1 | PostHog: `web_vital` {kind, value, rating} from every page (`kd/ui/vitals.tsx`) |
+| Few errors | under 0.5% of API responses are 5xx; under 0.1% of measured pages report an uncaught browser error (artboard 26, phase 19) | Vercel Observability (status codes); the Console's "Số liệu" reads `web_signals` (every page's Web Vitals and uncaught errors, 30 days, `services/web-signals.ts`); Sentry once `SENTRY_DSN` is set (`POST /client-errors` and the API's own); the hourly `webHealth` job tells every admin when an hour passes 0.1% on a hundred measured pages or more |
+| Pages feel quick on a phone | p75 LCP under 2.5 s, INP under 200 ms, CLS under 0.1 | The Console's "Số liệu" (p75 of the last 7 days from `web_signals`); PostHog's "Web Vitals p75 theo kind" insight (`scripts/posthog-insights.ts` makes the four insights with the owner's personal key) |
 
 Before a release the browser checks hold the same line in the lab: `e2e/next/perf.spec.ts` keeps every listed screen at CLS 0.05 at most on a throttled phone, within its JS budget.
 
