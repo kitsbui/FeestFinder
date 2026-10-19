@@ -124,6 +124,14 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: festfinder-backend
 
+      # The Next build's own cache, kept between runs (design v2 phase 14): a shard rebuilds only what changed.
+      - uses: actions/cache@v4
+        with:
+          path: festfinder-web/.next/cache
+          key: next-build-${{ runner.os }}-${{ hashFiles('festfinder-web/package-lock.json') }}-${{ hashFiles('festfinder-web/src/**', 'festfinder-web/next.config.ts') }}
+          restore-keys: |
+            next-build-${{ runner.os }}-${{ hashFiles('festfinder-web/package-lock.json') }}-
+
       - name: Smoke-test every route
         run: npm run test:screens -- --shard=${{ matrix.shard }}/3
         working-directory: festfinder-backend

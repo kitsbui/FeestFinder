@@ -22,7 +22,7 @@ import { EventCard } from '../card';
 import { Crumbs, WebFooter, WebNav } from '../chrome';
 import { WEB } from '../copy';
 import { CommunityLine, CopyAddress, Countdown, FollowOrg, ReportLink, SaveWithCount, ShareButton } from './actions';
-import { Ambassadors, PhotoWall } from './community';
+import { EventExtras } from './extras';
 import { EventMore } from './more';
 import { EventClientProvider } from './context';
 import { Lineup } from './lineup';
@@ -228,8 +228,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     </Accordion>
                   </section>
 
-                  <PhotoWall lang={lang} />
-                  <Ambassadors lang={lang} />
+                  <EventExtras lang={lang} />
                 </div>
 
                 {/* On a phone the tickets come right after the hero (design v2 phase 2); on a computer they stay beside the page. */}

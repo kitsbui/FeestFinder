@@ -8,6 +8,8 @@ import { ACCOUNTS } from './routes.ts';
  * slow CPU (4×) and 4G (9 Mbps, 150 ms):
  *
  * - CLS, how much the layout jumps while a screen loads: 0.05 at most on every screen here.
+ * - LCP, when the screen's largest picture or text is on (design v2 phase 14): 2.5 s at most, and
+ *   2.0 s on the home and event pages, the ones a newcomer opens first.
  * - The JS a screen boots with: the chunks its HTML names, gzipped (what a phone downloads before
  *   the page works), at most its budget below. Next prefetches the pages a screen links to on top;
  *   that is not counted.
@@ -18,12 +20,15 @@ import { ACCOUNTS } from './routes.ts';
 
 type Who = 'visitor' | 'fan' | 'organizer' | 'admin';
 const CLS_MAX = 0.05;
-/** KB of gzipped boot JS per screen (2026-10-18: React and Next are about 127 of them). */
+const LCP_MAX = 2500;
+/** The newcomer's first two screens, held tighter. */
+const LCP_TIGHT: Record<string, number> = { '/': 2000, '/e/ravo': 2000 };
+/** KB of gzipped boot JS per screen (2026-10-19, after design v2 phase 14; React and Next are about 127 of them). */
 const SCREENS: [Who, string, number][] = [
-  ['visitor', '/', 197], ['visitor', '/e/ravo', 222], ['visitor', '/a', 204], ['visitor', '/a/slimv', 198],
-  ['visitor', '/o/ravoent', 197], ['visitor', '/p', 183], ['visitor', '/?view=map', 197], ['visitor', '/about', 176],
-  ['fan', '/profile', 199], ['fan', '/app/tickets', 231], ['fan', '/saved', 199],
-  ['organizer', '/studio', 202], ['organizer', '/studio/new', 216], ['admin', '/console', 203],
+  ['visitor', '/', 195], ['visitor', '/e/ravo', 196], ['visitor', '/a', 203], ['visitor', '/a/slimv', 196],
+  ['visitor', '/o/ravoent', 196], ['visitor', '/p', 181], ['visitor', '/?view=map', 195], ['visitor', '/about', 174],
+  ['fan', '/profile', 198], ['fan', '/app/tickets', 230], ['fan', '/saved', 199],
+  ['organizer', '/studio', 200], ['organizer', '/studio/new', 215], ['admin', '/console', 200],
 ];
 
 async function phone(browser: Browser, who: Who) {
@@ -37,11 +42,13 @@ async function phone(browser: Browser, who: Who) {
   return { ctx, page };
 }
 
-/** The layout shift of a screen's load, with the elements that moved. */
+/** The layout shift of a screen's load, with the elements that moved, and when its largest content painted. */
 async function cls(page: Page, path: string) {
   await page.addInitScript(() => {
-    const w = window as unknown as { __cls: { v: number; what: string[] } };
+    const w = window as unknown as { __cls: { v: number; what: string[] }; __lcp: number };
     w.__cls = { v: 0, what: [] };
+    w.__lcp = 0;
+    new PerformanceObserver((l) => { for (const e of l.getEntries()) w.__lcp = e.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
     new PerformanceObserver((l) => {
       for (const e of l.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean; sources?: { node: Node | null }[] })[]) {
         if (e.hadRecentInput) continue;
@@ -56,7 +63,7 @@ async function cls(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'load' });
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
   await page.waitForTimeout(1500);
-  return page.evaluate(() => (window as unknown as { __cls: { v: number; what: string[] } }).__cls);
+  return page.evaluate(() => { const w = window as unknown as { __cls: { v: number; what: string[] }; __lcp: number }; return { ...w.__cls, lcp: Math.round(w.__lcp) }; });
 }
 
 /** KB of gzipped JS named by the screen's HTML (scripts for old browsers left out). */
@@ -79,8 +86,10 @@ test('every screen loads without jumping and within its JS budget', async ({ bro
     const { ctx, page } = await phone(browser, who);
     const shift = await cls(page, path);
     const js = await bootJs(page, path);
-    table.push(`${path} (${who}): CLS ${shift.v.toFixed(3)}, JS ${js} KB / ${budget}`);
+    const lcpMax = LCP_TIGHT[path] ?? LCP_MAX;
+    table.push(`${path} (${who}): CLS ${shift.v.toFixed(3)}, LCP ${shift.lcp} ms / ${lcpMax}, JS ${js} KB / ${budget}`);
     if (shift.v > CLS_MAX) over.push(`${path}: CLS ${shift.v.toFixed(3)} > ${CLS_MAX} — ${[...new Set(shift.what)].slice(0, 4).join(', ')}`);
+    if (shift.lcp > lcpMax) over.push(`${path}: LCP ${shift.lcp} ms > ${lcpMax} ms`);
     if (js > budget) over.push(`${path}: ${js} KB of JS > its budget of ${budget} KB`);
     await ctx.close();
   }
