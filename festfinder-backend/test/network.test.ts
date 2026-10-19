@@ -92,6 +92,27 @@ describe('the artist network', () => {
     assert.equal((await env.as(owner).patch(`/admin/artists/${mie.id}`, { verified: true })).status, 403);
   });
 
+  it('lets the team hide a profile from the site and show it again, deleting nothing', async () => {
+    type Listed = { id: string; slug: string; hidden: boolean };
+    const slugs = (items: { slug: string }[]) => items.map((a) => a.slug);
+    const find = async (q: string, slug: string) => ((await env.as(admin).get('/admin/artists?q=' + q)).body.items as Listed[]).find((a) => a.slug === slug)!;
+    const links = async () => slugs((await env.as().get('/events/ravo')).body.artistLinks as { slug: string }[]);
+    const may = await find('may', 'may-dem');
+    const mie = await find('mie', 'dj-mie');
+    assert.equal(may.hidden, false);
+    assert.equal((await env.as(owner).patch(`/admin/artists/${may.id}`, { hidden: true })).status, 403);
+    for (const a of [may, mie]) assert.equal((await env.as(admin).patch(`/admin/artists/${a.id}`, { hidden: true })).status, 200);
+    assert.ok(!slugs((await env.as().get('/artists?limit=60')).body.items).includes('may-dem'), 'out of the directory');
+    assert.equal((await env.as().get('/artists?q=may')).body.items.length, 0, 'and out of search');
+    assert.equal((await env.as().get('/artists/may-dem')).status, 404);
+    assert.equal((await find('may', 'may-dem')).hidden, true, 'the team still sees it');
+    assert.ok((await env.as().get('/events/ravo')).body.artists.includes('DJ Mie'), 'the lineup keeps the name');
+    assert.ok(!(await links()).includes('dj-mie'), 'without a link to the hidden page');
+    for (const a of [may, mie]) assert.equal((await env.as(admin).patch(`/admin/artists/${a.id}`, { hidden: false })).status, 200);
+    assert.equal((await env.as().get('/artists/may-dem')).status, 200);
+    assert.ok((await links()).includes('dj-mie'));
+  });
+
   it('recognises the genres FeestFinder does not list, which imports drop', () => {
     assert.equal(otherGenreOf({ tags: ['Death Metal'] }), 'Rock');
     assert.equal(otherGenreOf({ title: 'Saigon Pop Punk Night' }), 'Rock');

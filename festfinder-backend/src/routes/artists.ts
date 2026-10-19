@@ -83,7 +83,7 @@ export default async function artistRoutes(app: FastifyInstance) {
   // ---- an artist's page ---------------------------------------------------------------------
 
   app.get<{ Params: { slug: string } }>('/artists/:slug', async (req) => {
-    const a = await one<any>(ctx.db, 'select * from artists where slug = $1', [req.params.slug]);
+    const a = await one<any>(ctx.db, 'select * from artists where slug = $1 and hidden_at is null', [req.params.slug]);
     if (!a) throw notFound(L('Artist not found', 'Không tìm thấy nghệ sĩ'));
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
@@ -146,7 +146,7 @@ export default async function artistRoutes(app: FastifyInstance) {
   app.get('/meta/artists', async () => {
     const rows = await many<{ slug: string; name: string }>(ctx.db,
       `select distinct a.slug, a.name from artists a join event_artists ea on ea.artist_id = a.id join events e on e.id = ea.event_id
-        where ${LIVE} and e.ends_at >= $1 order by a.slug limit 20000`, [ctx.clock.now()]);
+        where ${LIVE} and e.ends_at >= $1 and a.hidden_at is null order by a.slug limit 20000`, [ctx.clock.now()]);
     // The directory pages listing enough artists to be indexed.
     return { items: rows, directories: await directoryPages(ctx.db) };
   });
@@ -320,16 +320,16 @@ export default async function artistRoutes(app: FastifyInstance) {
     const { q, limit: max } = parse(z.object({ q: z.string().trim().max(80).optional(), limit: limit(200, 50) }), req.query);
     const key = q ? artistKey(q) : '';
     const rows = await many<any>(ctx.db,
-      `select a.id, a.slug, a.name, a.aliases, a.verified, a.musicbrainz_id, a.wikidata_id, a.spotify_id, a.owner_user_id, u.email as owner_email,
+      `select a.id, a.slug, a.name, a.aliases, a.verified, a.hidden_at, a.musicbrainz_id, a.wikidata_id, a.spotify_id, a.owner_user_id, u.email as owner_email,
               (select count(*)::int from event_artists ea where ea.artist_id = a.id) as events
          from artists a left join users u on u.id = a.owner_user_id
         where ($1 = '' or a.normalized_name like '%' || $1 || '%')
         order by a.verified desc, events desc, a.name limit $2`, [key, max]);
-    return { items: rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, aliases: r.aliases, verified: r.verified, musicbrainzId: r.musicbrainz_id,
+    return { items: rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, aliases: r.aliases, verified: r.verified, hidden: !!r.hidden_at, musicbrainzId: r.musicbrainz_id,
       wikidataId: r.wikidata_id, spotifyId: r.spotify_id, owner: r.owner_user_id ? { id: r.owner_user_id, email: r.owner_email } : null, events: r.events })) };
   });
 
-  /** What only the team sets: the verified tick and the identity anchors that beat a name match. */
+  /** What only the team sets: the verified tick, the identity anchors that beat a name match, and hiding the profile from the site. */
   app.patch<{ Params: { id: string } }>('/admin/artists/:id', async (req) => {
     const s = requireAdmin(req);
     const id = parse(uuid, req.params.id);
@@ -339,12 +339,15 @@ export default async function artistRoutes(app: FastifyInstance) {
       wikidataId: z.string().regex(/^Q\d{1,12}$/).nullable(),
       spotifyId: z.string().regex(/^[A-Za-z0-9]{22}$/).nullable(),
       aliases: z.array(z.string().trim().min(1).max(120)).max(20),
+      hidden: z.boolean(),
     }).partial(), req.body);
     const before = await one<any>(ctx.db, 'select * from artists where id = $1', [id]);
     if (!before) throw notFound();
     const map: Record<string, string> = { verified: 'verified', musicbrainzId: 'musicbrainz_id', wikidataId: 'wikidata_id', spotifyId: 'spotify_id' };
     const set: Record<string, unknown> = {};
     for (const [k, col] of Object.entries(map)) if ((b as any)[k] !== undefined) set[col] = (b as any)[k];
+    // Hidden keeps the moment it was first hidden; shown again clears it.
+    if (b.hidden !== undefined && b.hidden !== !!before.hidden_at) set.hidden_at = b.hidden ? ctx.clock.now() : null;
     if (b.aliases) {
       set.aliases = [...new Set(b.aliases)].filter((x) => artistKey(x) !== before.normalized_name);
       set.alias_keys = [...new Set((set.aliases as string[]).map(artistKey))];

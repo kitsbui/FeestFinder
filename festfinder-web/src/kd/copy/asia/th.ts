@@ -413,4 +413,6 @@ export const TH: Record<string, string> = {
   'Price on the ticket page': 'ดูราคาที่หน้าขายบัตร',
   'See price': 'ดูราคา',
   'Ask a question': 'ถามคำถาม',
+  'All': 'ทั้งหมด',
+  'Log in to keep them on every device': 'เข้าสู่ระบบเพื่อเก็บไว้ในทุกอุปกรณ์',
 };

@@ -43,7 +43,7 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
     // Artists with a show still to come.
     many<Stamped>(ctx.db,
       `select a.slug, max(e.updated_at) as updated_at from artists a join event_artists ea on ea.artist_id = a.id join events e on e.id = ea.event_id
-        where e.status = 'live' and not e.held_for_reports and e.published_at is not null and e.ends_at >= $1 group by a.slug limit 20000`, [now]),
+        where e.status = 'live' and not e.held_for_reports and e.published_at is not null and e.ends_at >= $1 and a.hidden_at is null group by a.slug limit 20000`, [now]),
     // Public collections with something still on.
     many<Stamped>(ctx.db,
       `select c.slug, greatest(c.updated_at, max(e.updated_at)) as updated_at

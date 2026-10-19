@@ -3,8 +3,8 @@ import { signInWith, watch } from '../checks.ts';
 
 /*
  * The Console's artists, gear and sources (festfinder-web/src/kd/console/artists, sources),
- * signed in as the demo admin. These tests add rows (a source or two, an affiliate link) and set
- * Kreo's other names; they delete nothing. "Run now" is never pressed: it reads the network.
+ * signed in as the demo admin. These tests add rows (a source or two, an affiliate link), set
+ * Kreo's other names and hide Kreo, then show it again; they delete nothing. "Run now" is never pressed: it reads the network.
  */
 
 const ADMIN = { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' };
@@ -52,6 +52,26 @@ test.describe('the Console: artists, gear and sources', () => {
     // The search came back with the address.
     await page.reload();
     await expect(page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' })).toHaveValue('Kreo');
+    expect(problems).toEqual([]);
+  });
+
+  test('artists: the team hides a profile from the site and shows it again', async ({ page }) => {
+    const problems = await open(page, '/console/artists?q=Kreo');
+    const drawer = page.getByRole('dialog', { name: 'Kreo' });
+    const row = page.getByRole('row').filter({ hasText: 'Kreo' });
+    const toggle = async () => {
+      await page.getByRole('button', { name: 'Sửa Kreo' }).click();
+      await drawer.getByRole('switch', { name: 'Ẩn khỏi site' }).click();
+      await drawer.getByRole('button', { name: 'Lưu', exact: true }).click();
+      await expect(drawer).toBeHidden();
+    };
+    await toggle();
+    await expect(row.getByText('Đã ẩn', { exact: true })).toBeVisible();
+    await expect(row.getByRole('link', { name: 'Kreo', exact: true })).toHaveCount(0);
+    expect((await page.request.get('/artists/kreo')).status()).toBe(404);
+    await toggle();
+    await expect(row.getByRole('link', { name: 'Kreo', exact: true })).toBeVisible();
+    expect((await page.request.get('/artists/kreo')).status()).toBe(200);
     expect(problems).toEqual([]);
   });
 

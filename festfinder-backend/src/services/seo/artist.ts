@@ -20,7 +20,7 @@ function sameAsOf(a: Row<'artists'>): string[] | undefined {
 
 /** Everything an artist page says to search engines and AI assistants, or null when no public event lists them. */
 export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<ArtistSeo | null> {
-  const a = await one<Row<'artists'>>(ctx.db, 'select * from artists where slug = $1', [slug]);
+  const a = await one<Row<'artists'>>(ctx.db, 'select * from artists where slug = $1 and hidden_at is null', [slug]);
   if (!a) return null;
   const now = ctx.clock.now();
   const events = await many<Pick<Row<'events'>, 'slug' | 'title' | 'genre' | 'styles' | 'starts_on' | 'ends_on' | 'start_time' | 'end_time' | 'starts_at'
