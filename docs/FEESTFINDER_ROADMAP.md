@@ -246,6 +246,7 @@ Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md) (
   - D4 · "EVENT_TYPES thêm day; inferEventType theo giờ 06–15:59 bắt đầu và kết thúc trước 21:00 hoặc từ khoá; festival thắng."
   - D5 · "Một ô nổi bật duy nhất: kệ nếu có, không thì lễ hội; nhãn Được tài trợ khi trả tiền; không hiện trong /app."
   - D6 · "/mcp và /list.md stateless, chỉ dữ liệu đã công khai ở /e/<slug>.md; không mua vé qua agent."
+- Code review of the plan against `48b2cf3` (handoff §7, 2026-10-19): four blockers folded into the cards (one Zalo token refresher shared by ZNS and the OA bot; the OA user id in a new `social_connections` provider `zalo_oa`, never in `zalo`; `/zalo/link` in `kd/cutover.ts`; the `day` rule before the `rave`/`party` keywords in `inferEventType`), two decisions left for the owner with defaults: D5b (the paid shelf also shows for a chosen city that has a shelf item) and D3c (keep the public ambassadors list as it is).
 - [ ] W0: ugly seed for the plan (a coffee rave, a shelf of three, `ambassador_pct` on ravo, an ICS and a poster fixture).
 - [ ] Card 4: event type `day` (Ban ngày), inferred by hour and keywords; no card tag (migration `048`).
 - [ ] Card 5: a paid shelf takes the home page's one highlight surface, "Được tài trợ" beside its name; closes tech debt 17.
