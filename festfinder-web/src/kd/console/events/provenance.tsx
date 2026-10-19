@@ -33,7 +33,7 @@ interface Provenance {
 }
 
 const ICON: Record<string, typeof LinkIcon> = {
-  organizer: BuildingsIcon, community: UsersThreeIcon, team: SealCheckIcon, website: GlobeIcon, ics: CalendarDotsIcon, ticketmaster: TicketIcon,
+  organizer: BuildingsIcon, community: UsersThreeIcon, team: SealCheckIcon, website: GlobeIcon, ics: CalendarDotsIcon, ticketmaster: TicketIcon, wordpress: GlobeIcon,
   facebook: FacebookLogoIcon, instagram: InstagramLogoIcon,
 };
 const isLink = (s: string) => /^https?:\/\/\S+\.\S+/.test(s.trim());

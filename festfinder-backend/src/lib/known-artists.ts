@@ -72,6 +72,8 @@ const ENTRIES: Entry[] = [
   ['Camo & Krooked', ['drum-and-bass']], ['Noisia', ['drum-and-bass']], ['Culture Shock', ['drum-and-bass']], ['Delta Heavy', ['drum-and-bass']],
   ['A.M.C', ['drum-and-bass']], ['Mefjus', ['drum-and-bass']], ['Sammy Virji', ['uk-garage']], ['Interplanetary Criminal', ['uk-garage']],
   ['Conducta', ['uk-garage']],
+  // Touring Asia's clubs (on Ciné Saigon's and 1900 Le Théâtre's programmes, 2026-10)
+  ['Matt Sassari', ['tech-house']], ['Mari Ferrari', ['tech-house']], ['Dombresky', ['tech-house']], ['Nusha', ['hard-techno']],
 ];
 
 const keyOf = (name: string) => plainText(name).replace(/\s+/g, ' ').trim();

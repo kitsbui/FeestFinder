@@ -126,6 +126,22 @@ test.describe('the Console: artists, gear and sources', () => {
     expect(added.enabled).toBe(false);
     expect(added.config).toEqual({ follow: '/event/', maxPages: 20 });
 
+    // A club's WordPress site (phase 18): the kind of post, a filter, the venue and its address travel in the config.
+    const club = `E2E club ${Date.now().toString(36)}`;
+    await page.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
+    await form.getByRole('button', { name: 'Trang venue (WordPress)' }).click();
+    await form.getByLabel('Tên', { exact: true }).fill(club);
+    await form.getByLabel('Địa chỉ trang').fill(`https://club-${Date.now()}.example/`);
+    await form.getByLabel('Loại bài').fill('events');
+    await form.getByLabel('Bộ lọc').fill('event-types=2');
+    await form.getByLabel('Địa điểm', { exact: true }).fill(club);
+    await form.getByLabel('Địa chỉ địa điểm').fill('8B Tạ Hiện');
+    await form.getByRole('switch', { name: 'Đang bật' }).click();
+    await form.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
+    await expect(form).toBeHidden();
+    await expect(page.getByRole('row').filter({ hasText: club })).toContainText('Trang venue (WordPress)');
+    expect((await sources(page)).find((s) => s.name === club)!.config).toEqual({ type: 'events', query: 'event-types=2', venue: club, address: '8B Tạ Hiện' });
+
     await row.getByRole('button', { name: 'Mở ' + name }).click();
     await expect(page).toHaveURL(new RegExp(`[?&]id=${added.id}`));
     const detail = page.getByRole('dialog', { name });

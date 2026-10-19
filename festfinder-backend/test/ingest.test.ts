@@ -13,6 +13,7 @@ import { finalize } from '../src/services/ingest/normalize.ts';
 import { parseIcs, icsAdapter } from '../src/services/ingest/adapters/ics.ts';
 import { ticketmasterAdapter } from '../src/services/ingest/adapters/ticketmaster.ts';
 import { eventLinks, websiteAdapter } from '../src/services/ingest/adapters/website.ts';
+import { dateInText, lineupInTitle, postsUrl, priceInText, timeInText, withoutDate, wordpressAdapter } from '../src/services/ingest/adapters/wordpress.ts';
 import { scoreMatch, titleLikeness, venueLikeness } from '../src/services/ingest/resolve.ts';
 import { confidenceLabel, scoreConfidence, type SourceFact } from '../src/services/ingest/confidence.ts';
 import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent } from '../src/services/ingest/types.ts';
@@ -183,6 +184,62 @@ describe('reading sources', () => {
   });
 });
 
+describe('a venue on WordPress', () => {
+  const cine = (over: Partial<IngestSource> = {}) => source({ adapter: 'wordpress', name: 'Ciné Saigon', url: 'https://cine-saigon.example/', city: 'ho-chi-minh',
+    config: { type: 'event', venue: 'Ciné Saigon', address: '148 Cống Quỳnh, Phường Bến Thành' }, ...over });
+
+  it('asks the REST API for the posts of one kind, with their cover, and lets only a taxonomy filter through', () => {
+    assert.equal(postsUrl('https://cine-saigon.example/', { type: 'events', query: 'event-types=2&bad=<x>', perPage: 500 }),
+      'https://cine-saigon.example/wp-json/wp/v2/events?per_page=50&_embed=wp%3Afeaturedmedia&_fields=id%2Clink%2Ctitle%2Cdate%2Cmodified%2Ccontent%2C_links%2C_embedded&event-types=2');
+    assert.equal(postsUrl('https://cine-saigon.example/', { type: '../users' }), null);
+  });
+
+  it('reads the date from a title or a text, the year from the post, and the time, the price and the lineup around it', () => {
+    assert.equal(dateInText('AFTER HOURS #3: NUSHA | Saturday, 17.10', '2026-10-07T09:24:43')?.date, '2026-10-17');
+    assert.equal(dateInText('FRIDAY (OCT 16) - TUNE IN', '2026-10-10T12:00:00')?.date, '2026-10-16');
+    // "October 20th, 1900 Le Théâtre": 1900 is the club, not the year.
+    assert.equal(dateInText('on October 20th, 1900 Le Théâtre', '2026-10-15T19:27:28')?.date, '2026-10-20');
+    assert.equal(dateInText('ngày 4 tháng 10', '2026-10-01')?.date, '2026-10-04');
+    // A night in January written in December is next year's.
+    assert.equal(dateInText('Saturday, 03.01', '2026-12-28')?.date, '2027-01-03');
+    assert.equal(dateInText('Every Wednesday', '2026-10-07'), null);
+    assert.equal(withoutDate('FRIDAY (OCT 16) - TUNE IN TO RADARVERSE #04 WITH NUSHA', dateInText('FRIDAY (OCT 16) - TUNE IN TO RADARVERSE #04 WITH NUSHA', '2026-10-10')!), 'TUNE IN TO RADARVERSE #04 WITH NUSHA');
+    assert.deepEqual([timeInText('Doors 22:00.'), timeInText('from 10pm'), timeInText('mở cửa 21h30'), timeInText('Vé 500.000đ tại cửa')], ['22:00', '22:00', '21:30', null]);
+    // A bottle combo is not a ticket; "vé" and "đ" have no \b in JavaScript.
+    assert.deepEqual(priceInText('Combo 2900K. 🎫EARLY BIRD COUPON: 350K. COUPON ONLINE: 400K.'), { price: 350000, free: false });
+    assert.deepEqual(priceInText('Vé: 500.000đ tại cửa'), { price: 500000, free: false });
+    assert.deepEqual(priceInText('Free entrance all night'), { price: null, free: true });
+    assert.deepEqual(lineupInTitle('OFFICIAL AFTER PARTY NEWORLD: ADAM BEYER & ALEX MILLS'), ['ADAM BEYER', 'ALEX MILLS']);
+    assert.deepEqual([lineupInTitle('TUNE IN TO RADARVERSE #04 WITH NUSHA'), lineupInTitle('RAVEX x ECLIPSE TAKEOVER: CHAPTER I – THE AWAKENING')], [['NUSHA'], []]);
+  });
+
+  it('turns the posts into nights at the venue, and refuses a weekly post that names no date', async () => {
+    const io = fakeIO({ 'https://cine-saigon.example/wp-json/wp/v2/event': fixture('wordpress-cine.json') }, { etag: '"w1"' });
+    const out = await wordpressAdapter.discover(cine(), io);
+    assert.deepEqual(out.records.map((r) => r.externalId), ['cine-saigon.example:event:932', 'cine-saigon.example:event:926', 'cine-saigon.example:event:903', 'cine-saigon.example:event:880']);
+    const [nusha, neworld, weekly, newYear] = out.records.map((r) => wordpressAdapter.normalize(r, { source: cine(), now: NOW }));
+    assert.ok(!isRejection(nusha) && !isRejection(neworld) && !isRejection(newYear));
+    assert.deepEqual([nusha.title, nusha.startsOn, nusha.startTime, nusha.city, nusha.venueName, nusha.address], ['AFTER HOURS #3: NUSHA', '2026-10-17', null, 'ho-chi-minh', 'Ciné Saigon', '148 Cống Quỳnh, Phường Bến Thành']);
+    assert.deepEqual([nusha.styles, nusha.lineup, nusha.priceFrom, nusha.free, nusha.imageUrl], [['hard-techno'], ['NUSHA'], 350000, false, 'https://cine-saigon.example/wp-content/uploads/2026/10/NUSHA-KV.png']);
+    assert.deepEqual([neworld.startsOn, neworld.startTime, neworld.priceFrom, neworld.lineup], ['2026-10-02', '22:00', 500000, ['ADAM BEYER', 'ALEX MILLS']]);
+    assert.deepEqual([newYear.startsOn, newYear.lineup], ['2027-01-03', ['CHARLOTTE DE WITTE']]);
+    assert.deepEqual(weekly, { rejected: 'no_date' });
+    // Unchanged since last time: nothing to read again.
+    const again = await wordpressAdapter.discover(cine({ etag: '"w1"' }), io);
+    assert.equal(again.notModified, true);
+  });
+
+  it('reads 1900 Le Théâtre: a date in the text, the year from the post, "with" naming the guest', async () => {
+    const hanoi = source({ adapter: 'wordpress', name: '1900 Le Théâtre', url: 'https://1900-hanoi.example/', city: 'ha-noi', config: { type: 'events', query: 'event-types=2', address: '8B Tạ Hiện, Hoàn Kiếm' } });
+    const io = fakeIO({ 'https://1900-hanoi.example/wp-json/wp/v2/events': fixture('wordpress-1900.json') });
+    const out = await wordpressAdapter.discover(hanoi, io);
+    assert.match(io.hits[0], /\/wp-json\/wp\/v2\/events\?.*event-types=2/);
+    const [ladies, radar] = out.records.map((r) => wordpressAdapter.normalize(r, { source: hanoi, now: NOW }) as NormalizedEvent);
+    assert.deepEqual([ladies.startsOn, ladies.city, ladies.venueName, ladies.priceFrom, ladies.lineup], ['2026-10-20', 'ha-noi', '1900 Le Théâtre', 300000, ['Michael']]);
+    assert.deepEqual([radar.title, radar.startsOn, radar.startTime, radar.free, radar.styles], ['TUNE IN TO RADARVERSE #04 WITH NUSHA', '2026-10-16', '22:00', true, ['hard-techno']]);
+  });
+});
+
 describe('what real sources send', () => {
   it('drops a city put in front of the title, and a venue that is only the city', () => {
     const n = finalize({ title: 'TP.HỒ CHÍ MINH | Musique de salon 22', start: '2026-10-10T20:15:00+07:00', venueName: 'TP.HỒ CHÍ MINH',
@@ -278,6 +335,7 @@ describe('ingestion runs (API)', () => {
         .replace('GEO:35.6580;139.6960', 'GEO:13.7247;100.5699'),
       'https://ticketbox.vn/ravolution-music-festival-2026': fixture('ticketbox-ravolution.html'),
       'https://app.ticketmaster.com/discovery/v2/events.json': fixture('ticketmaster-sg.json'),
+      'https://cine-saigon.example/wp-json/wp/v2/event': fixture('wordpress-cine.json'),
     };
     env = await setup({ ingestIO: () => fakeIO(pages, { secrets: { ticketmasterKey: 'k-123' } }) });
     admin = await env.admin();
@@ -463,6 +521,19 @@ describe('ingestion runs (API)', () => {
     assert.equal(skipped.body.summary.rejected, 1);
     const raw = await env.as(admin).get(`/admin/sources/${skipping}/raw?status=rejected`);
     assert.match(raw.body.items[0].error, /^skipped/);
+  });
+
+  it('files a club\'s WordPress posts as club nights at the venue, in review', async () => {
+    const id = await addSource({ adapter: 'wordpress', name: 'Ciné Saigon', url: 'https://cine-saigon.example/', city: 'ho-chi-minh', authority: 'official',
+      config: { type: 'event', venue: 'Ciné Saigon', address: '148 Cống Quỳnh, Phường Bến Thành', eventType: 'club' } });
+    const run = await env.as(admin).post(`/admin/sources/${id}/run`);
+    assert.equal(run.status, 200, JSON.stringify(run.body));
+    assert.deepEqual([run.body.summary.fetched, run.body.summary.created, run.body.summary.rejected], [4, 3, 1], JSON.stringify(run.body.summary));
+    const ev = (await env.ctx.db.query<any>(`select * from events where title = 'AFTER HOURS #3: NUSHA'`)).rows[0];
+    assert.deepEqual([ev.status, ev.city, ev.venue_name, ev.event_type, ev.styles, ev.price_from, ev.lineup], ['in_review', 'ho-chi-minh', 'Ciné Saigon', 'club', ['hard-techno'], 350000, ['NUSHA']]);
+    assert.equal(ev.starts_on instanceof Date ? ev.starts_on.toISOString().slice(0, 10) : String(ev.starts_on).slice(0, 10), '2026-10-17');
+    const list = (await env.as(admin).get('/admin/sources')).body.items.find((x: any) => x.id === id);
+    assert.equal(list.adapter, 'wordpress');
   });
 
   it('reprocesses stored records without fetching again', async () => {
