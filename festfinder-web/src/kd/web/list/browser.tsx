@@ -41,7 +41,8 @@ const FirstRun = dynamic(() => import('./first-run').then((m) => m.FirstRun), { 
 export type View = 'table' | 'grid' | 'map';
 export type Time = 'all' | 'tonight' | 'weekend' | '7days' | 'month';
 export interface Meta {
-  cities: { slug: string; name: Pair; timezone: string; center: [number, number] | null; bbox: [number, number, number, number] | null }[];
+  cities: { slug: string; country: string; name: Pair; timezone: string; center: [number, number] | null; bbox: [number, number, number, number] | null }[];
+  countries: { code: string; name: Pair; timezone: string }[];
   styles: { key: string; label: Pair; genre: string | null }[];
   eventTypes: { key: string; label: Pair }[];
   genres: string[];
@@ -64,9 +65,9 @@ const TIMES: Time[] = ['all', 'tonight', 'weekend', '7days', 'month'];
 /** The kinds of night and music styles the list offers as one picker (the legacy chips). */
 const TYPE_CHIPS = ['club', 'festival', 'concert'];
 const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass'];
-/** A phone's four times, one tap each (design v2 phase 12, owner 2026-10-18). */
-const PHONE_TIMES: Time[] = ['tonight', 'weekend', '7days', 'all'];
-/** A phone's row of styles: the ones with nights here, most first. */
+/** A phone's three times, one tap each (design v2 phase 12, owner 2026-10-18; three since phase 13: the list by day already shows the week). */
+const PHONE_TIMES: Time[] = ['tonight', 'weekend', 'all'];
+/** A phone's row of styles: the ones with nights here, most first; shown once there are two to choose from. */
 const PHONE_STYLES = 6;
 
 /** A time choice's name. */
@@ -134,6 +135,8 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const [sort, setSort] = useState<{ by: 'date' | 'price' | 'hype'; desc: boolean }>({ by: 'date', desc: false });
   const [at, setAt] = useState<Date | null>(null);
   const [ready, setReady] = useState(false);
+  /** The newcomer's country (city-first.tsx): its nights lead the list while every city shows. */
+  const [country, setCountry] = useState<string | null>(null);
   const [firstRun, setFirstRun] = useState(false);
   const openedByApp = useRef(false);
   const seq = useRef(0);
@@ -175,6 +178,10 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     const first = document.documentElement.getAttribute('data-city-first');
     if (first && !q.has('city') && meta.cities.some((x) => x.slug === first)) next.city = first;
     else if (first) document.documentElement.removeAttribute('data-city-first');
+    // Or the newcomer's country: what the list has, its nights first (design v2 phase 13, owner 2026-10-19).
+    const placeFirst = document.documentElement.getAttribute('data-place-first');
+    if (placeFirst && !q.has('city') && meta.countries.some((x) => x.code === placeFirst)) setCountry(placeFirst);
+    else if (placeFirst) document.documentElement.removeAttribute('data-place-first');
     setF(next);
     setReady(true);
     const same = JSON.stringify({ ...next, view: 'grid', bbox: null }) === JSON.stringify({ ...DEFAULT });
@@ -193,10 +200,12 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     if (openedByApp.current && !place.known() && !kd.user) setFirstRun(true);
   }, [kd.session, kd.user]);
   useEffect(() => { if (clockReady) setAt(FF.now()); }, [clockReady]);
-  // The newcomer's city is in (or the list asked nothing): show the list city-first.tsx held back.
+  // The newcomer's city is in (or the list asked nothing), or its country is grouped: show the list city-first.tsx held back.
   useEffect(() => {
-    if (ready && !busy) document.documentElement.removeAttribute('data-city-first');
-  }, [ready, busy, rows]);
+    if (!ready || busy) return;
+    document.documentElement.removeAttribute('data-city-first');
+    document.documentElement.removeAttribute('data-place-first');
+  }, [ready, busy, rows, country]);
 
   // Every minute while the list is on screen (not more pages: they would be dropped).
   useEffect(() => {
@@ -318,7 +327,7 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const styleCounts = page.facets?.style ?? {};
   const phoneStyles = Object.entries(styleCounts).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, PHONE_STYLES).map(([k]) => k);
   if (f.style && !phoneStyles.includes(f.style)) phoneStyles.unshift(f.style);
-  const styleRow = phoneStyles.map((k) => (
+  const styleRow = phoneStyles.length < 2 ? null : phoneStyles.map((k) => (
     <Chip key={k} on={f.style === k} onClick={() => set({ style: f.style === k ? null : k, type: null })}>
       {tx(meta.styles.find((x) => x.key === k)?.label, lang) ?? k}
     </Chip>
@@ -376,7 +385,13 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
 
   const heading = [f.time !== 'all' ? timeLabel(f.time) : T.title, f.city !== 'all' ? cityName(f.city) : null].filter(Boolean).join(' · ');
   const today = at ? todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone, at) : null;
-  const groups = f.view === 'grid' ? groupByDay(sorted, lang, today) : [];
+  // The newcomer's country first (phase 13): its nights under its name, the rest under "Nơi khác", while every city shows.
+  const countryOf = (slug: string) => meta.cities.find((c) => c.slug === slug)?.country ?? null;
+  const mine = country && f.city === 'all' ? sorted.filter((e) => countryOf(e.city) === country) : [];
+  const split = mine.length > 0 && mine.length < sorted.length;
+  const groups = f.view === 'grid' ? groupByDay(split ? mine : sorted, lang, today) : [];
+  const elsewhere = split ? groupByDay(sorted.filter((e) => countryOf(e.city) !== country), lang, today) : [];
+  const countryName = country ? tx(meta.countries.find((c) => c.code === country)?.name, lang) : null;
 
   return (
     <>
@@ -404,7 +419,16 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
         {sorted.length ? (
           f.view === 'grid' ? (
             <div className="flex items-start gap-10">
-              <DayGrid groups={groups} lang={lang} className={cx('min-w-0 flex-1 transition-opacity', busy && 'opacity-60')} />
+              {split ? (
+                <div className={cx('flex min-w-0 flex-1 flex-col gap-10 transition-opacity', busy && 'opacity-60')}>
+                  <h2 id="here-h" className="kd-d2">{countryName}</h2>
+                  <DayGrid groups={groups} lang={lang} eager />
+                  <h2 id="elsewhere-h" className="kd-d2 border-t border-line-1 pt-10">{T.elsewhere}</h2>
+                  <DayGrid groups={elsewhere} lang={lang} />
+                </div>
+              ) : (
+                <DayGrid groups={groups} lang={lang} eager className={cx('min-w-0 flex-1 transition-opacity', busy && 'opacity-60')} />
+              )}
               <ListRail
                 lang={lang}
                 items={sorted}

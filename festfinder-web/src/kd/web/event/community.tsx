@@ -321,11 +321,12 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
   };
   const mine = !!p.me?.mine;
   return (
-    <article className={cx('flex gap-3', p.hidden && 'opacity-60')}>
+    <article className="flex gap-3">
       <Avatar name={p.author?.name || T.discMember} src={p.author?.photoUrl} size={32} />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="kd-hs">{p.removed ? T.discRemoved : p.author?.name || T.discMember}</span>
+          {/* A hidden post steps back in its name, never by dimming (contrast). */}
+          <span className={cx('kd-hs', p.hidden && 'text-fg-3')}>{p.removed ? T.discRemoved : p.author?.name || T.discMember}</span>
           {p.author?.badges.map((b) => <Tag key={b.key} tone={b.key === 'team' || b.key === 'ff' ? 'bone' : 'line'}>{tx(b.label, lang)}</Tag>)}
           {p.official ? <Tag tone="line">{T.discOfficial}</Tag> : null}
           {p.pinned ? <Tag>{T.discPinned}</Tag> : null}

@@ -16,10 +16,11 @@ export function EventRow({ e, lang, d, dim }: { e: Card; lang: Lang; d?: number 
   const T = pick(APP, lang);
   const fam = familyOf(e.genre);
   return (
-    <Link className={cx('kd-row', g(fam), dim && 'opacity-60')} href={'/e/' + e.slug}>
+    <Link className={cx('kd-row', g(fam))} href={'/e/' + e.slug}>
       <Art title={e.title} family={fam} cover={e.coverUrl} off={e.soldOut || e.past} />
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="flex min-w-0 items-center gap-2"><span className="kd-hs kd-ell">{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
+        {/* A past night steps back in its name, never by dimming the row (contrast). */}
+        <span className="flex min-w-0 items-center gap-2"><span className={cx('kd-hs kd-ell', dim && 'text-fg-3')}>{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
         <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{whenShort(e, lang)}{e.venue.area ? ' · ' + e.venue.area : ''}</span>
       </span>
       <span className="flex flex-col items-end gap-0.5">

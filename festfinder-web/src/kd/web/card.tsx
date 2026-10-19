@@ -47,7 +47,7 @@ export type CardLook = 'card' | 'lead' | 'row';
  * `morph`: the picture becomes the event page's hero when it opens (React's ViewTransition, design v2
  * phase 8). Only where an event appears once on the page (the list's days): two of one name would clash.
  */
-export function EventCard({ e, lang, look = 'card', morph = false }: { e: Card; lang: Lang; look?: CardLook; morph?: boolean }) {
+export function EventCard({ e, lang, look = 'card', morph = false, eager = false }: { e: Card; lang: Lang; look?: CardLook; morph?: boolean; /** Its picture loads first: the list's first lead (design v2 phase 13). */ eager?: boolean }) {
   const T = pick(WEB, lang);
   const fam = familyOf(e.genre);
   const tag = cardTag(e, lang);
@@ -55,7 +55,7 @@ export function EventCard({ e, lang, look = 'card', morph = false }: { e: Card; 
   const lead = !e.past && !e.soldOut && e.status !== 'cancelled' && (!!e.festival?.flagship || (!e.badge && e.featured));
   const href = inLang('/e/' + e.slug, lang);
   const radar = e.origin === 'radar';
-  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} />;
+  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} eager={eager} />;
   return (
     <article className={cx('kd-ev', look !== 'card' && `kd-ev-${look}`, g(fam))}>
       <div className="kd-ev-art relative">

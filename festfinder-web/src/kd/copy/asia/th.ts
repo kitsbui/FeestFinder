@@ -415,4 +415,5 @@ export const TH: Record<string, string> = {
   'Ask a question': 'ถามคำถาม',
   'All': 'ทั้งหมด',
   'Log in to keep them on every device': 'เข้าสู่ระบบเพื่อเก็บไว้ในทุกอุปกรณ์',
+  'Elsewhere': 'ที่อื่น',
 };

@@ -66,8 +66,10 @@ export function monogram(title: string): string {
  * on a page that names the event beside it, a poster of its date instead (`poster`).
  * No shapes and no gradients stand in for a picture. `off` dims it (sold out, past, not chosen).
  */
-export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card' }: {
+export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false }: {
   family: Family; cover?: string | null; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
+  /** The page's main picture (a hero, the list's first lead): fetched first, never lazily. */
+  eager?: boolean;
   /** The name a text tile shows when there is no cover, or the cover does not load. */
   title?: string | null;
   /** The style, in the information colour, at the start of the line under the name ("Hard techno"). */
@@ -94,7 +96,7 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
         </>
       ) : null}
       {cover ? (
-        <img src={cover} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
+        <img src={cover} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
       ) : null}
       {children}
     </div>

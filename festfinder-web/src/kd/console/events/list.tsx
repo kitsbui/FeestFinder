@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { FF } from '@/runtime/ff';
 import { INTL, fill, pick, type Lang, tx } from '../../copy';
 import { count, money, todayIn, whenShort } from '../../format';
+import { cx } from '../../cx';
 import { KdLink } from '../../link';
 import { useKd } from '../../runtime';
 import { buttonClass, LinkButton } from '../../ui/actions';
@@ -135,13 +136,14 @@ export function EventList() {
         {load.error ? <ErrorBox error={load.error} retry={load.reload} /> : null}
         {!data ? (load.error ? null : <Loading />) : !data.items.length ? <Empty title={T.noEvents} /> : (
           <Table label={T.title} cols={COLS} fold="lg" head={[T.cDate, T.cListing, T.cOrg, T.cStatus, T.cPrice, T.cSold, T.cHype, <span key="a" className="sr-only">{T.cActions}</span>]}>
+            {/* A listing that is off (removed, cancelled) steps back in its name only: dimming the row fails the contrast check. */}
             {data.items.map((e) => (
-              <Row key={e.id} cols={COLS} className={['removed', 'cancelled'].includes(e.status) ? 'opacity-60' : undefined}>
+              <Row key={e.id} cols={COLS}>
                 <span role="cell" className="kd-m kd-num">{e.startsOn ? <>{whenShort(e, lang)}<br />{e.startTime ?? ''}</> : '—'}</span>
                 <span role="cell" className="flex min-w-0 items-center gap-3 py-2">
                   <Art title={e.title} family="edm" cover={e.coverUrl} className="h-9 w-16 shrink-0 rounded-md" />
                   <span className="flex min-w-0 flex-col">
-                    <KdLink href={'/console/events/' + e.id} className="kd-hs kd-ell kd-hit hover:underline">
+                    <KdLink href={'/console/events/' + e.id} className={cx('kd-hs kd-ell kd-hit hover:underline', ['removed', 'cancelled'].includes(e.status) && 'text-fg-3')}>
                       {e.featured ? <StarIcon size={14} weight="fill" className="mr-1 inline text-info" aria-label={T.featured} /> : null}{e.title}
                     </KdLink>
                     <span className="kd-s kd-ell">{[e.genre, e.venueName, e.area].filter(Boolean).join(' · ') || '—'}</span>

@@ -415,4 +415,5 @@ export const JA: Record<string, string> = {
   'Ask a question': '質問する',
   'All': 'すべて',
   'Log in to keep them on every device': 'ログインするとすべての端末に保存されます',
+  'Elsewhere': 'その他の地域',
 };
