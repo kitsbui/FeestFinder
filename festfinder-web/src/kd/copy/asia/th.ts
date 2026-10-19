@@ -440,4 +440,7 @@ export const TH: Record<string, string> = {
   'Who listed it': 'ใครเป็นคนลง',
   'Machine translation': 'แปลด้วยเครื่อง',
   'Original text': 'ข้อความต้นฉบับ',
+  'Continue with Instagram': 'ดำเนินการต่อด้วย Instagram',
+  'Continue with TikTok': 'ดำเนินการต่อด้วย TikTok',
+  'The email also has a link that logs you in with one tap.': 'ในอีเมลมีลิงก์ที่แตะครั้งเดียวก็เข้าสู่ระบบได้',
 };

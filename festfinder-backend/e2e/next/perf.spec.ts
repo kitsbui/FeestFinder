@@ -28,10 +28,11 @@ const LCP_SIGNED_IN = 3500;
 const LCP_TIGHT: Record<string, number> = { '/': 2000, '/e/ravo': 2000 };
 /** KB of gzipped boot JS per screen (2026-10-19, after design v2 phase 14; React and Next are about 127 of them). A screen measured twice within 1 KB keeps the higher number: gzip rounds. */
 const SCREENS: [Who, string, number][] = [
-  ['visitor', '/', 195], ['visitor', '/e/ravo', 196], ['visitor', '/a', 203], ['visitor', '/a/slimv', 197],
-  ['visitor', '/o/ravoent', 196], ['visitor', '/p', 181], ['visitor', '/?view=map', 195], ['visitor', '/about', 174],
+  // Every page carries the sign-in sheet; phase 17 gave it two more ways in (one more kilobyte on /, the map and the wizard).
+  ['visitor', '/', 196], ['visitor', '/e/ravo', 196], ['visitor', '/a', 203], ['visitor', '/a/slimv', 197],
+  ['visitor', '/o/ravoent', 196], ['visitor', '/p', 181], ['visitor', '/?view=map', 196], ['visitor', '/about', 174],
   ['fan', '/profile', 198], ['fan', '/app/tickets', 230], ['fan', '/saved', 199],
-  ['organizer', '/studio', 200], ['organizer', '/studio/new', 215], ['admin', '/console', 200],
+  ['organizer', '/studio', 200], ['organizer', '/studio/new', 216], ['admin', '/console', 200],
 ];
 
 async function phone(browser: Browser, who: Who) {

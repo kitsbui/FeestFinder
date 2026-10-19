@@ -14,7 +14,7 @@ import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
 import { ClaudeTranslator, DisabledTranslator } from './services/translate.ts';
 import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
-import { FacebookOAuth, GoogleOAuth, InstagramOAuth, MockOAuth } from './services/oauth.ts';
+import { FacebookOAuth, GoogleOAuth, InstagramOAuth, TikTokOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
 import { fakeImageFetcher, fetchImageHead } from './services/remote-images.ts';
 import { fakeOembed, fetchOembed } from './services/mixes.ts';
@@ -107,7 +107,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     fetchPage: (url: string) => fetchPublicPage(url),
     fetchImage: config.fakeRemoteMedia ? fakeImageFetcher : fetchImageHead,
     oembed: config.fakeRemoteMedia ? fakeOembed : fetchOembed,
-    oauth: { google: googleOAuth(), fb: oauthFor('fb'), ig: oauthFor('ig') },
+    oauth: { google: googleOAuth(), fb: oauthFor('fb'), ig: oauthFor('ig'), tiktok: process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET ? new TikTokOAuth(process.env.TIKTOK_CLIENT_KEY, process.env.TIKTOK_CLIENT_SECRET) : null },
     checkLink,
     log,
   };

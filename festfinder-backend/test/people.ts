@@ -4,9 +4,9 @@ import type { TestEnv } from './helpers.ts';
 export async function emailUser(env: TestEnv, email: string): Promise<string> {
   const api = env.as();
   const start = await api.post('/auth/otp/start', { channel: 'email', identifier: email });
+  // A proven email signs in with no password step (phase 17).
   const verify = await api.post('/auth/otp/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
-  const done = await api.post('/auth/password', { token: verify.body.signupToken, password: 'longenough1', passwordConfirm: 'longenough1' });
-  return done.body.token;
+  return verify.body.token;
 }
 
 /** Signs in with a one-time code to a phone number, the way Zalo sign-in works. */

@@ -179,6 +179,13 @@ export const APP = {
   // checkout
   checkoutTitle: { en: 'Confirm your order', vi: 'Xác nhận đơn hàng' },
   gateCheckout: { en: 'Log in to buy tickets', vi: 'Đăng nhập để mua vé' },
+  guestTitle: { en: 'Buy without an account', vi: 'Mua không cần tài khoản' },
+  guestEmail: { en: 'Email for the tickets', vi: 'Email nhận vé' },
+  guestPhone: { en: 'Phone number', vi: 'Số điện thoại' },
+  guestGo: { en: 'Continue', vi: 'Tiếp tục' },
+  guestNote: { en: 'The tickets go to this email; a code sent to it opens them later.', vi: 'Vé gửi về email này; sau này một mã gửi tới email là mở được.' },
+  guestOr: { en: 'or log in', vi: 'hoặc đăng nhập' },
+  guestExists: { en: 'This email already has an account: log in with a code sent to it.', vi: 'Email này đã có tài khoản: đăng nhập bằng mã gửi tới email.' },
   quantity: { en: 'Tickets', vi: 'Số lượng vé' },
   qtyDec: { en: 'One fewer', vi: 'Bớt một vé' },
   qtyInc: { en: 'One more', vi: 'Thêm một vé' },

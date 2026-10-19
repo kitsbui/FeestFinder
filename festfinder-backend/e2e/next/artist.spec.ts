@@ -10,9 +10,9 @@ const ATTENDEE = { identifier: 'minh@example.com', password: 'festfinder123' };
 
 async function newAccount(page: Page, email: string) {
   const start = await (await page.request.post('/auth/otp/start', { data: { channel: 'email', identifier: email } })).json();
-  const verify = await (await page.request.post('/auth/otp/verify', { data: { challengeId: start.challengeId, code: start.devCode } })).json();
-  const done = await page.request.post('/auth/password', { data: { token: verify.signupToken, password: 'longenough1', passwordConfirm: 'longenough1' } });
-  expect(done.ok(), 'sign up as ' + email).toBeTruthy();
+  // The code alone signs the new account in (phase 17), on this browser's cookies.
+  const verify = await page.request.post('/auth/otp/verify', { data: { challengeId: start.challengeId, code: start.devCode } });
+  expect(verify.ok(), 'sign up as ' + email).toBeTruthy();
 }
 
 async function open(page: Page, path: string) {

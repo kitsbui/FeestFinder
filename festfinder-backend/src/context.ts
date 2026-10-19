@@ -36,7 +36,7 @@ export interface Ctx {
   fetchImage: ImageFetcher;
   /** Asks SoundCloud, Mixcloud or Spotify about a pasted link (oEmbed). */
   oembed: OembedFetcher;
-  oauth: { google: OAuthProvider | null; fb: OAuthProvider | null; ig: OAuthProvider | null };
+  oauth: { google: OAuthProvider | null; fb: OAuthProvider | null; ig: OAuthProvider | null; tiktok: OAuthProvider | null };
   checkLink: (url: string) => Promise<'ok' | 'broken'>;
   /** The network an ingestion run reads through. Tests hand in fixtures; otherwise the polite fetcher. */
   ingestIO?: () => IngestIO;

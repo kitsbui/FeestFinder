@@ -9,39 +9,70 @@ describe('sign-up and sign-in', () => {
   before(async () => { env = await setup(); });
   after(async () => { await env.close(); });
 
-  it('signs up by email: code, then password, then a session', async () => {
+  it('signs up by email with a code alone, and the email carries a one-tap link (phase 17)', async () => {
     const api = env.as();
     const bad = await api.post('/auth/otp/start', { channel: 'email', identifier: 'not-an-email' });
     assert.equal(bad.status, 400);
     assert.equal(bad.body.error.code, 'invalid_email');
 
-    const start = await api.post('/auth/otp/start', { channel: 'email', identifier: 'New.Person@Example.com' });
+    const start = await api.post('/auth/otp/start', { channel: 'email', identifier: 'New.Person@Example.com', redirectUri: 'http://localhost:3000/e/ravo' });
     assert.equal(start.status, 200);
     assert.equal(start.body.resendIn, 30);
     assert.match(start.body.devCode, /^\d{6}$/);
-    await new Promise((r) => setTimeout(r, 20));
-    assert.ok(env.transport.sent.some((m) => m.template === 'otp' && m.address === 'new.person@example.com'), 'code went out by email');
+    await deliverDue(env.ctx.db, env.clock, env.transport);
+    const mail = env.transport.sent.find((m) => m.template === 'otp' && m.address === 'new.person@example.com');
+    assert.ok(mail, 'code went out by email');
+    assert.match(String(mail!.payload.link), new RegExp(`/auth/email/${start.body.challengeId}/${start.body.devCode}\\?redirect=`), 'the link carries the same code');
 
+    // No password step: the code makes the account and signs it in.
     const verify = await api.post('/auth/otp/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
-    assert.equal(verify.body.next, 'set_password');
-
-    const short = await api.post('/auth/password', { token: verify.body.signupToken, password: 'short' });
-    assert.equal(short.body.error.code, 'password_too_short');
-    const mismatch = await api.post('/auth/password', { token: verify.body.signupToken, password: 'longenough1', passwordConfirm: 'different1' });
-    assert.equal(mismatch.body.error.code, 'password_mismatch');
-
-    const done = await api.post('/auth/password', { token: verify.body.signupToken, password: 'longenough1', passwordConfirm: 'longenough1' });
-    assert.equal(done.status, 200);
-    assert.equal(done.body.created, true);
-    assert.equal(done.body.user.email, 'new.person@example.com');
-    assert.match(String(done.headers['set-cookie']), /ff_session=.*HttpOnly/i);
-
-    const me = await env.as(done.body.token).get('/me');
-    assert.equal(me.status, 200);
+    assert.equal(verify.status, 200, JSON.stringify(verify.body));
+    assert.equal(verify.body.created, true);
+    assert.equal(verify.body.user.email, 'new.person@example.com');
+    assert.equal(verify.body.user.hasPassword, false);
+    assert.match(String(verify.headers['set-cookie']), /ff_session=.*HttpOnly/i);
+    const me = await env.as(verify.body.token).get('/me');
     assert.equal(me.body.user.signupMethod, 'email');
 
-    const reuse = await api.post('/auth/password', { token: verify.body.signupToken, password: 'longenough1' });
-    assert.equal(reuse.body.error.code, 'token_expired');
+    // The same address again signs in to the same account; the link does too, back to its page.
+    env.clock.advance(31_000);
+    const again = await api.post('/auth/otp/start', { channel: 'email', identifier: 'new.person@example.com', redirectUri: 'http://localhost:3000/e/ravo?lang=en' });
+    const back = await api.get(`/auth/email/${again.body.challengeId}/${again.body.devCode}?redirect=${encodeURIComponent('http://localhost:3000/e/ravo?lang=en')}`);
+    assert.equal(back.status, 302);
+    const to = new URL(back.headers.location as string);
+    assert.equal(to.pathname, '/e/ravo');
+    assert.deepEqual([to.searchParams.get('lang'), to.searchParams.get('auth'), to.searchParams.get('via')], ['en', 'email', 'signin']);
+    assert.match(String(back.headers['set-cookie']), /ff_session=/);
+    // The link is one-tap: a second tap is told the code was used.
+    const twice = await api.get(`/auth/email/${again.body.challengeId}/${again.body.devCode}`);
+    assert.equal(new URL(twice.headers.location as string).searchParams.get('auth_error'), 'not_found');
+  });
+
+  it('a guest buys with an email and a phone; proving the email later opens that account (phase 17)', async () => {
+    const api = env.as();
+    const bad = await api.post('/auth/guest', { email: 'nope' });
+    assert.equal(bad.body.error.code, 'invalid_email');
+    const guest = await api.post('/auth/guest', { email: 'Guest.Buyer@example.com', phone: '0912 000 333' });
+    assert.equal(guest.status, 200, JSON.stringify(guest.body));
+    assert.equal(guest.body.created, true);
+    assert.equal(guest.body.user.email, 'guest.buyer@example.com');
+    assert.equal(guest.body.user.phone, '+84912000333');
+    assert.match(String(guest.headers['set-cookie']), /ff_session=/);
+    const me = await env.as(guest.body.token).get('/me');
+    assert.equal(me.body.user.signupMethod, 'guest');
+    // The guest session is a plain one: it may buy, never administer.
+    assert.equal((await env.as(guest.body.token).get('/admin/events')).status, 403);
+    // The same email again as a guest: not taken over; that person logs in with a code.
+    const again = await api.post('/auth/guest', { email: 'guest.buyer@example.com' });
+    assert.equal(again.status, 409);
+    assert.equal(again.body.error.code, 'account_exists');
+    // A code to that email opens the guest's account, now proved.
+    const start = await api.post('/auth/otp/start', { channel: 'email', identifier: 'guest.buyer@example.com' });
+    const ok = await api.post('/auth/otp/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
+    assert.equal(ok.body.created, false);
+    assert.equal(ok.body.user.id, guest.body.user.id);
+    const proved = await env.as(ok.body.token).get('/me');
+    assert.equal(proved.body.user.emailVerified ?? true, true);
   });
 
   it('signs in by Zalo number, creating the account and the Zalo connection', async () => {
@@ -166,7 +197,7 @@ describe('sign-up and sign-in', () => {
 
   it('lists the ways in that work here, Google first', async () => {
     const r = await env.as().get('/auth/providers');
-    assert.deepEqual(Object.keys(r.body), ['google', 'fb', 'ig', 'sms', 'zalo', 'wa', 'email', 'password']);
+    assert.deepEqual(Object.keys(r.body), ['google', 'fb', 'ig', 'tiktok', 'sms', 'zalo', 'wa', 'email', 'password']);
     assert.equal(r.body.google, true);
   });
 

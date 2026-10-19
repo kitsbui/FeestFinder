@@ -440,4 +440,7 @@ export const JA: Record<string, string> = {
   'Who listed it': '掲載元',
   'Machine translation': '機械翻訳',
   'Original text': '原文',
+  'Continue with Instagram': 'Instagramで続ける',
+  'Continue with TikTok': 'TikTokで続ける',
+  'The email also has a link that logs you in with one tap.': 'メールのリンクをタップするだけでもログインできます。',
 };
