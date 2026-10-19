@@ -415,4 +415,5 @@ export const ID: Record<string, string> = {
   'Ask a question': 'Ajukan pertanyaan',
   'All': 'Semua',
   'Log in to keep them on every device': 'Masuk untuk menyimpannya di semua perangkat',
+  'Elsewhere': 'Tempat lain',
 };

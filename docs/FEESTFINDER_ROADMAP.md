@@ -224,6 +224,9 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - The event page reads in the order one decides: the hero with only the four facts, the line-up, Giới thiệu, the venue (Chỉ đường, Đặt xe), then one "Thêm" (going with friends, the guide, Thêm lịch, Hỏi đáp, Hype); under 900px the dock's "Mua vé" is the one way to the tickets. A card wears one tag at most and no marketing badges (trending, 500+ going, just added).
   - Tests: nav, list, pages, event, radar-actions and newcomer specs updated; `newcomer.spec.ts` counts what one can tap in the first screen (home 21, event 12 with the site's frame of six; the event page had 16), a time in one tap and the tickets in two.
 
+- [ ] Phases 13–20: to 9.5–10 (artboard 26, owner decisions 2026-10-19: country first and three times; sign-in by email link, Zalo, Facebook, Instagram, TikTok; guest checkout; merge automatically when the checks are green).
+  - [x] Phase 13: the newcomer's country first. `city-first.tsx` guesses the country from the zone or the language (no three-night threshold): its nights lead the list under its name, the rest under "Nơi khác", every city still showing; a chosen city is kept. The phone's times are three (Tối nay · Cuối tuần · Tất cả); the style chips show once there are two. The first lead picture and the event hero load eagerly. `newcomer.spec.ts` posts a Bangkok night to prove the split and takes it down.
+
 ## What the team does next in production
 
 1. Set `TICKETMASTER_API_KEY` in Vercel if Ticketmaster is wanted (Singapore has the most coverage).

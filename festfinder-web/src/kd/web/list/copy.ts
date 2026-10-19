@@ -12,6 +12,7 @@ export const LIST = {
   when: { en: 'When', vi: 'Thời gian' },
   anyTime: { en: 'Any time', vi: 'Mọi lúc' },
   allTimes: { en: 'All', vi: 'Tất cả' },
+  elsewhere: { en: 'Elsewhere', vi: 'Nơi khác' },
   tonight: { en: 'Tonight', vi: 'Tối nay' },
   weekend: { en: 'This weekend', vi: 'Cuối tuần này' },
   next7: { en: 'Next 7 days', vi: '7 ngày tới' },

@@ -29,8 +29,16 @@ test('a night sold at a price nobody gave is never "free"', async ({ page }) => 
 /** The phone's city chooser (above the list since design v2 phase 12). */
 const cityOf = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Thành phố:/ }).locator('visible=true');
 
-test('the city comes first: guessed from the phone, kept when chosen, and the page never jumps', async ({ browser }) => {
-  // A phone in Vietnam: the demo's nights are all in TP.HCM, more than enough for a guess.
+test('the country comes first: a phone in Vietnam sees Vietnam\u2019s nights first, a chosen city is kept, and the page never jumps', async ({ browser, request }) => {
+  // The demo's nights are all in TP.HCM: one in Bangkok, posted by the team for this test, gives the list an elsewhere.
+  expect((await request.post('/auth/login', { data: { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' } })).ok()).toBeTruthy();
+  const org = (await (await request.get('/admin/organizers?q=Ravolution')).json()).items[0];
+  const made = await request.post('/admin/events', { data: { organizerId: org.id, title: 'Bangkok Night Test', city: 'bangkok', venueName: 'Beam', address: '72 Sukhumvit 55', startsOn: '2026-11-21', startTime: '22:00', endTime: '04:00', entryMode: 'free', styles: ['techno'], publish: true } });
+  expect(made.ok(), await made.text()).toBeTruthy();
+  const bangkok = (await made.json()) as { id: string; slug: string };
+  // The home page is cached a minute: render it again with the new night, as a save in Studio does (kd/fresh.ts).
+  expect((await request.post('/kd-fresh', { data: { kind: 'e', slug: bangkok.slug } })).status()).toBe(204);
+  // A phone in Vietnam: Vietnam's nights lead, the rest follow under "Nơi khác".
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'Asia/Ho_Chi_Minh' });
   const page = await ctx.newPage();
   const problems = watch(page);
@@ -41,33 +49,39 @@ test('the city comes first: guessed from the phone, kept when chosen, and the pa
       for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) w.__shift += e.value;
     }).observe({ type: 'layout-shift', buffered: true });
   });
-  const asked: string[] = [];
-  page.on('request', (r) => { if (/\/events\?/.test(r.url())) asked.push(r.url()); });
   await page.goto('/');
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-  await expect(cityOf(page)).toContainText('TP.HCM');
-  expect(asked.some((u) => u.includes('city=ho-chi-minh')), asked.join('\n')).toBeTruthy();
-  await expect(page.locator('html')).not.toHaveAttribute('data-city-first', /./);
-  await expect(page.locator('[data-list] article').first()).toBeVisible();
+  await expect(page.locator('html')).not.toHaveAttribute('data-place-first', /./);
+  const main = page.getByRole('main');
+  await expect(main.getByRole('heading', { level: 2, name: 'Việt Nam' })).toBeVisible();
+  await expect(main.getByRole('heading', { level: 2, name: 'Nơi khác' })).toBeAttached();
+  // Every city still shows (no filter): the first card is a Vietnamese night, 0 taps.
+  await expect(cityOf(page)).toContainText('Mọi thành phố');
+  await expect(page.locator('[data-list] article').first()).toContainText('TP.HCM');
   expect(await page.evaluate(() => (window as unknown as { __shift: number }).__shift)).toBeLessThan(0.05);
   // No "Đăng sự kiện" on the phone's top bar: the top is the newcomer's.
   await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toBeHidden();
-  // Every city, chosen: the next visit keeps it instead of guessing.
+  // A city, chosen: the next visit opens on it instead of the grouped list.
   await cityOf(page).click();
-  await page.getByRole('menuitemradio', { name: /^Mọi thành phố/ }).click();
+  await page.getByRole('menuitemradio', { name: /^TP.HCM/ }).click();
+  await expect(page).toHaveURL(/city=ho-chi-minh/);
   await page.goto('/');
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-  await expect(cityOf(page)).toContainText('Mọi thành phố');
+  await expect(cityOf(page)).toContainText('TP.HCM');
+  await expect(main.getByRole('heading', { level: 2, name: 'Nơi khác' })).toHaveCount(0);
   expect(problems).toEqual([]);
   await ctx.close();
-  // A phone where no listed city keeps the time: every city, nothing held back.
-  const far = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'Europe/Paris' });
+  // A phone whose zone and language are not ours: every city, nothing grouped, nothing held back.
+  const far = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'Europe/Paris', locale: 'fr-FR' });
   const other = await far.newPage();
   await other.goto('/');
   await other.locator('html[data-kd-session]').waitFor({ state: 'attached' });
   await expect(cityOf(other)).toContainText('Mọi thành phố');
-  await expect(other.locator('html')).not.toHaveAttribute('data-city-first', /./);
+  await expect(other.locator('html')).not.toHaveAttribute('data-place-first', /./);
+  await expect(other.getByRole('main').getByRole('heading', { level: 2, name: 'Nơi khác' })).toHaveCount(0);
   await far.close();
+  expect((await request.post(`/admin/events/${bangkok.id}/status`, { data: { action: 'take_down' } })).ok()).toBeTruthy();
+  expect((await request.post('/kd-fresh', { data: { kind: 'e', slug: bangkok.slug } })).status()).toBe(204);
 });
 
 test('a heart works before signing in, and signing in keeps what was saved', async ({ page }) => {
@@ -151,7 +165,7 @@ async function controlsInSight(page: import('@playwright/test').Page) {
  * The first screens ask little (design v2 phase 12, owner 2026-10-18). The counts include the site's
  * frame (the logo, search and four tabs); like the JS budgets they only go down.
  */
-const IN_SIGHT = { home: 21, event: 12 };
+const IN_SIGHT = { home: 20, event: 12 };
 
 test('the first screens ask little: few controls, a time in one tap, the tickets in two', async ({ page }) => {
   const problems = watch(page);

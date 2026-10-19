@@ -98,7 +98,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                 <div className="relative">
                   {/* Without a cover, a poster of the date: the name is the H1 beside it, never twice. */}
                   <ViewTransition name={'ev-' + ev.slug} share="morph" default="none">
-                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
+                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" eager className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
                   </ViewTransition>
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}

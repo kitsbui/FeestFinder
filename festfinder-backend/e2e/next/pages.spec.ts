@@ -41,13 +41,14 @@ test('the table is the view to ask for; the bar keeps the filters on screen whil
   await expect(bar).toBeInViewport();
 });
 
-test('a phone filters with four times in one tap and the styles that have nights', async ({ page }) => {
+test('a phone filters with three times in one tap and the styles that have nights', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, '/');
   // No "Lọc" sheet on a phone any more (design v2 phase 12, owner 2026-10-18).
   await expect(page.getByRole('button', { name: /^Lọc/ })).toHaveCount(0);
   const times = page.locator('.kd-cmd').getByRole('group', { name: 'Thời gian' });
-  for (const name of ['Tối nay', 'Cuối tuần này', '7 ngày tới', 'Tất cả']) await expect(times.getByRole('button', { name })).toBeVisible();
+  for (const name of ['Tối nay', 'Cuối tuần này', 'Tất cả']) await expect(times.getByRole('button', { name })).toBeVisible();
+  await expect(times.getByRole('button', { name: '7 ngày tới' })).toHaveCount(0);
   await times.getByRole('button', { name: 'Cuối tuần này' }).click();
   await expect(page).toHaveURL(/time=weekend/);
   await expect(times.getByRole('button', { name: 'Cuối tuần này' })).toHaveAttribute('aria-pressed', 'true');

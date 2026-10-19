@@ -68,10 +68,11 @@ export function groupByDay(items: Card[], lang: Lang, today: string | null): Day
  * A day of one night shows it across the width, its picture beside its words; a day of two, two
  * leads side by side (design v2 phase 8), so a quiet day never leaves the row half empty.
  */
-export function DayGrid({ groups, lang, className }: { groups: DayGroup[]; lang: Lang; className?: string }) {
+export function DayGrid({ groups, lang, className, eager = false }: { groups: DayGroup[]; lang: Lang; className?: string; /** The first day's lead picture loads first (it is the page's largest). */ eager?: boolean }) {
   return (
     <div className={cx('kd-days flex flex-col gap-10', className)}>
-      {groups.map((g) => {
+      {groups.map((g, gi) => {
+        const first = eager && gi === 0;
         // Three nights or more: one alone beside a single row leaves a hole.
         const pickLead = g.byDay && g.items.length > 2;
         const lead = pickLead ? g.items.find((e) => e.festival?.flagship || e.featured) ?? g.items[0] : null;
@@ -85,16 +86,16 @@ export function DayGrid({ groups, lang, className }: { groups: DayGroup[]; lang:
               {g.note ? <span className="kd-s font-normal">{g.note}</span> : null}
             </h2>
             {g.byDay && g.items.length === 1 ? (
-              <div className="kd-day-solo"><EventCard e={g.items[0]} lang={lang} look="lead" morph /></div>
+              <div className="kd-day-solo"><EventCard e={g.items[0]} lang={lang} look="lead" morph eager={first} /></div>
             ) : g.byDay && g.items.length === 2 ? (
-              <div className="kd-day-pair">{g.items.map((e) => <EventCard key={e.id} e={e} lang={lang} look="lead" morph />)}</div>
+              <div className="kd-day-pair">{g.items.map((e, i) => <EventCard key={e.id} e={e} lang={lang} look="lead" morph eager={first && i === 0} />)}</div>
             ) : lead ? (
               <div className="kd-day-top">
-                <EventCard e={lead} lang={lang} look="lead" morph />
+                <EventCard e={lead} lang={lang} look="lead" morph eager={first} />
                 <div className="kd-day-stack">{stack.map((e) => <EventCard key={e.id} e={e} lang={lang} look="row" morph />)}</div>
               </div>
             ) : null}
-            {rest.length && !(g.byDay && g.items.length <= 2) ? <div className="kd-cards">{rest.map((e) => <EventCard key={e.id} e={e} lang={lang} morph />)}</div> : null}
+            {rest.length && !(g.byDay && g.items.length <= 2) ? <div className="kd-cards">{rest.map((e, i) => <EventCard key={e.id} e={e} lang={lang} morph eager={first && !lead && i === 0} />)}</div> : null}
           </section>
         );
       })}

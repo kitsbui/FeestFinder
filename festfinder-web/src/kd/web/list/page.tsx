@@ -19,7 +19,7 @@ import { CityFirst } from './city-first';
 export async function ListPage({ lang }: { lang: Lang }) {
   const T = pick(LIST, lang);
   const [meta, initial, ad, flagship] = await Promise.all([
-    apiOr<Meta>('/meta/discovery', { cities: [], styles: [], eventTypes: [], genres: [] }, { revalidate: 300 }),
+    apiOr<Meta>('/meta/discovery', { cities: [], countries: [], styles: [], eventTypes: [], genres: [] }, { revalidate: 300 }),
     apiOr<{ items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number> } }>(
       '/events?time=all&upcoming=true&limit=60', { items: [], total: 0, nextCursor: null, facets: { city: {} } }, { lang }),
     apiOr<{ ad: Ad | null }>('/ads?placement=banner', { ad: null }, { lang }),
@@ -38,7 +38,7 @@ export async function ListPage({ lang }: { lang: Lang }) {
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="list" />
           {/* Before the list, so the newcomer's city is known before it is drawn. */}
-          <CityFirst meta={meta} counts={initial.facets.city} />
+          <CityFirst meta={meta} />
           <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
