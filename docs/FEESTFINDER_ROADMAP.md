@@ -215,7 +215,8 @@ The owner's design review of 2026-10-17 (artboards 01–20 of the canvas, privat
   - [x] P1: the city first on the home page (guessed from the phone's time zone when that city has three nights coming, remembered when chosen, never a jump: `city-first.tsx`); "Cho bạn" folded into it; "Đăng sự kiện" leaves the phone's top bar for "Tôi" and the footer; a heart saves before signing in (on the device, moved to the account at sign-in) and Đã lưu shows those nights; "Tôi" signed out lists what works without an account; the page's big heading is for screen readers on a phone; Radar's tag is its sign only on cards. `e2e/next/newcomer.spec.ts` holds the newcomer's journey.
   - [x] P2: the event page on a phone: a free night's ticket box without a second "Chỉ đường", no "0 hype", an empty Hỏi đáp is one "Đặt câu hỏi" button, related nights as rows; the wizard names its steps on a phone and drops its technical lines there.
   - [x] The Console hides an artist profile the site should not show ("Ẩn khỏi site" in `/console/artists`, migration 046 `artists.hidden_at`; nothing deleted, shown again with the same switch).
-  - [ ] The team: hide the "SPONGE BOB" test profile (`/a/test`) with it; five newcomers on their own phones (docs/DESIGN_GOVERNANCE.md).
+  - The "SPONGE BOB" profile (`/a/test`) stays: it is a real person's, not a test (owner, 2026-10-19). Before calling a record a test, ask.
+  - [ ] The team: five newcomers on their own phones (docs/DESIGN_GOVERNANCE.md).
 
 - [x] Phase 12: tinh gọn (artboard 25, owner decisions 2026-10-18: three steps, three concepts first, one way to do each thing, fold don't delete).
   - The phone's tab bar has four places (Sự kiện, Bản đồ, Đã lưu, Tôi); search is an icon at the top; Nghệ sĩ and Dự án are in the search sheet and in "Tôi".
