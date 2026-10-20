@@ -18,6 +18,7 @@ import { Clamp } from './ui/clamp';
 import { FieldLabel, Input, Option, Segmented, Stepper, Switch, SwitchRow, TextArea } from './ui/forms';
 import { Menu, MenuItem, MenuSeparator, Picker } from './ui/menu';
 import { MomentsGrid } from './ui/moments';
+import { BadgeMark } from './ui/badges';
 import {
   Accordion, Art, Avatar, BarTrack, BoneCard, Card, DateBlock, Emblem, Marker, Stamp, Stat, StatRow, Status, Tag,
 } from './ui/parts';
@@ -378,6 +379,18 @@ export function Kit() {
         <div className="grid grid-cols-1 gap-10 desk:grid-cols-3">
           <div className="flex flex-col gap-3">
             <span className="kd-m">Huy hiệu</span>
+            {/* Badges v2: three tiers × earned, 60% along, new × a sign or a number (growth plan card E). */}
+            <div className="grid grid-cols-6 gap-3">
+              {(['common', 'rare', 'legendary'] as const).flatMap((tier) => [
+                { earned: true, isNew: false, value: 1 }, { earned: false, isNew: false, value: 0.6 }, { earned: true, isNew: true, value: 1 },
+              ].flatMap((st, i) => [true, false].map((sign) => (
+                <BadgeMark key={tier + i + String(sign)} size={44} progress b={{
+                  code: tier + i, family: 'edm', emblem: sign ? 'shape' : 'num', ring: sign ? null : '25', label: { vi: tier, en: tier }, rule: { vi: '', en: '' },
+                  threshold: sign ? 1 : 25, value: sign ? st.value : Math.round(st.value * 25), earned: st.earned, earnedAt: null, isNew: st.isNew, rarityPct: null,
+                  tier, icon: sign ? 'Moon' : null,
+                }} />
+              ))))}
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {[{ f: 'fest' as Family, n: null, t: 'Lần đầu' }, { f: 'edm' as Family, n: 10, t: 'Hộ chiếu 10' }, { f: 'cult' as Family, n: null, t: 'Đủ 4 gu' }].map((b, i) => (
                 <button key={b.t} type="button" className="kd-bdg" aria-pressed={badge === i} onClick={() => setBadge(badge === i ? null : i)}>

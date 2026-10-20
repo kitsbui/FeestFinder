@@ -5,8 +5,8 @@ export const ABOUT = {
   title: { en: 'About FeestFinder', vi: 'Về FeestFinder' },
   headline: { en: 'One place to see what is on tonight', vi: 'Một nơi để biết tối nay có gì' },
   lede: {
-    en: 'FeestFinder lists electronic music: club nights, raves and EDM festivals. Organisers publish for free, every listing is checked before it goes live, and tickets are sold by the organiser — we add no booking fee.',
-    vi: 'FeestFinder tập hợp sự kiện nhạc điện tử: club, rave và lễ hội EDM. Nhà tổ chức đăng miễn phí, mọi tin đều được kiểm tra trước khi lên sóng, và vé do nhà tổ chức bán — chúng tôi không thu thêm phí đặt vé.',
+    en: 'FeestFinder lists electronic music: club nights, raves and EDM festivals. Organisers publish for free and every listing is checked before it goes live. FeestFinder sells no tickets: Buy tickets takes you to the seller.',
+    vi: 'FeestFinder tập hợp sự kiện nhạc điện tử: club, rave và lễ hội EDM. Nhà tổ chức đăng miễn phí và mọi tin đều được kiểm tra trước khi lên sóng. FeestFinder không bán vé: nút Mua vé đưa bạn tới trang bán.',
   },
   metaDesc: {
     en: 'EDM club nights, raves and festivals in one place. How to reach FeestFinder: for people going out, organisers, brands and press.',
@@ -17,7 +17,10 @@ export const ABOUT = {
   numbers: { en: 'FeestFinder in numbers', vi: 'FeestFinder qua các con số' },
   statEvents: { en: 'Upcoming events', vi: 'Sự kiện sắp diễn ra' },
   statCities: { en: 'Cities with events', vi: 'Thành phố có sự kiện' },
-  statFee: { en: 'Booking fee', vi: 'Phí đặt vé' },
+  statFee: {
+    en: 'Fee to publish',
+    vi: 'Phí đăng tin',
+  },
 
   // cities
   cities: { en: 'Cities', vi: 'Thành phố' },
@@ -33,8 +36,8 @@ export const ABOUT = {
   },
   org: { en: 'For organisers', vi: 'Cho nhà tổ chức' },
   orgBody: {
-    en: 'Publishing is free. Get verified once and your events keep the badge, with ticket clicks and saves in the organiser console.',
-    vi: 'Đăng tin miễn phí. Xác minh một lần là sự kiện của bạn giữ nhãn đã xác minh, kèm số lượt bấm mua vé và lượt lưu trong bảng điều khiển.',
+    en: 'Publishing is free. Add your own ticket link, one per country if you sell in several, and see the taps on Buy tickets, who shared you and the saves in Studio.',
+    vi: 'Đăng tin miễn phí. Gắn link vé của bạn, mỗi nước một link nếu bán ở nhiều nơi, và xem lượt bấm Mua vé, ai đã chia sẻ và lượt lưu trong Studio.',
   },
   brand: { en: 'For brands & press', vi: 'Cho thương hiệu & báo chí' },
   brandBody: {
@@ -68,13 +71,13 @@ export const ABOUT = {
   },
   q2: { en: 'Who sells the tickets?', vi: 'Ai bán vé?' },
   a2: {
-    en: 'The organiser, or FeestFinder’s own checkout for the events it sells. FeestFinder adds no booking fee.',
-    vi: 'Nhà tổ chức, hoặc FeestFinder với các sự kiện bán vé tại đây. FeestFinder không thu thêm phí đặt vé.',
+    en: 'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.',
+    vi: 'Trang bán của nhà tổ chức. FeestFinder không bán vé: nút Mua vé đưa bạn tới trang bán.',
   },
   q3: { en: 'Is listing an event free?', vi: 'Đăng sự kiện có mất phí không?' },
   a3: {
-    en: 'Publishing is free. Get verified once and your events keep the badge, with ticket clicks and saves in your dashboard.',
-    vi: 'Đăng tin miễn phí. Xác minh một lần là sự kiện của bạn giữ nhãn đã xác minh, kèm lượt bấm mua vé và lượt lưu trong bảng điều khiển.',
+    en: 'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.',
+    vi: 'Đăng tin miễn phí. Link vé của bạn, lượt bấm Mua vé và lượt lưu nằm trong Studio.',
   },
   q4: { en: 'Something is wrong on a listing', vi: 'Tin đăng có thông tin sai' },
   a4: {

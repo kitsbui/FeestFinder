@@ -8,6 +8,7 @@ import { sha256, safeEqual } from '../lib/crypto.ts';
 import { isUuid } from '../http/sql.ts';
 import { hostOf } from '../services/ingest/normalize.ts';
 import { REF_DAYS, REF_RE } from '../lib/affiliate.ts';
+import { awardSoon } from '../services/badges.ts';
 import { conversionStatus, countEventMetric, countryOf, deviceOf, partnerForUrl, partnerLink, PLACEMENTS, recordConversion, referrerHostOf, sellerFor, utmLink, type Partner } from '../services/partners.ts';
 
 /*
@@ -172,6 +173,8 @@ export default async function outboundRoutes(app: FastifyInstance) {
         commission: b.commission === undefined ? null : Math.round(b.commission),
         occurredAt: b.at ?? now, payload,
       }, now);
+      const ref = await one<{ ref_user: string | null }>(ctx.db, 'select ref_user from partner_conversions where id = $1', [out.id]);
+      awardSoon(ctx, 'user', ref?.ref_user);
       return reply.code(out.created ? 201 : 200).send({ ok: true, id: out.id, matchedClick: out.matched });
     },
   });

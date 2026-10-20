@@ -18,7 +18,7 @@ import { SkipLink } from '@/kd/ui/skip-link';
 import { ScriptFonts } from '@/kd/ui/script-fonts';
 import { FeedbackWidget } from '@/kd/feedback/widget';
 import { Vitals } from '@/kd/ui/vitals';
-import { Worker } from '@/kd/ui/worker';
+import { InstallCapture, Worker } from '@/kd/ui/worker';
 
 export const metadata: Metadata = siteMetadata;
 
@@ -35,6 +35,7 @@ export default function KdLayout({ children }: { children: ReactNode }) {
     <html lang="vi">
       <head>
         <ExtensionGuardScript />
+        <InstallCapture />
       </head>
       <body>
         {/* The page's own box, so no <div> of ours sits directly in <body>: see extension-guard.tsx. */}

@@ -114,7 +114,6 @@ export const WEB = {
   qtyInc: { en: 'One more', vi: 'Thêm một vé' },
   buyN: { en: 'Buy {n} {t} · {p}', vi: 'Mua {n} vé {t} · {p}' },
   soldVia: { en: 'Sold by {h}. FeestFinder sells no tickets.', vi: 'Bán ở {h}. FeestFinder không bán vé.' },
-  soldHere: { en: 'Sold on FeestFinder · up to {n} tickets · no booking fee', vi: 'Bán trên FeestFinder · tối đa {n} vé · không thu phí đặt vé' },
   refund: { en: 'Refunds', vi: 'Hoàn tiền' },
   noTicketLink: { en: 'The organiser has not posted a ticket link yet', vi: 'Nhà tổ chức chưa đăng link bán vé' },
   ticketsAtDoor: { en: 'Tickets', vi: 'Vé' },

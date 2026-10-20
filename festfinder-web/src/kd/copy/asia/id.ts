@@ -451,4 +451,9 @@ export const ID: Record<string, string> = {
   'Commission': 'Komisi',
   'Kind': 'Jenis',
   'Sponsored': 'Disponsori',
+  'FeestFinder lists electronic music: club nights, raves and EDM festivals. Organisers publish for free and every listing is checked before it goes live. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'FeestFinder mengumpulkan acara musik elektronik: club night, rave, dan festival EDM. Penyelenggara memasang gratis dan setiap acara diperiksa sebelum tayang. FeestFinder tidak menjual tiket: Beli tiket membawamu ke penjual.',
+  'Publishing is free. Add your own ticket link, one per country if you sell in several, and see the taps on Buy tickets, who shared you and the saves in Studio.': 'Memasang acara gratis. Tambahkan tautan tiketmu, satu per negara jika dijual di beberapa tempat, lalu lihat ketukan Beli tiket, siapa yang membagikan, dan simpanan di Studio.',
+  'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'Penjual milik penyelenggara. FeestFinder tidak menjual tiket: Beli tiket membawamu ke penjual.',
+  'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': 'Memasang acara gratis. Tautan tiketmu, ketukan Beli tiket, dan simpanan ada di Studio.',
+  'Fee to publish': 'Biaya pasang',
 };

@@ -10,7 +10,8 @@ import { vnDate, vnTime } from '../lib/time.ts';
 import { limit, parse, uuid } from '../lib/validate.ts';
 import { decodeCursor, isUuid, page } from '../http/sql.ts';
 import { requireAdmin, requireUser, requireWriter } from '../http/guards.ts';
-import { notifyOrganizer, notifyUser } from '../services/notify.ts';
+import { notifyAdmins, notifyOrganizer, notifyUser } from '../services/notify.ts';
+import { awardSoon } from '../services/badges.ts';
 import {
   badgesFor, BADGE_LABEL, checkPostText, isEventTeam, KIND_LABEL, kindsShown, nameOf, phaseOf, POST_KINDS, type Badge, type PostKind,
 } from '../services/community.ts';
@@ -274,6 +275,9 @@ export default async function discussionRoutes(app: FastifyInstance) {
       return one<any>(q, `select ${POST_COLUMNS} ${POST_FROM} where p.id = $1`, [p!.id]);
     });
     const deco = await decorate(ctx.db, ev, [row], s.user);
+    // A comment can reach the writer's badges, and a reply the badges of whom it answers.
+    awardSoon(ctx, 'user', s.user.id);
+    if (row.reply_to_user_id || parent) awardSoon(ctx, 'user', row.reply_to_user_id ?? parent?.user_id);
     return reply.code(201).send({
       post: present(row, { ...deco, viewer: s.user, team, replies: parent ? undefined : [] }),
       message: official ? L('Answer posted · it now shows in the FAQ', 'Đã trả lời · câu này hiện trong FAQ') : L('Posted', 'Đã đăng'),
@@ -329,7 +333,18 @@ export default async function discussionRoutes(app: FastifyInstance) {
       // Counted among reports nobody has looked at yet: a post the team has kept stays up.
       const open = await one<{ n: number }>(q, 'select count(*)::int as n from event_post_reports where post_id = $1 and resolved_at is null', [id]);
       await q.query('update event_posts set report_count = report_count + 1 where id = $1', [id]);
-      if (open!.n >= HIDE_AFTER_REPORTS) await q.query(`update event_posts set status = 'hidden', pinned = false where id = $1 and status = 'visible'`, [id]);
+      if (open!.n >= HIDE_AFTER_REPORTS) {
+        const hidden = await one(q, `update event_posts set status = 'hidden', pinned = false where id = $1 and status = 'visible' returning 1`, [id]);
+        // Signing in is all it takes to comment (owner, 2026-10-20): the team hears at once when reports hide one.
+        if (hidden) {
+          await notifyAdmins(q, ctx.clock.now(), {
+            kind: 'review_needed', dedupeKey: `post-hidden:${id}`,
+            title: L('A comment was hidden by reports', 'Một bình luận bị ẩn vì báo cáo'),
+            body: L(`${HIDE_AFTER_REPORTS} people reported it. Keep it or delete it.`, `${HIDE_AFTER_REPORTS} người đã báo cáo. Giữ hoặc xoá.`),
+            cta: L('Open the comments', 'Mở bình luận'), link: { url: '/console/reports?tab=comments' },
+          });
+        }
+      }
     });
     return { ok: true, message: L('Thanks — we will take a look', 'Cảm ơn — chúng tôi sẽ xem xét') };
   });

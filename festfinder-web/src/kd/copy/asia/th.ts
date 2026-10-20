@@ -451,4 +451,9 @@ export const TH: Record<string, string> = {
   'Commission': 'ค่าคอมมิชชัน',
   'Kind': 'ประเภท',
   'Sponsored': 'ได้รับการสนับสนุน',
+  'FeestFinder lists electronic music: club nights, raves and EDM festivals. Organisers publish for free and every listing is checked before it goes live. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'FeestFinder รวมอีเวนต์ดนตรีอิเล็กทรอนิกส์: คลับไนท์ เรฟ และเทศกาล EDM ผู้จัดงานลงประกาศฟรี และทุกประกาศผ่านการตรวจสอบก่อนเผยแพร่ FeestFinder ไม่ขายบัตร: ปุ่มซื้อบัตรจะพาคุณไปยังผู้ขาย',
+  'Publishing is free. Add your own ticket link, one per country if you sell in several, and see the taps on Buy tickets, who shared you and the saves in Studio.': 'ลงประกาศฟรี ใส่ลิงก์ขายบัตรของคุณ แยกตามประเทศได้หากขายหลายที่ แล้วดูยอดกดซื้อบัตร ใครแชร์ และยอดบันทึกใน Studio',
+  'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'ผู้ขายของผู้จัดงานเอง FeestFinder ไม่ขายบัตร: ปุ่มซื้อบัตรจะพาคุณไปยังผู้ขาย',
+  'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': 'ลงประกาศฟรี ลิงก์ขายบัตร ยอดกดซื้อบัตร และยอดบันทึกอยู่ใน Studio',
+  'Fee to publish': 'ค่าลงประกาศ',
 };

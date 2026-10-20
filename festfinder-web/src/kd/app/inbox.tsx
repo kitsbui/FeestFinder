@@ -201,7 +201,18 @@ export function NotifSettings({ lang }: { lang: Lang }) {
     <>
       <Head lang={lang} title={T.notifTitle} />
       <Gate lang={lang} note={T.gateMe}><PrefsMatrix lang={lang} /><SharePrivacy lang={lang} /></Gate>
+      <Version lang={lang} />
     </>
+  );
+}
+
+/** Which build this is (growth plan card F): the installed app updates itself, and this says to which. */
+function Version({ lang }: { lang: Lang }) {
+  const id = (process.env.NEXT_PUBLIC_BUILD_ID || 'dev').slice(0, 7);
+  return (
+    <section className="flex px-4 pb-8">
+      <div className="kd-lrow min-h-13 w-full"><span className="kd-t flex-1">{lang === 'vi' ? 'Phiên bản' : 'Version'}</span><span className="kd-m kd-num normal-case">{id}</span></div>
+    </section>
   );
 }
 

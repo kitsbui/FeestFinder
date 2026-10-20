@@ -44,7 +44,9 @@ test('the fan’s own profile: numbers, passport, badges, and a photo of their o
   await expect(badges).toBeVisible();
   await expect(badges.getByRole('button', { name: /Lần đầu/ })).toBeVisible();
   await badges.getByRole('button', { name: /Lần đầu/ }).click();
-  await expect(badges.getByText('Tham dự sự kiện đầu tiên qua FeestFinder.')).toBeVisible();
+  const sheet = page.getByRole('dialog', { name: 'Huy hiệu' });
+  await expect(sheet.getByText('Đi đêm đầu tiên đăng trên FeestFinder.')).toBeVisible();
+  await sheet.getByRole('button', { name: 'Đóng' }).click();
 
   const moments = page.getByRole('region', { name: 'Khoảnh khắc' });
   await expect(moments).toBeVisible();

@@ -8,10 +8,19 @@ import { expect, test } from '@playwright/test';
 test('the widget draws an organiser’s upcoming nights on another site', async ({ page, baseURL }) => {
   const org = await (await page.request.get('/events/ravo')).json();
   const slug = org.organizer.slug as string;
-  await page.goto('about:blank');
-  await page.setContent(`<!doctype html><meta charset="utf-8"><title>Club site</title><h1>Our nights</h1>
-    <div id="ff" data-ff-org="${slug}" data-ff-lang="vi" data-ff-theme="light" data-ff-limit="3"></div>
-    <script src="${baseURL}/ui/widget/ff-widget.js" async></script>`);
+  // Drawn into a page as an organiser's site would host it (the open CORS of /embed for other sites is
+  // checked in test/calendar.test.ts: Chrome keeps a test page elsewhere from loading localhost).
+  await page.goto('/about');
+  await page.evaluate(({ slug, src }) => {
+    const host = document.createElement('div');
+    host.id = 'ff';
+    Object.assign(host.dataset, { ffOrg: slug, ffLang: 'vi', ffTheme: 'light', ffLimit: '3' });
+    document.body.appendChild(host);
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    document.body.appendChild(s);
+  }, { slug, src: `${baseURL}/ui/widget/ff-widget.js` });
   const rows = page.locator('#ff').locator('a[role="listitem"]');
   await expect(rows.first()).toBeVisible();
   expect(await rows.count()).toBeGreaterThan(0);

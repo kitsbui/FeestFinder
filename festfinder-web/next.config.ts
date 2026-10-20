@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { buildId } from './scripts/build-id.ts';
 
 /** Where the FeestFinder API runs. The browser never talks to it directly. */
 const API = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
@@ -51,7 +52,7 @@ const config: NextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
   // Which build a bug report came from (kd/feedback/telemetry.ts).
-  env: { NEXT_PUBLIC_BUILD_ID: (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 12) },
+  env: { NEXT_PUBLIC_BUILD_ID: buildId() },
 
   async rewrites() {
     return {

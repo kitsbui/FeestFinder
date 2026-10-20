@@ -31,3 +31,4 @@ Thumbs.db
 .vercel
 .env*.local
 .preview/
+festfinder-web/public/sw.js

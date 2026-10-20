@@ -74,7 +74,7 @@ test('every stamp and badge has its own art; the passport shares as a story', as
   expect(art.length).toBeGreaterThan(1);
   expect(art.every((a) => a.cover || a.mono), 'a cover or the initials on every stamp').toBe(true);
   expect(new Set(art.map((a) => `${a.tilt}|${a.mono}|${a.cover}`)).size, 'no two stamps alike').toBeGreaterThan(1);
-  await expect(page.getByRole('region', { name: 'Huy hiệu' }).locator('.kd-emb .kd-emb-i svg').first()).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Huy hiệu' }).locator('.kd-bm .kd-bm-i').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Chia sẻ thành story' })).toBeVisible();
   expect(problems).toEqual([]);
 });

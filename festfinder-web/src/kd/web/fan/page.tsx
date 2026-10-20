@@ -15,7 +15,8 @@ import { familyOf, g } from '../../genre';
 import { MomentsSection } from '../../moments';
 import { useKd } from '../../runtime';
 import { buttonClass, Button } from '../../ui/actions';
-import { Badges, type BadgeView } from '../../ui/badges';
+import type { BadgeView } from '../../ui/badges';
+import { ProfileBadges } from '../../ui/profile-badges';
 import type { Moment } from '../../ui/moments';
 import { Art, Avatar, Card as Panel, Stat } from '../../ui/parts';
 import { APP } from '../../app/copy';
@@ -52,6 +53,7 @@ function Mine({ lang }: { lang: Lang }) {
   const [going, setGoing] = useState<Card[] | null>(null);
   const [follows, setFollows] = useState<Follows | null>(null);
   const [badges, setBadges] = useState<BadgeView[] | null>(null);
+  const [pins, setPins] = useState<string[] | null>(null);
   const [moments, setMoments] = useState<Moment[] | null>(null);
   const [editing, setEditing] = useState(false);
   const [wrapped, setWrapped] = useState(false);
@@ -61,7 +63,7 @@ function Mine({ lang }: { lang: Lang }) {
     // The nights they said they are going to, still to come (FeestFinder sells no tickets, so there are no orders to read).
     FF.maybe(FF.get('/me/going?past=exclude&limit=8'), { items: [] }).then((w: { items: Card[] }) => setGoing(w.items));
     FF.maybe(FF.get('/me/follows'), null).then(setFollows);
-    FF.maybe(FF.get('/me/badges'), null).then((b: { items: BadgeView[] } | null) => setBadges(b?.items ?? []));
+    FF.maybe(FF.get('/me/badges'), null).then((b: { items: BadgeView[]; pins: string[] } | null) => { setBadges(b?.items ?? []); setPins(b?.pins ?? []); });
     FF.maybe(FF.get('/me/moments'), null).then((m: { items: Moment[] } | null) => setMoments(m?.items ?? []));
   }, []);
   const coming = clockReady ? going ?? [] : [];
@@ -117,7 +119,7 @@ function Mine({ lang }: { lang: Lang }) {
             </section>
           ) : null}
           {pp ? <PassportSection lang={lang} pp={pp} year={year} onWrapped={() => setWrapped(true)} flush appLinks={false} /> : <div className="kd-skel mt-8 h-40" aria-hidden="true" />}
-          <Badges lang={lang} items={badges} who={{ vi: 'người dùng', en: 'people' }} own className="pt-12" />
+          {pins ? <ProfileBadges lang={lang} items={badges} pins={pins} own className="pt-12" /> : <div className="kd-skel mt-12 h-24" aria-hidden="true" />}
           {follows ? <FollowManager lang={lang} f={follows} flush /> : null}
         </div>
       </div>

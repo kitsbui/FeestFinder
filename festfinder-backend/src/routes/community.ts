@@ -19,6 +19,7 @@ import { vnDate } from '../lib/time.ts';
 import { notifyOrganizer, notifyUser } from '../services/notify.ts';
 import { PageUnavailable } from '../services/fetchpage.ts';
 import { pageText, prefillFromJsonLd, PrefillUnavailable } from '../services/prefill.ts';
+import { awardSoon } from '../services/badges.ts';
 import { STATUS_LABEL } from './organizer/events.ts';
 
 const SUBMISSIONS_PER_DAY = 5;
@@ -340,6 +341,7 @@ export async function recordShareVisit(app: FastifyInstance, eventId: string, re
   const ins = await one(ctx.db,
     `insert into share_visits (event_id, ref_user, visitor, channel, created_at) values ($1,$2,$3,$4,$5) on conflict do nothing returning 1`,
     [eventId, sharer.id, sha256(visitor).slice(0, 32), channel, ctx.clock.now()]);
+  if (ins) awardSoon(ctx, 'user', sharer.id);
   return !!ins;
 }
 

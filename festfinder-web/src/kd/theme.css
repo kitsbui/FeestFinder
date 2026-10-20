@@ -245,6 +245,24 @@
   .kd-emb.kd-sm.kd-off { box-shadow: inset 0 0 0 1.5px var(--color-line-2); }
   .kd-emb.kd-sm .kd-mk { width: 14px; height: 14px; border-radius: 3px; }
   .kd-emb.kd-sm .kd-n { font-size: 11px; }
+  /* Badges v2 (growth plan card E): the ring says the tier, the dot the group. No shadow, glass or gradient. */
+  .kd-bm { position: relative; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-surface-1); color: var(--color-fg-1); border: 2px solid var(--color-line-2); }
+  .kd-bm-rare { border-color: var(--color-info); }
+  .kd-bm-legendary { border-color: var(--color-lime); }
+  .kd-bm-64 { width: 64px; height: 64px; } .kd-bm-64 .kd-bm-i { width: 28px; height: 28px; } .kd-bm-64 .kd-bm-n { font-size: 22px; }
+  .kd-bm-44 { width: 44px; height: 44px; } .kd-bm-44 .kd-bm-i { width: 20px; height: 20px; } .kd-bm-44 .kd-bm-n { font-size: 15px; }
+  .kd-bm-28 { width: 28px; height: 28px; border-width: 1.5px; } .kd-bm-28 .kd-bm-i { width: 14px; height: 14px; } .kd-bm-28 .kd-bm-n { font-size: 10px; }
+  .kd-bm-btn { display: inline-flex; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+  .kd-bm-n { font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .kd-bm-dot { position: absolute; bottom: -4px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 2px; background: var(--g, var(--color-info)); box-shadow: 0 0 0 2px var(--color-surface-0); }
+  .kd-bm-new { position: absolute; top: 0; right: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--color-ok); box-shadow: 0 0 0 2px var(--color-surface-0); }
+  .kd-bm-off { border-style: dashed; border-color: var(--color-line-1); color: var(--color-fg-3); }
+  .kd-bm-off .kd-bm-i, .kd-bm-off .kd-bm-n { opacity: 0.38; }
+  .kd-bm-off .kd-bm-dot { background: var(--color-line-2); }
+  .kd-bm-arc { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); transform: rotate(-90deg); pointer-events: none; }
+  .kd-bm-arc circle { fill: none; stroke: var(--color-info); stroke-width: 2; }
+  @media (prefers-reduced-motion: no-preference) { .kd-bm-new { animation: kd-bm-in 200ms var(--ease-ff) both; } }
+  @keyframes kd-bm-in { from { transform: scale(0); } to { transform: scale(1); } }
 
   /* status: a dot plus a word, never colour alone */
   .kd-st { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-2); }

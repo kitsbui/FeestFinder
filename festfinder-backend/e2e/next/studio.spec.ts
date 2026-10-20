@@ -159,7 +159,7 @@ test.describe('Studio, signed in', () => {
     await open(page, '/studio/profile');
     const block = page.getByRole('region', { name: 'Lịch' });
     await expect(block.getByLabel('Nhúng vào website')).toContainText('data-ff-org=');
-    await block.getByRole('radio', { name: 'Sáng' }).click();
+    await block.getByRole('group', { name: 'Nền' }).getByRole('button', { name: 'Sáng' }).click();
     await expect(block.getByLabel('Nhúng vào website')).toContainText('data-ff-theme="light"');
     await block.getByRole('button', { name: 'Xem trước' }).click();
     await expect(block.locator('a[role="listitem"]').first()).toBeVisible();

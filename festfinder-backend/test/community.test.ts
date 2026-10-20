@@ -151,6 +151,8 @@ describe('community event pages', () => {
     assert.ok(!publicView.body.items.some((x: any) => x.id === p.body.post.id), 'hidden from everyone else');
     const own = await env.as(author).get('/events/ravo/discussion?kind=talk&sort=new');
     assert.ok(own.body.items.find((x: any) => x.id === p.body.post.id).hidden, 'the author still sees it, marked hidden');
+    const told = await env.ctx.db.query<{ n: number }>(`select count(*)::int as n from notifications where kind = 'review_needed' and title->>'en' = 'A comment was hidden by reports'`);
+    assert.ok(told.rows[0].n >= 1, 'every admin is told at once');
     const queue = await env.as(admin).get('/admin/posts/reported');
     assert.ok(queue.body.items.some((x: any) => x.id === p.body.post.id && x.reports === 3));
     assert.equal((await env.as(minh).patch(`/posts/${p.body.post.id}`, { hidden: false })).status, 403, 'only the team moderates');

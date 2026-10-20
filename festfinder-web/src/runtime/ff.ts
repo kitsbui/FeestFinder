@@ -385,7 +385,7 @@ FF.track = function track(name: string, props?: Record<string, unknown>) {
   try {
     if (typeof navigator === 'undefined') return;
     if (navigator.doNotTrack === '1' || (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl) return;
-    const body = JSON.stringify({ name, anonId: anonId(), props: { path: location.pathname, ...(props || {}) } });
+    const body = JSON.stringify({ name, anonId: anonId(), props: { path: location.pathname, build: process.env.NEXT_PUBLIC_BUILD_ID || undefined, ...(props || {}) } });
     if (navigator.sendBeacon) navigator.sendBeacon('/analytics/collect', new Blob([body], { type: 'text/plain' }));
     else fetch('/analytics/collect', { method: 'POST', body, keepalive: true, credentials: 'same-origin' }).catch(() => {});
   } catch { /* analytics never breaks a screen */ }

@@ -11,6 +11,7 @@ import { fromMinutes, toMinutes } from '../lib/time.ts';
 import { parse, uuid } from '../lib/validate.ts';
 import { buildVietQr, BANKS } from '../lib/vietqr.ts';
 import { requireUser } from '../http/guards.ts';
+import { awardSoon } from '../services/badges.ts';
 import { notifyUser } from '../services/notify.ts';
 
 const METHODS: Record<'vietqr' | 'momo' | 'zalopay', string> = { vietqr: 'VietQR', momo: 'Momo', zalopay: 'ZaloPay' };
@@ -160,6 +161,7 @@ export default async function planRoutes(app: FastifyInstance) {
         });
       }
     });
+    if (status === 'going') awardSoon(ctx, 'user', plan.owner_id);
     return presentPlan(planId, s.user.id);
   });
 
