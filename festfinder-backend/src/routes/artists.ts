@@ -134,11 +134,11 @@ export default async function artistRoutes(app: FastifyInstance) {
         id: a.id, slug: a.slug, name: a.name, bio: a.bio, imageUrl: a.image_url, coverUrl: a.cover_url, website: a.website,
         styles: styles.slice(0, 6),
         styleLabels: styles.slice(0, 6).map(styleItem),
-        roles: a.artist_roles.map((r: any) => label(ARTIST_ROLE, r)),
+        roles: a.artist_roles.map((r: keyof typeof ARTIST_ROLE.label) => label(ARTIST_ROLE, r)),
         basedIn: a.based_city ? { city: a.based_city, label: cityLabel(a.based_city), country: a.based_country } : null,
         languages: a.languages, activeSince: a.active_since,
         booking: label(BOOKING_STATUS, a.booking_status), travel: label(TRAVEL_SCOPE, a.travel_scope),
-        gigTypes: a.gig_types.map((k: any) => label(GIG_TYPE, k)), setLengths: a.set_lengths.map((k: any) => label(SET_LENGTH, k)),
+        gigTypes: a.gig_types.map((k: keyof typeof GIG_TYPE.label) => label(GIG_TYPE, k)), setLengths: a.set_lengths.map((k: keyof typeof SET_LENGTH.label) => label(SET_LENGTH, k)),
         links: presentLinks(a), openToBrands: a.open_to_brands, verified: a.verified, claimed: !!a.owner_user_id, origin, kind,
         cities: rank(cards.map((c) => c.city)).map((slug) => ({ slug, label: cityLabel(slug) })),
         followers: counts.followers,
@@ -262,7 +262,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       website: 'website', roles: 'artist_roles', languages: 'languages', activeSince: 'active_since',
       bookingStatus: 'booking_status', travelScope: 'travel_scope', gigTypes: 'gig_types', setLengths: 'set_lengths', openToBrands: 'open_to_brands',
     };
-    for (const [k, col] of Object.entries(direct)) if ((b as any)[k] !== undefined) set[col] = (b as any)[k];
+    for (const [k, col] of Object.entries(direct)) if ((b as Record<string, unknown>)[k] !== undefined) set[col] = (b as Record<string, unknown>)[k];
     if (b.styles) set.styles = [...new Set(b.styles)];
     if (b.bio) set.bio = json(b.bio);
     const keys = Object.keys(set);
@@ -363,7 +363,7 @@ export default async function artistRoutes(app: FastifyInstance) {
     if (!before) throw notFound();
     const map: Record<string, string> = { verified: 'verified', musicbrainzId: 'musicbrainz_id', wikidataId: 'wikidata_id', spotifyId: 'spotify_id' };
     const set: Record<string, unknown> = {};
-    for (const [k, col] of Object.entries(map)) if ((b as any)[k] !== undefined) set[col] = (b as any)[k];
+    for (const [k, col] of Object.entries(map)) if ((b as Record<string, unknown>)[k] !== undefined) set[col] = (b as Record<string, unknown>)[k];
     // Hidden keeps the moment it was first hidden; shown again clears it.
     if (b.hidden !== undefined && b.hidden !== !!before.hidden_at) set.hidden_at = b.hidden ? ctx.clock.now() : null;
     if (b.aliases) {
@@ -374,8 +374,8 @@ export default async function artistRoutes(app: FastifyInstance) {
     if (!keys.length) throw badRequest('nothing_to_change', L('Nothing to change', 'Không có gì để thay đổi'));
     try {
       await ctx.db.query(`update artists set ${keys.map((k, i) => `${k} = $${i + 2}`).join(', ')}, updated_at = now() where id = $1`, [id, ...keys.map((k) => set[k])]);
-    } catch (e: any) {
-      if (e.code === '23505') throw conflict('anchor_taken', L('Another artist already has that identity', 'Nghệ sĩ khác đã dùng định danh này'));
+    } catch (e) {
+      if ((e as { code?: string }).code === '23505') throw conflict('anchor_taken', L('Another artist already has that identity', 'Nghệ sĩ khác đã dùng định danh này'));
       throw e;
     }
     await appendAudit(ctx.db, {

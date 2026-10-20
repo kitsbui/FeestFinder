@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import type { Row } from '../db/rows.ts';
 import { many, one } from '../db/index.ts';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
@@ -126,7 +127,7 @@ export default async function projectRoutes(app: FastifyInstance) {
     if (!x || (!PUBLIC.includes(x.p.status) && viewer.userId !== x.p.owner_user_id && !viewer.isAdmin)) throw notFound(L('Project not found', 'Không tìm thấy dự án'));
     const [mine, joined] = viewer.userId
       ? await Promise.all([
-        many<any>(ctx.db, `select id, kind, status from project_offers where project_id = $1 and user_id = $2 and status in ('sent', 'accepted') order by created_at`, [x.p.id, viewer.userId]),
+        many<{ id: string; kind: string; status: string }>(ctx.db, `select id, kind, status from project_offers where project_id = $1 and user_id = $2 and status in ('sent', 'accepted') order by created_at`, [x.p.id, viewer.userId]),
         one(ctx.db, 'select 1 from project_waitlist where project_id = $1 and user_id = $2', [x.p.id, viewer.userId]),
       ])
       : [[], null];
@@ -263,7 +264,7 @@ export default async function projectRoutes(app: FastifyInstance) {
     const p = await ownProject(s.user.id, req.params.id);
     const { accept } = parse(z.object({ accept: z.boolean() }), req.body);
     const now = ctx.clock.now();
-    const o = await one<any>(ctx.db, `select * from project_offers where id = $1 and project_id = $2`, [parse(uuid, req.params.offerId), p.id]);
+    const o = await one<Row<'project_offers'>>(ctx.db, `select * from project_offers where id = $1 and project_id = $2`, [parse(uuid, req.params.offerId), p.id]);
     if (!o || o.status === 'withdrawn') throw notFound(L('Offer not found', 'Không tìm thấy đề nghị'));
     if (o.status !== 'sent') throw conflict('already_decided', L('This offer was already answered', 'Đề nghị này đã được trả lời'));
     const owner = await contactOf(s.user.id);
