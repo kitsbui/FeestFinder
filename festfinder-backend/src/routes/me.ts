@@ -22,6 +22,7 @@ import { inBackground } from '../lib/background.ts';
 import { checkOtp, identifierFor, publicUser, startOtp } from './auth.ts';
 import { SHARE_PCT } from '../lib/affiliate.ts';
 import { commissionOf } from '../services/ambassadors.ts';
+import { awardSoon } from '../services/badges.ts';
 import { hypeGoalsReached } from '../services/community.ts';
 
 /** An event a person's lists show: one anyone can open (cancelled ones stay, marked; taken-down or held ones do not). */
@@ -172,8 +173,11 @@ export default async function meRoutes(app: FastifyInstance) {
         const ins = await one(q, `insert into ${t.table} (user_id, event_id, created_at) values ($1,$2,$3) on conflict do nothing returning 1`, [s.user.id, eventId, ctx.clock.now()]);
         if (ins && t.counter) await q.query(`update events set ${t.counter} = ${t.counter} + 1 where id = $1`, [eventId]);
         if (ins && t.path === 'hypes') await hypeGoalsReached(q, eventId, ctx.clock.now());
+        // "Before the crowd": whether only Feest Radar had found the night when they said yes.
+        if (ins && t.path === 'going') await q.query(`update going set origin_at_time = (select origin from events where id = $2) where user_id = $1 and event_id = $2`, [s.user.id, eventId]);
         return !!ins;
       });
+      if (changed) awardSoon(ctx, 'user', s.user.id);
       const extra = t.path === 'going'
         ? { note: L('Marking yourself going shows you to friends on the map.', 'Đánh dấu sẽ đi sẽ hiện bạn cho bạn bè trên bản đồ.') }
         : {};
@@ -464,6 +468,7 @@ export default async function meRoutes(app: FastifyInstance) {
          organizer_ids = excluded.organizer_ids, areas = excluded.areas, cities = excluded.cities, styles = excluded.styles,
          price_cap = excluded.price_cap, updated_at = excluded.updated_at`,
       [s.user.id, body.enabled, body.genres, body.artists, body.organizerIds, body.areas, body.cities, body.styles, body.priceCap, ctx.clock.now()]);
+    if (body.enabled) awardSoon(ctx, 'user', s.user.id);
     return { ...(await alertShape(s.user.id)), message: body.enabled ? L('Smart Alert saved', 'Đã lưu Smart Alert') : L('Smart Alert off', 'Đã tắt Smart Alert') };
   });
 

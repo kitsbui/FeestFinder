@@ -6,14 +6,85 @@ import { FF } from './ff';
 
 let vapidKey: string | null | undefined;
 
+/** The browser's own install prompt (Chrome, Edge, Samsung Internet), kept until a tap asks for it. */
+type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> };
+type WithPrompt = Window & { __ffInstall?: InstallPrompt | null };
+/** The prompt the head's line kept (kd/ui/worker.tsx InstallCapture), or one that comes later. */
+let deferred: InstallPrompt | null = typeof window !== 'undefined' ? (window as WithPrompt).__ffInstall ?? null : null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('ff:installable', () => { deferred = (window as WithPrompt).__ffInstall ?? deferred; });
+  window.addEventListener('appinstalled', () => {
+    deferred = null;
+    (window as WithPrompt).__ffInstall = null;
+    try { localStorage.setItem('ff:installed', '1'); } catch { /* storage blocked */ }
+    FF.track('install', { kind: 'appinstalled' });
+    window.dispatchEvent(new Event('ff:installed'));
+  });
+}
+
+/** Whether the browser will show its own install prompt on a tap. */
+export const canPromptInstall = () => !!(deferred ?? (window as WithPrompt).__ffInstall);
+
+/** Shows the browser's install prompt; false when it has none (the steps sheet then). */
+export async function promptInstall(): Promise<boolean> {
+  const p = deferred ?? (window as WithPrompt).__ffInstall ?? null;
+  if (!p) return false;
+  deferred = null;
+  (window as WithPrompt).__ffInstall = null;
+  FF.track('install_prompt', { kind: 'native' });
+  await p.prompt();
+  const choice = await p.userChoice.catch(() => ({ outcome: 'dismissed' as const }));
+  FF.track('install_prompt', { kind: 'native', outcome: choice.outcome });
+  return true;
+}
+
 /**
  * Register /sw.js. Production builds only: in development, Next serves unhashed modules
  * that a cache-first worker would pin to stale copies.
  */
+let registered = false;
+
 export function registerWorker(): boolean {
   if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return false;
-  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((e) => console.warn('[ff] service worker', e));
+  if (registered) return true;
+  registered = true;
+  // A page a worker already controlled is an update when the controller changes; the very first
+  // install also fires controllerchange, and must not reload a first visit (meeting 2026-10-20).
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) reloadWhenIdle(); });
+  // updateViaCache 'none': the browser asks for /sw.js itself every time (the server says no-cache too).
+  navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then((reg) => {
+    const check = () => { reg.update().catch(() => { /* offline: next time */ }); };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+    setInterval(check, 30 * 60_000);
+  }).catch((e) => console.warn('[ff] service worker', e));
   return true;
+}
+
+/** Nobody is typing, no sheet is open and the page has not scrolled in the last two seconds. */
+export function isIdle(doc: Pick<Document, 'activeElement' | 'querySelector'> = document, lastScroll = lastScrollAt, now = Date.now()): boolean {
+  const el = doc.activeElement as HTMLElement | null;
+  const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+  const sheet = !!doc.querySelector('dialog[open], [data-sheet-open]');
+  return !typing && !sheet && now - lastScroll > 2000;
+}
+
+let lastScrollAt = 0;
+if (typeof window !== 'undefined') window.addEventListener('scroll', () => { lastScrollAt = Date.now(); }, { passive: true, capture: true });
+
+/**
+ * A new build took over (growth plan card F, D18): the page reloads once, when it is idle and
+ * seen; otherwise when the person next leaves or comes back to it. A hidden tab waits.
+ */
+function reloadWhenIdle(): void {
+  let done = false;
+  const go = () => { if (!done) { done = true; location.reload(); } };
+  const tryNow = () => { if (document.visibilityState === 'visible' && isIdle()) go(); };
+  tryNow();
+  if (done) return;
+  const timer = setInterval(tryNow, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tryNow(); else { clearInterval(timer); } });
+  window.addEventListener('pagehide', () => clearInterval(timer), { once: true });
 }
 
 /** The worker, and the push key ahead of a tap that switches push on (the app's screens). */

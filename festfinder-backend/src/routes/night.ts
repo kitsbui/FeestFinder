@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
-import { forbidden, notFound, tooMany } from '../lib/errors.ts';
+import { badRequest, forbidden, notFound, tooMany } from '../lib/errors.ts';
 import { L, type Localized } from '../lib/i18n.ts';
 import { cityOf } from '../lib/places.ts';
 import { styleByKey } from '../lib/styles.ts';
@@ -13,7 +13,10 @@ import { isUuid } from '../http/sql.ts';
 import { requireOrganizer, requireOwnEvent, requireUser } from '../http/guards.ts';
 import { notifyUser } from '../services/notify.ts';
 import { nameOf, phaseOf } from '../services/community.ts';
-import { badgesOf } from '../services/badges.ts';
+import { personBadges } from '../services/badges.ts';
+
+/** Badges a person may show on their profile (decision D16). */
+const PIN_LIMIT = 6;
 import { attendedAny, attendedEvents } from '../services/attendance.ts';
 
 /*
@@ -180,10 +183,35 @@ export default async function nightRoutes(app: FastifyInstance) {
     };
   });
 
-  /** The fan's own badges: earned, then in progress; the new ones count as seen once read. */
+  /**
+   * A person's own badges, whatever their craft (theirs, and the artist profile and organiser they
+   * run): earned, then in progress; the new ones count as seen once read. `pins` are the ones
+   * shown on their profile, at most six.
+   */
   app.get('/me/badges', async (req) => {
     const s = requireUser(req);
-    return { items: await badgesOf(ctx.db, 'user', s.user.id, ctx.clock.now(), { own: true }) };
+    return personBadges(ctx.db, s.user.id, ctx.clock.now(), { own: true });
+  });
+
+  app.put('/me/badges/pins', async (req) => {
+    const s = requireUser(req);
+    const { codes } = parse(z.object({ codes: z.array(z.string().max(40)).max(PIN_LIMIT) }), req.body);
+    const unique = [...new Set(codes)];
+    const mine = await personBadges(ctx.db, s.user.id, ctx.clock.now());
+    const earned = new Set(mine.items.filter((b) => b.earned).map((b) => b.code));
+    const wrong = unique.filter((c) => !earned.has(c));
+    if (wrong.length) throw badRequest('not_earned', L('Pin only badges you have', 'Chỉ khoe được huy hiệu bạn đã có'), { codes: wrong });
+    await ctx.db.query('update users set badge_pins = $2 where id = $1', [s.user.id, unique]);
+    return { pins: unique, message: L('Saved', 'Đã lưu') };
+  });
+
+  /** Someone else's badges: only what they earned, their pins first. Nothing in progress, nothing new. */
+  app.get<{ Params: { id: string } }>('/users/:id/badges', async (req) => {
+    const id = parse(uuid, req.params.id);
+    if (!(await one(ctx.db, 'select 1 from users where id = $1', [id]))) throw notFound();
+    const all = await personBadges(ctx.db, id, ctx.clock.now());
+    const earned = all.items.filter((b) => b.earned);
+    return { items: [...earned.filter((b) => b.pinned), ...earned.filter((b) => !b.pinned)], pins: all.pins, total: all.total };
   });
 
   // ---- the year in review -----------------------------------------------------------------------

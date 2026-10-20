@@ -1,19 +1,20 @@
 /*
  * FeestFinder's service worker.
  *
- * The attendee app promises that tickets, saved events and set times still work with no
+ * The attendee app promises that saved events, plans and set times still work with no
  * signal, which is exactly where festivals are. This keeps that promise:
  *
  *  - Next's build assets: cache-first (their names change when they do)
  *  - design assets and icons: from the cache, refreshed in the background (fixed names)
  *  - the app's pages and the site's pages it moved into (/, /e/…, /saved, /profile; design v2
- *    phase 4): network-first, falling back to the last copy that loaded, else the tickets
- *  - the signed-in person's data (tickets, saves, plan, events): network-first, falling
+ *    phase 4): network-first, falling back to the last copy that loaded, else the saved nights
+ *  - the signed-in person's data (saves, plans, events): network-first, falling
  *    back to the last answer, and wiped on sign-out or when someone else signs in
  *  - Web Push: shows the notification and opens its link
  */
 
-const VERSION = 'ff-4';
+// Written per build by scripts/copy-ui.ts (public/sw.js is generated, never edited).
+const VERSION = 'ff-__BUILD_ID__';
 const STATIC = VERSION + '-static';
 const PAGES = VERSION + '-pages';
 const DATA = VERSION + '-data';

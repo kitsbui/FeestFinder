@@ -46,6 +46,9 @@ test.describe('the app', () => {
     expect(await to('/app/e/ravo?ride=1')).toMatch(/\/e\/ravo\?ride=1$/);
   });
 
+  test.describe('installed', () => {
+    // This one checks the service worker too (the config blocks it elsewhere).
+    test.use({ serviceWorkers: 'allow' });
   test('the installed app asks a new device two things, then opens the list on them; a browser asks nothing', async ({ page }) => {
     // In a browser: the list is the first screen.
     await open(page, '/');
@@ -67,7 +70,8 @@ test.describe('the app', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).active?.scriptURL)).toMatch(/\/sw\.js$/);
     expect(problems).toEqual([]);
-  });
+  });  });
+
 
   test('from the list to the seller: "Mua vé" goes through /go and leaves for the seller, FeestFinder sells no tickets', async ({ page }) => {
     await returning(page);
@@ -92,6 +96,25 @@ test.describe('the app', () => {
     await expect(page).toHaveURL(/\/profile$/);
     await page.goto('/app/checkout/ravo?tier=x&qty=2');
     await expect(page).toHaveURL(/\/e\/ravo(\?|$)/);
+  });
+
+  test('badges on the profile: the row, the sheet by group, pin one and it leads the row', async ({ page }) => {
+    await signInWith(page, ATTENDEE);
+    await page.goto('/profile');
+    const section = page.getByRole('region', { name: 'Huy hiệu' }).first();
+    await expect(section).toBeVisible();
+    // Everyone's 42, plus the artist or organiser set of a craft they run.
+    await expect(section.getByText(/^\d+\/(42|47|48)$/)).toBeVisible();
+    await section.getByRole('button', { name: 'Xem tất cả huy hiệu' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Huy hiệu' });
+    await expect(sheet.getByRole('region', { name: 'Đêm' })).toBeVisible();
+    const pin = sheet.getByRole('button', { name: /^Khoe: / }).first();
+    const name = (await pin.getAttribute('aria-label'))!.replace(/^Khoe: /, '');
+    await pin.click();
+    await expect(sheet.getByRole('button', { name: `Bỏ khoe: ${name}` })).toBeVisible();
+    await expect.poll(async () => (await (await page.request.get('/me/badges')).json()).pins.length).toBeGreaterThan(0);
+    await sheet.getByRole('button', { name: `Bỏ khoe: ${name}` }).click();
+    await expect(sheet.getByRole('button', { name: `Khoe: ${name}` })).toBeVisible();
   });
 
   test('"Tôi" is /profile: passport, Wrapped, the language, signing out', async ({ page }) => {

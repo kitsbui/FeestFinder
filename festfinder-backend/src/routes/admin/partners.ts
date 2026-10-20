@@ -9,6 +9,7 @@ import { limit, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin } from '../../http/guards.ts';
 import { appendAudit } from '../../services/audit.ts';
 import { settleEarning } from '../../services/ambassadors.ts';
+import { awardSoon } from '../../services/badges.ts';
 import { CONVERSION_STATUS, normalizeHost, partnerLink } from '../../services/partners.ts';
 
 /*
@@ -174,6 +175,8 @@ export default async function adminPartnerRoutes(app: FastifyInstance) {
     if (!c) throw notFound();
     await ctx.db.query('update partner_conversions set status = $2 where id = $1', [id, b.status]);
     await settleEarning(ctx.db, id, ctx.clock.now());
+    const ref = await one<{ ref_user: string | null }>(ctx.db, 'select ref_user from partner_conversions where id = $1', [id]);
+    awardSoon(ctx, 'user', ref?.ref_user);
     await audit(s, 'partner.conversion_status', { id: c.partner_id, name: c.partner_name }, [{ f: `order ${c.order_ref}`, a: c.status, b: b.status }]);
     return { id, status: b.status };
   });

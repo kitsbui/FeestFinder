@@ -15,6 +15,11 @@ import { useKd } from '../runtime';
 import { MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
 import { WorkspaceItems, WorkspaceRows } from '../ui/workspaces';
 import { WEB } from './copy';
+import dynamic from 'next/dynamic';
+
+
+/** Loads after the page (growth plan card F): no page carries the install code at boot. */
+const InstallRow = dynamic(() => import('../ui/install').then((m) => m.InstallRow), { ssr: false });
 import { rememberLang, useOtherLang } from './lang';
 
 export interface MeCounts { saved: number; handle: string; commission: number }
@@ -104,6 +109,7 @@ export function GuestHub({ lang, className }: { lang: Lang; className?: string }
         <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
         <Row href={inLang('/about', lang)}>{T.about}</Row>
         <Row onClick={feedback}>{T.feedback}</Row>
+        <InstallRow lang={lang} />
       </div>
     </nav>
   );
@@ -121,6 +127,7 @@ export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
     <nav aria-label={T.me} className={className}>
       <div className="flex flex-col">
         {places(lang, me).map((p) => <Row key={p.key} href={p.href} aside={p.aside}>{p.label}</Row>)}
+        <InstallRow lang={lang} />
       </div>
       <h2 className="kd-m mb-1 mt-6">{K.workspaces}</h2>
       <div className="flex flex-col">

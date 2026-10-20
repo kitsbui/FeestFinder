@@ -41,7 +41,7 @@ test.describe('the about page', () => {
 
     const numbers = page.getByRole('region', { name: 'FeestFinder qua các con số' });
     await expect(numbers.getByText('Sự kiện sắp diễn ra')).toBeVisible();
-    await expect(numbers.getByText('Phí đặt vé')).toBeVisible();
+    await expect(numbers.getByText('Phí đăng tin')).toBeVisible();
 
     // The cities come from the API; one with events leads to the list filtered to it.
     const cities = page.getByRole('region', { name: 'Thành phố' });

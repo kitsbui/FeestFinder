@@ -27,6 +27,9 @@ import { Logo } from '../ui/logo';
 import { TabBar } from '../ui/shell';
 import { WEB } from './copy';
 import { LANG_KEY, rememberLang, useHere, useOtherLang } from './lang';
+
+/** Loads after the page (growth plan card F): no page carries the install code at boot. */
+const InstallBar = dynamic(() => import('../ui/install').then((m) => m.InstallBar), { ssr: false });
 import { MeMenuItems } from './me';
 
 /** The "Tìm" sheet loads the first time it opens (search-sheet.tsx). */
@@ -110,6 +113,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           </div>
         </div>
       </header>
+      <InstallBar lang={lang} />
       <WebTabs lang={lang} current={current} />
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
     </>

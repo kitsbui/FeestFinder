@@ -241,6 +241,11 @@
   .kd-tabbar-edge .kd-tb[aria-current='page']::before { top: 0; }
   @media (max-width: 899px) { body:has(.kd-tabbar-edge) { padding-bottom: calc(56px + env(safe-area-inset-bottom)); } }
   @media (min-width: 900px) { .kd-tabbar-edge { display: none; } }
+  /* The install strip (growth plan card F, D17): part of the frame, a solid bar right on top of the tab bar; phones only. */
+  .kd-install { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 20; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; background: var(--color-surface-1); box-shadow: inset 0 1px 0 var(--color-line-1); }
+  @media (max-width: 899px) { body:has(.kd-install) { padding-bottom: calc(112px + env(safe-area-inset-bottom)); } }
+  @media (min-width: 900px) { .kd-install { display: none; } }
+  body:has(.kd-dock) .kd-install { display: none; }
   /* The event page's buy bar on a phone (web/event/dock.tsx): above the tab bar; it steps aside while the ticket panel is on screen. */
   .kd-buy-dock { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 19; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--color-surface-1); box-shadow: inset 0 1px 0 var(--color-line-1); transition: transform var(--dur-2) var(--ease-ff), opacity var(--dur-2) var(--ease-ff); }
   .kd-buy-dock[data-away] { transform: translateY(100%); opacity: 0; pointer-events: none; }

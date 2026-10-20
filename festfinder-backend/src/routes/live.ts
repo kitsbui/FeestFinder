@@ -9,6 +9,7 @@ import { atVn, toMinutes, vnDate, vnTime, addDays } from '../lib/time.ts';
 import { parse, uuid } from '../lib/validate.ts';
 import { requireUser } from '../http/guards.ts';
 import { areFriends } from '../services/friends.ts';
+import { awardSoon } from '../services/badges.ts';
 import { notifyUser } from '../services/notify.ts';
 
 /** Friend positions older than this are treated as "left the site". */
@@ -108,6 +109,7 @@ export default async function liveRoutes(app: FastifyInstance) {
        on conflict (user_id, event_id) do update set zone_id = excluded.zone_id, updated_at = excluded.updated_at`,
       [s.user.id, ev.id, zoneId ?? null, now]);
     await ctx.db.query('insert into going (user_id, event_id) values ($1,$2) on conflict do nothing', [s.user.id, ev.id]);
+    awardSoon(ctx, 'user', s.user.id);
     return { onSite: true, message: L('Checked in — enjoy the show', 'Đã check-in — chúc bạn vui') };
   });
 

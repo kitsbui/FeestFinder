@@ -16,6 +16,8 @@ export const siteMetadata: Metadata = {
       { url: '/ui/assets/favicon.ico', sizes: '32x32' },
       { url: '/ui/assets/favicon.svg', type: 'image/svg+xml' },
     ],
-    apple: '/ui/assets/apple-touch-icon.png',
+    apple: { url: '/ui/assets/apple-touch-icon.png', sizes: '180x180' },
   },
+  // Installed from any page on an iPhone (growth plan card F): its name and the status bar over the dark page.
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'FeestFinder' },
 };

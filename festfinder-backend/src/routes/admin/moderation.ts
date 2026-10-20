@@ -21,6 +21,7 @@ import { refreshDerived, REVIEW_COLUMNS } from '../../services/events.ts';
 import { openReportWeight, REPORT_HOLD_THRESHOLD } from '../event-actions.ts';
 import { askArtistsToConfirm } from '../../services/lineup.ts';
 import { festivalByKey } from '../../lib/festivals.ts';
+import { awardNow } from '../../services/badges.ts';
 import { bandOf, FIT_BAND_LABEL, type FitReason } from '../../services/ingest/fit.ts';
 
 const queueFestival = (key: string | null) => {
@@ -110,6 +111,9 @@ export async function approveListing(ctx: Ctx, q: Queryable, s: UserSession, eve
   if (!ev) throw notFound();
   const from = ev.status;
   await q.query(`update events set status = 'live', genre = coalesce(genre, 'EDM'), published_at = coalesce(published_at, $2), decided_at = $2 where id = $1`, [ev.id, now]);
+  // "Tin đầu" for the organiser, "Mắt tinh" for whoever sent it in (inside the approval, so they see it).
+  await awardNow(q, 'organizer', ev.organizer_id, now);
+  await awardNow(q, 'user', ev.submitted_by, now);
   await q.query(`insert into moderation_decisions (event_id, decision, decided_by, decided_at) values ($1,$2,$3,$4)`,
     [ev.id, action === 'appeal.overturned' ? 'overturned' : 'approved', s.user.id, now]);
   const minutes = ev.submitted_at ? Math.round((now.getTime() - new Date(ev.submitted_at).getTime()) / 60000) : 0;

@@ -156,7 +156,7 @@ export const STUDIO = {
   free: { en: 'Free', vi: 'Miễn phí' },
   fPrice: { en: 'Price from ({c})', vi: 'Giá từ ({c})' },
   fTicketUrl: { en: 'Ticket link', vi: 'Link bán vé' },
-  fTicketNote: { en: 'Buyers go to your ticket seller. FeestFinder charges no booking fee.', vi: 'Người mua được chuyển sang đơn vị bán vé. FeestFinder không thu phí đặt vé.' },
+  fTicketNote: { en: 'Buy tickets takes people to this seller. FeestFinder sells no tickets.', vi: 'Nút Mua vé đưa người mua tới trang này. FeestFinder không bán vé.' },
   fSellHere: { en: 'Sell on FeestFinder', vi: 'Bán vé trên FeestFinder' },
   fSoldOut: { en: 'Sold out at the seller', vi: 'Đã hết vé ở trang bán' },
   fSellNote: { en: 'Buyers pay here; the ticket link takes over when tiers sell out.', vi: 'Người mua thanh toán tại FeestFinder; hết hạng vé thì dùng link bán vé.' },

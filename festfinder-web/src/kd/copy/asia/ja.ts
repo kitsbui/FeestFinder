@@ -451,4 +451,9 @@ export const JA: Record<string, string> = {
   'Commission': '報酬',
   'Kind': '種類',
   'Sponsored': 'スポンサー',
+  'FeestFinder lists electronic music: club nights, raves and EDM festivals. Organisers publish for free and every listing is checked before it goes live. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'FeestFinderはエレクトロニックミュージックのイベントを掲載します：クラブナイト、レイヴ、EDMフェス。主催者は無料で掲載でき、すべての掲載は公開前に確認されます。FeestFinderはチケットを販売しません：「チケットを買う」で販売元へ移動します。',
+  'Publishing is free. Add your own ticket link, one per country if you sell in several, and see the taps on Buy tickets, who shared you and the saves in Studio.': '掲載は無料です。自分のチケットリンクを追加でき（複数の国で販売するなら国ごとに）、「チケットを買う」のタップ数、シェアした人、保存数をStudioで確認できます。',
+  'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.': '主催者の販売元です。FeestFinderはチケットを販売しません：「チケットを買う」で販売元へ移動します。',
+  'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': '掲載は無料です。チケットリンク、「チケットを買う」のタップ数、保存数はStudioにあります。',
+  'Fee to publish': '掲載料',
 };

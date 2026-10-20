@@ -29,9 +29,10 @@ const LCP_TIGHT: Record<string, number> = { '/': 2000, '/e/ravo': 2000 };
 /** KB of gzipped boot JS per screen (2026-10-19, after design v2 phase 14; React and Next are about 127 of them). A screen measured twice within 1 KB keeps the higher number: gzip rounds. */
 const SCREENS: [Who, string, number][] = [
   // Phase 19 moved the sign-in sheet's own lines out of the boot JS: phase 17's kilobyte on /, the map and the wizard is back.
-  ['visitor', '/', 195], ['visitor', '/e/ravo', 196], ['visitor', '/a', 203], ['visitor', '/a/slimv', 196],
-  ['visitor', '/o/ravoent', 196], ['visitor', '/p', 181], ['visitor', '/?view=map', 195], ['visitor', '/about', 174],
-  ['fan', '/profile', 198], ['fan', '/saved', 199],
+  // Growth plan 2026-10-20: the worker registered on every page and the install strip's loader (card F), the shelf slot and referral carry (cards 5, D): 2 KB on /, the map, an artist and the profile.
+  ['visitor', '/', 197], ['visitor', '/e/ravo', 196], ['visitor', '/a', 203], ['visitor', '/a/slimv', 198],
+  ['visitor', '/o/ravoent', 196], ['visitor', '/p', 181], ['visitor', '/?view=map', 197], ['visitor', '/about', 174],
+  ['fan', '/profile', 200], ['fan', '/saved', 199],
   ['organizer', '/studio', 200], ['organizer', '/studio/new', 215], ['admin', '/console', 200],
 ];
 

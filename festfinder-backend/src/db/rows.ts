@@ -687,6 +687,7 @@ export interface Rows {
     user_id: string;
     event_id: string;
     created_at: Date;
+    origin_at_time: string | null;
   };
   group_plan_members: {
     plan_id: string;
@@ -1280,6 +1281,7 @@ export interface Rows {
     onboarded_at: Date | null;
     email_verified_at: Date | null;
     share_nights: boolean | null;
+    badge_pins: string[];
   };
   venues: {
     id: string;
