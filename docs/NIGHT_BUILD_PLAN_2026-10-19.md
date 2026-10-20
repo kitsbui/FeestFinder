@@ -1,180 +1,158 @@
-# Night build plan 2026-10-19: năm thẻ của kế hoạch tăng trưởng, không deploy
+# Night build plan (bản 2, 2026-10-20): hai đêm, không deploy
 
 - Dành cho: Claude Code chạy nhiều giờ liền, không có người xem. Chủ sản phẩm đọc sáng hôm sau.
-- Tự đứng được: agent cần `CLAUDE.md`, `docs/HANDOFF_2026-10-19_growth-plan.md` (gọi tắt: **handoff**; thẻ 4, 5, 1, 3, 6 và mục 7) và file này. Khi file này và handoff khác nhau, **file này thắng**.
-- Nền: `main` = `origin/main` = `48b2cf3`. Migration: `048` Ban ngày, `049` Lịch, `050` Hoa hồng. Không migration nào khác trong đêm.
-- Trạng thái: **chưa chạy**. Chạy khi chủ sản phẩm nói "bắt đầu night build".
+- Tự đứng được: agent cần `CLAUDE.md`, `docs/HANDOFF_2026-10-19_growth-plan.md` bản 3 (gọi tắt **handoff**: thẻ C, A, B, D, 4, 5, 6, 1; mục 7 và 8) và file này. Khi hai file khác nhau, **file này thắng**.
+- Nền: `main` = `origin/main` = `48b2cf3` (hoặc mới hơn sau khi merge branch docs). Migration cố định: đêm 1 `048_drop_ticketing`, `049_comments`; đêm 2 `050_day_events`, `051_affiliate`, `052_organizer_calendar`.
+- Trạng thái: **chưa chạy**. Mỗi đêm chạy khi chủ sản phẩm nói "bắt đầu night build 1" / "… 2". Đêm 2 chỉ chạy khi đêm 1 đã merge vào `main` (thẻ D dựa trên `/go` không còn checkout).
 
 ---
 
-## 0. Luật của đêm
+## 0. Luật của đêm (cả hai đêm)
 
-1. **Chỉ làm việc đã có quyết định.** Dùng trong đêm: D1, D3, D4, D5, D6 = A (chủ sản phẩm, 2026-10-19); D5b và D3c = A mặc định (ghi vào roadmap ở N0, chủ sản phẩm đổi được sáng sau, cả hai đảo ngược được bằng một commit). **Zalo OA để sau** (chủ sản phẩm, 2026-10-19): không chạm `services/sms.ts`, `provider_tokens`, đăng nhập, xác minh số điện thoại; SMS giữ như phase 17. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
-2. **Mỗi việc một branch `night/2026-10-19-N<k>` rẽ từ `night/2026-10-19`, một commit**, tác giả `git -c user.name="Claude" -c user.email="noreply@anthropic.com"`, dòng cuối `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Qua cổng thì merge thường (không squash) vào `night/2026-10-19`, để sáng sau revert được từng việc.
-3. **Không push `main`, không deploy, không `vercel`, không mở PR.** Push `night/2026-10-19` lên origin sau mỗi merge để CI chạy (API và web đều chỉ tạo preview trên staging; chấp nhận). Sáng sau chủ sản phẩm nói mở PR nào thì mở.
-4. **Cổng:** mỗi việc có cột "Cổng". Đỏ thì sửa tối đa 2 lần; vẫn đỏ thì bỏ branch, ghi lý do, sang việc kế. **`newcomer.spec.ts`, `layout.spec.ts`, `perf.spec.ts` đỏ ở việc nào thì việc đó chưa xong**; ngân sách trong chúng không bao giờ tăng.
-5. **Sau mỗi việc, ghi `docs/NIGHT_BUILD_2026-10-19.md`** theo mẫu mục 4, commit cùng việc đó trên branch đêm. Bị dừng giữa chừng thì sáng sau vẫn đọc được.
-6. **Không làm trong đêm** dù còn giờ: thẻ 2 (Zalo), đổi điều hướng, đổi màn đầu, thêm tab, chip hay sheet trên điện thoại, link du lịch, bất kỳ việc ở mục 6 của handoff, gắn nhãn `visual-ok` (người gắn), chép skill từ design-kit vào `.claude/skills/` (việc của chủ sản phẩm, không bắt buộc).
-7. Không secret, token, mật khẩu vào repo; test không gọi mạng (fixture); `npm i @modelcontextprotocol/sdk` là lần gọi mạng duy nhất được phép (N5). Không sửa migration đã ship.
-8. **Chữ:** server `L()`, web cặp `{en, vi}` qua `pick()`/`tx()`; mọi dòng mới của trang công khai có ở `copy/asia/{th,ja,id}.ts` theo khoá tiếng Anh (chạy script đối chiếu dòng thiếu của repo trước khi commit; nếu không có script, `grep` khoá). Chữ lấy nguyên văn từ bảng "Người dùng thấy" của thẻ. Không câu giải thích, không số 0, không tên nội bộ ở màn đầu.
-9. **Bố cục:** mọi màn chạm tới lấp đầy bề ngang ở 390 và 1440, không cuộn ngang; bảng thành thẻ dưới 640; một hành động chính mỗi màn; ba trạng thái (tải, rỗng có việc, lỗi có thử lại) trước đường vui.
-10. **Kỷ luật công cụ** (bài học 12 của design-kit): `npm run lint; echo "lint $?"`, không pipe trong chuỗi `&&`; kết quả để quyết định phải từ build mới (không `WEB_SKIP_BUILD`); chạy cả bộ `test:screens` ở N11 vì các spec để dữ liệu cho nhau; `timezoneId` đã ghim trong config.
+1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D12 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
+2. **Mỗi việc một branch `night/<ngày>-N<k>` rẽ từ `night/<ngày>`, một commit**, tác giả `git -c user.name="Claude" -c user.email="noreply@anthropic.com"`, dòng cuối `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Qua cổng thì merge thường (không squash) vào `night/<ngày>`.
+3. **Không push `main`, không deploy, không `vercel`, không mở PR, không `visual-ok`.** Push `night/<ngày>` lên origin sau mỗi merge (preview trên staging; chấp nhận).
+4. **Cổng:** mỗi việc có cột "Cổng". Đỏ thì sửa tối đa 2 lần; vẫn đỏ thì bỏ branch, ghi lý do, sang việc kế. `newcomer.spec.ts`, `layout.spec.ts`, `perf.spec.ts` đỏ ở việc nào thì việc đó chưa xong; ngân sách trong chúng chỉ giảm (đêm 1 **ghi số mới thấp hơn** khi khối vé biến mất).
+5. **Sau mỗi việc, ghi `docs/NIGHT_BUILD_<ngày>.md`** theo mẫu mục 4, commit cùng việc đó.
+6. **Không làm trong đêm:** Zalo, đổi điều hướng, thêm tab/chip/sheet trên điện thoại, du lịch, Track ID, Crew, Night Pass, merch, gỡ `plans` payment requests (D11 A: giữ), gỡ đăng nhập SMS/Zalo/WhatsApp, đổi thứ tự sheet đăng nhập.
+7. Không secret vào repo; test không gọi mạng; `npm i @modelcontextprotocol/sdk@1.32` là lần gọi mạng duy nhất (đêm 2). Không sửa migration đã ship. **Migration 048 phải có khoá an toàn**: `raise exception` khi `orders` có dòng `status = 'paid'`.
+8. **Chữ:** `L()` / `{en, vi}`; dòng công khai mới có th/ja/id theo khoá tiếng Anh; chữ lấy nguyên văn từ thẻ. Không câu giải thích, không số 0, không tên nội bộ ở màn đầu.
+9. **Bố cục:** lấp đầy 390 và 1440, không cuộn ngang; bảng thành thẻ dưới 640; một hành động chính; ba trạng thái.
+10. **Kỷ luật công cụ:** `npm run lint; echo "lint $?"`; không pipe trong `&&`; build mới cho mọi kết quả; cả bộ `test:screens` ở việc đóng đêm. Khi xoá file, `npm run typecheck` trước mọi thứ: nó liệt kê mọi import mồ côi.
 
 ---
 
-## 1. Điều kiện trước khi bắt đầu (chủ sản phẩm, 10 phút)
+## 1. Điều kiện trước mỗi đêm (chủ sản phẩm, 10 phút)
 
 | # | Điều kiện | Cách kiểm |
 | --- | --- | --- |
-| 1 | Một dòng trong `docs/FEESTFINDER_ROADMAP.md` mục "Growth plan": "2026-10-xx: night build chạy với D1, D3–D6 = A, D5b và D3c mặc định A, Zalo OA để sau" | Agent đọc dòng đó ở N0; không có thì không bắt đầu |
-| 2 | `main` sạch và bằng `origin/main` (`48b2cf3` hoặc mới hơn sau khi merge branch docs này); nếu mới hơn, agent đọc `git log` từ `48b2cf3` trước N1 và ghi vào file tiến độ những gì đổi ở các file thẻ chạm | `git fetch && git status && git log --oneline origin/main -5` |
-| 3 | CI xanh trên `main`; cục bộ `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:screens` xanh (agent chạy lại ở N0 và ghi số) | — |
-| 4 | Preview không chạy (cổng 3000, 4300, 4100, 4400 trống); máy không ngủ; hạn mức phiên đủ 16 giờ | `preview_list` trống; `ccd_host request_keep_awake` |
-| 5 | Supabase và Vercel không cần: đêm nay chỉ PGlite và build cục bộ | — |
+| 1 | Dòng trong roadmap mục "Growth plan": "2026-10-xx: night build 1 (hoặc 2) chạy với D1, D4–D6 = A; D5b, D3c, D7–D12 mặc định A; Zalo OA để sau" | Agent đọc ở N0; không có thì không bắt đầu |
+| 2 | **Đêm 1:** production không có đơn `paid` (Console › Đơn hàng, hoặc Supabase). Migration 048 cũng tự kiểm, nhưng biết trước thì đỡ hỏng đêm | Chủ sản phẩm xem |
+| 3 | `main` sạch, bằng `origin/main`; nếu mới hơn `48b2cf3`, agent đọc `git log` và ghi vào file tiến độ những gì đổi ở các file thẻ chạm | `git fetch && git status` |
+| 4 | CI xanh; cục bộ `typecheck`, `lint`, `test`, `test:screens` xanh (agent chạy lại ở N0 và ghi số) | — |
+| 5 | Preview không chạy; máy không ngủ; hạn mức đủ 16 giờ | `preview_list` trống; `ccd_host request_keep_awake` |
 
 ---
 
-## 2. Lịch đêm
-
-Thời gian là trần ước lượng. Thứ tự theo **rủi ro thấp trước, giá trị cao trước**: seed → Ban ngày → Kệ → Agent (chỉ API) → Lịch → Hoa hồng. Hai việc cuối tuỳ chọn. Sáng sau còn việc chưa xong là bình thường.
+## 2. Đêm 1 · 2026-10-2x · Gỡ vé, Gmail là đủ, Bình luận
 
 ### N0 · 0:00 · Khởi động (15 phút)
+- Kiểm điều kiện. Tạo `docs/NIGHT_BUILD_<ngày>.md` (mẫu mục 4): commit xuất phát, số bài của bốn lệnh, giờ, dòng quyết định chép vào roadmap. `git checkout -b night/<ngày>`.
+- Đọc thẻ C, A, B và mục 7, 8 của handoff một lần.
 
-- Kiểm điều kiện 1–2. Tạo `docs/NIGHT_BUILD_2026-10-19.md` từ mẫu mục 4: commit xuất phát, kết quả bốn lệnh kiểm tra với số bài, giờ bắt đầu, dòng "D5b = A, D3c = A (mặc định, chủ sản phẩm đổi được)" chép vào roadmap mục "Growth plan".
-- `git checkout -b night/2026-10-19` từ `main`.
-- Đọc thẻ 4, 5, 1, 3, 6 và mục 7 của handoff một lần; không đọc lại giữa đêm trừ khi code khác với handoff.
+### N1 · 0:15 · Thẻ C P0: gỡ mảng vé khỏi API (4 giờ)
+- **Mục tiêu:** API không còn checkout, đơn, vé, quét, pass vé, khuyến mãi, payout; `/go` luôn tới bên bán hay trang gốc; schema sạch.
+- **Làm:** đúng danh sách "Xây P0" của thẻ C. Thứ tự an toàn: (1) `plans.ts` `pricePerHead` → `events.price_from`; `badges.ts` bỏ `doors`, `sold_out`, `sold_out_5`; `eventpage.ts`, `presenters/event.ts`, `seo/event.ts` bỏ tier và resale; (2) xoá 9 file route/service, cắt `audience.ts`, `organizer/events.ts`, `outbound.ts` nhánh checkout, `jobs.ts` ba job, `config.ts`, `app.ts`, `db/rows.ts`; (3) `npm run typecheck` và sửa tới sạch; (4) migration `048_drop_ticketing.sql` (khoá an toàn; `drop table` 12 bảng đúng thứ tự FK: `scans`, `ticket_transfers`, `resale_orders`, `ticket_listings`, `resale_watchers`, `tickets`, `guest_list`, `orders`, `payout_transfers`, `promo_codes`, `tier_watchers`, `ticket_tiers`; xoá `badge_awards` ba code); bump `CLAUDE.md` "The next one is `049_*.sql`"; (5) test: xoá `attendee`, `resale`; sửa seed (không tier, đơn, vé, promo, resale); sửa 15 file test có nhánh vé.
+- **Cổng:** `npm run typecheck`; `npm test` **cả bộ**; `npm run lint; echo "lint $?"` rồi hạ `--max-warnings` xuống đúng số thật.
+- **Commit:** `FeestFinder sells no tickets: checkout, orders, tickets, door, resale, promos and payouts removed; /go always leads to the seller (migration 048)`.
 
-### N1 · 0:15 · W0: seed xấu như production (45 phút)
+### N2 · 4:15 · Thẻ C P1: gỡ màn hình vé (3 giờ)
+- **Làm:** đúng "Xây P1" của thẻ C: xoá 10 màn và page của chúng; `tickets.tsx` thành một hàng `Mua vé · từ {giá}` đi `/go`; `me.tsx` bỏ Vé; rail Studio 5 mục; wizard/editor bước Vé = link và giá (một link; nhiều link là đêm 2); Console bỏ Đơn hàng; `/about`, FAQ câu mới; `routes.ts`, `perf.spec.ts` bỏ route; sửa 9 spec, xoá `console-commerce.spec.ts`; `newcomer.spec.ts` ghi `IN_SIGHT.event` mới (phải thấp hơn 12).
+- **Cổng:** `npx tsc --noEmit -p .` và `npm run lint; echo $?` trong `festfinder-web/`; `npm run test:screens` **cả bộ**.
+- **Commit:** `The site without tickets: one "Mua vé" row to the seller, no ticket screens in the app, Studio or Console`.
 
-- **Mục tiêu:** dữ liệu cho mọi việc sau có trong `test/fixtures/seed.ts` và fixture ingest.
-- **Làm:** một coffee rave 09:00–13:00 ở TP.HCM style house, `entry_mode` paid, giá có, không ảnh (tile chữ); một kệ `enabled` trong khung ngày với 3 sự kiện live sắp tới, một trong số đó cũng là lễ hội flagship (để test một tag); `ambassador_pct` chưa có cột: để N8 thêm vào seed; fixture `test/fixtures/ingest/organizer-calendar.ics` với 3 VEVENT (một không `LOCATION`, một `TZID` Asia/Tokyo cho sự kiện TP.HCM, một `STATUS:CANCELLED`) và một trùng tên-ngày với sự kiện live của Ravolution, một trùng với sự kiện của NTC khác; `services/analytics.ts`: `SERVER_EVENTS` thêm `calendar_connected`, `ambassador_sale`, `agent_call`; `ALLOWED_PROPS` thêm `tool`.
-- **Test:** `npm test` xanh với seed mới (các bài đếm số sự kiện của seed phải sửa theo); `newcomer.spec.ts` ghi lại `IN_SIGHT` thật nếu seed làm số **giảm** (không bao giờ tăng).
-- **Cổng:** `npm run typecheck`; `node --test test/public.test.ts test/analytics.test.ts`; `npx playwright test -c playwright.next.config.ts e2e/next/newcomer.spec.ts e2e/next/home.spec.ts`.
-- **Commit:** `Seed: a day party, a shelf of three and an organiser calendar fixture for the growth plan`.
+### N3 · 7:15 · Thẻ C P2: tài liệu (30 phút)
+- `CLAUDE.md` (bỏ mọi câu về checkout VND, tiers, resale, check-in, payouts, phí người mua; thêm câu của thẻ C), `CURRENT_ARCHITECTURE.md` bảng Commerce, `TECH_DEBT.md`, roadmap.
+- **Cổng:** `grep -rn "checkout\|ticket_tiers\|resale\|payout" CLAUDE.md` trống (trừ dòng "commerce tables were dropped in 048").
+- **Commit:** `Docs: FeestFinder sells no tickets`.
 
-### N2 · 1:00 · Thẻ 4 P0: loại `day` (1 giờ)
+### N4 · 7:45 · Thẻ A: Gmail là đủ (1 giờ)
+- **Làm:** `guards.ts` `requireWriter` = `requireUser` (giữ tên, comment ghi 2026-10-20 và rủi ro Nghị định 147); `discussion.ts` `canWrite` bỏ `verify_phone`; web bỏ nhánh `verify_phone` ở `community.tsx:177`, `kd/moments.tsx` không gọi `kd/phone.tsx` trước khi đăng; `GET /admin/posts/recent` và tab `Bình luận` ở `kd/console/reports.tsx` với nút Xoá; `CLAUDE.md` câu "publishing needs a confirmed phone" → "signing in is enough (owner 2026-10-20; Decree 147 risk accepted)".
+- **Test:** `test/community.test.ts`, `test/projects.test.ts`, `test/mixes.test.ts`: tài khoản Google không số đăng được; `test/admin.test.ts`: `/admin/posts/recent` và xoá; e2e `event.spec.ts` fan seed bình luận không gặp sheet; `console.spec.ts` tab Bình luận.
+- **Cổng:** `node --test test/community.test.ts test/projects.test.ts test/mixes.test.ts test/admin.test.ts`; `npx playwright test -c playwright.next.config.ts e2e/next/event.spec.ts e2e/next/console.spec.ts`.
+- **Commit:** `Signing in is enough: no phone gate on comments, submissions, projects or mixes; the Console deletes comments`.
 
-- **Mục tiêu:** `event_type = 'day'` hợp lệ; Radar gán đúng; fit có điểm.
-- **Làm:** migration `048_day_events.sql` nới CHECK của `events.event_type` và `projects.event_type` (tên constraint từ `pg_constraint`); `lib/styles.ts` `EVENT_TYPES` thêm `'day'` trước `'other'`, nhãn `L('Day party', 'Ban ngày')`; `inferEventType`: luật `day` **ngay sau** festival và **trước** `rave`/`concert`/`club`/`party`/`show`: từ khoá `coffee rave|matcha rave|day ?party|daytime|morning rave|sunset session|sunrise|tiệc ban ngày|ban ngày|sober rave|wellness rave` **hoặc** `startTime` trong 06:00–15:59 và `endTime` có mặt và < 21:00; `fit.ts:82-85` `day` cùng điểm `party`; `CLAUDE.md` bump "The next one is `049_*.sql`" và dòng mới ở mục "EDM only".
-- **Test:** `test/radar.test.ts` 6 ca của thẻ 4; `test/public.test.ts` `?type=day`; `test/edm.test.ts` (gương `lib/styles.ts` ↔ `kd/genre.ts`) vẫn xanh.
-- **Cổng:** `node --test test/radar.test.ts test/public.test.ts test/edm.test.ts test/ingest.test.ts`.
-- **Commit:** `Day parties are an event type: inferred before the rave and party keywords (migration 048)`.
+### N5 · 8:45 · Thẻ B P0: bình luận một dòng, trả lời hai cấp (2 giờ)
+- **Làm:** migration `049_comments.sql` (`event_posts.reply_to_user_id`, `edited_at`; bump `CLAUDE.md` `050`); `discussion.ts`: bỏ `reply_depth`, trả lời của trả lời ghi `parent_id` gốc + `reply_to_user_id`; `GET discussion` một danh sách (ghim trước, mới nhất) với 3 trả lời đầu và `replyCount`; `PATCH` chỉ 15 phút của mình; thông báo `reply` cho người được trả lời (topic `null`, không tới chính mình); `helpful` giữ route, nhãn "Thích" ở web (N6).
+- **Test:** `test/community.test.ts` theo thẻ B (trả lời của trả lời; sửa sau 15 phút → 403; admin xoá; thích; báo cáo; thông báo; tốc độ).
+- **Cổng:** `node --test test/community.test.ts test/night.test.ts`.
+- **Commit:** `Comments are one stream per event: replies to replies, edits for 15 minutes, a notice to the person replied to (migration 049)`.
 
-### N3 · 2:00 · Thẻ 4 P1: nhãn menu, Markdown (45 phút)
+### N6 · 10:45 · Thẻ B P1: màn hình bình luận (2 giờ)
+- **Làm:** `kd/web/event/community.tsx` bỏ chip kinds; một composer; `Thread` hiện trả lời phẳng với `@Tên`; hành động `Thích {n}` · `Trả lời` · `⋯` (Sửa, Xoá, Báo cáo); rỗng một câu một hành động; `more.tsx` mục `Bình luận (n)` thay ba tab; copy vi/en và th/ja/id theo khoá.
+- **Test:** `event.spec.ts` viết, trả lời, trả lời trả lời có @tên, xoá; `newcomer.spec.ts` không đổi; `layout`, `wcag`, `targets` cho `/e/ravo`.
+- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/event.spec.ts e2e/next/newcomer.spec.ts e2e/next/layout.spec.ts e2e/next/targets.spec.ts e2e/next/wcag.spec.ts`.
+- **Commit:** `Comments like a feed: one box, replies with @name, like, reply, edit, delete, report`.
 
-- **Làm:** `kd/web/list/copy.ts:22` `kind` → `{ en: 'Kind', vi: 'Loại' }` và dòng th/ja/id theo khoá `Kind`; `TYPE_CHIPS` giữ nguyên; `services/seo/text.ts` (hoặc nơi `pageMarkdown`) ghi "Loại: Ban ngày"; không tag trên thẻ.
-- **Test:** `list.spec.ts`: menu máy tính có "Ban ngày", chọn nó còn 1 thẻ seed; `languages.spec.ts` xanh; `visual.spec.ts` chạy cục bộ (`FF_VISUAL=1`) và ghi vào file tiến độ ảnh nào đổi (thanh lọc) để người xem sáng sau.
-- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/list.spec.ts e2e/next/languages.spec.ts e2e/next/newcomer.spec.ts`.
-- **Commit:** `The kind picker is "Loại": day parties fit in it; the event's Markdown names its kind`.
+### N7 · 12:45 · Đóng đêm 1 (1 giờ)
+- Cả bộ: `typecheck`, `lint; echo $?` (cả hai package), `npm test`, `npm run test:screens`. `FF_VISUAL=1 visual.spec.ts` cục bộ, ghi ảnh đổi (trang sự kiện: khối vé, mục Thêm). Push `night/<ngày>`. Mục "Sáng sau" của file tiến độ; roadmap "Growth plan" tick C, A, B; ghi `IN_SIGHT` và JS trang sự kiện trước → sau, lint budget trước → sau.
 
-### N4 · 2:45 · Thẻ 5: kệ trả tiền trong ô nổi bật (2 giờ)
+---
 
-- **Mục tiêu:** `/shelves` nói kệ nào trả tiền và lọc theo thành phố; thẻ trong kệ bật mang "Nổi bật"; trang chủ vẽ kệ trong ô nổi bật có sẵn (D5, D5b); tech debt 17 đóng.
-- **Làm (API):** `routes/catalog.ts` `/shelves` thêm `sponsored` (kệ có mục đến từ boost request được duyệt hoặc `ad_campaigns` placement `featured`; đọc nơi boost được duyệt trong `routes/admin/*` để biết dấu vết) và `?city=`; `CARD_COLUMNS` suy `featured` = `e.featured or exists (shelf bật, trong khung ngày, chứa e)`; không ghi cột.
-- **Làm (web):** `kd/web/list/page.tsx` lấy `/shelves` song song; `highlight` = kệ đầu tiên có ≥ 3 mục, không thì flagship, không bao giờ cả hai; tiêu đề `kd-d3` tên kệ, aside `kd-m` `Được tài trợ · Sponsored` khi `sponsored` (dòng th/ja/id theo khoá `Sponsored`, có thể đã có từ quảng cáo: tái dùng); `browser.tsx:416` vẽ `highlight` khi bộ lọc mặc định **hoặc** `f.city` nằm trong các thành phố của kệ (D5b); thẻ mở từ ô này: `/events/:id/track` `source: 'shelf'`, `FF.track('card_open', { surface: 'shelf' })`; `kd/fresh-paths.ts` kind `s` → `/`, `/en`; `kd/console/featured.tsx` gọi `freshen('s', slug)` sau mỗi lưu kệ; `TECH_DEBT.md` 17 "Resolved 2026-10-19 (night build)".
-- **Test:** `test/public.test.ts`: `/shelves` `sponsored`, `?city=`, chỉ live sắp tới, thẻ trong kệ có `featured: true`; `home.spec.ts`: ô kệ 3 thẻ ở 390 và 1440, nhãn khi sponsored, một tag mỗi thẻ (thẻ vừa lễ hội vừa kệ); `newcomer.spec.ts` `IN_SIGHT.home` không tăng; `layout.spec.ts` trang chủ; `visual.spec.ts` cục bộ ghi ảnh đổi.
-- **Cổng:** `node --test test/public.test.ts`; `npx playwright test -c playwright.next.config.ts e2e/next/home.spec.ts e2e/next/newcomer.spec.ts e2e/next/layout.spec.ts`.
+## 3. Đêm 2 · sau khi đêm 1 lên `main` · Affiliate, Ban ngày, Kệ, Agent, Lịch
+
+### N0 · 0:00 · Khởi động (15 phút)
+- Như đêm 1. Đọc thẻ D, 4, 5, 6, 1 và mục 7. Kiểm `/go` không còn nhánh checkout (`grep -n checkout festfinder-backend/src/routes/outbound.ts` trống).
+
+### N1 · 0:15 · W0: seed (45 phút)
+- Một sự kiện có hai link bán vé (VN và SG) và partner seed `megatix` với `postback_token` (giá trị trong seed là cho test, không bí mật); một coffee rave 09:00–13:00; một kệ bật 3 sự kiện (một cũng là lễ hội flagship); fixture `test/fixtures/ingest/organizer-calendar.ics` (thiếu `LOCATION`, `TZID` khác, `CANCELLED`, trùng Ravolution, trùng NTC khác); `SERVER_EVENTS` thêm `calendar_connected`, `ambassador_sale`, `agent_call`; `ALLOWED_PROPS` thêm `tool`.
+- **Cổng:** `npm run typecheck`; `node --test test/public.test.ts test/analytics.test.ts`; `newcomer.spec.ts`, `home.spec.ts`.
+- **Commit:** `Seed for the growth plan: two ticket sellers, a day party, a shelf, a calendar fixture`.
+
+### N2 · 1:00 · Thẻ 4 P0 + P1: Ban ngày (1,5 giờ)
+- Như bản 1 của plan: migration `050_day_events.sql`; `EVENT_TYPES` `day`; `inferEventType` luật `day` **ngay sau festival, trước `rave`/`party`**; `fit.ts` `day` như `party`; nhãn menu `Loại · Kind`; Markdown "Loại"; `CLAUDE.md`.
+- **Cổng:** `node --test test/radar.test.ts test/public.test.ts test/edm.test.ts test/ingest.test.ts`; `list.spec.ts`, `languages.spec.ts`, `newcomer.spec.ts`.
+- **Commit:** `Day parties are an event type, inferred before the rave and party keywords; the kind picker is "Loại" (migration 050)`.
+
+### N3 · 2:30 · Thẻ 5: kệ trả tiền trong ô nổi bật (2 giờ)
+- Như bản 1 của plan: `/shelves` `sponsored` và `?city=`; `featured` suy trong `presentCard`; `highlight` = kệ hoặc lễ hội; `browser.tsx:416` điều kiện D5b; `source: 'shelf'`, `card_open surface shelf`; `fresh-paths` kind `s`; Console `freshen`; `TECH_DEBT` 17.
+- **Cổng:** `node --test test/public.test.ts`; `home.spec.ts`, `newcomer.spec.ts`, `layout.spec.ts`.
 - **Commit:** `A paid shelf takes the home page's one highlight surface, labelled sponsored, and reaches a chosen city (tech debt 17)`.
 
-### N5 · 4:45 · Thẻ 6: MCP và /list.md (2 giờ)
+### N4 · 4:30 · Thẻ D P0: affiliate ở API (3 giờ)
+- **Làm:** đúng "Xây P0" của thẻ D: migration `051_affiliate.sql` (`outbound_clicks.ref_user`, `partner_conversions.ref_user`, `event_ticket_links`, `ambassador_earnings`, `ambassador_payouts`; bump `CLAUDE.md` `052`); `lib/affiliate.ts` (`SHARE_PCT 50`, `MIN_PAYOUT 50_000`); `lib/money.ts` tỷ giá cố định SGD, THB, IDR, JPY → VND với ngày ghi; `/go`: `ref` (regex `^[2-9A-HJ-NP-Z]{6}$`, chỉ ghi khi `share_visits` có lượt mở của ref ấy cho sự kiện và ref ≠ người bấm), chọn link theo `x-ff-client-country`, UTM khi không partner và chưa có `utm_`; `recordConversion` chép `ref_user`, tạo earnings khi `approved`, `void` khi `rejected` (cả `PATCH /admin/conversions/:id`); `GET /me/commission`; `/me` `counts.commission`; CRUD `/organizer/events/:id/links`; `PLACEMENTS` thêm `agent`, `widget`, `share`; `events.ticket_url` đồng bộ từ link `primary`.
+- **Test:** `test/affiliate.test.ts`, `test/partners.test.ts` theo thẻ D (ref ghi/không ghi; postback khớp click; approved → 50%; rejected → void; SGD → VND; chọn link theo nước; UTM; `/me/commission`).
+- **Cổng:** `node --test test/affiliate.test.ts test/partners.test.ts test/public.test.ts test/organizer.test.ts`.
+- **Commit:** `Smart affiliate: /go picks the seller by country, carries the referrer and UTM; a partner's approved conversion earns the referrer half of the commission (migration 051)`.
 
-- **Mục tiêu:** `POST /mcp` và `GET /list.md` chỉ đọc, stateless, rate-limit, không dữ liệu người xem; llms.txt nêu chúng.
-- **Làm:** `npm i @modelcontextprotocol/sdk@1.32` trong `festfinder-backend` (kiểm `import` chạy trên Node 24 type stripping; lỗi thì import từ `dist`); `routes/agent.ts` đăng ký trong `app.ts`: `/list.md` gọi cùng service với `/events` (không SQL mới), Markdown theo thẻ 6, tối đa 50, cursor; `/mcp` với `StreamableHTTPServerTransport` stateless, `handleRequest(req.raw, reply.raw, req.body)` sau `reply.hijack()`; 6 tool với zod; resource `feestfinder://llms.txt`; `config.rateLimit` 60/phút; analytics `agent_call` prop `tool`; `PUBLIC_READS` thêm `/^\/list\.md$/`; `services/seo/*` `llmsTxt` mục `## Agents`, `robotsTxt` một dòng; `CLAUDE.md` bảng "Where things are" thêm `routes/agent.ts` và quy tắc của thẻ 6; `docs/CURRENT_ARCHITECTURE.md` mục Discovery API.
-- **Test:** `test/agent.test.ts` (mới) theo thẻ 6 (initialize, tools/list 6, search_events chỉ live và không held, priceMax theo tiền thành phố, slug lạ → lỗi JSON-RPC, 61/phút → 429, NUL → invalid_input, `/list.md` đúng số seed); `test/seo.test.ts` mục Agents; `test/webproxy.test.ts` không đổi (proxy đã coi `.md` và `/mcp` là của API).
-- **Cổng:** `node --test test/agent.test.ts test/seo.test.ts test/webproxy.test.ts`; `npm run typecheck`; `npm run lint; echo "lint $?"` (phụ thuộc mới có thể thêm cảnh báo: không vượt ngân sách).
-- **Commit:** `A read-only MCP server and /list.md for agents, named in llms.txt`.
+### N5 · 7:30 · Thẻ 6: MCP và /list.md (2 giờ)
+- Như bản 1 của plan, với mọi link vé là `/go/<slug>?src=agent`. `npm i @modelcontextprotocol/sdk@1.32`; `routes/agent.ts`; `reply.hijack()` + `handleRequest(req.raw, reply.raw, req.body)`; rate-limit 60/phút; `PUBLIC_READS` `/list.md`; llms.txt mục Agents; `CLAUDE.md`, ARCHITECTURE.
+- **Cổng:** `node --test test/agent.test.ts test/seo.test.ts test/webproxy.test.ts`; `npm run typecheck`; `npm run lint; echo $?`.
+- **Commit:** `A read-only MCP server and /list.md for agents; their ticket links go through /go`.
 
-### N6 · 6:45 · Thẻ 1 P0: lịch kết nối là nguồn của nhà tổ chức (3 giờ)
+### N6 · 9:30 · Thẻ D P1: màn hình affiliate (2,5 giờ)
+- **Làm:** `context.tsx` lưu `ff:ref:<eventId>` 30 ngày; `tickets.tsx`, `dock.tsx` gắn `ref` vào `/go`; sheet chia sẻ dòng `Hoa hồng {p}%` (đã đăng nhập và sự kiện có partner); `me.tsx` hàng `Hoa hồng` khi `counts.commission > 0`; `/app/commission` (`/app/*` đã trong cutover; thêm vào `routes.ts` fan; `perf.spec.ts` đo một lần); Studio editor bước Vé: danh sách link với nước và tiền tệ; tab `Link vé` trong Sự kiện (click theo ngày, nguồn, bên bán, người giới thiệu).
+- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/event.spec.ts e2e/next/app-more.spec.ts e2e/next/studio-events.spec.ts e2e/next/newcomer.spec.ts e2e/next/layout.spec.ts e2e/next/targets.spec.ts e2e/next/wcag.spec.ts e2e/next/perf.spec.ts`.
+- **Commit:** `Affiliate on the screens: the referrer travels to "Mua vé", commission in Tôi, ticket links by country in Studio`.
 
-- **Mục tiêu:** NTC nối một URL ICS hay trang JSON-LD; sự kiện mới về `in_review` dưới tên họ, `origin = posted`; không gộp sang NTC khác; sự kiện live chỉ được điền chỗ trống.
-- **Làm:** migration `049_organizer_calendar.sql` (`ingest_sources.organizer_id` + unique partial index; `CLAUDE.md` bump `050`); `run.ts`: `createCandidate` nhận `organizerId` (giữ `holder` cho Radar); trong `resolveAndApply`, khi `source.organizer_id` và match thuộc NTC khác → không attach/enrich, tạo candidate dưới NTC của nguồn, `flagRisk` với `match`; khi match cùng NTC → attach + `enrich` (mở `enrich` cho `source.organizer_id === ev.organizer_id`: ảnh, lineup, pin như `is_community`); thêm dòng `event_sources` provider `organizer` cạnh dòng adapter; bỏ `FIT_FLOOR` cho nguồn có `organizer_id` nhưng vẫn `refreshFit`; `notifyAdmins` một lần mỗi đợt có sự kiện mới; `routes/organizer/calendar.ts` `GET/POST/DELETE /organizer/calendar` (thành viên NTC; placeholder → 400; `https` bắt buộc; adapter theo `.ics`/`text/calendar` hay `website`; fetch thử qua `IngestIO` ≥ 1 record hợp lệ, lỗi `no_events`/`robots`/`unreachable`; `authority 'official'`, `interval_minutes 360`, `config.requireStyle false`; chạy ngay một lần trong 20 s; rate-limit 5/phút; analytics `calendar_connected`); `ARCHITECTURE` bảng nguồn.
-- **Test:** `test/ingest.test.ts` với fixture N1: 3 sự kiện `in_review` thuộc Ravolution, `origin posted`, hai dòng `event_sources`; chạy lại không tạo thêm; `CANCELLED` → rejected; record trùng sự kiện live của Ravolution → merged, chỉ điền chỗ trống, tin vẫn live và **không** đổi giờ; record trùng NTC khác → candidate riêng có flag; `http://` → 400; fixture rỗng → `no_events`; `test/organizer.test.ts`: 403 ngoài thành viên, 400 placeholder.
+### N7 · 12:00 · Thẻ 1 P0: lịch kết nối (3 giờ)
+- Như bản 1 của plan: migration `052_organizer_calendar.sql`; `run.ts` nhánh `organizer_id` (không gộp sang NTC khác, `createCandidate` nhận `organizerId`, `enrich` cho NTC của nguồn, provider `organizer`, bỏ `FIT_FLOOR`); `/organizer/calendar` CRUD; thông báo một lần mỗi đợt.
 - **Cổng:** `node --test test/ingest.test.ts test/organizer.test.ts test/radar.test.ts`.
-- **Commit:** `An organiser connects a calendar: its nights are posted under the organiser and wait for review (migration 049)`.
+- **Commit:** `An organiser connects a calendar: its nights are posted under the organiser and wait for review (migration 052)`.
 
-### N7 · 9:45 · Thẻ 1 P1: lịch nhúng (3 giờ)
-
-- **Mục tiêu:** `/embed/organizers/:slug` (+ `.ics`) công khai mở CORS; widget `ff-widget.js`; khối "Lịch" trong Studio › Hồ sơ.
-- **Làm:** `routes/embed.ts` theo thẻ 1 (server dựng `dateLabel`, `timeLabel`, giá bằng `lib/format.ts`; `Access-Control-Allow-Origin: *` trong route; `PUBLIC_READS` thêm `/^\/embed\//`; `.ics` tái dùng writer của `routes/event-actions.ts:116-130`); `festfinder-frontend/ui/widget/ff-widget.js` (vanilla, Shadow DOM, < 8 KB gzip, `data-ff-org|lang|theme|limit|api`); `festfinder-web/scripts/copy-ui.ts` thêm `widget`; `kd/studio/profile.tsx` khối "Lịch" với hai phần theo bảng chữ của thẻ 1, copy trong `kd/studio/copy.ts`; `kd/web/event/context.tsx` `event_view` prop `source: 'widget'` khi `?src=widget`.
-- **Test:** `test/embed.test.ts` (mới) theo thẻ 1; e2e `widget.spec.ts` (mới): `page.setContent` nhúng từ `:3100` với `data-ff-api` `:4100`, đúng số dòng, click mở `/e/<slug>?src=widget`; `studio.spec.ts` khối Lịch ở 390 không cuộn ngang; `routes.ts` không đổi (`/studio/profile` đã có).
-- **Cổng:** `node --test test/embed.test.ts`; `npx playwright test -c playwright.next.config.ts e2e/next/widget.spec.ts e2e/next/studio.spec.ts e2e/next/layout.spec.ts`; `npm run typecheck`.
+### N8 · 15:00 · Thẻ 1 P1: lịch nhúng (3 giờ, tuỳ chọn)
+- Như bản 1: `routes/embed.ts` (+ `.ics` tái dùng writer `event-actions.ts:116-130`), `ui/widget/ff-widget.js`, `copy-ui.ts`, khối "Lịch" trong Studio › Hồ sơ, `source: 'widget'`.
+- **Cổng:** `node --test test/embed.test.ts`; `widget.spec.ts`, `studio.spec.ts`, `layout.spec.ts`; `npm run typecheck`.
 - **Commit:** `Embed calendar: /embed/organizers/:slug and its .ics feed, the widget, and the Studio "Lịch" block`.
 
-### N8 · 12:45 · Thẻ 3 P0: hoa hồng trên đơn (3 giờ)
+### N9 · 18:00 · Thẻ D P2 (1 giờ, tuỳ chọn)
+- Job `settleAmbassadors`; Console tab Đại sứ và "cần ký" (top host theo click 30 ngày không partner); `CLAUDE.md` mục "Ticket buttons" viết lại theo thẻ D.
+- **Cổng:** `node --test test/affiliate.test.ts test/jobs.test.ts`; `console.spec.ts`.
 
-- **Mục tiêu:** đơn đã trả qua `?ref=` sinh earnings đúng số; hoàn tiền → void; `GET /me/commission`.
-- **Làm:** migration `050_ambassadors.sql` đúng SQL của thẻ 3 (`events.ambassador_pct`, `orders.ref_user`, `ambassador_earnings`, `ambassador_payouts`; `CLAUDE.md` bump `051`); `routes/commerce.ts` `CheckoutInput` thêm `ref` (regex `^[2-9A-HJ-NP-Z]{6}$`), ghi `orders.ref_user` khi hợp lệ và `ref_user <> coalesce(user_id, '00000000-0000-0000-0000-000000000000')`, bỏ qua im lặng khi không; earnings khi đơn `paid` ở cả webhook VietQR và nhánh mock/0 đồng, `amount = round(total * pct / 100)`, không sinh khi `total = 0`; `routes/organizer/audience.ts` refund → `void`; `GET /me/commission`; `PATCH` sự kiện của NTC nhận `ambassadorPct` (1–20, null tắt); `services/eventpage.ts` trả `ambassadorPct` và `mine.commission`; seed đặt `ambassador_pct = 10` cho `ravo`; `/me` `counts.commission`.
-- **Test:** `test/ambassador.test.ts` (mới) theo thẻ 3 (vé 350.000, giảm 50.000, 10% → 30.000; tự mua → không; không % → không; hoàn → void; 25% → 400; `GET /me/commission` đúng tổng); `test/attendee.test.ts`, `test/organizer.test.ts` vẫn xanh.
-- **Cổng:** `node --test test/ambassador.test.ts test/attendee.test.ts test/organizer.test.ts test/resale.test.ts`.
-- **Commit:** `Ambassador commission: a paid order through a share link earns the sharer the organiser's percentage (migration 050)`.
-
-### N9 · 15:45 · Thẻ 3 P1: màn hình (2,5 giờ)
-
-- **Làm:** sheet chia sẻ dòng `Hoa hồng {p}%` chỉ khi có % **và** đã đăng nhập; `context.tsx` lưu `ff:ref:<eventId>` 30 ngày; checkout (`kd/app/checkout.tsx`) gửi `ref`; `kd/web/me.tsx` hàng `Hoa hồng` aside chỉ khi `counts.commission > 0`; `/app/commission` (`src/app/(kd)/app/commission/page.tsx`, `kd/app/commission.tsx`: `Table`/`Row`, trạng thái, nút phụ "Tài khoản nhận tiền", rỗng một câu một hành động; `/app/*` đã trong `kd/cutover.ts`); `e2e/next/routes.ts` fan thêm `/app/commission`; `perf.spec.ts` đo một lần và ghi ngân sách; Studio editor bước Vé switch + `%`; `payouts.ts` `LedgerLine` âm trong `post_event`, `advance` trên gross trừ hoa hồng; cột "Đại sứ" ở attendees.
-- **Test:** `event.spec.ts` sheet có dòng khi đăng nhập, không khi chưa; `app-more.spec.ts` `/app/commission` ở 390 và 1440 (rỗng và có dữ liệu); `studio-events.spec.ts` ô %; `newcomer.spec.ts` không đổi; `layout`, `wcag`, `targets` cho route mới.
-- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/event.spec.ts e2e/next/app-more.spec.ts e2e/next/studio-events.spec.ts e2e/next/newcomer.spec.ts e2e/next/layout.spec.ts e2e/next/targets.spec.ts e2e/next/wcag.spec.ts e2e/next/perf.spec.ts`.
-- **Commit:** `Commission on the screens: the share sheet, "Hoa hồng" in Tôi, /app/commission, the organiser's percentage and ledger line`.
-
-### N10 · 18:15 · Thẻ 3 P2: job tất toán và tab Console (1 giờ, tuỳ chọn)
-
-- **Làm:** job `settleAmbassadors` (mỗi giờ): `payable` khi `ends_at + 24h` và đơn không hoàn; gom `ambassador_payouts` theo kỳ, ngưỡng 50.000; `/console/affiliate` tab "Đại sứ" đánh dấu đã trả (như partner payouts); `CLAUDE.md` dòng của thẻ 3.
-- **Cổng:** `node --test test/ambassador.test.ts test/jobs.test.ts`; `npx playwright test -c playwright.next.config.ts e2e/next/console.spec.ts`.
-- **Commit:** `Commission settles after the night: payable, then paid by period from the Console`.
-
-### N11 · 19:15 · Đóng đêm (1 giờ)
-
-- Trên `night/2026-10-19`: `npm run typecheck`; `npm run lint; echo "lint $?"` (cả hai package); `npm test`; `npm run test:screens` **cả bộ**; `npx tsc --noEmit -p .` và `npm run lint` trong `festfinder-web/`.
-- `FF_VISUAL=1` chạy `visual.spec.ts` cục bộ; ghi danh sách ảnh đổi (trang chủ với kệ, thanh lọc với "Loại") vào file tiến độ. **Không** chụp lại baseline.
-- Push `night/2026-10-19`. Viết mục "Sáng sau" của file tiến độ (mẫu mục 4). Cập nhật roadmap "Growth plan": tick lát đã xong, ghi số thật từ `newcomer.spec.ts` (IN_SIGHT trước và sau).
-- Thẻ 1 P2 (`proposeRevision`, bản sửa từ lịch) **không** làm trong đêm: nó tách logic khỏi `routes/organizer/events.ts:336` và cần người xem; ghi là việc tiếp theo.
+### N10 · 19:00 · Đóng đêm 2 (1 giờ)
+- Như N7 của đêm 1. Ghi: thẻ 1 P2 (bản sửa từ lịch) là việc tiếp theo cần người xem.
 
 ---
 
-## 3. Những gì dễ hỏng trong đêm và cách tránh
-
-| Chỗ | Vì sao | Làm |
-| --- | --- | --- |
-| `inferEventType` | từ khoá `rave`/`party` khớp trước giờ | luật `day` đứng ngay sau festival (N2); test "coffee rave" là cổng |
-| Ô nổi bật và phase 13 | `browser.tsx:416` chỉ vẽ ở bộ lọc mặc định | điều kiện D5b (N4); `newcomer.spec.ts` chạy với seed có kệ |
-| Hai nguồn sự thật cho `featured` | admin đặt tay, kệ không chạm cột | suy trong `presentCard`, không ghi cột (N4) |
-| Gộp sang NTC khác | `resolveAndApply` không biết NTC | nhánh `organizer_id` (N6); test trùng NTC khác là cổng |
-| `enrich` đổi sự kiện live | hôm nay chỉ điền chỗ trống | giữ vậy trong đêm; bản sửa là việc sau |
-| `/embed` và CORS | plugin cors theo danh sách origin | header `*` trong route, không credentials; test header là cổng |
-| `orders.user_id` sắp nullable | guest checkout phase 17 | `coalesce` trong kiểm tự giới thiệu (N8) |
-| `advance` 50% vượt số còn lại | ledger không biết hoa hồng | `advance` trên gross trừ hoa hồng (N9) |
-| MCP và Fastify | body đã parse, SDK tự viết response | `reply.hijack()` + `handleRequest(req.raw, reply.raw, req.body)` (N5) |
-| Lint budget | phụ thuộc mới, file mới | `npm run lint; echo $?` sau mỗi việc; hạ ngân sách nếu giảm được, không tăng |
-| Perf budget | `/app/commission` mới, trang chủ thêm fetch | đo một lần, ghi số; trang chủ: `/shelves` song song, không thêm JS client ngoài điều kiện D5b |
-| Dịch th/ja/id | dòng công khai mới: "Loại", "Được tài trợ" (có thể đã có), "Ban ngày" | thêm theo khoá tiếng Anh ở N3, N4; `languages.spec.ts` |
-
----
-
-## 4. Mẫu file tiến độ `docs/NIGHT_BUILD_2026-10-19.md`
+## 4. Mẫu file tiến độ `docs/NIGHT_BUILD_<ngày>.md`
 
 ```
-# Night build 2026-10-19
+# Night build <ngày> (đêm 1 | đêm 2)
 
-Xuất phát: main <sha>. Kiểm tra lúc bắt đầu: typecheck ok · lint ok (<n> cảnh báo / ngân sách) · test <m> bài (<p> qua, <s> bỏ) · screens <k> bài.
-Quyết định dùng: D1, D3, D4, D5, D6 = A (chủ SP 2026-10-19); D5b = A, D3c = A (mặc định); Zalo OA để sau.
+Xuất phát: main <sha>. Kiểm tra lúc bắt đầu: typecheck ok · lint ok (<n>/<ngân sách>) · test <m> bài · screens <k> bài.
+Quyết định dùng: D1, D4–D6 = A; D5b, D3c, D7–D12 = A (mặc định); Zalo OA để sau.
 
 | N | Việc | Bắt đầu | Kết thúc | Kết quả | Branch · commit | Cổng | Ghi chú |
-| N1 | Seed | 0:15 | 0:52 | xong | night/2026-10-19-N1 · <sha> | xanh | newcomer IN_SIGHT home 20 → 20 |
-| N2 | … | | | xong / bỏ / dừng vì quyết định | | | |
 
-## Ảnh đổi (visual.spec cục bộ, cho người xem sáng sau)
-- home-phone: ô nổi bật là kệ seed (dự kiến)
-- filters-desktop: nhãn "Loại" (dự kiến)
-
+## Ảnh đổi (visual.spec cục bộ)
+## Số trước → sau
+- newcomer IN_SIGHT home/event · perf JS /, /e/ravo · lint cảnh báo API/web · test tổng · bảng trong schema
 ## Sáng sau
-- Đã xong: …  · Chưa xong: … (vì …)
-- Số: newcomer IN_SIGHT home/event trước → sau; perf JS trang chủ trước → sau; lint cảnh báo trước → sau; test tổng.
-- Cần chủ sản phẩm: xác nhận hoặc đổi D5b, D3c; mở PR nào (gợi ý: một PR mỗi thẻ từ các branch N, hoặc một PR cho night/2026-10-19); xem ảnh đổi rồi gắn visual-ok; đặt `ANTHROPIC_API_KEY` không liên quan đêm nay.
-- Việc tiếp theo: thẻ 1 P2 (bản sửa từ lịch), thẻ 2 khi điều kiện đúng.
+- Đã xong · Chưa xong (vì) · Cần chủ sản phẩm (xác nhận D7–D12; mở PR nào; xem ảnh, gắn visual-ok; ký partner) · Việc tiếp theo
 ```
 
-## 5. Sáng sau, cho chủ sản phẩm (15 phút)
+## 5. Sáng sau (chủ sản phẩm, 15 phút)
 
-1. Đọc `docs/NIGHT_BUILD_2026-10-19.md`.
-2. `git log --oneline main..night/2026-10-19` để thấy từng việc; muốn bỏ việc nào: `git revert -m 1 <merge sha>` trên branch đêm.
-3. Mở PR (bảo agent): theo thẻ, nhánh N4+N5 (thẻ 4), N6 (thẻ 5), N7 (thẻ 6), N8+N9 (thẻ 1), N10–N12 (thẻ 3); mỗi PR mang checklist "Thiết kế" đánh thật và ô ảnh để trống; xem `visual-diff`, gắn `visual-ok`; "merge" từng cái.
-4. Sau deploy: chạy script phụ lục A của handoff trên production, ghi cột mới vào roadmap; tạo một kệ 3 sự kiện trong Console để thấy ô nổi bật thật.
+1. Đọc file tiến độ. `git log --oneline main..night/<ngày>`; bỏ việc nào: `git revert -m 1 <merge sha>`.
+2. Bảo agent mở PR: đêm 1 nên là **một PR cho thẻ C** (N1–N3) và một cho A + B; đêm 2 một PR mỗi thẻ. Checklist "Thiết kế" đánh thật; xem `visual-diff`; gắn `visual-ok`; "merge".
+3. Sau deploy: script phụ lục A của handoff trên production; ghi số; với đêm 2 tạo một kệ 3 sự kiện trong Console và kiểm một `/go` thật tới bên bán.
