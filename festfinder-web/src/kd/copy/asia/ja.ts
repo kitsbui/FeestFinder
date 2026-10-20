@@ -450,4 +450,5 @@ export const JA: Record<string, string> = {
   'Commission {p}% when friends buy through your link': '友だちがあなたのリンクから購入すると {p}% の報酬',
   'Commission': '報酬',
   'Kind': '種類',
+  'Sponsored': 'スポンサー',
 };

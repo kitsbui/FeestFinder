@@ -450,4 +450,5 @@ export const TH: Record<string, string> = {
   'Commission {p}% when friends buy through your link': 'ค่าคอมมิชชัน {p}% เมื่อเพื่อนซื้อบัตรผ่านลิงก์ของคุณ',
   'Commission': 'ค่าคอมมิชชัน',
   'Kind': 'ประเภท',
+  'Sponsored': 'ได้รับการสนับสนุน',
 };

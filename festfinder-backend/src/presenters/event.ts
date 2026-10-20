@@ -6,6 +6,7 @@ import { BADGES, L, type Localized } from '../lib/i18n.ts';
 import { cityOf } from '../lib/places.ts';
 import { brandOf, CONFIDENCE_LABEL, freshness, type ConfidenceLabel } from '../services/ingest/confidence.ts';
 import { PROVIDER_LABEL } from '../services/ingest/providers.ts';
+import { vnDate } from '../lib/time.ts';
 import { festivalByKey, FLAGSHIP_LABEL } from '../lib/festivals.ts';
 
 /** A festival brand on a card: its name, and the highlight a world festival wears. */
@@ -20,12 +21,27 @@ export const ORG_COLUMNS = `
   o.art as org_art, o.logo_url as org_logo`;
 
 /** Columns every card needs, joined with its organiser. Alias the events table as `e`. */
+/**
+ * The date windows of the switched-on featured shelves the event sits on. presentCard reads them
+ * against its own clock (a back-office date, Vietnam's): a card on a shelf that shows today is
+ * "Nổi bật" like one the team featured by hand (growth plan card 5).
+ */
+const SHELF_WINDOWS = `(select coalesce(json_agg(json_build_object('from', s.starts_on, 'to', s.ends_on)), '[]'::json)
+   from shelf_items si join shelves s on s.id = si.shelf_id where si.event_id = e.id and s.enabled)`;
+
+/** Whether one of those windows covers today. */
+export function onShelf(windows: { from: string | null; to: string | null }[] | null | undefined, now: Date): boolean {
+  const today = vnDate(now);
+  return (windows ?? []).some((w) => (!w.from || String(w.from).slice(0, 10) <= today) && (!w.to || String(w.to).slice(0, 10) >= today));
+}
+
 export const CARD_COLUMNS = `
   e.id, e.slug, e.title, e.genre, e.art, e.cover_url, e.logo_url, e.badge, e.featured, e.sold_out, e.status,
   e.starts_on, e.ends_on, e.start_time, e.end_time, e.starts_at, e.ends_at,
   e.venue_id, e.venue_name, e.area, e.address, e.lat, e.lng, e.city,
   e.entry_mode, e.price_from, e.currency, e.hype_count, e.save_count, e.lineup, e.artists, e.organizer_id,
-  e.styles, e.event_type, e.confidence_score, e.confidence, e.source_count, e.last_verified_at, e.origin, e.festival, ${ORG_COLUMNS}`;
+  e.styles, e.event_type, e.confidence_score, e.confidence, e.source_count, e.last_verified_at, e.origin, e.festival, ${ORG_COLUMNS},
+  ${SHELF_WINDOWS} as shelf_windows`;
 
 export interface FriendFace { id: string; name: string; initials: string; photoUrl: string | null; source: string }
 
@@ -97,7 +113,7 @@ export function presentCard(r: any, o: PresentOpts) {
     coverUrl: r.cover_url as string | null,
     logoUrl: r.logo_url as string | null,
     badge: r.badge && !past && !r.sold_out ? { key: r.badge as string, label: BADGES[r.badge] } : null,
-    featured: r.featured as boolean,
+    featured: !!r.featured || onShelf(r.shelf_windows, o.now),
     soldOut: r.sold_out as boolean,
     past,
     status: r.status as string,

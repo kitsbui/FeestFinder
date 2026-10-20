@@ -82,5 +82,6 @@ export const LIST = {
   obSkip: { en: 'Skip', vi: 'Bỏ qua' },
   // the home page's highlight, banner and questions
   flagship: { en: 'World-class festivals', vi: 'Lễ hội lớn thế giới' },
+  sponsored: { en: 'Sponsored', vi: 'Được tài trợ' },
   adHide: { en: 'Hide this ad', vi: 'Ẩn quảng cáo' },
 } satisfies Dict;

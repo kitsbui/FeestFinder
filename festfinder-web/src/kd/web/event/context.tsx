@@ -47,8 +47,8 @@ export function EventClientProvider({ ev: served, children }: { ev: EventDetail;
       rememberRef(d.id, ref);
       FF.fire(FF.post('/events/' + d.id + '/track', ref
         ? { type: 'view', source: 'shared', ref, channel: q.get('ch') || 'copy' }
-        : { type: 'view', source: 'feed' }));
-      FF.track('event_view', { slug: d.slug, genre: d.genre ?? undefined, city: d.city });
+        : { type: 'view', source: q.get('src') === 'widget' ? 'widget' : 'feed' }));
+      FF.track('event_view', { slug: d.slug, genre: d.genre ?? undefined, city: d.city, ...(q.get('src') === 'widget' ? { source: 'widget' } : {}) });
     }
   }, [served.slug]);
   // Once the session is known, and again whenever who is signed in changes.

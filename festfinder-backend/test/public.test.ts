@@ -231,7 +231,7 @@ describe('public discovery (Web + App, signed out)', () => {
       assert.equal(detail.age, null, 'Radar reads no age: none is shown');
       assert.equal(detail.links.go, '/go/' + ev.slug);
       const go = await env.as().get('/go/' + ev.slug);
-      assert.deepEqual([go.status, go.headers.location], [302, 'https://club.example/night']);
+      assert.deepEqual([go.status, go.headers.location], [302, `https://club.example/night?utm_source=feestfinder&utm_medium=referral&utm_campaign=${ev.slug}&utm_content=detail`]);
       const seo = (await env.as().get('/seo/events/' + ev.slug)).body;
       const node = (seo.jsonLd['@graph'] as { '@type': string; isAccessibleForFree?: boolean }[]).find((n) => n['@type'] === 'MusicEvent')!;
       assert.equal(node.isAccessibleForFree, false);

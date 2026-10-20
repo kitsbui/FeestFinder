@@ -450,4 +450,5 @@ export const ID: Record<string, string> = {
   'Commission {p}% when friends buy through your link': 'Komisi {p}% saat teman membeli lewat tautanmu',
   'Commission': 'Komisi',
   'Kind': 'Jenis',
+  'Sponsored': 'Disponsori',
 };

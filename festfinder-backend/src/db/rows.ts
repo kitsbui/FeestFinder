@@ -789,6 +789,7 @@ export interface Rows {
     last_error: string | null;
     created_by: string | null;
     created_at: Date;
+    organizer_id: string | null;
   };
   lineup_disputes: {
     event_id: string;
@@ -1169,6 +1170,8 @@ export interface Rows {
     ends_on: string | null;
     sort: number;
     created_at: Date;
+    sponsored: boolean;
+    cities: string[];
   };
   site_zones: {
     id: string;

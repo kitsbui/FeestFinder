@@ -154,4 +154,17 @@ test.describe('Studio, signed in', () => {
     await page.getByRole('region', { name: 'Doanh nghiệp và liên hệ' }).getByRole('button', { name: 'Lưu' }).click();
     await expect.poll(async () => (await (await page.request.get('/organizer/profile')).json()).hotline).toBe('1900 1234');
   });
+
+  test('the calendar block: the two lines to embed, a preview, and an address to connect', async ({ page }) => {
+    await open(page, '/studio/profile');
+    const block = page.getByRole('region', { name: 'Lịch' });
+    await expect(block.getByLabel('Nhúng vào website')).toContainText('data-ff-org=');
+    await block.getByRole('radio', { name: 'Sáng' }).click();
+    await expect(block.getByLabel('Nhúng vào website')).toContainText('data-ff-theme="light"');
+    await block.getByRole('button', { name: 'Xem trước' }).click();
+    await expect(block.locator('a[role="listitem"]').first()).toBeVisible();
+    // Connecting reads the address at once (test/calendar.test.ts, with fixtures: no network here).
+    await expect(block.getByLabel('Địa chỉ lịch')).toBeVisible();
+    await expect(block.getByRole('button', { name: 'Kết nối' })).toBeDisabled();
+  });
 });

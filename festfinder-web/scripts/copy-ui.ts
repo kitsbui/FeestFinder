@@ -11,7 +11,7 @@ const PUBLIC_UI = join(ROOT, 'public/ui');
 
 // The text fonts used to be copied too; drop what an older run left.
 rmSync(join(PUBLIC_UI, 'fonts'), { recursive: true, force: true });
-for (const folder of ['vendor', 'assets', 'map']) {
+for (const folder of ['vendor', 'assets', 'map', 'widget']) {
   const from = join(SOURCE, 'ui', folder);
   // A mirror: a file removed there must stop being served here too.
   rmSync(join(PUBLIC_UI, folder), { recursive: true, force: true });

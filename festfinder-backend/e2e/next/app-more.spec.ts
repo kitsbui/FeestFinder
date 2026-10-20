@@ -109,6 +109,9 @@ test.describe('the app, signed in', () => {
     const problems = await open(page, '/app/commission');
     await expect(page.getByRole('heading', { name: 'Hoa hồng' })).toBeVisible();
     await expect(page.getByText('Chưa có hoa hồng')).toBeVisible();
+    // The demo attendee already has one for group plans: "Đổi" opens the form.
+    const change = page.getByRole('button', { name: 'Đổi', exact: true });
+    if (await change.isVisible()) await change.click();
     await page.getByLabel('Số tài khoản').fill('0123456789');
     await page.getByLabel('Chủ tài khoản').fill('Minh Tran');
     await page.getByRole('button', { name: 'Lưu', exact: true }).click();

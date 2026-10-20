@@ -30,6 +30,9 @@ export default defineConfig({
     baseURL: WEB,
     ...devices['Desktop Chrome'],
     trace: 'retain-on-failure',
+    // Every page installs the service worker; what it fetches would slip past page.route() mocks.
+    // The offline checks (site.spec.ts) allow it again.
+    serviceWorkers: 'block',
   },
   webServer: [
     {

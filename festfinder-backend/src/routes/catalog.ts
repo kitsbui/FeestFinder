@@ -163,6 +163,9 @@ export async function findEvent(ctx: Ctx, idOrSlug: string) {
       where ${isUuid(idOrSlug) ? 'e.id = $1' : 'e.slug = $1'}`, [idOrSlug]);
 }
 
+/** A shelf shows with at least this many live upcoming events. */
+export const SHELF_MIN = 3;
+
 export default async function catalogRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
 
@@ -488,12 +491,18 @@ export default async function catalogRoutes(app: FastifyInstance) {
     };
   });
 
-  /** Featured shelves that are switched on and inside their date window. */
-  app.get('/shelves', async () => {
+  /**
+   * Featured shelves that are switched on and inside their date window, with at least three live
+   * upcoming events (fewer is not a shelf); `?city=` keeps the shelves meant for that city or for
+   * every city. The home page draws the first in its highlight slot (growth plan card 5).
+   */
+  app.get('/shelves', async (req) => {
+    const { city } = parse(z.object({ city: z.string().max(60).optional() }), req.query);
     const now = ctx.clock.now();
     const today = vnDate(now);
     const shelves = await many<any>(ctx.db,
-      `select * from shelves where enabled and (starts_on is null or starts_on <= $1) and (ends_on is null or ends_on >= $1) order by sort`, [today]);
+      `select * from shelves where enabled and (starts_on is null or starts_on <= $1) and (ends_on is null or ends_on >= $1)
+          and ($2::text is null or cardinality(cities) = 0 or $2 = any(cities)) order by sort`, [today, city ?? null]);
     // Every shelf's events in one query.
     const rows = shelves.length ? await many<any>(ctx.db,
       `select si.shelf_id, ${CARD_COLUMNS} from shelf_items si join events e on e.id = si.event_id join organizers o on o.id = e.organizer_id
@@ -501,8 +510,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
       [shelves.map((s) => s.id), now]) : [];
     return {
       items: shelves
-        .map((s) => ({ id: s.id, slug: s.slug, name: s.name, items: rows.filter((r) => r.shelf_id === s.id).map((r) => presentCard(r, { now, viewer: null })) }))
-        .filter((s) => s.items.length),
+        .map((s) => ({ id: s.id, slug: s.slug, name: s.name, sponsored: !!s.sponsored, cities: s.cities ?? [], items: rows.filter((r) => r.shelf_id === s.id).map((r) => presentCard(r, { now, viewer: null })) }))
+        .filter((s) => s.items.length >= SHELF_MIN),
     };
   });
 
@@ -511,7 +520,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
   app.post<{ Params: { id: string } }>('/events/:id/track', async (req, reply) => {
     const body = parse(z.object({
       type: z.enum(['view', 'ticket_click', 'ride_click']),
-      source: z.enum(['feed', 'shelf', 'shared', 'search', 'own', 'ads', 'map', 'list']).default('feed'),
+      source: z.enum(['feed', 'shelf', 'shared', 'search', 'own', 'ads', 'map', 'list', 'widget']).default('feed'),
       // A view that arrived on a share link: where it was shared, and who shared it.
       channel: z.enum(SHARE_CHANNELS).optional(),
       ref: z.string().regex(/^[2-9A-HJ-NP-Z]{6}$/).optional(),

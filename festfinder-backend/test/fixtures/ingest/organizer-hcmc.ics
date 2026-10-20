@@ -1,0 +1,35 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Ravolution//Calendar//EN
+X-WR-TIMEZONE:Asia/Ho_Chi_Minh
+BEGIN:VEVENT
+UID:ravo-warehouse-1003@ravolution.example
+DTSTART;TZID=Asia/Ho_Chi_Minh:20261003T220000
+DTEND;TZID=Asia/Ho_Chi_Minh:20261004T040000
+SUMMARY:Ravolution Warehouse: Techno All Night Long
+LOCATION:The Observatory\, 5 Nguyễn Tất Thành\, Quận 4\, TP.HCM
+URL:https://ravolution.example/events/warehouse-1003
+CATEGORIES:Techno
+DESCRIPTION:A techno night in the warehouse with residents all night long.
+END:VEVENT
+BEGIN:VEVENT
+UID:ravo-house-1010@ravolution.example
+DTSTART;TZID=Asia/Ho_Chi_Minh:20261010T210000
+DTEND;TZID=Asia/Ho_Chi_Minh:20261011T020000
+SUMMARY:Ravolution House Club Night
+LOCATION:Lush Saigon\, 2 Lý Tự Trọng\, Quận 1\, TP.HCM
+URL:https://ravolution.example/events/house-1010
+CATEGORIES:House
+DESCRIPTION:Deep house and tech house club night.
+END:VEVENT
+BEGIN:VEVENT
+UID:ravo-coffee-1017@ravolution.example
+DTSTART;TZID=Asia/Ho_Chi_Minh:20261017T090000
+DTEND;TZID=Asia/Ho_Chi_Minh:20261017T130000
+SUMMARY:Coffee Rave Saigon
+LOCATION:Rooftop Garden\, 10 Lê Lợi\, Quận 1\, TP.HCM
+URL:https://ravolution.example/events/coffee-1017
+CATEGORIES:House
+DESCRIPTION:A morning house party with coffee.
+END:VEVENT
+END:VCALENDAR
