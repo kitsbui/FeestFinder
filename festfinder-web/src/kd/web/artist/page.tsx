@@ -241,7 +241,8 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 <h2 id="shows-h" className="kd-d2">{T.upcomingTab}</h2>
                 {highlights.length ? (
                   <>
-                    <div className="kd-cards">
+                    {/* One or two shows share the row in halves; three or more take the cards' grid. */}
+                    <div className={highlights.length < 3 ? 'grid grid-cols-1 gap-x-4 gap-y-7 tab:grid-cols-2' : 'kd-cards'}>
                       {highlights.map((e) => {
                         const tickets = !(e.isFree || e.entryMode === 'free') && !e.soldOut && !e.past;
                         return (
