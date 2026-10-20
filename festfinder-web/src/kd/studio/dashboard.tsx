@@ -33,6 +33,9 @@ interface Perf {
   boost: { status: 'open' | 'approved' | 'done' | 'declined' | 'withdrawn' } | null;
   /** Presses of "Đặt xe" (Grab, Green SM) on the event page, all time. */
   rideClicks?: number;
+  /** Where "Mua vé" sent people, by seller, and how many came through someone's share link. */
+  sellers?: { host: string; clicks: number }[];
+  referredClicks?: number;
 }
 
 interface Clicks { clicks: number; byPlacement: Tally[]; byDevice: Tally[]; byCountry: Tally[]; byEvent: { id: string; title: string; n: number }[] }
@@ -172,6 +175,13 @@ export function Dashboard() {
           {perf?.rideClicks ? (
             <Panel as="section" className="flex items-baseline justify-between gap-3 p-5" aria-label={T.rideClicks}>
               <span className="kd-h">{T.rideClicks}</span><span className="kd-d3 kd-num">{count(perf.rideClicks, lang)}</span>
+            </Panel>
+          ) : null}
+          {perf?.sellers?.length ? (
+            <Panel as="section" className="flex flex-col gap-3.5 p-5" aria-label={T.sellers}>
+              <span className="kd-h">{T.sellers}</span>
+              {perf.sellers.map((s) => <BarRow key={s.host} label={s.host} value={s.clicks} max={perf.sellers![0].clicks} display={count(s.clicks, lang)} />)}
+              {perf.referredClicks ? <span className="kd-s kd-num">{fill(T.referred, { n: count(perf.referredClicks, lang) })}</span> : null}
             </Panel>
           ) : null}
           {perf?.sources.length ? (

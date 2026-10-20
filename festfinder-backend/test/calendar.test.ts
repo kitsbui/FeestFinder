@@ -86,6 +86,23 @@ describe('organiser calendars and the embed', () => {
     const { runSource } = await import('../src/services/ingest/run.ts');
     const again = await runSource(env.ctx, src, { trigger: 'manual' });
     assert.equal(again.created, 0);
+
+    // The team approves one; then the calendar moves its start: it changes at once, stays live, and waits for review.
+    const house = (await env.ctx.db.query<{ id: string }>(`select id from events where title = 'Ravolution House Club Night'`)).rows[0].id;
+    const admin = await env.admin();
+    assert.equal((await env.as(admin).post(`/admin/listings/approve`, { ids: [house] })).status, 200);
+    pages['https://ravolution.example/calendar.ics'] = ICS.replace('DTSTART;TZID=Asia/Ho_Chi_Minh:20261010T210000', 'DTSTART;TZID=Asia/Ho_Chi_Minh:20261010T220000');
+    const moved = await runSource(env.ctx, src, { trigger: 'manual' });
+    assert.equal(moved.created, 0);
+    const after = (await env.ctx.db.query<{ status: string; start_time: string; needs_review_fields: string[]; needs_review_before: { start_time?: string } }>(
+      'select status, start_time::text as start_time, needs_review_fields, needs_review_before from events where id = $1', [house])).rows[0];
+    assert.equal(after.status, 'live', 'the page stays up');
+    assert.match(after.start_time, /^22:00/);
+    assert.ok(after.needs_review_fields.includes('startTime'), JSON.stringify(after.needs_review_fields));
+    assert.match(String(after.needs_review_before.start_time), /^21:00/, 'what it was before, for a rejection to put back');
+    // Unchanged on the next read: no second request.
+    const same = await runSource(env.ctx, src, { trigger: 'manual' });
+    assert.equal(same.created + same.merged, 0);
     assert.equal((await env.as(org).delete('/organizer/calendar')).status, 200);
     assert.equal((await env.as(org).get('/organizer/calendar')).body.calendar, null);
     assert.equal((await env.ctx.db.query<{ n: number }>(`select count(*)::int as n from events where title = 'Coffee Rave Saigon'`)).rows[0].n, 1, 'its events stay');

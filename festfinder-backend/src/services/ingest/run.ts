@@ -18,6 +18,8 @@ import { findExact, findSimilar, MATCH_RULES, venueLikeness, type Match } from '
 import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent, type RawRecord } from './types.ts';
 import { ensureOrigin } from '../events.ts';
 import { notifyAdmins } from '../notify.ts';
+import { proposeRevision } from '../../routes/organizer/events.ts';
+import type { Row } from '../../db/rows.ts';
 import { FIT_FLOOR, fitOf, refreshFit } from './fit.ts';
 
 /*
@@ -228,6 +230,9 @@ async function resolveAndApply(q: Queryable, source: IngestSource, rawId: string
   if (match && !othersEvent && (match.exact || match.score >= MATCH_RULES.mergeAt)) {
     await attachSource(q, match.eventId, source, rawId, record, n, match, now);
     await enrich(q, match.eventId, n, now, own);
+    // The organiser's own calendar moved its live night (a time, the venue, the price): the change
+    // applies and waits in the review queue like an edit in Studio, the page staying up meanwhile.
+    if (own) await reviseFromCalendar(q, match.eventId, n, venue, now);
     await refreshFit(q, [match.eventId], now);
     return { kind: 'merged' as const, eventId: match.eventId, match };
   }
@@ -293,6 +298,22 @@ async function attachSource(q: Queryable, eventId: string, source: IngestSource,
        raw_event_id = excluded.raw_event_id, conflicts = excluded.conflicts, cancelled = excluded.cancelled, last_seen_at = excluded.last_seen_at`,
     [eventId, source.adapter, source.authority, record.externalId, url, hostOf(url) ?? hostOf(source.url), source.id, rawId,
       PROVIDER_CONFIDENCE[source.authority], match?.score ?? null, match?.reason ?? null, json(conflicts), n.cancelled, now]);
+}
+
+/** What a calendar says about a live night of its own organiser, as an edit that goes to review when it changes something. */
+async function reviseFromCalendar(q: Queryable, eventId: string, n: NormalizedEvent, venue: { id: string } | null, now: Date) {
+  const ev = await one<Row<'events'>>(q, `select * from events where id = $1`, [eventId]);
+  if (!ev || ev.status !== 'live') return;
+  const patch: Record<string, unknown> = {};
+  if (n.title) patch.title = n.title;
+  if (n.startsOn) { patch.startsOn = n.startsOn; patch.endsOn = n.endsOn ?? n.startsOn; }
+  if (n.startTime) patch.startTime = n.startTime;
+  if (n.endTime) patch.endTime = n.endTime;
+  if (venue?.id) patch.venueId = venue.id;
+  else if (n.venueName && !ev.venue_id) patch.venueName = n.venueName;
+  if (n.free) patch.entryMode = 'free';
+  else if (n.priceFrom && n.priceFrom > 0) { patch.entryMode = 'paid'; patch.priceFrom = n.priceFrom; }
+  if (Object.keys(patch).length) await proposeRevision(q, ev, patch, now);
 }
 
 /**

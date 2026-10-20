@@ -84,6 +84,8 @@ export const STUDIO = {
   draft: { en: 'Draft', vi: 'Nháp' },
   continue: { en: 'Continue', vi: 'Tiếp tục' },
   sources: { en: 'Where views come from', vi: 'Lượt xem đến từ đâu' },
+  sellers: { en: 'Buy tickets, by seller', vi: 'Bấm Mua vé theo trang bán' },
+  referred: { en: '{n} through someone’s share', vi: '{n} qua link người khác chia sẻ' },
   srcFeed: { en: 'FeestFinder feed', vi: 'Nguồn cấp FeestFinder' },
   srcShelf: { en: 'Trending shelf', vi: 'Mục Đang hot' },
   srcShared: { en: 'Shared links', vi: 'Liên kết chia sẻ' },

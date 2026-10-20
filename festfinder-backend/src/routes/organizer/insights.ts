@@ -140,6 +140,12 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
       ev.previous_edition_id ? one<any>(ctx.db, 'select id, title, save_count, starts_on from events where id = $1', [ev.previous_edition_id]) : null,
     ]);
     const sources = await many<any>(ctx.db, `select key, sum(value::int)::int as n from event_metrics_daily, jsonb_each_text(sources) where event_id = $1 group by key order by n desc`, [ev.id]);
+    // Where "Mua vé" sent people, by seller (growth plan card D: one per country), and how many came through someone's share.
+    const [sellers, referred] = await Promise.all([
+      many<{ host: string; n: number }>(ctx.db,
+        `select target_host as host, count(*)::int as n from outbound_clicks where event_id = $1 and target_host is not null group by target_host order by n desc limit 8`, [ev.id]),
+      one<{ n: number }>(ctx.db, 'select count(*)::int as n from outbound_clicks where event_id = $1 and ref_user is not null', [ev.id]),
+    ]);
 
     const daysLeft = ev.starts_on ? Math.max(0, daysBetween(today, ev.starts_on)) : 0;
     const byDay = new Map(daily.map((d) => [d.day, d.n as number]));
@@ -181,6 +187,8 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
       // Presses of "Đặt xe" (Grab, Green SM) on the event page: people on their way.
       rideClicks: metrics.rides as number,
       sources: sources.map((s) => ({ key: s.key, pct: Math.round((s.n / Math.max(totalSources, 1)) * 100) })),
+      sellers: sellers.map((s) => ({ host: s.host, clicks: s.n })),
+      referredClicks: referred?.n ?? 0,
       vsPrevious,
     };
   });

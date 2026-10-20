@@ -72,6 +72,11 @@ describe('organizer back office (Ravolution)', () => {
     assert.equal(r.body.sources[0].key, 'feed');
     assert.equal(r.body.vsPrevious.rows.length, 4);
     assert.equal(r.body.sold, undefined, 'FeestFinder sells no tickets');
+    // Where "Mua vé" sent people, by seller: one more click through /go shows under its host.
+    await env.call('GET', '/go/ravo?src=detail', { headers: { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148' } });
+    const after = await env.as(token).get(`/organizer/events/${ravo}/performance`);
+    assert.ok(after.body.sellers.some((x: { host: string; clicks: number }) => x.host === 'ticketbox.vn' && x.clicks >= 1), JSON.stringify(after.body.sellers));
+    assert.equal(typeof after.body.referredClicks, 'number');
   });
 
   it('gives the studio its views, saves and ticket clicks day by day over a range', async () => {
