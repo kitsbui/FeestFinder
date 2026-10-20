@@ -1,15 +1,15 @@
-# Night build plan (bản 2, 2026-10-20): hai đêm, không deploy
+# Night build plan (bản 3, 2026-10-20): ba đêm, không deploy
 
 - Dành cho: Claude Code chạy nhiều giờ liền, không có người xem. Chủ sản phẩm đọc sáng hôm sau.
 - Tự đứng được: agent cần `CLAUDE.md`, `docs/HANDOFF_2026-10-19_growth-plan.md` bản 3 (gọi tắt **handoff**: thẻ C, A, B, D, 4, 5, 6, 1; mục 7 và 8) và file này. Khi hai file khác nhau, **file này thắng**.
-- Nền: `main` = `origin/main` = `48b2cf3` (hoặc mới hơn sau khi merge branch docs). Migration cố định: đêm 1 `048_drop_ticketing`, `049_comments`; đêm 2 `050_day_events`, `051_affiliate`, `052_organizer_calendar`.
-- Trạng thái: **chưa chạy**. Mỗi đêm chạy khi chủ sản phẩm nói "bắt đầu night build 1" / "… 2". Đêm 2 chỉ chạy khi đêm 1 đã merge vào `main` (thẻ D dựa trên `/go` không còn checkout).
+- Nền: `main` = `origin/main` = `48b2cf3` (hoặc mới hơn sau khi merge branch docs). Migration cố định: đêm 1 `048_drop_ticketing`, `049_comments`; đêm 2 `050_day_events`, `051_affiliate`, `052_organizer_calendar`; đêm 3 `053_badges_v2`.
+- Trạng thái: **chưa chạy**. Mỗi đêm chạy khi chủ sản phẩm nói "bắt đầu night build 1" / "… 2" / "… 3". Đêm 2 chỉ chạy khi đêm 1 đã merge vào `main` (thẻ D dựa trên `/go` không còn checkout); đêm 3 khi đêm 2 đã merge (huy hiệu đọc hoa hồng và bình luận mới).
 
 ---
 
 ## 0. Luật của đêm (cả hai đêm)
 
-1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D14 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
+1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D16 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
 2. **Mỗi việc một branch `night/<ngày>-N<k>` rẽ từ `night/<ngày>`, một commit**, tác giả `git -c user.name="Claude" -c user.email="noreply@anthropic.com"`, dòng cuối `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Qua cổng thì merge thường (không squash) vào `night/<ngày>`.
 3. **Không push `main`, không deploy, không `vercel`, không mở PR, không `visual-ok`.** Push `night/<ngày>` lên origin sau mỗi merge (preview trên staging; chấp nhận).
 4. **Cổng:** mỗi việc có cột "Cổng". Đỏ thì sửa tối đa 2 lần; vẫn đỏ thì bỏ branch, ghi lý do, sang việc kế. `newcomer.spec.ts`, `layout.spec.ts`, `perf.spec.ts` đỏ ở việc nào thì việc đó chưa xong; ngân sách trong chúng chỉ giảm (đêm 1 **ghi số mới thấp hơn** khi khối vé biến mất).
@@ -134,6 +134,30 @@
 
 ---
 
+## 3b. Đêm 3 · sau khi đêm 2 lên `main` · Huy hiệu raver (thẻ E)
+
+### N0 · 0:00 · Khởi động (15 phút)
+- Như các đêm trước. Đọc thẻ E (danh mục 53, hệ biểu tượng, D13, D15, D16). Kiểm `services/attendance.ts` có `attended()` (đêm 1) và `ambassador_earnings` (đêm 2).
+
+### N1 · 0:15 · Thẻ E P0: catalogue 53 và trao tự động (3,5 giờ)
+- **Làm:** migration `053_badges_v2.sql` (`users.badge_pins text[] default '{}'`; `going.origin_at_time`; xoá `badge_awards` code cũ còn sót); `services/badges.ts` catalogue 53 theo bảng của thẻ E (code, vai, nhóm, bậc, emblem icon|num, ngưỡng, icon, label, rule), `progressFor` cho mọi tín hiệu qua `attended()` và các bảng nêu ở cột Nguồn; `award` → `notifyUser` kind `badge` (tối đa 3 thông báo mỗi giờ mỗi người, còn lại chỉ "mới"); `awardFor(role, id)` gọi sau presence, bình luận, share visit, duyệt tin, conversion approved, kế hoạch tạo, Smart Alert; `going` ghi `origin_at_time` khi bấm Đi; `GET /me/badges` gộp ba vai, `PUT /me/badges/pins` (≤ 6, chỉ đã nhận), `GET /users/:id/badges`; `SERVER_EVENTS` `badge_earned`; seed một tài khoản đạt ≥ 10 huy hiệu và các bản ghi xấu (không `ends_at`, `area` null, `styles` rỗng).
+- **Test:** `test/badges.test.ts`: 53 × (đạt, chưa đạt); không trao hai lần; độ hiếm; pins > 6 → 400; pin huy hiệu chưa nhận → 400; `/users/:id/badges` không lộ gì ngoài huy hiệu; thông báo tối đa 3/giờ.
+- **Cổng:** `node --test test/badges.test.ts test/night.test.ts test/community.test.ts`; `npm run typecheck`.
+- **Commit:** `Badges v2: 53 achievements awarded from what people did, pins and a public list (migration 053)`.
+
+### N2 · 3:45 · Thẻ E P1: hệ biểu tượng và trang cá nhân (3,5 giờ)
+- **Làm:** `kd/ui/badges.tsx` `Emblem` v2 (bậc D15, số, chấm nhóm, cung tiến độ, chấm mới, cỡ 64/44/28); hàng ghim + `{n}/53` + sheet trên `kd/web/fan/page.tsx` cho mình và người khác; Khoe/Bỏ khoe/Chia sẻ (story qua `FF.shareStory`, `FF.track('share', { kind: 'badge' })`); rỗng một câu một hành động; copy vi/en và th/ja/id theo khoá (53 tên, 53 điều kiện, 3 bậc); `/kit` hàng 18 biến thể.
+- **Test:** `profiles.spec.ts` (hàng, sheet, Khoe tối đa 6, chia sẻ tạo ảnh, rỗng), `kit.spec.ts`, `layout`, `wcag`, `targets` cho `/profile`; `languages.spec.ts`.
+- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/profiles.spec.ts e2e/next/kit.spec.ts e2e/next/layout.spec.ts e2e/next/targets.spec.ts e2e/next/wcag.spec.ts e2e/next/languages.spec.ts`; `npx tsc --noEmit -p .` và `npm run lint; echo $?` trong `festfinder-web/`.
+- **Commit:** `Badges on every profile: one emblem system in three tiers, up to six pinned, a story to share`.
+
+### N3 · 7:15 · Thẻ E P2 (1 giờ)
+- Wrapped và passport đọc catalogue mới; `CLAUDE.md` dòng của thẻ E; roadmap tick.
+- **Cổng:** `node --test test/night.test.ts`; `app-more.spec.ts`.
+
+### N4 · 8:15 · Đóng đêm 3 (1 giờ)
+- Như N7 đêm 1. Ảnh đổi: trang cá nhân, `/kit`.
+
 ## 4. Mẫu file tiến độ `docs/NIGHT_BUILD_<ngày>.md`
 
 ```
@@ -154,5 +178,5 @@ Quyết định dùng: D1, D4–D6 = A; D5b, D3c, D7–D12 = A (mặc định); 
 ## 5. Sáng sau (chủ sản phẩm, 15 phút)
 
 1. Đọc file tiến độ. `git log --oneline main..night/<ngày>`; bỏ việc nào: `git revert -m 1 <merge sha>`.
-2. Bảo agent mở PR: đêm 1 nên là **một PR cho thẻ C** (N1–N3) và một cho A + B; đêm 2 một PR mỗi thẻ. Checklist "Thiết kế" đánh thật; xem `visual-diff`; gắn `visual-ok`; "merge".
+2. Bảo agent mở PR: đêm 1 nên là **một PR cho thẻ C** (N1–N3) và một cho A + B; đêm 2 một PR mỗi thẻ; đêm 3 một PR. Checklist "Thiết kế" đánh thật; xem `visual-diff`; gắn `visual-ok`; "merge".
 3. Sau deploy: script phụ lục A của handoff trên production; ghi số; với đêm 2 tạo một kệ 3 sự kiện trong Console và kiểm một `/go` thật tới bên bán.

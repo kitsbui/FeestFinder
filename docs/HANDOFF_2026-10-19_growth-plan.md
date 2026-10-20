@@ -24,8 +24,9 @@
 | 5 | **Nổi bật trả tiền trong ô có sẵn** (như bản 2) | NTC mua chỗ, brand | Cùng ô, có nhãn "Được tài trợ" | ≥ 1 chỗ bán · card_open ≥ 3% | 1 ngày |
 | 6 | **Dữ liệu cho agent** (như bản 2, mọi link vé trong kết quả là `/go`) | Agent | Không gì | 5/5 agent đúng · ≥ 200 gọi | 1,5 ngày |
 | 1 | **Lịch của nhà tổ chức** (như bản 2) | Venue, collective | Không gì (Studio) | 20 lịch nhúng · 10 lịch kết nối · 100 sự kiện | 2,5 ngày |
+| E | **Huy hiệu raver**: 53 thành tựu tự trao, một hệ biểu tượng, hàng "khoe" trên trang cá nhân của mọi người bất kể vai | Mọi người; nghệ sĩ và NTC có thêm bộ nghề | Trang cá nhân có hàng tối đa 6 huy hiệu đã ghim và một mục "Huy hiệu {{n}}/53"; thông báo khi nhận | ≥ 50% người có ≥ 1 đêm nhận ≥ 2 huy hiệu · ≥ 20% người có huy hiệu ghim ít nhất một · ≥ 100 lượt chia sẻ huy hiệu | 2 ngày |
 
-Thứ tự: **đêm 1: C → A → B** (gỡ trước để mọi thứ sau không phải né mảng vé); **đêm 2: D → 4 → 5 → 6 → 1**. Tổng ≈ 13 ngày công, hai night build. Thẻ 2 (Zalo OA) để sau.
+Thứ tự: **đêm 1: C → A → B**; **đêm 2: D → 4 → 5 → 6 → 1**; **đêm 3: E** (huy hiệu cần "đã đi" của D13, hoa hồng của D và bình luận của B). Tổng ≈ 15 ngày công, ba night build. Thẻ 2 (Zalo OA) để sau.
 
 **Số đo hôm nay** (2026-10-19, production, iPhone 13 giả lập, vi-VN, Asia/Ho_Chi_Minh; script ở phụ lục A). Đây là ngân sách: không việc nào được làm tăng.
 
@@ -61,6 +62,9 @@ Hai số đo lệch (16 so với ngân sách 20) vì cách đếm khác nhau; **
 | D13 | "Đã đi" (huy hiệu, passport, Wrapped, bạn bè thấy) hôm nay = vé đã quét **hoặc** `presence` (check-in vị trí ở live mode). Không còn vé thì tính gì? | **A (khuyến nghị): `presence` hoặc `going` khi sự kiện đã kết thúc.** Hệ quả: một truy vấn thay ở `badges.ts:81`, `night.ts:46,215`; không khái niệm mới. *Checklist: "attended(user, event) = presence ∪ (going ∧ ends_at < now); dùng chung một hàm trong services/attendance.ts."* · B: chỉ `presence`. Hệ quả: người không bật vị trí không có passport. |
 | D14 | Bình luận mở khi nào? Hôm nay `kindOpen` đóng Kỷ niệm trước sự kiện, Crew sau sự kiện, Track ID sau 7 ngày. | **A (khuyến nghị): luôn mở** cho sự kiện không `removed`; ảnh đính kèm luôn được. Hệ quả: bỏ `kindOpen`, `kindsShown`. · B: đóng 30 ngày sau sự kiện. |
 
+| D15 | Huy hiệu: ba bậc hiếm vẽ bằng gì? | **A (khuyến nghị): vòng 2 px theo bậc: Thường `line-2`, Hiếm `info`, Huyền thoại `lime` đặc; không gradient, không glow** (gradient và glow là của hành động chính, theo quy ước màu). Chấm họ màu 7 px ở đáy vòng dùng họ `edm`/`live`/`cult`/`fest` sẵn có để phân nhóm. · B: gradient nhấn cho Huyền thoại. Hệ quả: ba chỗ dùng dải nhấn trên một trang. |
+| D16 | Khoe bao nhiêu trên trang cá nhân? | **A (khuyến nghị): tối đa 6 ghim, mặc định 6 cái hiếm nhất đã nhận; còn lại trong sheet.** · B: 3. · C: tất cả. Hệ quả: hàng dài, vỡ lưới 390. |
+
 Đã chốt sẵn, không hỏi lại: Feest Scout không cần code; thẻ 2 Zalo OA, link du lịch, Mini App, Crew, Night Pass, merch để sau (mục 6). Sign-in: Google đứng đầu sheet như `CLAUDE.md` nói; phase 17 xếp cách bằng số điện thoại trước ở `kd/sign-in.tsx:135` cho người Việt: giữ thứ tự ấy, chỉ bỏ **bắt buộc**.
 
 ---
@@ -77,7 +81,7 @@ Ba điều chỉnh soi lại bản 2:
 | Ba tab thảo luận + Hype trong "Thêm" | Bình luận như Facebook | Thẻ B: một mục "Bình luận (n)"; Hype giữ nguyên (quyết định cũ của chủ sản phẩm). |
 | Thẻ 1, widget hiện giá từ tier | Không tier | Giá từ `events.price_from` và tiền tệ, hay "Giá ở trang bán vé". |
 | Thẻ 6, MCP trả link | Affiliate | Mọi link vé trong `/list.md` và tool là `/go/<slug>?src=agent`, để chuyển đổi từ agent cũng được ghi. |
-| Huy hiệu `doors` (quét vé), `sold_out`, `sold_out_5` | Không check-in, không bán | Gỡ khỏi `BADGE_CATALOGUE`; huy hiệu đã trao thì migration xoá dòng của chúng. |
+| Huy hiệu `doors` (quét vé), `sold_out`, `sold_out_5` | Không check-in, không bán; chủ sản phẩm giữ gamify (2026-10-20) | Gỡ ba code ấy; thẻ E xây lại catalogue 53 trên "đã đi" của D13 và các tín hiệu đang có. |
 | Thẻ 5, kệ và `featured` | Không đổi | Giữ. |
 | Thẻ 4 | Không đổi | Giữ. |
 
@@ -216,6 +220,118 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ vi · en,
 
 **Xong khi.** Cổng xanh; trên preview: chia sẻ → mở → Mua vé → postback giả (curl với token của partner seed) → earnings hiện trong `/app/commission`; `CLAUDE.md` đã đổi.
 
+### Thẻ E · Huy hiệu raver (đêm 3)
+
+**Một câu.** Mỗi người có một tủ huy hiệu: 53 thành tựu trao **tự động** từ việc họ đã làm trên FeestFinder (đi, khám phá, nói, lan toả, lên kế hoạch, hồ sơ; nghệ sĩ và nhà tổ chức có thêm bộ nghề), vẽ bằng một hệ biểu tượng, ghim tối đa 6 cái lên trang cá nhân để khoe, chia sẻ được dưới dạng ảnh story.
+
+**Đã có, dùng lại.** `services/badges.ts` (`BADGE_CATALOGUE` 20 cái theo vai, `progressFor`, `award`, `badgesOf` với độ hiếm theo vai, `seen_at` = "mới"), `badge_awards` (vai, id, code, ngày), job `awardBadges` mỗi giờ, `GET /me/badges`, `kd/ui/badges.tsx` (`Badges`, `Emblem` vẽ bằng CSS theo họ màu, sheet chi tiết), hiện trên trang cá nhân, nghệ sĩ, nhà tổ chức; `FF.shareStory` cho ảnh story; `attended()` của thẻ C (D13).
+
+**Nguyên tắc.** Mọi điều kiện đo được từ bảng đang có, không bảng điểm, không "điểm kinh nghiệm", không xếp hạng người với người (độ hiếm là "% raver có", không phải thứ hạng). Tên vui, dòng điều kiện là sự thật ("Đi 5 đêm kết thúc sau nửa đêm"). Một bộ cho **mọi vai** cộng hai bộ nghề; bộ nghề hiện trên trang cá nhân của người đang chạy hồ sơ ấy (`user_roles`), nên một DJ cũng khoe "Hộ chiếu 25" cạnh "25 show". Huy hiệu không mở khoá tính năng nào.
+
+**Danh mục 53 thành tựu** (`code` · tên vi · en · điều kiện · nguồn · bậc T thường, H hiếm, L huyền thoại · icon Phosphor). Số trong ngoặc là ngưỡng; `attended` = D13.
+
+*Đêm (9):*
+| code | Tên | Điều kiện | Nguồn | Bậc | Icon |
+| --- | --- | --- | --- | --- | --- |
+| first | Lần đầu · First night | attended ≥ 1 | attended | T | `Sparkle` |
+| passport_10 | Hộ chiếu 10 · Passport 10 | attended ≥ 10 | attended | T | số 10 |
+| passport_25 | Hộ chiếu 25 · Passport 25 | ≥ 25 | attended | T | số 25 |
+| passport_50 | Nửa trăm · Fifty | ≥ 50 | attended | H | số 50 |
+| passport_100 | Trăm đêm · A hundred nights | ≥ 100 | attended | L | số 100 |
+| night_owl | Cú đêm · Night owl | 5 đêm kết thúc sau 00:00 | attended × `ends_at` | T | `Moon` |
+| sunrise | Đón bình minh · Sunrise | 3 đêm kết thúc sau 05:00 | attended × `ends_at` | H | `SunHorizon` |
+| daylight | Ban ngày · Day party | 3 sự kiện `event_type = day` | attended × events | T | `Sun` |
+| streak_3 | Đều nhịp · Three months running | attended ở 3 tháng liên tiếp | attended × `starts_on` | H | `Repeat` |
+
+*Khám phá (9):*
+| four_styles | Đủ 4 dòng · Four styles | 4 style khác nhau (style đầu của mỗi đêm) | attended × `styles[1]` | T | `Waveform` |
+| local | Thổ địa · Local | 5 quận trong một thành phố | attended × `area` | T | `MapPin` |
+| two_cities | Hai thành phố · Two cities | 2 thành phố | attended × `city` | T | `Buildings` |
+| five_cities | Năm thành phố · Five cities | 5 thành phố | attended × `city` | H | `GlobeHemisphereEast` |
+| abroad | Xuất ngoại · Abroad | 2 nước (`cities.country_code`) | attended × places | H | `Airplane` |
+| festival_first | Lễ hội đầu · First festival | 1 sự kiện `festival` | attended × `event_type` | T | `Tent` |
+| festival_5 | Dân lễ hội · Festival regular | 5 lễ hội | attended | H | `Flag` |
+| flagship | Lễ hội lớn · World stage | 1 lễ hội `festival.flagship` | attended × `lib/festivals.ts` | H | `Crown` |
+| radar_first | Đi trước Radar · Before the crowd | đi một đêm còn `origin = radar` lúc đó (lưu `origin` vào `going` khi bấm Đi) | going + events | H | `Radar` |
+
+*Cộng đồng (8):*
+| comment_first | Lên tiếng · First comment | 1 bình luận | event_posts | T | `ChatCircle` |
+| comments_25 | Hay chuyện · Talker | 25 bình luận hoặc trả lời | event_posts | T | `ChatsCircle` |
+| comments_100 | Cây bình luận · Commentator | 100 | event_posts | H | số 100 |
+| replies_10 | Được hồi âm · Replied to | 10 trả lời nhận được | event_posts `reply_to_user_id` | T | `ArrowBendUpLeft` |
+| likes_25 | Được thích 25 · Liked 25 | tổng `helpful_count` ≥ 25 | event_posts | T | `Heart` |
+| photo_first | Khoảnh khắc · First shot | 1 ảnh (bình luận có ảnh hay Moments) | event_posts, moments | T | `Camera` |
+| question_answered | Câu hỏi hay · Good question | 1 câu hỏi được nhà tổ chức trả lời (`official`) | event_posts | T | `Question` |
+| friends_5 | Có hội · Crew of five | 5 bạn | friendships | T | `UsersThree` |
+
+*Lan toả (8):*
+| spread | Lan toả · Spreads the word | 10 lượt mở từ link chia sẻ | share_visits | T | `MegaphoneSimple` |
+| spread_100 | Loa phường · Loudspeaker | 100 lượt mở | share_visits | H | số 100 |
+| referrer_10 | Dẫn đường · Guide | 10 click Mua vé qua link của mình | outbound_clicks `ref_user` | T | `Signpost` |
+| referral_first | Chốt · Closer | 1 chuyển đổi được partner duyệt | partner_conversions `ref_user` | H | `Handshake` |
+| commission_first | Đồng đầu · First đồng | hoa hồng đầu tiên `payable` | ambassador_earnings | H | `Coins` |
+| submit_first | Mắt tinh · Sharp eye | 1 sự kiện gửi được duyệt | events `submitted_by` live | T | `Eye` |
+| submit_10 | Feest Scout | 10 sự kiện gửi được duyệt | events | H | `Binoculars` |
+| hype_25 | Tay hype · Hype hand | hype 25 đêm | hypes | T | `Fire` |
+
+*Kế hoạch và theo dõi (6):*
+| saved_50 | Sưu tầm · Collector | lưu 50 đêm | saves | T | `BookmarkSimple` |
+| follow_artists_10 | Fan ruột · Devoted | theo dõi 10 nghệ sĩ | artist_follows | T | `MusicNotes` |
+| superfan | Fan cứng · Superfan | 3 show của cùng một nghệ sĩ đang theo dõi | attended × event_artists | H | `Star` |
+| plan_first | Rủ rê · Ringleader | 1 kế hoạch có ≥ 2 người đi | group_plans | T | `UsersFour` |
+| alert_set | Radar riêng · Own radar | 1 Smart Alert đang bật | smart_alerts | T | `BellRinging` |
+| going_10 | Hứa là đi · Shows up | 10 lần bấm Đi và đêm đã diễn ra | going | T | `CheckCircle` |
+
+*Hồ sơ (2):*
+| profile_complete | Có mặt · Present | ảnh, tên và vài dòng giới thiệu | users | T | `IdentificationCard` |
+| early_bird | Người đầu · Early | trong 1.000 tài khoản đầu có ≥ 1 đêm | users `created_at` | L | `Lightning` |
+
+*Nghệ sĩ (6, trên hồ sơ nghệ sĩ và trang cá nhân người chạy nó):*
+| debut | Ra mắt · Debut | 1 show đã xác nhận | event_artists `confirmed` | T | `MicrophoneStage` |
+| shows_25 | 25 show | 25 | event_artists | T | số 25 |
+| shows_50 | 50 show | 50 | event_artists | H | số 50 |
+| touring | Lưu diễn · On tour | 5 thành phố | event_artists × events | H | `Van` |
+| closer | Khép đêm · Closer | 10 set cuối đêm | sets | H | `MoonStars` |
+| mix_first | Có mix · First mix | 1 mix trên hồ sơ | artist_mixes | T | `Vinyl` |
+
+*Nhà tổ chức (5):*
+| verified | Đã xác minh · Verified | giấy phép đã đối chiếu (trạng thái, hiện khi còn đúng) | organizers | T | `SealCheck` |
+| first_live | Tin đầu · First listing | 1 tin được duyệt | events | T | `CalendarCheck` |
+| events_50 | 50 sự kiện | 50 | events | H | số 50 |
+| calendar | Lịch nối · Connected | lịch kết nối đang chạy (thẻ 1) | ingest_sources `organizer_id` | T | `CalendarPlus` |
+| clicks_1000 | Nghìn click · Thousand clicks | 1.000 click Mua vé trên các tin của mình | outbound_clicks | H | số 1000 |
+
+Bỏ khỏi catalogue cũ: `doors` (vé quét), `sold_out`, `sold_out_5`, `events_100`, `all_styles` (gộp vào bộ chung); các dòng `badge_awards` của chúng xoá trong migration của thẻ C. Tổng: 42 cho mọi người, 6 nghệ sĩ, 5 nhà tổ chức.
+
+**Logo huy hiệu: một hệ, không 53 bức vẽ.** `Emblem` (nâng cấp `kd/ui/badges.tsx`) vẽ từ dữ liệu:
+- Đĩa 64 px nền `surface-1`, viền 2 px theo **bậc** (D15): Thường `line-2`, Hiếm `info`, Huyền thoại `lime` đặc. Không bóng, không kính, không gradient.
+- Trong đĩa: icon Phosphor Regular 28 px màu `fg-1`; huy hiệu đếm số (10, 25, 50, 100, 1000) vẽ số `kd-num` 22/700 thay icon, với icon nhóm 12 px ở 6 giờ.
+- Chấm nhóm 7 px bo 2 (`kd-mk`) ở đáy vòng theo họ màu sẵn có: Đêm `edm`, Khám phá `live`, Cộng đồng và Lan toả `cult`, Kế hoạch và Hồ sơ `free`, Nghệ sĩ `live`, Nhà tổ chức `fest`.
+- Chưa đạt: viền đứt `line-1`, icon `fg-3` ở 38 %, cung tiến độ `info` theo % (chỉ trong sheet, không trên hàng ghim). Mới nhận: chấm 6 px `ok` góc trên phải tới khi mở sheet (`seen_at`).
+- Ba cỡ: 64 (sheet, story), 44 (hàng ghim trên trang cá nhân, đủ vùng chạm), 28 (danh sách gọn trong Wrapped).
+- Ảnh story 1080×1920 (`FF.shareStory`): nền `surface-0`, huy hiệu 480 px, tên 64/700, dòng điều kiện 32, "{{x}} % raver có" 28 `info`, chân "feestfinder.com". Không logo bên thứ ba.
+- Trang `/kit` thêm một hàng: ba bậc × ba trạng thái (đạt, chưa đạt 60 %, mới) × hai kiểu (icon, số).
+
+**Người dùng thấy.** Trang cá nhân của mọi người (`/profile` của mình và trang người khác, `kd/web/fan/page.tsx`), ngay dưới phần đầu: hàng `Huy hiệu · Badges` với tối đa 6 huy hiệu đã ghim (D16) và chữ `kd-m` `{{n}}/53`; bấm mở sheet `Huy hiệu`: huy hiệu đã nhận theo nhóm (tên, điều kiện, ngày nhận, `{{x}} % raver có`), rồi chưa đạt mờ với tiến độ `3/5`; của mình có `Khoe · Pin` / `Bỏ khoe · Unpin` (tối đa 6) và `Chia sẻ · Share` (story). Chưa có gì: một hàng `Chưa có huy hiệu. Xem 53 huy hiệu · No badges yet. See all 53` mở sheet. Thông báo khi nhận: `Huy hiệu mới: {{tên}} · New badge: {{name}}` (in-app và push, một lần mỗi huy hiệu). Wrapped và passport đọc cùng dữ liệu. Trang nghệ sĩ và nhà tổ chức giữ hàng huy hiệu nghề như hôm nay.
+
+**Không làm.** Không điểm, không cấp, không bảng xếp hạng, không huy hiệu theo số follower, không mở khoá tính năng, không huy hiệu trả tiền, không hiệu ứng động ngoài 200 ms khi nhận. Không thêm tab hay mục nào ngoài hàng trên trang cá nhân.
+
+**10 điểm.**
+- Cổng: `test/badges.test.ts` mỗi thành tựu một ca đạt và một ca chưa đạt (53 × 2) trên seed xấu (người không ảnh, sự kiện không `ends_at`, `area` null, `styles` rỗng); độ hiếm đúng; `award` không trao hai lần; `badge_awards` của 5 code cũ không còn; `PUT /me/badges/pins` tối đa 6 và chỉ huy hiệu đã nhận; e2e `profiles.spec.ts`: hàng ghim, sheet, Khoe, chưa có gì; `kit.spec.ts` hàng Emblem; `layout`, `wcag`, `targets` (44 px cho mỗi huy hiệu trong hàng); `newcomer.spec.ts` không đổi (trang cá nhân không trong ngân sách màn đầu nhưng vẫn đo và ghi).
+- 5 người: 3 fan mở trang cá nhân, hiểu huy hiệu nào đã có và còn thiếu gì, ghim một cái, chia sẻ một story không gợi ý; 1 DJ thấy huy hiệu nghề cạnh huy hiệu fan; 1 NTC thấy "Tin đầu" sau khi tin được duyệt.
+- 2 tuần: ≥ 50 % người có ≥ 1 đêm nhận ≥ 2 huy hiệu; ≥ 20 % người có huy hiệu ghim ít nhất một; ≥ 100 lượt chia sẻ huy hiệu (`share` kind `badge`); 0 huy hiệu trao sai (team kiểm 20 ngẫu nhiên).
+
+**Ngân sách không tăng.** Màn đầu trang chủ và sự kiện không đổi. Trang cá nhân: +1 hàng (6 chỗ bấm) chỉ khi có huy hiệu; không có thì một hàng một chỗ bấm.
+
+**Dữ liệu xấu phải chạy.** Sự kiện không `ends_at` → không tính cú đêm; `styles` rỗng → không tính dòng nhạc; `area` null → không tính thổ địa; người xoá tài khoản → huy hiệu đi theo (cascade); huy hiệu trạng thái (`verified`, `calendar`) biến mất khi hết đúng; `early_bird` tính theo `created_at` của 1.000 người đầu có attended ≥ 1, không theo id; nhận nhiều huy hiệu cùng giờ → một thông báo mỗi cái nhưng tối đa 3 mỗi giờ, phần còn lại chỉ dấu "mới".
+
+**Xây.**
+- P0 (1 ngày, API): migration `053_badges_v2.sql`: `users.badge_pins text[] not null default '{}'`, `going.origin_at_time text` (cho `radar_first`), xoá `badge_awards` 5 code cũ nếu thẻ C chưa xoá; `services/badges.ts`: catalogue 53 (code, vai, nhóm, bậc, emblem, ngưỡng, icon, label, rule) và `progressFor` cho mọi tín hiệu qua `attended()`; `award` gọi `notifyUser` kind `badge`; hook `awardFor(role, id)` sau: presence insert, going khi đêm kết thúc (job hiện có), bình luận, share visit, duyệt tin, conversion approved, kế hoạch tạo, Smart Alert lưu; `GET /me/badges` trả cả ba vai của người đó gộp, `PUT /me/badges/pins`; `GET /users/:id/badges` (công khai) cho trang người khác; `/kit` dữ liệu; `SERVER_EVENTS` thêm `badge_earned`; tests.
+- P1 (1 ngày, web): `Emblem` v2 (bậc, cung tiến độ, chấm mới, ba cỡ); hàng ghim và sheet trên `kd/web/fan/page.tsx` (của mình và của người khác); Khoe/Bỏ khoe/Chia sẻ (story qua `FF.shareStory`, `FF.track('share', {{ kind: 'badge' }})`); copy vi/en và th/ja/id theo khoá (53 tên + 53 điều kiện); `/kit` hàng Emblem; e2e.
+- P2 (½ ngày): Wrapped và passport đọc catalogue mới; `CLAUDE.md` mục "Personas and admin" thêm: badges are automatic, measured from existing tables, never a ranking, never unlock a feature; pins ≤ 6; roadmap.
+
+**Xong khi.** Cổng xanh; trên preview một tài khoản seed có ≥ 10 huy hiệu, ghim 6, chia sẻ một story; `/kit` hiện 18 biến thể; `CLAUDE.md` có dòng mới.
+
 ### Thẻ 4 · Ban ngày
 
 **Một câu.** Coffee rave, matcha rave, sunset session, day party là một loại sự kiện FeestFinder biết: Radar tự nhận, menu loại có nó, Studio chọn được.
@@ -321,9 +437,9 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ vi · en,
 
 ## 5. Nhịp làm
 
-1. **Hai đêm** (`docs/NIGHT_BUILD_PLAN_2026-10-19.md`): đêm 1 **C → A → B**; đêm 2 **D → 4 → 5 → 6 → 1**. Gỡ vé trước để không thẻ nào phải né mảng vé; A trước B vì B dựa trên cổng mới.
+1. **Ba đêm** (`docs/NIGHT_BUILD_PLAN_2026-10-19.md`): đêm 1 **C → A → B**; đêm 2 **D → 4 → 5 → 6 → 1**; đêm 3 **E** (huy hiệu, cần D13 của đêm 1 và hoa hồng của đêm 2). Gỡ vé trước để không thẻ nào phải né mảng vé; A trước B vì B dựa trên cổng mới.
 2. **Mỗi lát một PR** sáng sau (đêm chỉ branch), theo skill `design-phase` của design-kit; checklist "Thiết kế" đánh thật; `visual-ok` sau khi xem ảnh; merge khi chủ sản phẩm nói.
-3. **Migration:** `048_drop_ticketing`, `049_comments`, `050_day_events`, `051_affiliate`, `052_organizer_calendar` (thứ tự hai đêm; đổi số theo merge thật; bump `CLAUDE.md`).
+3. **Migration:** `048_drop_ticketing`, `049_comments`, `050_day_events`, `051_affiliate`, `052_organizer_calendar`, `053_badges_v2` (thứ tự ba đêm; đổi số theo merge thật; bump `CLAUDE.md`).
 4. **Seed xấu như production** trước đêm 1: không tier, không đơn; một sự kiện có hai link bán vé (VN và SG) với partner seed `megatix` có `postback_token`; một bình luận có 4 trả lời và một trả lời của trả lời; một coffee rave; một kệ.
 5. **Sau mỗi merge:** script phụ lục A trên production, ghi số vào roadmap. Số không được tăng.
 6. **Không làm trong kế hoạch này:** Zalo OA, đổi điều hướng, thêm tab hay chip trên điện thoại, du lịch, Track ID, Crew, Night Pass, merch.
