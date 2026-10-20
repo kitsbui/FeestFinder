@@ -252,6 +252,7 @@ Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md), 
   - [ ] Card 1: organiser calendars as posted sources (migration `052`) and the embed widget.
 - Night 3 (E):
   - [ ] Card E: 53 achievements awarded automatically from what people did (attendance per D13, exploring, comments, sharing and referrals, plans, profile; artist and organiser sets shown on the same person's profile), one emblem system in three rarity tiers, up to six pinned on every profile, a story to share (migration `053`). Owner 2026-10-20: keep gamification, make it fun.
+  - [ ] Card F: install the app, done right: a service worker generated per build that installs itself and reloads an idle page (every push to Vercel reaches installed copies), a one-time install nudge after the first interaction, an "Cài ứng dụng" row in "Tôi", the right steps on Safari iOS and Chrome Android, the manifest without ticket shortcuts.
 - Waiting on conditions (handoff §6): Zalo OA (owner 2026-10-19: SMS only for now), organiser-funded rewards, partner coupons, travel links, Track ID, crews, hidden venues, Night Pass, merch, solo tables. Scouts run with no code.
 
 ## What the team does next in production
@@ -360,3 +361,4 @@ Plan in [HANDOFF_2026-10-19_growth-plan.md](HANDOFF_2026-10-19_growth-plan.md), 
 - 2026-10-19: Zalo OA deferred by the owner (SMS verification only); the growth plan became a night build plan (five cards, three migrations 048–050, branches only).
 - 2026-10-20: Owner adjustments: no phone verification (Google is enough; admins delete comments), Facebook-style comments, and no ticket sales or check-in (the commerce area goes; a smart affiliate link replaces it). Handoff version 3 and a two-night build plan; the whole project was inventoried for the three changes (handoff §8).
 - 2026-10-20: Owner keeps the badge system and wants it fun: card E designs 53 achievements, the emblem system and the profile shelf; night 3 of the build plan.
+- 2026-10-20: Owner asks for install-the-app on first visit and in the profile, Safari and Chrome, with automatic updates on every deploy: card F; the existing PWA (manifest, sw.js, push) had a hand-set cache version and no install UI.

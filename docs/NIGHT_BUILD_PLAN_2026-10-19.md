@@ -9,7 +9,7 @@
 
 ## 0. Luật của đêm (cả hai đêm)
 
-1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D16 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
+1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D18 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
 2. **Mỗi việc một branch `night/<ngày>-N<k>` rẽ từ `night/<ngày>`, một commit**, tác giả `git -c user.name="Claude" -c user.email="noreply@anthropic.com"`, dòng cuối `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Qua cổng thì merge thường (không squash) vào `night/<ngày>`.
 3. **Không push `main`, không deploy, không `vercel`, không mở PR, không `visual-ok`.** Push `night/<ngày>` lên origin sau mỗi merge (preview trên staging; chấp nhận).
 4. **Cổng:** mỗi việc có cột "Cổng". Đỏ thì sửa tối đa 2 lần; vẫn đỏ thì bỏ branch, ghi lý do, sang việc kế. `newcomer.spec.ts`, `layout.spec.ts`, `perf.spec.ts` đỏ ở việc nào thì việc đó chưa xong; ngân sách trong chúng chỉ giảm (đêm 1 **ghi số mới thấp hơn** khi khối vé biến mất).
@@ -134,7 +134,7 @@
 
 ---
 
-## 3b. Đêm 3 · sau khi đêm 2 lên `main` · Huy hiệu raver (thẻ E)
+## 3b. Đêm 3 · sau khi đêm 2 lên `main` · Huy hiệu raver (thẻ E) và cài app (thẻ F)
 
 ### N0 · 0:00 · Khởi động (15 phút)
 - Như các đêm trước. Đọc thẻ E (danh mục 53, hệ biểu tượng, D13, D15, D16). Kiểm `services/attendance.ts` có `attended()` (đêm 1) và `ambassador_earnings` (đêm 2).
@@ -155,8 +155,20 @@
 - Wrapped và passport đọc catalogue mới; `CLAUDE.md` dòng của thẻ E; roadmap tick.
 - **Cổng:** `node --test test/night.test.ts`; `app-more.spec.ts`.
 
-### N4 · 8:15 · Đóng đêm 3 (1 giờ)
-- Như N7 đêm 1. Ảnh đổi: trang cá nhân, `/kit`.
+### N4 · 8:15 · Thẻ F P0: worker theo build, tự cập nhật (2 giờ)
+- **Làm:** `src/sw/sw.js` là nguồn; `scripts/copy-ui.ts` ghi `public/sw.js` với `VERSION = 'ff-' + build id` (7 ký tự của `NEXT_PUBLIC_BUILD_ID`, `dev` khi thiếu); `.gitignore` `public/sw.js`; worker: precache `/saved` thay `/app/tickets`, không cache `/go`, `/mcp`, `/embed`, `/list.md`; `runtime/pwa.ts`: `updateViaCache 'none'`, `reg.update()` khi visible và mỗi 30 phút, `controllerchange` → `reloadWhenIdle()` (D18); `manifest.ts` shortcuts Đã lưu và Bản đồ, mô tả mới; `lib/site.ts` `appleWebApp` cho mọi trang; `CLIENT_EVENTS` `install_prompt`, `install`; `ALLOWED_PROPS` `build`; `page_view` gửi `build`.
+- **Test:** `pwa.spec.ts` (mới) phần manifest, `/sw.js` có build id và `no-cache`, meta Apple, icon 200 đúng cỡ; unit `isIdle()`; `test/analytics.test.ts`.
+- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/pwa.spec.ts e2e/next/health.spec.ts`; `npx tsc --noEmit -p .` trong `festfinder-web/`.
+- **Commit:** `A service worker per build: installs itself and reloads an idle page; the manifest without tickets`.
+
+### N5 · 10:15 · Thẻ F P1: mời cài và nút trong Tôi (2 giờ)
+- **Làm:** `kd/ui/install.tsx` (`useInstall`, `InstallBar` theo D17, `InstallSheet` ba bước cho Android và iOS, webview → "Mở trong Safari"); hàng `Cài ứng dụng` trong `me.tsx` (`Đã cài` khi standalone hay `?source=app`); hàng `Phiên bản` trong Cài đặt; copy vi/en và th/ja/id.
+- **Test:** `pwa.spec.ts` phần dải (không trước tương tác, có sau khi mở sự kiện, bỏ không hiện lại), hàng Tôi hai trạng thái, UA iPhone → sheet Share, UA Android + `beforeinstallprompt` giả → `prompt()`; `newcomer.spec.ts` không đổi; `layout`, `targets` cho dải (44 px).
+- **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/pwa.spec.ts e2e/next/newcomer.spec.ts e2e/next/layout.spec.ts e2e/next/targets.spec.ts e2e/next/app-more.spec.ts`.
+- **Commit:** `Install FeestFinder: a one-time nudge after the first interaction, a row in Tôi, the right steps on Safari and Chrome`.
+
+### N6 · 12:15 · Đóng đêm 3 (1 giờ)
+- Như N7 đêm 1. Ảnh đổi: trang cá nhân, `/kit`, "Tôi". Ghi vào "Sáng sau": chủ sản phẩm thử cài trên iPhone và Android thật từ preview của branch, rồi push một commit rỗng để thấy bản cài tự đổi Phiên bản.
 
 ## 4. Mẫu file tiến độ `docs/NIGHT_BUILD_<ngày>.md`
 
