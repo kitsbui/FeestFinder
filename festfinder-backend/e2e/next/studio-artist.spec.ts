@@ -68,8 +68,11 @@ test('one craft per account: from performing to organising and back, both profil
   await sheet.getByRole('button', { name: 'Tạo hồ sơ' }).click();
   await expect(page).toHaveURL(/\/studio$/);
   // From the workspace switcher at the head of Studio's rail back to performing: the artist profile is still there.
-  await page.getByRole('navigation', { name: 'Studio' }).getByRole('button', { name: /Không gian/ }).click();
-  await page.getByRole('menu', { name: 'Không gian làm việc' }).getByRole('menuitem', { name: 'Đổi sang Nghệ sĩ' }).click();
+  // Studio has just loaded: on a slow runner the first click can land before React (CI, 2026-10-20), so click until it opens.
+  const switcher = page.getByRole('navigation', { name: 'Studio' }).getByRole('button', { name: /Không gian/ });
+  const spaces = page.getByRole('menu', { name: 'Không gian làm việc' });
+  await expect(async () => { if (!(await spaces.isVisible())) await switcher.click(); await expect(spaces).toBeVisible({ timeout: 2000 }); }).toPass({ timeout: 15_000 });
+  await spaces.getByRole('menuitem', { name: 'Đổi sang Nghệ sĩ' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Đổi sang Nghệ sĩ' }).click();
   await expect(page).toHaveURL(/\/studio\/artist$/);
   await expect(page.getByText(me.name).first()).toBeVisible();
