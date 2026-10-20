@@ -9,7 +9,7 @@
 
 ## 0. Luật của đêm (cả hai đêm)
 
-1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D12 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
+1. **Chỉ làm việc đã có quyết định.** Dùng: D1, D4, D5, D6 = A (2026-10-19); D5b, D3c = A mặc định; D7–D14 = A mặc định (2026-10-20; chủ sản phẩm đổi được sáng sau; ghi vào roadmap ở N0). Zalo OA để sau. Gặp quyết định mới: **dừng việc đó, ghi vào file tiến độ, sang việc kế.**
 2. **Mỗi việc một branch `night/<ngày>-N<k>` rẽ từ `night/<ngày>`, một commit**, tác giả `git -c user.name="Claude" -c user.email="noreply@anthropic.com"`, dòng cuối `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Qua cổng thì merge thường (không squash) vào `night/<ngày>`.
 3. **Không push `main`, không deploy, không `vercel`, không mở PR, không `visual-ok`.** Push `night/<ngày>` lên origin sau mỗi merge (preview trên staging; chấp nhận).
 4. **Cổng:** mỗi việc có cột "Cổng". Đỏ thì sửa tối đa 2 lần; vẫn đỏ thì bỏ branch, ghi lý do, sang việc kế. `newcomer.spec.ts`, `layout.spec.ts`, `perf.spec.ts` đỏ ở việc nào thì việc đó chưa xong; ngân sách trong chúng chỉ giảm (đêm 1 **ghi số mới thấp hơn** khi khối vé biến mất).
@@ -29,7 +29,7 @@
 | 1 | Dòng trong roadmap mục "Growth plan": "2026-10-xx: night build 1 (hoặc 2) chạy với D1, D4–D6 = A; D5b, D3c, D7–D12 mặc định A; Zalo OA để sau" | Agent đọc ở N0; không có thì không bắt đầu |
 | 2 | **Đêm 1:** production không có đơn `paid` (Console › Đơn hàng, hoặc Supabase). Migration 048 cũng tự kiểm, nhưng biết trước thì đỡ hỏng đêm | Chủ sản phẩm xem |
 | 3 | `main` sạch, bằng `origin/main`; nếu mới hơn `48b2cf3`, agent đọc `git log` và ghi vào file tiến độ những gì đổi ở các file thẻ chạm | `git fetch && git status` |
-| 4 | CI xanh; cục bộ `typecheck`, `lint`, `test`, `test:screens` xanh (agent chạy lại ở N0 và ghi số) | — |
+| 4 | `npm ci` đã chạy trong `festfinder-backend/` và `festfinder-web/` (checkout này thiếu `@axe-core/playwright` tới 2026-10-20); CI xanh; cục bộ `typecheck`, `lint`, `test`, `test:screens` xanh (agent chạy lại ở N0 và ghi số) | `ls festfinder-backend/node_modules/@axe-core` |
 | 5 | Preview không chạy; máy không ngủ; hạn mức đủ 16 giờ | `preview_list` trống; `ccd_host request_keep_awake` |
 
 ---
@@ -42,7 +42,7 @@
 
 ### N1 · 0:15 · Thẻ C P0: gỡ mảng vé khỏi API (4 giờ)
 - **Mục tiêu:** API không còn checkout, đơn, vé, quét, pass vé, khuyến mãi, payout; `/go` luôn tới bên bán hay trang gốc; schema sạch.
-- **Làm:** đúng danh sách "Xây P0" của thẻ C. Thứ tự an toàn: (1) `plans.ts` `pricePerHead` → `events.price_from`; `badges.ts` bỏ `doors`, `sold_out`, `sold_out_5`; `eventpage.ts`, `presenters/event.ts`, `seo/event.ts` bỏ tier và resale; (2) xoá 9 file route/service, cắt `audience.ts`, `organizer/events.ts`, `outbound.ts` nhánh checkout, `jobs.ts` ba job, `config.ts`, `app.ts`, `db/rows.ts`; (3) `npm run typecheck` và sửa tới sạch; (4) migration `048_drop_ticketing.sql` (khoá an toàn; `drop table` 12 bảng đúng thứ tự FK: `scans`, `ticket_transfers`, `resale_orders`, `ticket_listings`, `resale_watchers`, `tickets`, `guest_list`, `orders`, `payout_transfers`, `promo_codes`, `tier_watchers`, `ticket_tiers`; xoá `badge_awards` ba code); bump `CLAUDE.md` "The next one is `049_*.sql`"; (5) test: xoá `attendee`, `resale`; sửa seed (không tier, đơn, vé, promo, resale); sửa 15 file test có nhánh vé.
+- **Làm:** đúng **bảng phụ thuộc** của thẻ C (12 file ngoài 9 file bị xoá) và "Xây P0". Thứ tự an toàn: (1) `services/attendance.ts` `attended()` = `presence` ∪ (`going` ∧ đã kết thúc) (D13); `badges.ts:81,216`, `night.ts:46,211,215`, `community.ts:122` dùng nó và bỏ `ticket`; `plans.ts:34` → `price_from`; `eventpage.ts:25,33,34`, `seo/event.ts:31`, `insights.ts` (clicks thay sold) bỏ tier và resale; `outbound.ts` bỏ nhánh checkout và `tier`, `qty` trong `GoQuery`; (2) xoá 9 file route/service, cắt `audience.ts`, `organizer/events.ts`, `outbound.ts` nhánh checkout, `jobs.ts` ba job, `config.ts`, `app.ts`, `db/rows.ts`; (3) `npm run typecheck` và sửa tới sạch; (4) migration `048_drop_ticketing.sql` (khoá an toàn; `drop table` 12 bảng đúng thứ tự FK: `scans`, `ticket_transfers`, `resale_orders`, `ticket_listings`, `resale_watchers`, `tickets`, `guest_list`, `orders`, `payout_transfers`, `promo_codes`, `tier_watchers`, `ticket_tiers`; xoá `badge_awards` ba code); bump `CLAUDE.md` "The next one is `049_*.sql`"; (5) test: xoá `attendee`, `resale`; sửa seed (không tier, đơn, vé, promo, resale); sửa 15 file test có nhánh vé.
 - **Cổng:** `npm run typecheck`; `npm test` **cả bộ**; `npm run lint; echo "lint $?"` rồi hạ `--max-warnings` xuống đúng số thật.
 - **Commit:** `FeestFinder sells no tickets: checkout, orders, tickets, door, resale, promos and payouts removed; /go always leads to the seller (migration 048)`.
 
@@ -63,7 +63,7 @@
 - **Commit:** `Signing in is enough: no phone gate on comments, submissions, projects or mixes; the Console deletes comments`.
 
 ### N5 · 8:45 · Thẻ B P0: bình luận một dòng, trả lời hai cấp (2 giờ)
-- **Làm:** migration `049_comments.sql` (`event_posts.reply_to_user_id`, `edited_at`; bump `CLAUDE.md` `050`); `discussion.ts`: bỏ `reply_depth`, trả lời của trả lời ghi `parent_id` gốc + `reply_to_user_id`; `GET discussion` một danh sách (ghim trước, mới nhất) với 3 trả lời đầu và `replyCount`; `PATCH` chỉ 15 phút của mình; thông báo `reply` cho người được trả lời (topic `null`, không tới chính mình); `helpful` giữ route, nhãn "Thích" ở web (N6).
+- **Làm:** bỏ `kindOpen`, `kindsShown` (D14: luôn mở); migration `049_comments.sql` (`event_posts.reply_to_user_id`, `edited_at`; bump `CLAUDE.md` `050`); `discussion.ts`: bỏ `reply_depth`, trả lời của trả lời ghi `parent_id` gốc + `reply_to_user_id`; `GET discussion` một danh sách (ghim trước, mới nhất) với 3 trả lời đầu và `replyCount`; `PATCH` chỉ 15 phút của mình; thông báo `reply` cho người được trả lời (topic `null`, không tới chính mình); `helpful` giữ route, nhãn "Thích" ở web (N6).
 - **Test:** `test/community.test.ts` theo thẻ B (trả lời của trả lời; sửa sau 15 phút → 403; admin xoá; thích; báo cáo; thông báo; tốc độ).
 - **Cổng:** `node --test test/community.test.ts test/night.test.ts`.
 - **Commit:** `Comments are one stream per event: replies to replies, edits for 15 minutes, a notice to the person replied to (migration 049)`.

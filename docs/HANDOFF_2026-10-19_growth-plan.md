@@ -5,7 +5,7 @@
 | Nền code | `main` ở `48b2cf3` (design v2 phase 0–14, 17). Rà toàn bộ dự án ngày 2026-10-20 theo ba điều chỉnh của chủ sản phẩm (mục 8 là bảng kiểm kê). |
 | Ba điều chỉnh (chủ sản phẩm, 2026-10-20) | **(1)** Không xác minh số điện thoại: đăng nhập Gmail là đủ để bình luận và dùng gần hết web; admin xoá được bình luận không phù hợp. **(2)** Bình luận và trả lời nhau như Facebook. **(3)** FeestFinder **không bán vé**, không cần hệ bán vé hay check-in: gỡ hết; thay bằng cơ chế giới thiệu link affiliate thông minh, hiện đại nhất. |
 | Luật trên hết | `CLAUDE.md`, rồi `docs/DESIGN_GOVERNANCE.md`, rồi design-kit (`/home/patrickstar/Desktop/design-kit`): đo trước, ngân sách chỉ giảm, một màn một việc, ba khái niệm trước, gấp chứ không bỏ, dữ liệu thử xấu như production, quyết định của chủ sản phẩm là lựa chọn có hệ quả chép nguyên văn. |
-| Trạng thái | **Final cho hai đêm night build**: `docs/NIGHT_BUILD_PLAN_2026-10-19.md` là lịch chạy; file này là thiết kế. Zalo OA để sau (2026-10-19). D1, D4, D5, D6 = A (2026-10-19); D3 cũ hết hiệu lực vì không còn bán vé, thay bằng D8; D7–D12 mới ở mục 2, mỗi cái có mặc định. |
+| Trạng thái | **Final (tự đánh giá cuối ở mục 9) cho hai đêm night build**: `docs/NIGHT_BUILD_PLAN_2026-10-19.md` là lịch chạy; file này là thiết kế. Zalo OA để sau (2026-10-19). D1, D4, D5, D6 = A (2026-10-19); D3 cũ hết hiệu lực vì không còn bán vé, thay bằng D8; D7–D12 mới ở mục 2, mỗi cái có mặc định. |
 | Cách đọc | Mục 1 trong ba phút. Mỗi việc là một thẻ cùng khuôn ở mục 4. Thẻ chỉ "xong" khi cột **Xong khi** có số thật. |
 
 ---
@@ -58,6 +58,9 @@ Hai số đo lệch (16 so với ngân sách 20) vì cách đếm khác nhau; **
 | D11 | "Đi cùng bạn bè" có yêu cầu tiền giữa bạn bè qua VietQR (`/plans/:id/payment-requests`, `lib/vietqr.ts`, `/me/payee`). Giữ không? | **A (khuyến nghị): giữ** (tiền giữa bạn bè, FeestFinder không cầm; `payee` còn cần cho hoa hồng D8). · B: gỡ cùng mảng vé. Hệ quả: `vietqr.ts` và payee của plans đi; `payee` chỉ còn cho hoa hồng. |
 | D12 | Một sự kiện có nhiều bên bán vé (Megatix cho SG, Ticketbox cho VN…)? | **A (khuyến nghị): có, bảng `event_ticket_links` (url, host, nước, tiền tệ, giá từ, chính)**; `/go` chọn theo nước của người xem (header CDN), không thì link chính. Studio: "Link vé" thành danh sách. · B: một link như hôm nay. Hệ quả: fan Việt vào Megatix SG trả bằng SGD. |
 
+| D13 | "Đã đi" (huy hiệu, passport, Wrapped, bạn bè thấy) hôm nay = vé đã quét **hoặc** `presence` (check-in vị trí ở live mode). Không còn vé thì tính gì? | **A (khuyến nghị): `presence` hoặc `going` khi sự kiện đã kết thúc.** Hệ quả: một truy vấn thay ở `badges.ts:81`, `night.ts:46,215`; không khái niệm mới. *Checklist: "attended(user, event) = presence ∪ (going ∧ ends_at < now); dùng chung một hàm trong services/attendance.ts."* · B: chỉ `presence`. Hệ quả: người không bật vị trí không có passport. |
+| D14 | Bình luận mở khi nào? Hôm nay `kindOpen` đóng Kỷ niệm trước sự kiện, Crew sau sự kiện, Track ID sau 7 ngày. | **A (khuyến nghị): luôn mở** cho sự kiện không `removed`; ảnh đính kèm luôn được. Hệ quả: bỏ `kindOpen`, `kindsShown`. · B: đóng 30 ngày sau sự kiện. |
+
 Đã chốt sẵn, không hỏi lại: Feest Scout không cần code; thẻ 2 Zalo OA, link du lịch, Mini App, Crew, Night Pass, merch để sau (mục 6). Sign-in: Google đứng đầu sheet như `CLAUDE.md` nói; phase 17 xếp cách bằng số điện thoại trước ở `kd/sign-in.tsx:135` cho người Việt: giữ thứ tự ấy, chỉ bỏ **bắt buộc**.
 
 ---
@@ -101,7 +104,28 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ vi · en,
 
 **Ngân sách không tăng.** Màn đầu trang sự kiện giảm (mục tiêu ≤ 7 + khung). Rail Studio 7 → 5. JS trang sự kiện giảm (`perf.spec.ts` ghi số mới, chỉ giảm).
 
-**Dữ liệu xấu phải chạy.** Sự kiện có `entry_mode paid` mà không link → "Chưa rõ giá", nút tới trang gốc như design v2 phase 11. Sự kiện có tier cũ trong staging → migration xoá; seed không còn tier. Badge `doors` đã trao → xoá dòng. `event_metrics_daily` giữ `ticket_clicks`. `plans.pricePerHead` (`plans.ts`) đọc `bought.unit_price` từ `orders`: đổi về `events.price_from`.
+**Dữ liệu xấu phải chạy.** Sự kiện có `entry_mode paid` mà không link → "Chưa rõ giá", nút tới trang gốc như design v2 phase 11. Sự kiện có tier cũ trong staging → migration xoá; seed không còn tier. Badge `doors` đã trao → xoá dòng. `event_metrics_daily` giữ `ticket_clicks`.
+
+**Bản đồ phụ thuộc chính xác ngoài 9 file bị xoá** (grep 2026-10-20 theo `from|join|into|update|delete from <bảng>`; mỗi dòng là một chỗ phải sửa, không hơn):
+
+| File | Dòng | Dùng gì | Thành gì |
+| --- | --- | --- | --- |
+| `routes/plans.ts` | 34 | `orders.unit_price` cho `pricePerHead` | `events.price_from` |
+| `services/badges.ts` | 81, 216 | `tickets status used` ∪ `presence` = đã đi; `sold_out*` theo tier | `attended()` (D13); gỡ `doors`, `sold_out`, `sold_out_5` |
+| `routes/night.ts` | 46 | passport: `tickets used` ∪ `presence`, cờ `by_door` | `attended()`, bỏ `by_door` |
+| `routes/night.ts` | 211, 215 | Wrapped: `ticket_transfers`, bạn bè qua `tickets` | bỏ dòng transfers; bạn bè qua `presence` ∪ `going` |
+| `services/community.ts` | 122 | nhãn `ticket` trên bình luận | bỏ nhãn `ticket` (Badge còn `team`, `ff`, `submitter`) |
+| `services/community.ts` | 25–34 | lọc rao bán vé, nhắc tới mục Pass vé | giữ lọc; câu nhắc thành "FeestFinder không bán vé, mua ở trang bán" |
+| `services/eventpage.ts` | 25, 33, 34 | resale count, `resale_watchers`, `mine.validTickets` | bỏ cả ba |
+| `services/seo/event.ts` | 31 | `offers` theo tier | một `Offer` từ `price_from`, `currency`, `ticket_url` (hay `/go`) |
+| `routes/outbound.ts` | 69–80 | nhánh `checkout` theo tier | bỏ; `GoQuery` bỏ `tier`, `qty` |
+| `routes/organizer/insights.ts` | 41, 126, 134–154, 139, 143 | doanh thu, sold theo ngày, pace theo tier | thay bằng `ticket_clicks` theo ngày và theo nguồn (`event_metrics_daily`, `outbound_clicks`) |
+| `routes/organizer/events.ts` | 157, 252–253, 315, 450, 587–630 | tier khi submit/duyệt/duplicate; `TiersInput`, `replaceTiers` | bỏ hết; bước Vé = link và giá |
+| `routes/organizer/audience.ts` | 34–37, 114, 160–162, 191–196 | attendees, resend, refund | xoá; giữ announcements (30–100, 225–290) |
+| `jobs.ts` | 34, 81–90, 97–115 | `expireOrders`, `tier_open`, `lowTicketAlerts` | bỏ |
+| `config.ts`, `bootstrap.ts`, `app.ts` | — | `PAYMENT_*`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*`, đăng ký route | bỏ |
+| `db/rows.ts` | — | kiểu hàng của 12 bảng | bỏ |
+| web | 10 màn + 40 file có nhánh (mục 8) | — | theo "Xây P1" |
 
 **Xây.**
 - P0 (1 ngày, API): migration `048_drop_ticketing.sql` (D7 A: khoá an toàn `raise exception` nếu `orders` có `paid`; `drop table` 12 bảng theo thứ tự khoá ngoại; xoá `badge_awards` code `doors`, `sold_out`, `sold_out_5`; `notification_prefs` topic `tickets` giữ hay đổi tên: giữ); xoá `routes/commerce.ts`, `routes/resale.ts`, `routes/organizer/door.ts`, `routes/organizer/money.ts`, `routes/admin/orders.ts`, `services/tickets.ts`, `services/resale.ts`, `services/payouts.ts`, `services/orders.ts`; `routes/organizer/audience.ts` giữ phần thông báo (`announcements`, dòng 30–100), xoá attendees/refund/resend; `routes/organizer/events.ts` bỏ `TiersInput`, `replaceTiers`; `routes/outbound.ts` `/go` bỏ nhánh `checkout` (luôn partner/organizer/trang gốc); `jobs.ts` bỏ `expireOrders`, `lowTicketAlerts`, nhánh `tier_open` của `reminders`; `services/badges.ts`; `services/eventpage.ts` bỏ `resale`, `tickets.tiers`, `mine.validTickets`; `presenters/event.ts`; `services/seo/*` bỏ `offers` theo tier, giữ `offers` một dòng từ `price_from` và `ticket_url`; `lib/money.ts`, `lib/vietqr.ts` giữ (plans); `config.ts` bỏ `PAYMENT_*`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*`; `app.ts` bỏ đăng ký route; `db/rows.ts` bỏ type; test: xoá `attendee`, `resale`; sửa `public`, `organizer`, `admin`, `ops`, `seo`, `partners`, `affiliate`, `roles`, `jobs`, `fresh`, `ads`, `radar`, `ingest`, `deploy`, `unit`; seed bỏ tier, order, ticket, promo, resale.
@@ -137,6 +161,8 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ vi · en,
 **Một câu.** Dưới mỗi sự kiện có một dòng bình luận: viết, trả lời bất kỳ bình luận nào (trả lời hiện phẳng dưới bài gốc, mở đầu bằng @tên người được trả lời), thích, sửa trong 15 phút, xoá của mình, admin xoá, báo cáo; người được trả lời được báo.
 
 **Người dùng thấy.** Trong "Thêm" của trang sự kiện: mục `Bình luận (n) · Comments (n)` thay ba tab. Mở ra: ô `Viết bình luận… · Write a comment…` và nút `Đăng · Post`; mỗi bình luận: avatar, tên, `{thời gian}`, nội dung, hàng hành động `Thích {n} · Like {n}`, `Trả lời · Reply`, menu `⋯` (`Sửa · Edit` trong 15 phút của mình, `Xoá · Delete` của mình hoặc admin, `Báo cáo · Report`); trả lời xếp dưới bài gốc thụt một cấp, tối đa 3 hiện rồi `Xem thêm {n} trả lời · See {n} more replies`; trả lời một trả lời: bắt đầu bằng `@Tên` và vẫn nằm trong cụm của bài gốc (như Facebook). Bình luận của nhà tổ chức mang nhãn `Nhà tổ chức · Organiser` (đã có `official`). Ghim của NTC giữ. Sắp xếp: mới nhất; bài ghim trên cùng. Thông báo: `{Tên} đã trả lời bình luận của bạn · {Name} replied to your comment`. Rỗng: `Chưa có bình luận. Viết bình luận · No comments yet. Write one`.
+
+**Mở khi nào (D14 A).** Luôn mở cho sự kiện không `removed`; `kindOpen`/`kindsShown` bỏ; ảnh luôn được đính ở bình luận gốc.
 
 **Không làm.** Không thêm emoji phản ứng, không GIF, không ảnh trong trả lời (ảnh ở bình luận gốc giữ như `memory`/`talk` hôm nay), không @mention tự do (chỉ @tên tự sinh khi trả lời), không chỉnh sửa vô hạn, không bảng xếp hạng người bình luận. Hype giữ nguyên ngoài mục này. Track ID để sau.
 
@@ -386,6 +412,29 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ vi · en,
 | Mảng vé | 12 bảng; API 2.051 dòng trong 11 file; web 1.511 dòng trong 10 file màn chính cộng 40 file có nhánh vé; test `attendee`, `resale` và nhánh trong 15 file; e2e `console-commerce` và nhánh trong 9 spec; job `expireOrders`, `lowTicketAlerts`, `tier_open`; config `PAYMENT_*`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*` | mục 3 và thẻ C |
 | Affiliate | `/go/:event` với click id, partner theo host, template link; `/go/link/:code`; postback `partner_conversions`; `affiliate_links`, `affiliate_payouts`; `users.ref_code`, `share_visits`, mục Đại sứ; `/console/partners` với host chưa có deal; `/organizer/affiliate`; `/me/payee` | migration 018, 022; `routes/outbound.ts`, `services/partners.ts`, `routes/admin/partners.ts`, `routes/admin/affiliate.ts` |
 | Đăng nhập | Google, email, SMS, Zalo, WhatsApp, mật khẩu; sheet xếp số điện thoại trước cho người Việt | `kd/sign-in.tsx`, `routes/auth.ts`, `services/sms.ts` |
+
+## 9. Tự đánh giá cuối (2026-10-20) và định nghĩa "hoạt động hoàn hảo"
+
+**Những gì bản 3 còn thiếu, đã bổ ở bản này:**
+1. "Đã đi" dựa trên vé quét: huy hiệu, passport, Wrapped và "bạn bè thấy" đều đọc `tickets status used`. Gỡ vé mà không định nghĩa lại thì passport trống. → D13, một hàm `attended()`.
+2. Bình luận có lịch đóng theo pha (`kindOpen`). Một dòng duy nhất cần một luật mở. → D14.
+3. Bản đồ gỡ của thẻ C viết theo file; chỗ gãy thật nằm ở 12 file **khác** (bảng ở thẻ C). Đêm 1 đi theo bảng đó, không theo trí nhớ.
+4. `node_modules` của checkout này chưa theo `main` mới: `npm run typecheck` đỏ vì thiếu `@axe-core/playwright`. Điều kiện trước đêm thêm `npm ci` ở cả hai package (đã chạy 2026-10-20).
+5. `/go` hôm nay nhận `tier` và `qty`: gỡ cùng nhánh checkout, nếu không zod còn giữ hai tham số chết.
+
+**"Hoạt động hoàn hảo" nghĩa là gì, đo được:**
+
+| Lớp | Bằng chứng | Khi nào |
+| --- | --- | --- |
+| Đúng | `typecheck`, `lint` dưới ngân sách (ngân sách hạ sau đêm 1), `npm test` cả bộ, `test:screens` cả bộ (layout, axe, 44 px, CLS, LCP, JS, màn đầu) | mỗi lát, mỗi đêm, mỗi PR |
+| Không gãy đường cũ | mọi route và trang của mảng vé trả 404; `grep` các bảng đã xoá trống trong `src`; `/go` của mọi sự kiện seed tới bên bán hay trang gốc | đóng đêm 1 |
+| Người thật | bài 5 người của mỗi thẻ (mục 4) đạt ≥ 4/5 | sau mỗi PR lên production |
+| Số thật | bảng "Số đo hôm nay" chỉ giảm; mục tiêu 2 tuần của từng thẻ | 2 tuần sau |
+| Tiền thật | ≥ 1 postback thật từ partner tạo earnings; chuyển khoản tay đầu tiên đúng số | khi có deal |
+
+Không có cổng nào thay cổng nào. Thẻ nào thiếu một lớp thì chưa "hoàn hảo", chỉ "xanh".
+
+**Rủi ro còn lại, không gỡ được bằng code:** Nghị định 147 (D10); deal affiliate chưa ký (thẻ D chỉ đếm cho tới khi có); 5 người thật chưa thử gì (mọi điểm người mới tới nay là của agent trên điện thoại giả lập).
 
 ## Phụ lục A · Đo màn đầu trên production (chạy sau mỗi merge)
 
