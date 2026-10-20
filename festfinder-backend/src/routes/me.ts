@@ -40,7 +40,6 @@ export default async function meRoutes(app: FastifyInstance) {
         `select (select count(*)::int from saves x join events e on e.id = x.event_id where x.user_id = $1 and ${LISTED}) as saved,
                 (select count(*)::int from hypes x join events e on e.id = x.event_id where x.user_id = $1 and ${LISTED}) as hyped,
                 (select count(*)::int from organizer_follows where user_id = $1) as following,
-                (select count(*)::int from tickets where user_id = $1 and status in ('valid','used')) as tickets,
                 (select count(*)::int from friendships where user_id = $1) as friends,
                 (select count(*)::int from notifications where user_id = $1 and read_at is null) as unread`, [s.user.id]),
     ]);

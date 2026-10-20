@@ -309,106 +309,6 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     const submitted: Record<string, number> = { 'neon-rooftop-session': 2.6, 'underground-techno-w12': 3.7, 'acoustic-sunset-bside': 1.1, 'edm-beach-bus': 5.3, 'ravo-after-hours': 2 };
     for (const [slug, h] of Object.entries(submitted)) await q.query('update events set submitted_at = $2 where id = $1', [ids.event[slug], hours(h)]);
 
-    // ---- tiers ----
-    const tier = async (slug: string, key: string, name: Localized, price: number, capacity: number, sold: number, extra: Record<string, unknown> = {}) => {
-      const r = await one<any>(q,
-        `insert into ticket_tiers (event_id, key, name, price, capacity, sold, is_last, sales_open_at, price_rise_on, price_rise_to, sort)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,(select count(*) from ticket_tiers where event_id = $1)) returning id`,
-        [ids.event[slug], key, json(name), price, capacity, sold, extra.isLast ?? false, extra.salesOpenAt ?? null, extra.riseOn ?? null, extra.riseTo ?? null]);
-      return r.id as string;
-    };
-    const EARLY = L('Early bird', 'Vé sớm');
-    const GA = L('General admission', 'Vé thường');
-    const VIP = L('VIP', 'VIP');
-    const TABLE = L('Table', 'Bàn');
-    const ravoTiers = {
-      early: await tier('ravo', 'early', EARLY, 900_000, n(500), 0),
-      ga: await tier('ravo', 'ga', GA, 1_200_000, n(3200), 0, { isLast: true, riseOn: '2026-09-18', riseTo: 1_450_000 }),
-      vip: await tier('ravo', 'vip', VIP, 2_400_000, n(1100), 0),
-      table: await tier('ravo', 'table', TABLE, 5_040_000, 40, 0, { salesOpenAt: atVn('2026-09-18', '12:00') }),
-    };
-    const warmTiers = {
-      standing: await tier('ravo-warmup', 'standing', L('Standing', 'Vé đứng'), 350_000, n(700), 0),
-      table: await tier('ravo-warmup', 'table', L('Table for four', 'Bàn 4 người'), 1_400_000, n(200), 0),
-    };
-    await tier('ravo-after-hours', 'ga', GA, 300_000, 600, 0);
-    await tier('ravo-2025', 'early', EARLY, 800_000, 500, 500);
-    await tier('ravo-2025', 'ga', GA, 1_100_000, 3000, 2900);
-    await tier('ravo-2025', 'vip', VIP, 2_200_000, 1000, 800);
-    await tier('rapviet', 'early', EARLY, 520_000, 400, 400);
-    await tier('rapviet', 'ga', GA, 650_000, 2600, 2600);
-    await tier('rapviet', 'vip', VIP, 1_235_000, 300, 300);
-    await tier('8wonder', 'ga', GA, 1_500_000, 12000, 9600);
-    await tier('8wonder', 'vip', VIP, 3_600_000, 1500, 1388, { isLast: true });
-    await tier('8wonder', 'table', TABLE, 7_500_000, 60, 60);
-    await tier('momang', 'ga', GA, 890_000, 8000, 7100);
-    await tier('blues', 'ga', GA, 150_000, 120, 104);
-    await tier('yoko-sinco', 'ga', GA, 120_000, 150, 40);
-    for (const s of ['momang-2025', '8wonder-winter', 'bside-acoustic-1', 'bside-acoustic-2', 'neon-rooftop-session', 'underground-techno-w12', 'acoustic-sunset-bside', 'edm-beach-bus', 'edm-beach-bus-mui-ne', 'warehouse-rave-q4', 'rooftop-sessions-vol3', 'rooftop-nye-countdown', 'pool-party-q2']) {
-      await tier(s, 'ga', GA, EVENTS[s].price ?? 100_000, 800, s.startsWith('bside-acoustic') ? 70 : 0);
-    }
-
-    // ---- promo codes ----
-    const promo = async (code: string, pct: number, cap: number, used: number, active: boolean, note: Localized) =>
-      (await one<any>(q, 'insert into promo_codes (event_id, code, pct, cap, used, active, note) values ($1,$2,$3,$4,$5,$6,$7) returning id',
-        [ids.event.ravo, code, pct, cap, used, active, json(note)])).id as string;
-    const earlyUsed = n(412);
-    const rave10Used = n(1183);
-    const pEarly = await promo('EARLYBIRD', 25, n(500), earlyUsed, false, L('First 500 tickets', '500 vé đầu tiên'));
-    const pRave = await promo('RAVE10', 10, n(3000), rave10Used, true, L('Instagram story campaign', 'Chiến dịch story Instagram'));
-    await promo('CREW2026', 100, 120, n(64), true, L('Crew & artist guests', 'Khách của crew & nghệ sĩ'));
-
-    // ---- generated sales: orders paid over the last two weeks, one ticket each ----
-    const sell = async (slug: string, prefix: string, batches: { tierId: string; price: number; count: number; promoId?: string; promoPct?: number; promoCount?: number; status?: string }[]) => {
-      let offset = 0;
-      const total = batches.reduce((s, b) => s + b.count, 0);
-      for (const b of batches) {
-        await q.query(
-          `with buyers as ${synthetic}
-           insert into orders (code, user_id, event_id, tier_id, qty, unit_price, subtotal, discount, fee, total, promo_code_id, status, payment_method, created_at, expires_at, paid_at, refunded_at)
-           select $1::text || lpad((i + $2::int)::text, 5, '0'), b.id, $3::uuid, $4::uuid, 1, p.unit, p.unit, p.disc, p.fee, p.unit - p.disc + p.fee,
-                  case when i <= $7::int then $6::uuid end, $8::text, (array['momo','zalopay','vietqr','card'])[1 + i % 4],
-                  t.paid, t.paid + interval '15 minutes', t.paid, case when $8::text = 'refunded' then t.paid + interval '2 days' end
-             from generate_series(1, $9::int) i
-             join buyers b on b.rn = i + $2::int
-             cross join lateral (select $5::bigint as unit, case when i <= $7::int then round($5::bigint * $10::numeric / 100)::bigint else 0::bigint end as disc) d
-             cross join lateral (select d.unit, d.disc, round((d.unit - d.disc) * 0.05)::bigint as fee) p
-             cross join lateral (select $11::timestamptz - make_interval(days => 13 - floor(13 * power((i + $2::int)::float / $12::float, 0.6))::int, hours => (i * 7) % 20) as paid) t`,
-          [prefix, offset, ids.event[slug], b.tierId, b.price, b.promoId ?? null, b.promoCount ?? 0, b.status ?? 'paid', b.count, b.promoPct ?? 0, hours(2), total]);
-        offset += b.count;
-      }
-      // Ticket codes carry the order prefix (FF-RV-00001), so two events never share a code.
-      await q.query(
-        `insert into tickets (order_id, event_id, tier_id, user_id, code, holder_name, holder_phone, status, created_at)
-         select o.id, o.event_id, o.tier_id, o.user_id, 'FF-' || replace($2::text, '-', '') || '-' || lpad(row_number() over (order by o.code)::text, 5, '0'),
-                u.name, u.phone, case when o.status = 'refunded' then 'refunded' else 'valid' end, o.paid_at
-           from orders o join users u on u.id = o.user_id where o.event_id = $1`, [ids.event[slug], prefix]);
-      await q.query(`update ticket_tiers t set sold = (select count(*) from orders o where o.tier_id = t.id and o.status = 'paid') where t.event_id = $1`, [ids.event[slug]]);
-    };
-    await sell('ravo', 'RV-', [
-      { tierId: ravoTiers.early, price: 900_000, count: n(500), promoId: pEarly, promoPct: 25, promoCount: earlyUsed },
-      { tierId: ravoTiers.ga, price: 1_200_000, count: n(1847), promoId: pRave, promoPct: 10, promoCount: rave10Used },
-      { tierId: ravoTiers.vip, price: 2_400_000, count: n(500) },
-      { tierId: ravoTiers.ga, price: 1_200_000, count: n(38), status: 'refunded' },
-    ]);
-    await sell('ravo-warmup', 'RW-', [
-      { tierId: warmTiers.standing, price: 350_000, count: n(642) },
-      { tierId: warmTiers.table, price: 1_400_000, count: n(100) },
-    ]);
-    // Keep the GA "last tier" at 153 seats left, as on the event page.
-    await q.query('update ticket_tiers set capacity = sold + $2 where id = $1', [ravoTiers.ga, n(153)]);
-
-    // Demo attendee: 2 × GA for Ravolution.
-    const demoOrder = await one<any>(q,
-      `insert into orders (code, user_id, event_id, tier_id, qty, unit_price, subtotal, discount, fee, total, status, payment_method, created_at, expires_at, paid_at)
-       values ('FFDEMO22', $1, $2, $3, 2, 1200000, 2400000, 0, 120000, 2520000, 'paid', 'momo', $4, $4, $4) returning id`,
-      [demo.id, ids.event.ravo, ravoTiers.ga, hours(72)]);
-    for (const code of ['FF-RAVO-DEM1', 'FF-RAVO-DEM2']) {
-      await q.query(`insert into tickets (order_id, event_id, tier_id, user_id, code, holder_name, holder_phone) values ($1,$2,$3,$4,$5,'Minh Anh','+84901234567')`,
-        [demoOrder.id, ids.event.ravo, ravoTiers.ga, demo.id, code]);
-    }
-    await q.query('update ticket_tiers set sold = sold + 2, capacity = capacity + 2 where id = $1', [ravoTiers.ga]);
-
     // ---- saves, hypes, going, follows ----
     const savers = n(4100);
     await q.query(`insert into saves (user_id, event_id, created_at) select id, $1, $2::timestamptz - make_interval(hours => (rn * 13 % 330)::int) from ${synthetic} s where rn <= $3`, [ids.event.ravo, now, savers]);
@@ -487,17 +387,6 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query(`insert into event_metrics_daily (event_id, day, views, ticket_clicks, sources) values ($1,'2025-09-10',$2,$3,'{"feed":1}')`, [ids.event['ravo-2025'], n(26600), n(2900)]);
     await q.query(`insert into event_metrics_daily (event_id, day, views, ticket_clicks, sources) values ($1,'2026-09-15',$2,$3,'{"feed":1}')`, [ids.event['ravo-warmup'], n(9800), n(620)]);
 
-    // ---- door operations ----
-    await q.query(`insert into event_staff (event_id, name, phone, gate, role, active, accepted_at, invited_at) values
-      ($1,'Trần Minh','+84903112884','main','lead',true,$2,$2), ($1,'Lê Thu Hà','+84938447120','vip','scanner',true,$2,$2), ($1,'Phạm Gia Hân','+84912660391','side','scanner',false,null,$2)`,
-      [ids.event.ravo, hours(96)]);
-    const guest = (name: string, note: Localized, seats: number, inside: boolean) =>
-      q.query('insert into guest_list (event_id, name, note, seats, checked_in) values ($1,$2,$3,$4,$5)', [ids.event.ravo, name, json(note), seats, inside]);
-    await guest('Trần Minh Anh', L('Artist manager — Hoaprox', 'Quản lý nghệ sĩ — Hoaprox'), 4, false);
-    await guest('Lê Thu Hà', L('Press — Kenh14', 'Báo chí — Kenh14'), 2, false);
-    await guest('Nguyễn Quốc Bảo', L('Sponsor — Heineken VN', 'Nhà tài trợ — Heineken VN'), 6, false);
-    await guest('Phạm Gia Hân', L('Photographer', 'Nhiếp ảnh'), 1, false);
-
     // ---- announcements ----
     const ann = (subject: string, body: string, audience: string, channels: string[], at: string, reach: number, openedPct: number) => {
       const sendAt = new Date(at);
@@ -507,8 +396,8 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
         [ids.event.ravo, audience, channels, subject, body, sent ? 'sent' : 'scheduled', sendAt, sent ? sendAt : null, reach, sent ? Math.round((reach * openedPct) / 100) : 0, orgUser.id, sendAt]);
     };
     await ann('After Hours lineup is out', 'Closing b2b and Triple D take the after-party. Tickets are on the event page.', 'saved', ['push', 'zalo'], '2026-09-13T18:00:00+07:00', n(5842), 61);
-    await ann('Gate map and shuttle times', 'Main gate opens 16:00, VIP 15:30. Shuttles run from Nguyễn Huệ every 20 minutes from 15:00.', 'holders', ['push'], '2026-09-12T09:30:00+07:00', n(2847), 74);
-    await ann('Last call for VIP tables', '48 VIP tickets left. The price holds until 18 Sep, after that it is general admission at the door only.', 'vip', ['push', 'zalo'], '2026-09-18T10:00:00+07:00', n(412), 0);
+    await ann('Gate map and shuttle times', 'Main gate opens 16:00, VIP 15:30. Shuttles run from Nguyễn Huệ every 20 minutes from 15:00.', 'going', ['push'], '2026-09-12T09:30:00+07:00', n(2847), 74);
+    await ann('Last call for VIP tables', '48 VIP tickets left. The price holds until 18 Sep, after that it is general admission at the door only.', 'going', ['push', 'zalo'], '2026-09-18T10:00:00+07:00', n(412), 0);
 
     // ---- organiser inbox & bell ----
     const t1 = await one<any>(q,
@@ -527,14 +416,12 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
       q.query(`insert into notifications (organizer_id, kind, title, body, cta, link, read_at, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [ids.org.ravoent, kind, json(title), json(body), json(cta), json(link), unread ? null : at, at]);
     await orgNote('live', L('Ravolution Music Festival is live', 'Ravolution Music Festival đã lên sóng'), L('Approved four hours after review and now showing in Ho Chi Minh City.', 'Được duyệt sau bốn giờ và đang hiển thị tại TP.HCM.'), L('View dashboard', 'Xem dashboard'), { screen: 'dash' }, hours(72), false);
-    await orgNote('payout', L('Payout scheduled', 'Đã lên lịch chi trả'), L('The post-event payout settles three working days after the event.', 'Khoản chi trả sau sự kiện về tài khoản 3 ngày làm việc sau sự kiện.'), L('Open payouts', 'Mở chi trả'), { screen: 'money' }, hours(26), false);
-    await orgNote('tickets', L('VIP tickets running low', 'Vé VIP gần hết'), L('48 VIP left with three days to go.', 'Còn 48 vé VIP, còn ba ngày.'), L('See ticket tiers', 'Xem loại vé'), { screen: 'money' }, hours(3), true);
+    await orgNote('tickets', L('Ticket clicks are up', 'Lượt bấm Mua vé đang tăng'), L('620 presses of Buy tickets this week, twice the week before.', '620 lượt bấm Mua vé tuần này, gấp đôi tuần trước.'), L('See the numbers', 'Xem số liệu'), { url: '/studio' }, hours(3), true);
     await orgNote('reject', L('Listing sent back', 'Tin bị trả lại'), L('Ravolution After Hours needs a 1600×900 image and a verified venue before it can go live.', 'Ravolution After Hours cần ảnh 1600×900 và địa điểm đã xác minh trước khi lên sóng.'), L('Open moderation thread', 'Mở thư kiểm duyệt'), { screen: 'inbox', threadId: t1.id }, hours(1), true);
 
     // ---- attendee notification centre ----
     const userNote = (kind: string, title: Localized, body: Localized, link: object, at: Date) =>
       q.query(`insert into notifications (user_id, kind, title, body, link, created_at) values ($1,$2,$3,$4,$5,$6)`, [demo.id, kind, json(title), json(body), json(link), at]);
-    await userNote('tickets_issued', L('Tickets are in My tickets', 'Vé đã vào mục Vé của tôi'), L('2 × Ravolution Music Festival', '2 × Ravolution Music Festival'), { screen: 'tickets' }, hours(72));
     await userNote('friend_going', L('Minh Trần is going', 'Minh Trần sẽ đi'), L('HOZO Super Fest', 'HOZO Super Fest'), { screen: 'event', eventId: ids.event.hozo }, hours(30));
     await userNote('smart_alert', L('Smart Alert · new match', 'Smart Alert · sự kiện mới khớp'), L('EDM · District 1 & 3 · This weekend', 'EDM · Quận 1 & 3 · Cuối tuần'), { screen: 'explore' }, hours(10));
 
@@ -660,28 +547,12 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
                    union all select $1::uuid, $3::uuid, 'w' || i, 'zalo', $4::timestamptz - make_interval(hours => i) from generate_series(1, 12) i`,
     [ids.event.ravo, ids.friend.f1, ids.friend.f6, now]);
 
-    // Rap Việt is sold out: Linh passes on her ticket at face value, and a Ravolution GA is up too.
-    const rapGa = (await one<any>(q, `select id from ticket_tiers where event_id = $1 and key = 'ga'`, [ids.event.rapviet])).id;
-    const linhOrder = await one<any>(q,
-      `insert into orders (code, user_id, event_id, tier_id, qty, unit_price, subtotal, discount, fee, total, status, payment_method, created_at, expires_at, paid_at)
-       values ('FFRAPLNH', $1, $2, $3, 1, 650000, 650000, 0, 32500, 682500, 'paid', 'momo', $4, $4, $4) returning id`, [ids.friend.f2, ids.event.rapviet, rapGa, hours(24 * 20)]);
-    const linhTicket = await one<any>(q,
-      `insert into tickets (order_id, event_id, tier_id, user_id, code, holder_name, holder_phone) values ($1,$2,$3,$4,'FF-RAPV-LNH1','Linh Phạm','+84908000002') returning id`,
-      [linhOrder.id, ids.event.rapviet, rapGa, ids.friend.f2]);
-    await q.query(`insert into ticket_listings (ticket_id, event_id, seller_id, price, face_value, created_at) values ($1,$2,$3,650000,650000,$4)`,
-      [linhTicket.id, ids.event.rapviet, ids.friend.f2, hours(5)]);
-    const ravoSeller = await one<any>(q,
-      `select t.id, t.user_id from tickets t join orders o on o.id = t.order_id where t.event_id = $1 and t.status = 'valid' and o.unit_price = 1200000 and t.user_id <> $2 order by t.code limit 1`,
-      [ids.event.ravo, demo.id]);
-    await q.query(`insert into ticket_listings (ticket_id, event_id, seller_id, price, face_value, created_at) values ($1,$2,$3,1050000,1200000,$4)`,
-      [ravoSeller.id, ids.event.ravo, ravoSeller.user_id, hours(2)]);
-
     // Minh Anh's past nights (checked in on the site), for the raver passport and the year in review.
     for (const slug of ['ravo-2025', 'momang-2025', '8wonder-winter', 'bside-acoustic-1', 'bside-acoustic-2']) {
       await q.query('insert into presence (user_id, event_id, updated_at) values ($1,$2,$3) on conflict do nothing', [demo.id, ids.event[slug], hours(24 * 30)]);
     }
     await q.query(`insert into event_updates (event_id, author_id, kind, body, created_at) values ($1,$2,'gate',$3,$4)`,
-      [ids.event.ravo, orgUser.id, 'Cổng số 3 mở sớm từ 15:30 cho khách có vé. Mang theo CCCD để đổi vòng tay.', hours(4)]);
+      [ids.event.ravo, orgUser.id, 'Cổng số 3 mở sớm từ 15:30. Mang theo CCCD để đổi vòng tay.', hours(4)]);
 
     // The demo accounts are past the role picker; organiser members organise.
     await q.query('update users set onboarded_at = created_at, email_verified_at = case when email is not null then created_at end');
@@ -693,8 +564,7 @@ export async function seed(db: Db, now: Date, opts: SeedOptions) {
     await q.query(`insert into user_roles (user_id, role, status) select distinct user_id, 'organizer', 'active' from organizer_members on conflict do nothing`);
 
     const counts = await one<any>(q,
-      `select (select count(*)::int from users) as users, (select count(*)::int from events) as events, (select count(*)::int from orders) as orders,
-              (select count(*)::int from tickets) as tickets, (select count(*)::int from saves) as saves`);
+      `select (select count(*)::int from users) as users, (select count(*)::int from events) as events, (select count(*)::int from saves) as saves`);
     log(`seed complete: ${JSON.stringify(counts)}`);
     return { ...counts, accounts: { attendee: 'minh@example.com', organizer: 'team@ravolution.vn', admin: 'admin@feestfinder.com' }, ids };
   });

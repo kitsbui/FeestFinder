@@ -2,39 +2,29 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
-import { badRequest, conflict, forbidden, notFound } from '../../lib/errors.ts';
-import { fill, L, type Localized } from '../../lib/i18n.ts';
-import { formatVnPhone, maskPhone } from '../../lib/contact.ts';
-import { toCsv } from '../../lib/csv.ts';
+import { badRequest, conflict, notFound } from '../../lib/errors.ts';
+import { L, type Localized } from '../../lib/i18n.ts';
 import { inQuietHours, quietHoursEnd, vnDate } from '../../lib/time.ts';
-import { csv, limit, parse, uuid } from '../../lib/validate.ts';
+import { csv, parse, uuid } from '../../lib/validate.ts';
 import { requireOrganizer, requireOwnEvent, requireUser } from '../../http/guards.ts';
-import { decodeCursor, page } from '../../http/sql.ts';
 import { enqueue, loadPrefs } from '../../services/notify.ts';
-import { qrToken } from '../../services/tickets.ts';
-import { refundOrder } from '../../services/orders.ts';
 
-type Audience = 'saved' | 'holders' | 'vip' | 'past';
+/** Who an announcement reaches: people who saved the night, who said they are going, who went to this organiser's nights before. */
+type Audience = 'saved' | 'going' | 'past';
 type Channel = 'push' | 'zalo' | 'email';
-const TOPIC: Record<Audience, 'saved' | 'tickets' | 'orgs'> = { saved: 'saved', holders: 'tickets', vip: 'tickets', past: 'orgs' };
+const AUDIENCES = ['saved', 'going', 'past'] as const;
+const TOPIC: Record<Audience, 'saved' | 'orgs'> = { saved: 'saved', going: 'saved', past: 'orgs' };
 const AUDIENCE_LABEL: Record<Audience, Localized> = {
-  saved: L('everyone who saved', 'người đã lưu'), holders: L('ticket holders', 'khách đã mua vé'),
-  vip: L('VIP holders', 'khách VIP'), past: L('past attendees', 'khách kỳ trước'),
-};
-
-const STATE_OF = (status: string) => (status === 'used' ? 'in' : status === 'refunded' ? 'refunded' : 'out');
-const METHOD_LABEL: Record<string, Localized> = {
-  momo: L('Momo', 'Momo'), zalopay: L('Zalo Pay', 'Zalo Pay'), vietqr: L('VietQR', 'VietQR'), card: L('card', 'thẻ'), mock: L('card', 'thẻ'),
+  saved: L('everyone who saved', 'người đã lưu'), going: L('everyone going', 'người sẽ đi'), past: L('past attendees', 'khách kỳ trước'),
 };
 
 /** User ids in an announcement audience. */
 async function audienceIds(q: Queryable, ev: any, audience: Audience, now: Date): Promise<string[]> {
   const sql = {
     saved: `select distinct user_id from saves where event_id = $1`,
-    holders: `select distinct user_id from tickets where event_id = $1 and status in ('valid','used') and user_id is not null`,
-    vip: `select distinct t.user_id from tickets t join ticket_tiers tt on tt.id = t.tier_id where t.event_id = $1 and tt.key = 'vip' and t.status in ('valid','used') and t.user_id is not null`,
+    going: `select distinct user_id from going where event_id = $1`,
     past: `select distinct x.user_id from (
-             select t.user_id, t.event_id from tickets t where t.status = 'used'
+             select p.user_id, p.event_id from presence p
              union select g.user_id, g.event_id from going g) x
            join events e on e.id = x.event_id
            where e.organizer_id = $2 and e.id <> $1 and e.ends_at < $3 and x.user_id is not null`,
@@ -106,116 +96,8 @@ export async function dispatchAnnouncement(q: Queryable, announcementId: string,
 export default async function organizerAudienceRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
 
-  // ---- attendees -----------------------------------------------------------
-
-  const ATTENDEE_SQL = `
-    select t.id, t.code, t.holder_name, t.holder_phone, t.kind, t.status, t.checked_in_at, t.resent_at, t.created_at,
-           o.id as order_id, o.code as order_code, o.payment_method, o.paid_at, tt.key as tier_key, tt.name as tier_name
-      from tickets t left join orders o on o.id = t.order_id left join ticket_tiers tt on tt.id = t.tier_id
-     where t.event_id = $1`;
-
-  function filterSql(filter: string, q: string | undefined, params: unknown[]) {
-    const where: string[] = [];
-    if (filter === 'in') where.push(`t.status = 'used'`);
-    if (filter === 'out') where.push(`t.status = 'valid'`);
-    if (filter === 'refunded') where.push(`t.status = 'refunded'`);
-    if (filter === 'vip') where.push(`tt.key = 'vip'`);
-    if (q?.trim()) {
-      // Phones are stored as +84…; "0903 118" should still match, so drop the local leading zero.
-      const digits = q.replace(/\D/g, '').replace(/^0/, '');
-      params.push(`%${q.trim().toLowerCase()}%`, digits.length >= 3 ? `%${digits}%` : 'no-match');
-      where.push(`(lower(t.holder_name) like $${params.length - 1} or lower(coalesce(o.code, t.code)) like $${params.length - 1} or regexp_replace(coalesce(t.holder_phone,''), '\\D', '', 'g') like $${params.length})`);
-    }
-    return where.map((w) => ` and ${w}`).join('');
-  }
-
-  function attendeeRow(r: any, canSeePhone: boolean) {
-    const phone = r.holder_phone ? (canSeePhone ? formatVnPhone(r.holder_phone) : maskPhone(r.holder_phone)) : null;
-    const bought: Localized = r.kind === 'guest' ? L('Guest list', 'Khách mời')
-      : L(`${r.paid_at ? new Date(r.paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Asia/Ho_Chi_Minh' }) : ''} · ${METHOD_LABEL[r.payment_method]?.en ?? ''}`,
-        `${r.paid_at ? new Date(r.paid_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' }) : ''} · ${METHOD_LABEL[r.payment_method]?.vi ?? ''}`);
-    return {
-      ticketId: r.id, ticketCode: r.code, name: r.holder_name, phone, orderId: r.order_id, orderCode: r.order_code ?? r.code, bought,
-      checkedInAt: r.checked_in_at, tier: r.kind === 'guest' ? 'guest' : r.tier_key, tierName: r.tier_name ?? L('Guest', 'Khách mời'),
-      state: STATE_OF(r.status), resent: !!r.resent_at,
-    };
-  }
-
-  app.get<{ Params: { id: string } }>('/organizer/events/:id/attendees', async (req) => {
-    const org = await requireOrganizer(ctx, req);
-    const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const f = parse(z.object({ q: z.string().max(60).optional(), filter: z.enum(['all', 'in', 'out', 'vip', 'refunded']).default('all'), limit: limit(100, 10), cursor: z.string().optional() }), req.query);
-    const offset = decodeCursor(f.cursor);
-    const params: unknown[] = [ev.id];
-    const where = filterSql(f.filter, f.q, params);
-    params.push(f.limit + 1, offset);
-    const rows = await many<any>(ctx.db, `${ATTENDEE_SQL} ${where} order by t.created_at, t.code limit $${params.length - 1} offset $${params.length}`, params);
-    const k = await one<any>(ctx.db,
-      `select count(*) filter (where t.status in ('valid','used'))::int as sold,
-              count(*) filter (where t.status = 'used')::int as checked_in,
-              count(*) filter (where t.status = 'valid')::int as not_in,
-              count(*) filter (where t.status = 'refunded')::int as refunded,
-              count(*)::int as all_rows,
-              count(*) filter (where tt.key = 'vip')::int as vip
-         from tickets t left join ticket_tiers tt on tt.id = t.tier_id where t.event_id = $1`, [ev.id]);
-    // The venue capacity the organiser declared, the same number the door screen counts against.
-    const capacity = ev.capacity ?? (await one<any>(ctx.db, 'select coalesce(sum(capacity),0)::int as n from ticket_tiers where event_id = $1', [ev.id])).n;
-    const p = page(rows, offset, f.limit);
-    return {
-      kpis: {
-        sold: k.sold, capacity, checkedIn: k.checked_in, checkedInPct: k.sold ? Math.round((k.checked_in / k.sold) * 100) : 0,
-        notIn: k.not_in, refunded: k.refunded, refundedPct: k.sold + k.refunded ? Math.round((k.refunded / (k.sold + k.refunded)) * 1000) / 10 : 0,
-      },
-      filters: { all: k.all_rows, in: k.checked_in, out: k.not_in, vip: k.vip, refunded: k.refunded },
-      items: p.items.map((r) => attendeeRow(r, org.role === 'owner')),
-      nextCursor: p.nextCursor,
-      privacy: L('Phone numbers are visible to the account owner and gate leads only', 'Số điện thoại chỉ hiện với chủ tài khoản và trưởng cửa'),
-    };
-  });
-
-  app.get<{ Params: { id: string } }>('/organizer/events/:id/attendees.csv', async (req, reply) => {
-    const org = await requireOrganizer(ctx, req);
-    const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const rows = await many<any>(ctx.db, `${ATTENDEE_SQL} order by t.created_at, t.code`, [ev.id]);
-    const body = toCsv(
-      ['ticket_code', 'order_code', 'name', 'phone', 'tier', 'status', 'checked_in_at', 'payment_method', 'paid_at'],
-      rows.map((r) => {
-        const a = attendeeRow(r, org.role === 'owner');
-        return [a.ticketCode, a.orderCode, a.name, a.phone, a.tier, a.state, r.checked_in_at?.toISOString?.() ?? '', r.payment_method ?? 'guest', r.paid_at?.toISOString?.() ?? ''];
-      }));
-    return reply.type('text/csv; charset=utf-8').header('content-disposition', `attachment; filename="${ev.slug}-attendees.csv"`).send(body);
-  });
-
-  app.post<{ Params: { ticketId: string } }>('/organizer/tickets/:ticketId/resend', async (req) => {
-    const org = await requireOrganizer(ctx, req);
-    const t = await one<any>(ctx.db, 'select t.*, e.organizer_id, e.title from tickets t join events e on e.id = t.event_id where t.id = $1', [parse(uuid, req.params.ticketId)]);
-    if (!t || t.organizer_id !== org.organizerId) throw notFound();
-    if (t.status === 'refunded') throw conflict('ticket_refunded', L('That ticket was refunded — nothing to resend', 'Vé này đã hoàn tiền — không gửi lại được'));
-    const now = ctx.clock.now();
-    await ctx.db.tx(async (q) => {
-      await q.query('update tickets set resent_at = $2 where id = $1', [t.id, now]);
-      const user = t.user_id ? await one<any>(q, 'select email, phone, locale from users where id = $1', [t.user_id]) : null;
-      const payload = { lang: user?.locale ?? 'vi', title: { en: `Your ticket · ${t.title}`, vi: `Vé của bạn · ${t.title}` }, body: { en: t.code, vi: t.code }, qr: qrToken(ctx.config.ticketSigningSecret, t.event_id, t.code) };
-      const phone = user?.phone ?? t.holder_phone;
-      if (phone) await enqueue(q, t.user_id, 'zalo', phone, 'ticket_resend', payload, now);
-      if (user?.email) await enqueue(q, t.user_id, 'email', user.email, 'ticket_resend', payload, now);
-    });
-    return { ok: true, state: 'resent', message: fill(L('Ticket resent to {n}', 'Đã gửi lại vé cho {n}'), { n: t.holder_name }) };
-  });
-
-  /** Refund a whole order: tickets stop scanning and seats go back on sale. */
-  app.post<{ Params: { orderId: string } }>('/organizer/orders/:orderId/refund', async (req) => {
-    const org = await requireOrganizer(ctx, req);
-    if (org.role !== 'owner') throw forbidden('owner_only', L('Only the account owner can refund', 'Chỉ chủ tài khoản hoàn tiền được'));
-    const now = ctx.clock.now();
-    const out = await ctx.db.tx((q) => refundOrder(q, parse(uuid, req.params.orderId), now, (o) => o.organizer_id === org.organizerId));
-    return { ok: true, orderCode: out.code, message: L('Refunded', 'Đã hoàn tiền') };
-  });
-
-  // ---- announcements ---------------------------------------------------------
-
   const AnnouncementInput = z.object({
-    audience: z.enum(['saved', 'holders', 'vip', 'past']),
+    audience: z.enum(AUDIENCES),
     channels: z.array(z.enum(['push', 'zalo', 'email'])),
     subject: z.string().max(120),
     body: z.string().max(2000),
@@ -225,7 +107,7 @@ export default async function organizerAudienceRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/organizer/events/:id/announcements/estimate', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const f = parse(z.object({ audience: z.enum(['saved', 'holders', 'vip', 'past']).default('saved'), channels: csv(z.enum(['push', 'zalo', 'email'])).default([]) }), req.query);
+    const f = parse(z.object({ audience: z.enum(AUDIENCES).default('saved'), channels: csv(z.enum(['push', 'zalo', 'email'])).default([]) }), req.query);
     return estimate(ctx.db, ev, f.audience, f.channels as Channel[], ctx.clock.now());
   });
 

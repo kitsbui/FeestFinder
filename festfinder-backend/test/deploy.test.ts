@@ -28,8 +28,8 @@ const SUPABASE_URL = 'postgresql://postgres.ref:pw@aws-1-ap-northeast-1.pooler.s
 const BLANK = {
   NODE_ENV: undefined, VERCEL: undefined, VERCEL_ENV: undefined, VERCEL_URL: undefined, VERCEL_PROJECT_PRODUCTION_URL: undefined,
   DATABASE_URL: undefined, DATABASE_URL_FROM: undefined, PGLITE_DIR: undefined, PUBLIC_BASE_URL: undefined,
-  PAYMENT_PROVIDER: undefined, JOBS_ENABLED: undefined, CRON_SECRET: undefined, EXPOSE_DEV_CODES: undefined, FF_ENV: undefined,
-  TICKET_SIGNING_SECRET: 'test-secret', PAYMENT_WEBHOOK_SECRET: 'test-secret',
+JOBS_ENABLED: undefined, CRON_SECRET: undefined, EXPOSE_DEV_CODES: undefined, FF_ENV: undefined,
+  TICKET_SIGNING_SECRET: 'test-secret',
 };
 
 describe('where the data goes', () => {
@@ -56,7 +56,7 @@ describe('where the data goes', () => {
   });
 
   it('needs real ticket and payment secrets in production only', () => {
-    const noSecrets = { ...BLANK, TICKET_SIGNING_SECRET: undefined, PAYMENT_WEBHOOK_SECRET: undefined, DATABASE_URL: SUPABASE_URL };
+    const noSecrets = { ...BLANK, TICKET_SIGNING_SECRET: undefined, DATABASE_URL: SUPABASE_URL };
     withEnv({ ...noSecrets, NODE_ENV: 'production', VERCEL: '1', VERCEL_ENV: 'production' }, () => assert.throws(() => loadConfig(), /TICKET_SIGNING_SECRET/));
     withEnv({ ...noSecrets, NODE_ENV: 'production', VERCEL: '1', VERCEL_ENV: 'preview' }, () => {
       const c = loadConfig();
@@ -70,16 +70,6 @@ describe('where the data goes', () => {
     withEnv({ ...BLANK, DATABASE_URL: SUPABASE_URL, EXPOSE_DEV_CODES: 'true' }, () => assert.equal(loadConfig().exposeDevCodes, true, 'staging, when asked for'));
     withEnv({ ...BLANK, NODE_ENV: 'production', DATABASE_URL: SUPABASE_URL, EXPOSE_DEV_CODES: 'true' }, () => assert.equal(loadConfig().exposeDevCodes, false));
     withEnv({ ...BLANK, PGLITE_DIR: 'memory://' }, () => assert.equal(loadConfig().exposeDevCodes, true));
-  });
-
-  it('allows fake payments on staging when asked for, never in production', () => {
-    withEnv({ ...BLANK, DATABASE_URL: SUPABASE_URL }, () => assert.equal(loadConfig().paymentProvider, 'vietqr'));
-    withEnv({ ...BLANK, DATABASE_URL: SUPABASE_URL, PAYMENT_PROVIDER: 'mock' }, () => assert.equal(loadConfig().paymentProvider, 'mock'));
-    withEnv({ ...BLANK, NODE_ENV: 'production', VERCEL: '1', VERCEL_ENV: 'preview', DATABASE_URL: SUPABASE_URL, PAYMENT_PROVIDER: 'mock' },
-      () => assert.equal(loadConfig().paymentProvider, 'mock'));
-    withEnv({ ...BLANK, NODE_ENV: 'production', DATABASE_URL: SUPABASE_URL, PAYMENT_PROVIDER: 'mock' }, () => assert.throws(() => loadConfig(), /PAYMENT_PROVIDER=mock/));
-    withEnv({ ...BLANK, FF_ENV: 'production', DATABASE_URL: SUPABASE_URL, PAYMENT_PROVIDER: 'mock' }, () => assert.throws(() => loadConfig(), /PAYMENT_PROVIDER=mock/));
-    withEnv({ ...BLANK, PGLITE_DIR: 'memory://' }, () => assert.equal(loadConfig().paymentProvider, 'mock'));
   });
 
   it('leaves the pg_cron schedule to the production deployment', () => {
@@ -217,9 +207,9 @@ describe('deployment', () => {
     const env = await setup();
     try {
       const everyJob = await runDueJobs(env.ctx, new Date(60_000 * 60 * 1000));
-      assert.equal(Object.keys(everyJob).length, 17);
+      assert.equal(Object.keys(everyJob).length, 15);
       const minuteJobs = await runDueJobs(env.ctx, new Date(60_000 * (60 * 1000 + 1)));
-      assert.deepEqual(Object.keys(minuteJobs).sort(), ['deliverOutbox', 'expireOrders', 'sendScheduledAnnouncements']);
+      assert.deepEqual(Object.keys(minuteJobs).sort(), ['deliverOutbox', 'sendScheduledAnnouncements']);
     } finally { await env.close(); }
   });
 

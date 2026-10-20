@@ -235,7 +235,7 @@ export default async function communityRoutes(app: FastifyInstance) {
         await notifyOrganizer(q, now, {
           organizerId: c.organizer_id, topic: 'moderation', kind: decision === 'approve' ? 'live' : 'reject',
           title: decision === 'approve' ? L(`${c.title} is now yours`, `${c.title} đã chuyển về tài khoản của bạn`) : L(`Request for ${c.title} declined`, `Yêu cầu nhận ${c.title} chưa được duyệt`),
-          body: decision === 'approve' ? L('Edit it, add tickets and answer questions from your dashboard.', 'Chỉnh sửa, thêm vé và trả lời câu hỏi từ trang quản lý.')
+          body: decision === 'approve' ? L('Edit it, add the ticket link and answer questions from your dashboard.', 'Chỉnh sửa, thêm link bán vé và trả lời câu hỏi từ trang quản lý.')
             : { en: note || 'We could not confirm you organise it. Reply with proof to try again.', vi: note || 'Chúng tôi chưa xác nhận được bạn là BTC. Gửi thêm bằng chứng để thử lại.' },
           link: { screen: 'dash', eventId: c.event_id },
         });

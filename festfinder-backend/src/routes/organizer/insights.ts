@@ -36,9 +36,11 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
     const cur = await totals(org.organizerId, days ? addDays(today, -(days - 1)) : null, today);
     const prev = days ? await totals(org.organizerId, addDays(today, -(2 * days - 1)), addDays(today, -days)) : null;
 
-    const buyers = await one<any>(ctx.db,
-      `select count(*)::int as n, count(*) filter (where exists (select 1 from saves s where s.user_id = o.user_id and s.event_id = o.event_id and s.created_at < o.paid_at))::int as saved_first
-         from orders o join events e on e.id = o.event_id where e.organizer_id = $1 and o.status = 'paid'`, [org.organizerId]);
+    // Of the signed-in people who pressed "Mua vé", how many had saved the night first.
+    const clickers = await one<any>(ctx.db,
+      `select count(*)::int as n, count(*) filter (where exists (select 1 from saves s where s.user_id = c.user_id and s.event_id = c.event_id and s.created_at < c.created_at))::int as saved_first
+         from (select distinct on (c.user_id, c.event_id) c.user_id, c.event_id, c.created_at from outbound_clicks c join events e on e.id = c.event_id
+                where e.organizer_id = $1 and c.user_id is not null order by c.user_id, c.event_id, c.created_at) c`, [org.organizerId]);
     const review = await one<any>(ctx.db,
       `select count(*)::int as n, max(submitted_at) as last from events where organizer_id = $1 and status = 'in_review'`, [org.organizerId]);
     const published = await one<any>(ctx.db, `select count(*)::int as n from events where organizer_id = $1 and published_at is not null`, [org.organizerId]);
@@ -51,7 +53,7 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
         `${signed(prev.views ? ((cur.views - prev.views) / prev.views) * 100 : 0)} so với ${range === '7d' ? 'tuần trước' : 'kỳ trước'}`)
       : L(`Across ${published.n} published events`, `Trên ${published.n} sự kiện đã đăng`);
     const saveRate = pct(cur.saves, cur.views);
-    const savedFirst = pct(buyers.saved_first, buyers.n);
+    const savedFirst = pct(clickers.saved_first, clickers.n);
 
     // Suggested next steps from what the listings are actually missing.
     const listings = await many<any>(ctx.db,
@@ -74,7 +76,7 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
       kpis: [
         { key: 'views', value: cur.views, delta: viewsDelta },
         { key: 'saves', value: cur.saves, delta: L(`${saveRate}% of viewers save`, `${String(saveRate).replace('.', ',')}% người xem lưu lại`) },
-        { key: 'ticketClicks', value: cur.clicks, delta: L(`${savedFirst}% of buyers saved first`, `${String(savedFirst).replace('.', ',')}% người mua đã lưu trước`) },
+        { key: 'ticketClicks', value: cur.clicks, delta: L(`${savedFirst}% saved it first`, `${String(savedFirst).replace('.', ',')}% đã lưu trước`) },
         { key: 'inReview', value: review.n, delta: hoursAgo === null ? L('Nothing waiting', 'Không có tin chờ') : L(`Submitted ${hoursAgo}h ago`, `Gửi ${hoursAgo} giờ trước`) },
       ],
       todo: todo.slice(0, 5),
@@ -116,74 +118,57 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
     const span = Number(range.slice(0, -1));
     const from = addDays(today, -(span - 1));
     const startOf = (day: string) => new Date(`${day}T00:00:00+07:00`);
-    const [dayMetrics, daySaves, daySold, before] = await Promise.all([
+    const [dayMetrics, daySaves, before] = await Promise.all([
       many<any>(ctx.db, `select day::text as day, views, ticket_clicks as clicks from event_metrics_daily where event_id = $1 and day >= $2 and day <= $3`, [ev.id, from, today]),
       many<any>(ctx.db,
         `select to_char(created_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') as day, count(*)::int as n
            from saves where event_id = $1 and created_at >= $2 group by 1`, [ev.id, startOf(from)]),
-      many<any>(ctx.db,
-        `select to_char(paid_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') as day, sum(qty)::int as n
-           from orders where event_id = $1 and status = 'paid' and paid_at >= $2 group by 1`, [ev.id, startOf(from)]),
       one<any>(ctx.db, `select coalesce(sum(views),0)::int as views from event_metrics_daily where event_id = $1 and day >= $2 and day < $3`,
         [ev.id, addDays(from, -span), from]),
     ]);
     const at = <T extends { day: string }>(rows: T[]) => new Map(rows.map((r) => [r.day, r]));
-    const m = at(dayMetrics), sv = at(daySaves), so = at(daySold);
+    const m = at(dayMetrics), sv = at(daySaves);
     const series = Array.from({ length: span }, (_, i) => {
       const d = addDays(from, i);
-      return { day: d, views: m.get(d)?.views ?? 0, clicks: m.get(d)?.clicks ?? 0, saves: sv.get(d)?.n ?? 0, sold: so.get(d)?.n ?? 0 };
+      return { day: d, views: m.get(d)?.views ?? 0, clicks: m.get(d)?.clicks ?? 0, saves: sv.get(d)?.n ?? 0 };
     });
-    const sum = (k: 'views' | 'clicks' | 'saves' | 'sold') => series.reduce((n, d) => n + d[k], 0);
+    const sum = (k: 'views' | 'clicks' | 'saves') => series.reduce((n, d) => n + d[k], 0);
     const boost = await one<any>(ctx.db, 'select status, created_at from boost_requests where event_id = $1 order by created_at desc limit 1', [ev.id]);
-    const [tiers, metrics, daily, prevEv] = await Promise.all([
-      many<any>(ctx.db, 'select name, capacity, sold from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
+    const [metrics, daily, prevEv] = await Promise.all([
       one<any>(ctx.db, `select coalesce(sum(views),0)::int as views, coalesce(sum(ticket_clicks),0)::int as clicks, coalesce(sum(ride_clicks),0)::int as rides from event_metrics_daily where event_id = $1`, [ev.id]),
-      many<any>(ctx.db,
-        `select to_char(paid_at at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD') as day, sum(qty)::int as n
-           from orders where event_id = $1 and status = 'paid' and paid_at >= $2 group by 1`, [ev.id, new Date(`${addDays(today, -13)}T00:00:00+07:00`)]),
+      many<any>(ctx.db, `select day::text as day, ticket_clicks as n from event_metrics_daily where event_id = $1 and day >= $2`, [ev.id, addDays(today, -13)]),
       ev.previous_edition_id ? one<any>(ctx.db, 'select id, title, save_count, starts_on from events where id = $1', [ev.previous_edition_id]) : null,
     ]);
     const sources = await many<any>(ctx.db, `select key, sum(value::int)::int as n from event_metrics_daily, jsonb_each_text(sources) where event_id = $1 group by key order by n desc`, [ev.id]);
 
-    const cap = tiers.reduce((n, t) => n + t.capacity, 0) || ev.capacity || 0;
-    const sold = tiers.reduce((n, t) => n + t.sold, 0);
     const daysLeft = ev.starts_on ? Math.max(0, daysBetween(today, ev.starts_on)) : 0;
-    const byDay = new Map(daily.map((d) => [d.day, d.n]));
-    const trend = Array.from({ length: 14 }, (_, i) => { const d = addDays(today, i - 13); return { day: d, sold: byDay.get(d) ?? 0 }; });
-    const pace = Math.round(trend.slice(-7).reduce((n, d) => n + d.sold, 0) / 7);
-    const need = Math.ceil(Math.max(0, cap - sold) / Math.max(daysLeft, 1));
-    const projected = Math.min(cap, sold + pace * daysLeft);
-    const onPace = pace >= need;
-    const funnel = [metrics.views, ev.save_count, metrics.clicks, sold];
+    const byDay = new Map(daily.map((d) => [d.day, d.n as number]));
+    // "Mua vé" presses by day over two weeks: FeestFinder sells no tickets, so a click to the seller is the last step it sees.
+    const trend = Array.from({ length: 14 }, (_, i) => { const d = addDays(today, i - 13); return { day: d, clicks: byDay.get(d) ?? 0 }; });
+    const funnel = [metrics.views, ev.save_count, metrics.clicks];
     const totalSources = sources.reduce((n, s) => n + s.n, 0);
 
     let vsPrevious = null;
     if (prevEv) {
-      const pm = await one<any>(ctx.db, `select coalesce(sum(views),0)::int as views from event_metrics_daily where event_id = $1`, [prevEv.id]);
-      const ps = await one<any>(ctx.db, `select coalesce(sum(sold),0)::int as sold from ticket_tiers where event_id = $1`, [prevEv.id]);
+      const pm = await one<any>(ctx.db, `select coalesce(sum(views),0)::int as views, coalesce(sum(ticket_clicks),0)::int as clicks from event_metrics_daily where event_id = $1`, [prevEv.id]);
       const change = (a: number, b: number) => (b ? ((a - b) / b) * 100 : 0);
-      const convNow = pct(sold, metrics.views);
-      const convPrev = pct(ps.sold, pm.views);
-      const pp = Math.round((convNow - convPrev) * 10) / 10;
+      const pp = Math.round((pct(metrics.clicks, metrics.views) - pct(pm.clicks, pm.views)) * 10) / 10;
       vsPrevious = {
         label: L(`vs ${prevEv.title}`, `so với ${prevEv.title}`),
         rows: [
           { key: 'views', label: L('Views', 'Lượt xem'), value: signed(change(metrics.views, pm.views)), good: metrics.views >= pm.views },
           { key: 'saves', label: L('Saves', 'Lượt lưu'), value: signed(change(ev.save_count, prevEv.save_count)), good: ev.save_count >= prevEv.save_count },
-          { key: 'conversion', label: L('View → sale', 'Xem → mua'), value: `${pp >= 0 ? '+' : '−'}${Math.abs(pp)}pp`, good: pp >= 0 },
-          { key: 'sold', label: L('Tickets sold', 'Vé đã bán'), value: signed(change(sold, ps.sold)), good: sold >= ps.sold },
+          { key: 'conversion', label: L('View → ticket click', 'Xem → bấm Mua vé'), value: `${pp >= 0 ? '+' : '−'}${Math.abs(pp)}pp`, good: pp >= 0 },
+          { key: 'clicks', label: L('Ticket clicks', 'Lượt bấm Mua vé'), value: signed(change(metrics.clicks, pm.clicks)), good: metrics.clicks >= pm.clicks },
         ],
       };
     }
 
     return {
       event: { id: ev.id, title: ev.title, startsOn: ev.starts_on, status: ev.status },
-      sold, capacity: cap, soldPct: pct(sold, cap),
-      daysLeft, pacePerDay: pace, needPerDay: need,
-      projection: { tickets: projected, pct: pct(projected, cap) },
-      verdict: onPace ? { key: 'on_pace', label: L('On pace to sell out', 'Đúng nhịp để bán hết') } : { key: 'behind', label: L('Behind pace', 'Chậm hơn nhịp cần') },
+      daysLeft,
       funnel: funnel.map((v, i) => ({
-        key: ['views', 'saves', 'ticketClicks', 'sold'][i],
+        key: ['views', 'saves', 'ticketClicks'][i],
         value: v,
         shareOfViews: pct(v, funnel[0]),
         stepConversion: i === 0 ? null : pct(v, funnel[i - 1]),
@@ -191,12 +176,11 @@ export default async function organizerInsightRoutes(app: FastifyInstance) {
       trend,
       range,
       daily: series,
-      period: { views: sum('views'), clicks: sum('clicks'), saves: sum('saves'), sold: sum('sold'), viewsBefore: before.views },
+      period: { views: sum('views'), clicks: sum('clicks'), saves: sum('saves'), viewsBefore: before.views },
       boost: boost ? { status: boost.status, requestedAt: boost.created_at } : null,
       // Presses of "Đặt xe" (Grab, Green SM) on the event page: people on their way.
       rideClicks: metrics.rides as number,
       sources: sources.map((s) => ({ key: s.key, pct: Math.round((s.n / Math.max(totalSources, 1)) * 100) })),
-      tiers: tiers.map((t) => ({ name: t.name, sold: t.sold, capacity: t.capacity, pct: pct(t.sold, t.capacity), soldOut: t.sold >= t.capacity })),
       vsPrevious,
     };
   });

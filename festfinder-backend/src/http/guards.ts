@@ -67,15 +67,3 @@ export async function requireOwnEvent(ctx: Ctx, org: OrgAccess, eventId: string)
   return ev;
 }
 
-/** Door endpoints accept the organiser team or a scanner invited to that event. */
-export async function requireDoorAccess(ctx: Ctx, req: FastifyRequest, eventId: string): Promise<{ staffId: string | null; lead: boolean; gate: string | null }> {
-  const s = req.session;
-  if (!s) throw unauthorized();
-  if (s.kind === 'staff' && s.staff) {
-    if (s.staff.eventId !== eventId) throw forbidden('wrong_event', L('This scanner is set up for a different event', 'Máy soát vé này thuộc sự kiện khác'));
-    return { staffId: s.staff.id, lead: s.staff.role === 'lead', gate: s.staff.gate };
-  }
-  const org = await requireOrganizer(ctx, req);
-  await requireOwnEvent(ctx, org, eventId);
-  return { staffId: null, lead: true, gate: null };
-}

@@ -82,43 +82,9 @@ describe('background jobs', () => {
     assert.ok(fallback.sent.some((m) => m.address === 'native-device-token-2'));
   });
 
-  it('expires unpaid holds and closes old appeals', async () => {
-    env.clock.set('2026-09-14T10:00:00+07:00');
-    const { ctx } = env;
-    const token = await env.attendee();
-    const detail = await env.as(token).get('/events/momang');
-    const ga = detail.body.tickets.tiers[0];
-    ctx.config.paymentProvider = 'vietqr';
-    const order = await env.as(token).post('/orders', { eventId: env.ids.event.momang, tierId: ga.id, qty: 1, paymentMethod: 'vietqr' });
-    ctx.config.paymentProvider = 'mock';
-    assert.equal(order.body.payment.status, 'awaiting_transfer');
-    assert.match(order.body.payment.qrPayload, /^000201010212/);
-    env.clock.advance(16 * 60_000);
-    assert.equal(await jobs.expireOrders(ctx), 1);
+  it('closes old appeals', async () => {
     env.clock.set('2026-09-30T00:00:00+07:00');
-    assert.ok(await jobs.expireAppeals(ctx) >= 1);
-  });
-
-  it('confirms a bank transfer from a signed webhook', async () => {
-    env.clock.set('2026-09-14T11:00:00+07:00');
-    const token = await env.attendee();
-    const detail = await env.as(token).get('/events/momang');
-    env.ctx.config.paymentProvider = 'vietqr';
-    const order = await env.as(token).post('/orders', { eventId: env.ids.event.momang, tierId: detail.body.tickets.tiers[0].id, qty: 1, paymentMethod: 'vietqr' });
-    env.ctx.config.paymentProvider = 'mock';
-    const body = JSON.stringify({ transactionId: 'VCB123', amount: order.body.payment.amount, description: `CK ${order.body.payment.reference} thanh toan` });
-    const { hmac } = await import('../src/lib/crypto.ts');
-    const unsigned = await env.app.inject({ method: 'POST', url: '/payments/bank-transfer/webhook', payload: body, headers: { 'content-type': 'application/json', 'x-signature': 'nope' } });
-    assert.equal(unsigned.statusCode, 401);
-    const signed = await env.app.inject({ method: 'POST', url: '/payments/bank-transfer/webhook', payload: body,
-      headers: { 'content-type': 'application/json', 'x-signature': hmac(env.ctx.config.paymentWebhookSecret, body) } });
-    assert.equal(signed.statusCode, 200);
-    const paid = await env.as(token).get(`/orders/${order.body.order.id}`);
-    assert.equal(paid.body.status, 'paid');
-    assert.equal(paid.body.tickets.length, 1);
-    const replay = await env.app.inject({ method: 'POST', url: '/payments/bank-transfer/webhook', payload: body,
-      headers: { 'content-type': 'application/json', 'x-signature': hmac(env.ctx.config.paymentWebhookSecret, body) } });
-    assert.equal(replay.json().alreadyPaid, true);
+    assert.ok(await jobs.expireAppeals(env.ctx) >= 1);
   });
 
   it('reminds people a day before a saved event and 15 minutes before a picked set', async () => {
@@ -136,13 +102,6 @@ describe('background jobs', () => {
     await jobs.reminders(env.ctx);
     const set = await many<any>(env.ctx.db, `select title from notifications where user_id = $1 and kind = 'set_reminder'`, [user.id]);
     assert.deepEqual(set.map((s) => s.title.en), ['DJ Mie at 18:00']);
-  });
-
-  it('tells the organiser when a tier passes 90% sold, once', async () => {
-    env.clock.set('2026-09-14T12:00:00+07:00');
-    const first = await jobs.lowTicketAlerts(env.ctx);
-    assert.ok(first >= 1);
-    assert.equal(await jobs.lowTicketAlerts(env.ctx), 0);
   });
 
   it('lets only one instance run a job at a time', async () => {

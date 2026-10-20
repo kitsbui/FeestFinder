@@ -490,19 +490,6 @@ export interface Rows {
     published_at: Date | null;
     added_by: string | null;
   };
-  event_staff: {
-    id: string;
-    event_id: string;
-    name: string;
-    phone: string;
-    gate: string;
-    role: string;
-    active: boolean;
-    invited_at: Date;
-    accepted_at: Date | null;
-    scan_count: number;
-    last_seen_at: Date | null;
-  };
   event_updates: {
     id: string;
     event_id: string;
@@ -700,16 +687,6 @@ export interface Rows {
     meet_spot: string | null;
     created_at: Date;
   };
-  guest_list: {
-    id: string;
-    event_id: string;
-    name: string;
-    note: unknown;
-    seats: number;
-    checked_in: boolean;
-    checked_in_at: Date | null;
-    created_at: Date;
-  };
   hype_goals: {
     id: string;
     event_id: string;
@@ -861,27 +838,6 @@ export interface Rows {
     redirect_uri: string;
     expires_at: Date;
   };
-  orders: {
-    id: string;
-    code: string;
-    user_id: string;
-    event_id: string;
-    tier_id: string;
-    qty: number;
-    unit_price: number;
-    subtotal: number;
-    discount: number;
-    fee: number;
-    total: number;
-    promo_code_id: string | null;
-    status: string;
-    payment_method: string;
-    provider_ref: string | null;
-    created_at: Date;
-    expires_at: Date;
-    paid_at: Date | null;
-    refunded_at: Date | null;
-  };
   organizer_claims: {
     id: string;
     organizer_id: string;
@@ -1029,15 +985,6 @@ export interface Rows {
     recipient_ids: string[];
     created_at: Date;
   };
-  payout_transfers: {
-    id: string;
-    event_id: string;
-    kind: string;
-    amount: number;
-    gross_basis: number;
-    reference: string;
-    paid_at: Date;
-  };
   plan_picks: {
     user_id: string;
     set_id: string;
@@ -1100,17 +1047,6 @@ export interface Rows {
     created_at: Date;
     updated_at: Date;
   };
-  promo_codes: {
-    id: string;
-    event_id: string;
-    code: string;
-    pct: number;
-    cap: number;
-    used: number;
-    note: unknown;
-    active: boolean;
-    created_at: Date;
-  };
   provider_tokens: {
     provider: string;
     access_token: string;
@@ -1156,52 +1092,10 @@ export interface Rows {
     checked_at: Date;
     created_at: Date;
   };
-  resale_orders: {
-    id: string;
-    code: string;
-    listing_id: string;
-    ticket_id: string;
-    event_id: string;
-    buyer_id: string;
-    seller_id: string;
-    price: number;
-    fee: number;
-    total: number;
-    status: string;
-    payment_method: string;
-    provider_ref: string | null;
-    created_at: Date;
-    expires_at: Date;
-    paid_at: Date | null;
-    payout_due_at: Date | null;
-    paid_out_at: Date | null;
-    payout_ref: string | null;
-  };
-  resale_watchers: {
-    user_id: string;
-    event_id: string;
-    created_at: Date;
-    notified_at: Date | null;
-  };
   saves: {
     user_id: string;
     event_id: string;
     created_at: Date;
-  };
-  scans: {
-    id: string;
-    event_id: string;
-    ticket_id: string | null;
-    code: string;
-    staff_id: string | null;
-    gate: string | null;
-    device_id: string;
-    client_scan_id: string;
-    result: string;
-    reason: string | null;
-    scanned_at: Date;
-    received_at: Date;
-    was_offline: boolean;
   };
   sessions: {
     token_hash: string;
@@ -1287,17 +1181,6 @@ export interface Rows {
     data: Buffer;
     created_at: Date;
   };
-  ticket_listings: {
-    id: string;
-    ticket_id: string;
-    event_id: string;
-    seller_id: string;
-    price: number;
-    face_value: number;
-    status: string;
-    created_at: Date;
-    closed_at: Date | null;
-  };
   ticket_partners: {
     id: string;
     slug: string;
@@ -1311,60 +1194,6 @@ export interface Rows {
     notes: string;
     created_at: Date;
     updated_at: Date;
-  };
-  ticket_tiers: {
-    id: string;
-    event_id: string;
-    key: string;
-    name: unknown;
-    note: unknown;
-    price: number;
-    capacity: number;
-    sold: number;
-    is_last: boolean;
-    sales_open_at: Date | null;
-    price_rise_on: string | null;
-    price_rise_to: number | null;
-    sort: number;
-  };
-  ticket_transfers: {
-    id: string;
-    ticket_id: string;
-    event_id: string;
-    from_user: string | null;
-    to_user: string | null;
-    kind: string;
-    resale_order_id: string | null;
-    from_version: number;
-    to_version: number;
-    created_at: Date;
-  };
-  tickets: {
-    id: string;
-    order_id: string | null;
-    event_id: string;
-    tier_id: string | null;
-    user_id: string | null;
-    code: string;
-    holder_name: string;
-    holder_phone: string | null;
-    kind: string;
-    status: string;
-    checked_in_at: Date | null;
-    checked_in_gate: string | null;
-    checked_in_by: string | null;
-    wallet_apple_at: Date | null;
-    wallet_google_at: Date | null;
-    resent_at: Date | null;
-    created_at: Date;
-    qr_version: number;
-    change_seq: number;
-  };
-  tier_watchers: {
-    user_id: string;
-    tier_id: string;
-    created_at: Date;
-    notified_at: Date | null;
   };
   uploads: {
     id: string;

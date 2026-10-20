@@ -6,7 +6,7 @@ import { hostOf } from './ingest/normalize.ts';
 /*
  * Ticket partners: where a ticket button sends people, and what FeestFinder earns from it.
  * Every press goes through /go/<event>, which counts it, picks the way out (FeestFinder's own
- * checkout, a partner's tracked link, or the organiser's link as it is) and redirects. A
+ * partner's tracked link, or the organiser's link as it is; FeestFinder sells no tickets) and redirects. A
  * partner reports each sale back with the click's id, so a sale is tied to the event it came
  * from.
  */

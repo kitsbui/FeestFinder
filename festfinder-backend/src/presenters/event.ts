@@ -2,7 +2,7 @@ import type { Queryable } from '../db/index.ts';
 import { many } from '../db/index.ts';
 import { initialsOf } from '../lib/contact.ts';
 import { haversineKm, round1 } from '../lib/geo.ts';
-import { BADGES, L, TIER_NAMES, type Localized } from '../lib/i18n.ts';
+import { BADGES, L, type Localized } from '../lib/i18n.ts';
 import { cityOf } from '../lib/places.ts';
 import { brandOf, CONFIDENCE_LABEL, freshness, type ConfidenceLabel } from '../services/ingest/confidence.ts';
 import { PROVIDER_LABEL } from '../services/ingest/providers.ts';
@@ -177,53 +177,3 @@ export function presentConfidence(r: any, now: Date) {
   };
 }
 
-export type TierState = 'onsale' | 'last' | 'soldout' | 'soon';
-
-export const TIER_NOTES: Record<string, Localized> = {
-  early: L('First 500 tickets, gone in 40 hours', '500 vé đầu tiên, hết sau 40 giờ'),
-  ga: L('Standing, re-entry until 22:00', 'Vé đứng, ra vào lại tới 22:00'),
-  vip: L('Raised deck, separate bar and entrance', 'Khu cao, quầy bar và cổng riêng'),
-  table: L('Opens when VIP sells out', 'Mở bán khi VIP hết vé'),
-};
-
-export const REFUND_POLICY = L(
-  'Refunds up to 7 days before the event, minus the payment fee. After that the organiser decides case by case.',
-  'Hoàn tiền tới trước sự kiện 7 ngày, trừ phí thanh toán. Sau thời điểm đó nhà tổ chức xét từng trường hợp.');
-
-export function tierState(t: { capacity: number; sold: number; is_last: boolean; sales_open_at: Date | null }, now: Date): TierState {
-  if (t.sold >= t.capacity) return 'soldout';
-  if (t.sales_open_at && new Date(t.sales_open_at).getTime() > now.getTime()) return 'soon';
-  return t.is_last ? 'last' : 'onsale';
-}
-
-function riseLine(t: any): Localized | null {
-  if (!t.price_rise_on || !t.price_rise_to) return null;
-  const [, m, d] = String(t.price_rise_on).split('-').map(Number);
-  const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1];
-  return L(
-    `Price rises to ${t.price_rise_to.toLocaleString('en-US')}₫ on ${d} ${mon}`,
-    `Giá lên ${t.price_rise_to.toLocaleString('vi-VN')}₫ từ ${d}/${m}`);
-}
-
-export function presentTiers(rows: any[], now: Date) {
-  const tiers = rows.map((t) => {
-    const state = tierState(t, now);
-    const rise = riseLine(t);
-    return {
-      id: t.id as string,
-      key: t.key as string,
-      name: (t.name ?? TIER_NAMES[t.key]) as Localized,
-      note: (rise ?? t.note ?? TIER_NOTES[t.key] ?? null) as Localized | null,
-      price: t.price as number,
-      state,
-      left: state === 'soldout' ? 0 : t.capacity - t.sold,
-      priceRise: t.price_rise_on ? { on: t.price_rise_on as string, to: t.price_rise_to as number } : null,
-    };
-  });
-  const urgent = tiers.find((t) => t.state === 'last');
-  return {
-    tiers,
-    urgency: urgent ? (urgent.priceRise ? urgent.note : L(`${urgent.left} left`, `Còn ${urgent.left}`)) : null,
-    refundPolicy: REFUND_POLICY,
-  };
-}

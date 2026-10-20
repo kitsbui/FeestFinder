@@ -11,5 +11,3 @@ export function formatMoney(amount: number, currency = 'VND', lang: Lang = 'vi')
   return new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 }
 
-/** FeestFinder sells tickets itself only in đồng; elsewhere an event links to its ticket seller. */
-export const CHECKOUT_CURRENCY = 'VND';

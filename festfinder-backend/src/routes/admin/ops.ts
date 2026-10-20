@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
-import { BADGES, GENRES, L, REJECT_REASONS, REPORT_CATEGORY, REPORT_CODES, TIER_NAMES, type Localized } from '../../lib/i18n.ts';
+import { BADGES, GENRES, L, REJECT_REASONS, REPORT_CATEGORY, REPORT_CODES, type Localized } from '../../lib/i18n.ts';
 import { formatVnPhone, searchNormalize, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { toCsv } from '../../lib/csv.ts';
@@ -19,10 +19,10 @@ import { assessRisk, riskBand } from '../../services/risk.ts';
 import { approveListing } from './moderation.ts';
 import { moderationThread } from '../organizer/inbox.ts';
 import {
-  applyDraft, DraftInput, duplicateEvent, missingForSubmit, presentDraft, replaceTiers, STATUS_LABEL, TiersInput,
+  applyDraft, DraftInput, duplicateEvent, missingForSubmit, presentDraft, STATUS_LABEL,
 } from '../organizer/events.ts';
 
-import { STATUSES, GENRE_LABEL, ORG_TYPES, AREA_GROUPS, ENTRY_MODES, AGES, ORDER_STATUS, PAY_METHOD, SIGNUP, ARTS, minutesSince, actorOf, diffRows, missingForPublish, publishByTeam } from './ops-shared.ts';
+import { STATUSES, GENRE_LABEL, ORG_TYPES, AREA_GROUPS, ENTRY_MODES, AGES, SIGNUP, ARTS, minutesSince, actorOf, diffRows, missingForPublish, publishByTeam } from './ops-shared.ts';
 /*
  * The team's operations (the Console's catalogue screens; once /ops): what the FeestFinder team needs beyond moderation — the whole catalogue with filters, listings created or fixed by the team, venues,
  * organiser onboarding, accounts and orders — plus the option lists every form draws from,
@@ -52,12 +52,9 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       organizerTypes: Object.entries(ORG_TYPES).map(([value, label]) => ({ value, label })),
       statuses: STATUSES.map((value) => ({ value, label: STATUS_LABEL[value] })),
       badges: Object.entries(BADGES).map(([value, label]) => ({ value, label })),
-      tierPresets: Object.entries(TIER_NAMES).map(([key, name]) => ({ key, name })),
       banks: Object.entries(BANKS).map(([bin, name]) => ({ bin, name })),
       rejectReasons: Object.entries(REJECT_REASONS).map(([code, r]) => ({ code, label: r.label, appeal: r.appeal })),
       reportCategories: [...new Set(Object.values(REPORT_CATEGORY))].map((value) => ({ value, codes: Object.entries(REPORT_CATEGORY).filter(([, c]) => c === value).map(([k]) => ({ code: k, label: REPORT_CODES[k] })) })),
-      orderStatuses: Object.entries(ORDER_STATUS).map(([value, label]) => ({ value, label })),
-      paymentMethods: Object.entries(PAY_METHOD).map(([value, label]) => ({ value, label })),
       signupMethods: Object.entries(SIGNUP).map(([value, label]) => ({ value, label })),
     };
   });
@@ -69,7 +66,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const today = vnDate(now);
     const dayStart = atVn(today);
-    const [queue, counts, decided, orders, upcoming, activity] = await Promise.all([
+    const [queue, counts, decided, clicks, upcoming, activity] = await Promise.all([
       many<any>(ctx.db, `select coalesce(needs_review_at, submitted_at) as submitted_at, flag, risk_score from events where status = 'in_review' or (status = 'live' and needs_review_at is not null)`),
       one<any>(ctx.db,
         `select (select count(distinct event_id)::int from listing_reports where resolved_at is null) as reports,
@@ -86,10 +83,10 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
                 (select count(*)::int from ad_inquiries where status = 'new') as ads`,
         [now, today, addDays(today, 7), new Date(now.getTime() - 7 * 86400_000), new Date(now.getTime() - 30 * 86400_000)]),
       many<any>(ctx.db, `select decision, count(*)::int as n from moderation_decisions where decided_at >= $1 group by decision`, [dayStart]),
-      one<any>(ctx.db, `select count(*)::int as n, coalesce(sum(total), 0)::bigint as gross from orders where status = 'paid' and paid_at >= $1`, [dayStart]),
+      one<any>(ctx.db, `select count(*)::int as n from outbound_clicks where created_at >= $1`, [dayStart]),
       many<any>(ctx.db,
         `select e.id, e.title, e.starts_on, e.start_time, e.venue_name, e.capacity, e.art, e.cover_url, o.name as org_name,
-                (select count(*)::int from tickets t where t.event_id = e.id and t.status in ('valid','used')) as sold
+                (select count(*)::int from outbound_clicks c where c.event_id = e.id) as clicks
            from events e join organizers o on o.id = e.organizer_id
           where e.status = 'live' and coalesce(e.ends_on, e.starts_on) >= $1 order by e.starts_on, e.start_time limit 6`, [today]),
       many<any>(ctx.db, `select seq, at, actor_type, actor_label, action, target_type, target_id, target_label from audit_log order by seq desc limit 8`),
@@ -106,9 +103,9 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       reports: counts.reports, appeals: counts.appeals, verification: counts.verification, flaggedOrganizers: counts.flagged_orgs,
       unresolvedVenues: counts.unresolved_venues, adInquiries: counts.ads,
       catalog: { live: counts.live, next7Days: counts.next7, drafts: counts.drafts },
-      today: { approved: (byDecision.approved ?? 0) + (byDecision.overturned ?? 0), rejected: byDecision.rejected ?? 0, takenDown: byDecision.taken_down ?? 0, orders: orders.n, gross: Number(orders.gross) },
+      today: { approved: (byDecision.approved ?? 0) + (byDecision.overturned ?? 0), rejected: byDecision.rejected ?? 0, takenDown: byDecision.taken_down ?? 0, ticketClicks: clicks.n },
       growth: { newUsers7Days: counts.new_users, newOrganizers30Days: counts.new_orgs },
-      upcoming: upcoming.map((e) => ({ id: e.id, title: e.title, startsOn: e.starts_on, startTime: e.start_time, venueName: e.venue_name, organizer: e.org_name, sold: e.sold, capacity: e.capacity, art: e.art, coverUrl: e.cover_url })),
+      upcoming: upcoming.map((e) => ({ id: e.id, title: e.title, startsOn: e.starts_on, startTime: e.start_time, venueName: e.venue_name, organizer: e.org_name, clicks: e.clicks, capacity: e.capacity, art: e.art, coverUrl: e.cover_url })),
       activity: activity.map((a) => ({
         seq: Number(a.seq), at: a.at, actorType: a.actor_type, actor: a.actor_label, action: a.action,
         label: { en: actionLabel(a.action, null, 'en'), vi: actionLabel(a.action, null, 'vi') },
@@ -132,7 +129,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     featured: bool.optional(),
     reported: bool.optional(),
     unresolved: bool.optional(),
-    sort: z.enum(['date', 'date_desc', 'updated', 'hype', 'saves', 'sold', 'quality', 'title']).default('date'),
+    sort: z.enum(['date', 'date_desc', 'updated', 'hype', 'saves', 'clicks', 'quality', 'title']).default('date'),
     limit: limit(200, 25),
     offset: z.coerce.number().int().min(0).max(100_000).default(0),
   });
@@ -175,14 +172,14 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     updated: 'e.updated_at desc',
     hype: 'e.hype_count desc, e.starts_on',
     saves: 'e.save_count desc, e.starts_on',
-    sold: 'sold desc, e.starts_on',
+    clicks: 'clicks desc, e.starts_on',
     quality: 'e.quality_score desc nulls last, e.starts_on',
     title: 'e.title',
   };
 
   const EVENT_LIST_SQL = `
     select e.*, o.name as org_name, o.initials as org_initials, o.verification_state as org_state,
-           (select count(*)::int from tickets t where t.event_id = e.id and t.status in ('valid','used')) as sold,
+           (select count(*)::int from outbound_clicks c where c.event_id = e.id) as clicks,
            (select count(*)::int from listing_reports r where r.event_id = e.id and r.resolved_at is null) as open_reports
       from events e join organizers o on o.id = e.organizer_id`;
 
@@ -193,7 +190,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     startsOn: e.starts_on, endsOn: e.ends_on, startTime: e.start_time, endTime: e.end_time,
     entryMode: e.entry_mode, priceFrom: Number(e.price_from), currency: e.currency, capacity: e.capacity, age: e.age,
     organizer: { id: e.organizer_id, name: e.org_name, initials: e.org_initials, verified: e.org_state === 'verified' },
-    featured: e.featured, badge: e.badge, hype: e.hype_count, saves: e.save_count, sold: e.sold, openReports: e.open_reports,
+    featured: e.featured, badge: e.badge, hype: e.hype_count, saves: e.save_count, clicks: e.clicks, openReports: e.open_reports,
     heldForReports: e.held_for_reports, qualityScore: e.quality_score, riskScore: e.risk_score,
     submittedAt: e.submitted_at, publishedAt: e.published_at, updatedAt: e.updated_at, createdAt: e.created_at,
   });
@@ -230,24 +227,20 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     return reply.type('text/csv; charset=utf-8').header('content-disposition', `attachment; filename="events-${today}.csv"`).send(out);
   });
 
-  /** Everything the team sees about one listing: the draft, its organiser, tiers, reviews, reports and trail. */
+  /** Everything the team sees about one listing: the draft, its organiser, reviews, reports and trail. */
   async function eventDetail(id: string) {
     const now = ctx.clock.now();
     const ev = await one<any>(ctx.db, 'select * from events where id = $1', [id]);
     if (!ev) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
-    const [org, tiers, stages, decisions, appeal, reports, metrics, sales, thread, history, shelves] = await Promise.all([
+    const [org, stages, decisions, appeal, reports, metrics, thread, history, shelves] = await Promise.all([
       one<any>(ctx.db, `select o.*, u.name as submitter_name, u.phone as submitter_phone,
                                (select count(*)::int from events x where x.submitted_by = u.id and x.published_at is not null) as submitter_published
                           from organizers o left join users u on u.id = $2 where o.id = $1`, [ev.organizer_id, ev.submitted_by]),
-      many<any>(ctx.db, 'select * from ticket_tiers where event_id = $1 order by sort, price', [id]),
       many<any>(ctx.db, `select s.id, s.name, (select count(*)::int from sets x where x.stage_id = s.id) as sets from stages s where s.event_id = $1 order by s.sort`, [id]),
       many<any>(ctx.db, `select d.*, u.name as by_name from moderation_decisions d left join users u on u.id = d.decided_by where d.event_id = $1 order by d.decided_at desc`, [id]),
       one<any>(ctx.db, 'select * from appeals where event_id = $1 order by created_at desc limit 1', [id]),
       many<any>(ctx.db, `select code, count(*)::int as n, max(note) as note from listing_reports where event_id = $1 and resolved_at is null group by code`, [id]),
       one<any>(ctx.db, `select coalesce(sum(views), 0)::int as views, coalesce(sum(ticket_clicks), 0)::int as clicks from event_metrics_daily where event_id = $1`, [id]),
-      one<any>(ctx.db, `select count(*) filter (where status = 'paid')::int as orders, coalesce(sum(qty) filter (where status = 'paid'), 0)::int as tickets,
-                               coalesce(sum(total) filter (where status = 'paid'), 0)::bigint as gross, count(*) filter (where status = 'refunded')::int as refunded
-                          from orders where event_id = $1`, [id]),
       one<any>(ctx.db, `select t.id, (select count(*)::int from inbox_messages m where m.thread_id = t.id) as messages from inbox_threads t where t.event_id = $1 and t.topic = 'moderation' order by t.created_at desc limit 1`, [id]),
       many<any>(ctx.db, `select seq, at, actor_type, actor_label, action, diff from audit_log where target_id = $1 order by seq desc limit 30`, [id]),
       many<any>(ctx.db, `select s.id, s.name, s.enabled from shelf_items i join shelves s on s.id = i.shelf_id where i.event_id = $1`, [id]),
@@ -269,7 +262,6 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       // Sent in by someone in the community: who, and how many of theirs went live before.
       submittedBy: ev.submitted_by ? { id: ev.submitted_by, name: org?.submitter_name || null, phone: org?.submitter_phone ? formatVnPhone(org.submitter_phone) : null, published: org?.submitter_published ?? 0 } : null,
       sourceUrl: ev.submitted_by ? ev.event_url : null,
-      tiers: tiers.map((t) => ({ id: t.id, key: t.key, name: t.name, note: t.note, price: Number(t.price), capacity: t.capacity, sold: t.sold, isLast: t.is_last, salesOpenAt: t.sales_open_at, priceRiseOn: t.price_rise_on, priceRiseTo: t.price_rise_to ? Number(t.price_rise_to) : null })),
       stages: stages.map((st) => ({ id: st.id, name: st.name, sets: st.sets })),
       decisions: decisions.map((d) => ({
         id: d.id, decision: d.decision, reasonCode: d.reason_code, reason: d.reason_code ? REJECT_REASONS[d.reason_code]?.label ?? null : null,
@@ -277,7 +269,7 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
       })),
       appeal: appeal && { id: appeal.id, state: appeal.state, reply: appeal.reply, closesAt: appeal.closes_at, reasonCode: appeal.reason_code },
       reports: reports.map((r) => ({ code: r.code, label: REPORT_CODES[r.code] ?? null, category: REPORT_CATEGORY[r.code] ?? null, count: r.n, note: r.note })),
-      metrics: { views: metrics.views, clicks: metrics.clicks, saves: ev.save_count, hype: ev.hype_count, orders: sales.orders, tickets: sales.tickets, gross: Number(sales.gross), refunded: sales.refunded },
+      metrics: { views: metrics.views, clicks: metrics.clicks, saves: ev.save_count, hype: ev.hype_count },
       thread: thread ? { id: thread.id, messages: thread.messages } : null,
       history: history.map((a) => ({ seq: Number(a.seq), at: a.at, actorType: a.actor_type, actor: a.actor_label, action: a.action, label: { en: actionLabel(a.action, a.diff, 'en'), vi: actionLabel(a.action, a.diff, 'vi') }, diff: (a.diff ?? []).map((d: any) => ({ field: d.f, before: d.a, after: d.b })) })),
       shelves: shelves.map((sh) => ({ id: sh.id, name: sh.name, enabled: sh.enabled })),
@@ -349,22 +341,6 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
     return { ...(await eventDetail(id)), message: changed ? L('Changes saved', 'Đã lưu thay đổi') : L('Nothing changed', 'Không có thay đổi') };
   });
 
-  app.put<{ Params: { id: string } }>('/admin/events/:id/tiers', async (req) => {
-    const s = requireAdmin(req);
-    const id = parse(uuid, req.params.id);
-    const { tiers } = parse(TiersInput, req.body);
-    const now = ctx.clock.now();
-    await ctx.db.tx(async (q) => {
-      const ev = await one<any>(q, 'select id, title from events where id = $1', [id]);
-      if (!ev) throw notFound();
-      const before = await many<any>(q, 'select key from ticket_tiers where event_id = $1', [id]);
-      await replaceTiers(q, id, tiers);
-      await appendAudit(q, { at: now, ...actorOf(s), action: 'listing.tiers_changed', targetType: 'event', targetId: id, targetLabel: ev.title,
-        diff: [{ f: 'tiers', a: before.map((t) => t.key).join(', ') || '—', b: tiers.map((t) => t.key).join(', ') }] });
-    });
-    return eventDetail(id);
-  });
-
   app.post<{ Params: { id: string } }>('/admin/events/:id/duplicate', async (req, reply) => {
     const s = requireAdmin(req);
     const ev = await one<any>(ctx.db, 'select * from events where id = $1', [parse(uuid, req.params.id)]);
@@ -418,14 +394,11 @@ export default async function adminOpsRoutes(app: FastifyInstance) {
         return L(`Taken down · ${ev.title}`, `Đã hạ · ${ev.title}`);
       }
       if (body.action === 'cancel') {
-        const sold = await one<any>(q, `select count(*)::int as n from orders where event_id = $1 and status = 'paid'`, [id]);
         await q.query(`update events set status = 'cancelled', decided_at = $2 where id = $1`, [id, now]);
         await appendAudit(q, { at: now, ...actorOf(s), action: 'listing.cancelled', targetType: 'event', targetId: id, targetLabel: ev.title,
-          diff: [{ f: 'status', a: ev.status, b: 'cancelled' }, { f: 'paid_orders', a: String(sold.n), b: String(sold.n) }] });
+          diff: [{ f: 'status', a: ev.status, b: 'cancelled' }] });
         await tell(L('Event marked cancelled', 'Sự kiện được đánh dấu huỷ'), L(`${ev.title} now shows as cancelled.`, `${ev.title} đang hiển thị là đã huỷ.`));
-        return sold.n
-          ? L(`Marked cancelled · ${sold.n} paid orders still need refunds`, `Đã đánh dấu huỷ · còn ${sold.n} đơn đã thanh toán cần hoàn tiền`)
-          : L('Marked cancelled', 'Đã đánh dấu huỷ');
+        return L('Marked cancelled', 'Đã đánh dấu huỷ');
       }
       await q.query(`update events set status = 'live', genre = coalesce(genre, 'EDM'), decided_at = $2, published_at = coalesce(published_at, $2) where id = $1`, [id, now]);
       await appendAudit(q, { at: now, ...actorOf(s), action: 'listing.restored', targetType: 'event', targetId: id, targetLabel: ev.title, diff: [{ f: 'status', a: ev.status, b: 'live' }] });

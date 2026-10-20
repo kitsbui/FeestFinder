@@ -86,16 +86,6 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     });
   });
 
-  /** "Notify me" on a tier that is not on sale yet. */
-  app.put<{ Params: { id: string; tierId: string } }>('/events/:id/tiers/:tierId/watch', async (req) => {
-    const s = requireUser(req);
-    const ev = await liveEvent(req.params.id);
-    const tier = await one(ctx.db, 'select 1 from ticket_tiers where id = $1 and event_id = $2', [parse(uuid, req.params.tierId), ev.id]);
-    if (!tier) throw notFound();
-    await ctx.db.query('insert into tier_watchers (user_id, tier_id) values ($1,$2) on conflict do nothing', [s.user.id, req.params.tierId]);
-    return { watching: true, message: L('We will tell you when this tier opens', 'Chúng tôi sẽ báo khi loại vé này mở bán') };
-  });
-
   /** "Remind me 24h before": saving the event is what drives that reminder. */
   app.post<{ Params: { id: string } }>('/events/:id/remind', async (req) => {
     const s = requireUser(req);
@@ -135,8 +125,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     const s = requireUser(req);
     const ev = await liveEvent(req.params.id);
     const now = ctx.clock.now();
-    const [ticket, presence, setsSeen, friends, next, existing] = await Promise.all([
-      one<any>(ctx.db, 'select checked_in_at from tickets where user_id = $1 and event_id = $2 and checked_in_at is not null order by checked_in_at limit 1', [s.user.id, ev.id]),
+    const [presence, setsSeen, friends, next, existing] = await Promise.all([
       one<any>(ctx.db, 'select updated_at from presence where user_id = $1 and event_id = $2', [s.user.id, ev.id]),
       one<any>(ctx.db, 'select count(*)::int as n from plan_picks p join sets st on st.id = p.set_id where p.user_id = $1 and st.event_id = $2 and st.starts_at <= $3', [s.user.id, ev.id, now]),
       one<any>(ctx.db, 'select count(*)::int as n from friendships f join going g on g.user_id = f.friend_id join users u on u.id = f.friend_id where f.user_id = $1 and g.event_id = $2 and u.share_nights', [s.user.id, ev.id]),
@@ -149,7 +138,7 @@ export default async function eventActionRoutes(app: FastifyInstance) {
       event: { id: ev.id, slug: ev.slug, title: ev.title, art: ev.art, startsOn: ev.starts_on },
       aspects: ['sound', 'crowd', 'value', 'org', 'queue', 'food'],
       stats: {
-        checkedInAt: ticket?.checked_in_at ?? presence?.updated_at ?? null,
+        checkedInAt: presence?.updated_at ?? null,
         setsSeen: setsSeen.n,
         friendsThere: friends.n,
       },
@@ -172,7 +161,6 @@ export default async function eventActionRoutes(app: FastifyInstance) {
     if (new Date(ev.starts_at) > ctx.clock.now()) throw badRequest('not_started', L('You can rate it once it has started', 'Bạn đánh giá được khi sự kiện đã bắt đầu'));
     const attended = await one(ctx.db,
       `select 1 where exists (select 1 from going where user_id = $1 and event_id = $2)
-          or exists (select 1 from tickets where user_id = $1 and event_id = $2)
           or exists (select 1 from presence where user_id = $1 and event_id = $2)`, [s.user.id, ev.id]);
     if (!attended) throw badRequest('not_attended', L('Only people who went can rate this event', 'Chỉ người đã tham dự mới đánh giá được'));
     await ctx.db.query(

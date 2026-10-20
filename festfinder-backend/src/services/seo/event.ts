@@ -5,7 +5,6 @@ import type { Lang } from '../../lib/i18n.ts';
 import { formatMoney } from '../../lib/money.ts';
 import { cityOf } from '../../lib/places.ts';
 import { isoIn, timeIn } from '../../lib/time.ts';
-import { presentTiers } from '../../presenters/event.ts';
 import { loadTimetable } from '../../presenters/timetable.ts';
 import { faqFor } from '../../routes/discussion.ts';
 import { latestUpdates } from '../../routes/night.ts';
@@ -26,9 +25,8 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const now = ctx.clock.now();
   const relatedSql = `select e.slug, e.title, e.genre, e.starts_on, e.ends_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.entry_mode, e.price_from, e.currency
       from events e where e.status = 'live' and not e.held_for_reports and e.published_at is not null`;
-  const [org, tierRows, faq, updates, timetable, related, nextEdition, prevEdition] = await Promise.all([
+  const [org, faq, updates, timetable, related, nextEdition, prevEdition] = await Promise.all([
     one<Pick<Row<'organizers'>, 'slug' | 'name' | 'website' | 'links'>>(ctx.db, 'select slug, name, website, links from organizers where id = $1', [ev.organizer_id]),
-    many<Row<'ticket_tiers'>>(ctx.db, 'select * from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
     faqFor(ctx.db, ev.id, 10),
     latestUpdates(ctx.db, ev.id, 5),
     loadTimetable(ctx.db, ev),
@@ -41,8 +39,6 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     one<Related>(ctx.db, `${relatedSql} and e.previous_edition_id = $1 order by e.starts_at limit 1`, [ev.id]),
     ev.previous_edition_id ? one<Related>(ctx.db, `${relatedSql} and e.id = $1`, [ev.previous_edition_id]) : null,
   ]);
-  const tiers = ev.entry_mode === 'paid' && tierRows.length ? presentTiers(tierRows, now).tiers : [];
-
   const base = baseOf(ctx);
   const path = `/e/${ev.slug}`;
   const alternates = { vi: `${base}${path}`, en: `${base}${path}?lang=en`, 'x-default': `${base}${path}` };
@@ -54,10 +50,9 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   const zoned = (ts: Date | string | null | undefined) => (ts ? isoIn(new Date(ts), tz) : undefined);
   const cancelled = ev.status === 'cancelled';
   const past = !cancelled && ev.ends_at && new Date(ev.ends_at) < now;
-  const soldOut = !!ev.sold_out || (tiers.length > 0 && tiers.every((x) => x.state === 'soldout'));
-  const low = !soldOut && (ev.badge === 'low_tickets' || tiers.some((x) => x.state === 'last'));
-  const soon = !soldOut && tiers.length > 0 && tiers.every((x) => x.state === 'soon' || x.state === 'soldout');
-  const statusLabel = t(cancelled ? 'cancelled' : past ? 'past' : soldOut ? 'soldOut' : low ? 'low' : soon ? 'soon' : 'onSale', lang);
+  const soldOut = !!ev.sold_out;
+  const low = !soldOut && ev.badge === 'low_tickets';
+  const statusLabel = t(cancelled ? 'cancelled' : past ? 'past' : soldOut ? 'soldOut' : low ? 'low' : 'onSale', lang);
   const lineup = ((ev.lineup ?? []) as string[]).filter(Boolean);
   const about = text(ev.description, lang);
   const venueLine = [ev.venue_name, ev.area, cityName].filter(Boolean).join(', ');
@@ -78,7 +73,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
         ? `${ev.title} là sự kiện ${ev.genre ?? ''} ${past ? 'đã diễn ra' : 'diễn ra'} vào ${whenLine(ev, lang).replace(' · ', ', từ ')} tại ${[ev.venue_name, street, cityName].filter(Boolean).join(', ')}.`.replace(/\s+/g, ' ')
         : `${ev.title} is ${/^[aeiou]/i.test(ev.genre ?? '') ? 'an' : 'a'} ${ev.genre ?? ''} event ${past ? 'that took place' : 'taking place'} on ${whenLine(ev, lang).replace(' · ', ', ')} at ${[ev.venue_name, street, cityName].filter(Boolean).join(', ')}.`.replace(/\s+/g, ' '),
     ev.entry_mode === 'paid' && ev.price_from
-      ? (vi ? `Vé từ ${formatMoney(ev.price_from, ev.currency, lang)}${tiers.length > 1 ? ` (${tiers.length} hạng vé)` : ''}, ${statusLabel.toLowerCase()}.` : `Tickets from ${formatMoney(ev.price_from, ev.currency, lang)}${tiers.length > 1 ? ` (${tiers.length} tiers)` : ''}, ${statusLabel.toLowerCase()}.`)
+      ? (vi ? `Vé từ ${formatMoney(ev.price_from, ev.currency, lang)}, ${statusLabel.toLowerCase()}.` : `Tickets from ${formatMoney(ev.price_from, ev.currency, lang)}, ${statusLabel.toLowerCase()}.`)
       : ev.entry_mode === 'donation' ? (vi ? 'Vào cửa tuỳ tâm.' : 'Pay what you like.') : (vi ? 'Vào cửa miễn phí.' : 'Free entry.'),
     ev.age !== 'All ages' ? (vi ? `Dành cho khách ${ev.age}.` : `Ages ${ev.age}.`) : '',
     lineup.length ? `${vi ? 'Đội hình' : 'Lineup'}: ${lineup.slice(0, 8).join(', ')}${lineup.length > 8 ? '…' : ''}.` : '',
@@ -127,7 +122,6 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     ...(ev.event_url ? [{ label: t('site', lang), value: hostOf(ev.event_url), href: ev.event_url }] : []),
   ].filter((f) => f.value);
 
-  const tierState = (s: string) => t(s === 'soldout' ? 'soldOut' : s === 'last' ? 'low' : s === 'soon' ? 'soon' : 'onSale', lang);
   const line = (r: Related) => eventLine(r, lang);
 
   const page: EventSeo['page'] = {
@@ -143,7 +137,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
       sets: d.stages.flatMap((st) => st.sets.map((x) => ({ time: timeIn(new Date(x.startsAt), tz), artist: x.artist, stage: text(st.name, lang), at: new Date(x.startsAt).getTime() })))
         .sort((a, b) => a.at - b.at).map(({ time, artist, stage }) => ({ time, artist, stage })),
     })),
-    tickets: tiers.map((x) => ({ name: text(x.name, lang), price: formatMoney(x.price, ev.currency, lang), state: tierState(x.state) })),
+    tickets: ev.entry_mode === 'paid' && ev.price_from ? [{ name: t('tickets', lang), price: formatMoney(ev.price_from, ev.currency, lang), state: statusLabel }] : [],
     updates: updates.map((u) => ({ kind: text(u.kindLabel, lang), body: u.body, at: zoned(u.createdAt)!, atLabel: `${timeIn(new Date(u.createdAt), tz)} ${shortDay(zoned(u.createdAt)!.slice(0, 10), lang)}` })),
     faq: faq.map((f) => ({ question: f.question, answer: f.answer })),
     editions: [
@@ -155,17 +149,6 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
   };
 
   // ---- structured data ----
-  const offers = tiers.map((x) => ({
-    '@type': 'Offer',
-    name: text(x.name, 'vi'),
-    price: x.price,
-    priceCurrency: ev.currency,
-    availability: x.state === 'soldout' ? 'https://schema.org/SoldOut' : x.state === 'soon' ? 'https://schema.org/PreOrder'
-      : x.state === 'last' ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock',
-    url: ev.ticket_url || url,
-    validFrom: vnIso(ev.published_at),
-  }));
-  const prices = tiers.map((x) => x.price);
   const sponsors = await sponsorsOf(ctx.db, ev.id);
   const ids = { site: `${base}/#website`, page: url, event: `${url}#event`, crumbs: `${url}#breadcrumb`, faq: `${url}#faq` };
   const event = {
@@ -201,11 +184,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     performer: lineup.length ? lineup.slice(0, 30).map((name) => ({ '@type': 'PerformingGroup', name })) : undefined,
     // Sponsors who backed the project the night came from (services/projects.ts).
     sponsor: sponsors.length ? sponsors.map((x) => ({ '@type': 'Organization', name: x.name })) : undefined,
-    offers: offers.length > 1
-      ? { '@type': 'AggregateOffer', priceCurrency: ev.currency, lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: offers.length, offers, url: ev.ticket_url || url,
-          availability: soldOut ? 'https://schema.org/SoldOut' : low ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock' }
-      : offers.length ? offers[0]
-      : ev.entry_mode !== 'paid'
+    offers: ev.entry_mode !== 'paid'
         ? { '@type': 'Offer', price: 0, priceCurrency: ev.currency, availability: 'https://schema.org/InStock', url }
         : ev.price_from
           ? { '@type': 'Offer', price: ev.price_from, priceCurrency: ev.currency, availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url: ev.ticket_url || url }

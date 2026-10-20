@@ -16,7 +16,7 @@ describe('community event pages', () => {
   });
   after(async () => { await env.close(); });
 
-  it('puts the hype meter, discussion, FAQ, resale and ambassadors on the event', async () => {
+  it('puts the hype meter, discussion, FAQ and ambassadors on the event', async () => {
     const r = await env.as(minh).get('/events/ravo');
     assert.equal(r.body.phase, 'before');
     assert.equal(r.body.hype.count, 2140);
@@ -27,10 +27,10 @@ describe('community event pages', () => {
     assert.equal(r.body.discussion.qa, 3);
     assert.equal(r.body.faq.length, 2);
     assert.match(r.body.faq[0].answer, /Bãi xe B/);
-    assert.equal(r.body.resale.count, 1);
-    assert.equal(r.body.resale.fromPrice, 1_050_000);
+    assert.equal(r.body.resale, undefined, 'FeestFinder sells no tickets');
     assert.deepEqual(r.body.ambassadors.map((a: any) => [a.name, a.visits]), [['Trần', 37], ['Anh', 12]]);
-    assert.equal(r.body.mine.validTickets, 2);
+    assert.equal(r.body.mine.validTickets, undefined);
+    assert.equal(r.body.ticketNote.en, 'FeestFinder sells no tickets. Buy tickets takes you to the seller.');
     assert.equal(r.body.community, null);
   });
 
@@ -86,10 +86,10 @@ describe('community event pages', () => {
     const link = await env.as(minh).post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Xem https://example.com' });
     assert.equal(link.body.error.code, 'post_has_link');
     const deal = await env.as(minh).post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Mình cần pass vé GA tối nay' });
-    assert.equal(deal.body.error.code, 'use_resale');
+    assert.equal(deal.body.error.code, 'no_ticket_trading');
     const fine = await env.as(minh).post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Cửa mở lúc 16:00, mình về sớm nha' });
     assert.equal(fine.status, 201);
-    assert.deepEqual(fine.body.post.author.badges.map((b: any) => b.key), ['ticket']);
+    assert.deepEqual(fine.body.post.author.badges.map((b: any) => b.key), [], 'no ticket-holder badge: FeestFinder sells no tickets');
   });
 
   it('turns the organiser’s reply to a question into the official answer and the FAQ', async () => {

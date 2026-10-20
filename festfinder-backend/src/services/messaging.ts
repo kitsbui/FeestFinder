@@ -123,7 +123,6 @@ export function linkUrl(link: any): string {
   if (isSitePath(link.url)) return link.url;
   const ev = link.slug ?? link.eventId;
   if (link.screen === 'live' && ev) return `/app/live/${encodeURIComponent(ev)}`;
-  if (link.screen === 'tickets') return '/app/tickets';
   if (link.screen === 'event' && ev) return `/e/${encodeURIComponent(ev)}`;
   return '/app/notifications';
 }

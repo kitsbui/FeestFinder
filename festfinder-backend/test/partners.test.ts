@@ -17,23 +17,22 @@ describe('the way out to tickets', () => {
   const clicks = async (slug: string) => (await env.ctx.db.query<any>(
     `select k.* from outbound_clicks k join events e on e.id = k.event_id where e.slug = $1 order by k.created_at`, [slug])).rows;
 
-  it('sends a ticket button to FeestFinder’s checkout when a tier is on sale, and counts it', async () => {
+  it('sends every ticket button to the seller, never to a checkout of its own, and counts it once', async () => {
     const counted = async () => (await env.ctx.db.query<{ n: number }>(
       `select coalesce(sum(ticket_clicks), 0)::int as n from event_metrics_daily m join events e on e.id = m.event_id where e.slug = 'ravo'`)).rows[0].n;
     const before = await counted();
     const res = await env.as().get('/go/ravo?src=detail');
     assert.equal(res.status, 302);
-    assert.equal(res.headers.location, '/app/checkout/ravo');
+    assert.equal(res.headers.location, 'https://ticketbox.vn/ravolution-2026', 'FeestFinder sells no tickets');
     assert.equal(res.headers['x-robots-tag'], 'noindex, nofollow');
-    const tier = (await env.ctx.db.query<{ id: string }>(`select t.id from ticket_tiers t join events e on e.id = t.event_id where e.slug = 'ravo' and t.key = 'vip'`)).rows[0].id;
-    assert.equal((await env.as().get(`/go/ravo?src=tier&tier=${tier}`)).headers.location, `/app/checkout/ravo?tier=${tier}`);
-    // The quantity chosen on the event page rides along to the checkout.
-    assert.equal((await env.as().get(`/go/ravo?src=tier&tier=${tier}&qty=3`)).headers.location, `/app/checkout/ravo?tier=${tier}&qty=3`);
+    // The old tier and quantity parameters change nothing.
+    assert.equal((await env.as().get('/go/ravo?src=tier&tier=00000000-0000-4000-8000-000000000000&qty=3')).headers.location, 'https://ticketbox.vn/ravolution-2026');
     const rows = await clicks('ravo');
-    assert.deepEqual(rows.map((r) => [r.target, r.source]), [['checkout', 'detail'], ['checkout', 'tier'], ['checkout', 'tier']]);
+    assert.deepEqual(rows.map((r) => [r.target, r.source]), [['organizer', 'detail'], ['organizer', 'tier']]);
     assert.equal(await counted(), before + 1, 'one person, one counted click');
     const detail = (await env.as().get('/events/ravo')).body;
     assert.equal(detail.links.go, '/go/ravo');
+    assert.equal(detail.tickets, undefined);
   });
 
   it('sends it to the organiser’s ticket link as it is when no partner sells there', async () => {
@@ -98,7 +97,7 @@ describe('the way out to tickets', () => {
     const tb = list.items.find((p: any) => p.slug === 'ticketbox');
     assert.deepEqual(tb.totals, [{ currency: 'VND', orders: 1, sales: 1300000, earned: 65000, pending: 0 }]);
     assert.ok(tb.clicks30 >= 1);
-    assert.ok(list.outbound.partner >= 1 && list.outbound.checkout >= 2);
+    assert.ok(list.outbound.partner >= 1 && list.outbound.organizer >= 2 && !list.outbound.checkout);
     const conv = (await env.as(admin).get(`/admin/partners/${partnerId}/conversions`)).body;
     assert.equal(conv.items[0].event.slug, 'rapviet');
     assert.equal(conv.topEvents[0].slug, 'rapviet');

@@ -203,7 +203,7 @@ describe('internal admin', () => {
     const r = await env.as(admin).get('/admin/insights');
     assert.equal(r.body.health.length, 4);
     assert.ok(r.body.users.accounts > 100);
-    assert.ok(r.body.organizers.some((o: any) => o.name === 'Ravolution Entertainment' && o.gmv > 0));
+    assert.ok(r.body.organizers.some((o: any) => o.name === 'Ravolution Entertainment' && o.clicks > 0));
     const counts = await env.as(admin).get('/admin/counts');
     assert.ok(counts.body.queue >= 1);
     // The Console's numbers board.

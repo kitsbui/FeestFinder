@@ -25,7 +25,7 @@ describe('operations back office', () => {
   });
 
   it('keeps the team endpoints to admins', async () => {
-    for (const path of ['/admin/overview', '/admin/events', '/admin/venues', '/admin/users', '/admin/orders']) {
+    for (const path of ['/admin/overview', '/admin/events', '/admin/venues', '/admin/users']) {
       const r = await env.as(organizer).get(path);
       assert.equal(r.status, 403, path);
     }
@@ -168,9 +168,7 @@ describe('operations back office', () => {
     assert.equal(copy.body.status, 'draft');
     assert.equal(copy.body.startsOn, null, 'dates are left for the organiser');
     assert.equal(copy.body.venue.resolved, true);
-    const tiers = await one<any>(env.ctx.db, 'select count(*)::int as n, coalesce(sum(sold), 0)::int as sold from ticket_tiers where event_id = $1', [copy.body.id]);
-    assert.ok(tiers.n > 0);
-    assert.equal(tiers.sold, 0);
+    assert.equal(copy.body.ticketUrl, ravo.ticketUrl ?? copy.body.ticketUrl, 'the seller\'s link comes along');
   });
 
   it('finds accounts; the Console can never grant or take away admin', async () => {
@@ -190,7 +188,7 @@ describe('operations back office', () => {
   it('every catalogue route split out of admin/ops refuses anyone but the team', async () => {
     const fan = await env.attendee();
     const anyId = '00000000-0000-4000-8000-000000000000';
-    for (const path of ['/admin/events', '/admin/venues', `/admin/organizers/${anyId}`, '/admin/users', `/admin/users/${anyId}`, '/admin/orders', `/admin/orders/${anyId}`, '/admin/overview']) {
+    for (const path of ['/admin/events', '/admin/venues', `/admin/organizers/${anyId}`, '/admin/users', `/admin/users/${anyId}`, '/admin/overview']) {
       for (const token of [fan, organizer]) {
         const r = await env.as(token).get(path);
         assert.equal(r.status, 403, `${path} must be admin only`);
@@ -198,24 +196,10 @@ describe('operations back office', () => {
     }
   });
 
-  it('looks orders up and refunds one, with the reason in the audit log', async () => {
-    const paid = await env.as(admin).get('/admin/orders?status=paid&limit=5');
-    assert.ok(paid.body.total > 0);
-    assert.ok(paid.body.summary.paid.count >= paid.body.items.length);
-    const order = paid.body.items[0];
-    const byCode = await env.as(admin).get(`/admin/orders?q=${order.code}`);
-    assert.equal(byCode.body.items[0].id, order.id);
-    const detail = await env.as(admin).get(`/admin/orders/${order.id}`);
-    assert.equal(detail.body.refundable, true);
-    const r = await env.as(admin).post(`/admin/orders/${order.id}/refund`, { reason: 'Bought the wrong date' });
-    assert.equal(r.status, 200);
-    const after = await env.as(admin).get(`/admin/orders/${order.id}`);
-    assert.equal(after.body.status, 'refunded');
-    assert.ok(after.body.tickets.every((t: any) => t.status === 'refunded'));
-    const again = await env.as(admin).post(`/admin/orders/${order.id}/refund`);
-    assert.equal(again.body.error.code, 'not_paid');
-    const audit = await one<any>(env.ctx.db, `select diff from audit_log where action = 'order.refunded' and target_id = $1`, [order.id]);
-    assert.ok(audit.diff.some((d: any) => d.f === 'reason' && d.b === 'Bought the wrong date'));
+  it('has no order desk: FeestFinder sells no tickets', async () => {
+    for (const path of ['/admin/orders', '/admin/payouts/x/post_event', '/orders', '/me/tickets', '/resale/listings']) {
+      assert.equal((await env.as(admin).get(path)).status, 404, path);
+    }
   });
 
   it('filters the audit log by area and text', async () => {
