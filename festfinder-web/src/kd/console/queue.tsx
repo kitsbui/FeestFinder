@@ -270,6 +270,7 @@ export function Queue() {
                   <span className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 pl-15 tab:basis-auto tab:flex-col tab:items-end tab:pl-0">
                     <Status tone={i.sla.state === 'breach' ? 'bad' : i.sla.state === 'soon' ? 'warn' : 'none'}>{tx(i.sla.label, lang)}</Status>
                     {i.festival?.flagship ? <Status tone="live">{R.flagship}</Status> : null}
+                    {i.fromCalendar ? <Status tone="none">{R.fromCalendar}</Status> : null}
                     {i.fit ? <Status tone={FIT_TONE[i.fit.band]}>{fill(R.fitN, { n: i.fit.score })}</Status> : null}
                     <Status tone={i.riskBand === 'high' ? 'bad' : i.riskBand === 'medium' ? 'warn' : 'ok'}>{fill(R.riskN, { n: i.riskScore })}</Status>
                     {i.flagged ? <Status tone="bad">{tx(i.flag?.label, lang) ?? T.flagged}</Status> : null}

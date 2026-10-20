@@ -129,6 +129,7 @@ export const CONSOLE = {
   shelfName: { en: 'Name', vi: 'Tên kệ' },
   shelfCreate: { en: 'Create', vi: 'Tạo' },
   shelfOn: { en: 'Show {n}', vi: 'Hiện {n}' },
+  shelfSponsored: { en: '{n} is paid for', vi: '{n} được tài trợ' },
   shelfFrom: { en: 'From', vi: 'Từ' },
   shelfTo: { en: 'To', vi: 'Đến' },
   shelfItems: { en: '{n} listings', vi: '{n} tin' },

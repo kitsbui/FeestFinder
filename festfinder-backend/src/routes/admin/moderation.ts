@@ -157,6 +157,10 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
     const f = parse(z.object({ filter: z.enum(['all', 'breach', 'flagged', 'new', 'clean', 'radar']).default('all'), sort: z.enum(['age', 'risk', 'new', 'fit']).default('age') }), req.query);
     const now = ctx.clock.now();
     const rows = await many<any>(ctx.db, QUEUE_SQL, []);
+    // Listings an organiser's connected calendar brought in (growth plan card 1).
+    const fromCalendar = new Set((await many<{ event_id: string }>(ctx.db,
+      `select distinct es.event_id from event_sources es join ingest_sources i on i.id = es.ingest_source_id
+        where i.organizer_id is not null and es.event_id = any($1::uuid[])`, [rows.map((r) => r.id)])).map((r) => r.event_id));
     const items = rows.map((r) => {
       const revision = isRevision(r);
       const waiting = Math.max(0, Math.round((now.getTime() - new Date(revision ? r.needs_review_at : r.submitted_at).getTime()) / 60000));
@@ -176,6 +180,7 @@ export default async function adminModerationRoutes(app: FastifyInstance) {
         logoUrl: r.logo_url, venueResolved: r.venue_resolved,
         // Feest Radar's finds and how well each suits FeestFinder (services/ingest/fit.ts).
         origin: r.origin === 'radar' ? 'radar' as const : 'posted' as const,
+        fromCalendar: fromCalendar.has(r.id),
         festival: queueFestival(r.festival),
         fit: r.fit_score == null ? null : { score: r.fit_score as number, band: bandOf(r.fit_score), bandLabel: FIT_BAND_LABEL[bandOf(r.fit_score)], reasons: (r.fit_reasons ?? []) as FitReason[] },
       };

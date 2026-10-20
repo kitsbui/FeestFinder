@@ -10,9 +10,10 @@ import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { CARD_COLUMNS, presentCard } from '../../presenters/event.ts';
 import { appendAudit } from '../../services/audit.ts';
 import { notifyOrganizer, notifyUser } from '../../services/notify.ts';
-import { cityLabel } from '../../lib/places.ts';
+import { cityBySlug, cityLabel } from '../../lib/places.ts';
 import { AD_CATEGORY_LABEL, BRAND_AD_PLACEMENT_LABEL, type AdCategory } from '../../lib/ads.ts';
 import { AD_REQUEST_COLUMNS, presentAdRequest } from '../organizer/ads.ts';
+import { SHELF_MIN } from '../catalog.ts';
 
 const AD_ART: Record<string, string> = {
   'F&B': 'linear-gradient(135deg,#FFB35C,#FF5C5C)',
@@ -116,6 +117,7 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     const p = shelfPhase(s, today);
     return {
       id: s.id, slug: s.slug, name: s.name, note: s.note, enabled: s.enabled, startsOn: s.starts_on, endsOn: s.ends_on,
+      sponsored: !!s.sponsored, cities: (s.cities ?? []) as string[],
       phase: p.phase, phaseLabel: p.label,
       items: rows.map((r) => presentCard(r, { now, viewer: null })),
     };
@@ -144,6 +146,8 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     const body = parse(z.object({
       enabled: z.boolean().optional(), startsOn: dateStr.nullable().optional(), endsOn: dateStr.nullable().optional(),
       name: localized.optional(), note: localized.optional(),
+      sponsored: z.boolean().optional(),
+      cities: z.array(z.string().refine((c) => !!cityBySlug(c), 'unknown city')).max(20).optional(),
     }), req.body);
     const now = ctx.clock.now();
     const row = await ctx.db.tx(async (q) => {
@@ -153,8 +157,9 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
       const endsOn = body.endsOn !== undefined ? body.endsOn : old.ends_on;
       if (startsOn && endsOn && endsOn < startsOn) throw badRequest('window_order', L('The end date is before the start date', 'Ngày kết thúc trước ngày bắt đầu'));
       const next = await one<any>(q,
-        `update shelves set enabled = coalesce($2, enabled), starts_on = $3, ends_on = $4, name = coalesce($5, name), note = coalesce($6, note) where id = $1 returning *`,
-        [old.id, body.enabled ?? null, startsOn, endsOn, body.name ? json(body.name) : null, body.note ? json(body.note) : null]);
+        `update shelves set enabled = coalesce($2, enabled), starts_on = $3, ends_on = $4, name = coalesce($5, name), note = coalesce($6, note),
+                sponsored = coalesce($7, sponsored), cities = coalesce($8, cities) where id = $1 returning *`,
+        [old.id, body.enabled ?? null, startsOn, endsOn, body.name ? json(body.name) : null, body.note ? json(body.note) : null, body.sponsored ?? null, body.cities ? [...new Set(body.cities)] : null]);
       const win = (a: string | null, b: string | null) => (a && b ? `${dm(a)} → ${dm(b)}` : '—');
       if (body.enabled !== undefined && body.enabled !== old.enabled) {
         await appendAudit(q, {
@@ -199,7 +204,7 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     return presentShelf(row, vnDate(now), now);
   });
 
-  /** Exactly what the Explore row renders, plus the live window. */
+  /** Exactly what the home page's shelf renders, plus the live window. */
   app.get<{ Params: { id: string } }>('/admin/shelves/:id/preview', async (req) => {
     requireAdmin(req);
     const now = ctx.clock.now();
@@ -211,8 +216,10 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
       items: view.items.map((c, i) => ({ ...c, tag: i === 0 ? L('Featured', 'Nổi bật') : L('Picked', 'Được chọn') })),
       window: shelf.starts_on && shelf.ends_on ? L(`Shows ${dm(shelf.starts_on)} → ${dm(shelf.ends_on)}`, `Hiển thị ${dm(shelf.starts_on)} → ${dm(shelf.ends_on)}`) : L('No date window', 'Không giới hạn thời gian'),
       note: shelf.enabled
-        // No page shows shelves yet (docs/TECH_DEBT.md #17): the team is not told otherwise.
-        ? L('The shelf is on. No page of the site shows shelves yet.', 'Dãy đang bật. Hiện chưa trang nào của site hiển thị dãy này.')
+        // The home page draws the first shelf with three live events or more (growth plan card 5).
+        ? (view.items.filter((c) => !c.past).length >= SHELF_MIN
+          ? L('The shelf is on: the home page shows it at the top when it is the first one on.', 'Dãy đang bật: trang chủ hiện nó ở đầu khi nó là dãy bật đầu tiên.')
+          : L(`The shelf is on, but the home page needs ${SHELF_MIN} live events in it.`, `Dãy đang bật, nhưng trang chủ cần ${SHELF_MIN} sự kiện đang mở trong dãy.`))
         : L('The shelf is off. This is how it would look once switched on.', 'Dãy đang tắt. Đây là hình dạng nó sẽ có khi bật.'),
     };
   });

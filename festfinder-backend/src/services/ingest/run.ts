@@ -16,6 +16,8 @@ import { EVENT_TYPES } from '../../lib/styles.ts';
 import { ADAPTERS, PROVIDER_CONFIDENCE } from './providers.ts';
 import { findExact, findSimilar, MATCH_RULES, venueLikeness, type Match } from './resolve.ts';
 import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent, type RawRecord } from './types.ts';
+import { ensureOrigin } from '../events.ts';
+import { notifyAdmins } from '../notify.ts';
 import { FIT_FLOOR, fitOf, refreshFit } from './fit.ts';
 
 /*
@@ -107,6 +109,16 @@ export async function runSource(ctx: Ctx, sourceId: string, opts: { io?: IngestI
       [run!.id, ctx.clock.now(), sum.fetched, sum.parsed, sum.rejected, sum.created, sum.merged, sum.unchanged, sum.failed, json(sum.errors.slice(0, 50))]);
     await ctx.db.query(`update ingest_sources set last_run_at = $2, next_run_at = $3, last_error = $4 where id = $1`, [sourceId, now, next, error]);
     if (touched.size) await refreshConfidence(ctx.db, now, [...touched]);
+    // An organiser's calendar brought new listings: every admin is told once per run.
+    if (source.organizer_id && sum.created) {
+      const org = await one<{ name: string }>(ctx.db, 'select name from organizers where id = $1', [source.organizer_id]);
+      await notifyAdmins(ctx.db, now, {
+        kind: 'review_needed', dedupeKey: `calendar:${run!.id}`,
+        title: L(`${sum.created} from ${org?.name ?? 'an organiser'}'s calendar`, `${sum.created} tin từ lịch của ${org?.name ?? 'nhà tổ chức'}`),
+        body: L('New listings from a connected calendar wait for review.', 'Tin mới từ lịch đã kết nối đang chờ duyệt.'),
+        cta: L('Review', 'Duyệt'), link: { url: '/console' },
+      });
+    }
     ctx.log(`ingest ${source.name}: fetched ${sum.fetched}, parsed ${sum.parsed}, new ${sum.created}, merged ${sum.merged}, unchanged ${sum.unchanged}, rejected ${sum.rejected}, failed ${sum.failed}${error ? `, error: ${error}` : ''} (${sum.ms} ms)`);
     return sum;
   };
@@ -209,9 +221,13 @@ async function resolveAndApply(q: Queryable, source: IngestSource, rawId: string
     venueName: venue?.name ?? n.venueName, lat: n.lat ?? venue?.lat ?? null, lng: n.lng ?? venue?.lng ?? null, lineup: n.lineup,
   });
   const match = exact ?? similar;
-  if (match && (match.exact || match.score >= MATCH_RULES.mergeAt)) {
+  const own = source.organizer_id ?? null;
+  // An organiser's calendar never adds to another organiser's event: a candidate of its own, marked as a possible duplicate.
+  const othersEvent = own && match && (match.exact || match.score >= MATCH_RULES.mergeAt)
+    ? !(await one(q, 'select 1 from events where id = $1 and organizer_id = $2', [match.eventId, own])) : false;
+  if (match && !othersEvent && (match.exact || match.score >= MATCH_RULES.mergeAt)) {
     await attachSource(q, match.eventId, source, rawId, record, n, match, now);
-    await enrich(q, match.eventId, n, now);
+    await enrich(q, match.eventId, n, now, own);
     await refreshFit(q, [match.eventId], now);
     return { kind: 'merged' as const, eventId: match.eventId, match };
   }
@@ -225,9 +241,12 @@ async function resolveAndApply(q: Queryable, source: IngestSource, rawId: string
     ticketUrl: n.ticketUrl, startTime: n.startTime, venueName: venue?.name ?? n.venueName, address: venue?.address ?? n.address,
     venueId: venue?.id ?? null, priceFrom: n.priceFrom, free: n.free, city: n.city, startsOn: n.startsOn, festival: n.festival,
   }, now);
-  if (fit.score < FIT_FLOOR && !fit.festival) return { kind: 'rejected' as const, eventId: null, match, error: `low_fit: ${fit.score}` };
-  const eventId = await createCandidate(q, source, n, venue, match, now);
+  // The fit is kept for the team, but an organiser's own calendar is never dropped for it.
+  if (!own && fit.score < FIT_FLOOR && !fit.festival) return { kind: 'rejected' as const, eventId: null, match, error: `low_fit: ${fit.score}` };
+  const eventId = await createCandidate(q, source, n, venue, match, now, 'radar', own);
   await attachSource(q, eventId, source, rawId, record, n, null, now);
+  // Posted, not Radar: the organiser's own row beside the calendar's (services/events.ts).
+  if (own) await ensureOrigin(q, await one<{ id: string; organizer_id: string; submitted_by: string | null; event_url: string | null; published_at: Date | null }>(q, 'select id, organizer_id, submitted_by, event_url, published_at from events where id = $1', [eventId]), now);
   await refreshDerived(q, eventId, now);
   await flagRisk(q, eventId, match, now);
   await refreshFit(q, [eventId], now);
@@ -280,15 +299,16 @@ async function attachSource(q: Queryable, eventId: string, source: IngestSource,
  * Fills what the event is missing from what the source says. Never overwrites: an organiser's
  * or moderator's words stand, and a disagreement is recorded as a conflict instead.
  */
-export async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Date) {
+export async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, now: Date, fromOrganizer: string | null = null) {
   const ev = await one<any>(q, `select e.*, o.is_community from events e join organizers o on o.id = e.organizer_id where e.id = $1`, [eventId]);
   if (!ev) return;
   const set: Record<string, unknown> = {};
   if (!(ev.styles ?? []).length && n.styles.length) set.styles = n.styles;
   if (!ev.event_type && n.eventType) set.event_type = n.eventType;
   if (!ev.genre && n.genre) set.genre = n.genre;
-  // Events nobody runs yet (community and imported ones) also take the source's pictures, lineup and pin.
-  if (ev.is_community) {
+  // Events nobody runs yet (community and imported ones) also take the source's pictures, lineup and pin,
+  // and so does an organiser's event from their own calendar. Times, title and price never change here.
+  if (ev.is_community || (fromOrganizer && ev.organizer_id === fromOrganizer)) {
     if (!ev.cover_url && n.imageUrl) set.cover_url = n.imageUrl;
     if (!(ev.lineup ?? []).length && n.lineup.length) { set.lineup = n.lineup; set.artists = n.lineup; }
     if (ev.lat === null && !ev.venue_id && n.lat !== null && n.lng !== null) { set.lat = n.lat; set.lng = n.lng; }
@@ -305,8 +325,8 @@ export async function enrich(q: Queryable, eventId: string, n: NormalizedEvent, 
  * A new event in the review queue, held until someone claims it: by Feest Radar when ingestion
  * found it, by the community organiser when a person reported it (an artist's gig report).
  */
-export async function createCandidate(q: Queryable, source: Pick<IngestSource, 'name' | 'url'>, n: NormalizedEvent, venue: any, match: Match | null, now: Date, holder: Placeholder = 'radar'): Promise<string> {
-  const organizerId = await placeholderOrganizerId(q, holder);
+export async function createCandidate(q: Queryable, source: Pick<IngestSource, 'name' | 'url'>, n: NormalizedEvent, venue: any, match: Match | null, now: Date, holder: Placeholder = 'radar', organizer: string | null = null): Promise<string> {
+  const organizerId = organizer ?? await placeholderOrganizerId(q, holder);
   const slug = `${slugify(n.title) || 'event'}-${randomCode(4).toLowerCase()}`;
   const paid = !n.free;
   const row = await one<{ id: string }>(q,

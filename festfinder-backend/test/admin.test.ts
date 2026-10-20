@@ -176,8 +176,17 @@ describe('internal admin', () => {
     assert.equal(quiet.phaseLabel.en, 'Scheduled 01/10');
     const moved = await env.as(admin).patch(`/admin/shelves/${quiet.id}`, { startsOn: '2026-09-10', endsOn: '2026-09-22' });
     assert.equal(moved.body.phaseLabel.en, 'Live · ends 22/09');
+    // Two events are not a shelf on the home page; three are, and their cards say "Nổi bật".
+    assert.ok(!(await env.as().get('/shelves')).body.items.some((s: { slug: string }) => s.slug === 'quiet-nights'));
+    await env.as(admin).put(`/admin/shelves/${quiet.id}/items`, { eventIds: [env.ids.event.blues, env.ids.event.nhacvien, env.ids.event['yoko-sinco']] });
+    await env.as(admin).patch(`/admin/shelves/${quiet.id}`, { sponsored: true, cities: ['ho-chi-minh'] });
     const pub = await env.as().get('/shelves');
-    assert.ok(pub.body.items.some((s: any) => s.slug === 'quiet-nights'));
+    const shown = (pub.body.items as { slug: string; sponsored: boolean; items: { featured: boolean }[] }[]).find((s) => s.slug === 'quiet-nights')!;
+    assert.deepEqual([shown?.sponsored, shown?.items.length], [true, 3]);
+    assert.ok(shown.items.every((c) => c.featured), 'a card on a live shelf is featured');
+    assert.ok(!(await env.as().get('/shelves?city=ha-noi')).body.items.some((s: { slug: string }) => s.slug === 'quiet-nights'), 'kept to its cities');
+    assert.ok((await env.as().get('/shelves?city=ho-chi-minh')).body.items.some((s: { slug: string }) => s.slug === 'quiet-nights'));
+    assert.equal((await env.as(admin).patch(`/admin/shelves/${quiet.id}`, { cities: ['atlantis'] })).status, 400);
     const bad = await env.as(admin).patch(`/admin/shelves/${quiet.id}`, { startsOn: '2026-09-30', endsOn: '2026-09-01' });
     assert.equal(bad.body.error.code, 'window_order');
     const items = await env.as(admin).put(`/admin/shelves/${quiet.id}/items`, { eventIds: [env.ids.event.blues, env.ids.event['yoko-sinco']] });

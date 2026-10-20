@@ -15,6 +15,8 @@ export interface IngestSource {
   etag: string | null;
   last_modified: string | null;
   content_hash: string | null;
+  /** An organiser's own calendar (migration 056): its events are theirs, posted, and wait for review. */
+  organizer_id?: string | null;
 }
 
 /** One event as a source sent it, before any cleaning. */

@@ -39,6 +39,7 @@ export const REVIEW = {
   community: { en: 'Community · {n}', vi: 'Cộng đồng · {n}' },
   newTag: { en: 'new', vi: 'mới' },
   revisionTag: { en: 'Change · still live', vi: 'Bản sửa · vẫn đang đăng' },
+  fromCalendar: { en: 'From calendar', vi: 'Từ lịch' },
   revisionHead: { en: 'What changed', vi: 'Đã sửa' },
   before: { en: 'Before', vi: 'Trước' },
   after: { en: 'After', vi: 'Sau' },

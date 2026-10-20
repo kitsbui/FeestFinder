@@ -97,3 +97,31 @@ test.describe('the home page', () => {
     }
   });
 });
+
+/*
+ * A featured shelf the team switched on takes the home page's one highlight slot (growth plan
+ * card 5), with "Được tài trợ" when it was paid for. The demo shelves are outside their dates on
+ * the test clock, so this turns one on and puts it back.
+ */
+test('a featured shelf takes the highlight slot, and says when it is paid for', async ({ page }) => {
+  await page.request.post('/auth/login', { data: { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' } });
+  type Shelf = { id: string; slug: string; enabled: boolean; sponsored: boolean; startsOn: string | null; endsOn: string | null; items: { id: string }[] };
+  const shelf = ((await (await page.request.get('/admin/shelves')).json()).items as Shelf[]).find((s) => s.slug === 'quiet-nights')!;
+  const ids = (await (await page.request.get('/events?time=all&upcoming=true&city=ho-chi-minh&limit=3')).json()).items.map((e: { id: string }) => e.id);
+  const fresh = () => page.request.post('/kd-fresh', { data: { kind: 's', slug: shelf.slug } });
+  try {
+    await page.request.put(`/admin/shelves/${shelf.id}/items`, { data: { eventIds: ids } });
+    await page.request.patch(`/admin/shelves/${shelf.id}`, { data: { enabled: true, sponsored: true, startsOn: null, endsOn: null } });
+    await fresh();
+    await page.goto('/');
+    const slot = page.getByRole('region', { name: 'Đêm nhạc nhẹ' });
+    await expect(slot).toBeVisible();
+    await expect(slot.getByText('Được tài trợ', { exact: true })).toBeVisible();
+    await expect(slot.locator('a[href^="/e/"]').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lễ hội lớn thế giới' })).toHaveCount(0);
+  } finally {
+    await page.request.put(`/admin/shelves/${shelf.id}/items`, { data: { eventIds: shelf.items.map((i) => i.id) } });
+    await page.request.patch(`/admin/shelves/${shelf.id}`, { data: { enabled: shelf.enabled, sponsored: shelf.sponsored, startsOn: shelf.startsOn, endsOn: shelf.endsOn } });
+    await fresh();
+  }
+});

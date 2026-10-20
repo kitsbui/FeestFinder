@@ -19,12 +19,13 @@ import { Art, Card as Panel, Status, type StatusTone } from '../ui/parts';
 import { CONSOLE } from './copy';
 import { act as run, AsyncPick, Body, Empty, ErrorBox, Loading, PageHead, type PickItem } from './kit';
 import { MOD } from './moderation/copy';
+import { freshen } from '../fresh';
 import { useConsole } from './root';
 
 /** A listing on a shelf: what /admin/shelves and /admin/events both give. */
 interface Item { id: string; title: string; coverUrl: string | null; startsOn: string | null; endsOn?: string | null; venue?: { name: string | null } | null; venueName?: string | null }
 interface Shelf {
-  id: string; name: Pair; enabled: boolean; startsOn: string | null; endsOn: string | null;
+  id: string; slug: string; name: Pair; enabled: boolean; startsOn: string | null; endsOn: string | null; sponsored: boolean;
   phase: 'live' | 'always' | 'scheduled' | 'ended' | 'off'; phaseLabel: Pair; items: Item[];
 }
 interface Boost {
@@ -171,13 +172,13 @@ function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChan
     setBusy(true);
     const out = await run(kd, lang, () => FF.patch('/admin/shelves/' + shelf.id, body));
     setBusy(false);
-    if (out && typeof out === 'object') { onChange(out as Shelf); kd.toast(M.saved); }
+    if (out && typeof out === 'object') { onChange(out as Shelf); kd.toast(M.saved); void freshen('s', shelf.slug); }
   };
   const saveItems = async () => {
     setBusy(true);
     const out = await run(kd, lang, () => FF.put(`/admin/shelves/${shelf.id}/items`, { eventIds: items.map((i) => i.id) }));
     setBusy(false);
-    if (out && typeof out === 'object') { onChange(out as Shelf); kd.toast(M.listSaved); }
+    if (out && typeof out === 'object') { onChange(out as Shelf); kd.toast(M.listSaved); void freshen('s', shelf.slug); }
   };
   const move = (i: number, d: number) => {
     const j = i + d;
@@ -211,6 +212,7 @@ function ShelfCard({ lang, shelf, onChange }: { lang: Lang; shelf: Shelf; onChan
       <div className="flex flex-wrap items-center gap-3">
         <Status tone={PHASE_TONE[shelf.phase] ?? 'none'}>{tx(shelf.phaseLabel, lang)}</Status>
         <span className="flex-1" />
+        <Switch checked={shelf.sponsored} label={fill(T.shelfSponsored, { n: tx(shelf.name, lang) })} onChange={(v) => save({ sponsored: v })} />
         <Switch checked={shelf.enabled} label={fill(T.shelfOn, { n: tx(shelf.name, lang) })} onChange={(v) => save({ enabled: v })} />
       </div>
       <div className="flex flex-wrap items-end gap-3">

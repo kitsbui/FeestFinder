@@ -17,6 +17,7 @@ import { ImageLinkField } from '../ui/image-link';
 import { Avatar, Status } from '../ui/parts';
 import { STUDIO } from './copy';
 import { Block, Page } from './parts';
+import { CalendarBlock } from './calendar';
 import { useStudio } from './root';
 
 interface City { slug: string; name: Pair }
@@ -60,6 +61,7 @@ export function BusinessProfile() {
       <div className="kd-split gap-3">
         <div className="kd-main flex flex-col gap-3">
           <PublicForm lang={lang} p={p} cities={cities} onSaved={setP} />
+          <CalendarBlock lang={lang} slug={p.slug} />
           <LegalForm lang={lang} p={p} onSaved={setP} />
         </div>
         <Block className="kd-side self-start" title={T.bizTeam}>

@@ -102,6 +102,9 @@ test('pages carry a strict policy with no eval', async ({ request }) => {
   expect(res.headers()['x-content-type-options']).toBe('nosniff');
 });
 
+test.describe('the service worker', () => {
+test.use({ serviceWorkers: 'allow' });
+
 test('saved nights still open with no signal', async ({ page, context }) => {
   const login = await page.request.post('/auth/login', { data: { identifier: 'minh@example.com', password: 'festfinder123' } });
   expect(login.ok()).toBeTruthy();
@@ -138,6 +141,7 @@ test('signing out drops the cached personal answers from the device', async ({ p
   await page.evaluate(() => fetch('/auth/session', { method: 'DELETE' }));
   // Public reads the app keeps making may cache again; nothing of the person's may.
   await expect.poll(personal).toEqual([]);
+});
 });
 
 test('browser extensions adding <div>s to <body> do not break hydration', async ({ page }) => {

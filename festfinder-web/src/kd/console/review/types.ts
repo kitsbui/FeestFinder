@@ -20,6 +20,7 @@ export interface Item {
   changes?: { field: string; before: unknown; after: unknown }[];
   /** Feest Radar's find, or posted here; how well it suits FeestFinder (festfinder-backend services/ingest/fit.ts). */
   origin?: 'posted' | 'radar';
+  fromCalendar?: boolean;
   festival?: { key: string; name: string; flagship: boolean } | null;
   fit?: { score: number; band: FitBand; bandLabel: Pair; reasons: { key: string; points: number; label: Pair }[] } | null;
 }
