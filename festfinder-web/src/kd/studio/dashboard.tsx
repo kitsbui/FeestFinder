@@ -2,7 +2,8 @@
 /**
  * /studio in Kính đêm (design/Studio-Dashboard): for the chosen event, over 7, 14 or 30 days:
  * views (against the period before), saves and ticket (or sign-up) clicks as a share of views, and
- * sold or signed up against capacity; views per day; the selling pace with "Đẩy tin" when behind;
+ * the days to doors; views per day; "Mua vé" presses per day with "Đẩy tin" (FeestFinder sells no
+ * tickets, so a press of "Mua vé" is the last step it sees);
  * every event (a row picks it, a draft continues in the wizard); where views come from; to do.
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -24,10 +25,10 @@ import { isPast, useStudio } from './root';
 
 type Range = '7d' | '14d' | '30d';
 interface Perf {
-  sold: number; capacity: number; soldPct: number; daysLeft: number; pacePerDay: number; needPerDay: number;
-  verdict: { key: 'on_pace' | 'behind'; label: Pair };
-  daily: { day: string; views: number; clicks: number; saves: number; sold: number }[];
-  period: { views: number; clicks: number; saves: number; sold: number; viewsBefore: number };
+  daysLeft: number;
+  trend: { day: string; clicks: number }[];
+  daily: { day: string; views: number; clicks: number; saves: number }[];
+  period: { views: number; clicks: number; saves: number; viewsBefore: number };
   sources: { key: string; pct: number }[];
   boost: { status: 'open' | 'approved' | 'done' | 'declined' | 'withdrawn' } | null;
   /** Presses of "Đặt xe" (Grab, Green SM) on the event page, all time. */
@@ -107,12 +108,9 @@ export function Dashboard() {
             <Panel className="kd-kpi"><span className="kd-m">{T.saves}</span><span className="kd-d2 kd-num">{count(perf.period.saves, lang)}</span><span className="kd-s kd-num">{fill(T.ofViews, { p: pct(perf.period.saves, perf.period.views) })}</span></Panel>
             <Panel className="kd-kpi"><span className="kd-m">{free ? T.registerClicks : T.clicks}</span><span className="kd-d2 kd-num">{count(perf.period.clicks, lang)}</span><span className="kd-s kd-num">{fill(T.ofViews, { p: pct(perf.period.clicks, perf.period.views) })}</span></Panel>
             <Panel className="kd-kpi kd-kpi-hi">
-              <span className="kd-m">{free ? T.registered : T.sold}</span>
-              <span className="flex items-baseline gap-1.5"><span className="kd-d2 kd-num">{count(perf.sold, lang)}</span><span className="kd-s kd-num">/ {count(perf.capacity, lang)}</span></span>
-              <div className="flex items-center gap-2.5">
-                <div className="h-2 flex-1 overflow-hidden rounded bg-white/[0.06]"><div className="h-full rounded-r bg-info" style={{ width: `${Math.min(100, perf.soldPct)}%` }} /></div>
-                <span className="kd-mb kd-num">{pct(perf.sold, perf.capacity)}</span>
-              </div>
+              <span className="kd-m">{T.daysToDoors}</span>
+              <span className="kd-d2 kd-num">{event && !isPast(event) ? perf.daysLeft : '—'}</span>
+              <span className="kd-s kd-num">{fill(T.nRides, { n: count(perf.rideClicks ?? 0, lang) })}</span>
             </Panel>
           </div>
 
@@ -130,20 +128,16 @@ export function Dashboard() {
               )}
             </Panel>
             {event && !isPast(event) ? <Panel as="section" className="kd-side flex flex-col gap-4 p-5" aria-label={T.pace}>
-              <div className="flex items-center justify-between"><span className="kd-h">{T.pace}</span><Status tone={perf.verdict.key === 'on_pace' ? 'ok' : 'warn'}>{perf.verdict.key === 'on_pace' ? T.onPace : T.behind}</Status></div>
-              <div className="flex items-baseline gap-2.5"><span className="kd-d1 kd-num">{perf.daysLeft}</span><span className="kd-t text-fg-3">{T.daysToDoors}</span></div>
-              <div className="mt-auto flex flex-col gap-3.5">
-                <BarRow label={T.needPerDay} value={perf.needPerDay} max={Math.max(perf.needPerDay, perf.pacePerDay, 1)} display={count(perf.needPerDay, lang)} />
-                <BarRow label={T.ratePerDay} value={perf.pacePerDay} max={Math.max(perf.needPerDay, perf.pacePerDay, 1)} display={count(perf.pacePerDay, lang)} />
+              <span className="kd-h">{T.pace}</span>
+              {perf.trend.some((d) => d.clicks > 0) ? (
+                <LineChart label={T.pace} height={140} points={perf.trend.map((d) => ({ label: dayMonth(d.day, lang), value: d.clicks }))} format={(n) => count(n, lang)} />
+              ) : <span className="kd-t text-fg-2">{T.noClicksYet}</span>}
+              <div className="mt-auto flex items-center justify-between gap-2.5 border-t border-line-1 pt-3">
+                <span className="kd-s">{T.boostLine}</span>
+                {perf.boost?.status === 'open' ? <Status tone="warn">{T.boostAsked}</Status>
+                  : perf.boost?.status === 'done' || perf.boost?.status === 'approved' ? <Status tone="ok">{T.boostDone}</Status>
+                  : <Button size="sm" onClick={boost}><RocketLaunchIcon size={14} aria-hidden="true" />{T.boost}</Button>}
               </div>
-              {perf.verdict.key === 'behind' || perf.boost ? (
-                <div className="flex items-center justify-between gap-2.5 border-t border-line-1 pt-3">
-                  <span className="kd-s">{T.boostLine}</span>
-                  {perf.boost?.status === 'open' ? <Status tone="warn">{T.boostAsked}</Status>
-                    : perf.boost?.status === 'done' || perf.boost?.status === 'approved' ? <Status tone="ok">{T.boostDone}</Status>
-                    : <Button size="sm" onClick={boost}><RocketLaunchIcon size={14} aria-hidden="true" />{T.boost}</Button>}
-                </div>
-              ) : null}
             </Panel> : null}
           </div>
         </>
@@ -163,7 +157,7 @@ export function Dashboard() {
                   <span role="cell" className="kd-mb kd-num text-right">
                     {e.status === 'draft' || e.status === 'rejected'
                       ? <a className={buttonClass({ tone: 'ghost', size: 'sm' }, '-mr-3')} href={'/studio/new?draft=' + e.id} onClick={(x) => x.stopPropagation()}>{T.continue}</a>
-                      : e.sold != null ? count(e.sold, lang) : '—'}
+                      : e.clicks != null ? count(e.clicks, lang) : '—'}
                   </span>
                 </>
               );

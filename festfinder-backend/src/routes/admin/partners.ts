@@ -8,6 +8,7 @@ import { randomToken, sha256 } from '../../lib/crypto.ts';
 import { limit, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin } from '../../http/guards.ts';
 import { appendAudit } from '../../services/audit.ts';
+import { settleEarning } from '../../services/ambassadors.ts';
 import { CONVERSION_STATUS, normalizeHost, partnerLink } from '../../services/partners.ts';
 
 /*
@@ -172,6 +173,7 @@ export default async function adminPartnerRoutes(app: FastifyInstance) {
       `select c.id, c.status, c.order_ref, p.id as partner_id, p.name as partner_name from partner_conversions c join ticket_partners p on p.id = c.partner_id where c.id = $1`, [id]);
     if (!c) throw notFound();
     await ctx.db.query('update partner_conversions set status = $2 where id = $1', [id, b.status]);
+    await settleEarning(ctx.db, id, ctx.clock.now());
     await audit(s, 'partner.conversion_status', { id: c.partner_id, name: c.partner_name }, [{ f: `order ${c.order_ref}`, a: c.status, b: b.status }]);
     return { id, status: b.status };
   });

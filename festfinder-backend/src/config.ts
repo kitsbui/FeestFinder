@@ -64,6 +64,13 @@ export interface Config {
   anthropicModel: string;
   aiGuideEnabled: boolean;
   /**
+   * Whether posting (comments, submitted events, projects, mixes) needs a phone proven with a code.
+   * Off since 2026-10-20 (owner: signing in, with Google, is enough). Decree 147/2024 asks networks
+   * where people publish to verify accounts by phone: REQUIRE_PHONE_TO_POST=1 turns it back on with
+   * no code change.
+   */
+  requirePhoneToPost: boolean;
+  /**
    * Run the job timers in this process: on a laptop (the staging database) and a long-lived
    * server. On Vercel pg_cron calls POST /internal/jobs instead, for production only.
    */
@@ -197,6 +204,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     uploadDir: str('UPLOAD_DIR', './.data/uploads'),
     anthropicModel: str('ANTHROPIC_MODEL', 'claude-opus-5-5'),
     aiGuideEnabled: bool('AI_GUIDE_ENABLED', true),
+    requirePhoneToPost: bool('REQUIRE_PHONE_TO_POST', false),
     jobsEnabled: bool('JOBS_ENABLED', !onVercel),
     fixedNow: process.env.FF_NOW || null,
     adminEmails: (process.env.ADMIN_EMAIL ?? '').split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => e.includes('@')),

@@ -86,6 +86,17 @@ describe('music styles', () => {
     assert.equal(inferEventType({ title: 'Contact All Night Long: Techno & House' }), 'club');
     assert.equal(inferEventType({ title: 'Something', schemaType: 'MusicEvent' }), 'concert');
   });
+
+  it('knows a daytime party, before the words rave and party', () => {
+    assert.equal(inferEventType({ title: 'Coffee Rave Saigon', startTime: '09:00', endTime: '13:00' }), 'day');
+    assert.equal(inferEventType({ title: 'Sunset Session: deep house on the roof', startTime: '17:00', endTime: '21:00' }), 'day');
+    assert.equal(inferEventType({ title: 'Tiệc ban ngày cuối tuần' }), 'day');
+    assert.equal(inferEventType({ title: 'Warehouse Club Night', startTime: '22:00', endTime: '04:00' }), 'club');
+    assert.equal(inferEventType({ title: 'Day Party Festival', startTime: '14:00', endTime: '23:00' }), 'festival');
+    assert.equal(inferEventType({ title: 'Sunrise afterhours', startTime: '05:00', endTime: '10:00' }), null);
+    assert.equal(inferEventType({ title: 'Techno Club Night', description: 'We dance until sunrise', startTime: '23:00', endTime: '05:00' }), 'club');
+    assert.equal(inferEventType({ title: 'Afternoon session', startTime: '14:00' }), null, 'no daytime words, no day');
+  });
 });
 
 describe('reading sources', () => {

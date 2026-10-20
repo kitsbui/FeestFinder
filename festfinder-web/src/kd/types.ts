@@ -46,17 +46,6 @@ export interface Card {
   festival?: { key: string; name: string; flagship: boolean; label: Pair | null } | null;
 }
 
-export interface Tier {
-  id: string;
-  key: string;
-  name: Pair;
-  note: Pair | null;
-  price: number;
-  state: 'onsale' | 'last' | 'soldout' | 'soon' | 'closed' | string;
-  left: number | null;
-  priceRise: { on: string; to: number } | null;
-}
-
 export interface TimetableSet { id: string; stageId: string; artist: string; startsAt: string; endsAt: string; startMin: number; endMin: number }
 export interface Timetable {
   days: { date: string; label: Pair; window: { startMin: number; endMin: number }; stages: { id: string; name: Pair; sets: TimetableSet[] }[] }[];
@@ -87,7 +76,6 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   hype: { count: number; last24h: number; goals: { threshold: number; reward: Pair; reached: boolean }[]; next: { threshold: number; left: number; reward: Pair; progress: number } | null } | null;
   discussion: { total: number; faqCount: number } | null;
   faq: { question: string; answer: string }[];
-  resale: { enabled: boolean; count: number; fromPrice: number | null } | null;
   /** The AI local guide can answer for this event (it runs, or wrote its guide before). */
   guide?: boolean;
   ambassadors: { name: string; initials: string; visits: number }[];
@@ -99,7 +87,8 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   capacity: number | null;
   links: { event: string; brand: string | null; tickets: string | null; go: string | null };
   ticketNote: Pair;
-  tickets: { tiers: Tier[]; urgency: Pair | null; refundPolicy: Pair | null } | null;
+  /** The organiser says the seller has sold out (FeestFinder sells no tickets, so nobody else knows). */
+  soldOut: boolean;
   timetable: Timetable | null;
   hasLiveMode: boolean;
   organizer: Card['organizer'] & { followersCount: number; sinceYear: number | null; art?: string | null } | null;
@@ -107,14 +96,15 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   viewer: { saved: boolean; hyped: boolean; going: boolean } | null;
   me: EventMine | null;
   /** The viewer's side of the community parts (services/eventpage.ts). */
-  mine: { refCode: string | null; broughtVisits: number; watchingResale: boolean; validTickets: number; claim: { organiser: boolean; canClaim: boolean; pending: boolean } | null } | null;
+  mine: { refCode: string | null; broughtVisits: number; commissionPct: number | null; claim: { organiser: boolean; canClaim: boolean; pending: boolean } | null } | null;
   travel?: string | null;
   entryRules?: string | null;
 }
 
 export interface Discussion {
   phase: string;
-  kind: string;
+  /** null: one stream of every kind (comments like a feed, 2026-10-20). */
+  kind: string | null;
   kinds: { kind: string; label: Pair; count: number; open: boolean }[];
   items: Post[];
   nextCursor: string | null;
@@ -139,6 +129,11 @@ export interface Post {
   helpfulCount: number;
   replyCount: number;
   createdAt: string;
+  edited?: boolean;
+  /** A reply to a reply: whom it answers. */
+  replyTo?: { id: string; name: string | null } | null;
+  /** Its author may change the words until then. */
+  editableUntil?: string | null;
   me: { mine: boolean; helped: boolean } | null;
   canModerate: boolean;
   replies?: Post[];

@@ -33,6 +33,23 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal((await env.as(token).get(`/events/${id}/guide?lang=en`)).status, 503);
   });
 
+  it('filters a daytime party by its kind, and names the kind', async () => {
+    const was = (await env.ctx.db.query<{ event_type: string | null }>('select event_type from events where id = $1', [env.ids.event.ravo])).rows[0].event_type;
+    await env.ctx.db.query(`update events set event_type = 'day' where id = $1`, [env.ids.event.ravo]);
+    try {
+      const r = await env.as().get('/events?type=day&time=all&limit=50');
+      assert.equal(r.status, 200);
+      assert.ok(r.body.items.length >= 1);
+      assert.ok(r.body.items.every((e: { slug: string }) => e.slug === 'ravo'), 'only the daytime party');
+      const meta = await env.as().get('/meta/discovery');
+      assert.deepEqual(meta.body.eventTypes.find((t: { key: string }) => t.key === 'day')?.label, { en: 'Day party', vi: 'Ban ngày' });
+      const md = await env.as().get('/e/ravo.md');
+      assert.match(String(md.body), /\*\*Loại:\*\* Ban ngày/);
+    } finally {
+      await env.ctx.db.query('update events set event_type = $2 where id = $1', [env.ids.event.ravo, was]);
+    }
+  });
+
   it('reports health', async () => {
     const r = await env.as().get('/health');
     assert.equal(r.status, 200);

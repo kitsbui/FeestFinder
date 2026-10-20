@@ -23,7 +23,7 @@ test.describe('pages for search engines', () => {
     const event = nodes.find((b) => b['@type'] === 'MusicEvent');
     expect(event, 'MusicEvent structured data').toBeTruthy();
     expect(event.location.address.addressCountry).toBe('VN');
-    expect(event.offers['@type']).toBe('AggregateOffer');
+    expect(event.offers['@type']).toBe('Offer');
     // The organiser's answers on the page are its FAQ, for search engines and AI answers.
     const faq = nodes.find((b) => b['@type'] === 'FAQPage');
     expect(faq?.mainEntity.length).toBeGreaterThan(0);
@@ -102,29 +102,28 @@ test('pages carry a strict policy with no eval', async ({ request }) => {
   expect(res.headers()['x-content-type-options']).toBe('nosniff');
 });
 
-test('tickets still open with no signal', async ({ page, context }) => {
+test('saved nights still open with no signal', async ({ page, context }) => {
   const login = await page.request.post('/auth/login', { data: { identifier: 'minh@example.com', password: 'festfinder123' } });
   expect(login.ok()).toBeTruthy();
-  await page.goto('/app/tickets');
+  await page.goto('/saved');
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   // The first visit installed the worker; this one runs through it and fills the cache.
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
-  await expect.poll(() => page.locator('body').innerText()).toMatch(/FF-RAVO-/);
+  await expect.poll(() => page.locator('body').innerText()).toMatch(/Ravolution/);
 
   await context.setOffline(true);
   await page.reload();
-  await expect.poll(() => page.locator('body').innerText()).toMatch(/Vé của tôi/);
-  await expect.poll(() => page.locator('body').innerText()).toMatch(/FF-RAVO-/);
+  await expect.poll(() => page.locator('body').innerText()).toMatch(/Đã lưu/);
   await context.setOffline(false);
 });
 
-test('signing out drops the cached tickets from the device', async ({ page }) => {
+test('signing out drops the cached personal answers from the device', async ({ page }) => {
   await page.request.post('/auth/login', { data: { identifier: 'minh@example.com', password: 'festfinder123' } });
-  await page.goto('/app/tickets');
+  await page.goto('/saved');
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.reload();
-  // Personal answers: the session, and anything under /me (tickets, saves, plans…).
+  // Personal answers: the session, and anything under /me (saves, plans…).
   const personal = () => page.evaluate(async () => {
     const found: string[] = [];
     for (const name of await caches.keys()) {
@@ -135,7 +134,7 @@ test('signing out drops the cached tickets from the device', async ({ page }) =>
     }
     return found;
   });
-  await expect.poll(async () => (await personal()).includes('/me/tickets')).toBe(true);
+  await expect.poll(async () => (await personal()).length > 0).toBe(true);
   await page.evaluate(() => fetch('/auth/session', { method: 'DELETE' }));
   // Public reads the app keeps making may cache again; nothing of the person's may.
   await expect.poll(personal).toEqual([]);
@@ -190,9 +189,9 @@ test.describe('full width on desktop', () => {
   }
 
   test('the app’s screens wear the site’s frame and fill the screen under its nav', async ({ page }) => {
-    await page.goto('/app/tickets');
+    await page.goto('/app/notifications');
     await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-    // The site's own nav on top, so leaving the list for a ticket never loses the way around.
+    // The site's own nav on top, so leaving the list for an app screen never loses the way around.
     const site = page.getByRole('navigation', { name: 'Chính' });
     await expect(site.getByRole('link', { name: 'Sự kiện' })).toBeVisible();
     expect((await page.getByRole('banner').first().boundingBox())!.height).toBe(65);

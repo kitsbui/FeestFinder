@@ -1,7 +1,7 @@
 'use client';
 /**
- * /studio/announce: a message to the chosen event's people. Who (saved it, ticket holders,
- * VIP, past guests, each with its size), which channels (with how many each reaches, nobody
+ * /studio/announce: a message to the chosen event's people. Who (saved it, going, past guests,
+ * each with its size), which channels (with how many each reaches, nobody
  * counted twice), subject and message, now or at a time; then what went out and what is
  * scheduled, with the open rate, and cancel for a scheduled one.
  */
@@ -18,7 +18,7 @@ import { StudioHead } from './head';
 import { Block, NeedEvent, Page } from './parts';
 import { useStudio } from './root';
 
-type Audience = 'saved' | 'holders' | 'vip' | 'past';
+type Audience = 'saved' | 'going' | 'past';
 type Channel = 'push' | 'zalo' | 'email';
 interface Sent { id: string; subject: string; body: string; status: 'scheduled' | 'sent' | string; audienceLabel: Pair; channels: Channel[]; sendAt: string; reach: number | null; openedPct: number | null }
 interface Estimate { audienceSize: number; reach: number; channels: { channel: Channel; reachable: number; rate: number }[] }
@@ -48,8 +48,8 @@ export function Announce() {
   useEffect(() => {
     if (!base) return;
     void loadSent();
-    void Promise.all((['saved', 'holders', 'vip', 'past'] as Audience[]).map((a) => FF.maybe(FF.get(`${base}/estimate?audience=${a}&channels=`), null)))
-      .then((r: (Estimate | null)[]) => setSizes({ saved: r[0]?.audienceSize, holders: r[1]?.audienceSize, vip: r[2]?.audienceSize, past: r[3]?.audienceSize }));
+    void Promise.all((['saved', 'going', 'past'] as Audience[]).map((a) => FF.maybe(FF.get(`${base}/estimate?audience=${a}&channels=`), null)))
+      .then((r: (Estimate | null)[]) => setSizes({ saved: r[0]?.audienceSize, going: r[1]?.audienceSize, past: r[2]?.audienceSize }));
   }, [base, loadSent]);
   useEffect(() => {
     if (!base) return;
@@ -72,7 +72,7 @@ export function Announce() {
     try { const out = await FF.del('/organizer/announcements/' + id); kd.toast(FF.text(out.message, lang)); void loadSent(); } catch (x) { kd.toast(FF.errorText(x, lang)); }
   };
   const audiences: { value: Audience; label: string }[] = [
-    { value: 'saved', label: T.audSaved }, { value: 'holders', label: T.audHolders }, { value: 'vip', label: T.audVip }, { value: 'past', label: T.audPast },
+    { value: 'saved', label: T.audSaved }, { value: 'going', label: T.audGoing }, { value: 'past', label: T.audPast },
   ];
   const chLabel: Record<Channel, string> = { push: 'Push', zalo: 'Zalo', email: 'Email' };
   const toggle = (c: Channel) => setChannels((cs) => (cs.includes(c) ? cs.filter((x) => x !== c) : [...cs, c]));

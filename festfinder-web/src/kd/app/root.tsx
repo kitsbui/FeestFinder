@@ -17,14 +17,14 @@ import { WebNav, type WebSection } from '../web/chrome';
 import { place } from './place';
 
 /** Which of the site's places a screen belongs to: it lights that tab. */
-export type AppTab = 'saved' | 'tickets' | 'me' | null;
+export type AppTab = 'saved' | 'me' | null;
 
 interface AppChrome { lang: Lang; setLang: (l: Lang) => void }
 const ChromeCtx = createContext<AppChrome>({ lang: 'vi', setLang: () => {} });
 /** The app's language and the way to change it (Settings). */
 export const useApp = () => useContext(ChromeCtx);
 
-const SECTION: Record<Exclude<AppTab, null>, WebSection> = { saved: 'saved', tickets: 'me', me: 'me' };
+const SECTION: Record<Exclude<AppTab, null>, WebSection> = { saved: 'saved', me: 'me' };
 
 export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang) => ReactNode }) {
   const [lang, setLangState] = useState<Lang>('vi');

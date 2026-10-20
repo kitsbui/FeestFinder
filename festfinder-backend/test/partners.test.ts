@@ -23,10 +23,11 @@ describe('the way out to tickets', () => {
     const before = await counted();
     const res = await env.as().get('/go/ravo?src=detail');
     assert.equal(res.status, 302);
-    assert.equal(res.headers.location, 'https://ticketbox.vn/ravolution-2026', 'FeestFinder sells no tickets');
+    // FeestFinder sells no tickets; a seller with no deal still sees FeestFinder in its analytics.
+    assert.equal(res.headers.location, 'https://ticketbox.vn/ravolution-2026?utm_source=feestfinder&utm_medium=referral&utm_campaign=ravo&utm_content=detail', 'FeestFinder sells no tickets');
     assert.equal(res.headers['x-robots-tag'], 'noindex, nofollow');
     // The old tier and quantity parameters change nothing.
-    assert.equal((await env.as().get('/go/ravo?src=tier&tier=00000000-0000-4000-8000-000000000000&qty=3')).headers.location, 'https://ticketbox.vn/ravolution-2026');
+    assert.equal((await env.as().get('/go/ravo?src=tier&tier=00000000-0000-4000-8000-000000000000&qty=3')).headers.location, 'https://ticketbox.vn/ravolution-2026?utm_source=feestfinder&utm_medium=referral&utm_campaign=ravo&utm_content=tier');
     const rows = await clicks('ravo');
     assert.deepEqual(rows.map((r) => [r.target, r.source]), [['organizer', 'detail'], ['organizer', 'tier']]);
     assert.equal(await counted(), before + 1, 'one person, one counted click');
@@ -35,11 +36,11 @@ describe('the way out to tickets', () => {
     assert.equal(detail.tickets, undefined);
   });
 
-  it('sends it to the organiser’s ticket link as it is when no partner sells there', async () => {
+  it('sends it to the organiser’s ticket link, tagged with UTM, when no partner sells there', async () => {
     // Every Rap Việt tier is gone; the organiser's own page may still have returns.
     const res = await env.as().get('/go/rapviet?src=hero');
     assert.equal(res.status, 302);
-    assert.equal(res.headers.location, 'https://ticketbox.vn/rap-viet-live');
+    assert.equal(res.headers.location, 'https://ticketbox.vn/rap-viet-live?utm_source=feestfinder&utm_medium=referral&utm_campaign=rapviet&utm_content=hero');
     assert.deepEqual((await clicks('rapviet')).map((r) => [r.target, r.target_host, r.partner_id]), [['organizer', 'ticketbox.vn', null]]);
   });
 
@@ -114,8 +115,8 @@ describe('the way out to tickets', () => {
     assert.equal((await env.as().get(`/partners/ticketbox/postback?token=${res.body.token}&order=A2`)).status, 201);
     const off = await env.as(admin).patch(`/admin/partners/${partnerId}`, { enabled: false });
     assert.equal(off.body.enabled, false);
-    // Off: links go out untouched.
-    assert.equal((await env.as().get('/go/rapviet')).headers.location, 'https://ticketbox.vn/rap-viet-live');
+    // Off: links go out without the partner's tracking, as for any seller without a deal.
+    assert.equal((await env.as().get('/go/rapviet')).headers.location, 'https://ticketbox.vn/rap-viet-live?utm_source=feestfinder&utm_medium=referral&utm_campaign=rapviet&utm_content=detail');
   });
 
   it('keeps search engines out of the redirects', async () => {

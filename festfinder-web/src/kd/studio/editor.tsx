@@ -21,14 +21,15 @@ import { Button, buttonClass, Chip, IconButton } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Menu, MenuItem, MenuSeparator } from '../ui/menu';
 import { Card as Panel, Status } from '../ui/parts';
+import { fromRows, TicketLinks, toRows, type TicketLinkRow } from '../ui/ticket-links';
 import { act, ErrorBox, stamp, useAsk, useOptions } from '../console/kit';
 import { STUDIO } from './copy';
 import { missingText } from './events';
 import { statusTone } from './head';
 import { Block, Page } from './parts';
 import { useStudio } from './root';
-import { Appeal, Lineup, newTier, Tiers, Upload, VenueField } from './fields';
-import type { Tier, Venue } from './wizard-model';
+import { Appeal, Lineup, Upload, VenueField } from './fields';
+import type { Venue } from './wizard-model';
 
 const STYLES = Object.keys(STYLE_LABEL);
 const STYLE_MAX = 5;
@@ -38,23 +39,21 @@ const REVIEWED = ['title', 'startsOn', 'endsOn', 'startTime', 'endTime', 'venueI
 /** The sections a reviewed field lives in, tagged on a live listing. */
 const REVIEWED_SECTIONS = new Set(['basics', 'when', 'where', 'tickets', 'media']);
 
-interface SavedTier { key: string; name: Pair; note: Pair | null; price: number; capacity: number; sold: number; isLast: boolean; salesOpenAt: string | null; priceRiseOn: string | null; priceRiseTo: number | null }
 interface Listing {
   id: string; slug: string; status: string; statusLabel: Pair; reviewPending?: { at: string; fields: string[] } | null; title: string; styles: string[]; eventType: string | null; description: Pair | null;
   city: string; currency: string; logoUrl: string | null; coverUrl: string | null;
   startsOn: string | null; endsOn: string | null; startTime: string | null; endTime: string | null;
   venue: { id: string | null; name: string | null; address: string | null; area: string | null };
   entryMode: 'free' | 'paid' | 'donation'; priceFrom: number; capacity: number | null; age: string | null; lineup: string[] | null;
-  ticketUrl: string | null; eventUrl: string | null; brandUrl: string | null; submittedAt: string | null;
+  ticketUrl: string | null; ticketLinks?: { url: string; countries: string[] }[]; eventUrl: string | null; brandUrl: string | null; soldOut?: boolean; submittedAt: string | null;
   quality: { score: number; bandLabel: Pair; checks: { key: string; ok: boolean; points: number; label: Pair }[] };
-  tiers?: SavedTier[];
   moderation?: { reason: Pair | null; message: string | null; decidedAt: string; appeal: { state: string; closesAt: string } | null } | null;
 }
 interface Form {
   title: string; styles: string[]; eventType: string; age: string; descVi: string; descEn: string;
   multiDay: boolean; startsOn: string; endsOn: string; startTime: string; endTime: string;
   venueId: string | null; venueName: string; city: string; area: string; address: string;
-  entryMode: 'free' | 'paid' | 'donation'; price: string; capacity: string; ticketUrl: string; sellHere: boolean; tiers: Tier[];
+  entryMode: 'free' | 'paid' | 'donation'; price: string; capacity: string; ticketUrl: string; soldOut: boolean; ticketLinks: TicketLinkRow[];
   lineup: string[]; logoUrl: string | null; coverUrl: string | null; eventUrl: string; brandUrl: string;
 }
 
@@ -68,8 +67,7 @@ function fromListing(d: Listing): Form {
     multiDay: !!(d.endsOn && d.startsOn && d.endsOn !== d.startsOn), startsOn: d.startsOn ?? '', endsOn: d.endsOn ?? '', startTime: d.startTime ?? '', endTime: d.endTime ?? '',
     venueId: d.venue.id, venueName: d.venue.name ?? '', city: d.city, area: d.venue.id ? '' : d.venue.area ?? '', address: d.venue.id ? '' : d.venue.address ?? '',
     entryMode: d.entryMode, price: d.priceFrom ? String(d.priceFrom) : '', capacity: d.capacity ? String(d.capacity) : '', ticketUrl: d.ticketUrl ?? '',
-    sellHere: !!d.tiers?.length,
-    tiers: (d.tiers ?? []).map((t) => ({ key: t.key, name: t.name.vi || t.name.en, price: String(t.price), capacity: String(t.capacity), sold: t.sold })),
+    soldOut: !!d.soldOut, ticketLinks: toRows(d.ticketLinks),
     lineup: d.lineup ?? [], logoUrl: d.logoUrl, coverUrl: d.coverUrl, eventUrl: d.eventUrl ?? '', brandUrl: d.brandUrl ?? '',
   };
 }
@@ -85,21 +83,12 @@ function payload(f: Form) {
     venueId: f.venueId, venueName: f.venueName.trim() || null,
     ...(f.venueId ? {} : { city: f.city, area: f.area.trim() || null, address: f.address.trim() || null }),
     entryMode: f.entryMode,
-    ...(f.entryMode !== 'paid' ? { priceFrom: 0 } : f.sellHere ? {} : { priceFrom: int(f.price) }),
+    ...(f.entryMode !== 'paid' ? { priceFrom: 0 } : { priceFrom: int(f.price) }),
+    soldOut: f.entryMode === 'paid' && f.soldOut,
+    ticketLinks: f.entryMode === 'paid' ? fromRows(f.ticketLinks) : [],
     capacity: f.capacity ? int(f.capacity) || null : null,
     ticketUrl: link(f.ticketUrl), lineup: f.lineup, logoUrl: f.logoUrl, coverUrl: f.coverUrl, eventUrl: link(f.eventUrl), brandUrl: link(f.brandUrl),
   };
-}
-
-/** Tiers for PUT …/tiers: what the form edits, keeping what it doesn't (last tier, note, sale times, price rise). */
-function tierBody(f: Form, saved: SavedTier[]) {
-  return f.tiers.filter((t) => t.name.trim() && int(t.price) > 0 && int(t.capacity) > 0).map((t) => {
-    const o = saved.find((x) => x.key === t.key);
-    return {
-      key: t.key, name: { vi: t.name.trim(), en: o && o.name.vi === t.name.trim() ? o.name.en : t.name.trim() }, price: int(t.price), capacity: int(t.capacity),
-      isLast: o?.isLast ?? false, note: o?.note ?? null, salesOpenAt: o?.salesOpenAt ?? null, priceRiseOn: o?.priceRiseOn ?? null, priceRiseTo: o?.priceRiseTo ?? null,
-    };
-  });
 }
 
 /** What submit still needs: the API's missingForSubmit, read from the form. */
@@ -108,7 +97,7 @@ function missingOf(f: Form) {
   if (!f.title.trim()) m.push('title');
   if (!f.startsOn || !f.startTime || !f.endTime) m.push('dates');
   if (!f.venueName.trim()) m.push('venue');
-  if (f.entryMode === 'paid' && (!(f.sellHere ? f.tiers.some((t) => int(t.price) > 0) : int(f.price) > 0) || !f.ticketUrl.trim())) m.push('price');
+  if (f.entryMode === 'paid' && (!(int(f.price) > 0) || !f.ticketUrl.trim())) m.push('price');
   if (!f.logoUrl) m.push('logo');
   if (!f.eventUrl.trim()) m.push('eventUrl');
   return m;
@@ -128,7 +117,6 @@ export function EventEditor({ id }: { id: string }) {
   const [save, setSave] = useState<{ state: 'idle' | 'saving' | 'saved' | 'error'; at?: string; error?: string }>({ state: 'idle' });
   const [busy, setBusy] = useState(false);
   const base = useRef('');
-  const tierBase = useRef('[]');
 
   const load = useCallback(async () => {
     setError(null);
@@ -136,7 +124,6 @@ export function EventEditor({ id }: { id: string }) {
       const out: Listing = await FF.get('/organizer/events/' + encodeURIComponent(id));
       const form = fromListing(out);
       base.current = JSON.stringify(payload(form));
-      tierBase.current = JSON.stringify(tierBody(form, out.tiers ?? []));
       setD(out);
       setF(form);
       setSave({ state: 'idle' });
@@ -146,7 +133,6 @@ export function EventEditor({ id }: { id: string }) {
   useEffect(() => { FF.maybe(FF.get('/venues?limit=200'), { items: [] }).then((v: { items: Venue[] }) => setVenues(v.items)); }, []);
 
   const body = useMemo(() => (f ? payload(f) : null), [f]);
-  const tiers = useMemo(() => (f && d ? tierBody(f, d.tiers ?? []) : []), [f, d]);
   const changed = useMemo(() => {
     if (!body) return [] as string[];
     const was = JSON.parse(base.current || '{}') as Record<string, unknown>;
@@ -154,9 +140,7 @@ export function EventEditor({ id }: { id: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- base moves with save()
   }, [body, save]);
   const currency = opts?.cities.find((c) => c.value === (f?.venueId ? d?.city : f?.city))?.currency ?? d?.currency ?? 'VND';
-  const canSellHere = currency === 'VND';
-  const tiersChanged = !!f && f.entryMode === 'paid' && f.sellHere && canSellHere && tiers.length > 0 && JSON.stringify(tiers) !== tierBase.current;
-  const dirty = changed.length > 0 || tiersChanged;
+  const dirty = changed.length > 0;
   const readOnly = !!d && ['removed', 'cancelled'].includes(d.status);
   const draftLike = !!d && ['draft', 'rejected'].includes(d.status);
   const errors = useMemo(() => {
@@ -192,11 +176,6 @@ export function EventEditor({ id }: { id: string }) {
         out = { ...d, ...res };
       }
       base.current = JSON.stringify(body);
-      if (tiersChanged) {
-        await FF.put(`/organizer/events/${d.id}/tiers`, { tiers });
-        tierBase.current = JSON.stringify(tiers);
-        out = await FF.get('/organizer/events/' + d.id);
-      }
       setD(out);
       // The public page shows the change at once, not after its cache.
       if (out.slug) void freshen('e', out.slug);
@@ -372,12 +351,8 @@ export function EventEditor({ id }: { id: string }) {
 
           <Block title={T.sTickets} aside={tag('tickets')}>
             <Segmented className="max-w-[420px]" full label={T.fMode} value={f.entryMode} onChange={(v) => set({ entryMode: v })} options={(opts?.entryModes as { value: Form['entryMode']; label: Pair }[] | undefined)?.map((m) => ({ value: m.value, label: tx(m.label, lang) })) ?? [{ value: 'paid' as const, label: T.paid }, { value: 'free' as const, label: T.free }]} />
-            {f.entryMode === 'paid' && canSellHere ? (
-              <SwitchRow label={T.fSellHere} note={T.fSellNote} checked={f.sellHere} disabled={!!d.tiers?.some((t) => t.sold > 0)} onChange={(v) => set({ sellHere: v, tiers: v && !f.tiers.length ? [newTier(f.price)] : f.tiers })} />
-            ) : null}
-            {f.entryMode === 'paid' && f.sellHere && canSellHere ? <Tiers lang={lang} currency={currency} rows={f.tiers} onChange={(t) => set({ tiers: t })} /> : null}
             <div className={grid}>
-              {f.entryMode === 'paid' && !(f.sellHere && canSellHere)
+              {f.entryMode === 'paid'
                 ? field('edPrice', fill(T.fPrice, { c: currency === 'VND' ? '₫' : currency }), <Input id="edPrice" className="kd-num" inputMode="numeric" value={f.price ? int(f.price).toLocaleString(INTL[lang]) : ''} onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, '') })} />)
                 : null}
               {field('edCap', <>{T.fCapacity} <span className="font-normal text-fg-3">{T.optional}</span></>, <Input id="edCap" className="kd-num" inputMode="numeric" value={f.capacity} onChange={(e) => set({ capacity: e.target.value.replace(/[^0-9]/g, '') })} />)}
@@ -385,6 +360,8 @@ export function EventEditor({ id }: { id: string }) {
             {field('edTicket', f.entryMode === 'paid' ? T.fTicketUrl : <>{T.fRegisterUrl} <span className="font-normal text-fg-3">{T.optional}</span></>, (
               <Input id="edTicket" type="url" inputMode="url" placeholder="https://" invalid={!!errors.ticketUrl} value={f.ticketUrl} onChange={(e) => set({ ticketUrl: e.target.value })} />
             ), errors.ticketUrl)}
+            {f.entryMode === 'paid' ? <TicketLinks lang={lang} id="edLinks" value={f.ticketLinks} onChange={(ticketLinks) => set({ ticketLinks })} /> : null}
+            {f.entryMode === 'paid' ? <SwitchRow label={T.fSoldOut} checked={f.soldOut} onChange={(v) => set({ soldOut: v })} /> : null}
           </Block>
 
           <Block title={T.sLineup} id="edLineup">

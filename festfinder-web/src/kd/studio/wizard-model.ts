@@ -21,14 +21,12 @@ export function writeLocal(f: Form | null) {
 
 export interface City { slug: string; name: Pair; currency: string }
 export interface Venue { id: string; name: string; address: string | null; area: string | null }
-export interface Tier { key: string; name: string; price: string; capacity: string; sold: number }
 export interface Form {
   title: string; styles: string[]; description: string; lineup: string[];
   logoUrl: string | null; coverUrl: string | null; eventUrl: string;
   date: string; start: string; end: string;
   venueId: string | null; venueName: string; city: string; age: (typeof AGES)[number];
   entryMode: 'paid' | 'free'; price: string; ticketUrl: string; register: boolean;
-  sellHere: boolean; tiers: Tier[];
 }
 export interface Draft {
   id: string; slug: string; status: string; statusLabel: Pair; title: string; genre: string | null; styles?: string[]; description: Pair | null;
@@ -37,7 +35,6 @@ export interface Draft {
   venue: { id: string | null; name: string | null };
   entryMode: 'free' | 'paid' | 'donation'; priceFrom: number; age: string | null; lineup: string[] | null;
   ticketUrl: string | null; eventUrl: string | null;
-  tiers?: { key: string; name: Pair; price: number; capacity: number; sold: number }[];
   moderation?: { decision: string; reason: Pair | null; message: string | null; appeal: { state: string; closesAt: string } | null } | null;
 }
 
@@ -64,8 +61,6 @@ export function fromDraft(d: Draft | null, orgLogo: string | null, city: string)
     price: d?.priceFrom ? String(d.priceFrom) : '',
     ticketUrl: d?.ticketUrl ?? '',
     register: d?.entryMode === 'free' && !!d.ticketUrl,
-    sellHere: !!d?.tiers?.length,
-    tiers: (d?.tiers ?? []).map((t) => ({ key: t.key, name: t.name.vi || t.name.en, price: String(t.price), capacity: String(t.capacity), sold: t.sold })),
   };
 }
 
@@ -90,19 +85,16 @@ export function payload(f: Form) {
     ...(f.venueId ? {} : { city: f.city }),
     age: f.age,
     entryMode: f.entryMode,
-    ...(f.entryMode === 'paid' && !f.sellHere ? { priceFrom: int(f.price) } : {}),
+    ...(f.entryMode === 'paid' ? { priceFrom: int(f.price) } : {}),
     ticketUrl: f.entryMode === 'free' && !f.register ? null : url(f.ticketUrl),
   };
 }
 export type Payload = ReturnType<typeof payload>;
 
-export const tierRows = (f: Form) => f.tiers.filter((t) => t.name.trim() && int(t.price) > 0 && int(t.capacity) > 0);
-export const tierBody = (f: Form) => tierRows(f).map((t) => ({ key: t.key, name: { vi: t.name.trim(), en: t.name.trim() }, price: int(t.price), capacity: int(t.capacity) }));
-
 /** Which steps are complete, and what submit still needs (the API's missingForSubmit, read from the form). */
 export function check(f: Form) {
   const p = payload(f);
-  const priced = f.entryMode === 'free' || ((f.sellHere ? tierRows(f).length > 0 : int(f.price) > 0) && !!p.ticketUrl);
+  const priced = f.entryMode === 'free' || (int(f.price) > 0 && !!p.ticketUrl);
   const missing: { key: string; step: number }[] = [];
   if (!p.title) missing.push({ key: 'mTitle', step: 0 });
   if (!f.styles.length) missing.push({ key: 'mGenre', step: 0 });

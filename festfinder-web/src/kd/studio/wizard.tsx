@@ -31,8 +31,8 @@ import { Logo } from '../ui/logo';
 import { BackLink } from '../ui/back-link';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
-import { AGES, check, type City, COMMON_STYLES, type Draft, type Form, fromDraft, int, NAME_MAX, payload, type Payload, readLocal, STEP_KEYS, STYLE_MAX, STYLES, tierBody, tierRows, url, type Venue, writeLocal } from './wizard-model';
-import { Appeal, Lineup, newTier, Tiers, Upload, VenueField } from './fields';
+import { AGES, check, type City, COMMON_STYLES, type Draft, type Form, fromDraft, int, NAME_MAX, payload, type Payload, readLocal, STEP_KEYS, STYLE_MAX, STYLES, url, type Venue, writeLocal } from './wizard-model';
+import { Appeal, Lineup, Upload, VenueField } from './fields';
 
 
 export function Wizard() {
@@ -51,7 +51,6 @@ export function Wizard() {
   const [sent, setSent] = useState<{ boost: 'none' | 'open' | 'busy' } | null>(null);
   const [busy, setBusy] = useState(false);
   const base = useRef<string>('');
-  const tierBase = useRef<string>('');
   const id = useRef<string | null>(null);
 
   // The cities, the verified venues, and the draft named in the address.
@@ -69,7 +68,6 @@ export function Wizard() {
       const form = kept ? { ...fromDraft(null, org.logoUrl, meta.defaultCity), ...kept } : fromDraft(d, org.logoUrl, meta.defaultCity);
       id.current = d?.id ?? null;
       base.current = d ? JSON.stringify(payload(form)) : '';
-      tierBase.current = JSON.stringify(tierBody(form));
       setDraft(d);
       setF(form);
       if (d) setOpen(check(form).missing[0]?.step ?? 3);
@@ -80,7 +78,6 @@ export function Wizard() {
   const live = draft?.status === 'live' || draft?.status === 'in_review';
   const city = cities.find((c) => c.slug === (f?.venueId ? draft?.city ?? f.city : f?.city));
   const currency = city?.currency ?? draft?.currency ?? 'VND';
-  const canSellHere = currency === 'VND';
 
   // Saves what changed: the draft is created on the first change, then patched. Live listings save on the button only.
   const inflight = useRef<Promise<boolean>>(Promise.resolve(true));
@@ -89,13 +86,11 @@ export function Wizard() {
     inflight.current = inflight.current.then(() => saveNow(form));
     return inflight.current;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- saveNow reads the refs and the latest render
-  }, [canSellHere, draft, lang, org, reload]);
+  }, [draft, lang, org, reload]);
   const saveNow = async (form: Form): Promise<boolean> => {
     const body = payload(form);
     const json = JSON.stringify(body);
-    const tiers = form.entryMode === 'paid' && form.sellHere && canSellHere ? tierBody(form) : [];
-    const tiersJson = JSON.stringify(tiers);
-    if (json === base.current && (tiersJson === tierBase.current || !tiers.length)) return true;
+    if (json === base.current) return true;
     setSave({ state: 'saving' });
     try {
       let out: Draft;
@@ -115,10 +110,6 @@ export function Wizard() {
         if ('message' in (out as object)) kd.toast(FF.text((out as unknown as { message: Pair }).message, lang));
       }
       base.current = json;
-      if (tiers.length && tiersJson !== tierBase.current) {
-        await FF.put('/organizer/events/' + id.current + '/tiers', { tiers });
-        tierBase.current = tiersJson;
-      }
       setDraft((d) => ({ ...(d ?? {}), ...out }));
       setSave({ state: 'saved', at: new Date().toLocaleTimeString((lang === 'en' ? 'en-GB' : INTL[lang]), { hour: '2-digit', minute: '2-digit' }) });
       return true;
@@ -194,8 +185,7 @@ export function Wizard() {
   const sums = [
     [f.title.trim(), f.styles.map((k) => styleLabel(k, lang)).join(', ')].filter(Boolean).join(' · '),
     [f.date ? whenShort({ startsOn: f.date, endsOn: f.date, startTime: f.start || null, endTime: f.end || null }, lang) : '', f.venueName].filter(Boolean).join(' · '),
-    f.entryMode === 'free' ? T.free : f.sellHere && tierRows(f).length
-      ? tierRows(f).map((t) => `${t.name} ${money(int(t.price), currency, lang)}`).join(' · ')
+    f.entryMode === 'free' ? T.free
       : int(f.price) ? fill(T.fPrice, { c: '' }).replace(/\s*\(\)/, '') + ' ' + money(int(f.price), currency, lang) : '',
     missing.length ? fill(T.wDone, { n: done.filter(Boolean).length }) : '',
   ];
@@ -334,19 +324,14 @@ export function Wizard() {
                 <Segmented full className="max-w-[360px]" label={T.fMode} value={f.entryMode} onChange={(v) => set({ entryMode: v })} options={[{ value: 'paid', label: T.paid }, { value: 'free', label: T.free }]} />
                 {f.entryMode === 'paid' ? (
                   <>
-                    {canSellHere ? <SwitchRow label={T.fSellHere} note={T.fSellNote} checked={f.sellHere} disabled={!!draft?.tiers?.some((t) => t.sold > 0) || (f.sellHere && tierBase.current !== '[]')} onChange={(v) => set({ sellHere: v, tiers: v && !f.tiers.length ? [newTier(f.price)] : f.tiers })} /> : null}
-                    {f.sellHere && canSellHere ? (
-                      <Tiers lang={lang} currency={currency} rows={f.tiers} onChange={(tiers) => set({ tiers })} />
-                    ) : (
-                      <div className="flex max-w-[260px] flex-col gap-2">
-                        <FieldLabel htmlFor="evPrice">{fill(T.fPrice, { c: currency === 'VND' ? '₫' : currency })}</FieldLabel>
-                        <Input id="evPrice" className="kd-num" inputMode="numeric" value={f.price ? int(f.price).toLocaleString(INTL[lang]) : ''} placeholder="450.000" onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, '') })} />
-                      </div>
-                    )}
+                    <div className="flex max-w-[260px] flex-col gap-2">
+                      <FieldLabel htmlFor="evPrice">{fill(T.fPrice, { c: currency === 'VND' ? '₫' : currency })}</FieldLabel>
+                      <Input id="evPrice" className="kd-num" inputMode="numeric" value={f.price ? int(f.price).toLocaleString(INTL[lang]) : ''} placeholder="450.000" onChange={(e) => set({ price: e.target.value.replace(/[^0-9]/g, '') })} />
+                    </div>
                     <div className="flex flex-col gap-2">
                       <FieldLabel htmlFor="evLink">{T.fTicketUrl}</FieldLabel>
                       <Input id="evLink" type="url" inputMode="url" value={f.ticketUrl} placeholder="https://ticketbox.vn/…" invalid={!!f.ticketUrl.trim() && !url(f.ticketUrl)} onChange={(e) => set({ ticketUrl: e.target.value })} />
-                      {f.ticketUrl.trim() && !url(f.ticketUrl) ? <FieldError>{T.fUrlRule}</FieldError> : <span className="kd-s">{f.sellHere && canSellHere ? T.fSellNote : T.fTicketNote}</span>}
+                      {f.ticketUrl.trim() && !url(f.ticketUrl) ? <FieldError>{T.fUrlRule}</FieldError> : <span className="kd-s">{T.fTicketNote}</span>}
                     </div>
                   </>
                 ) : (
@@ -435,7 +420,7 @@ export function Wizard() {
                   <span className="kd-ell">{[f.date ? whenShort({ startsOn: f.date, endsOn: f.date, startTime: f.start || null, endTime: f.end || null }, lang) : T.noDate, f.venueName].filter(Boolean).join(' · ')}</span>
                 </span>
                 {(() => {
-                  const p = f.sellHere && tierRows(f).length ? Math.min(...tierRows(f).map((t) => int(t.price))) : int(f.price);
+                  const p = int(f.price);
                   if (f.entryMode !== 'free' && !p) return null;
                   return <span className={cx('kd-mb kd-num mt-0.5', f.entryMode === 'free' && 'text-info')}>{f.entryMode === 'free' ? T.free : priceLine({ isFree: false, entryMode: 'paid', priceFrom: p, currency }, lang)}</span>;
                 })()}

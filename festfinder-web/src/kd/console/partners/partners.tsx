@@ -21,7 +21,7 @@ import { Sheet } from '../../ui/sheet';
 import { Row, Table, Tabs } from '../../ui/shell';
 import { act, Body, Drawer, Empty, ErrorBox, Field, KV, Loading, PageHead, Pill, stamp, useAsk, useLoad } from '../kit';
 import { useConsole } from '../root';
-import { Cell, copyText, Tile, Tiles, Two } from '../orders/parts';
+import { Cell, copyText, Tile, Tiles, Two } from '../parts';
 import { PARTNERS } from './copy';
 
 interface Total { currency: string; orders: number; sales: number; earned: number; pending: number }

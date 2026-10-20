@@ -8,6 +8,7 @@ export const MOD = {
   tabsLabel: { en: 'What was reported', vi: 'Loại báo cáo' },
   tabReports: { en: 'User reports', vi: 'Báo cáo người dùng' },
   tabPosts: { en: 'Discussion posts', vi: 'Bài thảo luận' },
+  tabComments: { en: 'All comments', vi: 'Mọi bình luận' },
   tabMoments: { en: 'Moments', vi: 'Khoảnh khắc' },
   tabMixComments: { en: 'Mix comments', vi: 'Bình luận mix' },
   noMixComments: { en: 'No reported comments', vi: 'Không có bình luận bị báo cáo' },
@@ -29,6 +30,7 @@ export const MOD = {
   noPhotos: { en: 'No reported photos', vi: 'Không có ảnh bị báo cáo' },
   // posts
   noPosts: { en: 'No reported posts', vi: 'Không có bài bị báo cáo' },
+  noComments: { en: 'No comments yet', vi: 'Chưa có bình luận' },
   colPost: { en: 'Post', vi: 'Bài viết' },
   colEvent: { en: 'Event', vi: 'Sự kiện' },
   colWhy: { en: 'Why', vi: 'Lý do' },

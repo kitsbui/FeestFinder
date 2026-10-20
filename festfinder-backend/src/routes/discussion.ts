@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Ctx } from '../context.ts';
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
-import { badRequest, conflict, forbidden, notFound, tooMany } from '../lib/errors.ts';
+import { badRequest, forbidden, notFound, tooMany } from '../lib/errors.ts';
 import { L, type Localized } from '../lib/i18n.ts';
 import { initialsOf } from '../lib/contact.ts';
 import { vnDate, vnTime } from '../lib/time.ts';
@@ -12,7 +12,7 @@ import { decodeCursor, isUuid, page } from '../http/sql.ts';
 import { requireAdmin, requireUser, requireWriter } from '../http/guards.ts';
 import { notifyOrganizer, notifyUser } from '../services/notify.ts';
 import {
-  badgesFor, BADGE_LABEL, checkPostText, isEventTeam, KIND_LABEL, kindOpen, kindsShown, nameOf, phaseOf, POST_KINDS, type Badge, type PostKind,
+  badgesFor, BADGE_LABEL, checkPostText, isEventTeam, KIND_LABEL, kindsShown, nameOf, phaseOf, POST_KINDS, type Badge, type PostKind,
 } from '../services/community.ts';
 
 /** Reports that hide a post until someone on the team looks at it. */
@@ -32,9 +32,9 @@ async function eventFor(ctx: Ctx, idOrSlug: string) {
 
 const POST_COLUMNS = `
   p.id, p.event_id, p.user_id, p.parent_id, p.kind, p.body, p.set_id, p.heard_at, p.status, p.pinned, p.official,
-  p.helpful_count, p.reply_count, p.report_count, p.created_at, p.edited_at, p.photo_url,
-  u.name as author_name, u.photo_url as author_photo, st.artist as set_artist, st.starts_at as set_starts_at`;
-const POST_FROM = `from event_posts p join users u on u.id = p.user_id left join sets st on st.id = p.set_id`;
+  p.helpful_count, p.reply_count, p.report_count, p.created_at, p.edited_at, p.photo_url, p.reply_to_user_id,
+  u.name as author_name, u.photo_url as author_photo, st.artist as set_artist, st.starts_at as set_starts_at, rt.name as reply_to_name`;
+const POST_FROM = `from event_posts p join users u on u.id = p.user_id left join sets st on st.id = p.set_id left join users rt on rt.id = p.reply_to_user_id`;
 
 /** What a viewer may see: visible posts, plus their own and (for the team) hidden ones. */
 function visibility(viewer: Viewer, team: boolean, at: number): { sql: string; values: unknown[] } {
@@ -42,6 +42,9 @@ function visibility(viewer: Viewer, team: boolean, at: number): { sql: string; v
   if (viewer) return { sql: `(p.status = 'visible' or (p.status = 'hidden' and p.user_id = $${at}))`, values: [viewer.id] };
   return { sql: `p.status = 'visible'`, values: [] };
 }
+
+/** How long an author may change a comment's words after posting it. */
+const EDIT_MINUTES = 15;
 
 function present(r: any, o: { badges: Map<string, Badge[]>; helped: Set<string>; viewer: Viewer; team: boolean; replies?: any[] }) {
   const removed = r.status === 'removed';
@@ -67,6 +70,10 @@ function present(r: any, o: { badges: Map<string, Badge[]>; helped: Set<string>;
     replyCount: r.reply_count as number,
     createdAt: r.created_at as Date,
     edited: !!r.edited_at,
+    // A reply to a reply: whom it answers (the screen writes "@name").
+    replyTo: r.reply_to_user_id ? { id: r.reply_to_user_id as string, name: (r.reply_to_name as string | null)?.trim() || null } : null,
+    // Its author may still change the words for this long (EDIT_MINUTES).
+    editableUntil: removed ? null : new Date(new Date(r.created_at).getTime() + EDIT_MINUTES * 60_000),
     me: o.viewer ? { mine: r.user_id === o.viewer.id, helped: o.helped.has(r.id) } : null,
     canModerate: o.team,
     replies: o.replies,
@@ -108,7 +115,7 @@ export async function discussionCounts(q: Queryable, eventId: string): Promise<R
 function canWrite(req: FastifyRequest): 'ok' | 'signin' | 'verify_phone' {
   const u = req.session?.user;
   if (!u) return 'signin';
-  return u.phoneVerified ? 'ok' : 'verify_phone';
+  return u.phoneVerified || !req.server.ctx.config.requirePhoneToPost ? 'ok' : 'verify_phone';
 }
 
 export default async function discussionRoutes(app: FastifyInstance) {
@@ -124,22 +131,24 @@ export default async function discussionRoutes(app: FastifyInstance) {
     const shown = kindsShown(phase);
     const f = parse(z.object({
       kind: z.enum(POST_KINDS).optional(),
-      sort: z.enum(['top', 'new']).default('top'),
+      sort: z.enum(['top', 'new']).optional(),
       cursor: z.string().optional(),
       limit: limit(30, 10),
     }), req.query);
-    const kind = f.kind ?? shown[0];
+    // One stream of every kind, newest first, unless a kind is asked for (owner, 2026-10-20: comments like a feed).
+    const kind = f.kind ?? null;
     const viewer = viewerOf(req);
     const team = await isEventTeam(ctx.db, ev.id, viewer);
     const offset = decodeCursor(f.cursor);
     const vis = visibility(viewer, team, 3);
-    const order = f.sort === 'new'
+    const sort = f.sort ?? (kind ? 'top' : 'new');
+    const order = sort === 'new'
       ? 'p.pinned desc, p.created_at desc'
       : `p.pinned desc, (exists (select 1 from event_posts a where a.parent_id = p.id and a.official and a.status = 'visible')) desc, p.helpful_count desc, p.reply_count desc, p.created_at desc`;
     // A deleted first post stays as a placeholder while its thread has replies.
     const rows = await many<any>(ctx.db,
       `select ${POST_COLUMNS} ${POST_FROM}
-        where p.event_id = $1 and p.kind = $2 and p.parent_id is null and (${vis.sql} or (p.status = 'removed' and p.reply_count > 0))
+        where p.event_id = $1 and ($2::text is null or p.kind = $2) and p.parent_id is null and (${vis.sql} or (p.status = 'removed' and p.reply_count > 0))
         order by ${order} limit ${f.limit + 1} offset ${offset}`, [ev.id, kind, ...vis.values]);
     const p = page(rows, offset, f.limit);
     // The first three replies of each thread, the organiser's answer first.
@@ -157,7 +166,7 @@ export default async function discussionRoutes(app: FastifyInstance) {
       phase,
       kind,
       kinds: [...new Set([...shown, ...POST_KINDS.filter((k) => counts[k] > 0)])].map((k) => ({
-        kind: k, label: KIND_LABEL[k], count: counts[k], open: kindOpen(k, phase, ev, now),
+        kind: k, label: KIND_LABEL[k], count: counts[k], open: true,
       })),
       items,
       nextCursor: p.nextCursor,
@@ -205,15 +214,18 @@ export default async function discussionRoutes(app: FastifyInstance) {
     }
 
     let parent: any = null;
+    let replyTo: string | null = null;
     if (body.parentId) {
       parent = await one<any>(ctx.db, 'select id, user_id, kind, status, parent_id, body from event_posts where id = $1 and event_id = $2', [body.parentId, ev.id]);
       if (!parent || parent.status === 'removed') throw notFound(L('That post is gone', 'Bài này không còn'));
-      if (parent.parent_id) throw badRequest('reply_depth', L('Reply to the first post of the thread', 'Hãy trả lời bài đầu của chủ đề'));
+      // A reply to a reply joins the first post's thread and says whom it answers.
+      if (parent.parent_id) {
+        replyTo = parent.user_id;
+        parent = await one<typeof parent>(ctx.db, 'select id, user_id, kind, status, parent_id, body from event_posts where id = $1', [parent.parent_id]);
+        if (!parent || parent.status === 'removed') throw notFound(L('That post is gone', 'Bài này không còn'));
+      }
     }
     const kind: PostKind = parent ? parent.kind : (body.kind ?? 'talk');
-    if (!parent && !kindOpen(kind, phaseOf(ev, now), ev, now)) {
-      throw conflict('thread_closed', L('This section is closed for new posts right now', 'Mục này đang đóng, chưa đăng mới được'));
-    }
     let setId: string | null = null;
     if (kind === 'trackid' && body.setId) {
       const set = await one<{ id: string }>(ctx.db, 'select id from sets where id = $1 and event_id = $2', [body.setId, ev.id]);
@@ -232,18 +244,21 @@ export default async function discussionRoutes(app: FastifyInstance) {
 
     const row = await ctx.db.tx(async (q) => {
       const p = await one<any>(q,
-        `insert into event_posts (event_id, user_id, parent_id, kind, body, set_id, heard_at, official, photo_url, created_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
-        [ev.id, s.user.id, parent?.id ?? null, kind, text, setId, kind === 'trackid' ? body.heardAt ?? null : null, official, photoUrl, now]);
+        `insert into event_posts (event_id, user_id, parent_id, kind, body, set_id, heard_at, official, photo_url, reply_to_user_id, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id`,
+        [ev.id, s.user.id, parent?.id ?? null, kind, text, setId, kind === 'trackid' ? body.heardAt ?? null : null, official, photoUrl, replyTo, now]);
       if (parent) {
         await q.query('update event_posts set reply_count = reply_count + 1 where id = $1', [parent.id]);
         // The organiser's answer joins the page's FAQ: the page has changed for search engines.
         if (official) await q.query('update events set updated_at = now() where id = $1', [ev.id]);
-        if (parent.user_id !== s.user.id) {
+        // The person answered hears of it: the one replied to, else the thread's first author; never oneself.
+        const told = replyTo ?? parent.user_id;
+        if (told !== s.user.id) {
           await notifyUser(q, now, {
-            userId: parent.user_id, topic: null, kind: official ? 'post_answered' : 'post_reply',
-            dedupeKey: `post-reply:${parent.id}:${official ? 'official' : vnDate(now)}`,
-            title: official ? L(`The organiser answered you · ${ev.title}`, `BTC đã trả lời bạn · ${ev.title}`) : L(`New reply · ${ev.title}`, `Có trả lời mới · ${ev.title}`),
+            userId: told, topic: null, kind: official ? 'post_answered' : 'post_reply',
+            dedupeKey: `post-reply:${parent.id}:${told}:${official ? 'official' : vnDate(now)}`,
+            title: official ? L(`The organiser answered you · ${ev.title}`, `BTC đã trả lời bạn · ${ev.title}`)
+              : L(`${s.user.name?.trim() || 'Someone'} replied to your comment · ${ev.title}`, `${s.user.name?.trim() || 'Một người'} đã trả lời bình luận của bạn · ${ev.title}`),
             body: { en: text.slice(0, 140), vi: text.slice(0, 140) },
             link: { screen: 'event', eventId: ev.id, postId: parent.id },
           });
@@ -323,15 +338,26 @@ export default async function discussionRoutes(app: FastifyInstance) {
   app.patch<{ Params: { id: string } }>('/posts/:id', async (req) => {
     const s = requireUser(req);
     const id = parse(uuid, req.params.id);
-    const body = parse(z.object({ pinned: z.boolean().optional(), hidden: z.boolean().optional(), official: z.boolean().optional() }), req.body);
+    const body = parse(z.object({ pinned: z.boolean().optional(), hidden: z.boolean().optional(), official: z.boolean().optional(), body: z.string().max(4000).optional() }), req.body);
     const post = await one<any>(ctx.db, `select * from event_posts where id = $1 and status <> 'removed'`, [id]);
     if (!post) throw notFound();
+    const now = ctx.clock.now();
+    // Its author changes the words, for EDIT_MINUTES after posting; nobody else does.
+    if (body.body !== undefined) {
+      if (post.user_id !== s.user.id) throw forbidden('not_yours', L('Only its author can edit a comment', 'Chỉ người viết mới sửa được bình luận'));
+      if (now.getTime() - new Date(post.created_at).getTime() > EDIT_MINUTES * 60_000) {
+        throw forbidden('edit_window', L(`A comment can be edited for ${EDIT_MINUTES} minutes`, `Bình luận chỉ sửa được trong ${EDIT_MINUTES} phút`));
+      }
+      const team = await isEventTeam(ctx.db, post.event_id, s.user);
+      const text = checkPostText(body.body, team);
+      await ctx.db.query('update event_posts set body = $2, edited_at = $3 where id = $1', [id, text, now]);
+      return { ok: true, status: post.status, body: text, edited: true, message: L('Saved', 'Đã lưu') };
+    }
     if (!(await isEventTeam(ctx.db, post.event_id, s.user))) throw forbidden();
     if (body.official !== undefined && !(post.parent_id && post.kind === 'qa')) {
       throw badRequest('not_an_answer', L('Only an answer to a question can be official', 'Chỉ câu trả lời cho câu hỏi mới đánh dấu chính thức được'));
     }
     if (body.pinned && post.parent_id) throw badRequest('pin_threads', L('Pin the first post of a thread', 'Chỉ ghim bài đầu của chủ đề'));
-    const now = ctx.clock.now();
     const status = body.hidden === undefined ? post.status : body.hidden ? 'hidden' : 'visible';
     await ctx.db.tx(async (q) => {
       await q.query(
@@ -346,15 +372,17 @@ export default async function discussionRoutes(app: FastifyInstance) {
   });
 
   /** FeestFinder's queue of reported posts, across every event. */
+  /** Reported posts (the default), or every comment, newest first (`?all=1`): the team deletes any that does not belong. */
   app.get('/admin/posts/reported', async (req) => {
     requireAdmin(req);
+    const { all } = parse(z.object({ all: z.coerce.boolean().default(false) }), req.query);
     const rows = await many<any>(ctx.db,
       `select p.id, p.body, p.kind, p.status, p.report_count, p.created_at, p.event_id, e.title as event_title, e.slug as event_slug,
               u.name as author_name, u.id as author_id,
               (select array_agg(distinct r.code) from event_post_reports r where r.post_id = p.id and r.resolved_at is null) as codes
          from event_posts p join events e on e.id = p.event_id join users u on u.id = p.user_id
-        where p.status <> 'removed' and exists (select 1 from event_post_reports r where r.post_id = p.id and r.resolved_at is null)
-        order by p.report_count desc, p.created_at desc limit 100`);
+        where p.status <> 'removed' and (${all ? 'true' : 'exists (select 1 from event_post_reports r where r.post_id = p.id and r.resolved_at is null)'})
+        order by ${all ? 'p.created_at desc' : 'p.report_count desc, p.created_at desc'} limit 100`);
     return {
       items: rows.map((r) => ({
         id: r.id, body: r.body, kind: r.kind, kindLabel: KIND_LABEL[r.kind as PostKind], status: r.status, reports: r.report_count, codes: r.codes ?? [],

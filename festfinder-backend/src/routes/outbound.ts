@@ -7,12 +7,15 @@ import { parse } from '../lib/validate.ts';
 import { sha256, safeEqual } from '../lib/crypto.ts';
 import { isUuid } from '../http/sql.ts';
 import { hostOf } from '../services/ingest/normalize.ts';
-import { conversionStatus, countEventMetric, countryOf, deviceOf, partnerForUrl, partnerLink, PLACEMENTS, recordConversion, referrerHostOf, type Partner } from '../services/partners.ts';
+import { REF_DAYS, REF_RE } from '../lib/affiliate.ts';
+import { conversionStatus, countEventMetric, countryOf, deviceOf, partnerForUrl, partnerLink, PLACEMENTS, recordConversion, referrerHostOf, sellerFor, utmLink, type Partner } from '../services/partners.ts';
 
 /*
  * The way out to tickets, and the way back in for what was sold.
  *
- *   GET /go/<event>?src=detail               every ticket button: counted, then sent to the seller (FeestFinder sells no tickets)
+ *   GET /go/<event>?src=detail&ref=<code>    every ticket button: counted, then sent to the seller for the viewer's country
+ *                                            (FeestFinder sells no tickets), with the partner's tracking or UTM tags
+ *   GET /r/<code>/<event>                    a short share link: the event page with the sharer's code
  *   GET /go/link/<code>?src=artist           an affiliate link (merch, a product, a campaign): counted, then redirected
  *   GET|POST /partners/<slug>/postback       a partner reports a sale (token, order, amount, click…)
  */
@@ -21,6 +24,8 @@ export const GO_SOURCES = PLACEMENTS;
 
 const GoQuery = z.object({
   src: z.enum(GO_SOURCES).catch('detail'),
+  /** The code of the person whose share link brought this visitor (kept on the phone for REF_DAYS). */
+  ref: z.string().trim().toUpperCase().regex(REF_RE).optional().catch(undefined),
 });
 
 const pick = (o: Record<string, unknown>, ...keys: string[]) => {
@@ -55,7 +60,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
     const q = parse(GoQuery, req.query);
     const key = req.params.event;
     const ev = await one<any>(ctx.db,
-      `select id, slug, status, held_for_reports, entry_mode, ticket_url, event_url from events where ${isUuid(key) ? 'id = $1' : 'slug = $1'}`, [key]);
+      `select id, slug, status, held_for_reports, entry_mode, ticket_url, event_url, ticket_links from events where ${isUuid(key) ? 'id = $1' : 'slug = $1'}`, [key]);
     if (!ev) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
     reply.header('cache-control', 'no-store').header('x-robots-tag', 'noindex, nofollow');
     const page = `/e/${encodeURIComponent(ev.slug)}`;
@@ -64,20 +69,35 @@ export default async function outboundRoutes(app: FastifyInstance) {
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
     // FeestFinder sells no tickets: the seller's page, else (a Radar find that names no ticket link) the page it was found on.
-    const ticketUrl = ev.entry_mode !== 'paid' ? null
+    const main = ev.entry_mode !== 'paid' ? null
       : /^https?:\/\//i.test(ev.ticket_url ?? '') ? String(ev.ticket_url)
       : /^https?:\/\//i.test(ev.event_url ?? '') ? String(ev.event_url) : null;
-    if (!ticketUrl) return reply.redirect(page, 302);
-    const partner: Partner | null = await partnerForUrl(ctx.db, ticketUrl);
-    const target: 'partner' | 'organizer' = partner ? 'partner' : 'organizer';
-    let location = ticketUrl;
+    if (!main) return reply.redirect(page, 302);
 
     const who = origin(req);
+    // The seller for the viewer's country (an extra link the organiser listed for it), else the main link.
+    const ticketUrl = sellerFor(main, ev.ticket_links, who?.country ?? countryOf(req.headers));
+    const partner: Partner | null = await partnerForUrl(ctx.db, ticketUrl);
+    const target: 'partner' | 'organizer' = partner ? 'partner' : 'organizer';
+    // A seller without a deal still sees FeestFinder in its analytics.
+    let location = partner ? ticketUrl : utmLink(ticketUrl, ev.slug, q.src);
     if (!who) return reply.redirect(location, 302);
+
+    // Who referred this click: a share link's code, never the person clicking, and only once
+    // that link was opened for this event in the last REF_DAYS (a code pasted by hand earns nothing).
+    let refUser: string | null = null;
+    if (q.ref) {
+      const r = await one<{ id: string }>(ctx.db,
+        `select u.id from users u
+          where u.ref_code = $1 and u.id is distinct from $2::uuid
+            and exists (select 1 from share_visits v where v.ref_user = u.id and v.event_id = $3 and v.created_at >= $4 and v.created_at <= $5)`,
+        [q.ref, userId, ev.id, new Date(now.getTime() - REF_DAYS * 86_400_000), now]);
+      refUser = r?.id ?? null;
+    }
     const click = await one<{ id: string }>(ctx.db,
-      `insert into outbound_clicks (event_id, partner_id, user_id, source, target, target_host, device, country, referrer_host, created_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
-      [ev.id, partner?.id ?? null, userId, q.src, target, hostOf(location), who.device, who.country, who.referrer, now]);
+      `insert into outbound_clicks (event_id, partner_id, user_id, source, target, target_host, device, country, referrer_host, created_at, ref_user)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id`,
+      [ev.id, partner?.id ?? null, userId, q.src, target, hostOf(location), who.device, who.country, who.referrer, now, refUser]);
     if (partner) {
       try { location = partnerLink(location, partner, click!.id); } catch { /* a broken template: the plain link still sells */ }
     }
@@ -89,6 +109,16 @@ export default async function outboundRoutes(app: FastifyInstance) {
       await countEventMetric(ctx.db, ev.id, 'ticket_clicks', q.src, now);
     }
     return reply.redirect(location, 302);
+  });
+
+  /** A short share link: /r/<code>/<event> opens the event page with the sharer's code, so its "Mua vé" carries it. */
+  app.get<{ Params: { ref: string; event: string } }>('/r/:ref/:event', async (req, reply) => {
+    reply.header('cache-control', 'no-store').header('x-robots-tag', 'noindex, nofollow');
+    const ev = await one<{ slug: string }>(ctx.db, 'select slug from events where slug = $1', [req.params.event]);
+    if (!ev) return reply.redirect('/', 302);
+    const ref = req.params.ref.toUpperCase();
+    const page = `/e/${encodeURIComponent(ev.slug)}`;
+    return reply.redirect(REF_RE.test(ref) ? `${page}?ref=${ref}&ch=copy` : page, 302);
   });
 
   app.get<{ Params: { code: string } }>('/go/link/:code', async (req, reply) => {

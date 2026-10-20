@@ -46,14 +46,22 @@ test.describe('the list, the home page', () => {
 
   test('filters by kind of night and style, and the same choice again turns it off', async ({ page }) => {
     await open(page, '/');
-    await page.getByRole('button', { name: 'Kiểu đêm' }).click();
+    await page.getByRole('button', { name: /, Loại$/ }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
     await expect(page).toHaveURL(/style=techno/);
     await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
     await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Kiểu đêm' }).click();
+    await page.getByRole('button', { name: /, Loại$/ }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
     await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(1);
+  });
+
+  test('the kind menu offers a daytime party next to club, festival and concert', async ({ page }) => {
+    await open(page, '/');
+    await page.getByRole('button', { name: /, Loại$/ }).click();
+    await page.getByRole('menuitemradio', { name: 'Ban ngày', exact: true }).click();
+    await expect(page).toHaveURL(/type=day/);
+    await expect(page.getByRole('button', { name: /, Loại$/ })).toHaveText('Ban ngày');
   });
 
   test('the old city landing pages land on the list with their filters', async ({ page }) => {
@@ -86,7 +94,7 @@ test.describe('the list, the home page', () => {
     await nav.getByRole('link', { name: 'Sự kiện' }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('aria-current', 'page');
-    await page.getByRole('button', { name: 'Kiểu đêm' }).click();
+    await page.getByRole('button', { name: /, Loại$/ }).click();
     await page.getByRole('menuitemradio', { name: 'Techno', exact: true }).click();
     await page.getByRole('button', { name: 'Bản đồ', exact: true }).click();
     await expect(page).toHaveURL(/style=techno&view=map/);
@@ -95,11 +103,11 @@ test.describe('the list, the home page', () => {
     // (The phone's tab bar, hidden on a computer, names its map tab too.)
     await expect(page.getByRole('main').getByText('Bản đồ', { exact: true })).toHaveCount(1);
     await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByRole('button', { name: 'Kiểu đêm' })).toHaveText('Techno');
+    await expect(page.getByRole('button', { name: /, Loại$/ })).toHaveText('Techno');
     await expect(page.getByRole('button', { name: /Ravolution Music Festival/ })).toHaveCount(1);
     await expect(page.getByRole('button', { name: /HOZO/ })).toHaveCount(0);
     await page.getByRole('button', { name: 'Bảng', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Kiểu đêm' })).toHaveText('Techno');
+    await expect(page.getByRole('button', { name: /, Loại$/ })).toHaveText('Techno');
     await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
   });
 

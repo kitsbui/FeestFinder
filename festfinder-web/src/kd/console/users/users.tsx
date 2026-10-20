@@ -2,31 +2,29 @@
 /**
  * /console/users: accounts. Search by name, email or phone; filter by kind, sign-up method,
  * city and activity; sort; every filter and the page are in the address. An account opens in
- * a drawer (?id=, or /console/users/<id>) with what it has done, its organiser teams and its
- * recent orders. An admin can make another account an admin or remove it (never their own:
+ * a drawer (?id=, or /console/users/<id>) with what it has done (saves, hype, ticket clicks) and
+ * its organiser teams. An admin can make another account an admin or remove it (never their own:
  * the API refuses); the ADMIN_EMAIL allowlist still decides on every boot who keeps it.
  */
 import { useCallback } from 'react';
-import { INTL, fill, pick, type Lang, type Pair, tx } from '../../copy';
-import { money } from '../../format';
+import { INTL, fill, pick, type Lang } from '../../copy';
 import { KdLink } from '../../link';
 import { Avatar, Stat, StatRow } from '../../ui/parts';
 import { Row, Table } from '../../ui/shell';
 import { ago, Body, Choice, Drawer, Empty, ErrorBox, FilterBar, KV, Loading, MultiChoice, PageHead, Pager, Pill, qs, SearchField, stamp, useLoad, useOptions, useQuery } from '../kit';
 import { useConsole } from '../root';
-import { Cell, CHECKOUT_CURRENCY, Section, STATUS_TONE, Two, useTyped } from '../orders/parts';
+import { Cell, Section, Two, useTyped } from '../parts';
 import { USERS } from './copy';
 
 interface Org { id: string; name: string; role: 'owner' | 'manager' | string }
 interface UserRow {
   id: string; name: string | null; email: string | null; phone: string | null; city: string | null; role: 'user' | 'admin'; signupLabel: string;
-  createdAt: string; lastActiveAt: string | null; photoUrl: string | null; tickets: number; saves: number; organizers: Org[];
+  createdAt: string; lastActiveAt: string | null; photoUrl: string | null; clicks: number; saves: number; organizers: Org[];
 }
-interface UserDetail extends Omit<UserRow, 'tickets' | 'saves'> {
+interface UserDetail extends Omit<UserRow, 'clicks' | 'saves'> {
   locale: string; interests: string[]; birthYear: number | null; hasPassword: boolean;
-  counts: { saves: number; hypes: number; going: number; tickets: number; friends: number; reports: number; orders: number; activeDays: number };
+  counts: { saves: number; hypes: number; going: number; clicks: number; friends: number; reports: number; activeDays: number };
   connections: { provider: string; label: string; name: string | null }[];
-  orders: { id: string; code: string; status: string; statusLabel: Pair; total: number; qty: number; createdAt: string; event: string }[];
 }
 
 /** Vietnamese numbers read the way people write them (0901 234 567); others stay as stored. */
@@ -65,7 +63,7 @@ export function Users() {
             options={[{ value: '7d', label: T.a7 }, { value: '30d', label: T.a30 }, { value: 'dormant', label: T.aDormant }]} />
           <span className="ml-auto">
             <Choice label={T.sort} any={false} value={sort} onChange={(v) => reset({ sort: v === 'new' ? null : v })}
-              options={[{ value: 'new', label: T.sNew }, { value: 'active', label: T.sActive }, { value: 'tickets', label: T.sTickets }, { value: 'name', label: T.sName }]} />
+              options={[{ value: 'new', label: T.sNew }, { value: 'active', label: T.sActive }, { value: 'clicks', label: T.sTickets }, { value: 'name', label: T.sName }]} />
           </span>
         </FilterBar>
         {load.error ? <ErrorBox error={load.error} retry={load.reload} /> : null}
@@ -88,7 +86,7 @@ export function Users() {
                 </Cell>
                 <Cell className="kd-s">{u.signupLabel}</Cell>
                 <Cell className="kd-s kd-ell">{u.city || '—'}</Cell>
-                <Cell end className="kd-num text-sm text-fg-1">{u.tickets} · {u.saves}</Cell>
+                <Cell end className="kd-num text-sm text-fg-1">{u.clicks} · {u.saves}</Cell>
                 <Cell className="kd-s text-xs">{ago(u.lastActiveAt, lang)}</Cell>
                 <Cell className="kd-s kd-num text-xs">{monthYear(u.createdAt, lang)}</Cell>
               </Row>
@@ -125,7 +123,7 @@ function UserDrawer({ id, lang, onClose }: { id: string; lang: Lang; onClose: ()
           <div className="flex items-center gap-4">
             <Avatar name={u.name || u.email || '?'} src={u.photoUrl} size={44} />
             <StatRow className="flex-1">
-              <Stat value={u.counts.tickets} label={fill(T.sTicketsN, { n: u.counts.orders })} />
+              <Stat value={u.counts.clicks} label={T.sTicketsN} />
               <Stat value={`${u.counts.saves} · ${u.counts.hypes}`} label={T.sSaves} />
               <Stat value={u.counts.friends} label={T.sFriends} />
               <Stat value={u.counts.activeDays} label={fill(T.sDays, { a: ago(u.lastActiveAt, lang) })} />
@@ -156,23 +154,6 @@ function UserDrawer({ id, lang, onClose }: { id: string; lang: Lang; onClose: ()
               </ul>
             </Section>
           ) : null}
-          <Section title={T.orders}>
-            {u.orders.length ? (
-              <ul className="flex flex-col">
-                {u.orders.map((o) => (
-                  <li key={o.id} className="border-b border-line-1">
-                    <KdLink className="flex items-center gap-3 py-2.5 hover:bg-white/[0.03]" href={'/console/orders?id=' + o.id}>
-                      <Two title={o.event} sub={fill(T.orderLine, { c: o.code, d: stamp(o.createdAt, lang), n: o.qty })} />
-                      <span className="ml-auto flex shrink-0 items-center gap-2">
-                        <span className="kd-num text-sm text-fg-1">{money(o.total, CHECKOUT_CURRENCY, lang)}</span>
-                        <Pill tone={STATUS_TONE[o.status] ?? 'none'}>{tx(o.statusLabel, lang)}</Pill>
-                      </span>
-                    </KdLink>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="kd-s">{T.noOrders}</p>}
-          </Section>
         </>
       )}
     </Drawer>

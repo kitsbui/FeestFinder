@@ -1,6 +1,7 @@
 import type { Queryable } from '../db/index.ts';
 import { json, many, one } from '../db/index.ts';
 import { vnDate } from '../lib/time.ts';
+import { settleEarning } from './ambassadors.ts';
 import { hostOf } from './ingest/normalize.ts';
 
 /*
@@ -49,6 +50,30 @@ export function partnerLink(ticketUrl: string, p: Pick<Partner, 'link_template' 
   return p.link_template ? fill(p.link_template).replaceAll('{url}', encodeURIComponent(target)) : target;
 }
 
+/**
+ * A seller FeestFinder has no deal with still sees FeestFinder in its analytics: UTM tags, unless
+ * the link already carries its own. A link that does not parse goes out as it is.
+ */
+export function utmLink(url: string, campaign: string, content: string): string {
+  let u: URL;
+  try { u = new URL(url); } catch { return url; }
+  if ([...u.searchParams.keys()].some((k) => k.toLowerCase().startsWith('utm_'))) return url;
+  u.searchParams.set('utm_source', 'feestfinder');
+  u.searchParams.set('utm_medium', 'referral');
+  u.searchParams.set('utm_campaign', campaign);
+  u.searchParams.set('utm_content', content);
+  return u.toString();
+}
+
+/** The seller for a viewer: the first extra link listed for their country, else the main one. */
+export function sellerFor(main: string, links: { url: string; countries: string[] }[] | null | undefined, country: string | null): string {
+  if (country) {
+    const hit = (links ?? []).find((l) => /^https:\/\//i.test(l.url) && (l.countries ?? []).includes(country));
+    if (hit) return hit.url;
+  }
+  return main;
+}
+
 /** What partners call a sale's state, in FeestFinder's four words. */
 export function conversionStatus(v: unknown): ConversionStatus {
   const s = String(v ?? '').trim().toLowerCase();
@@ -72,21 +97,24 @@ export interface ConversionInput {
 /** Keeps a sale a partner reported. The same order again updates it; a paid one stays paid. */
 export async function recordConversion(q: Queryable, partner: Partner, c: ConversionInput, now: Date): Promise<{ id: string; created: boolean; matched: boolean }> {
   const click = c.clickId
-    ? await one<{ id: string; event_id: string | null; link_id: string | null }>(q, 'select id, event_id, link_id from outbound_clicks where id = $1 and partner_id = $2', [c.clickId, partner.id])
+    ? await one<{ id: string; event_id: string | null; link_id: string | null; ref_user: string | null }>(q, 'select id, event_id, link_id, ref_user from outbound_clicks where id = $1 and partner_id = $2', [c.clickId, partner.id])
     : null;
   const commission = c.commission ?? Math.round((c.amount * Number(partner.commission_pct)) / 100);
   const row = await one<{ id: string; created: boolean }>(q,
-    `insert into partner_conversions (partner_id, click_id, event_id, order_ref, amount, currency, commission, status, occurred_at, received_at, payload, link_id)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+    `insert into partner_conversions (partner_id, click_id, event_id, order_ref, amount, currency, commission, status, occurred_at, received_at, payload, link_id, ref_user)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
      on conflict (partner_id, order_ref) do update set
        amount = excluded.amount, currency = excluded.currency, commission = excluded.commission,
        status = case when partner_conversions.status = 'paid' then 'paid' else excluded.status end,
        click_id = coalesce(partner_conversions.click_id, excluded.click_id),
        event_id = coalesce(partner_conversions.event_id, excluded.event_id),
        link_id = coalesce(partner_conversions.link_id, excluded.link_id),
+       ref_user = coalesce(partner_conversions.ref_user, excluded.ref_user),
        received_at = excluded.received_at, payload = excluded.payload
      returning id, (xmax = 0) as created`,
-    [partner.id, click?.id ?? null, click?.event_id ?? null, c.orderRef, c.amount, c.currency, commission, c.status, c.occurredAt, now, json(c.payload), click?.link_id ?? null]);
+    [partner.id, click?.id ?? null, click?.event_id ?? null, c.orderRef, c.amount, c.currency, commission, c.status, c.occurredAt, now, json(c.payload), click?.link_id ?? null, click?.ref_user ?? null]);
+  // The referrer's share follows the sale's state (lib/affiliate.ts).
+  await settleEarning(q, row!.id, now);
   return { id: row!.id, created: row!.created, matched: !!click };
 }
 
@@ -136,4 +164,4 @@ export function referrerHostOf(headers: Record<string, string | string[] | undef
 }
 
 /** Placements a click can come from: where on FeestFinder the button or link was. */
-export const PLACEMENTS = ['detail', 'tier', 'hero', 'card', 'map', 'list', 'app', 'link', 'artist', 'organizer', 'email', 'external'] as const;
+export const PLACEMENTS = ['detail', 'tier', 'hero', 'card', 'map', 'list', 'app', 'link', 'artist', 'organizer', 'email', 'external', 'share', 'agent', 'widget'] as const;

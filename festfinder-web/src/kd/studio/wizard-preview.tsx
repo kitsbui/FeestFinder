@@ -5,7 +5,7 @@
  */
 import { pick, tx, type Lang } from '../copy';
 import { cx } from '../cx';
-import { dayMonth, money, weekdayLong, whenShort } from '../format';
+import { dayMonth, weekdayLong, whenShort } from '../format';
 import { g, styleLabel } from '../genre';
 import { Art } from '../ui/parts';
 import { priceLine } from '../web/card';
@@ -23,13 +23,13 @@ const PREVIEW = {
   pPrice: { en: 'Price', vi: 'Giá' },
   pPriceUnknown: { en: 'Price not given yet', vi: 'Chưa rõ giá' },
 };
-import { int, tierRows, type City, type Form } from './wizard-model';
+import { int, type City, type Form } from './wizard-model';
 
 export function ReviewPreview({ lang, f, cities, currency }: { lang: Lang; f: Form; cities: City[]; currency: string }) {
   const T = { ...pick(STUDIO, lang), ...pick(PREVIEW, lang) };
 
   const cityName = tx(cities.find((c) => c.slug === f.city)?.name, lang) ?? '';
-  const price = f.sellHere && tierRows(f).length ? Math.min(...tierRows(f).map((t) => int(t.price))) : int(f.price);
+  const price = int(f.price);
   const priceText = f.entryMode === 'free' ? T.free : price ? priceLine({ isFree: false, entryMode: 'paid', priceFrom: price, currency, priceUnknown: false }, lang) : T.pPriceUnknown;
   const warnings = [
     !f.coverUrl && T.previewNoCover,

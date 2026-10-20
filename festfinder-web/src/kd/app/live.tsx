@@ -81,7 +81,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       <AppBar className="gap-3 pr-1.5">
         <Status tone="live">{T.live}</Status>
         <span className="kd-hs kd-ell">{ev.title}</span>
-        <a className="kd-ib ml-auto" href="/app/tickets" aria-label={T.exitLive}><XIcon size={22} aria-hidden="true" /></a>
+        <a className="kd-ib ml-auto" href={"/e/" + ev.slug} aria-label={T.exitLive}><XIcon size={22} aria-hidden="true" /></a>
       </AppBar>
 
       {d && d.stages.length > 1 ? (

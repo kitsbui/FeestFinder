@@ -26,7 +26,7 @@ test.describe('the app, signed in', () => {
 
   test('notifications open what they are about, and can all be marked read', async ({ page }) => {
     const problems = await open(page, '/app/notifications');
-    await expect(page.getByRole('link', { name: /Vé đã vào mục Vé của tôi/ })).toHaveAttribute('href', '/app/tickets');
+    await expect(page.getByRole('link', { name: /Minh Trần sẽ đi/ })).toHaveAttribute('href', /^\/e\//);
     await page.getByRole('button', { name: 'Đánh dấu đã đọc' }).click();
     await expect.poll(async () => (await (await page.request.get('/me/notifications?limit=1')).json()).unread).toBe(0);
     expect(problems).toEqual([]);
@@ -103,6 +103,17 @@ test.describe('the app, signed in', () => {
     await open(page, '/app/following');
     const ravo = page.getByRole('listitem').filter({ hasText: 'Ravolution Entertainment' });
     await expect(ravo.getByRole('button', { name: 'Đang theo dõi' })).toBeVisible();
+  });
+
+  test('commission: nothing earned yet, and the bank account the team pays to', async ({ page }) => {
+    const problems = await open(page, '/app/commission');
+    await expect(page.getByRole('heading', { name: 'Hoa hồng' })).toBeVisible();
+    await expect(page.getByText('Chưa có hoa hồng')).toBeVisible();
+    await page.getByLabel('Số tài khoản').fill('0123456789');
+    await page.getByLabel('Chủ tài khoản').fill('Minh Tran');
+    await page.getByRole('button', { name: 'Lưu', exact: true }).click();
+    await expect(page.getByText('···· 6789')).toBeVisible();
+    expect(problems).toEqual([]);
   });
 
   test('the guide is offered only when it can answer; its page still says when it is off', async ({ page }) => {

@@ -142,6 +142,11 @@ const config: NextConfig = {
       { source: '/a/:by(style|city)/:slug/:lang(th|ja|id)', destination: '/a/:by/:slug?lang=:lang', permanent: true },
       // The map is a view of the list.
       { source: '/map', destination: '/?view=map', permanent: false },
+      // FeestFinder sells no tickets and runs no door (owner, 2026-10-20): the old screens lead to their nearest place.
+      { source: '/app/tickets', destination: '/profile', permanent: true },
+      { source: '/app/checkout/:slug', destination: '/e/:slug', permanent: true },
+      { source: '/studio/:page(attendees|door|revenue|promos)', destination: '/studio', permanent: true },
+      { source: '/console/orders/:rest*', destination: '/console', permanent: true },
       { source: '/app/map', destination: '/?view=map', permanent: true },
     ];
   },

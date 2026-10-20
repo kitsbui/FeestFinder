@@ -90,7 +90,7 @@ const BY_KEY = new Map(STYLES.map((s) => [s.key, s]));
 export const styleByKey = (key: string) => BY_KEY.get(key) ?? null;
 export const isStyle = (key: string) => BY_KEY.has(key);
 
-export const EVENT_TYPES = ['club', 'festival', 'concert', 'rave', 'party', 'show', 'other'] as const;
+export const EVENT_TYPES = ['club', 'festival', 'concert', 'rave', 'party', 'show', 'day', 'other'] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 export const EVENT_TYPE_LABEL: Record<EventType, Localized> = {
   club: L('Club night', 'Club'),
@@ -99,10 +99,20 @@ export const EVENT_TYPE_LABEL: Record<EventType, Localized> = {
   rave: L('Rave', 'Rave'),
   party: L('Party', 'Tiệc'),
   show: L('Show', 'Show'),
+  day: L('Day party', 'Ban ngày'),
   other: L('Other', 'Khác'),
 };
 
 const has = (text: string, phrase: string) => text.includes(` ${phrase} `);
+
+/** Words that name a daytime party (diacritics removed, as `plainText` writes them). */
+const DAY_WORDS = ['coffee rave', 'matcha rave', 'day party', 'dayparty', 'daytime', 'day rave', 'morning rave', 'sunset session', 'sunset sessions', 'sunrise', 'tiec ban ngay', 'ban ngay', 'sober rave', 'wellness rave'];
+
+/** A daytime party by its words, unless it starts before 06:00 (an afterhours) or from 20:00. A party with no time is taken at its word. */
+function isDaytime(title: string, all: string, start: string | null): boolean {
+  if (!DAY_WORDS.some((w) => has(title, w) || has(all, w))) return false;
+  return !start || (start >= '06:00' && start < '20:00');
+}
 
 export interface StyleInput { tags?: string[]; title?: string | null; description?: string | null; lineup?: string[] }
 
@@ -147,6 +157,8 @@ export function inferEventType(input: { schemaType?: string | null; title?: stri
   const title = ` ${plainText(input.title ?? '')} `;
   const all = ` ${plainText(`${input.title ?? ''} ${input.description ?? ''}`)} `;
   if (input.schemaType === 'Festival' || /\s(festival|fest)\s/.test(title)) return 'festival';
+  // Daytime first: "coffee rave" would read as a rave and "day party" as a party.
+  if (isDaytime(title, all, input.startTime ?? null)) return 'day';
   if (has(title, 'rave')) return 'rave';
   if (has(title, 'concert') || has(title, 'live in') || has(title, 'tour') || has(title, 'world tour')) return 'concert';
   if (has(all, 'club') || has(title, 'b2b') || has(title, 'all night long')) return 'club';

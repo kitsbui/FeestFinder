@@ -31,7 +31,7 @@ const SCREENS: [Who, string, number][] = [
   // Phase 19 moved the sign-in sheet's own lines out of the boot JS: phase 17's kilobyte on /, the map and the wizard is back.
   ['visitor', '/', 195], ['visitor', '/e/ravo', 196], ['visitor', '/a', 203], ['visitor', '/a/slimv', 196],
   ['visitor', '/o/ravoent', 196], ['visitor', '/p', 181], ['visitor', '/?view=map', 195], ['visitor', '/about', 174],
-  ['fan', '/profile', 198], ['fan', '/app/tickets', 230], ['fan', '/saved', 199],
+  ['fan', '/profile', 198], ['fan', '/saved', 199],
   ['organizer', '/studio', 200], ['organizer', '/studio/new', 215], ['admin', '/console', 200],
 ];
 

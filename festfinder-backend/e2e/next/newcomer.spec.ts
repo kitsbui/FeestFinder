@@ -168,27 +168,7 @@ test('signs in by email with a code alone, no password (phase 17)', async ({ pag
   expect(problems).toEqual([]);
 });
 
-test('a guest buys a ticket with an email and a phone, no account first (phase 17)', async ({ page }) => {
-  const problems = watch(page);
-  await page.goto('/app/checkout/ravo?tier=&qty=1');
-  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-  const guest = page.getByRole('form', { name: 'Mua không cần tài khoản' });
-  await expect(guest).toBeVisible();
-  await guest.getByLabel('Email nhận vé').fill('guest.on.phone@example.com');
-  await guest.getByLabel('Số điện thoại').fill('0912 777 888');
-  const answered = page.waitForResponse((r) => r.url().includes('/auth/guest'));
-  await guest.getByRole('button', { name: 'Tiếp tục' }).click();
-  const res = await answered;
-  expect(res.status(), await res.text()).toBe(200);
-  // The basket opens on the same page, signed in as the guest.
-  await page.locator('html[data-kd-session="user"]').waitFor({ state: 'attached' });
-  await expect(guest).toHaveCount(0);
-  const me = await (await page.request.get('/me')).json();
-  expect([me.user.email, me.user.signupMethod]).toEqual(['guest.on.phone@example.com', 'guest']);
-  expect(problems).toEqual([]);
-});
-
-test('an event page on a phone: the way there once in each place, an empty Hỏi đáp is one button', async ({ page, request }) => {
+test('an event page on a phone: the way there once in each place, no comments yet is one button', async ({ page, request }) => {
   const problems = watch(page);
   // A night nobody has asked about yet.
   const items = (await (await request.get('/events?time=all&limit=60')).json()).items as { id: string; slug: string }[];
@@ -202,12 +182,12 @@ test('an event page on a phone: the way there once in each place, an empty Hỏi
   await page.goto('/e/' + quiet);
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
   // Under "Thêm" (design v2 phase 12): its row opens it.
-  await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
-  const qa = page.getByRole('region', { name: 'Hỏi đáp' });
-  await expect(qa.getByRole('button', { name: 'Đặt câu hỏi' })).toBeVisible();
+  await page.locator('summary', { hasText: /^Bình luận/ }).click();
+  const qa = page.getByRole('region', { name: 'Bình luận' });
+  await expect(qa.getByRole('button', { name: 'Viết bình luận' })).toBeVisible();
   await expect(qa.getByRole('textbox')).toHaveCount(0);
-  await qa.getByRole('button', { name: 'Đặt câu hỏi' }).click();
-  await expect(page.getByRole('region', { name: /^Hỏi đáp/ }).getByRole('textbox')).toBeVisible();
+  await qa.getByRole('button', { name: 'Viết bình luận' }).click();
+  await expect(page.getByRole('region', { name: /^Bình luận/ }).getByRole('textbox')).toBeVisible();
   // "Chỉ đường": under the venue, once.
   expect(await page.getByRole('link', { name: /^Chỉ đường/ }).count()).toBeLessThanOrEqual(1);
   expect(problems).toEqual([]);
@@ -257,7 +237,8 @@ test('the first screens ask little: few controls, a time in one tap, the tickets
   const event = await controlsInSight(page);
   expect(event.n, event.names.join(' | ')).toBeLessThanOrEqual(IN_SIGHT.event);
   // Only one way to the tickets in sight: the dock.
-  await expect(page.getByRole('link', { name: /^Chọn vé/ })).toBeHidden();
+  // The hero's own "Mua vé" is for a computer; on a phone the dock is the one way.
+  await expect(page.getByRole('main').locator('a[href="#tickets"]').first()).toBeHidden();
   await page.locator('.kd-buy-dock').getByRole('link', { name: 'Mua vé' }).click();
   await expect(page.locator('#tickets')).toBeInViewport();
   expect(problems).toEqual([]);

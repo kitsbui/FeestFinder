@@ -14,7 +14,8 @@ export const OVERVIEW = {
   decidedNote: { en: '{a} approved · {r} sent back', vi: '{a} duyệt · {r} trả lại' },
   live: { en: 'Live listings', vi: 'Đang đăng' },
   liveNote: { en: '{n} in the next 7 days', vi: '{n} diễn ra trong 7 ngày' },
-  orders: { en: 'Orders today', vi: 'Đơn hàng hôm nay' },
+  orders: { en: 'Ticket clicks today', vi: 'Bấm Mua vé hôm nay' },
+  clicksNote: { en: 'To the sellers', vi: 'Tới trang bán' },
   // to do
   todo: { en: 'To do', vi: 'Việc cần làm' },
   allClear: { en: 'All caught up', vi: 'Không có việc tồn đọng' },
@@ -30,7 +31,7 @@ export const OVERVIEW = {
   upcoming: { en: 'Coming up', vi: 'Sắp diễn ra' },
   next7: { en: 'Next 7 days', vi: '7 ngày tới' },
   nothingUp: { en: 'Nothing coming up', vi: 'Không có sự kiện sắp tới' },
-  sold: { en: '{s}/{c} sold', vi: '{s}/{c} vé' },
+  sold: { en: '{s} ticket clicks', vi: '{s} lượt bấm Mua vé' },
   activity: { en: 'Recent activity', vi: 'Hoạt động gần đây' },
   auditLog: { en: 'Audit log', vi: 'Nhật ký' },
   system: { en: 'System', vi: 'Hệ thống' },

@@ -8,6 +8,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { FF } from '@/runtime/ff';
 import { useKd } from '../../runtime';
+import { rememberRef } from './referral';
 import type { EventDetail } from '../../types';
 
 interface EventClient {
@@ -43,6 +44,7 @@ export function EventClientProvider({ ev: served, children }: { ev: EventDetail;
       tracked.current = true;
       const q = new URLSearchParams(location.search);
       const ref = q.get('ref');
+      rememberRef(d.id, ref);
       FF.fire(FF.post('/events/' + d.id + '/track', ref
         ? { type: 'view', source: 'shared', ref, channel: q.get('ch') || 'copy' }
         : { type: 'view', source: 'feed' }));

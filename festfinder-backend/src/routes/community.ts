@@ -283,7 +283,8 @@ export default async function communityRoutes(app: FastifyInstance) {
     await ctx.db.query('insert into event_shares (event_id, user_id, channel, created_at) values ($1,$2,$3,$4)', [ev.id, userId, channel, ctx.clock.now()]);
     const base = ctx.config.publicBaseUrl.replace(/\/$/, '');
     const qs = new URLSearchParams({ ...(ref ? { ref } : {}), ch: channel });
-    return { url: `${base}/e/${ev.slug}?${qs}`, ref, title: ev.title };
+    // The short form (/r/<code>/<slug>) is what a copied link carries.
+    return { url: `${base}/e/${ev.slug}?${qs}`, short: ref ? `${base}/r/${ref}/${ev.slug}` : null, ref, title: ev.title };
   });
 
   // ---- hype goals ---------------------------------------------------------------------------

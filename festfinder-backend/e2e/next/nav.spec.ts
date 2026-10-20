@@ -67,11 +67,12 @@ test('Dự án, Vé and Đã lưu are at most two taps from any page on a phone'
   await tabs.getByRole('link', { name: 'Đã lưu' }).click();
   await expect(page).toHaveURL(/\/saved$/);
   await expect(tabs.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('aria-current', 'page');
-  // Vé: Tôi, then Vé của tôi (the hub on /profile).
+  // Tôi: the hub on /profile; FeestFinder sells no tickets, so there is no "Vé của tôi".
   await tabs.getByRole('link', { name: 'Tôi' }).click();
   await expect(page).toHaveURL(/\/profile$/);
   const hub = page.getByRole('navigation', { name: 'Tôi' });
-  await expect(hub.getByRole('link', { name: /^Vé của tôi/ })).toHaveAttribute('href', '/app/tickets');
+  await expect(hub.getByRole('link', { name: /^Vé của tôi/ })).toHaveCount(0);
+  await expect(hub.getByRole('link', { name: /^Đã lưu/ })).toHaveAttribute('href', '/saved');
   // The hub holds the workspaces, the language and signing out too.
   await expect(hub.getByRole('link', { name: /^Người tham dự/ })).toBeVisible();
   await expect(hub.getByRole('link', { name: /^Ngôn ngữ/ })).toHaveAttribute('href', '/profile?lang=en');

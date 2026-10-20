@@ -4,7 +4,7 @@
  * fix one, publish it. Seven sections, each with its done tick: basics (organiser on create,
  * name, genre, age, styles, kind, descriptions), date and time (quick dates and presets),
  * venue (saved, or new with city, district and address), tickets and entry (price, capacity,
- * ticket link with its partner, the tier editor), lineup, images and links, and the team's own
+ * ticket link with its partner, sold out at the seller), lineup, images and links, and the team's own
  * settings (featured, card badge, publish on create). The rail scores the listing as the server
  * does, lists what publishing still needs, saves (Ctrl/⌘+S) and shows the card as the feed will.
  * Leaving with unsaved changes asks first. It talks to /admin/events.
@@ -25,8 +25,9 @@ import { AsyncPick, Field, Loading, useOptions, type FormOptions, type PickItem 
 import { useConsole } from '../root';
 import { EVENTS } from './copy';
 import { loadOrganizers } from './list';
-import { useLeaveGuard, usePlaces, type City, type EventDetail, type Tier } from './model';
-import { jump, Lineup, PriceInput, Section, TierEditor, TimeSelect, Upload, type TierRow } from './parts';
+import { useLeaveGuard, usePlaces, type City, type EventDetail } from './model';
+import { fromRows, TicketLinks, toRows, type TicketLinkRow } from '../../ui/ticket-links';
+import { jump, Lineup, PriceInput, Section, TimeSelect, Upload } from './parts';
 
 type Str = Strings<typeof EVENTS>;
 type Entry = 'free' | 'paid' | 'donation';
@@ -37,7 +38,7 @@ interface F {
   venueMode: 'saved' | 'new'; venueId: string | null; venueLabel: string | null; venueSub: string; venueArea: string;
   venueName: string; address: string; area: string;
   entryMode: Entry; priceFrom: number; capacity: string; ticketUrl: string; lineup: string[];
-  logoUrl: string | null; coverUrl: string | null; eventUrl: string; brandUrl: string; featured: boolean; badge: string; tiers: TierRow[];
+  logoUrl: string | null; coverUrl: string | null; eventUrl: string; brandUrl: string; featured: boolean; badge: string; soldOut: boolean; ticketLinks: TicketLinkRow[];
 }
 
 const SECTIONS = ['basics', 'when', 'where', 'tickets', 'lineup', 'media'] as const;
@@ -105,7 +106,8 @@ function fromDraft(d: EventDetail | null, o: FormOptions, defaultCity: string): 
     brandUrl: d?.brandUrl ?? '',
     featured: !!d?.featured,
     badge: d?.badge ?? '',
-    tiers: (d?.tiers ?? []).map((t) => ({ key: t.key, nameVi: t.name?.vi ?? '', nameEn: t.name?.en ?? '', price: t.price, capacity: String(t.capacity), sold: t.sold })),
+    soldOut: !!d?.soldOut,
+    ticketLinks: toRows(d?.ticketLinks),
   };
 }
 
@@ -132,21 +134,12 @@ function toPayload(f: F) {
     brandUrl: f.brandUrl.trim() || null,
     featured: f.featured,
     badge: f.badge || null,
+    soldOut: f.entryMode === 'paid' && f.soldOut,
+    ticketLinks: f.entryMode === 'paid' ? fromRows(f.ticketLinks) : [],
   };
   if (f.venueMode === 'saved') Object.assign(p, { venueId: f.venueId || null, ...(f.venueId ? {} : { venueName: null, address: null, area: null }) });
   else Object.assign(p, { venueId: null, venueName: f.venueName.trim() || null, address: f.address.trim() || null, area: f.area.trim() || null, city: f.city });
   return p;
-}
-
-/** Tiers as PUT /admin/events/:id/tiers takes them; what the form doesn't edit is kept from the saved tier. */
-function tiersPayload(f: F, original: Tier[]) {
-  return f.tiers.map((x) => {
-    const o = original.find((y) => y.key === x.key);
-    return {
-      key: x.key, name: { vi: x.nameVi.trim() || x.nameEn.trim(), en: x.nameEn.trim() || x.nameVi.trim() }, price: x.price || 0, capacity: Number(x.capacity) || 0,
-      isLast: o?.isLast ?? false, note: o?.note ?? null, salesOpenAt: o?.salesOpenAt ?? null, priceRiseOn: o?.priceRiseOn ?? null, priceRiseTo: o?.priceRiseTo ?? null,
-    };
-  });
 }
 
 function qualityOf(f: F) {
@@ -209,18 +202,15 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
   const id = draft?.id ?? null;
   const [f, setF] = useState<F>(() => fromDraft(draft, o, defaultCity));
   const [base, setBase] = useState(() => JSON.stringify(toPayload(fromDraft(draft, o, defaultCity))));
-  const [tierBase, setTierBase] = useState(() => JSON.stringify(tiersPayload(fromDraft(draft, o, defaultCity), draft?.tiers ?? [])));
   const [organizer, setOrganizer] = useState<PickItem | null>(presetOrganizer ?? null);
   const [publishNow, setPublishNow] = useState(false);
   const [busy, setBusy] = useState<'save' | 'primary' | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showEn, setShowEn] = useState(!!draft?.description?.en);
-  const [showTiers, setShowTiers] = useState((draft?.tiers ?? []).length > 0);
   const set = (patch: Partial<F>) => setF((x) => ({ ...x, ...patch }));
   const payload = useMemo(() => toPayload(f), [f]);
-  const tiers = useMemo(() => tiersPayload(f, draft?.tiers ?? []), [f, draft]);
-  const dirty = JSON.stringify(payload) !== base || (!!id && showTiers && JSON.stringify(tiers) !== tierBase);
+  const dirty = JSON.stringify(payload) !== base;
   const q = qualityOf(f);
   const missing = missingOf(f);
   const boosts = q.checks.filter((c) => !c.ok && !missing.includes(COVERED[c.key]));
@@ -231,7 +221,6 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
 
   const city = cities.find((c) => c.slug === f.city) ?? cities.find((c) => c.slug === defaultCity) ?? null;
   const currency = (f.venueMode === 'new' ? city?.currency : draft?.currency ?? city?.currency) ?? '';
-  const canTier = currency === 'VND';
   const today = todayIn(city?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   const validate = () => {
@@ -241,17 +230,16 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
     for (const k of ['ticketUrl', 'eventUrl', 'brandUrl'] as const) if (f[k].trim() && !isUrl(f[k])) e[k] = T.eUrl;
     if (f.capacity !== '' && (Number(f.capacity) < 1 || !Number.isInteger(Number(f.capacity)))) e.capacity = T.eCapacity;
     if (!id && !organizer) e.organizer = T.eOrganizer;
-    if (showTiers && f.tiers.some((x) => !x.nameVi.trim() && !x.nameEn.trim())) e.tiers = T.eTiers;
     setErrors(e);
     const first = Object.keys(e)[0];
     if (first) {
-      jump(({ title: 'basics', organizer: 'basics', endsOn: 'when', ticketUrl: 'tickets', capacity: 'tickets', tiers: 'tickets', eventUrl: 'media', brandUrl: 'media' } as Record<string, string>)[first] ?? 'basics');
+      jump(({ title: 'basics', organizer: 'basics', endsOn: 'when', ticketUrl: 'tickets', capacity: 'tickets', eventUrl: 'media', brandUrl: 'media' } as Record<string, string>)[first] ?? 'basics');
       return false;
     }
     return true;
   };
 
-  /** Saves the fields (and the tiers, when edited); returns the saved listing, or null. */
+  /** Saves the fields; returns the saved listing, or null. */
   const save = async (): Promise<any> => {
     if (!validate()) { kd.toast(T.checkFields); return null; }
     setBusy('save');
@@ -261,11 +249,6 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
         out = await FF.post('/admin/events', { ...payload, organizerId: organizer!.value, publish: publishNow });
       } else {
         out = JSON.stringify(payload) !== base ? await FF.patch(`/admin/events/${id}`, payload) : draft;
-        if (showTiers && JSON.stringify(tiers) !== tierBase && f.entryMode === 'paid' && tiers.length) {
-          const t2 = await FF.put(`/admin/events/${id}/tiers`, { tiers });
-          out = { ...out, ...t2, message: out?.message };
-          setTierBase(JSON.stringify(tiers));
-        }
       }
       setBase(JSON.stringify(payload));
       if (out?.slug) void freshen('e', out.slug);
@@ -457,14 +440,10 @@ function Form({ draft, onSaved, primary, banner, orgName, presetOrganizer, o, ci
                 <Input id="evTicket" type="url" inputMode="url" value={f.ticketUrl} placeholder="https://ticketbox.vn/…" invalid={!!err('ticketUrl')}
                   onChange={(e) => set({ ticketUrl: e.target.value })} onBlur={() => set({ ticketUrl: withScheme(f.ticketUrl) })} />
               </Field>
+              <TicketLinks lang={lang} id="evLinks" value={f.ticketLinks} onChange={(ticketLinks) => set({ ticketLinks })} />
               <div className="border-t border-line-1">
-                <SwitchRow label={T.tiersSwitch} note={!id ? T.tiersNeedDraft : !canTier ? T.tiersVndOnly : undefined} checked={showTiers}
-                  disabled={!id || (!canTier && !showTiers)} onChange={(v) => setShowTiers(v)} />
+                <SwitchRow label={T.soldOutSwitch} checked={f.soldOut} onChange={(v) => set({ soldOut: v })} />
               </div>
-              {showTiers && id ? (
-                <TierEditor lang={lang} rows={f.tiers} onChange={(rows) => set({ tiers: rows })} presets={(o.tierPresets ?? []) as { key: string; name: Pair }[]} priceFrom={f.priceFrom} currency={currency} />
-              ) : null}
-              {err('tiers') ? <p role="alert" className="kd-s text-bad">{err('tiers')}</p> : null}
             </>
           ) : null}
         </Section>

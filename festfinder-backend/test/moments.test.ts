@@ -99,10 +99,13 @@ describe('moments', () => {
     assert.equal((await env.as(organizer).delete(`/me/moments/${made.body.id}`)).status, 200);
   });
 
-  it('publishing on a public profile needs a confirmed phone', async () => {
+  it('with REQUIRE_PHONE_TO_POST, publishing on a public profile needs a confirmed phone', async () => {
+    env.ctx.config.requirePhoneToPost = true;
     await env.ctx.db.query(`update users set phone_verified_at = null where email = 'team@ravolution.vn'`);
     const r = await env.as(organizer).post('/me/moments', { as: 'organizer', url: IMG });
     assert.equal(r.status, 403);
     assert.equal(r.body.error.code, 'phone_unverified');
+    env.ctx.config.requirePhoneToPost = false;
+    assert.equal((await env.as(organizer).post('/me/moments', { as: 'organizer', url: IMG })).status < 400, true, 'signing in is enough by default');
   });
 });

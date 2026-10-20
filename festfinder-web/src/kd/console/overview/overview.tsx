@@ -1,8 +1,8 @@
 'use client';
 /**
  * /console/overview: the team's first screen. Four tiles (in queue, decided today, live
- * listings, orders today), what needs a person now (each line opens the screen that handles
- * it), the next live events with how much has sold, and the latest entries of the log.
+ * listings, ticket clicks today), what needs a person now (each line opens the screen that handles
+ * it), the next live events with their ticket clicks, and the latest entries of the log.
  */
 import type { ReactNode } from 'react';
 import {
@@ -10,11 +10,11 @@ import {
 } from '@phosphor-icons/react/ssr';
 import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
-import { count, money, monthShort, weekdayShort, day } from '../../format';
+import { count, monthShort, weekdayShort, day } from '../../format';
 import { familyOf } from '../../genre';
 import { KdLink as Link } from '../../link';
 import { LinkButton } from '../../ui/actions';
-import { Art, BarTrack, Card as Panel, DateBlock } from '../../ui/parts';
+import { Art, Card as Panel, DateBlock } from '../../ui/parts';
 import { Body, Empty, Loaded, PageHead, ago, useLoad } from '../kit';
 import { useConsole } from '../root';
 import { duration } from '../review/types';
@@ -24,8 +24,8 @@ interface Overview {
   queue: { total: number; breach: number; soon: number; flagged: number; highRisk: number; oldestMinutes: number; slaMinutes: number };
   reports: number; appeals: number; verification: number; flaggedOrganizers: number; unresolvedVenues: number; adInquiries: number;
   catalog: { live: number; next7Days: number; drafts: number };
-  today: { approved: number; rejected: number; takenDown: number; orders: number; gross: number };
-  upcoming: { id: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; organizer: string; sold: number; capacity: number | null; coverUrl: string | null }[];
+  today: { approved: number; rejected: number; takenDown: number; ticketClicks: number };
+  upcoming: { id: string; title: string; startsOn: string; startTime: string | null; venueName: string | null; organizer: string; clicks: number; capacity: number | null; coverUrl: string | null }[];
   activity: { seq: number; at: string; actorType: string; actor: string; action: string; label: Pair; target: { type: string; id: string | null; label: string } }[];
 }
 
@@ -93,8 +93,8 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
         />
         <Tile label={O.decided} value={count(d.today.approved + d.today.rejected, lang)} note={fill(O.decidedNote, { a: d.today.approved, r: d.today.rejected })} />
         <Tile label={O.live} value={count(d.catalog.live, lang)} valueClass="text-ok" note={fill(O.liveNote, { n: d.catalog.next7Days })} href="/console/events?status=live&when=upcoming" />
-        {/* FeestFinder checkout is VND only, so the day's gross is in đồng. */}
-        <Tile label={O.orders} value={count(d.today.orders, lang)} note={money(d.today.gross, 'VND', lang)} href="/console/orders" />
+        {/* FeestFinder sells no tickets: the day's presses of "Mua vé", all going to the sellers. */}
+        <Tile label={O.orders} value={count(d.today.ticketClicks, lang)} note={O.clicksNote} href="/console/partners" />
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(440px,100%),1fr))] items-start gap-4">
@@ -132,12 +132,7 @@ function Board({ lang, d }: { lang: Lang; d: Overview }) {
                         <span className="kd-hs kd-ell">{e.title}</span>
                         <span className="kd-s kd-ell">{[e.startTime, e.organizer, e.venueName].filter(Boolean).join(' · ')}</span>
                       </span>
-                      {e.capacity ? (
-                        <span className="flex w-28 shrink-0 flex-col items-end gap-1">
-                          <span className="kd-m kd-num">{fill(O.sold, { s: count(e.sold, lang), c: count(e.capacity, lang) })}</span>
-                          <BarTrack value={e.sold} max={e.capacity} className={cx('w-full', e.sold / e.capacity > 0.85 && 'text-warn')} label={fill(O.sold, { s: e.sold, c: e.capacity })} />
-                        </span>
-                      ) : null}
+                      {e.clicks ? <span className="kd-m kd-num shrink-0">{fill(O.sold, { s: count(e.clicks, lang) })}</span> : null}
                     </Link>
                   </li>
                 ))}

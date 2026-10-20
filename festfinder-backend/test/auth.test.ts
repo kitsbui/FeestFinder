@@ -48,31 +48,16 @@ describe('sign-up and sign-in', () => {
     assert.equal(new URL(twice.headers.location as string).searchParams.get('auth_error'), 'not_found');
   });
 
-  it('a guest buys with an email and a phone; proving the email later opens that account (phase 17)', async () => {
+  it('an account a guest checkout made (phase 17) is opened by proving its email; there is no guest checkout any more', async () => {
     const api = env.as();
-    const bad = await api.post('/auth/guest', { email: 'nope' });
-    assert.equal(bad.body.error.code, 'invalid_email');
-    const guest = await api.post('/auth/guest', { email: 'Guest.Buyer@example.com', phone: '0912 000 333' });
-    assert.equal(guest.status, 200, JSON.stringify(guest.body));
-    assert.equal(guest.body.created, true);
-    assert.equal(guest.body.user.email, 'guest.buyer@example.com');
-    assert.equal(guest.body.user.phone, '+84912000333');
-    assert.match(String(guest.headers['set-cookie']), /ff_session=/);
-    const me = await env.as(guest.body.token).get('/me');
-    assert.equal(me.body.user.signupMethod, 'guest');
-    // The guest session is a plain one: it may buy, never administer.
-    assert.equal((await env.as(guest.body.token).get('/admin/events')).status, 403);
-    // The same email again as a guest: not taken over; that person logs in with a code.
-    const again = await api.post('/auth/guest', { email: 'guest.buyer@example.com' });
-    assert.equal(again.status, 409);
-    assert.equal(again.body.error.code, 'account_exists');
-    // A code to that email opens the guest's account, now proved.
+    // FeestFinder sells no tickets (owner, 2026-10-20): nobody becomes a guest buyer now.
+    assert.equal((await api.post('/auth/guest', { email: 'guest.buyer@example.com' })).status, 404);
+    const now = new Date();
+    const made = (await env.ctx.db.query<{ id: string }>(`insert into users (name, email, phone, signup_method, created_at) values ('', 'guest.buyer@example.com', '+84912000333', 'guest', $1) returning id`, [now])).rows[0];
     const start = await api.post('/auth/otp/start', { channel: 'email', identifier: 'guest.buyer@example.com' });
     const ok = await api.post('/auth/otp/verify', { challengeId: start.body.challengeId, code: start.body.devCode });
     assert.equal(ok.body.created, false);
-    assert.equal(ok.body.user.id, guest.body.user.id);
-    const proved = await env.as(ok.body.token).get('/me');
-    assert.equal(proved.body.user.emailVerified ?? true, true);
+    assert.equal(ok.body.user.id, made.id);
   });
 
   it('signs in by Zalo number, creating the account and the Zalo connection', async () => {

@@ -19,7 +19,8 @@ import { Badges, type BadgeView } from '../../ui/badges';
 import type { Moment } from '../../ui/moments';
 import { Art, Avatar, Card as Panel, Stat } from '../../ui/parts';
 import { APP } from '../../app/copy';
-import { EditSheet, PassportSection, WrappedSheet, type Me, type Order, type Passport } from '../../app/profile';
+import { EditSheet, PassportSection, WrappedSheet, type Me, type Passport } from '../../app/profile';
+import type { Card } from '../../types';
 import { FollowManager, FollowStats, type Follows } from '../../ui/follows';
 import { GuestHub, MeHub } from '../me';
 
@@ -48,7 +49,7 @@ function Mine({ lang }: { lang: Lang }) {
   const { clockReady } = useKd();
   const [me, setMe] = useState<Me | null>(null);
   const [pp, setPp] = useState<Passport | null>(null);
-  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [going, setGoing] = useState<Card[] | null>(null);
   const [follows, setFollows] = useState<Follows | null>(null);
   const [badges, setBadges] = useState<BadgeView[] | null>(null);
   const [moments, setMoments] = useState<Moment[] | null>(null);
@@ -57,13 +58,13 @@ function Mine({ lang }: { lang: Lang }) {
   useEffect(() => {
     FF.maybe(FF.get('/me'), null).then(setMe);
     FF.maybe(FF.get('/me/passport'), null).then(setPp);
-    FF.maybe(FF.get('/me/tickets'), { items: [] }).then((w: { items: Order[] }) => setOrders(w.items));
+    // The nights they said they are going to, still to come (FeestFinder sells no tickets, so there are no orders to read).
+    FF.maybe(FF.get('/me/going?past=exclude&limit=8'), { items: [] }).then((w: { items: Card[] }) => setGoing(w.items));
     FF.maybe(FF.get('/me/follows'), null).then(setFollows);
     FF.maybe(FF.get('/me/badges'), null).then((b: { items: BadgeView[] } | null) => setBadges(b?.items ?? []));
     FF.maybe(FF.get('/me/moments'), null).then((m: { items: Moment[] } | null) => setMoments(m?.items ?? []));
   }, []);
-  const now = FF.now().getTime();
-  const coming = (clockReady ? orders ?? [] : []).filter((o) => o.status === 'paid' && o.tickets.length && !(o.event.endsAt && Date.parse(o.event.endsAt) < now));
+  const coming = clockReady ? going ?? [] : [];
   const u = me?.user;
   const year = new Date(FF.now()).getFullYear();
   const en = lang === 'vi' ? '' : '?lang=' + lang;
@@ -87,7 +88,7 @@ function Mine({ lang }: { lang: Lang }) {
             </div>
             <div className="grid grid-cols-2 gap-y-3.5 border-y border-line-1 py-3.5">
               <Stat value={pp ? pp.stats.nights : '–'} label={T.went} />
-              <Stat value={orders ? coming.length : '–'} label={T.going} />
+              <Stat value={going ? coming.length : '–'} label={T.going} />
               <FollowStats lang={lang} f={follows} />
             </div>
           </div>
@@ -99,18 +100,17 @@ function Mine({ lang }: { lang: Lang }) {
         <div className="kd-main flex flex-col">
           {coming.length ? (
             <section className="flex flex-col gap-2.5" aria-labelledby="fp-going">
-              <div className="flex items-baseline justify-between"><h2 id="fp-going" className="kd-d3">{T.going}</h2><a className={buttonClass({ size: 'sm' })} href="/app/tickets">{T.allTickets}</a></div>
-              {coming.slice(0, 4).map((o, i) => {
-                const fam = familyOf(o.event.genre);
+              <div className="flex items-baseline justify-between"><h2 id="fp-going" className="kd-d3">{T.going}</h2></div>
+              {coming.slice(0, 4).map((e) => {
+                const fam = familyOf(e.genre);
                 return (
-                  <a key={o.id} href={'/e/' + o.event.slug + en} className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)_auto] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
-                    <Art family={fam} title={o.event.title} className="h-19 rounded-lg" />
+                  <a key={e.id} href={'/e/' + e.slug + en} className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
+                    <Art family={fam} title={e.title} cover={e.coverUrl} className="h-19 rounded-lg" />
                     <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="kd-m kd-num">{weekdayShort(o.event.startsOn, lang)} {dayMonth(o.event.startsOn, lang)}</span>
-                      <span className="kd-hs kd-ell">{o.event.title}</span>
-                      <span className="kd-s kd-ell">{[o.event.venueName, o.event.area, o.event.startTime ? fill(T.doorsAt, { t: o.event.startTime }) : null].filter(Boolean).join(' · ')}</span>
+                      <span className="kd-m kd-num">{e.startsOn ? `${weekdayShort(e.startsOn, lang)} ${dayMonth(e.startsOn, lang)}` : ''}</span>
+                      <span className="kd-hs kd-ell">{e.title}</span>
+                      <span className="kd-s kd-ell">{[e.venue.name, e.venue.area, e.startTime ? fill(T.doorsAt, { t: e.startTime }) : null].filter(Boolean).join(' · ')}</span>
                     </span>
-                    <span className="kd-tag bg-on-inverse text-inverse">{fill(T.nTickets, { n: o.tickets.length })}</span>
                   </a>
                 );
               })}

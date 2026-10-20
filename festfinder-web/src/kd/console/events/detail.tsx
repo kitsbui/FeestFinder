@@ -1,24 +1,24 @@
 'use client';
 /**
  * /console/events/<id>: one listing. The head has its status, its organiser and its actions
- * (public page, the queue when it waits there, duplicate, orders, take down, cancel, restore);
+ * (public page, the queue when it waits there, duplicate, take down, cancel, restore);
  * below, its numbers, then three tabs kept in the address (?tab=): the event form in team mode,
  * moderation and change history, and sources with confidence.
  */
 import {
-  ArrowArcLeftIcon, ArrowRightIcon, CaretLeftIcon, CopyIcon, DotsThreeIcon, EyeIcon, ReceiptIcon, SealCheckIcon, StackIcon,
+  ArrowArcLeftIcon, ArrowRightIcon, CaretLeftIcon, CopyIcon, DotsThreeIcon, EyeIcon, SealCheckIcon, StackIcon,
 } from '@phosphor-icons/react/ssr';
 import { useRouter } from 'next/navigation';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, tx } from '../../copy';
-import { count, money } from '../../format';
+import { count } from '../../format';
 import { KdLink } from '../../link';
 import { useKd } from '../../runtime';
 import { LinkButton } from '../../ui/actions';
 import { Menu, MenuItem } from '../../ui/menu';
 import { Avatar, Card as Panel, Stat, StatRow } from '../../ui/parts';
 import { Tabs } from '../../ui/shell';
-import { ago, Body, Loaded, PageHead, Pill, qs, stamp, useLoad, useQuery } from '../kit';
+import { ago, Body, Loaded, PageHead, Pill, stamp, useLoad, useQuery } from '../kit';
 import { useConsole } from '../root';
 import { EVENTS } from './copy';
 import { EventForm } from './form';
@@ -73,7 +73,6 @@ export function EventDetail({ id }: { id: string }) {
                   <button type="button" {...tp} ref={tp.ref} className="kd-ib kd-ib-line" aria-label={T.more}><DotsThreeIcon size={18} weight="bold" aria-hidden="true" /></button>
                 )}>
                   <MenuItem icon={<CopyIcon size={16} aria-hidden="true" />} onSelect={() => duplicate(ev)}>{T.duplicate}</MenuItem>
-                  <MenuItem icon={<ReceiptIcon size={16} aria-hidden="true" />} href={'/console/orders' + qs({ event: ev.id, eventLabel: ev.title })}>{T.orders}</MenuItem>
                   {/* eslint-disable-next-line @typescript-eslint/no-misused-promises -- run catches its own errors */}
                   {statusItems(ev, run, lang, { publish: false })}
                 </Menu>
@@ -83,8 +82,6 @@ export function EventDetail({ id }: { id: string }) {
               <StatRow>
                 <Stat label={<>{T.stViews} · {fill(T.stClicks, { n: count(m.clicks, lang) })}</>} value={count(m.views, lang)} />
                 <Stat label={T.stHype} value={`${count(m.hype, lang)} · ${count(m.saves, lang)}`} />
-                <Stat label={ev.capacity ? `${T.stSold} · ${fill(T.stOf, { n: count(ev.capacity, lang) })}` : T.stSold} value={count(m.tickets, lang)} />
-                <Stat label={m.refunded ? `${T.stGross} · ${fill(T.stRefunded, { n: m.refunded })}` : T.stGross} value={money(m.gross, ev.currency, lang)} />
                 {ev.shelves.length ? <Stat label={`${T.stShelves} · ${ev.shelves.map((s) => FF.text(s.name, lang)).join(', ')}`} value={ev.shelves.length} /> : null}
               </StatRow>
               <Tabs

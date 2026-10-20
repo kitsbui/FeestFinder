@@ -10,9 +10,15 @@ let vapidKey: string | null | undefined;
  * Register /sw.js. Production builds only: in development, Next serves unhashed modules
  * that a cache-first worker would pin to stale copies.
  */
-export function registerServiceWorker(): void {
-  if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;
+export function registerWorker(): boolean {
+  if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return false;
   navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((e) => console.warn('[ff] service worker', e));
+  return true;
+}
+
+/** The worker, and the push key ahead of a tap that switches push on (the app's screens). */
+export function registerServiceWorker(): void {
+  if (!registerWorker()) return;
   // Fetched ahead so that switching push on can ask for permission straight away, inside
   // the tap: browsers only show the prompt during a user gesture.
   FF.maybe(FF.get('/push/public-key'), { key: null }).then((r: { key: string | null }) => { vapidKey = r.key; });

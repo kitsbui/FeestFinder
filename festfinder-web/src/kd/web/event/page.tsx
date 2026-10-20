@@ -62,10 +62,9 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
     line: [several ? null : weekdayLong(ev.startsOn, lang), ev.startTime, tx(ev.cityLabel, lang)].filter(Boolean).join(' · '),
   } : null;
   const familyLine = [tx(FAMILY_LABEL[fam], lang), ev.eventType ? tx(EVENT_TYPE[ev.eventType], lang) : null, tx(ev.cityLabel, lang)].filter(Boolean).join(' · ');
-  const tiers = ev.tickets?.tiers ?? [];
-  const openTiers = tiers.filter((t) => t.state === 'onsale' || t.state === 'last');
-  const cheapest = openTiers.length ? Math.min(...openTiers.map((t) => t.price)) : ev.priceFrom;
-  const hasTickets = !free && !ev.past && (openTiers.length > 0 || !!ev.links.go);
+  // FeestFinder sells no tickets: the price is the organiser's "from", and every button goes through /go to the seller.
+  const cheapest = ev.priceFrom;
+  const hasTickets = !free && !ev.past && !!ev.links.go;
   const address = [ev.venue.address, ev.venue.area, tx(ev.cityLabel, lang)].filter(Boolean).join(', ');
   const mapsHref = directionsUrl(ev.venue, address);
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? T.english : T.vietnamese };
@@ -139,7 +138,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     {/* Under 900px the dock's "Mua vé" is the one way to the tickets. */}
                     {hasTickets ? (
                       <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto max-desk:hidden')} href="#tickets">
-                        {openTiers.length ? fill(T.chooseTickets, { p: money(cheapest, ev.currency, lang) }) : T.buyTickets}
+                        {T.buyTickets}
                       </a>
                     ) : free && !ev.past ? (
                       <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#venue">{T.freeEntry}</a>
@@ -296,7 +295,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
               </section>
             ) : null}
 
-            {hasTickets ? <BuyDock lang={lang} price={openTiers.length ? money(cheapest, ev.currency, lang) : null} /> : null}
+            {hasTickets ? <BuyDock lang={lang} price={cheapest > 0 && !ev.priceUnknown ? money(cheapest, ev.currency, lang) : null} /> : null}
             <div className="mt-auto">
               <WebFooter lang={lang} otherLang={otherLang} />
               <div className="kd-wrap -mt-4 flex flex-wrap gap-1 pb-6">

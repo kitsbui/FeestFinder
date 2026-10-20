@@ -54,7 +54,6 @@ function hrefOf(n: Note): string {
     if (l.screen === 'plan') return '/app/plan/' + l.eventId;
     return '/e/' + l.eventId;
   }
-  if (l.screen === 'tickets') return '/app/tickets';
   if (l.screen === 'chat' && l.friendId) return '/app/chat/' + l.friendId;
   return '/';
 }

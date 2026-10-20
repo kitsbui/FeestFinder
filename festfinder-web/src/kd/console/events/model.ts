@@ -15,12 +15,7 @@ export interface EventRow {
   venueName: string | null; venueResolved: boolean; startsOn: string | null; endsOn: string | null; startTime: string | null; endTime: string | null;
   entryMode: 'free' | 'paid' | 'donation'; priceFrom: number; capacity: number | null;
   organizer: { id: string; name: string; verified: boolean };
-  featured: boolean; badge: string | null; hype: number; saves: number; sold: number; openReports: number; currency?: string;
-}
-
-export interface Tier {
-  id?: string; key: string; name: Pair; note: Pair | null; price: number; capacity: number; sold: number; isLast: boolean;
-  salesOpenAt: string | null; priceRiseOn: string | null; priceRiseTo: number | null;
+  featured: boolean; badge: string | null; hype: number; saves: number; clicks: number; openReports: number; currency?: string;
 }
 
 /** One listing as the team sees it (eventDetail in routes/admin/ops.ts). */
@@ -30,13 +25,12 @@ export interface EventDetail {
   startsOn: string | null; endsOn: string | null; startTime: string | null; endTime: string | null;
   venue: { id: string | null; name: string | null; address: string | null; area: string | null; resolved: boolean };
   entryMode: 'free' | 'paid' | 'donation'; priceFrom: number; capacity: number | null; age: string | null; lineup: string[] | null;
-  ticketUrl: string | null; eventUrl: string | null; brandUrl: string | null;
+  ticketUrl: string | null; ticketLinks?: { url: string; countries: string[] }[]; eventUrl: string | null; brandUrl: string | null; soldOut?: boolean;
   featured: boolean; badge: string | null; heldForReports: boolean; createdAt: string; updatedAt: string;
   organizer: { id: string; name: string; verified: boolean; logoUrl: string | null } | null;
-  tiers: Tier[];
   decisions: { id: string; decision: string; reason: Pair | null; message: string | null; by: string | null; at: string }[];
   appeal: { state: string; reply: string | null } | null;
-  metrics: { views: number; clicks: number; saves: number; hype: number; tickets: number; gross: number; refunded: number };
+  metrics: { views: number; clicks: number; saves: number; hype: number };
   history: { seq: number; at: string; actorType: string; actor: string; label: Pair; diff: { field: string; before: string; after: string }[] }[];
   shelves: { id: string; name: Pair }[];
   publicUrl: string;

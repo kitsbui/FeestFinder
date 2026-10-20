@@ -50,7 +50,7 @@ export const T = {
   related: { vi: 'Sự kiện liên quan', en: 'Related events' }, updated: { vi: 'Cập nhật', en: 'Updated' },
   when: { vi: 'Thời gian', en: 'When' }, venue: { vi: 'Địa điểm', en: 'Venue' }, address: { vi: 'Địa chỉ', en: 'Address' },
   price: { vi: 'Giá vé', en: 'Price' }, status: { vi: 'Tình trạng', en: 'Status' }, age: { vi: 'Độ tuổi', en: 'Age' },
-  genre: { vi: 'Thể loại', en: 'Genre' }, organiser: { vi: 'Ban tổ chức', en: 'Organiser' }, buy: { vi: 'Mua vé', en: 'Tickets' },
+  genre: { vi: 'Thể loại', en: 'Genre' }, kind: { vi: 'Loại', en: 'Kind' }, organiser: { vi: 'Ban tổ chức', en: 'Organiser' }, buy: { vi: 'Mua vé', en: 'Tickets' },
   site: { vi: 'Trang chính thức', en: 'Official site' }, free: { vi: 'Miễn phí', en: 'Free' }, from: { vi: 'Từ', en: 'From' },
   donation: { vi: 'Tuỳ tâm', en: 'Pay what you like' }, allAges: { vi: 'Mọi lứa tuổi', en: 'All ages' },
   priceAtSeller: { vi: 'Giá ở trang bán vé', en: 'Price on the ticket page' },

@@ -63,7 +63,7 @@ export interface Filters {
 
 const TIMES: Time[] = ['all', 'tonight', 'weekend', '7days', 'month'];
 /** The kinds of night and music styles the list offers as one picker (the legacy chips). */
-const TYPE_CHIPS = ['club', 'festival', 'concert'];
+const TYPE_CHIPS = ['club', 'festival', 'concert', 'day'];
 const STYLE_CHIPS = ['techno', 'hard-techno', 'house', 'trance', 'psytrance', 'drum-and-bass', 'hardstyle', 'bass'];
 /** A phone's three times, one tap each (design v2 phase 12, owner 2026-10-18; three since phase 13: the list by day already shows the week). */
 const PHONE_TIMES: Time[] = ['tonight', 'weekend', 'all'];

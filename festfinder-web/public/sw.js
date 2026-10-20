@@ -13,7 +13,7 @@
  *  - Web Push: shows the notification and opens its link
  */
 
-const VERSION = 'ff-3';
+const VERSION = 'ff-4';
 const STATIC = VERSION + '-static';
 const PAGES = VERSION + '-pages';
 const DATA = VERSION + '-data';
@@ -31,7 +31,7 @@ const NETWORK_TIMEOUT_MS = 4000;
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(PAGES)
-      .then((c) => c.add(new Request('/app/tickets', { credentials: 'same-origin' })))
+      .then((c) => c.add(new Request('/saved', { credentials: 'same-origin' })))
       .catch(() => {}),
   );
   self.skipWaiting();
@@ -98,7 +98,7 @@ async function staleWhileRevalidate(req, event) {
   return hit;
 }
 
-/** A page the app works offline on: fresh when there is signal, the last good copy (or the tickets) when not. */
+/** A page the app works offline on: fresh when there is signal, the last good copy (or the saved nights) when not. */
 async function page(req) {
   const cache = await caches.open(PAGES);
   try {
@@ -106,7 +106,7 @@ async function page(req) {
     if (res.ok && res.type === 'basic') cache.put(req, res.clone());
     return res;
   } catch (err) {
-    const hit = (await cache.match(req, { ignoreSearch: true })) || (await cache.match('/app/tickets'));
+    const hit = (await cache.match(req, { ignoreSearch: true })) || (await cache.match('/saved'));
     if (hit) return hit;
     throw err;
   }

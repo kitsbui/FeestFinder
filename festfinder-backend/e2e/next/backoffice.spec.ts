@@ -28,15 +28,12 @@ test.describe('Studio', () => {
     await signInWith(page, ACCOUNTS.organizer);
     const problems = await open(page, '/studio');
     const rail = page.getByRole('navigation', { name: 'Studio' });
-    await expect(entries(page, 'Studio')).toHaveText([/^Hôm nay/, /^Sự kiện/, /^Khách và cửa/, /^Doanh thu/, /^Quảng bá/, /^Hộp thư/, /^Gig & booking/]);
+    // Five entries: FeestFinder sells no tickets, so guests, the door, revenue and promo codes went (owner, 2026-10-20).
+    await expect(entries(page, 'Studio')).toHaveText([/^Hôm nay/, /^Sự kiện/, /^Quảng bá/, /^Hộp thư/, /^Gig & booking/]);
     await expect(rail.getByRole('link', { name: /^Hôm nay/ })).toHaveAttribute('aria-current', 'page');
-    // Folded: the group's pages are not listed.
     await expect(rail.getByRole('link', { name: 'Check-in' })).toHaveCount(0);
-    await rail.getByRole('link', { name: /^Khách và cửa/ }).click();
-    await expect(page).toHaveURL(/\/studio\/attendees/);
-    await expect(rail.getByRole('link', { name: /^Người tham dự/ })).toHaveAttribute('aria-current', 'page');
-    // The door is a page of its own, without the rail.
-    await expect(rail.getByRole('link', { name: 'Check-in' })).toHaveAttribute('href', '/studio/door');
+    await page.goto('/studio/door');
+    await expect(page).toHaveURL(/\/studio(\?|$)/);
     // "Hôm nay": every row of the to-do carries its action.
     await page.goto('/studio');
     const todo = page.getByRole('region', { name: /^Việc cần làm/ });
