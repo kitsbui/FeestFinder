@@ -362,7 +362,9 @@
     .kd-day-top, .kd-day-solo .kd-ev { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .kd-day-solo .kd-ev-save { right: calc((100% - 32px) * 0.5 + 42px); }
     /* A lead half the page wide stays short enough to leave the next day in sight. */
-    .kd-day-top .kd-ev-lead .kd-art, .kd-day-pair .kd-ev-lead .kd-art { aspect-ratio: 2 / 1; }
+    .kd-day-top .kd-ev-lead .kd-art, .kd-day-pair .kd-ev-lead .kd-art, .kd-day-solo .kd-ev-lead .kd-art { aspect-ratio: 2 / 1; }
+    /* A night alone on its day: its words carry the half beside the picture (night build 2026-10-21). */
+    .kd-day-solo .kd-ev-lead .kd-ev-title { font-size: 32px; letter-spacing: -0.03em; }
   }
   @container days (max-width: 599px) {
     .kd-day-pair { grid-template-columns: minmax(0, 1fr); gap: 0; }
