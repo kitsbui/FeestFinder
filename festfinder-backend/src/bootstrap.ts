@@ -19,11 +19,14 @@ import { checkLink } from './services/risk.ts';
 import { fakeImageFetcher, fetchImageHead } from './services/remote-images.ts';
 import { fakeOembed, fetchOembed } from './services/mixes.ts';
 import { addStarterSources } from './services/ingest/starter.ts';
+import { logShipper } from './services/remote-logs.ts';
 import { appendAudit } from './services/audit.ts';
 
 /** Wires real dependencies from configuration. Tests build their own Ctx instead. */
 export async function createContext(config: Config): Promise<Ctx> {
-  const log = (msg: string) => console.log(`[festfinder] ${msg}`);
+  // PostHog Logs gets a copy of every line when switched on (services/remote-logs.ts).
+  const shipper = config.posthogLogs && config.posthog ? logShipper({ key: config.posthog.key, host: config.posthog.host, environment: config.environment }) : null;
+  const log = (msg: string) => { console.log(`[festfinder] ${msg}`); shipper?.ship(msg); };
   const db = await openDb(config);
   log(`database: ${db.provider} (${db.location})`);
   // Before the migrations, so a laptop's unreleased migration never reaches production.
@@ -94,6 +97,7 @@ export async function createContext(config: Config): Promise<Ctx> {
   }
 
   return {
+    flushLogs: shipper ? () => shipper.flush() : undefined,
     config,
     db,
     clock,
