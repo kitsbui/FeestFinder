@@ -15,6 +15,7 @@ import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { KdProvider, useKd } from '../runtime';
 import { place } from '../app/place';
+import { DEFAULT_LANG } from '../lang-default';
 import { buttonClass } from '../ui/actions';
 import { Input } from '../ui/forms';
 import { Menu, MenuHeader, MenuItem, MenuSeparator } from '../ui/menu';
@@ -27,10 +28,10 @@ import { WorkspaceSwitch } from '../ui/workspaces';
 
 export type ConsoleTab =
   | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports' | 'feedback'
-  | 'partners' | 'affiliate' | 'brands' | 'projects' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
+  | 'partners' | 'affiliate' | 'brands' | 'projects' | 'blog' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
 export interface Counts {
   queue: number; verification: number; reports: number; ads: number; appeals: number;
-  claims: number; profileClaims: number; allClaims: number; unresolvedVenues?: number; projects?: number;
+  claims: number; profileClaims: number; allClaims: number; unresolvedVenues?: number; projects?: number; blog?: number;
 }
 
 interface ConsoleCtx { lang: Lang; q: string; counts: Counts | null; refreshCounts: () => void }
@@ -41,13 +42,14 @@ export function useConsole(): ConsoleCtx {
   return v;
 }
 
-const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'feedback', 'partners', 'affiliate', 'brands', 'projects', 'featured', 'users', 'orders', 'insights', 'audit'];
+const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'feedback', 'partners', 'affiliate', 'brands', 'projects', 'blog', 'featured', 'users', 'orders', 'insights', 'audit'];
 /** Routes that belong to a tab of another name. */
 const ALIAS: Record<string, ConsoleTab> = { verification: 'organizers' };
 
 export function ConsoleRoot({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('vi');
-  useEffect(() => { const l = place.lang(); if (l) setLang(l); }, []);
+  // What this device chose, else the site's first-visit language (kd/lang-pref.ts).
+  useEffect(() => { setLang(place.lang() ?? DEFAULT_LANG); }, []);
   return (
     <KdProvider lang={lang}>
       <Gate lang={lang}>{children}</Gate>
@@ -125,6 +127,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
       { key: 'venues', label: T.tabVenues, href: '/console/venues', count: n(counts?.unresolvedVenues) },
       { key: 'artists', label: T.tabArtists, href: '/console/artists' },
       { key: 'sources', label: T.tabSources, href: '/console/sources' },
+      { key: 'blog', label: T.tabBlog, href: '/console/blog', count: n(counts?.blog) },
     ] },
     { key: 'partnersG', label: T.navPartners, href: '/console/partners', icon: i(HandshakeIcon), sub: [
       { key: 'partners', label: T.tabPartners, href: '/console/partners' },

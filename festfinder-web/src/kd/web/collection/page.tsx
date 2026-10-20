@@ -16,12 +16,13 @@ import { LinkButton } from '../../ui/actions';
 import { Accordion, Art, Avatar, SectionHead, Stat } from '../../ui/parts';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
-import { Crumbs, WebFooter, WebNav } from '../chrome';
+import { WebFooter, WebNav } from '../chrome';
+import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { PastList } from '../profile/parts';
 import { COLLECTION } from './copy';
 import { MoreCards } from './more';
-import { ShareCollection } from './share';
+import { ShareButton } from '../share';
 import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
@@ -112,7 +113,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                     <span className="kd-ell">{fill(T.madeBy, { n: owner })}</span>
                   </span>
                 </div>
-                <ShareCollection lang={lang} name={col.name} url={inLang(col.url, lang)} slug={col.slug} story={story} />
+                <ShareButton lang={lang} name={col.name} url={inLang(col.url, lang)} slug={col.slug} story={story} source="collection" />
               </div>
               <div className="mt-7 grid auto-cols-[minmax(0,240px)] grid-flow-col border-y border-line-1 py-4.5">
                 <Stat value={count(col.items.length, lang)} label={T.events} />
@@ -121,10 +122,9 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
               </div>
             </section>
 
-            {/* ---- its events, and the rest at the side ---- */}
+            {/* ---- one column (owner, 2026-10-20: no side column on any page): its events, then the rest ---- */}
             <div className="kd-wrap pt-8">
-              <div className="kd-split gap-[clamp(28px,4vw,56px)]">
-                <div className="kd-main flex flex-col">
+                <div className="flex flex-col">
                   <section aria-labelledby="col-up">
                     <SectionHead id="col-up" title={T.upcoming} aside={<span className="kd-m kd-num">{upcoming.length}</span>} />
                     {upcoming.length ? (
@@ -145,11 +145,9 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                       </Accordion>
                     </section>
                   ) : null}
-                </div>
-
-                <aside className="kd-side flex flex-col gap-8">
+                  <div className="mt-12 flex flex-col gap-8">
                   {mix.length ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex max-w-read flex-col gap-3">
                       <div className="flex items-baseline justify-between"><span className="kd-m">{T.families}</span><span className="kd-m kd-num">{fill(T.nEvents, { n: count(mixTotal, lang) })}</span></div>
                       <div className="flex h-2.5 gap-0.5" role="img" aria-label={mix.map((x) => `${tx(FAMILY_LABEL[x.f], lang)} ${x.n}`).join(', ')}>
                         {mix.map((x, i) => (
@@ -166,7 +164,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                     </div>
                   ) : null}
 
-                  <div className="flex flex-col border-t border-line-1">
+                  <div className="flex max-w-read flex-col border-t border-line-1">
                     <Accordion small summary={seo.headings.facts}>
                       <div className="flex flex-col gap-3">
                         <p className="kd-s">{seo.page.summary}</p>
@@ -181,8 +179,8 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
                       </div>
                     </Accordion>
                   </div>
-                </aside>
-              </div>
+                  </div>
+                </div>
             </div>
           </main>
 

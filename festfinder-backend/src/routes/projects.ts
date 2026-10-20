@@ -12,7 +12,7 @@ import { personId } from '../services/analytics.ts';
 import { appendAudit } from '../services/audit.ts';
 import { notifyUser } from '../services/notify.ts';
 import {
-  ANSWERS, loadProject, missingForReview, newSlug, OFFER_KINDS, OFFER_LABEL, presentProject, PROJECT, SEEKING, type OfferKind, type Seeking,
+  ANSWERS, defaultCurrency, loadProject, missingForReview, syncProjectArtists, newSlug, OFFER_KINDS, OFFER_LABEL, presentProject, PROJECT, PROJECT_CURRENCIES, SEEKING, type OfferKind, type Seeking,
 } from '../services/projects.ts';
 
 /*
@@ -22,7 +22,8 @@ import {
  *   owner     GET/POST /me/projects, GET/PATCH /me/projects/:id, PUT /me/projects/:id/packages,
  *             POST /me/projects/:id/submit | close | event, GET /me/projects/:id/offers,
  *             POST /me/projects/:id/offers/:offerId { accept }
- *   others    POST /projects/:slug/offers, GET /me/offers, POST /me/offers/:id/withdraw
+ *   others    POST /projects/:slug/offers, GET /me/offers, POST /me/offers/:id/withdraw,
+ *             PUT / DELETE /projects/:slug/waitlist (join or leave the waitlist)
  *   team      GET /admin/projects?status=, POST /admin/projects/:id/decision { approve | close }
  *
  * A project is public once the team approved it (open), and stays so when it became an event
@@ -40,21 +41,28 @@ const Fields = {
   targetOn: dateStr.nullable(),
   capacity: z.coerce.number().int().min(1).max(1_000_000).nullable(),
   budget: amount.nullable(),
-  raiseAmount: amount.nullable(),
+  currency: z.enum(PROJECT_CURRENCIES),
+  waitlistTarget: z.coerce.number().int().min(1).max(1_000_000).nullable(),
   seeking: z.array(z.enum(SEEKING)).max(SEEKING.length),
   // A link, checked when it changes (services/remote-images.ts): only event media is uploaded.
   coverUrl: z.string().max(2048).nullable(),
+  /** The project's own page (a website, a social page). */
+  linkUrl: z.string().trim().max(500).transform((v) => v.replace(/^http:\/\//i, 'https://'))
+    .refine((v) => { try { const u = new URL(v); return u.protocol === 'https:' && !u.username && !u.password && u.hostname.includes('.'); } catch { return false; } }, 'an https link').nullable(),
+  /** Names of the artists it wants, in order; each meets its profile or gets one waiting to be claimed. */
+  lineup: z.array(z.string().trim().min(1).max(120)).max(30),
 };
 const Create = z.object({
   ...Fields,
   pitch: Fields.pitch.default(''), story: Fields.story.default(''), styles: Fields.styles.default([]), eventType: Fields.eventType.default(null),
   targetOn: Fields.targetOn.default(null), capacity: Fields.capacity.default(null), budget: Fields.budget.default(null),
-  raiseAmount: Fields.raiseAmount.default(null), seeking: Fields.seeking.default([]), coverUrl: Fields.coverUrl.default(null),
+  currency: Fields.currency.optional(), waitlistTarget: Fields.waitlistTarget.default(null), seeking: Fields.seeking.default([]), coverUrl: Fields.coverUrl.default(null),
+  linkUrl: Fields.linkUrl.default(null), lineup: Fields.lineup.default([]),
 });
 const Update = z.object(Fields).partial();
 const COLUMN: Record<string, string> = {
   title: 'title', pitch: 'pitch', story: 'story', city: 'city', styles: 'styles', eventType: 'event_type', targetOn: 'target_on',
-  capacity: 'capacity', budget: 'budget', raiseAmount: 'raise_amount', seeking: 'seeking', coverUrl: 'cover_url',
+  capacity: 'capacity', budget: 'budget', currency: 'currency', waitlistTarget: 'waitlist_target', seeking: 'seeking', coverUrl: 'cover_url', linkUrl: 'link_url',
 };
 const Package = z.object({ title: z.string().trim().min(2).max(80), amount, perks: z.string().trim().max(600).default(''), slots: z.coerce.number().int().min(1).max(1000).nullable().default(null) });
 const Offer = z.object({
@@ -80,7 +88,7 @@ export default async function projectRoutes(app: FastifyInstance) {
   };
   const full = async (id: string, req: FastifyRequest) => {
     const x = (await loadProject(ctx.db, { id }))!;
-    return presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event, viewer: viewerOf(req) });
+    return presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event, lineup: x.lineup, viewer: viewerOf(req) });
   };
   const contactOf = async (userId: string) => one<{ name: string | null; email: string | null; phone: string | null }>(ctx.db, 'select name, email, phone from users where id = $1', [userId]);
 
@@ -116,10 +124,13 @@ export default async function projectRoutes(app: FastifyInstance) {
     const x = await loadProject(ctx.db, { slug: req.params.slug });
     const viewer = viewerOf(req);
     if (!x || (!PUBLIC.includes(x.p.status) && viewer.userId !== x.p.owner_user_id && !viewer.isAdmin)) throw notFound(L('Project not found', 'Không tìm thấy dự án'));
-    const mine = viewer.userId
-      ? await many<any>(ctx.db, `select id, kind, status from project_offers where project_id = $1 and user_id = $2 and status in ('sent', 'accepted') order by created_at`, [x.p.id, viewer.userId])
-      : [];
-    return { ...presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event, viewer }), myOffers: mine.map((o) => ({ id: o.id, kind: o.kind, status: o.status })) };
+    const [mine, joined] = viewer.userId
+      ? await Promise.all([
+        many<any>(ctx.db, `select id, kind, status from project_offers where project_id = $1 and user_id = $2 and status in ('sent', 'accepted') order by created_at`, [x.p.id, viewer.userId]),
+        one(ctx.db, 'select 1 from project_waitlist where project_id = $1 and user_id = $2', [x.p.id, viewer.userId]),
+      ])
+      : [[], null];
+    return { ...presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event, lineup: x.lineup, viewer, joined: !!joined }), myOffers: mine.map((o) => ({ id: o.id, kind: o.kind, status: o.status })) };
   });
 
   // ---- the owner -------------------------------------------------------------------------------
@@ -139,11 +150,13 @@ export default async function projectRoutes(app: FastifyInstance) {
     const cover = (await imageChange(ctx, null, b.coverUrl, 'profile_cover')) ?? null;
     const row = await ctx.db.tx(async (q) => {
       const slug = await newSlug(q, b.title);
-      return one<{ id: string; slug: string }>(q,
-        `insert into projects (slug, owner_user_id, title, pitch, story, city, styles, event_type, target_on, capacity, budget, raise_amount, currency, seeking, cover_url, created_at, updated_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$16) returning id, slug`,
-        [slug, s.user.id, b.title, b.pitch, b.story, b.city, b.styles, b.eventType, b.targetOn, b.capacity, b.budget, b.raiseAmount,
-          cityBySlug(b.city)!.currency, b.seeking, cover, now]);
+      const made = await one<{ id: string; slug: string }>(q,
+        `insert into projects (slug, owner_user_id, title, pitch, story, city, styles, event_type, target_on, capacity, budget, waitlist_target, currency, seeking, cover_url, link_url, created_at, updated_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17) returning id, slug`,
+        [slug, s.user.id, b.title, b.pitch, b.story, b.city, b.styles, b.eventType, b.targetOn, b.capacity, b.budget, b.waitlistTarget,
+          b.currency ?? defaultCurrency(cityBySlug(b.city)!.currency), b.seeking, cover, b.linkUrl, now]);
+      if (b.lineup.length) await syncProjectArtists(q, made!.id, b.lineup);
+      return made;
     });
     void ctx.analytics.capture('project_created', personId(s.user.id), { city: b.city });
     return reply.code(201).send({ ...(await full(row!.id, req)), message: L('Draft saved', 'Đã lưu bản nháp') });
@@ -168,10 +181,9 @@ export default async function projectRoutes(app: FastifyInstance) {
     if (keys.length) {
       const set = keys.map((k, i) => `${COLUMN[k]} = $${i + 2}`);
       const values = keys.map((k) => (b as Record<string, unknown>)[k]);
-      // Amounts follow the city: a project that moves city changes currency with it.
-      if (b.city) { set.push(`currency = $${keys.length + 2}`); values.push(cityBySlug(b.city)!.currency); }
       await ctx.db.query(`update projects set ${set.join(', ')}, updated_at = $${values.length + 2} where id = $1`, [p.id, ...values, ctx.clock.now()]);
     }
+    if (b.lineup) await ctx.db.tx((q) => syncProjectArtists(q, p.id, b.lineup!));
     return full(p.id, req);
   });
 
@@ -308,6 +320,51 @@ export default async function projectRoutes(app: FastifyInstance) {
     });
     void ctx.analytics.capture('project_offer_sent', personId(s.user.id), { kind: b.kind, city: p.city });
     return reply.code(201).send({ id: row.id, message: L('Offer sent. You hear back here when the owner answers.', 'Đã gửi đề nghị. Bạn sẽ nhận thông báo khi chủ dự án trả lời.') });
+  });
+
+  // ---- the waitlist ----------------------------------------------------------------------------
+
+  /** The count after a join or a leave, as the page shows it. */
+  const waitlistOf = async (projectId: string, joined: boolean) => {
+    const r = await one<{ n: number; target: number | null }>(ctx.db,
+      'select (select count(*)::int from project_waitlist where project_id = $1) as n, waitlist_target as target from projects where id = $1', [projectId]);
+    return { count: r?.n ?? 0, target: r?.target ?? null, joined };
+  };
+
+  /** Join: one row per account, so the count is of real people; the owner is told once when the target is met. */
+  app.put<{ Params: { slug: string } }>('/projects/:slug/waitlist', async (req) => {
+    const s = requireUser(req);
+    const p = await one<any>(ctx.db, `${PROJECT} where p.slug = $1`, [req.params.slug]);
+    if (!p || !PUBLIC.includes(p.status)) throw notFound(L('Project not found', 'Không tìm thấy dự án'));
+    if (p.status !== 'open') throw conflict('project_closed', L('This project takes no more people on its waitlist', 'Dự án này không nhận thêm người chờ'));
+    if (p.owner_user_id === s.user.id) throw forbidden('own_project', L('This is your own project', 'Đây là dự án của bạn'));
+    const now = ctx.clock.now();
+    const added = await ctx.db.tx(async (q) => {
+      const r = await q.query('insert into project_waitlist (project_id, user_id, created_at) values ($1, $2, $3) on conflict do nothing returning user_id', [p.id, s.user.id, now]);
+      if (!r.rows.length || !p.waitlist_target) return r.rows.length > 0;
+      const reached = await one<{ id: string }>(q,
+        `update projects set waitlist_reached_at = $2 where id = $1 and waitlist_reached_at is null
+            and (select count(*) from project_waitlist where project_id = $1) >= waitlist_target returning id`, [p.id, now]);
+      if (reached) {
+        await notifyUser(q, now, {
+          userId: p.owner_user_id, topic: null, kind: 'project_waitlist',
+          title: L(`${p.title}: ${p.waitlist_target} people are waiting`, `${p.title}: đã đủ ${p.waitlist_target} người chờ`),
+          body: L('Your waitlist reached its target.', 'Danh sách chờ đã đạt mục tiêu.'),
+          link: { url: `/p/${p.slug}/manage` },
+        });
+      }
+      return true;
+    });
+    if (added) void ctx.analytics.capture('project_waitlist_joined', personId(s.user.id), { city: p.city });
+    return { ...(await waitlistOf(p.id, true)), message: L('You are on the waitlist', 'Bạn đã vào danh sách chờ') };
+  });
+
+  app.delete<{ Params: { slug: string } }>('/projects/:slug/waitlist', async (req) => {
+    const s = requireUser(req);
+    const p = await one<{ id: string }>(ctx.db, `select id from projects where slug = $1 and status = any($2)`, [req.params.slug, PUBLIC]);
+    if (!p) throw notFound(L('Project not found', 'Không tìm thấy dự án'));
+    await ctx.db.query('delete from project_waitlist where project_id = $1 and user_id = $2', [p.id, s.user.id]);
+    return { ...(await waitlistOf(p.id, false)), message: L('You left the waitlist', 'Bạn đã rời danh sách chờ') };
   });
 
   app.get('/me/offers', async (req) => {

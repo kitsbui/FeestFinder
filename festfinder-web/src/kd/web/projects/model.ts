@@ -6,6 +6,7 @@
 import { type Dict, type Lang, type Pair, tx } from '../../copy';
 
 export interface Keyed { key: string; label: Pair }
+export interface LineupArtist { slug: string; name: string; imageUrl: string | null; claimed: boolean }
 export interface Package { id: string; title: string; amount: number; perks: string; slots: number | null }
 
 export interface Project {
@@ -20,10 +21,15 @@ export interface Project {
   targetOn: string | null;
   capacity: number | null;
   budget: number | null;
-  raiseAmount: number | null;
   currency: string;
+  /** Real accounts waiting for the night (one per person), the owner's target, and whether the viewer is one. */
+  waitlist: { count: number; target: number | null; joined: boolean };
   seeking: Keyed[];
   coverUrl: string | null;
+  /** The project's own page: a website or a social page. */
+  link: string | null;
+  /** The artists it wants, each a profile (run by the artist, or waiting to be claimed). */
+  lineup: LineupArtist[];
   status: 'draft' | 'in_review' | 'open' | 'closed' | 'realized' | 'rejected';
   owner: { name: string | null; initials: string };
   event: { slug: string; title: string } | null;
@@ -39,6 +45,16 @@ export interface Project {
 }
 
 export interface ProjectList { items: Project[]; total: number; seeking: Record<Seeking, number>; nextOffset: number | null }
+
+/** The currencies a budget is given in (the API checks the same), and the round amounts offered for each. */
+export const CURRENCIES = ['VND', 'USD'] as const;
+export type Currency = (typeof CURRENCIES)[number];
+export const asCurrency = (c: string | null | undefined): Currency => (c === 'VND' || c === 'USD' ? c : 'USD');
+export const BUDGET_PRESETS: Record<Currency, number[]> = {
+  VND: [50_000_000, 100_000_000, 200_000_000, 500_000_000, 1_000_000_000, 2_000_000_000],
+  USD: [2_000, 5_000, 10_000, 25_000, 50_000, 100_000],
+};
+export const WAITLIST_PRESETS = [100, 300, 500, 1000, 2000];
 
 export const SEEKING = ['investment', 'sponsorship', 'artists', 'venue', 'partner'] as const;
 export type Seeking = (typeof SEEKING)[number];

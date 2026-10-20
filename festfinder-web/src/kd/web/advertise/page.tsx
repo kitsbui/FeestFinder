@@ -30,44 +30,41 @@ export async function AdvertisePage({ lang }: { lang: Lang }) {
     <KdProvider lang={lang}>
       <div className="flex min-h-dvh flex-col" lang={lang}>
         <WebNav lang={lang} />
+        {/* One column in the middle (owner, 2026-10-20: no side column on any page): the rates, the form, the partners. */}
         <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
-          <header className="flex max-w-read flex-col gap-4">
-            <span className="kd-m">{T.kicker}</span>
-            <h1 className="kd-d1">{T.title}</h1>
-            <p className="kd-t max-w-[620px]">{T.sub}</p>
-            {reach?.events ? (
-              <span className="kd-m kd-num">{fill(T.reach, { e: count(reach.events, lang), c: count(reach.withEvents, lang) })}</span>
-            ) : null}
-          </header>
-
-          <div className="kd-split mt-10 gap-[clamp(28px,4vw,56px)]">
-            <div className="kd-main max-w-[640px]">
-              <AdEnquiry lang={lang} />
-            </div>
-
-            <aside className="kd-side flex max-w-[400px] flex-col gap-8">
-              {card ? (
-                <section aria-labelledby="ad-rates" className="flex flex-col">
-                  <h2 id="ad-rates" className="kd-m pb-1.5">{T.rates}</h2>
-                  <dl className="flex flex-col">
-                    {PLACEMENTS.map((p) => (
-                      <div key={p.key} className="kd-lrow justify-between">
-                        <dt className="kd-hs">{T[p.label]}</dt>
-                        <dd className="kd-mb kd-num text-fg-1">{fill(T.cpm, { p: money(card.rates[p.key], card.currency, lang) })}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
+          <div className="mx-auto flex w-full max-w-read flex-col gap-10">
+            <header className="flex flex-col gap-4">
+              <span className="kd-m">{T.kicker}</span>
+              <h1 className="kd-d1">{T.title}</h1>
+              <p className="kd-t">{T.sub}</p>
+              {reach?.events ? (
+                <span className="kd-m kd-num">{fill(T.reach, { e: count(reach.events, lang), c: count(reach.withEvents, lang) })}</span>
               ) : null}
+            </header>
 
-              <section aria-labelledby="ad-partners" className="flex flex-col items-start gap-2">
-                <h2 id="ad-partners" className="kd-m">{T.partners}</h2>
-                <a className={buttonClass({ size: 'sm' }, 'max-w-full')} href={'mailto:' + PARTNERS}>
-                  <EnvelopeSimpleIcon size={16} aria-hidden="true" />
-                  <span className="kd-ell">{PARTNERS}</span>
-                </a>
+            {card ? (
+              <section aria-labelledby="ad-rates" className="flex flex-col">
+                <h2 id="ad-rates" className="kd-m pb-1.5">{T.rates}</h2>
+                <dl className="grid grid-cols-1 gap-x-8 tab:grid-cols-2">
+                  {PLACEMENTS.map((p) => (
+                    <div key={p.key} className="kd-lrow justify-between">
+                      <dt className="kd-hs">{T[p.label]}</dt>
+                      <dd className="kd-mb kd-num text-fg-1">{fill(T.cpm, { p: money(card.rates[p.key], card.currency, lang) })}</dd>
+                    </div>
+                  ))}
+                </dl>
               </section>
-            </aside>
+            ) : null}
+
+            <AdEnquiry lang={lang} />
+
+            <section aria-labelledby="ad-partners" className="flex flex-col items-start gap-2 border-t border-line-1 pt-6">
+              <h2 id="ad-partners" className="kd-m">{T.partners}</h2>
+              <a className={buttonClass({ size: 'sm' }, 'max-w-full')} href={'mailto:' + PARTNERS}>
+                <EnvelopeSimpleIcon size={16} aria-hidden="true" />
+                <span className="kd-ell">{PARTNERS}</span>
+              </a>
+            </section>
           </div>
         </main>
         <div className="mt-auto"><WebFooter lang={lang} otherLang={otherLang} /></div>

@@ -20,7 +20,7 @@ import { Cell, Two } from '../parts';
 type Status = 'in_review' | 'open' | 'closed' | 'realized' | 'rejected';
 interface Item {
   id: string; slug: string; title: string; pitch: string; story: string; city: { label: Pair | null }; seeking: { key: string; label: Pair }[];
-  budget: number | null; raiseAmount: number | null; currency: string; targetOn: string | null; status: Status; ownerEmail: string | null;
+  budget: number | null; waitlist: { count: number; target: number | null }; currency: string; targetOn: string | null; status: Status; ownerEmail: string | null;
   owner: { name: string | null }; offers: number; decisionNote?: string | null;
 }
 
@@ -41,7 +41,7 @@ const P = {
   close: { en: 'Close', vi: 'Đóng dự án' },
   note: { en: 'Reason for the owner', vi: 'Lý do gửi chủ dự án' },
   budget: { en: 'Budget', vi: 'Ngân sách' },
-  raise: { en: 'Raising', vi: 'Cần gọi' },
+  waitlist: { en: 'Waitlist', vi: 'Danh sách chờ' },
   seeking: { en: 'Looking for', vi: 'Đang tìm' },
   view: { en: 'Public page', vi: 'Trang công khai' },
 };
@@ -110,7 +110,7 @@ function Review({ lang, p, onClose }: { lang: Lang; p: Item; onClose: (changed: 
         <p className="kd-s whitespace-pre-line">{p.story}</p>
         <dl className="grid grid-cols-2 gap-3">
           {p.budget != null ? <div><dt className="kd-m">{T.budget}</dt><dd className="kd-num text-fg-1">{money(p.budget, p.currency, lang)}</dd></div> : null}
-          {p.raiseAmount != null ? <div><dt className="kd-m">{T.raise}</dt><dd className="kd-num text-fg-1">{money(p.raiseAmount, p.currency, lang)}</dd></div> : null}
+          <div><dt className="kd-m">{T.waitlist}</dt><dd className="kd-num text-fg-1">{p.waitlist.count}{p.waitlist.target ? ` / ${p.waitlist.target}` : ''}</dd></div>
         </dl>
         {p.status !== 'in_review' ? <a className="kd-s underline" href={`/p/${encodeURIComponent(p.slug)}`} target="_blank" rel="noopener">{T.view}</a> : null}
         {p.status === 'in_review' ? (

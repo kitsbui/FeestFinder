@@ -95,6 +95,15 @@ export function money(n: number, currency?: string | null, lang: Lang = 'vi'): s
   return new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
 }
 
+/** A round amount in a few characters, for preset buttons: 50 triệu, 1 tỷ (dong in Vietnamese) / ₫50M, $25K. */
+export function moneyCompact(n: number, currency: string, lang: Lang = 'vi'): string {
+  if (currency === 'VND' && lang === 'vi') {
+    const [v, unit] = n >= 1e9 ? [n / 1e9, 'tỷ'] : n >= 1e6 ? [n / 1e6, 'triệu'] : [n / 1e3, 'nghìn'];
+    return `${v.toLocaleString(INTL.vi, { maximumFractionDigits: 1 })} ${unit}`;
+  }
+  return new Intl.NumberFormat(INTL[lang], { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(n);
+}
+
 /** A short price for pins and tight rows: 350K, 1,2TR (vi) / 350K, 1.2M (en). */
 export function moneyShort(n: number, currency?: string | null, lang: Lang = 'vi'): string {
   if (currency && currency !== 'VND') return money(n, currency, lang);

@@ -16,15 +16,18 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
-test('a computer: four places, the search, the languages, "Đăng sự kiện"; no styles menu', async ({ page }) => {
+test('a computer: five places, the search, the languages, "Đăng sự kiện"; no styles menu', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const problems = await open(page, '/a');
   const nav = page.getByRole('navigation', { name: 'Chính' });
-  await expect(nav.getByRole('link')).toHaveText(['Sự kiện', 'Nghệ sĩ', 'Dự án', 'Nhà tổ chức']);
+  await expect(nav.getByRole('link')).toHaveText(['Sự kiện', 'Nghệ sĩ', 'Dự án', 'Blog', 'Nhà tổ chức']);
   await expect(nav.getByRole('link', { name: 'Nghệ sĩ' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('banner').getByRole('button', { name: 'Dòng nhạc' })).toHaveCount(0);
   await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
-  await expect(page.getByRole('banner').getByRole('link', { name: /^VI\s*·?\s*EN/ })).toHaveAttribute('href', '/a?lang=en');
+  // The language switch is two flags, the page's own ringed (owner, 2026-10-20).
+  const flags = page.getByRole('banner').getByRole('group', { name: 'Ngôn ngữ' });
+  await expect(flags.getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('aria-current', 'true');
+  await expect(flags.getByRole('link', { name: 'English' })).toHaveAttribute('href', '/a?setlang=en');
   // No tab bar on a computer.
   await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Đã lưu' })).toBeHidden();
   // Between 900 and 1200px the field is an icon that opens the search sheet; ⌘K / Ctrl+K opens it too.
@@ -75,7 +78,7 @@ test('Dự án, Vé and Đã lưu are at most two taps from any page on a phone'
   await expect(hub.getByRole('link', { name: /^Đã lưu/ })).toHaveAttribute('href', '/saved');
   // The hub holds the workspaces, the language and signing out too.
   await expect(hub.getByRole('link', { name: /^Người tham dự/ })).toBeVisible();
-  await expect(hub.getByRole('link', { name: /^Ngôn ngữ/ })).toHaveAttribute('href', '/profile?lang=en');
+  await expect(hub.getByRole('link', { name: /^Ngôn ngữ/ })).toHaveAttribute('href', '/profile?setlang=en');
   await expect(hub.getByRole('button', { name: 'Đăng xuất' })).toBeVisible();
 });
 
@@ -101,4 +104,21 @@ test('the back offices: the logo leads home and the switcher to the other worksp
   const menu = page.getByRole('menu', { name: 'Không gian làm việc' });
   await expect(menu.getByRole('menuitemradio', { name: 'Nhà tổ chức' })).toHaveAttribute('aria-checked', 'true');
   await expect(menu.getByRole('menuitem', { name: 'Người tham dự' })).toHaveAttribute('href', '/');
+});
+
+test('a phone: scrolling down hides the frame, scrolling up brings it back (ui/immersive.tsx)', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  // The frame stays still under automation; this check is a person.
+  await ctx.addInitScript(() => Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }));
+  const page = await ctx.newPage();
+  const problems = await open(page, '/');
+  const away = page.locator('html[data-chrome-away]');
+  await page.mouse.wheel(0, 600);
+  await expect(away).toHaveCount(1);
+  await expect.poll(async () => (await page.getByRole('banner').boundingBox())?.y ?? 0).toBeLessThan(-40);
+  await page.mouse.wheel(0, -200);
+  await expect(away).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Chính' }).getByText('Đã lưu', { exact: true })).toBeInViewport();
+  expect(problems).toEqual([]);
+  await ctx.close();
 });

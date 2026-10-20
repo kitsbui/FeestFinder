@@ -13,7 +13,7 @@ import { styleByKey } from '../lib/styles.ts';
 
 export const artistKey = (name: string) => plainText(name);
 
-const RESERVED_SLUGS = new Set(['style', 'city', 'en', 'radar']);
+const RESERVED_SLUGS = new Set(['style', 'city', 'en', 'radar', 'suggest']);
 
 /** The artist records for these names, made when missing. Returns name key → id. */
 export async function ensureArtists(q: Queryable, names: string[]): Promise<Map<string, string>> {
@@ -156,7 +156,8 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
   const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
   const owned = '(a.owner_user_id is not null or a.verified)';
   // A profile the team hid (migration 046) is in no list and no count.
-  const where = [(f.kind ?? 'owned') === 'owned' ? owned : `(not ${owned} and coalesce(pl.events, 0) > 0)`, 'a.hidden_at is null'];
+  // A name waits unclaimed once a public event lists it, or a public project wants it on its lineup (migration 059).
+  const where = [(f.kind ?? 'owned') === 'owned' ? owned : `(not ${owned} and (coalesce(pl.events, 0) > 0 or pj.artist_id is not null))`, 'a.hidden_at is null'];
   if (f.q) {
     const key = artistKey(f.q);
     where.push(`(a.normalized_name like ${p(`%${key}%`)} or ${p(key)} = any(a.alias_keys))`);
@@ -201,20 +202,24 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
               (array_agg(e.slug || '|' || e.title order by e.starts_at desc))[1] as last_event
          from event_artists ea join events e on e.id = ea.event_id left join lateral unnest(e.styles) s on true
         where ${PUBLIC} group by ea.artist_id),
+     -- The public projects that want each artist, the latest first.
+     pj as (
+       select pa.artist_id, (array_agg(p.slug || '|' || p.title order by p.published_at desc nulls last))[1] as last_project
+         from project_artists pa join projects p on p.id = pa.project_id where p.status in ('open', 'realized') group by pa.artist_id),
      -- The genre each artist has played most, which colours their card.
      gn as (
        select ea.artist_id, mode() within group (order by e.genre) as genre
          from event_artists ea join events e on e.id = ea.event_id where ${PUBLIC} and e.genre is not null group by ea.artist_id)`;
-  const from = `from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id left join gn on gn.artist_id = a.id`;
+  const from = `from artists a left join up on up.artist_id = a.id left join pl on pl.artist_id = a.id left join gn on gn.artist_id = a.id left join pj on pj.artist_id = a.id`;
   const rows = await many<any>(q,
     `${ctes}
      select a.id, a.slug, a.name, a.image_url, a.cover_url, a.artist_roles, a.based_city, a.based_country, a.styles, a.booking_status, a.travel_scope,
             a.verified, a.owner_user_id is not null as claimed, coalesce(up.upcoming, 0) as upcoming, up.next_show, coalesce(pl.events, 0) as events,
-            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, ${ORIGIN} as origin, ${KIND} as kind, pl.last_event, count(*) over () as total
+            coalesce(pl.styles, '{}') as played_styles, gn.genre, a.updated_at, ${ORIGIN} as origin, ${KIND} as kind, pl.last_event, pj.last_project, count(*) over () as total
        ${from}
       where ${where.join(' and ')}
       order by ${order} limit ${p(f.limit)} offset ${p(f.offset)}`, params);
-  const kinds = await many<{ kind: string; n: number }>(q, `${ctes} select ${KIND} as kind, count(*)::int as n ${from} where ${['(a.owner_user_id is not null or a.verified or coalesce(pl.events, 0) > 0)', ...all].join(' and ')} group by 1`, base);
+  const kinds = await many<{ kind: string; n: number }>(q, `${ctes} select ${KIND} as kind, count(*)::int as n ${from} where ${['(a.owner_user_id is not null or a.verified or coalesce(pl.events, 0) > 0 or pj.artist_id is not null)', ...all].join(' and ')} group by 1`, base);
   const total = rows[0] ? Number(rows[0].total) : 0;
   return {
     items: rows.map((a) => ({
@@ -228,7 +233,11 @@ export async function searchArtists(q: Queryable, f: ArtistFilters, now: Date) {
       origin: a.origin as 'posted' | 'radar',
       kind: a.kind as ArtistKind,
       // Where an unclaimed name was seen, for "Đây là tôi": the latest event that lists it.
-      source: a.kind === 'owned' || !a.last_event ? null : { kind: a.kind === 'radar' ? 'radar' : 'lineup', event: { slug: String(a.last_event).split('|')[0], title: String(a.last_event).split('|').slice(1).join('|') } },
+      source: a.kind === 'owned' ? null
+        : a.last_event ? { kind: a.kind === 'radar' ? 'radar' as const : 'lineup' as const, event: { slug: String(a.last_event).split('|')[0], title: String(a.last_event).split('|').slice(1).join('|') } }
+        // Wanted by a project before any event lists it: the project, for "Đây là tôi".
+        : a.last_project ? { kind: 'project' as const, project: { slug: String(a.last_project).split('|')[0], title: String(a.last_project).split('|').slice(1).join('|') } }
+        : null,
     })),
     total, offset: f.offset, limit: f.limit,
     kinds: { owned: kinds.find((k) => k.kind === 'owned')?.n ?? 0, unclaimed: kinds.find((k) => k.kind === 'unclaimed')?.n ?? 0, radar: kinds.find((k) => k.kind === 'radar')?.n ?? 0 },

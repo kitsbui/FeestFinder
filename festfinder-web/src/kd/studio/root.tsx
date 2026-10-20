@@ -22,6 +22,7 @@ import { FlagLoader, Logo } from '../ui/logo';
 import { Shell, SideNav } from '../ui/shell';
 import { WorkspaceSwitch } from '../ui/workspaces';
 import { place } from '../app/place';
+import { DEFAULT_LANG } from '../lang-default';
 import { STUDIO } from './copy';
 
 export type StudioScreen = 'dash' | 'events' | 'new' | 'attendees' | 'door' | 'revenue' | 'inbox' | 'announce' | 'promos' | 'ads' | 'gigs' | 'profile';
@@ -84,7 +85,8 @@ function OrgRoot({ path, children }: { path: string; children: ReactNode }) {
   const seg = path.split('/')[2] as StudioScreen | undefined;
   const current: StudioScreen = seg && SCREENS.includes(seg) ? seg : 'dash';
   const [lang, setLang] = useState<Lang>('vi');
-  useEffect(() => { const l = place.lang(); if (l) setLang(l); }, []);
+  // What this device chose, else the site's first-visit language (kd/lang-pref.ts).
+  useEffect(() => { setLang(place.lang() ?? DEFAULT_LANG); }, []);
   return (
     <KdProvider lang={lang}>
       <AskHost lang={lang}>

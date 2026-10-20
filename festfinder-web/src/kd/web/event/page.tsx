@@ -19,7 +19,8 @@ import { Accordion, Art, Avatar, Tag } from '../../ui/parts';
 import { VenueMap } from '../../map/venue-map';
 import type { Card, EventDetail } from '../../types';
 import { EventCard } from '../card';
-import { Crumbs, WebFooter, WebNav } from '../chrome';
+import { WebFooter, WebNav } from '../chrome';
+import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { CommunityLine, CopyAddress, Countdown, FollowOrg, ReportLink, SaveWithCount, ShareButton } from './actions';
 import { EventExtras } from './extras';
@@ -178,9 +179,10 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             </section>
 
             {/* ---- body ---- */}
+            {/* One column, the tickets first (owner, 2026-10-20: no side column on any page). */}
             <section className="kd-wrap pt-10 tab:pt-14">
-              <div className="kd-split gap-[clamp(28px,4vw,56px)]">
-                <div className="kd-main flex flex-col gap-11">
+                <div className="flex flex-col gap-11">
+                  <TicketsPanel lang={lang} />
                   {ev.updates.length ? (
                     <section aria-labelledby="upd-h" className="flex max-w-read flex-col gap-2">
                       <h2 id="upd-h" className="kd-d3">{T.updates}</h2>
@@ -238,18 +240,12 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
 
                   <EventExtras lang={lang} />
                 </div>
-
-                {/* On a phone the tickets come right after the hero (design v2 phase 2); on a computer they stay beside the page. */}
-                <aside data-sticky-col className="kd-side self-start max-desk:order-first desk:sticky desk:top-32">
-                  <TicketsPanel lang={lang} />
-                </aside>
-              </div>
             </section>
 
             {/* ---- venue ---- */}
             <section id="venue" aria-labelledby="venue-h" className="kd-wrap scroll-mt-32 pt-[clamp(56px,7vw,88px)]">
-              <div className="kd-split items-stretch gap-[clamp(28px,4vw,56px)]">
-                <div className="kd-side flex flex-col gap-3">
+              <div className="flex flex-col gap-6">
+                <div className="flex max-w-read flex-col gap-3">
                   <span className="kd-m">{T.venue}</span>
                   <h2 id="venue-h" className="kd-d2">{ev.venue.name}</h2>
                   {address ? <p className="kd-t">{address}</p> : null}
@@ -266,7 +262,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   ) : null}
                 </div>
                 {ev.venue.lat != null && ev.venue.lng != null ? (
-                  <a className="kd-main kd-card relative min-h-80 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-card after:shadow-[inset_0_0_0_1px_var(--color-line-1)] after:content-['']" href={inLang(`/?view=map&city=${enc(ev.city)}`, lang)} aria-label={T.onMap}>
+                  <a className="kd-card relative aspect-video max-h-120 min-h-80 overflow-hidden after:pointer-events-none after:absolute after:inset-0 after:rounded-card after:shadow-[inset_0_0_0_1px_var(--color-line-1)] after:content-['']" href={inLang(`/?view=map&city=${enc(ev.city)}`, lang)} aria-label={T.onMap}>
                     <VenueMap lat={ev.venue.lat} lng={ev.venue.lng} family={fam} label={(ev.venue.name ?? ev.title).split(' — ')[0]} className="absolute inset-0 bg-map" />
                   </a>
                 ) : null}

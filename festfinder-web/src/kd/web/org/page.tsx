@@ -17,7 +17,8 @@ import type { Moment } from '../../ui/moments';
 import { Clamp } from '../../ui/clamp';
 import { Accordion, Art, Avatar, Stat, Status, Tag } from '../../ui/parts';
 import type { Card } from '../../types';
-import { Crumbs, WebFooter, WebNav } from '../chrome';
+import { WebFooter, WebNav } from '../chrome';
+import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
@@ -132,10 +133,9 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
             </div>
           </section>
 
-          {/* ---- events, and the rest at the side ---- */}
-          <section className="kd-wrap pt-8">
-            <div className="kd-split gap-[clamp(28px,4vw,56px)]">
-              <div className="kd-main flex flex-col">
+          {/* ---- one column (owner, 2026-10-20: no side column on any page): the events, who they are, the rest folded, then the moments ---- */}
+          <section className="kd-wrap flex flex-col gap-12 pt-8">
+            <div className="flex flex-col">
                 <EventTabs
                   label={T.events}
                   tabs={[
@@ -146,11 +146,8 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     ...(past.length ? [{ key: 'past', label: T.past, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
                   ]}
                 />
-                <ProfileMoments lang={lang} source={source} items={org.moments ?? []} organizerId={org.id} className="mt-12" />
-                <Badges lang={lang} items={org.badges} who={{ vi: 'nhà tổ chức', en: 'organisers' }} className="mt-12" />
-              </div>
-
-              <aside className="kd-side flex flex-col gap-8">
+            </div>
+            {bio || links.length || mix.length || org.artists.length ? <div className="grid grid-cols-1 gap-x-12 gap-y-10 tab:grid-cols-2 wide:grid-cols-3">
                 {bio || links.length ? (
                   <div className="flex flex-col gap-2">
                     <span className="kd-m">{T.about}</span>
@@ -193,7 +190,8 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                   </div>
                 ) : null}
 
-                <div className="flex flex-col border-t border-line-1">
+            </div> : null}
+                <div className="grid grid-cols-1 gap-x-8 border-t border-line-1 tab:grid-cols-2">
                   {org.venues.length ? (
                     <Accordion small summary={T.orgVenues} aside={org.venues.length}>
                       <div className="flex flex-col">
@@ -231,8 +229,8 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                     </div>
                   </Accordion>
                 </div>
-              </aside>
-            </div>
+                <ProfileMoments lang={lang} source={source} items={org.moments ?? []} organizerId={org.id} />
+                <Badges lang={lang} items={org.badges} who={{ vi: 'nhà tổ chức', en: 'organisers' }} />
           </section>
 
           <div className="mt-auto">

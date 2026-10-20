@@ -57,6 +57,7 @@ import { momentsOf } from './moments.ts';
 import { mixesOf } from '../services/mixes.ts';
 import { confirmLineup, disputeLineup, lineupOf } from '../services/lineup.ts';
 import { artistCounts } from '../services/follows.ts';
+import { tracksOf } from '../services/audio.ts';
 
 
 
@@ -78,6 +79,21 @@ export default async function artistRoutes(app: FastifyInstance) {
         gigs: GIG_TYPE.keys.map((k) => label(GIG_TYPE, k)),
       },
     };
+  });
+
+  /**
+   * Names for a lineup field (a project's): every profile with that name, run or waiting to be
+   * claimed, none the team hid. The profiles artists run come first.
+   */
+  app.get('/artists/suggest', async (req) => {
+    const { q } = parse(z.object({ q: z.string().trim().min(1).max(80) }), req.query);
+    const key = artistKey(q);
+    if (!key) return { items: [] };
+    const rows = await many<any>(ctx.db,
+      `select slug, name, image_url, (owner_user_id is not null or verified) as claimed from artists
+        where hidden_at is null and (normalized_name like $1 or $2 = any(alias_keys))
+        order by (owner_user_id is not null or verified) desc, normalized_name <> $2, length(name), name limit 8`, [`%${key}%`, key]);
+    return { items: rows.map((a) => ({ slug: a.slug, name: a.name, imageUrl: a.image_url, claimed: a.claimed })) };
   });
 
   // ---- an artist's page ---------------------------------------------------------------------
@@ -104,7 +120,7 @@ export default async function artistRoutes(app: FastifyInstance) {
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
     ]);
-    const [gear, badges, moments, kind, mixes, counts] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistKind(ctx.db, a), mixesOf(ctx.db, a.id), artistCounts(ctx.db, a.id, a.owner_user_id)]);
+    const [gear, badges, moments, kind, mixes, counts, tracks] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistKind(ctx.db, a), mixesOf(ctx.db, a.id), artistCounts(ctx.db, a.id, a.owner_user_id), tracksOf(ctx.db, a.id)]);
     const origin = kind === 'radar' ? 'radar' : 'posted';
     // Free and busy dates still to come, as the artist set them. Their notes are for them alone.
     const windows = await many<any>(ctx.db,
@@ -139,6 +155,8 @@ export default async function artistRoutes(app: FastifyInstance) {
       badges,
       moments,
       mixes,
+      // The MP3 playlist, played by the page's waveform player (routes/tracks.ts).
+      tracks,
     };
   });
 

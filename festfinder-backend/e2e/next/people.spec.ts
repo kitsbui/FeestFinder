@@ -44,15 +44,15 @@ test('a phone: two square cards to a row, the first names in the first screen', 
   expect(Math.abs(a!.y - b!.y), 'side by side').toBeLessThan(4);
 });
 
-test('an artist: no banner repeating the name, the shows and the rest in tabs', async ({ page }) => {
+test('an artist: no banner repeating the name, one column with the shows first', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const problems = await open(page, '/a/hoaprox');
   await expect(page.getByRole('heading', { level: 1, name: 'Hoaprox' })).toBeVisible();
   await expect(page.locator('.kd-art-banner')).toHaveCount(0);
-  const tabs = page.getByRole('tablist');
-  await expect(tabs.getByRole('tab', { name: /^Sắp diễn/ })).toHaveAttribute('aria-selected', 'true');
-  await tabs.getByRole('tab', { name: /^Đã diễn/ }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Đã diễn' })).toBeVisible();
+  await expect(page.getByRole('complementary'), 'no side column').toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Sắp diễn');
+  await page.locator('#played summary').click();
+  await expect(page.locator('#played').getByRole('link').first()).toBeVisible();
   await expect(page.getByText('EDM', { exact: true })).toHaveCount(0);
   expect(problems).toEqual([]);
 });

@@ -70,6 +70,11 @@ export function ArtistCard({ a, lang }: { a: DirArtist; lang: Lang }) {
             {fill(T.fromLineup, { t: '' })}
             <Link href={inLang('/e/' + encodeURIComponent(a.source.event.slug), lang)} className="text-fg-2 underline decoration-line-2 underline-offset-2 hover:decoration-fg-2">{a.source.event.title}</Link>
           </span>
+        ) : a.source?.kind === 'project' ? (
+          <span className="kd-s kd-ell">
+            {fill(T.fromProject, { t: '' })}
+            <Link href={inLang('/p/' + encodeURIComponent(a.source.project.slug), lang)} className="text-fg-2 underline decoration-line-2 underline-offset-2 hover:decoration-fg-2">{a.source.project.title}</Link>
+          </span>
         ) : null}
         {a.styles.length ? (
           <span className="flex flex-wrap gap-1.5 pt-1">

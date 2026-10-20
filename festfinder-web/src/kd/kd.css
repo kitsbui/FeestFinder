@@ -275,6 +275,50 @@
   /* The list's sticky filter bar (web/list/browser.tsx), under the nav: 57px high on a phone, 65px from 900px. Over the menu scrim (25), like the nav. */
   .kd-cmd { position: sticky; top: 57px; z-index: 27; background: var(--color-surface-0); border-bottom: 1px solid var(--color-line-1); }
   @media (min-width: 900px) { .kd-cmd { top: 65px; } }
+  /* Scrolling down on a phone hides the frame (ui/immersive.tsx): the nav and the list's filter bar slide up, the tab bar and the install strip down,
+     the event page's buy bar drops to the bottom edge (its shadow fills the home indicator's strip). Transforms only; a focus inside brings a part back.
+     Not on a screen with a dock (checkout and the like), whose bar sits on the tab bar. */
+  @media (max-width: 899px) {
+    .kd-nav, .kd-cmd, .kd-tabbar-edge, .kd-install { transition: transform var(--dur-2) var(--ease-ff); }
+    html[data-chrome-away]:not(:has(.kd-dock)) .kd-nav:not(:focus-within) { transform: translateY(-100%); }
+    html[data-chrome-away]:not(:has(.kd-dock)) .kd-cmd { transform: translateY(-57px); }
+    html[data-chrome-away]:not(:has(.kd-dock)) .kd-tabbar-edge:not(:focus-within) { transform: translateY(100%); }
+    html[data-chrome-away]:not(:has(.kd-dock)) .kd-install:not(:focus-within) { transform: translateY(calc(100% + 56px + env(safe-area-inset-bottom))); }
+    html[data-chrome-away] .kd-buy-dock:not([data-away]) { transform: translateY(calc(56px + env(safe-area-inset-bottom))); box-shadow: inset 0 1px 0 var(--color-line-1), 0 env(safe-area-inset-bottom) 0 var(--color-surface-1); }
+  }
+  @media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+    .kd-nav, .kd-cmd, .kd-tabbar-edge, .kd-install, .kd-buy-dock { transition: none; }
+  }
+  /* The language switch (web/chrome.tsx): two flags, each a 44px link; the chosen one full and ringed in the information colour. */
+  .kd-flags { display: inline-flex; align-items: center; }
+  .kd-flag { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: var(--radius-btn); opacity: 0.5; transition: opacity var(--dur-1) var(--ease-ff); }
+  .kd-flag:hover, .kd-flag[aria-current] { opacity: 1; }
+  .kd-flag-svg { display: block; width: 24px; height: 16px; border-radius: 2px; box-shadow: 0 0 0 1px var(--color-line-2); }
+  .kd-flag[aria-current] .kd-flag-svg { box-shadow: 0 0 0 1.5px var(--color-surface-1), 0 0 0 3px var(--color-info); }
+  /* A table in a post's words (web/blog/body.tsx): grid rows that turn into cards in a narrow column; nothing scrolls sideways. */
+  .kd-mdt { container-type: inline-size; display: flex; flex-direction: column; border-top: 1px solid var(--color-line-1); font-size: 14px; line-height: 1.5; }
+  .kd-mdt-head, .kd-mdt-row { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--color-line-1); overflow-wrap: anywhere; }
+  .kd-mdt-head { color: var(--color-fg-3); font-size: 12px; }
+  .kd-mdt-row { color: var(--color-fg-2); }
+  .kd-mdt-row > :first-child { color: var(--color-fg-1); font-weight: 600; }
+  @container (max-width: 560px) {
+    .kd-mdt-head { display: none; }
+    .kd-mdt-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .kd-mdt-row > [data-label]:not(:first-child)::before { content: attr(data-label) ": "; color: var(--color-fg-3); }
+  }
+  /* The artist page's player (web/artist/playlist.tsx): a round play button and the tracks as 44px rows. */
+  .kd-play { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 52px; height: 52px; border: 0; border-radius: 9999px; background: var(--color-inverse); color: var(--color-on-inverse); cursor: pointer; transition: transform var(--dur-1) var(--ease-ff); }
+  .kd-play:hover { transform: scale(1.04); }
+  .kd-track { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 4px; border: 0; border-bottom: 1px solid var(--color-line-1); background: transparent; color: var(--color-fg-2); font: inherit; font-size: 14px; cursor: pointer; transition: color var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
+  .kd-track:hover { color: var(--color-fg-1); background: rgba(255, 255, 255, 0.03); }
+  .kd-track[aria-current] { color: var(--color-info); }
+  /* The artist page's hero (web/artist/page.tsx): the cover fades into the night ground under the name. */
+  .kd-hero-fade { background: linear-gradient(to bottom, transparent 35%, var(--color-surface-0)); }
+  /* The artist page's hero (web/artist/page.tsx): the cover across the page, the photo over its fade. */
+  .kd-artist-cover { height: clamp(220px, 32vw, 440px); }
+  .kd-artist-photo { width: 128px !important; height: 128px !important; font-size: 48px !important; }
+  @media (min-width: 760px) { .kd-artist-photo { width: 192px !important; height: 192px !important; font-size: 72px !important; } }
+  .kd-artist-name { font-size: clamp(2.5rem, 7vw, 5.5rem); line-height: 1; letter-spacing: -0.04em; font-weight: 800; overflow-wrap: anywhere; }
   /* A keyboard shortcut named in a field (the nav's ⌘K). */
   .kd-kbd { flex-shrink: 0; padding: 1px 5px; border-radius: var(--radius-tag); box-shadow: inset 0 0 0 1px var(--color-line-1); font: inherit; font-size: 11px; color: var(--color-fg-3); }
   .kd-nl { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-btn); background: transparent; font-size: 14px; color: var(--color-fg-2); white-space: nowrap; transition: color var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
@@ -313,6 +357,13 @@
   /* The save button stays on the picture's corner: the words' column is 2 of 5 parts, after a 32px gap. */
   .kd-day-solo .kd-ev-save { right: calc((100% - 32px) * 0.4 + 42px); }
   .kd-day-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; align-items: start; }
+  /* The whole width on a wide screen (the rail went, owner 2026-10-20): the lead and its rows share it evenly, so the lead's picture never towers over them. */
+  @container days (min-width: 1100px) {
+    .kd-day-top, .kd-day-solo .kd-ev { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kd-day-solo .kd-ev-save { right: calc((100% - 32px) * 0.5 + 42px); }
+    /* A lead half the page wide stays short enough to leave the next day in sight. */
+    .kd-day-top .kd-ev-lead .kd-art, .kd-day-pair .kd-ev-lead .kd-art { aspect-ratio: 2 / 1; }
+  }
   @container days (max-width: 599px) {
     .kd-day-pair { grid-template-columns: minmax(0, 1fr); gap: 0; }
     .kd-day-top { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -461,6 +512,8 @@
   @media (pointer: coarse) { .kd-mi { min-height: 44px; } }
   .kd-mi:hover, .kd-mi:focus-visible { background: rgba(255, 255, 255, 0.07); color: var(--color-fg-1); }
   .kd-mi:hover { outline: none; }
+  /* The option the arrows are on in a combobox's list (the focus stays in the field). */
+  .kd-mi[data-on] { background: rgba(255, 255, 255, 0.07); color: var(--color-fg-1); }
   .kd-mi:focus-visible { outline: 2px solid var(--color-lime); outline-offset: -2px; }
 
   /* The skip link (ui/skip-link.tsx): above the page, in view only while it has focus. */

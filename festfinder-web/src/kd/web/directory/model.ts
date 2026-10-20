@@ -33,7 +33,7 @@ export interface DirArtist {
   /** 'owned': the artist runs it (or the team verified it). The others are names nobody runs yet. */
   kind?: 'owned' | 'unclaimed' | 'radar';
   /** Where an unclaimed name was seen: the latest event that lists it. */
-  source?: { kind: 'lineup' | 'radar'; event: { slug: string; title: string } } | null;
+  source?: { kind: 'lineup' | 'radar'; event: { slug: string; title: string } } | { kind: 'project'; project: { slug: string; title: string } } | null;
 }
 
 export interface DirPage {

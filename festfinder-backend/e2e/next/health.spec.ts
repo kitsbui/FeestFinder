@@ -14,6 +14,9 @@ const IGNORED_CONSOLE = [
   /Failed to load resource: net::ERR_(NAME_NOT_RESOLVED|CONNECTION_REFUSED|ADDRESS_UNREACHABLE)/,
   // A signed-out or not-allowed probe the screen expects and handles (FF.maybe).
   /Failed to load resource: the server responded with a status of 40[13]/,
+  // A linked picture's host behind a gateway (a sandboxed network answers 504); the screen's own
+  // server errors are caught by the response handler below, whatever the console says.
+  /Failed to load resource: the server responded with a status of 50[24]/,
 ];
 
 function collect(page: Page, path: () => string) {

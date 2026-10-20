@@ -27,7 +27,8 @@
     "qrcode-generator": "^1.5.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "wavesurfer.js": "^7.12.12"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.4.2",

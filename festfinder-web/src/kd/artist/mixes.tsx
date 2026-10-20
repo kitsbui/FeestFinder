@@ -3,7 +3,7 @@
  * /studio/artist/mixes: the sets and tracks on the artist's page (festfinder-backend
  * routes/mixes.ts). A pasted SoundCloud, Mixcloud or Spotify link is previewed from the service
  * before it is added; the artist orders them, pins one first, says which night one was recorded
- * at, and removes them. Up to twelve.
+ * at, and removes them. Up to twelve. Under them, the MP3 playlist (./tracks.tsx).
  */
 import { useState, type FormEvent } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, PushPinIcon, TrashIcon } from '@phosphor-icons/react/ssr';
@@ -18,6 +18,7 @@ import { Row, Table } from '../ui/shell';
 import { act, Body, Drawer, Empty, Field, Loaded, PageHead, useLoad } from '../console/kit';
 import type { Mix } from '../web/artist/mixes';
 import { ARTIST } from './copy';
+import { ArtistTracksStudio } from './tracks';
 import { useArtist } from './root';
 
 interface Night { id: string; slug: string; title: string; startsOn: string }
@@ -40,6 +41,7 @@ export function ArtistMixesStudio() {
       />
       <Body>
         <Loaded load={load}>{(data) => <List lang={lang} data={data} onChange={load.reload} />}</Loaded>
+        <ArtistTracksStudio lang={lang} />
       </Body>
       {adding && load.data ? <AddDrawer lang={lang} nights={load.data.nights} onClose={() => setAdding(false)} onAdded={() => { setAdding(false); load.reload(); }} /> : null}
     </>

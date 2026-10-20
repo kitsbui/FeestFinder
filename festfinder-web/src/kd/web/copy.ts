@@ -10,6 +10,7 @@ export const WEB = {
   events: { en: 'Events', vi: 'Sự kiện' },
   projects: { en: 'Projects', vi: 'Dự án' },
   myProjects: { en: 'My projects', vi: 'Dự án của tôi' },
+  blog: { en: 'Blog', vi: 'Blog' },
   artists: { en: 'Artists', vi: 'Nghệ sĩ' },
   genres: { en: 'Styles', vi: 'Dòng nhạc' },
   search: { en: 'Search', vi: 'Tìm kiếm' },

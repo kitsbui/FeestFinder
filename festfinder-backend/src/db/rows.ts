@@ -257,6 +257,17 @@ export interface Rows {
     removed_by: string | null;
     removed_reason: string | null;
   };
+  artist_tracks: {
+    id: string;
+    artist_id: string;
+    sort: number;
+    url: string;
+    title: string;
+    duration_s: number | null;
+    peaks: unknown;
+    bytes: number | null;
+    created_at: Date;
+  };
   artists: {
     id: string;
     slug: string;
@@ -309,6 +320,50 @@ export interface Rows {
     code: string;
     earned_at: Date;
     seen_at: Date | null;
+  };
+  blog_posts: {
+    id: string;
+    slug: string;
+    author_user_id: string | null;
+    byline: string | null;
+    category: string;
+    lang: string;
+    title: unknown;
+    excerpt: unknown;
+    body: unknown;
+    cover_url: string | null;
+    cover_credit: string | null;
+    styles: string[];
+    city: string | null;
+    facts: unknown;
+    faq: unknown;
+    sources: unknown;
+    parent_id: string | null;
+    import_key: string | null;
+    import_hash: string | null;
+    edited_at: Date | null;
+    status: string;
+    decision_note: string | null;
+    decided_by: string | null;
+    decided_at: Date | null;
+    published_at: Date | null;
+    created_at: Date;
+    updated_at: Date;
+  };
+  blog_tracks: {
+    id: string;
+    post_id: string;
+    sort: number;
+    provider: string;
+    kind: string;
+    url: string | null;
+    embed_src: string;
+    title: string;
+    author_name: string | null;
+    thumbnail_url: string | null;
+    year: number | null;
+    note: unknown;
+    created_at: Date;
   };
   booking_inquiries: {
     id: string;
@@ -1030,6 +1085,11 @@ export interface Rows {
     zone_id: string | null;
     updated_at: Date;
   };
+  project_artists: {
+    project_id: string;
+    artist_id: string;
+    sort: number;
+  };
   project_offers: {
     id: string;
     project_id: string;
@@ -1052,6 +1112,11 @@ export interface Rows {
     perks: string;
     slots: number | null;
     sort: number;
+  };
+  project_waitlist: {
+    project_id: string;
+    user_id: string;
+    created_at: Date;
   };
   projects: {
     id: string;
@@ -1078,6 +1143,9 @@ export interface Rows {
     published_at: Date | null;
     created_at: Date;
     updated_at: Date;
+    waitlist_target: number | null;
+    waitlist_reached_at: Date | null;
+    link_url: string | null;
   };
   provider_tokens: {
     provider: string;

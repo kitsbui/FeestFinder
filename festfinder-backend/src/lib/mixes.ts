@@ -120,6 +120,39 @@ export function playerHeight(provider: MixProvider, kind: MixKind): number {
   return kind === 'track' || kind === 'episode' ? 152 : 352;
 }
 
+// ---- YouTube, for a blog post's tracks -------------------------------------------------------
+// The blog also plays YouTube videos (an artist's mixes stay the three services above). Its
+// player is YouTube's privacy-enhanced one, which sets no cookie before play; the web's
+// frame-src allows its host (festfinder-web/next.config.ts).
+
+export const TRACK_PROVIDERS = [...MIX_PROVIDERS, 'youtube'] as const;
+export type TrackProvider = (typeof TRACK_PROVIDERS)[number];
+export const TRACK_LABEL: Record<TrackProvider, string> = { ...PROVIDER_LABEL, youtube: 'YouTube' };
+export const YOUTUBE_EMBED_HOST = 'www.youtube-nocookie.com';
+const YOUTUBE_HOSTS = new Set(['youtube.com', 'music.youtube.com', 'youtube-nocookie.com', 'youtu.be']);
+const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
+
+/** The video a YouTube link or player address names (watch, youtu.be, embed, shorts), or null. */
+export function youtubeId(raw: string): string | null {
+  let u: URL;
+  try { u = new URL(raw.trim()); } catch { return null; }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+  const h = host(u);
+  if (!YOUTUBE_HOSTS.has(h)) return null;
+  const parts = u.pathname.split('/').filter(Boolean);
+  const id = h === 'youtu.be' ? parts[0]
+    : parts[0] === 'watch' ? u.searchParams.get('v')
+    : ['embed', 'shorts', 'live', 'v'].includes(parts[0] ?? '') ? parts[1]
+    : null;
+  return id && VIDEO_ID.test(id) ? id : null;
+}
+
+/** Where YouTube answers oEmbed for a video (a 401 or 404 there: the video cannot be embedded). */
+export const youtubeOembed = (id: string) => `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${id}`)}`;
+/** The player's address as FeestFinder embeds it; `{autoplay}` is filled when someone presses play. */
+export const youtubeEmbed = (id: string) => `https://${YOUTUBE_EMBED_HOST}/embed/${id}?rel=0&autoplay={autoplay}`;
+export const youtubeWatch = (id: string) => `https://www.youtube.com/watch?v=${id}`;
+
 /** "45:30" or "1:02:05" into seconds; null when it is not a time. */
 export function parseAt(v: string | null | undefined): number | null {
   if (!v) return null;

@@ -4,7 +4,7 @@ import { L } from '../lib/i18n.ts';
 import { notFound } from '../lib/errors.ts';
 import { parse } from '../lib/validate.ts';
 import { genreArtPng } from '../services/ogimage.ts';
-import { buildArtistSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, buildProjectSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
+import { buildArtistSeo, buildBlogSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, buildProjectSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
 
 /** robots.txt, the sitemap, llms.txt, the IndexNow key file, link-preview art, and what each public page says to search engines and AI agents. */
 export default async function seoRoutes(app: FastifyInstance) {
@@ -35,6 +35,7 @@ export default async function seoRoutes(app: FastifyInstance) {
     { prefix: 'c', api: 'collections', build: buildCollectionSeo, missing: L('Collection not found', 'Không tìm thấy bộ sưu tập') },
     { prefix: 'a', api: 'artists', build: buildArtistSeo, missing: L('Artist not found', 'Không tìm thấy nghệ sĩ') },
     { prefix: 'p', api: 'projects', build: buildProjectSeo, missing: L('Project not found', 'Không tìm thấy dự án') },
+    { prefix: 'blog', api: 'blog', build: buildBlogSeo, missing: L('Post not found', 'Không tìm thấy bài viết') },
   ] as const;
   for (const k of kinds) {
     app.get<{ Params: { slug: string } }>(`/seo/${k.api}/:slug`, async (req, reply) => {

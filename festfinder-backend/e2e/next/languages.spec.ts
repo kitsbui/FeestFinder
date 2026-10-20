@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { langRedirect } from '../../../festfinder-web/src/kd/lang-pref.ts';
 import { watch } from '../checks.ts';
 
 /*
@@ -71,4 +72,47 @@ test('the Indonesian artist directory and about page', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'FeestFinder dalam angka' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Satu tempat untuk tahu ada apa malam ini' })).toBeVisible();
   expect(problems).toEqual([]);
+});
+
+/** A person's browser: crawlers, previews and headless browsers are never moved (kd/lang-pref.ts). */
+const CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+
+test('a first visit reads English; the language a person picks is kept, and a shared link never moves them back', async ({ browser, baseURL }) => {
+  // The rule itself, with production's first-visit language (this build's is Vietnamese: playwright.next.config.ts).
+  const at = (path: string, search: string, cookie: 'vi' | 'en' | null, ua = CHROME) => langRedirect({ path, search, cookie, ua, fallback: 'en' })?.to ?? null;
+  expect(at('/e/ravo', '', null)).toBe('/e/ravo?lang=en');
+  expect(at('/', '?view=map', null)).toBe('/?view=map&lang=en');
+  expect(at('/e/ravo', '?lang=th', null)).toBeNull();
+  expect(at('/e/ravo', '?lang=en', 'vi')).toBe('/e/ravo');
+  expect(at('/e/ravo', '', 'vi')).toBeNull();
+  expect(at('/blog/some-post', '', 'en')).toBe('/blog/some-post?lang=en');
+  expect(at('/e/ravo', '', null, 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')).toBeNull();
+  for (const p of ['/studio', '/p/new', '/blog/new', '/console', '/e/ravo.md']) expect(at(p, '', null)).toBeNull();
+  // A language link keeps the choice and opens the clean address, for anyone.
+  expect(langRedirect({ path: '/e/ravo', search: '?setlang=vi&lang=en', cookie: 'en', ua: CHROME })).toEqual({ to: '/e/ravo', set: 'vi' });
+  expect(langRedirect({ path: '/', search: '?view=map&setlang=en', cookie: null, ua: null })).toEqual({ to: '/?view=map&lang=en', set: 'en' });
+
+  // In a browser: the flags keep the choice in the cookie the proxy reads.
+  const ctx = await browser.newContext({ userAgent: CHROME, viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  const problems = watch(page);
+  const cookie = async () => (await ctx.cookies(baseURL)).find((c) => c.name === 'ff_lang')?.value;
+  await page.goto('/e/ravo');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const flags = page.getByRole('banner').getByRole('group', { name: 'Ngôn ngữ' });
+  await flags.getByRole('link', { name: 'English' }).click();
+  await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
+  expect(await cookie()).toBe('en');
+  // Every Vietnamese address now opens in English.
+  await page.goto('/o/ravoent');
+  await expect(page).toHaveURL(/\/o\/ravoent\?lang=en$/);
+  // Back to Vietnamese: kept, even when someone shares an English link.
+  await page.getByRole('banner').getByRole('group', { name: 'Language' }).getByRole('link', { name: 'Tiếng Việt' }).click();
+  await expect(page).toHaveURL(/\/o\/ravoent$/);
+  expect(await cookie()).toBe('vi');
+  await page.goto('/e/ravo?lang=en');
+  await expect(page).toHaveURL(/\/e\/ravo$/);
+  await expect(page.getByRole('banner').getByRole('group', { name: 'Ngôn ngữ' }).getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('aria-current', 'true');
+  expect(problems).toEqual([]);
+  await ctx.close();
 });

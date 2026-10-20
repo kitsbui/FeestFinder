@@ -27,7 +27,7 @@ import { Menu, MenuItem, MenuSeparator, Picker } from '../../ui/menu';
 import { Card as Panel, Marker, Status, type StatusTone } from '../../ui/parts';
 import type { Card } from '../../types';
 import { ORIGIN, RadarTag, type Origin } from '../../ui/origin';
-import { DayGrid, ListRail, groupByDay } from './days';
+import { DayGrid, groupByDay } from './days';
 import { fromApp } from './from-app';
 import { place } from '../../app/place';
 import { LIST } from './copy';
@@ -418,26 +418,16 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
         <div data-list className="contents">
         {sorted.length ? (
           f.view === 'grid' ? (
-            <div className="flex items-start gap-10">
-              {split ? (
-                <div className={cx('flex min-w-0 flex-1 flex-col gap-10 transition-opacity', busy && 'opacity-60')}>
-                  <h2 id="here-h" className="kd-d2">{countryName}</h2>
-                  <DayGrid groups={groups} lang={lang} eager />
-                  <h2 id="elsewhere-h" className="kd-d2 border-t border-line-1 pt-10">{T.elsewhere}</h2>
-                  <DayGrid groups={elsewhere} lang={lang} />
-                </div>
-              ) : (
-                <DayGrid groups={groups} lang={lang} eager className={cx('min-w-0 flex-1 transition-opacity', busy && 'opacity-60')} />
-              )}
-              <ListRail
-                lang={lang}
-                items={sorted}
-                today={today}
-                cities={meta.cities.map((c) => ({ slug: c.slug, name: tx(c.name, lang), center: c.center, count: cityCounts[c.slug] ?? 0 }))}
-                onCity={(slug) => set({ city: slug })}
-                onMap={() => set({ view: 'map' })}
-              />
-            </div>
+            split ? (
+              <div className={cx('flex min-w-0 flex-col gap-10 transition-opacity', busy && 'opacity-60')}>
+                <h2 id="here-h" className="kd-d2">{countryName}</h2>
+                <DayGrid groups={groups} lang={lang} eager />
+                <h2 id="elsewhere-h" className="kd-d2 border-t border-line-1 pt-10">{T.elsewhere}</h2>
+                <DayGrid groups={elsewhere} lang={lang} />
+              </div>
+            ) : (
+              <DayGrid groups={groups} lang={lang} eager className={cx('min-w-0 transition-opacity', busy && 'opacity-60')} />
+            )
           ) : (
             <div className={cx('kd-tbl -mx-4 tab:mx-0 transition-opacity', busy && 'opacity-60')} role="table" aria-label={T.title} data-fold="xl">
               <div role="row" className="kd-tr kd-tr-head" style={{ gridTemplateColumns: shrinkable(COLS) }}>

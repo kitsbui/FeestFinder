@@ -20,7 +20,8 @@ import dynamic from 'next/dynamic';
 
 /** Loads after the page (growth plan card F): no page carries the install code at boot. */
 const InstallRow = dynamic(() => import('../ui/install').then((m) => m.InstallRow), { ssr: false });
-import { rememberLang, useOtherLang } from './lang';
+import { rememberLang, useChooseHref } from './lang';
+import { UsFlag, VnFlag } from '../ui/flags';
 
 export interface MeCounts { saved: number; handle: string; commission: number }
 
@@ -93,11 +94,21 @@ function Row({ href, onClick, children, aside, hrefLang }: { href?: string; onCl
     : <button type="button" onClick={onClick} className="kd-lrow min-h-13 w-full text-left">{body}</button>;
 }
 
+/** The language this page is in, with its flag (ui/flags.tsx): the row leads to the other one. */
+function LangAside({ lang }: { lang: Lang }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      {lang === 'vi' ? <VnFlag /> : <UsFlag />}
+      {lang === 'vi' ? 'Tiếng Việt' : 'English'}
+    </span>
+  );
+}
+
 /** "Tôi" before signing in (design v2 phase 11): what someone can do without an account. */
 export function GuestHub({ lang, className }: { lang: Lang; className?: string }) {
   const T = pick(WEB, lang);
-  const other = useOtherLang(lang);
   const next: Lang = lang === 'vi' ? 'en' : 'vi';
+  const other = useChooseHref(lang, next);
   return (
     <nav aria-label={T.me} className={className}>
       <div className="flex flex-col">
@@ -105,8 +116,9 @@ export function GuestHub({ lang, className }: { lang: Lang; className?: string }
         {/* The places the phone's tab bar leaves to search (design v2 phase 12). */}
         <Row href={inLang('/a', lang)}>{T.artists}</Row>
         <Row href={inLang('/p', lang)}>{T.projects}</Row>
+        <Row href={inLang('/blog', lang)}>{T.blog}</Row>
         <Row href="/studio/new">{T.listEvent}</Row>
-        <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
+        <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={<LangAside lang={lang} />}>{T.language}</Row>
         <Row href={inLang('/about', lang)}>{T.about}</Row>
         <Row onClick={feedback}>{T.feedback}</Row>
         <InstallRow lang={lang} />
@@ -121,8 +133,8 @@ export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
   const T = pick(WEB, lang);
   const K = pick(CRAFT, lang);
   const me = useMeCounts();
-  const other = useOtherLang(lang);
   const next: Lang = lang === 'vi' ? 'en' : 'vi';
+  const other = useChooseHref(lang, next);
   return (
     <nav aria-label={T.me} className={className}>
       <div className="flex flex-col">
@@ -140,8 +152,9 @@ export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
         {/* The phone's top bar leaves it to "Tôi" (owner, 2026-10-18); the tab bar leaves the places to search. */}
         <Row href={inLang('/a', lang)}>{T.artists}</Row>
         <Row href={inLang('/p', lang)}>{T.projects}</Row>
+        <Row href={inLang('/blog', lang)}>{T.blog}</Row>
         <Row href="/studio/new">{T.listEvent}</Row>
-        <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={lang === 'vi' ? 'Tiếng Việt' : 'English'}>{T.language}</Row>
+        <Row href={other} hrefLang={next} onClick={() => rememberLang(next, true)} aside={<LangAside lang={lang} />}>{T.language}</Row>
         <Row href="/app/settings">{T.settings}</Row>
         <Row onClick={feedback}>{T.feedback}</Row>
         <Row onClick={() => kd.signOut()}>{pick(COMMON, lang).signOut}</Row>

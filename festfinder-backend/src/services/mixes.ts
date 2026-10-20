@@ -45,6 +45,10 @@ export const fakeOembed: OembedFetcher = async (endpoint) => {
       html: `<iframe width="100%" height="120" src="https://www.mixcloud.com/widget/iframe/?feed=${encodeURIComponent(url)}&amp;hide_cover=1" frameborder="0"></iframe>`,
     };
   }
+  if (endpoint.startsWith('https://www.youtube.com/oembed')) {
+    const id = new URL(url).searchParams.get('v') ?? '';
+    return { title: `YouTube video ${id}`, author_name: 'YouTube channel', thumbnail_url: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` };
+  }
   const [, kind, id] = new URL(url).pathname.split('/');
   return {
     title: name, thumbnail_url: 'https://image-cdn-ak.spotifycdn.com/image/fake', iframe_url: `https://open.spotify.com/embed/${kind}/${id}?utm_source=oembed`,

@@ -72,9 +72,11 @@ export const T = {
   directory: { vi: 'Nghệ sĩ', en: 'Artists' }, withShows: { vi: 'Có show sắp tới', en: 'With shows coming up' }, others: { vi: 'Nghệ sĩ khác', en: 'More artists' },
   artistCount: { vi: 'Số nghệ sĩ', en: 'Artists' },
   project: { vi: 'Dự án', en: 'Project' }, projects: { vi: 'Dự án', en: 'Projects' }, seeking: { vi: 'Đang tìm', en: 'Looking for' },
-  target: { vi: 'Dự kiến', en: 'Planned for' }, budget: { vi: 'Ngân sách', en: 'Budget' }, raise: { vi: 'Cần gọi', en: 'Raising' },
+  target: { vi: 'Dự kiến', en: 'Planned for' }, budget: { vi: 'Ngân sách', en: 'Budget' }, waitlist: { vi: 'Danh sách chờ', en: 'Waitlist' },
   capacity: { vi: 'Sức chứa', en: 'Capacity' }, by: { vi: 'Người khởi xướng', en: 'Started by' }, onBoard: { vi: 'Đã đồng hành', en: 'On board' },
   realized: { vi: 'Đã thành sự kiện', en: 'Became an event' },
+  blog: { vi: 'Blog', en: 'Blog' }, tracks: { vi: 'Bài nhạc', en: 'Tracks' }, category: { vi: 'Chuyên mục', en: 'Category' },
+  author: { vi: 'Tác giả', en: 'Author' }, readTime: { vi: 'Thời gian đọc', en: 'Reading time' }, published: { vi: 'Ngày đăng', en: 'Published' },
 };
 export const ORG_TYPE: Record<string, Localized> = {
   promoter: { vi: 'đơn vị tổ chức sự kiện', en: 'event promoter' }, venue: { vi: 'địa điểm tổ chức', en: 'venue' },
@@ -127,7 +129,7 @@ export type Link = { title: string; path: string; line: string };
 
 /** What every public page says to search engines and AI assistants: its head, its graph, its facts. */
 export interface PageSeo {
-  kind: 'event' | 'organizer' | 'collection' | 'artist' | 'directory' | 'project';
+  kind: 'event' | 'organizer' | 'collection' | 'artist' | 'directory' | 'project' | 'blog';
   lang: Lang;
   url: string;
   canonical: string;
@@ -222,4 +224,9 @@ export interface DirectorySeo extends Omit<OrganizerSeo, 'kind'> {
 /** A project looking for backers: its idea and its needs, the same page parts as an organiser. */
 export interface ProjectSeo extends Omit<OrganizerSeo, 'kind'> {
   kind: 'project';
+}
+
+/** A blog post: its words as the page's about, its tracks in the first list. */
+export interface BlogSeo extends Omit<OrganizerSeo, 'kind'> {
+  kind: 'blog';
 }

@@ -31,7 +31,7 @@ describe('projects: an idea for a night, and the people who offer to make it hap
     assert.equal((await env.as(owner).post(`/me/projects/${id}/submit`)).body.error.code, 'incomplete');
     const filled = await env.as(owner).patch(`/me/projects/${id}`, {
       pitch: 'A riverside warehouse techno night for 800 people', story: STORY, styles: ['techno', 'hard-techno'], eventType: 'rave',
-      targetOn: '2026-12-12', capacity: 800, budget: 450_000_000, raiseAmount: 200_000_000, seeking: ['sponsorship', 'artists', 'venue', 'investment'],
+      targetOn: '2026-12-12', capacity: 800, budget: 450_000_000, waitlistTarget: 2, seeking: ['sponsorship', 'artists', 'venue', 'investment'],
     });
     assert.deepEqual(filled.body.missing, []);
     await env.as(owner).put(`/me/projects/${id}/packages`, { items: [{ title: 'Main sponsor', amount: 100_000_000, perks: 'Logo on stage, 20 tickets', slots: 1 }, { title: 'Bar partner', amount: 30_000_000 }] });
@@ -51,7 +51,7 @@ describe('projects: an idea for a night, and the people who offer to make it hap
   it('is reviewed by the team: sent back with a reason, then approved and listed', async () => {
     assert.equal((await env.as(owner).get('/admin/projects')).status, 403);
     const queue = (await env.as(admin).get('/admin/projects')).body;
-    assert.deepEqual(queue.items.map((p: any) => p.slug), [slug]);
+    assert.deepEqual(queue.items.map((p: { slug: string }) => p.slug), [slug]);
     assert.equal((await env.as(admin).post(`/admin/projects/${id}/decision`, { action: 'reject' })).body.error.code, 'note_required');
     await env.as(admin).post(`/admin/projects/${id}/decision`, { action: 'reject', note: 'Say who runs the sound' });
     const back = (await env.as(owner).get(`/me/projects/${id}`)).body;
@@ -72,6 +72,55 @@ describe('projects: an idea for a night, and the people who offer to make it hap
     assert.match(page.disclaimer.vi, /không nhận, giữ hay chuyển tiền/);
   });
 
+  it('keeps a waitlist of real accounts, with the target the owner set, and tells the owner once it is met', async () => {
+    assert.deepEqual((await env.as().get(`/projects/${slug}`)).body.waitlist, { count: 0, target: 2, joined: false });
+    assert.equal((await env.as().put(`/projects/${slug}/waitlist`)).status, 401);
+    assert.equal((await env.as(owner).put(`/projects/${slug}/waitlist`)).body.error.code, 'own_project');
+    const joined = (await env.as(fan).put(`/projects/${slug}/waitlist`)).body;
+    assert.deepEqual([joined.count, joined.target, joined.joined], [1, 2, true]);
+    // Joining twice counts once.
+    assert.equal((await env.as(fan).put(`/projects/${slug}/waitlist`)).body.count, 1);
+    assert.equal((await env.as(fan).get(`/projects/${slug}`)).body.waitlist.joined, true);
+    await env.as(dj).put(`/projects/${slug}/waitlist`);
+    const told = async () => (await env.ctx.db.query<{ n: number }>(`select count(*)::int as n from notifications n join projects p on p.owner_user_id = n.user_id where p.slug = $1 and n.title->>'en' like '%people are waiting'`, [slug])).rows[0].n;
+    assert.equal(await told(), 1);
+    // Leaving and joining again does not tell the owner twice.
+    assert.equal((await env.as(dj).delete(`/projects/${slug}/waitlist`)).body.count, 1);
+    await env.as(dj).put(`/projects/${slug}/waitlist`);
+    assert.equal(await told(), 1);
+    assert.equal((await env.as().get('/projects')).body.items[0].waitlist.count, 2);
+  });
+
+  it('gives the budget in VND or USD, as the owner chooses', async () => {
+    assert.equal((await env.as(owner).patch(`/me/projects/${id}`, { currency: 'THB' })).body.error.code, 'invalid_input');
+    assert.equal((await env.as(owner).patch(`/me/projects/${id}`, { currency: 'USD', budget: 25_000 })).body.currency, 'USD');
+    // Moving city keeps the owner's currency.
+    assert.equal((await env.as(owner).patch(`/me/projects/${id}`, { city: 'ha-noi' })).body.currency, 'USD');
+    await env.as(owner).patch(`/me/projects/${id}`, { currency: 'VND', budget: 450_000_000, city: 'ho-chi-minh' });
+    const bkk = await env.as(fan).post('/me/projects', { title: 'Bangkok rooftop', city: 'bangkok' });
+    assert.equal(bkk.body.currency, 'USD');
+  });
+
+  it('names its own page and the artists it wants: each a profile, a new name waiting to be claimed', async () => {
+    assert.equal((await env.as(owner).patch(`/me/projects/${id}`, { linkUrl: 'javascript:alert(1)' })).body.error.code, 'invalid_input');
+    const sug = (await env.as().get('/artists/suggest?q=mai')).body.items;
+    assert.equal(sug[0].name, 'Mai Pulse');
+    assert.equal(sug[0].claimed, true);
+    const out = (await env.as(owner).patch(`/me/projects/${id}`, { linkUrl: 'http://instagram.com/riverwarehouse', lineup: ['mai pulse', 'Sông Đêm Collective', 'Mai Pulse'] })).body;
+    assert.equal(out.link, 'https://instagram.com/riverwarehouse');
+    assert.deepEqual(out.lineup.map((a: { name: string; claimed: boolean }) => [a.name, a.claimed]), [['Mai Pulse', true], ['Sông Đêm Collective', false]]);
+    // The new name is a profile of its own, waiting at /a/radar with the project it came from.
+    const page = (await env.as().get(`/artists/${out.lineup[1].slug}`)).body.artist;
+    assert.deepEqual([page.claimed, page.kind], [false, 'unclaimed']);
+    const waiting = (await env.as().get('/artists?kind=unclaimed&q=song dem')).body.items;
+    assert.deepEqual(waiting.map((a: { name: string; source?: { kind: string; project?: { slug: string } } }) => [a.name, a.source?.kind, a.source?.project?.slug]), [['Sông Đêm Collective', 'project', slug]]);
+    // Reordering keeps one link per artist; the public page and its facts name them.
+    const again = (await env.as(owner).patch(`/me/projects/${id}`, { lineup: ['Sông Đêm Collective', 'Mai Pulse'] })).body;
+    assert.deepEqual(again.lineup.map((a: { name: string }) => a.name), ['Sông Đêm Collective', 'Mai Pulse']);
+    const seo = (await env.as().get(`/seo/projects/${slug}`)).body;
+    assert.ok(seo.page.facts.some((f: { value: string }) => f.value === 'Sông Đêm Collective, Mai Pulse'));
+  });
+
   it('takes offers that answer what it asks for, from the right people', async () => {
     const pkg = (await env.as().get(`/projects/${slug}`)).body.packages[0].id;
     assert.equal((await env.as(owner).post(`/projects/${slug}/offers`, { kind: 'sponsor', orgName: 'Self' })).body.error.code, 'own_project');
@@ -85,22 +134,22 @@ describe('projects: an idea for a night, and the people who offer to make it hap
     assert.equal(play.status, 201);
 
     const offers = (await env.as(owner).get(`/me/projects/${id}/offers`)).body.items;
-    assert.deepEqual(offers.map((o: any) => [o.kind, o.from, o.contact]).sort(), [['perform', 'Mai Pulse', null], ['sponsor', 'Saigon Beer Co.', null]]);
-    assert.equal(offers.find((o: any) => o.kind === 'sponsor').package, 'Main sponsor');
+    assert.deepEqual(offers.map((o: { kind: string; from: string; contact: unknown }) => [o.kind, o.from, o.contact]).sort(), [['perform', 'Mai Pulse', null], ['sponsor', 'Saigon Beer Co.', null]]);
+    assert.equal(offers.find((o: { kind: string }) => o.kind === 'sponsor').package, 'Main sponsor');
     const owners = await env.ctx.db.query<{ n: number }>(`select count(*)::int as n from notifications n join users u on u.id = n.user_id where u.phone like '%300400' and n.kind = 'project_offer'`);
     assert.equal(owners.rows[0].n, 2);
 
     // Accepting shows each side how to reach the other; FeestFinder never sees money.
-    const s = offers.find((o: any) => o.kind === 'sponsor');
+    const s = offers.find((o: { kind: string }) => o.kind === 'sponsor');
     await env.as(owner).post(`/me/projects/${id}/offers/${s.id}`, { accept: true });
-    const after = (await env.as(owner).get(`/me/projects/${id}/offers`)).body.items.find((o: any) => o.id === s.id);
+    const after = (await env.as(owner).get(`/me/projects/${id}/offers`)).body.items.find((o: { id: string }) => o.id === s.id);
     assert.deepEqual([after.status, after.contact.email], ['accepted', 'brand.manager@example.com']);
     const mine = (await env.as(fan).get('/me/offers')).body.items[0];
     assert.equal(mine.status, 'accepted');
     assert.match(mine.contact.phone, /300400/);
     assert.equal((await env.as(owner).post(`/me/projects/${id}/offers/${s.id}`, { accept: false })).body.error.code, 'already_decided');
     // The artist withdraws; the page counts who is on board.
-    const p = offers.find((o: any) => o.kind === 'perform');
+    const p = offers.find((o: { kind: string }) => o.kind === 'perform');
     assert.equal((await env.as(dj).post(`/me/offers/${p.id}/withdraw`)).body.status, 'withdrawn');
     assert.deepEqual((await env.as().get(`/projects/${slug}`)).body.onBoard, { sponsor: 1 });
   });
@@ -114,12 +163,12 @@ describe('projects: an idea for a night, and the people who offer to make it hap
     assert.deepEqual([linked.body.status, linked.body.event.slug], ['realized', 'ravo']);
     assert.deepEqual((await env.as().get('/events/ravo')).body.sponsors, [{ name: 'Saigon Beer Co.' }]);
     const eventSeo = (await env.as().get('/seo/events/ravo')).body;
-    const ev = eventSeo.jsonLd['@graph'].find((n: any) => n['@type'] === 'MusicEvent');
+    const ev = eventSeo.jsonLd['@graph'].find((n: { '@type': string }) => n['@type'] === 'MusicEvent');
     assert.deepEqual(ev.sponsor, [{ '@type': 'Organization', name: 'Saigon Beer Co.' }]);
 
     const seo = (await env.as().get(`/seo/projects/${slug}`)).body;
-    const project = seo.jsonLd['@graph'].find((n: any) => n['@type'] === 'Project');
-    assert.deepEqual(project.seeks.map((d: any) => d.name), ['Tài trợ', 'Nghệ sĩ', 'Địa điểm', 'Đầu tư']);
+    const project = seo.jsonLd['@graph'].find((n: { '@type': string }) => n['@type'] === 'Project');
+    assert.deepEqual(project.seeks.map((d: { name: string }) => d.name), ['Tài trợ', 'Nghệ sĩ', 'Địa điểm', 'Đầu tư']);
     assert.equal(project.subjectOf.url.endsWith('/e/ravo'), true);
     assert.equal(seo.robots.startsWith('index'), true);
     const md = (await env.app.inject({ method: 'GET', url: `/p/${slug}.md?lang=en` })).body;

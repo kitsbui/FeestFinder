@@ -1,9 +1,11 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 
 /*
- * The artist page in Kính đêm (festfinder-web/src/kd/web/artist): what the compiled screen
- * showed (shows, who they play with, booking details, free dates), on the rebuilt page.
+ * The artist page in Kính đêm (festfinder-web/src/kd/web/artist), one column since 2026-10-20:
+ * the hero, the shows to come, everything about them, their music (the MP3 playlist, then the
+ * mixes) and the moments last.
  */
 
 const ATTENDEE = { identifier: 'minh@example.com', password: 'festfinder123' };
@@ -42,18 +44,22 @@ test.describe('the artist page', () => {
 
   test('opens in English at ?lang=en', async ({ page }) => {
     const problems = await open(page, '/a/hoaprox?lang=en');
-    await expect(page.getByRole('tab', { name: /Upcoming/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Upcoming', level: 2 })).toBeVisible();
+    await expect(page.getByRole('complementary'), 'no side column').toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Ravolution Music Festival' })).toHaveAttribute('href', '/e/ravo?lang=en');
     await expect(page.getByRole('link', { name: /Ravolution Entertainment/ })).toHaveAttribute('href', '/o/ravoent?lang=en');
     expect(problems).toEqual([]);
   });
 
-  test('the next show buys through /go, and the past tab lists where they played', async ({ page }) => {
+  test('the next show buys through /go, and "Đã diễn" lists where they played', async ({ page }) => {
     await open(page, '/a/hoaprox');
-    const buy = page.getByRole('link', { name: 'Mua vé' }).first();
+    // The shows to come first, then who they are.
+    const order = await page.getByRole('heading', { level: 2 }).allInnerTexts();
+    expect(order.indexOf('Sắp diễn')).toBeLessThan(order.indexOf('Giới thiệu'));
+    const buy = page.getByRole('region', { name: 'Sắp diễn' }).getByRole('link', { name: 'Mua vé' }).first();
     await expect(buy).toHaveAttribute('href', '/go/ravo?src=artist');
-    await page.getByRole('tab', { name: /Đã diễn/ }).click();
-    await expect(page.getByRole('tabpanel', { name: 'Đã diễn' }).getByRole('link', { name: /Ravolution Music Festival 2025/ })).toBeVisible();
+    await page.locator('#played summary').click();
+    await expect(page.locator('#played').getByRole('link', { name: /Ravolution Music Festival 2025/ })).toBeVisible();
   });
 
   test('following an artist who runs their profile asks for sign-in, then follows and moves the count', async ({ page }) => {
@@ -116,12 +122,12 @@ test.describe('the artist page', () => {
 
     await open(page, '/a/' + slug);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(name);
-    // The bio, links and booking details are the "Giới thiệu" tab (design v2 phase 3).
-    await page.getByRole('tab', { name: 'Giới thiệu' }).click();
-    await expect(page.getByText('DJ ở Sài Gòn, chơi melodic techno.')).toBeVisible();
+    // The bio, links and booking details are all under "Giới thiệu", open on the page.
+    const about = page.getByRole('region', { name: 'Giới thiệu' });
+    await expect(about.getByText('DJ ở Sài Gòn, chơi melodic techno.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Spotify' })).toHaveAttribute('href', 'https://open.spotify.com/artist/abc123');
     await expect(page.getByText('Đang nhận booking').first()).toBeVisible();
-    await page.getByText('Lịch', { exact: true }).click();
+    await about.getByText('Lịch', { exact: true }).click();
     await expect(page.getByText('01/03 – 03/03')).toBeVisible();
     await expect(page.getByText('private note')).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveAttribute('href', '/studio/artist');
@@ -148,13 +154,13 @@ test.describe('mixes on the artist page', () => {
     expect(added.status(), await added.text()).toBe(201);
 
     const problems = await open(page, '/a/wukong');
-    // "Mix mới nhất" beside the tabs leads into the Mix tab, where the sets play.
-    await page.getByRole('region', { name: 'Mix mới nhất' }).getByRole('link').click();
-    await expect(page.getByRole('tab', { name: /^Mix/ })).toHaveAttribute('aria-selected', 'true');
+    // Without a playlist, the hero's "Phát" leads to the mixes under "Nghe".
+    await page.getByRole('link', { name: 'Phát', exact: true }).click();
+    await expect(page).toHaveURL(/#mix$/);
     const listen = page.getByRole('region', { name: 'Nghe' });
     await expect(listen).toBeVisible();
     await expect(listen.locator('iframe'), 'nothing from SoundCloud loads before play').toHaveCount(0);
-    await listen.getByRole('button', { name: /^Phát / }).click();
+    await listen.getByRole('button', { name: /Phát$/ }).click();
     await expect(listen.locator('iframe')).toHaveAttribute('src', /^https:\/\/w\.soundcloud\.com\/player\/\?url=https%3A%2F%2Fapi\.soundcloud\.com%2F.*auto_play=true/);
     await listen.getByRole('button', { name: /Thích/ }).click();
     await expect(page.getByText('Đăng nhập để thích mix')).toBeVisible();
@@ -164,7 +170,6 @@ test.describe('mixes on the artist page', () => {
   test('a fan likes a mix and opens its comments', async ({ page }) => {
     await signInWith(page, ATTENDEE);
     await open(page, '/a/wukong');
-    await page.getByRole('tab', { name: /^Mix/ }).click();
     const listen = page.getByRole('region', { name: 'Nghe' });
     // "0 Thích", then "1 Đã thích" once pressed.
     const like = listen.getByRole('button', { name: /thích/i }).first();
@@ -178,5 +183,34 @@ test.describe('mixes on the artist page', () => {
     await sheet.getByRole('button', { name: 'Đăng' }).click();
     await expect(sheet.getByText('Đoạn drop này đỉnh quá')).toBeVisible();
     await expect(sheet.getByText('Tại 45:30')).toBeVisible();
+  });
+});
+
+test.describe('the MP3 playlist on the artist page', () => {
+  test('plays in its own waveform player, from the hero’s "Phát", track after track', async ({ page }) => {
+    await newAccount(page, `waves${Date.now() % 1_000_000}@example.com`);
+    const name = `Wave Rider ${Date.now() % 100000}`;
+    expect((await page.request.post('/me/roles/artist', { data: { stageName: name, roles: ['dj'] } })).ok()).toBeTruthy();
+    const slug = (await (await page.request.get('/auth/session')).json()).artist.slug;
+    // The test API measures every link from a fixture; the browser is given the same file.
+    for (const [i, title] of ['Sunrise', 'Night Drive'].entries()) {
+      const added = await page.request.post('/me/artist/tracks', { data: { url: `https://cdn.example.com/${slug}-${i}.mp3`, title } });
+      expect(added.status(), await added.text()).toBe(201);
+    }
+    const mp3 = await readFile(new URL('../../test/fixtures/audio/tone.mp3', import.meta.url));
+    await page.route('https://cdn.example.com/**', (r) => r.fulfill({ body: mp3, contentType: 'audio/mpeg' }));
+
+    const problems = await open(page, '/a/' + slug);
+    const list = page.getByRole('region', { name: 'Playlist' });
+    await expect(list.getByRole('button', { name: /Sunrise/ })).toHaveAttribute('aria-current', 'true');
+    await expect(list.getByRole('button', { name: /Night Drive/ })).toContainText('0:02');
+    await page.getByRole('button', { name: 'Phát', exact: true }).first().click();
+    await expect(list.getByRole('button', { name: 'Tạm dừng' })).toBeVisible();
+    await list.getByRole('button', { name: 'Bài sau' }).click();
+    await expect(list.getByRole('button', { name: /Night Drive/ })).toHaveAttribute('aria-current', 'true');
+    // The moments come after the music.
+    const order = await page.getByRole('heading', { level: 2 }).allInnerTexts();
+    expect(order.indexOf('Giới thiệu')).toBeLessThan(order.indexOf('Nghe'));
+    expect(problems).toEqual([]);
   });
 });

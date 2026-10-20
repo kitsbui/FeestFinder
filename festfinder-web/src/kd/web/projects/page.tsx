@@ -3,6 +3,7 @@
  * server with their structured data; offering, the owner's tools and the filters come in the
  * browser. FeestFinder connects the people and never handles money (every page says so).
  */
+import { LinkIcon } from '@phosphor-icons/react/ssr';
 import { api, apiOr, jsonLdHtml, type Lang, type ProjectSeo } from '@/lib/api';
 import { fill, pick } from '../../copy';
 import { count, dayMonth, money } from '../../format';
@@ -11,15 +12,21 @@ import { KdLink as Link, inLang } from '../../link';
 import { KdProvider } from '../../runtime';
 import { LinkButton } from '../../ui/actions';
 import { Accordion, Art, Avatar, SectionHead, Stat } from '../../ui/parts';
-import { Crumbs, WebFooter, WebNav } from '../chrome';
+import { WebFooter, WebNav } from '../chrome';
+import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { ProjectsBrowser } from './browser';
-import { PROJ } from './copy';
+import { PROJ_PAGE as PROJ } from './copy-page';
 import { text, type Project, type ProjectList } from './model';
 import { OfferBox } from './offer';
+import { Waitlist } from './waitlist';
+import { ShareButton } from '../share';
 import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
+const NO_WAITLIST: Project['waitlist'] = { count: 0, target: null, joined: false };
+/** A link's site, as it is shown: "instagram.com/rooftop.sunrise". */
+const hostOf = (url: string) => { try { const u = new URL(url); return (u.hostname.replace(/^www\./, '') + u.pathname).replace(/\/$/, ''); } catch { return url; } };
 
 export async function ProjectsPage({ lang }: { lang: Lang }) {
   const T = pick(PROJ, lang);
@@ -64,6 +71,9 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
   const W = pick(WEB, lang);
   const owner = p.owner.name || T.member;
   const onBoard = Object.values(p.onBoard).reduce((a, b) => a + b, 0);
+  // An answer cached from an API older than these fields (the web and the API deploy one after the other) still renders.
+  const waitlist = p.waitlist ?? NO_WAITLIST;
+  const lineup = p.lineup ?? [];
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? W.english : W.vietnamese };
   return (
     <InLang lang={lang}>
@@ -85,21 +95,33 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                     {p.owner.name ? <Avatar name={p.owner.name} size={28} /> : null}
                     {fill(T.by, { n: owner })}
                   </span>
+                  {p.link ? (
+                    <a className="kd-nl -mx-2.5 self-start" href={p.link} target="_blank" rel="noopener nofollow ugc">
+                      <LinkIcon size={16} aria-hidden="true" />
+                      <span className="kd-ell">{hostOf(p.link)}</span>
+                    </a>
+                  ) : null}
                 </div>
-                <OfferBox lang={lang} slug={p.slug} status={p.status} seeking={p.seeking.map((s) => s.key)} packages={p.packages} currency={p.currency} />
+                <div className="flex w-full max-w-sm flex-col gap-4">
+                  <Waitlist lang={lang} slug={p.slug} status={p.status} initial={waitlist} />
+                  <div className="flex flex-wrap items-start gap-2">
+                    <OfferBox lang={lang} slug={p.slug} status={p.status} seeking={p.seeking.map((s) => s.key)} packages={p.packages} currency={p.currency} />
+                    <ShareButton lang={lang} tone="default" name={p.title} url={seo.url} slug={p.slug} source="project"
+                      story={{ kicker: [T.kicker, text(p.city.label, lang)].filter(Boolean).join(' · '), lines: [p.pitch, waitlist.count ? fill(T.waitlistN, { n: count(waitlist.count, lang) }) : ''].filter(Boolean) }} />
+                  </div>
+                </div>
               </div>
               <div className="mt-7 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-y-4 border-y border-line-1 py-4.5">
                 {p.targetOn ? <Stat value={dayMonth(p.targetOn, lang) + (lang === 'vi' ? '.' : ' ') + p.targetOn.slice(0, 4)} label={T.target} /> : null}
                 {p.budget != null ? <Stat value={money(p.budget, p.currency, lang)} label={T.budget} /> : null}
-                {p.raiseAmount != null ? <Stat value={money(p.raiseAmount, p.currency, lang)} label={T.raise} /> : null}
                 {p.capacity ? <Stat value={fill(T.people, { n: count(p.capacity, lang) })} label={T.capacity} /> : null}
                 {onBoard ? <Stat value={count(onBoard, lang)} label={T.onBoard} /> : null}
               </div>
             </section>
 
+            {/* One column (owner, 2026-10-20: no side column on any page); the facts fold at its end. */}
             <div className="kd-wrap pt-8">
-              <div className="kd-split gap-[clamp(28px,4vw,56px)]">
-                <div className="kd-main flex flex-col gap-10">
+                <div className="flex flex-col gap-10">
                   {p.event ? (
                     <Link href={inLang('/e/' + enc(p.event.slug), lang)} className="kd-card flex flex-col gap-1 p-5 hover:bg-white/[0.04]">
                       <span className="kd-m">{T.became}</span>
@@ -116,6 +138,21 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                       </div>
                     ) : null}
                   </section>
+                  {lineup.length ? (
+                    <section aria-labelledby="p-lu" className="flex flex-col gap-4">
+                      <SectionHead id="p-lu" title={T.lineup} aside={<span className="kd-m kd-num">{lineup.length}</span>} />
+                      <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-x-4">
+                        {lineup.map((a) => (
+                          <li key={a.slug}>
+                            <Link href={inLang('/a/' + enc(a.slug), lang)} className="kd-lrow">
+                              <Avatar name={a.name} src={a.imageUrl} size={36} />
+                              <span className="kd-hs kd-ell min-w-0">{a.name}</span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
                   {p.packages.length ? (
                     <section aria-labelledby="p-pk" className="flex flex-col gap-4">
                       <SectionHead id="p-pk" title={T.packages} aside={<span className="kd-m kd-num">{p.packages.length}</span>} />
@@ -131,13 +168,10 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                       </ul>
                     </section>
                   ) : null}
-                  <p className="kd-s max-w-read border-t border-line-1 pt-4 text-fg-3">{text(p.disclaimer, lang)}</p>
-                </div>
-                <aside className="kd-side flex flex-col border-t border-line-1">
-                  <Accordion small summary={seo.headings.facts} open>
+                  <Accordion small summary={seo.headings.facts} className="max-w-read border-t border-line-1">
                     <div className="flex flex-col gap-3">
                       <p className="kd-s">{seo.page.summary}</p>
-                      <dl className="grid grid-cols-1 gap-y-2">
+                      <dl className="grid grid-cols-1 gap-x-6 gap-y-2 tab:grid-cols-2">
                         {seo.page.facts.map((f) => (
                           <div key={f.label} className="flex flex-col gap-0.5">
                             <dt className="kd-m">{f.label}</dt>
@@ -147,8 +181,8 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                       </dl>
                     </div>
                   </Accordion>
-                </aside>
-              </div>
+                  <p className="kd-s max-w-read border-t border-line-1 pt-4 text-fg-3">{text(p.disclaimer, lang)}</p>
+                </div>
             </div>
           </main>
           <div className="mt-auto"><WebFooter lang={lang} otherLang={otherLang} /></div>
