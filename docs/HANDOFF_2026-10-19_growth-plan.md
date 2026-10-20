@@ -1,27 +1,31 @@
-# Kế hoạch tăng trưởng · handoff 2026-10-19 (bản 2)
+# Kế hoạch tăng trưởng · handoff 2026-10-19 (bản 3, rà lại 2026-10-20)
 
 | | |
 | --- | --- |
-| Nền code | `main` ở `48b2cf3` (design v2 phase 0–14 và 17 đã merge; migration tiếp theo `048`). Bản 1 của file này viết trên `f9baae0`, trước design v2, nên đã viết lại toàn bộ. |
-| Luật trên hết | `CLAUDE.md`, rồi `docs/DESIGN_GOVERNANCE.md`. File này không lặp lại chúng. Nguyên tắc thiết kế lấy từ design-kit (`/home/patrickstar/Desktop/design-kit`, repo `kitsbui/design-kit`): đo trước, ngân sách chỉ giảm, hai thang điểm, một màn một việc, ba khái niệm trước, một cách làm một việc, gấp chứ không bỏ, dữ liệu thử xấu như production, quyết định của chủ dự án là lựa chọn có hệ quả và được chép nguyên văn. |
-| Trạng thái | **Final, chạy như night build**: `docs/NIGHT_BUILD_PLAN_2026-10-19.md` là lịch chạy; file này là thiết kế. Chủ sản phẩm chọn A cho D1, D3–D6 (2026-10-19); **thẻ 2 Zalo OA để sau** (chủ sản phẩm, 2026-10-19: hiện chỉ cần xác minh SMS của phase 17); D5b và D3c mặc định A, đổi được sáng sau. |
-| Cách đọc | Mục 1 trong ba phút. Mỗi việc là một **thẻ** cùng khuôn ở mục 4; agent làm đúng một thẻ, một lát (P0/P1/P2) mỗi PR. Thẻ chỉ "xong" khi cột **Xong khi** có số thật. |
+| Nền code | `main` ở `48b2cf3` (design v2 phase 0–14, 17). Rà toàn bộ dự án ngày 2026-10-20 theo ba điều chỉnh của chủ sản phẩm (mục 8 là bảng kiểm kê). |
+| Ba điều chỉnh (chủ sản phẩm, 2026-10-20) | **(1)** Không xác minh số điện thoại: đăng nhập Gmail là đủ để bình luận và dùng gần hết web; admin xoá được bình luận không phù hợp. **(2)** Bình luận và trả lời nhau như Facebook. **(3)** FeestFinder **không bán vé**, không cần hệ bán vé hay check-in: gỡ hết; thay bằng cơ chế giới thiệu link affiliate thông minh, hiện đại nhất. |
+| Luật trên hết | `CLAUDE.md`, rồi `docs/DESIGN_GOVERNANCE.md`, rồi design-kit (`/home/patrickstar/Desktop/design-kit`): đo trước, ngân sách chỉ giảm, một màn một việc, ba khái niệm trước, gấp chứ không bỏ, dữ liệu thử xấu như production, quyết định của chủ sản phẩm là lựa chọn có hệ quả chép nguyên văn. |
+| Trạng thái | **Final cho hai đêm night build**: `docs/NIGHT_BUILD_PLAN_2026-10-19.md` là lịch chạy; file này là thiết kế. Zalo OA để sau (2026-10-19). D1, D4, D5, D6 = A (2026-10-19); D3 cũ hết hiệu lực vì không còn bán vé, thay bằng D8; D7–D12 mới ở mục 2, mỗi cái có mặc định. |
+| Cách đọc | Mục 1 trong ba phút. Mỗi việc là một thẻ cùng khuôn ở mục 4. Thẻ chỉ "xong" khi cột **Xong khi** có số thật. |
 
 ---
 
 ## 1. Ba phút
 
-**Kết luận.** Hạ tầng của FeestFinder lớn hơn catalogue và lớn hơn lượng người dùng. Thị trường 2026 trả tiền cho kinh tế fan, đi chơi theo nhóm, format ban ngày, và Đông Nam Á là nơi các brand EDM lớn đổ vào. Nhưng design v2 vừa mất ba ngày để gỡ "lằng nhằng" (≈30 khái niệm, 22 nút màn đầu); kế hoạch tăng trưởng không được trả lại số đó. Vì vậy từ 20 ý tưởng của buổi brainstorm còn **6 việc**, mỗi việc **không thêm khái niệm nào vào màn đầu của người mới**, 4 việc nằm trong back office hoặc vô hình, và mỗi việc có định nghĩa 10 điểm đo được ngay từ ngày đầu.
+**Kết luận.** Ba điều chỉnh làm sản phẩm **gọn hơn**, không rối hơn: bỏ nguyên một mảng (vé, pass vé, check-in, doanh thu, khuyến mãi, hoàn tiền, payout) là bỏ 11 bảng, hơn 3.500 dòng code và năm khái niệm người dùng từng gặp ("Vé của tôi", "Pass vé", "Check-in", "Doanh thu", "Khuyến mãi"); rail Studio từ 7 mục xuống 5; trang sự kiện mất khối "Pass vé 0". Tiền đi về **một đường duy nhất**: mỗi nút "Mua vé" là một link affiliate theo dõi được, FeestFinder ăn hoa hồng của bên bán vé và chia cho người đã giới thiệu. Cổng đăng nhập hạ xuống Gmail làm bình luận thành việc thật. Năm thẻ của bản 2 vẫn đứng (Ban ngày, Kệ, Lịch, Agent) trừ thẻ 3, viết lại thành thẻ D.
 
 | # | Việc | Cho ai | Người mới thấy gì thay đổi | Số đo 10 điểm sau 2 tuần | Công |
 | --- | --- | --- | --- | --- | --- |
-| 1 | **Lịch** của nhà tổ chức: nhúng vào site của họ, hoặc kết nối lịch có sẵn để sự kiện tự về Studio chờ duyệt | Venue, promoter, collective | Không gì (Studio) | 20 lịch nhúng sống · 10 lịch kết nối · 100 sự kiện đến từ lịch · Đà Nẵng hoặc Nha Trang ≥ 5 sự kiện | 2,5 ngày |
-| 3 | **Hoa hồng cho đại sứ**: nhà tổ chức đặt % cho vé bán qua link chia sẻ; "Đại sứ" đã có trên trang sự kiện | Fan chia sẻ, nhà tổ chức bán vé trên FeestFinder | Một dòng "Hoa hồng 10%" trong sheet chia sẻ, chỉ khi có; một hàng "Hoa hồng" trong "Tôi", chỉ khi > 0 | ≥ 1 NTC bật · ≥ 5% đơn mang ref · 0 đơn tự giới thiệu | 2,5 ngày |
-| 4 | **Ban ngày**: coffee rave, day party là một loại sự kiện; Radar tự nhận | Mọi người, cả Hà Nội đang siết club đêm | Thêm một giá trị trong menu "Kiểu đêm" trên máy tính; không tag, không chip mới trên điện thoại | ≥ 10 sự kiện ban ngày trong catalogue · ≤ 1/20 Radar gán nhầm | 1 ngày |
-| 5 | **Nổi bật có trả tiền hiện trên trang chủ**: kệ của Console chiếm đúng ô "Lễ hội lớn thế giới" đang có, không thêm hàng | Nhà tổ chức mua chỗ, brand | Cùng một ô nổi bật, có khi là lễ hội, có khi là kệ với nhãn "Được tài trợ" | ≥ 1 chỗ bán được · card_open từ ô này ≥ 3% lượt xem trang chủ · màn đầu không tăng nút | 1 ngày |
-| 6 | **Dữ liệu cho agent**: MCP server chỉ đọc và `/list.md` | ChatGPT, Claude, Gemini, người dùng của chúng | Không gì | 5/5 agent trả lời đúng "techno Sài Gòn cuối tuần" bằng dữ liệu FeestFinder · ≥ 200 lượt gọi · 0 lỗi 5xx | 1,5 ngày |
+| C | **Gỡ bán vé và check-in**: không checkout, đơn, vé, QR, quét cửa, pass vé, chuyển vé, khuyến mãi, payout; mọi "Mua vé" đi `/go` tới bên bán | Mọi người; nhà tổ chức | Trang sự kiện: một nút "Mua vé · từ {giá}" tới trang bán; không khối vé, không "Pass vé 0". "Tôi" không còn hàng "Vé". Studio không còn Check-in, Doanh thu, Khuyến mãi | 0 route cũ còn trả 200 · 0 khái niệm vé trên 3 màn đầu · test và lint xanh với ngân sách thấp hơn | 2 ngày |
+| A | **Gmail là đủ**: bỏ mọi cổng xác minh số điện thoại; admin xoá bình luận | Mọi người đăng nhập | Bấm bình luận, gửi sự kiện, dự án, mix: không còn sheet "Xác thực số điện thoại" | ≥ 60% người đăng nhập mới bình luận hoặc lưu trong 7 ngày · 0 lần hiện sheet số điện thoại | ½ ngày |
+| B | **Bình luận như Facebook**: một dòng bình luận mỗi sự kiện, trả lời bất kỳ bình luận nào (hiện phẳng dưới bài gốc với @tên), thích, sửa trong 15 phút, xoá của mình, admin xoá, báo cáo, báo cho người được trả lời | Fan, nhà tổ chức | Mục "Bình luận (n)" trong "Thêm" thay ba tab Hỏi đáp · Trò chuyện · Kỷ niệm; một ô viết, một nút | ≥ 20% người xem sự kiện đã đăng nhập bình luận hoặc trả lời · thời gian admin xoá bình luận bị báo ≤ 24 giờ | 1,5 ngày |
+| D | **Affiliate thông minh**: `/go` chọn bên bán theo nước người xem, gắn click id và UTM, nhớ ai giới thiệu 30 ngày; postback của bên bán ghi chuyển đổi; hoa hồng chia cho người giới thiệu; dashboard cho NTC, fan và team; agent cũng đi `/go` | Fan chia sẻ, NTC, team, agent | Nút "Mua vé" như cũ. Đã đăng nhập: sheet chia sẻ có "Hoa hồng {p}%"; "Tôi" có hàng "Hoa hồng" khi > 0 | ≥ 2 partner postback thật · ≥ 5% click Mua vé mang `ref` · ≥ 1 chuyển đổi được ghi và chia · 0 đơn tự giới thiệu | 3 ngày |
+| 4 | **Ban ngày** (như bản 2) | Mọi người | Một giá trị trong menu "Loại" | ≥ 10 sự kiện `day` · ≤ 1/20 gán nhầm | 1 ngày |
+| 5 | **Nổi bật trả tiền trong ô có sẵn** (như bản 2) | NTC mua chỗ, brand | Cùng ô, có nhãn "Được tài trợ" | ≥ 1 chỗ bán · card_open ≥ 3% | 1 ngày |
+| 6 | **Dữ liệu cho agent** (như bản 2, mọi link vé trong kết quả là `/go`) | Agent | Không gì | 5/5 agent đúng · ≥ 200 gọi | 1,5 ngày |
+| 1 | **Lịch của nhà tổ chức** (như bản 2) | Venue, collective | Không gì (Studio) | 20 lịch nhúng · 10 lịch kết nối · 100 sự kiện | 2,5 ngày |
 
-Thứ tự: **4 → 5 → 6 → 1 → 3** (night build; mục 5). Tổng ≈ 8,5 ngày công. **Thẻ 2 (Zalo OA) để sau** theo chủ sản phẩm 2026-10-19: thiết kế giữ ở mục 4 và điều kiện ở mục 6; không migration cho nó trong chặng này.
+Thứ tự: **đêm 1: C → A → B** (gỡ trước để mọi thứ sau không phải né mảng vé); **đêm 2: D → 4 → 5 → 6 → 1**. Tổng ≈ 13 ngày công, hai night build. Thẻ 2 (Zalo OA) để sau.
 
 **Số đo hôm nay** (2026-10-19, production, iPhone 13 giả lập, vi-VN, Asia/Ho_Chi_Minh; script ở phụ lục A). Đây là ngân sách: không việc nào được làm tăng.
 
@@ -41,63 +45,150 @@ Hai số đo lệch (16 so với ngân sách 20) vì cách đếm khác nhau; **
 
 ---
 
-## 2. Chủ sản phẩm quyết (trước khi code)
+## 2. Chủ sản phẩm quyết
 
-Mỗi câu hỏi 2–3 lựa chọn có hệ quả, lựa chọn đầu là khuyến nghị. **Đã chọn: A cho cả sáu (chủ sản phẩm, 2026-10-19).** Dòng "Checklist" của mỗi lựa chọn A đã chép nguyên văn vào roadmap; agent code theo checklist đó, không theo trí nhớ.
-
-| # | Câu hỏi | Lựa chọn và hệ quả |
-| --- | --- | --- |
-| D1 | Sự kiện đến từ lịch mà nhà tổ chức tự kết nối là gì? | **A (khuyến nghị): "Đã đăng", dưới tên nhà tổ chức, chờ duyệt như mọi tin.** Hệ quả: thêm một dòng `event_sources` provider `organizer`; `origin = posted`. *Checklist: "Sự kiện từ lịch kết nối thuộc NTC đó, in_review, provider organizer + adapter; không gộp vào sự kiện của NTC khác."* · B: "Radar" dưới Feest Radar, NTC nhận sau. Hệ quả: thêm một bước cho NTC, họ thấy tin của mình gắn tên Feest Radar. · C: lên thẳng không duyệt. Không đề xuất: trái quy tắc mọi tin đều chờ duyệt. |
-| D2 | Zalo làm gì trước? | **Chủ sản phẩm 2026-10-19: để sau cả OA bot và Mini App; hiện chỉ xác minh SMS của phase 17.** Khi quay lại: A: OA bot gửi poster (thẻ 2). Mini App chỉ khi OA ≥ 1.000 follower và có quyết định pháp lý về số điện thoại Zalo (mục 6).** *Checklist: "Zalo OA nhận poster hoặc link → bản nháp → form cộng đồng → hàng chờ; không đăng từ Zalo; Mini App để sau."* · B: cả hai ngay. Hệ quả: +5 ngày, cần review của Zalo, CORS cho `h5.zdn.vn`. · C: chỉ Mini App. Hệ quả: mất luồng poster, là luồng có giá trị nhất. |
-| D3 | Hoa hồng đại sứ trả bằng cách nào? | **A (khuyến nghị): qua payout của FeestFinder, trừ khỏi payout của NTC, trả cho đại sứ bằng tài khoản `/me/payee` có sẵn; trần 20%.** Hệ quả: FeestFinder chuyển tiền cho cá nhân, cần kế toán xác nhận (mục 6). *Checklist: "events.ambassador_pct ≤ 20; orders.ref_user; earnings pending → payable sau sự kiện 24h → paid qua ambassador_payouts; dòng trừ trong ledger của NTC; không phí người mua."* · B: NTC tự trả ngoài, FeestFinder chỉ hiện số. Hệ quả: không cầm tiền, nhưng đại sứ phải tin NTC. · C: thưởng bằng vé, không tiền. Hệ quả: cần nối `guest_list`; ít hấp dẫn hơn với fan. |
-| D4 | "Ban ngày" là gì trong dữ liệu? | **A (khuyến nghị): `event_type = 'day'`.** Hệ quả: một migration nới CHECK; Studio và Console chọn được; Radar gán tự động. *Checklist: "EVENT_TYPES thêm day; inferEventType theo giờ 06–15:59 bắt đầu và kết thúc trước 21:00 hoặc từ khoá; festival thắng."* · B: cờ suy ra từ giờ, không lưu. Hệ quả: không migration, nhưng NTC không chọn được, Smart Alerts không lọc được. |
-| D5 | Kệ nổi bật hiện ở đâu và ghi gì? | **A (khuyến nghị): kệ chiếm đúng ô "Lễ hội lớn thế giới" (`data-surface="flagship"`) khi có kệ bật với ≥ 3 sự kiện; tiêu đề là tên kệ, cạnh đó chữ nhỏ "Được tài trợ" khi kệ đến từ placement trả tiền; thẻ mang tag "Nổi bật" sẵn có.** Hệ quả: không thêm hàng, màn đầu không tăng nút. *Checklist: "Một ô nổi bật duy nhất: kệ nếu có, không thì lễ hội; nhãn Được tài trợ khi trả tiền; không hiện trong /app."* · B: kệ dưới danh sách cạnh banner quảng cáo. Hệ quả: ngoài màn đầu, ít giá trị bán. · C: ngừng bán placement này. |
-| D6 | MCP cho agent có xác thực không? | **A (khuyến nghị): chỉ đọc, không khoá, rate-limit 60/phút/IP, không bao giờ trả dữ liệu người xem.** *Checklist: "/mcp và /list.md stateless, chỉ dữ liệu đã công khai ở /e/<slug>.md; không mua vé qua agent."* · B: khoá API theo agent. Hệ quả: ít agent dùng. · C: chưa làm. |
-
-Hai câu mới từ đối chiếu code (mục 7), chưa chốt, có mặc định để làm luôn:
+Đã chốt (2026-10-19): D1, D4, D5, D6 = A; D5b, D3c mặc định A. **D3 (hoa hồng trả qua payout của FeestFinder) hết hiệu lực** vì FeestFinder không còn thu tiền vé; thay bằng D8. Câu mới của bản 3, mỗi câu có mặc định để chạy đêm luôn; chủ sản phẩm đổi được sáng sau.
 
 | # | Câu hỏi | Lựa chọn và hệ quả |
 | --- | --- | --- |
-| D5b | Ô nổi bật chỉ vẽ khi bộ lọc ở mặc định (`browser.tsx:416`: mọi thành phố, lưới, không bbox). Từ phase 13 người Việt quay lại được nhớ thành phố đã chọn, nên sẽ **không bao giờ** thấy kệ trả tiền. | **A (khuyến nghị): ô nổi bật cũng vẽ khi thành phố đã chọn có ít nhất một sự kiện trong kệ (lọc kệ theo thành phố đó); lễ hội giữ luật cũ.** Hệ quả: một điều kiện thêm trong `browser.tsx`, kệ đến được người đã chọn thành phố. · B: giữ luật cũ, nói với người mua chỗ rằng kệ chỉ hiện ở chế độ mặc định. · C: luôn vẽ kệ ở mọi bộ lọc. Hệ quả: kệ Bangkok hiện cho người đang lọc TP.HCM, mùi quảng cáo. |
-| D3c | Mục "Đại sứ" cuối trang sự kiện đã công khai tên (chỉ tên gọi) và số khách của người chia sẻ. Khi có tiền, đó cũng là danh sách người đang nhận hoa hồng. | **A (khuyến nghị): giữ như hiện nay** (tên gọi, số lượt mở; không số tiền). · B: ẩn mục khi sự kiện có hoa hồng. Hệ quả: mất bằng chứng xã hội đang có. · C: thêm nút tắt hiển thị trong Cài đặt. Hệ quả: thêm một điều khiển. |
+| D7 | 11 bảng của mảng vé (`ticket_tiers`, `promo_codes`, `orders`, `tickets`, `scans`, `guest_list`, `payout_transfers`, `ticket_listings`, `resale_orders`, `ticket_transfers`, `resale_watchers`, cộng `tier_watchers`) xoá hay để lại? | **A (khuyến nghị): xoá bằng migration `048_drop_ticketing.sql`, có khoá an toàn: migration dừng (`raise exception`) nếu production có bất kỳ đơn `paid` nào.** Hệ quả: schema sạch, test và lint gọn; không quay lại được bằng revert code, chỉ bằng backup. *Checklist: "048 drop 12 bảng sau khi kiểm không có đơn paid; events bỏ cột `featured`? không: giữ; bỏ `ticket_link_status`? giữ (link vé vẫn được kiểm)."* · B: giữ bảng, chỉ gỡ route và màn. Hệ quả: 1.300 cảnh báo lint của `any` không giảm, bảng chết trong schema. |
+| D8 | Hoa hồng cho người giới thiệu lấy từ đâu, bao nhiêu? | **A (khuyến nghị): từ hoa hồng FeestFinder nhận của bên bán vé (partner postback), chia **50%** cho người giới thiệu; team chuyển khoản tay theo kỳ qua `/me/payee`; sự kiện của bên bán chưa có deal thì chỉ đếm lượt mở và click.** *Checklist: "partner_conversions.ref_user; ambassador_earnings = round(commission × share); share trong `lib/affiliate.ts` SHARE_PCT = 50; payable khi conversion approved; paid theo kỳ ambassador_payouts; không tiền từ NTC."* · B: 30%. · C: không chia tiền, chỉ bảng xếp hạng. Hệ quả: ít động lực chia sẻ. |
+| D9 | Bình luận: một dòng duy nhất hay giữ ba tab Hỏi đáp · Trò chuyện · Kỷ niệm (+ Track ID, Crew ẩn)? | **A (khuyến nghị): một dòng "Bình luận"**; bài cũ của mọi kind hiện trong cùng dòng (cũ nhất dưới); câu hỏi có câu trả lời của NTC vẫn hiện như bình luận có trả lời "Nhà tổ chức"; ảnh đính kèm vẫn được; Track ID để sau. Hệ quả: ba tab bớt, một ô viết. *Checklist: "GET discussion không còn tabs; POST posts kind mặc định talk; replies hai cấp hiện phẳng dưới bài gốc với @tên; thích thay helpful; sửa 15 phút; xoá của mình; admin xoá bất kỳ; báo cáo giữ."* · B: giữ tab. Hệ quả: ba khái niệm trên trang sự kiện. |
+| D10 | Bỏ xác minh số điện thoại ở đâu? | **A (khuyến nghị): mọi nơi `requireWriter` đang đứng** (bình luận, gửi sự kiện cộng đồng và prefill, dự án, mix). Đăng nhập bằng Google, email, SMS, Zalo, WhatsApp đều đủ; số điện thoại chỉ là cách đăng nhập tuỳ chọn. **Rủi ro pháp lý**: Nghị định 147/2024 yêu cầu mạng xã hội xác thực tài khoản bằng số điện thoại Việt Nam (hoặc định danh) trước khi đăng; `http/guards.ts:18` ghi lý do đó. Chủ sản phẩm nhận rủi ro này hoặc giữ cổng cho **đăng tin**, bỏ cho **bình luận**. · B: bỏ cho bình luận và mix, giữ cho gửi sự kiện và dự án. Hệ quả: gần với Nghị định hơn; người gửi tin vẫn gặp sheet số điện thoại một lần. |
+| D11 | "Đi cùng bạn bè" có yêu cầu tiền giữa bạn bè qua VietQR (`/plans/:id/payment-requests`, `lib/vietqr.ts`, `/me/payee`). Giữ không? | **A (khuyến nghị): giữ** (tiền giữa bạn bè, FeestFinder không cầm; `payee` còn cần cho hoa hồng D8). · B: gỡ cùng mảng vé. Hệ quả: `vietqr.ts` và payee của plans đi; `payee` chỉ còn cho hoa hồng. |
+| D12 | Một sự kiện có nhiều bên bán vé (Megatix cho SG, Ticketbox cho VN…)? | **A (khuyến nghị): có, bảng `event_ticket_links` (url, host, nước, tiền tệ, giá từ, chính)**; `/go` chọn theo nước của người xem (header CDN), không thì link chính. Studio: "Link vé" thành danh sách. · B: một link như hôm nay. Hệ quả: fan Việt vào Megatix SG trả bằng SGD. |
 
-Đã chốt sẵn, không hỏi lại: Feest Scout **không cần code** (chương trình vận hành trên Zalo OA và form cộng đồng, mục 6); link du lịch, Mini App, Crew, Night Pass, merch để sau với điều kiện ở mục 6.
+Đã chốt sẵn, không hỏi lại: Feest Scout không cần code; thẻ 2 Zalo OA, link du lịch, Mini App, Crew, Night Pass, merch để sau (mục 6). Sign-in: Google đứng đầu sheet như `CLAUDE.md` nói; phase 17 xếp cách bằng số điện thoại trước ở `kd/sign-in.tsx:135` cho người Việt: giữ thứ tự ấy, chỉ bỏ **bắt buộc**.
 
 ---
 
-## 3. Tự đánh giá: 20 ý tưởng thành 6 việc
+## 3. Tự đánh giá, cập nhật 2026-10-20
 
-Áp nguyên tắc của kit lên bản brainstorm và bản handoff 1. Cột "Vì" là nguyên tắc đã quyết.
+Ba điều chỉnh soi lại bản 2:
 
-| Ý tưởng (brainstorm) | Quyết định | Vì |
+| Chỗ của bản 2 | Điều chỉnh | Hệ quả |
 | --- | --- | --- |
-| Widget lịch venue + kết nối lịch | **Giữ, gộp thành một khối "Lịch"** trong Studio › Hồ sơ | Một màn một việc; không thêm mục rail (rail Studio đã 7) |
-| Zalo OA bot | **Giữ** | Phân phối ở nơi scene đang sống; tái dùng app Zalo của phase 17 (`provider_tokens`, `ZaloZnsTransport`) |
-| Zalo Mini App | **Để sau** | Thêm một sản phẩm, một nền tảng review, một quyết định pháp lý |
-| Feest Scout | **Bỏ khỏi code** | "Scout" và "Đại sứ" là hai từ cho một hành vi (người góp sức); form cộng đồng, huy hiệu `spread`, Console đã đủ để vận hành |
-| Đại sứ đêm (hoa hồng) | **Giữ, không đặt tên mới**: "Đại sứ" đã là mục trên trang sự kiện (`ev.ambassadors`), chỉ thêm tiền | Một khái niệm đã có; màn mới duy nhất là "Hoa hồng" trong "Tôi", gấp theo kit |
-| Loại "Ban ngày" + tag mặt trời trên thẻ | **Giữ loại, bỏ tag** | Một thẻ một tag, và chỉ tag đổi quyết định; giờ bắt đầu đã nói "ban ngày" |
-| Kệ nổi bật thành hàng mới trên trang chủ | **Giữ, nhưng chiếm ô đang có** | Màn đầu không được tăng nút; sự kiện đầu tiên phải ở màn đầu |
-| "Đến <thành phố>" 3 nút du lịch | **Để sau**, một hàng trong "Thêm", khi ≥ 2 thành phố có ≥ 50 sự kiện | Mỗi hành động một lần, phần phụ gấp vào "Thêm"; chưa có cầu liên thành phố |
-| MCP + /list.md | **Giữ** | Vô hình với người dùng, đi trước vùng |
-| Hỏi Feest (trợ lý AI) | **Để sau** | Thêm khái niệm; `/app/guide` đã có |
-| Crew vote nhiều sự kiện | **Để sau**, mở rộng "Đi cùng bạn bè" có sẵn, không từ mới | Chờ 5 người thật nói cần |
-| Bàn cho người đi một mình | **Để sau** | Khái niệm mới, quy tắc an toàn chưa có |
-| Drop bí mật | **Để sau** (một trường trên sự kiện) | Nhỏ; chờ NTC đầu tiên hỏi |
-| Track ID | **Để sau** (`event_posts.kind = 'trackid'` đã có) | Chờ Moments có người dùng |
-| Vé an toàn | **Để sau** | Chưa có khối lượng vé FeestFinder để nói chuyện |
-| Night Pass | **Để sau** | Cần hợp đồng ≥ 4 venue trước dòng code đầu |
-| Merch drop | **Để sau** | Đổi cấu trúc đơn hàng; chưa ai hỏi |
-| Insights cho brand | **Để sau** (Console) | Chờ 3 yêu cầu quảng cáo hỏi số |
-| Báo cáo quý, EPK, live-selling | **Để sau** | Chặng 3 |
+| Thẻ 3 "Hoa hồng cho đại sứ" tính trên đơn FeestFinder bán | Không bán vé | Viết lại thành thẻ D: hoa hồng từ postback của bên bán, chia cho người giới thiệu (D8). Bỏ `events.ambassador_pct`, bỏ dòng ledger, bỏ ô % trong editor. |
+| Mọi chỗ nói "FeestFinder không thu phí người mua" | Không còn người mua | Câu đó thành "FeestFinder không bán vé; nút Mua vé đưa bạn tới bên bán" ở `/about`, FAQ, trang sự kiện. |
+| Cổng `requireWriter` ở form cộng đồng, dự án, mix, bình luận | Gmail là đủ | Thẻ A. Một sheet (`kd/phone.tsx`) chỉ còn cho người **muốn** thêm số. |
+| Ba tab thảo luận + Hype trong "Thêm" | Bình luận như Facebook | Thẻ B: một mục "Bình luận (n)"; Hype giữ nguyên (quyết định cũ của chủ sản phẩm). |
+| Thẻ 1, widget hiện giá từ tier | Không tier | Giá từ `events.price_from` và tiền tệ, hay "Giá ở trang bán vé". |
+| Thẻ 6, MCP trả link | Affiliate | Mọi link vé trong `/list.md` và tool là `/go/<slug>?src=agent`, để chuyển đổi từ agent cũng được ghi. |
+| Huy hiệu `doors` (quét vé), `sold_out`, `sold_out_5` | Không check-in, không bán | Gỡ khỏi `BADGE_CATALOGUE`; huy hiệu đã trao thì migration xoá dòng của chúng. |
+| Thẻ 5, kệ và `featured` | Không đổi | Giữ. |
+| Thẻ 4 | Không đổi | Giữ. |
 
-Lỗi của bản 1 đã sửa ở bản này: viết trên `f9baae0`, trước 22 PR của design v2 (hai ngày code); đặt `integration_tokens` trùng `provider_tokens` (migration 047); dùng `payout_transfers` sai mục đích; "Scout" thêm khái niệm trùng; hàng kệ mới và tag mặt trời phá ngân sách màn đầu và luật một tag; ba nút du lịch phá "mỗi hành động một lần"; format kể việc theo workstream thay cho bằng chứng đo được.
+**Khái niệm cho khách sau bản 3:** trang sự kiện bớt "Pass vé", "Vé" (khối), ba tab thảo luận thành một; "Tôi" bớt "Vé"; Studio bớt Check-in, Doanh thu, Khuyến mãi, Khách; thêm duy nhất "Hoa hồng" (chỉ khi có tiền) và "Bình luận" (thay ba từ). Số khái niệm người mới gặp ở trang sự kiện: ≈ 7 → ≈ 5, đúng mục tiêu của kit.
 
 ---
 
-## 4. Sáu thẻ việc
+## 4. Thẻ việc
 
-Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ trên màn, vi · en, chép nguyên văn) · **Không làm** · **10 điểm** (ba cột của `DESIGN_GOVERNANCE.md`: cổng tự động, 5 người thật, số sau 2 tuần) · **Ngân sách không tăng** · **Dữ liệu xấu phải chạy** · **Xây** (lát ≤ 1 ngày, một PR mỗi lát) · **Xong khi**.
+Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ vi · en, chép nguyên văn) · **Không làm** · **10 điểm** (cổng, 5 người, số sau 2 tuần) · **Ngân sách không tăng** · **Dữ liệu xấu phải chạy** · **Xây** (lát ≤ 1 ngày, một PR mỗi lát) · **Xong khi**.
+
+### Thẻ C · Gỡ bán vé và check-in (đêm 1, trước mọi thẻ khác)
+
+**Một câu.** FeestFinder không bán vé: mọi nút "Mua vé" đi `/go` tới bên bán; checkout, đơn, vé QR, quét cửa, pass vé, chuyển vé, khuyến mãi, hoàn tiền, payout và khách mời biến mất khỏi API, màn hình, job, test và schema.
+
+**Người dùng thấy.** Trang sự kiện: khối vé thành một hàng `Mua vé · từ {giá} · Buy tickets · from {price}` (hay `Chưa rõ giá`, `Miễn phí`) với dòng `Giá ở trang bán vé · Price on the ticket page` khi có link; dock điện thoại giữ "Mua vé" (đi `/go`). Không "Pass vé", không "Đổi vé", không "Theo dõi vé mở bán". "Tôi": bỏ hàng `Vé của tôi`. Studio rail: `Hôm nay · Sự kiện · Quảng bá (Thông báo, Quảng cáo) · Hộp thư · Gig`; bỏ `Khách và cửa` (Khách, Check-in), `Doanh thu`, `Khuyến mãi`. Wizard bước 3 thành `Vé · Tickets`: link bán vé (một hay nhiều, D12), giá từ, tiền tệ, miễn phí; không hạng vé. Console: bỏ `Đơn hàng`; `Số liệu` bỏ cột bán được. `/about` và FAQ: `FeestFinder không bán vé. Nút Mua vé đưa bạn tới trang bán. · FeestFinder sells no tickets. Buy tickets takes you to the seller.`
+
+**Không làm.** Không đụng `plans` payment requests (D11 A). Không gỡ `outbound_clicks`, `ticket_partners`, `partner_conversions`, `affiliate_*` (nền của thẻ D). Không gỡ `events.entry_mode`, `price_from`, `currency`, `ticket_url`, `ticket_link_status` (link vé vẫn được kiểm bởi job `checkTicketLinks`). Không gỡ Moments, live mode (`/app/live`: presence, waves; không cần vé), recap, badges khác.
+
+**10 điểm.**
+- Cổng: `npm run typecheck` sạch sau khi xoá; `npm test` xanh với `test/attendee.test.ts`, `test/resale.test.ts` đã xoá và các bài khác sửa; `test/public.test.ts`: `/go/<slug>` luôn tới bên bán hay trang gốc, không bao giờ `/app/checkout`; `GET /app/checkout/*`, `/app/tickets`, `/studio/door`, `/studio/revenue`, `/studio/promos`, `/studio/attendees`, `/console/orders` → 404 (trang) và API cũ → 404; `routes.ts`, `perf.spec.ts`, `nav.spec.ts`, `backoffice.spec.ts` bỏ các route ấy; `event.spec.ts`: hàng Mua vé đi `/go`; `newcomer.spec.ts`: `IN_SIGHT.event` **giảm** (khối vé bớt nút) và ghi số mới; `layout`, `wcag`, `targets` cả bộ; lint budget hạ theo số cảnh báo biến mất (`--max-warnings`).
+- 5 người: 2 người đi chơi tìm một đêm và bấm "Mua vé" tới trang bán; 2 nhà tổ chức đăng một sự kiện với link vé và giá từ; 1 admin thấy Console không còn Đơn hàng và không có lỗi.
+- 2 tuần: 0 lỗi 5xx ở `/go`; lượt `ticket_click` không giảm so với 2 tuần trước; 0 route cũ được gọi (Sentry không có 404 lạ từ app cũ).
+
+**Ngân sách không tăng.** Màn đầu trang sự kiện giảm (mục tiêu ≤ 7 + khung). Rail Studio 7 → 5. JS trang sự kiện giảm (`perf.spec.ts` ghi số mới, chỉ giảm).
+
+**Dữ liệu xấu phải chạy.** Sự kiện có `entry_mode paid` mà không link → "Chưa rõ giá", nút tới trang gốc như design v2 phase 11. Sự kiện có tier cũ trong staging → migration xoá; seed không còn tier. Badge `doors` đã trao → xoá dòng. `event_metrics_daily` giữ `ticket_clicks`. `plans.pricePerHead` (`plans.ts`) đọc `bought.unit_price` từ `orders`: đổi về `events.price_from`.
+
+**Xây.**
+- P0 (1 ngày, API): migration `048_drop_ticketing.sql` (D7 A: khoá an toàn `raise exception` nếu `orders` có `paid`; `drop table` 12 bảng theo thứ tự khoá ngoại; xoá `badge_awards` code `doors`, `sold_out`, `sold_out_5`; `notification_prefs` topic `tickets` giữ hay đổi tên: giữ); xoá `routes/commerce.ts`, `routes/resale.ts`, `routes/organizer/door.ts`, `routes/organizer/money.ts`, `routes/admin/orders.ts`, `services/tickets.ts`, `services/resale.ts`, `services/payouts.ts`, `services/orders.ts`; `routes/organizer/audience.ts` giữ phần thông báo (`announcements`, dòng 30–100), xoá attendees/refund/resend; `routes/organizer/events.ts` bỏ `TiersInput`, `replaceTiers`; `routes/outbound.ts` `/go` bỏ nhánh `checkout` (luôn partner/organizer/trang gốc); `jobs.ts` bỏ `expireOrders`, `lowTicketAlerts`, nhánh `tier_open` của `reminders`; `services/badges.ts`; `services/eventpage.ts` bỏ `resale`, `tickets.tiers`, `mine.validTickets`; `presenters/event.ts`; `services/seo/*` bỏ `offers` theo tier, giữ `offers` một dòng từ `price_from` và `ticket_url`; `lib/money.ts`, `lib/vietqr.ts` giữ (plans); `config.ts` bỏ `PAYMENT_*`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*`; `app.ts` bỏ đăng ký route; `db/rows.ts` bỏ type; test: xoá `attendee`, `resale`; sửa `public`, `organizer`, `admin`, `ops`, `seo`, `partners`, `affiliate`, `roles`, `jobs`, `fresh`, `ads`, `radar`, `ingest`, `deploy`, `unit`; seed bỏ tier, order, ticket, promo, resale.
+- P1 (1 ngày, web): xoá `kd/app/checkout.tsx`, `kd/app/tickets.tsx`, `kd/studio/door.tsx`, `kd/studio/revenue.tsx`, `kd/studio/promos.tsx`, `kd/studio/attendees.tsx`, `kd/web/event/resale.tsx`, `kd/console/orders/*` và các `app/(kd)/*/page.tsx` tương ứng; `kd/web/event/tickets.tsx` thành khối một hàng đi `/go`; `kd/web/event/dock.tsx` giữ; `kd/web/me.tsx` bỏ `tickets`; `kd/studio/root.tsx` rail 5 mục; `kd/studio/wizard.tsx`, `wizard-model.ts`, `editor.tsx`, `fields.tsx` bước Vé thành link và giá; `kd/console/events/*`, `review/*` bỏ tier; `kd/app/root.tsx`, `screens.tsx`, `inbox.tsx`, `live.tsx` bỏ nhánh vé; `kd/web/about/copy.ts`, `kd/web/copy.ts` câu mới; `kd/types.ts`; `kd/banks.ts` giữ (plans); `copy/asia/*` dòng mới theo khoá; `e2e/next/routes.ts`, `perf.spec.ts` bỏ route; `event.spec.ts`, `studio.spec.ts`, `studio-events.spec.ts`, `app.spec.ts`, `app-more.spec.ts`, `nav.spec.ts`, `site.spec.ts`, `backoffice.spec.ts`, `console-commerce.spec.ts` (xoá), `newcomer.spec.ts` (ghi `IN_SIGHT` mới, thấp hơn).
+- P2 (½ ngày, docs): `CLAUDE.md`: bỏ mọi câu về checkout VND, tiers, resale, check-in, payouts, phí người mua; thêm "FeestFinder sells no tickets: every ticket button goes through `/go` to the seller; commerce tables were dropped in 048"; `docs/CURRENT_ARCHITECTURE.md` bảng Commerce; `TECH_DEBT.md`; roadmap. Hạ `--max-warnings` của oxlint và ESLint theo số thật.
+
+**Xong khi.** Cổng xanh; `grep -rn "checkout\|ticket_tiers\|resale" src` chỉ còn ở `/go` (nhánh bên bán) và lịch sử migration; script phụ lục A: trang sự kiện có ít nút hơn 10 và không chữ "Pass vé"; `CLAUDE.md` không còn câu nào về bán vé.
+
+### Thẻ A · Gmail là đủ (đêm 1)
+
+**Một câu.** Đăng nhập (Google hay cách khác) là đủ để bình luận, gửi sự kiện, dự án, mix; không nơi nào đòi số điện thoại; admin xoá được bình luận.
+
+**Người dùng thấy.** Sheet "Xác thực số điện thoại" không hiện ở hành động nào. Cài đặt vẫn có `Thêm số điện thoại · Add a phone number` (tuỳ chọn, cho đăng nhập bằng SMS). Mục bình luận: người đã đăng nhập thấy ô viết ngay. Console: ở `/console/reports` (bài bị báo) nút `Xoá · Delete` đã có qua `isEventTeam` (`community.ts:106-108`: admin là team của mọi sự kiện); thêm tab `Bình luận · Comments` liệt kê 100 bình luận mới nhất mọi sự kiện với `Xoá` (thẻ B dùng).
+
+**Không làm.** Không gỡ đăng nhập SMS/Zalo/WhatsApp của phase 17. Không đổi thứ tự sheet đăng nhập. Không gỡ `users.phone_verified_at` (vẫn ghi khi người ta chứng minh số).
+
+**10 điểm.**
+- Cổng: `test/community.test.ts`, `test/projects.test.ts`, `test/mixes.test.ts`: tài khoản Google không số điện thoại đăng được bình luận, gửi sự kiện, dự án, mix; `discussion` `canWrite` trả `ok` cho mọi người đăng nhập; e2e `event.spec.ts`: fan seed (không số) bình luận được; `profiles.spec.ts` Cài đặt còn "Thêm số điện thoại".
+- 5 người: 3 người mới đăng nhập Google và bình luận trong < 1 phút không gặp sheet nào khác; 2 người gửi một sự kiện cộng đồng.
+- 2 tuần: 0 lần `phone_unverified` trong log; ≥ 60% người đăng nhập mới làm một việc (bình luận, lưu, gửi) trong 7 ngày.
+
+**Ngân sách không tăng.** Màn đầu không đổi. Bớt một sheet trên đường tới bình luận (chạm từ "Bình luận" tới gửi: 2).
+
+**Dữ liệu xấu phải chạy.** Tài khoản email chưa xác minh email: `requireUser` đủ. Tài khoản bị khoá (`users.status`?) vẫn bị chặn như hôm nay. Người đã có `phone_verified_at` không đổi gì.
+
+**Xây.**
+- P0 (½ ngày): `http/guards.ts` `requireWriter` = `requireUser` (giữ tên để không đổi 8 call site, comment ghi quyết định 2026-10-20 và rủi ro Nghị định 147); `routes/discussion.ts:108-112` `canWrite` bỏ `verify_phone`; web `kd/web/event/community.tsx:177` bỏ nhánh `verify_phone`; `kd/moments.tsx` bỏ gọi `kd/phone.tsx` trước khi đăng; `kd/phone.tsx` chỉ còn từ Cài đặt; Console tab Bình luận (`GET /admin/posts/recent`); `CLAUDE.md` mục "Personas and admin": "publishing needs a confirmed phone" → "signing in is enough (owner 2026-10-20; Decree 147 risk accepted)"; tests.
+
+**Xong khi.** Cổng xanh; trên preview của branch, tài khoản Google mới bình luận được ngay; `CLAUDE.md` đã đổi câu.
+
+### Thẻ B · Bình luận như Facebook (đêm 1, sau A)
+
+**Một câu.** Dưới mỗi sự kiện có một dòng bình luận: viết, trả lời bất kỳ bình luận nào (trả lời hiện phẳng dưới bài gốc, mở đầu bằng @tên người được trả lời), thích, sửa trong 15 phút, xoá của mình, admin xoá, báo cáo; người được trả lời được báo.
+
+**Người dùng thấy.** Trong "Thêm" của trang sự kiện: mục `Bình luận (n) · Comments (n)` thay ba tab. Mở ra: ô `Viết bình luận… · Write a comment…` và nút `Đăng · Post`; mỗi bình luận: avatar, tên, `{thời gian}`, nội dung, hàng hành động `Thích {n} · Like {n}`, `Trả lời · Reply`, menu `⋯` (`Sửa · Edit` trong 15 phút của mình, `Xoá · Delete` của mình hoặc admin, `Báo cáo · Report`); trả lời xếp dưới bài gốc thụt một cấp, tối đa 3 hiện rồi `Xem thêm {n} trả lời · See {n} more replies`; trả lời một trả lời: bắt đầu bằng `@Tên` và vẫn nằm trong cụm của bài gốc (như Facebook). Bình luận của nhà tổ chức mang nhãn `Nhà tổ chức · Organiser` (đã có `official`). Ghim của NTC giữ. Sắp xếp: mới nhất; bài ghim trên cùng. Thông báo: `{Tên} đã trả lời bình luận của bạn · {Name} replied to your comment`. Rỗng: `Chưa có bình luận. Viết bình luận · No comments yet. Write one`.
+
+**Không làm.** Không thêm emoji phản ứng, không GIF, không ảnh trong trả lời (ảnh ở bình luận gốc giữ như `memory`/`talk` hôm nay), không @mention tự do (chỉ @tên tự sinh khi trả lời), không chỉnh sửa vô hạn, không bảng xếp hạng người bình luận. Hype giữ nguyên ngoài mục này. Track ID để sau.
+
+**10 điểm.**
+- Cổng: `test/community.test.ts`: trả lời một trả lời được nhận (`parent_id` = bài gốc, `reply_to_user_id` = người được trả lời), hiện phẳng; sửa sau 15 phút → 403; xoá của mình → `removed`; admin xoá bất kỳ → `removed`, `moderated_by`; thích/bỏ thích; báo cáo; thông báo tới người được trả lời (không tới chính mình); 10 phút 20 bài → `posting_too_fast` (giữ); e2e `event.spec.ts`: viết, trả lời, trả lời trả lời có @tên, xoá; `console.spec.ts` tab Bình luận xoá được; `newcomer.spec.ts` không đổi (mục trong "Thêm").
+- 5 người: 3 fan bình luận và trả lời nhau trên điện thoại, không hỏi "tab nào"; 1 NTC trả lời câu hỏi; 1 admin xoá một bình luận từ Console trong < 1 phút.
+- 2 tuần: ≥ 20% người xem sự kiện đã đăng nhập bình luận hay trả lời; bình luận bị báo được xử lý ≤ 24 giờ (Console › Số liệu).
+
+**Ngân sách không tăng.** Màn đầu không đổi; mục nằm trong "Thêm". Trên trang sự kiện bớt hai tab.
+
+**Dữ liệu xấu phải chạy.** Bài cũ kind `qa` có `answer` của NTC → hiện như bình luận gốc với trả lời gắn nhãn Nhà tổ chức; kind `crew`, `trackid`, `memory` cũ hiện trong dòng với ảnh nếu có; bài `removed` không hiện, trả lời của nó vẫn hiện với dòng `Bình luận đã xoá · Comment deleted` ở chỗ bài gốc; người được trả lời đã xoá tài khoản → không thông báo; nội dung 1 ký tự → 400 (giữ `checkPostText`).
+
+**Xây.**
+- P0 (1 ngày): migration `049_comments.sql`: `event_posts` thêm `reply_to_user_id uuid references users on delete set null`, `edited_at timestamptz`; (`event_post_votes` đã có cho thích). `routes/discussion.ts`: bỏ lỗi `reply_depth` (`discussion.ts:212`): trả lời một trả lời ghi `parent_id` = gốc của cụm và `reply_to_user_id`; `GET /events/:id/discussion` không chia tab: một danh sách bài gốc mới nhất (ghim trước) với 3 trả lời đầu và `replyCount`; `PATCH /posts/:id` chỉ trong 15 phút kể từ `created_at` và chỉ của mình (admin không sửa, chỉ xoá); `DELETE` giữ (admin qua `isEventTeam`); `PUT/DELETE /posts/:id/helpful` đổi nhãn thành thích (route giữ tên để không gãy); thông báo `notifyUser` kind `reply` topic `friends`? → topic mới không thêm: dùng `null` (transactional, in-app + push); `GET /admin/posts/recent`; tests.
+- P1 (½ ngày): `kd/web/event/community.tsx` bỏ chip kinds, một composer, `Thread` hiện trả lời phẳng với `@Tên`, hành động Thích/Trả lời/⋯; `kd/web/event/more.tsx` mục `Bình luận (n)` thay `discussion`; copy vi/en và th/ja/id theo khoá; `kd/console/reports.tsx` tab Bình luận; e2e.
+
+**Xong khi.** Cổng xanh; trên preview, hai tài khoản trả lời nhau và thấy @tên; `CLAUDE.md` mục "Feedback" hay "Community" thêm một dòng: comments are one stream per event, replies two levels shown flat, admins delete.
+
+### Thẻ D · Affiliate thông minh (đêm 2, thay thẻ 3 của bản 2)
+
+**Một câu.** Mỗi "Mua vé" là một link theo dõi được: `/go` chọn bên bán theo nước người xem, gắn click id và UTM, nhớ ai đã giới thiệu trong 30 ngày; bên bán báo chuyển đổi về bằng postback (đã có); FeestFinder nhận hoa hồng và chia cho người giới thiệu; NTC, fan, team và agent đều thấy số của mình.
+
+**Đã có, dùng lại (`routes/outbound.ts`, `services/partners.ts`, migration 018 và 022):** `/go/:event` đếm `outbound_clicks` (device, nước, referrer, nguồn), nhận partner theo host và gắn `{click}` vào link partner; `/partners/<slug>/postback` ghi `partner_conversions` khớp click; `/go/link/:code` cho affiliate link tự do; `users.ref_code`, `?ref=` trên link chia sẻ, `share_visits`, mục "Đại sứ" trên trang sự kiện, huy hiệu `spread`; `/console/partners` liệt kê các host bán vé chưa có deal với số click; `/me/payee`.
+
+**Cái mới, theo thứ tự giá trị:**
+1. **Nhớ người giới thiệu tới tận bên bán.** `ff:ref:<eventId>` (30 ngày, từ `?ref=`) được gửi kèm khi bấm Mua vé: `/go/<slug>?src=…&ref=<code>`; `outbound_clicks.ref_user` ghi người giới thiệu (không phải chính người bấm); `partner_conversions.ref_user` chép từ click khi postback về. Attribution kiểu last-click 30 ngày, server-side, không cookie bên thứ ba.
+2. **Chia hoa hồng (D8).** `ambassador_earnings (conversion_id unique, event_id, user_id, partner_id, amount, status pending|payable|paid|void)`: `amount = round(conversion.commission × SHARE_PCT / 100)` khi conversion `approved`; `void` khi `rejected`; `ambassador_payouts` theo kỳ, team đánh dấu đã trả (như partner payouts). `lib/affiliate.ts` giữ `SHARE_PCT = 50`, `MIN_PAYOUT = 50_000` VND, quy đổi tiền tệ của conversion về VND bằng tỷ giá cố định trong `lib/money.ts` (D: team cập nhật tỷ giá tay mỗi tháng; ghi rõ).
+3. **Nhiều bên bán, chọn theo nước (D12).** `event_ticket_links (event_id, url, host, countries text[], currency, price_from, primary)`; `/go` chọn link có `countries` chứa nước của người xem (`x-ff-client-country`), không thì `primary`; wizard và editor: danh sách link vé. `events.ticket_url` giữ làm link chính (đồng bộ từ link `primary`) để mọi code cũ, SEO và Radar không đổi.
+4. **UTM cho bên bán không có deal.** Link không partner nhận `utm_source=feestfinder&utm_medium=referral&utm_campaign=<slug>&utm_content=<ref|src>` (chỉ khi URL không đã có `utm_`); NTC thấy FeestFinder trong analytics của họ; là lý lẽ để ký deal.
+5. **Dashboard.** Studio › Sự kiện › tab `Link vé · Ticket links` (thay Doanh thu): click theo ngày, theo nguồn (card, detail, map, share, agent, widget), theo bên bán, số người giới thiệu; `/organizer/affiliate` đã có một phần. "Tôi" › `Hoa hồng · Commission` (chỉ khi > 0) → `/app/commission`: sự kiện · lượt mở · click Mua vé · chuyển đổi · hoa hồng · trạng thái; `Tài khoản nhận tiền`. Console `/console/affiliate` tab `Đại sứ` (payouts) và `/console/partners` thêm "cần ký": top host theo click 30 ngày không có partner (có sẵn một phần).
+6. **Agent và widget cũng là nguồn.** `/list.md` và MCP trả `/go/<slug>?src=agent`; widget trả `/e/<slug>?src=widget`; `PLACEMENTS` (`partners.ts:139`) thêm `agent`, `widget`, `share`.
+7. **Chống gian.** `ref_user ≠ user_id` người bấm; dedupe click 30 phút đã có; conversion chỉ tính khi partner `approved`; một `ref` chỉ được tính khi `share_visits` có lượt mở trước click (chống dán ref tay).
+
+**Người dùng thấy.** Sheet chia sẻ (đã đăng nhập): dòng `Hoa hồng {p}% · Commission {p}%` khi sự kiện có bên bán partner (p = `commission_pct × SHARE_PCT`); "Tôi": hàng `Hoa hồng` chỉ khi > 0; `/app/commission` như thẻ 3 cũ với cột `Chuyển đổi · Conversions` thay `Đơn`; Studio tab `Link vé`; Console như trên. Người chưa đăng nhập: không gì đổi.
+
+**Không làm.** Không tiền từ NTC, không payout cho NTC (họ bán ở chỗ của họ). Không coupon của FeestFinder. Không bảng xếp hạng mới ngoài mục Đại sứ (D3c A). Không cookie bên thứ ba, không pixel. Không hoa hồng cho sự kiện của bên bán không có deal (chỉ đếm).
+
+**10 điểm.**
+- Cổng: `test/affiliate.test.ts`, `test/partners.test.ts` mở rộng: `/go` với `ref` ghi `outbound_clicks.ref_user` (không ghi khi `ref` là chính người bấm, không ghi khi chưa có `share_visits` của ref đó cho sự kiện); postback với click id → `partner_conversions.ref_user`; `approved` → earnings đúng số (commission 100.000 → 50.000); `rejected` → void; tiền tệ SGD quy về VND bằng tỷ giá cố định; chọn link theo nước (người Singapore → Megatix SG, người Việt → link chính); UTM thêm khi không partner và không có sẵn; `/list.md` chứa `/go/...?src=agent`; `GET /me/commission`; e2e: `event.spec.ts` sheet chia sẻ có dòng khi đăng nhập và sự kiện seed có partner; `app-more.spec.ts` `/app/commission`; `studio-events.spec.ts` tab Link vé với hai link và nước; `routes.ts` thêm `/app/commission`; `perf.spec.ts` đo một lần.
+- 5 người: 3 fan chia sẻ, bạn mở và bấm Mua vé: fan thấy click trong `/app/commission`; 2 NTC thêm hai link bán vé theo nước và đọc được tab Link vé.
+- 2 tuần: ≥ 2 partner có postback thật (team ký: Megatix, Ticketmaster qua Impact, Klook; mục 6); ≥ 5% click Mua vé mang `ref`; ≥ 1 chuyển đổi được ghi và chia; 0 earnings tự giới thiệu.
+
+**Ngân sách không tăng.** Màn đầu không đổi. "Tôi" +1 hàng chỉ khi có tiền. Studio rail: `Link vé` là tab trong Sự kiện, không mục rail.
+
+**Dữ liệu xấu phải chạy.** Postback không có click id → conversion `pending` không `ref_user`; click id của sự kiện khác → bỏ qua `ref`; `ref` của tài khoản đã xoá → bỏ; conversion tiền tệ không có tỷ giá → `pending` với lý do, team xử; sự kiện Radar với link trang gốc (không bán) → UTM vẫn gắn, không partner; hai link cùng nước → `primary` thắng; người xem không nước (header thiếu) → `primary`.
+
+**Xây.**
+- P0 (1 ngày, API): migration `051_affiliate.sql`: `outbound_clicks.ref_user`, `partner_conversions.ref_user`, `event_ticket_links`, `ambassador_earnings`, `ambassador_payouts` (SQL như thẻ 3 cũ, bỏ cột `order_id`/`pct`, thêm `conversion_id unique`, `partner_id`, `currency`, `amount_src`); `lib/affiliate.ts`; `/go` nhận `ref` (regex `^[2-9A-HJ-NP-Z]{6}$`), chọn link theo nước, UTM, ghi `ref_user`; `recordConversion` chép `ref_user` và tạo earnings khi `approved` (cả khi admin đổi trạng thái ở `PATCH /admin/conversions/:id`); `GET /me/commission`; `GET /organizer/events/:id/links` CRUD; `/list.md` và MCP (thẻ 6) dùng `/go?src=agent`; `PLACEMENTS` mới; tests.
+- P1 (1 ngày, web): `context.tsx` lưu `ff:ref`; `tickets.tsx` và `dock.tsx` gắn `ref` vào `/go`; sheet chia sẻ dòng hoa hồng (đăng nhập); `me.tsx` hàng; `/app/commission`; Studio tab Link vé (`kd/studio/editor.tsx` bước Vé: danh sách link với nước và tiền tệ; `kd/studio/dashboard.tsx` số click); `routes.ts`; e2e.
+- P2 (½ ngày): job `settleAmbassadors` (payable → gom kỳ), Console tab Đại sứ và "cần ký"; `CLAUDE.md` mục "Ticket buttons" viết lại: "`/go` picks the seller by the viewer's country, adds the partner's tracking or UTM, remembers who referred for 30 days (`ref`); a partner's approved conversion earns the referrer `SHARE_PCT` of FeestFinder's commission, paid by the team by period; never money from an organiser or a buyer"; roadmap.
+
+**Xong khi.** Cổng xanh; trên preview: chia sẻ → mở → Mua vé → postback giả (curl với token của partner seed) → earnings hiện trong `/app/commission`; `CLAUDE.md` đã đổi.
 
 ### Thẻ 4 · Ban ngày
 
@@ -145,66 +236,6 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ trên mà
 
 **Xong khi.** Cổng xanh, `visual-ok` đã gắn sau khi xem ảnh; trên production team tạo một kệ 3 sự kiện trong Console và script phụ lục A đo lại: chỗ bấm màn đầu ≤ 16, sự kiện đầu tiên trong màn đầu, ô có nhãn.
 
-### Thẻ 1 · Lịch của nhà tổ chức
-
-**Một câu.** Trong Studio › Hồ sơ có khối "Lịch": dán hai dòng vào website của mình để lịch FeestFinder hiện ở đó; hoặc dán địa chỉ lịch có sẵn (ICS, trang có JSON-LD) để sự kiện tự về Studio chờ duyệt dưới tên mình.
-
-**Người dùng thấy.** Studio › Hồ sơ (`kd/studio/profile.tsx`, một `Block` mới sau "Hồ sơ công khai", trước "Doanh nghiệp và liên hệ"), tên `Lịch · Calendar`, hai phần:
-- `Nhúng vào website · Embed on your website`: snippet trong `<pre>` gói dòng, nút `Sao chép · Copy`, chọn ngôn ngữ và nền (`Tối · Sáng`), `Xem trước · Preview` (iframe `srcdoc`). Snippet:
-  ```html
-  <div data-ff-org="<slug>" data-ff-lang="vi" data-ff-theme="dark" data-ff-limit="6"></div>
-  <script src="https://feestfinder.com/ui/widget/ff-widget.js" async></script>
-  ```
-- `Kết nối lịch có sẵn · Connect an existing calendar`: một ô `Địa chỉ lịch · Calendar address` (hint định dạng duy nhất: `https://…`), nút `Kết nối · Connect`. Khi đã nối: một hàng `Đọc lần cuối {t} · Last read {t}`, `{n} chờ duyệt · {n} in review` làm aside, nút `Ngắt · Disconnect`. Lỗi: `Không tìm thấy sự kiện ở địa chỉ này · No events at this address`, `Trang không cho đọc (robots.txt) · The page does not allow reading (robots.txt)`, `Không mở được · Could not reach it`.
-- Widget (trên site của họ): mỗi dòng thứ + ngày, tên, venue · giá (`Miễn phí`, `Chưa rõ giá` theo quy tắc `priceUnknown`), chân `Xem tất cả trên FeestFinder · See all on FeestFinder`. Vanilla JS, Shadow DOM, không tải font, dưới 8 KB gzip, không theo dõi.
-- Console: hàng chờ gắn nhãn `Từ lịch · From calendar` cho tin có provider `organizer` kèm adapter; `/console/sources` cột `Nhà tổ chức · Organiser`.
-
-**Không làm.** Không mục rail mới. Không trang công khai mới. Một lịch mỗi nhà tổ chức. Không xoá sự kiện khi nó biến mất khỏi lịch. Không gộp bản ghi vào sự kiện của nhà tổ chức khác (tạo candidate riêng cho đội duyệt). Nhà tổ chức placeholder (Feest Radar, Cộng đồng) không có lịch kết nối, nhưng vẫn nhúng được.
-
-**10 điểm.**
-- Cổng: `test/embed.test.ts` (mới): `/embed/organizers/:slug` chỉ live sắp tới, header `Access-Control-Allow-Origin: *`, không trường của người xem, 404 slug lạ, `.ics` đọc lại được bằng parser của adapter `ics`, đúng `TZID`; `test/ingest.test.ts`: fixture ICS 3 sự kiện nối bởi Ravolution → 3 `in_review` thuộc Ravolution, `origin = posted`, hai dòng `event_sources`; chạy lại không tạo thêm; đổi giờ sự kiện đã live → `needs_review_fields` có `startTime`, tin vẫn live; `http://` bị từ chối; fixture rỗng → `no_events`; record trùng sự kiện của NTC khác → candidate riêng; `test/organizer.test.ts`: không phải thành viên → 403, placeholder → 400; e2e `widget.spec.ts` (mới): trang HTML tĩnh nhúng `ff-widget.js` từ `:3100` với `data-ff-api` trỏ `:4100` → shadow root đúng số dòng, click mở `/e/<slug>?src=widget`; `studio.spec.ts`: khối Lịch ở 390 không cuộn ngang (`white-space: pre-wrap`), `/studio/profile` đã trong `ROUTES` nên layout, axe, 44 px chạy sẵn; `perf.spec.ts` không gate `/studio/profile`: đo một lần và ghi ngân sách nếu thêm vào danh sách.
-- 5 người: 2 chủ venue nhúng được vào một trang test (hoặc site thật) trong < 3 phút không gợi ý; 2 collective dán link Google Calendar công khai (ICS) và thấy sự kiện của mình ở `/studio/events` lọc "Chờ duyệt"; 1 admin duyệt cả đợt bằng bulk approve và thấy nhãn "Từ lịch".
-- 2 tuần: ≥ 20 host khác nhau có `event_view` với `source: 'widget'` (PostHog); ≥ 10 `ingest_sources` có `organizer_id`; ≥ 100 sự kiện có `event_sources` provider `organizer` kèm adapter; Đà Nẵng hoặc Nha Trang ≥ 5 sự kiện sắp tới; thời gian duyệt trung vị không tăng (Console › Số liệu).
-
-**Ngân sách không tăng.** Không chạm màn đầu người mới. Rail Studio giữ 7 mục. Profile Studio: +1 `Block`, không bảng rộng.
-
-**Dữ liệu xấu phải chạy.** ICS: sự kiện không `LOCATION`; `DTSTART` ở múi khác thành phố; sự kiện cả ngày (`VALUE=DATE`); `DESCRIPTION` có HTML; `STATUS:CANCELLED` → `cancelled`; `RRULE` → chỉ lấy lần đầu, ghi lý do. JSON-LD: trang có sự kiện ở thành phố khác với NTC (giữ thành phố của bản ghi, `out_of_area` nếu chưa mở); trang Megatix ghi +08:00 cho Sài Gòn (dùng `wallClock` như starter). Lịch 300 sự kiện → đọc theo budget 20 s mỗi lần, phần còn lại lần sau.
-
-**Xây.**
-- P0 (1 ngày): migration `049_organizer_calendar.sql` `ingest_sources.organizer_id uuid references organizers on delete cascade` + unique partial index. `services/ingest/run.ts`, chỉ phần **tạo**: `createCandidate` (`run.ts:308`) nhận thêm `organizerId` thay cho `holder` khi nguồn có `organizer_id`; trong `resolveAndApply` (`run.ts:204-237`), một match ≥ `mergeAt` tới sự kiện của **NTC khác** không `attachSource`/`enrich` mà tạo candidate dưới NTC của nguồn với `match` lưu để `flagRisk` đánh dấu trùng; bỏ `FIT_FLOOR` nhưng vẫn lưu fit; thêm dòng `event_sources` provider `organizer` cạnh dòng adapter (mẫu `report.ts:26`). `enrich` (`run.ts:283`) hôm nay chỉ điền chỗ trống và chỉ lấy ảnh, lineup, pin cho NTC `is_community`: mở rộng cho `source.organizer_id === ev.organizer_id`. **Không** đổi giờ, tên, giá của sự kiện đã live trong P0. `routes/organizer/calendar.ts` `GET/POST/DELETE /organizer/calendar` (đoán adapter theo `.ics` hay `text/calendar`, fetch thử bằng `IngestIO`, chạy ngay một lần, rate-limit 5/phút vì fetch chạy đồng bộ); `notifyAdmins` một lần mỗi đợt; tests.
-- P1 (1 ngày): `routes/embed.ts` (`/embed/organizers/:slug`, `.ics`; vào `PUBLIC_READS`; header CORS trong route; server dựng `dateLabel`, `timeLabel`, giá bằng `lib/format.ts`, widget không tính giờ); `festfinder-frontend/ui/widget/ff-widget.js`; `scripts/copy-ui.ts` thêm `widget`; khối Lịch trong `kd/studio/profile.tsx` và copy trong `kd/studio/copy.ts`; `kd/web/event/context.tsx` thêm `source: 'widget'` vào `event_view` khi `?src=widget`; `widget.spec.ts`, `studio.spec.ts`.
-- P2 (1 ngày): **bản sửa từ lịch**: khi record khớp sự kiện live của cùng NTC và một trường trong `REVIEWED_FIELDS` (`routes/organizer/events.ts:105`) khác, viết `needs_review_at/fields/before` thay vì ghi thẳng. Logic ấy đang nằm trong route (`events.ts:336`); tách thành `services/listing.ts` `proposeRevision(q, eventId, patch, now)` để route và pipeline dùng chung, không chép. Nhãn Console, cột `/console/sources`; `CLAUDE.md` mục "Sources" thêm: lịch kết nối là nguồn có `organizer_id`, sự kiện là đã đăng dưới NTC và chờ duyệt; `/embed/*` là feed công khai mở CORS mà `ui/widget/ff-widget.js` đọc; `docs/CURRENT_ARCHITECTURE.md` bảng nguồn thêm "Organiser calendar"; roadmap.
-
-**Xong khi.** Cổng xanh; trên production: một trang HTML trong scratchpad nhúng lịch của một NTC thật mà chủ sản phẩm chọn và hiện đúng số sự kiện của `/o/<slug>`; `.ics` mở được trong Google Calendar; NTC thử của chủ sản phẩm nối một ICS và thấy tin chờ duyệt; số host có `source: widget` bắt đầu đếm trong PostHog.
-
-### Thẻ 3 · Hoa hồng cho đại sứ
-
-**Một câu.** "Đại sứ" (mục cuối trang sự kiện: những người mang khách tới qua link chia sẻ `?ref=`) có thêm tiền: nhà tổ chức bán vé trên FeestFinder đặt một %, mỗi đơn đã trả qua link của ai sinh hoa hồng cho người đó, trả qua payout có sẵn.
-
-**Người dùng thấy.**
-- Sheet chia sẻ (`kd/web/event/actions.tsx`): dưới tiêu đề, một dòng `kd-s` `Hoa hồng {p}% · Commission {p}%`, chỉ khi sự kiện có % **và người xem đã đăng nhập** (chưa đăng nhập thì link chia sẻ không có `ref`, hiện dòng này sẽ khiến họ hỏi "link của tôi đâu"; không ép đăng nhập ở hành động chia sẻ, theo kit). Sau khi sao chép: toast `Đã sao chép link · Link copied` (như hiện nay).
-- "Tôi" (`kd/web/me.tsx`): hàng `Hoa hồng · Commission`, aside là tổng đang chờ và đã nhận (`formatMoney`), **chỉ khi > 0**. Mở `/app/commission` (màn mới, vào `ROUTES` vai fan): bảng `Table`/`Row` cột `Sự kiện · Lượt mở · Đơn · Hoa hồng · Trạng thái` (trạng thái: `Chờ · Pending`, `Có thể trả · Payable`, `Đã trả · Paid`, `Huỷ · Void`), nút phụ `Tài khoản nhận tiền · Payout account` tới form payee có sẵn; rỗng: `Chưa có hoa hồng. Chia sẻ một đêm · No commission yet. Share a night` (một câu, một hành động).
-- Studio editor, bước Vé: switch `Hoa hồng đại sứ · Ambassador commission` và ô `%` (hint `1–20`). `/studio/revenue`: dòng ledger `Hoa hồng đại sứ · Ambassador commission` (âm). `/studio/attendees`: cột `Đại sứ · Ambassador` (tên người, có thì hiện).
-- Console `/console/affiliate`: tab `Đại sứ · Ambassadors` với payout theo kỳ, nút `Đánh dấu đã trả · Mark paid` (như payouts của partner).
-
-**Không làm.** Không từ mới ("Đại sứ" đã có). Không bảng xếp hạng mới (top 5 theo lượt mở đã có, giữ). Không phí người mua. Không hoa hồng cho vé bán ngoài (vẫn đếm lượt mở). Không tự giới thiệu. Không thay đổi màn đầu. `/app/commission` không hiện khi chưa có gì (hàng "Tôi" ẩn).
-
-**10 điểm.**
-- Cổng: `test/ambassador.test.ts` (mới): share → `?ref=`; đặt vé với `ref` → `orders.ref_user`; thanh toán giả → earnings `pending` đúng số (vé 350.000, giảm 50.000, 10% → 30.000); tự mua → không ghi; không % → không ghi; hoàn tiền → `void`; job sau `ends_at + 24h` → `payable`; payout → `paid`, ledger NTC trừ đúng; không payee → vẫn `payable`; `GET /me/commission` đúng tổng; `ambassadorPct` 25 → 400. E2E `event.spec.ts`: sheet có dòng khi seed đặt % cho `ravo`; `app-more.spec.ts`: `/app/commission` ở 390 và 1440; `routes.ts` thêm `/app/commission`; `perf.spec.ts` ngân sách đo một lần; `newcomer.spec.ts` không đổi.
-- 5 người: 3 fan chia sẻ một đêm cho bạn từ điện thoại và sau một đơn thử tìm thấy hàng "Hoa hồng" trong "Tôi" không gợi ý; 2 nhà tổ chức bật 10% trong editor không gợi ý.
-- 2 tuần: ≥ 1 NTC bật; ≥ 5% đơn mang `ref_user`; 0 đơn có `ref_user = user_id`; phễu `share` → `event_view` (ref) → đơn đọc được trong PostHog và Console.
-
-**Ngân sách không tăng.** Màn đầu trang sự kiện 10 chỗ bấm (sheet mở khi bấm; mục Đại sứ nằm cuối trang). "Tôi": +1 hàng chỉ khi có tiền.
-
-**Dữ liệu xấu phải chạy.** `ref` của tài khoản đã xoá → bỏ qua; `ref` quá 30 ngày trong `localStorage` → không gửi; đơn hoàn sau khi `payable` → `void` và trừ lại ledger; đổi % sau khi có đơn → earnings giữ % lúc đặt; sự kiện có % nhưng không có hạng vé → không gì xảy ra; hai đơn cùng người cùng ref → hai earnings, một mỗi đơn.
-
-**Xây.**
-- P0 (1 ngày): migration `050_ambassadors.sql`: `events.ambassador_pct numeric(5,2) check (> 0 and <= 20)`; `orders.ref_user uuid references users on delete set null` + index; `ambassador_earnings (id, order_id unique, event_id, organizer_id, user_id, pct, amount bigint, status pending|payable|paid|void, payout_id, created_at, payable_at, paid_at, voided_at)`; `ambassador_payouts (id, user_id, period_from, period_to, amount, status open|paid, created_by, created_at, paid_at)` theo mẫu `affiliate_payouts` (**không** dùng `payout_transfers`: CHECK `kind` và `unique (event_id, kind)` của nó là của NTC theo sự kiện). `routes/commerce.ts` `CheckoutInput` (`commerce.ts:22`) thêm `ref` với đúng regex của `/events/:id/track` (`catalog.ts:517`: `^[2-9A-HJ-NP-Z]{6}$`), ghi `orders.ref_user` khi hợp lệ, bỏ qua im lặng khi không; đơn `total = 0` (promo 100%, `commerce.ts:163`) không sinh earnings; `orders.user_id` hôm nay `not null` nhưng phase 17 sắp có guest checkout: viết kiểm tra tự giới thiệu bằng `ref_user <> coalesce(user_id, '00000000-0000-0000-0000-000000000000')` để không gãy khi `user_id` thành null; khi đơn `paid` (cả webhook VietQR `commerce.ts:209` và nhánh mock/0 đồng) → earnings; hoàn tiền ở `routes/organizer/audience.ts:207` → `void`; `GET /me/commission`; `PATCH` sự kiện của NTC nhận `ambassadorPct`; tests.
-- P1 (1 ngày): sheet chia sẻ đọc `ambassadorPct` từ `services/eventpage.ts`; `context.tsx` lưu `ff:ref:<eventId>` 30 ngày khi tới bằng `?ref=` (đã gọi `/events/:id/track`); checkout gửi `ref`; hàng "Tôi" + `/app/commission`; Studio editor; ledger: một `LedgerLine` âm `commission` trong hàng `post_event` của `payoutLedger` (`payouts.ts:49`), và `advance` (50% theo `PAYOUT_POLICY`) tính trên gross **trừ** hoa hồng, nếu không ứng trước có thể vượt số còn lại; cột attendees; e2e.
-- P2 (½ ngày): job `settleAmbassadors` (mỗi giờ, `jobs.ts`): `payable` sau sự kiện, gom `ambassador_payouts` theo kỳ của payout NTC, ngưỡng 50.000 VND; tiền trả cho đại sứ là **chuyển khoản tay của team** như payouts của partner (FeestFinder không có API chi tiền), tab Console đánh dấu đã trả; `/me` (`routes/me.ts:36-52`) thêm `counts.commission` để hàng "Tôi" có aside; `CLAUDE.md` dưới "Ticket buttons": `?ref=` nhớ 30 ngày và đi cùng đơn; đơn đã trả sinh `events.ambassador_pct` cho người chia sẻ, trả qua `ambassador_payouts` và `/me/payee`, không bao giờ tính cho người mua; roadmap.
-
-**Xong khi.** Cổng xanh; trên **web preview của branch** (web project build mọi branch, API preview dùng staging): NTC thử bật 10%, một đơn thử qua link có `ref` sinh earnings đúng số, hàng "Hoa hồng" hiện trong "Tôi"; chủ sản phẩm xác nhận kế toán (D3) trước khi NTC thật đầu tiên bật trên production.
-
 ### Thẻ 6 · Dữ liệu cho agent
 
 **Một câu.** Một agent (ChatGPT, Claude, Gemini, hay một script) hỏi "techno Sài Gòn thứ bảy dưới 300k" và nhận dữ liệu FeestFinder qua MCP hoặc một trang Markdown, chỉ đọc, không cần tài khoản.
@@ -228,77 +259,69 @@ Khuôn mỗi thẻ: **Một câu** · **Người dùng thấy** (chữ trên mà
 
 **Xong khi.** Cổng xanh; chủ sản phẩm chạy bài 5 agent trên production và ghi 5 câu trả lời vào roadmap; `agent_call` xuất hiện trong PostHog.
 
-### Thẻ 2 · Gửi sự kiện qua Zalo (để sau, chủ sản phẩm 2026-10-19; thiết kế giữ nguyên để dùng khi điều kiện ở mục 6 đúng)
+### Thẻ 1 · Lịch của nhà tổ chức
 
-**Một câu.** Ai follow Zalo OA của FeestFinder gửi ảnh poster hoặc link sự kiện, nhận lại các trường đã đọc và một link "Xem và gửi" mở form cộng đồng đã điền; gửi xong vào hàng chờ duyệt như mọi tin.
+**Một câu.** Trong Studio › Hồ sơ có khối "Lịch": dán hai dòng vào website của mình để lịch FeestFinder hiện ở đó; hoặc dán địa chỉ lịch có sẵn (ICS, trang có JSON-LD) để sự kiện tự về Studio chờ duyệt dưới tên mình.
 
-**Tái dùng.** App Zalo của phase 17: `ZALO_OA_APP_ID`, `ZALO_OA_SECRET_KEY`, `ZALO_OA_REFRESH_TOKEN` (`config.ts:271`), `provider_tokens` + `DbTokenStore` (key `'zalo'`, `sms.ts:153,163`), và logic refresh của `ZaloZnsTransport` (`services/sms.ts:141-170`): **tách phần token thành `services/zalo-oauth.ts`, một bản duy nhất trong tiến trình, có advisory lock khi refresh**, dùng chung cho ZNS và OA bot. Đây là chỗ dễ hỏng nhất (mục 7): Zalo xoay refresh token mỗi lần refresh, hai nơi refresh riêng sẽ làm token của nơi kia vô hiệu và **đăng nhập bằng Zalo OTP ngừng chạy**. `ClaudePrefill` và `prefillFromJsonLd` (`services/prefill.ts`), `aiBudget` (`community.ts:170`), `POST /community/events`, `otp_challenges` purpose `connect` channel `zalo`. **Không** dùng `social_connections.provider = 'zalo'` cho id người dùng OA: hàng đó đang giữ số điện thoại đã chứng minh (`me.ts:525-526`) và `notify.ts:64-66` đọc `external_id` của nó làm địa chỉ ZNS (`phone:`); ghi id OA vào đó sẽ phá ZNS. Dùng provider mới `zalo_oa` (nới CHECK của `social_connections.provider` trong migration 051).
+**Người dùng thấy.** Studio › Hồ sơ (`kd/studio/profile.tsx`, một `Block` mới sau "Hồ sơ công khai", trước "Doanh nghiệp và liên hệ"), tên `Lịch · Calendar`, hai phần:
+- `Nhúng vào website · Embed on your website`: snippet trong `<pre>` gói dòng, nút `Sao chép · Copy`, chọn ngôn ngữ và nền (`Tối · Sáng`), `Xem trước · Preview` (iframe `srcdoc`). Snippet:
+  ```html
+  <div data-ff-org="<slug>" data-ff-lang="vi" data-ff-theme="dark" data-ff-limit="6"></div>
+  <script src="https://feestfinder.com/ui/widget/ff-widget.js" async></script>
+  ```
+- `Kết nối lịch có sẵn · Connect an existing calendar`: một ô `Địa chỉ lịch · Calendar address` (hint định dạng duy nhất: `https://…`), nút `Kết nối · Connect`. Khi đã nối: một hàng `Đọc lần cuối {t} · Last read {t}`, `{n} chờ duyệt · {n} in review` làm aside, nút `Ngắt · Disconnect`. Lỗi: `Không tìm thấy sự kiện ở địa chỉ này · No events at this address`, `Trang không cho đọc (robots.txt) · The page does not allow reading (robots.txt)`, `Không mở được · Could not reach it`.
+- Widget (trên site của họ): mỗi dòng thứ + ngày, tên, venue · giá (`Miễn phí`, `Chưa rõ giá`, hay "từ {giá}" của trang bán vé; FeestFinder không bán vé từ bản 3), chân `Xem tất cả trên FeestFinder · See all on FeestFinder`. Vanilla JS, Shadow DOM, không tải font, dưới 8 KB gzip, không theo dõi.
+- Console: hàng chờ gắn nhãn `Từ lịch · From calendar` cho tin có provider `organizer` kèm adapter; `/console/sources` cột `Nhà tổ chức · Organiser`.
 
-**Người dùng thấy.** Trong Zalo, tối đa ba tin, tiếng Việt theo locale (mặc định vi):
-- Khi follow: `Gửi ảnh poster hoặc link sự kiện, FeestFinder đọc giúp bạn. · Send a poster or an event link and FeestFinder reads it for you.`
-- Chưa nối tài khoản: `Nối với tài khoản FeestFinder để gửi sự kiện: {link} · Link your FeestFinder account to send events: {link}`
-- Bản nháp: bốn dòng `{title}` / `{date} · {venue}` / `{price}` / `Xem và gửi: {link} · Review and send: {link}`
-- Không đọc được: `Chưa đọc được. Gửi lại ảnh rõ hơn hoặc dán link. · Could not read it. Send a clearer picture or paste a link.`
-- Quá 10 bản nháp một ngày: `Hôm nay đủ 10 bản nháp rồi. Mai gửi tiếp. · That is 10 drafts today. More tomorrow.`
-Trên site: `/zalo/link` (một nút `Nối Zalo · Link Zalo`, xong hiện `Đã nối · Linked` và nút về "Tôi"; chưa đăng nhập thì sheet đăng nhập trước); form cộng đồng đọc `?draft=` và điền; `/app/settings` mục Kết nối: hàng Zalo aside `Đã nối · Linked`. Console: `/console/sources` tab `Zalo` với 50 dòng gần nhất và trạng thái, chỉ admin.
-
-**Không làm.** Không đăng từ Zalo. Không chatbot: văn bản không phải link nhận một câu cố định (câu chào). Không Mini App (D2). Không gửi thông báo marketing qua OA trong lát này (kênh `zalo` của notify giữ ZNS/webhook như hiện nay).
+**Không làm.** Không mục rail mới. Không trang công khai mới. Một lịch mỗi nhà tổ chức. Không xoá sự kiện khi nó biến mất khỏi lịch. Không gộp bản ghi vào sự kiện của nhà tổ chức khác (tạo candidate riêng cho đội duyệt). Nhà tổ chức placeholder (Feest Radar, Cộng đồng) không có lịch kết nối, nhưng vẫn nhúng được.
 
 **10 điểm.**
-- Cổng: `test/zalo.test.ts` (mới) với `fetch` giả: chữ ký sai → 401, không ghi; webhook gửi lại cùng `message id` → một dòng; `user_send_image` từ người chưa nối → dòng `received`, job trả link nối; nối bằng mã → `user_id` gắn vào dòng cũ; job với prefill giả → `drafted`, tin trả lời đúng 4 dòng; `POST /community/events` với `draft` → `submitted`, `event_id`, tin `in_review` dưới Cộng đồng FeestFinder; quá 10/ngày → tin giới hạn; token hết hạn → refresh một lần, ghi cả hai token vào `provider_tokens`; `test/sms.test.ts` vẫn xanh sau khi tách `zalo-oauth.ts`. E2E: `/zalo/link` vào `ROUTES` vai fan (layout, axe, 44 px); form cộng đồng với `?draft=` điền đúng (fixture).
-- 5 người: 3 fan gửi một poster từ điện thoại của họ và hoàn tất gửi duyệt trong < 2 phút không gợi ý; 2 người của collective làm cùng việc với link sự kiện; mỗi người được hỏi "bạn nghĩ nó đã lên chưa?" và trả lời đúng là "chờ duyệt".
-- 2 tuần: ≥ 100 `zalo_inbox` `drafted`; ≥ 40% thành `submitted`; ≥ 60% `submitted` được duyệt; OA ≥ 1.000 follower (team); 0 lỗi 5xx ở `/zalo/webhook`.
+- Cổng: `test/embed.test.ts` (mới): `/embed/organizers/:slug` chỉ live sắp tới, header `Access-Control-Allow-Origin: *`, không trường của người xem, 404 slug lạ, `.ics` đọc lại được bằng parser của adapter `ics`, đúng `TZID`; `test/ingest.test.ts`: fixture ICS 3 sự kiện nối bởi Ravolution → 3 `in_review` thuộc Ravolution, `origin = posted`, hai dòng `event_sources`; chạy lại không tạo thêm; đổi giờ sự kiện đã live → `needs_review_fields` có `startTime`, tin vẫn live; `http://` bị từ chối; fixture rỗng → `no_events`; record trùng sự kiện của NTC khác → candidate riêng; `test/organizer.test.ts`: không phải thành viên → 403, placeholder → 400; e2e `widget.spec.ts` (mới): trang HTML tĩnh nhúng `ff-widget.js` từ `:3100` với `data-ff-api` trỏ `:4100` → shadow root đúng số dòng, click mở `/e/<slug>?src=widget`; `studio.spec.ts`: khối Lịch ở 390 không cuộn ngang (`white-space: pre-wrap`), `/studio/profile` đã trong `ROUTES` nên layout, axe, 44 px chạy sẵn; `perf.spec.ts` không gate `/studio/profile`: đo một lần và ghi ngân sách nếu thêm vào danh sách.
+- 5 người: 2 chủ venue nhúng được vào một trang test (hoặc site thật) trong < 3 phút không gợi ý; 2 collective dán link Google Calendar công khai (ICS) và thấy sự kiện của mình ở `/studio/events` lọc "Chờ duyệt"; 1 admin duyệt cả đợt bằng bulk approve và thấy nhãn "Từ lịch".
+- 2 tuần: ≥ 20 host khác nhau có `event_view` với `source: 'widget'` (PostHog); ≥ 10 `ingest_sources` có `organizer_id`; ≥ 100 sự kiện có `event_sources` provider `organizer` kèm adapter; Đà Nẵng hoặc Nha Trang ≥ 5 sự kiện sắp tới; thời gian duyệt trung vị không tăng (Console › Số liệu).
 
-**Ngân sách không tăng.** Không chạm màn đầu. "Tôi" không thêm hàng (Kết nối nằm trong Cài đặt sẵn có).
+**Ngân sách không tăng.** Không chạm màn đầu người mới. Rail Studio giữ 7 mục. Profile Studio: +1 `Block`, không bảng rộng.
 
-**Dữ liệu xấu phải chạy.** Poster không có ngày → bản nháp thiếu ngày, form bắt điền; poster ngày đã qua → nháp vẫn tạo, form báo như hiện nay; link Facebook hay RA → đọc như form cộng đồng đang đọc (một người dán link là hành vi của người, không phải crawl; không lưu nội dung trang); ảnh > 5 MB → `failed`; ảnh không phải poster → `failed`; hai ảnh một tin → lấy ảnh đầu; Zalo gửi lại webhook → idempotent theo `message id`; người gửi 50 tin/giờ → ngoài 10 nháp, mọi tin còn lại không gọi Claude.
+**Dữ liệu xấu phải chạy.** ICS: sự kiện không `LOCATION`; `DTSTART` ở múi khác thành phố; sự kiện cả ngày (`VALUE=DATE`); `DESCRIPTION` có HTML; `STATUS:CANCELLED` → `cancelled`; `RRULE` → chỉ lấy lần đầu, ghi lý do. JSON-LD: trang có sự kiện ở thành phố khác với NTC (giữ thành phố của bản ghi, `out_of_area` nếu chưa mở); trang Megatix ghi +08:00 cho Sài Gòn (dùng `wallClock` như starter). Lịch 300 sự kiện → đọc theo budget 20 s mỗi lần, phần còn lại lần sau.
 
 **Xây.**
-- P0 (1 ngày): `services/zalo-oauth.ts` (tách từ `sms.ts`, một instance, advisory lock khi refresh; `ZaloZnsTransport` chuyển sang dùng nó; `test/sms.test.ts` phải còn xanh); migration `051_zalo_inbox.sql` (`zalo_inbox`: `id, zalo_user_id, zalo_message_id unique, user_id, kind text|image|link|follow|other, text, attachment_url, prefill jsonb, prefill_error, status received|read|drafted|submitted|ignored|failed, event_id, created_at, handled_at`; nới CHECK `social_connections.provider` thêm `'zalo_oa'`; **không** tạo bảng token: `provider_tokens` đã có); `routes/zalo.ts` `POST /zalo/webhook` (`req.rawBody` đã có nhờ parser ở `app.ts:239-241`, kiểm chữ ký như `commerce.ts:211`; `config: { rateLimit: false }` như `/robots.txt` để Zalo gửi dồn không bị 429; 200 ngay; ghi dòng; Zalo trỏ về `https://feestfinder.com/zalo/webhook` để đi qua proxy ký như pg_cron); job `zaloInbox` (`jobs.ts`, mỗi phút, tối đa 2 bản nháp mỗi lần chạy vì mỗi lần gọi Claude 5–15 s trong budget 55 s của pg_cron; ảnh tải bằng `fetchPublic` tối đa 5 MB và chỉ PNG/JPEG/WebP như `community.ts:165-167`, đưa vào `PrefillInput.image`) với trả lời qua `services/zalo-oa.ts` `sendText`; tests. Thiếu `ZALO_OA_*` hoặc `ANTHROPIC_API_KEY` (`DisabledPrefill`) → mọi route Zalo 404, job không chạy.
-- P1 (1 ngày): `GET /zalo/link?code=` + `POST /me/connections/zalo-oa` dùng `otp_challenges` (`purpose = 'connect'`, `channel = 'zalo'`, `identifier = zalo_user_id`, 15 phút); trang `src/app/(kd)/zalo/link/page.tsx` **và thêm `/zalo/link` vào danh sách trang của `kd/cutover.ts`** (`proxy.ts:40` `isCutOver`), nếu không proxy chuyển `/zalo/link` sang API và trả 404; `GET /community/drafts/:id` (chủ sở hữu) và `draft` trong `POST /community/events`; form cộng đồng đọc `?draft=` (tìm form bằng `grep -rn "community/events" festfinder-web/src/kd`); hàng Kết nối trong Cài đặt; e2e.
-- P2 (½ ngày): tab Console; `CLAUDE.md` mục "Zalo": webhook OA biến poster hay link thành bản nháp cộng đồng mà người đó gửi từ form; không gì đăng từ Zalo; token OA ở `provider_tokens` dùng chung với ZNS; `docs/CURRENT_ARCHITECTURE.md` bảng nguồn thêm "Zalo OA draft"; roadmap.
+- P0 (1 ngày): migration `049_organizer_calendar.sql` `ingest_sources.organizer_id uuid references organizers on delete cascade` + unique partial index. `services/ingest/run.ts`, chỉ phần **tạo**: `createCandidate` (`run.ts:308`) nhận thêm `organizerId` thay cho `holder` khi nguồn có `organizer_id`; trong `resolveAndApply` (`run.ts:204-237`), một match ≥ `mergeAt` tới sự kiện của **NTC khác** không `attachSource`/`enrich` mà tạo candidate dưới NTC của nguồn với `match` lưu để `flagRisk` đánh dấu trùng; bỏ `FIT_FLOOR` nhưng vẫn lưu fit; thêm dòng `event_sources` provider `organizer` cạnh dòng adapter (mẫu `report.ts:26`). `enrich` (`run.ts:283`) hôm nay chỉ điền chỗ trống và chỉ lấy ảnh, lineup, pin cho NTC `is_community`: mở rộng cho `source.organizer_id === ev.organizer_id`. **Không** đổi giờ, tên, giá của sự kiện đã live trong P0. `routes/organizer/calendar.ts` `GET/POST/DELETE /organizer/calendar` (đoán adapter theo `.ics` hay `text/calendar`, fetch thử bằng `IngestIO`, chạy ngay một lần, rate-limit 5/phút vì fetch chạy đồng bộ); `notifyAdmins` một lần mỗi đợt; tests.
+- P1 (1 ngày): `routes/embed.ts` (`/embed/organizers/:slug`, `.ics`; vào `PUBLIC_READS`; header CORS trong route; server dựng `dateLabel`, `timeLabel`, giá bằng `lib/format.ts`, widget không tính giờ); `festfinder-frontend/ui/widget/ff-widget.js`; `scripts/copy-ui.ts` thêm `widget`; khối Lịch trong `kd/studio/profile.tsx` và copy trong `kd/studio/copy.ts`; `kd/web/event/context.tsx` thêm `source: 'widget'` vào `event_view` khi `?src=widget`; `widget.spec.ts`, `studio.spec.ts`.
+- P2 (1 ngày): **bản sửa từ lịch**: khi record khớp sự kiện live của cùng NTC và một trường trong `REVIEWED_FIELDS` (`routes/organizer/events.ts:105`) khác, viết `needs_review_at/fields/before` thay vì ghi thẳng. Logic ấy đang nằm trong route (`events.ts:336`); tách thành `services/listing.ts` `proposeRevision(q, eventId, patch, now)` để route và pipeline dùng chung, không chép. Nhãn Console, cột `/console/sources`; `CLAUDE.md` mục "Sources" thêm: lịch kết nối là nguồn có `organizer_id`, sự kiện là đã đăng dưới NTC và chờ duyệt; `/embed/*` là feed công khai mở CORS mà `ui/widget/ff-widget.js` đọc; `docs/CURRENT_ARCHITECTURE.md` bảng nguồn thêm "Organiser calendar"; roadmap.
 
-**Xong khi.** Cổng xanh; trên production chủ sản phẩm gửi một poster thật cho OA từ điện thoại và hoàn tất gửi duyệt; tin hiện trong hàng chờ Console với người gửi đúng; `zalo_inbox` đếm được trong tab Console.
+**Xong khi.** Cổng xanh; trên production: một trang HTML trong scratchpad nhúng lịch của một NTC thật mà chủ sản phẩm chọn và hiện đúng số sự kiện của `/o/<slug>`; `.ics` mở được trong Google Calendar; NTC thử của chủ sản phẩm nối một ICS và thấy tin chờ duyệt; số host có `source: widget` bắt đầu đếm trong PostHog.
 
 ---
 
 ## 5. Nhịp làm
 
-1. **Thứ tự (night build):** 4 → 5 → 6 → 1 → 3: rủi ro thấp và chỉ API trước, màn hình mới sau. Lịch từng giờ, cổng từng việc và luật của đêm ở `docs/NIGHT_BUILD_PLAN_2026-10-19.md`. Thẻ 2 không làm.
-2. **Mỗi lát một PR** (`feat/<thẻ>-p<k>`), ≤ 1 ngày, theo skill `design-phase` của design-kit (chưa có trong `.claude/skills/` của repo này: W0 chép `skills/design-phase` và `skills/design-review` từ `/home/patrickstar/Desktop/design-kit/skills/` vào `.claude/skills/`): chép checklist của quyết định đã chọn vào mô tả PR; code, test và docs trong cùng commit; `npm run typecheck`, `npm run lint; echo $?` (không pipe), test khu vực, `npm run test:screens`; checklist "Thiết kế" trong PR đánh thật; `visual-diff` xem rồi mới `visual-ok`; merge khi chủ sản phẩm nói "merge".
-3. **Migration:** 048 Ban ngày, 049 Lịch, 050 Hoa hồng (thứ tự của night build); Zalo không có migration trong chặng này; bump "The next one is" trong `CLAUDE.md`; mỗi file có comment vì sao và khối RLS như `044`.
-4. **Seed xấu như production** (W0, nửa ngày, trước thẻ 4): một coffee rave 09:00–13:00; một kệ bật 3 sự kiện; một sự kiện có `ambassador_pct = 10` (ravo); một ICS fixture với bản ghi thiếu `LOCATION`, múi khác, `CANCELLED`; một poster fixture không ngày. `newcomer.spec.ts` chạy trên seed này.
-5. **Sau mỗi merge:** chờ deploy bằng marker, chạy script phụ lục A trên production, ghi số vào roadmap (mục "Growth plan") cùng ngày. Số không được tăng so với bảng ở mục 1.
-6. **Tài liệu:** mỗi thẻ ghi dòng của nó vào `CLAUDE.md` (đã nêu trong "Xây"); `docs/FEESTFINDER_ROADMAP.md` mục "Growth plan" tick từng lát; `TECH_DEBT.md` 17 đóng ở thẻ 5.
-7. **Không làm trong kế hoạch này:** đổi điều hướng, đổi màn đầu, thêm tab, thêm chip trên điện thoại, thêm từ mới cho người mới. Gặp việc cần một trong số đó: dừng, ghi vào roadmap, hỏi chủ sản phẩm bằng 2–4 lựa chọn.
+1. **Hai đêm** (`docs/NIGHT_BUILD_PLAN_2026-10-19.md`): đêm 1 **C → A → B**; đêm 2 **D → 4 → 5 → 6 → 1**. Gỡ vé trước để không thẻ nào phải né mảng vé; A trước B vì B dựa trên cổng mới.
+2. **Mỗi lát một PR** sáng sau (đêm chỉ branch), theo skill `design-phase` của design-kit; checklist "Thiết kế" đánh thật; `visual-ok` sau khi xem ảnh; merge khi chủ sản phẩm nói.
+3. **Migration:** `048_drop_ticketing`, `049_comments`, `050_day_events`, `051_affiliate`, `052_organizer_calendar` (thứ tự hai đêm; đổi số theo merge thật; bump `CLAUDE.md`).
+4. **Seed xấu như production** trước đêm 1: không tier, không đơn; một sự kiện có hai link bán vé (VN và SG) với partner seed `megatix` có `postback_token`; một bình luận có 4 trả lời và một trả lời của trả lời; một coffee rave; một kệ.
+5. **Sau mỗi merge:** script phụ lục A trên production, ghi số vào roadmap. Số không được tăng.
+6. **Không làm trong kế hoạch này:** Zalo OA, đổi điều hướng, thêm tab hay chip trên điện thoại, du lịch, Track ID, Crew, Night Pass, merch.
 
 ---
 
 ## 6. Việc của chủ sản phẩm, và những gì chờ điều kiện
 
-**Chủ sản phẩm và team làm (agent không làm được):**
-1. Chọn D1–D6 (mục 2), chép checklist vào roadmap kèm ngày.
-2. Zalo OA: **để sau** (2026-10-19). Khi mở lại: xác minh OA doanh nghiệp, bật webhook trỏ `https://feestfinder.com/zalo/webhook`, cấp quyền gửi tin tư vấn; app và token đã có từ phase 17.
-3. Kế toán xác nhận cách trả hoa hồng cho cá nhân (D3) trước khi NTC thật đầu tiên bật.
-4. Danh sách 15–20 venue và collective mỗi thành phố lớn để mời dùng Lịch; 5 fan mỗi thành phố cho chương trình scout trên Zalo OA (không code).
-5. Sau mỗi thẻ: bài 5 người theo `DESIGN_GOVERNANCE.md` với nhiệm vụ ghi trong thẻ; ghi kết quả vào roadmap.
-6. Sau thẻ 6: nối 5 agent và ghi câu trả lời; đăng MCP vào thư mục công khai.
+**Chủ sản phẩm và team:**
+1. Chọn D7–D12 (mục 2) hoặc để mặc định; xác nhận production **không có đơn `paid`** (Console › Đơn hàng trước khi gỡ; migration 048 cũng tự kiểm).
+2. Nghị định 147 (D10): quyết định nhận rủi ro hay giữ cổng số điện thoại cho đăng tin.
+3. **Ký affiliate**: Megatix (SG, TH, ID, VN), Ticketmaster (qua Impact), Klook, Ticketbox (hỏi chương trình), Eventbrite (affiliate qua Impact); nhập vào `/console/partners` với host, template link và token postback. Không có deal thì thẻ D chỉ đếm.
+4. Tỷ giá cố định cho SGD, THB, IDR, JPY → VND trong `lib/money.ts` mỗi tháng (hoa hồng về VND).
+5. Danh sách venue và collective cho thẻ 1; 5 người cho mỗi bài thử; sau thẻ 6 nối 5 agent.
+6. Lint budget hạ sau đêm 1 theo số thật.
 
-**Chờ điều kiện (không code trước khi điều kiện đúng, điều kiện là số đo):**
+**Chờ điều kiện:**
 
 | Việc | Làm khi | Hình hài đã định |
 | --- | --- | --- |
-| Link du lịch "Đến <thành phố>" | ≥ 2 thành phố có ≥ 50 sự kiện sắp tới | Một hàng trong "Thêm" của trang sự kiện, chỉ khi thành phố sự kiện ≠ thành phố đã nhớ của người xem; `lib/travel.ts` theo mẫu `lib/rides.ts`; `/go/travel`; mã affiliate trong env |
-| Zalo OA bot (thẻ 2) | Chủ sản phẩm mở lại (2026-10-19: để sau, chỉ SMS); OA doanh nghiệp đã xác minh, webhook bật | Thiết kế đầy đủ ở thẻ 2, kể cả bốn chỗ chặn của mục 7 |
-| Zalo Mini App | Sau OA bot: OA ≥ 1.000 follower và có quyết định pháp lý về số điện thoại Zalo (Nghị định 147) | Package `festfinder-zalo/`, `POST /auth/zalo-mini`, CORS cho origin Mini App |
-| Crew vote nhiều sự kiện | Bài 5 người có ≥ 2 người hỏi | Mở rộng `plans` (ứng viên + vote), không từ mới |
-| Địa điểm công bố sau | NTC đầu tiên hỏi | `events.venue_hidden_until`; SEO chỉ thành phố; push lúc công bố |
-| Track ID xác nhận | Moments ≥ 50 bài/tháng | `post_votes`; nghệ sĩ trong lineup xác nhận; link Beatport qua `/go/link` |
-| Vé an toàn | FeestFinder bán ≥ 100 vé/tháng | Trang `/an-toan-ve`, nhãn trên khối vé, báo cáo lừa vé |
-| Night Pass | Hợp đồng ≥ 4 venue một thành phố | `passes`, `pass_subscriptions`, `pass_checkins`; QR ký bằng `TICKET_SIGNING_SECRET`; chia theo check-in |
-| Merch | ≥ 2 collective hỏi và D13 (tách `order_items`) | `products`, `order_items` |
-| Insights cho brand | ≥ 3 yêu cầu quảng cáo hỏi số | Xuất CSV/PDF từ `/console/insights`, ngưỡng ≥ 50 người mỗi ô |
-| Bàn cho người đi một mình | Bài 5 người có 2 người đi một mình xin | Quy tắc an toàn duyệt trước |
+| Zalo OA bot (thẻ 2) | Chủ sản phẩm mở lại; OA xác minh, webhook bật | Thiết kế ở bản 2 (lịch sử git), bốn chỗ chặn của mục 7 |
+| Hoa hồng từ NTC (NTC thưởng người giới thiệu) | ≥ 3 NTC hỏi và có cách trả không qua FeestFinder | Trường `organizer_reward` hiển thị, FeestFinder không cầm tiền |
+| Coupon của FeestFinder ở bên bán | Partner cấp mã | `promo` của partner trong `event_ticket_links` |
+| Track ID, Crew vote, Drop, Night Pass, merch, du lịch, Mini App, Bàn người đi một mình | Như bản 2 | Như bản 2 |
 
 ---
 
@@ -333,6 +356,36 @@ Trên site: `/zalo/link` (một nút `Nối Zalo · Link Zalo`, xong hiện `Đ�
 | 6 | nhỏ | Proxy đã coi `.md` và `/mcp` là của API | Không sửa proxy |
 
 **Khái niệm và flow cho khách, sau đối chiếu.** Sáu thẻ không thêm từ nào vào màn đầu, không thêm tab, chip hay sheet. Hai sửa chữ để không rối: "Kiểu đêm" thành "Loại" (thẻ 4), và dòng hoa hồng chỉ cho người đã đăng nhập (thẻ 3). Hai chỗ đã có hai nơi nói cùng một việc, **không thêm nơi thứ ba**: lượt mở từ link chia sẻ đã hiện ở passport ("Lan toả") và ở mục Đại sứ; hoa hồng thêm vào hàng "Tôi" là nơi tiền, không lặp số lượt mở ở đó. Thiếu logic đã bổ: kệ không tới người đã chọn thành phố (D5b); sự kiện live không có đường cập nhật từ lịch (P2 thẻ 1); guest checkout sắp tới với `ref` (thẻ 3); OA và ZNS giành token (thẻ 2).
+
+
+### Bổ sung 2026-10-20 cho thẻ C, A, B, D
+
+| Thẻ | Mức | Thấy gì | Làm gì |
+| --- | --- | --- | --- |
+| C | **chặn** | `plans.ts` `pricePerHead` đọc `orders.unit_price` | Đổi về `events.price_from` trước khi drop |
+| C | **chặn** | `services/badges.ts` có `doors` (scans), `sold_out`, `sold_out_5` (tiers) | Gỡ khỏi catalogue và xoá `badge_awards` của chúng trong 048 |
+| C | lệch | `services/seo/event.ts` viết `offers` theo tier | Một `Offer` từ `price_from`, `currency`, `ticket_url` |
+| C | lệch | `routes/organizer/audience.ts` trộn attendees và announcements | Giữ announcements, xoá phần còn lại |
+| C | lệch | `notification_prefs.topic 'tickets'` và `jobs` `tier_open` | Topic giữ (tên không hiện), job bỏ |
+| C | nhỏ | `copy/asia/*` có dòng vé | Để lại, không hại; dọn khi rà bản dịch |
+| A | lệch | `requireWriter` ở 8 chỗ, `canWrite` ở discussion, nhánh `verify_phone` ở web, `kd/moments.tsx` gọi `kd/phone.tsx` | Giữ tên hàm, đổi ruột; bỏ nhánh web |
+| B | lệch | `reply_depth` chặn trả lời của trả lời (`discussion.ts:212`); `GET discussion` chia tab theo `kind` | Bỏ chặn, `reply_to_user_id`; một danh sách |
+| B | nhỏ | `event_post_votes` đã là "thích" | Chỉ đổi nhãn |
+| D | **chặn** | `/go` có nhánh `checkout` (`outbound.ts:69-80`) | Thẻ C gỡ trước; D chỉ thêm `ref`, nước, UTM |
+| D | lệch | `recordConversion` không biết `ref`; trạng thái đổi ở `PATCH /admin/conversions/:id` | Tạo/void earnings ở cả hai chỗ |
+| D | lệch | Tiền tệ của conversion theo bên bán | Tỷ giá cố định trong `lib/money.ts`, `pending` khi thiếu |
+
+---
+
+## 8. Kiểm kê dự án 2026-10-20 (cho ba điều chỉnh)
+
+| Trục | Có gì | Ở đâu |
+| --- | --- | --- |
+| Cổng số điện thoại | `requireWriter` (= `requireUser` + `phoneVerified`) ở 8 call site: bình luận 1, cộng đồng 3, dự án 1, mix 3; `canWrite` trả `verify_phone`; web nhánh `verify_phone` và sheet `kd/phone.tsx` (chỉ `kd/moments.tsx` gọi) | `http/guards.ts:21-27`, `routes/discussion.ts:108-112`, `routes/community.ts:60,139,160`, `routes/projects.ts:195`, `routes/mixes.ts:147,155,241`, `kd/web/event/community.tsx:177` |
+| Bình luận | `event_posts` (parent một cấp, 5 kind, ảnh, ghim, official, helpful, reply_count, report_count, status), `event_post_votes`, báo cáo, admin dismiss; xoá của mình hoặc team (admin là team mọi sự kiện); thông báo NTC khi có câu hỏi; chưa thông báo người được trả lời; chặn trả lời của trả lời | migration 010, `routes/discussion.ts`, `services/community.ts:65-150`, `kd/web/event/community.tsx`, `kd/console/reports.tsx` |
+| Mảng vé | 12 bảng; API 2.051 dòng trong 11 file; web 1.511 dòng trong 10 file màn chính cộng 40 file có nhánh vé; test `attendee`, `resale` và nhánh trong 15 file; e2e `console-commerce` và nhánh trong 9 spec; job `expireOrders`, `lowTicketAlerts`, `tier_open`; config `PAYMENT_*`, `TICKET_SIGNING_SECRET`, `PLATFORM_BANK_*` | mục 3 và thẻ C |
+| Affiliate | `/go/:event` với click id, partner theo host, template link; `/go/link/:code`; postback `partner_conversions`; `affiliate_links`, `affiliate_payouts`; `users.ref_code`, `share_visits`, mục Đại sứ; `/console/partners` với host chưa có deal; `/organizer/affiliate`; `/me/payee` | migration 018, 022; `routes/outbound.ts`, `services/partners.ts`, `routes/admin/partners.ts`, `routes/admin/affiliate.ts` |
+| Đăng nhập | Google, email, SMS, Zalo, WhatsApp, mật khẩu; sheet xếp số điện thoại trước cho người Việt | `kd/sign-in.tsx`, `routes/auth.ts`, `services/sms.ts` |
 
 ## Phụ lục A · Đo màn đầu trên production (chạy sau mỗi merge)
 
