@@ -109,13 +109,6 @@ export const REJECT_REASONS: Record<string, { label: Localized; message: Localiz
   },
 };
 
-export const TIER_NAMES: Record<string, Localized> = {
-  early: L('Early bird', 'Vé sớm'),
-  ga: L('General admission', 'Vé thường'),
-  vip: L('VIP', 'VIP'),
-  table: L('Table', 'Bàn'),
-};
-
 export const NOTIFICATION_TOPICS = ['saved', 'tickets', 'artists', 'orgs', 'friends', 'weekly', 'sets'] as const;
 export type NotificationTopic = (typeof NOTIFICATION_TOPICS)[number];
 

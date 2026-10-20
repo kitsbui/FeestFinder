@@ -5,7 +5,6 @@ import { buildVietQr, crc16, parseTlv } from '../src/lib/vietqr.ts';
 import { imageInfo } from '../src/lib/image.ts';
 import { normalizeVnPhone, maskPhone, searchNormalize, slugify } from '../src/lib/contact.ts';
 import { toCsv } from '../src/lib/csv.ts';
-import { eventScanKey, qrToken, readQrToken, verifyQrSignature } from '../src/services/tickets.ts';
 import { qualityScore } from '../src/services/quality.ts';
 import { findClashes } from '../src/presenters/timetable.ts';
 import { hashPassword, verifyPassword } from '../src/lib/crypto.ts';
@@ -111,27 +110,7 @@ describe('helpers', () => {
   });
 });
 
-describe('tickets & listings', () => {
-  it('signs QR tokens per event so scanners can verify offline', () => {
-    const token = qrToken('secret', 'event-1', 'FF-RAVO-7K2Q');
-    const { code, sig } = readQrToken(token);
-    assert.equal(code, 'FF-RAVO-7K2Q');
-    assert.equal(verifyQrSignature(eventScanKey('secret', 'event-1'), code, sig!), true);
-    assert.equal(verifyQrSignature(eventScanKey('secret', 'event-2'), code, sig!), false);
-  });
-
-  it('gives a ticket a new QR each time it changes hands, signed over its version', () => {
-    const key = eventScanKey('secret', 'event-1');
-    const v2 = qrToken('secret', 'event-1', 'FF-RAVO-7K2Q', 2);
-    const read = readQrToken(v2);
-    assert.deepEqual([read.code, read.version, read.payload], ['FF-RAVO-7K2Q', 2, 'FF-RAVO-7K2Q~2']);
-    assert.equal(verifyQrSignature(key, read.payload, read.sig!), true);
-    // Changing the version by hand breaks the signature.
-    const forged = readQrToken(v2.replace('~2.', '~3.'));
-    assert.equal(verifyQrSignature(key, forged.payload, forged.sig!), false);
-    assert.equal(readQrToken(qrToken('secret', 'event-1', 'FF-RAVO-7K2Q')).version, 0);
-  });
-
+describe('listings', () => {
   it('scores listing quality out of 100', () => {
     const full = qualityScore({
       title: 'Ravolution Music Festival 2026', genre: 'EDM', description: { en: 'x'.repeat(90), vi: '' }, logoUrl: 'https://a/l.png',
@@ -174,7 +153,7 @@ describe('network', () => {
 describe('notification links', () => {
   it('open the screen a notification is about', () => {
     assert.equal(linkUrl({ screen: 'live', eventId: 'ev 1' }), '/app/live/ev%201');
-    assert.equal(linkUrl({ screen: 'tickets', orderId: 'o1' }), '/app/tickets');
+    assert.equal(linkUrl({ screen: 'tickets', orderId: 'o1' }), '/app/notifications', 'no ticket screen any more');
     assert.equal(linkUrl({ screen: 'event', eventId: 'e1' }), '/e/e1');
     assert.equal(linkUrl({ url: '/app/saved' }), '/app/saved');
     assert.equal(linkUrl(null), '/');

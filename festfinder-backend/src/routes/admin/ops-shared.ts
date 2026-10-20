@@ -36,17 +36,12 @@ export const AREA_GROUPS: { key: string; label: Localized; areas: string[] }[] =
 
 export const ENTRY_MODES: Record<string, { label: Localized; hint: Localized }> = {
   free: { label: L('Free entry', 'Miễn phí'), hint: L('No ticket needed', 'Không cần vé') },
-  paid: { label: L('Paid tickets', 'Bán vé'), hint: L('Price and a ticket link', 'Có giá và link bán vé') },
+  paid: { label: L('Ticketed', 'Có vé'), hint: L('Price and the seller\'s link', 'Giá và link trang bán vé') },
   donation: { label: L('Donation', 'Tuỳ tâm'), hint: L('Pay what you want at the door', 'Trả tuỳ ý tại cửa') },
 };
 
 export const AGES: Record<string, Localized> = { 'All ages': L('All ages', 'Mọi lứa tuổi'), '16+': L('16+', '16+'), '18+': L('18+ (ID checked)', '18+ (kiểm tra giấy tờ)') };
 
-export const ORDER_STATUS: Record<string, Localized> = {
-  pending: L('Awaiting payment', 'Chờ thanh toán'), paid: L('Paid', 'Đã thanh toán'), cancelled: L('Cancelled', 'Đã huỷ'),
-  expired: L('Expired', 'Hết hạn'), refunded: L('Refunded', 'Đã hoàn tiền'),
-};
-export const PAY_METHOD: Record<string, string> = { card: 'Card', momo: 'MoMo', zalopay: 'ZaloPay', vietqr: 'VietQR', mock: 'Demo' };
 export const SIGNUP: Record<string, string> = { email: 'Email', google: 'Google', zalo: 'Zalo', wa: 'WhatsApp', fb: 'Facebook', ig: 'Instagram', staff: 'Staff' };
 
 export const ARTS = PROFILE_ARTS;

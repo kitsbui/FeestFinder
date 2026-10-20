@@ -46,7 +46,7 @@ describe('EDM only', () => {
 
   it('migration 031 deletes every event and what hangs off it (after a copy), keeps people, places and sources, and lets sources start over', async () => {
     const kept = { users: await count(env, 'users'), organizers: await count(env, 'organizers'), venues: await count(env, 'venues'), artists: await count(env, 'artists') };
-    assert.ok((await count(env, 'events')) > 0 && (await count(env, 'orders')) > 0 && (await count(env, 'tickets')) > 0);
+    assert.ok((await count(env, 'events')) > 0);
     await env.ctx.db.query(`insert into ingest_sources (adapter, name, url, authority, config, etag, content_hash, next_run_at)
       values ('website', 'TicketGo · Âm nhạc', 'https://ticketgo.vn/event/category/am-nhac', 'ticketing', '{"maxPages": 20}', 'W/"1"', 'abc', '2030-01-01')`);
     await env.ctx.db.query(`update artists set styles = '{rock,techno}' where id = (select id from artists order by name limit 1)`);
@@ -56,12 +56,16 @@ describe('EDM only', () => {
     // production the copy runs first (030_9 sorts before 031); here it ran on the empty database,
     // so it is taken again.
     await env.ctx.db.query('drop schema backup_before_031 cascade');
-    await env.ctx.db.tx(async (q) => { for (const s of splitSql(BACKUP)) await q.query(s); });
-    await env.ctx.db.tx(async (q) => { for (const s of splitSql(MIGRATION)) await q.query(s); });
+    // Since migration 051 the ticketing tables live in archive_ticketing; the old files still name them bare.
+    const old = async (sql: string) => env.ctx.db.tx(async (q) => {
+      await q.query('set local search_path to public, archive_ticketing');
+      for (const s of splitSql(sql)) await q.query(s);
+    });
+    await old(BACKUP);
+    await old(MIGRATION);
     assert.equal(await count(env, 'backup_before_031.events'), events, 'every event is kept in the copy');
-    assert.ok((await count(env, 'backup_before_031.orders')) > 0, 'with its orders');
 
-    for (const t of ['events', 'orders', 'tickets', 'ticket_tiers', 'saves', 'raw_events', 'event_sources']) assert.equal(await count(env, t), 0, t);
+    for (const t of ['events', 'saves', 'raw_events', 'event_sources']) assert.equal(await count(env, t), 0, t);
     assert.deepEqual({ users: await count(env, 'users'), organizers: await count(env, 'organizers'), venues: await count(env, 'venues'), artists: await count(env, 'artists') }, kept);
     const src = (await one<any>(env.ctx.db, `select config, etag, content_hash, next_run_at from ingest_sources where name = 'TicketGo · Âm nhạc'`))!;
     assert.equal(src.config.requireStyle, true, 'a general music listing now needs an EDM style');

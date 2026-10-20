@@ -54,13 +54,11 @@ export interface Config {
   publicBaseUrl: string;
   corsOrigins: string[];
   cookieSecure: boolean;
-  /** Signs ticket QR tokens so scanners can verify them offline. */
+  /**
+   * A deployment's own secret. FeestFinder sells no tickets since 2026-10-20, so it signs no QR
+   * any more; production still derives the scheduler's secret from it when CRON_SECRET is unset.
+   */
   ticketSigningSecret: string;
-  /** Secret shared with the bank-transfer webhook sender (e.g. SePay / Casso). */
-  paymentWebhookSecret: string;
-  paymentProvider: 'mock' | 'vietqr';
-  /** Collecting account for ticket sales paid by VietQR transfer. */
-  platformBank: { bin: string; accountNo: string; accountName: string };
   /** Uploads on local disk, with the embedded test database only. */
   uploadDir: string;
   anthropicModel: string;
@@ -196,14 +194,6 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     corsOrigins: str('CORS_ORIGINS', 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
     cookieSecure: bool('COOKIE_SECURE', prod),
     ticketSigningSecret,
-    paymentWebhookSecret: live ? str('PAYMENT_WEBHOOK_SECRET') : str('PAYMENT_WEBHOOK_SECRET', 'dev-webhook-secret'),
-    // Instant fake payments: the tests' embedded database, or staging when asked for.
-    paymentProvider: (str('PAYMENT_PROVIDER', prod || databaseUrl ? 'vietqr' : 'mock') as Config['paymentProvider']),
-    platformBank: {
-      bin: str('PLATFORM_BANK_BIN', '970436'),
-      accountNo: str('PLATFORM_BANK_ACCOUNT', '0000000000'),
-      accountName: str('PLATFORM_BANK_ACCOUNT_NAME', 'CONG TY FESTFINDER'),
-    },
     uploadDir: str('UPLOAD_DIR', './.data/uploads'),
     anthropicModel: str('ANTHROPIC_MODEL', 'claude-opus-5-5'),
     aiGuideEnabled: bool('AI_GUIDE_ENABLED', true),
@@ -279,9 +269,6 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     release: str('RELEASE', 'dev'),
     ...overrides,
   };
-  if (cfg.environment === 'production' && cfg.paymentProvider === 'mock') {
-    throw new Error('PAYMENT_PROVIDER=mock is not allowed in production: it issues tickets nobody paid for.');
-  }
   // A deployment never falls back to a database of its own: one that lives in memory or on
   // an instance's disk loses every write, and no two instances would ever agree.
   if ((prod || onVercel) && !cfg.databaseUrl) {

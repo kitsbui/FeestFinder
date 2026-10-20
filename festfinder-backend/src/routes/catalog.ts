@@ -17,7 +17,7 @@ import { dateIn, TIME_KEYS, timeWindow, vnDate, weekendRange, type TimeKey } fro
 import { bool, csv, dateStr, limit, parse, uuid } from '../lib/validate.ts';
 import { ridesFor } from '../lib/rides.ts';
 import { decodeCursor, isUuid, page, SqlParams } from '../http/sql.ts';
-import { CARD_COLUMNS, loadPublicSources, loadViewer, ORG_COLUMNS, presentCard, presentTiers } from '../presenters/event.ts';
+import { CARD_COLUMNS, loadPublicSources, loadViewer, ORG_COLUMNS, presentCard } from '../presenters/event.ts';
 import { findClashes, loadTimetable } from '../presenters/timetable.ts';
 import { SHARE_CHANNELS } from '../services/community.ts';
 import { eventExtras } from '../services/eventpage.ts';
@@ -292,9 +292,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
     if (!ev || (!visible && !(await canPreview(ctx, req, ev.organizer_id, ev.submitted_by)))) throw notFound(L('Event not found', 'Không tìm thấy sự kiện'));
     const userId = req.session?.user?.id ?? null;
 
-    const [viewer, tierRows, timetable, org, similarRows] = await Promise.all([
+    const [viewer, timetable, org, similarRows] = await Promise.all([
       loadViewer(ctx.db, userId, [ev.id]),
-      many<any>(ctx.db, 'select * from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
       loadTimetable(ctx.db, ev),
       one<any>(ctx.db, 'select id, slug, name, initials, art, logo_url, verification_state, followers_count, since_year from organizers where id = $1', [ev.organizer_id]),
       many<any>(ctx.db,
@@ -355,12 +354,12 @@ export default async function catalogRoutes(app: FastifyInstance) {
         event: ev.event_url ?? `${ctx.config.publicBaseUrl.replace(/\/$/, '')}/e/${ev.slug}`,
         brand: ev.brand_url,
         tickets: ev.entry_mode === 'paid' ? ev.ticket_url : null,
-        // Every ticket button goes through here: counted, then to the checkout or the seller.
+        // Every ticket button goes through here: counted, then to the seller (FeestFinder sells no tickets).
         // /go sends a Radar find without a ticket link to the page it was found on.
-        go: ev.entry_mode === 'paid' && (tierRows.length || ev.ticket_url || ev.event_url) ? `/go/${ev.slug}` : null,
+        go: ev.entry_mode === 'paid' && (ev.ticket_url || ev.event_url) ? `/go/${ev.slug}` : null,
       },
-      ticketNote: L('Tickets are sold by the organiser. FeestFinder does not add a booking fee.', 'Vé do nhà tổ chức bán. FeestFinder không thu thêm phí đặt vé.'),
-      tickets: ev.entry_mode === 'paid' && tierRows.length ? presentTiers(tierRows, now) : null,
+      ticketNote: L('FeestFinder sells no tickets. Buy tickets takes you to the seller.', 'FeestFinder không bán vé. Nút Mua vé đưa bạn tới trang bán.'),
+      soldOut: !!ev.sold_out,
       timetable,
       hasLiveMode: !!timetable,
       organizer: org && {

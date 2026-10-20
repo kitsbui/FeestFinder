@@ -88,7 +88,6 @@ export interface SearchFacts {
   entryMode: 'free' | 'paid' | 'donation';
   priceFrom: number;
   ticketUrl: string | null;
-  tiers: number;
   lineup: string[];
   styles: string[];
   eventType: string | null;
@@ -121,7 +120,7 @@ export function searchChecks(f: SearchFacts): SearchCheck[] {
     { key: 'geo', ok: f.pinned, points: 10, field: 'edAddr',
       label: L('The venue on the map', 'Địa điểm có toạ độ'),
       why: L('"Near me" searches and maps need the coordinates.', 'Tìm kiếm "gần tôi" và bản đồ cần toạ độ.') },
-    { key: 'offers', ok: !paid || (f.priceFrom > 0 && (!!f.ticketUrl || f.tiers > 0)), points: 12, field: 'edPrice',
+    { key: 'offers', ok: !paid || (f.priceFrom > 0 && !!f.ticketUrl), points: 12, field: 'edPrice',
       label: L('Price, currency and where to buy', 'Giá, tiền tệ và nơi mua vé'),
       why: L('Without an offer Google shows no price, and assistants cannot say how much.', 'Thiếu thông tin vé thì Google không hiện giá và trợ lý không trả lời được giá bao nhiêu.') },
     { key: 'performers', ok: f.lineup.length > 0, points: 10, field: 'edLineup',

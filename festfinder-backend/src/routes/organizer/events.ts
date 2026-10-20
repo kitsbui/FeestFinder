@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { CHECKOUT_CURRENCY } from '../../lib/money.ts';
 import type { Ctx } from '../../context.ts';
 import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
@@ -24,7 +23,6 @@ import { appendAudit } from '../../services/audit.ts';
 import { draftFacts, refreshDerived, reviewSnapshot } from '../../services/events.ts';
 import { qualityScore, searchScore, type SearchFacts } from '../../services/quality.ts';
 import { assessRisk } from '../../services/risk.ts';
-import { refreshSoldOut } from '../../services/tickets.ts';
 import { inBackground } from '../../lib/background.ts';
 import { askArtistsToConfirm } from '../../services/lineup.ts';
 import { notifyUser } from '../../services/notify.ts';
@@ -99,6 +97,8 @@ export const DraftInput = z.object({
   city: launchedCity,
   styles: z.array(z.string().refine(isStyle, 'unknown style')).max(5),
   eventType: z.enum(EVENT_TYPES).nullable(),
+  /** The seller's page says it is sold out (FeestFinder sells no tickets, so the organiser says so). */
+  soldOut: z.boolean(),
 }).partial();
 
 /** Edits to these on a live listing wait for the team's review (the listing stays live meanwhile). */
@@ -128,7 +128,7 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
     title: 'title', genre: 'genre', logoUrl: 'logo_url', coverUrl: 'cover_url', startsOn: 'starts_on', endsOn: 'ends_on',
     startTime: 'start_time', endTime: 'end_time', entryMode: 'entry_mode', priceFrom: 'price_from', capacity: 'capacity',
     age: 'age', ticketUrl: 'ticket_url', eventUrl: 'event_url', brandUrl: 'brand_url', address: 'address', area: 'area', venueName: 'venue_name',
-    city: 'city', eventType: 'event_type',
+    city: 'city', eventType: 'event_type', soldOut: 'sold_out',
   };
   for (const [k, col] of Object.entries(map)) if ((body as any)[k] !== undefined) set[col] = (body as any)[k];
   if (body.description) set.description = json(body.description);
@@ -153,13 +153,6 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
     set.cover_sha256 = up?.sha256 ?? null;
   }
   if (body.ticketUrl !== undefined) set.ticket_link_status = body.ticketUrl ? 'unchecked' : null;
-  if (set.city !== undefined) {
-    const tiers = await one<{ n: number }>(q, 'select count(*)::int as n from ticket_tiers where event_id = $1', [id]);
-    const city = await one<{ currency: string }>(q, 'select currency from cities where slug = $1', [set.city]);
-    if (tiers!.n && city?.currency !== CHECKOUT_CURRENCY) {
-      throw badRequest('tiers_unavailable', L('Remove the ticket tiers first: FeestFinder sells tickets for events in Vietnam only', 'Hãy xoá các loại vé trước: FeestFinder chỉ bán vé sự kiện ở Việt Nam'));
-    }
-  }
   const keys = Object.keys(set);
   if (keys.length) await q.query(`update events set ${keys.map((k, i) => `${k} = $${i + 2}`).join(', ')} where id = $1`, [id, ...keys.map((k) => set[k])]);
   await refreshDerived(q, id);
@@ -249,8 +242,6 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     const filter = status === 'live' ? `and e.status = 'live'` : status === 'review' ? `and e.status <> 'live'` : '';
     const rows = await many<any>(ctx.db,
       `select e.*, coalesce(m.views, 0)::int as views, coalesce(m.clicks, 0)::int as clicks,
-              exists (select 1 from ticket_tiers t where t.event_id = e.id) as has_tiers,
-              (select count(*)::int from tickets t where t.event_id = e.id and t.status in ('valid','used')) as sold,
               (select json_build_object('decision', d.decision, 'code', d.reason_code, 'message', d.message, 'at', d.decided_at)
                  from moderation_decisions d where d.event_id = e.id order by d.decided_at desc limit 1) as last_decision
          from events e
@@ -275,7 +266,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
           mon: e.starts_on ? MON[Number(e.starts_on.slice(5, 7)) - 1] : null, day: e.starts_on ? e.starts_on.slice(8, 10) : null,
           status: e.status, statusLabel: STATUS_LABEL[e.status], meta,
           views: hasData ? e.views : null, saves: hasData ? e.save_count : null, clicks: hasData ? e.clicks : null,
-          sold: e.sold, hasPerformance: e.status === 'live' && e.has_tiers,
+          hasPerformance: e.status === 'live',
           // Raw fields for list views that filter and sort on their own.
           startsOn: e.starts_on, endsOn: e.ends_on, startTime: e.start_time, endTime: e.end_time, genre: e.genre, area: e.area,
           venueName: e.venue_name, venueResolved: !!e.venue_id || e.lat !== null, entryMode: e.entry_mode, priceFrom: e.price_from,
@@ -309,10 +300,9 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/organizer/events/:id', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const [decision, appeal, tiers] = await Promise.all([
+    const [decision, appeal] = await Promise.all([
       one<any>(ctx.db, 'select decision, reason_code, message, allow_appeal, decided_at from moderation_decisions where event_id = $1 order by decided_at desc limit 1', [ev.id]),
       one<any>(ctx.db, 'select id, state, reply, closes_at from appeals where event_id = $1 order by created_at desc limit 1', [ev.id]),
-      many<any>(ctx.db, 'select id, key, name, note, price, capacity, sold, is_last, sales_open_at, price_rise_on, price_rise_to from ticket_tiers where event_id = $1 order by sort, price', [ev.id]),
     ]);
     return {
       ...presentDraft(ev),
@@ -322,7 +312,6 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
         message: decision.message, decidedAt: decision.decided_at,
         appeal: appeal ? { id: appeal.id, state: appeal.state, reply: appeal.reply, closesAt: appeal.closes_at } : null,
       } : null,
-      tiers: tiers.map((t) => ({ id: t.id, key: t.key, name: t.name, note: t.note, price: t.price, capacity: t.capacity, sold: t.sold, isLast: t.is_last, salesOpenAt: t.sales_open_at, priceRiseOn: t.price_rise_on, priceRiseTo: t.price_rise_to })),
       moderationNote: L('Every listing is checked by a person. Most are live within two hours.', 'Mọi tin đăng đều được người kiểm duyệt. Phần lớn lên sóng trong hai giờ.'),
     };
   });
@@ -447,11 +436,10 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
   /** What Google and AI assistants get from the organiser's listings (services/quality.ts searchChecks). */
   const searchFacts = async (orgId: string, evs: any[]): Promise<Map<string, SearchFacts>> => {
     const org = await one<{ logo_url: string | null; website: string | null; links: Record<string, string> | null }>(ctx.db, 'select logo_url, website, links from organizers where id = $1', [orgId]);
-    const tiers = await many<{ event_id: string; n: number }>(ctx.db, 'select event_id, count(*)::int as n from ticket_tiers where event_id = any($1::uuid[]) group by event_id', [evs.map((e) => e.id)]);
     const orgLinks = (org?.website ? 1 : 0) + Object.values(org?.links ?? {}).filter(Boolean).length;
     return new Map(evs.map((e) => [e.id, {
       coverUrl: e.cover_url, description: e.description ?? { en: '', vi: '' }, endTime: e.end_time, pinned: e.lat !== null && e.lng !== null,
-      entryMode: e.entry_mode, priceFrom: e.price_from ?? 0, ticketUrl: e.ticket_url, tiers: tiers.find((t) => t.event_id === e.id)?.n ?? 0,
+      entryMode: e.entry_mode, priceFrom: e.price_from ?? 0, ticketUrl: e.ticket_url,
       lineup: e.lineup ?? [], styles: e.styles ?? [], eventType: e.event_type, eventUrl: e.event_url, orgLogo: !!org?.logo_url, orgLinks,
     }]));
   };
@@ -523,15 +511,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     };
   });
 
-  // ---- tiers, timetable and site map ----------------------------------------------
-
-  app.put<{ Params: { id: string } }>('/organizer/events/:id/tiers', async (req) => {
-    const org = await requireOrganizer(ctx, req);
-    const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const { tiers } = parse(TiersInput, req.body);
-    await ctx.db.tx((q) => replaceTiers(q, ev.id, tiers));
-    return { ok: true };
-  });
+  // ---- timetable and site map ----------------------------------------------
 
   app.put<{ Params: { id: string } }>('/organizer/events/:id/timetable', async (req) => {
     const org = await requireOrganizer(ctx, req);
@@ -583,52 +563,7 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
   });
 }
 
-/** Ticket tiers as the organiser wizard and the admin editor send them. */
-export const TiersInput = z.object({
-  tiers: z.array(z.object({
-    key: z.string().regex(/^[a-z0-9_-]{2,24}$/),
-    name: localized,
-    note: localized.nullable().optional(),
-    price: z.number().int().min(0).max(100_000_000),
-    capacity: z.number().int().min(0).max(500_000),
-    isLast: z.boolean().default(false),
-    salesOpenAt: z.string().datetime({ offset: true }).nullable().optional(),
-    priceRiseOn: dateStr.nullable().optional(),
-    priceRiseTo: z.number().int().positive().nullable().optional(),
-  })).min(1).max(12),
-});
-
-/** Replaces an event's tiers, keeping sales: a tier with sales can't go and can't shrink below what it sold. */
-export async function replaceTiers(q: Queryable, eventId: string, tiers: z.infer<typeof TiersInput>['tiers']): Promise<void> {
-  if (new Set(tiers.map((t) => t.key)).size !== tiers.length) throw badRequest('duplicate_tier', L('Each tier needs its own key', 'Mỗi loại vé cần mã riêng'));
-  // FeestFinder sells tickets in đồng only: an event elsewhere links to its own ticket seller.
-  const ev = await one<{ currency: string }>(q, 'select currency from events where id = $1', [eventId]);
-  if (tiers.length && ev && ev.currency !== CHECKOUT_CURRENCY) {
-    throw badRequest('tiers_unavailable', L('FeestFinder sells tickets for events in Vietnam only; add the ticket link instead', 'FeestFinder chỉ bán vé sự kiện ở Việt Nam; hãy thêm link mua vé'));
-  }
-  const existing = await many<any>(q, 'select id, key, sold from ticket_tiers where event_id = $1', [eventId]);
-  for (const old of existing) {
-    const next = tiers.find((t) => t.key === old.key);
-    if (!next && old.sold > 0) throw conflict('tier_has_sales', L(`Tier ${old.key} has sales and can't be removed`, `Loại vé ${old.key} đã bán nên không xoá được`));
-    if (next && next.capacity < old.sold) throw conflict('capacity_below_sold', L(`Tier ${old.key} already sold ${old.sold}`, `Loại vé ${old.key} đã bán ${old.sold}`));
-    if (!next) await q.query('delete from ticket_tiers where id = $1', [old.id]);
-  }
-  for (const [i, t] of tiers.entries()) {
-    await q.query(
-      `insert into ticket_tiers (event_id, key, name, note, price, capacity, is_last, sales_open_at, price_rise_on, price_rise_to, sort)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-       on conflict (event_id, key) do update set name = excluded.name, note = excluded.note, price = excluded.price, capacity = excluded.capacity,
-         is_last = excluded.is_last, sales_open_at = excluded.sales_open_at, price_rise_on = excluded.price_rise_on,
-         price_rise_to = excluded.price_rise_to, sort = excluded.sort`,
-      [eventId, t.key, json(t.name), json(t.note ?? null), t.price, t.capacity, t.isLast, t.salesOpenAt ?? null, t.priceRiseOn ?? null, t.priceRiseTo ?? null, i]);
-  }
-  const min = Math.min(...tiers.map((t) => t.price));
-  await q.query(`update events set price_from = $2, capacity = coalesce(capacity, $3) where id = $1 and entry_mode = 'paid'`,
-    [eventId, min, tiers.reduce((n, t) => n + t.capacity, 0)]);
-  await refreshSoldOut(q, eventId);
-}
-
-/** Copies a listing into a fresh draft for the same organiser: details, lineup, images and tiers, but no dates, sales or history. */
+/** Copies a listing into a fresh draft for the same organiser: details, lineup and images, but no dates or history. */
 export async function duplicateEvent(ctx: Ctx, ev: any, organizerId: string): Promise<any> {
   return ctx.db.tx(async (q) => {
     const title = `${ev.title}`.slice(0, 112);
@@ -641,9 +576,6 @@ export async function duplicateEvent(ctx: Ctx, ev: any, organizerId: string): Pr
               'draft', id
          from events where id = $1 returning id`,
       [ev.id, `${slugify(title) || 'event'}-${randomCode(4).toLowerCase()}`, organizerId, title]);
-    await q.query(
-      `insert into ticket_tiers (event_id, key, name, note, price, capacity, is_last, sort)
-       select $2, key, name, note, price, capacity, is_last, sort from ticket_tiers where event_id = $1`, [ev.id, row.id]);
     await refreshDerived(q, row.id);
     return one<any>(q, 'select * from events where id = $1', [row.id]);
   });

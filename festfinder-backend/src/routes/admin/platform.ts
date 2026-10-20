@@ -11,7 +11,6 @@ import { createSession } from '../../http/session.ts';
 import { decodeCursor, page } from '../../http/sql.ts';
 import { actionLabel, appendAudit, verifyAuditChain } from '../../services/audit.ts';
 import { webNumbers } from '../../services/web-signals.ts';
-import { payoutLedger } from '../../services/payouts.ts';
 import { SLA_HOURS } from '../../services/risk.ts';
 
 const IMPERSONATION_TTL_MS = 60 * 60_000;
@@ -109,9 +108,8 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
                 (select count(*)::int from events e where e.organizer_id = o.id and e.status = 'live' and e.ends_at >= $1) as live,
                 coalesce((select sum(m.views) from event_metrics_daily m join events e on e.id = m.event_id where e.organizer_id = o.id), 0)::int as views,
                 coalesce((select sum(m.ticket_clicks) from event_metrics_daily m join events e on e.id = m.event_id where e.organizer_id = o.id), 0)::int as clicks,
-                (select count(*)::int from listing_reports r join events e on e.id = r.event_id where e.organizer_id = o.id) as reports,
-                coalesce((select sum(total - fee) from orders x join events e on e.id = x.event_id where e.organizer_id = o.id and x.status = 'paid'), 0)::bigint as gmv
-           from organizers o order by gmv desc, views desc limit 20`, [now]),
+                (select count(*)::int from listing_reports r join events e on e.id = r.event_id where e.organizer_id = o.id) as reports
+           from organizers o order by clicks desc, views desc limit 20`, [now]),
       one<any>(ctx.db,
         `select count(*)::int as total,
                 count(*) filter (where created_at >= $1)::int as new7,
@@ -128,7 +126,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
         `select u.id, u.name, u.email, u.phone, u.city, u.created_at,
                 (select count(*)::int from saves where user_id = u.id) as saved,
                 (select count(*)::int from hypes where user_id = u.id) as hyped,
-                (select count(*)::int from tickets where user_id = u.id) as tickets
+                (select count(*)::int from outbound_clicks where user_id = u.id) as clicks
            from users u where u.role = 'user' order by u.created_at desc limit 5`),
     ]);
     const board = await boardNumbers(now);
@@ -145,7 +143,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
       ],
       organizers: orgs.map((o) => ({
         id: o.id, name: o.name, initials: o.initials, verified: o.verification_state === 'verified',
-        live: o.live, views: o.views, ctrPct: pct(o.clicks, o.views), reports: o.reports, gmv: o.gmv,
+        live: o.live, views: o.views, ctrPct: pct(o.clicks, o.views), reports: o.reports, clicks: o.clicks,
       })),
       users: {
         accounts: users.total, newLast7Days: users.new7, weeklyActive: users.wau, weeklyActivePct: pct(users.wau, users.total),
@@ -160,7 +158,7 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
           : []),
       genres: genres.slice(0, 5).map((g) => ({ label: g.genre, pct: pct(g.n, totalGenre) })),
       recentAccounts: accounts.map((a) => ({
-        id: a.id, handle: a.name || a.email || a.phone, city: a.city, joined: a.created_at, saved: a.saved, hyped: a.hyped, tickets: a.tickets,
+        id: a.id, handle: a.name || a.email || a.phone, city: a.city, joined: a.created_at, saved: a.saved, hyped: a.hyped, clicks: a.clicks,
       })),
       board,
       privacy: L('The admin sees aggregate numbers and on-platform activity. Private messages, contacts and location history stay out of reach.',
@@ -293,30 +291,5 @@ export default async function adminPlatformRoutes(app: FastifyInstance) {
       });
     });
     return { ok: true, message: L('Impersonation ended', 'Đã thoát phiên xem hộ') };
-  });
-
-  // ---- payouts --------------------------------------------------------------------------
-
-  /** Finance records a transfer it has made; the organiser's ledger row flips to paid. */
-  app.post<{ Params: { eventId: string; kind: string } }>('/admin/payouts/:eventId/:kind', async (req, reply) => {
-    const s = requireAdmin(req);
-    const kind = parse(z.enum(['advance', 'post_event', 'refund_hold']), req.params.kind);
-    const { reference } = parse(z.object({ reference: z.string().min(3).max(60) }), req.body);
-    const now = ctx.clock.now();
-    const row = await ctx.db.tx(async (q) => {
-      const ev = await one<any>(q, 'select id, title, starts_on, ends_on from events where id = $1', [parse(uuid, req.params.eventId)]);
-      if (!ev) throw notFound();
-      const ledger = (await payoutLedger(q, ev, now)).find((r) => r.kind === kind)!;
-      if (ledger.status === 'paid' || ledger.status === 'released') throw conflict('already_paid', L('This payout is already recorded', 'Khoản chi trả này đã được ghi nhận'));
-      if (ledger.net <= 0) throw badRequest('nothing_to_pay', L('Nothing to pay out yet', 'Chưa có gì để chi trả'));
-      const basis = ledger.lines.find((l) => l.key === 'gross_share' || l.key === 'held')?.amount ?? 0;
-      await q.query('insert into payout_transfers (event_id, kind, amount, gross_basis, reference, paid_at) values ($1,$2,$3,$4,$5,$6)', [ev.id, kind, ledger.net, basis, reference, now]);
-      await appendAudit(q, {
-        at: now, actorType: 'admin', actorId: s.user.id, actorLabel: s.user.name || 'FeestFinder Admin', action: 'payout.marked_paid',
-        targetType: 'event', targetId: ev.id, targetLabel: ev.title, diff: [{ f: kind, a: ledger.status, b: 'paid' }, { f: 'amount', a: '—', b: String(ledger.net) }],
-      });
-      return (await payoutLedger(q, ev, now)).find((r) => r.kind === kind);
-    });
-    return reply.code(201).send(row);
   });
 }

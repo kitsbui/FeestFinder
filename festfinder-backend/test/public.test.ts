@@ -61,7 +61,7 @@ describe('public discovery (Web + App, signed out)', () => {
       assert.equal(flagged.headers['vercel-cdn-cache-control'], undefined, `nothing is stored under x-ff-session: ${mark}`);
     }
     assert.equal((await env.as().get('/events/ravo/resale')).headers['vercel-cdn-cache-control'], undefined, 'nothing nested is public');
-    assert.equal((await env.as().get('/me/tickets')).status, 401);
+    assert.equal((await env.as().get('/me/notifications')).status, 401);
     assert.equal((await env.as().get('/map/style.json')).headers['cache-control'], 'public, max-age=300, s-maxage=3600');
   });
 
@@ -127,13 +127,14 @@ describe('public discovery (Web + App, signed out)', () => {
     assert.equal(detail.status, 404);
   });
 
-  it('returns event detail with tier ladder, refund policy and timetable', async () => {
+  it('returns event detail with the seller\'s link, timetable and no tickets of its own', async () => {
     const r = await env.as().get('/events/ravo');
     assert.equal(r.status, 200);
     assert.equal(r.body.guide, false, 'no guide runs in the tests and none was written: the app offers no guide row');
-    assert.deepEqual(r.body.tickets.tiers.map((t: any) => [t.key, t.state]), [['early', 'soldout'], ['ga', 'last'], ['vip', 'onsale'], ['table', 'soon']]);
-    assert.equal(r.body.tickets.urgency.en, 'Price rises to 1,450,000₫ on 18 Sep');
-    assert.match(r.body.tickets.refundPolicy.en, /Refunds up to 7 days/);
+    assert.equal(r.body.tickets, undefined, 'FeestFinder sells no tickets');
+    assert.equal(r.body.links.go, '/go/ravo');
+    assert.equal(r.body.links.tickets, 'https://ticketbox.vn/ravolution-2026');
+    assert.equal(r.body.soldOut, false);
     assert.equal(r.body.timetable.days.length, 1);
     const bass = r.body.timetable.days[0].stages.find((s: any) => s.name.en === 'Bass room');
     const closing = bass.sets.find((s: any) => s.artist === 'Closing b2b');
@@ -202,10 +203,8 @@ describe('public discovery (Web + App, signed out)', () => {
       `select e.id, e.slug, e.price_from, e.origin, e.ticket_url, e.event_url, e.age from events e
         where e.status = 'live' and e.entry_mode = 'paid' and e.ends_at >= $1 order by e.starts_at limit 1`, [env.clock.now()])).rows[0];
     assert.ok(ev, 'a paid night');
-    const tiers = (await db.query<{ id: string; sales_open_at: Date | null }>('select id, sales_open_at from ticket_tiers where event_id = $1', [ev.id])).rows;
     // What Feest Radar finds on a page that gives no price, no ticket link and no age (and nothing sold here).
     await db.query(`update events set price_from = 0, origin = 'radar', ticket_url = null, event_url = 'https://club.example/night', age = 'All ages' where id = $1`, [ev.id]);
-    await db.query(`update ticket_tiers set sales_open_at = $2 where event_id = $1`, [ev.id, new Date(env.clock.now().getTime() + 90 * 86400_000)]);
     try {
       type Card = { slug: string; isFree: boolean; priceUnknown: boolean };
       const card = ((await env.as().get('/events?time=all&limit=60')).body.items as Card[]).find((e) => e.slug === ev.slug)!;
@@ -224,7 +223,6 @@ describe('public discovery (Web + App, signed out)', () => {
     } finally {
       await db.query('update events set price_from = $2, origin = $3, ticket_url = $4, event_url = $5, age = $6 where id = $1',
         [ev.id, ev.price_from, ev.origin, ev.ticket_url, ev.event_url, ev.age]);
-      for (const t of tiers) await db.query('update ticket_tiers set sales_open_at = $2 where id = $1', [t.id, t.sales_open_at]);
     }
   });
 

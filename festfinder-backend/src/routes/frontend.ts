@@ -18,7 +18,7 @@ import { slugify } from '../lib/contact.ts';
  */
 
 /** The Console screens that kept their /ops name. */
-const CONSOLE_SAME = new Set(['claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'featured', 'users', 'orders', 'audit']);
+const CONSOLE_SAME = new Set(['claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'partners', 'affiliate', 'brands', 'featured', 'users', 'audit']);
 
 /**
  * Where an /ops address lives now: the team's screens in the Console, the organiser's in

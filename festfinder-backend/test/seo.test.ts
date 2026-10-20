@@ -20,7 +20,7 @@ describe('event pages for search engines and AI assistants', () => {
     assert.ok(s.description.length <= 160, s.description);
     assert.match(s.description, /^Ravolution Music Festival: EDM, Thứ Bảy, 19\/9\/2026/);
     assert.match(s.page.summary, /^Ravolution Music Festival là sự kiện EDM diễn ra vào Thứ Bảy, 19\/9\/2026, từ 16:00 – 02:00 \(hôm sau\) tại SECC/);
-    assert.match(s.page.summary, /Vé từ 1\.200\.000₫ \(\d hạng vé\)/);
+    assert.match(s.page.summary, /Vé từ 1\.200\.000₫, /);
     assert.match(s.page.summary, /Dành cho khách 18\+\. Đội hình: Hoaprox, DJ Mie, Wukong\. Tổ chức bởi Ravolution Entertainment\.$/);
     const facts = Object.fromEntries(s.page.facts.map((f: any) => [f.label, f]));
     assert.equal(facts['Thời gian'].datetime, '2026-09-19T16:00:00+07:00');
@@ -47,9 +47,11 @@ describe('event pages for search engines and AI assistants', () => {
     assert.equal(ev.startDate, '2026-09-19T16:00:00+07:00');
     assert.equal(ev.eventStatus, 'https://schema.org/EventScheduled');
     assert.deepEqual([ev.location.address.addressLocality, ev.location.address.addressRegion, ev.location.address.addressCountry], ['Thành phố Hồ Chí Minh', 'Thành phố Hồ Chí Minh', 'VN']);
-    assert.equal(ev.offers['@type'], 'AggregateOffer');
-    assert.equal(ev.offers.lowPrice, Math.min(...ev.offers.offers.map((o: any) => o.price)));
+    // One offer from the "from" price, sold at the seller's page: FeestFinder sells no tickets.
+    assert.equal(ev.offers['@type'], 'Offer');
+    assert.equal(ev.offers.price, 1_200_000);
     assert.equal(ev.offers.priceCurrency, 'VND');
+    assert.equal(ev.offers.url, 'https://ticketbox.vn/ravolution-2026');
     assert.deepEqual(ev.performer.map((p: any) => p.name), ['Hoaprox', 'DJ Mie', 'Wukong']);
     assert.equal(ev.typicalAgeRange, '18-');
     assert.equal(byType.WebPage.mainEntity['@id'], ev['@id']);

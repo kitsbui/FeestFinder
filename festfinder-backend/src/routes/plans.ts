@@ -25,15 +25,9 @@ function meetSpots(ev: any): { id: 'gate' | 'cafe' | 'park'; name: Localized; ti
   ];
 }
 
-/**
- * The ticket price each person owes: the tier of the owner's main order (most seats, then
- * earliest) if they bought, else the listing's "from" price.
- */
-async function pricePerHead(q: Queryable, plan: any): Promise<number> {
-  const bought = await one<any>(q,
-    `select unit_price from orders where user_id = $1 and event_id = $2 and status = 'paid' order by qty desc, paid_at asc limit 1`,
-    [plan.owner_id, plan.event_id]);
-  return bought?.unit_price ?? plan.price_from;
+/** The ticket price each person owes: the listing's "from" price (FeestFinder sells no tickets, so there is no order to read). */
+async function pricePerHead(_q: Queryable, plan: any): Promise<number> {
+  return plan.price_from;
 }
 
 export default async function planRoutes(app: FastifyInstance) {

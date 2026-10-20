@@ -49,8 +49,8 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
-    paymentProvider: 'mock', publicBaseUrl: 'http://test.local', corsOrigins: ['http://localhost:3000'], cookieSecure: false,
-    ticketSigningSecret: 'test-ticket-secret', paymentWebhookSecret: 'test-webhook-secret', aiGuideEnabled: true, fixedNow: null,
+    publicBaseUrl: 'http://test.local', corsOrigins: ['http://localhost:3000'], cookieSecure: false,
+    ticketSigningSecret: 'test-ticket-secret', aiGuideEnabled: true, fixedNow: null,
     ...opts.config,
   });
   const db = await openDb(config);

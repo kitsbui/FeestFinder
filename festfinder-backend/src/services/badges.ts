@@ -1,5 +1,5 @@
 /**
- * Badges: milestones read from what already happened on FeestFinder (door scans and check-ins,
+ * Badges: milestones read from what already happened on FeestFinder (check-ins and nights gone to,
  * shares people opened, published shows and events, sold-out nights, timetables). The catalogue
  * is the Kính đêm boards' starter set, without the badges that would count followers (follower
  * counts never rank anyone here) and without an organiser rating or response time (there is no
@@ -12,6 +12,7 @@
 import type { Queryable } from '../db/index.ts';
 import { many, one } from '../db/index.ts';
 import { L, type Localized } from '../lib/i18n.ts';
+import { attendedEvents } from './attendance.ts';
 import { artistKey } from './artists.ts';
 
 export type BadgeRole = 'user' | 'artist' | 'organizer';
@@ -37,7 +38,6 @@ export const BADGE_CATALOGUE: BadgeDef[] = [
   b('user', 'four_styles', 'free', 'num', 4, L('Four styles', 'Đủ 4 dòng nhạc'), L('Go to nights in four different styles, like techno, house, trance and drum & bass.', 'Đi sự kiện thuộc 4 dòng nhạc khác nhau, như techno, house, trance và drum & bass.')),
   b('user', 'passport_10', 'fest', 'num', 10, L('Passport 10', 'Hộ chiếu 10'), L('Go to 10 events listed on FeestFinder.', 'Tham dự 10 sự kiện đăng trên FeestFinder.')),
   b('user', 'night_owl', 'edm', 'shape', 5, L('Night owl', 'Cú đêm'), L('Go to 5 events that end after midnight.', 'Đi 5 sự kiện kết thúc sau nửa đêm.')),
-  b('user', 'doors', 'live', 'shape', 3, L('Doors open', 'Mở cửa'), L('Have your ticket scanned at the door within the first hour at 3 events.', 'Được quét vé ở cửa trong giờ đầu tiên ở 3 sự kiện.')),
   b('user', 'local', 'cult', 'shape', 5, L('Local', 'Thổ địa'), L('Go to events in 5 different districts.', 'Đi sự kiện ở 5 quận khác nhau.')),
   b('user', 'passport_25', 'fest', 'num', 25, L('Passport 25', 'Hộ chiếu 25'), L('Go to 25 events listed on FeestFinder.', 'Tham dự 25 sự kiện đăng trên FeestFinder.')),
   b('user', 'superfan', 'edm', 'shape', 3, L('Superfan', 'Fan cứng'), L('See 3 shows of the same artist you follow.', 'Xem 3 show của cùng một nghệ sĩ bạn theo dõi.')),
@@ -47,12 +47,10 @@ export const BADGE_CATALOGUE: BadgeDef[] = [
   b('artist', 'shows_25', 'fest', 'num', 25, L('25 shows', '25 show'), L('Play 25 shows listed on FeestFinder.', 'Diễn 25 show được đăng trên FeestFinder.')),
   b('artist', 'touring', 'live', 'shape', 5, L('On tour', 'Lưu diễn'), L('Play in 5 different cities.', 'Diễn ở 5 thành phố khác nhau.')),
   b('artist', 'closer', 'edm', 'shape', 10, L('Closer', 'Khép đêm'), L('Play the last set of the night at 10 events.', 'Chơi set cuối đêm ở 10 sự kiện.')),
-  b('artist', 'sold_out', 'fest', 'shape', 1, L('Sold out', 'Cháy vé'), L('A show with you on the line-up sells out.', 'Một show có tên bạn trong line-up bán hết vé.')),
   b('artist', 'shows_50', 'edm', 'num', 50, L('50 shows', '50 show'), L('Play 50 shows listed on FeestFinder.', 'Diễn 50 show được đăng trên FeestFinder.')),
 
   b('organizer', 'verified', 'free', 'shape', 1, L('Verified', 'Đã xác minh'), L('Business licence and contacts checked by FeestFinder.', 'Giấy phép kinh doanh và thông tin liên hệ đã được FeestFinder đối chiếu.')),
   b('organizer', 'events_50', 'fest', 'num', 50, L('50 events', '50 sự kiện'), L('List 50 events on FeestFinder.', 'Đăng 50 sự kiện trên FeestFinder.')),
-  b('organizer', 'sold_out_5', 'fest', 'shape', 5, L('Sold out ×5', 'Cháy vé ×5'), L('5 events sell out.', '5 sự kiện bán hết vé.')),
   b('organizer', 'all_styles', 'free', 'num', 4, L('Every style', 'Đa dòng nhạc'), L('Run nights in four different styles.', 'Tổ chức sự kiện thuộc 4 dòng nhạc khác nhau.')),
   b('organizer', 'events_100', 'fest', 'num', 100, L('100 events', '100 sự kiện'), L('List 100 events on FeestFinder.', 'Đăng 100 sự kiện trên FeestFinder.')),
 ];
@@ -74,15 +72,13 @@ export async function progressFor(q: Queryable, role: BadgeRole, id: string, now
 }
 
 async function userProgress(q: Queryable, userId: string, now: Date): Promise<Record<string, number>> {
-  // A night counts once the door scanned the ticket or the person checked in on the site (as the passport does).
+  // A night counts once the person checked in on the site, or said they were going and it is over (services/attendance.ts).
   const [nights, follows, shared] = await Promise.all([
     many<any>(q,
-      `select e.id, e.styles, e.area, e.start_time, e.end_time, e.starts_at, min(x.checked_in_at) as checked_in_at
-         from (select event_id, checked_in_at from tickets where user_id = $1 and status = 'used'
-               union all select event_id, null from presence where user_id = $1) x
+      `select e.id, e.styles, e.area, e.start_time, e.end_time, e.starts_at
+         from ${attendedEvents('$1', '$2')} x
          join events e on e.id = x.event_id
-        where e.starts_at <= $2
-        group by e.id`, [userId, now]),
+        where e.starts_at <= $2`, [userId, now]),
     many<{ artist: string }>(q, 'select artist from artist_follows where user_id = $1', [userId]),
     one<{ n: number }>(q, 'select count(distinct event_id)::int as n from share_visits where ref_user = $1', [userId]),
   ]);
@@ -102,7 +98,6 @@ async function userProgress(q: Queryable, userId: string, now: Date): Promise<Re
     first: count, passport_10: count, passport_25: count,
     four_styles: styleCount(nights),
     night_owl: nights.filter((n) => n.start_time && n.end_time && n.end_time < n.start_time).length,
-    doors: nights.filter((n) => n.checked_in_at && new Date(n.checked_in_at).getTime() - new Date(n.starts_at).getTime() <= 3600_000).length,
     local: new Set(nights.map((n) => n.area).filter(Boolean)).size,
     superfan,
     spread: shared!.n,
@@ -112,7 +107,7 @@ async function userProgress(q: Queryable, userId: string, now: Date): Promise<Re
 async function artistProgress(q: Queryable, artistId: string, now: Date): Promise<Record<string, number>> {
   const [shows, me] = await Promise.all([
     many<any>(q,
-      `select e.id, e.city, e.sold_out, e.starts_at <= $2 as past from event_artists ea join events e on e.id = ea.event_id
+      `select e.id, e.city, e.starts_at <= $2 as past from event_artists ea join events e on e.id = ea.event_id
         where ea.artist_id = $1 and e.status = 'live' and not e.held_for_reports and e.published_at is not null`, [artistId, now]),
     one<{ normalized_name: string; alias_keys: string[] | null }>(q, 'select normalized_name, alias_keys from artists where id = $1', [artistId]),
   ]);
@@ -131,7 +126,6 @@ async function artistProgress(q: Queryable, artistId: string, now: Date): Promis
     touring: new Set(played.map((s) => s.city)).size,
     // Events, not days: closing every night of one festival is one event.
     closer: new Set(lasts.filter((s) => keys.has(artistKey(s.artist))).map((s) => s.event_id)).size,
-    sold_out: shows.filter((s) => s.sold_out).length,
   };
 }
 
@@ -141,13 +135,12 @@ const COUNTED_EVENT = `status = 'live' and not held_for_reports and published_at
 async function organizerProgress(q: Queryable, organizerId: string): Promise<Record<string, number>> {
   const [o, events] = await Promise.all([
     one<{ verification_state: string }>(q, 'select verification_state from organizers where id = $1', [organizerId]),
-    many<{ styles: string[] | null; sold_out: boolean }>(q, `select styles, sold_out from events where organizer_id = $1 and ${COUNTED_EVENT}`, [organizerId]),
+    many<{ styles: string[] | null }>(q, `select styles from events where organizer_id = $1 and ${COUNTED_EVENT}`, [organizerId]),
   ]);
   const n = events.length;
   return {
     verified: o?.verification_state === 'verified' ? 1 : 0,
     events_50: n, events_100: n,
-    sold_out_5: events.filter((e) => e.sold_out).length,
     all_styles: styleCount(events),
   };
 }
@@ -213,8 +206,7 @@ export async function badgesOf(q: Queryable, role: BadgeRole, id: string, now: D
 export async function awardAll(q: Queryable, now: Date): Promise<number> {
   const [users, artists, orgs] = await Promise.all([
     many<{ id: string }>(q,
-      `select distinct user_id as id from tickets where status = 'used' and user_id is not null
-       union select user_id from presence union select ref_user from share_visits`),
+      `select distinct user_id as id from presence union select user_id from going union select ref_user from share_visits`),
     many<{ id: string }>(q, `select distinct ea.artist_id as id from event_artists ea join events e on e.id = ea.event_id where e.published_at is not null`),
     many<{ id: string }>(q, `select id from organizers where verification_state = 'verified' or exists (select 1 from events where events.organizer_id = organizers.id and ${COUNTED_EVENT})`),
   ]);

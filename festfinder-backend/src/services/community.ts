@@ -93,12 +93,11 @@ export function kindsShown(phase: Phase): PostKind[] {
 
 // ---- who someone is on this page ------------------------------------------------------
 
-export type Badge = 'team' | 'ff' | 'ticket' | 'submitter';
+export type Badge = 'team' | 'ff' | 'submitter';
 
 export const BADGE_LABEL: Record<Badge, Localized> = {
   team: L('Organiser', 'BTC'),
   ff: L('FeestFinder', 'FeestFinder'),
-  ticket: L('Has a ticket', 'Có vé'),
   submitter: L('Posted this event', 'Người đăng sự kiện'),
 };
 
@@ -111,19 +110,17 @@ export async function isEventTeam(q: Queryable, eventId: string, user: { id: str
   return !!row;
 }
 
-/** The badges each author carries on one event's page, in four queries for the whole list. */
+/** The badges each author carries on one event's page, in two queries for the whole list. */
 export async function badgesFor(q: Queryable, ev: { id: string; organizer_id: string; submitted_by: string | null }, userIds: string[]): Promise<Map<string, Badge[]>> {
   const ids = [...new Set(userIds)];
   const out = new Map<string, Badge[]>(ids.map((id) => [id, []]));
   if (!ids.length) return out;
-  const [team, admins, holders] = await Promise.all([
+  const [team, admins] = await Promise.all([
     many<{ user_id: string }>(q, 'select user_id from organizer_members where organizer_id = $1 and user_id = any($2::uuid[])', [ev.organizer_id, ids]),
     many<{ id: string }>(q, `select id from users where role = 'admin' and id = any($1::uuid[])`, [ids]),
-    many<{ user_id: string }>(q, `select distinct user_id from tickets where event_id = $1 and status in ('valid', 'used') and user_id = any($2::uuid[])`, [ev.id, ids]),
   ]);
   for (const r of team) out.get(r.user_id)!.push('team');
   for (const r of admins) out.get(r.id)!.push('ff');
-  for (const r of holders) out.get(r.user_id)!.push('ticket');
   if (ev.submitted_by && out.has(ev.submitted_by)) out.get(ev.submitted_by)!.push('submitter');
   return out;
 }
@@ -145,8 +142,8 @@ const TRADE_PLAIN = new RegExp(`${B}(?:ban|pass|nhuong|thanh ly|can mua|mua lai)
 
 /**
  * Keeps phone numbers out (personal data, and how off-platform ticket deals start), keeps
- * links to the organiser's team, and sends ticket trading to the resale section, where the
- * price is capped at face value and the QR changes hands safely.
+ * links to the organiser's team, and keeps ticket trading out: FeestFinder sells no tickets,
+ * and a ticket bought from a stranger in a comment is how fans get scammed.
  */
 export function checkPostText(body: string, team: boolean): string {
   const text = body.replace(/\s+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -157,8 +154,8 @@ export function checkPostText(body: string, team: boolean): string {
   if (LINK.test(text)) throw badRequest('post_has_link', L('Links can only be posted by the organiser', 'Chỉ BTC được đăng link'));
   const nfc = text.normalize('NFC');
   if (TRADE_ACCENTED.test(nfc) || (/^[\x00-\x7F]*$/.test(nfc) && TRADE_PLAIN.test(nfc))) {
-    throw badRequest('use_resale', L('Buy and sell tickets in Resale — capped at face value, and the QR changes hands safely',
-      'Mua bán vé ở mục Pass vé — không quá giá gốc, mã QR được chuyển an toàn'));
+    throw badRequest('no_ticket_trading', L('No ticket trading in comments: buy from the seller with "Buy tickets"',
+      'Không mua bán vé trong bình luận: mua ở trang bán qua nút "Mua vé"'));
   }
   return text;
 }

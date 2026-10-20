@@ -14,6 +14,7 @@ import { requireOrganizer, requireOwnEvent, requireUser } from '../http/guards.t
 import { notifyUser } from '../services/notify.ts';
 import { nameOf, phaseOf } from '../services/community.ts';
 import { badgesOf } from '../services/badges.ts';
+import { attendedAny, attendedEvents } from '../services/attendance.ts';
 
 /*
  * The night itself and what stays after it: the organiser's live updates, the photo wall,
@@ -38,16 +39,15 @@ export async function latestUpdates(q: Queryable, eventId: string, max = 20) {
 
 // ---- stamps: the nights someone was actually there --------------------------------------
 
-/** A night counts once the door scanned your ticket, or you checked in on the site. */
+/** A night counts once you checked in on the site, or said you were going and it is over (services/attendance.ts). */
 async function stamps(q: Queryable, userId: string, now: Date) {
   return many<any>(q,
     `select e.id, e.slug, e.title, e.genre, e.styles, e.art, e.cover_url, e.starts_on, e.start_time, e.end_time, e.venue_name, e.area, e.city, e.lineup,
-            bool_or(x.via = 'door') as by_door
-       from (select event_id, 'door' as via from tickets where user_id = $1 and status = 'used'
-             union all select event_id, 'checkin' as via from presence where user_id = $1) x
+            exists (select 1 from presence p where p.user_id = $1 and p.event_id = e.id) as checked_in
+       from ${attendedEvents('$1', '$2')} x
        join events e on e.id = x.event_id
       where e.starts_at <= $2
-      group by e.id order by e.starts_on desc`, [userId, now]);
+      order by e.starts_on desc`, [userId, now]);
 }
 
 const overnight = (r: any) => !!(r.start_time && r.end_time && r.end_time < r.start_time);
@@ -105,8 +105,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       let reached = 0;
       if (notify) {
         const people = await many<{ user_id: string }>(q,
-          `select user_id from tickets where event_id = $1 and status in ('valid', 'used') and user_id is not null
-           union select user_id from going where event_id = $1`, [ev.id]);
+          `select user_id from going where event_id = $1 union select user_id from saves where event_id = $1`, [ev.id]);
         for (const p of people) {
           if (await notifyUser(q, now, {
             userId: p.user_id, topic: null, kind: 'event_update', urgent: true, dedupeKey: `update:${u.id}`,
@@ -175,7 +174,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       stats: { nights, events: rows.length, styles: styles.size, venues: venues.size, cities: cities.size },
       stamps: rows.map((r) => ({
         eventId: r.id, slug: r.slug, title: r.title, genre: r.genre, art: r.art, coverUrl: r.cover_url, date: r.starts_on,
-        venue: r.venue_name, area: r.area, city: cityOf(r.city).name, via: r.by_door ? 'door' : 'checkin',
+        venue: r.venue_name, area: r.area, city: cityOf(r.city).name, via: r.checked_in ? 'checkin' : 'going',
       })),
       badges: BADGES.map((b) => ({ key: b.key, icon: b.icon, label: b.label, need: b.need, earned: !!earned[b.key] })),
     };
@@ -203,17 +202,14 @@ export default async function nightRoutes(app: FastifyInstance) {
       return [...m.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
     };
     const yearRange = [new Date(`${from}T00:00:00+07:00`), new Date(`${to}T23:59:59+07:00`)];
-    const [hypes, posts, helpful, brought, passed, friends] = await Promise.all([
+    const [hypes, posts, helpful, brought, friends] = await Promise.all([
       one<{ n: number }>(ctx.db, 'select count(*)::int as n from hypes where user_id = $1 and created_at between $2 and $3', [s.user.id, ...yearRange]),
       one<{ n: number }>(ctx.db, `select count(*)::int as n from event_posts where user_id = $1 and status <> 'removed' and created_at between $2 and $3`, [s.user.id, ...yearRange]),
       one<{ n: number }>(ctx.db, 'select coalesce(sum(helpful_count), 0)::int as n from event_posts where user_id = $1 and created_at between $2 and $3', [s.user.id, ...yearRange]),
       one<{ n: number }>(ctx.db, 'select count(*)::int as n from share_visits where ref_user = $1 and created_at between $2 and $3', [s.user.id, ...yearRange]),
-      one<{ n: number }>(ctx.db, 'select count(*)::int as n from ticket_transfers where from_user = $1 and created_at between $2 and $3', [s.user.id, ...yearRange]),
       ids.length ? many<any>(ctx.db,
         `select distinct u.id, u.name from friendships f join users u on u.id = f.friend_id
-          where f.user_id = $1 and u.share_nights and (exists (select 1 from presence p where p.user_id = u.id and p.event_id = any($2::uuid[]))
-                                    or exists (select 1 from tickets t where t.user_id = u.id and t.status = 'used' and t.event_id = any($2::uuid[]))
-                                    or exists (select 1 from going g where g.user_id = u.id and g.event_id = any($2::uuid[])))`, [s.user.id, ids]) : Promise.resolve([]),
+          where f.user_id = $1 and u.share_nights and ${attendedAny('u.id', '$2::uuid[]', '$3')}`, [s.user.id, ids, now]) : Promise.resolve([]),
     ]);
     const style = count(rows.map((r) => r.styles?.[0]).filter(Boolean));
     const artist = count(rows.flatMap((r) => (r.lineup ?? []) as string[]).filter((a) => !/vendors|gian hàng|DJ set \d/i.test(a)));
@@ -233,7 +229,7 @@ export default async function nightRoutes(app: FastifyInstance) {
       latestNight: latest ? { ...brief(latest), until: latest.end_time } : null,
       friends: friends.map((f) => ({ name: nameOf(f.name), initials: initialsOf(nameOf(f.name)) })).slice(0, 8),
       friendsCount: friends.length,
-      hypes: hypes!.n, posts: posts!.n, helpful: helpful!.n, brought: brought!.n, passedOn: passed!.n,
+      hypes: hypes!.n, posts: posts!.n, helpful: helpful!.n, brought: brought!.n,
       cities: [...new Set(rows.map((r) => cityOf(r.city).slug))].map((c) => cityOf(c).name),
     };
   });

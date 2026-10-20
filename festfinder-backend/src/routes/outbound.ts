@@ -1,19 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { many, one } from '../db/index.ts';
+import { one } from '../db/index.ts';
 import { AppError, notFound } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
 import { parse } from '../lib/validate.ts';
 import { sha256, safeEqual } from '../lib/crypto.ts';
 import { isUuid } from '../http/sql.ts';
-import { tierState } from '../presenters/event.ts';
 import { hostOf } from '../services/ingest/normalize.ts';
 import { conversionStatus, countEventMetric, countryOf, deviceOf, partnerForUrl, partnerLink, PLACEMENTS, recordConversion, referrerHostOf, type Partner } from '../services/partners.ts';
 
 /*
  * The way out to tickets, and the way back in for what was sold.
  *
- *   GET /go/<event>?src=detail[&tier=<id>]   every ticket button: counted, then redirected
+ *   GET /go/<event>?src=detail               every ticket button: counted, then sent to the seller (FeestFinder sells no tickets)
  *   GET /go/link/<code>?src=artist           an affiliate link (merch, a product, a campaign): counted, then redirected
  *   GET|POST /partners/<slug>/postback       a partner reports a sale (token, order, amount, click…)
  */
@@ -22,9 +21,6 @@ export const GO_SOURCES = PLACEMENTS;
 
 const GoQuery = z.object({
   src: z.enum(GO_SOURCES).catch('detail'),
-  tier: z.string().uuid().optional().catch(undefined),
-  /** How many tickets the button was for: the checkout opens with that many. */
-  qty: z.coerce.number().int().min(1).max(6).optional().catch(undefined),
 });
 
 const pick = (o: Record<string, unknown>, ...keys: string[]) => {
@@ -67,36 +63,21 @@ export default async function outboundRoutes(app: FastifyInstance) {
 
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
-    // FeestFinder's own checkout first, when one of its tiers is on sale.
-    const tiers = ev.entry_mode === 'paid' ? await many<any>(ctx.db, 'select id, capacity, sold, is_last, sales_open_at from ticket_tiers where event_id = $1', [ev.id]) : [];
-    const open = tiers.filter((t) => ['onsale', 'last'].includes(tierState(t, now)));
-    let target: 'checkout' | 'partner' | 'organizer';
-    let location: string;
-    let partner: Partner | null = null;
-    // The seller's page, else (a Radar find that names no ticket link) the page it was found on, which sells or says how.
+    // FeestFinder sells no tickets: the seller's page, else (a Radar find that names no ticket link) the page it was found on.
     const ticketUrl = ev.entry_mode !== 'paid' ? null
       : /^https?:\/\//i.test(ev.ticket_url ?? '') ? String(ev.ticket_url)
       : /^https?:\/\//i.test(ev.event_url ?? '') ? String(ev.event_url) : null;
-    if (open.length) {
-      target = 'checkout';
-      const params = new URLSearchParams();
-      if (q.tier && open.some((t) => t.id === q.tier)) params.set('tier', q.tier);
-      if (q.qty && q.qty > 1) params.set('qty', String(q.qty));
-      location = `/app/checkout/${encodeURIComponent(ev.slug)}${params.size ? '?' + params : ''}`;
-    } else if (ticketUrl) {
-      partner = await partnerForUrl(ctx.db, ticketUrl);
-      target = partner ? 'partner' : 'organizer';
-      location = ticketUrl;
-    } else {
-      return reply.redirect(page, 302);
-    }
+    if (!ticketUrl) return reply.redirect(page, 302);
+    const partner: Partner | null = await partnerForUrl(ctx.db, ticketUrl);
+    const target: 'partner' | 'organizer' = partner ? 'partner' : 'organizer';
+    let location = ticketUrl;
 
     const who = origin(req);
     if (!who) return reply.redirect(location, 302);
     const click = await one<{ id: string }>(ctx.db,
       `insert into outbound_clicks (event_id, partner_id, user_id, source, target, target_host, device, country, referrer_host, created_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
-      [ev.id, partner?.id ?? null, userId, q.src, target, target === 'checkout' ? null : hostOf(location), who.device, who.country, who.referrer, now]);
+      [ev.id, partner?.id ?? null, userId, q.src, target, hostOf(location), who.device, who.country, who.referrer, now]);
     if (partner) {
       try { location = partnerLink(location, partner, click!.id); } catch { /* a broken template: the plain link still sells */ }
     }

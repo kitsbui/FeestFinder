@@ -145,7 +145,7 @@ export default async function organizerInboxRoutes(app: FastifyInstance) {
 
   app.put('/organizer/notification-preferences', async (req) => {
     const org = await requireOrganizer(ctx, req);
-    const body = parse(z.object({ moderation: z.boolean(), tickets: z.boolean(), payouts: z.boolean(), crew: z.boolean(), bookings: z.boolean() }).partial(), req.body);
+    const body = parse(z.object({ moderation: z.boolean(), tickets: z.boolean(), bookings: z.boolean() }).partial(), req.body);
     for (const [topic, enabled] of Object.entries(body)) {
       await ctx.db.query(
         `insert into organizer_notification_prefs (organizer_id, topic, enabled) values ($1,$2,$3)
@@ -158,11 +158,11 @@ export default async function organizerInboxRoutes(app: FastifyInstance) {
   app.post('/organizer/notifications/test', async (req) => {
     const org = await requireOrganizer(ctx, req);
     const sent = await ctx.db.tx((q) => notifyOrganizer(q, ctx.clock.now(), {
-      organizerId: org.organizerId, topic: 'crew', kind: 'crew',
+      organizerId: org.organizerId, topic: 'moderation', kind: 'live',
       title: L('Test notification', 'Thông báo thử'),
-      body: L('This is how gate crew alerts will look on your phone.', 'Cảnh báo từ crew cổng sẽ hiện như thế này trên điện thoại.'),
-      cta: L('View gate crew', 'Xem crew cổng'), link: { screen: 'door' },
+      body: L('This is how FeestFinder alerts will look on your phone.', 'Thông báo của FeestFinder sẽ hiện như thế này trên điện thoại.'),
+      cta: L('Open Studio', 'Mở Studio'), link: { url: '/studio' },
     }));
-    return { sent, ...(sent ? {} : { message: L('Gate crew alerts are switched off', 'Cảnh báo crew cổng đang tắt') }) };
+    return { sent, ...(sent ? {} : { message: L('Listing alerts are switched off', 'Thông báo duyệt tin đang tắt') }) };
   });
 }

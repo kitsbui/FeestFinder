@@ -85,7 +85,6 @@ const groups = [
   ]],
   ['Attendee (sign in)', [
     ['My profile', '/me', 1],
-    ['My tickets', '/me/tickets', 1],
     ['Saved events', '/me/saves', 1],
     ['Friends', '/me/friends', 1],
     ['Group plans', '/me/plans', 1],
@@ -102,13 +101,10 @@ const groups = [
     ['Inbox', '/organizer/inbox', 1],
     ['Notification bell', '/organizer/notifications', 1],
     ['My first event: performance', '/organizer/events/{own}/performance', 1],
-    ['My first event: attendees', '/organizer/events/{own}/attendees', 1],
     ['My first event: announcements', '/organizer/events/{own}/announcements', 1],
     ['My first event: reach estimate', '/organizer/events/{own}/announcements/estimate?audience=saved&channels=push,zalo', 1],
-    ['My first event: door summary', '/door/events/{own}/summary', 1],
     ['My first event: promos', '/organizer/events/{own}/promos', 1],
     ['My first event: guests', '/organizer/events/{own}/guests', 1],
-    ['My first event: revenue & payouts', '/organizer/events/{own}/revenue', 1],
   ]],
   ['Admin (sign in)', [
     ['Tab counts', '/admin/counts', 1],

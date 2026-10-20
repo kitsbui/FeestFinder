@@ -164,7 +164,7 @@ export default async function discussionRoutes(app: FastifyInstance) {
       total: counts.total,
       faq: await faqFor(ctx.db, ev.id),
       me: { canWrite: canWrite(req), isTeam: team },
-      rules: L('Be kind. No phone numbers or ticket deals — use Resale for tickets.', 'Hãy tử tế. Không đăng số điện thoại hay mua bán vé — dùng mục Pass vé.'),
+      rules: L('Be kind. No phone numbers or ticket deals: buy tickets from the seller.', 'Hãy tử tế. Không đăng số điện thoại hay mua bán vé: mua vé ở trang bán.'),
     };
   });
 

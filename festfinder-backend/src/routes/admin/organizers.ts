@@ -38,7 +38,7 @@ export default async function adminOrganizerRoutes(app: FastifyInstance) {
       one<any>(ctx.db,
         `select (select count(*)::int from events where organizer_id = $1 and status = 'live' and (ends_at is null or ends_at >= $2)) as live,
                 (select count(*)::int from listing_reports r join events e on e.id = r.event_id where e.organizer_id = $1) as reports,
-                coalesce((select sum(x.total - x.fee) from orders x join events e on e.id = x.event_id where e.organizer_id = $1 and x.status = 'paid'), 0)::bigint as gmv`, [id, now]),
+                (select count(*)::int from outbound_clicks c join events e on e.id = c.event_id where e.organizer_id = $1) as clicks`, [id, now]),
       many<any>(ctx.db, `select d.decision, count(*)::int as n from moderation_decisions d join events e on e.id = d.event_id where e.organizer_id = $1 group by d.decision`, [id]),
     ]);
     return {
@@ -49,7 +49,7 @@ export default async function adminOrganizerRoutes(app: FastifyInstance) {
       bank: o.bank_account_no ? { bin: o.bank_bin, bankName: o.bank_name, accountNo: o.bank_account_no, accountName: o.bank_account_name, verified: o.bank_verified, addedAt: o.bank_added_at } : null,
       members: members.map((m) => ({ id: m.id, name: m.name, email: m.email, phone: m.phone, role: m.role, lastActiveAt: m.last_active_at, hasPassword: m.has_password })),
       events: events.map((e) => ({ id: e.id, slug: e.slug, title: e.title, status: e.status, statusLabel: STATUS_LABEL[e.status], startsOn: e.starts_on, genre: e.genre, qualityScore: e.quality_score })),
-      stats: { live: stats.live, reports: stats.reports, gmv: Number(stats.gmv), decisions: Object.fromEntries(decisions.map((d) => [d.decision, d.n])) },
+      stats: { live: stats.live, reports: stats.reports, clicks: stats.clicks, decisions: Object.fromEntries(decisions.map((d) => [d.decision, d.n])) },
     };
   });
 

@@ -89,8 +89,9 @@ export async function enqueue(
     [userId, channel, address, template, json(payload), notBefore, announcementId]);
 }
 
-export type OrgTopic = 'moderation' | 'tickets' | 'payouts' | 'crew' | 'bookings';
-export const DEFAULT_ORG_PREFS: Record<OrgTopic, boolean> = { moderation: true, tickets: true, payouts: true, crew: false, bookings: true };
+/** `tickets` carries what a night draws (hype goals, ticket clicks); FeestFinder sells no tickets, so there are no payouts or gate crew. */
+export type OrgTopic = 'moderation' | 'tickets' | 'bookings';
+export const DEFAULT_ORG_PREFS: Record<OrgTopic, boolean> = { moderation: true, tickets: true, bookings: true };
 
 export async function loadOrgPrefs(q: Queryable, organizerId: string): Promise<Record<OrgTopic, boolean>> {
   const rows = await many<any>(q, 'select topic, enabled from organizer_notification_prefs where organizer_id = $1', [organizerId]);
@@ -102,7 +103,7 @@ export async function loadOrgPrefs(q: Queryable, organizerId: string): Promise<R
 export interface OrgNotice {
   organizerId: string;
   topic: OrgTopic;
-  kind: 'reject' | 'tickets' | 'payout' | 'live' | 'crew' | 'question' | 'hype' | 'gig' | 'boost' | 'broken_image';
+  kind: 'reject' | 'tickets' | 'live' | 'question' | 'hype' | 'gig' | 'boost' | 'broken_image';
   title: Localized;
   body: Localized;
   cta?: Localized;
