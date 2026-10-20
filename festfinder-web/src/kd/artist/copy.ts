@@ -31,6 +31,7 @@ export const ARTIST = {
   trLink: { en: 'MP3 link', vi: 'Link MP3' },
   trLinkHint: { en: 'An https link to an .mp3 file', vi: 'Link https tới file .mp3' },
   trName: { en: 'Track title', vi: 'Tên bài' },
+  trReading: { en: 'Reading the file…', vi: 'Đang đọc file…' },
   trRename: { en: 'Rename', vi: 'Đổi tên' },
   trSaveName: { en: 'Save', vi: 'Lưu' },
   trEmpty: { en: 'No tracks yet', vi: 'Chưa có bài nào' },

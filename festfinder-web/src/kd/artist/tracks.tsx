@@ -91,7 +91,7 @@ function AddDrawer({ lang, onClose, onAdded }: { lang: Lang; onClose: () => void
     if (out) onAdded();
   };
   return (
-    <Drawer onClose={onClose} title={T.trAdd} footer={<Button tone="acc" type="submit" form="track-add" disabled={busy || !url.trim() || !title.trim()}>{T.mixSave}</Button>}>
+    <Drawer onClose={onClose} title={T.trAdd} footer={<Button tone="acc" type="submit" form="track-add" disabled={busy || !url.trim() || !title.trim()} aria-busy={busy || undefined}>{busy ? T.trReading : T.mixSave}</Button>}>
       <form id="track-add" className="flex flex-col gap-4" onSubmit={save}>
         <Field label={T.trLink} hint={T.trLinkHint} htmlFor="track-url">
           <Input id="track-url" type="url" inputMode="url" placeholder="https://" maxLength={1000} value={url} onChange={(e) => setUrl(e.target.value)} />
