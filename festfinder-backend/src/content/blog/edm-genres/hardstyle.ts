@@ -16,8 +16,8 @@ export const hardstyle: PackPost = {
     en: 'What is hardstyle? BPM, Dutch roots and sub-genres',
   },
   excerpt: {
-    vi: 'Hardstyle là hard dance ra đời ở Hà Lan cuối thập niên 1990: kick distorted, reverse bass, giai điệu euphoric hoặc raw, 150–160 BPM. Lịch sử, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
-    en: 'Hardstyle is hard dance born in the Netherlands in the late 1990s: distorted kicks, reverse bass, euphoric or raw melodies, 150–160 BPM. History, sub-genres, five artists, five tracks.',
+    vi: 'Hardstyle ra đời ở Hà Lan cuối thập niên 1990: kick distorted, reverse bass, giai điệu euphoric hoặc raw, 150–160 BPM. Lịch sử, sub-genre, nghệ sĩ và track.',
+    en: 'Hardstyle was born in the Netherlands in the late 1990s: distorted kicks, reverse bass, euphoric or raw melodies, 150–160 BPM. History, sub-genres, artists, tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['hardstyle', 'rawstyle', 'hardcore', 'gabber', 'hard-dance'],

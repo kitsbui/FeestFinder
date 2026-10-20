@@ -29,7 +29,8 @@ describe('blog content packs: written once in the repository, edited by the team
     for (const p of posts) {
       for (const l of ['vi', 'en'] as const) {
         assert.ok(p.title[l].length >= 20 && p.title[l].length <= 65, `${p.slug} title ${l}: ${p.title[l].length}`);
-        assert.ok(p.excerpt[l].length >= 120 && p.excerpt[l].length <= 200, `${p.slug} excerpt ${l}: ${p.excerpt[l].length}`);
+        // The excerpt is the meta description: search results cut it after about 170 characters (design-kit blog_check).
+        assert.ok(p.excerpt[l].length >= 140 && p.excerpt[l].length <= 170, `${p.slug} excerpt ${l}: ${p.excerpt[l].length}`);
         assert.ok(p.body[l].split(/\s+/).length >= 500, `${p.slug} body ${l} is a full article`);
         // The answer first: the opening paragraph names the subject in bold.
         assert.match(p.body[l], /^\*\*[^*]+\*\*/, `${p.slug} body ${l} opens with its definition`);
@@ -39,6 +40,9 @@ describe('blog content packs: written once in the repository, edited by the team
       assert.ok(p.faq.length >= 5, `${p.slug} has five questions`);
       assert.ok(p.facts.length >= 5, `${p.slug} has quick facts`);
       assert.ok(p.sources.length >= 4 && p.sources.every((s) => /^https:\/\//.test(s.url)), `${p.slug} cites its sources`);
+      // From three publishers at least (en. and vi.wikipedia.org are one): not an encyclopedia alone.
+      const site = (u: string) => new URL(u).hostname.split('.').slice(-2).join('.');
+      assert.ok(new Set(p.sources.map((s) => site(s.url))).size >= 3, `${p.slug} cites three publishers`);
       assert.ok(p.styles.every(isStyle), `${p.slug} styles are the site's`);
       assert.ok(p.cover && /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(p.cover.url) && p.cover.credit.includes('commons.wikimedia.org'), `${p.slug} cover is credited`);
       if (p.key !== 'edm-genres/edm') assert.equal(p.tracks.length, 5, `${p.slug} has five tracks`);

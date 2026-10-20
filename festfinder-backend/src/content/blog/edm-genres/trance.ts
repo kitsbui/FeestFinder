@@ -16,8 +16,8 @@ export const trance: PackPost = {
     en: 'What is trance? BPM, history and trance sub-genres',
   },
   excerpt: {
-    vi: 'Trance là nhạc điện tử ra đời ở Đức đầu thập niên 1990: giai điệu synth bay bổng, breakdown dài, 128–140 BPM. Lịch sử, đặc trưng, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
-    en: 'Trance is electronic music born in Germany in the early 1990s: soaring synth melodies, long breakdowns, 128–140 BPM. Its history, sound, sub-genres, five artists and five tracks.',
+    vi: 'Trance ra đời ở Đức đầu thập niên 1990: giai điệu synth bay bổng, breakdown dài, 128–140 BPM. Lịch sử, đặc trưng, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
+    en: 'Trance was born in Germany in the early 1990s: soaring synth melodies, long breakdowns, 128–140 BPM. Its history, sound, sub-genres, five artists and five tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['trance', 'psytrance'],
@@ -180,6 +180,7 @@ Trance has loyal communities in Vietnam, Thailand and Japan. See [upcoming tranc
     { title: "Ralf Hildenbeutel: Eye Q, Earth Nation and Frankfurt's 90s trance scene", url: 'https://threadsradio.com/ralf-hildenbeutel-eye-q-earth-nation-and-frankfurts-90s-trance-scene/', publisher: 'Threads Radio' },
     { title: 'Uplifting trance', url: wiki('Uplifting trance'), publisher: 'Wikipedia' },
     { title: 'Nhạc trance', url: 'https://vi.wikipedia.org/wiki/Nh%E1%BA%A1c_trance', publisher: 'Wikipedia tiếng Việt' },
+    { title: 'Trance', url: 'https://www.britannica.com/art/trance-music', publisher: 'Encyclopaedia Britannica' },
   ],
   tracks: [
     { youtube: '--3eIRSg2RY', artist: 'Paul van Dyk', title: 'For An Angel', year: 1994, channel: 'Paul van Dyk', note: { vi: 'Bản trance kinh điển, vẫn vang lên ở mọi sân khấu sau ba thập kỷ.', en: 'A trance classic still heard on every stage three decades on.' } },

@@ -16,8 +16,8 @@ export const drumAndBass: PackPost = {
     en: 'What is drum & bass? BPM, jungle and DnB sub-genres',
   },
   excerpt: {
-    vi: 'Drum & Bass (DnB) ra đời ở Anh đầu thập niên 1990: breakbeat dồn dập 160–180 BPM và bassline nặng. Từ jungle tới liquid, neurofunk: lịch sử, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
-    en: 'Drum & bass (DnB) was born in the UK in the early 1990s: rushing breakbeats at 160–180 BPM and heavy basslines. From jungle to liquid and neurofunk: history, sub-genres, artists, tracks.',
+    vi: 'Drum & Bass ra đời ở Anh đầu thập niên 1990: breakbeat dồn dập 160–180 BPM, bassline nặng. Từ jungle tới liquid, neurofunk: lịch sử, nghệ sĩ và 5 track.',
+    en: 'Drum & bass was born in the UK in the early 1990s: rushing breakbeats at 160–180 BPM and heavy basslines. From jungle to liquid and neurofunk, with artists and tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['drum-and-bass', 'breakbeat'],
@@ -169,7 +169,7 @@ DnB has loyal nights in Ho Chi Minh City, Hanoi, Bangkok, Tokyo and Singapore. S
   },
   faq: [
     { q: { vi: 'Drum & Bass là gì?', en: 'What is drum & bass?' }, a: { vi: 'Drum & Bass là dòng nhạc điện tử ra đời ở Anh đầu thập niên 1990, với breakbeat nhanh 160–180 BPM và bassline nặng, phát triển từ jungle.', en: 'Drum & bass is electronic music born in the UK in the early 1990s, with fast 160–180 BPM breakbeats and heavy basslines, grown out of jungle.' } },
-    { q: { vi: 'Drum & Bass bao nhiêu BPM?', en: 'What BPM is drum & bass?' }, a: { vi: 'Thường 160–180 BPM, phổ biến nhất là 172–175 BPM.', en: 'Usually 160–180 BPM, most commonly 172–175 BPM.' } },
+    { q: { vi: 'Drum & Bass bao nhiêu BPM?', en: 'What BPM is drum & bass?' }, a: { vi: 'Thường 160–180 BPM, phổ biến nhất là 172–175 BPM. Jungle thời đầu hay ở khoảng 160–170 BPM; drum & bass hiện đại, từ liquid tới neurofunk, phần lớn chơi ở khoảng 174 BPM để DJ dễ nối bài.', en: 'Usually 160–180 BPM, most commonly 172–175 BPM. Early jungle often sat around 160–170 BPM; most modern drum & bass, from liquid to neurofunk, is played at about 174 BPM so DJs can blend tracks smoothly.' } },
     { q: { vi: 'Jungle và drum & bass khác nhau thế nào?', en: 'What is the difference between jungle and drum & bass?' }, a: { vi: 'Jungle (1992–1995) dùng Amen break cắt dồn dập, bass reggae và vocal ragga. Drum & bass là hướng đi sau đó, gọn và kỹ thuật hơn, với reese bass và sound design hiện đại.', en: 'Jungle (1992–1995) uses frantic Amen break chops, reggae bass and ragga vocals. Drum & bass is the direction that followed, cleaner and more technical, with reese bass and modern sound design.' } },
     { q: { vi: 'Người mới nên nghe sub-genre DnB nào?', en: 'Which DnB sub-genre suits beginners?' }, a: { vi: 'Liquid funk và dancefloor DnB dễ nghe nhất nhờ giai điệu và vocal; neurofunk hợp khi bạn đã quen với tốc độ và bass.', en: 'Liquid funk and dancefloor DnB are the easiest way in, thanks to melodies and vocals; neurofunk suits you once the speed and bass feel familiar.' } },
     { q: { vi: 'Nghệ sĩ drum & bass tiêu biểu là ai?', en: 'Who are the key drum & bass artists?' }, a: { vi: 'Goldie, LTJ Bukem, Roni Size, Andy C ở giai đoạn đầu; Sub Focus, Noisia, Netsky và Chase & Status ở giai đoạn sau.', en: 'Goldie, LTJ Bukem, Roni Size and Andy C in the early days; Sub Focus, Noisia, Netsky and Chase & Status later.' } },
@@ -178,8 +178,9 @@ DnB has loyal nights in Ho Chi Minh City, Hanoi, Bangkok, Tokyo and Singapore. S
     { title: 'Drum and bass', url: wiki('Drum and bass'), publisher: 'Wikipedia' },
     { title: 'Jungle music', url: wiki('Jungle music'), publisher: 'Wikipedia' },
     { title: 'Metalheadz', url: wiki('Metalheadz'), publisher: 'Wikipedia' },
-    { title: 'Inner City Life', url: wiki('Inner City Life'), publisher: 'Wikipedia' },
     { title: 'Drum and bass (tiếng Việt)', url: 'https://vi.wikipedia.org/wiki/Drum_and_bass', publisher: 'Wikipedia tiếng Việt' },
+    { title: 'Drum and bass', url: 'https://www.britannica.com/art/drum-and-bass', publisher: 'Encyclopaedia Britannica' },
+    { title: 'The origins and evolution of drum’n’bass', url: 'https://www.redbull.com/ie-en/history-of-drum-and-bass-music', publisher: 'Red Bull' },
   ],
   tracks: [
     { youtube: 'DNQDoiuGq58', artist: 'LTJ Bukem', title: 'Music', year: 1993, channel: 'LTJ Bukem - Topic', note: { vi: 'Atmospheric DnB kinh điển: pad và breakbeat bồng bềnh.', en: 'Classic atmospheric DnB: floating pads and breakbeats.' } },

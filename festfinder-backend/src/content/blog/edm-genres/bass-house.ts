@@ -16,7 +16,7 @@ export const bassHouse: PackPost = {
     en: 'What is bass house? BPM, UK bassline roots and sub-genres',
   },
   excerpt: {
-    vi: 'Bass House là house hiện đại giữa thập niên 2010: kick 4/4, bassline gầm gừ kiểu UK bass và dubstep, 124–128 BPM. Nguồn gốc, đặc trưng, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
+    vi: 'Bass House là house giữa thập niên 2010: kick 4/4, bassline gầm gừ kiểu UK bass và dubstep, 124–128 BPM. Nguồn gốc, đặc trưng, 5 nghệ sĩ và 5 track nên nghe.',
     en: 'Bass house is mid-2010s house music: a 4/4 kick under growling UK bass and dubstep-style basslines at 124–128 BPM. Roots, sound, sub-genres, five artists and five tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
@@ -163,7 +163,7 @@ Bass house turns up in house and EDM nights across Ho Chi Minh City, Hanoi, Bang
   },
   faq: [
     { q: { vi: 'Bass House là gì?', en: 'What is bass house?' }, a: { vi: 'Bass House là dòng house hiện đại (giữa thập niên 2010) kết hợp kick 4/4 với bassline gầm gừ kiểu UK bass và dubstep, thường ở 124–128 BPM.', en: 'Bass house is modern house music (mid-2010s) that pairs a 4/4 kick with growling UK bass and dubstep-style basslines, usually at 124–128 BPM.' } },
-    { q: { vi: 'Bass House bao nhiêu BPM?', en: 'What BPM is bass house?' }, a: { vi: 'Thường 124–128 BPM, giống house và tech house.', en: 'Usually 124–128 BPM, like house and tech house.' } },
+    { q: { vi: 'Bass House bao nhiêu BPM?', en: 'What BPM is bass house?' }, a: { vi: 'Thường 124–128 BPM, giống house và tech house. Vì cùng tempo nên DJ dễ chuyển qua lại giữa bass house, tech house và G-house trong một set: năng lượng đến từ bassline gầm gừ chứ không phải từ tốc độ.', en: 'Usually 124–128 BPM, like house and tech house. That shared tempo is why DJs move easily between bass house, tech house and G-house in one set: the energy comes from the growling bassline, not from extra speed.' } },
     { q: { vi: 'Bass House khác Tech House thế nào?', en: 'How is bass house different from tech house?' }, a: { vi: 'Cùng tempo, nhưng bass house dùng bassline nặng, sound design kỹ và drop "đập"; tech house groove nhẹ, bass ngắn và nảy.', en: 'Same tempo, but bass house uses heavy, intricately designed basslines and hard-hitting drops; tech house grooves lightly with short, bouncy bass.' } },
     { q: { vi: 'G-house là gì?', en: 'What is G-house?' }, a: { vi: 'G-house là nhánh house tối giản dùng vocal và sample hip-hop, gắn với Malaa và label Confession của Tchami.', en: 'G-house is a minimal branch of house built on hip-hop vocals and samples, tied to Malaa and Tchami’s Confession label.' } },
     { q: { vi: 'Nghệ sĩ bass house tiêu biểu là ai?', en: 'Who are the key bass house artists?' }, a: { vi: 'Jauz, Malaa, JOYRYDE, AC Slater, Habstrakt; ở Anh có Chris Lorenzo, người đến từ dòng bassline Birmingham.', en: 'Jauz, Malaa, JOYRYDE, AC Slater, Habstrakt; in the UK, Chris Lorenzo, who came out of the Birmingham bassline scene.' } },
@@ -174,6 +174,7 @@ Bass house turns up in house and EDM nights across Ho Chi Minh City, Hanoi, Bang
     { title: 'Bassline (music genre)', url: wiki('Bassline (music genre)'), publisher: 'Wikipedia' },
     { title: 'G-house', url: wiki('G-house'), publisher: 'Wikipedia' },
     { title: 'Tech house', url: wiki('Tech house'), publisher: 'Wikipedia' },
+    { title: 'Beatport adds bass house as a new genre category', url: 'https://mixmag.net/read/beatport-adds-bass-house-genre-category-news', publisher: 'Mixmag' },
   ],
   tracks: [
     { youtube: 'mub2x7cP0Ng', artist: 'Jauz', title: 'Feel The Volume', channel: 'JAUZ', note: { vi: 'Bản mở đường cho bass house tới khán giả đại chúng.', en: 'The record that opened bass house to a mainstream crowd.' } },

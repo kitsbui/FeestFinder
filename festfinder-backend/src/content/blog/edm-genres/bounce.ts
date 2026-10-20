@@ -16,8 +16,8 @@ export const bounce: PackPost = {
     en: 'What is bounce? Melbourne bounce, BPM and its branches',
   },
   excerpt: {
-    vi: 'Bounce (Melbourne bounce) là electro house ra đời ở Melbourne, Úc đầu thập niên 2010: bassline off-beat "nảy", lead kiểu Dutch house, 126–130 BPM. Lịch sử, các nhánh, 5 nghệ sĩ và 5 track.',
-    en: 'Bounce (Melbourne bounce) is electro house born in Melbourne, Australia, in the early 2010s: a bouncy off-beat bassline, Dutch-style leads, 126–130 BPM. History, branches, artists, tracks.',
+    vi: 'Bounce (Melbourne bounce) là electro house ra đời ở Úc đầu thập niên 2010: bassline off-beat nảy, lead kiểu Dutch house, 126–130 BPM. Lịch sử, nghệ sĩ và track.',
+    en: 'Melbourne bounce is electro house born in Australia in the early 2010s: a bouncy off-beat bassline, Dutch-style leads, 126–130 BPM. Its history, artists and tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['mainstage', 'edm', 'electro'],
@@ -176,6 +176,7 @@ Bounce and bounce remixes are all over EDM nights and festivals in Vietnam, Thai
     { title: 'Did Melbourne bounce really start in Melbourne?', url: 'https://bassgorilla.com/did-melbourne-bounce-really-start-in-melbourne/', publisher: 'Bass Gorilla' },
     { title: 'Electro house', url: wiki('Electro house'), publisher: 'Wikipedia' },
     { title: 'Slap house', url: wiki('Slap house'), publisher: 'Wikipedia' },
+    { title: 'EDMTunes interview: Will Sparks', url: 'https://www.edmtunes.com/2013/08/26/edmtunes-interview-will-sparks/', publisher: 'EDMTunes' },
   ],
   tracks: [
     { youtube: 'VhFvRGK4pVY', artist: 'Will Sparks', title: 'Ah Yeah!', channel: 'TMRW Music', note: { vi: 'Bản khai sinh làn sóng Melbourne bounce.', en: 'The record that started the Melbourne bounce wave.' } },

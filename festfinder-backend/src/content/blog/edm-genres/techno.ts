@@ -16,8 +16,8 @@ export const techno: PackPost = {
     en: 'What is techno? BPM, Detroit roots and sub-genres',
   },
   excerpt: {
-    vi: 'Techno là nhạc điện tử ra đời ở Detroit giữa thập niên 1980: kick 4/4, groove lặp mang tính thôi miên, 120–150 BPM. Nguồn gốc, đặc trưng, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
-    en: 'Techno is electronic music born in Detroit in the mid-1980s: a 4/4 kick, hypnotic repetition, 120–150 BPM. Its roots, sound, sub-genres, five artists and five tracks to start with.',
+    vi: 'Techno ra đời ở Detroit giữa thập niên 1980: kick 4/4, groove lặp thôi miên, 120–150 BPM. Nguồn gốc, đặc trưng, sub-genre, 5 nghệ sĩ và 5 track nên nghe.',
+    en: 'Techno was born in Detroit in the mid-1980s: a 4/4 kick, hypnotic repetition, 120–150 BPM. Its roots, sound, sub-genres, five artists and five tracks to start with.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['techno', 'melodic-techno', 'hard-techno', 'minimal', 'acid-techno', 'industrial-techno'],
@@ -182,10 +182,10 @@ Techno drives many underground clubs in Ho Chi Minh City, Hanoi, Bangkok, Tokyo 
   ],
   sources: [
     { title: 'Techno', url: wiki('Techno'), publisher: 'Wikipedia' },
-    { title: 'Detroit techno', url: wiki('Detroit techno'), publisher: 'Wikipedia' },
     { title: 'The Belleville Three', url: wiki('The Belleville Three'), publisher: 'Wikipedia' },
-    { title: 'Minimal techno', url: wiki('Minimal techno'), publisher: 'Wikipedia' },
     { title: 'Techno (tiếng Việt)', url: 'https://vi.wikipedia.org/wiki/Techno', publisher: 'Wikipedia tiếng Việt' },
+    { title: 'Techno', url: 'https://www.britannica.com/art/techno-music', publisher: 'Encyclopaedia Britannica' },
+    { title: 'This is the story of a techno revolution', url: 'https://www.redbull.com/za-en/quickfire-history-of-detroit-techno', publisher: 'Red Bull' },
   ],
   tracks: [
     { youtube: 'xcdOBLH_AXs', artist: 'Model 500', title: "No UFO's", year: 1985, channel: 'Model 500 - Topic', note: { vi: 'Một trong những bản techno đầu tiên: electro, funk và tương lai trong cùng một groove.', en: 'One of the first techno records: electro, funk and the future in one groove.' } },

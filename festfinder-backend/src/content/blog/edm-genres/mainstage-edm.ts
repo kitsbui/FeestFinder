@@ -16,8 +16,8 @@ export const mainstageEdm: PackPost = {
     en: 'What is mainstage EDM? Big room house, BPM and styles',
   },
   excerpt: {
-    vi: 'Mainstage EDM (big room) là nhạc viết cho sân khấu chính lễ hội đầu thập niên 2010: 126–132 BPM, build-up dài, drop tối giản với kick nặng. Lịch sử, các nhánh, 5 nghệ sĩ và 5 track.',
-    en: 'Mainstage EDM (big room) is music written for festival main stages in the early 2010s: 126–132 BPM, long build-ups, minimal drops with heavy kicks. History, styles, artists, tracks.',
+    vi: 'Mainstage EDM (big room) là nhạc cho sân khấu chính lễ hội đầu thập niên 2010: 126–132 BPM, build-up dài, drop tối giản, kick nặng. Lịch sử, nghệ sĩ và track.',
+    en: 'Mainstage EDM (big room) is festival main-stage music of the early 2010s: 126–132 BPM, long build-ups, minimal drops with heavy kicks. History, artists and tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['mainstage', 'edm', 'progressive-house', 'electro', 'future-bass'],
@@ -169,7 +169,7 @@ The big festivals in Vietnam, Thailand, Singapore and Japan always have a mainst
   },
   faq: [
     { q: { vi: 'Mainstage EDM là gì?', en: 'What is mainstage EDM?' }, a: { vi: 'Mainstage EDM là cách gọi chung nhạc điện tử viết cho sân khấu chính lễ hội; tiêu biểu nhất là big room house ở khoảng 128 BPM với build-up dài và drop tối giản.', en: 'Mainstage EDM is the umbrella name for electronic music written for festival main stages; its typical form is big room house at around 128 BPM with long build-ups and minimal drops.' } },
-    { q: { vi: 'Big room bao nhiêu BPM?', en: 'What BPM is big room?' }, a: { vi: 'Thường 126–132 BPM, phổ biến nhất là 128 BPM.', en: 'Usually 126–132 BPM, most commonly 128 BPM.' } },
+    { q: { vi: 'Big room bao nhiêu BPM?', en: 'What BPM is big room?' }, a: { vi: 'Thường 126–132 BPM, phổ biến nhất là 128 BPM. Tempo gần với house; cảm giác “khổng lồ” đến từ build-up dài, một khoảng lặng ngắn và drop dựa trên kick nặng cùng một lead đơn giản.', en: 'Usually 126–132 BPM, most commonly 128 BPM. The tempo is close to house; the sense of scale comes from long build-ups, a short pause and a drop built on a heavy kick and a simple lead.' } },
     { q: { vi: 'Mainstage có phải một genre không?', en: 'Is mainstage a genre?' }, a: { vi: 'Không hẳn. "Mainstage" là tên gọi theo nơi biểu diễn, gồm big room, progressive house thời EDM, electro house, Dutch house và các nhánh lai.', en: 'Not strictly. "Mainstage" is named after where it is played and covers big room, EDM-era progressive house, electro house, Dutch house and hybrids.' } },
     { q: { vi: 'Bản big room nổi tiếng nhất là gì?', en: 'What is the most famous big room track?' }, a: { vi: '"Animals" của Martin Garrix (2013) thường được xem là bản big room tiêu biểu nhất nhờ drop tối giản mang tính biểu tượng.', en: 'Martin Garrix’s "Animals" (2013) is usually seen as the definitive big room track for its iconic minimal drop.' } },
     { q: { vi: 'Nghệ sĩ mainstage tiêu biểu là ai?', en: 'Who are the key mainstage artists?' }, a: { vi: 'Martin Garrix, Hardwell, Dimitri Vegas & Like Mike, Afrojack, Steve Aoki, cùng Swedish House Mafia và Avicii ở nhánh progressive house.', en: 'Martin Garrix, Hardwell, Dimitri Vegas & Like Mike, Afrojack and Steve Aoki, with Swedish House Mafia and Avicii on the progressive house side.' } },
@@ -180,6 +180,7 @@ The big festivals in Vietnam, Thailand, Singapore and Japan always have a mainst
     { title: 'Electronic dance music', url: wiki('Electronic dance music'), publisher: 'Wikipedia' },
     { title: 'Progressive house', url: wiki('Progressive house'), publisher: 'Wikipedia' },
     { title: 'Dutch house', url: wiki('Dutch house'), publisher: 'Wikipedia' },
+    { title: 'Beatport launches Mainstage, a new genre inspired by the festival experience', url: 'https://www.beatportal.com/articles/350255-beatport-launches-mainstage-a-new-genre-inspired-by-the-festival-experience', publisher: 'Beatportal' },
   ],
   tracks: [
     { youtube: 'Qh9_UM961aE', artist: 'Afrojack feat. Eva Simons', title: 'Take Over Control', year: 2010, channel: 'Afrojack', note: { vi: 'Dutch house gặp pop: lead cao và vocal dễ nhớ.', en: 'Dutch house meets pop: a high lead and a catchy vocal.' } },

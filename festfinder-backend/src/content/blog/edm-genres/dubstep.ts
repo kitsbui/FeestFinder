@@ -16,8 +16,8 @@ export const dubstep: PackPost = {
     en: 'What is dubstep? 140 BPM half-time, history, sub-genres',
   },
   excerpt: {
-    vi: 'Dubstep ra đời ở Nam London đầu thập niên 2000: 140 BPM với cảm giác half-time, sub-bass sâu và wobble bass. Từ Croydon tới brostep, riddim: lịch sử, sub-genre và 5 track nên nghe.',
-    en: 'Dubstep was born in South London in the early 2000s: 140 BPM with a half-time feel, deep sub-bass and wobble bass. From Croydon to brostep and riddim: history, sub-genres, five tracks.',
+    vi: 'Dubstep ra đời ở Nam London đầu thập niên 2000: 140 BPM cảm giác half-time, sub-bass sâu, wobble bass. Từ Croydon tới brostep, riddim: lịch sử và 5 track.',
+    en: 'Dubstep was born in South London in the early 2000s: 140 BPM with a half-time feel, deep sub-bass, wobble bass. From Croydon to brostep and riddim, with five tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['dubstep', 'bass'],

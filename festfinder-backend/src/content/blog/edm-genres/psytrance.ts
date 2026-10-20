@@ -16,8 +16,8 @@ export const psytrance: PackPost = {
     en: 'What is psytrance? Goa trance, BPM and psy sub-genres',
   },
   excerpt: {
-    vi: 'Psytrance phát triển từ Goa trance ở Goa, Ấn Độ đầu thập niên 1990: rolling bass 16 nốt, âm thanh psychedelic, 138–148 BPM. Lịch sử, full-on, dark psy, progressive psy và 5 track nên nghe.',
-    en: 'Psytrance grew out of Goa trance in Goa, India, in the early 1990s: a 16th-note rolling bass, psychedelic sound design, 138–148 BPM. History, full-on, dark psy, progressive psy and tracks.',
+    vi: 'Psytrance lớn lên từ Goa trance ở Ấn Độ đầu thập niên 1990: rolling bass 16 nốt, âm thanh psychedelic, 138–148 BPM. Lịch sử, các nhánh và 5 track nên nghe.',
+    en: 'Psytrance grew out of Goa trance in India in the early 1990s: a 16th-note rolling bass, psychedelic sound design, 138–148 BPM. History, styles and five tracks.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['psytrance', 'trance'],
@@ -94,7 +94,7 @@ ${fig('vi')}
 - [Trance là gì?](${guide('trance', 'vi')}) Gia đình lớn của psytrance.
 - [Bounce là gì?](${guide('bounce', 'vi')}) Psy bounce, khi psytrance gặp mainstage.
 - [Techno là gì?](${guide('techno', 'vi')}) Một nhánh khác của nhạc lặp thôi miên.`,
-    en: `**Psytrance** (psychedelic trance) is the branch of trance that grew out of Goa trance in the Indian state of Goa in the early 1990s, defined by a 16th-note rolling bass locked to the kick, spiralling psychedelic sound design and tempos of 138–148 BPM. It is tied to open-air festival culture such as Boom in Portugal and Ozora in Hungary.
+    en: `**Psytrance** (psychedelic trance) is the trance branch that grew out of Goa trance in the Indian state of Goa in the early 1990s, defined by a 16th-note rolling bass locked to the kick, spiralling psychedelic sound design and tempos of 138–148 BPM. It is tied to open-air festival culture such as Boom in Portugal and Ozora in Hungary.
 
 ## What does psytrance sound like?
 
@@ -170,8 +170,8 @@ India, Thailand, Japan and Vietnam all have lively psytrance communities, from b
     { title: 'Psychedelic trance', url: wiki('Psychedelic trance'), publisher: 'Wikipedia' },
     { title: 'Goa trance', url: wiki('Goa trance'), publisher: 'Wikipedia' },
     { title: 'Progressive psytrance', url: wiki('Progressive psytrance'), publisher: 'Wikipedia' },
-    { title: 'Dark psytrance', url: wiki('Dark psytrance'), publisher: 'Wikipedia' },
-    { title: 'Vini Vici', url: wiki('Vini Vici'), publisher: 'Wikipedia' },
+    { title: 'A brief history of psytrance and Sunburn in Goa', url: 'https://dancingastronaut.com/2014/12/brief-history-psytrance-sunburn-goa/', publisher: 'Dancing Astronaut' },
+    { title: 'Boom Festival', url: 'https://www.boomfestival.org/', publisher: 'Boom Festival' },
   ],
   tracks: [
     { youtube: 'kJSyBUZshfs', artist: 'Astral Projection', title: 'People Can Fly', channel: 'Astral Projection', note: { vi: 'Goa trance kinh điển với giai điệu bay bổng.', en: 'Classic Goa trance with a soaring melody.' } },

@@ -28,8 +28,8 @@ export const edm: PackPost = {
     en: 'What is EDM? A map of electronic dance music genres',
   },
   excerpt: {
-    vi: 'EDM (Electronic Dance Music) là nhạc điện tử viết để nhảy, từ techno, house, trance tới dubstep, drum & bass, hardstyle. Bản đồ 9 dòng chính với BPM, cảm giác và cách chọn dòng hợp với bạn.',
-    en: 'EDM (electronic dance music) is electronic music made for dancing, from techno, house and trance to dubstep, drum & bass and hardstyle. A map of nine main genres with BPM, feel and where to start.',
+    vi: 'EDM là nhạc điện tử viết để nhảy, từ techno, house, trance tới dubstep, drum & bass, hardstyle. Bản đồ 9 dòng chính với BPM, cảm giác và nơi bắt đầu.',
+    en: 'EDM is electronic music made for dancing, from techno, house and trance to dubstep, drum & bass and hardstyle. Nine main genres with BPM, feel and where to start.',
   },
   cover: { url: cover.url, credit: `[${cover.author}](${cover.page}) · ${cover.license} · Wikimedia Commons` },
   styles: ['edm', 'techno', 'trance', 'dubstep', 'drum-and-bass', 'hardstyle'],
@@ -154,6 +154,8 @@ FeestFinder lists electronic club nights, raves and festivals in Ho Chi Minh Cit
     { title: 'Nhạc dance điện tử', url: 'https://vi.wikipedia.org/wiki/Nh%E1%BA%A1c_dance_%C4%91i%E1%BB%87n_t%E1%BB%AD', publisher: 'Wikipedia tiếng Việt' },
     { title: 'Techno', url: wiki('Techno'), publisher: 'Wikipedia' },
     { title: 'Trance music', url: wiki('Trance music'), publisher: 'Wikipedia' },
+    { title: 'Electronic dance music', url: 'https://www.britannica.com/art/electronic-dance-music', publisher: 'Encyclopaedia Britannica' },
+    { title: 'Electronic dance music (definition)', url: 'https://www.merriam-webster.com/dictionary/electronic%20dance%20music', publisher: 'Merriam-Webster' },
   ],
   tracks: [],
 };
