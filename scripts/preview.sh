@@ -56,6 +56,8 @@ until up http://localhost:4300/health; do
 done
 
 say "3/3 Starting the site…"
+# The database above is new, with new ids: pages Next cached from the last run would name the old ones.
+rm -rf "$ROOT/festfinder-web/.next/dev/cache/fetch-cache" "$ROOT/festfinder-web/.next/cache/fetch-cache"
 (cd "$ROOT/festfinder-web" && FF_API_ORIGIN=http://localhost:4300 exec npm run dev) > "$LOGS/web.log" 2>&1 &
 PIDS+=($!)
 until up http://localhost:3000/robots.txt; do

@@ -109,3 +109,63 @@ Mức: **P0** chặn mục tiêu, **P1** người dùng gặp hoặc rủi ro th
 | N8 | F4 | `blog_check` chỉ còn cảnh báo về độ dài trên cả 20 bài; test gói nội dung giữ sapo ≤ 170 và ≥ 2 nhà xuất bản | `test/blog-content.test.ts`, `blog_check` |
 | N9 | F13 | lint API dưới 1.103, ngân sách hạ | `npm run lint` |
 | Đóng đêm | — | typecheck, lint, `npm test`, `test:screens` đầy đủ; điểm sau; push nhánh | tất cả |
+
+## 7. Tiến độ (mỗi việc một commit trên `night/2026-10-21`)
+
+| Việc | Commit | Đã làm | Kiểm |
+| --- | --- | --- | --- |
+| Kế hoạch | `a2f41bb` | tài liệu này: vai, phản hồi, điểm trước, giải pháp, kiểm chéo | — |
+| N1 | `a2f41bb` | link chip giữ vùng chạm 44 px, nền tag chỉ quanh chữ; hàng cách 8 px | `blog.spec`: khung các chip ở 390 px không giao nhau |
+| N2 | `dbc490b` | Console gọi `freshen` sau Duyệt/Gửi lại/Gỡ/Đăng lại; nút "Duyệt bài biên tập (n)" chỉ cho bài từ content pack (bài của người dùng vẫn đọc từng bài: kiểm chéo thêm điều kiện này), một thông báo "Đã duyệt n bài" | `blog.spec`: khách mở `/blog` trước, admin duyệt, khách thấy bài ngay |
+| N3 | `0a9b182` | `POST /me/artist/tracks`: 20 lần mỗi 15 phút **theo tài khoản** (đổi địa chỉ IP không lách được) | `tracks.test`: lần thứ 21 trả 429, người khác cùng IP không bị chặn |
+| N4 | `122ab89` | `suppressHydrationWarning` trên `<html>` kèm lý do | script: console `/` sạch |
+| N5 | `067d695` | ngày một đêm từ 1100 px: ảnh 2:1, tên 32 px (đo DOM: chữ vốn đã căn giữa; cái lệch là tỉ lệ ảnh/chữ) | ảnh 1440 trước/sau |
+| N6 | `ae98e8b` | 1–2 show: lưới hai cột | ảnh `/a/slimv` 1440 |
+| N7 | `ae221f6` | nút thêm bài: "Đang đọc file…", `aria-busy` | typecheck |
+| N8 | `6236448` | 19 sapo viết lại (140–170 ký tự, hai ngôn ngữ); nguồn mới đã kiểm từng link: Britannica (EDM, techno, drum and bass, trance; mở bằng trình duyệt vì Cloudflare chặn script), Merriam-Webster, Red Bull (techno 2019, drum'n'bass 2020), Dancing Astronaut, Boom Festival, Mixmag, Beatportal, EDMTunes; bỏ 4 link Wikipedia trùng; 3 câu trả lời FAQ đầy đủ hơn; định nghĩa psytrance EN 60 từ. Bỏ DJ Mag (trang thử thách chống bot, không vượt). `blog_check` của kit sửa hai lỗi của chính nó (Wikipedia en/vi là một nhà xuất bản; dấu phẩy sau thuật ngữ in đậm) | `blog-content.test`: sapo 140–170, ≥ 3 tên miền; `blog_check`: chỉ còn lỗi độ dài |
+| N9 | `a670d6c` | kiểu cho hàng và body ở route nghệ sĩ, dự án | lint API 1.093 (ngân sách hạ từ 1.103) |
+| Tài liệu | `7120b2a` | CLAUDE.md, roadmap, tech debt | — |
+
+Ngoài kế hoạch, ghi lại: design-kit nhận bản sửa `blog_check` (`f0d4380`, đã push).
+
+## 8. Đóng đêm: cổng
+
+- `npm run typecheck` (API, test, e2e) xanh; `npm run lint`: API 1.093 cảnh báo (ngân sách 1.093), web 41/41, px 98/98, mọi dòng công khai đủ năm ngôn ngữ.
+- `npm test`: 445 test, 444 pass, 0 fail (1 bỏ qua có chủ ý).
+- `npm run test:screens`: 354 test, **332 pass, 0 fail**, 22 bỏ qua (ảnh so sánh, chạy riêng với `FF_VISUAL`). Ngân sách JS giữ nguyên hoặc thấp hơn: `/` 194/195, `/e/ravo` 193/193, `/a/slimv` 196/196, `/p` 181/181, `/studio/new` 210/210; CLS ≤ 0,015; LCP ≤ 568 ms ở trang chủ, ≤ 1,7 giây ở back office (ngân sách 2,0 và 3,5 giây).
+- Bản xem trước khởi động lại: 10 bài blog đã đăng, sapo 149–160 ký tự.
+- Script dùng thử chạy lại sau các sửa (62 ảnh): không cảnh báo hydration, không màn nào cuộn ngang hay có chữ hỏng; lỗi console còn lại là ảnh mẫu trỏ host không tồn tại (đúng ý: dữ liệu mẫu) và một 404 `/events/<id>/photos` do bản xem trước giữ cache trang của database trước (id mới sau mỗi lần khởi động). Đã sửa `scripts/preview.sh`: xoá cache fetch của Next mỗi lần tạo database mới.
+
+## 9. Điểm sau
+
+"10" theo định nghĩa ở đầu tài liệu: cổng tự động xanh có bằng chứng, không còn phản hồi P0/P1 của vai nào trong hạng mục, cách đo đã ghi. Cột "5 người thật" và "số sau hai tuần" của kit **chưa có ở hạng mục nào**: đó là điều kiện của 10 tuyệt đối, không làm được trong một đêm.
+
+| Hạng mục | Trước | Sau | Còn thiếu gì cho 10 tuyệt đối |
+| --- | --- | --- | --- |
+| 1 Hình khối, hình ảnh | 8,5 | 9 | ≥ 80 % thẻ trên production có ảnh thật: việc nội dung |
+| 2 Bố cục | 8,5 | 10 | 5 người thật |
+| 3 Thẩm mỹ | 9 | 10 | 5 người thật |
+| 4 UX/UI | 8,5 | 10 | 5 người thật |
+| 5 Điều hướng | 9 | 10 | 5 người thật |
+| 6 Flow | 8,5 | 10 | 5 người thật; duyệt blog cần chủ sản phẩm bấm một lần |
+| 7 Mobile | 8,5 | 10 | 5 người thật trên máy thật (iPhone, Android) |
+| 8 Trải nghiệm fan | 7,5 | 8 | **F11**: thêm đêm ở Việt Nam (hàng duyệt Radar, nguồn mới) |
+| 9 Trải nghiệm nghệ sĩ | 8,5 | 10 | một nghệ sĩ thật dán MP3 của họ trên production |
+| 10 Trải nghiệm nhà tổ chức | 9 | 10 | 5 người thật |
+| 11 Code: chất lượng, độ bền | 8,5 | 9,5 | nợ 22: còn 1.093 `any` trên hàng SQL |
+| 12 Hiệu năng, truy cập | 9,5 | 10 | số Web Vitals p75 thật sau deploy (Console › Số liệu) |
+| Nội dung | 5 | 6 | F11; mười bài hướng dẫn còn 600–750 từ (chuẩn của kit là 800) |
+| SEO/AIO | 8 | 9 | merge #31 để blog và JSON-LD mới lên production; độ dài bài |
+
+Bốn vai đồng ý đánh giá này. CL ghi chú: Nội dung và Trải nghiệm fan là hai điểm thấp nhất, và không vai nào kéo chúng lên được bằng code trong một đêm.
+
+## 10. Sáng mai (chủ sản phẩm, khoảng 15 phút)
+
+1. **Merge [#31](https://github.com/kitsbui/FeestFinder/pull/31)** (Vercel tự deploy cả hai project; migration 058–061 chạy khi API khởi động). Sau đó tới nhánh `night/2026-10-21` (đã push lên GitHub, chưa mở PR theo luật của đêm): mở PR vào `main` sau khi #31 vào, hoặc nói "ship night build" để agent mở PR và chạy lại cổng.
+2. Trong vòng 10 phút sau deploy, job nhập 10 bài blog: vào **Console › Blog**, bấm **"Duyệt bài biên tập (10)"**. Bài lên `/blog` ngay.
+3. **Console › Kiểm duyệt**, lọc "Từ Radar": duyệt các đêm của Ciné Saigon (23–31.10) nếu đúng là EDM.
+4. Quyết định (chọn một mỗi dòng):
+   - Bài từ content pack: **A** giữ duyệt (một nút như trên, khuyến nghị) · **B** tự đăng khi nhập.
+   - Câu lạc bộ chỉ chơi nhạc điện tử (Ciné Saigon…): **A** đặt style mặc định cho nguồn để đêm không ghi style vẫn lên hàng duyệt với style đó (khuyến nghị) · **B** giữ như hiện tại.
+   - Độ dài bài hướng dẫn: **A** viết thêm lên 800+ từ trong đợt nội dung sau (khuyến nghị) · **B** giữ 600–750.
+5. Buổi thử 5 người (`docs/DESIGN_GOVERNANCE.md`, design-kit `usertest/`): cột còn thiếu của mọi điểm 10.
