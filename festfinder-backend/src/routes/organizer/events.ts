@@ -26,6 +26,7 @@ import { assessRisk } from '../../services/risk.ts';
 import { inBackground } from '../../lib/background.ts';
 import { askArtistsToConfirm } from '../../services/lineup.ts';
 import { notifyUser } from '../../services/notify.ts';
+import type { Row } from '../../db/rows.ts';
 import { artistKey } from '../../services/artists.ts';
 
 export const STATUS_LABEL: Record<string, Localized> = {
@@ -125,6 +126,31 @@ function sameValue(ev: any, field: string, value: unknown): boolean {
   const a = cur instanceof Date ? cur.toISOString().slice(0, 10) : cur == null ? null : String(cur).slice(0, field === 'startTime' || field === 'endTime' ? 5 : undefined);
   const b = value == null || value === '' ? null : String(value);
   return a === b;
+}
+
+/**
+ * An edit to a listing, from Studio or from the organiser's connected calendar (growth plan
+ * card 1): it applies at once; on a live listing a change to a reviewed field also waits in the
+ * review queue with what it was before (migration 040), so the page never stops for an edit.
+ * What the team changes needs no review. Returns the reviewed fields that changed.
+ */
+export async function proposeRevision(q: Queryable, ev: Row<'events'>, body: z.infer<typeof DraftInput>, now: Date, o: { team?: boolean } = {}): Promise<string[]> {
+  const changed = ev.status === 'live' && !o.team ? REVIEWED_FIELDS.filter((f) => (body as any)[f] !== undefined && !sameValue(ev, f, (body as any)[f])) : [];
+  await applyDraft(q, ev.id, body);
+  if (!changed.length) return changed;
+  // The first pending change keeps its time (the queue's clock) and its "before"; later ones add fields.
+  await q.query(
+    `update events set needs_review_at = coalesce(needs_review_at, $2),
+            needs_review_fields = (select array(select distinct unnest(needs_review_fields || $3::text[]))),
+            needs_review_before = coalesce(needs_review_before, $4::jsonb)
+      where id = $1`,
+    [ev.id, now, changed, json(reviewSnapshot(ev))]);
+  const risk = await assessRisk(q, ev.id, now);
+  await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
+    [ev.id, risk.score, json(risk.factors), json(risk.signals), risk.flag]);
+  const by = await one<{ name: string }>(q, 'select name from organizers where id = $1', [ev.organizer_id]);
+  await askForReview(q, now, ev, by?.name ?? '', true);
+  return changed;
 }
 
 export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof DraftInput>) {
@@ -330,25 +356,9 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     // What the team changes needs no review. Someone else's change to a reviewed field applies at
     // once and the listing stays live; it waits in the review queue with what it was before
     // (migration 040), so the event page and ticket sales never stop for an edit.
-    const changed = ev.status === 'live' && !teamSession(req) ? REVIEWED_FIELDS.filter((f) => (body as any)[f] !== undefined && !sameValue(ev, f, (body as any)[f])) : [];
-    const sendsBack = changed.length > 0;
+    let sendsBack = false;
     await ctx.db.tx(async (q) => {
-      await applyDraft(q, ev.id, body);
-      if (sendsBack) {
-        const now = ctx.clock.now();
-        // The first pending change keeps its time (the queue's clock) and its "before"; later ones add fields.
-        await q.query(
-          `update events set needs_review_at = coalesce(needs_review_at, $2),
-                  needs_review_fields = (select array(select distinct unnest(needs_review_fields || $3::text[]))),
-                  needs_review_before = coalesce(needs_review_before, $4::jsonb)
-            where id = $1`,
-          [ev.id, now, changed, json(reviewSnapshot(ev))]);
-        const risk = await assessRisk(q, ev.id, now);
-        await q.query('update events set risk_score = $2, risk_factors = $3, signals = $4, flag = $5 where id = $1',
-          [ev.id, risk.score, json(risk.factors), json(risk.signals), risk.flag]);
-        const by = await one<{ name: string }>(q, 'select name from organizers where id = $1', [org.organizerId]);
-        await askForReview(q, now, ev, by?.name ?? '', true);
-      }
+      sendsBack = (await proposeRevision(q, ev, body, ctx.clock.now(), { team: !!teamSession(req) })).length > 0;
       if (body.lineup && ['in_review', 'live'].includes(ev.status)) await askArtistsToConfirm(q, ev.id, ctx.clock.now());
     });
     const updated = await one<any>(ctx.db, 'select * from events where id = $1', [ev.id]);

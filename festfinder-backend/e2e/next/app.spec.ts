@@ -115,6 +115,12 @@ test.describe('the app', () => {
     await expect.poll(async () => (await (await page.request.get('/me/badges')).json()).pins.length).toBeGreaterThan(0);
     await sheet.getByRole('button', { name: `Bỏ khoe: ${name}` }).click();
     await expect(sheet.getByRole('button', { name: `Khoe: ${name}` })).toBeVisible();
+    // The story: the badge drawn large, saved as a picture where the browser cannot share files.
+    const download = page.waitForEvent('download');
+    await sheet.getByRole('button', { name: `Chia sẻ: ${name}` }).click();
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/^badge-[a-z0-9_]+\.png$/);
+    expect((await import('node:fs')).statSync((await file.path())!).size).toBeGreaterThan(20_000);
   });
 
   test('"Tôi" is /profile: passport, Wrapped, the language, signing out', async ({ page }) => {

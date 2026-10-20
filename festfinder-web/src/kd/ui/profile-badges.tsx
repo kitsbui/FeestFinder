@@ -29,6 +29,16 @@ const COPY = {
 };
 
 export const PIN_LIMIT = 6;
+/** A sign's paths from the badges' sprite (public/kd/badges.svg), for the story image. */
+async function signPaths(icon: string | null | undefined): Promise<string[] | null> {
+  if (!icon) return null;
+  try {
+    const svg = new DOMParser().parseFromString(await (await fetch('/kd/badges.svg')).text(), 'image/svg+xml');
+    const paths = [...svg.querySelectorAll(`symbol[id="${CSS.escape(icon)}"] path`)].map((p) => p.getAttribute('d')).filter((d): d is string => !!d);
+    return paths.length ? paths : null;
+  } catch { return null; }
+}
+
 const date = (iso: string, lang: Lang) => new Date(iso).toLocaleDateString((lang === 'en' ? 'en-GB' : INTL[lang]), { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
 
 export function ProfileBadges({ lang, items, pins: initialPins, own, className }: { lang: Lang; items: BadgeView[] | null; pins: string[]; own?: boolean; className?: string }) {
@@ -58,6 +68,7 @@ export function ProfileBadges({ lang, items, pins: initialPins, own, className }
     FF.track('share', { kind: 'badge', value: b.code });
     const how = await FF.shareStory({
       kicker: T.kicker, title: tx(b.label, lang),
+      badge: { paths: await signPaths(b.icon), number: b.icon ? null : b.ring ?? String(b.threshold), tier: b.tier ?? 'common' },
       lines: [tx(b.rule, lang), b.rarityPct != null ? fill(T.rare, { p: nf(b.rarityPct) }) : ''].filter(Boolean),
       url: 'feestfinder.com',
     }, 'badge-' + b.code).catch((e: unknown) => { kd.toast(FF.errorText(e, lang)); return null; });
