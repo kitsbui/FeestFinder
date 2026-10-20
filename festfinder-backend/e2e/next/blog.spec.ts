@@ -100,3 +100,22 @@ test('an editorial guide from the content packs: facts, tables, a credited pictu
   expect(problems).toEqual([]);
   await page.close();
 });
+
+test('the team approves the waiting editorial posts in one go, and the blog shows them at once', async ({ page, browser }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  expect((await page.request.post('/auth/login', { data: ACCOUNTS.admin })).ok()).toBeTruthy();
+  expect((await page.request.post('/admin/posts/import')).ok()).toBeTruthy();
+  // The list is read before, so a cached copy would still miss the posts.
+  const visitor = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await visitor.goto('/blog');
+  await page.goto('/console/blog');
+  const all = page.getByRole('button', { name: /^Duyệt bài biên tập \(\d+\)$/ });
+  await expect(all).toBeVisible();
+  const n = Number((await all.innerText()).replace(/\D/g, ''));
+  await all.click();
+  await expect(page.getByText(`Đã duyệt ${n} bài`)).toBeVisible();
+  await expect(all).toHaveCount(0);
+  await visitor.goto('/blog');
+  await expect(visitor.getByRole('link', { name: /^Trance là gì\?/ }).first()).toBeVisible();
+  await visitor.close();
+});

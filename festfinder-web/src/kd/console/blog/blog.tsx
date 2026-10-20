@@ -2,12 +2,14 @@
 /**
  * /console/blog: posts people write (festfinder-backend routes/blog.ts). The team reads one in
  * review and approves it (it goes public) or sends it back with a reason; a public post can be
- * taken down and put back.
+ * taken down and put back. Every decision renders the public pages again at once (kd/fresh.ts);
+ * the editorial posts the import brings (content packs) can be approved together.
  */
 import { useState } from 'react';
 import { ArrowSquareOutIcon, CheckIcon, DownloadSimpleIcon, PencilSimpleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang } from '../../copy';
+import { fill, pick, type Lang } from '../../copy';
+import { freshen } from '../../fresh';
 import { useKd } from '../../runtime';
 import { Button, LinkButton } from '../../ui/actions';
 import { TextArea } from '../../ui/forms';
@@ -39,6 +41,8 @@ const B = {
   view: { en: 'Public page', vi: 'Trang công khai' },
   edit: { en: 'Edit post', vi: 'Sửa bài' },
   importPacks: { en: 'Import editorial posts', vi: 'Nhập bài biên tập' },
+  approvePacks: { en: 'Approve editorial ({n})', vi: 'Duyệt bài biên tập ({n})' },
+  approvedN: { en: '{n} approved', vi: 'Đã duyệt {n} bài' },
   fromPack: { en: 'Editorial', vi: 'Biên tập' },
   editedPack: { en: 'Editorial, edited', vi: 'Biên tập, đã sửa' },
 };
@@ -59,9 +63,26 @@ export function ConsoleBlog() {
     if (await act(kd, lang, () => FF.post('/admin/posts/import'))) { load.reload(); refreshCounts(); }
     setImporting(false);
   };
+  // The editorial posts waiting, approved in one go (the team's own words; a person's post is read one by one).
+  const packs = status === 'in_review' ? (load.data?.items ?? []).filter((p) => p.imported) : [];
+  const approvePacks = async () => {
+    setImporting(true);
+    let done = 0;
+    for (const p of packs) {
+      try { await FF.post(`/admin/posts/${p.id}/decision`, { action: 'approve', note: '' }); done++; void freshen('blog', p.slug); } catch (e) { kd.toast(FF.errorText(e, lang)); break; }
+    }
+    if (done) kd.toast(fill(T.approvedN, { n: done }));
+    setImporting(false);
+    load.reload(); refreshCounts();
+  };
   return (
     <>
-      <PageHead title={T.title} actions={<Button disabled={importing} onClick={importPacks}><DownloadSimpleIcon size={16} aria-hidden="true" />{T.importPacks}</Button>} />
+      <PageHead title={T.title} actions={(
+        <>
+          {packs.length > 1 ? <Button tone="acc" disabled={importing} onClick={approvePacks}><CheckIcon size={16} aria-hidden="true" />{fill(T.approvePacks, { n: packs.length })}</Button> : null}
+          <Button disabled={importing} onClick={importPacks}><DownloadSimpleIcon size={16} aria-hidden="true" />{T.importPacks}</Button>
+        </>
+      )} />
       <Body>
         <Tabs label={T.title} current={status} onSelect={(k) => setStatus(k as Status)} items={STATUSES.map((s) => ({ key: s, label: T[s], count: load.data?.counts[s] ?? null }))} />
         {load.error && !load.data ? <ErrorBox error={load.error} retry={load.reload} /> : !load.data ? <Loading /> : !load.data.items.length ? <Empty title={T.none} /> : (
@@ -94,7 +115,8 @@ function Review({ lang, p, onClose }: { lang: Lang; p: Item; onClose: (changed: 
     setBusy(true);
     const ok = await act(kd, lang, () => FF.post(`/admin/posts/${p.id}/decision`, { action, note }));
     setBusy(false);
-    if (ok) onClose(true);
+    // The post's page and the blog's list render again now, not a minute later.
+    if (ok) { void freshen('blog', p.slug); onClose(true); }
   };
   return (
     <Drawer
