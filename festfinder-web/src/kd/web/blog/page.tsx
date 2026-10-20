@@ -98,8 +98,9 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
                   <EditLink lang={lang} slug={post.slug} />
                 </div>
                 {post.styles.length ? (
-                  <span className="flex flex-wrap gap-1.5" lang={lang}>
-                    {post.styles.map((s) => <a key={s.key} href={inLang(`/?style=${s.key}`, lang)} className="kd-tag kd-hit">{text(s.label, lang)}</a>)}
+                  <span className="flex flex-wrap gap-x-1.5 gap-y-2" lang={lang}>
+                    {/* The link takes the 44px to tap, the tag's ground stays around its words: wrapped rows never overlap. */}
+                    {post.styles.map((s) => <a key={s.key} href={inLang(`/?style=${s.key}`, lang)} className="kd-hit inline-flex items-center"><span className="kd-tag">{text(s.label, lang)}</span></a>)}
                   </span>
                 ) : null}
               </header>

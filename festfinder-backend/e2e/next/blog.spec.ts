@@ -89,6 +89,14 @@ test('an editorial guide from the content packs: facts, tables, a credited pictu
   await page.goto('/blog/techno?lang=en');
   await expect(page.getByRole('heading', { level: 1, name: 'What is techno? BPM, Detroit roots and sub-genres' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Frequently asked' })).toBeVisible();
+  // On a phone its style chips wrap without overlapping (night build 2026-10-21, N1).
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/blog/techno');
+  const chips = await page.locator('article header .kd-tag').evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; }));
+  expect(chips.length).toBeGreaterThan(3);
+  for (const [i, a] of chips.entries()) for (const b of chips.slice(i + 1)) {
+    expect(a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h, 'two chips overlap').toBe(false);
+  }
   expect(problems).toEqual([]);
   await page.close();
 });
