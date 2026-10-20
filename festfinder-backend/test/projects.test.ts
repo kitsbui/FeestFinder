@@ -38,9 +38,11 @@ describe('projects: an idea for a night, and the people who offer to make it hap
     // Not public yet: the owner sees it, nobody else does.
     assert.equal((await env.as(fan).get(`/projects/${slug}`)).status, 404);
     assert.equal((await env.as(owner).get(`/projects/${slug}`)).body.packages.length, 2);
-    // Someone without a confirmed phone cannot publish (Decree 147/2024, as for every post).
+    // With REQUIRE_PHONE_TO_POST, someone without a confirmed phone cannot publish (Decree 147/2024, as for every post).
     const other = await env.as(fan).post('/me/projects', { title: 'Brand pop-up', city: 'ha-noi', pitch: 'x'.repeat(30), story: STORY, seeking: ['artists'] });
+    env.ctx.config.requirePhoneToPost = true;
     assert.equal((await env.as(fan).post(`/me/projects/${other.body.id}/submit`)).body.error.code, 'phone_unverified');
+    env.ctx.config.requirePhoneToPost = false;
     const sent = await env.as(owner).post(`/me/projects/${id}/submit`);
     assert.equal(sent.body.status, 'in_review', JSON.stringify(sent.body));
     assert.equal((await env.as().get('/projects')).body.total, 0);

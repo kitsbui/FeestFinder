@@ -44,7 +44,6 @@ export interface Listing {
   organizer: { id: string; slug: string; name: string; verified: boolean; state: string; strikes: number; suspended: boolean; logoUrl: string | null; community: boolean } | null;
   submittedBy: { id: string; name: string | null; phone: string | null; published: number } | null;
   sourceUrl: string | null;
-  tiers: { id: string; key: string; name: Pair | string; price: number; capacity: number; sold: number }[];
   decisions: { id: string; decision: string; reason: Pair | null; by: string | null; at: string }[];
   reports: { code: string; label: Pair | null; count: number }[];
   thread: { id: string; messages: number } | null;

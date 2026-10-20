@@ -58,7 +58,7 @@ export const actorOf = (s: UserSession) => ({ actorType: 'admin' as const, actor
 export const EDIT_COLUMNS: [string, string][] = [
   ['title', 'title'], ['genre', 'genre'], ['starts_on', 'starts_on'], ['ends_on', 'ends_on'], ['start_time', 'start_time'], ['end_time', 'end_time'],
   ['venue_name', 'venue'], ['address', 'address'], ['area', 'area'], ['entry_mode', 'entry'], ['price_from', 'price_from'], ['capacity', 'capacity'],
-  ['age', 'age'], ['lineup', 'lineup'], ['ticket_url', 'ticket_url'], ['event_url', 'event_url'], ['brand_url', 'brand_url'], ['cover_url', 'cover'],
+  ['age', 'age'], ['lineup', 'lineup'], ['ticket_url', 'ticket_url'], ['ticket_links', 'ticket_links'], ['event_url', 'event_url'], ['brand_url', 'brand_url'], ['cover_url', 'cover'],
   ['logo_url', 'logo'], ['featured', 'featured'], ['badge', 'badge'],
 ];
 

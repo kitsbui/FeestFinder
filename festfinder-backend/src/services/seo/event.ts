@@ -4,6 +4,7 @@ import type { Row } from '../../db/rows.ts';
 import type { Lang } from '../../lib/i18n.ts';
 import { formatMoney } from '../../lib/money.ts';
 import { cityOf } from '../../lib/places.ts';
+import { EVENT_TYPE_LABEL, type EventType } from '../../lib/styles.ts';
 import { isoIn, timeIn } from '../../lib/time.ts';
 import { loadTimetable } from '../../presenters/timetable.ts';
 import { faqFor } from '../../routes/discussion.ts';
@@ -116,6 +117,7 @@ export async function buildEventSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): 
     { label: t('status', lang), value: statusLabel },
     { label: t('age', lang), value: ageLabel },
     ...(ev.genre ? [{ label: t('genre', lang), value: ev.genre }] : []),
+    ...(ev.event_type && ev.event_type !== 'other' && EVENT_TYPE_LABEL[ev.event_type as EventType] ? [{ label: t('kind', lang), value: EVENT_TYPE_LABEL[ev.event_type as EventType][lang] }] : []),
     ...(lineup.length ? [{ label: t('lineup', lang), value: lineup.join(', ') }] : []),
     ...(org ? [{ label: t('organiser', lang), value: org.name, href: inLang(`/o/${org.slug}`, lang) }] : []),
     ...(ev.ticket_url ? [{ label: t('buy', lang), value: hostOf(ev.ticket_url), href: ev.ticket_url }] : []),

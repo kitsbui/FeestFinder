@@ -5,7 +5,7 @@ import { signInWith, watch } from '../checks.ts';
  * The app (festfinder-web/src/kd/app) after design v2 phase 4: it is the site. Its discovery, map,
  * saved, profile and event moved into the site's pages and their old addresses lead there with
  * their query; the installed app opens on the home page and asks a new device its city and styles;
- * the screens left (tickets, checkout, the plan, the guide, notifications) wear the site's frame,
+ * the screens left (the plan, the guide, notifications, live mode, recap) wear the site's frame,
  * so buying from the list never changes frame. Phone-sized.
  */
 
@@ -69,7 +69,7 @@ test.describe('the app', () => {
     expect(problems).toEqual([]);
   });
 
-  test('buying from the list reaches /go and the checkout without changing frame', async ({ page }) => {
+  test('from the list to the seller: "Mua vé" goes through /go and leaves for the seller, FeestFinder sells no tickets', async ({ page }) => {
     await returning(page);
     await signInWith(page, ATTENDEE);
     const problems = await open(page, '/');
@@ -77,65 +77,21 @@ test.describe('the app', () => {
     await page.getByRole('main').getByRole('link', { name: 'Ravolution Music Festival' }).first().click();
     await expect(page).toHaveURL(/\/e\/ravo$/);
     await inFrame(page);
-    const buy = page.locator('#tickets').getByRole('link', { name: /^Mua 1 vé/ });
-    await expect(buy).toHaveAttribute('href', /^\/go\/ravo\?/);
-    await buy.click();
-    await expect(page).toHaveURL(/\/app\/checkout\/ravo\?/);
-    await inFrame(page);
-    await expect(page.getByRole('button', { name: /^Thanh toán / })).toBeVisible();
+    const buy = page.locator('#tickets').getByRole('link', { name: /^Mua vé/ });
+    await expect(buy).toHaveAttribute('href', '/go/ravo?src=detail');
+    const hop = await page.request.get('/go/ravo?src=detail', { maxRedirects: 0 });
+    expect(hop.status()).toBe(302);
+    expect(hop.headers().location).toMatch(/^https:\/\/ticketbox\.vn\/ravolution-2026\?utm_source=feestfinder&utm_medium=referral&utm_campaign=ravo&utm_content=detail$/);
+    await expect(page.locator('#tickets').getByText('Pass vé')).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 
-  test('Tickets: a real QR per ticket, the doors countdown, and resale at no more than face value', async ({ page }) => {
-    await returning(page);
+  test('the old ticket screens lead to their nearest place', async ({ page }) => {
     await signInWith(page, ATTENDEE);
-    await open(page, '/app/tickets');
-    await inFrame(page);
-    await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Tôi' })).toHaveAttribute('aria-current', 'page');
-    const card = page.getByRole('article', { name: 'Ravolution Music Festival' });
-    await expect(card.getByRole('img', { name: 'Mã QR của vé FF-RAVO-DEM1' })).toBeVisible();
-    await expect(card.getByText(/Mở cửa sau \d+ ngày/)).toBeVisible();
-    await card.getByRole('button', { name: 'Vé 2' }).click();
-    await expect(card.getByRole('img', { name: 'Mã QR của vé FF-RAVO-DEM2' })).toBeVisible();
-    await page.getByRole('button', { name: 'Pass vé', exact: true }).click();
-    const sheet = page.getByRole('dialog', { name: 'Pass vé này' });
-    await expect(sheet.getByText('Tối đa 1.200.000₫')).toBeVisible();
-    await page.keyboard.press('Escape');
-    // The past tab holds nothing yet.
-    await page.getByRole('button', { name: 'Đã qua' }).click();
-    await expect(page.getByText('Chưa có vé nào')).toBeVisible();
-  });
-
-  test('checkout takes the tier and quantity from /go, a promo code, and lands in the tickets', async ({ page }) => {
-    await returning(page);
-    await signInWith(page, ATTENDEE);
-    const ev = await (await page.request.get('/events/ravo')).json();
-    const vip = ev.tickets.tiers.find((t: { name: { en: string } }) => t.name.en === 'VIP');
-    const problems = await open(page, `/app/checkout/ravo?tier=${vip.id}&qty=2`);
-    await expect(page.getByRole('radio', { name: /^VIP/ })).toHaveAttribute('aria-checked', 'true');
-    // 2 × 2.400.000₫, no fee on top.
-    await expect(page.getByRole('button', { name: 'Thanh toán 4.800.000₫' })).toBeVisible();
-    await expect(page.getByText('Phí dịch vụ')).toHaveCount(0);
-    await page.getByRole('textbox', { name: 'Mã giảm giá' }).fill('NOPE');
-    await page.getByRole('button', { name: 'Áp dụng' }).click();
-    await expect(page.getByRole('alert').filter({ hasText: 'Mã này không dùng được' })).toBeVisible();
-    await page.getByRole('textbox', { name: 'Mã giảm giá' }).fill('rave10');
-    await page.getByRole('button', { name: 'Áp dụng' }).click();
-    await page.getByRole('button', { name: 'Thanh toán 4.320.000₫' }).click();
-    await expect(page).toHaveURL(/\/app\/tickets$/);
-    await expect(page.getByRole('article', { name: 'Ravolution Music Festival' }).filter({ hasText: 'VIP' })).toBeVisible();
-    expect(problems).toEqual([]);
-  });
-
-  test('a resale ticket opens its own checkout', async ({ page }) => {
-    await returning(page);
-    await signInWith(page, ATTENDEE);
-    const listing = (await (await page.request.get('/events/rapviet/resale')).json()).items[0];
-    await open(page, `/app/checkout/rapviet?listing=${listing.id}`);
-    await expect(page.getByText(/Vé pass · /)).toBeVisible();
-    // The seller's price, no fee on top.
-    await expect(page.getByRole('button', { name: 'Thanh toán 650.000₫' })).toBeVisible();
-    await expect(page.getByText('Phí dịch vụ')).toHaveCount(0);
+    await page.goto('/app/tickets');
+    await expect(page).toHaveURL(/\/profile$/);
+    await page.goto('/app/checkout/ravo?tier=x&qty=2');
+    await expect(page).toHaveURL(/\/e\/ravo(\?|$)/);
   });
 
   test('"Tôi" is /profile: passport, Wrapped, the language, signing out', async ({ page }) => {

@@ -19,10 +19,10 @@ async function open(page: Page, path: string) {
 
 const stamp = () => Date.now().toString(36);
 
-test.describe('the Console: accounts, orders and partners', () => {
+test.describe('the Console: accounts and partners', () => {
   test.beforeEach(async ({ page }) => signInWith(page, ADMIN));
 
-  test('accounts: filter, open one, follow a recent order', async ({ page }) => {
+  test('accounts: filter, open one, see what it did', async ({ page }) => {
     const problems = await open(page, '/console/users');
     await expect(page.getByRole('heading', { level: 1, name: 'Người dùng' })).toBeVisible();
 
@@ -47,10 +47,9 @@ test.describe('the Console: accounts, orders and partners', () => {
     await page.getByRole('row', { name: /minh@example\.com/ }).click();
     await expect(page).toHaveURL(/[?&]id=/);
     const drawer = page.getByRole('dialog', { name: 'Minh Anh' });
-    await expect(drawer.getByRole('heading', { name: 'Đơn hàng gần đây' })).toBeVisible();
-    await drawer.getByRole('link', { name: /FFDEMO22/ }).click();
-    await expect(page).toHaveURL(/\/console\/orders\?id=/);
-    await expect(page.getByRole('dialog', { name: 'FFDEMO22' })).toBeVisible();
+    // FeestFinder sells no tickets: no orders, the ticket clicks instead.
+    await expect(drawer.getByText('Lượt bấm Mua vé')).toBeVisible();
+    await expect(drawer.getByRole('heading', { name: 'Đơn hàng gần đây' })).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 
@@ -60,61 +59,14 @@ test.describe('the Console: accounts, orders and partners', () => {
     await open(page, '/console/users/' + guest.id);
     await expect(page).toHaveURL(new RegExp(`/console/users\\?id=${guest.id}`));
     const drawer = page.getByRole('dialog', { name: guest.name });
-    await expect(drawer.getByRole('heading', { name: 'Đơn hàng gần đây' })).toBeVisible();
+    await expect(drawer.getByText('Lượt bấm Mua vé')).toBeVisible();
     await expect(drawer.getByRole('button', { name: /quyền admin/i })).toHaveCount(0);
     expect((await page.request.patch('/admin/users/' + guest.id, { data: { role: 'admin' } })).status()).toBe(404);
   });
 
-  test('orders: tiles, search, the event filter, and the refund asks for a reason', async ({ page }) => {
-    const problems = await open(page, '/console/orders');
-    await expect(page.getByRole('heading', { level: 1, name: 'Đơn hàng' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Đơn bán vé' })).toHaveAttribute('aria-selected', 'true');
-
-    // A tile toggles its status.
-    const refunded = page.getByRole('button', { name: /^Đã hoàn tiền/ });
-    await refunded.click();
-    await expect(refunded).toHaveAttribute('aria-pressed', 'true');
-    await expect(page).toHaveURL(/status=refunded/);
-    await expect(page.getByRole('row').filter({ hasText: 'Đã thanh toán' })).toHaveCount(0);
-    await refunded.click();
-    await expect(page).not.toHaveURL(/status=/);
-
-    // The events screen links here with ?event=&eventLabel=.
-    const ev = (await (await page.request.get('/admin/events?q=Warm-up&limit=5')).json()).items.find((e: { title: string }) => e.title === 'Ravolution Warm-up · Rooftop');
-    await page.goto(`/console/orders?event=${ev.id}&eventLabel=${encodeURIComponent(ev.title)}`);
-    await expect(page.getByText('Ravolution Warm-up · Rooftop').first()).toBeVisible();
-    await expect(page.getByRole('row', { name: /^RW-/ }).first()).toBeVisible();
-    await expect(page.getByRole('row', { name: /^RV-/ })).toHaveCount(0);
-
-    // Search, open, and the refund needs a reason (cancelled here: other specs use this order).
-    await page.goto('/console/orders');
-    await page.getByRole('searchbox', { name: 'Tìm đơn hàng' }).fill('FFDEMO22');
-    await expect(page).toHaveURL(/q=FFDEMO22/);
-    await page.getByRole('row', { name: /FFDEMO22/ }).click();
-    const drawer = page.getByRole('dialog', { name: 'FFDEMO22' });
-    await expect(drawer.getByText('FF-RAVO-DEM1')).toBeVisible();
-    await expect(drawer.getByRole('link', { name: 'Mở sự kiện' })).toHaveAttribute('href', /\/console\/events\//);
-    await drawer.getByRole('button', { name: 'Hoàn tiền' }).click();
-    const ask = page.getByRole('alertdialog', { name: 'Hoàn tiền đơn FFDEMO22?' });
-    await ask.getByRole('button', { name: 'Hoàn tiền' }).click();
-    await expect(ask.getByRole('alert')).toHaveText('Hãy viết ghi chú trước');
-    await ask.getByRole('button', { name: 'Huỷ' }).click();
-    const order = (await (await page.request.get('/admin/orders?q=FFDEMO22')).json()).items[0];
-    expect(order.status).toBe('paid');
-    expect(problems).toEqual([]);
-  });
-
-  test('orders: the resale tab and its states', async ({ page }) => {
-    const problems = await open(page, '/console/orders?view=resale');
-    await expect(page.getByRole('tab', { name: 'Pass vé' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('table', { name: 'Giao dịch pass vé' }).or(page.getByText('Không có giao dịch'))).toBeVisible();
-    await page.getByRole('button', { name: 'Trạng thái' }).click();
-    await page.getByRole('menuitemradio', { name: 'Cần hoàn cho người mua' }).click();
-    await expect(page).toHaveURL(/rs=failed/);
-    await expect(page.getByRole('table', { name: 'Giao dịch pass vé' }).or(page.getByText('Không có giao dịch'))).toBeVisible();
-    await page.getByRole('tab', { name: 'Đơn bán vé' }).click();
-    await expect(page).not.toHaveURL(/view=resale/);
-    expect(problems).toEqual([]);
+  test('the old order desk leads back to the Console', async ({ page }) => {
+    await page.goto('/console/orders?view=resale');
+    await expect(page).toHaveURL(/\/console(\?|$)/);
   });
 
   test('partners: add one, see its token once', async ({ page }) => {

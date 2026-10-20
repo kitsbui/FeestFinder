@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'FeestFinder',
     short_name: 'FeestFinder',
-    description: 'Club, rave và lễ hội EDM ở châu Á — vé, kế hoạch nhóm và chế độ trực tiếp.',
+    description: 'Club, rave và lễ hội EDM ở châu Á: tìm đêm, lưu, đi cùng bạn bè.',
     id: '/app',
     start_url: '/?source=app',
     scope: '/',
@@ -26,7 +26,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/icons/app-icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: 'Vé của tôi', short_name: 'Vé', url: '/app/tickets' },
+      { name: 'Bản đồ', short_name: 'Bản đồ', url: '/?view=map' },
       { name: 'Đã lưu', short_name: 'Đã lưu', url: '/saved' },
     ],
   };

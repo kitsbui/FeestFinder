@@ -17,7 +17,7 @@ import type { StatusTone } from '../ui/parts';
 import { Row, Table, Tabs } from '../ui/shell';
 import { act, Body, Drawer, Empty, ErrorBox, Field, Loading, PageHead, Pill, stamp, useLoad } from './kit';
 import { useConsole } from './root';
-import { Cell, Two } from './orders/parts';
+import { Cell, Two } from './parts';
 
 type Kind = 'bug' | 'ui_ux' | 'feature' | 'support';
 type St = 'new' | 'triaged' | 'in_progress' | 'done' | 'wont_fix';

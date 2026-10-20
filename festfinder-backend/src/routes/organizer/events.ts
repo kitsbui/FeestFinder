@@ -52,7 +52,7 @@ export function presentDraft(ev: any) {
     startsOn: ev.starts_on, endsOn: ev.ends_on, startTime: ev.start_time, endTime: ev.end_time,
     venue: { id: ev.venue_id, name: ev.venue_name, address: ev.address, area: ev.area, lat: ev.lat, lng: ev.lng, resolved: !!ev.venue_id || ev.lat !== null },
     entryMode: ev.entry_mode, priceFrom: ev.price_from, capacity: ev.capacity, age: ev.age, lineup: ev.lineup,
-    ticketUrl: ev.ticket_url, eventUrl: ev.event_url, brandUrl: ev.brand_url,
+    ticketUrl: ev.ticket_url, ticketLinks: ev.ticket_links ?? [], eventUrl: ev.event_url, brandUrl: ev.brand_url, soldOut: !!ev.sold_out,
     submittedAt: ev.submitted_at, publishedAt: ev.published_at,
     quality: qualityScore(draftFacts(ev)),
   };
@@ -92,6 +92,11 @@ export const DraftInput = z.object({
   age: z.enum(['All ages', '16+', '18+']),
   lineup: z.array(z.string().trim().min(1).max(100)).max(80),
   ticketUrl: z.string().url().nullable(),
+  /** More sellers, each for the viewers of some countries (ISO codes); the main link serves everyone else. */
+  ticketLinks: z.array(z.object({
+    url: z.string().trim().url().max(1000).refine((u) => /^https:\/\//i.test(u), 'https only'),
+    countries: z.array(z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/)).min(1).max(30).transform((c) => [...new Set(c)]),
+  })).max(5),
   eventUrl: z.string().url().nullable(),
   brandUrl: z.string().url().nullable(),
   city: launchedCity,
@@ -132,6 +137,7 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
   };
   for (const [k, col] of Object.entries(map)) if ((body as any)[k] !== undefined) set[col] = (body as any)[k];
   if (body.description) set.description = json(body.description);
+  if (body.ticketLinks) set.ticket_links = json(body.ticketLinks);
   if (body.lineup) { set.lineup = body.lineup; set.artists = body.lineup; }
   if (body.styles) set.styles = [...new Set(body.styles)];
   if (body.entryMode === 'free') set.price_from = 0;

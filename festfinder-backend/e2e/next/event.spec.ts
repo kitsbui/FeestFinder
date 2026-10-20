@@ -31,8 +31,10 @@ test.describe('the event page', () => {
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
     const types = blocks.flatMap((b) => (b['@graph'] ?? [b]).map((n: { '@type': string }) => n['@type']));
     for (const t of ['MusicEvent', 'FAQPage', 'WebPage', 'BreadcrumbList']) expect(types).toContain(t);
-    // The real page, rendered on the server: the title, the answer first, the line-up, the tiers, the FAQ.
-    expect(html).toMatch(/<h1[^>]*>Ravolution Music Festival<\/h1>[\s\S]*Ravolution Music Festival là sự kiện EDM[\s\S]*Hoaprox[\s\S]*Câu hỏi thường gặp[\s\S]*Vé thường/);
+    // The real page, rendered on the server: the title, the answer first, the line-up, the FAQ, and the way to the seller.
+    expect(html).toMatch(/<h1[^>]*>Ravolution Music Festival<\/h1>[\s\S]*Ravolution Music Festival là sự kiện EDM[\s\S]*Hoaprox[\s\S]*Câu hỏi thường gặp/);
+    expect(html).toContain('href="/go/ravo?src=detail"');
+    expect(html).not.toContain('Hạng vé');
     expect(html).not.toContain('/ui/theme.css');
     expect((await request.get('/e/no-such-event')).status()).toBe(404);
     const en = await (await request.get('/e/ravo?lang=en')).text();
@@ -40,21 +42,21 @@ test.describe('the event page', () => {
     expect(en).toContain('Frequently asked');
   });
 
-  test('opens in Vietnamese with updates, hype goals, the FAQ, resale and the discussion', async ({ page }) => {
+  test('opens in Vietnamese with updates, hype goals, the FAQ and the discussion', async ({ page }) => {
     const problems = await open(page, '/e/ravo');
     await expect(page.getByRole('heading', { level: 1, name: 'Ravolution Music Festival' })).toBeVisible();
-    // Hỏi đáp and Hype are folded under "Thêm" (design v2 phase 12).
-    await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
+    // Bình luận and Hype are folded under "Thêm" (design v2 phase 12).
+    await page.locator('summary', { hasText: /^Bình luận/ }).click();
     await page.locator('summary', { hasText: /^Hype/ }).click();
     for (const text of [/Tin từ BTC/i, /Cổng số 3 mở sớm/, /Công bố nghệ sĩ bí mật/, /Câu hỏi thường gặp/i, /Đại sứ/i]) {
       await expect(page.getByText(text).first()).toBeVisible();
     }
-    // One "Hỏi đáp": the organiser's answers, then the questions thread (design v2 phase 2).
-    await expect(page.getByRole('region', { name: 'Hỏi đáp' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Câu hỏi\s*3/ })).toHaveAttribute('aria-pressed', 'true');
-    // Resale folds under the tickets.
-    await page.locator('summary', { hasText: 'Pass vé' }).click();
-    await expect(page.getByText('1.050.000₫').first()).toBeVisible();
+    // One stream of comments (owner, 2026-10-20): the organiser's answers, then everything, no tabs.
+    await expect(page.getByRole('region', { name: 'Bình luận' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Câu hỏi\s*3/ })).toHaveCount(0);
+    await expect(page.locator('#discussion').getByRole('textbox', { name: 'Viết bình luận…' })).toBeVisible();
+    // FeestFinder sells no tickets: no resale under them.
+    await expect(page.locator('summary', { hasText: 'Pass vé' })).toHaveCount(0);
     // Nothing of the Bảng phấn look (/ops's), even after the links on the page were prefetched.
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.getAttribute('href')).filter((h) => /theme\.css|screens_/.test(h ?? '')))).toEqual([]);
@@ -63,9 +65,9 @@ test.describe('the event page', () => {
 
   test('opens in English at ?lang=en and keeps it in the address', async ({ page }) => {
     await open(page, '/e/ravo?lang=en');
-    await page.locator('summary', { hasText: /^Questions/ }).click();
+    await page.locator('summary', { hasText: /^Comments/ }).click();
     await expect(page.getByText('Frequently asked')).toBeVisible();
-    await expect(page.getByRole('button', { name: /Questions\s*3/ })).toBeVisible();
+    await expect(page.locator('#discussion').getByRole('textbox', { name: 'Write a comment…' })).toBeVisible();
     await expect(page).toHaveURL(/\/e\/ravo\?lang=en$/);
   });
 
@@ -81,22 +83,19 @@ test.describe('the event page', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Thêm' })).toBeVisible();
   });
 
-  test('every ticket button goes through /go: a tier and a quantity to the checkout here', async ({ page }) => {
+  test('every ticket button goes through /go to the seller: FeestFinder sells no tickets', async ({ page }) => {
     await open(page, '/e/ravo');
-    await page.getByRole('link', { name: /Chọn vé · từ 1\.200\.000₫/ }).click();
+    await page.getByRole('link', { name: 'Mua vé', exact: true }).first().click();
     await expect(page).toHaveURL(/#tickets$/);
-    const tiers = page.getByRole('radiogroup', { name: 'Hạng vé' });
-    await expect(tiers.getByRole('radio', { name: /Vé sớm/ })).toBeDisabled();
-    await tiers.getByRole('radio', { name: /^VIP/ }).click();
-    await page.getByRole('button', { name: 'Thêm một vé' }).click();
-    const buy = page.getByRole('link', { name: /Mua 2 vé VIP · 4\.800\.000₫/ });
-    const href = await buy.getAttribute('href');
-    expect(href).toMatch(/^\/go\/ravo\?src=tier&tier=[0-9a-f-]{36}&qty=2$/);
-    const hop = await page.request.get(href!, { maxRedirects: 0 });
+    const panel = page.locator('#tickets');
+    await expect(panel.getByText('từ 1.200.000₫')).toBeVisible();
+    await expect(panel.getByRole('radiogroup')).toHaveCount(0);
+    await expect(panel.getByText('Bán ở ticketbox.vn. FeestFinder không bán vé.')).toBeVisible();
+    const buy = panel.getByRole('link', { name: /^Mua vé/ });
+    await expect(buy).toHaveAttribute('href', '/go/ravo?src=detail');
+    const hop = await page.request.get('/go/ravo?src=detail', { maxRedirects: 0 });
     expect(hop.status()).toBe(302);
-    expect(hop.headers().location).toMatch(/^\/app\/checkout\/ravo\?tier=[0-9a-f-]{36}&qty=2$/);
-    await buy.click();
-    await expect(page).toHaveURL(/\/app\/checkout\/ravo/);
+    expect(hop.headers().location).toMatch(/^https:\/\/ticketbox\.vn\/ravolution-2026\?utm_source=feestfinder&utm_medium=referral&utm_campaign=ravo&utm_content=detail$/);
   });
 
   test('a night sold elsewhere goes out to the seller through /go; a free night points the way', async ({ page }) => {
@@ -108,7 +107,7 @@ test.describe('the event page', () => {
     const buy = page.getByRole('link', { name: 'Mua vé', exact: true }).last();
     await expect(buy).toHaveAttribute('href', '/go/nhacvien?src=detail');
     const hop = await page.request.get('/go/nhacvien?src=detail', { maxRedirects: 0 });
-    expect([hop.status(), hop.headers().location]).toEqual([302, 'https://tickets.example/nhacvien']);
+    expect([hop.status(), hop.headers().location]).toEqual([302, 'https://tickets.example/nhacvien?utm_source=feestfinder&utm_medium=referral&utm_campaign=nhacvien&utm_content=detail']);
 
     await open(page, '/e/outcast');
     await expect(page.getByRole('link', { name: 'Vào cửa miễn phí' })).toHaveAttribute('href', '#venue');
@@ -160,15 +159,35 @@ test.describe('the event page', () => {
     expect((await clip).suggestedFilename()).toMatch(/^ravo\.(mp4|webm)$/);
   });
 
-  test('a signed-in attendee posts a question', async ({ page }) => {
+  test('comments like a feed: post, reply to a reply with @name, like, edit, delete', async ({ page }) => {
     await signInWith(page, ATTENDEE);
     await open(page, '/e/ravo');
-    await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
-    const box = page.getByRole('textbox', { name: 'Hỏi nhà tổ chức hoặc người đi' });
+    await page.locator('summary', { hasText: /^Bình luận/ }).click();
+    const box = page.locator('#discussion').getByRole('textbox', { name: 'Viết bình luận…' });
     await box.fill('Có tủ gửi đồ cho balo không ạ?');
     await page.getByRole('button', { name: 'Đăng', exact: true }).click();
-    await expect(page.getByText('Có tủ gửi đồ cho balo không ạ?').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Câu hỏi\s*4/ })).toBeVisible();
+    const mine = page.locator('#discussion article', { hasText: 'Có tủ gửi đồ cho balo không ạ?' }).first();
+    await expect(mine).toBeVisible();
+    // Reply to it, then reply to that reply: the second one stays in the thread and names whom it answers.
+    await mine.getByRole('button', { name: 'Trả lời' }).click();
+    const author = (await mine.locator('.kd-hs').first().innerText()).trim();
+    await page.getByRole('textbox', { name: `Trả lời ${author}…` }).fill('Mình cũng muốn biết');
+    await page.locator('form', { has: page.getByRole('textbox', { name: `Trả lời ${author}…` }) }).getByRole('button', { name: 'Trả lời', exact: true }).click();
+    const reply = page.locator('#discussion article', { hasText: 'Mình cũng muốn biết' });
+    await expect(reply).toBeVisible();
+    await reply.getByRole('button', { name: 'Trả lời' }).click();
+    await page.getByRole('textbox', { name: `Trả lời ${author}…` }).fill('Cảm ơn nhé');
+    await page.locator('form', { has: page.getByRole('textbox', { name: `Trả lời ${author}…` }) }).getByRole('button', { name: 'Trả lời', exact: true }).click();
+    await expect(page.locator('#discussion article', { hasText: 'Cảm ơn nhé' })).toContainText('@' + author);
+    // Edit within 15 minutes, then delete.
+    await mine.getByRole('button', { name: 'Sửa' }).click();
+    const editing = page.locator('#discussion form', { has: page.getByRole('textbox', { name: 'Sửa' }) });
+    await editing.getByRole('textbox', { name: 'Sửa' }).fill('Có tủ gửi đồ không ạ?');
+    await editing.getByRole('button', { name: 'Lưu' }).click();
+    const edited = page.locator('#discussion article', { hasText: 'Có tủ gửi đồ không ạ?' }).first();
+    await expect(edited).toContainText('đã sửa');
+    await edited.getByRole('button', { name: 'Xoá' }).click();
+    await expect(page.locator('#discussion').getByText('Có tủ gửi đồ không ạ?')).toHaveCount(0);
   });
 
   test('picks sets into a plan from the stage timeline, and flags a clash', async ({ page }) => {
@@ -188,8 +207,8 @@ test.describe('the event page', () => {
 
   test('signs up with Google, comes back to the page, and a new account picks a role', async ({ page }) => {
     await open(page, '/e/ravo');
-    await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
-    await page.getByRole('textbox', { name: 'Hỏi nhà tổ chức hoặc người đi' }).click();
+    await page.locator('summary', { hasText: /^Bình luận/ }).click();
+    await page.locator('#discussion').getByRole('textbox', { name: 'Viết bình luận…' }).click();
     // The test API's Google stand-in answers at once; the real one asks which account.
     await page.getByRole('button', { name: 'Tiếp tục với Google' }).click();
     await expect(page.getByText(/Đã tạo tài khoản|Đã đăng nhập/).first()).toBeVisible();
@@ -240,13 +259,12 @@ test.describe('the ride button on an Android phone', () => {
   });
 });
 
-test('back from a checkout returns to the web event page it came from, not the app’s', async ({ page }) => {
+test('back from the group plan returns to the web event page it came from, not the app’s', async ({ page }) => {
   await signInWith(page, ATTENDEE);
   await page.goto('/e/ravo');
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-  // A ticket button leads to FeestFinder's checkout in the app.
-  await page.evaluate(() => location.assign('/app/checkout/ravo'));
-  await expect(page).toHaveURL(/\/app\/checkout\/ravo/);
+  await page.evaluate(() => location.assign('/app/plan/ravo'));
+  await expect(page).toHaveURL(/\/app\/plan\/ravo/);
   await page.getByRole('link', { name: 'Quay lại' }).first().click();
   await expect(page).toHaveURL(/\/e\/ravo$/);
 });

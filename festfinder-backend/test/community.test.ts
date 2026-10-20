@@ -5,6 +5,9 @@ import { emailUser, phoneUser } from './people.ts';
 import { many, one } from '../src/db/index.ts';
 import { buildEventSeo, pingIndexNow, queueIndexNow } from '../src/services/seo.ts';
 
+type Post = { id: string; createdAt: string; kind: string; replyTo?: { name: string } | null; replies: Post[] };
+type Note = { kind: string; title: { vi: string } };
+
 describe('community event pages', () => {
   let env: TestEnv;
   let minh: string;
@@ -47,7 +50,16 @@ describe('community event pages', () => {
     assert.ok(r.body.kinds.every((k: any) => k.open));
   });
 
-  it('asks for a proven phone number before anyone posts', async () => {
+  it('signing in is enough to post (owner, 2026-10-20)', async () => {
+    const ravo = env.ids.event.ravo;
+    const fresh = await emailUser(env, 'just.signed.in@example.com');
+    assert.equal((await env.as(fresh).get('/events/ravo/discussion')).body.me.canWrite, 'ok');
+    const posted = await env.as(fresh).post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Ai đi chung không?' });
+    assert.equal(posted.status, 201, JSON.stringify(posted.body));
+  });
+
+  it('with REQUIRE_PHONE_TO_POST, asks for a proven phone number before anyone posts', async () => {
+    env.ctx.config.requirePhoneToPost = true;
     const ravo = env.ids.event.ravo;
     assert.equal((await env.as().post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Hello' })).status, 401);
     const fresh = await emailUser(env, 'quiet.reader@example.com');
@@ -67,6 +79,7 @@ describe('community event pages', () => {
     const posted = await env.as(fresh).post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Ai đi chung không?' });
     assert.equal(posted.status, 201);
     assert.deepEqual(posted.body.post.author.badges, []);
+    env.ctx.config.requirePhoneToPost = false;
   });
 
   it('never signs anyone in to an account through a number that was only typed in', async () => {
@@ -147,10 +160,10 @@ describe('community event pages', () => {
     assert.ok(again.body.items.some((x: any) => x.id === p.body.post.id));
   });
 
-  it('opens track IDs once the music starts and closes the crew finder after the night', async () => {
+  it('keeps comments open before, during and after the night (D14), track IDs tied to a set', async () => {
     const ravo = env.ids.event.ravo;
     const before = await env.as(minh).post(`/events/${ravo}/posts`, { kind: 'trackid', body: 'Bài lúc 20:15 là gì vậy?' });
-    assert.equal(before.body.error.code, 'thread_closed');
+    assert.equal(before.status, 201, 'nothing closes by phase any more');
     env.clock.set('2026-09-19T20:30:00+07:00');
     try {
       const sets = (await env.as().get('/events/ravo')).body.timetable.days[0].stages[0].sets;
@@ -161,7 +174,7 @@ describe('community event pages', () => {
       assert.equal((await env.as().get('/events/ravo/discussion')).body.phase, 'live');
       env.clock.set('2026-09-21T10:00:00+07:00');
       const crew = await env.as(minh).post(`/events/${ravo}/posts`, { kind: 'crew', body: 'Đi chung về không?' });
-      assert.equal(crew.body.error.code, 'thread_closed');
+      assert.equal(crew.status, 201);
       const memory = await env.as(minh).post(`/events/${ravo}/posts`, { kind: 'memory', body: 'Đêm qua quá đã, cảm ơn BTC!' });
       assert.equal(memory.status, 201);
       assert.deepEqual((await env.as().get('/events/ravo/discussion')).body.kinds[0].kind, 'memory');
@@ -177,7 +190,9 @@ describe('community event pages', () => {
       startsOn: '2026-10-10', startTime: '20:00', endTime: '02:00', venueName: 'The Garden', address: '12 Nguyễn Đình Chiểu', area: 'Quận 1',
       entryMode: 'paid', priceFrom: 250_000, sourceUrl: 'https://instagram.com/p/techno-garden', lineup: ['Mya', 'Kanji'],
     };
+    env.ctx.config.requirePhoneToPost = true;
     assert.equal((await env.as(unproven).post('/community/events', body)).body.error.code, 'phone_unverified');
+    env.ctx.config.requirePhoneToPost = false;
     const scout = await phoneUser(env, '0912 222 333');
     const sent = await env.as(scout).post('/community/events', body);
     assert.equal(sent.status, 201);
@@ -267,5 +282,59 @@ describe('community event pages', () => {
       assert.equal((await keyed.as().get('/ff-indexnow-key-1.txt')).body, 'ff-indexnow-key-1');
       assert.equal((await many(keyed.ctx.db, 'select * from indexnow_queue')).length, 0);
     } finally { await keyed.close(); }
+  });
+
+  it('lets the team list every comment, newest first, and delete any of them', async () => {
+    const ravo = env.ids.event.ravo;
+    const author = await emailUser(env, 'loud.commenter@example.com');
+    const posted = await env.as(author).post(`/events/${ravo}/posts`, { kind: 'talk', body: 'Bình luận không phù hợp' });
+    assert.equal(posted.status, 201);
+    assert.equal((await env.as(minh).get('/admin/posts/reported?all=1')).status, 403);
+    const all = await env.as(admin).get('/admin/posts/reported?all=1');
+    // The test clock stands still, so several share the newest time: it is among them, reported or not.
+    assert.ok(all.body.items.some((p: Post) => p.id === posted.body.post.id), 'every comment, reported or not');
+    const times = all.body.items.map((p: Post) => new Date(p.createdAt).getTime());
+    assert.deepEqual(times, [...times].sort((x: number, y: number) => y - x), 'newest first');
+    const reported = await env.as(admin).get('/admin/posts/reported');
+    assert.ok(!reported.body.items.some((p: Post) => p.id === posted.body.post.id), 'the default is reported posts only');
+    assert.equal((await env.as(admin).delete(`/posts/${posted.body.post.id}`)).status, 200);
+    assert.ok(!(await env.as(admin).get('/admin/posts/reported?all=1')).body.items.some((p: Post) => p.id === posted.body.post.id));
+  });
+
+  it('comments like a feed: one stream, a reply to a reply with whom it answers, edits for 15 minutes, a notice to the one answered', async () => {
+    const ravo = env.ids.event.ravo;
+    const a = await emailUser(env, 'feed.a@example.com');
+    const b = await emailUser(env, 'feed.b@example.com');
+    await env.as(a).patch('/me', { name: 'An Feed' });
+    await env.as(b).patch('/me', { name: 'Bảo Feed' });
+    const root = (await env.as(a).post(`/events/${ravo}/posts`, { body: 'Ai đi từ Quận 7 không?' })).body.post;
+    assert.equal(root.kind, 'talk', 'a comment with no kind is a talk post');
+    const r1 = (await env.as(b).post(`/events/${ravo}/posts`, { parentId: root.id, body: 'Mình nè' })).body.post;
+    // A reply to a reply: it joins the first post's thread and names whom it answers.
+    const r2 = await env.as(a).post(`/events/${ravo}/posts`, { parentId: r1.id, body: 'Hẹn 17:00 nha' });
+    assert.equal(r2.status, 201, JSON.stringify(r2.body));
+    assert.equal(r2.body.post.parentId, root.id);
+    assert.equal(r2.body.post.replyTo.name, 'Bảo Feed');
+    // Bảo is told, not An (who wrote it).
+    const bNotes = (await env.as(b).get('/me/notifications')).body.items;
+    assert.ok(bNotes.some((n: Note) => n.kind === 'post_reply' && /An Feed đã trả lời bình luận của bạn/.test(n.title.vi)));
+    // One stream, newest first, every kind in it, no tab asked for.
+    const stream = await env.as().get('/events/ravo/discussion');
+    assert.equal(stream.body.kind, null);
+    assert.ok(stream.body.items.some((p: Post) => p.id === root.id));
+    assert.ok(new Set(stream.body.items.map((p: Post) => p.kind)).size >= 2, 'questions and talk side by side');
+    const thread = stream.body.items.find((p: Post) => p.id === root.id);
+    assert.deepEqual(thread.replies.map((r: Post) => r.replyTo?.name ?? null), [null, 'Bảo Feed']);
+    // Edits: its author, within 15 minutes.
+    assert.equal((await env.as(b).patch(`/posts/${root.id}`, { body: 'Đổi chữ' })).status, 403);
+    const edited = await env.as(a).patch(`/posts/${root.id}`, { body: 'Ai đi từ Quận 7 hay Quận 4 không?' });
+    assert.equal(edited.body.edited, true);
+    env.clock.advance(16 * 60_000);
+    assert.equal((await env.as(a).patch(`/posts/${root.id}`, { body: 'Muộn rồi' })).body.error.code, 'edit_window');
+    // Deleting your own: gone from the stream; the thread's replies stay under a placeholder.
+    assert.equal((await env.as(a).delete(`/posts/${root.id}`)).status, 200);
+    const after = (await env.as().get('/events/ravo/discussion')).body.items.find((p: Post) => p.id === root.id);
+    assert.equal(after.removed, true);
+    assert.equal(after.body, null);
   });
 });

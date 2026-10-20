@@ -15,7 +15,7 @@ import { TextArea } from '../../ui/forms';
 import { Row, Table, Tabs } from '../../ui/shell';
 import { act, Body, Drawer, Empty, ErrorBox, Field, Loading, PageHead, Pill, useLoad } from '../kit';
 import { useConsole } from '../root';
-import { Cell, Two } from '../orders/parts';
+import { Cell, Two } from '../parts';
 
 type Status = 'in_review' | 'open' | 'closed' | 'realized' | 'rejected';
 interface Item {

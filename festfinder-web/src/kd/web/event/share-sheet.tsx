@@ -35,7 +35,11 @@ export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void 
     url: location.host + '/e/' + ev.slug,
   };
   const link = async (channel: Channel) => {
-    try { return (await FF.post('/events/' + ev.id + '/shares', { channel })).url as string; } catch { return location.origin + '/e/' + ev.slug; }
+    try {
+      const r = (await FF.post('/events/' + ev.id + '/shares', { channel })) as { url: string; short: string | null };
+      // A copied link is the short one (/r/<code>/<slug>); a network's share box gets the page's own address.
+      return channel === 'copy' && r.short ? r.short : r.url;
+    } catch { return location.origin + '/e/' + ev.slug; }
   };
   const go = async (channel: Channel) => {
     if (channel === 'instagram') {
@@ -81,6 +85,7 @@ export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void 
     copy(channel === 'zalo' ? t.shareCopiedZalo : channel === 'messenger' ? t.shareCopiedMessenger : t.shareCopied);
   };
   const brought = personal?.mine?.broughtVisits ?? 0;
+  const pct = personal?.mine?.commissionPct ?? null;
   const tile = (channel: Channel, label: string, icon: React.ReactNode) => (
     <button key={channel} type="button" className="kd-btn kd-btn-ghost h-auto flex-col gap-2 py-3" onClick={() => go(channel)}>
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 shadow-[inset_0_0_0_1px_var(--color-line-1)]">{icon}</span>
@@ -109,6 +114,7 @@ export function ShareSheet({ lang, onClose }: { lang: Lang; onClose: () => void 
             <Button tone="acc" block onClick={async () => { await FF.shareFile(video.file!, ev.title); setVideo(null); }}>{t.videoReady}</Button>
           ) : null
         ) : null}
+        {pct ? <a className="kd-s kd-hit underline decoration-line-2 underline-offset-4" href="/app/commission">{fill(t.shareCommission, { p: pct.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US') })}</a> : null}
         {brought ? <p className="kd-s">{fill(pick({ b: { en: 'Your links brought {n} people here', vi: 'Link của bạn đã mang về {n} người' } }, lang).b, { n: brought })}</p> : null}
         <CollectRow lang={lang} />
       </div>

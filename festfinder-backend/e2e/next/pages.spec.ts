@@ -6,7 +6,7 @@ import { watch } from '../checks.ts';
  * the list by day is the default and its first event is in the first screen at 390 and 1440px;
  * the table is a view to ask for; the questions live on /about with their FAQPage JSON-LD; on a
  * phone the event page keeps "Mua vé" within reach and puts the tickets right after the hero;
- * the organiser's answers and everyone's questions are one "Hỏi đáp".
+ * the organiser's answers and everyone's comments are one "Bình luận".
  */
 
 async function open(page: Page, path: string) {
@@ -90,11 +90,11 @@ test('a phone: the facts, the tickets right after the hero, and "Mua vé" always
   expect(problems).toEqual([]);
 });
 
-test('one "Hỏi đáp": the organiser’s answers, then the questions; the rules behind "Quy tắc"', async ({ page }) => {
+test('one "Bình luận": the organiser’s answers, then the comments; the rules behind "Quy tắc"', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, '/e/ravo');
   // Under "Thêm" (design v2 phase 12): its row opens it.
-  await page.locator('summary', { hasText: /^Hỏi đáp/ }).click();
+  await page.locator('summary', { hasText: /^Bình luận/ }).click();
   const qa = page.locator('#discussion');
   await expect(qa).toBeVisible();
   await expect(qa.getByRole('heading', { level: 3, name: 'Câu hỏi thường gặp' })).toBeVisible();

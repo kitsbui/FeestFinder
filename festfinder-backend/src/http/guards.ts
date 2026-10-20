@@ -14,13 +14,14 @@ export function requireUser(req: FastifyRequest): UserSession {
 }
 
 /**
- * Writing what other people read (a post, a submitted event, a ticket for sale) needs a
- * Vietnamese number proven with a one-time code: Decree 147/2024 asks it of every network
- * where people publish. The screens answer `phone_unverified` by opening that step.
+ * Writing what other people read (a comment, a submitted event, a project, a mix). Signing in is
+ * enough (owner, 2026-10-20). With REQUIRE_PHONE_TO_POST (config.requirePhoneToPost) it also needs a
+ * Vietnamese number proven with a one-time code, as Decree 147/2024 asks of networks where people
+ * publish; the screens answer `phone_unverified` by opening that step.
  */
 export function requireWriter(req: FastifyRequest): UserSession {
   const s = requireUser(req);
-  if (!s.user.phoneVerified) {
+  if (req.server.ctx.config.requirePhoneToPost && !s.user.phoneVerified) {
     throw forbidden('phone_unverified', L('Confirm your phone number with a code before posting', 'Xác thực số điện thoại bằng mã trước khi đăng'));
   }
   return s;

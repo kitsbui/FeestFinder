@@ -2,7 +2,7 @@
 /**
  * "Tôi": a signed-in person's own places, one list shown in two places: the account menu on a
  * computer (web/chrome.tsx) and the hub at the top of /profile on a phone, where the tab bar's "Tôi"
- * leads. Their tickets, saved events, follows, projects and notifications; the workspaces
+ * leads. Their saved events, follows, projects and notifications; the workspaces
  * (ui/workspaces.tsx); then the language, settings, feedback and signing out.
  */
 import { useEffect, useState, type ReactNode } from 'react';
@@ -17,7 +17,7 @@ import { WorkspaceItems, WorkspaceRows } from '../ui/workspaces';
 import { WEB } from './copy';
 import { rememberLang, useOtherLang } from './lang';
 
-export interface MeCounts { tickets: number; saved: number; handle: string }
+export interface MeCounts { saved: number; handle: string; commission: number }
 
 /** The counts beside "Vé" and "Đã lưu", asked once per page. */
 export function useMeCounts(): MeCounts | null {
@@ -25,8 +25,8 @@ export function useMeCounts(): MeCounts | null {
   const [me, setMe] = useState<MeCounts | null>(null);
   useEffect(() => {
     if (!kd.user) return;
-    FF.once('kd:me', () => FF.maybe(FF.get('/me'), null)).then((r: { counts: { tickets: number; saved: number }; user: { email?: string; phone?: string } } | null) => {
-      if (r) setMe({ tickets: r.counts.tickets, saved: r.counts.saved, handle: r.user.email || r.user.phone || '' });
+    FF.once('kd:me', () => FF.maybe(FF.get('/me'), null)).then((r: { counts: { saved: number; commission?: number }; user: { email?: string; phone?: string } } | null) => {
+      if (r) setMe({ saved: r.counts.saved, handle: r.user.email || r.user.phone || '', commission: r.counts.commission ?? 0 });
     });
   }, [kd.user]);
   return kd.user ? me : null;
@@ -38,12 +38,13 @@ interface Place { key: string; label: string; href: string; aside?: number | nul
 function places(lang: Lang, me: MeCounts | null): Place[] {
   const T = pick(WEB, lang);
   return [
-    { key: 'tickets', label: T.myTickets, href: '/app/tickets', aside: me?.tickets ?? null },
     { key: 'saved', label: T.saved, href: inLang('/saved', lang), aside: me?.saved ?? null },
     { key: 'following', label: T.following, href: '/app/following' },
     { key: 'projects', label: T.myProjects, href: inLang('/p/mine', lang) },
     { key: 'notifications', label: T.notifications, href: '/app/notifications' },
     { key: 'alerts', label: T.alerts, href: '/app/alerts' },
+    // Only once a share link has earned something (growth plan card D).
+    ...(me?.commission ? [{ key: 'commission', label: T.commission, href: '/app/commission' }] : []),
   ];
 }
 

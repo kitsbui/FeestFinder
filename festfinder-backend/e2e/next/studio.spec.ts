@@ -22,11 +22,6 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
-async function eventId(page: Page, title: string): Promise<string> {
-  const { items } = await (await page.request.get('/organizer/events')).json();
-  return items.find((e: { title: string }) => e.title === title).id;
-}
-
 test('signed out, Studio asks to log in', async ({ page }) => {
   await open(page, '/studio');
   await expect(page.locator('[data-ff-gate]')).toBeVisible();
@@ -39,8 +34,10 @@ test.describe('Studio, signed in', () => {
   test('the dashboard: the next live event, its numbers, and a row picks another', async ({ page }) => {
     const problems = await open(page, '/studio');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ravolution Warm-up · Rooftop');
-    await expect(page.getByText('Đã bán', { exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Nhịp bán' })).toBeVisible();
+    // FeestFinder sells no tickets: the numbers are views, saves and clicks on Mua vé.
+    await expect(page.getByText('Lượt bấm mua vé', { exact: true })).toBeVisible();
+    await expect(page.getByText('Đã bán', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Bấm Mua vé mỗi ngày' })).toBeVisible();
     // The range asks for its own numbers.
     const asked = page.waitForRequest((r) => /\/performance\?range=30d/.test(r.url()));
     await page.getByRole('button', { name: '30 ngày' }).click();
@@ -103,60 +100,14 @@ test.describe('Studio, signed in', () => {
     expect(problems).toEqual([]);
   });
 
-  test('check-in: valid, then already used, then not a ticket', async ({ page }) => {
-    const id = await eventId(page, 'Ravolution Warm-up · Rooftop');
-    const { items } = await (await page.request.get(`/organizer/events/${id}/attendees?filter=out&limit=1`)).json();
-    const problems = await open(page, '/studio/door?event=' + id);
-    const code = page.getByRole('textbox', { name: 'Mã vé' });
-    await code.fill(items[0].ticketCode);
-    await page.getByRole('button', { name: 'Kiểm tra' }).click();
-    await expect(page.getByText('Hợp lệ', { exact: true })).toBeVisible();
-    await code.fill(items[0].ticketCode);
-    await page.getByRole('button', { name: 'Kiểm tra' }).click();
-    await expect(page.getByText('Đã dùng', { exact: true })).toBeVisible();
-    await code.fill('NOPE-0000');
-    await page.getByRole('button', { name: 'Kiểm tra' }).click();
-    await expect(page.getByText('Không hợp lệ', { exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Vừa quét' }).getByText(items[0].name).first()).toBeVisible();
-    expect(problems).toEqual([]);
-  });
-
-  test('attendees: counts, filters and the CSV', async ({ page }) => {
-    const problems = await open(page, '/studio/attendees');
-    await expect(page.getByText('Vé đã phát')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Tải CSV' })).toHaveAttribute('href', /attendees\.csv$/);
-    await page.getByRole('button', { name: /^Hoàn tiền/ }).click();
-    await expect(page.getByRole('button', { name: /^Hoàn tiền/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(problems).toEqual([]);
-  });
-
-  test('promos and guests: a new code, a new guest', async ({ page }) => {
-    await open(page, '/studio/promos');
-    await page.getByLabel('Mã', { exact: true }).fill('STUDIO10');
-    await page.getByLabel('Giảm (%)').fill('10');
-    await page.getByRole('button', { name: 'Tạo mã' }).click();
-    await expect(page.getByText('STUDIO10', { exact: true })).toBeVisible();
-    await page.getByLabel('Tên khách').fill('Khách Studio');
-    await page.getByRole('button', { name: 'Thêm khách' }).click();
-    await expect(page.getByText('Khách Studio', { exact: true })).toBeVisible();
-  });
-
   test('announcements: reach before sending, then it is listed', async ({ page }) => {
     await open(page, '/studio/announce');
-    await page.getByRole('button', { name: /^Đã mua vé/ }).click();
+    await page.getByRole('button', { name: /^Sẽ đi/ }).click();
     await expect(page.getByRole('status').filter({ hasText: /^Tới/ })).toBeVisible();
     await page.getByLabel('Tiêu đề').fill('Giờ mở cửa');
     await page.getByLabel('Nội dung').fill('Cổng mở lúc 19:00, nhớ mang vé.');
     await page.getByRole('button', { name: 'Gửi', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Đã gửi và đã hẹn' }).getByText('Giờ mở cửa')).toBeVisible();
-  });
-
-  test('revenue: what it made, the payouts and the account', async ({ page }) => {
-    const problems = await open(page, '/studio/revenue');
-    await expect(page.getByText('Thực nhận').first()).toBeVisible();
-    await expect(page.getByText('Tạm ứng 50%', { exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Tài khoản nhận tiền' }).getByText('Vietcombank')).toBeVisible();
-    expect(problems).toEqual([]);
   });
 
   test('the inbox: a thread and a reply; notifications; topics', async ({ page }) => {
@@ -168,10 +119,11 @@ test.describe('Studio, signed in', () => {
     await page.getByRole('tab', { name: 'Thông báo' }).click();
     await expect(page.getByRole('link', { name: /Tin bị trả lại/ })).toHaveAttribute('href', /\/studio\/inbox\?thread=/);
     await page.getByRole('tab', { name: 'Cài đặt' }).click();
-    const payouts = page.getByRole('switch', { name: 'Thanh toán' });
-    const was = (await payouts.getAttribute('aria-checked')) === 'true';
-    await payouts.click();
-    await expect.poll(async () => (await (await page.request.get('/organizer/notification-preferences')).json()).topics.find((t: { key: string }) => t.key === 'payouts').enabled).toBe(!was);
+    const bookings = page.getByRole('switch', { name: 'Booking' });
+    const was = (await bookings.getAttribute('aria-checked')) === 'true';
+    await bookings.click();
+    await expect.poll(async () => (await (await page.request.get('/organizer/notification-preferences')).json()).topics.find((t: { key: string }) => t.key === 'bookings').enabled).toBe(!was);
+    await expect(page.getByRole('switch', { name: 'Thanh toán' })).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 

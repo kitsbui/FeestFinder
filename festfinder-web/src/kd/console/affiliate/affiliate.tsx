@@ -20,10 +20,10 @@ import { Card as Panel } from '../../ui/parts';
 import { Row, Table, Tabs } from '../../ui/shell';
 import { act, Body, Choice, Drawer, Empty, ErrorBox, Field, FilterBar, Loading, PageHead, Pill, stamp, useLoad, useQuery } from '../kit';
 import { useConsole } from '../root';
-import { Cell, copyText, Tile, Tiles, Two } from '../orders/parts';
+import { Cell, copyText, Tile, Tiles, Two } from '../parts';
 import { AFFILIATE } from './copy';
 
-type Tab = 'summary' | 'links' | 'payouts';
+type Tab = 'summary' | 'links' | 'payouts' | 'ambassadors';
 type Kind = 'artist' | 'product' | 'brand' | 'campaign' | 'partner';
 interface Link {
   id: string; code: string; label: string; destinationUrl: string; kind: Kind; enabled: boolean; url: string; clicks30: number;
@@ -45,14 +45,14 @@ export function Affiliate() {
   const T = pick(AFFILIATE, lang);
   const [params, set] = useQuery();
   const raw = params.get('tab');
-  const tab: Tab = raw === 'links' || raw === 'payouts' ? raw : 'summary';
+  const tab: Tab = raw === 'links' || raw === 'payouts' || raw === 'ambassadors' ? raw : 'summary';
   return (
     <>
       <PageHead title={T.title} />
       <Body>
         <Tabs label={T.tabs} current={tab} onSelect={(k) => set({ tab: k === 'summary' ? null : k })}
-          items={[{ key: 'summary', label: T.tSummary }, { key: 'links', label: T.tLinks }, { key: 'payouts', label: T.tPayouts }]} />
-        {tab === 'links' ? <Links lang={lang} /> : tab === 'payouts' ? <Payouts lang={lang} /> : <SummaryTab lang={lang} params={params} set={set} />}
+          items={[{ key: 'summary', label: T.tSummary }, { key: 'links', label: T.tLinks }, { key: 'payouts', label: T.tPayouts }, { key: 'ambassadors', label: T.tAmbassadors }]} />
+        {tab === 'links' ? <Links lang={lang} /> : tab === 'payouts' ? <Payouts lang={lang} /> : tab === 'ambassadors' ? <Ambassadors lang={lang} /> : <SummaryTab lang={lang} params={params} set={set} />}
       </Body>
     </>
   );
@@ -245,6 +245,72 @@ function Payouts({ lang }: { lang: Lang }) {
           ))}
         </Table>
       )}
+    </>
+  );
+}
+
+interface Ambassador { user: { id: string; name: string | null; email: string | null }; payee: { bankName: string | null } | null; pending: number; payable: number; paid: number; conversions: number; noRate: number }
+interface AmbassadorPayout { id: string; user: { id: string; name: string | null }; amount: number; earnings: number; status: 'open' | 'paid'; createdAt: string; paidAt: string | null }
+
+/** Referrers and their share of partner commission (growth plan card D): gather what is owed, then mark it sent. */
+function Ambassadors({ lang }: { lang: Lang }) {
+  const T = pick(AFFILIATE, lang);
+  const kd = useKd();
+  const load = useLoad<{ items: Ambassador[]; payouts: AmbassadorPayout[]; minPayout: number }>('/admin/affiliate/ambassadors');
+  const [busy, setBusy] = useState<string | null>(null);
+  const run = async (key: string, path: string, done: string) => {
+    setBusy(key);
+    if (await act(kd, lang, () => FF.post(path))) { kd.toast(done); load.reload(); }
+    setBusy(null);
+  };
+  const vnd = (n: number) => money(n, 'VND', lang);
+  const COLS = 'minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr)';
+  const PCOLS = 'minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr)';
+  if (load.error && !load.data) return <ErrorBox error={load.error} retry={load.reload} />;
+  if (!load.data) return <Loading />;
+  const d = load.data;
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="kd-s">{fill(T.ambMin, { m: vnd(d.minPayout) })}</span>
+        <a className={buttonClass({ size: 'sm' })} href="/admin/partners/to-sign.csv" download><DownloadSimpleIcon size={14} aria-hidden="true" />{T.toSign}</a>
+      </div>
+      {!d.items.length ? <Empty title={T.noAmbassadors} /> : (
+        <Table label={T.ambTable} cols={COLS} head={[T.cPerson, T.cPending, T.cOwed, T.cPaid, '']}>
+          {d.items.map((a) => (
+            <Row key={a.user.id} cols={COLS}>
+              <Cell><Two title={a.user.name || a.user.email || '—'} sub={a.payee ? a.payee.bankName ?? '' : T.noPayee} /></Cell>
+              <Cell end className="kd-num text-sm">{vnd(a.pending)}</Cell>
+              <Cell end className="kd-num text-sm text-fg-1">{vnd(a.payable)}</Cell>
+              <Cell end className="kd-num text-sm">{vnd(a.paid)}</Cell>
+              <Cell end>
+                <Button size="sm" disabled={!a.payee || a.payable < d.minPayout || busy === a.user.id}
+                  aria-label={fill(T.payOutLabel, { p: a.user.name || a.user.email || '' })}
+                  onClick={() => run(a.user.id, `/admin/affiliate/ambassadors/${a.user.id}/payout`, T.settled)}>
+                  <CheckIcon size={14} aria-hidden="true" />{T.payOut}
+                </Button>
+              </Cell>
+            </Row>
+          ))}
+        </Table>
+      )}
+      {d.payouts.length ? (
+        <Table label={T.ambPayouts} cols={PCOLS} head={[T.cPerson, T.cCommission, T.cOrders, '']}>
+          {d.payouts.map((p) => (
+            <Row key={p.id} cols={PCOLS}>
+              <Cell className="kd-ell text-sm text-fg-1">{p.user.name || '—'}</Cell>
+              <Cell end className="kd-num text-sm text-fg-1">{vnd(p.amount)}</Cell>
+              <Cell end className="kd-num text-sm">{nf(p.earnings, lang)}</Cell>
+              <Cell end>
+                {p.status === 'paid'
+                  ? <Pill tone="ok">{T.paid}{p.paidAt ? ' · ' + stamp(p.paidAt, lang, false) : ''}</Pill>
+                  : <Button size="sm" disabled={busy === p.id} aria-label={fill(T.markPaidLabel, { p: p.user.name || '', d: stamp(p.createdAt, lang, false) })}
+                      onClick={() => run(p.id, `/admin/ambassador-payouts/${p.id}/paid`, T.paid)}><CheckIcon size={14} aria-hidden="true" />{T.markPaid}</Button>}
+              </Cell>
+            </Row>
+          ))}
+        </Table>
+      ) : null}
     </>
   );
 }

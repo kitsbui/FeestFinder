@@ -213,7 +213,7 @@ function Topics() {
     setTopics(out?.topics ?? []);
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const names: Record<string, string> = { moderation: T.topicModeration, tickets: T.topicTickets, payouts: T.topicPayouts, crew: T.topicCrew, bookings: T.topicBookings };
+  const names: Record<string, string> = { moderation: T.topicModeration, tickets: T.topicTickets, bookings: T.topicBookings };
   const set = async (key: string, on: boolean) => {
     setTopics((ts) => ts && ts.map((t) => (t.key === key ? { ...t, enabled: on } : t)));
     try { await FF.put('/organizer/notification-preferences', { [key]: on }); void load(); } catch (x) { kd.toast(FF.errorText(x, lang)); void load(); }

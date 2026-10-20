@@ -9,6 +9,7 @@ import { randomCode } from '../../lib/crypto.ts';
 import { dateStr, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, requireOrganizer, requireUser } from '../../http/guards.ts';
 import { appendAudit } from '../../services/audit.ts';
+import { MIN_PAYOUT } from '../../lib/affiliate.ts';
 
 /*
  * Affiliate links and the money side of partners.
@@ -18,6 +19,10 @@ import { appendAudit } from '../../services/audit.ts';
  *   GET  /admin/affiliate/payouts                each partner's settled periods
  *   POST /admin/affiliate/payouts                settle a partner's approved sales over a period
  *   POST /admin/affiliate/payouts/:id/paid       the money arrived
+ *   GET  /admin/affiliate/ambassadors            referrers with what they are owed (their share of partner commission)
+ *   POST /admin/affiliate/ambassadors/:id/payout gather a referrer's payable share into a payout (at least MIN_PAYOUT)
+ *   POST /admin/ambassador-payouts/:id/paid      the team sent the money
+ *   GET  /admin/partners/to-sign.csv             sellers without a deal, by clicks in 30 days: who to sign next
  *   GET  /organizer/affiliate                    where an organiser's ticket buttons sent people
  *   GET  /me/artist/links                        an artist's own links and their clicks
  */
@@ -220,6 +225,81 @@ export default async function adminAffiliateRoutes(app: FastifyInstance) {
     });
     await audit(s, 'affiliate_payout.paid', { type: 'ticket_partner', id: y.partner_id, label: y.partner_name }, [{ f: 'payout', a: 'open', b: 'paid' }]);
     return presentPayout(await one<any>(ctx.db, `${PAYOUTS} where y.id = $1`, [id]));
+  });
+
+  // ---- ambassadors: the referrers' share --------------------------------------------------------
+
+  app.get('/admin/affiliate/ambassadors', async (req) => {
+    requireAdmin(req);
+    type A = { id: string; name: string | null; email: string | null; has_payee: boolean; payee_bank_name: string | null; pending: string; payable: string; paid: string; conversions: number; no_rate: number };
+    const rows = await many<A>(ctx.db,
+      `select u.id, u.name, u.email, u.payee_account_no is not null as has_payee, u.payee_bank_name,
+              coalesce(sum(a.amount) filter (where a.status = 'pending'), 0)::bigint as pending,
+              coalesce(sum(a.amount) filter (where a.status = 'payable' and a.payout_id is null), 0)::bigint as payable,
+              coalesce(sum(a.amount) filter (where a.status = 'paid'), 0)::bigint as paid,
+              count(*) filter (where a.status <> 'void')::int as conversions,
+              count(*) filter (where a.reason = 'no_rate')::int as no_rate
+         from ambassador_earnings a join users u on u.id = a.user_id
+        group by u.id order by payable desc, pending desc limit 200`);
+    const payouts = await many<{ id: string; user_id: string; name: string | null; amount: string; earnings: number; status: string; created_at: Date; paid_at: Date | null }>(ctx.db,
+      `select y.*, u.name from ambassador_payouts y join users u on u.id = y.user_id order by y.created_at desc limit 100`);
+    return {
+      minPayout: MIN_PAYOUT,
+      items: rows.map((r) => ({
+        user: { id: r.id, name: r.name, email: r.email }, payee: r.has_payee ? { bankName: r.payee_bank_name } : null,
+        pending: Number(r.pending), payable: Number(r.payable), paid: Number(r.paid), conversions: r.conversions, noRate: r.no_rate,
+      })),
+      payouts: payouts.map((y) => ({ id: y.id, user: { id: y.user_id, name: y.name }, amount: Number(y.amount), earnings: y.earnings, status: y.status, createdAt: y.created_at, paidAt: y.paid_at })),
+    };
+  });
+
+  app.post<{ Params: { id: string } }>('/admin/affiliate/ambassadors/:id/payout', async (req, reply) => {
+    const s = requireAdmin(req);
+    const userId = parse(uuid, req.params.id);
+    const user = await one<{ id: string; name: string; payee_account_no: string | null }>(ctx.db, 'select id, name, payee_account_no from users where id = $1', [userId]);
+    if (!user) throw notFound();
+    if (!user.payee_account_no) throw badRequest('no_payee', L('This person has not added a bank account yet', 'Người này chưa thêm tài khoản nhận tiền'));
+    const id = await ctx.db.tx(async (q) => {
+      const due = await many<{ id: string; amount: string }>(q,
+        `select id, amount from ambassador_earnings where user_id = $1 and status = 'payable' and payout_id is null for update`, [userId]);
+      const amount = due.reduce((n, r) => n + Number(r.amount), 0);
+      if (amount < MIN_PAYOUT) throw badRequest('below_minimum', L(`Less than ${MIN_PAYOUT.toLocaleString('en-US')} VND is owed`, `Số dư chưa tới ${MIN_PAYOUT.toLocaleString('vi-VN')}₫`));
+      const row = await one<{ id: string }>(q,
+        'insert into ambassador_payouts (user_id, amount, earnings, created_by, created_at) values ($1,$2,$3,$4,$5) returning id',
+        [userId, amount, due.length, s.user.id, ctx.clock.now()]);
+      await q.query('update ambassador_earnings set payout_id = $2 where id = any($1::uuid[])', [due.map((r) => r.id), row!.id]);
+      return row!.id;
+    });
+    await audit(s, 'ambassador_payout.created', { type: 'user', id: user.id, label: user.name }, [{ f: 'payout', a: '—', b: 'open' }]);
+    return reply.code(201).send({ id, message: L('Payout ready to send', 'Đã gom kỳ trả') });
+  });
+
+  app.post<{ Params: { id: string } }>('/admin/ambassador-payouts/:id/paid', async (req) => {
+    const s = requireAdmin(req);
+    const id = parse(uuid, req.params.id);
+    const y = await one<{ user_id: string; name: string; status: string }>(ctx.db, 'select y.user_id, y.status, u.name from ambassador_payouts y join users u on u.id = y.user_id where y.id = $1', [id]);
+    if (!y) throw notFound();
+    if (y.status === 'paid') throw conflict('already_paid', L('Already marked paid', 'Đã đánh dấu đã trả'));
+    const now = ctx.clock.now();
+    await ctx.db.tx(async (q) => {
+      await q.query(`update ambassador_payouts set status = 'paid', paid_at = $2 where id = $1`, [id, now]);
+      await q.query(`update ambassador_earnings set status = 'paid', updated_at = $2 where payout_id = $1`, [id, now]);
+    });
+    await audit(s, 'ambassador_payout.paid', { type: 'user', id: y.user_id, label: y.name }, [{ f: 'payout', a: 'open', b: 'paid' }]);
+    return { id, status: 'paid' };
+  });
+
+  /** Ticket sites people were sent to in the last 30 days that no partner covers: the list to take to a deal. */
+  app.get('/admin/partners/to-sign.csv', async (req, reply) => {
+    requireAdmin(req);
+    const rows = await many<{ host: string; clicks: number; events: number; cities: string | null }>(ctx.db,
+      `select k.target_host as host, count(*)::int as clicks, count(distinct k.event_id)::int as events,
+              string_agg(distinct e.city, ' ') as cities
+         from outbound_clicks k left join events e on e.id = k.event_id
+        where k.created_at >= $1 and k.target = 'organizer' and k.target_host is not null
+        group by k.target_host order by clicks desc limit 500`, [since(30)]);
+    return reply.type('text/csv; charset=utf-8').header('content-disposition', 'attachment; filename="sellers-to-sign.csv"')
+      .send(toCsv(['host', 'clicks', 'events', 'cities'], rows.map((r) => [r.host, r.clicks, r.events, r.cities ?? ''])));
   });
 
   // ---- what organisers and artists see --------------------------------------------------------

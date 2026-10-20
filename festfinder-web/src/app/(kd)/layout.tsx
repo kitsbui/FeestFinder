@@ -18,6 +18,7 @@ import { SkipLink } from '@/kd/ui/skip-link';
 import { ScriptFonts } from '@/kd/ui/script-fonts';
 import { FeedbackWidget } from '@/kd/feedback/widget';
 import { Vitals } from '@/kd/ui/vitals';
+import { Worker } from '@/kd/ui/worker';
 
 export const metadata: Metadata = siteMetadata;
 
@@ -45,6 +46,7 @@ export default function KdLayout({ children }: { children: ReactNode }) {
           <BrokenCovers />
           <FeedbackWidget />
           <Vitals />
+          <Worker />
           <ExtensionGuardRelease />
         </ff-app>
       </body>

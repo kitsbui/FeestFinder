@@ -3,11 +3,11 @@
  * /console/events: the whole catalogue. Every filter lives in the address (search, status with
  * its counts, when with a date range, genre, district, organiser, entry, traits), then the sort,
  * the page and the CSV with the same filters. A row's title opens the listing; its menu
- * features it, duplicates it as a draft, changes its status or opens its orders.
+ * features it, duplicates it as a draft or changes its status.
  */
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ArrowSquareOutIcon, CopyIcon, DotsThreeIcon, DownloadSimpleIcon, PencilSimpleIcon, PlusIcon, ReceiptIcon, SealCheckIcon, StackIcon, StarIcon,
+  ArrowSquareOutIcon, CopyIcon, DotsThreeIcon, DownloadSimpleIcon, PencilSimpleIcon, PlusIcon, SealCheckIcon, StackIcon, StarIcon,
 } from '@phosphor-icons/react/ssr';
 import { useRouter } from 'next/navigation';
 import { FF } from '@/runtime/ff';
@@ -87,7 +87,7 @@ export function EventList() {
     ['upcoming', T.wUpcoming], ['today', T.wToday], ['weekend', T.wWeekend], ['week', T.wWeek], ['month', T.wMonth], ['past', T.wPast], ['undated', T.wUndated], ['range', T.wRange],
   ].map(([value, label]) => ({ value, label }));
   const sorts = [
-    ['date', T.sDate], ['date_desc', T.sDateDesc], ['updated', T.sUpdated], ['hype', T.sHype], ['saves', T.sSaves], ['sold', T.sSold], ['quality', T.sQuality], ['title', T.sTitle],
+    ['date', T.sDate], ['date_desc', T.sDateDesc], ['updated', T.sUpdated], ['hype', T.sHype], ['saves', T.sSaves], ['clicks', T.sSold], ['quality', T.sQuality], ['title', T.sTitle],
   ].map(([value, label]) => ({ value, label }));
   const split = (k: string, sep = ',') => (get(k) ? get(k).split(sep) : []);
   const active = [filters.q, filters.status, when !== 'upcoming' ? when : '', filters.genre, filters.area, filters.organizerId, filters.entry, get('traits')].some(Boolean);
@@ -161,9 +161,7 @@ export function EventList() {
                 <span role="cell" className="kd-num text-right text-sm">
                   {e.entryMode === 'free' ? T.free : e.entryMode === 'donation' ? T.donation : e.priceFrom ? (e.currency ? money(e.priceFrom, e.currency, lang) : e.priceFrom.toLocaleString(INTL[lang])) : '—'}
                 </span>
-                <span role="cell" className={`kd-num text-right text-sm ${e.capacity && e.sold / e.capacity > 0.9 ? 'text-warn' : ''}`}>
-                  {e.capacity ? `${count(e.sold, lang)} / ${count(e.capacity, lang)}` : e.sold ? count(e.sold, lang) : '—'}
-                </span>
+                <span role="cell" className="kd-num text-right text-sm">{e.clicks ? count(e.clicks, lang) : '—'}</span>
                 <span role="cell" className="flex flex-col items-end">
                   <span className="kd-num text-sm">{count(e.hype, lang)}</span>
                   <span className="kd-s kd-num text-xs">{fill(T.savesN, { n: count(e.saves, lang) })}</span>
@@ -196,7 +194,6 @@ function RowMenu({ e, lang, onFeature, onDuplicate, run }: {
       {e.status === 'in_review' ? <MenuItem icon={i(StackIcon)} href={'/console?id=' + e.id}>{T.openQueue}</MenuItem> : null}
       <MenuItem icon={i(StarIcon)} onSelect={() => onFeature(e)}>{e.featured ? T.unfeature : T.feature}</MenuItem>
       <MenuItem icon={i(CopyIcon)} onSelect={() => onDuplicate(e)}>{T.duplicate}</MenuItem>
-      <MenuItem icon={i(ReceiptIcon)} href={'/console/orders' + qs({ event: e.id, eventLabel: e.title })}>{T.orders}</MenuItem>
       {statusItems(e, run, lang)}
     </Menu>
   );

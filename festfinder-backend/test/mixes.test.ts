@@ -73,7 +73,9 @@ describe('mixes on an artist page', () => {
   after(async () => { await env.close(); });
 
   it('the artist adds sets from three services; publishing needs a confirmed phone', async () => {
+    env.ctx.config.requirePhoneToPost = true;
     assert.equal((await env.as(owner).post('/me/artist/mixes', { url: SC })).body.error.code, 'phone_unverified');
+    env.ctx.config.requirePhoneToPost = false;
     await verify('mix.owner@example.com');
     const preview = await env.as(owner).post('/me/artist/mixes/preview', { url: SC });
     assert.equal(preview.status, 200, JSON.stringify(preview.body));
@@ -123,7 +125,9 @@ describe('mixes on an artist page', () => {
 
   it('comments: a confirmed phone, a moment in the set, replies tell their thread, the artist hears of new ones', async () => {
     const id = (await env.as().get('/artists/may-dem')).body.mixes[0].id;
+    env.ctx.config.requirePhoneToPost = true;
     assert.equal((await env.as(other).post(`/mixes/${id}/comments`, { body: 'Track ID?' })).body.error.code, 'phone_unverified');
+    env.ctx.config.requirePhoneToPost = false;
     const c = await env.as(fan).post(`/mixes/${id}/comments`, { body: 'Track ID ở đoạn này?', at: '45:30' });
     assert.equal(c.status, 201, JSON.stringify(c.body));
     assert.equal(c.body.comment.atS, 2730);

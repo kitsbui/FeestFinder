@@ -232,26 +232,6 @@ export default async function authRoutes(app: FastifyInstance) {
     return back({ auth: 'email', via: user.created ? 'signup' : 'signin' });
   });
 
-  /**
-   * A guest buying a ticket (phase 17, owner 2026-10-19): an email and a phone make the account
-   * silently and sign it in, so the order has someone to belong to and the ticket an address to
-   * go to; proving the email later (a code or the link) takes the account over. An address that
-   * already has an account is not taken: that person signs in with a code instead.
-   */
-  app.post('/auth/guest', async (req, reply) => {
-    const body = parse(z.object({ email: z.string().min(3).max(200), phone: z.string().max(30).optional(), name: z.string().trim().max(80).optional() }), req.body);
-    const ip = req.ip ?? 'ip';
-    if (recentFailures(`guest:${ip}`).length >= LOGIN_MAX_FAILURES) throw tooMany('too_many_requests', L('Too many attempts. Try again later.', 'Thử quá nhiều lần. Hãy thử lại sau.'));
-    noteFailure(`guest:${ip}`);
-    const email = identifierFor('email', body.email);
-    const phone = body.phone?.trim() ? identifierFor('sms', body.phone) : null;
-    const existing = await one<{ id: string }>(ctx.db, 'select id from users where email = $1', [email]);
-    if (existing) throw conflict('account_exists', L('That email already has an account: log in with a code sent to it', 'Email này đã có tài khoản: hãy đăng nhập bằng mã gửi tới email'));
-    const now = ctx.clock.now();
-    const made = await one<{ id: string }>(ctx.db, `insert into users (name, email, phone, signup_method, created_at) values ($1, $2, $3, 'guest', $4) returning id`, [body.name ?? '', email, phone, now]);
-    return issue(reply, made!.id, true, 'guest');
-  });
-
   /** Set a password (password reset): 8+ characters. */
   app.post('/auth/password', async (req, reply) => {
     const body = parse(z.object({ token: z.string().min(10), password: z.string().max(200), passwordConfirm: z.string().max(200).optional() }), req.body);

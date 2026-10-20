@@ -8,7 +8,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, ChatTextIcon, CoinsIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, SignOutIcon, SquaresFourIcon, TrayIcon, UsersIcon,
+  BuildingsIcon, CalendarDotsIcon, CaretUpDownIcon, ChatTextIcon, MegaphoneIcon, MicrophoneStageIcon, PlusIcon, SignOutIcon, SquaresFourIcon, TrayIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { COMMON, fill, pick, type Lang, type Pair } from '../copy';
@@ -30,7 +30,7 @@ export interface OrgEvent {
   id: string; slug: string; title: string; status: 'draft' | 'in_review' | 'live' | 'rejected' | 'ended' | string; statusLabel: Pair;
   startsOn: string | null; endsOn: string | null; startTime: string | null; endTime: string | null; genre: string | null;
   venueName: string | null; area: string | null; entryMode: 'free' | 'paid' | 'donation'; priceFrom: number;
-  views: number | null; saves: number | null; clicks: number | null; sold: number | null; hasPerformance: boolean; meta: Pair;
+  views: number | null; saves: number | null; clicks: number | null; hasPerformance: boolean; meta: Pair;
   coverUrl?: string | null; qualityScore?: number | null; missing?: string[]; submittedAt?: string | null; updatedAt?: string | null;
   lastDecision?: { decision: string; code: string | null; message: string | null; at: string; reason: Pair | null } | null;
 }
@@ -235,21 +235,13 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
           <a className={buttonClass({ tone: 'acc', size: 'sm' }, 'mb-3 shrink-0')} href="/studio/new"><PlusIcon size={16} aria-hidden="true" />{T.newEvent}</a>
         </>
       )}
-      // Seven entries in sight (design v2 phase 5); the guests and the promotion pages fold under theirs.
+      // Five entries in sight: FeestFinder sells no tickets (owner, 2026-10-20), so guests, the door, revenue and promo codes went; the promotion pages fold under theirs.
       items={[
         { key: 'dash', label: T.today, href: '/studio', icon: i(SquaresFourIcon) },
         { key: 'events', label: T.events, href: '/studio/events', icon: i(CalendarDotsIcon) },
         {
-          key: 'guests', label: T.guestsDoor, href: '/studio/attendees', icon: i(UsersIcon), sub: [
-            { key: 'attendees', label: T.attendees, href: '/studio/attendees' },
-            { key: 'door', label: T.door, href: '/studio/door' },
-          ],
-        },
-        { key: 'revenue', label: T.revenue, href: '/studio/revenue', icon: i(CoinsIcon) },
-        {
           key: 'promote', label: T.promote, href: '/studio/announce', icon: i(MegaphoneIcon), sub: [
             { key: 'announce', label: T.announce, href: '/studio/announce' },
-            { key: 'promos', label: T.promos, href: '/studio/promos' },
             { key: 'ads', label: T.ads, href: '/studio/ads' },
           ],
         },

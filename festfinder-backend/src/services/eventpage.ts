@@ -4,6 +4,8 @@ import { initialsOf } from '../lib/contact.ts';
 import type { Localized } from '../lib/i18n.ts';
 import { discussionCounts, faqFor } from '../routes/discussion.ts';
 import { kindsShown, nameOf, phaseOf, type Phase } from './community.ts';
+import { sharePct } from '../lib/affiliate.ts';
+import { partnerForUrl } from './partners.ts';
 import { latestUpdates } from '../routes/night.ts';
 
 const firstName = (name: string | null) => nameOf(name).split(/\s+/).slice(-1)[0];
@@ -38,6 +40,8 @@ export async function eventExtras(q: Queryable, ev: any, viewerId: string | null
          from organizers o where o.id = $2`, [viewerId, ev.organizer_id, ev.id]),
   ]);
 
+  // What a signed-in sharer would earn of a sale their link brings, when the seller is a partner (lib/affiliate.ts).
+  const partner = viewerId && ev.entry_mode === 'paid' && ev.ticket_url ? await partnerForUrl(q, String(ev.ticket_url)) : null;
   const count = ev.hype_count as number;
   const shaped = goals.map((g) => ({ threshold: g.threshold as number, reward: g.reward as Localized, reached: !!g.reached_at }));
   const next = shaped.find((g) => !g.reached) ?? null;
@@ -65,6 +69,7 @@ export async function eventExtras(q: Queryable, ev: any, viewerId: string | null
     mine: mine ? {
       refCode: mine[0]?.ref_code ?? null,
       broughtVisits: mine[1]!.n,
+      commissionPct: partner && Number(partner.commission_pct) > 0 ? sharePct(Number(partner.commission_pct)) : null,
       claim: claim?.community ? { organiser: !!claim.organiser, canClaim: !!claim.organiser && !claim.pending, pending: !!claim.pending } : null,
     } : null,
   };

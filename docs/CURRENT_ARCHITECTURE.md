@@ -50,7 +50,7 @@ The API checks the signature in an `onRequest` hook (`webProxy` in `app.ts`) and
 | --- | --- | --- |
 | Identity | `users`, `social_connections`, `friendships`, `otp_challenges`, `password_tokens`, `oauth_states`, `sessions` | Google first; FB/IG/Zalo/WA when configured. Writing needs a proven Vietnamese phone (Decree 147/2024). |
 | Catalogue | `organizers`, `organizer_members`, `venues`, `events`, `ticket_tiers`, `stages`, `sets`, `site_zones`, `shelves`, `shelf_items` | One row per event; `events` is already the canonical table. |
-| Commerce | `orders`, `tickets`, `scans`, `guest_list`, `promo_codes`, `payout_transfers`, `ticket_listings`, `resale_orders`, `ticket_transfers` | VND only; VietQR/Momo/ZaloPay/card. |
+| Commerce | none since 2026-10-20 | FeestFinder sells no tickets (owner): the commerce tables moved to the `archive_ticketing` schema in migration 051; ticket buttons go through `/go` to the seller, counted in `outbound_clicks`. |
 | Engagement | `saves`, `hypes`, `going`, `organizer_follows`, `artist_follows`, `smart_alerts`, `notifications`, `outbox`, `collections`, … | `smart_alerts` already matches genres, artists, organisers, areas and price on new listings. |
 | Community | `event_posts`, `hype_goals`, `event_shares`, `share_visits`, `event_claims`, `event_updates` | |
 | Operations | `moderation_decisions`, `appeals`, `listing_reports`, `audit_log` (hash-chained), `ai_calls`, `indexnow_queue` | |
@@ -101,7 +101,7 @@ There is no crawler, raw store, provider list or scheduled ingestion. On 2026-10
 | Surface | URL | Notes |
 | --- | --- | --- |
 | Web | `/`, `/list`, `/e/:slug`, `/o/:slug`, `/c/:slug`, `/saved` | The browser loads `GET /events?time=all&limit=60` once and filters on the client. `/list` has Table and Grid views with city/time/genre chips; `/map` redirects to `/list`. |
-| App | `/app/*` | Feed, tickets, plans, live mode, `/app/list` |
+| App | `/app/*` | Plans, live mode, the guide, recaps, notifications, settings |
 | Studio / Console | `/studio`, `/studio/artist`, `/console` | the back offices: organisers, artists, and the team (review queue with bulk and keys, catalogue, venues, claims, organisers, accounts, orders, audit) |
 
 The map was removed on 2026-10-02 (commit `138fa3a`) because it cost more than it gave. No map library is vendored. The CSP allows `connect-src 'self'` only, in both fronts.
@@ -169,3 +169,6 @@ The Next front (`festfinder-web`) was rebuilt in the Kính đêm design, route b
 | New API (Phase 4–5) | migrations `027`–`030` | Boost requests (`027`), badges (`028`, `services/badges.ts`), Moments (`029`, `routes/moments.ts`), row level security on them (`030`); per-day Studio performance, the Console's numbers board. |
 | Tests | `festfinder-backend/e2e/next/` | One spec per area of the site and of each back office. |
 
+## Since 2026-10-20: no ticket sales
+
+The owner decided FeestFinder sells no tickets and runs no door. Removed: checkout (`routes/commerce.ts`), resale, the door scanner and gate-crew sessions, revenue and payouts (`services/payouts.ts`), promo codes, refunds, the Console's order desk, the guest checkout (`POST /auth/guest`), and the screens `/app/tickets`, `/app/checkout`, `/studio/attendees|door|revenue|promos`, `/console/orders` (they redirect to their nearest place). Migration 051 moves the twelve commerce tables and `event_staff` to `archive_ticketing`. What a night draws is its views, saves and ticket clicks; who went to it is `services/attendance.ts`.

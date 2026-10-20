@@ -1,17 +1,16 @@
 'use client';
-/** The listing fields the wizard and the editor share: tiers, the lineup, the venue, an upload, an appeal. */
+/** The listing fields the wizard and the editor share: the lineup, the venue, an upload, an appeal. */
 import { useRef, useState } from 'react';
-import { CameraIcon, ImageSquareIcon, MapPinIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { CameraIcon, ImageSquareIcon, MapPinIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { fill, INTL, type Lang, pick } from '../copy';
-import { cx } from '../cx';
+import { fill, type Lang, pick } from '../copy';
 import { useKd } from '../runtime';
-import { Button, Chip, IconButton } from '../ui/actions';
+import { Button, Chip } from '../ui/actions';
 import { FieldLabel, Input, TextArea } from '../ui/forms';
 import { Status } from '../ui/parts';
 import { STUDIO } from './copy';
 import { FrameButton, FramedThumb } from '../ui/frame-editor';
-import { int, type Tier, type Venue } from './wizard-model';
+import { type Venue } from './wizard-model';
 
 /** A listing sent back can be appealed once, within its window. */
 export function Appeal({ lang, eventId }: { lang: Lang; eventId: string }) {
@@ -27,31 +26,6 @@ export function Appeal({ lang, eventId }: { lang: Lang; eventId: string }) {
       <Button size="sm" className="self-start" disabled={text.trim().length < 10} onClick={async () => {
         try { const out = await FF.post(`/organizer/events/${eventId}/appeal`, { reply: text.trim() }); kd.toast(FF.text(out.message, lang)); setDone(true); } catch (e) { kd.toast(FF.errorText(e, lang)); }
       }}>{T.appealSend}</Button>
-    </div>
-  );
-}
-
-export function newTier(price = ''): Tier {
-  return { key: 't' + Math.random().toString(36).slice(2, 8), name: '', price, capacity: '', sold: 0 };
-}
-
-export function Tiers({ lang, currency, rows, onChange }: { lang: Lang; currency: string; rows: Tier[]; onChange: (t: Tier[]) => void }) {
-  const T = pick(STUDIO, lang);
-  const sym = currency === 'VND' ? '₫' : currency;
-  const upd = (i: number, p: Partial<Tier>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
-  const cols = 'grid grid-cols-[minmax(0,1fr)_120px_96px_44px] items-center gap-2 max-sm:grid-cols-[minmax(0,1fr)_96px_72px_44px]';
-  return (
-    <div className="flex flex-col gap-2">
-      <div className={cx(cols, 'kd-m')}><span>{T.tier}</span><span>{fill(T.tierPrice, { c: sym })}</span><span>{T.tierQty}</span><span /></div>
-      {rows.map((t, i) => (
-        <div key={t.key} className={cols}>
-          <Input value={t.name} maxLength={60} placeholder={T.tierNamePh} aria-label={T.tierName} onChange={(e) => upd(i, { name: e.target.value })} />
-          <Input className="kd-num" inputMode="numeric" value={t.price ? int(t.price).toLocaleString(INTL[lang]) : ''} placeholder="450.000" aria-label={fill(T.tierPrice, { c: sym })} onChange={(e) => upd(i, { price: e.target.value.replace(/[^0-9]/g, '') })} />
-          <Input className="kd-num" inputMode="numeric" value={t.capacity} placeholder="100" aria-label={T.tierQty} onChange={(e) => upd(i, { capacity: e.target.value.replace(/[^0-9]/g, '') })} />
-          <IconButton label={t.sold ? fill(T.tierSold, { n: t.sold }) : T.tierRemove} disabled={t.sold > 0 || rows.length === 1} onClick={() => onChange(rows.filter((_, j) => j !== i))}><TrashIcon size={16} aria-hidden="true" /></IconButton>
-        </div>
-      ))}
-      {rows.length < 12 ? <Button tone="ghost" size="sm" className="-ml-3 self-start" onClick={() => onChange([...rows, newTier()])}><PlusIcon size={16} aria-hidden="true" />{T.addTier}</Button> : null}
     </div>
   );
 }

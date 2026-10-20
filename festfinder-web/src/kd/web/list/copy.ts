@@ -19,7 +19,7 @@ export const LIST = {
   month: { en: 'This month', vi: 'Tháng này' },
   genre: { en: 'Genre', vi: 'Thể loại' },
   allGenres: { en: 'Every genre', vi: 'Mọi thể loại' },
-  kind: { en: 'Night', vi: 'Kiểu đêm' },
+  kind: { en: 'Kind', vi: 'Loại' },
   anyKind: { en: 'Any night', vi: 'Mọi kiểu' },
   free: { en: 'Free', vi: 'Miễn phí' },
   priceUnknown: { en: 'Price not given yet', vi: 'Chưa rõ giá' },

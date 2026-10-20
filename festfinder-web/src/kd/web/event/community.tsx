@@ -1,12 +1,11 @@
 'use client';
 /**
- * The event's community: hype and its goals, the discussion (questions, talk, finding a
- * crew, track IDs and memories, depending on whether it is before, during or after), the
+ * The event's community: hype and its goals, the comments (one stream, like a feed), the
  * photo wall and the ambassadors who brought people in.
  */
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
-  ArrowBendUpLeftIcon, CameraIcon, CheckCircleIcon, FireIcon, FlagIcon, LockSimpleIcon, PushPinIcon, ThumbsUpIcon, TrashIcon, EyeSlashIcon, XIcon,
+  ArrowBendUpLeftIcon, CameraIcon, CheckCircleIcon, FireIcon, FlagIcon, LockSimpleIcon, PencilSimpleIcon, PushPinIcon, ThumbsUpIcon, TrashIcon, EyeSlashIcon, XIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, tx } from '../../copy';
@@ -14,9 +13,8 @@ import { cx } from '../../cx';
 import { count } from '../../format';
 import { PhoneSheet } from '../../phone';
 import { useKd } from '../../runtime';
-import { Button, Chip } from '../../ui/actions';
-import { TextArea, Input } from '../../ui/forms';
-import { Picker } from '../../ui/menu';
+import { Button } from '../../ui/actions';
+import { TextArea } from '../../ui/forms';
 import { Accordion, Avatar, BarTrack, Tag } from '../../ui/parts';
 import type { Discussion, Post } from '../../types';
 import { WEB } from '../copy';
@@ -88,31 +86,34 @@ export function Hype({ lang, bare }: { lang: Lang; bare?: boolean }) {
   );
 }
 
-// ---- discussion ----------------------------------------------------------------------
+// ---- comments -------------------------------------------------------------------------
 
-/** `bare`: inside the page's "Thêm" (more.tsx), whose row names it. */
+/**
+ * Comments like a feed (owner, 2026-10-20): one stream, newest first; anyone signed in writes; a
+ * reply to any comment sits flat under the first post of its thread and starts with "@name";
+ * like, edit for 15 minutes, delete your own; the organiser and the team hide, pin or delete any.
+ * `bare`: inside the page's "Thêm" (more.tsx), whose row names it.
+ */
 export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }) {
   const { ev, reload: reloadEvent } = useEvent();
   const kd = useKd();
   const T = pick(WEB, lang);
-  const [kind, setKind] = useState<string | null>(null);
-  const [sort, setSort] = useState<'top' | 'new'>('top');
   const [d, setD] = useState<Discussion | null>(null);
   const [more, setMore] = useState<Record<string, Post[]>>({});
-  const [replyTo, setReplyTo] = useState<string | null>(null);
+  /** The comment being answered: its thread, and the post (the first one or a reply). */
+  const [replyTo, setReplyTo] = useState<{ thread: string; post: Post } | null>(null);
   const [phoneFor, setPhoneFor] = useState<(() => void) | null>(null);
   const [rules, setRules] = useState(false);
-  const [asking, setAsking] = useState(false);
+  const [writing, setWriting] = useState(false);
 
-  const load = useCallback(async (k = kind, s = sort) => {
-    const qs = 'sort=' + s + (k ? '&kind=' + k : '');
-    const out = await FF.maybe(FF.get('/events/' + ev.id + '/discussion?' + qs), null);
-    if (out) { setD(out); setKind(out.kind); setMore({}); }
-  }, [ev.id, kind, sort]);
+  const load = useCallback(async () => {
+    const out = await FF.maybe(FF.get('/events/' + ev.id + '/discussion'), null);
+    if (out) { setD(out); setMore({}); }
+  }, [ev.id]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { void load(); }, [ev.id, kd.user]);
 
-  /** A write: sign in first, or prove a phone when the API asks, then retry. */
+  /** A write: sign in first, or prove a phone when the API asks (REQUIRE_PHONE_TO_POST), then retry. */
   const write = async <R,>(run: () => Promise<R>): Promise<R | null> => {
     if (!kd.requireSignIn(undefined, T.discSignin)) return null;
     try {
@@ -124,31 +125,22 @@ export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }
     }
   };
 
-  const kinds = d?.kinds ?? [];
-  const cur = kinds.find((k) => k.kind === kind);
   const gate = d?.me.canWrite ?? 'signin';
-  // Nothing asked or answered yet: one button, not three tabs and an empty field (design v2 phase 11).
-  if (d && !d.total && !ev.faq.length && !asking) {
+  const posted = () => { setReplyTo(null); void load(); void reloadEvent(); };
+  // Nothing written yet: one sentence and one action (design kit), not an empty field.
+  if (d && !d.total && !ev.faq.length && !writing) {
     return (
       <section id="discussion" aria-labelledby={bare ? undefined : 'disc-h'} aria-label={bare ? T.discussion : undefined} className="flex max-w-read scroll-mt-32 flex-wrap items-center justify-between gap-3">
-        {bare ? null : <h2 id="disc-h" className="kd-d3">{T.discussion}</h2>}
-        <Button onClick={() => setAsking(true)}>{T.discAsk}</Button>
+        {bare ? <p className="kd-s">{T.discEmpty}</p> : <h2 id="disc-h" className="kd-d3">{T.discussion}</h2>}
+        <Button onClick={() => setWriting(true)}>{T.discAsk}</Button>
       </section>
     );
   }
 
   return (
     <section id="discussion" aria-labelledby={bare ? undefined : 'disc-h'} aria-label={bare ? T.discussion : undefined} className="flex max-w-read scroll-mt-32 flex-col gap-4">
-      <div className={cx('kd-sec items-center', bare && 'justify-end')}>
-        {bare ? null : <h2 id="disc-h" className="kd-d3">{T.discussion}{d ? <span className="kd-m kd-num ml-3 align-middle">{d.total}</span> : null}</h2>}
-        <Picker
-          label={T.discSort}
-          value={sort}
-          onChange={(v) => { setSort(v); void load(kind, v); }}
-          options={[{ value: 'top', label: T.discTop }, { value: 'new', label: T.discNew }]}
-        />
-      </div>
-      {/* The organiser's answers lead (they were a section of their own until design v2 phase 2). */}
+      {bare ? null : <h2 id="disc-h" className="kd-d3">{T.discussion}{d?.total ? <span className="kd-m kd-num ml-3 align-middle">{d.total}</span> : null}</h2>}
+      {/* The organiser's answers lead: they are the page's FAQ for search engines too. */}
       {ev.faq.length ? (
         <div className="flex flex-col">
           <h3 className="kd-hs pb-1.5">{T.orgAnswers}</h3>
@@ -161,23 +153,11 @@ export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }
           </div>
         </div>
       ) : null}
-      {kinds.length ? (
-        <div className="kd-hscroll" role="group" aria-label={T.discussion}>
-          {kinds.map((k) => (
-            <Chip key={k.kind} on={k.kind === kind} count={k.count || null} onClick={() => { setKind(k.kind); setReplyTo(null); void load(k.kind, sort); }}>
-              {tx(k.label, lang)}
-            </Chip>
-          ))}
-        </div>
-      ) : null}
-      {d && cur && !cur.open ? <p className="kd-s">{T.discClosed}</p> : null}
-      {d && cur?.open ? (
-        gate === 'ok' || !kd.user ? (
-          <Composer lang={lang} kind={kind!} onPosted={() => { void load(); void reloadEvent(); }} write={write} />
-        ) : gate === 'verify_phone' ? (
-          <Button onClick={() => setPhoneFor(() => () => load())}>{T.discVerify}</Button>
-        ) : null
-      ) : null}
+      {gate === 'verify_phone' && kd.user ? (
+        <Button className="self-start" onClick={() => setPhoneFor(() => () => load())}>{T.discVerify}</Button>
+      ) : (
+        <Composer lang={lang} onPosted={posted} write={write} autoFocus={writing} />
+      )}
       {/* The rules behind a link beside the field, not a line telling everyone off (design v2 phase 2). */}
       {d?.rules ? (
         <div className="flex flex-col gap-1.5">
@@ -200,22 +180,24 @@ export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }
                   if (r) setMore((m) => ({ ...m, [p.id]: r.items }));
                 }}
                 team={!!d.me.isTeam}
-                replyOpen={replyTo === p.id}
-                onReply={() => { if (kd.requireSignIn(undefined, T.discSignin)) setReplyTo(replyTo === p.id ? null : p.id); }}
+                replying={replyTo?.thread === p.id ? replyTo.post : null}
+                onReply={(target) => { if (kd.requireSignIn(undefined, T.discSignin)) setReplyTo(replyTo?.post.id === target.id ? null : { thread: p.id, post: target }); }}
+                onPosted={posted}
                 write={write}
                 reload={() => load()}
               />
             ))}
           </ul>
-        ) : <p className="kd-s">{T.discEmpty}</p>
+        ) : null
       ) : <div className="kd-skel h-24" aria-hidden="true" />}
       {phoneFor ? <PhoneSheet lang={lang} onClose={() => setPhoneFor(null)} onDone={() => { const f = phoneFor; setPhoneFor(null); f(); }} /> : null}
     </section>
   );
 }
 
-function Composer({ lang, kind, onPosted, write, parentId, onDone }: {
-  lang: Lang; kind: string; onPosted: () => void; write: <R>(run: () => Promise<R>) => Promise<R | null>; parentId?: string; onDone?: () => void;
+/** A new comment, or (`to`) a reply to one: replying to a reply names its author first. */
+function Composer({ lang, onPosted, write, to, autoFocus }: {
+  lang: Lang; onPosted: () => void; write: <R>(run: () => Promise<R>) => Promise<R | null>; to?: Post; autoFocus?: boolean;
 }) {
   const { ev } = useEvent();
   const kd = useKd();
@@ -223,22 +205,14 @@ function Composer({ lang, kind, onPosted, write, parentId, onDone }: {
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
-  const [setId, setSetId] = useState('');
-  const [heard, setHeard] = useState('');
-  const photoOk = !parentId && (kind === 'memory' || kind === 'talk');
-  const sets = !parentId && kind === 'trackid' && ev.timetable
-    ? ev.timetable.days.flatMap((d) => d.stages.flatMap((st) => st.sets.map((s) => ({ id: s.id, label: s.artist + ' · ' + tx(st.name, lang) }))))
-    : [];
   const send = async (e: FormEvent) => {
     e.preventDefault();
     const text = body.trim();
     if (!text || busy) return;
     setBusy(true);
     const out = await write(async () => {
-      const payload: Record<string, unknown> = parentId ? { parentId, body: text } : { kind, body: text };
-      if (sets.length && setId) payload.setId = setId;
-      if (!parentId && kind === 'trackid' && /^([01]\d|2[0-3]):[0-5]\d$/.test(heard)) payload.heardAt = heard;
-      if (photoOk && photo) {
+      const payload: Record<string, unknown> = to ? { parentId: to.id, body: text } : { kind: 'talk', body: text };
+      if (!to && photo) {
         const form = new FormData();
         form.append('file', photo);
         payload.photoUrl = (await FF.api('POST', '/uploads?purpose=recap', form)).url;
@@ -247,31 +221,26 @@ function Composer({ lang, kind, onPosted, write, parentId, onDone }: {
     });
     setBusy(false);
     if (out) {
-      setBody(''); setPhoto(null); setSetId(''); setHeard('');
+      setBody(''); setPhoto(null);
       kd.toast(FF.text((out as { message?: unknown }).message, lang) || T.discPost);
       onPosted();
-      onDone?.();
     }
   };
+  const label = to ? fill(T.discReplyTo, { n: to.author?.name || T.discMember }) : T.discWritePh;
   return (
     <form onSubmit={send} className="flex flex-col gap-2">
       <TextArea
-        rows={parentId ? 2 : 3}
-        maxLength={4000}
-        placeholder={parentId ? T.discReplyPh : kind === 'qa' ? T.discAskPh : T.discWritePh}
-        aria-label={parentId ? T.discReplyPh : kind === 'qa' ? T.discAskPh : T.discWritePh}
+        rows={to ? 2 : 3}
+        maxLength={1000}
+        placeholder={label}
+        aria-label={label}
         value={body}
+        autoFocus={autoFocus || !!to}
         onChange={(e) => setBody(e.target.value)}
         onFocus={() => kd.requireSignIn(undefined, T.discSignin)}
       />
-      {sets.length ? (
-        <div className="kd-hscroll">
-          {sets.map((s) => <Chip key={s.id} on={setId === s.id} onClick={() => setSetId(setId === s.id ? '' : s.id)}>{s.label}</Chip>)}
-        </div>
-      ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        {sets.length ? <Input boxClass="w-36" inputMode="numeric" placeholder="HH:MM" aria-label={T.discHeard} value={heard} onChange={(e) => setHeard(e.target.value)} /> : null}
-        {photoOk ? (
+        {!to ? (
           photo ? (
             <span className="kd-tag kd-tag-line">
               {photo.name.slice(0, 24)}
@@ -284,25 +253,25 @@ function Composer({ lang, kind, onPosted, write, parentId, onDone }: {
             </label>
           )
         ) : null}
-        <Button type="submit" size="sm" className="ml-auto" disabled={!body.trim() || busy}>{parentId ? T.discReply : T.discPost}</Button>
+        <Button type="submit" size="sm" className="ml-auto" disabled={!body.trim() || busy}>{to ? T.discReply : T.discPost}</Button>
       </div>
     </form>
   );
 }
 
-function Thread({ lang, post, replies, hasMore, onMore, team, replyOpen, onReply, write, reload }: {
-  lang: Lang; post: Post; replies: Post[]; hasMore: boolean; onMore: () => void; team: boolean; replyOpen: boolean; onReply: () => void;
-  write: <R>(run: () => Promise<R>) => Promise<R | null>; reload: () => void;
+function Thread({ lang, post, replies, hasMore, onMore, team, replying, onReply, onPosted, write, reload }: {
+  lang: Lang; post: Post; replies: Post[]; hasMore: boolean; onMore: () => void; team: boolean; replying: Post | null;
+  onReply: (target: Post) => void; onPosted: () => void; write: <R>(run: () => Promise<R>) => Promise<R | null>; reload: () => void;
 }) {
   const T = pick(WEB, lang);
   return (
     <li className="flex flex-col gap-3 border-t border-line-1 py-4">
-      <PostView lang={lang} post={post} team={team} write={write} reload={reload} onReply={post.removed ? undefined : onReply} />
-      {replies.length || hasMore || replyOpen ? (
+      <PostView lang={lang} post={post} team={team} write={write} reload={reload} onReply={post.removed ? undefined : () => onReply(post)} />
+      {replies.length || hasMore || replying ? (
         <div className="ml-11 flex flex-col gap-3 border-l border-line-1 pl-4">
-          {replies.map((r) => <PostView key={r.id} lang={lang} post={r} team={team} write={write} reload={reload} />)}
+          {replies.map((r) => <PostView key={r.id} lang={lang} post={r} team={team} write={write} reload={reload} onReply={r.removed ? undefined : () => onReply(r)} />)}
           {hasMore ? <button type="button" className="kd-more" onClick={onMore}>{fill(T.discMore, { n: post.replyCount - (post.replies ?? []).length })}</button> : null}
-          {replyOpen ? <Composer lang={lang} kind={post.kind} parentId={post.id} onPosted={reload} write={write} /> : null}
+          {replying ? <Composer lang={lang} to={replying} onPosted={onPosted} write={write} /> : null}
         </div>
       ) : null}
     </li>
@@ -314,12 +283,20 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
 }) {
   const kd = useKd();
   const T = pick(WEB, lang);
+  const [editing, setEditing] = useState<string | null>(null);
   const act = async (run: () => Promise<{ message?: unknown } | undefined>) => {
     const out = await write(run);
     if (out && out.message) kd.toast(FF.text(out.message, lang));
     reload();
   };
   const mine = !!p.me?.mine;
+  const canEdit = mine && !!p.editableUntil && FF.now().getTime() < Date.parse(p.editableUntil);
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    if (editing === null || !editing.trim()) return;
+    const out = await write(() => FF.patch('/posts/' + p.id, { body: editing.trim() }));
+    if (out) { setEditing(null); reload(); }
+  };
   return (
     <article className="flex gap-3">
       <Avatar name={p.author?.name || T.discMember} src={p.author?.photoUrl} size={32} />
@@ -327,19 +304,27 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {/* A hidden post steps back in its name, never by dimming (contrast). */}
           <span className={cx('kd-hs', p.hidden && 'text-fg-3')}>{p.removed ? T.discRemoved : p.author?.name || T.discMember}</span>
-          {p.author?.badges.map((b) => <Tag key={b.key} tone={b.key === 'team' || b.key === 'ff' ? 'bone' : 'line'}>{tx(b.label, lang)}</Tag>)}
-          {p.official ? <Tag tone="line">{T.discOfficial}</Tag> : null}
+          {p.official ? <Tag tone="line">{T.discOfficial}</Tag> : p.author?.badges.length ? <Tag tone={p.author.badges[0].key === 'team' || p.author.badges[0].key === 'ff' ? 'bone' : 'line'}>{tx(p.author.badges[0].label, lang)}</Tag> : null}
           {p.pinned ? <Tag>{T.discPinned}</Tag> : null}
           {p.hidden ? <Tag tone="line">{T.discHidden}</Tag> : null}
-          <span className="kd-s">{ago(p.createdAt, lang)}</span>
+          <span className="kd-s">{ago(p.createdAt, lang)}{p.edited ? ` · ${T.discEdited}` : ''}</span>
         </div>
-        {p.set || p.heardAt ? <span className="kd-m">{[p.set?.artist, p.heardAt].filter(Boolean).join(' · ')}</span> : null}
-        <p className={cx('kd-t whitespace-pre-line', p.removed && 'text-fg-3')}>{p.removed ? T.discRemoved : p.body}</p>
-        {p.photoUrl ? (
-           
-          <img src={p.photoUrl} alt="" loading="lazy" className="max-h-80 w-auto max-w-full rounded-card object-cover" />
-        ) : null}
-        {!p.removed ? (
+        {editing !== null ? (
+          <form onSubmit={save} className="flex flex-col gap-2">
+            <TextArea rows={2} maxLength={1000} aria-label={T.discEdit} value={editing} autoFocus onChange={(e) => setEditing(e.target.value)} />
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={!editing.trim()}>{T.discSave}</Button>
+              <Button size="sm" tone="ghost" onClick={() => setEditing(null)}>{T.discCancel}</Button>
+            </div>
+          </form>
+        ) : (
+          <p className={cx('kd-t whitespace-pre-line', p.removed && 'text-fg-3')}>
+            {!p.removed && p.replyTo?.name ? <span className="text-info">@{p.replyTo.name} </span> : null}
+            {p.removed ? T.discRemoved : p.body}
+          </p>
+        )}
+        {p.photoUrl ? <img src={p.photoUrl} alt="" loading="lazy" className="max-h-80 w-auto max-w-full rounded-card object-cover" /> : null}
+        {!p.removed && editing === null ? (
           <div className="-ml-2 flex flex-wrap items-center gap-1">
             <button
               type="button"
@@ -352,17 +337,18 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
               {T.discHelpful}{p.helpfulCount ? <span className="kd-num"> {p.helpfulCount}</span> : null}
             </button>
             {onReply ? <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost" onClick={onReply}><ArrowBendUpLeftIcon size={16} aria-hidden="true" />{T.discReply}</button> : null}
+            {canEdit ? <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost" onClick={() => setEditing(p.body)}><PencilSimpleIcon size={16} aria-hidden="true" />{T.discEdit}</button> : null}
             {team && !p.parentId ? (
               <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost" onClick={() => act(() => FF.patch('/posts/' + p.id, { pinned: !p.pinned }))}>
                 <PushPinIcon size={16} aria-hidden="true" />{p.pinned ? T.discUnpin : T.discPin}
               </button>
             ) : null}
-            {team ? (
+            {team && !mine ? (
               <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost" onClick={() => act(() => FF.patch('/posts/' + p.id, { hidden: !p.hidden }))}>
                 <EyeSlashIcon size={16} aria-hidden="true" />{p.hidden ? T.discShow : T.discHide}
               </button>
             ) : null}
-            {mine ? (
+            {mine || team ? (
               <button type="button" className="kd-btn kd-btn-sm kd-btn-ghost" onClick={() => act(() => FF.del('/posts/' + p.id))}>
                 <TrashIcon size={16} aria-hidden="true" />{T.discDelete}
               </button>

@@ -7,7 +7,7 @@
  * the flag, four tabs (design v2 phase 5): "Thay đổi", a change to a live listing before and after
  * (only for one); "Toàn bộ tin", the card as the feed shows it, the images and whether they load,
  * the description in either language, the details with the genre and the venue pin fixed in place,
- * the links and the ticket link's state, the tiers; "Nguồn và bằng chứng", the fit, quality checks,
+ * the links and the ticket link's state; "Nguồn và bằng chứng", the fit, quality checks,
  * risk signals (recheck) and open reports; "Lịch sử", the review history and the thread with the
  * organiser. The queue keeps the tab chosen from one listing to the next.
  */
@@ -273,22 +273,6 @@ export function Detail({ lang, id, item, reasons, tab, onTab, onDecide, onSendBa
                       ]} />
                     </Section>
 
-                    {ev.tiers.length ? (
-                      <Section title={R.tiers}>
-                        <div role="table" aria-label={R.tiers} className="flex flex-col">
-                          <div role="row" className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-line-1 pb-1.5">
-                            <span role="columnheader" className="kd-m">{R.tierName}</span><span role="columnheader" className="kd-m text-right">{R.tierPrice}</span><span role="columnheader" className="kd-m text-right">{R.tierSold}</span>
-                          </div>
-                          {ev.tiers.map((x) => (
-                            <div role="row" key={x.id} className="grid min-h-10 grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-line-1">
-                              <span role="cell" className="kd-t text-fg-1">{text(x.name, lang)}</span>
-                              <span role="cell" className="kd-num text-right text-sm">{money(x.price, ev.currency, lang)}</span>
-                              <span role="cell" className="kd-s kd-num text-right">{count(x.sold, lang)}/{count(x.capacity, lang)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </Section>
-                    ) : null}
                   </div>
                 </div>
               ) : on === 'evidence' ? (

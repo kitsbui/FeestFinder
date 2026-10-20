@@ -20,6 +20,8 @@ import { loadPrefs } from '../services/notify.ts';
 import { deliverDue } from '../services/messaging.ts';
 import { inBackground } from '../lib/background.ts';
 import { checkOtp, identifierFor, publicUser, startOtp } from './auth.ts';
+import { SHARE_PCT } from '../lib/affiliate.ts';
+import { commissionOf } from '../services/ambassadors.ts';
 import { hypeGoalsReached } from '../services/community.ts';
 
 /** An event a person's lists show: one anyone can open (cancelled ones stay, marked; taken-down or held ones do not). */
@@ -41,7 +43,8 @@ export default async function meRoutes(app: FastifyInstance) {
                 (select count(*)::int from hypes x join events e on e.id = x.event_id where x.user_id = $1 and ${LISTED}) as hyped,
                 (select count(*)::int from organizer_follows where user_id = $1) as following,
                 (select count(*)::int from friendships where user_id = $1) as friends,
-                (select count(*)::int from notifications where user_id = $1 and read_at is null) as unread`, [s.user.id]),
+                (select count(*)::int from notifications where user_id = $1 and read_at is null) as unread,
+                (select coalesce(sum(amount), 0)::float8 from ambassador_earnings where user_id = $1 and status <> 'void') as commission`, [s.user.id]),
     ]);
     const prefs = await loadPrefs(ctx.db, s.user.id);
     const channelsOn = Object.values(prefs).reduce((n, p) => n + (p.push ? 1 : 0) + (p.zalo ? 1 : 0) + (p.email ? 1 : 0), 0);
@@ -135,6 +138,20 @@ export default async function meRoutes(app: FastifyInstance) {
       'update users set payee_bank_bin = $2, payee_bank_name = $3, payee_account_no = $4, payee_account_name = $5 where id = $1',
       [s.user.id, body.bankBin, BANKS[body.bankBin] ?? null, body.accountNo, body.accountName.toUpperCase()]);
     return { ok: true, bankName: BANKS[body.bankBin] ?? null };
+  });
+
+  /** What a person's share links brought: opens, Mua vé clicks, partner sales and the share of commission (VND). */
+  app.get('/me/commission', async (req) => {
+    const s = requireUser(req);
+    const [out, payee] = await Promise.all([
+      commissionOf(ctx.db, s.user.id),
+      one<{ payee_account_no: string | null; payee_bank_name: string | null }>(ctx.db, 'select payee_account_no, payee_bank_name from users where id = $1', [s.user.id]),
+    ]);
+    return {
+      ...out, sharePct: SHARE_PCT,
+      payee: payee?.payee_account_no ? { bankName: payee.payee_bank_name, last4: payee.payee_account_no.slice(-4) } : null,
+      banks: Object.entries(BANKS).map(([bin, name]) => ({ bin, name })),
+    };
   });
 
   // ---- saves, hypes, going -------------------------------------------------

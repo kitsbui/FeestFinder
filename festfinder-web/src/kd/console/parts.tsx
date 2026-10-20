@@ -1,18 +1,11 @@
 'use client';
 /**
- * Small parts the commerce screens share (orders, users, partners, affiliate, brands): a table
- * cell, a stat tile that toggles a filter, a section heading in a drawer, and copying text.
+ * Small parts the Console's screens share (users, partners, affiliate, brands, projects, feedback):
+ * a table cell, a stat tile that toggles a filter, a section heading in a drawer, and copying text.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { pick, type Lang } from '../../copy';
-import { cx } from '../../cx';
-import type { StatusTone } from '../../ui/parts';
-
-/** FeestFinder's checkout sells in đồng only (ticket tiers and orders are VND). */
-export const CHECKOUT_CURRENCY = 'VND';
-
-/** An order status's tone. */
-export const STATUS_TONE: Record<string, StatusTone> = { paid: 'ok', pending: 'warn', refunded: 'live', cancelled: 'none', expired: 'none' };
+import { pick, type Lang } from '../copy';
+import { cx } from '../cx';
 
 /** One cell of a `Row`. */
 export function Cell({ children, className, end }: { children?: ReactNode; className?: string; end?: boolean }) {

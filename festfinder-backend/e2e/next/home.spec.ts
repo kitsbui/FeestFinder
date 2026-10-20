@@ -44,7 +44,7 @@ test.describe('the home page', () => {
   test('the old addresses of the list and the map lead here with their filters', async ({ page }) => {
     await page.goto('/list?style=techno&view=grid');
     await expect(page).toHaveURL(/\/\?style=techno&view=grid$/);
-    await expect(page.getByRole('button', { name: 'Kiểu đêm' })).toHaveText('Techno');
+    await expect(page.getByRole('button', { name: /, Loại$/ })).toHaveText('Techno');
     await page.goto('/list?lang=en');
     await expect(page).toHaveURL(/\/\?lang=en$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Every event' })).toBeVisible();

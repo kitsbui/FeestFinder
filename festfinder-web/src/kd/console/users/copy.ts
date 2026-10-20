@@ -17,7 +17,7 @@ export const USERS = {
   sort: { en: 'Sort', vi: 'Sắp xếp' },
   sNew: { en: 'Newest', vi: 'Mới tham gia' },
   sActive: { en: 'Recently active', vi: 'Hoạt động gần nhất' },
-  sTickets: { en: 'Most tickets', vi: 'Nhiều vé nhất' },
+  sTickets: { en: 'Most ticket clicks', vi: 'Bấm Mua vé nhiều nhất' },
   sName: { en: 'Name A → Z', vi: 'Tên A → Z' },
 
   table: { en: 'Accounts', vi: 'Danh sách tài khoản' },
@@ -25,7 +25,7 @@ export const USERS = {
   colKind: { en: 'Kind', vi: 'Loại' },
   colMethod: { en: 'Signed up via', vi: 'Đăng ký qua' },
   colCity: { en: 'City', vi: 'Thành phố' },
-  colTickets: { en: 'Tickets · saves', vi: 'Vé · lưu' },
+  colTickets: { en: 'Ticket clicks · saves', vi: 'Bấm Mua vé · lưu' },
   colActive: { en: 'Last active', vi: 'Hoạt động' },
   colJoined: { en: 'Joined', vi: 'Tham gia' },
   noName: { en: '(no name)', vi: '(chưa đặt tên)' },
@@ -34,7 +34,7 @@ export const USERS = {
 
   loading: { en: 'Loading…', vi: 'Đang tải…' },
   joined: { en: '{m} · joined {d}', vi: '{m} · tham gia {d}' },
-  sTicketsN: { en: 'Tickets · {n} orders', vi: 'Vé · {n} đơn' },
+  sTicketsN: { en: 'Ticket clicks', vi: 'Lượt bấm Mua vé' },
   sSaves: { en: 'Saves · hype', vi: 'Lưu · quan tâm' },
   sFriends: { en: 'Friends', vi: 'Bạn bè' },
   sDays: { en: 'Active days · {a}', vi: 'Ngày hoạt động · {a}' },
@@ -53,7 +53,4 @@ export const USERS = {
   teams: { en: 'Organizer teams', vi: 'Thành viên nhà tổ chức' },
   owner: { en: 'Owner', vi: 'Chủ' },
   manager: { en: 'Manager', vi: 'Quản lý' },
-  orders: { en: 'Recent orders', vi: 'Đơn hàng gần đây' },
-  noOrders: { en: 'No orders.', vi: 'Chưa có đơn nào.' },
-  orderLine: { en: '{c} · {d} · {n} tickets', vi: '{c} · {d} · {n} vé' },
 } as const;

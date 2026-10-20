@@ -110,6 +110,32 @@ export interface Rows {
     model: string;
     created_at: Date;
   };
+  ambassador_earnings: {
+    id: string;
+    conversion_id: string;
+    user_id: string;
+    event_id: string | null;
+    partner_id: string | null;
+    currency: string;
+    amount_src: number;
+    amount: number | null;
+    status: string;
+    reason: string | null;
+    payout_id: string | null;
+    created_at: Date;
+    updated_at: Date;
+  };
+  ambassador_payouts: {
+    id: string;
+    user_id: string;
+    amount: number;
+    earnings: number;
+    status: string;
+    note: string;
+    created_by: string | null;
+    created_at: Date;
+    paid_at: Date | null;
+  };
   announcements: {
     id: string;
     event_id: string;
@@ -462,6 +488,7 @@ export interface Rows {
     edited_at: Date | null;
     moderated_by: string | null;
     moderated_at: Date | null;
+    reply_to_user_id: string | null;
   };
   event_shares: {
     id: string;
@@ -575,6 +602,7 @@ export interface Rows {
     fit_at: Date | null;
     expired_at: Date | null;
     auto_translated: string[];
+    ticket_links: unknown;
   };
   feedback: {
     id: string;
@@ -932,6 +960,7 @@ export interface Rows {
     device: string | null;
     country: string | null;
     referrer_host: string | null;
+    ref_user: string | null;
   };
   outbox: {
     id: string;
@@ -963,6 +992,7 @@ export interface Rows {
     payload: unknown;
     link_id: string | null;
     payout_id: string | null;
+    ref_user: string | null;
   };
   password_tokens: {
     token_hash: string;

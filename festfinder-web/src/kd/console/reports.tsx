@@ -1,6 +1,7 @@
 'use client';
 /**
- * /console/reports: what people reported, in four tabs kept in the address (?tab=).
+ * /console/reports: what people reported, in five tabs kept in the address (?tab=), and every
+ * comment, newest first, for the team to delete what does not belong (owner, 2026-10-20).
  * - reports: open user reports on listings, grouped by listing and kind, most reporters (or
  *   open longest) first, with what one of them wrote; filtered by kind (?cat=). Dismiss, warn
  *   the organiser (a third strike suspends) or take the listing down, each confirmed. The last
@@ -36,8 +37,8 @@ interface Post {
   event: { id: string; title: string; slug: string }; author: { id: string; name: string | null };
 }
 
-type Tab = 'reports' | 'posts' | 'moments' | 'mixes';
-const TABS: Tab[] = ['reports', 'posts', 'moments', 'mixes'];
+type Tab = 'reports' | 'posts' | 'comments' | 'moments' | 'mixes';
+const TABS: Tab[] = ['reports', 'posts', 'comments', 'moments', 'mixes'];
 
 const ago = (min: number, lang: Lang) => (min < 60 ? `${min} ${lang === 'vi' ? 'phút' : 'min'}` : min < 1440 ? `${Math.floor(min / 60)} ${lang === 'vi' ? 'giờ' : 'h'}` : `${Math.floor(min / 1440)} ${lang === 'vi' ? 'ngày' : 'd'}`);
 /** Refund claims and safety are the serious kinds. */
@@ -62,11 +63,12 @@ export function Reports() {
           items={[
             { key: 'reports', label: M.tabReports, count: counts?.reports || null },
             { key: 'posts', label: M.tabPosts },
+            { key: 'comments', label: M.tabComments },
             { key: 'moments', label: M.tabMoments },
             { key: 'mixes', label: M.tabMixComments },
           ]}
         />
-        {tab === 'posts' ? <PostsTab lang={lang} /> : tab === 'moments' ? <MomentsTab lang={lang} /> : tab === 'mixes' ? <MixCommentsTab lang={lang} /> : <ReportsTab lang={lang} params={params} setParams={setParams} />}
+        {tab === 'posts' ? <PostsTab lang={lang} /> : tab === 'comments' ? <PostsTab lang={lang} all /> : tab === 'moments' ? <MomentsTab lang={lang} /> : tab === 'mixes' ? <MixCommentsTab lang={lang} /> : <ReportsTab lang={lang} params={params} setParams={setParams} />}
       </Body>
     </>
   );
@@ -156,13 +158,13 @@ function ReportsTab({ lang, params, setParams }: { lang: Lang; params: URLSearch
 const CODE: Record<string, keyof typeof MOD> = { spam: 'codeSpam', scalping: 'codeScalping', abuse: 'codeAbuse', drugs: 'codeDrugs', personal: 'codePersonal', other: 'codeOther' };
 const POST_COLS = 'minmax(260px,2.2fr) minmax(160px,1fr) minmax(140px,1fr) 70px 100px minmax(220px,auto)';
 
-/** Discussion posts people reported, across every event page. Three reports hide a post until someone decides. */
-function PostsTab({ lang }: { lang: Lang }) {
+/** Discussion posts people reported, across every event page (three reports hide a post until someone decides); or, `all`, every comment, newest first. */
+function PostsTab({ lang, all }: { lang: Lang; all?: boolean }) {
   const M = pick(MOD, lang);
   const kd = useKd();
   const ask = useAsk();
   const { q } = useConsole();
-  const load = useLoad<{ items: Post[] }>('/admin/posts/reported');
+  const load = useLoad<{ items: Post[] }>(all ? '/admin/posts/reported?all=1' : '/admin/posts/reported');
   const needle = q.trim().toLowerCase();
   const run = async (p: Post, kind: 'keep' | 'hide' | 'remove') => {
     if (kind === 'remove' && !(await ask({ title: M.removeAsk, body: p.body.slice(0, 160), confirm: M.remove, danger: true }))) return;
@@ -173,7 +175,7 @@ function PostsTab({ lang }: { lang: Lang }) {
     <Loaded load={load}>
       {(data) => {
         const rows = data.items.filter((p) => !needle || p.body.toLowerCase().includes(needle) || p.event.title.toLowerCase().includes(needle));
-        if (!rows.length) return <Empty title={M.noPosts} />;
+        if (!rows.length) return <Empty title={all ? M.noComments : M.noPosts} />;
         return (
           <Table cols={POST_COLS} label={M.tabPosts} head={[M.colPost, M.colEvent, M.colWhy, M.colReports, M.colStatus, '']}>
             {rows.map((p) => (
@@ -193,7 +195,7 @@ function PostsTab({ lang }: { lang: Lang }) {
                 <span role="cell" className="kd-num text-fg-1">{p.reports}</span>
                 <span role="cell">{p.status === 'hidden' ? <Status tone="bad">{M.hidden}</Status> : <Status tone="ok">{M.visible}</Status>}</span>
                 <span role="cell" className="flex flex-wrap justify-end gap-2">
-                  <Button size="sm" onClick={() => run(p, 'keep')}>{M.keep}</Button>
+                  {p.reports ? <Button size="sm" onClick={() => run(p, 'keep')}>{M.keep}</Button> : null}
                   {p.status === 'hidden' ? null : <Button size="sm" onClick={() => run(p, 'hide')}>{M.hide}</Button>}
                   <Button size="sm" tone="ghost" className="text-bad" onClick={() => run(p, 'remove')}>{M.remove}</Button>
                 </span>

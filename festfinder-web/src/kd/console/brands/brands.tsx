@@ -16,7 +16,7 @@ import { Input, Select, TextArea } from '../../ui/forms';
 import { Row, Table } from '../../ui/shell';
 import { act, Body, Drawer, Empty, ErrorBox, Field, Loading, PageHead, Pill, useLoad, useOptions, type FormOptions } from '../kit';
 import { useConsole } from '../root';
-import { Cell, Tile, Tiles, Two } from '../orders/parts';
+import { Cell, Tile, Tiles, Two } from '../parts';
 import { BRANDS } from './copy';
 
 type Status = 'draft' | 'open' | 'closed';

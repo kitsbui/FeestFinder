@@ -135,7 +135,6 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
     { key: 'platform', label: T.navPlatform, href: '/console/featured', icon: i(SlidersHorizontalIcon), sub: [
       { key: 'featured', label: T.tabFeatured, href: '/console/featured', count: n(counts?.ads) },
       { key: 'users', label: T.tabUsers, href: '/console/users' },
-      { key: 'orders', label: T.tabOrders, href: '/console/orders' },
       { key: 'insights', label: T.tabInsights, href: '/console/insights' },
       { key: 'audit', label: T.tabAudit, href: '/console/audit' },
     ] },
