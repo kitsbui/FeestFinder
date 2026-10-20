@@ -3,6 +3,7 @@
 - Dành cho: Claude Code chạy nhiều giờ liền, không có người xem. Chủ sản phẩm đọc sáng hôm sau.
 - Tự đứng được: agent cần `CLAUDE.md`, `docs/HANDOFF_2026-10-19_growth-plan.md` bản 3 (gọi tắt **handoff**: thẻ C, A, B, D, 4, 5, 6, 1; mục 7 và 8) và file này. Khi hai file khác nhau, **file này thắng**.
 - Nền: `main` = `origin/main` = `48b2cf3` (hoặc mới hơn sau khi merge branch docs). Migration cố định: đêm 1 `048_drop_ticketing`, `049_comments`; đêm 2 `050_day_events`, `051_affiliate`, `052_organizer_calendar`; đêm 3 `053_badges_v2`.
+- Họp 2026-10-20 (`docs/MEETING_2026-10-20_final-plan.md`) chốt 8 điều chỉnh, đã chép vào handoff; lịch này đi theo handoff. **Điểm dừng an toàn đêm 1** (họp 2.9): nếu sau N3 đã quá giờ thứ 9, dừng; A và B mở đầu đêm 2 trước D.
 - Trạng thái: **chưa chạy**. Mỗi đêm chạy khi chủ sản phẩm nói "bắt đầu night build 1" / "… 2" / "… 3". Đêm 2 chỉ chạy khi đêm 1 đã merge vào `main` (thẻ D dựa trên `/go` không còn checkout); đêm 3 khi đêm 2 đã merge (huy hiệu đọc hoa hồng và bình luận mới).
 
 ---
@@ -27,6 +28,7 @@
 | # | Điều kiện | Cách kiểm |
 | --- | --- | --- |
 | 1 | Dòng trong roadmap mục "Growth plan": "2026-10-xx: night build 1 (hoặc 2) chạy với D1, D4–D6 = A; D5b, D3c, D7–D12 mặc định A; Zalo OA để sau" | Agent đọc ở N0; không có thì không bắt đầu |
+| 2a | `POSTHOG_KEY` đã đặt trên Vercel và phễu cơ sở (danh sách → sự kiện → ticket_click) đã lưu, để hai tuần sau có số (họp 2.10) | CL + MK |
 | 2 | **Đêm 1:** production không có đơn `paid` (Console › Đơn hàng, hoặc Supabase). Migration 048 cũng tự kiểm, nhưng biết trước thì đỡ hỏng đêm | Chủ sản phẩm xem |
 | 3 | `main` sạch, bằng `origin/main`; nếu mới hơn `48b2cf3`, agent đọc `git log` và ghi vào file tiến độ những gì đổi ở các file thẻ chạm | `git fetch && git status` |
 | 4 | `npm ci` đã chạy trong `festfinder-backend/` và `festfinder-web/` (checkout này thiếu `@axe-core/playwright` tới 2026-10-20); CI xanh; cục bộ `typecheck`, `lint`, `test`, `test:screens` xanh (agent chạy lại ở N0 và ghi số) | `ls festfinder-backend/node_modules/@axe-core` |
@@ -47,7 +49,7 @@
 - **Commit:** `FeestFinder sells no tickets: checkout, orders, tickets, door, resale, promos and payouts removed; /go always leads to the seller (migration 048)`.
 
 ### N2 · 4:15 · Thẻ C P1: gỡ màn hình vé (3 giờ)
-- **Làm:** đúng "Xây P1" của thẻ C: xoá 10 màn và page của chúng; `tickets.tsx` thành một hàng `Mua vé · từ {giá}` đi `/go`; `me.tsx` bỏ Vé; rail Studio 5 mục; wizard/editor bước Vé = link và giá (một link; nhiều link là đêm 2); Console bỏ Đơn hàng; `/about`, FAQ câu mới; `routes.ts`, `perf.spec.ts` bỏ route; sửa 9 spec, xoá `console-commerce.spec.ts`; `newcomer.spec.ts` ghi `IN_SIGHT.event` mới (phải thấp hơn 12).
+- **Làm:** đúng "Xây P1" của thẻ C: xoá 10 màn và page của chúng; `tickets.tsx` thành một hàng `Mua vé · từ {giá}` đi `/go`; `me.tsx` bỏ Vé; rail Studio 5 mục; wizard/editor bước Vé = link và giá (một link; nhiều link là đêm 2); Console bỏ Đơn hàng; `/about`, FAQ và "Cho nhà tổ chức" câu mới (họp 2.6); `routes.ts`, `perf.spec.ts` bỏ route; sửa 9 spec, xoá `console-commerce.spec.ts`; `newcomer.spec.ts` ghi `IN_SIGHT.event` mới (phải thấp hơn 12).
 - **Cổng:** `npx tsc --noEmit -p .` và `npm run lint; echo $?` trong `festfinder-web/`; `npm run test:screens` **cả bộ**.
 - **Commit:** `The site without tickets: one "Mua vé" row to the seller, no ticket screens in the app, Studio or Console`.
 
@@ -57,13 +59,13 @@
 - **Commit:** `Docs: FeestFinder sells no tickets`.
 
 ### N4 · 7:45 · Thẻ A: Gmail là đủ (1 giờ)
-- **Làm:** `guards.ts` `requireWriter` = `requireUser` (giữ tên, comment ghi 2026-10-20 và rủi ro Nghị định 147); `discussion.ts` `canWrite` bỏ `verify_phone`; web bỏ nhánh `verify_phone` ở `community.tsx:177`, `kd/moments.tsx` không gọi `kd/phone.tsx` trước khi đăng; `GET /admin/posts/recent` và tab `Bình luận` ở `kd/console/reports.tsx` với nút Xoá; `CLAUDE.md` câu "publishing needs a confirmed phone" → "signing in is enough (owner 2026-10-20; Decree 147 risk accepted)".
+- **Làm:** `guards.ts` `requireWriter` đọc cờ `REQUIRE_PHONE_TO_POST` (mặc định 0; họp 2.1), `config.ts` thêm biến; test hai giá trị; `discussion.ts` `canWrite` bỏ `verify_phone`; web bỏ nhánh `verify_phone` ở `community.tsx:177`, `kd/moments.tsx` không gọi `kd/phone.tsx` trước khi đăng; `GET /admin/posts/recent` và tab `Bình luận` ở `kd/console/reports.tsx` với nút Xoá; `CLAUDE.md` câu "publishing needs a confirmed phone" → "signing in is enough (owner 2026-10-20; Decree 147 risk accepted)".
 - **Test:** `test/community.test.ts`, `test/projects.test.ts`, `test/mixes.test.ts`: tài khoản Google không số đăng được; `test/admin.test.ts`: `/admin/posts/recent` và xoá; e2e `event.spec.ts` fan seed bình luận không gặp sheet; `console.spec.ts` tab Bình luận.
 - **Cổng:** `node --test test/community.test.ts test/projects.test.ts test/mixes.test.ts test/admin.test.ts`; `npx playwright test -c playwright.next.config.ts e2e/next/event.spec.ts e2e/next/console.spec.ts`.
 - **Commit:** `Signing in is enough: no phone gate on comments, submissions, projects or mixes; the Console deletes comments`.
 
 ### N5 · 8:45 · Thẻ B P0: bình luận một dòng, trả lời hai cấp (2 giờ)
-- **Làm:** bỏ `kindOpen`, `kindsShown` (D14: luôn mở); migration `049_comments.sql` (`event_posts.reply_to_user_id`, `edited_at`; bump `CLAUDE.md` `050`); `discussion.ts`: bỏ `reply_depth`, trả lời của trả lời ghi `parent_id` gốc + `reply_to_user_id`; `GET discussion` một danh sách (ghim trước, mới nhất) với 3 trả lời đầu và `replyCount`; `PATCH` chỉ 15 phút của mình; thông báo `reply` cho người được trả lời (topic `null`, không tới chính mình); `helpful` giữ route, nhãn "Thích" ở web (N6).
+- **Làm:** bỏ `kindOpen`, `kindsShown` (D14: luôn mở); hàng rào spam (họp 2.4: tài khoản < 10 phút không đăng link; ẩn theo ngưỡng báo cáo và `notifyAdmins` ngay); migration `049_comments.sql` (`event_posts.reply_to_user_id`, `edited_at`; bump `CLAUDE.md` `050`); `discussion.ts`: bỏ `reply_depth`, trả lời của trả lời ghi `parent_id` gốc + `reply_to_user_id`; `GET discussion` một danh sách (ghim trước, mới nhất) với 3 trả lời đầu và `replyCount`; `PATCH` chỉ 15 phút của mình; thông báo `reply` cho người được trả lời (topic `null`, không tới chính mình); `helpful` giữ route, nhãn "Thích" ở web (N6).
 - **Test:** `test/community.test.ts` theo thẻ B (trả lời của trả lời; sửa sau 15 phút → 403; admin xoá; thích; báo cáo; thông báo; tốc độ).
 - **Cổng:** `node --test test/community.test.ts test/night.test.ts`.
 - **Commit:** `Comments are one stream per event: replies to replies, edits for 15 minutes, a notice to the person replied to (migration 049)`.
@@ -100,7 +102,7 @@
 - **Commit:** `A paid shelf takes the home page's one highlight surface, labelled sponsored, and reaches a chosen city (tech debt 17)`.
 
 ### N4 · 4:30 · Thẻ D P0: affiliate ở API (3 giờ)
-- **Làm:** đúng "Xây P0" của thẻ D: migration `051_affiliate.sql` (`outbound_clicks.ref_user`, `partner_conversions.ref_user`, `event_ticket_links`, `ambassador_earnings`, `ambassador_payouts`; bump `CLAUDE.md` `052`); `lib/affiliate.ts` (`SHARE_PCT 50`, `MIN_PAYOUT 50_000`); `lib/money.ts` tỷ giá cố định SGD, THB, IDR, JPY → VND với ngày ghi; `/go`: `ref` (regex `^[2-9A-HJ-NP-Z]{6}$`, chỉ ghi khi `share_visits` có lượt mở của ref ấy cho sự kiện và ref ≠ người bấm), chọn link theo `x-ff-client-country`, UTM khi không partner và chưa có `utm_`; `recordConversion` chép `ref_user`, tạo earnings khi `approved`, `void` khi `rejected` (cả `PATCH /admin/conversions/:id`); `GET /me/commission`; `/me` `counts.commission`; CRUD `/organizer/events/:id/links`; `PLACEMENTS` thêm `agent`, `widget`, `share`; `events.ticket_url` đồng bộ từ link `primary`.
+- **Làm:** đúng "Xây P0" của thẻ D: migration `051_affiliate.sql` (`outbound_clicks.ref_user`, `partner_conversions.ref_user`, `event_ticket_links`, `ambassador_earnings`, `ambassador_payouts`; bump `CLAUDE.md` `052`); `lib/affiliate.ts` (`SHARE_PCT 50`, `MIN_PAYOUT 50_000`); `lib/money.ts` tỷ giá cố định SGD, THB, IDR, JPY → VND với ngày ghi; `/go`: `ref` (regex `^[2-9A-HJ-NP-Z]{6}$`, chỉ ghi khi `share_visits` có lượt mở của ref ấy cho sự kiện và ref ≠ người bấm), chọn link theo `x-ff-client-country`, UTM khi không partner và chưa có `utm_`; `recordConversion` chép `ref_user`, tạo earnings khi `approved`, `void` khi `rejected` (cả `PATCH /admin/conversions/:id`); `GET /me/commission`; `/me` `counts.commission`; CRUD `/organizer/events/:id/links`; `GET /r/:ref/:slug` 302 (họp 2.5a); xuất CSV "cần ký" (họp 2.5b); `PLACEMENTS` thêm `agent`, `widget`, `share`; `events.ticket_url` đồng bộ từ link `primary`.
 - **Test:** `test/affiliate.test.ts`, `test/partners.test.ts` theo thẻ D (ref ghi/không ghi; postback khớp click; approved → 50%; rejected → void; SGD → VND; chọn link theo nước; UTM; `/me/commission`).
 - **Cổng:** `node --test test/affiliate.test.ts test/partners.test.ts test/public.test.ts test/organizer.test.ts`.
 - **Commit:** `Smart affiliate: /go picks the seller by country, carries the referrer and UTM; a partner's approved conversion earns the referrer half of the commission (migration 051)`.
@@ -140,7 +142,7 @@
 - Như các đêm trước. Đọc thẻ E (danh mục 53, hệ biểu tượng, D13, D15, D16). Kiểm `services/attendance.ts` có `attended()` (đêm 1) và `ambassador_earnings` (đêm 2).
 
 ### N1 · 0:15 · Thẻ E P0: catalogue 53 và trao tự động (3,5 giờ)
-- **Làm:** migration `053_badges_v2.sql` (`users.badge_pins text[] default '{}'`; `going.origin_at_time`; xoá `badge_awards` code cũ còn sót); `services/badges.ts` catalogue 53 theo bảng của thẻ E (code, vai, nhóm, bậc, emblem icon|num, ngưỡng, icon, label, rule), `progressFor` cho mọi tín hiệu qua `attended()` và các bảng nêu ở cột Nguồn; `award` → `notifyUser` kind `badge` (tối đa 3 thông báo mỗi giờ mỗi người, còn lại chỉ "mới"); `awardFor(role, id)` gọi sau presence, bình luận, share visit, duyệt tin, conversion approved, kế hoạch tạo, Smart Alert; `going` ghi `origin_at_time` khi bấm Đi; `GET /me/badges` gộp ba vai, `PUT /me/badges/pins` (≤ 6, chỉ đã nhận), `GET /users/:id/badges`; `SERVER_EVENTS` `badge_earned`; seed một tài khoản đạt ≥ 10 huy hiệu và các bản ghi xấu (không `ends_at`, `area` null, `styles` rỗng).
+- **Làm:** migration `053_badges_v2.sql` (`users.badge_pins text[] default '{}'`; `going.origin_at_time`; xoá `badge_awards` code cũ còn sót); `services/badges.ts` catalogue 53 theo bảng của thẻ E (code, vai, nhóm, bậc, emblem icon|num, ngưỡng, icon, label, rule), `progressFor` cho mọi tín hiệu qua `attended()` và các bảng nêu ở cột Nguồn; `award` → `notifyUser` kind `badge` (tối đa 3 thông báo mỗi giờ mỗi người, còn lại chỉ "mới"); job hằng giờ chỉ quét người hoạt động 7 ngày và huy hiệu trạng thái (họp 2.7); `awardFor(role, id)` gọi sau presence, bình luận, share visit, duyệt tin, conversion approved, kế hoạch tạo, Smart Alert; `going` ghi `origin_at_time` khi bấm Đi; `GET /me/badges` gộp ba vai, `PUT /me/badges/pins` (≤ 6, chỉ đã nhận), `GET /users/:id/badges`; `SERVER_EVENTS` `badge_earned`; seed một tài khoản đạt ≥ 10 huy hiệu và các bản ghi xấu (không `ends_at`, `area` null, `styles` rỗng).
 - **Test:** `test/badges.test.ts`: 53 × (đạt, chưa đạt); không trao hai lần; độ hiếm; pins > 6 → 400; pin huy hiệu chưa nhận → 400; `/users/:id/badges` không lộ gì ngoài huy hiệu; thông báo tối đa 3/giờ.
 - **Cổng:** `node --test test/badges.test.ts test/night.test.ts test/community.test.ts`; `npm run typecheck`.
 - **Commit:** `Badges v2: 53 achievements awarded from what people did, pins and a public list (migration 053)`.
@@ -156,13 +158,13 @@
 - **Cổng:** `node --test test/night.test.ts`; `app-more.spec.ts`.
 
 ### N4 · 8:15 · Thẻ F P0: worker theo build, tự cập nhật (2 giờ)
-- **Làm:** `src/sw/sw.js` là nguồn; `scripts/copy-ui.ts` ghi `public/sw.js` với `VERSION = 'ff-' + build id` (7 ký tự của `NEXT_PUBLIC_BUILD_ID`, `dev` khi thiếu); `.gitignore` `public/sw.js`; worker: precache `/saved` thay `/app/tickets`, không cache `/go`, `/mcp`, `/embed`, `/list.md`; `runtime/pwa.ts`: `updateViaCache 'none'`, `reg.update()` khi visible và mỗi 30 phút, `controllerchange` → `reloadWhenIdle()` (D18); `manifest.ts` shortcuts Đã lưu và Bản đồ, mô tả mới; `lib/site.ts` `appleWebApp` cho mọi trang; `CLIENT_EVENTS` `install_prompt`, `install`; `ALLOWED_PROPS` `build`; `page_view` gửi `build`.
+- **Làm:** `src/sw/sw.js` là nguồn; `scripts/copy-ui.ts` ghi `public/sw.js` với `VERSION = 'ff-' + build id` (7 ký tự của `NEXT_PUBLIC_BUILD_ID`, `dev` khi thiếu); `.gitignore` `public/sw.js`; worker: precache `/saved` thay `/app/tickets`, không cache `/go`, `/mcp`, `/embed`, `/list.md`; `runtime/pwa.ts`: `updateViaCache 'none'`, `reg.update()` khi visible và mỗi 30 phút, `controllerchange` → `reloadWhenIdle()` chỉ khi đã có controller lúc đăng ký (D18; họp 2.8); `manifest.ts` shortcuts Đã lưu và Bản đồ, mô tả mới; `lib/site.ts` `appleWebApp` cho mọi trang; `CLIENT_EVENTS` `install_prompt`, `install`; `ALLOWED_PROPS` `build`; `page_view` gửi `build`.
 - **Test:** `pwa.spec.ts` (mới) phần manifest, `/sw.js` có build id và `no-cache`, meta Apple, icon 200 đúng cỡ; unit `isIdle()`; `test/analytics.test.ts`.
 - **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/pwa.spec.ts e2e/next/health.spec.ts`; `npx tsc --noEmit -p .` trong `festfinder-web/`.
 - **Commit:** `A service worker per build: installs itself and reloads an idle page; the manifest without tickets`.
 
 ### N5 · 10:15 · Thẻ F P1: mời cài và nút trong Tôi (2 giờ)
-- **Làm:** `kd/ui/install.tsx` (`useInstall`, `InstallBar` theo D17, `InstallSheet` ba bước cho Android và iOS, webview → "Mở trong Safari"); hàng `Cài ứng dụng` trong `me.tsx` (`Đã cài` khi standalone hay `?source=app`); hàng `Phiên bản` trong Cài đặt; copy vi/en và th/ja/id.
+- **Làm:** `kd/ui/install.tsx` (`useInstall`, `InstallBar` là thanh đặc gắn trên tab bar, không nổi, theo D17 và họp 2.2, `InstallSheet` ba bước cho Android và iOS, webview → "Mở trong Safari"); hàng `Cài ứng dụng` trong `me.tsx` (`Đã cài` khi standalone hay `?source=app`); hàng `Phiên bản` trong Cài đặt; copy vi/en và th/ja/id.
 - **Test:** `pwa.spec.ts` phần dải (không trước tương tác, có sau khi mở sự kiện, bỏ không hiện lại), hàng Tôi hai trạng thái, UA iPhone → sheet Share, UA Android + `beforeinstallprompt` giả → `prompt()`; `newcomer.spec.ts` không đổi; `layout`, `targets` cho dải (44 px).
 - **Cổng:** `npx playwright test -c playwright.next.config.ts e2e/next/pwa.spec.ts e2e/next/newcomer.spec.ts e2e/next/layout.spec.ts e2e/next/targets.spec.ts e2e/next/app-more.spec.ts`.
 - **Commit:** `Install FeestFinder: a one-time nudge after the first interaction, a row in Tôi, the right steps on Safari and Chrome`.
