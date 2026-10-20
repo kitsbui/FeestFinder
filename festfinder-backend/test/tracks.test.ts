@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
 import { mp3Peaks } from '../src/services/audio.ts';
+import { TRACK_ADDS } from '../src/routes/tracks.ts';
 
 describe('an artist’s MP3 playlist: ten tracks at most, measured once, played by the page', () => {
   let env: TestEnv;
@@ -58,5 +59,18 @@ describe('an artist’s MP3 playlist: ten tracks at most, measured once, played 
     assert.deepEqual(order.slice(0, 2).map((t: { id: string }) => t.id), [b.id, a.id]);
     assert.equal((await env.as(dj).delete(`/me/artist/tracks/${a.id}`)).body.ok, true);
     assert.equal((await env.as().get(`/artists/${slug}`)).body.tracks.length, 9);
+  });
+
+  it('holds a person to a number of adds a quarter of an hour, since each reads a whole file', async () => {
+    // From a visitor's address (the API's own network is never limited); the limit is the person's, whatever address they use.
+    const from = (ip: string) => ({ headers: { 'x-forwarded-for': ip } });
+    const statuses: number[] = [];
+    for (let i = 0; i < TRACK_ADDS + 1; i++) {
+      statuses.push((await env.as(dj).post('/me/artist/tracks', { url: `https://cdn.example.com/loop${i}.mp3`, title: `Loop ${i}` }, from(`203.0.113.${i + 1}`))).status);
+    }
+    assert.ok(statuses.slice(0, TRACK_ADDS).every((s) => s !== 429), JSON.stringify(statuses));
+    assert.equal(statuses.at(-1), 429);
+    // Someone else, from the same address, is not held by it.
+    assert.notEqual((await env.as(fan).post('/me/artist/tracks', { url: 'https://cdn.example.com/x.mp3', title: 'X' }, from('203.0.113.1'))).status, 429);
   });
 });

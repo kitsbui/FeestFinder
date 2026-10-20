@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { one, json } from '../db/index.ts';
 import type { Row } from '../db/rows.ts';
@@ -14,13 +14,16 @@ import { presentTrack, readTrack, tracksOf, TRACKS_MAX } from '../services/audio
  * waveform player (festfinder-web kd/web/artist/playlist.tsx).
  *
  *   GET    /me/artist/tracks           the owner's list
- *   POST   /me/artist/tracks           { url, title } add one (public: a sign-in is enough, as for mixes)
+ *   POST   /me/artist/tracks           { url, title } add one (a sign-in is enough, as for mixes; TRACK_ADDS a quarter of an hour)
  *   PATCH  /me/artist/tracks/:id       { title }
  *   DELETE /me/artist/tracks/:id
  *   PUT    /me/artist/tracks/order     { ids }
  */
 
 const Url = z.string().trim().max(1000).regex(/^https:\/\/[^\s"'<>]+$/, 'an https link');
+
+/** Adds a person may try in a quarter of an hour (each reads a whole file). */
+export const TRACK_ADDS = 20;
 
 export default async function trackRoutes(app: FastifyInstance) {
   const ctx = app.ctx;
@@ -41,7 +44,11 @@ export default async function trackRoutes(app: FastifyInstance) {
     return { items: await tracksOf(ctx.db, a.id), max: TRACKS_MAX };
   });
 
-  app.post('/me/artist/tracks', async (req, reply) => {
+  // Each add downloads and decodes a whole file (up to 60 MB, about a second of CPU per 9 MB):
+  // twenty a quarter of an hour per person is room for a playlist of ten and stops a loop of adds.
+  app.post('/me/artist/tracks', {
+    config: { rateLimit: { max: TRACK_ADDS, timeWindow: '15 minutes', hook: 'preHandler', keyGenerator: (req: FastifyRequest) => req.session?.user?.id ?? req.clientIp } },
+  }, async (req, reply) => {
     const s = requireWriter(req);
     const a = await ownArtist(s.user.id);
     const b = parse(z.object({ url: Url, title: z.string().trim().min(1).max(200) }), req.body);
