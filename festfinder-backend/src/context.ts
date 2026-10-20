@@ -41,4 +41,6 @@ export interface Ctx {
   /** The network an ingestion run reads through. Tests hand in fixtures; otherwise the polite fetcher. */
   ingestIO?: () => IngestIO;
   log: (msg: string) => void;
+  /** Sends the log lines waiting for PostHog Logs (when switched on); the app calls it after each response. */
+  flushLogs?: () => Promise<void>;
 }

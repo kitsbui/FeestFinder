@@ -169,6 +169,8 @@ export interface Config {
   sentryDsn: string | null;
   /** PostHog project key and host. Without a key, analytics events go nowhere. */
   posthog: { key: string; host: string } | null;
+  /** Copy the API's log lines to PostHog Logs too (POSTHOG_LOGS=1, needs POSTHOG_KEY). */
+  posthogLogs: boolean;
   /** Release name reported alongside errors. */
   release: string;
 }
@@ -274,6 +276,7 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
       : null,
     sentryDsn: process.env.SENTRY_DSN || null,
     posthog: process.env.POSTHOG_KEY ? { key: process.env.POSTHOG_KEY, host: process.env.POSTHOG_HOST || 'https://eu.i.posthog.com' } : null,
+    posthogLogs: process.env.POSTHOG_LOGS === '1' && !!process.env.POSTHOG_KEY,
     release: str('RELEASE', 'dev'),
     ...overrides,
   };

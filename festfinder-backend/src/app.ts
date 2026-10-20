@@ -270,6 +270,9 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   // renders send X-FF-Session: render (they keep their own page cache, refreshed on every save). A
   // request that carries the header gets no shared copy at all, so nobody can store an anonymous
   // answer under it.
+  // A serverless function may be frozen once it has answered: the waiting log lines leave first.
+  if (ctx.flushLogs) app.addHook('onResponse', async () => { await ctx.flushLogs!(); });
+
   app.addHook('onSend', async (req, reply, payload) => {
     if (reply.hasHeader('cache-control')) return payload;
     if (req.session || reply.hasHeader('set-cookie')) reply.header('cache-control', 'private, no-store');
