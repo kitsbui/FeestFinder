@@ -4,4 +4,4 @@
 - [design-kit repo](design-kit-repo.md) — /home/patrickstar/Desktop/design-kit: the redesign retrospective, reusable design system, gates, 5 skills and an MCP server for future projects (2026-10-19)
 - [Growth plan 2026-10-20](growth-plan-2026-10-20.md) — cards C/A/B/D/4/5/6/1/E/F shipped, PostHog US setup on API project, what is left
 - [Blog content from documents](blog-content-from-documents.md) — owner sends a doc, I do research → bilingual posts → content pack end to end (feestfinder-blog-content skill)
-- [Night build 2026-10-21](night-build-2026-10-21.md) — #32 (owner requests + N1–N9) and #33 (one navigation) shipped; merge via PR when technical checks are green
+- [Night build 2026-10-21](night-build-2026-10-21.md) — #32–#38 shipped on 2026-10-21 (DJ lessons, sitemap, Search Console, laptop handoff); merge via PR when technical checks are green

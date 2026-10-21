@@ -10,7 +10,7 @@ Bàn giao ngày 21.10.2026. Làm theo thứ tự; phần lớn là một lệnh 
   - #34: 17 bài "Kỹ năng DJ";
   - #35, #36: sitemap đủ trang, dựng theo yêu cầu;
   - #37: file xác minh Google Search Console;
-  - PR mang tài liệu này.
+  - #38: tài liệu này, script cài đặt, MCP design-kit, bản skill cho Codex.
 - Blog: 27 bài đã công khai, gồm 10 bài dòng nhạc (gói `edm-genres`) và 17 bài Kỹ năng DJ (gói `dj-skills`).
 - Sitemap: https://feestfinder.com/sitemap.xml có khoảng 200 địa chỉ, CDN giữ 15 phút.
 - Google Search Console: thuộc tính `https://feestfinder.com/` xác minh bằng file `festfinder-web/public/google69f1c7d1cf79cd6d.html`. **Đừng xoá file đó.** Bạn gửi sitemap bằng tài khoản đã xác minh.
