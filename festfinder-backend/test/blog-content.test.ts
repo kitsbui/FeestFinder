@@ -47,7 +47,8 @@ describe('blog content packs: written once in the repository, edited by the team
       assert.ok(new Set(p.sources.map((s) => site(s.url))).size >= 3, `${p.slug} cites three publishers`);
       assert.ok(p.styles.every(isStyle), `${p.slug} styles are the site's`);
       assert.ok(p.cover && /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(p.cover.url) && p.cover.credit.includes('commons.wikimedia.org'), `${p.slug} cover is credited`);
-      if (p.key !== 'edm-genres/edm') assert.equal(p.tracks.length, 5, `${p.slug} has five tracks`);
+      // A genre guide plays five tracks; the guide above them and the DJ lessons need none.
+      if (p.category === 'styles' && p.parent) assert.equal(p.tracks.length, 5, `${p.slug} has five tracks`);
       for (const t of p.tracks) assert.match(t.youtube, /^[A-Za-z0-9_-]{11}$/, `${p.slug} ${t.title}`);
       // Every guide it links to exists, in both languages.
       for (const l of ['vi', 'en'] as const) {
@@ -93,6 +94,33 @@ describe('blog content packs: written once in the repository, edited by the team
     assert.deepEqual(crumbs, ['FeestFinder', 'Blog', 'What is EDM? A map of electronic dance music genres', 'What is techno? BPM, Detroit roots and sub-genres']);
     const sitemap = (await env.app.inject({ method: 'GET', url: '/sitemap.xml' })).body;
     assert.match(sitemap, /<loc>[^<]+\/blog\/techno\?lang=en<\/loc>/);
+  });
+
+  it('reads a DJ lesson’s steps as a HowTo and the glossary’s tables as a DefinedTermSet, under the course’s pillar', async () => {
+    for (const slug of ['hoc-dj-tu-so-0', 'beatmatch-bang-tai', 'thuat-ngu-dj']) {
+      const id = (await env.ctx.db.query<{ id: string }>('select id from blog_posts where slug = $1', [slug])).rows[0].id;
+      assert.equal((await env.as(admin).post(`/admin/posts/${id}/decision`, { action: 'approve' })).body.status, 'published');
+    }
+    const graph = async (path: string) => (await env.as().get(path)).body.jsonLd['@graph'] as { '@type': string; [k: string]: unknown }[];
+    const lesson = await graph('/seo/blog/beatmatch-bang-tai?lang=en');
+    const how = lesson.find((n) => n['@type'] === 'HowTo') as unknown as { step: { name: string; text: string; position: number }[]; tool: { name: string }[]; inLanguage: string };
+    assert.equal(how.inLanguage, 'en');
+    assert.deepEqual(how.step.map((x) => x.position), [1, 2, 3, 4, 5]);
+    assert.equal(how.step[0].name, 'Set a cue on beat one of track B');
+    assert.match(how.step[2].text, /^Do: listen for a while\..*Listen for:/);
+    assert.ok(how.tool.length >= 3 && how.tool.every((x) => !x.name.includes('**')));
+    const vi = await graph('/seo/blog/beatmatch-bang-tai');
+    assert.equal((vi.find((n) => n['@type'] === 'HowTo') as unknown as { step: { name: string }[] }).step[0].name, 'Đặt cue ở phách 1 của bài B');
+    const crumbs = (vi.find((n) => n['@type'] === 'BreadcrumbList') as unknown as { itemListElement: { name: string }[] }).itemListElement.map((c) => c.name);
+    assert.deepEqual(crumbs.slice(2), ['Học DJ từ số 0: lộ trình 16 bài thực hành trên controller', 'Cách beatmatch bằng tai: từng bước cho người mới']);
+    // The glossary is no how-to, and the pillar lists its lessons.
+    const glossary = await graph('/seo/blog/thuat-ngu-dj?lang=en');
+    assert.equal(glossary.find((n) => n['@type'] === 'HowTo'), undefined);
+    const set = glossary.find((n) => n['@type'] === 'DefinedTermSet') as unknown as { hasDefinedTerm: { name: string; description: string }[] };
+    assert.equal(set.hasDefinedTerm.length, 25);
+    assert.deepEqual(set.hasDefinedTerm[0], { '@type': 'DefinedTerm', name: 'Controller', description: 'A USB control surface that drives DJ software on a laptop; two decks and a mixer in one unit' });
+    assert.deepEqual((await env.as().get('/posts/hoc-dj-tu-so-0')).body.children.map((c: { slug: string }) => c.slug).sort(), ['beatmatch-bang-tai', 'thuat-ngu-dj']);
+    assert.equal((await graph('/seo/blog/techno')).find((n) => n['@type'] === 'HowTo'), undefined, 'a genre guide is no how-to');
   });
 
   it('takes a pack’s newer words until someone edits a post, and never after', async () => {

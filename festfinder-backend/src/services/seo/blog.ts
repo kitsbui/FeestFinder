@@ -13,11 +13,52 @@ const say = (p: Localized, lang: Lang) => (lang === 'vi' ? p.vi || p.en : p.en |
 const plain = (md: string) => md.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/^\|.*\|$/gm, '')
   .replace(/^[#>\-\d.]+\s*/gm, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
 
+const STEP = /^###\s+(?:Bước|Step)\s+\d+\s*[:.]\s*(.+)$/;
+const PREPARE = /^##\s+(?:Bạn cần chuẩn bị|What you need)\s*$/;
+
+/**
+ * A lesson's steps for HowTo: each "### Bước n: …" ("### Step n: …") heading with the words under
+ * it up to the next heading, and the list under "## Bạn cần chuẩn bị" ("## What you need") as its
+ * tools. A post without three steps is not a how-to.
+ */
+function howToOf(md: string) {
+  const steps: { name: string; text: string }[] = [];
+  const tools: string[] = [];
+  let step: { name: string; lines: string[] } | null = null;
+  let preparing = false;
+  const close = () => { if (step) steps.push({ name: plain(step.name), text: clip(plain(step.lines.join('\n')), 500) }); step = null; };
+  for (const line of md.split('\n')) {
+    const m = line.match(STEP);
+    if (m) { close(); step = { name: m[1], lines: [] }; preparing = false; continue; }
+    if (/^#{2,3}\s/.test(line)) { close(); preparing = PREPARE.test(line); continue; }
+    if (step) step.lines.push(line);
+    else if (preparing && /^\s*-\s+/.test(line)) tools.push(plain(line));
+  }
+  close();
+  return steps.length >= 3 ? { steps, tools } : null;
+}
+
+/** A glossary's terms for a DefinedTermSet: the rows of every table whose first column is headed "Thuật ngữ" or "Term". */
+function termsOf(md: string) {
+  const cells = (row: string) => row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+  const terms: { name: string; description: string }[] = [];
+  for (const chunk of md.split(/\n{2,}/)) {
+    const rows = chunk.split('\n').filter((l) => l.trim());
+    if (rows.length < 3 || !rows.every((l) => /^\s*\|.*\|\s*$/.test(l)) || !/^(Thuật ngữ|Term)$/i.test(cells(rows[0])[0])) continue;
+    for (const row of rows.slice(2)) {
+      const [name, description] = cells(row);
+      if (name && description) terms.push({ name: plain(name), description: plain(description) });
+    }
+  }
+  return terms.length >= 5 ? terms : null;
+}
+
 /**
  * A published post (services/blog.ts): Vietnamese at /blog/<slug>, English at ?lang=en, each
  * its own page with the other named, when the post is written in both; a post written in one
  * language has that one address. A guide adds its facts, its questions (FAQPage), its tracks
- * (ItemList of MusicRecording) and its sources (citation). Drafts, posts in review and posts the
+ * (ItemList of MusicRecording) and its sources (citation); a lesson its steps (HowTo) and a
+ * glossary its terms (DefinedTermSet). Drafts, posts in review and posts the
  * team took down have no page (null).
  */
 export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<BlogSeo | null> {
@@ -57,8 +98,10 @@ export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): P
     { label: t('published', lang), value: published ? longDate(published, lang) : '', datetime: published ?? undefined },
     { label: t('readTime', lang), value: vi ? `${post.minutes[written]} phút` : `${post.minutes[written]} min` },
   ].filter((f) => f.value);
-  const ids = { page: url, post: `${canonical}#post`, crumbs: `${url}#breadcrumb`, faq: `${url}#faq`, tracks: `${url}#tracks`, topic: `${canonical}#topic` };
+  const ids = { page: url, post: `${canonical}#post`, crumbs: `${url}#breadcrumb`, faq: `${url}#faq`, tracks: `${url}#tracks`, topic: `${canonical}#topic`, howTo: `${url}#howto`, terms: `${url}#terms` };
   const guideTopic = post.category.key === 'styles' && post.facts.length > 0;
+  const howTo = howToOf(say(body, written));
+  const terms = termsOf(say(body, written));
   const graph = [
     ...siteNodes(base),
     {
@@ -87,6 +130,16 @@ export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): P
     post.faq.length ? {
       '@type': 'FAQPage', '@id': ids.faq, inLanguage: written,
       mainEntity: post.faq.map((f) => ({ '@type': 'Question', name: say(f.q, written), acceptedAnswer: { '@type': 'Answer', text: say(f.a, written) } })),
+    } : null,
+    // A lesson that goes step by step (the DJ lessons: what to do, where to look, what to listen for).
+    howTo ? {
+      '@type': 'HowTo', '@id': ids.howTo, name: clip(title, 110), description, inLanguage: written, image: image.url,
+      tool: howTo.tools.length ? howTo.tools.map((name) => ({ '@type': 'HowToTool', name })) : undefined,
+      step: howTo.steps.map((x, i) => ({ '@type': 'HowToStep', position: i + 1, name: x.name, text: x.text })),
+    } : null,
+    terms ? {
+      '@type': 'DefinedTermSet', '@id': ids.terms, name: title, inLanguage: written,
+      hasDefinedTerm: terms.map((x) => ({ '@type': 'DefinedTerm', name: x.name, description: x.description })),
     } : null,
     post.tracks.length ? {
       '@type': 'ItemList', '@id': ids.tracks, name: t('tracks', lang), numberOfItems: post.tracks.length,
