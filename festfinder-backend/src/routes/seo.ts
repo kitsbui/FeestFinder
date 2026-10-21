@@ -4,7 +4,7 @@ import { L } from '../lib/i18n.ts';
 import { notFound } from '../lib/errors.ts';
 import { parse } from '../lib/validate.ts';
 import { genreArtPng } from '../services/ogimage.ts';
-import { buildArtistSeo, buildBlogSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, buildProjectSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapXml } from '../services/seo.ts';
+import { buildArtistSeo, buildBlogSeo, buildCollectionSeo, buildDirectorySeo, buildEventSeo, buildOrganizerSeo, buildProjectSeo, llmsTxt, pageMarkdown, robotsTxt, sitemapPages, sitemapXml } from '../services/seo.ts';
 
 /** robots.txt, the sitemap, llms.txt, the IndexNow key file, link-preview art, and what each public page says to search engines and AI agents. */
 export default async function seoRoutes(app: FastifyInstance) {
@@ -16,6 +16,11 @@ export default async function seoRoutes(app: FastifyInstance) {
 
   app.get('/sitemap.xml', async (_req, reply) => {
     return reply.type('application/xml; charset=utf-8').header('cache-control', 'public, max-age=900').send(await sitemapXml(ctx));
+  });
+
+  // The same pages for the web, whose /sitemap.xml is the one robots.txt names and which names every language a page has.
+  app.get('/seo/sitemap', async (_req, reply) => {
+    return reply.header('cache-control', 'public, max-age=900').send({ pages: await sitemapPages(ctx) });
   });
 
   // Proves to IndexNow that the key announcing our pages is ours.

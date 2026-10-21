@@ -62,6 +62,11 @@ test.describe('pages for search engines', () => {
     expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo<\/loc>/);
     expect(sitemap).toMatch(/<loc>[^<]+\/o\/ravoent<\/loc>/);
     expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo\?lang=en<\/loc>/);
+    // Every language the event page speaks, each naming the others (the API's list, services/seo/crawlers.ts).
+    expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo\?lang=th<\/loc>/);
+    expect(sitemap).toMatch(/hreflang="ja" href="[^"]+\/e\/ravo\?lang=ja"/);
+    expect(sitemap).toMatch(/<loc>[^<]+\/about<\/loc>/);
+    expect(sitemap).not.toMatch(/<loc>[^<]+\/list<\/loc>/);
     expect(sitemap).not.toMatch(/\/vi\/ho-chi-minh/);
     const robots = await (await request.get('/robots.txt')).text();
     for (const path of ['/app', '/studio', '/console']) expect(robots).toContain(`Disallow: ${path}`);

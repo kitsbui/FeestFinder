@@ -1,52 +1,33 @@
 import type { MetadataRoute } from 'next';
-import { apiOr, SITE_URL, type EventCard } from '@/lib/api';
+import { apiOr, SITE_URL } from '@/lib/api';
 import { LANGS, type Lang } from '@/kd/copy';
 
 // Rebuilt at most every 15 minutes: new listings reach search engines the same hour.
 export const revalidate = 900;
 
-type Entry = Omit<MetadataRoute.Sitemap[number], 'url' | 'alternates' | 'priority'>;
+/**
+ * A page the API lists (GET /seo/sitemap, services/seo/crawlers.ts `sitemapPages`): in every
+ * language the site speaks, in Vietnamese and English (a blog post written in both), or in one.
+ */
+type Page = { path: string; lastmod?: string; priority: number; langs: 'every' | 'pair' | 'one' };
 
-/** A page in its five languages (design v2 phase 10), each address naming the others: Vietnamese first. */
-function inEvery(vi: string, entry: Entry, priority: number): MetadataRoute.Sitemap {
-  const at = (l: Lang) => (l === 'vi' ? vi : `${vi}?lang=${l}`);
-  const alternates = { languages: { ...Object.fromEntries(LANGS.map((l) => [l, at(l)])), 'x-default': vi } };
-  return LANGS.map((l) => ({ url: at(l), ...entry, priority: l === 'vi' ? priority : Math.round(priority * (l === 'en' ? 8 : 6)) / 10, alternates }));
+const at = (vi: string, l: Lang) => (l === 'vi' ? vi : `${vi}?lang=${l}`);
+
+/** A page's addresses, each naming the others: Vietnamese first, the other languages a little lower. */
+function entries(p: Page): MetadataRoute.Sitemap {
+  const vi = `${SITE_URL}${p.path}`;
+  const entry = { lastModified: p.lastmod };
+  if (p.langs === 'one') return [{ url: vi, ...entry, priority: p.priority }];
+  // Five languages for the pages that speak them (design v2 phase 10); a post has its two.
+  const langs: readonly Lang[] = p.langs === 'every' ? LANGS : ['vi', 'en'];
+  const alternates = { languages: { ...Object.fromEntries(langs.map((l) => [l, at(vi, l)])), 'x-default': vi } };
+  return langs.map((l) => ({ url: at(vi, l), ...entry, priority: l === 'vi' ? p.priority : Math.round(p.priority * (l === 'en' ? 8 : 6)) / 10, alternates }));
 }
 
-/** Every live listing, every organiser and artist with one, in every language. */
+/** Every public page worth a search result: events, organisers, artists, collections, projects, the blog, the directory, about. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const events: EventCard[] = [];
-  let cursor: string | null = null;
-  for (let page = 0; page < 50; page++) {
-    const out: { items: EventCard[]; nextCursor: string | null } | null = await apiOr<{ items: EventCard[]; nextCursor: string | null } | null>(
-      `/events?time=all&limit=60${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`,
-      null,
-      { revalidate: 900 },
-    );
-    if (!out) break;
-    events.push(...out.items);
-    cursor = out.nextCursor;
-    if (!cursor) break;
-  }
-
-  const organizers = new Map<string, EventCard['organizer']>();
-  for (const e of events) organizers.set(e.organizer.slug, e.organizer);
-
-  // Artists with a show still to come.
-  const meta = await apiOr<{ items: { slug: string }[]; directories?: string[] } | null>('/meta/artists', null, { revalidate: 900 });
-  const artists = meta?.items ?? [];
-  // The artist directory pages that list enough artists to be indexed.
-  const directories = meta?.directories ?? [];
-
-  const now = new Date();
-  return [
-    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'hourly', priority: 1 },
-    { url: `${SITE_URL}/list`, lastModified: now, changeFrequency: 'hourly', priority: 0.6 },
-    { url: `${SITE_URL}/about`, changeFrequency: 'monthly', priority: 0.3 },
-    ...events.filter((e) => !e.past).flatMap((e) => inEvery(`${SITE_URL}/e/${e.slug}`, { lastModified: now, changeFrequency: 'daily' }, 0.9)),
-    ...[...organizers.values()].flatMap((o) => inEvery(`${SITE_URL}/o/${o.slug}`, { changeFrequency: 'weekly' }, 0.6)),
-    ...artists.flatMap((a) => inEvery(`${SITE_URL}/a/${a.slug}`, { changeFrequency: 'weekly' }, 0.6)),
-    ...directories.flatMap((path) => inEvery(`${SITE_URL}${path}`, { changeFrequency: 'daily' }, 0.5)),
-  ];
+  const out = await apiOr<{ pages: Page[] } | null>('/seo/sitemap', null, { revalidate: 900 });
+  const pages: Page[] = out?.pages ?? [{ path: '/', priority: 1, langs: 'every' }, { path: '/about', priority: 0.3, langs: 'every' }];
+  // One file holds 50,000 addresses at most (the sitemap protocol's limit).
+  return pages.flatMap(entries).slice(0, 50_000);
 }

@@ -174,10 +174,29 @@ describe('event pages for search engines and AI assistants', () => {
     assert.match(map, /xmlns:xhtml="http:\/\/www\.w3\.org\/1999\/xhtml"/);
     assert.match(map, /<loc>http:\/\/test\.local\/e\/ravo<\/loc><lastmod>\d{4}-\d{2}-\d{2}<\/lastmod><priority>0\.9<\/priority><xhtml:link rel="alternate" hreflang="vi" href="http:\/\/test\.local\/e\/ravo"\/><xhtml:link rel="alternate" hreflang="en" href="http:\/\/test\.local\/e\/ravo\?lang=en"\/>/);
     assert.match(map, /<loc>http:\/\/test\.local\/e\/ravo\?lang=en<\/loc>/);
-    assert.match(map, /<loc>http:\/\/test\.local\/list<\/loc>/);
+    // /list redirects to the home page: a sitemap lists only pages that answer.
+    assert.doesNotMatch(map, /<loc>http:\/\/test\.local\/list<\/loc>/);
     assert.match(map, /<loc>http:\/\/test\.local\/o\/ravoent<\/loc><lastmod>[^<]+<\/lastmod><priority>0\.6<\/priority><xhtml:link rel="alternate" hreflang="vi" href="http:\/\/test\.local\/o\/ravoent"\/>/);
     assert.match(map, /<loc>http:\/\/test\.local\/o\/ravoent\?lang=en<\/loc>/);
     assert.doesNotMatch(map, /\/vi\/ho-chi-minh/);
+  });
+
+  it('gives the web the same pages with their languages, for the /sitemap.xml robots.txt names', async () => {
+    const res = await env.as().get('/seo/sitemap');
+    assert.equal(res.status, 200);
+    assert.match(String(res.headers['cache-control']), /public, max-age=900/);
+    const pages = res.body.pages as { path: string; lastmod?: string; priority: number; langs: string }[];
+    const at = (path: string) => pages.find((p) => p.path === path);
+    assert.deepEqual(at('/'), { path: '/', lastmod: at('/')!.lastmod, priority: 1, langs: 'every' });
+    assert.equal(at('/e/ravo')?.langs, 'every');
+    assert.match(at('/e/ravo')!.lastmod!, /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal(at('/o/ravoent')?.langs, 'every');
+    assert.equal(at('/about')?.langs, 'every');
+    assert.equal(at('/list'), undefined);
+    // Every page the XML lists, the web lists too: one inventory.
+    const map = (await env.as().get('/sitemap.xml')).body as string;
+    const locs = [...map.matchAll(/<loc>http:\/\/test\.local([^<?]*)<\/loc>/g)].map((m) => m[1]);
+    assert.deepEqual([...new Set(locs)].sort(), [...new Set(pages.map((p) => p.path))].sort());
   });
 });
 
