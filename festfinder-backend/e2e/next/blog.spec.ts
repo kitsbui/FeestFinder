@@ -116,6 +116,9 @@ test('the team approves the waiting editorial posts in one go, and the blog show
   await expect(page.getByText(`Đã duyệt ${n} bài`)).toBeVisible();
   await expect(all).toHaveCount(0);
   await visitor.goto('/blog');
-  await expect(visitor.getByRole('link', { name: /^Trance là gì\?/ }).first()).toBeVisible();
+  // The page itself counts every approved post (its first screen holds 24 of them): the decisions rendered it again.
+  const { total } = await (await visitor.request.get('/posts?limit=1')).json();
+  await expect(visitor.getByRole('tab', { name: /^Tất cả/ })).toHaveAccessibleName(new RegExp(`^Tất cả\\s*${total}$`));
+  await expect(visitor.getByRole('tab', { name: /^Kỹ năng DJ/ })).toHaveAccessibleName(/^Kỹ năng DJ\s*17$/);
   await visitor.close();
 });

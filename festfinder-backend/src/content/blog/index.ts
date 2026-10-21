@@ -4,6 +4,7 @@
  * (services/blog-content.ts). Add a pack here; never remove one whose posts are live.
  */
 import type { BlogPack } from '../../services/blog-content.ts';
+import { djSkills } from './dj-skills/index.ts';
 import { edmGenres } from './edm-genres/index.ts';
 
-export const PACKS: BlogPack[] = [edmGenres];
+export const PACKS: BlogPack[] = [edmGenres, djSkills];
