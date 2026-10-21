@@ -12,7 +12,7 @@ import { assessRisk } from '../risk.ts';
 import { refreshConfidence } from './confidence.ts';
 import { politeIO } from './fetch.ts';
 import { hostOf } from './normalize.ts';
-import { EVENT_TYPES } from '../../lib/styles.ts';
+import { EVENT_TYPES, genreFromStyles, styleByKey } from '../../lib/styles.ts';
 import { ADAPTERS, PROVIDER_CONFIDENCE } from './providers.ts';
 import { findExact, findSimilar, MATCH_RULES, venueLikeness, type Match } from './resolve.ts';
 import { isRejection, type IngestIO, type IngestSource, type NormalizedEvent, type RawRecord } from './types.ts';
@@ -35,8 +35,13 @@ import { FIT_FLOOR, fitOf, refreshFit } from './fit.ts';
  *
  * FeestFinder lists electronic music only. A new record that names another genre and no EDM
  * style is dropped ("other_genre"), and so is one with no style at all from a source that
- * lists every kind of music (config.requireStyle); one that names no genre waits for review.
+ * lists every kind of music (config.requireStyle); one that names no genre waits for review. A club
+ * whose every night is electronic names its styles (config.styles), which a night naming none takes.
  */
+
+/** A source's own styles (config.styles), the known ones, three at most. */
+export const sourceStyles = (config: Record<string, unknown>): string[] =>
+  Array.isArray(config.styles) ? config.styles.filter((x): x is string => typeof x === 'string' && !!styleByKey(x)).slice(0, 3) : [];
 
 export interface RunSummary {
   sourceId: string;
@@ -203,6 +208,12 @@ export async function ingestRecord(ctx: Ctx, source: IngestSource, record: RawRe
     // A club's own site lists club nights, whatever its pages call them.
     if (!isRejection(n) && typeof source.config.eventType === 'string' && (EVENT_TYPES as readonly string[]).includes(source.config.eventType)) {
       n.eventType = source.config.eventType as NormalizedEvent['eventType'];
+    }
+    // A club whose every night is electronic names its styles (config.styles): a night that names none takes
+    // them, and so reaches the review queue instead of falling under the fit floor (owner, 2026-10-21).
+    if (!isRejection(n) && !n.styles.length) {
+      const styles = sourceStyles(source.config);
+      if (styles.length) { n.styles = styles; n.genre = genreFromStyles(styles); }
     }
     if (isRejection(n)) {
       await q.query(`update raw_events set status = 'rejected', error = $2, processed_at = $3 where id = $1`, [raw!.id, n.detail ? `${n.rejected}: ${n.detail}` : n.rejected, now]);

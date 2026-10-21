@@ -54,7 +54,8 @@ const club = (name: string, url: string, city: string, config: Record<string, un
 });
 
 export const STARTER_SOURCES: StarterSource[] = [
-  club('Ciné Saigon', 'https://cinesaigon.vn/', 'ho-chi-minh', { type: 'event', address: '148 Cống Quỳnh, Phường Bến Thành' }),
+  // Every night there is techno or house (Adam Beyer, Matt Sassari, NUSHA): one that names no style takes these (owner, 2026-10-21).
+  club('Ciné Saigon', 'https://cinesaigon.vn/', 'ho-chi-minh', { type: 'event', address: '148 Cống Quỳnh, Phường Bến Thành', styles: ['techno', 'house'] }),
   club('1900 Le Théâtre', 'https://1900club.vn/', 'ha-noi', { type: 'events', query: 'event-types=2', address: '8B Tạ Hiện, Hoàn Kiếm' }),
   megatix('Megatix Singapore', 'https://megatix.com.sg/'),
   megatix('Megatix Indonesia', 'https://megatix.co.id/'),

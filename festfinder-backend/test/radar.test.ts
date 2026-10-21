@@ -29,7 +29,7 @@ function fakeIO(pages: Record<string, string>): IngestIO {
 }
 
 type Reason = { key: string };
-type EventRow = { id: string; city: string; festival: string | null; event_type: string; status: string; origin: string; starts_on: string; ends_on: string; ticket_url: string | null; fit_score: number; fit_reasons: Reason[]; styles: string[] };
+type EventRow = { id: string; city: string; festival: string | null; event_type: string; status: string; origin: string; starts_on: string; ends_on: string; ticket_url: string | null; fit_score: number; fit_reasons: Reason[]; styles: string[]; genre: string | null };
 type CardLike = { id: string; festival: { key: string; flagship: boolean; label: { vi: string } } };
 
 const page = (node: Record<string, unknown>) => `<html><head><script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', ...node })}</script></head><body></body></html>`;
@@ -55,6 +55,12 @@ const TECHNO = page({
   performer: [{ '@type': 'MusicGroup', name: 'Charlotte de Witte' }, { '@type': 'MusicGroup', name: 'Amelie Lens' }],
   offers: { '@type': 'Offer', url: 'https://tickets.example/cdw', price: '600000', priceCurrency: 'VND' },
   location: { '@type': 'Place', name: 'The Warehouse', address: { '@type': 'PostalAddress', streetAddress: '9 Đường Số 1, Quận 4', addressLocality: 'Ho Chi Minh City' } },
+});
+
+// A night at an electronic club that names no style and no known artist (as Ciné Saigon's pages do).
+const RAVE_NIGHT = page({
+  '@type': 'Event', name: 'RAVEX: GAZTIK', startDate: '2026-10-24T22:00:00+07:00',
+  location: { '@type': 'Place', name: 'Ciné Club', address: { '@type': 'PostalAddress', streetAddress: '148 Cống Quỳnh', addressLocality: 'Ho Chi Minh City' } },
 });
 
 describe('Feest Radar, pure', () => {
@@ -99,6 +105,7 @@ describe('Feest Radar, running', () => {
         'https://thailand.electricdaisycarnival.com/': EDC_THAILAND,
         'https://bar.example/': KARAOKE,
         'https://club.example/': TECHNO,
+        'https://cine.example/': RAVE_NIGHT,
       }),
     });
     admin = await env.admin();
@@ -122,6 +129,20 @@ describe('Feest Radar, running', () => {
     assert.equal(ev.ticket_url, 'https://thailand.edc.com/tickets/', 'the ticket page, as the festival names it');
     assert.ok(ev.fit_score >= 70, `a world festival is worth listing (${ev.fit_score})`);
     assert.ok(ev.fit_reasons.some((r) => r.key === 'festival_world'));
+  });
+
+  it('a club that names its styles gives them to its nights that name none, higher in the queue', async () => {
+    const first = await run('Ciné Club', 'https://cine.example/', { eventType: 'club' });
+    assert.equal(first.summary.created, 1, JSON.stringify(first.summary));
+    const before = (await one<EventRow>(env.ctx.db, `select * from events where title = 'RAVEX: GAZTIK'`))!;
+    assert.deepEqual([before.styles, before.genre], [[], null]);
+    // The team names the club's styles and runs its stored records again ("Xử lý lại"): nothing is fetched.
+    assert.equal((await env.as(admin).patch(`/admin/sources/${first.id}`, { config: { eventType: 'club', styles: ['techno', 'house', 'not-a-style'] } })).status, 200);
+    assert.equal((await env.as(admin).post(`/admin/sources/${first.id}/reprocess`)).status, 200);
+    const ev = (await one<EventRow>(env.ctx.db, `select * from events where title = 'RAVEX: GAZTIK'`))!;
+    assert.deepEqual([ev.styles, ev.genre, ev.status, ev.origin], [['techno', 'house'], 'EDM', 'in_review', 'radar']);
+    assert.ok(ev.fit_score >= before.fit_score + 25, `${before.fit_score} → ${ev.fit_score}`);
+    assert.ok(ev.fit_reasons.some((r) => r.key === 'style'));
   });
 
   it('drops what is not worth a night out, and scores a strong club night high with its reasons', async () => {

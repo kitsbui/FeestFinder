@@ -52,6 +52,8 @@ export const SOURCES = {
   optional: { en: 'optional', vi: 'không bắt buộc' },
   city: { en: 'Default city', vi: 'Thành phố mặc định' },
   cityAny: { en: '— From each event’s address —', vi: '— Theo địa chỉ từng sự kiện —' },
+  styles: { en: 'The source’s styles', vi: 'Dòng nhạc của nguồn' },
+  stylesHint: { en: 'Up to 3, for a night that names none', vi: 'Tối đa 3, cho đêm không ghi dòng nhạc' },
   authority: { en: 'Authority', vi: 'Mức tin cậy' },
   hours: { en: 'Read every (hours)', vi: 'Đọc lại sau (giờ)' },
   hoursHint: { en: '1–168', vi: '1–168' },

@@ -158,7 +158,7 @@ export function Sources() {
 // ---- the form -----------------------------------------------------------------------------
 
 /** The config keys this form sets; every other key a source carries (requireStyle, skip, eventType…) is kept as it is. */
-const FORM_KEYS = ['follow', 'maxPages', 'countryCode', 'city', 'pages', 'type', 'query', 'venue', 'address'];
+const FORM_KEYS = ['follow', 'maxPages', 'countryCode', 'city', 'pages', 'type', 'query', 'venue', 'address', 'styles'];
 
 function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: Source; onClose: () => void; onSaved: (s: Source) => void }) {
   const T = pick(SOURCES, lang);
@@ -174,6 +174,7 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
     follow: str(c.follow, ''), maxPages: str(c.maxPages, '20'),
     countryCode: str(c.countryCode, ''), tmCity: str(c.city, ''), pages: str(c.pages, '1'),
     wpType: str(c.type, 'event'), wpQuery: str(c.query, ''), venue: str(c.venue, ''), address: str(c.address, ''),
+    styles: Array.isArray(c.styles) ? c.styles.filter((x): x is string => typeof x === 'string') : [] as string[],
   }));
   const [busy, setBusy] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -192,7 +193,7 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
       : {};
     const body = {
       adapter: f.adapter, name: f.name.trim(), url: needsUrl ? f.url.trim() : null, city: f.city || null, authority: f.authority,
-      intervalMinutes: Math.round(hours * 60), enabled: f.enabled, config: { ...kept, ...own },
+      intervalMinutes: Math.round(hours * 60), enabled: f.enabled, config: { ...kept, ...own, ...(f.styles.length ? { styles: f.styles } : {}) },
     };
     try {
       const out: Source = editing ? await FF.patch('/admin/sources/' + source.id, body) : await FF.post('/admin/sources', body);
@@ -274,6 +275,17 @@ function SourceForm({ lang, source, onClose, onSaved }: { lang: Lang; source?: S
           {(options?.cities ?? []).map((x) => <option key={x.value} value={x.value}>{FF.text(x.label, lang)}</option>)}
         </Select>
       </Field>
+      {/* A club whose every night is electronic: a night that names no style takes these (services/ingest/run.ts). */}
+      <fieldset className="flex flex-col gap-2">
+        <legend className="kd-flabel mb-1">{T.styles}</legend>
+        <span className="kd-s">{T.stylesHint}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {(options?.styles ?? []).map((x) => {
+            const on = f.styles.includes(x.value);
+            return <Chip key={x.value} on={on} aria-pressed={on} disabled={!on && f.styles.length >= 3} onClick={() => set('styles')(on ? f.styles.filter((v) => v !== x.value) : [...f.styles, x.value])}>{FF.text(x.label, lang)}</Chip>;
+          })}
+        </div>
+      </fieldset>
       <Field label={T.authority} htmlFor="cs-auth">
         <Select id="cs-auth" value={f.authority} onChange={(e) => set('authority')(e.target.value as Authority)}>
           {AUTHORITIES.map((a) => <option key={a} value={a}>{T[a]}</option>)}
