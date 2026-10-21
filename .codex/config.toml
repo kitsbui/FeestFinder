@@ -1,0 +1,8 @@
+# Codex reads this project's MCP servers here (Claude Code reads .mcp.json): the same set.
+[mcp_servers.vercel]
+url = "https://mcp.vercel.com"
+
+# The design kit (blog_check, design rules, first-screen measurement): clone kitsbui/design-kit next to this repo.
+[mcp_servers.design-kit]
+command = "node"
+args = ["../design-kit/mcp/src/server.ts"]

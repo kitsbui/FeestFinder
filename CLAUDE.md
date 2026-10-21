@@ -68,7 +68,8 @@ For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. 
 ## Skills and MCP (for coding agents)
 
 - `.claude/skills/`: `feestfinder-preview` (run or restart the local preview), `feestfinder-migration`, `feestfinder-add-city` (places, tiles, Blob, `MAP_*`), `feestfinder-radar-adapter`, `feestfinder-blog-content` (a document the owner sends becomes researched bilingual blog posts, end to end) and `feestfinder-ship` (checks, merge, deploy, verify). Keep them true when the commands they name change.
-- `.mcp.json`: the Vercel MCP server (sign in with OAuth when asked) and the Supabase one, read-only, on the project in `SUPABASE_PROJECT_REF` with the token in `SUPABASE_ACCESS_TOKEN` (both from your own environment; use staging). Never write a ref, token or password into the repo.
+- `.mcp.json`: the Vercel MCP server (sign in with OAuth when asked), the Supabase one, read-only, on the project in `SUPABASE_PROJECT_REF` with the token in `SUPABASE_ACCESS_TOKEN` (both from your own environment; use staging), and the design kit's (`../design-kit`, kitsbui/design-kit cloned beside this repo: `blog_check`, `blog_jsonld`, the design rules). Never write a ref, token or password into the repo.
+- Codex reads `AGENTS.md` (which points here), `.agents/skills/` (a copy of `.claude/skills/`: change a skill, copy it again) and `.codex/config.toml` (the same MCP servers). A new machine: `docs/handoff/NEW_LAPTOP.md` and `bash scripts/setup-laptop.sh`.
 
 ## Caching (frontend.ts)
 

@@ -39,7 +39,7 @@
         "http.server",
         "5173",
         "--directory",
-        "/home/patrickstar/Desktop/design-kit/usertest"
+        "../design-kit/usertest"
       ],
       "port": 5173
     }
