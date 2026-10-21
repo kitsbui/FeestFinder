@@ -171,3 +171,16 @@ Bốn vai đồng ý đánh giá này. CL ghi chú: Nội dung và Trải nghi�
    - Câu lạc bộ chỉ chơi nhạc điện tử (Ciné Saigon…): **A** đặt style mặc định cho nguồn để đêm không ghi style vẫn lên hàng duyệt với style đó (khuyến nghị) · **B** giữ như hiện tại.
    - Độ dài bài hướng dẫn: **A** viết thêm lên 800+ từ trong đợt nội dung sau (khuyến nghị) · **B** giữ 600–750.
 5. Buổi thử 5 người (`docs/DESIGN_GOVERNANCE.md`, design-kit `usertest/`): cột còn thiếu của mọi điểm 10.
+
+## 11. Sáng 21.10: ba quyết định, làm theo khuyến nghị
+
+Chủ sản phẩm: "tự động thực hiện cho đến khi hoàn thành, khởi động lại dev server cho tôi preview". Bản xem trước chạy lại ở http://localhost:3000 (nhánh này, 10 bài blog đã đăng). Ba quyết định của mục 10 làm theo phương án A:
+
+| Quyết định | Đã làm |
+| --- | --- |
+| Bài biên tập | Giữ duyệt; nút "Duyệt bài biên tập (n)" (N2) là một lần bấm |
+| Style mặc định theo nguồn | `config.styles` (tối đa 3 style có thật) cho câu lạc bộ chỉ chơi nhạc điện tử: đêm không ghi style nhận các style đó và thể loại EDM, điểm fit tăng ≥ 25, vẫn chờ duyệt. Ô "Dòng nhạc của nguồn" trong form nguồn của Console; Ciné Saigon đặt techno + house qua migration 062. Kiểm tra lại giả thuyết của đêm: một đêm club có link trang riêng đã đủ 27 điểm (> 25), nên các đêm Ciné Saigon nhiều khả năng **đang chờ trong hàng duyệt**, không bị loại; style mặc định giúp chúng có style, đứng cao hơn trong hàng và lọc được theo style. Test: `radar.test` (đêm không style, đặt style cho nguồn, "Xử lý lại", có techno + house, EDM, fit +25) |
+| Độ dài bài hướng dẫn | Mỗi bài vệ tinh thêm "DJ mix … thế nào?" (tempo, phrase, EQ, harmonic mixing, nét riêng từng dòng); "EDM là gì?" thêm "Một track EDM được dựng thế nào?", "Club, rave và lễ hội khác nhau thế nào?", "Đêm EDM đầu tiên của bạn", "Đọc trang sự kiện trên FeestFinder". EN 800–930 từ, bài trụ 1.200+; VI 836–1.290 âm tiết. **20/20 bản đạt trọn `blog_check`**; `blog-content.test` giữ ngưỡng 800 và 1.200 |
+
+Điểm Nội dung: 6 → 7 (blog đạt chuẩn của kit; production vẫn ít đêm ở Việt Nam cho tới khi hàng duyệt được xử lý). SEO/AIO giữ 9 cho tới khi merge.
+

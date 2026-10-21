@@ -85,6 +85,17 @@ ${fig('vi')}
 3. **Đếm nhịp:** khoảng 140–148 BPM, nhanh hơn trance thường.
 4. **So với trance:** ít chord và breakdown hơn, nhiều hiệu ứng và năng lượng liên tục hơn.
 
+## DJ mix psytrance thế nào?
+
+Psytrance chạy nhanh và rolling bass nằm trên từng nốt móc kép, khoá chặt với kick. Vì vậy mix psytrance là việc cần độ chính xác.
+
+1. **Không bao giờ chồng hai bassline.** Hai rolling bass cùng lúc lệch nhau ngay, nên DJ cắt phần trầm của bài mới rồi đổi bass trong một động tác gọn đúng lúc chuyển phrase.
+2. **Đếm theo nhóm tám.** Psytrance thay đổi một thứ gì đó sau mỗi 8 hoặc 16 bar; cho bài sau vào đúng những mốc đó giữ được mạch.
+3. **Giữ tempo đều.** Một set thường ở trong một khoảng BPM hẹp và chỉ tăng chậm, vì tốc độ nhảy vọt sẽ làm đứt cảm giác trance trên sàn.
+4. **Kể chuyện bằng âm thanh.** Ở lễ hội, những âm thanh tối như dark psy thường thuộc về ban đêm, còn full-on và progressive hay lấp đầy buổi sáng và ban ngày.
+
+Ở các lễ hội ngoài trời, set thường kéo dài nhiều giờ, từ đêm sang sáng, nên nhịp độ của cả set quan trọng hơn kỹ thuật. Nhiều track psytrance dài bảy, tám phút, nên DJ có thời gian chuẩn bị từng lần chuyển, và những đoạn build dài cho đám đông chìm vào groove trước khi âm thanh đổi hướng.
+
 ## Nghe psytrance ở đâu tại châu Á?
 
 Ấn Độ, Thái Lan, Nhật Bản và Việt Nam đều có cộng đồng psytrance sôi nổi, từ tiệc bãi biển tới lễ hội ngoài trời. Xem [lịch psytrance sắp tới trên FeestFinder](${nights('psytrance', 'vi')}).
@@ -148,6 +159,17 @@ ${fig('en')}
 2. **Listen to the effects:** "cosmic" sounds, sweeping filters, spoken samples.
 3. **Count the tempo:** about 140–148 BPM, faster than most trance.
 4. **Compare with trance:** fewer chords and breakdowns, more effects and constant energy.
+
+## How do DJs mix psytrance?
+
+Psytrance moves fast, and its rolling bass sits on every 16th note, locked to the kick. That makes mixing it precise work.
+
+1. **Never stack two basslines.** Two rolling basses at once clash immediately, so DJs cut the low end of the incoming track and swap the basses in one clean move at a phrase change.
+2. **Count in eights.** Psytrance changes something every 8 or 16 bars; starting the next track on those boundaries keeps the flow.
+3. **Keep the tempo steady.** A set usually stays within a narrow BPM band and rises slowly, because jumps in speed break the trance on the dancefloor.
+4. **Tell a story with sound.** At festivals, darker sounds such as dark psy usually belong to the night, while full-on and progressive often fill the morning and the day.
+
+At open-air festivals sets often run for hours, from night into morning, so the pacing of the whole set matters more than any single trick. A good psytrance DJ is judged by how long the dancefloor stays lost in the music. Many psytrance tracks run seven or eight minutes, so a DJ has time to prepare each change, and the long builds give the crowd time to sink into the groove before the next shift in sound.
 
 ## Where to hear psytrance in Asia
 

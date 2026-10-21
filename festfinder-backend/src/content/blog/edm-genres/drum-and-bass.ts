@@ -89,6 +89,17 @@ ${fig('vi')}
 3. **Nghe bass:** sub lăn liên tục hoặc reese "rền".
 4. **So với dubstep:** dubstep chậm hơn (140, cảm giác 70) và thưa hơn nhiều.
 
+## DJ mix drum & bass thế nào?
+
+Drum & bass nhanh nhưng cấu trúc rất đều: intro và outro 16 hoặc 32 bar, rồi tới drop. DJ dựa vào đó để giữ năng lượng luôn cao.
+
+1. **Mix theo phrase.** Bài mới được cho vào sao cho drop của nó nổ đúng lúc bài đang chạy hết một đoạn.
+2. **Double drop.** Hai drop cùng lúc, khi hai bassline hợp nhau, là một trong những khoảnh khắc đặc trưng của dòng nhạc.
+3. **Đổi bass.** EQ rút phần trầm của một bài trong khi bass của bài kia vào, để reese và sub-bass không bao giờ đè nhau.
+4. **Rewind và MC.** Một bài hay có thể bị kéo lại và chơi lần nữa khi đám đông đòi, và MC thường cưỡi lên beat suốt set.
+
+Nhiều DJ drum & bass mix rất nhanh, đổi bài mỗi một hai phút, nên một set một tiếng có thể chứa rất nhiều bài. Set liquid thì êm hơn, với những đoạn blend dài để giai điệu của hai bài chồng lên nhau.
+
 ## Nghe drum & bass ở đâu tại châu Á?
 
 DnB có những đêm nhạc trung thành ở TP.HCM, Hà Nội, Bangkok, Tokyo và Singapore. Xem [lịch drum & bass sắp tới trên FeestFinder](${nights('drum-and-bass', 'vi')}).
@@ -156,6 +167,17 @@ ${fig('en')}
 2. **Listen to the drums:** breakbeats instead of a 4/4 kick, a crisp snare on 2 and 4.
 3. **Listen to the bass:** a rolling sub or a growling reese.
 4. **Compare with dubstep:** dubstep is slower (140, a 70 feel) and far sparser.
+
+## How do DJs mix drum & bass?
+
+Drum & bass is fast, but its structure is regular: intros and outros of 16 or 32 bars, then the drop. DJs use that to keep the energy high.
+
+1. **Mix on the phrase.** The incoming track starts so that its drop lands just as the current one finishes a section.
+2. **Double drops.** Two drops at once, when the basslines agree, is one of the genre's signature moments.
+3. **Swap the bass.** The EQ takes the low end out of one track while the other's bass comes in, so the reese and the sub never clash.
+4. **Rewinds and MCs.** A big tune can be pulled back and played again on the crowd's call, and an MC often rides the beat through the set.
+
+Many drum & bass DJs mix quickly, changing tracks every minute or two, so a one-hour set can hold a large number of records. That pace, the MC and the rewinds come straight from the jungle raves and pirate radio of the early 1990s. Liquid sets run smoother, with longer blends that let the melodies of two tracks overlap.
 
 ## Where to hear drum & bass in Asia
 

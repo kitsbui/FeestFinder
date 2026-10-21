@@ -84,6 +84,49 @@ ${table('vi')}
 | B2B | Back-to-back: hai DJ thay phiên chơi trong cùng một set |
 | Sub-genre | Nhánh nhỏ của một dòng nhạc, như minimal techno hay liquid DnB |
 
+## Một track EDM được dựng thế nào?
+
+Gần như mọi track EDM đều gồm những phần giống nhau, sắp theo phrase 8, 16 hoặc 32 bar:
+
+1. **Intro:** trống và vài lớp âm thanh, để DJ mix vào.
+2. **Build-up:** căng dần với riser, snare roll và filter.
+3. **Drop:** lúc beat đầy đủ cùng bass hoặc lead chính vào cùng lúc, phần người ta nhảy hết mình nhất.
+4. **Breakdown:** trống lùi lại, giai điệu hoặc không khí lên tiếng.
+5. **Build-up và drop thứ hai:** thường lớn hơn lần đầu.
+6. **Outro:** lại là trống, để bài sau vào.
+
+Thứ đổi theo từng dòng là nhịp bên dưới. House, techno, trance và big room dùng kick **four-on-the-floor**, mỗi phách một tiếng. Drum & bass và breakbeat dùng nhịp trống gãy (broken beat), còn dubstep chạy 140 BPM với cảm giác half-time. Tempo là gợi ý nhanh nhất: house khoảng 120–128 BPM, trance 128–140, hardstyle 150–160, drum & bass 160–180.
+
+## Club, rave và lễ hội khác nhau thế nào?
+
+EDM có ba kiểu nơi để nghe, mỗi nơi một cảm giác:
+
+- **Đêm club:** một phòng vài trăm người, thường từ tối muộn tới rạng sáng, một hai DJ chơi set dài. Đây là nơi techno, house, drum & bass sống hằng tuần.
+- **Rave:** tiệc trong nhà kho, bãi đất trống hay những nơi không phải club, thường kéo dài cả đêm và xoay quanh một scene hay một kiểu âm thanh.
+- **Lễ hội (festival):** từ một tới vài ngày, nhiều sân khấu, hàng chục nghệ sĩ từ DJ địa phương tới headliner. Mỗi sân khấu thường có một dòng nhạc riêng, nên lễ hội là cách tốt để nghe nhiều dòng trong một cuối tuần.
+
+Ngoài ba kiểu trên còn có những buổi ban ngày như coffee rave, sunset session hay day party: nhạc điện tử nhưng nhẹ nhàng hơn, hợp với người mới.
+
+## Đêm EDM đầu tiên của bạn
+
+- **Chọn đêm theo line-up và dòng nhạc,** không chỉ theo địa điểm: các dòng nhạc ghi trên trang sự kiện cho bạn biết sẽ nghe gì.
+- **Mua vé ở nơi bán chính thức.** Nút Mua vé trên FeestFinder đưa bạn tới nơi bán của nhà tổ chức.
+- **Xem giới hạn tuổi và giờ mở cửa** trước khi đi; nhiều đêm club là 18+.
+- **Giữ gìn đôi tai.** Nút tai dành cho nghe nhạc giảm âm lượng mà không làm méo tiếng, và thỉnh thoảng ra xa loa cũng giúp nhiều.
+- **Đến sớm** nếu được: DJ mở màn đặt không khí cho cả đêm, và những set mở màn là nơi nhiều headliner tương lai được chú ý lần đầu.
+- **Uống nước, tính trước đường về** và đi cùng bạn bè.
+
+## Đọc trang sự kiện trên FeestFinder
+
+Mỗi đêm trên FeestFinder trả lời cùng những câu hỏi theo cùng một thứ tự: khi nào, ở đâu, giá bao nhiêu, từ bao nhiêu tuổi, rồi tới line-up và dòng nhạc.
+
+- **Dòng nhạc** là gợi ý đầu tiên về âm thanh: một đêm gắn techno hay hard techno sẽ rất khác một đêm gắn house hay trance.
+- **Giá** là mức vé thấp nhất nơi bán đưa ra ("từ"). Khi nguồn không ghi giá, trang ghi là chưa rõ giá chứ không gọi đêm đó là miễn phí.
+- **Được đăng hay được tìm thấy:** đêm do nhà tổ chức hoặc cộng đồng đăng sẽ ghi rõ; đêm do Feest Radar tìm thấy trên trang của club hay trang bán vé mang dấu Radar, và nút mua vé đưa bạn tới trang nơi nó được tìm thấy.
+- **Lưu lại** bằng trái tim để tìm lại trong mục Đã lưu, hoặc đặt nhắc khi có show cho một dòng nhạc hay một nghệ sĩ để được báo khi có đêm mới ở thành phố của bạn.
+
+Nếu line-up có nghệ sĩ đã có hồ sơ, trang của họ cho bạn nghe mix trước khi mua vé.
+
 ## EDM ở châu Á
 
 Châu Á có một trong những cộng đồng nhạc điện tử sôi động nhất thế giới: Goa (Ấn Độ) là nơi Goa trance ra đời, Tokyo có văn hóa club techno và house lâu đời, Bangkok và Bali là điểm hẹn của các lễ hội ngoài trời, còn TP.HCM và Hà Nội có những club underground và rave ngày càng lớn. Nhiều DJ quốc tế đưa châu Á vào lịch lưu diễn hằng năm, và các nghệ sĩ châu Á cũng đang tạo dấu ấn riêng.
@@ -133,6 +176,49 @@ ${table('en')}
 | Set | A DJ's continuous performance, usually 1–2 hours |
 | B2B | Back-to-back: two DJs taking turns in one set |
 | Sub-genre | A smaller branch of a genre, such as minimal techno or liquid DnB |
+
+## How is an EDM track built?
+
+Almost every EDM track is made of the same parts, arranged in phrases of 8, 16 or 32 bars:
+
+1. **Intro:** drums and a few elements, so a DJ can mix in.
+2. **Build-up:** rising tension with risers, snare rolls and filters.
+3. **Drop:** the moment the full beat and the main bass or lead hit together, the part people dance hardest to.
+4. **Breakdown:** the drums step back and the melody or the atmosphere takes over.
+5. **Second build-up and drop:** often bigger than the first.
+6. **Outro:** drums again, so the next track can come in.
+
+What changes from genre to genre is the rhythm underneath. House, techno, trance and big room use a **four-on-the-floor** kick, one on every beat. Drum & bass and breakbeat use broken drum patterns, and dubstep plays at 140 BPM with a half-time feel. Tempo is the quickest clue: house around 120–128 BPM, trance 128–140, hardstyle 150–160, drum & bass 160–180.
+
+## Clubs, raves and festivals: what is the difference?
+
+EDM is heard in three kinds of places, and each feels different:
+
+- **Club nights:** a room for a few hundred people, usually from late evening into the early morning, with one or two DJs playing long sets. This is where techno, house and drum & bass live week to week.
+- **Raves:** parties in warehouses, open fields or other places that are not regular clubs, often all night long and built around one scene or one sound.
+- **Festivals:** one to several days, many stages and dozens of artists, from local DJs to headliners. Each stage often has its own style, so a festival is a good way to hear several genres in one weekend.
+
+Besides these, daytime events such as coffee raves, sunset sessions and day parties play electronic music in a gentler setting, a good first step for newcomers.
+
+## Your first EDM night
+
+- **Pick the night by its line-up and its styles,** not only by the venue: the styles on an event page tell you what you will hear.
+- **Buy tickets from the official seller.** The ticket buttons on FeestFinder take you to the organiser's seller.
+- **Check the age limit and the door time** before you go; many club nights are 18+.
+- **Protect your hearing.** Earplugs made for music lower the volume without muffling the sound, and short breaks away from the speakers help too.
+- **Arrive early** if you can: the warm-up DJs set the mood of the night, and their opening sets are where many future headliners first get noticed.
+- **Drink water, plan the way home** and stay with your friends.
+
+## Reading an event page on FeestFinder
+
+Every night on FeestFinder answers the same questions in the same order: when, where, how much and from what age, then the line-up and the styles.
+
+- **Styles** are the first clue to the sound: a night tagged techno or hard techno will feel very different from one tagged house or trance.
+- **Price** is the lowest ticket the seller lists ("from"). When a source gives no price, the page says the price is unknown rather than calling the night free.
+- **Posted or found:** a night an organiser or the community posted says so; a night Feest Radar found on a club's site or a ticket site carries the Radar mark, and its ticket button goes to the page where it was found.
+- **Save it** with the heart to find it again under Saved, or set an alert for a style or an artist to be told when a new night comes up in your city.
+
+When the line-up names artists with a profile, their pages let you listen to their mixes before you buy a ticket.
 
 ## EDM in Asia
 

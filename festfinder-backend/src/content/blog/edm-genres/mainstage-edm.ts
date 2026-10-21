@@ -89,6 +89,17 @@ ${fig('vi')}
 3. **Đếm nhịp:** khoảng 128 BPM.
 4. **So với progressive:** big room ít chord, nhiều "cú đấm" hơn.
 
+## DJ mix mainstage EDM thế nào?
+
+Set mainstage được dựng cho đám đông lớn và những khoảnh khắc lớn, nên DJ mix từ drop sang drop.
+
+1. **Thuộc cấu trúc.** Phần lớn track đi theo intro, build-up, drop, breakdown, build-up thứ hai và drop thứ hai, theo phrase 8 và 16 bar.
+2. **Đổi bài ở build-up.** Bài sau thường vào ngay trong build-up, để drop của nó tới đúng lúc đám đông chờ một cú drop.
+3. **Edit và mashup.** DJ lễ hội chuẩn bị phiên bản của riêng mình: vocal của bài này trên drop của bài kia, hoặc một bản edit ngắn hơn giữ cho set luôn chạy.
+4. **Giữ quanh 128.** Phần lớn dòng nhạc nằm quanh 128 BPM, nên dễ đi qua lại giữa big room, progressive house và electro house.
+
+Một set mainstage cũng là một buổi diễn, với ánh sáng, pháo hoa và hình ảnh canh đúng từng cú drop.
+
 ## Nghe mainstage EDM ở đâu tại châu Á?
 
 Các lễ hội lớn ở Việt Nam, Thái Lan, Singapore và Nhật Bản luôn có sân khấu mainstage. Xem [lịch mainstage sắp tới trên FeestFinder](${nights('mainstage', 'vi')}).
@@ -156,6 +167,17 @@ ${fig('en')}
 2. **Listen to the drop:** little more than a kick and a short lead.
 3. **Count the tempo:** about 128 BPM.
 4. **Compare with progressive:** big room has fewer chords and more punch.
+
+## How do DJs mix mainstage EDM?
+
+Mainstage sets are built for big crowds and big moments, so DJs mix from drop to drop.
+
+1. **Know the structure.** Most tracks follow intro, build-up, drop, breakdown, a second build-up and a second drop, in phrases of 8 and 16 bars.
+2. **Change on the build-up.** The next track often comes in during a build-up, so its drop arrives right where the crowd expects one.
+3. **Edits and mashups.** Festival DJs prepare their own versions: a vocal from one song over the drop of another, or a shorter edit that keeps the set moving.
+4. **Stay around 128.** Most of the style sits around 128 BPM, which makes it easy to move between big room, progressive house and electro house.
+
+A mainstage set is also a show, with lights, pyrotechnics and visuals timed to the drops, so the DJ often plans the order of the set with the production team well before the festival.
 
 ## Where to hear mainstage EDM in Asia
 

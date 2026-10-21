@@ -31,7 +31,9 @@ describe('blog content packs: written once in the repository, edited by the team
         assert.ok(p.title[l].length >= 20 && p.title[l].length <= 65, `${p.slug} title ${l}: ${p.title[l].length}`);
         // The excerpt is the meta description: search results cut it after about 170 characters (design-kit blog_check).
         assert.ok(p.excerpt[l].length >= 140 && p.excerpt[l].length <= 170, `${p.slug} excerpt ${l}: ${p.excerpt[l].length}`);
-        assert.ok(p.body[l].split(/\s+/).length >= 500, `${p.slug} body ${l} is a full article`);
+        // A guide is 800 words at least, the pillar 1,200 (design-kit blog_check; Vietnamese counts syllables).
+        const words = p.body[l].replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/https?:\/\/\S+/g, ' ').replace(/[#>*_|`-]/g, ' ').split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+        assert.ok(words >= (p.parent ? 800 : 1200), `${p.slug} body ${l}: ${words} words`);
         // The answer first: the opening paragraph names the subject in bold.
         assert.match(p.body[l], /^\*\*[^*]+\*\*/, `${p.slug} body ${l} opens with its definition`);
         for (const f of p.faq) assert.ok(f.q[l] && f.a[l], `${p.slug} faq ${l}`);

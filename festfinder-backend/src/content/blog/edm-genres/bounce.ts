@@ -87,6 +87,17 @@ ${fig('vi')}
 3. **Đếm nhịp:** khoảng 128 BPM.
 4. **So với big room:** bounce vui và nhiều bass hơn, big room nặng kick hơn.
 
+## DJ mix bounce thế nào?
+
+Bounce chung tempo với big room, khoảng 126–130 BPM, và được mix theo cùng một kiểu ngắn gọn, nhiều năng lượng.
+
+1. **Chuyển bài nhanh.** Đoạn chồng ngắn, thường 8 hoặc 16 bar, vì hai bassline nảy cùng lúc sẽ rối.
+2. **Dựa vào sample.** Tiếng hô và sample vocal là một phần của phong cách, và DJ dùng chúng làm cầu nối từ bài này sang bài sau.
+3. **Mix cùng các dòng hàng xóm.** Bounce đứng cạnh big room và electro house rất hợp trong set lễ hội, và về sau cạnh cả slap house.
+4. **Chơi những cú drop.** Bassline off-beat là thứ người ta nhảy theo, nên DJ để các drop nối nhau thật gần.
+
+Bounce bắt đầu từ các club ở Melbourne, nên nhiều set vẫn mang không khí một đêm tiệc hơn là một màn trình diễn ánh sáng. Phần lớn track bounce ngắn, khoảng ba tới bốn phút, nên một set đi qua rất nhiều bài. Nhiều DJ còn chơi bản edit bounce của chính họ cho các bài pop và bài lễ hội, một lý do khiến phong cách này lan nhanh trên các sân khấu lễ hội đầu thập niên 2010.
+
 ## Nghe bounce ở đâu tại châu Á?
 
 Bounce và các remix bounce xuất hiện nhiều trong các đêm EDM và lễ hội ở Việt Nam, Thái Lan và Úc gần kề. Xem [lịch mainstage và EDM sắp tới trên FeestFinder](${nights('mainstage', 'vi')}).
@@ -152,6 +163,17 @@ ${fig('en')}
 2. **Listen to the lead:** shrill and horn-like, with a simple melody.
 3. **Count the tempo:** about 128 BPM.
 4. **Compare with big room:** bounce is more playful and bass-led, big room is heavier on the kick.
+
+## How do DJs mix bounce?
+
+Bounce shares its tempo with big room, about 126–130 BPM, and it is mixed in the same short, energetic way.
+
+1. **Quick transitions.** Overlaps are short, often 8 or 16 bars, because two bouncy basslines at once get crowded.
+2. **Lean on samples.** Vocal shouts and samples are part of the style, and DJs use them to bridge one track into the next.
+3. **Mix with neighbours.** Bounce sits well next to big room and electro house in festival sets, and in later years next to slap house too.
+4. **Play the drops.** The off-beat bass is what people dance to, so DJs keep the drops close together.
+
+Bounce began in Melbourne's clubs, so many sets still feel like a party night rather than a light show. A bounce DJ reads the room quickly: if the crowd is jumping, the next drop comes sooner, and if it needs a break, a vocal hook or a familiar sample brings it back. Most bounce tracks are short, around three to four minutes, so a set moves through many records. Many DJs also play their own bounce edits of pop and festival songs, which is part of why the style spread so fast on festival stages in the early 2010s.
 
 ## Where to hear bounce in Asia
 

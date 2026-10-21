@@ -92,6 +92,17 @@ ${fig('vi')}
 3. **Nghe arrangement:** bản nhạc thay đổi bằng filter và layer, chậm rãi và lặp lại.
 4. **So với house:** ít vocal, ít swing, cảm giác "máy" hơn.
 
+## DJ mix techno thế nào?
+
+Techno được viết để blend dài. Phần lớn track mở đầu và kết thúc bằng 16 hoặc 32 bar chỉ có trống, nên DJ có thể đưa bài sau vào dưới bài đang chạy và để cả hai cùng chơi một phút hoặc lâu hơn. Những việc cơ bản:
+
+1. **Khớp tempo, rồi khớp phrase.** Cho bài mới vào đúng phách đầu của một phrase (mỗi 8, 16 hoặc 32 bar) để hai bài cùng build và cùng break.
+2. **Đổi phần trầm.** Hai kick và hai bassline chồng lên nhau sẽ đục: cắt bass của bài mới bằng EQ, rồi đổi bass giữa hai bài trong vài bar.
+3. **Chồng lớp chứ không chỉ thay bài.** Một vòng lặp thôi miên của bài này đặt trên trống của bài kia là một phần của nghề; có DJ chơi ba, bốn deck cùng lúc.
+4. **Dẫn năng lượng.** Một set techno là một đường cong chậm: sâu và thôi miên lúc đầu, mạnh và nhanh hơn ở giờ cao điểm, BPM thường tăng dần qua đêm.
+
+Jeff Mills, biệt danh "The Wizard", nổi tiếng với lối mix nhanh, cắt ghép liên tục trên ba bàn xoay; nhiều DJ khác lại chuộng blend chậm và liền mạch. Cả hai đều là techno.
+
 ## Nghe techno ở đâu tại châu Á?
 
 Techno là dòng nhạc chủ lực của nhiều club underground ở TP.HCM, Hà Nội, Bangkok, Tokyo hay Singapore. Xem [lịch techno sắp tới trên FeestFinder](${nights('techno', 'vi')}) để tìm đêm gần bạn.
@@ -162,6 +173,17 @@ In the early 1990s a second wave came from Underground Resistance, with **Jeff M
 2. **Listen to the bass:** bass and kick merge into one rumble, with little melody.
 3. **Listen to the arrangement:** the track changes through filters and layers, slowly and repetitively.
 4. **Compare with house:** fewer vocals, less swing, a more "machine" feel.
+
+## How do DJs mix techno?
+
+Techno is built for long blends. Most tracks open and close with 16 or 32 bars of drums alone, so a DJ can bring the next record in under the current one and let both run together for a minute or more. The basics:
+
+1. **Match the tempo, then the phrase.** Start the new track on the first beat of a phrase (every 8, 16 or 32 bars) so both build and break at the same moment.
+2. **Swap the low end.** Two kicks and two basslines at once turn to mud: cut the bass of the incoming track with the EQ, then trade the basses over a few bars.
+3. **Layer, don't just replace.** A hypnotic loop from one record over the drums of another is part of the craft; some DJs work three or four decks at once.
+4. **Ride the energy.** A techno set is a slow curve: deep and hypnotic early, harder and faster at peak time, the BPM often rising through the night.
+
+Jeff Mills, nicknamed "The Wizard", is famous for fast, cut-up mixing across three turntables; many others prefer slow, seamless blends. Both are techno, and both start from the same habit of listening to the phrase before touching a fader.
 
 ## Where to hear techno in Asia
 

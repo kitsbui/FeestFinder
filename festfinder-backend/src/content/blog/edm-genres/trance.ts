@@ -89,6 +89,17 @@ ${fig('vi')}
 3. **Nghe bass:** off-beat hoặc rolling, không "gầm" như dubstep.
 4. **So với psytrance:** trance nhiều giai điệu và chord hơn, psytrance tập trung vào bass và hiệu ứng.
 
+## DJ mix trance thế nào?
+
+Track trance dài và đi theo một tấm bản đồ rõ ràng: intro chỉ có trống, build-up, breakdown dài với giai điệu chính, rồi cao trào và outro. DJ mix dựa trên tấm bản đồ đó.
+
+1. **Mix ở intro và outro.** Các đoạn 32 bar chỉ có trống và bass ở hai đầu là nơi hai bài chồng lên nhau; breakdown được để chơi một mình.
+2. **Để ý tông (key).** Hai giai điệu cùng lúc chỉ nghe êm khi tông hợp nhau, nên nhiều DJ trance xếp bài theo vòng Camelot (harmonic mixing) và chuyển từng bước một.
+3. **Để breakdown thở.** Khoảng lặng trước drop là lúc cả đám đông chờ đợi; chèn bài khác vào lúc đó là phí.
+4. **Dựng một hành trình.** Một set điển hình đi từ progressive và những bài sâu lên các anthem uplifting, rồi lắng xuống.
+
+Nhiều DJ trance chơi set dài từ hai tiếng trở lên, nên hành trình từ bài đầu tới bài cuối là một phần của buổi diễn.
+
 ## Nghe trance ở đâu tại châu Á?
 
 Trance có cộng đồng trung thành ở Việt Nam, Thái Lan và Nhật Bản. Xem [lịch trance sắp tới trên FeestFinder](${nights('trance', 'vi')}).
@@ -156,6 +167,17 @@ ${fig('en')}
 2. **Listen to the lead:** thick supersaws and fast arpeggios are the clearest sign.
 3. **Listen to the bass:** off-beat or rolling, never growling like dubstep.
 4. **Compare with psytrance:** trance has more melody and chords, psytrance focuses on bass and effects.
+
+## How do DJs mix trance?
+
+Trance tracks are long and follow a clear map: an intro of drums, a build-up, a long breakdown with the main melody, then the climax and an outro. DJs mix them by that map.
+
+1. **Mix in the intro and the outro.** The 32-bar sections of drums and bass at each end are where two tracks overlap; the breakdown is left to play on its own.
+2. **Mind the key.** Two melodies at once only work in compatible keys, so many trance DJs sort their records with the Camelot wheel (harmonic mixing) and move one step at a time.
+3. **Let the breakdown breathe.** The pause before the drop is the moment the crowd waits for; talking over it with another track wastes it.
+4. **Build an arc.** A typical set climbs from progressive and deeper records to uplifting anthems, then winds down.
+
+Many trance DJs play long sets of two hours or more, so the journey from the first track to the last is part of the show, and the order of the records matters as much as the records themselves.
 
 ## Where to hear trance in Asia
 

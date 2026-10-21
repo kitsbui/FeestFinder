@@ -87,6 +87,17 @@ ${fig('vi')}
 3. **Nghe breakdown:** euphoric có giai điệu lớn, raw có screech và vocal MC.
 4. **So với hardcore:** hardstyle chậm và giàu giai điệu hơn.
 
+## DJ mix hardstyle thế nào?
+
+Kick của hardstyle không chỉ là tiếng trống: nó được distort và chỉnh tông, nên nó có cao độ. Điều đó quyết định cách DJ mix.
+
+1. **Mix theo tông.** Hai kick khác tông vang cùng lúc nghe sai ngay, nên DJ hardstyle lên set theo key và giữ đoạn chồng ngắn.
+2. **Blend ngắn, cắt gọn.** Nhiều lần chuyển bài chỉ dài 8 hoặc 16 bar, hoặc cắt thẳng từ drop này sang drop kia.
+3. **Chơi những cú drop.** Set đi nhanh từ cao trào này sang cao trào khác, thường bằng các bản edit bỏ bớt breakdown dài.
+4. **Điều tiết năng lượng.** Giai điệu euphoric và những đoạn raw, nặng hơn được mix thành từng đợt để đám đông có lúc thở giữa các khoảnh khắc mạnh nhất.
+
+Ở các sự kiện hard dance lớn, DJ còn chuẩn bị edit và mashup của riêng mình để cả set nghe như một buổi diễn liền mạch. Tempo hiếm khi nhảy vọt: một set thường ở trong khoảng 150–160 BPM, và năng lượng thay đổi nhờ kick và giai điệu chứ không nhờ tốc độ.
+
 ## Nghe hardstyle ở đâu tại châu Á?
 
 Hardstyle có cộng đồng mạnh ở Thái Lan, Nhật Bản, Úc và ngày càng lớn ở Việt Nam. Xem [lịch hardstyle sắp tới trên FeestFinder](${nights('hardstyle', 'vi')}).
@@ -152,6 +163,17 @@ ${fig('en')}
 2. **Count the tempo:** about 150 BPM, faster than trance and slower than hardcore.
 3. **Listen to the breakdown:** euphoric tracks bring big melodies, raw tracks screeches and MC vocals.
 4. **Compare with hardcore:** hardstyle is slower and more melodic.
+
+## How do DJs mix hardstyle?
+
+A hardstyle kick is not just a drum: it is distorted and tuned, so it has a pitch. That shapes how DJs mix the style.
+
+1. **Mix in key.** Two kicks in clashing keys sound wrong at once, so hardstyle DJs plan their sets by key and keep overlaps short.
+2. **Short blends, clean cuts.** Many transitions last 8 or 16 bars, or are a straight cut from one drop into the next.
+3. **Play the drops.** Sets move quickly from climax to climax, often with edits that skip long breakdowns.
+4. **Pace the energy.** Euphoric melodies and raw, harder sections are mixed in waves, so the crowd can breathe between the hardest moments.
+
+At big hard dance events, DJs also prepare their own edits and mashups so the set feels like one continuous show. The screech, the kick and the melody all have to sit in the same key for those mashups to work, which is why hardstyle DJs often talk about keys as much as tempo. A crowd at a hardstyle event knows the anthems by heart, so the DJ's choice of which melody to bring back, and when, is part of the performance. Tempos rarely jump: a set usually stays between 150 and 160 BPM, and the change of energy comes from the kicks and the melodies rather than from speed.
 
 ## Where to hear hardstyle in Asia
 

@@ -86,6 +86,17 @@ ${fig('vi')}
 3. **Nghe vocal:** chop ngắn hoặc sample hip-hop, ít giai điệu hát.
 4. **So với tech house:** tech house groove nhẹ hơn, bass house nặng và ồn hơn.
 
+## DJ mix bass house thế nào?
+
+Bass House chạy ở tempo của house, khoảng 124–128 BPM, nên được mix như house nhưng với phần trầm nặng hơn.
+
+1. **Blend intro và outro.** Phần lớn track có 16 hoặc 32 bar trống ở mỗi đầu, đủ cho một đoạn chồng êm.
+2. **Mỗi lúc một bassline.** Tiếng bass gầm gừ là nhân vật chính, nên DJ cắt phần trầm của bài mới và đổi bass đúng phrase.
+3. **Đi qua các dòng hàng xóm.** Vì cùng tempo, một set có thể chảy từ tech house sang bass house, G-house rồi quay lại mà không đổi tốc độ.
+4. **Mix ra từ drop.** Một chiêu quen thuộc là đưa bài sau vào trong lúc breakdown và để drop của nó nối tiếp drop của bài trước.
+
+Dòng nhạc lớn lên ở club và ở lễ hội cùng một lúc, nên set bass house thường trộn groove của club với những cú drop cỡ lễ hội. Hook vocal và những sample cắt ngắn cũng giúp DJ nối bài này sang bài kia mà không mất groove.
+
 ## Nghe bass house ở đâu tại châu Á?
 
 Bass house xuất hiện thường xuyên trong các đêm house và EDM ở TP.HCM, Hà Nội, Bangkok và Singapore. Xem [lịch bass house sắp tới trên FeestFinder](${nights('bass-house', 'vi')}).
@@ -150,6 +161,17 @@ ${fig('en')}
 2. **Listen to the drop:** the bass takes over, growling and changing timbre.
 3. **Listen to the vocals:** short chops or hip-hop samples, little sung melody.
 4. **Compare with tech house:** tech house grooves more lightly, bass house is heavier and louder.
+
+## How do DJs mix bass house?
+
+Bass house sits at house tempo, around 124–128 BPM, so it is mixed like house with a heavier low end.
+
+1. **Blend the intros and outros.** Most tracks give 16 or 32 bars of drums at each end, enough for a smooth overlap.
+2. **One bassline at a time.** The growling bass is the star, so DJs cut the low end of the incoming track and swap the basses on the phrase.
+3. **Move between neighbours.** Because the tempo is shared, a set can flow from tech house into bass house and G-house and back without changing speed.
+4. **Mix out of the drop.** A common move is to bring the next track in during the breakdown and let its drop follow the previous one.
+
+The style grew in clubs and at festivals at the same time, so bass house sets often mix club grooves with festival-sized drops, and the same record can work at midnight in a small room and at sunset on a big stage. Vocal hooks and short chopped samples also help DJs bridge one track into the next without losing the groove.
 
 ## Where to hear bass house in Asia
 

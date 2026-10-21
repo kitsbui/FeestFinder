@@ -86,6 +86,17 @@ ${fig('vi')}
 3. **Nghe khoảng trống:** dubstep gốc nhiều không gian và tiếng vang.
 4. **So với D&B:** D&B nhanh hơn hẳn với breakbeat dồn dập.
 
+## DJ mix dubstep thế nào?
+
+Dubstep chạy khoảng 140 BPM nhưng cảm giác chậm một nửa, và năng lượng của nó nằm ở drop. Cách DJ mix dubstep đến từ văn hoá sound system ở Anh.
+
+1. **Mix nhanh và dứt khoát.** Thay vì blend dài, nhiều lần chuyển bài rất ngắn: vài bar chồng lên nhau hoặc cắt đúng phrase.
+2. **Double drop.** Canh hai bài để drop của chúng nổ cùng lúc là một chiêu kinh điển, dùng khi hai bassline hợp nhau.
+3. **Rewind.** Khi một drop nổ đúng lúc, DJ có thể kéo bài lại và chơi từ đầu, một thói quen thừa hưởng từ sound system reggae và jungle.
+4. **Chừa chỗ cho sub-bass.** Trên một hệ thống loa lớn, sub-bass gánh cả bài, nên DJ chỉ để một bassline nặng tại một thời điểm.
+
+Một MC thường dẫn set, khuấy đám đông và hô báo những cú drop. Set riddim và brostep đi nhanh hơn dubstep Anh thời đầu, drop đổi gần như mỗi phút, nhưng thói quen của sound system vẫn giữ nguyên.
+
 ## Nghe dubstep ở đâu tại châu Á?
 
 Dubstep và bass music có cộng đồng sôi nổi ở Việt Nam, Thái Lan và Nhật Bản. Xem [lịch dubstep sắp tới trên FeestFinder](${nights('dubstep', 'vi')}).
@@ -150,6 +161,17 @@ ${fig('en')}
 2. **Listen to the bass:** a bass that wobbles in time or growls at the drop.
 3. **Listen for space:** original dubstep is full of room and echo.
 4. **Compare with D&B:** D&B is much faster, with rushing breakbeats.
+
+## How do DJs mix dubstep?
+
+Dubstep runs at about 140 BPM but feels half as fast, and its energy lives in the drop. The way DJs mix it comes from UK sound-system culture.
+
+1. **Quick, punchy mixes.** Instead of long blends, many transitions are short: a few bars of overlap, or a cut on the phrase.
+2. **Double drops.** Lining up two tracks so their drops land together is a classic move, used when both basslines fit.
+3. **Rewinds.** When a drop lands well, the DJ may pull the record back and start it again, a habit inherited from reggae and jungle sound systems.
+4. **Room for the sub.** On a big sound system the sub-bass carries the track, so DJs keep only one heavy bassline playing at a time.
+
+An MC often hosts the set, hyping the crowd and calling the drops. Early dubstep nights in London were built around the sound system itself, and the best sets still treat the speakers as an instrument: space, weight and the silence before a drop matter as much as speed. Riddim and brostep sets move faster than early UK dubstep, with drops changing almost every minute, but the habits of the sound system stay the same.
 
 ## Where to hear dubstep in Asia
 
