@@ -76,6 +76,12 @@ test.describe('pages for search engines', () => {
     for (const path of ['/app', '/studio', '/console']) expect(robots).toContain(`Disallow: ${path}`);
   });
 
+  test('Google Search Console finds its verification file, served by this app rather than the API', async ({ request }) => {
+    const res = await request.get('/google69f1c7d1cf79cd6d.html');
+    expect(res.status()).toBe(200);
+    expect(await res.text()).toBe('google-site-verification: google69f1c7d1cf79cd6d.html');
+  });
+
   test('the app installs', async ({ request }) => {
     const manifest = await (await request.get('/manifest.webmanifest')).json();
     // The app is the site: it opens on the home page, which asks a new device its city and styles.
