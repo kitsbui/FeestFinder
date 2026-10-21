@@ -1,43 +1,29 @@
 'use client';
 /**
- * Sharing a public collection: the primary "Chia sẻ" and its sheet, with the same channels as an
- * event's (link, Zalo, Messenger, Facebook, a story image, a short clip, Threads, X, Telegram,
- * the phone's own sheet). A collection's link carries no share tracking: it is the page itself.
+ * The share sheet of a page that is not an event (a collection, a project): the same channels as
+ * an event's (link, Zalo, Messenger, Facebook, a story image, a short clip, Threads, X, Telegram,
+ * the phone's own sheet). The link carries no share tracking: it is the page itself.
  */
 import { useState, type ReactNode } from 'react';
 import {
   ChatCircleIcon, DotsThreeIcon, FacebookLogoIcon, FilmStripIcon, ImageIcon, LinkIcon, MessengerLogoIcon,
-  PaperPlaneTiltIcon, ShareNetworkIcon, ThreadsLogoIcon, XLogoIcon,
+  PaperPlaneTiltIcon, ThreadsLogoIcon, XLogoIcon,
 } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
-import { pick, type Lang } from '../../copy';
-import { useKd } from '../../runtime';
-import { Button } from '../../ui/actions';
-import { Sheet } from '../../ui/sheet';
-import { WEB } from '../copy';
-import { COLLECTION } from './copy';
+import { pick, type Lang } from '../copy';
+import { useKd } from '../runtime';
+import { Button } from '../ui/actions';
+import { Sheet } from '../ui/sheet';
+import { WEB } from './copy';
 
 type Channel = 'copy' | 'native' | 'zalo' | 'messenger' | 'facebook' | 'threads' | 'x' | 'telegram' | 'instagram' | 'tiktok';
 
-/** What the story picture says: the first event's genre, "Bộ sưu tập · n sự kiện", the name, three events. */
-export interface CollectionStory { genre?: string; kicker: string; lines: string[] }
+/** What the story picture says: a kicker ("Bộ sưu tập · n sự kiện", "Dự án · TP.HCM"), the name, a few lines. */
+export interface ShareStory { genre?: string; kicker: string; lines: string[] }
 
-export function ShareCollection({ lang, name, url, slug, story }: { lang: Lang; name: string; url: string; slug: string; story: CollectionStory }) {
-  const [open, setOpen] = useState(false);
-  const C = pick(COLLECTION, lang);
-  return (
-    <>
-      <Button tone="acc" onClick={() => setOpen(true)}>
-        <ShareNetworkIcon size={18} aria-hidden="true" />
-        {C.share}
-      </Button>
-      {open ? <ShareSheet lang={lang} name={name} url={url} slug={slug} story={story} onClose={() => setOpen(false)} /> : null}
-    </>
-  );
-}
-
-function ShareSheet({ lang, name, url, slug, story, onClose }: {
-  lang: Lang; name: string; url: string; slug: string; story: CollectionStory; onClose: () => void;
+/** Loaded when it opens (share.tsx). */
+export default function ShareSheet({ lang, name, url, slug, story, source, onClose }: {
+  lang: Lang; name: string; url: string; slug: string; story: ShareStory; source: string; onClose: () => void;
 }) {
   const kd = useKd();
   const t = pick(WEB, lang);
@@ -47,7 +33,7 @@ function ShareSheet({ lang, name, url, slug, story, onClose }: {
   const text = name + ' · ' + story.kicker;
 
   const go = async (channel: Channel) => {
-    FF.track('share', { kind: channel, source: 'collection' });
+    FF.track('share', { kind: channel, source });
     if (channel === 'instagram') {
       const how = await FF.shareStory(spec, file).catch((e: unknown) => { kd.toast(FF.errorText(e, lang)); return null; });
       if (how === 'saved') kd.toast(t.storySaved);

@@ -11,6 +11,7 @@ export const DIR = {
   titleUnclaimed: { en: 'Not run by anyone yet', vi: 'Chưa có người quản lý' },
   sameNames: { en: '{n} with this name not run by anyone yet', vi: '{n} tên trùng chưa có người quản lý' },
   fromLineup: { en: 'Lineup · {t}', vi: 'Lineup · {t}' },
+  fromProject: { en: 'Project · {t}', vi: 'Dự án · {t}' },
   thisIsMe: { en: 'This is me', vi: 'Đây là tôi' },
   unclaimedTag: { en: 'Not run by anyone', vi: 'Chưa có người quản lý' },
   search: { en: 'Search artists', vi: 'Tìm nghệ sĩ' },

@@ -19,7 +19,9 @@ async function as(baseURL: string | undefined, account: { identifier: string; pa
 test('a project from idea to an accepted sponsor, and its page for search engines', async ({ page, browser, baseURL }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   expect((await page.request.post('/auth/login', { data: ATTENDEE })).ok()).toBeTruthy();
-  const title = `Rooftop Sunrise ${Date.now() % 1_000_000}`;
+  const n = Date.now() % 1_000_000;
+  const title = `Rooftop Sunrise ${n}`;
+  const newcomer = `Rooftop Newcomer ${n}`;
 
   // Started from the form: the draft opens its own page.
   await page.goto('/p/new');
@@ -28,6 +30,21 @@ test('a project from idea to an accepted sponsor, and its page for search engine
   await page.getByLabel('Ý tưởng').fill('We want a sunrise session on a rooftop in District 1: house and melodic techno from 4am, a local lineup and good coffee. We have the crew; we need a venue and sponsors to cover sound and lights.');
   await page.getByRole('button', { name: 'Tài trợ', exact: true }).click();
   await page.getByRole('button', { name: 'Địa điểm', exact: true }).click();
+  // The budget in dollars from a preset, and a waitlist target (owner, 2026-10-20).
+  await page.getByRole('button', { name: 'USD', exact: true }).click();
+  await expect(page.getByLabel('Ngân sách (USD)')).toBeVisible();
+  await page.getByRole('button', { name: /^25\s/ }).click();
+  await expect(page.getByLabel('Ngân sách (USD)')).toHaveValue('25000');
+  await page.getByRole('button', { name: '300', exact: true }).click();
+  await expect(page.getByLabel('Mục tiêu danh sách chờ (người)')).toHaveValue('300');
+  // The lineup: an artist's own profile from the suggestions, and a new name that waits to be claimed.
+  const lineup = page.getByRole('combobox', { name: 'Nghệ sĩ' });
+  await lineup.fill('slim');
+  await page.getByRole('option', { name: /SlimV/ }).click();
+  await lineup.fill(newcomer);
+  await page.getByRole('option', { name: `Thêm “${newcomer}” thành hồ sơ mới` }).click();
+  await expect(page.getByRole('button', { name: `Bỏ ${newcomer}` })).toBeVisible();
+  await page.getByLabel('Link dự án').fill('https://instagram.com/rooftop.sunrise');
   await page.getByRole('button', { name: 'Tạo dự án' }).click();
   await expect(page).toHaveURL(/\/p\/[a-z0-9-]+\/manage$/);
   const slug = page.url().split('/p/')[1].split('/')[0];
@@ -51,6 +68,20 @@ test('a project from idea to an accepted sponsor, and its page for search engine
   const graph = JSON.parse((await brand.locator('script[type="application/ld+json"]').first().textContent())!)['@graph'];
   expect(graph.find((n: { '@type': string }) => n['@type'] === 'Project').seeks.map((d: { name: string }) => d.name)).toEqual(['Tài trợ', 'Địa điểm']);
   await expect(brand.getByText(/không nhận, giữ hay chuyển tiền/)).toBeVisible();
+  await expect(brand.locator('.kd-v', { hasText: /25\.000\sUS\$/ })).toBeVisible();
+  await expect(brand.getByRole('link', { name: 'instagram.com/rooftop.sunrise' })).toHaveAttribute('href', 'https://instagram.com/rooftop.sunrise');
+  await expect(brand.getByRole('link', { name: 'SlimV' })).toHaveAttribute('href', '/a/slimv');
+  await expect(brand.getByRole('link', { name: newcomer })).toHaveAttribute('href', `/a/rooftop-newcomer-${n}`);
+
+  // The waitlist counts real accounts against the target; sharing opens the networks.
+  await expect(brand.getByText('0/300 người chờ')).toBeVisible();
+  await brand.getByRole('button', { name: 'Vào danh sách chờ' }).click();
+  await expect(brand.getByText('1/300 người chờ')).toBeVisible();
+  await expect(brand.getByRole('button', { name: 'Đã vào danh sách chờ' })).toHaveAttribute('aria-pressed', 'true');
+  await brand.getByRole('button', { name: 'Chia sẻ' }).click();
+  const share = brand.getByRole('dialog', { name: 'Chia sẻ' });
+  await expect(share.getByRole('button', { name: 'Facebook' })).toBeVisible();
+  await share.getByRole('button', { name: 'Đóng' }).click();
 
   // A brand offers to sponsor.
   await brand.getByRole('button', { name: 'Đề nghị tham gia' }).click();

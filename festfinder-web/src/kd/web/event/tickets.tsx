@@ -35,17 +35,21 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
 
   const price = ev.priceUnknown || !ev.priceFrom ? T.priceUnknown : fill(T.fromPrice, { p: money(ev.priceFrom, ev.currency, lang) });
   return (
-    <div id="tickets" className="kd-card flex scroll-mt-32 flex-col gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="kd-h">{T.tickets}</h2>
-        {ev.soldOut ? <Status tone="none">{T.tierSoldOut}</Status> : null}
+    // One row from 760px (the page is one column, design v2, owner 2026-10-20): what it costs, then the button.
+    <div id="tickets" className="kd-card flex scroll-mt-32 flex-col gap-3 p-4 tab:flex-row tab:items-center tab:gap-6 tab:p-5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex items-center gap-3">
+          <h2 className="kd-h">{T.tickets}</h2>
+          {ev.soldOut ? <Status tone="none">{T.tierSoldOut}</Status> : null}
+        </div>
+        <p className="kd-mb kd-num">{price}</p>
+        <p className="kd-s">{ticketHost ? fill(T.soldVia, { h: ticketHost }) : tx(ev.ticketNote, lang)}</p>
       </div>
-      <p className="kd-mb kd-num">{price}</p>
       {ev.past ? (
         <p className="kd-s">{T.eventEnded}</p>
       ) : ev.links.go ? (
         <a
-          className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true })}
+          className={buttonClass({ tone: 'acc', size: 'lg', block: true, glow: true }, 'tab:w-auto tab:shrink-0')}
           href={`/go/${encodeURIComponent(ev.slug)}?src=detail${ref ? '&ref=' + ref : ''}`}
           onClick={() => FF.track('ticket_click', { slug: ev.slug, source: 'detail' })}
         >
@@ -55,7 +59,6 @@ export function TicketsPanel({ lang }: { lang: Lang }) {
       ) : (
         <p className="kd-s">{T.noTicketLink}</p>
       )}
-      <p className="kd-s">{ticketHost ? fill(T.soldVia, { h: ticketHost }) : tx(ev.ticketNote, lang)}</p>
     </div>
   );
 }

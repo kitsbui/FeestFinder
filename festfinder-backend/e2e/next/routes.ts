@@ -16,14 +16,14 @@ export const OTHER_LANGS = ['en', 'th', 'ja', 'id'] as const;
 export const inLang = (path: string, lang: string) => path + (path.includes('?') ? '&' : '?') + 'lang=' + lang;
 export const ROUTES: Record<Role, string[]> = {
   visitor: ['/', '/?view=table', '/?view=grid', '/e/ravo', '/a', '/a/radar', '/a/slimv', '/a/hoaprox', '/a/style/techno', '/a/city/ho-chi-minh',
-    '/o/ravoent', '/about', '/advertise', '/p', '/stats/venues', '/kit'],
+    '/o/ravoent', '/about', '/advertise', '/p', '/blog', '/stats/venues', '/kit'],
   // /app, /app/list, /app/saved, /app/profile and /app/e/… lead to the site's pages since design v2 phase 4.
   fan: ['/profile', '/saved', '/app/notifications', '/app/alerts', '/app/settings',
-    '/app/following', '/app/hyped', '/app/commission', '/app/plan/ravo', '/app/guide/ravo', '/app/live/hozo', '/app/recap/ravo-2025', '/p/mine', '/p/new'],
+    '/app/following', '/app/hyped', '/app/commission', '/app/plan/ravo', '/app/guide/ravo', '/app/live/hozo', '/app/recap/ravo-2025', '/p/mine', '/p/new', '/blog/mine', '/blog/new'],
   organizer: ['/studio', '/studio/events', '/studio/new', '/studio/inbox', '/studio/announce',
     '/studio/ads', '/studio/gigs', '/studio/profile', '/studio/events/:first'],
   artist: ['/studio/artist', '/studio/artist/mixes', '/studio/artist/gigs', '/studio/artist/opportunities', '/studio/artist/gear'],
   admin: ['/console', '/console/overview', '/console/claims', '/console/reports', '/console/feedback', '/console/events', '/console/events/new',
     '/console/organizers', '/console/venues', '/console/artists', '/console/sources', '/console/partners', '/console/affiliate', '/console/brands',
-    '/console/projects', '/console/featured', '/console/users', '/console/insights', '/console/audit', '/console/verification'],
+    '/console/projects', '/console/blog', '/console/featured', '/console/users', '/console/insights', '/console/audit', '/console/verification'],
 };

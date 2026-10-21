@@ -33,7 +33,13 @@ export const place = {
   setLikes: (f: string[]) => write(KEY.likes, JSON.stringify(f)),
   /** Whether this device has been through onboarding (a city or a position). */
   known: () => !!(read(KEY.city) || read(KEY.at)),
-  lang: (): Lang | null => { const v = read(KEY.lang); return v && (LANGS as readonly string[]).includes(v) ? (v as Lang) : null; },
+  /** The language this device chose: the cookie the site's proxy reads first (kd/lang-pref.ts), else the storage. */
+  lang: (): Lang | null => {
+    let v: string | null = null;
+    try { v = document.cookie.match(/(?:^|;\s*)ff_lang=([a-z]{2})(?:;|$)/)?.[1] ?? null; } catch { /* no document */ }
+    v ??= read(KEY.lang);
+    return v && (LANGS as readonly string[]).includes(v) ? (v as Lang) : null;
+  },
   setLang: (l: Lang) => write(KEY.lang, l),
 };
 

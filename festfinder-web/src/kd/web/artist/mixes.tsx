@@ -35,7 +35,8 @@ interface Comment {
 export { clock };
 
 /** `heading={false}`: inside the profile's Mix tab, whose name says it (the heading stays for screen readers). */
-export function ArtistMixes({ lang, slug, items, className, heading = true }: { lang: Lang; slug: string; items: Mix[]; className?: string; heading?: boolean }) {
+/** `title` names the section (the artist page calls it "Mix" under its "Nghe"), `id` is its anchor. */
+export function ArtistMixes({ lang, slug, items, className, heading = true, title, id }: { lang: Lang; slug: string; items: Mix[]; className?: string; heading?: boolean; title?: string; id?: string }) {
   const T = pick(MIXES, lang);
   const kd = useKd();
   const [playing, setPlaying] = useState<string | null>(null);
@@ -74,8 +75,8 @@ export function ArtistMixes({ lang, slug, items, className, heading = true }: { 
   };
 
   return (
-    <section ref={root} className={cx('flex scroll-mt-32 flex-col gap-3.5', className)} aria-labelledby="mixes-h">
-      <h2 id="mixes-h" className={heading ? 'kd-d3' : 'sr-only'}>{T.title}</h2>
+    <section ref={root} id={id} className={cx('flex scroll-mt-32 flex-col gap-3.5', className)} aria-labelledby="mixes-h">
+      {title ? <h3 id="mixes-h" className={heading ? 'kd-h' : 'sr-only'}>{title}</h3> : <h2 id="mixes-h" className={heading ? 'kd-d3' : 'sr-only'}>{T.title}</h2>}
       <ul className="flex flex-col">
         {items.map((m) => {
           const on = liked.has(m.id);
@@ -91,7 +92,7 @@ export function ArtistMixes({ lang, slug, items, className, heading = true }: { 
                   className="w-full rounded-card border-0 bg-surface-1"
                 />
               ) : (
-                <button type="button" className="group flex min-w-0 items-center gap-3.5 text-left" onClick={() => play(m)} aria-label={fill(T.play, { t: m.title })}>
+                <button type="button" className="group flex min-w-0 items-center gap-3.5 text-left" onClick={() => play(m)}>
                   <span className="relative size-16 shrink-0 overflow-hidden rounded-tag">
                     <Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" />
                     <span className="absolute inset-0 grid place-items-center bg-surface-0/30 text-fg-1 transition-colors group-hover:bg-surface-0/10" aria-hidden="true"><PlayIcon size={22} weight="fill" /></span>
@@ -100,6 +101,8 @@ export function ArtistMixes({ lang, slug, items, className, heading = true }: { 
                     <span className="kd-h kd-ell">{m.title}</span>
                     <span className="kd-s kd-ell">{[m.providerLabel, m.event ? fill(T.recordedAt, { e: m.event.title }) : null, m.durationS ? clock(m.durationS) : null].filter(Boolean).join(' · ')}</span>
                   </span>
+                  {/* Named by what it shows, then what it does (WCAG 2.5.3): "Warehouse set … Phát". */}
+                  <span className="sr-only">{T.playTrack}</span>
                 </button>
               )}
               <div className="flex items-center gap-1">

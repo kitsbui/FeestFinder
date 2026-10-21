@@ -72,6 +72,9 @@ export default defineConfig({
         NEXT_TELEMETRY_DISABLED: '1',
         // The Kính đêm component kit (/kit) answers 404 in production builds without it.
         FF_KIT: '1',
+        // The checks read the Vietnamese site: a first visit there is Vietnamese (production's is English,
+        // festfinder-web/src/kd/lang-pref.ts); e2e/next/languages.spec.ts checks the choice is kept.
+        NEXT_PUBLIC_DEFAULT_LANG: 'vi',
       },
     },
   ],

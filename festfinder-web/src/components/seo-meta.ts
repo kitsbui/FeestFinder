@@ -3,7 +3,7 @@
  * and hreflang links, Open Graph. Used by the Kính đêm pages.
  */
 import type { Metadata } from 'next';
-import { api, type ArtistSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo, type ProjectSeo } from '@/lib/api';
+import { api, type ArtistSeo, type BlogSeo, type CollectionSeo, type DirectorySeo, type EventSeo, type Lang, type OrganizerSeo, type ProjectSeo } from '@/lib/api';
 import { LANGS, tx } from '@/kd/copy';
 
 /**
@@ -18,11 +18,11 @@ const ogLocales = (lang: Lang) => ({ locale: OG_LOCALE[lang], alternateLocale: L
 /** The home page's addresses in every language. */
 export const homeAlternates = everyLang('/');
 
-export type Kind = 'events' | 'organizers' | 'collections' | 'artists' | 'projects';
+export type Kind = 'events' | 'organizers' | 'collections' | 'artists' | 'projects' | 'blog';
 export type Props = { params: Promise<{ slug: string }> };
 
 export const load = async (kind: Kind, slug: string, lang: Lang) =>
-  api<EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | ProjectSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'vi' ? '' : '?lang=en'}`);
+  api<EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | ProjectSeo | BlogSeo>(`/seo/${kind}/${encodeURIComponent(slug)}${lang === 'vi' ? '' : '?lang=en'}`);
 
 const MISSING = {
   events: { vi: 'Không tìm thấy sự kiện', en: 'Event not found' },
@@ -30,12 +30,29 @@ const MISSING = {
   collections: { vi: 'Không tìm thấy bộ sưu tập', en: 'Collection not found' },
   artists: { vi: 'Không tìm thấy nghệ sĩ', en: 'Artist not found' },
   projects: { vi: 'Không tìm thấy dự án', en: 'Project not found' },
+  blog: { vi: 'Không tìm thấy bài viết', en: 'Post not found' },
 };
 
 export const seoMetadata = (kind: Kind, lang: Lang) => async ({ params }: Props): Promise<Metadata> => {
   const seo = await load(kind, (await params).slug, lang);
   if (!seo) return { title: tx(MISSING[kind], lang) };
   const url = withLang(seo.alternates.vi, lang);
+  // A post's pages: one per language it is written in (services/seo/blog.ts).
+  if (seo.kind === 'blog') {
+    return {
+      title: { absolute: seo.title }, description: seo.description, robots: seo.robots,
+      alternates: {
+        canonical: seo.canonical, types: { 'text/markdown': seo.markdown },
+        // Written in both languages: two pages that name each other.
+        ...(seo.alternates.vi !== seo.alternates.en ? { languages: { vi: seo.alternates.vi, en: seo.alternates.en, 'x-default': seo.alternates.vi } } : {}),
+      },
+      openGraph: {
+        type: 'article', url: seo.canonical, siteName: 'FeestFinder', title: seo.page.h1, description: seo.description, publishedTime: seo.publishedAt ?? undefined, modifiedTime: seo.updatedAt,
+        images: [{ url: seo.image.url, width: seo.image.width, height: seo.image.height, alt: seo.image.alt, type: seo.image.type }],
+      },
+      twitter: { card: 'summary_large_image', title: seo.page.h1, description: seo.description, images: [{ url: seo.image.url, alt: seo.image.alt }] },
+    };
+  }
   return {
     title: { absolute: seo.title },
     description: seo.description,

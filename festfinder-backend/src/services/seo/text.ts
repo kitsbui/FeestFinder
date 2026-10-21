@@ -2,14 +2,14 @@ import type { Ctx } from '../../context.ts';
 import { many } from '../../db/index.ts';
 import type { Row } from '../../db/rows.ts';
 import { cityLabel, launchedCities } from '../../lib/places.ts';
-import { type ArtistSeo, baseOf, type CollectionSeo, type DirectorySeo, eventLine, type EventSeo, type LineRow, type OrganizerSeo, type ProjectSeo, PUBLIC_EVENT, t, text } from './shared.ts';
+import { type ArtistSeo, baseOf, type BlogSeo, type CollectionSeo, type DirectorySeo, eventLine, type EventSeo, type LineRow, type OrganizerSeo, type ProjectSeo, PUBLIC_EVENT, t, text } from './shared.ts';
 
 /* Pages as text for AI agents: Markdown and llms.txt. Part of services/seo.ts. */
 
 const stamp = (iso: string) => `${iso.slice(11, 16)} ${iso.slice(8, 10)}/${Number(iso.slice(5, 7))}/${iso.slice(0, 4)}`;
 
 /** A page as Markdown: the same answer, facts and lists as its HTML, with links made absolute. */
-export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo | ProjectSeo): string {
+export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | CollectionSeo | ArtistSeo | DirectorySeo | ProjectSeo | BlogSeo): string {
   const base = baseOf(ctx);
   const absUrl = (href: string) => (/^https?:/.test(href) ? href : base + href);
   const md = (s: string) => s.replace(/([\\`*_[\]])/g, '\\$1');
@@ -47,7 +47,7 @@ export function pageMarkdown(ctx: Ctx, seo: EventSeo | OrganizerSeo | Collection
 export async function llmsTxt(ctx: Ctx): Promise<string> {
   const now = ctx.clock.now();
   const base = baseOf(ctx);
-  const [events, orgs, projects] = await Promise.all([
+  const [events, orgs, projects, posts] = await Promise.all([
     many<LineRow & Pick<Row<'events'>, 'slug' | 'title' | 'genre'>>(ctx.db,
       `select e.slug, e.title, e.genre, e.starts_on, e.start_time, e.venue_name, e.city, e.entry_mode, e.price_from, e.currency
          from events e where ${PUBLIC_EVENT} and e.status = 'live' and e.ends_at >= $1 order by e.starts_at limit 300`, [now]),
@@ -57,6 +57,9 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
         where ${PUBLIC_EVENT} and e.status = 'live' and e.ends_at >= $1 and o.suspended_at is null
         group by o.slug, o.name order by count(*) desc, o.name limit 200`, [now]),
     many<Pick<Row<'projects'>, 'slug' | 'title' | 'pitch' | 'city' | 'seeking'>>(ctx.db, `select slug, title, pitch, city, seeking from projects where status = 'open' order by published_at desc limit 100`),
+    many<{ slug: string; title: string; excerpt: string; category: string }>(ctx.db,
+      `select slug, coalesce(nullif(title->>'en', ''), title->>'vi') as title, coalesce(nullif(excerpt->>'en', ''), excerpt->>'vi', '') as excerpt, category
+         from blog_posts where status = 'published' order by published_at desc limit 100`),
   ]);
   const md = (s: string) => s.replace(/([\\`*_[\]])/g, '\\$1');
   return [
@@ -80,6 +83,14 @@ export async function llmsTxt(ctx: Ctx): Promise<string> {
       'Ideas for nights that ask for investment, sponsors, artists, a venue or an organising partner. FeestFinder introduces the people and never handles the money.',
       '',
       ...projects.map((x) => `- [${md(x.title)}](${base}/p/${x.slug}.md): ${[text(cityLabel(x.city), 'en'), x.seeking.join(', '), md(x.pitch)].filter(Boolean).join(' · ')}`),
+      '',
+    ] : []),
+    ...(posts.length ? [
+      '## Blog',
+      '',
+      'Posts by the community and the team about music styles, music news, playlists, DJ skills, clubs and cafés, in Vietnamese and English (add `?lang=en`), each with a Markdown version.',
+      '',
+      ...posts.map((x) => `- [${md(x.title)}](${base}/blog/${x.slug}.md?lang=en): ${[x.category, md(x.excerpt)].filter(Boolean).join(' · ')}`),
       '',
     ] : []),
     '## Agents',

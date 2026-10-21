@@ -18,7 +18,7 @@ import { abs, addressOf, baseOf, clip, crumbList, type DirectorySeo, type Fact, 
 export async function buildProjectSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<ProjectSeo | null> {
   const x = await loadProject(ctx.db, { slug });
   if (!x || !['open', 'realized', 'closed'].includes(x.p.status)) return null;
-  const pr = presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event });
+  const pr = presentProject(x.p, { packages: x.packages, counts: x.counts, event: x.event, lineup: x.lineup });
   const vi = lang === 'vi';
   const base = baseOf(ctx);
   const path = `/p/${pr.slug}`;
@@ -43,8 +43,9 @@ export async function buildProjectSeo(ctx: Ctx, slug: string, lang: Lang = 'vi')
     { label: t('type', lang), value: text(pr.eventType?.label, lang) },
     { label: t('styles', lang), value: pr.styles.map((s) => text(s.label, lang)).join(', ') },
     { label: t('seeking', lang), value: seeking.join(', ') },
+    { label: t('lineup', lang), value: pr.lineup.map((a) => a.name).join(', ') },
     { label: t('budget', lang), value: money(pr.budget) },
-    { label: t('raise', lang), value: money(pr.raiseAmount) },
+    { label: t('waitlist', lang), value: pr.waitlist.count || pr.waitlist.target ? (pr.waitlist.target ? `${pr.waitlist.count} / ${pr.waitlist.target}` : String(pr.waitlist.count)) : '' },
     { label: t('capacity', lang), value: pr.capacity ? String(pr.capacity) : '' },
     { label: t('onBoard', lang), value: onBoard ? String(onBoard) : '' },
     { label: t('by', lang), value: pr.owner.name ?? t('member', lang) },
@@ -64,6 +65,7 @@ export async function buildProjectSeo(ctx: Ctx, slug: string, lang: Lang = 'vi')
       location: { '@type': 'Place', address: { '@type': 'PostalAddress', ...addressOf(pr.city.slug), addressCountry: addressOf(pr.city.slug).country } },
       // What it asks for, as demands (schema.org `seeks`).
       seeks: seeking.map((name) => ({ '@type': 'Demand', name })),
+      sameAs: pr.link ?? undefined,
       subjectOf: pr.event ? { '@type': 'Event', url: base + inLang(`/e/${pr.event.slug}`, lang), name: pr.event.title } : undefined,
     },
     crumbList(base, ids.crumbs, crumbs),

@@ -14,6 +14,7 @@ import { expireRadar } from './services/ingest/expire.ts';
 import { translatePending } from './services/translate.ts';
 import { refreshAllFit } from './services/ingest/fit.ts';
 import { checkRemoteImages } from './services/remote-images.ts';
+import { importBlogContent } from './services/blog-content.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
 import { webHealth } from './services/web-signals.ts';
 
@@ -111,6 +112,11 @@ export const jobs = {
     return checkRemoteImages(ctx);
   },
 
+  /** The team's editorial posts from the repository's content packs: new ones wait for review, edited ones are never written over (services/blog-content.ts). */
+  async importBlogContent(ctx: Ctx) {
+    return (await importBlogContent(ctx)).added;
+  },
+
   /** Feedback screenshots are deleted after 90 days (routes/feedback.ts). */
   async purgeFeedbackAttachments(ctx: Ctx) {
     return purgeFeedbackAttachments(ctx);
@@ -142,6 +148,7 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['refreshConfidence', 60 * 60_000],
   ['expireRadar', 60 * 60_000],
   ['translateDescriptions', 10 * 60_000],
+  ['importBlogContent', 10 * 60_000],
   ['refreshFit', 60 * 60_000],
   ['awardBadges', 60 * 60_000],
   ['webHealth', 60 * 60_000],

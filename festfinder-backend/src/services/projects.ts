@@ -5,7 +5,7 @@ import { randomCode } from '../lib/crypto.ts';
 import { L, type Localized } from '../lib/i18n.ts';
 import { cityLabel } from '../lib/places.ts';
 import { EVENT_TYPE_LABEL, type EventType } from '../lib/styles.ts';
-import { styleItem } from './artists.ts';
+import { ensureArtists, artistKey, styleItem } from './artists.ts';
 
 /*
  * Projects (migration 034): an idea for a night and what it needs, from anyone; offers to take
@@ -42,6 +42,11 @@ export const DISCLAIMER = L(
   'FeestFinder giới thiệu người làm dự án với những ai muốn đồng hành. FeestFinder không nhận, giữ hay chuyển tiền, và nội dung ở đây không phải lời chào bán chứng khoán: các bên tự thoả thuận trực tiếp và tự kiểm chứng đối tác.',
 );
 
+/** The currencies an owner gives the budget in (owner, 2026-10-20); the city's is the default when it is one of them. */
+export const PROJECT_CURRENCIES = ['VND', 'USD'] as const;
+export type ProjectCurrency = (typeof PROJECT_CURRENCIES)[number];
+export const defaultCurrency = (cityCurrency: string): ProjectCurrency => (PROJECT_CURRENCIES as readonly string[]).includes(cityCurrency) ? cityCurrency as ProjectCurrency : 'USD';
+
 /** The pages a project's slug cannot take (they are /p's own). */
 const RESERVED = new Set(['new', 'mine', 'en']);
 
@@ -65,7 +70,7 @@ export function missingForReview(p: { title: string; pitch: string; story: strin
 export interface ProjectViewer { userId: string | null; isAdmin: boolean }
 
 /** A project as the screens show it; the owner's own fields only to the owner and the team. */
-export function presentProject(p: any, opts: { packages?: any[]; counts?: Record<string, number>; viewer?: ProjectViewer; event?: { slug: string; title: string } | null } = {}) {
+export function presentProject(p: any, opts: { packages?: any[]; counts?: Record<string, number>; viewer?: ProjectViewer; event?: { slug: string; title: string } | null; joined?: boolean; lineup?: LineupArtist[] } = {}) {
   const mine = !!opts.viewer && (opts.viewer.userId === p.owner_user_id || opts.viewer.isAdmin);
   return {
     id: p.id as string,
@@ -79,10 +84,15 @@ export function presentProject(p: any, opts: { packages?: any[]; counts?: Record
     targetOn: p.target_on ? String(p.target_on).slice(0, 10) : null,
     capacity: p.capacity as number | null,
     budget: p.budget == null ? null : Number(p.budget),
-    raiseAmount: p.raise_amount == null ? null : Number(p.raise_amount),
     currency: p.currency as string,
+    /** Real accounts waiting for the night, and how many the owner wants; `joined` for the viewer. */
+    waitlist: { count: Number(p.waitlist_count ?? 0), target: p.waitlist_target as number | null, joined: !!opts.joined },
     seeking: (p.seeking as Seeking[]).map((k) => ({ key: k, label: SEEKING_LABEL[k] })),
     coverUrl: p.cover_url as string | null,
+    /** The project's own page: a website or a social page. */
+    link: (p.link_url as string | null) ?? null,
+    /** The artists it wants, in the owner's order, each a profile (run by the artist, or waiting to be claimed). */
+    lineup: opts.lineup ?? [],
     status: p.status as string,
     publishedAt: p.published_at as Date | null,
     updatedAt: p.updated_at as Date,
@@ -96,18 +106,47 @@ export function presentProject(p: any, opts: { packages?: any[]; counts?: Record
   };
 }
 
-export const PROJECT = `select p.*, u.name as owner_name from projects p join users u on u.id = p.owner_user_id`;
+export const PROJECT = `select p.*, u.name as owner_name, (select count(*)::int from project_waitlist w where w.project_id = p.id) as waitlist_count from projects p join users u on u.id = p.owner_user_id`;
 
-/** A project with what its page shows around it: packages, accepted offers by kind, its event. */
+export interface LineupArtist { slug: string; name: string; imageUrl: string | null; claimed: boolean }
+
+/** A project's lineup as its page shows it: profiles the team hid are left out. */
+export async function lineupOfProject(q: Queryable, projectId: string): Promise<LineupArtist[]> {
+  const rows = await many<{ slug: string; name: string; image_url: string | null; claimed: boolean }>(q,
+    `select a.slug, a.name, a.image_url, (a.owner_user_id is not null or a.verified) as claimed
+       from project_artists pa join artists a on a.id = pa.artist_id where pa.project_id = $1 and a.hidden_at is null order by pa.sort`, [projectId]);
+  return rows.map((r) => ({ slug: r.slug, name: r.name, imageUrl: r.image_url, claimed: r.claimed }));
+}
+
+/**
+ * The lineup the owner typed, in order: each name meets its artist's profile, or a profile is made
+ * for it to wait for its artist to claim ("Đây là tôi"), as event lineups do.
+ */
+export async function syncProjectArtists(q: Queryable, projectId: string, names: string[]): Promise<void> {
+  const ids = await ensureArtists(q, names);
+  const keep: string[] = [];
+  for (const n of names) {
+    const id = ids.get(artistKey(n.replace(/\s+/g, ' ').trim().slice(0, 120)));
+    if (!id || keep.includes(id)) continue;
+    await q.query(
+      `insert into project_artists (project_id, artist_id, sort) values ($1, $2, $3)
+       on conflict (project_id, artist_id) do update set sort = excluded.sort`, [projectId, id, keep.length]);
+    keep.push(id);
+  }
+  await q.query('delete from project_artists where project_id = $1 and not (artist_id = any($2::uuid[]))', [projectId, keep]);
+}
+
+/** A project with what its page shows around it: packages, accepted offers by kind, its event, its lineup. */
 export async function loadProject(q: Queryable, where: { slug?: string; id?: string }) {
   const p = await one<any>(q, `${PROJECT} where ${where.id ? 'p.id = $1' : 'p.slug = $1'}`, [where.id ?? where.slug]);
   if (!p) return null;
-  const [packages, accepted, event] = await Promise.all([
+  const [packages, accepted, event, lineup] = await Promise.all([
     many<any>(q, 'select * from project_packages where project_id = $1 order by sort, amount desc', [p.id]),
     many<{ kind: string; n: number }>(q, `select kind, count(*)::int as n from project_offers where project_id = $1 and status = 'accepted' group by kind`, [p.id]),
     p.event_id ? one<{ slug: string; title: string }>(q, `select slug, title from events where id = $1 and status in ('live', 'cancelled')`, [p.event_id]) : null,
+    lineupOfProject(q, p.id),
   ]);
-  return { p, packages, counts: Object.fromEntries(accepted.map((r) => [r.kind, r.n])), event };
+  return { p, packages, counts: Object.fromEntries(accepted.map((r) => [r.kind, r.n])), event, lineup };
 }
 
 /** The sponsors an event shows: accepted sponsor offers on the project it came from. */

@@ -16,5 +16,4 @@ export const COLLECTION = {
   explore: { en: 'See events', vi: 'Xem sự kiện' },
   moreN: { en: 'Show {n} more', vi: 'Xem thêm {n}' },
   less: { en: 'Show less', vi: 'Thu gọn' },
-  share: { en: 'Share', vi: 'Chia sẻ' },
 } satisfies Dict;

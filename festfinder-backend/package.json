@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "test:screens": "playwright test -c playwright.next.config.ts",
-    "lint": "oxlint --type-aware --quiet --max-warnings 1111 src test e2e index.ts",
+    "lint": "oxlint --type-aware --quiet --max-warnings 1093 src test e2e index.ts",
     "lint:warnings": "oxlint --type-aware src test e2e index.ts",
     "test:visual": "FF_VISUAL=1 playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts"
   },
@@ -31,6 +31,7 @@
     "@fastify/rate-limit": "^11.2.0",
     "@vercel/functions": "^3.9.9",
     "fastify": "^5.12.5",
+    "mpg123-decoder": "^1.0.3",
     "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "web-push": "^3.6.7",

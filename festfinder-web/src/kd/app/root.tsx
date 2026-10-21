@@ -15,6 +15,7 @@ import { LANGS, type Lang } from '../copy';
 import { KdProvider } from '../runtime';
 import { WebNav, type WebSection } from '../web/chrome';
 import { place } from './place';
+import { DEFAULT_LANG } from '../lang-default';
 
 /** Which of the site's places a screen belongs to: it lights that tab. */
 export type AppTab = 'saved' | 'me' | null;
@@ -33,8 +34,7 @@ export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang)
     const asked = new URLSearchParams(location.search).get('lang');
     const named = (LANGS as readonly string[]).includes(asked ?? '') ? (asked as Lang) : null;
     if (named) place.setLang(named);
-    const saved = named ?? place.lang();
-    if (saved) setLangState(saved);
+    setLangState(named ?? place.lang() ?? DEFAULT_LANG);
     registerServiceWorker();
     // Signing out stops this browser's notifications.
     FF.beforeSignOut = forgetDevice;

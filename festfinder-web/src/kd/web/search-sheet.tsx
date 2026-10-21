@@ -55,7 +55,7 @@ export default function SearchSheet({ lang, onClose }: { lang: Lang; onClose: ()
         <button type="submit" className={buttonClass({ tone: 'acc', block: true })}>{T.searchGo}</button>
       </form>
       <nav aria-label={T.goTo} className="mt-5 flex flex-col">
-        {([['artists', inLang('/a', lang), T.artists], ['projects', inLang('/p', lang), T.projects], ['organisers', '/studio', T.organisers]] as const).map(go)}
+        {([['artists', inLang('/a', lang), T.artists], ['projects', inLang('/p', lang), T.projects], ['blog', inLang('/blog', lang), T.blog], ['organisers', '/studio', T.organisers]] as const).map(go)}
       </nav>
       <h3 className="kd-m mb-2.5 mt-5">{T.genres}</h3>
       <div className="flex flex-wrap gap-2">

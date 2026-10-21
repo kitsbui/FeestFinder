@@ -10,17 +10,18 @@ import { CheckIcon, PlusIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../../fresh';
 import { fill, pick, type Lang, type Pair, tx } from '../../copy';
-import { money } from '../../format';
+import { count, money, moneyCompact } from '../../format';
 import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { FieldError, FieldLabel, Input, Select, TextArea } from '../../ui/forms';
 import { ImageLinkField } from '../../ui/image-link';
 import { Card as Panel, Status, type StatusTone } from '../../ui/parts';
-import { PROJ } from './copy';
-import { SEEKING, SEEKING_LABEL, text, type Package, type Project, type Seeking } from './model';
+import { PROJ_ALL as PROJ } from './copy-own';
+import { LineupField } from './lineup-field';
+import { asCurrency, BUDGET_PRESETS, CURRENCIES, SEEKING, SEEKING_LABEL, text, WAITLIST_PRESETS, type Currency, type Package, type Project, type Seeking } from './model';
 
-interface Meta { cities: { slug: string; name: Pair }[]; styles: { key: string; label: Pair }[]; eventTypes: { key: string; label: Pair }[] }
+interface Meta { cities: { slug: string; name: Pair; currency?: string }[]; styles: { key: string; label: Pair }[]; eventTypes: { key: string; label: Pair }[] }
 interface Offer {
   id: string; kind: string; kindLabel: Pair; status: 'sent' | 'accepted' | 'declined'; message: string; from: string | null; person: string | null;
   artist: { slug: string; name: string } | null; package: string | null; amount: number | null; currency: string;
@@ -119,9 +120,13 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
   const [f, setF] = useState({
     title: p?.title ?? '', pitch: p?.pitch ?? '', story: p?.story ?? '', city: p?.city.slug ?? meta.cities[0]?.slug ?? '',
     styles: p?.styles.map((s) => s.key) ?? [], eventType: p?.eventType?.key ?? '', targetOn: p?.targetOn ?? '',
-    capacity: p?.capacity ? String(p.capacity) : '', budget: p?.budget != null ? String(p.budget) : '', raiseAmount: p?.raiseAmount != null ? String(p.raiseAmount) : '',
+    capacity: p?.capacity ? String(p.capacity) : '', budget: p?.budget != null ? String(p.budget) : '', waitlistTarget: p?.waitlist.target ? String(p.waitlist.target) : '',
     seeking: (p?.seeking.map((s) => s.key) ?? []) as Seeking[], coverUrl: p?.coverUrl ?? null as string | null,
+    linkUrl: p?.link ?? '', lineup: p?.lineup.map((a) => a.name) ?? [],
   });
+  // The budget's currency: the owner's choice, else the city's when it is VND or USD.
+  const [picked, setPicked] = useState<Currency | null>(p ? asCurrency(p.currency) : null);
+  const currency: Currency = picked ?? asCurrency(meta.cities.find((c) => c.slug === f.city)?.currency);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const editable = !p || ['draft', 'rejected', 'open'].includes(p.status);
@@ -133,7 +138,8 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
     setBusy(true); setErr('');
     const body = {
       title: f.title, pitch: f.pitch, story: f.story, city: f.city, styles: f.styles, eventType: f.eventType || null, targetOn: f.targetOn || null,
-      capacity: num(f.capacity), budget: num(f.budget), raiseAmount: num(f.raiseAmount), seeking: f.seeking, coverUrl: f.coverUrl,
+      capacity: num(f.capacity), budget: num(f.budget), currency, waitlistTarget: num(f.waitlistTarget), seeking: f.seeking, coverUrl: f.coverUrl,
+      linkUrl: f.linkUrl.trim() || null, lineup: f.lineup,
     };
     try {
       const out = (await (p ? FF.patch(`/me/projects/${p.id}`, body) : FF.post('/me/projects', body))) as Project;
@@ -143,7 +149,6 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
     catch (x) { setErr(FF.errorText(x, lang)); }
     setBusy(false);
   };
-  const currency = p?.currency ?? '';
   return (
     <form onSubmit={save} className="grid max-w-[880px] grid-cols-1 gap-4 tab:grid-cols-2">
       <div className="flex flex-col gap-2 tab:col-span-2"><FieldLabel htmlFor="pj-title">{T.fTitle}</FieldLabel><Input id="pj-title" required minLength={3} maxLength={120} value={f.title} disabled={!editable} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
@@ -160,12 +165,40 @@ function Editor({ lang, meta, p, onSaved }: { lang: Lang; meta: Meta; p: Project
       </div>
       <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-date">{T.fDate}</FieldLabel><Input id="pj-date" type="date" className="kd-num" value={f.targetOn} disabled={!editable} onChange={(e) => setF({ ...f, targetOn: e.target.value })} /></div>
       <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-cap">{T.fCapacity}</FieldLabel><Input id="pj-cap" inputMode="numeric" className="kd-num" value={f.capacity} disabled={!editable} onChange={(e) => setF({ ...f, capacity: e.target.value })} /></div>
-      <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-budget">{fill(T.fBudget, { c: currency || '…' })}</FieldLabel><Input id="pj-budget" inputMode="numeric" className="kd-num" value={f.budget} disabled={!editable} onChange={(e) => setF({ ...f, budget: e.target.value })} /></div>
-      <div className="flex flex-col gap-2"><FieldLabel htmlFor="pj-raise">{fill(T.fRaise, { c: currency || '…' })}</FieldLabel><Input id="pj-raise" inputMode="numeric" className="kd-num" value={f.raiseAmount} disabled={!editable} onChange={(e) => setF({ ...f, raiseAmount: e.target.value })} /></div>
+      <fieldset className="flex flex-col gap-2 tab:col-span-2" disabled={!editable}>
+        <legend className="kd-flabel mb-2">{T.fCurrency}</legend>
+        <div className="flex flex-wrap gap-2">
+          {CURRENCIES.map((c) => <Chip key={c} on={currency === c} onClick={() => { if (c !== currency) setF((x) => ({ ...x, budget: '' })); setPicked(c); }}>{c}</Chip>)}
+        </div>
+      </fieldset>
+      <div className="flex flex-col gap-2 tab:col-span-2">
+        <FieldLabel htmlFor="pj-budget">{fill(T.fBudget, { c: currency })}</FieldLabel>
+        <Input id="pj-budget" inputMode="numeric" className="kd-num" value={f.budget} disabled={!editable} onChange={(e) => setF({ ...f, budget: e.target.value })} />
+        <div className="flex flex-wrap gap-2">
+          {BUDGET_PRESETS[currency].map((n) => (
+            <Chip key={n} on={num(f.budget) === n} disabled={!editable} onClick={() => setF((x) => ({ ...x, budget: String(n) }))}>
+              <span className="kd-num">{moneyCompact(n, currency, lang)}</span>
+            </Chip>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 tab:col-span-2">
+        <FieldLabel htmlFor="pj-wait">{T.fWaitlist}</FieldLabel>
+        <Input id="pj-wait" inputMode="numeric" className="kd-num" value={f.waitlistTarget} disabled={!editable} onChange={(e) => setF({ ...f, waitlistTarget: e.target.value })} />
+        <div className="flex flex-wrap gap-2">
+          {WAITLIST_PRESETS.map((n) => (
+            <Chip key={n} on={num(f.waitlistTarget) === n} disabled={!editable} onClick={() => setF((x) => ({ ...x, waitlistTarget: String(n) }))}>
+              <span className="kd-num">{count(n, lang)}</span>
+            </Chip>
+          ))}
+        </div>
+      </div>
       <fieldset className="flex flex-col gap-2 tab:col-span-2" disabled={!editable}>
         <legend className="kd-flabel mb-2">{T.fSeeking}</legend>
         <div className="flex flex-wrap gap-2">{SEEKING.map((k) => <Chip key={k} on={f.seeking.includes(k)} onClick={() => toggle('seeking', k)}>{S[k]}</Chip>)}</div>
       </fieldset>
+      <div className="tab:col-span-2"><LineupField lang={lang} value={f.lineup} disabled={!editable} onChange={(lineup) => setF((x) => ({ ...x, lineup }))} /></div>
+      <div className="flex flex-col gap-2 tab:col-span-2"><FieldLabel htmlFor="pj-link" hint={T.fLinkHint}>{T.fLink}</FieldLabel><Input id="pj-link" type="url" inputMode="url" maxLength={500} value={f.linkUrl} disabled={!editable} onChange={(e) => setF({ ...f, linkUrl: e.target.value })} /></div>
       <fieldset className="flex flex-col gap-2 tab:col-span-2" disabled={!editable}>
         <legend className="kd-flabel mb-2">{T.fStyles}</legend>
         <div className="flex flex-wrap gap-2">{meta.styles.map((s) => <Chip key={s.key} family="edm" on={f.styles.includes(s.key)} onClick={() => toggle('styles', s.key)}>{tx(s.label, lang)}</Chip>)}</div>

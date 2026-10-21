@@ -13,6 +13,7 @@ import type { IngestIO } from './services/ingest/types.ts';
 import type { Analytics } from './services/analytics.ts';
 import type { ImageFetcher } from './services/remote-images.ts';
 import type { OembedFetcher } from './services/mixes.ts';
+import type { AudioFetcher } from './services/audio.ts';
 
 /** Everything a route or job needs. Built once in server.ts, or per test. */
 export interface Ctx {
@@ -36,6 +37,8 @@ export interface Ctx {
   fetchImage: ImageFetcher;
   /** Asks SoundCloud, Mixcloud or Spotify about a pasted link (oEmbed). */
   oembed: OembedFetcher;
+  /** Reads an MP3 an artist linked, once, to measure its waveform (services/audio.ts). */
+  fetchAudio: AudioFetcher;
   oauth: { google: OAuthProvider | null; fb: OAuthProvider | null; ig: OAuthProvider | null; tiktok: OAuthProvider | null };
   checkLink: (url: string) => Promise<'ok' | 'broken'>;
   /** The network an ingestion run reads through. Tests hand in fixtures; otherwise the polite fetcher. */

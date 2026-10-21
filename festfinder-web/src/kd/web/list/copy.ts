@@ -57,13 +57,11 @@ export const LIST = {
   details: { en: 'See details', vi: 'Xem chi tiết' },
   close: { en: 'Close', vi: 'Đóng' },
   fromPrice: { en: 'from {p}', vi: 'từ {p}' },
-  // the days and the rail (days.tsx), the filter bar
+  // the days (days.tsx), the filter bar
   today: { en: 'today', vi: 'hôm nay' },
   tomorrow: { en: 'tomorrow', vi: 'ngày mai' },
   noDate: { en: 'Date to be announced', vi: 'Chưa có ngày' },
-  rail: { en: 'The week and the cities', vi: 'Tuần tới và các thành phố' },
   cities: { en: 'Cities', vi: 'Thành phố' },
-  seeMap: { en: 'See on the map', vi: 'Xem trên bản đồ' },
   filters: { en: 'Filters', vi: 'Lọc' },
   forYou: { en: 'For you', vi: 'Cho bạn' },
   filtersBar: { en: 'Filters', vi: 'Bộ lọc' },

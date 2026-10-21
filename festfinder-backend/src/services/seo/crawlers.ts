@@ -33,7 +33,7 @@ type Stamped = { slug: string; updated_at: Date };
 export async function sitemapXml(ctx: Ctx): Promise<string> {
   const now = ctx.clock.now();
   const since = new Date(now.getTime() - 183 * 86400_000);
-  const [events, orgs, artists, collections, projects] = await Promise.all([
+  const [events, orgs, artists, collections, projects, posts] = await Promise.all([
     many<Stamped>(ctx.db,
       `select slug, updated_at from events where status in ('live', 'cancelled') and not held_for_reports and published_at is not null and ends_at >= $1
         order by starts_at limit 20000`, [since]),
@@ -51,6 +51,10 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
         where c.is_public and ${PUBLIC_EVENT} and e.ends_at >= $1 group by c.slug, c.updated_at limit 5000`, [now]),
     // Projects open to backers, and the ones that became events.
     many<Stamped>(ctx.db, `select slug, updated_at from projects where status in ('open', 'realized') order by published_at desc limit 5000`),
+    // Published blog posts: one address each, in the language they were written in.
+    many<Stamped & { both: boolean }>(ctx.db,
+      `select slug, updated_at, (title->>'en' <> '' and title->>'vi' <> '' and body->>'en' <> '' and body->>'vi' <> '') as both
+         from blog_posts where status = 'published' order by published_at desc limit 10000`),
   ]);
   const base = baseOf(ctx);
   const day = (d: Date | string | null) => (d ? new Date(d).toISOString().slice(0, 10) : now.toISOString().slice(0, 10));
@@ -80,6 +84,14 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
       return [{ loc: vi, lastmod: day(x.updated_at), priority: '0.5', alternates: links }, { loc: en, lastmod: day(x.updated_at), priority: '0.3', alternates: links }];
     }),
     ...(projects.length ? [{ loc: `${base}/p`, lastmod: day(projects[0].updated_at), priority: '0.5' }] : []),
+    // A post written in both languages is two pages; in one, one.
+    ...posts.flatMap((x) => {
+      const vi = `${base}/blog/${x.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
+      return x.both
+        ? [{ loc: vi, lastmod: day(x.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(x.updated_at), priority: '0.5', alternates: links }]
+        : [{ loc: vi, lastmod: day(x.updated_at), priority: '0.5' }];
+    }),
+    ...(posts.length ? [{ loc: `${base}/blog`, lastmod: day(posts[0].updated_at), priority: '0.5' }] : []),
     // The directory pages that list enough artists to be worth a search result.
     ...(await directoryPages(ctx.db)).flatMap((path) => {
       const vi = `${base}${path}`, en = `${vi}?lang=en`, links = alt(vi, en);

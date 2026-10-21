@@ -30,6 +30,18 @@
         "festfinder-web"
       ],
       "port": 3000
+    },
+    {
+      "name": "design-kit-usertest",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5173",
+        "--directory",
+        "/home/patrickstar/Desktop/design-kit/usertest"
+      ],
+      "port": 5173
     }
   ]
 }

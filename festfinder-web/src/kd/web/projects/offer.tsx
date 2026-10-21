@@ -11,7 +11,7 @@ import { useKd } from '../../runtime';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { FieldError, FieldLabel, Input, Select, TextArea } from '../../ui/forms';
 import { Sheet } from '../../ui/sheet';
-import { PROJ } from './copy';
+import { PROJ_PAGE as PROJ } from './copy-page';
 import { ANSWERS, OFFER_KINDS, OFFER_LABEL, type OfferKind, type Package, type Project } from './model';
 
 export function OfferBox({ lang, slug, status, seeking, packages, currency }: {
@@ -35,7 +35,8 @@ export function OfferBox({ lang, slug, status, seeking, packages, currency }: {
       {me?.myOffers?.length ? (
         <span className="kd-s">{me.myOffers.map((o) => fill(T.offered, { k: `${O[o.kind]} · ${o.status === 'accepted' ? T.accepted : T.waiting}` })).join(' · ')}</span>
       ) : null}
-      <Button tone="acc" onClick={() => { if (kd.requireSignIn()) setOpen(true); }}>{T.offer}</Button>
+      {/* Outlined: joining the waitlist is the page's one primary action (waitlist.tsx). */}
+      <Button onClick={() => { if (kd.requireSignIn()) setOpen(true); }}>{T.offer}</Button>
       {open ? (
         <OfferSheet lang={lang} slug={slug} kinds={kinds} packages={packages} currency={currency}
           onClose={(sent) => {

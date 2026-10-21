@@ -18,7 +18,8 @@ import { KdProvider } from '../../runtime';
 import { ChipLink, LinkButton } from '../../ui/actions';
 import { Art, Card as Panel, Marker, Status } from '../../ui/parts';
 import type { Card } from '../../types';
-import { Crumbs, WebFooter, WebNav } from '../chrome';
+import { WebFooter, WebNav } from '../chrome';
+import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { STATS } from './copy';
 import {

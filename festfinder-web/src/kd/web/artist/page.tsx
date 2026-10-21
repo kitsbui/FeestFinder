@@ -1,10 +1,12 @@
 /**
- * /a/<slug> (and ?lang=en) in Kính đêm (design v2 phase 3): their cover when they have one, the
- * artist (photo, what they do, the booking line, follow or claim), then tabs: upcoming shows as
- * dated rows, their mixes to play right here (./mixes.tsx), the shows they played, and about (bio,
- * links, booking details); beside them the latest mix, who they play with most and the rest. Every
- * show and every line comes from canonical events; follower counts are shown, never used to rank.
- * The server renders it with its structured data; following and the owner's controls come in the browser.
+ * /a/<slug> (and ?lang=en), one column like a music service's artist page (owner, 2026-10-20): the
+ * hero (their cover across the page when they have one, fading into the night under their photo
+ * and their name set large), "Phát" (a link the playlist takes over), follow or claim, then in this order: the shows to come (three
+ * as cards, the rest as rows), everything about them (bio, the key facts, links, the booking facts, who
+ * they play with, the shows they played, the rest folded), their music (the MP3 playlist with its waveform,
+ * ./playlist.tsx, then their mixes, ./mixes.tsx) and, last, the moments. Every show and every line
+ * comes from canonical events; follower counts are shown, never used to rank. Anchors #shows,
+ * #about, #played, #mix and #listen keep the old tabs' links working.
  */
 import { CaretRightIcon, PlayIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { api, jsonLdHtml, type ArtistSeo, type Lang } from '@/lib/api';
@@ -20,13 +22,17 @@ import type { Moment } from '../../ui/moments';
 import { RadarTag } from '../../ui/origin';
 import { Accordion, Art, Avatar, DateBlock, Marker, Stat, Status, type StatusTone } from '../../ui/parts';
 import type { Card } from '../../types';
-import { Crumbs, WebFooter, WebNav } from '../chrome';
+import { WebFooter, WebNav } from '../chrome';
+import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
-import { ArtistMixes, clock, type Mix } from './mixes';
+import { ArtistMixes, type Mix } from './mixes';
+import { LazyPlaylist } from './music';
+import type { Track } from './track';
+import { EventCard } from '../card';
 import { MIXES } from './copy';
-import { ClaimButton, EventTabs, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
+import { ClaimButton, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
 import { InLang } from '@/kd/ui/in-lang';
 
 const enc = encodeURIComponent;
@@ -63,6 +69,8 @@ export interface ArtistData {
   badges?: BadgeView[];
   moments?: Moment[];
   mixes?: Mix[];
+  /** The MP3 playlist (routes/tracks.ts). */
+  tracks?: Track[];
 }
 
 export async function loadArtist(slug: string, lang: Lang) {
@@ -110,7 +118,6 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
   const languages = a.languages.map((code) => {
     try { return new Intl.DisplayNames([lang], { type: 'language' }).of(code) ?? code; } catch { return code; }
   });
-  const hasBooking = !!(a.booking || a.travel || a.gigTypes.length || a.setLengths.length || languages.length || a.openToBrands || a.activeSince);
   const otherLang = { href: seo.page.otherLang.path, label: lang === 'vi' ? W.english : W.vietnamese };
   const past = data.past.map((e) => ({ slug: e.slug, title: e.title, startsOn: e.startsOn, venue: e.venue, cityLabel: e.cityLabel }));
   const month = (iso: string) => {
@@ -120,34 +127,32 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
 
   const M = pick(MIXES, lang);
   const mixes = data.mixes ?? [];
-  // About: the bio, the links and the booking details, a tab of its own.
-  const aboutPanel = bio || links.length || hasBooking ? (
-    <div className="flex max-w-read flex-col gap-5 pt-5">
-      {bio ? <p className="kd-tl whitespace-pre-line text-fg-1">{bio}</p> : null}
-      {links.length ? <ProfileLinks links={links} lang={lang} label={T.listen} /> : null}
-      {hasBooking ? (
-        <dl className="flex flex-col border-t border-line-1">
-          {a.booking ? <Row k={T.booking} v={text(a.booking.label, lang)} /> : null}
-          {a.travel ? <Row k={T.travel} v={text(a.travel.label, lang)} /> : null}
-          {a.gigTypes.length ? <Row k={T.gigTypes} v={a.gigTypes.map((x) => text(x.label, lang)).join(', ')} /> : null}
-          {a.setLengths.length ? <Row k={T.setLengths} v={a.setLengths.map((x) => text(x.label, lang)).join(', ')} /> : null}
-          {languages.length ? <Row k={T.languages} v={languages.join(', ')} /> : null}
-          {a.activeSince ? <Row k={T.active} v={fill(T.since, { y: a.activeSince })} /> : null}
-          {a.openToBrands ? <Row k={T.brands} v="✓" /> : null}
-        </dl>
-      ) : null}
-    </div>
-  ) : null;
+  const tracks = data.tracks ?? [];
+  // The upcoming shows: three as cards, the rest as dated rows.
+  const highlights = data.upcoming.slice(0, 3);
+  const rest = data.upcoming.slice(3);
+  const facts: { k: string; v: string }[] = [
+    a.roles.length ? { k: T.rolesK, v: a.roles.map((r) => text(r.label, lang)).join(', ') } : null,
+    a.styleLabels.length ? { k: T.stylesK, v: a.styleLabels.map((x) => text(x.label, lang)).join(', ') } : null,
+    a.basedIn ? { k: T.basedIn, v: text(a.basedIn.label, lang) || a.basedIn.city } : null,
+    a.booking ? { k: T.booking, v: text(a.booking.label, lang) } : null,
+    a.travel ? { k: T.travel, v: text(a.travel.label, lang) } : null,
+    a.gigTypes.length ? { k: T.gigTypes, v: a.gigTypes.map((x) => text(x.label, lang)).join(', ') } : null,
+    a.setLengths.length ? { k: T.setLengths, v: a.setLengths.map((x) => text(x.label, lang)).join(', ') } : null,
+    languages.length ? { k: T.languages, v: languages.join(', ') } : null,
+    a.activeSince ? { k: T.active, v: fill(T.since, { y: a.activeSince }) } : null,
+    a.openToBrands ? { k: T.brands, v: '✓' } : null,
+  ].filter((x): x is { k: string; v: string } => !!x);
 
-  const shows = data.upcoming.length ? (
+  const rows = (items: Card[]) => (
     <ol className="flex flex-col">
-      {data.upcoming.map((e, i) => {
+      {items.map((e) => {
         const fam = familyOf(e.genre);
         const free = e.isFree || e.entryMode === 'free';
         const tickets = !free && !e.soldOut && !e.past;
         return (
           <li key={e.id} className={cx('grid min-h-22 grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-line-1', g(fam))}>
-            {e.startsOn ? <DateBlock hi={i === 0} top={weekdayShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} /> : <span />}
+            {e.startsOn ? <DateBlock top={weekdayShort(e.startsOn, lang)} day={Number(e.startsOn.slice(8, 10))} bottom={month(e.startsOn)} /> : <span />}
             <span className="flex min-w-0 flex-col gap-1">
               <Link href={inLang('/e/' + e.slug, lang)} className="kd-h kd-ell kd-hit hover:underline">{e.title}</Link>
               <span className="kd-s kd-ell flex items-center gap-1.5"><Marker family={fam} />{[e.venue.name, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}</span>
@@ -162,7 +167,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
         );
       })}
     </ol>
-  ) : <p className="kd-t pt-5 text-fg-3">{T.noShows}</p>;
+  );
 
   return (
     <InLang lang={lang}>
@@ -170,34 +175,44 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} />
-          <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, all) => (i === all.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
+          <Crumbs width="page" label={W.crumbs} items={seo.page.crumbs.map((c, i, all) => (i === all.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
-          {/* ---- their cover, when they have one: a tile with their name again would say nothing ---- */}
-          {a.coverUrl ? (
-            <div className="kd-wrap" aria-hidden="true">
-              <Art family={tiles[0]} cover={a.coverUrl} className="h-[clamp(140px,17vw,240px)]" />
-            </div>
-          ) : null}
-
-          {/* ---- who ---- */}
-          <section className="kd-wrap" aria-label={T.artistKind}>
-            <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5 pl-[clamp(0px,2vw,24px)]">
-              <div className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-4">
-                <Avatar ring name={a.name} src={a.imageUrl} size={128} className={cx(a.coverUrl ? '-mt-12 tab:-mt-16' : 'mt-4', 'h-24! w-24! text-[40px]! tab:h-32! tab:w-32! tab:text-[54px]!')} />
-                <div className="flex min-w-0 flex-col gap-2">
-                  <h1 className="kd-d2">
-                    {a.name}
-                    {a.verified ? <SealCheckIcon size={28} weight="fill" className="ml-3 inline-block align-[-0.05em] text-info" role="img" aria-label={T.artistVerified} /> : null}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                    <span className="kd-m">{meta}</span>
-                    {a.booking ? <Status tone={BOOKING_TONE[a.booking.key] ?? 'none'}>{text(a.booking.label, lang)}</Status> : null}
-                    {a.origin === 'radar' ? <RadarTag lang={lang} /> : null}
-                    {unclaimed ? <span className="kd-tag">{P.unclaimed}</span> : null}
-                  </div>
+          {/* ---- the hero: their cover across the page, fading into the night under their name (no cover, no banner) ---- */}
+          <header className={cx('relative', g(tiles[0]))}>
+            {a.coverUrl ? (
+              <div className="kd-wrap" aria-hidden="true">
+                <div className="kd-artist-cover relative overflow-hidden rounded-card">
+                  <Art family={tiles[0]} cover={a.coverUrl} eager className="absolute inset-0 rounded-none" />
+                  <div className="kd-hero-fade absolute inset-0" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+            ) : null}
+            <div className={cx('kd-wrap relative', a.coverUrl ? '-mt-24 tab:-mt-32' : 'pt-6')}>
+              <div className="mx-auto flex max-w-page flex-col items-start gap-5 tab:flex-row tab:items-end tab:gap-8">
+                <Avatar ring name={a.name} src={a.imageUrl} size={192} className="kd-artist-photo shrink-0" />
+                <div className="flex min-w-0 flex-col gap-3 pb-1">
+                  <span className="kd-m flex flex-wrap items-center gap-2">
+                    {a.verified ? <><SealCheckIcon size={18} weight="fill" className="text-info" aria-hidden="true" /><span>{T.artistVerified}</span></> : <span>{T.artistKind}</span>}
+                    {a.origin === 'radar' ? <RadarTag lang={lang} /> : null}
+                    {unclaimed ? <span className="kd-tag">{P.unclaimed}</span> : null}
+                  </span>
+                  <h1 className="kd-artist-name">{a.name}</h1>
+                  <span className="kd-s">{meta}</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="kd-wrap flex flex-col">
+            <div className="mx-auto flex w-full max-w-page flex-col">
+              {/* ---- what to do: play, follow (or claim), share ---- */}
+              <div className="flex flex-wrap items-center gap-3 pt-7">
+                {tracks.length || mixes.length ? (
+                  // The playlist plays it when its code is in (data-play-artist); before that, and without tracks, it is a link.
+                  <a href={tracks.length ? '#listen' : '#mix'} data-play-artist={tracks.length ? '' : undefined} className={buttonClass({ tone: 'acc', glow: true, pill: true })}>
+                    <PlayIcon size={20} weight="fill" aria-hidden="true" />{M.playTrack}
+                  </a>
+                ) : null}
                 {unclaimed ? (
                   // Nobody runs this profile: claiming it is the action, and a fan asks to be told instead of following.
                   <>
@@ -211,67 +226,87 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                   </>
                 )}
                 <ShareProfile lang={lang} title={a.name} />
+                {a.booking ? <Status tone={BOOKING_TONE[a.booking.key] ?? 'none'}>{text(a.booking.label, lang)}</Status> : null}
               </div>
-            </div>
-            {/* Who follows them and whom they follow; their shows are counted in the tabs below. */}
-            {!unclaimed || a.claimed ? (
-              <div className="mt-6 flex flex-wrap gap-x-12 gap-y-4 border-y border-line-1 py-4">
-                {unclaimed ? null : <FollowersStat lang={lang} kind="art" id={a.id} source={source} served={a.followers} />}
-                {a.claimed ? <Stat value={count(a.followingCount ?? 0, lang)} label={T.followingN} /> : null}
-              </div>
-            ) : null}
-          </section>
+              {!unclaimed || a.claimed ? (
+                <div className="mt-6 flex flex-wrap gap-x-12 gap-y-4 border-y border-line-1 py-4">
+                  {unclaimed ? null : <FollowersStat lang={lang} kind="art" id={a.id} source={source} served={a.followers} />}
+                  {a.claimed ? <Stat value={count(a.followingCount ?? 0, lang)} label={T.followingN} /> : null}
+                  <Stat value={count(data.upcoming.length, lang)} label={T.upcomingTab} />
+                </div>
+              ) : null}
 
-          {/* ---- shows, and the rest at the side ---- */}
-          <section className="kd-wrap pt-8">
-            <div className="kd-split gap-[clamp(28px,4vw,56px)]">
-              <div className="kd-main flex flex-col">
-                <EventTabs
-                  label={T.dates}
-                  tabs={[
-                    { key: 'shows', label: T.upcomingTab, count: data.upcoming.length, panel: shows },
-                    ...(mixes.length ? [{ key: 'mix', label: M.tab, count: mixes.length, panel: <ArtistMixes lang={lang} slug={a.slug} items={mixes} heading={false} className="pt-5" /> }] : []),
-                    ...(past.length ? [{ key: 'played', label: T.pastTab, count: past.length, panel: <PastList lang={lang} items={past} /> }] : []),
-                    ...(aboutPanel ? [{ key: 'about', label: T.about, panel: aboutPanel }] : []),
-                  ]}
-                />
-                <ProfileMoments lang={lang} source={source} items={data.moments ?? []} className="mt-12" />
-                <Badges lang={lang} items={data.badges} who={{ vi: 'nghệ sĩ', en: 'artists' }} className="mt-12" />
-              </div>
+              {/* ---- 1. the shows to come, first ---- */}
+              <section id="shows" aria-labelledby="shows-h" className="flex scroll-mt-32 flex-col gap-5 pt-12">
+                <h2 id="shows-h" className="kd-d2">{T.upcomingTab}</h2>
+                {highlights.length ? (
+                  <>
+                    {/* One or two shows share the row in halves; three or more take the cards' grid. */}
+                    <div className={highlights.length < 3 ? 'grid grid-cols-1 gap-x-4 gap-y-7 tab:grid-cols-2' : 'kd-cards'}>
+                      {highlights.map((e) => {
+                        const tickets = !(e.isFree || e.entryMode === 'free') && !e.soldOut && !e.past;
+                        return (
+                          <div key={e.id} className="flex min-w-0 flex-col gap-3">
+                            <EventCard e={e} lang={lang} />
+                            {tickets ? <a className={buttonClass({ size: 'sm' }, 'self-start')} href={`/go/${enc(e.slug)}?src=artist`}>{T.buy}</a> : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {rest.length ? rows(rest) : null}
+                  </>
+                ) : <p className="kd-t text-fg-3">{T.noShows}</p>}
+              </section>
 
-              <aside className="kd-side flex flex-col gap-8">
-                {/* The latest mix: a way into the Mix tab, where it plays (one player on the page). */}
-                {mixes.length ? (
-                  <section aria-labelledby="latest-h" className="flex flex-col gap-3 rounded-card p-4 shadow-[inset_0_0_0_1px_var(--color-line-1)]">
-                    <h2 id="latest-h" className="kd-hs">{M.latest}</h2>
-                    <a href="#mix" className="group flex items-center gap-3">
-                      <Art family="edm" cover={mixes[0].thumbnailUrl} title={mixes[0].title} className="size-14 shrink-0 rounded-seg" />
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="kd-hs kd-ell group-hover:underline">{mixes[0].title}</span>
-                        <span className="kd-s">{mixes[0].providerLabel}{mixes[0].durationS ? ' · ' + clock(mixes[0].durationS) : ''}</span>
-                      </span>
-                      <span className="kd-ib kd-ib-line shrink-0" aria-hidden="true"><PlayIcon size={16} weight="fill" /></span>
-                    </a>
-                  </section>
-                ) : null}
-
-                {withMost.length ? (
-                  <div className="flex flex-col">
-                    <span className="kd-m pb-1.5">{T.mostWith}</span>
-                    {withMost.map((x) => (
-                      <Link key={x.key} className="kd-lrow" href={inLang(x.href, lang)}>
-                        <Avatar name={x.name} src={x.logo} size={40} org={x.org} />
-                        <span className="flex min-w-0 flex-1 flex-col">
-                          <span className="kd-hs kd-ell">{x.name}</span>
-                          <span className="kd-s">{x.line}</span>
-                        </span>
-                        <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
-                      </Link>
+              {/* ---- 2. everything about them ---- */}
+              <section id="about" aria-labelledby="about-h" className="flex scroll-mt-32 flex-col gap-6 pt-14">
+                <h2 id="about-h" className="kd-d2">{T.about}</h2>
+                {bio ? <p className="kd-tl max-w-read whitespace-pre-line text-fg-1">{bio}</p> : null}
+                {/* The key facts right under the bio (owner, 2026-10-20). */}
+                <Accordion small summary={seo.headings.facts} className="max-w-read border-y border-line-1">
+                  <div className="flex flex-col gap-3">
+                    <p className="kd-s">{seo.page.summary}</p>
+                    <dl className="grid grid-cols-1 gap-x-6 gap-y-2 tab:grid-cols-2">
+                      {seo.page.facts.map((f) => (
+                        <div key={f.label} className="flex flex-col gap-0.5">
+                          <dt className="kd-m">{f.label}</dt>
+                          <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                </Accordion>
+                {links.length ? <ProfileLinks links={links} lang={lang} label={T.listen} /> : null}
+                {facts.length ? (
+                  <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-y border-line-1 py-5 tab:grid-cols-2 desk:grid-cols-3">
+                    {facts.map((f) => (
+                      <div key={f.k} className="flex flex-col gap-0.5">
+                        <dt className="kd-m">{f.k}</dt>
+                        <dd className="kd-hs">{f.v}</dd>
+                      </div>
                     ))}
+                  </dl>
+                ) : null}
+                {withMost.length ? (
+                  <div className="flex flex-col gap-3">
+                    <h3 className="kd-h">{T.mostWith}</h3>
+                    <ul className="grid grid-cols-1 gap-x-6 tab:grid-cols-2 desk:grid-cols-3">
+                      {withMost.map((x) => (
+                        <li key={x.key}>
+                          <Link className="kd-lrow" href={inLang(x.href, lang)}>
+                            <Avatar name={x.name} src={x.logo} size={40} org={x.org} />
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="kd-hs kd-ell">{x.name}</span>
+                              <span className="kd-s">{x.line}</span>
+                            </span>
+                            <CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : null}
-
-                <div className="flex flex-col border-t border-line-1">
+                <div className="grid grid-cols-1 gap-x-8 border-t border-line-1 tab:grid-cols-2">
                   {data.availability.length ? (
                     <Accordion small summary={T.dates} aside={data.availability.length}>
                       <ul className="flex flex-col">
@@ -285,6 +320,11 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                       </ul>
                     </Accordion>
                   ) : null}
+                  {past.length ? (
+                    <Accordion small summary={T.pastTab} aside={past.length} id="played">
+                      <PastList lang={lang} items={past} />
+                    </Accordion>
+                  ) : null}
                   {rel.venues.length ? (
                     <Accordion small summary={T.playedAt} aside={rel.venues.length}>
                       <ul className="flex flex-col">
@@ -293,15 +333,6 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                             <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs kd-ell">{v.name}</span><span className="kd-s">{text(v.cityLabel, lang) || v.city}</span></span>
                             <span className="kd-mb kd-num">{v.events}</span>
                           </li>
-                        ))}
-                      </ul>
-                    </Accordion>
-                  ) : null}
-                  {rel.similar.length ? (
-                    <Accordion small summary={T.similar} aside={rel.similar.length}>
-                      <ul className="flex flex-col">
-                        {rel.similar.map((x) => (
-                          <li key={x.id}><Link className="kd-lrow" href={inLang('/a/' + x.slug, lang)}><Avatar name={x.name} size={32} /><span className="kd-hs kd-ell flex-1">{x.name}</span><CaretRightIcon size={16} className="text-fg-3" aria-hidden="true" /></Link></li>
                         ))}
                       </ul>
                     </Accordion>
@@ -320,23 +351,25 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                       </ul>
                     </Accordion>
                   ) : null}
-                  <Accordion small summary={seo.headings.facts}>
-                    <div className="flex flex-col gap-3">
-                      <p className="kd-s">{seo.page.summary}</p>
-                      <dl className="grid grid-cols-1 gap-y-2">
-                        {seo.page.facts.map((f) => (
-                          <div key={f.label} className="flex flex-col gap-0.5">
-                            <dt className="kd-m">{f.label}</dt>
-                            <dd className="kd-s text-fg-2">{f.href ? <a href={f.href} rel={/^https?:/.test(f.href) ? 'noopener' : undefined} className="underline decoration-line-2 underline-offset-4 hover:text-fg-1">{f.value}</a> : f.value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </div>
-                  </Accordion>
                 </div>
-              </aside>
+                <Badges lang={lang} items={data.badges} who={{ vi: 'nghệ sĩ', en: 'artists' }} />
+              </section>
+
+              {/* ---- 3. their music: the MP3 playlist, then their mixes ---- */}
+              {tracks.length || mixes.length ? (
+                <section id="listen" aria-labelledby="listen-h" className="flex scroll-mt-32 flex-col gap-6 pt-14">
+                  <h2 id="listen-h" className="kd-d2">{M.title}</h2>
+                  {tracks.length ? <LazyPlaylist lang={lang} tracks={tracks} artist={a.name} /> : null}
+                  {mixes.length ? (
+                    <ArtistMixes lang={lang} slug={a.slug} items={mixes} title={M.tab} id="mix" />
+                  ) : null}
+                </section>
+              ) : null}
+
+              {/* ---- 4. the moments, last ---- */}
+              <ProfileMoments lang={lang} source={source} items={data.moments ?? []} className="pt-14" />
             </div>
-          </section>
+          </main>
 
           <div className="mt-auto">
             <WebFooter lang={lang} otherLang={otherLang} />
@@ -344,14 +377,5 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
         </div>
       </KdProvider>
     </InLang>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="kd-lrow min-h-11 last:border-b-0">
-      <dt className="kd-s flex-1">{k}</dt>
-      <dd className="kd-hs text-right">{v}</dd>
-    </div>
   );
 }

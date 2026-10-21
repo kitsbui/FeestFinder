@@ -7,6 +7,7 @@ import { styleByKey } from '../../lib/styles.ts';
 import { isoIn } from '../../lib/time.ts';
 import { presentLinks } from '../artists.ts';
 import { mixesOf } from '../mixes.ts';
+import { tracksOf } from '../audio.ts';
 import { OG_HEIGHT, OG_WIDTH } from '../ogimage.ts';
 import { abs, addressOf, type ArtistSeo, baseOf, clip, crumbList, eventLine, type Fact, hostOf, inLang, ogFallback, PUBLIC_EVENT, ROBOTS, SCHEMA_TYPE, shortDay, siteNodes, t, text, vnIso } from './shared.ts';
 
@@ -48,6 +49,7 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
   const what = styles.length ? styles.join(', ') : genres.join(', ');
   const bio = text(a.bio, lang);
   const mixes = await mixesOf(ctx.db, a.id);
+  const tracks = await tracksOf(ctx.db, a.id);
 
   const summary = [
     vi
@@ -96,8 +98,12 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
         location: place(e), image: [e.cover_url ? abs(ctx, e.cover_url) : ogFallback(base)],
         performer: { '@id': ids.artist },
       })),
-      // Their sets and tracks, played by each service's own player (services/mixes.ts).
-      track: mixes.length ? mixes.map((m) => ({
+      // Their MP3 playlist (routes/tracks.ts), then their sets, played by each service's own player (services/mixes.ts).
+      track: tracks.length || mixes.length ? [...tracks.map((tr) => ({
+        '@type': 'MusicRecording', name: tr.title, byArtist: { '@id': ids.artist },
+        duration: tr.durationS ? `PT${Math.floor(tr.durationS / 60)}M${tr.durationS % 60}S` : undefined,
+        audio: { '@type': 'AudioObject', name: tr.title, contentUrl: tr.url, encodingFormat: 'audio/mpeg' },
+      })), ...mixes.map((m) => ({
         '@type': ['track', 'show', 'episode'].includes(m.kind) ? 'MusicRecording' : 'MusicPlaylist',
         name: m.title, url: m.url, image: m.thumbnailUrl ?? undefined, byArtist: { '@id': ids.artist },
         audio: { '@type': 'AudioObject', name: m.title, embedUrl: m.embedSrc, provider: { '@type': 'Organization', name: m.providerLabel } },
@@ -106,7 +112,7 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
           { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: m.likeCount },
           { '@type': 'InteractionCounter', interactionType: 'https://schema.org/CommentAction', userInteractionCount: m.commentCount },
         ],
-      })) : undefined,
+      }))] : undefined,
     },
     crumbList(base, ids.crumbs, crumbs),
   ];

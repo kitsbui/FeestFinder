@@ -5,14 +5,12 @@
  * phone) every event is a row (kd.css `.kd-days`). Grouped by the events' own calendar days, so the
  * server and the browser draw the same headings; "hôm nay" and "ngày mai" come once the clock is known.
  *
- * Beside it on a wide screen, the rail: the next seven days with how many nights each (a tap goes
- * to that day), and the cities placed by where they are, each with its count (a tap filters).
+ * The days take the page's whole width (owner, 2026-10-20: the rail of the week and the cities is
+ * gone); on a wide screen the lead and its rows share the row evenly (kd.css).
  */
-import { ArrowRightIcon } from '@phosphor-icons/react/ssr';
-import type { ReactNode } from 'react';
 import { pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
-import { day, daysBetween, dayMonth, weekdayLong, weekdayShort } from '../../format';
+import { day, daysBetween, dayMonth, weekdayLong } from '../../format';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
 import { LIST } from './copy';
@@ -100,102 +98,5 @@ export function DayGrid({ groups, lang, className, eager = false }: { groups: Da
         );
       })}
     </div>
-  );
-}
-
-interface City { slug: string; name: string; center: [number, number] | null; count: number }
-
-/** The rail beside the days (from 1200px): the week ahead and the cities. */
-export function ListRail({ lang, items, today, cities, onCity, onMap }: {
-  lang: Lang; items: Card[]; today: string | null; cities: City[]; onCity: (slug: string) => void; onMap: () => void;
-}) {
-  const T = pick(LIST, lang);
-  const anchor = anchorDay(items, today);
-  const week = anchor ? Array.from({ length: DAYS }, (_, i) => addDays(anchor, i)) : [];
-  const perDay = new Map<string, number>();
-  for (const e of items) {
-    const on = e.startsOn && anchor && e.startsOn < anchor ? anchor : e.startsOn;
-    if (on) perDay.set(on, (perDay.get(on) ?? 0) + 1);
-  }
-  const go = (iso: string) => {
-    document.getElementById('day-' + iso)?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  };
-  const placed = cities.filter((c) => c.count > 0);
-  return (
-    <aside aria-label={T.rail} className="sticky top-36 hidden w-75 shrink-0 flex-col gap-4 self-start wide:flex">
-      {week.length ? (
-        <Box title={T.next7}>
-          <div className="grid grid-cols-7 gap-1">
-            {week.map((iso) => {
-              const n = perDay.get(iso) ?? 0;
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  disabled={!n}
-                  onClick={() => go(iso)}
-                  className={cx('flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-btn text-fg-1 hover:bg-white/[0.05] disabled:text-fg-3 disabled:hover:bg-transparent', iso === today && 'shadow-[inset_0_0_0_1px_var(--color-info)]')}
-                >
-                  <span className="kd-m">{weekdayShort(iso, lang)}</span>
-                  <span className="kd-hs kd-num">{day(iso).d}</span>
-                  <span className={cx('kd-m kd-num', n ? 'text-info' : '')}>{n}</span>
-                  <span className="sr-only">, {weekdayLong(iso, lang)} {dayMonth(iso, lang)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Box>
-      ) : null}
-      {placed.length ? (
-        <Box title={T.cities}>
-          <CityDots cities={placed} />
-          <ul className="flex flex-col">
-            {placed.map((c) => (
-              <li key={c.slug}>
-                <button type="button" onClick={() => onCity(c.slug)} className="flex min-h-11 w-full items-center justify-between border-b border-line-1 text-left text-sm text-fg-2 hover:text-fg-1">
-                  <span>{c.name}</span><span className="kd-num text-fg-1">{c.count}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button type="button" onClick={onMap} className="kd-nl -mx-2.5 self-start">{T.seeMap}<ArrowRightIcon size={14} aria-hidden="true" /></button>
-        </Box>
-      ) : null}
-    </aside>
-  );
-}
-
-function Box({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3 rounded-card p-4 shadow-[inset_0_0_0_1px_var(--color-line-1)]">
-      <h2 className="kd-hs">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-/** The cities where they are on the globe (a plain projection of their centres), each a dot with its count. */
-function CityDots({ cities }: { cities: City[] }) {
-  const pts = cities.filter((c) => c.center);
-  if (pts.length < 2) return null;
-  const W = 268, H = 150, P = 18;
-  const lons = pts.map((c) => c.center![0]), lats = pts.map((c) => c.center![1]);
-  const [x0, x1, y0, y1] = [Math.min(...lons), Math.max(...lons), Math.min(...lats), Math.max(...lats)];
-  const x = (lon: number) => P + ((lon - x0) / (x1 - x0 || 1)) * (W - 2 * P);
-  const y = (lat: number) => H - P - ((lat - y0) / (y1 - y0 || 1)) * (H - 2 * P);
-  return (
-    // A picture of where the cities are; the list under it is what a tap or a screen reader uses.
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-btn bg-map" aria-hidden="true">
-      {pts.map((c) => {
-        const cx0 = x(c.center![0]), cy0 = y(c.center![1]);
-        const right = cx0 < W - 90;
-        return (
-          <g key={c.slug}>
-            <circle cx={cx0} cy={cy0} r={5} className="fill-info" />
-            <text x={cx0 + (right ? 9 : -9)} y={cy0 + 4} textAnchor={right ? 'start' : 'end'} fontSize={11} className="fill-fg-2">{c.name} · {c.count}</text>
-          </g>
-        );
-      })}
-    </svg>
   );
 }

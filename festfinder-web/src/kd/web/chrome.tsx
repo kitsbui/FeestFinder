@@ -2,8 +2,8 @@
 /**
  * The public site's frame (design v2 phase 1, artboard 03 of the design review): one frame for
  * every public page, the same addresses.
- * - A computer: one bar with the logo, the four places (Sự kiện, Nghệ sĩ, Dự án, Nhà tổ chức), the
- *   search field (⌘K or Ctrl+K; an icon below 1200px), VI · EN, "Đăng sự kiện" (straight to the
+ * - A computer: one bar with the logo, the five places (Sự kiện, Nghệ sĩ, Dự án, Blog, Nhà tổ chức), the
+ *   search field (⌘K or Ctrl+K; an icon below 1200px), the two flags (Vietnamese, English), "Đăng sự kiện" (straight to the
  *   wizard) and the account menu, "Tôi" (web/me.tsx).
  * - A phone: the logo and the search on top ("Tìm": a sheet with the search, the other places and the
  *   styles; "Đăng sự kiện" is in "Tôi"), and the tab bar at the bottom: Sự kiện, Bản đồ, Đã lưu,
@@ -26,17 +26,23 @@ import { Input } from '../ui/forms';
 import { Logo } from '../ui/logo';
 import { TabBar } from '../ui/shell';
 import { WEB } from './copy';
-import { LANG_KEY, rememberLang, useHere, useOtherLang } from './lang';
+import { LANG_KEY, rememberLang, useHere } from './lang';
+
+/** Loads after the page: the frame hiding on scroll and full screen on a phone (ui/immersive.tsx). */
+const Immersive = dynamic(() => import('../ui/immersive').then((m) => m.Immersive), { ssr: false });
 
 /** Loads after the page (growth plan card F): no page carries the install code at boot. */
 const InstallBar = dynamic(() => import('../ui/install').then((m) => m.InstallBar), { ssr: false });
 import { MeMenuItems } from './me';
 
+/** The flags (lang-switch.tsx): a computer's alone, so a phone's script never carries them; the box keeps their size meanwhile. */
+const LangSwitch = dynamic(() => import('./lang-switch').then((m) => m.LangSwitch), { ssr: false, loading: () => <span className="kd-flags hidden w-22 desk:inline-flex" aria-hidden="true" /> });
+
 /** The "Tìm" sheet loads the first time it opens (search-sheet.tsx). */
 const SearchSheet = dynamic(() => import('./search-sheet'), { ssr: false });
 
 /** Which place the page is: it marks the nav link and the tab. */
-export type WebSection = 'list' | 'artists' | 'projects' | 'saved' | 'me' | 'none';
+export type WebSection = 'list' | 'artists' | 'projects' | 'blog' | 'saved' | 'me' | 'none';
 
 /** Where a style leads: every upcoming event of it (the list), the same events its count counts. Only music styles: price is a filter, not a style. */
 export const styleHref = (k: string, lang: Lang = 'vi') => inLang(`/?style=${k}`, lang);
@@ -79,6 +85,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
             {place('list', '/', T.events, 'events')}
             {place('artists', '/a', T.artists, 'artists')}
             {place('projects', '/p', T.projects, 'projects')}
+            {place('blog', '/blog', T.blog, 'blog')}
             <a className="kd-nl" href="/studio" onClick={track('organisers', 'nav')}>{T.organisers}</a>
           </nav>
           <NavSearch lang={lang} field={field} />
@@ -113,6 +120,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           </div>
         </div>
       </header>
+      <Immersive />
       <InstallBar lang={lang} />
       <WebTabs lang={lang} current={current} />
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
@@ -151,25 +159,6 @@ function NavSearch({ lang, field }: { lang: Lang; field: RefObject<HTMLInputElem
   );
 }
 
-/**
- * VI · EN: the same page in the other language, the current one lit. On a page in Thai, Japanese or
- * Indonesian (design v2 phase 10) its code comes first, lit, and the link leads to Vietnamese; the
- * footer lists every language.
- */
-function LangSwitch({ lang, className }: { lang: Lang; className?: string }) {
-  const other = useOtherLang(lang);
-  const next: Lang = lang === 'vi' ? 'en' : 'vi';
-  const own = lang === 'vi' || lang === 'en' ? null : lang.toUpperCase();
-  return (
-    <a className={cx('kd-nl', className)} href={other} hrefLang={next} onClick={() => { FF.track('nav_click', { kind: 'lang', surface: 'nav' }); rememberLang(next); }}>
-      <span className={lang === 'vi' || own ? 'text-fg-1' : 'text-fg-3'}>{own ?? 'VI'}</span>
-      <span aria-hidden="true" className="text-fg-3">·</span>
-      <span className={lang === 'en' ? 'text-fg-1' : 'text-fg-3'}>{own ? 'VI' : 'EN'}</span>
-      <span className="sr-only">{next === 'en' ? ', English' : ', Tiếng Việt'}</span>
-    </a>
-  );
-}
-
 /** The phone's tab bar: below 900px, on every public page. Four places (design v2 phase 12): search is at the top. */
 function WebTabs({ lang, current }: { lang: Lang; current: WebSection }) {
   const T = pick(WEB, lang);
@@ -199,8 +188,7 @@ const OWN_SCRIPT = new Set<Lang>(['th', 'ja']);
 /** The one-line footer: the logo, a few links, the other language, the company line. */
 export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href: string; label: string } | null }) {
   const T = pick(WEB, lang);
-  // The language picked before on this device: a page in Vietnamese by default moves to its
-  // English address. An address that says ?lang=en is never moved back.
+  const kd = useKd();
   // Every language of this page (design v2 phase 10), each named in itself.
   const here = useHere(lang);
   const at = (l: Lang) => {
@@ -209,11 +197,15 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
     else u.searchParams.set('lang', l);
     return u.pathname + u.search;
   };
+  // A device that chose before the cookie existed (its storage only): the cookie learns the choice,
+  // and the page moves to it once (src/proxy.ts moves every later visit before it is drawn).
   useEffect(() => {
-    if (!otherLang || lang !== 'vi') return;
+    if (!otherLang || /(?:^|;\s*)ff_lang=/.test(document.cookie)) return;
     let saved: string | null = null;
     try { saved = localStorage.getItem(LANG_KEY); } catch { /* storage blocked */ }
-    if (saved && saved !== 'vi' && (LANGS as readonly string[]).includes(saved)) location.replace(saved === 'en' ? otherLang.href : at(saved as Lang));
+    if (!saved || !(LANGS as readonly string[]).includes(saved)) return;
+    rememberLang(saved as Lang);
+    if (saved !== lang) location.replace(at(saved as Lang));
   // eslint-disable-next-line react-hooks/exhaustive-deps -- once, for the address the page opened at
   }, [lang, otherLang]);
   const foot = (kind: string) => track(kind, 'footer');
@@ -232,8 +224,8 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
           {otherLang ? LANGS.filter((l) => l !== lang).map((l) => (
             OWN_SCRIPT.has(l)
               // Thai and Japanese drawn by kd.css from data-name in the system's face: a page in another language fetches no font for one word.
-              ? <a key={l} className="kd-nl kd-own-script" href={at(l)} hrefLang={l} lang={l} aria-label={LANG_NAME[l]} data-name={LANG_NAME[l]} onClick={() => rememberLang(l)} />
-              : <a key={l} className="kd-nl" href={at(l)} hrefLang={l} lang={l} onClick={() => rememberLang(l)}>{LANG_NAME[l]}</a>
+              ? <a key={l} className="kd-nl kd-own-script" href={at(l)} hrefLang={l} lang={l} aria-label={LANG_NAME[l]} data-name={LANG_NAME[l]} onClick={() => rememberLang(l, !!kd.user)} />
+              : <a key={l} className="kd-nl" href={at(l)} hrefLang={l} lang={l} onClick={() => rememberLang(l, !!kd.user)}>{LANG_NAME[l]}</a>
           )) : null}
         </nav>
         <span className="kd-m">{fill(T.company, { y: new Date().getFullYear() })}</span>
@@ -246,18 +238,3 @@ export function WebFooter({ lang, otherLang }: { lang: Lang; otherLang?: { href:
  * Where a detail page sits: its list, then the page ("Sự kiện ở TP.HCM › Ravolution"). The home
  * crumb the search engines get (services/seo.ts) is the logo here; a page one step from home shows none.
  */
-export function Crumbs({ items, label }: { items: { name: string; href?: string }[]; label: string }) {
-  const shown = items.filter((c, i) => !(i === 0 && c.name === 'FeestFinder'));
-  if (shown.length < 2) return null;
-  return (
-    <nav aria-label={label} className="kd-wrap flex min-h-12 flex-wrap items-center gap-2 kd-s">
-      {shown.map((c, i) => (
-        <span key={i} className="flex min-w-0 items-center gap-2">
-          {i ? <CaretRightIcon size={12} className="shrink-0 text-fg-3" aria-hidden="true" /> : null}
-          {/* A short crumb ("Artists") still gets 44px to tap: a minimum width, the text where it was. */}
-          {c.href ? <Link href={c.href} className="kd-hit inline-block min-w-11 text-fg-3 hover:text-fg-1">{c.name}</Link> : <span className="kd-ell text-fg-2" aria-current="page">{c.name}</span>}
-        </span>
-      ))}
-    </nav>
-  );
-}

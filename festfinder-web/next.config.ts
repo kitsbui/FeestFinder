@@ -26,9 +26,11 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
+  // An artist's MP3 playlist (kd/web/artist/playlist.tsx) streams from the artist's own https links.
+  "media-src 'self' https:",
   `connect-src 'self'${MAP_ORIGINS.map((o) => ` ${o}`).join('')}${dev ? ' ws: wss:' : ''}`,
-  // The music players an artist's page embeds (festfinder-backend lib/mixes.ts EMBED_HOSTS), and nothing else.
-  'frame-src https://w.soundcloud.com https://player-widget.mixcloud.com https://www.mixcloud.com https://open.spotify.com',
+  // The music players an artist's page and a blog post embed (festfinder-backend lib/mixes.ts EMBED_HOSTS and YOUTUBE_EMBED_HOST), and nothing else.
+  'frame-src https://w.soundcloud.com https://player-widget.mixcloud.com https://www.mixcloud.com https://open.spotify.com https://www.youtube-nocookie.com',
   "worker-src 'self'",
   "manifest-src 'self'",
   "object-src 'none'",
@@ -64,6 +66,7 @@ const config: NextConfig = {
         { source: '/a/:file([^/]+\\.md)', destination: `${API}/a/:file` },
         { source: '/a.md', destination: `${API}/a.md` },
         { source: '/p/:file([^/]+\\.md)', destination: `${API}/p/:file` },
+        { source: '/blog/:file([^/]+\\.md)', destination: `${API}/blog/:file` },
         { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
         // The home page in English is /?lang=en: a cached page of its own; in Thai, Japanese and
         // Indonesian /?lang=th|ja|id (design v2 phase 10), each its own too.
@@ -85,6 +88,9 @@ const config: NextConfig = {
         { source: '/p/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/p/:slug/:lang' },
         { source: '/p', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/p/en' },
         { source: '/p', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/p/:lang' },
+        // The blog's frame speaks Vietnamese and English; Thai, Japanese and Indonesian read the English one. A post keeps the language it was written in.
+        { source: '/blog/:slug', has: [{ type: 'query', key: 'lang', value: '(en|th|ja|id)' }], destination: '/blog/:slug/en' },
+        { source: '/blog', has: [{ type: 'query', key: 'lang', value: '(en|th|ja|id)' }], destination: '/blog/en' },
         { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/a/:by/:slug/en' },
         { source: '/a/:by(style|city)/:slug', has: [{ type: 'query', key: 'lang', value: '(?<lang>th|ja|id)' }], destination: '/a/:by/:slug/:lang' },
       ],
@@ -128,6 +134,8 @@ const config: NextConfig = {
       { source: '/a/en', destination: '/a?lang=en', permanent: true },
       { source: '/p/en', destination: '/p?lang=en', permanent: true },
       { source: '/p/:slug/en', destination: '/p/:slug?lang=en', permanent: true },
+      { source: '/blog/en', destination: '/blog?lang=en', permanent: true },
+      { source: '/blog/:slug/en', destination: '/blog/:slug?lang=en', permanent: true },
       { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
       // The same for Thai, Japanese and Indonesian (design v2 phase 10).

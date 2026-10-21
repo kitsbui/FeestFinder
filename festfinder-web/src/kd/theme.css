@@ -105,6 +105,7 @@
   --breakpoint-desk: 900px;    /* hide-sm / show-sm, side nav becomes a column */
   --breakpoint-wide: 1200px;    /* the nav's search field (web/chrome.tsx) */
   --container-read: 760px;     /* max-w-read: reading measure */
+  --container-page: 1200px;    /* max-w-page: a page's one centred column (no side column anywhere) */
 
   /* ---- motion (design v2 phase 8): three durations, one curve. dur-1 a state (hover, press, a colour),
      dur-2 a part that moves (a menu, a sheet, a dock, a step), dur-3 the page (a card becoming its event). ---- */
@@ -290,4 +291,11 @@
   /* small controls keep a 44px hit area */
   .kd-hit { position: relative; }
   .kd-hit::after { content: ""; position: absolute; inset: -4px 0; }
+}
+
+/* The language switch's flags (ui/flags.tsx, owner 2026-10-20): Vietnam's and the United States' own
+   colours, drawn here as pictures so no page's script carries them. */
+@layer components {
+  .kd-flag-vn { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23da251d'/%3E%3Cpath fill='%23ffff00' d='M15 4L16.35 8.15H20.71L17.18 10.71L18.53 14.85L15 12.29L11.47 14.85L12.82 10.71L9.29 8.15H13.65Z'/%3E%3C/svg%3E") center / cover no-repeat; }
+  .kd-flag-us { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20'%3E%3Crect width='30' height='20' fill='%23ffffff'/%3E%3Cpath fill='%23b22234' d='M0 0.00h30v1.54H0zM0 3.08h30v1.54H0zM0 6.15h30v1.54H0zM0 9.23h30v1.54H0zM0 12.31h30v1.54H0zM0 15.38h30v1.54H0zM0 18.46h30v1.54H0z'/%3E%3Crect width='12.6' height='10.77' fill='%233c3b6e'/%3E%3Cpath fill='%23ffffff' d='M0.8 0.8h.7v.7h-.7zM5.0 0.8h.7v.7h-.7zM9.2 0.8h.7v.7h-.7zM2.9 2.9h.7v.7h-.7zM7.1 2.9h.7v.7h-.7zM11.3 2.9h.7v.7h-.7zM0.8 5.0h.7v.7h-.7zM5.0 5.0h.7v.7h-.7zM9.2 5.0h.7v.7h-.7zM2.9 7.1h.7v.7h-.7zM7.1 7.1h.7v.7h-.7zM11.3 7.1h.7v.7h-.7zM0.8 9.2h.7v.7h-.7zM5.0 9.2h.7v.7h-.7zM9.2 9.2h.7v.7h-.7z'/%3E%3C/svg%3E") center / cover no-repeat; }
 }

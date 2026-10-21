@@ -16,6 +16,7 @@ import { COMMON, fill, pick, type Lang } from '../copy';
 import { CRAFT } from '../craft';
 import { KdProvider, useKd } from '../runtime';
 import { place } from '../app/place';
+import { DEFAULT_LANG } from '../lang-default';
 import { buttonClass } from '../ui/actions';
 import { Avatar, Card as Panel } from '../ui/parts';
 import { FlagLoader, Logo } from '../ui/logo';
@@ -39,7 +40,8 @@ export function useArtist(): ArtistCtx {
 
 export function ArtistRoot({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('vi');
-  useEffect(() => { const l = place.lang(); if (l) setLang(l); }, []);
+  // What this device chose, else the site's first-visit language (kd/lang-pref.ts).
+  useEffect(() => { setLang(place.lang() ?? DEFAULT_LANG); }, []);
   return (
     <KdProvider lang={lang}>
       <Gate lang={lang}>{children}</Gate>

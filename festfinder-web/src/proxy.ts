@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { isCutOver } from './kd/cutover';
+import { cookieLang, LANG_COOKIE, langRedirect } from './kd/lang-pref';
 
 /*
  * Every path that is not one of this app's pages is the API's: this proxy forwards it there with
@@ -42,7 +43,18 @@ function isOwn(path: string): boolean {
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  if (isOwn(pathname)) return NextResponse.next();
+  if (isOwn(pathname)) {
+    // A page in the language this visitor reads (English when new, then their last choice: kd/lang-pref.ts).
+    if (request.method === 'GET') {
+      const move = langRedirect({ path: pathname, search, cookie: cookieLang(request.headers.get('cookie')), ua: request.headers.get('user-agent') });
+      if (move) {
+        const res = NextResponse.redirect(new URL(move.to, request.nextUrl), 307);
+        if (move.set) res.cookies.set(LANG_COOKIE, move.set, { path: '/', maxAge: 400 * 86400, sameSite: 'lax', secure: request.nextUrl.protocol === 'https:' });
+        return res;
+      }
+    }
+    return NextResponse.next();
+  }
   const headers = new Headers(request.headers);
   // Only this proxy speaks these headers; Vercel's own (its OIDC token among them) stay here.
   for (const h of [...OURS, ...HOP]) headers.delete(h);

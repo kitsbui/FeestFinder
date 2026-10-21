@@ -1,5 +1,5 @@
-/** Which public pages a save of an event, an artist, an organiser, a project or a featured shelf changes (kd/fresh.ts). */
-export type FreshKind = 'e' | 'a' | 'o' | 'p' | 's';
+/** Which public pages a save of an event, an artist, an organiser, a project, a featured shelf or a blog post changes (kd/fresh.ts). */
+export type FreshKind = 'e' | 'a' | 'o' | 'p' | 's' | 'blog';
 
 /** The lists that show each kind's cover or photo, besides its own page. */
 const LISTS: Record<FreshKind, string[]> = {
@@ -9,6 +9,7 @@ const LISTS: Record<FreshKind, string[]> = {
   p: ['/p'],
   // A shelf has no page of its own: the home page draws it.
   s: ['/'],
+  blog: ['/blog'],
 };
 
 const NO_PAGE = new Set<FreshKind>(['s']);
