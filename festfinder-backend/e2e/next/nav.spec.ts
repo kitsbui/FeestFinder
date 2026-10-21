@@ -16,11 +16,12 @@ async function open(page: Page, path: string) {
   return problems;
 }
 
-test('a computer: five places, the search, the languages, "Đăng sự kiện"; no styles menu', async ({ page }) => {
+test('a computer: the tab bar\'s places on top (owner, 2026-10-21), the search, the languages, "Đăng sự kiện"; no styles menu', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const problems = await open(page, '/a');
   const nav = page.getByRole('navigation', { name: 'Chính' });
-  await expect(nav.getByRole('link')).toHaveText(['Sự kiện', 'Nghệ sĩ', 'Dự án', 'Blog', 'Nhà tổ chức']);
+  // The same places, order and icons as the phone's tab bar; "Tôi" is the account menu at the end.
+  await expect(nav.getByRole('link')).toHaveText(['Sự kiện', 'Nghệ sĩ', 'Blog', 'Đã lưu']);
   await expect(nav.getByRole('link', { name: 'Nghệ sĩ' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('banner').getByRole('button', { name: 'Dòng nhạc' })).toHaveCount(0);
   await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
@@ -28,8 +29,8 @@ test('a computer: five places, the search, the languages, "Đăng sự kiện"; 
   const flags = page.getByRole('banner').getByRole('group', { name: 'Ngôn ngữ' });
   await expect(flags.getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('aria-current', 'true');
   await expect(flags.getByRole('link', { name: 'English' })).toHaveAttribute('href', '/a?setlang=en');
-  // No tab bar on a computer.
-  await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Đã lưu' })).toBeHidden();
+  // No tab bar on a computer (its "Tôi" tab is the account menu here).
+  await expect(page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Tôi' })).toBeHidden();
   // Between 900 and 1200px the field is an icon that opens the search sheet; ⌘K / Ctrl+K opens it too.
   await page.setViewportSize({ width: 1000, height: 800 });
   await page.keyboard.press('Control+k');
@@ -37,7 +38,7 @@ test('a computer: five places, the search, the languages, "Đăng sự kiện"; 
   expect(problems).toEqual([]);
 });
 
-test('a phone: four places in the tab bar on every public screen; the bar on top keeps the logo and the search, "Đăng sự kiện" is in "Tôi"', async ({ page }) => {
+test('a phone: the five places in the tab bar on every public screen; the bar on top keeps the logo and the search, "Đăng sự kiện" is in "Tôi"', async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 390, height: 844 });
   const missing: string[] = [];
@@ -45,7 +46,7 @@ test('a phone: four places in the tab bar on every public screen; the bar on top
   for (const path of ROUTES.visitor.filter((p) => p !== '/kit')) {
     await open(page, path);
     const tabs = page.getByRole('navigation', { name: 'Chính' });
-    for (const name of ['Sự kiện', 'Bản đồ', 'Đã lưu', 'Tôi']) {
+    for (const name of ['Sự kiện', 'Nghệ sĩ', 'Blog', 'Đã lưu', 'Tôi']) {
       if (!(await tabs.getByText(name, { exact: true }).isVisible())) missing.push(`${path}: ${name}`);
     }
     // Search left the tab bar for the top (design v2 phase 12, owner 2026-10-18).
@@ -75,7 +76,8 @@ test('Dự án, Vé and Đã lưu are at most two taps from any page on a phone'
   await expect(page).toHaveURL(/\/profile$/);
   const hub = page.getByRole('navigation', { name: 'Tôi' });
   await expect(hub.getByRole('link', { name: /^Vé của tôi/ })).toHaveCount(0);
-  await expect(hub.getByRole('link', { name: /^Đã lưu/ })).toHaveAttribute('href', '/saved');
+  // Đã lưu is a tab (owner, 2026-10-21); the hub keeps what the tab bar leaves, Dự án first.
+  await expect(hub.getByRole('link', { name: /^Dự án$/ })).toHaveAttribute('href', '/p');
   // The hub holds the workspaces, the language and signing out too.
   await expect(hub.getByRole('link', { name: /^Người tham dự/ })).toBeVisible();
   await expect(hub.getByRole('link', { name: /^Ngôn ngữ/ })).toHaveAttribute('href', '/profile?setlang=en');

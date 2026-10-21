@@ -100,7 +100,7 @@ test.describe('the list, the home page', () => {
     await expect(page).toHaveURL(/style=techno&view=map/);
     // One title for the page, one name per view: "Bản đồ" is the pressed view, nothing else.
     await expect(page.getByRole('heading', { level: 1, name: 'Tất cả sự kiện' })).toBeAttached();
-    // (The phone's tab bar, hidden on a computer, names its map tab too.)
+    // (The phone's "Bản đồ" button sits in the list's bar, which the map replaces.)
     await expect(page.getByRole('main').getByText('Bản đồ', { exact: true })).toHaveCount(1);
     await expect(nav.getByRole('link', { name: 'Sự kiện' })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('button', { name: /, Loại$/ })).toHaveText('Techno');
@@ -111,13 +111,15 @@ test.describe('the list, the home page', () => {
     await expect(page.getByRole('row').filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
   });
 
-  test('on a phone, the tab bar holds four places, and the search on top the others and the styles', async ({ page }) => {
+  test('on a phone, the tab bar holds the five places, the map is a view of the list, and the search on top has the others and the styles', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await open(page, '/');
     const tabs = page.getByRole('navigation', { name: 'Chính' });
     await expect(tabs.getByRole('link', { name: 'Sự kiện', exact: true })).toHaveAttribute('aria-current', 'page');
-    await expect(tabs.getByRole('link', { name: 'Bản đồ' })).toHaveAttribute('href', '/?view=map');
+    await expect(tabs.getByRole('link', { name: 'Nghệ sĩ' })).toHaveAttribute('href', '/a');
+    await expect(tabs.getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog');
     await expect(tabs.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
+    await expect(tabs.getByRole('link', { name: 'Bản đồ' })).toHaveCount(0);
     await expect(tabs.getByRole('link', { name: 'Tôi' })).toHaveAttribute('href', '/profile');
     await expect(page.getByRole('banner').getByRole('link', { name: 'Đăng sự kiện' })).toBeHidden();
     await expect(tabs.getByText('Tìm', { exact: true })).toHaveCount(0);
@@ -126,14 +128,14 @@ test.describe('the list, the home page', () => {
     await expect(sheet.getByRole('link', { name: /^Techno/ })).toHaveAttribute('href', '/?style=techno');
     await expect(sheet.getByRole('link', { name: 'Dự án' })).toHaveAttribute('href', '/p');
     await expect(sheet.getByRole('link', { name: 'Nhà tổ chức' })).toHaveAttribute('href', '/studio');
-    await sheet.getByRole('link', { name: 'Nghệ sĩ' }).click();
-    await expect(page).toHaveURL(/\/a$/);
+    await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    // The map's tab is lit on the map.
-    await open(page, '/?view=map');
-    await expect(tabs.getByRole('link', { name: 'Bản đồ' })).toHaveAttribute('aria-current', 'page');
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await expect(tabs.getByRole('link', { name: 'Bản đồ' })).toBeHidden();
+    // The map is a view of the list (owner, 2026-10-21): a button in its bar, Sự kiện still lit.
+    await page.locator('.kd-cmd').getByRole('button', { name: 'Bản đồ', exact: true }).click();
+    await expect(page).toHaveURL(/view=map/);
+    await expect(tabs.getByRole('link', { name: 'Sự kiện', exact: true })).toHaveAttribute('aria-current', 'page');
+    await tabs.getByRole('link', { name: 'Nghệ sĩ' }).click();
+    await expect(page).toHaveURL(/\/a$/);
   });
 
   test('splits what someone posted from what Feest Radar found, and tags the Radar ones', async ({ page }) => {

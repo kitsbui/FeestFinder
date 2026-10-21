@@ -29,11 +29,12 @@ const LCP_TIGHT: Record<string, number> = { '/': 2000, '/e/ravo': 2000 };
 /** KB of gzipped boot JS per screen (2026-10-19, after design v2 phase 14; React and Next are about 127 of them). A screen measured twice within 1 KB keeps the higher number: gzip rounds. */
 const SCREENS: [Who, string, number][] = [
   // Phase 19 moved the sign-in sheet's own lines out of the boot JS: phase 17's kilobyte on /, the map and the wizard is back.
+  // 2026-10-21: the nav's icons are drawn by CSS (one navigation for both devices): 3–5 KB less on every public screen (measured +1 for gzip rounding).
   // 2026-10-20 (later): the wizard measured 210 twice after the owner's requests (breadcrumbs left the client bundle).
   // 2026-10-20: the story images left the runtime for a chunk of their own (runtime/story.ts), which paid for the install strip and the worker (growth plan card F) and lowered the event page, an organiser, the artists and Studio.
-  ['visitor', '/', 195], ['visitor', '/e/ravo', 193], ['visitor', '/a', 202], ['visitor', '/a/slimv', 196],
-  ['visitor', '/o/ravoent', 195], ['visitor', '/p', 181], ['visitor', '/?view=map', 195], ['visitor', '/about', 174],
-  ['fan', '/profile', 198], ['fan', '/saved', 199],
+  ['visitor', '/', 193], ['visitor', '/e/ravo', 192], ['visitor', '/a', 198], ['visitor', '/a/slimv', 194],
+  ['visitor', '/o/ravoent', 192], ['visitor', '/p', 179], ['visitor', '/?view=map', 193], ['visitor', '/about', 171],
+  ['fan', '/profile', 196], ['fan', '/saved', 196],
   ['organizer', '/studio', 196], ['organizer', '/studio/new', 210], ['admin', '/console', 200],
 ];
 
