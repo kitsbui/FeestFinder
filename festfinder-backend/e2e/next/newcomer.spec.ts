@@ -115,7 +115,9 @@ test('"Tôi" before signing in: signing in first, then what works without an acc
   const hub = page.getByRole('navigation', { name: 'Tôi' });
   await expect(page.getByRole('button', { name: 'Đăng nhập' }).first()).toBeVisible();
   await expect(hub.getByRole('link', { name: 'Đăng sự kiện' })).toHaveAttribute('href', '/studio/new');
-  await expect(hub.getByRole('link', { name: 'Đã lưu' })).toHaveAttribute('href', '/saved');
+  // Đã lưu, Nghệ sĩ and Blog are tabs (owner, 2026-10-21); "Tôi" keeps what the tab bar leaves.
+  await expect(hub.getByRole('link', { name: 'Dự án' })).toHaveAttribute('href', '/p');
+  await expect(hub.getByRole('link', { name: 'Nhà tổ chức' })).toHaveAttribute('href', '/studio');
 });
 
 test('signs in with a phone number by SMS: the way is offered, the code arrives, the account is made and the number proved', async ({ page }) => {
@@ -214,9 +216,11 @@ async function controlsInSight(page: import('@playwright/test').Page) {
 
 /*
  * The first screens ask little (design v2 phase 12, owner 2026-10-18). The counts include the site's
- * frame (the logo, search and four tabs); like the JS budgets they only go down.
+ * frame (the logo, search and the tabs); like the JS budgets they only go down. 2026-10-21: the owner
+ * made one navigation for both devices (five tabs) and the map a button of the list: two more at home,
+ * one more on the event page.
  */
-const IN_SIGHT = { home: 20, event: 12 };
+const IN_SIGHT = { home: 22, event: 13 };
 
 test('the first screens ask little: few controls, a time in one tap, the tickets in two', async ({ page }) => {
   const problems = watch(page);

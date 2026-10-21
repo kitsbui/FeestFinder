@@ -44,7 +44,7 @@ interface Place { key: string; label: string; href: string; aside?: number | nul
 function places(lang: Lang, me: MeCounts | null): Place[] {
   const T = pick(WEB, lang);
   return [
-    { key: 'saved', label: T.saved, href: inLang('/saved', lang), aside: me?.saved ?? null },
+    // Đã lưu is a place of the bar and the tab bar (owner, 2026-10-21), not a row here.
     { key: 'following', label: T.following, href: '/app/following' },
     { key: 'projects', label: T.myProjects, href: inLang('/p/mine', lang) },
     { key: 'notifications', label: T.notifications, href: '/app/notifications' },
@@ -74,6 +74,8 @@ export function MeMenuItems({ lang, name }: { lang: Lang; name: string }) {
       <MenuSeparator />
       <WorkspaceItems lang={lang} current="fan" />
       <MenuSeparator />
+      {/* The places the bar leaves to "Tôi" (owner, 2026-10-21). */}
+      <MenuItem href={inLang('/p', lang)}>{T.projects}</MenuItem>
       <MenuItem href="/app/settings" external>{T.settings}</MenuItem>
       <MenuItem onSelect={feedback}>{T.feedback}</MenuItem>
       <MenuItem onSelect={() => kd.signOut()}>{T.signOut}</MenuItem>
@@ -112,11 +114,9 @@ export function GuestHub({ lang, className }: { lang: Lang; className?: string }
   return (
     <nav aria-label={T.me} className={className}>
       <div className="flex flex-col">
-        <Row href={inLang('/saved', lang)}>{T.saved}</Row>
-        {/* The places the phone's tab bar leaves to search (design v2 phase 12). */}
-        <Row href={inLang('/a', lang)}>{T.artists}</Row>
+        {/* The places the tab bar leaves to "Tôi" (owner, 2026-10-21): Đã lưu, Nghệ sĩ and Blog are tabs. */}
         <Row href={inLang('/p', lang)}>{T.projects}</Row>
-        <Row href={inLang('/blog', lang)}>{T.blog}</Row>
+        <Row href="/studio">{T.organisers}</Row>
         <Row href="/studio/new">{T.listEvent}</Row>
         <Row href={other} hrefLang={next} onClick={() => rememberLang(next)} aside={<LangAside lang={lang} />}>{T.language}</Row>
         <Row href={inLang('/about', lang)}>{T.about}</Row>
@@ -149,10 +149,8 @@ export function MeHub({ lang, className }: { lang: Lang; className?: string }) {
       </div>
       <h2 className="kd-m mb-1 mt-6">{T.more}</h2>
       <div className="flex flex-col">
-        {/* The phone's top bar leaves it to "Tôi" (owner, 2026-10-18); the tab bar leaves the places to search. */}
-        <Row href={inLang('/a', lang)}>{T.artists}</Row>
+        {/* What the tab bar leaves to "Tôi" (owner, 2026-10-21); the workspaces above lead to Studio. */}
         <Row href={inLang('/p', lang)}>{T.projects}</Row>
-        <Row href={inLang('/blog', lang)}>{T.blog}</Row>
         <Row href="/studio/new">{T.listEvent}</Row>
         <Row href={other} hrefLang={next} onClick={() => rememberLang(next, true)} aside={<LangAside lang={lang} />}>{T.language}</Row>
         <Row href="/app/settings">{T.settings}</Row>

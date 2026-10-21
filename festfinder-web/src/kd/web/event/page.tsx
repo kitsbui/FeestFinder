@@ -93,7 +93,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
       <KdProvider lang={lang}>
         <EventClientProvider ev={ev}>
           <div className={cx('flex min-h-dvh flex-col', g(fam))} lang={lang}>
-            <WebNav lang={lang} />
+            <WebNav lang={lang} current="list" />
             <Crumbs label={T.crumbs} items={seo.page.crumbs.map((c, i, all) => (i === all.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
             {/* ---- hero ---- */}

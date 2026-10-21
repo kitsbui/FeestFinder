@@ -121,9 +121,10 @@ test('the saved events: upcoming as cards with their heart, the past folded away
   await pastHeart.click();
   await expect.poll(async () => (await savedIds(page.request)).has(ids['ravo-2025'])).toBe(true);
 
-  // The account menu leads here.
-  await page.getByRole('button', { name: 'Tài khoản' }).click();
-  await expect(page.getByRole('menuitem', { name: /^Đã lưu/ })).toHaveAttribute('href', '/saved');
+  // The bar leads here, its place the one shown as current (one of the five places since 2026-10-21).
+  const place = page.getByRole('navigation', { name: 'Chính' }).getByRole('link', { name: 'Đã lưu' });
+  await expect(place).toHaveAttribute('href', '/saved');
+  await expect(place).toHaveAttribute('aria-current', 'page');
   expect(problems).toEqual([]);
 });
 

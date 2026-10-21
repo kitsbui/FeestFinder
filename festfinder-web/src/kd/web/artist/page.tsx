@@ -174,7 +174,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(seo.jsonLd) }} />
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
-          <WebNav lang={lang} />
+          <WebNav lang={lang} current="artists" />
           <Crumbs width="page" label={W.crumbs} items={seo.page.crumbs.map((c, i, all) => (i === all.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
           {/* ---- the hero: their cover across the page, fading into the night under their name (no cover, no banner) ---- */}

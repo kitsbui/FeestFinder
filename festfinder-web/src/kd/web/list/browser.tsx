@@ -21,7 +21,7 @@ import { moneyShort, todayIn, whenShort, count as fmtCount } from '../../format'
 import { FAMILY_LABEL, familyOf, type Family } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { useKd } from '../../runtime';
-import { Button, Chip } from '../../ui/actions';
+import { Button, Chip, IconButton } from '../../ui/actions';
 import { Segmented } from '../../ui/forms';
 import { Menu, MenuItem, MenuSeparator, Picker } from '../../ui/menu';
 import { Card as Panel, Marker, Status, type StatusTone } from '../../ui/parts';
@@ -403,7 +403,11 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           </div>
           {/* On a phone the bar holds the time; the city and the styles open the list below it. */}
           <div className="min-w-0 flex-1 tab:hidden">{phoneTimes}</div>
-          {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. On a phone the tab bar has the map. */}
+          {/* The map is a view of the list on a phone too (owner, 2026-10-21: it left the tab bar for Nghệ sĩ and Blog). */}
+          <IconButton label={T.map} className="shrink-0 tab:hidden" onPointerDown={warmKdMap} onClick={() => set({ view: 'map' })}>
+            <span className="kd-pi kd-pi-map" style={{ ['--pi' as string]: '20px' }} aria-hidden="true" />
+          </IconButton>
+          {/* Pointing at the switch starts loading the map, so "Bản đồ" opens at once. */}
           <div className="ml-auto max-tab:hidden" onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
         </div>
       </div>

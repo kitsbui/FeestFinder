@@ -2,18 +2,21 @@
 /**
  * The public site's frame (design v2 phase 1, artboard 03 of the design review): one frame for
  * every public page, the same addresses.
- * - A computer: one bar with the logo, the five places (Sự kiện, Nghệ sĩ, Dự án, Blog, Nhà tổ chức), the
- *   search field (⌘K or Ctrl+K; an icon below 1200px), the two flags (Vietnamese, English), "Đăng sự kiện" (straight to the
- *   wizard) and the account menu, "Tôi" (web/me.tsx).
+ * - One set of places on both (owner, 2026-10-21): Sự kiện, Nghệ sĩ, Blog, Đã lưu, Tôi, in that order
+ *   and with the same icons (PLACES). The map is a view of Sự kiện; Dự án and Nhà tổ chức are in
+ *   "Tôi", the search sheet and the footer.
+ * - A computer: one bar with the logo, the places, the search field (⌘K or Ctrl+K; an icon below
+ *   1200px), the two flags (Vietnamese, English), "Đăng sự kiện" (straight to the wizard) and "Tôi",
+ *   the account menu (web/me.tsx).
  * - A phone: the logo and the search on top ("Tìm": a sheet with the search, the other places and the
- *   styles; "Đăng sự kiện" is in "Tôi"), and the tab bar at the bottom: Sự kiện, Bản đồ, Đã lưu,
- *   Tôi (/profile, the hub). Four places since design v2 phase 12 (owner, 2026-10-18).
+ *   styles; "Đăng sự kiện" is in "Tôi"), and the same places as a tab bar at the bottom ("Tôi" is
+ *   /profile, the hub).
  * - The one-line footer, and the breadcrumbs of a detail page.
  * Styles are filters of the list, not a place: the list's bar and the search sheet offer them.
  */
 import { KdLink as Link, inLang } from '../link';
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type RefObject } from 'react';
-import { CalendarBlankIcon, CaretRightIcon, HeartIcon, MagnifyingGlassIcon, MapTrifoldIcon, UserIcon } from '@phosphor-icons/react/ssr';
+import { CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { LANG_NAME, LANGS, fill, pick, type Lang } from '../copy';
@@ -73,20 +76,19 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const place = (key: WebSection, href: string, label: string, kind: string) => (
-    <Link className="kd-nl" href={inLang(href, lang)} aria-current={current === key ? 'page' : undefined} onClick={track(kind, 'nav')}>{label}</Link>
-  );
+  // The same places as the phone's tab bar, with the same icons (owner, 2026-10-21); "Tôi" is the account menu at the end.
+  const on = placeOf(current);
   return (
     <>
       <header className="kd-nav">
         <div className="kd-wrap flex h-14 items-center gap-2 desk:h-16">
           <Logo lang={lang} height={20} className="mr-2 desk:mr-3" />
           <nav aria-label={T.mainNav} className="hidden items-center gap-0.5 desk:flex">
-            {place('list', '/', T.events, 'events')}
-            {place('artists', '/a', T.artists, 'artists')}
-            {place('projects', '/p', T.projects, 'projects')}
-            {place('blog', '/blog', T.blog, 'blog')}
-            <a className="kd-nl" href="/studio" onClick={track('organisers', 'nav')}>{T.organisers}</a>
+            {PLACES.filter((p) => p.key !== 'me').map((p) => (
+              <Link key={p.key} className="kd-nl" href={inLang(p.href, lang)} aria-current={on === p.key ? 'page' : undefined} onClick={track(p.key, 'nav')}>
+                <PlaceIcon k={p.key} size={18} />{T[p.label]}
+              </Link>
+            ))}
           </nav>
           <NavSearch lang={lang} field={field} />
           <div className="ml-auto flex items-center gap-1.5">
@@ -159,25 +161,35 @@ function NavSearch({ lang, field }: { lang: Lang; field: RefObject<HTMLInputElem
   );
 }
 
-/** The phone's tab bar: below 900px, on every public page. Four places (design v2 phase 12): search is at the top. */
+/** The places, in order, on a computer's bar and a phone's tab bar alike (owner, 2026-10-21). */
+const PLACES = [
+  { key: 'events', label: 'events', href: '/' },
+  { key: 'artists', label: 'artists', href: '/a' },
+  { key: 'blog', label: 'blog', href: '/blog' },
+  { key: 'saved', label: 'saved', href: '/saved' },
+  { key: 'me', label: 'me', href: '/profile' },
+] as const;
+
+/** A place's icon, drawn by CSS (kd.css .kd-pi): no script carries it. */
+const PlaceIcon = ({ k, size }: { k: string; size: number }) => <span className={`kd-pi kd-pi-${k}`} style={{ ['--pi' as string]: `${size}px` }} aria-hidden="true" />;
+
+/** Which place a page is (the map is a view of Sự kiện). */
+const placeOf = (current: WebSection) =>
+  current === 'list' ? 'events' : current === 'artists' || current === 'blog' || current === 'saved' || current === 'me' ? current : '';
+
+/** The phone's tab bar: below 900px, on every public page. The search is at the top. */
 function WebTabs({ lang, current }: { lang: Lang; current: WebSection }) {
   const T = pick(WEB, lang);
-  const here = useHere(lang);
-  const onMap = current === 'list' && /[?&]view=map\b/.test(here);
-  const tab = current === 'list' ? (onMap ? 'map' : 'events') : current === 'saved' ? 'saved' : current === 'me' ? 'me' : '';
-  const i = (Icon: typeof UserIcon) => <Icon size={22} aria-hidden="true" />;
   return (
     <TabBar
       edge
       label={T.mainNav}
-      current={tab}
-      items={[
-        // The list's own views: a full load, so the list reads its address again.
-        { key: 'events', label: T.events, href: inLang('/', lang), external: true, icon: i(CalendarBlankIcon), onClick: track('events', 'tabs') },
-        { key: 'map', label: T.map, href: inLang('/?view=map', lang), external: true, icon: i(MapTrifoldIcon), onClick: track('map', 'tabs') },
-        { key: 'saved', label: T.saved, href: inLang('/saved', lang), icon: i(HeartIcon), onClick: track('saved', 'tabs') },
-        { key: 'me', label: T.me, href: inLang('/profile', lang), icon: i(UserIcon), onClick: track('me', 'tabs') },
-      ]}
+      current={placeOf(current)}
+      items={PLACES.map((p) => ({
+        key: p.key, label: T[p.label], href: inLang(p.href, lang), icon: <PlaceIcon k={p.key} size={22} />, onClick: track(p.key, 'tabs'),
+        // The list: a full load, so it reads its address again (a view or filters left on the map).
+        ...(p.key === 'events' ? { external: true } : {}),
+      }))}
     />
   );
 }
