@@ -136,7 +136,7 @@ Ngoài kế hoạch, ghi lại: design-kit nhận bản sửa `blog_check` (`f0d
 - Bản xem trước khởi động lại: 10 bài blog đã đăng, sapo 149–160 ký tự.
 - Script dùng thử chạy lại sau các sửa (62 ảnh): không cảnh báo hydration, không màn nào cuộn ngang hay có chữ hỏng; lỗi console còn lại là ảnh mẫu trỏ host không tồn tại (đúng ý: dữ liệu mẫu) và một 404 `/events/<id>/photos` do bản xem trước giữ cache trang của database trước (id mới sau mỗi lần khởi động). Đã sửa `scripts/preview.sh`: xoá cache fetch của Next mỗi lần tạo database mới.
 
-- CI của PR #31 (chạy trên GitHub): API, Web, shard 1–2 xanh; **shard 3 đỏ** ở `studio-artist.spec.ts:54`. Trace của CI cho thấy menu "Không gian làm việc" chưa mở: cú bấm rơi vào lúc Studio chưa hydrate xong (máy CI chậm hơn; ở máy này shard 3 chạy riêng vẫn xanh, 95 pass). Test bấm lại tới khi menu mở (`8f6d7d6`), đã cherry-pick sang nhánh của #31 (`9c8964b`) và push cả hai; CI chạy lại. "Design checklist" và "Visual" đỏ vì chờ người xem `visual-diff` và gắn `visual-ok` (luật của repo, agent không tự gắn).
+- CI của PR #31 (chạy trên GitHub): API, Web, shard 1–2 xanh; **shard 3 đỏ** ở `studio-artist.spec.ts:54`. Trace của CI cho thấy menu "Không gian làm việc" chưa mở: cú bấm rơi vào lúc Studio chưa hydrate xong (máy CI chậm hơn; ở máy này shard 3 chạy riêng vẫn xanh, 95 pass). Test bấm lại tới khi menu mở (`9c8964b` ở nhánh này, `8f6d7d6` ở nhánh của #31) và push cả hai. **CI chạy lại trên #31: API (pglite, postgres), Web, cả ba shard Screens đều xanh.** "Design checklist" và "Visual" đỏ vì chờ người xem `visual-diff` và gắn `visual-ok` (luật của repo, agent không tự gắn).
 
 ## 9. Điểm sau
 
