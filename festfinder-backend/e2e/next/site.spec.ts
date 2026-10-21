@@ -58,7 +58,11 @@ test.describe('pages for search engines', () => {
   });
 
   test('the sitemap lists live events and robots keeps the back offices out', async ({ request }) => {
-    const sitemap = await (await request.get('/sitemap.xml')).text();
+    const res = await request.get('/sitemap.xml');
+    // Rendered on request and kept 15 minutes by Vercel's CDN, never a file fixed at build time.
+    expect(res.headers()['content-type']).toContain('application/xml');
+    expect(res.headers()['vercel-cdn-cache-control']).toBe('max-age=900, stale-while-revalidate=900');
+    const sitemap = await res.text();
     expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo<\/loc>/);
     expect(sitemap).toMatch(/<loc>[^<]+\/o\/ravoent<\/loc>/);
     expect(sitemap).toMatch(/<loc>[^<]+\/e\/ravo\?lang=en<\/loc>/);
