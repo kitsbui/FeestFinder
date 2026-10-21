@@ -29,11 +29,24 @@ export function robotsTxt(ctx: Ctx): string {
 /** A page's address and when it last changed. */
 type Stamped = { slug: string; updated_at: Date };
 
-/** Event pages (upcoming, and the last six months' for their recaps and next editions) and organiser pages, in both languages; the list. */
-export async function sitemapXml(ctx: Ctx): Promise<string> {
+/**
+ * A page the sitemap lists, with which languages it is: every language the site speaks (the web
+ * names Thai, Japanese and Indonesian too, design v2 phase 10), Vietnamese and English (a blog
+ * post written in both, the blog itself), or the one it is written in.
+ */
+export type SitemapPage = { path: string; lastmod?: string; priority: number; langs: 'every' | 'pair' | 'one' };
+
+/**
+ * Every public page worth a search result: the home page, events (upcoming, and the last six
+ * months' for their recaps and next editions), organisers and artists with a show to come, public
+ * collections with something still on, projects and the blog, the artist directory pages that list
+ * enough artists, and the about page. The web's /sitemap.xml (festfinder-web/src/app/sitemap.ts)
+ * and the API's own read this one list.
+ */
+export async function sitemapPages(ctx: Ctx): Promise<SitemapPage[]> {
   const now = ctx.clock.now();
   const since = new Date(now.getTime() - 183 * 86400_000);
-  const [events, orgs, artists, collections, projects, posts] = await Promise.all([
+  const [events, orgs, artists, collections, projects, posts, directories] = await Promise.all([
     many<Stamped>(ctx.db,
       `select slug, updated_at from events where status in ('live', 'cancelled') and not held_for_reports and published_at is not null and ends_at >= $1
         order by starts_at limit 20000`, [since]),
@@ -51,57 +64,45 @@ export async function sitemapXml(ctx: Ctx): Promise<string> {
         where c.is_public and ${PUBLIC_EVENT} and e.ends_at >= $1 group by c.slug, c.updated_at limit 5000`, [now]),
     // Projects open to backers, and the ones that became events.
     many<Stamped>(ctx.db, `select slug, updated_at from projects where status in ('open', 'realized') order by published_at desc limit 5000`),
-    // Published blog posts: one address each, in the language they were written in.
+    // Published blog posts: two pages when written in both languages, else one (services/seo/blog.ts).
     many<Stamped & { both: boolean }>(ctx.db,
       `select slug, updated_at, (title->>'en' <> '' and title->>'vi' <> '' and body->>'en' <> '' and body->>'vi' <> '') as both
          from blog_posts where status = 'published' order by published_at desc limit 10000`),
+    directoryPages(ctx.db),
   ]);
-  const base = baseOf(ctx);
   const day = (d: Date | string | null) => (d ? new Date(d).toISOString().slice(0, 10) : now.toISOString().slice(0, 10));
+  const every = (prefix: string, rows: Stamped[], priority: number): SitemapPage[] =>
+    rows.map((r) => ({ path: `${prefix}${r.slug}`, lastmod: day(r.updated_at), priority, langs: 'every' }));
+  return [
+    { path: '/', lastmod: day(now), priority: 1, langs: 'every' },
+    ...every('/e/', events, 0.9),
+    ...every('/o/', orgs, 0.6),
+    ...every('/a/', artists, 0.6),
+    ...every('/c/', collections, 0.5),
+    ...every('/p/', projects, 0.5),
+    ...(projects.length ? [{ path: '/p', lastmod: day(projects[0].updated_at), priority: 0.5, langs: 'every' as const }] : []),
+    ...posts.map((x): SitemapPage => ({ path: `/blog/${x.slug}`, lastmod: day(x.updated_at), priority: x.both ? 0.6 : 0.5, langs: x.both ? 'pair' : 'one' })),
+    ...(posts.length ? [{ path: '/blog', lastmod: day(posts[0].updated_at), priority: 0.5, langs: 'pair' as const }] : []),
+    ...directories.map((path): SitemapPage => ({ path, lastmod: day(now), priority: 0.5, langs: 'every' })),
+    { path: '/about', priority: 0.3, langs: 'every' },
+  ];
+}
+
+/** The same pages as XML, each in Vietnamese and English where it has both (the API's own /sitemap.xml). */
+export async function sitemapXml(ctx: Ctx): Promise<string> {
+  const base = baseOf(ctx);
   const alt = (vi: string, en: string) => [['vi', vi], ['en', en], ['x-default', vi]]
     .map(([l, href]) => `<xhtml:link rel="alternate" hreflang="${l}" href="${esc(href)}"/>`).join('');
-  const urls: { loc: string; lastmod?: string; priority: string; alternates?: string }[] = [
-    { loc: `${base}/`, lastmod: day(now), priority: '1.0' },
-    { loc: `${base}/list`, lastmod: day(now), priority: '0.6' },
-    ...events.flatMap((e) => {
-      const vi = `${base}/e/${e.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return [{ loc: vi, lastmod: day(e.updated_at), priority: '0.9', alternates: links }, { loc: en, lastmod: day(e.updated_at), priority: '0.7', alternates: links }];
-    }),
-    ...orgs.flatMap((o) => {
-      const vi = `${base}/o/${o.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return [{ loc: vi, lastmod: day(o.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(o.updated_at), priority: '0.4', alternates: links }];
-    }),
-    ...artists.flatMap((a) => {
-      const vi = `${base}/a/${a.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return [{ loc: vi, lastmod: day(a.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(a.updated_at), priority: '0.4', alternates: links }];
-    }),
-    ...collections.flatMap((c) => {
-      const vi = `${base}/c/${c.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return [{ loc: vi, lastmod: day(c.updated_at), priority: '0.5', alternates: links }, { loc: en, lastmod: day(c.updated_at), priority: '0.3', alternates: links }];
-    }),
-    ...projects.flatMap((x) => {
-      const vi = `${base}/p/${x.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return [{ loc: vi, lastmod: day(x.updated_at), priority: '0.5', alternates: links }, { loc: en, lastmod: day(x.updated_at), priority: '0.3', alternates: links }];
-    }),
-    ...(projects.length ? [{ loc: `${base}/p`, lastmod: day(projects[0].updated_at), priority: '0.5' }] : []),
-    // A post written in both languages is two pages; in one, one.
-    ...posts.flatMap((x) => {
-      const vi = `${base}/blog/${x.slug}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return x.both
-        ? [{ loc: vi, lastmod: day(x.updated_at), priority: '0.6', alternates: links }, { loc: en, lastmod: day(x.updated_at), priority: '0.5', alternates: links }]
-        : [{ loc: vi, lastmod: day(x.updated_at), priority: '0.5' }];
-    }),
-    ...(posts.length ? [{ loc: `${base}/blog`, lastmod: day(posts[0].updated_at), priority: '0.5' }] : []),
-    // The directory pages that list enough artists to be worth a search result.
-    ...(await directoryPages(ctx.db)).flatMap((path) => {
-      const vi = `${base}${path}`, en = `${vi}?lang=en`, links = alt(vi, en);
-      return [{ loc: vi, lastmod: day(now), priority: '0.5', alternates: links }, { loc: en, lastmod: day(now), priority: '0.3', alternates: links }];
-    }),
-    { loc: `${base}/about`, priority: '0.3' },
-  ];
+  const url = (loc: string, p: SitemapPage, priority: number, alternates = '') =>
+    `<url><loc>${esc(loc)}</loc>${p.lastmod ? `<lastmod>${p.lastmod}</lastmod>` : ''}<priority>${priority.toFixed(1)}</priority>${alternates}</url>`;
+  const urls = (await sitemapPages(ctx)).flatMap((p) => {
+    const vi = `${base}${p.path}`;
+    if (p.langs === 'one') return [url(vi, p, p.priority)];
+    const en = `${vi}?lang=en`, links = alt(vi, en);
+    return [url(vi, p, p.priority, links), url(en, p, Math.max(0.1, p.priority - 0.2), links)];
+  });
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
-    + urls.map((u) => `<url><loc>${esc(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.priority}</priority>${u.alternates ?? ''}</url>`).join('\n')
-    + '\n</urlset>\n';
+    + urls.join('\n') + '\n</urlset>\n';
 }
 
 // ---- IndexNow ----------------------------------------------------------------------------

@@ -94,6 +94,10 @@ describe('blog content packs: written once in the repository, edited by the team
     assert.deepEqual(crumbs, ['FeestFinder', 'Blog', 'What is EDM? A map of electronic dance music genres', 'What is techno? BPM, Detroit roots and sub-genres']);
     const sitemap = (await env.app.inject({ method: 'GET', url: '/sitemap.xml' })).body;
     assert.match(sitemap, /<loc>[^<]+\/blog\/techno\?lang=en<\/loc>/);
+    // The web's sitemap reads the same list: a post written in both languages is a pair, the blog too.
+    const pages = (await env.as().get('/seo/sitemap')).body.pages as { path: string; langs: string }[];
+    assert.equal(pages.find((p) => p.path === '/blog/techno')?.langs, 'pair');
+    assert.equal(pages.find((p) => p.path === '/blog')?.langs, 'pair');
   });
 
   it('reads a DJ lesson’s steps as a HowTo and the glossary’s tables as a DefinedTermSet, under the course’s pillar', async () => {
