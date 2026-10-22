@@ -58,7 +58,7 @@ export function AppBar({ children, className }: { children: ReactNode; className
   return <header className={cx('kd-bar', className)}>{children}</header>;
 }
 
-export interface TabBarItem { key: string; label: string; href?: string; icon: ReactNode; external?: boolean; onClick?: () => void; dialog?: boolean }
+export interface TabBarItem { key: string; label: string; href?: string; icon: ReactNode; external?: boolean; onClick?: () => void; dialog?: boolean; prefetch?: 'viewport' }
 
 /**
  * The bottom tab bar: five tabs, the current one marked with a turquoise tick. `edge` is the site's
@@ -74,7 +74,7 @@ export function TabBar({ items, current, label, edge }: { items: TabBarItem[]; c
         const props = { className: 'kd-tb', 'aria-current': t.key === current ? ('page' as const) : undefined, onClick: t.onClick };
         return t.external
           ? <a key={t.key} href={t.href} {...props}>{body}</a>
-          : <Link key={t.key} href={t.href} {...props}>{body}</Link>;
+          : <Link key={t.key} href={t.href} prefetch={t.prefetch} {...props}>{body}</Link>;
       })}
     </nav>
   );

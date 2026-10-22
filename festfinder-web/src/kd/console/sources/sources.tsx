@@ -7,7 +7,7 @@
  * (?id=) with its runs, its records and their raw payloads, Reprocess and Run now.
  */
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { KdLink as Link } from '../../link';
 import { CodeIcon, PencilSimpleIcon, PlusIcon, SparkleIcon, WarningIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair } from '../../copy';

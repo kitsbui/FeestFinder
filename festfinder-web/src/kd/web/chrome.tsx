@@ -85,7 +85,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
           <Logo lang={lang} height={20} className="mr-2 desk:mr-3" />
           <nav aria-label={T.mainNav} className="hidden items-center gap-0.5 desk:flex">
             {PLACES.filter((p) => p.key !== 'me').map((p) => (
-              <Link key={p.key} className="kd-nl" href={inLang(p.href, lang)} aria-current={on === p.key ? 'page' : undefined} onClick={track(p.key, 'nav')}>
+              <Link key={p.key} className="kd-nl" href={inLang(p.href, lang)} prefetch="viewport" aria-current={on === p.key ? 'page' : undefined} onClick={track(p.key, 'nav')}>
                 <PlaceIcon k={p.key} size={18} />{T[p.label]}
               </Link>
             ))}
@@ -161,7 +161,11 @@ function NavSearch({ lang, field }: { lang: Lang; field: RefObject<HTMLInputElem
   );
 }
 
-/** The places, in order, on a computer's bar and a phone's tab bar alike (owner, 2026-10-21). */
+/**
+ * The places, in order, on a computer's bar and a phone's tab bar alike (owner, 2026-10-21). Their
+ * pages are prefetched as soon as the links are in sight (owner, 2026-10-22); every other link of
+ * the site waits until someone reaches for it (kd/link-client.tsx).
+ */
 const PLACES = [
   { key: 'events', label: 'events', href: '/' },
   { key: 'artists', label: 'artists', href: '/a' },
@@ -186,7 +190,7 @@ function WebTabs({ lang, current }: { lang: Lang; current: WebSection }) {
       label={T.mainNav}
       current={placeOf(current)}
       items={PLACES.map((p) => ({
-        key: p.key, label: T[p.label], href: inLang(p.href, lang), icon: <PlaceIcon k={p.key} size={22} />, onClick: track(p.key, 'tabs'),
+        key: p.key, label: T[p.label], href: inLang(p.href, lang), icon: <PlaceIcon k={p.key} size={22} />, onClick: track(p.key, 'tabs'), prefetch: 'viewport' as const,
         // The list: a full load, so it reads its address again (a view or filters left on the map).
         ...(p.key === 'events' ? { external: true } : {}),
       }))}

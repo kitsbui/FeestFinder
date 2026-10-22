@@ -13,8 +13,9 @@ import { ACCOUNTS } from './routes.ts';
  *   signed-in screen, which waits for its session before it draws. A screen over its limit is loaded
  *   once more and the better of the two counts: the throttled browser is noisy.
  * - The JS a screen boots with: the chunks its HTML names, gzipped (what a phone downloads before
- *   the page works), at most its budget below. Next prefetches the pages a screen links to on top;
- *   that is not counted.
+ *   the page works), at most its budget below. Next prefetches the five places' pages on top (every
+ *   other link waits until someone reaches for it: festfinder-web/src/kd/link-client.tsx); that is
+ *   not counted.
  *
  * Budgets only go down: when a change makes a screen lighter, lower its number in the same PR.
  * docs/DESIGN_GOVERNANCE.md has the gates.

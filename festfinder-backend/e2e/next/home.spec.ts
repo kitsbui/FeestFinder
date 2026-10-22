@@ -42,8 +42,11 @@ test.describe('the home page', () => {
   });
 
   test('the old addresses of the list and the map lead here with their filters', async ({ page }) => {
+    const moved = await page.request.get('/list?style=techno&view=grid', { maxRedirects: 0 });
+    expect(moved.headers().location).toBe('/?style=techno&view=grid');
     await page.goto('/list?style=techno&view=grid');
-    await expect(page).toHaveURL(/\/\?style=techno&view=grid$/);
+    // Once its rows are in, the list writes its address without the view it shows by default (the grid).
+    await expect(page).toHaveURL(/\/\?style=techno(&view=grid)?$/);
     await expect(page.getByRole('button', { name: /, Loại$/ })).toHaveText('Techno');
     await page.goto('/list?lang=en');
     await expect(page).toHaveURL(/\/\?lang=en$/);
