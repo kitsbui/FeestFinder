@@ -55,6 +55,11 @@ const config: NextConfig = {
   poweredByHeader: false,
   // Which build a bug report came from (kd/feedback/telemetry.ts).
   env: { NEXT_PUBLIC_BUILD_ID: buildId() },
+  // src/proxy.ts sees the request as it came: Next would hide the router's headers from it
+  // (next-router-prefetch among them), and the proxy answers a prefetch it would move with no content.
+  // It drops the router's `_rsc` from the address itself, and its redirects go out as it writes them
+  // (absolute, on the host the visitor asked for; Next no longer makes them relative).
+  skipProxyUrlNormalize: true,
 
   async rewrites() {
     return {

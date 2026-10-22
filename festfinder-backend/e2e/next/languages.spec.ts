@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Request } from '@playwright/test';
 import { langRedirect } from '../../../festfinder-web/src/kd/lang-pref.ts';
 import { watch } from '../checks.ts';
 
@@ -113,6 +113,63 @@ test('a first visit reads English; the language a person picks is kept, and a sh
   await page.goto('/e/ravo?lang=en');
   await expect(page).toHaveURL(/\/e\/ravo$/);
   await expect(page.getByRole('banner').getByRole('group', { name: 'Ngôn ngữ' }).getByRole('link', { name: 'Tiếng Việt' })).toHaveAttribute('aria-current', 'true');
+  expect(problems).toEqual([]);
+  await ctx.close();
+});
+
+test('the router\'s prefetch is never moved to another language; a page load and a navigation still are', async ({ request, browser, baseURL }) => {
+  const get = (path: string, headers: Record<string, string>) => request.get(path, { headers: { 'user-agent': CHROME, ...headers }, maxRedirects: 0 });
+  const prefetch = { rsc: '1', 'next-router-prefetch': '1', 'next-router-segment-prefetch': '/_tree' };
+  // Someone who reads English, and a link's path without its query (Next prefetches that too): no content, cached by nobody.
+  let res = await get('/a?_rsc=abc12', { ...prefetch, cookie: 'ff_lang=en' });
+  expect(res.status()).toBe(204);
+  expect(res.headers()['cache-control']).toBe('private, no-store');
+  expect(res.headers().location).toBeUndefined();
+  expect(res.headers()['set-cookie']).toBeUndefined();
+  // The same address navigated to (the router's request) or opened moves, without the router's _rsc.
+  res = await get('/a?_rsc=abc12', { rsc: '1', cookie: 'ff_lang=en' });
+  expect(res.status()).toBe(307);
+  expect(res.headers().location).toBe('/a?lang=en');
+  res = await get('/a', { cookie: 'ff_lang=en' });
+  expect(res.status()).toBe(307);
+  expect(res.headers().location).toBe('/a?lang=en');
+  // Someone who chose Vietnamese and an English link: the prefetch is not moved, the click is, and a language link's prefetch keeps no choice.
+  res = await get('/e/ravo?lang=en&_rsc=abc12', { ...prefetch, cookie: 'ff_lang=vi' });
+  expect(res.status()).toBe(204);
+  res = await get('/e/ravo?lang=en&_rsc=abc12', { rsc: '1', cookie: 'ff_lang=vi' });
+  expect(res.status()).toBe(307);
+  expect(res.headers().location).toBe('/e/ravo');
+  res = await get('/e/ravo?setlang=en&_rsc=abc12', { ...prefetch, cookie: 'ff_lang=vi' });
+  expect(res.status()).toBe(204);
+  expect(res.headers()['set-cookie']).toBeUndefined();
+  // A path the API answers still reaches it (without the router's headers and _rsc, which the proxy now sees).
+  res = await get('/health?_rsc=abc12', prefetch);
+  expect(res.status()).toBe(200);
+
+  // In a browser that reads English: the tab bar's places are prefetched with and without their query,
+  // none of them moved, every prefetch answered, and the page goes quiet.
+  const ctx = await browser.newContext({ userAgent: CHROME, viewport: { width: 390, height: 844 } });
+  await ctx.addCookies([{ name: 'ff_lang', value: 'en', url: baseURL! }]);
+  const page = await ctx.newPage();
+  const problems = watch(page);
+  const moved: string[] = [];
+  const empty: string[] = [];
+  const pending = new Set<Request>();
+  page.on('request', (r) => { if (r.headers()['next-router-prefetch']) pending.add(r); });
+  page.on('requestfinished', (r) => pending.delete(r));
+  page.on('requestfailed', (r) => pending.delete(r));
+  page.on('response', (r) => {
+    if (!r.request().headers()['next-router-prefetch']) return;
+    if (r.status() === 307) moved.push(r.url());
+    if (r.status() === 204) empty.push(new URL(r.url()).pathname);
+  });
+  await page.goto('/?lang=en');
+  await expect(page.getByRole('heading', { level: 1, name: 'Every event' })).toBeVisible();
+  await expect.poll(() => empty).toContain('/blog');
+  await expect.poll(() => pending.size).toBe(0);
+  await page.waitForLoadState('networkidle', { timeout: 10_000 });
+  expect(moved).toEqual([]);
+  expect(page.url()).toMatch(/\/\?lang=en$/);
   expect(problems).toEqual([]);
   await ctx.close();
 });
