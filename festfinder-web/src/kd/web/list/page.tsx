@@ -28,19 +28,23 @@ export async function ListPage({ lang }: { lang: Lang }) {
   ]);
   // One highlight slot (growth plan card 5): the first shelf on (three live events or more), else the festivals.
   const shelf = shelves.items[0] ?? null;
+  const items = shelf ? shelf.items.slice(0, 8) : flagship.items;
+  // Above the list, so its first picture is the page's first: fetched first, the one with high priority (the list's waits).
+  const hero = items.find((e) => e.coverUrl)?.id;
+  const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} />);
   const highlight = shelf ? (
     <section key="shelf" aria-labelledby="shelf-h" data-surface="shelf" className="kd-days flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 id="shelf-h" className="kd-d3">{tx(shelf.name, lang)}</h2>
         {shelf.sponsored ? <span className="kd-m">{T.sponsored}</span> : null}
       </div>
-      <div className="kd-cards">{shelf.items.slice(0, 8).map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div>
+      <div className="kd-cards">{cards}</div>
     </section>
   ) : flagship.items.length ? (
     // Keyed: it is handed to ListBrowser, a client component, which places it among its own children.
     <section key="flagship" aria-labelledby="flagship-h" data-surface="flagship" className="kd-days flex flex-col gap-3">
       <h2 id="flagship-h" className="kd-d3">{T.flagship}</h2>
-      <div className="kd-cards">{flagship.items.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div>
+      <div className="kd-cards">{cards}</div>
     </section>
   ) : null;
   return (
@@ -50,7 +54,7 @@ export async function ListPage({ lang }: { lang: Lang }) {
           <WebNav lang={lang} current="list" />
           {/* Before the list, so the newcomer's city is known before it is drawn. */}
           <CityFirst meta={meta} />
-          <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} />
+          <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} highlightArt={!!hero} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
         </div>

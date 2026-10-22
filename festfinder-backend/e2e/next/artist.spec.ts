@@ -141,6 +141,23 @@ test.describe('the artist page', () => {
     await expect(visitor.getByRole('heading', { level: 1 })).toHaveText(name);
     await expect(visitor.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveCount(0);
   });
+
+  test('without a cover, their photo is the page’s main picture: fetched first, never lazily', async ({ page }) => {
+    await newAccount(page, `photo${Date.now() % 1_000_000}@example.com`);
+    expect((await page.request.post('/me/roles/artist', { data: { stageName: `Photo Owl ${Date.now() % 100000}`, roles: ['dj'] } })).ok()).toBeTruthy();
+    const slug = (await (await page.request.get('/auth/session')).json()).artist.slug;
+    // A link (the test API reads every https link as a picture).
+    const photo = `https://img.example/photo-${slug}.png`;
+    expect((await page.request.patch('/me/artist', { data: { imageUrl: photo } })).status()).toBe(200);
+    const html = await (await page.request.get('/a/' + slug)).text();
+    const high = [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((t) => /\bfetchpriority="high"/i.test(t));
+    expect(high, 'one picture first').toHaveLength(1);
+    expect(high[0]).toContain(`src="${photo}"`);
+    expect(high[0]).not.toContain('loading="lazy"');
+    // React preloads it in the head.
+    const head = html.slice(0, html.indexOf('</head>'));
+    expect([...head.matchAll(/<link\b[^>]*>/g)].some(([t]) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && t.includes(`href="${photo}"`))).toBe(true);
+  });
 });
 
 test.describe('mixes on the artist page', () => {

@@ -47,7 +47,7 @@ export type CardLook = 'card' | 'lead' | 'row';
  * `morph`: the picture becomes the event page's hero when it opens (React's ViewTransition, design v2
  * phase 8). Only where an event appears once on the page (the list's days): two of one name would clash.
  */
-export function EventCard({ e, lang, look = 'card', morph = false, eager = false }: { e: Card; lang: Lang; look?: CardLook; morph?: boolean; /** Its picture loads first: the list's first lead (design v2 phase 13). */ eager?: boolean }) {
+export function EventCard({ e, lang, look = 'card', morph = false, eager = false }: { e: Card; lang: Lang; look?: CardLook; morph?: boolean; /** Its picture loads first: the home page's first picture (list/page.tsx, days.tsx). */ eager?: boolean }) {
   const T = pick(WEB, lang);
   const fam = familyOf(e.genre);
   const tag = cardTag(e, lang);

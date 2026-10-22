@@ -126,7 +126,11 @@ function address(f: Filters, lang: Lang) {
 
 interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
 
-export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode }) {
+export function ListBrowser({ lang, meta, initial, highlight, highlightArt = false }: {
+  lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode;
+  /** The highlight has a picture, which then loads first (list/page.tsx); else the list's first picture does. */
+  highlightArt?: boolean;
+}) {
   const T = pick(LIST, lang);
   const [f, setF] = useState<Filters>(DEFAULT);
   const [page, setPage] = useState<Page>(initial);
@@ -200,11 +204,11 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
     if (openedByApp.current && !place.known() && !kd.user) setFirstRun(true);
   }, [kd.session, kd.user]);
   useEffect(() => { if (clockReady) setAt(FF.now()); }, [clockReady]);
-  // The newcomer's city is in (or the list asked nothing), or its country is grouped: show the list city-first.tsx held back.
+  // The newcomer's city is in (or the list asked nothing), its country is grouped, or the address's filters
+  // have their answer: show the list (and drop the highlight's hiding) city-first.tsx held back.
   useEffect(() => {
     if (!ready || busy) return;
-    document.documentElement.removeAttribute('data-city-first');
-    document.documentElement.removeAttribute('data-place-first');
+    for (const a of ['data-city-first', 'data-place-first', 'data-list-wait', 'data-asked']) document.documentElement.removeAttribute(a);
   }, [ready, busy, rows, country]);
 
   // Every minute while the list is on screen (not more pages: they would be dropped).
@@ -392,6 +396,11 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
   const groups = f.view === 'grid' ? groupByDay(split ? mine : sorted, lang, today) : [];
   const elsewhere = split ? groupByDay(sorted.filter((e) => countryOf(e.city) !== country), lang, today) : [];
   const countryName = country ? tx(meta.countries.find((c) => c.code === country)?.name, lang) : null;
+  // The world's biggest festivals (or the shelf on), while nothing but the city narrows the list. Decided
+  // once, from the filters: the server and the first render in the browser (both DEFAULT) agree.
+  const showHighlight = !!highlight && JSON.stringify({ ...f, city: 'all', view: 'grid', bbox: null }) === JSON.stringify(DEFAULT);
+  // One picture first on the page: the highlight's when it has one, else the list's.
+  const listEager = !(showHighlight && highlightArt);
 
   return (
     <>
@@ -411,26 +420,28 @@ export function ListBrowser({ lang, meta, initial, highlight }: { lang: Lang; me
           <div className="ml-auto max-tab:hidden" onPointerOver={warmKdMap} onFocus={warmKdMap}>{viewSwitch()}</div>
         </div>
       </div>
-      <main className="kd-wrap flex flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
+      {/* A screen's height before the footer: the list changes after the first paint (the address's city, a
+          filter, an empty answer) and must not pull the footer into view (CLS). */}
+      <main className="kd-wrap flex min-h-dvh flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
         {/* On a phone the day headings lead; the page keeps its heading for screen readers and search. */}
         <h1 className="kd-d2 max-tab:sr-only">{heading}</h1>
         {/* A phone: the city first (the newcomer's question), then the styles that have nights here. */}
         <div className="flex flex-wrap items-center gap-2 tab:hidden">{cityPicker}{styleRow}{queryChip}</div>
         {/* The world's biggest festivals, always first, while nothing narrows the list. */}
-        {highlight && JSON.stringify({ ...f, city: 'all', view: 'grid', bbox: null }) === JSON.stringify(DEFAULT) ? highlight : null}
-        {/* data-list: held back while the newcomer's city loads (city-first.tsx). */}
+        {showHighlight ? highlight : null}
+        {/* data-list: held back while the newcomer's city, or the address's filters, load (city-first.tsx). */}
         <div data-list className="contents">
         {sorted.length ? (
           f.view === 'grid' ? (
             split ? (
               <div className={cx('flex min-w-0 flex-col gap-10 transition-opacity', busy && 'opacity-60')}>
                 <h2 id="here-h" className="kd-d2">{countryName}</h2>
-                <DayGrid groups={groups} lang={lang} eager />
+                <DayGrid groups={groups} lang={lang} eager={listEager} />
                 <h2 id="elsewhere-h" className="kd-d2 border-t border-line-1 pt-10">{T.elsewhere}</h2>
                 <DayGrid groups={elsewhere} lang={lang} />
               </div>
             ) : (
-              <DayGrid groups={groups} lang={lang} eager className={cx('min-w-0 transition-opacity', busy && 'opacity-60')} />
+              <DayGrid groups={groups} lang={lang} eager={listEager} className={cx('min-w-0 transition-opacity', busy && 'opacity-60')} />
             )
           ) : (
             <div className={cx('kd-tbl -mx-4 tab:mx-0 transition-opacity', busy && 'opacity-60')} role="table" aria-label={T.title} data-fold="xl">

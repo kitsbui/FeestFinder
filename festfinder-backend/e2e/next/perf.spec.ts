@@ -34,6 +34,8 @@ const SCREENS: [Who, string, number][] = [
   // 2026-10-20: the story images left the runtime for a chunk of their own (runtime/story.ts), which paid for the install strip and the worker (growth plan card F) and lowered the event page, an organiser, the artists and Studio.
   ['visitor', '/', 193], ['visitor', '/e/ravo', 192], ['visitor', '/a', 198], ['visitor', '/a/slimv', 194],
   ['visitor', '/o/ravoent', 192], ['visitor', '/p', 179], ['visitor', '/?view=map', 193], ['visitor', '/about', 171],
+  // 2026-10-22: a city with no night here (the browser swaps every row for the empty panel after the first paint; the footer must not rise).
+  ['visitor', '/?city=ha-noi', 193],
   ['fan', '/profile', 196], ['fan', '/saved', 196],
   ['organizer', '/studio', 196], ['organizer', '/studio/new', 210], ['admin', '/console', 200],
 ];

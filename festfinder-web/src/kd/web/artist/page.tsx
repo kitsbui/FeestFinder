@@ -189,7 +189,8 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
             ) : null}
             <div className={cx('kd-wrap relative', a.coverUrl ? '-mt-24 tab:-mt-32' : 'pt-6')}>
               <div className="mx-auto flex max-w-page flex-col items-start gap-5 tab:flex-row tab:items-end tab:gap-8">
-                <Avatar ring name={a.name} src={a.imageUrl} size={192} className="kd-artist-photo shrink-0" />
+                {/* Without a cover, the photo is the page's main picture (on a phone, larger than the name): fetched first. */}
+                <Avatar ring name={a.name} src={a.imageUrl} size={192} eager={a.coverUrl ? false : 'high'} className="kd-artist-photo shrink-0" />
                 <div className="flex min-w-0 flex-col gap-3 pb-1">
                   <span className="kd-m flex flex-wrap items-center gap-2">
                     {a.verified ? <><SealCheckIcon size={18} weight="fill" className="text-info" aria-hidden="true" /><span>{T.artistVerified}</span></> : <span>{T.artistKind}</span>}

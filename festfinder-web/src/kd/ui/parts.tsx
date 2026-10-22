@@ -68,7 +68,7 @@ export function monogram(title: string): string {
  */
 export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false }: {
   family: Family; cover?: string | null; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
-  /** The page's main picture (a hero, the list's first lead): fetched first, never lazily. */
+  /** The page's main picture (a hero, the home page's first picture): fetched first, with high priority, never lazily. One per page. */
   eager?: boolean;
   /** The name a text tile shows when there is no cover, or the cover does not load. */
   title?: string | null;
@@ -130,8 +130,10 @@ export function StatRow({ children, className }: { children: ReactNode; classNam
 }
 
 /** People are circles, organisers rounded squares. `ring` sits above a cover it overlaps. */
-export function Avatar({ name, src, size = 40, org, ring, acc, className }: {
+export function Avatar({ name, src, size = 40, org, ring, acc, className, eager = false }: {
   name: string; src?: string | null; size?: number; org?: boolean; ring?: boolean; acc?: boolean; className?: string;
+  /** Never lazily: 'high' when it is the page's main picture (an artist's page without a cover). */
+  eager?: boolean | 'high';
 }) {
   const initials = String(name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   return (
@@ -145,7 +147,7 @@ export function Avatar({ name, src, size = 40, org, ring, acc, className }: {
       <span className="kd-av-i" data-i={initials} aria-hidden="true" />
       {src ? (
          
-        <img src={src} alt={name} loading="lazy" decoding="async" referrerPolicy="no-referrer" style={frameStyle(src)} />
+        <img src={src} alt={name} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager === 'high' ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" style={frameStyle(src)} />
       ) : null}
     </span>
   );
