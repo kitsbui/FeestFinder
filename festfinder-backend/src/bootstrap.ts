@@ -12,6 +12,7 @@ import { NoopReporter, SentryReporter } from './services/errors.ts';
 import { DbStorage, LocalStorage, S3Storage } from './services/storage.ts';
 import { ClaudeGuide, DisabledGuide } from './services/guide.ts';
 import { ClaudeTranslator, DisabledTranslator } from './services/translate.ts';
+import { ClaudeDigester, DisabledDigester } from './services/news.ts';
 import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, TikTokOAuth, MockOAuth } from './services/oauth.ts';
@@ -108,6 +109,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     analytics,
     guide: config.aiGuideEnabled && hasAnthropic ? new ClaudeGuide(config.anthropicModel) : new DisabledGuide(),
     translator: hasAnthropic ? new ClaudeTranslator(config.anthropicModel) : new DisabledTranslator(),
+    digester: hasAnthropic ? new ClaudeDigester(config.anthropicModel) : new DisabledDigester(),
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),
     fetchImage: config.fakeRemoteMedia ? fakeImageFetcher : fetchImageHead,

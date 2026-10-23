@@ -13,8 +13,9 @@ import { sha256 } from '../lib/crypto.ts';
 /** Events a screen may send. Anything else is dropped. */
 // nav_click {kind, surface} and card_open {slug, surface} measure the design funnel: list → event → ticket, and which ways in people use;
 // wizard_step {kind: basics|when|tickets|review|signin|submitted, role: guest|organizer} the Studio wizard's draft-to-submit rate;
-// web_vital {kind: LCP|INP|CLS, value, rating: good|needs-improvement|poor} how fast pages are for real people (design v2 phase 7).
-export const CLIENT_EVENTS = ['page_view', 'search', 'directory_filter', 'artist_view', 'event_view', 'ticket_click', 'role_picker_shown', 'share', 'mix_play', 'ride_click', 'nav_click', 'card_open', 'wizard_step', 'web_vital', 'install_prompt', 'install'] as const;
+// web_vital {kind: LCP|INP|CLS, value, rating: good|needs-improvement|poor} how fast pages are for real people (design v2 phase 7);
+// news_click {source, kind: topic} which publishers and topics of the news feed people open.
+export const CLIENT_EVENTS = ['page_view', 'search', 'directory_filter', 'artist_view', 'event_view', 'ticket_click', 'role_picker_shown', 'share', 'mix_play', 'ride_click', 'nav_click', 'card_open', 'wizard_step', 'web_vital', 'install_prompt', 'install', 'news_click'] as const;
 /** Events only the server records. */
 export const SERVER_EVENTS = ['role_chosen', 'profile_claimed', 'gig_reported', 'gig_posted', 'gig_applied', 'booking_requested', 'signed_up', 'project_created', 'project_offer_sent', 'project_waitlist_joined', 'blog_post_created', 'mix_liked', 'mix_commented', 'feedback_sent', 'agent_call'] as const;
 export type AnalyticsEvent = (typeof CLIENT_EVENTS)[number] | (typeof SERVER_EVENTS)[number];

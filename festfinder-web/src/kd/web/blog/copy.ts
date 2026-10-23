@@ -76,6 +76,33 @@ export const BLOG = {
   noneMine: { en: 'You have not written a post yet', vi: 'Bạn chưa viết bài nào' },
   gate: { en: 'Log in to write a post', vi: 'Đăng nhập để viết bài' },
   signIn: { en: 'Log in', vi: 'Đăng nhập' },
+  // the news feed (the EDM press's headlines, under the News tab)
+  newsTitle: { en: 'Latest from the EDM press', vi: 'Tin mới từ báo chí EDM' },
+  newsTopics: { en: 'Topics', vi: 'Chủ đề' },
+  newsAll: { en: 'All', vi: 'Tất cả' },
+  newsAuto: { en: 'Automatic summary', vi: 'Tóm tắt tự động' },
+  newsRead: { en: 'Read on {s}', vi: 'Đọc trên {s}' },
+  newsNone: { en: 'No headlines yet', vi: 'Chưa có tin nào' },
+  newsPosts: { en: 'Posts', vi: 'Bài viết' },
+  // the style hub (style-hub.tsx): everything the site has about a style
+  hubTitle: { en: 'More {s}', vi: 'Thêm về {s}' },
+  hubNights: { en: 'Coming nights', vi: 'Lịch đêm nhạc' },
+  hubNightsN: { en: '{n} coming nights', vi: '{n} đêm sắp tới' },
+  hubArtists: { en: 'Artists', vi: 'Nghệ sĩ' },
+  hubArtistsN: { en: '{n} artists', vi: '{n} nghệ sĩ' },
+  hubGuide: { en: 'The guide', vi: 'Bài hướng dẫn' },
+  hubPlaylist: { en: 'Playlist', vi: 'Playlist' },
+  hubNewsN: { en: '{n} news items', vi: '{n} tin' },
+  hubChartAt: { en: 'updated {d}', vi: 'cập nhật {d}' },
+  hubChartMore: { en: 'The whole chart on {s}', vi: 'Xem cả bảng trên {s}' },
+} satisfies Dict;
+
+export const NEWS_TOPIC_LABEL = {
+  festival: { en: 'Festivals', vi: 'Festival' },
+  artist: { en: 'Artists', vi: 'Nghệ sĩ' },
+  industry: { en: 'Industry', vi: 'Ngành' },
+  tech: { en: 'Tech', vi: 'Công nghệ' },
+  scene: { en: 'Scene', vi: 'Đời sống club' },
 } satisfies Dict;
 
 export const CATEGORY_LABEL = {

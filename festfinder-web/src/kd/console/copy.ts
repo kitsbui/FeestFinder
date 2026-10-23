@@ -24,6 +24,7 @@ export const CONSOLE = {
   tabBrands: { en: 'Brand campaigns', vi: 'Chiến dịch thương hiệu' },
   tabProjects: { en: 'Projects', vi: 'Dự án' },
   tabBlog: { en: 'Blog', vi: 'Blog' },
+  tabNews: { en: 'News feed', vi: 'Tin tức' },
   tabFeedback: { en: 'Feedback', vi: 'Góp ý' },
   tabUsers: { en: 'Accounts', vi: 'Tài khoản' },
   tabOrders: { en: 'Orders', vi: 'Đơn hàng' },

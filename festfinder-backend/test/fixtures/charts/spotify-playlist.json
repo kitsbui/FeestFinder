@@ -1,0 +1,5 @@
+{"items": [
+  {"track": {"id": "7abc", "name": "Lose Control", "artists": [{"name": "Amelie Lens"}], "album": {"name": "Lose Control", "release_date": "2026-08-21", "images": [{"url": "https://i.scdn.co/image/7abc"}]}, "external_urls": {"spotify": "https://open.spotify.com/track/7abc"}}},
+  {"track": null},
+  {"track": {"id": "8def", "name": "Rave Alarm", "artists": [{"name": "Sara Landry"}, {"name": "Trym"}], "album": {"name": "Rave Alarm", "release_date": "2026-10-10", "images": []}, "external_urls": {"spotify": "https://open.spotify.com/track/8def"}}}
+]}

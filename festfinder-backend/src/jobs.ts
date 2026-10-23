@@ -17,6 +17,8 @@ import { checkRemoteImages } from './services/remote-images.ts';
 import { importBlogContent } from './services/blog-content.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
 import { webHealth } from './services/web-signals.ts';
+import { digestPending, fetchDueNews } from './services/news.ts';
+import { refreshDueCharts } from './services/charts.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
 export const jobs = {
@@ -127,6 +129,21 @@ export const jobs = {
     return webHealth(ctx.db, ctx.clock.now());
   },
 
+  /** The news feed: each publication's feed read on its interval, new headlines kept with their pictures (services/news.ts). */
+  async fetchNews(ctx: Ctx) {
+    return (await fetchDueNews(ctx)).reduce((n, s) => n + s.added, 0);
+  },
+
+  /** Two-sentence digests of the newest headlines, in both languages, when Claude is configured. */
+  async digestNews(ctx: Ctx) {
+    return (await digestPending(ctx, 20)).written;
+  },
+
+  /** The charts of each style (Beatport, Spotify) read on their interval, with the keys in the environment (services/charts.ts). */
+  async refreshCharts(ctx: Ctx) {
+    return (await refreshDueCharts(ctx)).filter((r) => !r.error).length;
+  },
+
   async checkTicketLinks(ctx: Ctx) {
     if (!ctx.config.linkChecksEnabled) return 0;
     const rows = await many<any>(ctx.db,
@@ -149,6 +166,9 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
   ['expireRadar', 60 * 60_000],
   ['translateDescriptions', 10 * 60_000],
   ['importBlogContent', 10 * 60_000],
+  ['fetchNews', 15 * 60_000],
+  ['digestNews', 10 * 60_000],
+  ['refreshCharts', 60 * 60_000],
   ['refreshFit', 60 * 60_000],
   ['awardBadges', 60 * 60_000],
   ['webHealth', 60 * 60_000],

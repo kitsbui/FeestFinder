@@ -46,7 +46,7 @@ say "2/3 Starting the API with the demo data…"
   cd "$ROOT/festfinder-backend"
   export PORT=4300 PUBLIC_BASE_URL=http://localhost:3000 DATABASE_URL= DATABASE_URL_FROM= \
     PGLITE_DIR=./.data/pglite-preview UPLOAD_DIR=./.data/uploads-preview \
-    FF_NOW=2026-09-14T10:00:00+07:00 JOBS_ENABLED=false LINK_CHECKS_ENABLED=false SEED_RADAR=1 SEED_BLOG=1
+    FF_NOW=2026-09-14T10:00:00+07:00 JOBS_ENABLED=false LINK_CHECKS_ENABLED=false SEED_RADAR=1 SEED_BLOG=1 SEED_NEWS=1
   node test/fixtures/reset.ts && exec node src/server.ts
 ) > "$LOGS/api.log" 2>&1 &
 PIDS+=($!)

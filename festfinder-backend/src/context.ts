@@ -6,6 +6,8 @@ import type { Transport } from './services/messaging.ts';
 import type { Storage } from './services/storage.ts';
 import type { GuideGenerator } from './services/guide.ts';
 import type { Translator } from './services/translate.ts';
+import type { NewsDigester } from './services/news.ts';
+import type { ChartFetch } from './services/charts.ts';
 import type { OAuthProvider } from './services/oauth.ts';
 import type { PrefillGenerator } from './services/prefill.ts';
 import type { PageFetcher } from './services/fetchpage.ts';
@@ -29,6 +31,8 @@ export interface Ctx {
   guide: GuideGenerator;
   /** Machine translation of listings' text (phase 15). Off without ANTHROPIC_API_KEY. */
   translator: Translator;
+  /** Two-sentence digests of the news feed's headlines, in both languages (services/news.ts). Off without ANTHROPIC_API_KEY. */
+  digester: NewsDigester;
   /** Reads an event's details off a poster or a page for the submission form. */
   prefill: PrefillGenerator;
   /** Fetches a public page someone pasted, never one on a private network. */
@@ -43,6 +47,8 @@ export interface Ctx {
   checkLink: (url: string) => Promise<'ok' | 'broken'>;
   /** The network an ingestion run reads through. Tests hand in fixtures; otherwise the polite fetcher. */
   ingestIO?: () => IngestIO;
+  /** The chart providers' APIs (services/charts.ts). Tests hand in a fake; otherwise the real one. */
+  chartFetch?: ChartFetch;
   log: (msg: string) => void;
   /** Sends the log lines waiting for PostHog Logs (when switched on); the app calls it after each response. */
   flushLogs?: () => Promise<void>;

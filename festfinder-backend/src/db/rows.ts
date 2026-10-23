@@ -425,6 +425,35 @@ export interface Rows {
     created_at: Date;
     updated_at: Date;
   };
+  chart_entries: {
+    id: string;
+    source_id: string;
+    rank: number;
+    artist: string;
+    title: string;
+    label: string | null;
+    released_on: string | null;
+    url: string | null;
+    image_url: string | null;
+    external_id: string | null;
+    fetched_at: Date;
+  };
+  chart_sources: {
+    id: string;
+    provider: string;
+    name: string;
+    style: string;
+    external_id: string;
+    url: string;
+    enabled: boolean;
+    interval_minutes: number;
+    next_run_at: Date;
+    last_run_at: Date | null;
+    last_error: string | null;
+    last_count: number | null;
+    created_at: Date;
+    updated_at: Date;
+  };
   cities: {
     slug: string;
     country_code: string;
@@ -895,6 +924,43 @@ export interface Rows {
     removed_at: Date | null;
     removed_by: string | null;
     removed_reason: string | null;
+  };
+  news_items: {
+    id: string;
+    source_id: string;
+    guid: string;
+    url: string;
+    title: string;
+    summary: string | null;
+    digest: unknown;
+    image_url: string | null;
+    image_from: string | null;
+    author: string | null;
+    topic: string;
+    region: string;
+    styles: string[];
+    published_at: Date;
+    fetched_at: Date;
+    updated_at: Date;
+    hidden_at: Date | null;
+  };
+  news_sources: {
+    id: string;
+    name: string;
+    site_url: string;
+    feed_url: string;
+    lang: string;
+    region: string;
+    enabled: boolean;
+    interval_minutes: number;
+    etag: string | null;
+    last_modified: string | null;
+    next_run_at: Date;
+    last_run_at: Date | null;
+    last_error: string | null;
+    last_count: number | null;
+    created_at: Date;
+    updated_at: Date;
   };
   notification_prefs: {
     user_id: string;

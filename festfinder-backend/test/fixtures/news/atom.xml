@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <title type="text">DJ TechTools</title>
+  <link rel="alternate" type="text/html" href="https://djtt.example/"/>
+  <link rel="self" href="https://djtt.example/feed/atom/"/>
+  <updated>2026-10-21T08:00:00Z</updated>
+  <entry>
+    <title type="html">rekordbox 8 adds stem separation on the CDJ-3000 &amp; more</title>
+    <link rel="alternate" type="text/html" href="https://djtt.example/rekordbox-8-stems"/>
+    <id>tag:djtt.example,2026:rekordbox-8</id>
+    <published>2026-10-21T08:00:00Z</published>
+    <updated>2026-10-21T09:00:00Z</updated>
+    <author><name>Dan White</name></author>
+    <category term="Software"/>
+    <summary type="html">&lt;p&gt;The update brings stems to the players themselves, no laptop needed.&lt;/p&gt;</summary>
+    <content type="html">&lt;figure&gt;&lt;img src="https://djtt.example/img/rekordbox-8.jpg" alt="rekordbox 8"&gt;&lt;/figure&gt;&lt;p&gt;Long article…&lt;/p&gt;</content>
+    <media:thumbnail url="https://djtt.example/img/rekordbox-8-thumb.jpg"/>
+  </entry>
+  <entry>
+    <title>Boiler Room announces a Bangkok show with a Thai line-up</title>
+    <link href="https://djtt.example/boiler-room-bangkok"/>
+    <id>tag:djtt.example,2026:br-bkk</id>
+    <updated>2026-10-20T10:00:00Z</updated>
+    <summary>The first Boiler Room in Bangkok since 2019 lands in November.</summary>
+  </entry>
+</feed>

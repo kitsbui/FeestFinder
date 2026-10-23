@@ -28,7 +28,7 @@ import { WorkspaceSwitch } from '../ui/workspaces';
 
 export type ConsoleTab =
   | 'overview' | 'queue' | 'claims' | 'events' | 'organizers' | 'venues' | 'artists' | 'sources' | 'reports' | 'feedback'
-  | 'partners' | 'affiliate' | 'brands' | 'projects' | 'blog' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
+  | 'partners' | 'affiliate' | 'brands' | 'projects' | 'blog' | 'news' | 'featured' | 'users' | 'orders' | 'insights' | 'audit';
 export interface Counts {
   queue: number; verification: number; reports: number; ads: number; appeals: number;
   claims: number; profileClaims: number; allClaims: number; unresolvedVenues?: number; projects?: number; blog?: number;
@@ -42,7 +42,7 @@ export function useConsole(): ConsoleCtx {
   return v;
 }
 
-const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'feedback', 'partners', 'affiliate', 'brands', 'projects', 'blog', 'featured', 'users', 'orders', 'insights', 'audit'];
+const TABS: ConsoleTab[] = ['overview', 'claims', 'events', 'organizers', 'venues', 'artists', 'sources', 'reports', 'feedback', 'partners', 'affiliate', 'brands', 'projects', 'blog', 'news', 'featured', 'users', 'orders', 'insights', 'audit'];
 /** Routes that belong to a tab of another name. */
 const ALIAS: Record<string, ConsoleTab> = { verification: 'organizers' };
 
@@ -128,6 +128,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
       { key: 'artists', label: T.tabArtists, href: '/console/artists' },
       { key: 'sources', label: T.tabSources, href: '/console/sources' },
       { key: 'blog', label: T.tabBlog, href: '/console/blog', count: n(counts?.blog) },
+      { key: 'news', label: T.tabNews, href: '/console/news' },
     ] },
     { key: 'partnersG', label: T.navPartners, href: '/console/partners', icon: i(HandshakeIcon), sub: [
       { key: 'partners', label: T.tabPartners, href: '/console/partners' },

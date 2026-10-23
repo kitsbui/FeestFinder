@@ -62,3 +62,25 @@ export const readIn = (post: Pick<Post, 'body' | 'title'>, lang: Lang): 'vi' | '
   const other = want === 'vi' ? 'en' : 'vi';
   return (post.body ? post.body[want] : post.title[want]).trim() ? want : other;
 };
+
+// ---- the news feed (festfinder-backend src/services/news.ts, GET /news) --------------------
+
+export const NEWS_TOPICS = ['festival', 'artist', 'industry', 'tech', 'scene'] as const;
+export type NewsTopic = (typeof NEWS_TOPICS)[number];
+
+/** A headline of the EDM press: it links to its publisher, and reads here as the feed's summary or a machine-written digest. */
+export interface NewsItem {
+  id: string;
+  title: string;
+  url: string;
+  summary: string | null;
+  digest: Pair | null;
+  imageUrl: string | null;
+  author: string | null;
+  topic: NewsTopic;
+  region: 'global' | 'asia' | 'vietnam';
+  styles: { key: string; label: Pair; genre: string | null }[];
+  publishedAt: string;
+  source: { name: string; siteUrl: string; host: string; lang: string };
+}
+export interface NewsList { items: NewsItem[]; total: number; nextOffset: number | null; topics: Record<NewsTopic, number> }
