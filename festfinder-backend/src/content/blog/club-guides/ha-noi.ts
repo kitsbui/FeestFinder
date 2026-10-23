@@ -185,7 +185,7 @@ const haNoi: CityGuide = {
     ],
   },
   related: [
-    { slug: 'club-sai-gon', line: { vi: 'Top club ở TP.HCM · Ciné Saigon, Arcan và những đêm Sài Gòn', en: 'Best clubs in Ho Chi Minh City · Ciné Saigon, Arcan and Saigon\'s nights' } },
+    { slug: 'club-sai-gon', line: { vi: 'Top club ở TP.HCM · Ciné Saigon, APLUS và đêm Sài Gòn', en: 'Best clubs in Ho Chi Minh City · Ciné Saigon, APLUS and Saigon\'s nights' } },
     { slug: 'club-da-nang', line: { vi: 'Top club ở Đà Nẵng · SAGA, Sky36 và bờ biển', en: 'Best clubs in Đà Nẵng · SAGA, Sky36 and the beach' } },
     { slug: 'club-edm-chau-a', line: { vi: 'Club EDM ở châu Á · cẩm nang 11 thành phố', en: 'EDM clubs in Asia · the 11-city guide' } },
     { slug: 'techno', line: { vi: 'Techno là gì? · dòng nhạc của Unmute và Le Maquis', en: 'What is techno? · the sound of Unmute and Le Maquis' } },

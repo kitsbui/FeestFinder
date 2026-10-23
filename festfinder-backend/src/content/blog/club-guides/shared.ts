@@ -99,7 +99,8 @@ function clubSection(c: Club, lang: Lang): string {
     `- **${T.music[lang]}:** ${c.music[lang]}`,
     `- **${T.dress[lang]}:** ${c.dress[lang]}`,
     `- **${T.price[lang]}:** ${c.price[lang]}`,
-    `- **${T.site[lang]}:** [${host(c.url)}](${c.url})`,
+    // The blog draws only https links: a site without https is named, not linked.
+    `- **${T.site[lang]}:** ${c.url.startsWith('https://') ? `[${host(c.url)}](${c.url})` : host(c.url)}`,
   ].join('\n');
   return `${name}\n\n${facts}\n\n${c.why[lang]}`;
 }
