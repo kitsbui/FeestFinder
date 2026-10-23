@@ -52,8 +52,16 @@ export function BoneCard({ className, children, as: As = 'div', ...rest }: HTMLA
  * words ("Headsmasher 5" → H5), or the first two of a single word ("Zamna" → ZA). Whole characters
  * (a Vietnamese mark, a CJK character, never half an emoji); punctuation and symbols are skipped.
  */
-const segmenter = typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
-const chars = (s: string) => (segmenter ? Array.from(segmenter.segment(s), (x) => x.segment) : Array.from(s)).filter((c) => /[\p{L}\p{N}]/u.test(c));
+let segmenter: Intl.Segmenter | null | undefined;
+/** Made on the first monogram, not while the page's script loads. */
+function graphemes() {
+  if (segmenter === undefined) segmenter = typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+  return segmenter;
+}
+const chars = (s: string) => {
+  const seg = graphemes();
+  return (seg ? Array.from(seg.segment(s), (x) => x.segment) : Array.from(s)).filter((c) => /[\p{L}\p{N}]/u.test(c));
+};
 export function monogram(title: string): string {
   const words = title.trim().split(/\s+/).map(chars).filter((w) => w.length);
   const picked = words.length > 1 ? [words[0][0], words[1][0]] : (words[0] ?? []).slice(0, 2);

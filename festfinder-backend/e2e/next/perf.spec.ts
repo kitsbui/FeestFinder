@@ -33,11 +33,12 @@ const SCREENS: [Who, string, number][] = [
   // 2026-10-21: the nav's icons are drawn by CSS (one navigation for both devices): 3–5 KB less on every public screen (measured +1 for gzip rounding).
   // 2026-10-20 (later): the wizard measured 210 twice after the owner's requests (breadcrumbs left the client bundle).
   // 2026-10-20: the story images left the runtime for a chunk of their own (runtime/story.ts), which paid for the install strip and the worker (growth plan card F) and lowered the event page, an organiser, the artists and Studio.
-  ['visitor', '/', 193], ['visitor', '/e/ravo', 192], ['visitor', '/a', 198], ['visitor', '/a/slimv', 194],
-  ['visitor', '/o/ravoent', 192], ['visitor', '/p', 179], ['visitor', '/?view=map', 193], ['visitor', '/about', 171],
+  // 2026-10-23: the map view, the worker's registration, the account menu's items and the install strip load when they are needed, and the public frame's tab bar left the back offices' shell (ui/tabbar.tsx): 2–10 KB less on every public screen (measured +1).
+  ['visitor', '/', 183], ['visitor', '/e/ravo', 189], ['visitor', '/a', 196], ['visitor', '/a/slimv', 192],
+  ['visitor', '/o/ravoent', 190], ['visitor', '/p', 177], ['visitor', '/?view=map', 183], ['visitor', '/about', 167],
   // 2026-10-22: a city with no night here (the browser swaps every row for the empty panel after the first paint; the footer must not rise).
-  ['visitor', '/?city=ha-noi', 193],
-  ['fan', '/profile', 196], ['fan', '/saved', 196],
+  ['visitor', '/?city=ha-noi', 183],
+  ['fan', '/profile', 196], ['fan', '/saved', 193],
   ['organizer', '/studio', 196], ['organizer', '/studio/new', 210], ['admin', '/console', 200],
 ];
 

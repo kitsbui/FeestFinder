@@ -248,8 +248,29 @@ FF.oauthErrorText = (code: string, lang: string) => {
 /** Which ways in work on this server: { google, fb, ig, zalo, wa, email, password }. */
 FF.authProviders = () => FF.maybe(FF.get('/auth/providers'), { google: true, fb: false, ig: false, tiktok: false, sms: false, zalo: false, wa: false, email: true, password: true });
 
+/** Where the last server-clock offset is kept. */
+const CLOCK_KEY = 'ff:clock-offset';
+let clockKnown = false;
+
+/**
+ * The server's clock comes with the session (`time`): "n minutes ago", countdowns and "today" follow
+ * it (it is pinned in the tests). With no signal the last offset holds, so a night stays "upcoming"
+ * offline; the worker keeps no clock in the session it caches (src/sw/sw.js).
+ */
+function takeClock(time: unknown) {
+  const at = typeof time === 'string' ? Date.parse(time) : NaN;
+  if (Number.isFinite(at)) {
+    FF.clockOffset = at - Date.now();
+    clockKnown = true;
+    try { localStorage.setItem(CLOCK_KEY, String(FF.clockOffset)); } catch { /* storage blocked */ }
+  } else if (!clockKnown) {
+    try { FF.clockOffset = Number(localStorage.getItem(CLOCK_KEY)) || 0; } catch { /* storage blocked */ }
+  }
+}
+
 FF.refreshSession = async function refreshSession() {
   const s = await FF.maybe(FF.get('/auth/session?optional=1'), null);
+  takeClock(s?.time);
   FF.session = s && s.user ? s : null;
   return FF.session;
 };

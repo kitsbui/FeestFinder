@@ -7,7 +7,7 @@
  * API calls go through FF (src/runtime/ff.ts), the site's API client.
  */
 import {
-  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
+  createContext, startTransition, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
 } from 'react';
 import dynamic from 'next/dynamic';
 import { FF, type Session } from '@/runtime/ff';
@@ -64,7 +64,7 @@ export interface ToastMsg { text: string; action?: { label: string; run: () => v
 
 interface Kd {
   lang: Lang;
-  /** Flips once the API's clock is known (FF.now() follows it from then on). */
+  /** Flips once the API's clock is known (FF.now() follows it from then on): it comes with the session. */
   clockReady: boolean;
   /** undefined while the session is being read. */
   session: Session | null | undefined;
@@ -86,9 +86,6 @@ interface Kd {
   toast: (text: string, action?: ToastMsg['action']) => void;
 }
 
-/** Where the last server-clock offset is kept. */
-const CLOCK_KEY = 'ff:clock-offset';
-
 const Ctx = createContext<Kd | null>(null);
 
 export function useKd(): Kd {
@@ -106,6 +103,8 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
   const [toastMsg, setToast] = useState<ToastMsg | null>(null);
   const [role, setRole] = useState<{ step: RoleStep; name?: string } | null>(null);
   const [clockReady, setClockReady] = useState(false);
+  /** Who is there, for the tests' html[data-kd-session], once the page has drawn it with their saves. */
+  const [known, setKnown] = useState<'user' | 'none' | null>(null);
   const toastId = useRef(0);
   // Settles once the first session read is back: what a click made while it loads waits for.
   const ready = useRef<{ promise: Promise<Session | null>; resolve: (s: Session | null) => void } | null>(null);
@@ -123,9 +122,8 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     setToast({ text, action, id: toastId.current });
   }, []);
 
-  const loadPersonal = useCallback(async (s: Session | null) => {
-    if (!s?.user) { setSaved(new Set(deviceSaves())); return; }
-    // What they saved on this device before signing in joins the account.
+  /** What a signed-in person saved; their device's saves join the account first. */
+  const loadSaves = useCallback(async () => {
     const kept = deviceSaves();
     if (kept.length) {
       await Promise.all(kept.map((id) => FF.fire(FF.put('/me/saves/' + id))));
@@ -133,17 +131,29 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
     }
     // Past nights too, so their hearts read as saved (upcoming come first in the answer).
     const out = await FF.maybe(FF.get('/me/saves?limit=100'), { items: [] as { id: string }[] });
-    setSaved(new Set(out.items.map((e: { id: string }) => e.id)));
+    return new Set<string>(out.items.map((e: { id: string }) => e.id));
   }, []);
 
+  // The session, the API's clock (it comes with it, runtime/ff.ts) and the saves land in one render,
+  // in a transition: the page stays responsive while everything that reads them draws again.
   const refresh = useCallback(async () => {
     FF.forget('kd:session');
     const s = await FF.once('kd:session', () => FF.refreshSession());
-    setSession(s);
-    await loadPersonal(s);
+    if (!s?.user) {
+      // Signed out, a heart saves on the device: the same empty set when there is none, so nothing draws again.
+      const kept = deviceSaves();
+      startTransition(() => {
+        setClockReady(true);
+        setSession(s);
+        setSaved((prev) => (!kept.length && !prev.size ? prev : new Set(kept)));
+        setKnown('none');
+      });
+    } else {
+      startTransition(() => { setClockReady(true); setSession(s); });
+      const mine = await loadSaves();
+      startTransition(() => { setSaved(mine); setKnown('user'); });
+    }
     ready.current!.resolve(s);
-    // For the tests: the page has hydrated and knows who is there.
-    document.documentElement.dataset.kdSession = s?.user ? 'user' : 'none';
     // A new account says what it is first; ?role= opens the picker at that step.
     if (s?.user) {
       const asked = new URLSearchParams(location.search).get('role');
@@ -151,7 +161,10 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
       else if (s.user.onboarded === false) setRole({ step: 'menu' });
     }
     return s;
-  }, [loadPersonal]);
+  }, [loadSaves]);
+
+  // For the tests: the page has hydrated and drawn who is there.
+  useEffect(() => { if (known) document.documentElement.dataset.kdSession = known; }, [known]);
 
   const runIntent = useCallback(async (i: Intent | null) => {
     if (!i) return;
@@ -172,20 +185,6 @@ export function KdProvider({ lang, children }: { lang: Lang; children: ReactNode
       location.assign(i.href);
     }
   }, [toast, C.saved]);
-
-  // The server's clock: "n minutes ago" and countdowns follow it (it is pinned in the tests).
-  // With no signal the check fails and the last offset holds: a ticket stays "upcoming" offline.
-  useEffect(() => {
-    FF.once('kd:clock', () => FF.maybe(FF.get('/health'), null)).then((h: { time?: string } | null) => {
-      if (h?.time) {
-        FF.clockOffset = new Date(h.time).getTime() - Date.now();
-        try { localStorage.setItem(CLOCK_KEY, String(FF.clockOffset)); } catch { /* storage blocked */ }
-      } else {
-        try { FF.clockOffset = Number(localStorage.getItem(CLOCK_KEY)) || 0; } catch { /* storage blocked */ }
-      }
-      setClockReady(true);
-    });
-  }, []);
 
   // The session, and the hand-back from Google if this page is where the browser came back to.
   useEffect(() => {

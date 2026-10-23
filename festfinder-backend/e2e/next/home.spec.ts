@@ -167,9 +167,13 @@ test('the days are grouped the same on the server and in a browser whose day dif
   // The API's clock (10:00 on 14 Sep in Asia) is still 13 Sep in Pago Pago: the first night is tomorrow there.
   const ctx = await browser.newContext({ timezoneId: 'Pacific/Pago_Pago', viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
+  // The API's clock comes with the session (GET /auth/session's `time`): the page asks /health nothing.
+  const health: string[] = [];
+  page.on('request', (r) => { if (new URL(r.url()).pathname === '/health') health.push(r.url()); });
   const problems = await open(page);
   await expect(page.locator('#day-2026-09-14-h')).toContainText('ngày mai');
   await page.waitForLoadState('networkidle');
+  expect(health).toEqual([]);
   expect(await page.locator('section[id^="day-"]').evaluateAll((all) => all.map((x) => x.id))).toEqual(server);
   expect(problems).toEqual([]);
   await ctx.close();

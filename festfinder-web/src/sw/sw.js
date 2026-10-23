@@ -113,10 +113,23 @@ async function page(req) {
   }
 }
 
+/**
+ * What is kept of an answer. The session's leaves out the server's clock (`time`): offline, the
+ * page would set its clock back to when it was cached (FF's takeClock keeps the last offset instead).
+ */
+async function keepable(req, copy) {
+  if (new URL(req.url).pathname !== '/auth/session') return copy;
+  const body = await copy.json();
+  delete body.time;
+  const headers = new Headers(copy.headers);
+  headers.delete('content-length');
+  return new Response(JSON.stringify(body), { status: copy.status, statusText: copy.statusText, headers });
+}
+
 async function networkFirst(req, name) {
   const cache = await caches.open(name);
   const network = fetch(req).then((res) => {
-    if (res.ok && res.type === 'basic') cache.put(req, res.clone());
+    if (res.ok && res.type === 'basic') keepable(req, res.clone()).then((kept) => cache.put(req, kept)).catch(() => {});
     return res;
   });
   const cached = await cache.match(req);

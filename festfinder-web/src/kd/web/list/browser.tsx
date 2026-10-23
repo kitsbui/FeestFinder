@@ -10,11 +10,10 @@
  * /vi/… and /en/… redirects keep landing on the right list. The list re-reads itself every
  * minute while it is open.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
-import { registerServiceWorker } from '@/runtime/pwa';
 import { fill, pick, type Lang, type Pair, tx } from '../../copy';
 import { cx } from '../../cx';
 import { moneyShort, todayIn, whenShort, count as fmtCount } from '../../format';
@@ -31,12 +30,22 @@ import { DayGrid, groupByDay } from './days';
 import { fromApp } from './from-app';
 import { place } from '../../app/place';
 import { LIST } from './copy';
-import { warmKdMap, type Box } from '../../map/kd-map';
-import { MapView } from './map-view';
-import { shrinkable } from '../../ui/shell';
+import type { Box } from '../../map/kd-map';
+import { shrinkable } from '../../ui/shrinkable';
 
 /** The installed app's first run is a sheet few ever see: it loads when it opens (first-run.tsx). */
 const FirstRun = dynamic(() => import('./first-run').then((m) => m.FirstRun), { ssr: false });
+
+/** The map view loads when it opens (or when someone points at "Bản đồ"): its box holds the screen meanwhile. */
+const MapView = dynamic(() => import('./map-view').then((m) => m.MapView), {
+  ssr: false,
+  loading: () => <main className="min-h-[calc(100dvh-64px)] desk:h-[calc(100dvh-64px)]" aria-busy="true" />,
+});
+/** Starts loading the map view, MapLibre and the style, for a map about to open. */
+const warmKdMap = () => {
+  void import('./map-view');
+  void import('../../map/kd-map').then((m) => m.warmKdMap());
+};
 
 export type View = 'table' | 'grid' | 'map';
 export type Time = 'all' | 'tonight' | 'weekend' | '7days' | 'month';
@@ -137,7 +146,8 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
   const [rows, setRows] = useState<Card[]>(initial.items);
   const [busy, setBusy] = useState(false);
   const [sort, setSort] = useState<{ by: 'date' | 'price' | 'hype'; desc: boolean }>({ by: 'date', desc: false });
-  const [at, setAt] = useState<Date | null>(null);
+  /** Counts the list's answers, so "today" is read again with each (by the API's clock: `at` below). */
+  const [reads, setReads] = useState(0);
   const [ready, setReady] = useState(false);
   /** The newcomer's country (city-first.tsx): its nights lead the list while every city shows. */
   const [country, setCountry] = useState<string | null>(null);
@@ -159,7 +169,7 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
     if (n !== seq.current) return;
     setBusy(false);
     if (!out) return;
-    setAt(FF.now());
+    setReads((n) => n + 1);
     if (mode === 'more') { setRows((r) => [...r, ...out.items]); setPage((p) => ({ ...p, nextCursor: out.nextCursor })); return; }
     setPage(out);
     setRows(out.items);
@@ -173,7 +183,7 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
     // Read before the list rewrites its address, which drops ?source=app.
     openedByApp.current = fromApp();
     // The installed app keeps its tickets working offline from its first screen on.
-    if (openedByApp.current) registerServiceWorker();
+    if (openedByApp.current) void import('@/runtime/pwa').then((m) => m.registerServiceWorker());
     if (!q.has('city') && openedByApp.current) {
       const c = place.city();
       if (c && meta.cities.some((x) => x.slug === c)) next.city = c;
@@ -184,16 +194,19 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
     else if (first) document.documentElement.removeAttribute('data-city-first');
     // Or the newcomer's country: what the list has, its nights first (design v2 phase 13, owner 2026-10-19).
     const placeFirst = document.documentElement.getAttribute('data-place-first');
-    if (placeFirst && !q.has('city') && meta.countries.some((x) => x.code === placeFirst)) setCountry(placeFirst);
-    else if (placeFirst) document.documentElement.removeAttribute('data-place-first');
-    setF(next);
-    setReady(true);
+    const country = placeFirst && !q.has('city') && meta.countries.some((x) => x.code === placeFirst) ? placeFirst : null;
+    if (placeFirst && !country) document.documentElement.removeAttribute('data-place-first');
+    // In a transition, and only what changed: the list the server drew stays while this draws.
+    startTransition(() => {
+      if (country) setCountry(country);
+      if (JSON.stringify(next) !== JSON.stringify(DEFAULT)) setF(next);
+      setReady(true);
+    });
     const same = JSON.stringify({ ...next, view: 'grid', bbox: null }) === JSON.stringify({ ...DEFAULT });
     if (!same || next.view === 'map') void load(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When it was read, by the API's clock (it is pinned in the tests).
   const kd = useKd();
   const { clockReady } = kd;
   // The installed app's first run: a device it has never seen, nobody signed in (first-run.tsx).
@@ -203,7 +216,8 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
     asked.current = true;
     if (openedByApp.current && !place.known() && !kd.user) setFirstRun(true);
   }, [kd.session, kd.user]);
-  useEffect(() => { if (clockReady) setAt(FF.now()); }, [clockReady]);
+  // When the list was read, by the API's clock (it is pinned in the tests; null until it is known, as on the server).
+  const at = useMemo(() => (clockReady && reads >= 0 ? FF.now() : null), [clockReady, reads]);
   // The newcomer's city is in (or the list asked nothing), its country is grouped, or the address's filters
   // have their answer: show the list (and drop the highlight's hiding) city-first.tsx held back.
   useEffect(() => {
