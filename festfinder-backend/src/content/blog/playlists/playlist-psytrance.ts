@@ -12,7 +12,7 @@ const psytrance: Playlist = {
   },
   excerpt: {
     vi: 'Playlist psytrance 11 bài: Goa trance của Hallucinogen và Man With No Name, Shpongle, Juno Reactor, rồi full-on và progressive của Infected Mushroom, Vini Vici, Blastoyz.',
-    en: 'An 11-track psytrance playlist: Goa trance from Hallucinogen and Man With No Name, Shpongle, Juno Reactor, then the full-on and progressive of Infected Mushroom and Vini Vici.',
+    en: 'An 11-track psytrance playlist: Goa trance from Hallucinogen and Man With No Name, Shpongle, Juno Reactor, then full-on and progressive from Infected Mushroom, Vini Vici.',
   },
   cover: PLAYLIST_MEDIA_B.psytrance,
   styles: ['psytrance'],
@@ -26,8 +26,8 @@ const psytrance: Playlist = {
       youtube: 'iIsVzSMRw8E', artist: 'Hallucinogen', title: 'LSD', year: 1994, channel: 'TwistedMusicUK',
       style: { vi: 'Goa trance', en: 'Goa trance' },
       note: {
-        vi: 'Hallucinogen là Simon Posford, nghệ sĩ Anh sinh năm 1971 và là người lập Twisted Records; "LSD" ra năm 1994 cùng "Alpha Centauri", và bản "LSD (Live Mix)" năm 1995 (Wikipedia). Album Goa trance đầu tiên, "Project II Trance" năm 1993, đã có tên ông. Nghe đường acid uốn lượn và tiếng nói lấy mẫu: đây là âm thanh của các bãi biển Goa giữa thập niên 1990.',
-        en: 'Hallucinogen is Simon Posford, an English artist born in 1971 and the founder of Twisted Records; "LSD" came out in 1994 alongside "Alpha Centauri", with "LSD (Live Mix)" in 1995 (Wikipedia). The first Goa trance album, 1993\'s "Project II Trance", already featured him. Listen to the bending acid line and the sampled voice: the sound of Goa\'s beaches in the mid-1990s.',
+        vi: 'Hallucinogen là Simon Posford, nghệ sĩ Anh sinh năm 1971 và là người lập Twisted Records; "LSD" ra năm 1994 cùng "Alpha Centauri", và bản "LSD (Live Mix)" năm 1995 (Wikipedia). Album Goa trance đầu tiên, "Project II Trance" năm 1993, đã có tên ông. Nghe đường acid uốn lượn: đây là âm thanh của các bãi biển Goa giữa thập niên 1990.',
+        en: 'Hallucinogen is Simon Posford, an English artist born in 1971 and the founder of Twisted Records; "LSD" came out in 1994 alongside "Alpha Centauri", with "LSD (Live Mix)" in 1995 (Wikipedia). The first Goa trance album, 1993\'s "Project II Trance", already featured him. Listen to the bending acid line: the sound of Goa\'s beaches in the mid-1990s.',
       },
     },
     {
@@ -58,32 +58,32 @@ const psytrance: Playlist = {
       youtube: 'OkRm9pnP-SA', artist: 'Juno Reactor', title: 'Navras (BLISS Remix)', channel: 'Juno Reactor',
       style: { vi: 'Psytrance, remix nhạc phim', en: 'Psytrance remix of a film score' },
       note: {
-        vi: 'Juno Reactor là nhóm có trụ sở ở Brighton, nổi tiếng với chất điện tử pha nhạc giao hưởng; Ben Watkins cùng nhà soạn nhạc Don Davis làm nhạc cho loạt phim "Matrix", và "Navras" là bài khép lại "The Matrix Revolutions" (Wikipedia). Đây là bản remix psytrance của BLISS trên kênh chính thức của Juno Reactor: nghe dàn hợp xướng gặp bassline psy cuộn.',
-        en: 'Juno Reactor is a Brighton-based group known for fusing electronics with orchestral music; Ben Watkins worked with composer Don Davis on the "Matrix" films, and "Navras" closes "The Matrix Revolutions" (Wikipedia). This is BLISS\'s psytrance remix on Juno Reactor\'s official channel: listen to the choir meet a rolling psy bassline.',
+        vi: 'Juno Reactor là nhóm có trụ sở ở Brighton, nổi tiếng với chất điện tử pha nhạc giao hưởng; Ben Watkins cùng nhà soạn nhạc Don Davis làm nhạc cho loạt phim "Matrix", và "Navras" nằm trong nhạc phim "The Matrix Revolutions" (Wikipedia). Đây là bản remix psytrance của BLISS trên kênh chính thức của Juno Reactor: nghe dàn hợp xướng gặp bassline psy cuộn.',
+        en: 'Juno Reactor is a Brighton-based group known for fusing electronics with orchestral music; Ben Watkins worked with composer Don Davis on the "Matrix" films, and "Navras" is from "The Matrix Revolutions" soundtrack (Wikipedia). This is BLISS\'s psytrance remix on Juno Reactor\'s official channel: listen to the choir meet a rolling psy bassline.',
       },
     },
     {
       youtube: 'U4XOZeJb2ZQ', artist: 'Infected Mushroom', title: 'Spitfire', channel: 'Infected Mushroom', label: 'Monstercat',
       style: { vi: 'Full-on, psy gặp EDM', en: 'Full-on meets EDM' },
       note: {
-        vi: 'Infected Mushroom là bộ đôi Israel Erez Eisen và Amit Duvdevani, lập ở Haifa năm 1996; danh sách label của họ có cả Perfecto, Dim Mak và Monstercat (Wikipedia). "Spitfire" ra trên Monstercat, label quen với khán giả EDM hơn là psy. Nghe tiếng guitar và đoạn thả nặng: đây là psy viết để chạm tới cả người nghe dubstep và electro.',
-        en: 'Infected Mushroom are Israeli duo Erez Eisen and Amit Duvdevani, formed in Haifa in 1996; their labels include Perfecto, Dim Mak and Monstercat (Wikipedia). "Spitfire" came out on Monstercat, a label better known to EDM fans than to psy crowds. Listen to the guitars and the heavy drop: psy written to reach dubstep and electro listeners too.',
+        vi: 'Infected Mushroom là bộ đôi Israel Erez Eisen và Amit Duvdevani, lập ở Haifa năm 1996; danh sách label của họ có cả Perfecto, Dim Mak và Monstercat (Wikipedia). "Spitfire" ra trên Monstercat, label quen với khán giả EDM hơn là psy. Nghe đoạn thả nặng: đây là psy viết để chạm tới cả người nghe dubstep và electro.',
+        en: 'Infected Mushroom are Israeli duo Erez Eisen and Amit Duvdevani, formed in Haifa in 1996; their labels include Perfecto, Dim Mak and Monstercat (Wikipedia). "Spitfire" came out on Monstercat, a label better known to EDM fans than to psy crowds. Listen to the heavy drop: psy written to reach dubstep and electro listeners too.',
       },
     },
     {
       youtube: 'tDD5WHewxQk', artist: 'Liquid Soul', title: 'Desire', channel: 'Liquid Soul Official',
       style: { vi: 'Full-on giai điệu', en: 'Melodic full-on' },
       note: {
-        vi: 'Liquid Soul là một trong những tên chủ lực của Iboga Records, label psytrance Đan Mạch; kênh của Iboga cũng đăng "Desire" và các bản remix của nó, và năm 2026 Liquid Soul vẫn chơi những set dài ở Adhana Festival (Brazil). Nghe bassline cuộn đều dưới một giai điệu ấm: full-on dễ vào nhất cho người đi từ trance sang.',
-        en: 'Liquid Soul is one of the key names on Iboga Records, the Danish psytrance label; Iboga\'s channel also carries "Desire" and its remixes, and in 2026 Liquid Soul was still playing long sets at Adhana Festival in Brazil. Listen to the even rolling bassline under a warm melody: the easiest full-on for anyone coming over from trance.',
+        vi: 'Liquid Soul phát hành trên Iboga Records, một label psytrance lớn; kênh của Iboga cũng đăng "Desire" và các bản remix của nó, và năm 2026 Liquid Soul vẫn chơi những set dài ở Adhana Festival (Brazil). Nghe bassline cuộn đều dưới một giai điệu ấm: full-on dễ vào nhất cho người đi từ trance sang.',
+        en: 'Liquid Soul releases on Iboga Records, a major psytrance label; Iboga\'s channel also carries "Desire" and its remixes, and in 2026 Liquid Soul was still playing long sets at Adhana Festival in Brazil. Listen to the even rolling bassline under a warm melody: the easiest full-on for anyone coming over from trance.',
       },
     },
     {
       youtube: 'JCO_Kg6Q_v8', artist: 'Hilight Tribe', title: 'Free Tibet (Vini Vici Remix)', channel: 'Vini Vici',
       style: { vi: 'Psytrance gặp nhạc dân tộc', en: 'Psytrance meets world music' },
       note: {
-        vi: 'Vini Vici remix "Free Tibet" của ban nhạc Hilight Tribe, và đến năm 2019 bản remix đã vượt 94 triệu lượt nghe trên YouTube (Wikipedia). Năm 2016 hai bên còn làm "Great Spirit" cùng Armin van Buuren, bài đã có trong cẩm nang. Nghe tiếng trống, didgeridoo và giọng hát của ban nhạc sống đặt lên nhịp psy: lý do bài này vang ở cả sân khấu EDM lớn.',
-        en: 'Vini Vici remixed the band Hilight Tribe\'s "Free Tibet", and by 2019 the remix had passed 94 million plays on YouTube (Wikipedia). In 2016 they made "Great Spirit" together with Armin van Buuren, which is in the guide. Listen to a live band\'s drums, didgeridoo and chant set on a psy beat: why it rings out on big EDM stages too.',
+        vi: 'Vini Vici remix "Free Tibet" của ban nhạc Hilight Tribe, và đến năm 2019 bản remix đã vượt 94 triệu lượt nghe trên YouTube (Wikipedia). Năm 2016 hai bên còn làm "Great Spirit" cùng Armin van Buuren, bài đã có trong cẩm nang. Nghe tiếng trống và giọng hô của một ban nhạc sống đặt lên nhịp psy: lý do bài này vang ở cả sân khấu EDM lớn.',
+        en: 'Vini Vici remixed the band Hilight Tribe\'s "Free Tibet", and by 2019 the remix had passed 94 million plays on YouTube (Wikipedia). In 2016 they made "Great Spirit" together with Armin van Buuren, which is in the guide. Listen to a live band\'s drums and chant set on a psy beat: why it rings out on big EDM stages too.',
       },
     },
     {
@@ -106,8 +106,8 @@ const psytrance: Playlist = {
       youtube: 'Ausckv7bb4g', artist: 'Blastoyz x Sajanka ft. Liora Itzhak', title: 'Indian Spirit', channel: 'Blastoyz',
       style: { vi: 'Psytrance có vocal', en: 'Vocal psytrance' },
       note: {
-        vi: 'Video chính thức trên kênh của Blastoyz, mang tên Indian Spirit, lễ hội ở Đức nơi Blastoyz chơi các năm 2024 và 2025 (cả hai set đều có trên kênh của anh). Giọng hát của Liora Itzhak, mang màu nhạc Ấn, đặt trên nhịp psy hiện đại. Nghe để thấy psytrance những năm 2020 kéo cả vocal và giai điệu dân gian lên sân khấu chính.',
-        en: 'The official video on Blastoyz\'s channel, named after Indian Spirit, the German festival where Blastoyz played in 2024 and 2025 (both sets are on his channel). Liora Itzhak\'s Indian-tinged vocal rides a modern psy beat. Listen to hear 2020s psytrance bring vocals and folk melodies to the main stage.',
+        vi: 'Video chính thức trên kênh của Blastoyz, mang tên Indian Spirit, lễ hội ở Đức nơi Blastoyz chơi các năm 2024 và 2025 (cả hai set đều có trên kênh của anh). Giọng hát của Liora Itzhak đặt trên nhịp psy hiện đại. Nghe để thấy psytrance những năm 2020 kéo cả vocal và giai điệu dân gian lên sân khấu chính.',
+        en: 'The official video on Blastoyz\'s channel, named after Indian Spirit, the German festival where Blastoyz played in 2024 and 2025 (both sets are on his channel). Liora Itzhak\'s vocal rides a modern psy beat. Listen to hear 2020s psytrance bring vocals and folk melodies to the main stage.',
       },
     },
   ],
@@ -116,8 +116,8 @@ const psytrance: Playlist = {
     en: 'We chose 11 tracks on four rules: every stage of psytrance has at least one, from 1990s Goa trance to the stages of 2026; each is named by a reputable source (Wikipedia, a label\'s page) or is a signature track of its artist; none repeats the five tracks already in our Psytrance guide; and each plays from the artist\'s or label\'s official channel or a YouTube-verified one, checked through oEmbed. Years and labels appear only where a source states them.',
   },
   notes: {
-    vi: 'Năm 2026 psytrance sống ở những festival riêng hơn là trong club: kênh chính thức của Vini Vici đăng set ở Indian Spirit Festival 2026, Liquid Soul chơi ở Adhana Festival (Brazil), và Ace Ventura cùng Zen Mechanics chơi dưới tên Zentura ở Ozora 2025, lễ hội Hungary trên ảnh bìa bài này. Ở Việt Nam, psytrance chủ yếu xuất hiện ở các đêm của cộng đồng nhỏ; hãy lọc theo dòng nhạc trên FeestFinder để xem đêm sắp tới.',
-    en: 'In 2026 psytrance lives at its own festivals more than in clubs: Vini Vici\'s official channel posted their Indian Spirit Festival 2026 set, Liquid Soul played Adhana Festival in Brazil, and Ace Ventura and Zen Mechanics played as Zentura at Ozora 2025, the Hungarian festival on this post\'s cover. In Vietnam psytrance shows up mostly at small community nights; filter by style on FeestFinder to see what is coming.',
+    vi: 'Năm 2026 psytrance sống ở những festival riêng hơn là trong club: kênh chính thức của Vini Vici đăng set ở Indian Spirit Festival 2026, Liquid Soul chơi ở Adhana Festival (Brazil), và Ace Ventura cùng Zen Mechanics chơi dưới tên Zentura ở Ozora 2025, lễ hội Hungary trên ảnh bìa bài này. Hãy lọc theo dòng nhạc trên FeestFinder để xem đêm psytrance sắp tới gần bạn.',
+    en: 'In 2026 psytrance lives at its own festivals more than in clubs: Vini Vici\'s official channel posted their Indian Spirit Festival 2026 set, Liquid Soul played Adhana Festival in Brazil, and Ace Ventura and Zen Mechanics played as Zentura at Ozora 2025, the Hungarian festival on this post\'s cover. Filter by style on FeestFinder to see the psytrance nights coming near you.',
   },
   related: [
     { slug: 'psytrance', line: { vi: 'Psytrance là gì? · Goa, full-on, progressive và năm bài kinh điển', en: 'What is psytrance? · Goa, full-on, progressive and five classics' } },
