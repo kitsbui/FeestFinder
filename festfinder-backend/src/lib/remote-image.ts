@@ -2,6 +2,7 @@ import { isIP } from 'node:net';
 import { badRequest } from './errors.ts';
 import { L } from './i18n.ts';
 import { UPLOAD_PATH } from './validate.ts';
+import { baseOf } from './frame.ts';
 
 /*
  * Images FeestFinder shows from a link: a person's or an artist's photo, an organiser's logo
@@ -71,6 +72,79 @@ export function previewImageOf(html: string, pageUrl: string): string | null {
       if (!content) continue;
       try { return new URL(content.replaceAll('&amp;', '&').trim(), pageUrl).toString(); } catch { /* the next one */ }
     }
+  }
+  return null;
+}
+
+/*
+ * Resized copies: the pages show a stored picture through GET /img/<w>x<h>/<key>.webp
+ * (routes/images.ts), where <key> is the link without its fragment as base64url, and the box is
+ * one of a few: a width from IMG_WIDTHS and a shape from IMG_SHAPES. festfinder-web/src/kd/img.ts
+ * builds the same addresses, with the same arithmetic.
+ */
+
+/** The widths a resized picture comes in. */
+export const IMG_WIDTHS = [96, 192, 256, 384, 640, 828, 1080, 1280, 1600, 1920] as const;
+/**
+ * The shapes of a box, as its height over its width: square, card (1.6:1), wide (16:9), banner
+ * (2:1) and strip (4:1). The height is Math.round(width × n / d), and every d is a power of two,
+ * so it comes out the same in any language.
+ */
+export const IMG_SHAPES = { square: [1, 1], card: [5, 8], wide: [9, 16], banner: [1, 2], strip: [1, 4] } as const;
+export type ImgShape = keyof typeof IMG_SHAPES;
+
+export const imgHeight = (width: number, shape: ImgShape): number => Math.round((width * IMG_SHAPES[shape][0]) / IMG_SHAPES[shape][1]);
+
+/** Whether width × height is one of the boxes. */
+export function isImgBox(width: number, height: number): boolean {
+  return (IMG_WIDTHS as readonly number[]).includes(width) && (Object.keys(IMG_SHAPES) as ImgShape[]).some((s) => imgHeight(width, s) === height);
+}
+
+/** A picture's key in /img: its link without the fragment (the framing is the screen's), as base64url. */
+export const imgKey = (link: string): string => Buffer.from(baseOf(link), 'utf8').toString('base64url');
+
+/** The link a key names, or null when the key is not one imgKey makes (one picture, one address). */
+export function linkOfKey(key: string): string | null {
+  if (!/^[\w-]{1,2800}$/.test(key)) return null;
+  const link = Buffer.from(key, 'base64url').toString('utf8');
+  return link && imgKey(link) === key ? link : null;
+}
+
+/** An https link with nothing a public fetch refuses (credentials, another port). */
+export function isHttpsLink(link: string): boolean {
+  try {
+    const u = new URL(link);
+    return u.protocol === 'https:' && !u.username && !u.password && (!u.port || u.port === '443') && u.hostname.includes('.');
+  } catch {
+    return false;
+  }
+}
+
+/** The thumbnail steps Wikimedia makes for everyone. */
+const WIKIMEDIA_STEPS = [500, 960, 1280, 1920];
+
+/**
+ * A smaller copy of a linked picture that its host makes itself, for a resize that needs `need`
+ * pixels across: a lower Wikimedia thumbnail step, microCMS's (imgix) ?w=, Pinterest's 736 px copy.
+ * Null when the host makes none or the link is small already: the link itself is fetched.
+ */
+export function upstreamFor(link: string, need: number): string | null {
+  let u: URL;
+  try { u = new URL(link); } catch { return null; }
+  if (u.hostname === 'upload.wikimedia.org' && !u.search) {
+    const m = u.pathname.match(/^(\/.+\/thumb\/.+\/)(\d+)px-([^/]+)$/);
+    const step = WIKIMEDIA_STEPS.find((s) => s >= need);
+    return m && step && step < Number(m[2]) ? `${u.origin}${m[1]}${step}px-${m[3]}` : null;
+  }
+  if (u.hostname === 'images.microcms-assets.io' && ![...u.searchParams.keys()].length) {
+    u.searchParams.set('w', String(need));
+    u.searchParams.set('fit', 'max');
+    u.searchParams.set('fm', 'webp');
+    return u.toString();
+  }
+  if (u.hostname === 'i.pinimg.com' && u.pathname.startsWith('/originals/') && need <= 736) {
+    u.pathname = `/736x/${u.pathname.slice('/originals/'.length)}`;
+    return u.toString();
   }
   return null;
 }
