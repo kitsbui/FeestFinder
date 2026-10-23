@@ -90,8 +90,8 @@ const mainstage: Playlist = {
       youtube: 'b3esC6cJ7RQ', artist: 'Hardwell', title: 'Tomorrowland 2025 (MainStage closing set)', year: 2025, channel: 'Hardwell',
       style: { vi: 'Set đóng màn sân khấu chính', en: 'A main-stage closing set' },
       note: {
-        vi: 'Đây là set gần một giờ, không phải single: Hardwell đóng màn sân khấu chính Tomorrowland 2025, do kênh chính thức của anh đăng. Một set mainstage là cách tốt nhất để hiểu dòng nhạc này: bài mới, bản edit riêng và những anthem cũ nối vào nhau. Nghe cách anh xếp các đoạn build và drop, và cách pháo hoa của buổi đóng màn đi cùng âm nhạc.',
-        en: 'This is a set of nearly an hour, not a single: Hardwell closing Tomorrowland 2025\'s main stage, posted by his official channel. A mainstage set is the best way to understand the style: new tracks, his own edits and old anthems run into one another. Listen to how he stacks builds and drops, and how the closing show\'s fireworks move with the music.',
+        vi: 'Đây là set gần một giờ, không phải single: Hardwell đóng màn sân khấu chính Tomorrowland 2025, do kênh chính thức của anh đăng. Một set mainstage là cách tốt nhất để hiểu dòng nhạc này: bài mới, bản edit riêng và những anthem cũ nối vào nhau. Nghe cách anh xếp các đoạn build và drop, và cách anh đẩy năng lượng lên cho những phút cuối của sân khấu.',
+        en: 'This is a set of nearly an hour, not a single: Hardwell closing Tomorrowland 2025\'s main stage, posted by his official channel. A mainstage set is the best way to understand the style: new tracks, his own edits and old anthems run into one another. Listen to how he stacks builds and drops, and how he lifts the energy for the stage\'s final minutes.',
       },
     },
     {
