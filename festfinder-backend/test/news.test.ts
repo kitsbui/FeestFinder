@@ -104,6 +104,12 @@ describe('the news feed: fetched on a schedule, pictured, digested, served, hidd
 
   const sources: Record<string, string> = {};
 
+  it('switches the suggested publications on in every database once, the same list the Console adds', async () => {
+    const sql = readFileSync(new URL('../src/db/migrations/065_starter_news_sources.sql', import.meta.url), 'utf8');
+    const feeds = [...sql.matchAll(/^  \('(?:[^']|'')+', '[^']+', '([^']+)'/gm)].map((m) => m[1]);
+    assert.deepEqual(feeds, STARTER_NEWS_SOURCES.map((s) => s.feedUrl));
+  });
+
   it('lists the suggested publications once, and the team adds a feed of its own', async () => {
     const first = await env.as(admin).post('/admin/news/sources/starter');
     assert.equal(first.body.added, STARTER_NEWS_SOURCES.length);

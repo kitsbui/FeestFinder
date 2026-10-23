@@ -12,7 +12,7 @@ Do it fully: no questions back unless the document contradicts itself on somethi
 
 - **The database is the source of truth.** Posts are rows in `blog_posts` / `blog_tracks` (migration 060), so the two admins edit them in the Console (`/console/blog` → "Sửa bài" → `/blog/<slug>/edit`) and the site reads them without a deploy.
 - **The repository holds the content packs** I write from documents: `festfinder-backend/src/content/blog/<pack>/` (one `.ts` file per post, `media.ts` for pictures and link helpers, `index.ts` for the pack), listed in `src/content/blog/index.ts` (`PACKS`).
-- The `importBlogContent` job (every 10 minutes; "Nhập bài biên tập" in the Console runs it now) adds new posts as `in_review` and tells every admin; it updates a post with a pack's newer words **only until someone edits it** (`edited_at`), and never deletes. So: never rename a post's `key`; fix a live post in the Console, or in the pack only if nobody edited it.
+- The `importBlogContent` job (every 10 minutes; "Nhập bài biên tập" in the Console runs it now) adds new posts as `in_review` and tells every admin; it updates a post with a pack's newer words **only until someone edits it** (`edited_at`), and never deletes. A pack with `publish: true` skips the queue: set it only when the owner says to publish the pack as written (with who and when in a comment), never on your own. So: never rename a post's `key`; fix a live post in the Console, or in the pack only if nobody edited it.
 
 ## Steps
 

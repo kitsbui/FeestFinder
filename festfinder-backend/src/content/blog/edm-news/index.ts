@@ -22,6 +22,8 @@ import { tomorrowlandThailand } from './tomorrowland-thailand.ts';
 export const edmNews: BlogPack = {
   pack: 'edm-news',
   byline: 'FeestFinder',
+  // The owner approved the pack as written and asked for it public without the queue (2026-10-23).
+  publish: true,
   posts: [
     tinTucEdm,
     lichFestivalChauA, tomorrowlandThailand, festivalTheGioi,

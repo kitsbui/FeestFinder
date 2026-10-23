@@ -23,6 +23,8 @@ import { clubTokyo } from './tokyo.ts';
 export const clubGuides: BlogPack = {
   pack: 'club-guides',
   byline: 'FeestFinder',
+  // The owner approved the pack as written and asked for it public without the queue (2026-10-23).
+  publish: true,
   posts: [
     clubEdmChauA,
     clubHaNoi, clubSaiGon, clubDaNang,

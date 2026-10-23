@@ -26,6 +26,8 @@ import { playlistWarmUp } from './playlist-warm-up.ts';
 export const playlists: BlogPack = {
   pack: 'playlists',
   byline: 'FeestFinder',
+  // The owner approved the pack as written and asked for it public without the queue (2026-10-23).
+  publish: true,
   posts: [
     playlistEdm,
     playlist2026, playlistThang10,

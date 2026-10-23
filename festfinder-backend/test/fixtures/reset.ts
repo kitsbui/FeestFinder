@@ -24,6 +24,8 @@ if (config.databaseUrl || !config.pgliteDir || config.pgliteDir.startsWith('memo
 rmSync(config.pgliteDir, { recursive: true, force: true });
 const db = await openDb({ databaseUrl: null, pgliteDir: config.pgliteDir });
 await migrate(db, (m) => console.log(m));
+// The suggested publications migration 065 switches on: the preview and the screen tests read no feed.
+await db.query('delete from news_sources');
 const clock = config.fixedNow ? fixedClock(config.fixedNow) : systemClock;
 const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: process.env.SEED_VOLUME === 'small' ? 'small' : 'full' })) as Record<string, unknown>;
 // The local preview also shows what Feest Radar finds (test/fixtures/radar.ts).
