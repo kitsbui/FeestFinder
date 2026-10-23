@@ -204,7 +204,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
             </div>
           </header>
 
-          <main className="kd-wrap flex flex-col">
+          <main id="main" className="kd-wrap flex flex-col">
             <div className="mx-auto flex w-full max-w-page flex-col">
               {/* ---- what to do: play, follow (or claim), share ---- */}
               <div className="flex flex-wrap items-center gap-3 pt-7">

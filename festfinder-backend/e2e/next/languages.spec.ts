@@ -193,3 +193,13 @@ test('the router\'s prefetch is never moved to another language; a page load and
   expect(problems).toEqual([]);
   await ctx.close();
 });
+
+test("the skip link is in the page's own language in its HTML, and leads to its <main>", async ({ request }) => {
+  const skip = (html: string) => [...html.matchAll(/<a href="#main" class="kd-skip"[^>]*>([^<]*)<\/a>/g)].map((m) => m[1]);
+  for (const path of ['/?lang=en', '/e/ravo?lang=en', '/a?lang=en', '/o/ravoent?lang=en', '/blog?lang=en', '/about?lang=en']) {
+    const html = await (await request.get(path)).text();
+    expect(skip(html), path).toEqual(['Skip to content']);
+    expect(html, path).toMatch(/<main id="main"/);
+  }
+  for (const path of ['/', '/e/ravo']) expect(skip(await (await request.get(path)).text()), path).toEqual(['Bỏ qua tới nội dung']);
+});

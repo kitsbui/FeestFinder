@@ -40,7 +40,7 @@ export async function ProjectsPage({ lang }: { lang: Lang }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="projects" />
-          <main className="kd-wrap flex flex-col gap-5 py-8">
+          <main id="main" className="kd-wrap flex flex-col gap-5 py-8">
             <div className="kd-sec items-end">
               <h1 className="kd-d2">{T.title}</h1>
               <div className="flex flex-wrap gap-2">
@@ -82,7 +82,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="projects" />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
-          <main className="flex flex-col">
+          <main id="main" className="flex flex-col">
             <div className="kd-wrap"><Art title={p.title} family="edm" cover={p.coverUrl} alt={p.title} className="h-[clamp(200px,28vw,380px)]" /></div>
 
             <section className="kd-wrap pt-7" aria-labelledby="p-h">

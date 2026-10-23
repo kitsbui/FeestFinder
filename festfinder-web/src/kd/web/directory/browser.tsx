@@ -222,7 +222,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   return (
     <>
       <Crumbs label={W.crumbs} items={crumbs} />
-      <main className="kd-wrap flex flex-col gap-5 pb-8 pt-2" aria-labelledby="dir-title">
+      <main id="main" className="kd-wrap flex flex-col gap-5 pb-8 pt-2" aria-labelledby="dir-title">
         <div className="kd-sec">
           <div className="flex min-w-0 flex-col gap-1.5">
             <h1 id="dir-title" className="kd-d2">{title}</h1>

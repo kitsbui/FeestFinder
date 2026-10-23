@@ -96,6 +96,8 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             <WebNav lang={lang} current="list" />
             <Crumbs label={T.crumbs} items={seo.page.crumbs.map((c, i, all) => (i === all.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
+            {/* The page's own content: where the skip link (ui/skip-link.tsx) leads. */}
+            <main id="main" className="flex flex-col">
             {/* ---- hero ---- */}
             <section className="kd-wrap">
               <div className="grid grid-cols-1 items-start gap-6 desk:grid-cols-2 desk:gap-14">
@@ -290,6 +292,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                 </div>
               </section>
             ) : null}
+            </main>
 
             {hasTickets ? <BuyDock lang={lang} price={cheapest > 0 && !ev.priceUnknown ? money(cheapest, ev.currency, lang) : null} /> : null}
             <div className="mt-auto">

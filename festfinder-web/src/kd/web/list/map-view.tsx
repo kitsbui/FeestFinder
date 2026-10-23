@@ -175,7 +175,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
   const home = () => { const box = cityBox(f.city); map.current?.fit(box); void search(f.city === 'all' ? 'all' : box); };
 
   return (
-    <main className="flex min-h-[calc(100dvh-64px)] flex-wrap content-start desk:h-[calc(100dvh-64px)]">
+    <main id="main" className="flex min-h-[calc(100dvh-64px)] flex-wrap content-start desk:h-[calc(100dvh-64px)]">
       <aside className="flex max-h-full min-w-0 flex-[1_1_340px] flex-col overflow-y-auto border-line-1 desk:border-r">
         <div className="flex flex-col gap-3 px-4 pb-2.5 pt-4.5">
           {/* The nav names the page (Sự kiện) and the switch the view: no third label. */}

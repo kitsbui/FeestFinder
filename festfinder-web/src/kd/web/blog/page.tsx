@@ -36,7 +36,7 @@ export async function BlogPage({ lang }: { lang: Lang }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="blog" />
-          <main className="kd-wrap flex flex-col gap-5 py-8">
+          <main id="main" className="kd-wrap flex flex-col gap-5 py-8">
             <div className="kd-sec items-end">
               <h1 className="kd-d2">{T.title}</h1>
               <div className="flex flex-wrap gap-2">
@@ -79,7 +79,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
           <WebNav lang={lang} current="blog" />
           <Crumbs width="read" label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
           {/* The article in the middle of the page on every width (owner, 2026-10-20). */}
-          <main className="kd-wrap flex flex-col pb-4">
+          <main id="main" className="kd-wrap flex flex-col pb-4">
             <article className="mx-auto flex w-full max-w-read flex-col" lang={l}>
               <header className={`flex flex-col gap-3 pt-4 ${g('edm')}`}>
                 <a href={inLang(`/blog?category=${post.category.key}`, lang)} className="kd-m kd-hit flex items-center gap-1.5 self-start text-info" lang={lang}>

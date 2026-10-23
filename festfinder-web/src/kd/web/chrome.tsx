@@ -28,6 +28,7 @@ import { Avatar } from '../ui/parts';
 import { Input } from '../ui/forms';
 import { countVisit } from '../ui/install-gate';
 import { Logo } from '../ui/logo';
+import { SkipLink } from '../ui/skip-link';
 import { TabBar } from '../ui/tabbar';
 import { WEB } from './copy';
 import { LANG_KEY, rememberLang, useHere } from './lang';
@@ -91,6 +92,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
   const on = placeOf(current);
   return (
     <>
+      <SkipLink lang={lang} />
       <header className="kd-nav">
         <div className="kd-wrap flex h-14 items-center gap-2 desk:h-16">
           <Logo lang={lang} height={20} className="mr-2 desk:mr-3" />

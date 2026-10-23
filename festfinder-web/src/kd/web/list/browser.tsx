@@ -39,7 +39,7 @@ const FirstRun = dynamic(() => import('./first-run').then((m) => m.FirstRun), { 
 /** The map view loads when it opens (or when someone points at "Bản đồ"): its box holds the screen meanwhile. */
 const MapView = dynamic(() => import('./map-view').then((m) => m.MapView), {
   ssr: false,
-  loading: () => <main className="min-h-[calc(100dvh-64px)] desk:h-[calc(100dvh-64px)]" aria-busy="true" />,
+  loading: () => <main id="main" className="min-h-[calc(100dvh-64px)] desk:h-[calc(100dvh-64px)]" aria-busy="true" />,
 });
 /** Starts loading the map view, MapLibre and the style, for a map about to open. */
 const warmKdMap = () => {
@@ -440,7 +440,7 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
       </div>
       {/* A screen's height before the footer: the list changes after the first paint (the address's city, a
           filter, an empty answer) and must not pull the footer into view (CLS). */}
-      <main className="kd-wrap flex min-h-dvh flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
+      <main id="main" className="kd-wrap flex min-h-dvh flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
         {/* On a phone the day headings lead; the page keeps its heading for screen readers and search. */}
         <h1 className="kd-d2 max-tab:sr-only">{heading}</h1>
         {/* A phone: the city first (the newcomer's question), then the styles that have nights here. */}

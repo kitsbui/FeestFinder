@@ -70,7 +70,10 @@
   .kd-btn:hover { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px var(--color-line-2); }
   .kd-btn-acc { background: var(--gradient-accent); color: var(--color-on-accent); font-weight: 600; box-shadow: none; }
   .kd-btn-acc:hover { background: var(--gradient-accent); box-shadow: none; filter: brightness(1.06) saturate(1.05); }
-  .kd-btn-glow { animation: var(--animate-kd-glow); }
+  .kd-btn-glow::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+    box-shadow: 0 0 22px 2px color-mix(in srgb, var(--color-lime) 50%, transparent); animation: var(--animate-kd-glow);
+  }
   /* Not a tone: the one button on a warning bar (the Console's "viewing as"), dark on the amber. */
   .kd-btn-dark { background: var(--color-on-inverse); color: var(--color-inverse); box-shadow: none; }
   .kd-btn-dark:hover { background: color-mix(in srgb, var(--color-on-inverse) 86%, var(--color-white)); box-shadow: none; }

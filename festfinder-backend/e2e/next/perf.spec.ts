@@ -40,7 +40,8 @@ const SCREENS: [Who, string, number][] = [
   ['visitor', '/?city=ha-noi', 183],
   // 2026-10-23: one city's list is drawn on the server (festfinder-web/src/kd/web/list/city.tsx): the address Lighthouse measured in production.
   ['visitor', '/?city=ho-chi-minh&lang=en', 183],
-  ['fan', '/profile', 196], ['fan', '/saved', 193],
+  // 2026-10-23 (later): the skip link is drawn by each frame without a store of its own (ui/skip-link.tsx): /saved a kilobyte lighter (measured +1).
+  ['fan', '/profile', 196], ['fan', '/saved', 192],
   ['organizer', '/studio', 196], ['organizer', '/studio/new', 210], ['admin', '/console', 200],
 ];
 

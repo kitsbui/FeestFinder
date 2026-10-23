@@ -93,6 +93,9 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
           <WebNav lang={lang} />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
+          {/* The page's own content: where the skip link (ui/skip-link.tsx) leads. */}
+          <main id="main" className="flex flex-col">
+
           {/* ---- cover: only a real one; a tile would print the name above the name (design v2 phase 8) ---- */}
           {org.coverUrl ? (
             <div className="kd-wrap" aria-hidden="true">
@@ -232,6 +235,7 @@ export function OrgPage({ org, seo, lang }: { org: Org; seo: OrganizerSeo; lang:
                 <ProfileMoments lang={lang} source={source} items={org.moments ?? []} organizerId={org.id} />
                 <Badges lang={lang} items={org.badges} who={{ vi: 'nhà tổ chức', en: 'organisers' }} />
           </section>
+          </main>
 
           <div className="mt-auto">
             <WebFooter lang={lang} otherLang={otherLang} />

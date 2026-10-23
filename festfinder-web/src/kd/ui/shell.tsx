@@ -4,8 +4,10 @@
  */
 import { KdLink as Link } from '../link';
 import type { KeyboardEvent, ReactNode } from 'react';
+import type { Lang } from '../copy';
 import { cx } from '../cx';
 import { Rail } from './rail';
+import { SkipLink } from './skip-link';
 import { shrinkable } from './shrinkable';
 
 // ---- tabs ---------------------------------------------------------------------------
@@ -103,11 +105,12 @@ export function SideNav({ items, current, head, label, footer }: { items: SideIt
   );
 }
 
-export function Shell({ nav, children }: { nav: ReactNode; children: ReactNode }) {
+export function Shell({ lang, nav, children }: { lang: Lang; nav: ReactNode; children: ReactNode }) {
   return (
     <div className="kd-shell">
+      <SkipLink lang={lang} />
       {nav}
-      <main className="kd-content">{children}</main>
+      <main id="main" className="kd-content">{children}</main>
     </div>
   );
 }

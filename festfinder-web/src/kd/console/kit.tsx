@@ -42,17 +42,30 @@ export const KIT = {
 
 // ---- data -----------------------------------------------------------------------------------
 
-/** GET a path; `null` waits. `reload` asks again, keeping what is shown until the answer is in. */
-export function useLoad<T>(path: string | null) {
-  const [data, setData] = useState<T | null>(null);
+/**
+ * GET a path; `null` waits. `reload` asks again, keeping what is shown until the answer is in.
+ * `first` hands over a request a root started earlier (beside the session) for the first answer,
+ * with its answer when it is already in, so the screen draws it at once; when there is none, or
+ * that one failed (signed in since), the path is asked as usual.
+ */
+export interface Early<T> { promise: Promise<T>; data?: T }
+export function useLoad<T>(path: string | null, first?: () => Early<T> | null) {
+  const [early] = useState(() => first?.() ?? null);
+  const [data, setData] = useState<T | null>(early?.data ?? null);
   const [error, setError] = useState<unknown>(null);
   const [tick, setTick] = useState(0);
+  const taken = useRef(false);
   useEffect(() => {
     if (!path) return;
     let live = true;
     setError(null);
-    FF.get(path).then((d: T) => { if (live) setData(d); }, (e: unknown) => { if (live) setError(e); });
+    const handed = !taken.current ? early : null;
+    taken.current = true;
+    if (handed?.data !== undefined) return;
+    const ask = handed ? handed.promise.catch((): Promise<T> => FF.get(path)) : (FF.get(path) as Promise<T>);
+    ask.then((d: T) => { if (live) setData(d); }, (e: unknown) => { if (live) setError(e); });
     return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `early` is the first answer only
   }, [path, tick]);
   const reload = useCallback(() => setTick((n) => n + 1), []);
   return { data, error, reload, setData };

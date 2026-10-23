@@ -31,7 +31,7 @@ export async function AdvertisePage({ lang }: { lang: Lang }) {
       <div className="flex min-h-dvh flex-col" lang={lang}>
         <WebNav lang={lang} />
         {/* One column in the middle (owner, 2026-10-20: no side column on any page): the rates, the form, the partners. */}
-        <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
+        <main id="main" className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
           <div className="mx-auto flex w-full max-w-read flex-col gap-10">
             <header className="flex flex-col gap-4">
               <span className="kd-m">{T.kicker}</span>

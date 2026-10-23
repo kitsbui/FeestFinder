@@ -129,10 +129,11 @@
   50% { top: 84%; }
   100% { top: 12%; }
 }
-/* The one action on a screen breathes: a soft lime halo, in and out. */
+/* The one action on a screen breathes: a soft lime halo, in and out. The halo is drawn once (kd.css
+   .kd-btn-glow::before) and only its opacity moves, which the compositor does without repainting. */
 @keyframes kd-glow {
-  0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  50% { box-shadow: 0 0 22px 2px color-mix(in srgb, var(--color-lime) 50%, transparent); }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 @layer base {

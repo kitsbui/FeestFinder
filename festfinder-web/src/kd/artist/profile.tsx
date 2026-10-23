@@ -14,13 +14,14 @@ import { useKd } from '../runtime';
 import { Button, LinkButton } from '../ui/actions';
 import { Input, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Stat, StatRow } from '../ui/parts';
-import { Body, Field, Loaded, PageHead, useLoad, useOptions } from '../console/kit';
+import { Body, Field, Loaded, PageHead, useLoad } from '../console/kit';
 import { ARTIST } from './copy';
 import { Block, ChipPick } from './parts';
 import { ImageLinkField } from '../ui/image-link';
-import { useArtist } from './root';
+import { takeProfile, useArtist } from './root';
 
 interface Opt { key: string; label: Pair }
+interface Choice { value: string; label: Pair }
 interface Me {
   profile: {
     id: string; slug: string; name: string; bio: Pair | null; imageUrl: string | null; coverUrl: string | null; website: string | null;
@@ -29,12 +30,13 @@ interface Me {
     links: Record<string, string> | null; openToBrands: boolean; verified: boolean;
   };
   stats: { upcoming: number; events: number; followers: number };
-  options: { roles: Opt[]; booking: Opt[]; travel: Opt[]; gigs: Opt[]; setLengths: Opt[]; links: Opt[] };
+  // Styles and cities come with the profile, so the form never grows after its first paint.
+  options: { roles: Opt[]; booking: Opt[]; travel: Opt[]; gigs: Opt[]; setLengths: Opt[]; links: Opt[]; styles: Choice[]; cities: Choice[] };
 }
 
 export function ArtistProfile() {
   const { lang } = useArtist();
-  const load = useLoad<Me>('/me/artist');
+  const load = useLoad<Me>('/me/artist', takeProfile<Me>);
   return <Loaded load={load}>{(me) => <Form lang={lang} me={me} />}</Loaded>;
 }
 
@@ -49,7 +51,6 @@ type F = ReturnType<typeof formOf>;
 function Form({ lang, me }: { lang: Lang; me: Me }) {
   const T = pick(ARTIST, lang);
   const kd = useKd();
-  const options = useOptions();
   const [f, setF] = useState<F>(() => formOf(me.profile));
   const [base, setBase] = useState(() => JSON.stringify(formOf(me.profile)));
   const [err, setErr] = useState<Record<string, string>>({});
@@ -66,8 +67,8 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
   }, [dirty]);
 
   const opt = (list: Opt[]) => list.map((x) => ({ value: x.key, label: tx(x.label, lang) }));
-  const cities = useMemo(() => (options?.cities ?? []).map((c) => ({ value: c.value, label: tx(c.label, lang) })), [options, lang]);
-  const styles = useMemo(() => (options?.styles ?? []).map((s) => ({ value: s.value, label: tx(s.label, lang) })), [options, lang]);
+  const cities = useMemo(() => me.options.cities.map((c) => ({ value: c.value, label: tx(c.label, lang) })), [me.options.cities, lang]);
+  const styles = useMemo(() => me.options.styles.map((s) => ({ value: s.value, label: tx(s.label, lang) })), [me.options.styles, lang]);
   // Chosen styles first, in the order picked (the first is the main one), then the rest.
   const styleChips = useMemo(() => [...f.styles.map((v) => styles.find((s) => s.value === v) ?? { value: v, label: v }), ...styles.filter((s) => !f.styles.includes(s.value))], [styles, f.styles]);
 

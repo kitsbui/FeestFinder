@@ -167,7 +167,7 @@ function Console({ lang, name, children }: { lang: Lang; name: string; children:
   return (
     <Ctx.Provider value={{ lang, q, counts, refreshCounts }}>
       <AskHost lang={lang}>
-        <Shell nav={nav}>
+        <Shell lang={lang} nav={nav}>
           <div className="flex min-h-dvh flex-col">
             <header className="flex h-15 items-center gap-3.5 border-b border-line-1 px-[var(--kd-gutter)]">
               <Input

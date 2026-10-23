@@ -93,7 +93,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
           <WebNav lang={lang} />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
 
-          <main className="flex flex-col">
+          <main id="main" className="flex flex-col">
             {/* ---- cover ---- */}
             <div className="kd-wrap" aria-hidden="true">
               <div className="grid h-[clamp(96px,12vw,168px)] gap-2" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0, 1fr))` }}>

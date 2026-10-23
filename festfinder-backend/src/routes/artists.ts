@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { many, one, json } from '../db/index.ts';
 import { badRequest, conflict, notFound } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
-import { cityBySlug, cityLabel, citySlug, countryCode } from '../lib/places.ts';
-import { isStyle } from '../lib/styles.ts';
+import { cityBySlug, cityLabel, citySlug, countryCode, launchedCities } from '../lib/places.ts';
+import { isStyle, STYLES } from '../lib/styles.ts';
 import {
   ARTIST_LINK, ARTIST_ROLE, BOOKING_STATUS, cleanLink, GIG_TYPE, SET_LENGTH, TRAVEL_SCOPE, type ArtistLink,
 } from '../lib/network.ts';
@@ -200,6 +200,9 @@ export default async function artistRoutes(app: FastifyInstance) {
         roles: ARTIST_ROLE.keys.map((k) => label(ARTIST_ROLE, k)), booking: BOOKING_STATUS.keys.map((k) => label(BOOKING_STATUS, k)),
         travel: TRAVEL_SCOPE.keys.map((k) => label(TRAVEL_SCOPE, k)), gigs: GIG_TYPE.keys.map((k) => label(GIG_TYPE, k)),
         setLengths: SET_LENGTH.keys.map((k) => label(SET_LENGTH, k)), links: ARTIST_LINK.keys.map((k) => label(ARTIST_LINK, k)),
+        // The styles and cities the form offers, as /meta/form-options lists them: with the profile, so every chip is there at the first paint.
+        styles: STYLES.map((x) => ({ value: x.key, label: x.label })),
+        cities: launchedCities().map((c) => ({ value: c.slug, label: c.name })),
       },
     };
   });
