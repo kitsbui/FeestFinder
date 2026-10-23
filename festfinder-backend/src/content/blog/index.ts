@@ -7,5 +7,6 @@ import type { BlogPack } from '../../services/blog-content.ts';
 import { clubGuides } from './club-guides/index.ts';
 import { djSkills } from './dj-skills/index.ts';
 import { edmGenres } from './edm-genres/index.ts';
+import { edmNews } from './edm-news/index.ts';
 
-export const PACKS: BlogPack[] = [edmGenres, djSkills, clubGuides];
+export const PACKS: BlogPack[] = [edmGenres, djSkills, clubGuides, edmNews];

@@ -127,6 +127,29 @@ describe('blog content packs: written once in the repository, edited by the team
     assert.equal((await graph('/seo/blog/techno')).find((n) => n['@type'] === 'HowTo'), undefined, 'a genre guide is no how-to');
   });
 
+  it('reads a club guide’s clubs as NightClubs and a news post’s confirmed festival as a MusicEvent in a NewsArticle', async () => {
+    for (const slug of ['club-ha-noi', 'tomorrowland-thailand-2026']) {
+      const id = (await env.ctx.db.query<{ id: string }>('select id from blog_posts where slug = $1', [slug])).rows[0].id;
+      assert.equal((await env.as(admin).post(`/admin/posts/${id}/decision`, { action: 'approve' })).body.status, 'published');
+    }
+    type Node = { '@type': string; [k: string]: unknown };
+    const graph = async (path: string) => (await env.as().get(path)).body.jsonLd['@graph'] as Node[];
+    const clubs = (await graph('/seo/blog/club-ha-noi?lang=en')).find((n) => n['@type'] === 'ItemList' && String(n['@id']).endsWith('#venues')) as unknown as { itemListElement: { item: { '@type': string; name: string; address: string; url?: string } }[] };
+    assert.equal(clubs.itemListElement.length, 7);
+    assert.deepEqual(clubs.itemListElement.map((x) => x.item['@type']), Array(7).fill('NightClub'));
+    assert.ok(clubs.itemListElement.every((x) => x.item.address && x.item.url?.startsWith('https://')));
+    const news = await graph('/seo/blog/tomorrowland-thailand-2026?lang=en');
+    assert.ok(news.some((n) => n['@type'] === 'NewsArticle'));
+    assert.equal(news.find((n) => n['@type'] === 'BlogPosting'), undefined);
+    const events = news.find((n) => String(n['@id']).endsWith('#events')) as unknown as { itemListElement: { item: { '@type': string; name: string; startDate: string; endDate: string; url: string } }[] };
+    const tl = events.itemListElement[0].item;
+    assert.deepEqual([tl['@type'], tl.startDate, tl.endDate], ['MusicEvent', '2026-12-11', '2026-12-13']);
+    assert.match(tl.url, /^https:\/\/[^/]*tomorrowland\.com\//);
+    // A genre guide is neither.
+    const techno = await graph('/seo/blog/techno');
+    assert.ok(!techno.some((n) => String(n['@id']).endsWith('#venues') || String(n['@id']).endsWith('#events')));
+  });
+
   it('takes a pack’s newer words until someone edits a post, and never after', async () => {
     const changed: BlogPack[] = PACKS.map((p) => ({ ...p, posts: p.posts.map((x) => ({ ...x, excerpt: { ...x.excerpt, en: `${x.excerpt.en} (revised)` } })) }));
     // An admin edits the techno guide in the Console.
