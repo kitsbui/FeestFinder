@@ -94,7 +94,7 @@ export function ConsoleNews() {
                         <span className="kd-hs kd-ell">{s.name}</span>
                         {s.enabled ? null : <Pill>{T.off}</Pill>}
                       </span>
-                      <a href={s.siteUrl} target="_blank" rel="noopener" className="kd-s kd-ell text-xs hover:underline">{host(s.feedUrl)}</a>
+                      <a href={s.siteUrl} target="_blank" rel="noopener" className="kd-hit kd-s kd-ell text-xs hover:underline">{host(s.feedUrl)}</a>
                     </span>
                     <span role="cell" className="kd-s kd-ell">{T[s.region]}</span>
                     <span role="cell" className="kd-s kd-num">{every(s.intervalMinutes)}</span>
