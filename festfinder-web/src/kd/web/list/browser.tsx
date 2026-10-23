@@ -135,13 +135,17 @@ function address(f: Filters, lang: Lang) {
 
 interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
 
-export function ListBrowser({ lang, meta, initial, highlight, highlightArt = false }: {
+export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt = false }: {
   lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode;
+  /** The city whose nights the server drew (/?city=<slug>, list/city.tsx): the list starts there and asks nothing on load. */
+  city?: string;
   /** The highlight has a picture, which then loads first (list/page.tsx); else the list's first picture does. */
   highlightArt?: boolean;
 }) {
   const T = pick(LIST, lang);
-  const [f, setF] = useState<Filters>(DEFAULT);
+  /** What the server drew: every city, or the address's one. */
+  const drawn = useMemo<Filters>(() => (city ? { ...DEFAULT, city } : DEFAULT), [city]);
+  const [f, setF] = useState<Filters>(drawn);
   const [page, setPage] = useState<Page>(initial);
   const [rows, setRows] = useState<Card[]>(initial.items);
   const [busy, setBusy] = useState(false);
@@ -199,10 +203,10 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
     // In a transition, and only what changed: the list the server drew stays while this draws.
     startTransition(() => {
       if (country) setCountry(country);
-      if (JSON.stringify(next) !== JSON.stringify(DEFAULT)) setF(next);
+      if (JSON.stringify(next) !== JSON.stringify(drawn)) setF(next);
       setReady(true);
     });
-    const same = JSON.stringify({ ...next, view: 'grid', bbox: null }) === JSON.stringify({ ...DEFAULT });
+    const same = JSON.stringify({ ...next, view: 'grid', bbox: null }) === JSON.stringify(drawn);
     if (!same || next.view === 'map') void load(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -411,7 +415,7 @@ export function ListBrowser({ lang, meta, initial, highlight, highlightArt = fal
   const elsewhere = split ? groupByDay(sorted.filter((e) => countryOf(e.city) !== country), lang, today) : [];
   const countryName = country ? tx(meta.countries.find((c) => c.code === country)?.name, lang) : null;
   // The world's biggest festivals (or the shelf on), while nothing but the city narrows the list. Decided
-  // once, from the filters: the server and the first render in the browser (both DEFAULT) agree.
+  // once, from the filters: the server and the first render in the browser (both what the server drew, a city at most) agree.
   const showHighlight = !!highlight && JSON.stringify({ ...f, city: 'all', view: 'grid', bbox: null }) === JSON.stringify(DEFAULT);
   // One picture first on the page: the highlight's when it has one, else the list's.
   const listEager = !(showHighlight && highlightArt);

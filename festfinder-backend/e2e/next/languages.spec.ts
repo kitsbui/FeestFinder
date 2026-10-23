@@ -40,6 +40,26 @@ test('a page names its five languages to search engines and arrives in its own',
   expect(moved.headers().location).toBe('/e/ravo?lang=ja');
 });
 
+/*
+ * One city's list (/?city=<slug>, drawn on the server: festfinder-web/src/kd/web/list/city.tsx) is
+ * the home page to search engines in every language: the same title, canonical and hreflang links.
+ */
+test("one city's list has the home page's head in every language", async ({ request }) => {
+  /** The head's title, meta tags and canonical and alternate links. */
+  const head = (html: string) => {
+    const h = html.slice(0, html.indexOf('</head>'));
+    return [...h.matchAll(/<title>[^<]*<\/title>|<meta\b[^>]*>|<link rel="(?:canonical|alternate)"[^>]*>/g)].map((m) => m[0]);
+  };
+  for (const l of ['vi', 'en', 'th', 'ja', 'id']) {
+    const q = l === 'vi' ? '' : `lang=${l}`;
+    const home = await (await request.get(`/${q ? '?' + q : ''}`)).text();
+    const city = await (await request.get(`/?city=ho-chi-minh${q ? '&' + q : ''}`)).text();
+    expect(head(city), l).toEqual(head(home));
+    expect(head(city).some((t) => t.startsWith('<link rel="canonical"')), l).toBe(true);
+    expect(city, l).toContain(`lang="${l}"`);
+  }
+});
+
 test('a Thai page reads Thai from the list to an event, and offers every language', async ({ page }) => {
   const problems = await open(page, '/?lang=th');
   await expect(page.getByRole('heading', { level: 1, name: 'ทุกอีเวนต์' })).toBeVisible();

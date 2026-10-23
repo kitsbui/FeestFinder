@@ -134,9 +134,10 @@ test('a featured shelf takes the highlight slot, and says when it is paid for', 
 });
 
 /*
- * The home page's list changes after the first paint: the browser reads the address's city or the
- * city this device chose, and asks the API again. Its <main> holds a screen's height, so the footer
- * never rises into view (the 0.31 shift production measured on /?city=ho-chi-minh&lang=en).
+ * The home page's list can change after the first paint: the browser reads the city this device
+ * chose and asks the API again (the address's city is drawn on the server: list.spec.ts). Its <main>
+ * holds a screen's height, so the footer never rises into view (the 0.31 shift production measured
+ * on /?city=ho-chi-minh&lang=en).
  */
 test('the footer stays below the first screen while the list changes after the first paint', async ({ browser }) => {
   // Hà Nội is launched and has no night in the demo data: every row gives way to the empty panel.

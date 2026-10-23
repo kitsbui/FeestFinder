@@ -36,8 +36,10 @@ const SCREENS: [Who, string, number][] = [
   // 2026-10-23: the map view, the worker's registration, the account menu's items and the install strip load when they are needed, and the public frame's tab bar left the back offices' shell (ui/tabbar.tsx): 2–10 KB less on every public screen (measured +1).
   ['visitor', '/', 183], ['visitor', '/e/ravo', 189], ['visitor', '/a', 196], ['visitor', '/a/slimv', 192],
   ['visitor', '/o/ravoent', 190], ['visitor', '/p', 177], ['visitor', '/?view=map', 183], ['visitor', '/about', 167],
-  // 2026-10-22: a city with no night here (the browser swaps every row for the empty panel after the first paint; the footer must not rise).
+  // 2026-10-22: a city with no night here (since 2026-10-23 drawn on the server as the empty panel; the footer must not rise).
   ['visitor', '/?city=ha-noi', 183],
+  // 2026-10-23: one city's list is drawn on the server (festfinder-web/src/kd/web/list/city.tsx): the address Lighthouse measured in production.
+  ['visitor', '/?city=ho-chi-minh&lang=en', 183],
   ['fan', '/profile', 196], ['fan', '/saved', 193],
   ['organizer', '/studio', 196], ['organizer', '/studio/new', 210], ['admin', '/console', 200],
 ];
