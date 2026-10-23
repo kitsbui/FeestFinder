@@ -11,8 +11,8 @@ const warmUp: Playlist = {
     en: 'Warm-up playlist: 10 deep and melodic opening tracks',
   },
   excerpt: {
-    vi: 'Playlist warm-up cho giờ đầu đêm: deep house, organic và melodic từ Kiasmos, Bonobo, Four Tet, Lane 8, Ben Böhmer, RÜFÜS DU SOL, Âme và Bicep, sắp theo năng lượng tăng dần.',
-    en: 'A warm-up playlist for the first hour: deep, organic and melodic house from Kiasmos, Bonobo, Four Tet, Lane 8, Ben Böhmer, RÜFÜS DU SOL, Âme and Bicep, ordered by rising energy.',
+    vi: 'Playlist warm-up cho giờ đầu đêm: deep house, organic và melodic từ Kiasmos, Bonobo, Four Tet, Lane 8, Ben Böhmer, RÜFÜS DU SOL, Âme và Bicep, năng lượng tăng dần.',
+    en: 'Warm-up tracks for the first hour: deep, organic and melodic house from Kiasmos, Bonobo, Four Tet, Lane 8, Ben Böhmer, RÜFÜS DU SOL, Âme and Bicep, by rising energy.',
   },
   cover: PLAYLIST_MEDIA_A.warmUp,
   styles: ['deep-house', 'organic-house', 'melodic-techno', 'progressive-house'],
@@ -114,7 +114,7 @@ const warmUp: Playlist = {
   related: [
     { slug: 'playlist-peak-time', line: { vi: 'Playlist peak time · phần tiếp theo của đêm', en: 'Peak-time playlist · the next part of the night' } },
     { slug: 'playlist-house', line: { vi: 'Playlist house · nền tảng của dance music', en: 'House playlist · the foundation of dance music' } },
-    { slug: 'hoc-dj', line: { vi: 'Học DJ từ số 0 · từ controller đến set đầu tiên', en: 'Learn to DJ from zero · from the controller to your first set' } },
+    { slug: 'hoc-dj-tu-so-0', line: { vi: 'Học DJ từ số 0 · từ controller đến set đầu tiên', en: 'Learn to DJ from zero · from the controller to your first set' } },
     { slug: 'playlist-edm', line: { vi: 'Playlist EDM · mọi danh sách của FeestFinder', en: 'EDM playlists · every FeestFinder list' } },
   ],
   facts: [
