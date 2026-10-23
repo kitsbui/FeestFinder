@@ -87,7 +87,7 @@ const haNoi: CityGuide = {
     },
     {
       name: 'A Plus Hanoi',
-      tagline: { vi: 'mainstage, trance và melodic techno', en: 'mainstage, trance and melodic techno' },
+      tagline: { vi: 'mainstage và trance, DJ Mag hạng 43', en: 'mainstage and trance, DJ Mag No. 43' },
       area: { vi: 'Ba Đình, Yên Phụ', en: 'Ba Đình, Yên Phụ' },
       address: '78 Yên Phụ, Ba Đình, Hà Nội',
       hours: { vi: '21:00–02:00 theo danh sách của Trip.com (club không công bố giờ)', en: '21:00–02:00 per Trip.com\'s listing (the club publishes no hours)' },
@@ -97,8 +97,8 @@ const haNoi: CityGuide = {
       price: { vi: 'Đêm headliner theo coupon kèm một đồ uống: 599.000–899.000 ₫ bán trước, 1.199.000 ₫ tại cửa (Giuseppe Ottaviani, 16/8/2026)', en: 'Headliner nights by coupon with one drink: 599,000–899,000 ₫ in advance, 1,199,000 ₫ at the door (Giuseppe Ottaviani, 16 Aug 2026)' },
       url: 'https://aplushanoi.com/',
       why: {
-        vi: 'A Plus là superclub thứ hai của thành phố và là nơi của những tên tuổi mainstage: Vietcetera ghi nhận vị trí 67 trong DJ Mag Top 100 Clubs 2025, lần đầu một club Hà Nội vào danh sách, với sức chứa 1.000 người và dàn đèn chuẩn lễ hội. Chuỗi A+Global làm cùng DJ Mag (Fideles, Goom Gum), các lễ hội trong nhà Raverse và Manifestival, trance của Giuseppe Ottaviani, Ruben de Ronde và John O\'Callaghan, melodic techno của Argy (lần đầu tới Việt Nam, 24/1/2026, với hệ thống L-Acoustics) và Agents of Time. Giữa những đêm đó là Vietmix, ladies\' night và các show theo chủ đề. Vị trí ở Yên Phụ, giữa Trúc Bạch và Tây Hồ, cách phố cổ một cuốc xe ngắn.',
-        en: 'A Plus is the city\'s second superclub and the home of the mainstage names: Vietcetera reported 67th place in DJ Mag\'s Top 100 Clubs 2025, the first Hanoi club on the list, with room for 1,000 and festival-grade lighting. Its A+Global series runs with DJ Mag (Fideles, Goom Gum), its in-house festivals are Raverse and Manifestival, and its bookings run from trance (Giuseppe Ottaviani, Ruben de Ronde, John O\'Callaghan) to melodic techno (Argy\'s first show in Vietnam on 24 January 2026, on an L-Acoustics system, and Agents of Time). Between those nights come Vietmix, ladies\' nights and themed shows. It sits on Yên Phụ between Trúc Bạch and West Lake, a short ride from the Old Quarter.',
+        vi: 'A Plus là superclub thứ hai của thành phố và là nơi của những tên tuổi mainstage: club vào DJ Mag Top 100 Clubs lần đầu năm 2025 ở hạng 67, là club Hà Nội đầu tiên trong danh sách (Vietcetera), rồi lên hạng 43 năm 2026, với sức chứa 1.000 người và dàn đèn chuẩn lễ hội. Chuỗi A+Global làm cùng DJ Mag (Fideles, Goom Gum), các lễ hội trong nhà Raverse và Manifestival, trance của Giuseppe Ottaviani, Ruben de Ronde và John O\'Callaghan, melodic techno của Argy (lần đầu tới Việt Nam, 24/1/2026, với hệ thống L-Acoustics) và Agents of Time. Giữa những đêm đó là Vietmix, ladies\' night và các show theo chủ đề. Vị trí ở Yên Phụ, giữa Trúc Bạch và Tây Hồ, cách phố cổ một cuốc xe ngắn.',
+        en: 'A Plus is the city\'s second superclub and the home of the mainstage names: it entered DJ Mag\'s Top 100 Clubs at No. 67 in 2025, the first Hanoi club on the list (Vietcetera), and rose to No. 43 in 2026, with room for 1,000 and festival-grade lighting. Its A+Global series runs with DJ Mag (Fideles, Goom Gum), its in-house festivals are Raverse and Manifestival, and its bookings run from trance (Giuseppe Ottaviani, Ruben de Ronde, John O\'Callaghan) to melodic techno (Argy\'s first show in Vietnam on 24 January 2026, on an L-Acoustics system, and Agents of Time). Between those nights come Vietmix, ladies\' nights and themed shows. It sits on Yên Phụ between Trúc Bạch and West Lake, a short ride from the Old Quarter.',
       },
     },
     {

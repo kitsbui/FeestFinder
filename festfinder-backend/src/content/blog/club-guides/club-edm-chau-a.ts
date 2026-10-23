@@ -33,9 +33,9 @@ ${fig('vi')}
 
 ## Việt Nam: Hà Nội, TP.HCM và Đà Nẵng
 
-**Hà Nội** là thành phố underground nhất trong ba: Unmute mở tháng 11/2023 trong một chợ đầu mối ở Phúc Tân và trở thành phòng techno chính sau khi Savage đóng năm 2025; Le Maquis và Mirage giữ house và techno bên Hồ Tây, Birdcage là bass và drum & bass. Ở đầu kia, 1900 Le Théâtre và A Plus là những phòng lớn với mainstage và trance. Giờ đóng cửa là chỗ cần để ý: quy định năm 2016 cho phố cổ là 2 giờ sáng cuối tuần, trong khi các đêm underground ghi đến 5 giờ.
+**Hà Nội** là thành phố underground nhất trong ba: Unmute mở tháng 11/2023 trong một chợ đầu mối ở Phúc Tân và trở thành phòng techno chính sau khi Savage đóng năm 2025; Le Maquis và Mirage giữ house và techno bên Hồ Tây, Birdcage là bass và drum & bass. Ở đầu kia, 1900 Le Théâtre và A Plus, hạng 43 DJ Mag Top 100 Clubs 2026, là những phòng lớn với mainstage và trance. Giờ đóng cửa là chỗ cần để ý: quy định năm 2016 cho phố cổ là 2 giờ sáng cuối tuần, trong khi các đêm underground ghi đến 5 giờ.
 
-**TP.HCM** có hai club trong DJ Mag Top 100 Clubs 2026: APLUS Saigon hạng 59 và Ciné Saigon hạng 68, cả hai ở Quận 1. POCPOC Garden, Canalis và Lush hoàn thiện bức tranh từ house ngoài trời đến phòng thương mại. Tin đáng chú ý của mùa này là The Observatory, nhà của house và techno underground Sài Gòn từ năm 2013, đóng cửa cuối tháng 10/2026; sau đó, techno underground sẽ đi theo các nhóm tổ chức như Nhạc Gãy.
+**TP.HCM** có hai club trong DJ Mag Top 100 Clubs 2026: APLUS Saigon hạng 59 và Ciné Saigon hạng 68, cả hai ở Quận 1 (club Việt Nam thứ ba trong danh sách là APLUS Hanoi, hạng 43). POCPOC Garden, Canalis và Lush hoàn thiện bức tranh từ house ngoài trời đến phòng thương mại. Tin đáng chú ý của mùa này là The Observatory, nhà của house và techno underground Sài Gòn từ năm 2013, đóng cửa cuối tháng 10/2026; sau đó, techno underground sẽ đi theo các nhóm tổ chức như Nhạc Gãy.
 
 **Đà Nẵng** là thành phố biển: SAGA bên sông Hàn là phòng techno và mở đến 4 giờ sáng cuối tuần, Sky36 là sky bar trên tầng cao, còn An Thượng và biển Mỹ Khê có các pub và beach club. Phần lớn nơi miễn phí vào cửa; đêm có khách quốc tế ở SAGA là 250.000–550.000 ₫. Cả ba thành phố đều có lịch đêm nhạc trên FeestFinder, nên bạn có thể xem ai chơi tối nay trước khi chọn club.
 
@@ -111,9 +111,9 @@ ${fig('en')}
 
 ## Vietnam: Hanoi, Ho Chi Minh City and Da Nang
 
-**Hanoi** is the most underground of the three: Unmute opened in November 2023 inside a wholesale market in Phúc Tân and became the main techno room after Savage closed in 2025; Le Maquis and Mirage keep house and techno by West Lake, and Birdcage is bass and drum & bass. At the other end, 1900 Le Théâtre and A Plus are the big rooms for mainstage and trance. Closing time is the thing to watch: the 2016 rule for the Old Quarter is 2 am at weekends, while underground nights list 5 am.
+**Hanoi** is the most underground of the three: Unmute opened in November 2023 inside a wholesale market in Phúc Tân and became the main techno room after Savage closed in 2025; Le Maquis and Mirage keep house and techno by West Lake, and Birdcage is bass and drum & bass. At the other end, 1900 Le Théâtre and A Plus, No. 43 in DJ Mag's Top 100 Clubs 2026, are the big rooms for mainstage and trance. Closing time is the thing to watch: the 2016 rule for the Old Quarter is 2 am at weekends, while underground nights list 5 am.
 
-**Ho Chi Minh City** has two clubs in DJ Mag's Top 100 Clubs 2026: APLUS Saigon at No. 59 and Ciné Saigon at No. 68, both in District 1. POCPOC Garden, Canalis and Lush complete the picture, from open-air house to commercial rooms. The news of the season is that The Observatory, home of Saigon's underground house and techno since 2013, closes at the end of October 2026; after that the underground will travel with collectives such as Nhạc Gãy.
+**Ho Chi Minh City** has two clubs in DJ Mag's Top 100 Clubs 2026: APLUS Saigon at No. 59 and Ciné Saigon at No. 68, both in District 1 (the third Vietnamese club on the list is APLUS Hanoi, at No. 43). POCPOC Garden, Canalis and Lush complete the picture, from open-air house to commercial rooms. The news of the season is that The Observatory, home of Saigon's underground house and techno since 2013, closes at the end of October 2026; after that the underground will travel with collectives such as Nhạc Gãy.
 
 **Da Nang** is the beach city: SAGA on the Hàn riverfront is the techno room and stays open until 4 am at weekends, Sky36 is the sky bar high above the river, and An Thượng and Mỹ Khê beach have the pubs and beach clubs. Most places are free to enter; international nights at SAGA cost 250,000–550,000 ₫. All three cities have their nights listed on FeestFinder, so you can see who plays tonight before you pick a club.
 
@@ -186,20 +186,21 @@ export const clubEdmChauA: PackPost = {
   styles: ['techno', 'house', 'edm', 'mainstage', 'hard-techno'],
   facts: [
     { label: { vi: 'Thành phố', en: 'Cities' }, value: { vi: '11 ở 6 nước', en: '11 in 6 countries' } },
-    { label: { vi: 'DJ Mag Top 100 Clubs 2026', en: 'DJ Mag Top 100 Clubs 2026' }, value: { vi: 'Zouk 17 · PLAY X 27 · Zouk Tokyo 51 · Lion 57 · APLUS 59 · Ciné 68', en: 'Zouk 17 · PLAY X 27 · Zouk Tokyo 51 · Lion 57 · APLUS 59 · Ciné 68' } },
+    { label: { vi: 'DJ Mag Top 100 Clubs 2026', en: 'DJ Mag Top 100 Clubs 2026' }, value: { vi: 'Zouk 17 · PLAY X 27 · APLUS Hanoi 43 · Zouk Tokyo 51 · Lion 57 · APLUS Saigon 59 · Ciné 68', en: 'Zouk 17 · PLAY X 27 · APLUS Hanoi 43 · Zouk Tokyo 51 · Lion 57 · APLUS Saigon 59 · Ciné 68' } },
     { label: { vi: 'Mở suốt đêm', en: 'All night' }, value: { vi: 'Tokyo, Osaka (từ 2016)', en: 'Tokyo, Osaka (since 2016)' } },
     { label: { vi: 'Độ tuổi', en: 'Age' }, value: { vi: '18 Việt Nam · 19 Hàn · 20 Nhật · 21 Malaysia', en: '18 Vietnam · 19 Korea · 20 Japan · 21 Malaysia' } },
     { label: { vi: 'Cập nhật', en: 'Updated' }, value: { vi: 'Tháng 10/2026', en: 'October 2026' } },
   ],
   faq: [
     { q: { vi: 'Thành phố nào ở châu Á có club EDM tốt nhất?', en: 'Which Asian city has the best EDM clubs?' }, a: { vi: 'Tokyo có chiều sâu nhất (WOMB, ZEROTOKYO, Vent, mở suốt đêm hợp pháp); Singapore có club xếp hạng cao nhất (Zouk, hạng 17 DJ Mag 2026); Thượng Hải có cảnh techno sôi động nhất Trung Quốc.', en: 'Tokyo has the most depth (WOMB, ZEROTOKYO, Vent, legally open all night); Singapore has the highest-ranked club (Zouk, No. 17 in DJ Mag 2026); Shanghai has China\'s liveliest techno scene.' } },
-    { q: { vi: 'Club nào ở Việt Nam có trong DJ Mag Top 100 Clubs 2026?', en: 'Which Vietnamese clubs are in DJ Mag\'s Top 100 Clubs 2026?' }, a: { vi: 'APLUS Saigon hạng 59 và Ciné Saigon hạng 68, cả hai ở Quận 1, TP.HCM.', en: 'APLUS Saigon at No. 59 and Ciné Saigon at No. 68, both in District 1, Ho Chi Minh City.' } },
+    { q: { vi: 'Club nào ở Việt Nam có trong DJ Mag Top 100 Clubs 2026?', en: 'Which Vietnamese clubs are in DJ Mag\'s Top 100 Clubs 2026?' }, a: { vi: 'Ba club: APLUS Hanoi hạng 43, APLUS Saigon hạng 59 và Ciné Saigon hạng 68 (hai club sau ở Quận 1, TP.HCM).', en: 'Three: APLUS Hanoi at No. 43, APLUS Saigon at No. 59 and Ciné Saigon at No. 68 (the last two in District 1, Ho Chi Minh City).' } },
     { q: { vi: 'Đi club ở châu Á cần bao nhiêu tuổi?', en: 'What is the clubbing age in Asia?' }, a: { vi: '18 ở Việt Nam, 19 theo tuổi Hàn ở Seoul, 20 ở Nhật Bản và 21 ở Malaysia. Luôn mang hộ chiếu hoặc giấy tờ có ảnh bản gốc.', en: '18 in Vietnam, 19 by Korean reckoning in Seoul, 20 in Japan and 21 in Malaysia. Always carry your passport or original photo ID.' } },
     { q: { vi: 'Club ở châu Á mở đến mấy giờ?', en: 'How late do Asian clubs stay open?' }, a: { vi: 'Tokyo và Osaka mở suốt đêm hợp pháp từ 2016; Seoul thường đến 5–6 giờ, Thượng Hải 4–5 giờ; Singapore đóng 3 giờ (4 giờ thứ Bảy) theo luật; Việt Nam tuỳ club, hãy xem giờ đăng cho từng đêm.', en: 'Tokyo and Osaka may open all night since 2016; Seoul usually runs to 5–6 am and Shanghai to 4–5 am; Singapore closes at 3 am (4 am on Saturday) by law; in Vietnam it depends on the club, so check each night\'s hours.' } },
     { q: { vi: 'Zouk KL còn mở không?', en: 'Is Zouk KL still open?' }, a: { vi: 'Không. Zouk KL đóng hẳn tháng 11/2020; Zouk vẫn mở ở Singapore và Tokyo.', en: 'No. Zouk KL closed for good in November 2020; Zouk is still open in Singapore and Tokyo.' } },
   ],
   sources: [
     { title: 'Zouk Singapore – Top 100 Clubs 2026', url: 'https://djmag.com/top100clubs/2026/17/zouk-singapore', publisher: 'DJ Mag' },
+    { title: 'Top 100 Clubs 2026: No. 43 APLUS Hanoi', url: 'https://djmag.com/top100clubs/2026/43/aplus-hanoi', publisher: 'DJ Mag' },
     { title: 'Top 100 Clubs 2026: No. 59 APLUS Saigon', url: 'https://djmag.com/top100clubs/2026/59/aplus-saigon', publisher: 'DJ Mag' },
     { title: 'Ho Chi Minh City club The Observatory rings in ten years', url: 'https://ra.co/news/79830', publisher: 'Resident Advisor' },
     { title: 'Best clubs in Tokyo by music genre', url: 'https://www.timeout.com/tokyo/nightlife/best-clubs-in-tokyo-by-music-genre', publisher: 'Time Out Tokyo' },
