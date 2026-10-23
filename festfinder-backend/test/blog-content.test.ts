@@ -127,8 +127,8 @@ describe('blog content packs: written once in the repository, edited by the team
     assert.equal((await graph('/seo/blog/techno')).find((n) => n['@type'] === 'HowTo'), undefined, 'a genre guide is no how-to');
   });
 
-  it('reads a club guide’s clubs as NightClubs and a news post’s confirmed festival as a MusicEvent in a NewsArticle', async () => {
-    for (const slug of ['club-ha-noi', 'tomorrowland-thailand-2026']) {
+  it('reads a club guide’s clubs as NightClubs, a news post’s confirmed festival as a MusicEvent in a NewsArticle, a playlist as a MusicPlaylist', async () => {
+    for (const slug of ['club-ha-noi', 'tomorrowland-thailand-2026', 'playlist-techno']) {
       const id = (await env.ctx.db.query<{ id: string }>('select id from blog_posts where slug = $1', [slug])).rows[0].id;
       assert.equal((await env.as(admin).post(`/admin/posts/${id}/decision`, { action: 'approve' })).body.status, 'published');
     }
@@ -145,6 +145,9 @@ describe('blog content packs: written once in the repository, edited by the team
     const tl = events.itemListElement[0].item;
     assert.deepEqual([tl['@type'], tl.startDate, tl.endDate], ['MusicEvent', '2026-12-11', '2026-12-13']);
     assert.match(tl.url, /^https:\/\/[^/]*tomorrowland\.com\//);
+    // A playlist is a MusicPlaylist of its tracks.
+    const list = (await graph('/seo/blog/playlist-techno?lang=en')).find((n) => n['@type'] === 'MusicPlaylist') as unknown as { numTracks: number; track: { '@type': string }[] };
+    assert.ok(list.numTracks >= 10 && list.track.every((tr) => tr['@type'] === 'MusicRecording'));
     // A genre guide is neither.
     const techno = await graph('/seo/blog/techno');
     assert.ok(!techno.some((n) => String(n['@id']).endsWith('#venues') || String(n['@id']).endsWith('#events')));

@@ -8,5 +8,6 @@ import { clubGuides } from './club-guides/index.ts';
 import { djSkills } from './dj-skills/index.ts';
 import { edmGenres } from './edm-genres/index.ts';
 import { edmNews } from './edm-news/index.ts';
+import { playlists } from './playlists/index.ts';
 
-export const PACKS: BlogPack[] = [edmGenres, djSkills, clubGuides, edmNews];
+export const PACKS: BlogPack[] = [edmGenres, djSkills, clubGuides, edmNews, playlists];
