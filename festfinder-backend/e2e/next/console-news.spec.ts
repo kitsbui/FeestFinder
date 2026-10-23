@@ -49,7 +49,7 @@ test('the team switches a publication off and on, and hides a headline', async (
   await sw.click();
   await expect(row.getByText('Tắt')).toHaveCount(0);
   // The headlines tab: hide one, then show it again.
-  await page.getByRole('tab', { name: 'Tin' }).click();
+  await page.getByRole('tab', { name: 'Tin', exact: true }).click();
   const item = page.getByRole('row').filter({ hasText: 'Boiler Room returns to Bangkok' });
   await item.getByRole('button', { name: 'Ẩn' }).click();
   await expect(item).toHaveCount(0);
@@ -59,5 +59,24 @@ test('the team switches a publication off and on, and hides a headline', async (
   await hidden.getByRole('button', { name: 'Hiện' }).click();
   await expect(hidden).toHaveCount(0);
   expect((await (await page.request.get('/news?region=asia')).json()).items.some((i: { title: string }) => i.title.startsWith('Boiler Room'))).toBe(true);
+  expect(problems).toEqual([]);
+});
+
+test('the team adds a style’s chart, which reads nothing until the provider’s keys are set', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signInWith(page, ADMIN);
+  const problems = watch(page);
+  await page.goto('/console/news?tab=charts');
+  await expect(page.getByText('Beatport: chưa có khoá')).toBeVisible();
+  await page.getByRole('button', { name: 'Thêm bảng xếp hạng' }).first().click();
+  const drawer = page.getByRole('dialog', { name: 'Thêm bảng xếp hạng' });
+  await drawer.getByLabel('Tên').fill('Beatport Top 100 Techno (demo)');
+  await drawer.getByLabel('Mã thể loại Beatport').fill('6');
+  await drawer.getByLabel('Trang bảng xếp hạng').fill('https://www.beatport.com/genre/techno-peak-time-driving/6/top-100');
+  await drawer.getByRole('button', { name: 'Lưu' }).click();
+  const row = page.getByRole('row').filter({ hasText: 'Beatport Top 100 Techno (demo)' });
+  await expect(row).toBeVisible();
+  await row.getByRole('button', { name: 'Đọc Beatport Top 100 Techno (demo) ngay' }).click();
+  await expect(row.getByText('Lỗi')).toBeVisible();
   expect(problems).toEqual([]);
 });

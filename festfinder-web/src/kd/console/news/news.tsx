@@ -3,7 +3,8 @@
  * /console/news: the news feed (festfinder-backend routes/news.ts): the publications whose feeds
  * FeestFinder reads, each with its last read and a switch, "Đọc ngay" and a form in a drawer; and
  * the headlines read so far, each with "Ẩn" (a hidden headline leaves the blog's news page and
- * can be shown again). "Thêm nguồn gợi ý" lists the suggested publications once.
+ * can be shown again). "Thêm nguồn gợi ý" lists the suggested publications once. A third tab holds
+ * the style hub's charts (charts.tsx).
  */
 import { useState } from 'react';
 import { ArrowSquareOutIcon, ArrowsClockwiseIcon, PencilSimpleIcon, PlusIcon, SparkleIcon } from '@phosphor-icons/react/ssr';
@@ -17,6 +18,7 @@ import { Row, Table, Tabs } from '../../ui/shell';
 import type { NewsItem } from '../../web/blog/model';
 import { act, Body, Drawer, Empty, Field, Loaded, PageHead, Pill, stamp, useLoad, useQuery } from '../kit';
 import { useConsole } from '../root';
+import { ChartsTab } from './charts';
 import { NEWS } from './copy';
 
 type Region = 'global' | 'asia' | 'vietnam';
@@ -39,7 +41,7 @@ export function ConsoleNews() {
   const T = pick(NEWS, lang);
   const kd = useKd();
   const [params, setParams] = useQuery();
-  const tab = params.get('tab') === 'items' ? 'items' : 'sources';
+  const tab = params.get('tab') === 'items' || params.get('tab') === 'charts' ? params.get('tab')! : 'sources';
   const sources = useLoad<Sources>('/admin/news');
   const [form, setForm] = useState<{ source?: Source } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export function ConsoleNews() {
         </>}
       />
       <Body>
-        <Tabs label={T.title} current={tab} onSelect={(k) => setParams({ tab: k === 'items' ? 'items' : null })} items={[{ key: 'sources', label: T.sources }, { key: 'items', label: T.items }]} />
+        <Tabs label={T.title} current={tab} onSelect={(k) => setParams({ tab: k === 'sources' ? null : k, source: null, hidden: null })} items={[{ key: 'sources', label: T.sources }, { key: 'items', label: T.items }, { key: 'charts', label: T.charts }]} />
         {tab === 'sources' ? (
           <Loaded load={sources}>
             {(d) => !d.items.length ? (
@@ -111,7 +113,7 @@ export function ConsoleNews() {
               </Table>
             )}
           </Loaded>
-        ) : <ItemsTab lang={lang} sources={sources.data?.items ?? []} onChanged={sources.reload} />}
+        ) : tab === 'items' ? <ItemsTab lang={lang} sources={sources.data?.items ?? []} onChanged={sources.reload} /> : <ChartsTab lang={lang} />}
       </Body>
       {form ? <SourceForm key={form.source?.id ?? 'new'} lang={lang} source={form.source} onClose={() => setForm(null)} onSaved={() => { setForm(null); sources.reload(); }} /> : null}
     </>
