@@ -11,8 +11,8 @@ const hardstyle: Playlist = {
     en: 'Hardstyle playlist: 12 anthems, Qlimax 2003 to Defqon.1 2026',
   },
   excerpt: {
-    vi: 'Playlist hardstyle 12 bài kể lịch sử dòng nhạc qua anthem của Qlimax và Defqon.1, từ The Prophet năm 2003 đến "Sacred Oath" năm 2026: euphoric, rawstyle, mỗi bài một lý do nghe.',
-    en: 'A 12-track hardstyle playlist told through the Qlimax and Defqon.1 anthems, from The Prophet in 2003 to 2026\'s "Sacred Oath": euphoric and raw, each with a reason to listen.',
+    vi: 'Playlist hardstyle 12 bài kể lịch sử dòng nhạc qua anthem của Qlimax và Defqon.1, từ The Prophet năm 2003 đến "Sacred Oath" năm 2026: euphoric, rawstyle, kèm lý do nghe.',
+    en: 'A 12-track hardstyle playlist told through the Qlimax and Defqon.1 anthems, from The Prophet in 2003 to 2026\'s "Sacred Oath": euphoric and raw, and why.',
   },
   cover: PLAYLIST_MEDIA_B.hardstyle,
   styles: ['hardstyle', 'rawstyle', 'hard-dance'],
