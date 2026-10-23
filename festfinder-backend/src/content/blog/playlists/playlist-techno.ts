@@ -11,8 +11,8 @@ const techno: Playlist = {
     en: 'Techno playlist: 11 tracks from Energy Flash to Overdrive',
   },
   excerpt: {
-    vi: 'Playlist techno 11 bài, từ Energy Flash (1990) và Spastik của Plastikman đến Amelie Lens và Charlotte de Witte 2023: peak time, hypnotic, hard techno, mỗi bài một lý do nghe.',
-    en: 'An 11-track techno playlist from Energy Flash (1990) and Plastikman\'s Spastik to Amelie Lens and Charlotte de Witte in 2023: peak time, hypnotic and hard, each with a reason.',
+    vi: 'Playlist techno 11 bài, từ Energy Flash (1990) và Spastik của Plastikman đến Amelie Lens và Charlotte de Witte 2023: peak time, hypnotic, hard techno, kèm lý do nghe.',
+    en: 'An 11-track techno playlist from Energy Flash (1990) and Plastikman\'s Spastik to Amelie Lens and Charlotte de Witte in 2023: peak time, hypnotic, hard, and why.',
   },
   cover: PLAYLIST_MEDIA_B.techno,
   styles: ['techno', 'hard-techno', 'minimal'],
@@ -26,8 +26,8 @@ const techno: Playlist = {
       youtube: '43W62fFY8C4', artist: 'Joey Beltram', title: 'Energy Flash', year: 1990, channel: 'GROUND:FAULT:INTERRUPT', label: 'R&S Records',
       style: { vi: 'Techno thời đầu', en: 'Early techno' },
       note: {
-        vi: 'Joey Beltram, DJ người New York, phát hành "Energy Flash" trên R&S Records, label Bỉ khi đó đã bảy năm tuổi (Beatportal). Bài gần như không có giai điệu: một tiếng stab lặp, bassline u tối và giọng thì thầm. Hãy nghe cách sáu phút chỉ đổi rất ít mà vẫn giữ được sàn, đó là bài học đầu tiên của techno.',
-        en: 'New York DJ Joey Beltram released "Energy Flash" on R&S Records, a Belgian label already seven years old by then (Beatportal). There is barely a melody: one looping stab, a dark bassline and a whispered voice. Listen to how six minutes change very little and still hold a floor; that is techno\'s first lesson.',
+        vi: 'Joey Beltram, DJ người New York, phát hành "Energy Flash" trên R&S Records, label Bỉ khi đó đã bảy năm tuổi (Beatportal). Bài gần như không có giai điệu: một tiếng stab lặp và bassline u tối. Hãy nghe cách sáu phút chỉ đổi rất ít mà vẫn giữ được sàn, đó là bài học đầu tiên của techno.',
+        en: 'New York DJ Joey Beltram released "Energy Flash" on R&S Records, a Belgian label already seven years old by then (Beatportal). There is barely a melody: one looping stab and a dark bassline. Listen to how six minutes change very little and still hold a floor; that is techno\'s first lesson.',
       },
     },
     {
