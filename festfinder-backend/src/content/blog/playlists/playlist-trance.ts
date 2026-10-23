@@ -11,8 +11,8 @@ const trance: Playlist = {
     en: 'Trance playlist: 12 tracks from Age of Love to ASOT 2026',
   },
   excerpt: {
-    vi: 'Playlist trance 12 bài, từ "The Age of Love" và "Children" thập niên 1990 qua "Sandstorm", "Saltwater" đến anthem A State of Trance 2026: mỗi bài kèm năm, label và lý do nghe.',
-    en: 'A 12-track trance playlist from 1990s "The Age of Love" and "Children" through "Sandstorm" and "Saltwater" to the 2026 A State of Trance anthem, with years, labels and why.',
+    vi: 'Playlist trance 12 bài, từ "The Age of Love" và "Children" thập niên 1990 qua "Sandstorm", "Saltwater" đến anthem A State of Trance 2026, kèm năm, label và lý do nghe.',
+    en: 'A 12-track trance playlist from 1990s "The Age of Love" and "Children" through "Sandstorm" and "Saltwater" to the 2026 A State of Trance anthem: years, labels, why.',
   },
   cover: PLAYLIST_MEDIA_B.trance,
   styles: ['trance'],
