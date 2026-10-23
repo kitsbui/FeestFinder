@@ -11,8 +11,8 @@ const year2026: Playlist = {
     en: 'Top dance tracks of 2026: the 11 that shaped the year',
   },
   excerpt: {
-    vi: 'Những bài dance định hình năm 2026: ANOTR, Swedish House Mafia, John Summit, Calvin Harris, HUGEL, Prospa và UK garage của Silva Bumpa, mỗi bài có player và lý do nên nghe.',
-    en: 'The dance tracks that shaped 2026: ANOTR, Swedish House Mafia, John Summit, Calvin Harris, HUGEL, Prospa and Silva Bumpa\'s UK garage, each with a player and why it matters.',
+    vi: 'Những bài dance định hình năm 2026: ANOTR, Swedish House Mafia, John Summit, Calvin Harris, HUGEL, Prospa và UK garage của Silva Bumpa, mỗi bài có player và lý do nghe.',
+    en: 'The dance tracks that shaped 2026: ANOTR, Swedish House Mafia, John Summit, Calvin Harris, HUGEL, Prospa and Silva Bumpa\'s UK garage, each with a player and why.',
   },
   cover: PLAYLIST_MEDIA_A.year,
   styles: ['house', 'uk-garage', 'mainstage', 'electro'],
@@ -42,16 +42,16 @@ const year2026: Playlist = {
       youtube: 'TSZo2eZzD6s', artist: 'John Summit ft. LAVINIA', title: 'SHADOWS', channel: 'John Summit', year: 2026,
       style: { vi: 'House', en: 'House' },
       note: {
-        vi: 'Phát hành ngày 11/2/2026, đến tháng 10 bài đã gần 24 triệu lượt nghe trên Spotify theo EDMTunes, và ngày 16/10 có thêm EP ba bản remix của REBRN, EdiP và Kade Findley x BLOOM. Đây là bài đi cùng John Summit suốt tour Ctrl Escape ở các arena Bắc Mỹ: giọng LAVINIA tối, bassline đều và kéo dài.',
-        en: 'Released on 11 February 2026, it was close to 24 million Spotify streams by October according to EDMTunes, and on 16 October it gained a three-track remix EP by REBRN, EdiP and Kade Findley x BLOOM. It soundtracks John Summit\'s Ctrl Escape arena tour across North America: LAVINIA\'s dark vocal over a steady, rolling bassline.',
+        vi: 'Phát hành ngày 11/2/2026, đến tháng 10 bài đã gần 24 triệu lượt nghe trên Spotify theo EDMTunes, và ngày 16/10 có thêm EP ba bản remix của REBRN, EdiP và Kade Findley x BLOOM. Bài ra trong năm John Summit đi tour Ctrl Escape ở các arena Bắc Mỹ: giọng LAVINIA tối, bassline đều và kéo dài.',
+        en: 'Released on 11 February 2026, it was close to 24 million Spotify streams by October according to EDMTunes, and on 16 October it gained a three-track remix EP by REBRN, EdiP and Kade Findley x BLOOM. It arrived in the year of John Summit\'s Ctrl Escape arena tour across North America: LAVINIA\'s dark vocal over a steady, rolling bassline.',
       },
     },
     {
       youtube: 'VCUSH0pWnTc', artist: 'Calvin Harris, Jazzy', title: 'Satisfy', channel: 'CalvinHarrisVEVO', year: 2026,
       style: { vi: 'Piano house', en: 'Piano house' },
       note: {
-        vi: 'Ra ngày 8/5/2026, EDM.com gọi đây là bài house ấm áp dẫn dắt bằng piano, đúng lúc mùa festival bắt đầu. Calvin Harris mang bài đi khắp mùa diễn ở Ushuaïa Ibiza và Tomorrowland, còn ca sĩ kiêm DJ người Ireland Jazzy hát nhẹ phía trên. Một bài cho hoàng hôn và các sân khấu ngoài trời, dễ nghe ngay lần đầu.',
-        en: 'Out on 8 May 2026, it was described by EDM.com as a warm, piano-driven house track arriving just as festival season began. Calvin Harris carried it through his Ushuaïa Ibiza residency and Tomorrowland, with the Irish singer and DJ Jazzy floating above it. A track for sunsets and open-air stages that lands on the first listen.',
+        vi: 'Ra ngày 8/5/2026, EDM.com gọi đây là bài house ấm áp dẫn dắt bằng piano, đúng lúc mùa festival bắt đầu. Bài ra ngay trước mùa diễn của Calvin Harris ở Ushuaïa Ibiza và suất diễn chính ở Tomorrowland, còn ca sĩ kiêm DJ người Ireland Jazzy hát nhẹ phía trên. Một bài cho hoàng hôn và các sân khấu ngoài trời, dễ nghe ngay lần đầu.',
+        en: 'Out on 8 May 2026, it was described by EDM.com as a warm, piano-driven house track arriving just as festival season began. It arrived just before Calvin Harris\'s Ushuaïa Ibiza residency and his Tomorrowland headline set, with the Irish singer and DJ Jazzy floating above it. A track for sunsets and open-air stages that lands on the first listen.',
       },
     },
     {
@@ -66,8 +66,8 @@ const year2026: Playlist = {
       youtube: 'gJYjbDnyx-o', artist: 'Prospa, Cloonee, Sybil', title: 'Free Your Mind', channel: 'CircoLoco Records', year: 2026, label: 'CircoLoco Records',
       style: { vi: 'House', en: 'House' },
       note: {
-        vi: 'Bộ đôi Prospa của Anh cùng Cloonee làm nên một bài club cháy chậm, theo cách nói của Official Charts, và là bài chủ đề của album Prospa phát hành trên CircoLoco Records năm 2026. Groove house đều, piano và giọng hát lặp lại làm phòng nóng dần thay vì bùng nổ ngay: hợp với giờ thứ hai của một set.',
-        en: 'The English duo Prospa and Cloonee made what Official Charts calls a slow-burning club track, the title track of Prospa\'s 2026 album on CircoLoco Records. A steady house groove, piano and a looping vocal warm the room up gradually instead of exploding at once: right for the second hour of a set.',
+        vi: 'Bộ đôi người Anh Prospa, cùng Cloonee và Sybil, làm nên một bài club cháy chậm, theo cách nói của Official Charts, và là bài chủ đề của album Prospa phát hành trên CircoLoco Records năm 2026. Groove house đều, piano và giọng hát lặp lại làm phòng nóng dần thay vì bùng nổ ngay: hợp với giờ thứ hai của một set.',
+        en: 'The English duo Prospa, with Cloonee and Sybil, made what Official Charts calls a slow-burning club track, the title track of Prospa\'s 2026 album on CircoLoco Records. A steady house groove, piano and a looping vocal warm the room up gradually instead of exploding at once: right for the second hour of a set.',
       },
     },
     {
@@ -90,7 +90,7 @@ const year2026: Playlist = {
       youtube: 'ULPcTknBMqw', artist: 'Silva Bumpa', title: 'On 2nite', channel: 'SilvaBumpaVEVO', year: 2026,
       style: { vi: 'UK garage', en: 'UK garage' },
       note: {
-        vi: 'Official Charts gọi đây là bài bùng nổ của Silva Bumpa, ứng viên "bài hát mùa hè 2026" ở mục dance. Nhà sản xuất Leeds đưa UK garage từ các phòng club nhỏ lên bảng xếp hạng phổ thông mà vẫn giữ nhịp lệch và bassline đặc trưng. Nghe cùng "HOLD DA PHONE" để thấy cả hai mặt của anh.',
+        vi: 'Official Charts gọi đây là bài bùng nổ của Silva Bumpa, ứng viên "bài hát mùa hè 2026" ở mục dance. Anh đưa UK garage từ các phòng club nhỏ lên bảng xếp hạng phổ thông mà vẫn giữ nhịp lệch và bassline đặc trưng. Nghe cùng "HOLD DA PHONE" để thấy cả hai mặt của anh.',
         en: 'Official Charts calls it Silva Bumpa\'s breakthrough banger and a dance contender for the song of summer 2026. He takes UK garage from small club rooms into the mainstream charts while keeping the swung rhythm and the signature bassline. Play it next to "HOLD DA PHONE" to hear both sides of him.',
       },
     },
@@ -106,8 +106,8 @@ const year2026: Playlist = {
       youtube: 'nS-fOh1CfhQ', artist: 'Disco Lines & Tinashe', title: 'No Broke Boys', channel: 'Disco Lines', year: 2025,
       style: { vi: 'House, dance-pop', en: 'House, dance-pop' },
       note: {
-        vi: 'Phát hành ngày 6/6/2025, nên đây là bài của năm ngoái; chúng tôi giữ trong danh sách vì nó vẫn đứng số 1 Hot Dance/Electronic Songs của Billboard vào tháng 1/2026, sau hơn 30 tuần trên bảng. Bản remix của Disco Lines biến bài R&B của Tinashe thành một hit house toàn cầu, lọt top 5 ở Anh, Úc và Đức.',
-        en: 'Released on 6 June 2025, so it belongs to last year; it stays on this list because it still sat at No. 1 on Billboard\'s Hot Dance/Electronic Songs in January 2026, more than 30 weeks into its run. Disco Lines\' remix turned Tinashe\'s R&B song into a global house hit, top five in the UK, Australia and Germany.',
+        vi: 'Phát hành ngày 6/6/2025, nên đây là bài của năm ngoái; chúng tôi giữ trong danh sách vì nó vẫn đứng số 1 Hot Dance/Electronic Songs của Billboard vào tháng 1/2026, sau khoảng 30 tuần trên bảng. Bản remix của Disco Lines biến bài R&B của Tinashe thành một hit house toàn cầu, lọt top 5 ở Anh, Úc và Đức.',
+        en: 'Released on 6 June 2025, so it belongs to last year; it stays on this list because it still sat at No. 1 on Billboard\'s Hot Dance/Electronic Songs in January 2026, about 30 weeks into its run. Disco Lines\' remix turned Tinashe\'s R&B song into a global house hit, top five in the UK, Australia and Germany.',
       },
     },
   ],
