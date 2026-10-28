@@ -1,7 +1,7 @@
 'use client';
 /**
  * /console/news?tab=charts: the charts the style hub shows (festfinder-backend routes/styles.ts,
- * services/charts.ts): each a Beatport genre's top 100 or a Spotify playlist, for one style, with
+ * services/charts.ts): each a YouTube Music playlist, a Beatport genre's top 100 or a Spotify playlist, for one style, with
  * its last read, a switch, "Đọc ngay" and a form in a drawer. A provider without its keys in the
  * environment reads nothing; the page says which.
  */
@@ -18,16 +18,16 @@ import { Row, Table } from '../../ui/shell';
 import { act, Drawer, Empty, Field, Loaded, Pill, stamp, useLoad } from '../kit';
 import { NEWS } from './copy';
 
-type Provider = 'beatport' | 'spotify';
+type Provider = 'beatport' | 'spotify' | 'youtube';
 interface Chart {
   id: string; provider: Provider; name: string; style: { key: string }; externalId: string; url: string; enabled: boolean; intervalMinutes: number;
   lastRunAt: string | null; lastError: string | null; lastCount: number | null; entries: number;
 }
 interface Charts { items: Chart[]; providers: Record<Provider, boolean> }
 
-const PROVIDERS: Provider[] = ['beatport', 'spotify'];
+const PROVIDERS: Provider[] = ['youtube', 'beatport', 'spotify'];
 const COLS = 'minmax(220px,2fr) minmax(120px,1fr) 90px minmax(160px,1fr) 70px 60px 88px';
-const LABEL: Record<Provider, string> = { beatport: 'Beatport', spotify: 'Spotify' };
+const LABEL: Record<Provider, string> = { beatport: 'Beatport', spotify: 'Spotify', youtube: 'YouTube Music' };
 
 export function ChartsTab({ lang }: { lang: Lang }) {
   const T = pick(NEWS, lang);
@@ -91,7 +91,7 @@ function ChartForm({ lang, chart, onClose, onSaved }: { lang: Lang; chart?: Char
   const T = pick(NEWS, lang);
   const kd = useKd();
   const editing = !!chart;
-  const provider: Provider = chart?.provider ?? 'beatport';
+  const provider: Provider = chart?.provider ?? 'youtube';
   const [f, setF] = useState({
     provider, name: chart?.name ?? '', style: chart?.style.key ?? 'techno', externalId: chart?.externalId ?? '', url: chart?.url ?? '',
     hours: String(Math.round((chart?.intervalMinutes ?? 1440) / 60)), enabled: chart?.enabled ?? true,
@@ -126,7 +126,7 @@ function ChartForm({ lang, chart, onClose, onSaved }: { lang: Lang; chart?: Char
         </Field>
       </div>
       <Field label={T.name} htmlFor="chart-name"><Input id="chart-name" value={f.name} placeholder={T.chartNamePh} onChange={(e) => set('name')(e.target.value)} /></Field>
-      <Field label={f.provider === 'beatport' ? T.genreId : T.playlistId} hint={f.provider === 'beatport' ? T.genreIdHint : T.playlistIdHint} htmlFor="chart-id"><Input id="chart-id" value={f.externalId} onChange={(e) => set('externalId')(e.target.value)} /></Field>
+      <Field label={{ beatport: T.genreId, spotify: T.playlistId, youtube: T.ytPlaylistId }[f.provider]} hint={{ beatport: T.genreIdHint, spotify: T.playlistIdHint, youtube: T.ytPlaylistIdHint }[f.provider]} htmlFor="chart-id"><Input id="chart-id" value={f.externalId} onChange={(e) => set('externalId')(e.target.value)} /></Field>
       <Field label={T.chartUrl} htmlFor="chart-url"><Input id="chart-url" type="url" value={f.url} onChange={(e) => set('url')(e.target.value)} /></Field>
       <Field label={T.everyHours} hint={T.everyHoursHint} htmlFor="chart-every"><Input id="chart-every" type="number" min={1} max={168} value={f.hours} onChange={(e) => set('hours')(e.target.value)} /></Field>
       <SwitchRow label={T.enabled} checked={f.enabled} onChange={set('enabled')} />

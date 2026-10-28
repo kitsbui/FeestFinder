@@ -13,6 +13,8 @@ import { inLang } from '../../link';
 import { BLOG } from './copy';
 import { text } from './model';
 
+const PROVIDER: Record<string, string> = { youtube: 'YouTube Music', beatport: 'Beatport', spotify: 'Spotify' };
+
 interface Hub {
   style: { key: string; label: Pair };
   nights: number; artists: number; news: number;
@@ -59,7 +61,7 @@ export async function StyleHub({ style, lang, except }: { style: string; lang: L
             ))}
           </ol>
           <a href={c.url} target="_blank" rel="noopener" className="kd-s kd-hit inline-flex items-center gap-1 self-start text-info underline underline-offset-2">
-            {fill(T.hubChartMore, { s: c.provider === 'beatport' ? 'Beatport' : 'Spotify' })}<ArrowSquareOutIcon size={12} aria-hidden="true" />
+            {fill(T.hubChartMore, { s: PROVIDER[c.provider] ?? c.provider })}<ArrowSquareOutIcon size={12} aria-hidden="true" />
           </a>
         </div>
       ))}

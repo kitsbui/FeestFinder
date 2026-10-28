@@ -68,8 +68,12 @@ test('the team adds a style’s chart, which reads nothing until the provider’
   const problems = watch(page);
   await page.goto('/console/news?tab=charts');
   await expect(page.getByText('Beatport: chưa có khoá')).toBeVisible();
+  await expect(page.getByText('YouTube Music: chưa có khoá')).toBeVisible();
   await page.getByRole('button', { name: 'Thêm bảng xếp hạng' }).first().click();
   const drawer = page.getByRole('dialog', { name: 'Thêm bảng xếp hạng' });
+  // A new chart is a YouTube Music playlist unless the team picks another provider.
+  await expect(drawer.getByLabel('Mã playlist YouTube')).toBeVisible();
+  await drawer.getByLabel('Nguồn', { exact: true }).selectOption('beatport');
   await drawer.getByLabel('Tên').fill('Beatport Top 100 Techno (demo)');
   await drawer.getByLabel('Mã thể loại Beatport').fill('6');
   await drawer.getByLabel('Trang bảng xếp hạng').fill('https://www.beatport.com/genre/techno-peak-time-driving/6/top-100');

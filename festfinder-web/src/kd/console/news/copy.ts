@@ -79,6 +79,8 @@ export const NEWS = {
   genreIdHint: { en: 'The number in the genre page\'s address', vi: 'Con số trong địa chỉ trang thể loại' },
   playlistId: { en: 'Spotify playlist ID', vi: 'Mã playlist Spotify' },
   playlistIdHint: { en: 'The 22 characters after /playlist/', vi: '22 ký tự sau /playlist/' },
+  ytPlaylistId: { en: 'YouTube playlist ID', vi: 'Mã playlist YouTube' },
+  ytPlaylistIdHint: { en: 'What follows list= in the address', vi: 'Phần sau list= trong địa chỉ' },
   chartUrl: { en: 'Chart page', vi: 'Trang bảng xếp hạng' },
   everyHours: { en: 'Read every (hours)', vi: 'Đọc lại sau (giờ)' },
   everyHoursHint: { en: '1–168', vi: '1–168' },

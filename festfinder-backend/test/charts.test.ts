@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { setup, type TestEnv } from './helpers.ts';
 import { jobs } from '../src/jobs.ts';
-import { type ChartFetch, readBeatport, readSpotify, refreshDueCharts } from '../src/services/charts.ts';
+import { type ChartFetch, readBeatport, readSpotify, readYoutube, refreshDueCharts } from '../src/services/charts.ts';
 
 /*
  * Charts (migration 064, services/charts.ts) and the style hub (routes/styles.ts): a style's top
@@ -21,9 +21,10 @@ function fakeFetch(): ChartFetch & { calls: string[] } {
     calls,
     async token(url) { calls.push(`token ${url}`); return { access_token: 'tok' }; },
     async get(url, headers) {
-      calls.push(`get ${url} ${headers.authorization}`);
+      calls.push(`get ${url} ${headers.authorization ?? headers['x-goog-api-key']}`);
       if (url.includes('api.beatport.com/v4/catalog/genres/6/top/100')) return fixture('beatport-top.json');
       if (url.includes('api.spotify.com/v1/playlists/pl1/tracks')) return fixture('spotify-playlist.json');
+      if (url.startsWith('https://www.googleapis.com/youtube/v3/playlistItems?') && url.includes('playlistId=PLyt1')) return fixture(url.includes('pageToken=P2') ? 'youtube-page2.json' : 'youtube-page1.json');
       throw new Error('status 404');
     },
   };
@@ -50,6 +51,21 @@ describe('reading a chart', () => {
   });
 });
 
+describe('reading a YouTube Music playlist', () => {
+  it('reads its videos in order across pages: a Topic upload as the track, a label’s “Artist - Title” split, video tags dropped, a deleted video left out, the key never in the address', async () => {
+    const io = fakeFetch();
+    const out = await readYoutube(io, { key: 'yt-key' }, 'PLyt1');
+    assert.deepEqual(out.map((t) => [t.rank, t.artist, t.title, t.label, t.releasedOn, t.imageUrl]), [
+      [1, 'Amelie Lens', 'Lose Control', null, '2026-08-21', 'https://i.ytimg.com/vi/aaaaaaaaaa1/hqdefault.jpg'],
+      [2, 'Sara Landry', 'Rave Alarm', 'Drumcode', '2026-10-10', 'https://i.ytimg.com/vi/cccccccccc3/mqdefault.jpg'],
+      [3, 'Anyma', 'Hypnotised', null, null, null],
+    ]);
+    assert.equal(out[0].url, 'https://music.youtube.com/watch?v=aaaaaaaaaa1&list=PLyt1');
+    assert.equal(io.calls.length, 2);
+    assert.ok(io.calls.every((c) => !c.split(' ')[1].includes('yt-key') && c.endsWith(' yt-key')));
+  });
+});
+
 describe('charts refreshed on a schedule and the style hub', () => {
   let env: TestEnv;
   let admin: string;
@@ -70,7 +86,7 @@ describe('charts refreshed on a schedule and the style hub', () => {
     assert.equal((await env.as().get('/admin/charts')).status, 401);
     const list = (await env.as(admin).get('/admin/charts')).body;
     assert.equal(list.items.length, 2);
-    assert.deepEqual(list.providers, { beatport: false, spotify: false }, 'no keys in the test environment');
+    assert.deepEqual(list.providers, { beatport: false, spotify: false, youtube: false }, 'no keys in the test environment');
   });
 
   it('reads nothing without keys, and with them replaces each chart’s entries on its interval', async () => {

@@ -12,6 +12,9 @@ import { styleItem } from './artists.ts';
  *     client credentials; access to the API is granted by Beatport on request).
  *   - Spotify: the tracks of a playlist (SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET, client
  *     credentials): a playlist the team keeps, or any public one Spotify lets the API read.
+ *   - YouTube Music: the videos of a public playlist (YOUTUBE_API_KEY, YouTube Data API v3,
+ *     free quota; owner 2026-10-28): YouTube Music's editorial lists and the labels' own, picked
+ *     in migration 066. YouTube's public RSS feed of a playlist is not read: it no longer answers.
  *
  * A source names its style and the chart; `refreshCharts` reads each due source on its interval
  * and replaces its entries. The style's playlist posts and the style hub (GET /styles/:key) show
@@ -19,7 +22,7 @@ import { styleItem } from './artists.ts';
  * and the Console says so.
  */
 
-export const CHART_PROVIDERS = ['beatport', 'spotify'] as const;
+export const CHART_PROVIDERS = ['beatport', 'spotify', 'youtube'] as const;
 export type ChartProvider = (typeof CHART_PROVIDERS)[number];
 
 export interface ChartTrack { rank: number; artist: string; title: string; label: string | null; releasedOn: string | null; url: string | null; imageUrl: string | null; externalId: string | null }
@@ -31,7 +34,7 @@ export interface ChartFetch {
 }
 
 /** The hosts the providers live on: nothing else is ever asked. */
-const HOSTS = ['https://api.beatport.com/', 'https://accounts.spotify.com/', 'https://api.spotify.com/'];
+const HOSTS = ['https://api.beatport.com/', 'https://accounts.spotify.com/', 'https://api.spotify.com/', 'https://www.googleapis.com/youtube/v3/'];
 const allowed = (url: string) => { if (!HOSTS.some((h) => url.startsWith(h))) throw new Error(`chart fetch refused: ${url}`); };
 
 export const realChartFetch: ChartFetch = {
@@ -51,10 +54,11 @@ export const realChartFetch: ChartFetch = {
   },
 };
 
-export interface ChartKeys { beatport?: { id: string; secret: string }; spotify?: { id: string; secret: string } }
+export interface ChartKeys { beatport?: { id: string; secret: string }; spotify?: { id: string; secret: string }; youtube?: { key: string } }
 export const chartKeysFromEnv = (env = process.env): ChartKeys => ({
   beatport: env.BEATPORT_CLIENT_ID && env.BEATPORT_CLIENT_SECRET ? { id: env.BEATPORT_CLIENT_ID, secret: env.BEATPORT_CLIENT_SECRET } : undefined,
   spotify: env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET ? { id: env.SPOTIFY_CLIENT_ID, secret: env.SPOTIFY_CLIENT_SECRET } : undefined,
+  youtube: env.YOUTUBE_API_KEY ? { key: env.YOUTUBE_API_KEY } : undefined,
 });
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -101,12 +105,52 @@ export async function readSpotify(io: ChartFetch, keys: { id: string; secret: st
   return out;
 }
 
+/** What a video's title adds that a chart does not print: "(Official Video)", "[Official Audio]", "| Lyric Video"… */
+const VIDEO_TAGS = /\s*[([](?:official\s*)?(?:music\s*)?(?:video|audio|visuali[sz]er|lyric(?:s)?(?:\s*video)?|clip|hd|4k)[)\]]|\s*\|\s*(?:official|lyric).*$/gi;
+
+/**
+ * A YouTube playlist's videos in their order (Data API v3 playlistItems, the key in a header, never
+ * the address), up to 100. An upload of a "… - Topic" channel is the track itself (the channel is
+ * the artist); a label's upload is titled "Artist - Title" and the channel is its label. A video
+ * that went private or was deleted is left out.
+ */
+export async function readYoutube(io: ChartFetch, keys: { key: string }, playlistId: string): Promise<ChartTrack[]> {
+  const out: ChartTrack[] = [];
+  let page: string | undefined;
+  for (let n = 0; n < 4 && out.length < CHART_MAX; n++) {
+    const q = new URLSearchParams({ part: 'snippet,contentDetails', maxResults: '50', playlistId });
+    if (page) q.set('pageToken', page);
+    const data = await io.get(`https://www.googleapis.com/youtube/v3/playlistItems?${q}`, { 'x-goog-api-key': keys.key }) as { items?: unknown[]; nextPageToken?: string };
+    for (const raw of data.items ?? []) {
+      const it = raw as { snippet?: { title?: string; videoOwnerChannelTitle?: string; resourceId?: { videoId?: string }; thumbnails?: Record<string, { url?: string }> }; contentDetails?: { videoId?: string; videoPublishedAt?: string } };
+      const id = str(it.contentDetails?.videoId) ?? str(it.snippet?.resourceId?.videoId);
+      const channel = str(it.snippet?.videoOwnerChannelTitle);
+      const full = str(it.snippet?.title)?.replace(VIDEO_TAGS, '').trim();
+      if (!id || !channel || !full) continue;
+      const topic = channel.match(/^(.*?)\s+-\s+Topic$/);
+      const split = topic ? null : full.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+      const artist = topic ? topic[1] : split ? split[1] : channel;
+      const thumbs = it.snippet?.thumbnails ?? {};
+      out.push({
+        rank: out.length + 1, artist, title: split ? split[2] : full, label: split && channel !== artist ? channel : null,
+        releasedOn: str(it.contentDetails?.videoPublishedAt)?.slice(0, 10) ?? null,
+        url: `https://music.youtube.com/watch?v=${id}&list=${encodeURIComponent(playlistId)}`,
+        imageUrl: str(thumbs.high?.url) ?? str(thumbs.medium?.url) ?? str(thumbs.default?.url), externalId: id,
+      });
+      if (out.length >= CHART_MAX) break;
+    }
+    page = data.nextPageToken;
+    if (!page) break;
+  }
+  return out;
+}
+
 export interface ChartSourceRow {
   id: string; provider: ChartProvider; name: string; style: string; external_id: string; url: string; enabled: boolean; interval_minutes: number;
   next_run_at: Date; last_run_at: Date | null; last_error: string | null; last_count: number | null;
 }
 
-export const chartsEnabled = (keys: ChartKeys) => ({ beatport: !!keys.beatport, spotify: !!keys.spotify });
+export const chartsEnabled = (keys: ChartKeys) => ({ beatport: !!keys.beatport, spotify: !!keys.spotify, youtube: !!keys.youtube });
 
 /** One chart read now: its entries replaced, its run recorded; a provider without keys is an error the Console shows. */
 export async function refreshChart(ctx: Ctx, sourceId: string, opts: { io?: ChartFetch; keys?: ChartKeys } = {}): Promise<{ sourceId: string; name: string; count: number; error: string | null }> {
@@ -117,9 +161,10 @@ export async function refreshChart(ctx: Ctx, sourceId: string, opts: { io?: Char
   const keys = opts.keys ?? chartKeysFromEnv();
   const next = new Date(now.getTime() + s.interval_minutes * 60_000);
   try {
-    const key = keys[s.provider];
-    if (!key) throw new Error(`no ${s.provider} keys in the environment`);
-    const tracks = s.provider === 'beatport' ? await readBeatport(io, key, s.external_id) : await readSpotify(io, key, s.external_id);
+    if (!keys[s.provider]) throw new Error(`no ${s.provider} keys in the environment`);
+    const tracks = s.provider === 'beatport' ? await readBeatport(io, keys.beatport!, s.external_id)
+      : s.provider === 'spotify' ? await readSpotify(io, keys.spotify!, s.external_id)
+        : await readYoutube(io, keys.youtube!, s.external_id);
     if (!tracks.length) throw new Error('the chart answered with no tracks');
     await ctx.db.tx(async (q) => {
       await q.query('delete from chart_entries where source_id = $1', [s.id]);
