@@ -19,7 +19,7 @@ import { money, whenShort } from '../format';
 import { g, styleLabel } from '../genre';
 import { KdLink } from '../link';
 import dynamic from 'next/dynamic';
-import { priceLine } from '../web/card';
+import { priceLine } from '../web/price';
 
 /** The last step's page preview (design v2 phase 16): loaded when that step shows, never with the form. */
 const ReviewPreview = dynamic(() => import('./wizard-preview').then((m) => m.ReviewPreview), { ssr: false });

@@ -33,6 +33,8 @@ import { TicketsPanel } from './tickets';
 import { directionsUrl } from './directions';
 import { BuyDock } from './dock';
 import { InLang } from '@/kd/ui/in-lang';
+import { FIT } from '../../fits';
+import { square } from '../../img';
 
 const enc = encodeURIComponent;
 
@@ -104,7 +106,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                 <div className="relative">
                   {/* Without a cover, a poster of the date: the name is the H1 beside it, never twice. */}
                   <ViewTransition name={'ev-' + ev.slug} share="morph" default="none">
-                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" eager className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
+                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" eager fit={FIT.hero} className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
                   </ViewTransition>
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}
@@ -161,7 +163,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     ) : org ? (
                       <div className="kd-lrow min-h-15">
                         <Link href={inLang('/o/' + org.slug, lang)} className="flex min-w-0 flex-1 items-center gap-3">
-                          <Avatar name={org.name} src={org.logoUrl} size={36} org />
+                          <Avatar name={org.name} src={org.logoUrl} size={36} org fit={square(36)} />
                           <span className="kd-hs kd-ell">{org.name}</span>
                           {org.verified ? <SealCheckIcon size={16} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.verifiedOrg} /> : null}
                         </Link>

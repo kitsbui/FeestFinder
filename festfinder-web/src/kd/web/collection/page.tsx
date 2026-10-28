@@ -24,6 +24,10 @@ import { COLLECTION } from './copy';
 import { MoreCards } from './more';
 import { ShareButton } from '../share';
 import { InLang } from '@/kd/ui/in-lang';
+import { fit } from '../../img';
+
+/** A tile of the cover: a few side by side, 96 to 168px high. */
+const TILE = fit('25vw', 96, 640, 'banner');
 
 const enc = encodeURIComponent;
 
@@ -97,7 +101,7 @@ export function CollectionPage({ col, seo, lang }: { col: PublicCollection; seo:
             {/* ---- cover ---- */}
             <div className="kd-wrap" aria-hidden="true">
               <div className="grid h-[clamp(96px,12vw,168px)] gap-2" style={{ gridTemplateColumns: `repeat(${tiles.length}, minmax(0, 1fr))` }}>
-                {tiles.map((x) => <Art key={x.key} family={x.family} cover={x.cover} title={x.title} />)}
+                {tiles.map((x) => <Art key={x.key} family={x.family} cover={x.cover} title={x.title} fit={TILE} />)}
               </div>
             </div>
 

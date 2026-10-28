@@ -180,8 +180,6 @@ test('the days are grouped the same on the server and in a browser whose day dif
   await ctx.close();
 });
 
-/** A 1×1 PNG: the fake host's picture. */
-const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
 
 /** Every <img> tag of a page's HTML. */
 const imgTags = (html: string) => [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]);
@@ -214,15 +212,22 @@ test('the first picture is fetched first, and a filtered address never paints th
     const high = imgs.filter((t) => /\bfetchpriority="high"/i.test(t));
     expect(high, 'one picture first').toHaveLength(1);
     expect(high[0]).toBe(imgs.find((t) => /\bclass="kd-cover\b/.test(t) && /\bsrc="/.test(t)));
-    expect(high[0]).toContain(`src="${cover}"`);
+    // A copy the size of its box (kd/img.ts: /img on the API), with the ladder's widths beside it.
+    const key = Buffer.from(cover).toString('base64url');
+    expect(high[0]).toMatch(new RegExp(`src="/img/\\d+x\\d+/${key}\\.webp"`));
+    expect(high[0]).toMatch(new RegExp(`\\ssrcset="/img/96x96/${key}\\.webp 96w,`, 'i'));
     expect(high[0]).not.toContain('loading="lazy"');
     // The list's card of the same night waits its turn.
-    expect(imgs.filter((t) => t.includes(`src="${cover}"`))).toHaveLength(2);
+    expect(imgs.filter((t) => t.includes(`/${key}.webp`))).toHaveLength(2);
+    // React preloads the same copies, so the browser never fetches the picture twice.
     const head = html.slice(0, html.indexOf('</head>'));
-    expect([...head.matchAll(/<link\b[^>]*>/g)].some(([t]) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && t.includes(`href="${cover}"`)), 'preloaded').toBe(true);
+    const preload = [...head.matchAll(/<link\b[^>]*>/g)].map(([t]) => t).filter((t) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && t.includes(key));
+    expect(preload, 'preloaded').toHaveLength(1);
+    const attr = (tag: string, name: string) => new RegExp(`\\s${name}="([^"]*)"`, 'i').exec(tag)?.[1];
+    expect(attr(preload[0], 'imagesrcset')).toBe(attr(high[0], 'srcset'));
+    expect(attr(preload[0], 'imagesizes')).toBe(attr(high[0], 'sizes'));
 
     // A filtered address on a phone: the highlight never shows, the list's first picture is the one.
-    await page.route('https://pics.example/**', (route) => route.fulfill({ contentType: 'image/png', body: PNG }));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.addInitScript(() => {
       const w = window as unknown as { __shift: number; __highlight: boolean };
@@ -244,8 +249,10 @@ test('the first picture is fetched first, and a filtered address never paints th
     await expect(page.locator('html')).not.toHaveAttribute('data-asked', /.*/);
     await expect(page.locator('[data-surface]')).toHaveCount(0);
     const first = page.locator('[data-list] img.kd-cover').first();
-    await expect(first).toHaveAttribute('src', cover);
+    await expect(first).toHaveAttribute('src', new RegExp(`^/img/\\d+x\\d+/${key}\\.webp$`));
     expect(await first.evaluate((img: HTMLImageElement) => img.fetchPriority)).toBe('high');
+    // Drawn: the API made the copy from the stored link (the test network's pics.example is a real PNG).
+    await expect.poll(() => first.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0 && new URL(img.currentSrc).pathname.startsWith('/img/'))).toBe(true);
     await expect(page.locator('img[fetchpriority="high" i]')).toHaveCount(1);
     await page.waitForLoadState('networkidle');
     const seen = await page.evaluate(() => { const w = window as unknown as { __shift: number; __highlight: boolean }; return { shift: w.__shift, highlight: w.__highlight }; });

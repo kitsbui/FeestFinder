@@ -19,6 +19,7 @@ import { FieldError, Input, TextArea } from '../../ui/forms';
 import { Art, Avatar } from '../../ui/parts';
 import { Sheet } from '../../ui/sheet';
 import { MIXES } from './copy';
+import { square } from '../../img';
 
 export interface Mix {
   id: string; provider: 'soundcloud' | 'mixcloud' | 'spotify'; providerLabel: string; kind: string; url: string;
@@ -94,7 +95,7 @@ export function ArtistMixes({ lang, slug, items, className, heading = true, titl
               ) : (
                 <button type="button" className="group flex min-w-0 items-center gap-3.5 text-left" onClick={() => play(m)}>
                   <span className="relative size-16 shrink-0 overflow-hidden rounded-tag">
-                    <Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" />
+                    <Art title={m.title} family="edm" cover={m.thumbnailUrl} fit={square(64)} className="absolute inset-0 rounded-none" />
                     <span className="absolute inset-0 grid place-items-center bg-surface-0/30 text-fg-1 transition-colors group-hover:bg-surface-0/10" aria-hidden="true"><PlayIcon size={22} weight="fill" /></span>
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -179,7 +180,7 @@ function CommentsSheet({ lang, mix, onClose, onTotal }: { lang: Lang; mix: Mix; 
 
   const row = (c: Comment, reply = false) => (
     <li key={c.id} className={cx('flex gap-3 py-3', reply ? 'pl-11' : 'border-t border-line-1')}>
-      {c.author ? <Avatar name={c.author.name ?? T.member} src={c.author.photoUrl} size={32} /> : <span className="size-8 shrink-0" />}
+      {c.author ? <Avatar name={c.author.name ?? T.member} src={c.author.photoUrl} size={32} fit={square(32)} /> : <span className="size-8 shrink-0" />}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {c.removed ? <p className="kd-s italic">{T.removed}</p> : (
           <>

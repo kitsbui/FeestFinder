@@ -42,7 +42,8 @@ const SCREENS: [Who, string, number][] = [
   ['visitor', '/?city=ho-chi-minh&lang=en', 183],
   // 2026-10-23 (later): the skip link is drawn by each frame without a store of its own (ui/skip-link.tsx): /saved a kilobyte lighter (measured +1).
   ['fan', '/profile', 196], ['fan', '/saved', 192],
-  ['organizer', '/studio', 196], ['organizer', '/studio/new', 210], ['admin', '/console', 200],
+  // 2026-10-28: the wizard reads its price line from web/price.ts, without the event card (and its save toggle and links): 4 KB less (measured +1).
+  ['organizer', '/studio', 196], ['organizer', '/studio/new', 207], ['admin', '/console', 200],
 ];
 
 async function phone(browser: Browser, who: Who) {

@@ -9,6 +9,7 @@ import { pick, tx, type Pair } from '../../copy';
 import { KdProvider } from '../../runtime';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
+import { DAY } from '../card-fit';
 import { WebFooter, WebNav } from '../chrome';
 import { AdBanner, type Ad } from './ad';
 import { ListBrowser, type Meta } from './browser';
@@ -38,7 +39,7 @@ export async function ListPage({ lang, city }: { lang: Lang; city?: string }) {
   const items = shelf ? shelf.items.slice(0, 8) : flagship.items;
   // Above the list, so its first picture is the page's first: fetched first, the one with high priority (the list's waits).
   const hero = items.find((e) => e.coverUrl)?.id;
-  const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} />);
+  const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} fit={DAY} />);
   const highlight = shelf ? (
     <section key="shelf" aria-labelledby="shelf-h" data-surface="shelf" className="kd-days flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

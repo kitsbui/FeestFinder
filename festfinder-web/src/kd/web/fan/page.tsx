@@ -24,6 +24,7 @@ import { EditSheet, PassportSection, WrappedSheet, type Me, type Passport } from
 import type { Card } from '../../types';
 import { FollowManager, FollowStats, type Follows } from '../../ui/follows';
 import { GuestHub, MeHub } from '../me';
+import { square } from '../../img';
 
 export function FanProfile({ lang }: { lang: Lang }) {
   const kd = useKd();
@@ -78,7 +79,7 @@ function Mine({ lang }: { lang: Lang }) {
         <section className="flex flex-col gap-8" aria-label={T.myProfile}>
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <Avatar name={u?.name || u?.email || '?'} src={u?.photoUrl} size={88} acc />
+              <Avatar name={u?.name || u?.email || '?'} src={u?.photoUrl} size={88} acc fit={square(88)} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <h1 className="kd-d2 kd-ell">{u?.name || '…'}</h1>
                 <span className="kd-m kd-ell normal-case">{[u?.email || u?.phone, u?.city].filter(Boolean).join(' · ')}</span>
@@ -108,7 +109,7 @@ function Mine({ lang }: { lang: Lang }) {
                 const fam = familyOf(e.genre);
                 return (
                   <a key={e.id} href={'/e/' + e.slug + en} className={cx('kd-bonecard grid grid-cols-[76px_minmax(0,1fr)] items-center gap-3.5 py-1.5 pl-1.5 pr-3.5', g(fam))}>
-                    <Art family={fam} title={e.title} cover={e.coverUrl} className="h-19 rounded-lg" />
+                    <Art family={fam} title={e.title} cover={e.coverUrl} fit={square(76)} className="h-19 rounded-lg" />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="kd-m kd-num">{e.startsOn ? `${weekdayShort(e.startsOn, lang)} ${dayMonth(e.startsOn, lang)}` : ''}</span>
                       <span className="kd-hs kd-ell">{e.title}</span>

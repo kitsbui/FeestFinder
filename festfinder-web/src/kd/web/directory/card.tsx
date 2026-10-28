@@ -14,6 +14,7 @@ import { Art, Status, type StatusTone } from '../../ui/parts';
 import { ClaimButton } from '../profile/parts';
 import { DIR } from './copy';
 import type { DirArtist } from './model';
+import { FIT } from '../../fits';
 
 const text = (v: Pair | null | undefined, lang: Lang) => (v ? tx(v, lang) || v.vi || v.en || '' : '');
 
@@ -38,7 +39,7 @@ export function ArtistCard({ a, lang }: { a: DirArtist; lang: Lang }) {
     <article className="flex min-w-0 flex-col gap-3" aria-labelledby={id}>
       <div className="relative">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
-          <Art family={fam ?? 'free'} cover={a.imageUrl ?? a.coverUrl} title={a.name} layout="mono" className="aspect-square" />
+          <Art family={fam ?? 'free'} cover={a.imageUrl ?? a.coverUrl} title={a.name} layout="mono" fit={FIT.tile} className="aspect-square" />
         </Link>
         {booking || a.origin === 'radar' ? (
           <span className="pointer-events-none absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">

@@ -152,11 +152,14 @@ test.describe('the artist page', () => {
     const html = await (await page.request.get('/a/' + slug)).text();
     const high = [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((t) => /\bfetchpriority="high"/i.test(t));
     expect(high, 'one picture first').toHaveLength(1);
-    expect(high[0]).toContain(`src="${photo}"`);
+    // A copy its size (kd/img.ts): 128px on a phone, 192px from 760px.
+    const key = Buffer.from(photo).toString('base64url');
+    expect(high[0]).toMatch(new RegExp(`src="/img/\\d+x\\d+/${key}\\.webp"`));
+    expect(high[0]).toContain('sizes="(min-width: 760px) 192px, 128px"');
     expect(high[0]).not.toContain('loading="lazy"');
-    // React preloads it in the head.
+    // React preloads the same copies in the head.
     const head = html.slice(0, html.indexOf('</head>'));
-    expect([...head.matchAll(/<link\b[^>]*>/g)].some(([t]) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && t.includes(`href="${photo}"`))).toBe(true);
+    expect([...head.matchAll(/<link\b[^>]*>/g)].some(([t]) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && /\simagesrcset="[^"]*\/img\/192x192\//i.test(t) && t.includes(key))).toBe(true);
   });
 });
 

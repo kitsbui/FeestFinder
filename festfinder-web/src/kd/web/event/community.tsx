@@ -19,6 +19,11 @@ import { Accordion, Avatar, BarTrack, Tag } from '../../ui/parts';
 import type { Discussion, Post } from '../../types';
 import { WEB } from '../copy';
 import { useEvent } from './context';
+import { fit, imgAttrs, square } from '../../img';
+import { MOMENT } from '../../ui/moments';
+
+/** A post's photo in Hỏi đáp: a 4:3 box, the width up to 384px. */
+const PHOTO = fit('(max-width: 415px) 100vw, 384px', 384, 1080, 'square');
 
 export function ago(iso: string, lang: Lang, now = FF.now().getTime()): string {
   const T = pick(WEB, lang);
@@ -300,7 +305,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
   };
   return (
     <article className="flex gap-3">
-      <Avatar name={p.author?.name || T.discMember} src={p.author?.photoUrl} size={32} />
+      <Avatar name={p.author?.name || T.discMember} src={p.author?.photoUrl} size={32} fit={square(32)} />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {/* A hidden post steps back in its name, never by dimming (contrast). */}
@@ -327,7 +332,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
         {/* A box of its own size, so the thread never moves when the photo arrives. */}
         {p.photoUrl ? (
           <span className="block aspect-4/3 w-full max-w-sm overflow-hidden rounded-card bg-surface-1" data-post-photo>
-            <img src={p.photoUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className="size-full object-cover" />
+            <img {...imgAttrs(p.photoUrl, PHOTO, true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" className="size-full object-cover" />
           </span>
         ) : null}
         {!p.removed && editing === null ? (
@@ -388,7 +393,7 @@ export function PhotoWall({ lang }: { lang: Lang }) {
         {items.slice(0, 9).map((x) => (
           <figure key={x.url} className="kd-mtile m-0 cursor-default">
             { }
-            <img src={x.url} alt={x.caption ?? ''} loading="lazy" />
+            <img {...imgAttrs(x.url, MOMENT, true)} alt={x.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
           </figure>
         ))}
       </div>

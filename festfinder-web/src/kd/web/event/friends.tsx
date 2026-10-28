@@ -9,6 +9,7 @@ import { fill, pick, type Lang } from '../../copy';
 import { Avatar } from '../../ui/parts';
 import { WEB } from '../copy';
 import { useEvent } from './context';
+import { square } from '../../img';
 
 export function GoTogetherRow({ lang, href }: { lang: Lang; href: string }) {
   const { personal } = useEvent();
@@ -20,7 +21,7 @@ export function GoTogetherRow({ lang, href }: { lang: Lang; href: string }) {
       <span className="kd-t flex-1 text-fg-1">{T.goTogether}</span>
       {going.length ? (
         <span className="flex items-center gap-2">
-          <span className="flex -space-x-2" aria-hidden="true">{going.slice(0, 3).map((f) => <Avatar key={f.id} name={f.name} src={f.photoUrl} size={24} ring />)}</span>
+          <span className="flex -space-x-2" aria-hidden="true">{going.slice(0, 3).map((f) => <Avatar key={f.id} name={f.name} src={f.photoUrl} size={24} ring fit={square(24)} />)}</span>
           <span className="kd-s kd-num">{fill(T.friendsGoing, { n: going.length })}</span>
         </span>
       ) : null}

@@ -28,6 +28,7 @@ import {
 } from './model';
 import { MoreRows } from './more';
 import { StatPicker } from './pickers';
+import { square } from '../../img';
 
 /** Rows shown before "Xem thêm". */
 const FIRST = 30;
@@ -163,7 +164,7 @@ function EventRow({ e, i, lang }: { e: Card; i: number; lang: Lang }) {
   const free = e.isFree || e.entryMode === 'free';
   return (
     <Link href={inLang('/e/' + e.slug, lang)} className={cx('kd-row transition-colors duration-(--dur-1) hover:bg-white/[0.03]', g(fam))}>
-      <Art family={fam} cover={e.coverUrl} title={e.title} off={e.soldOut} />
+      <Art family={fam} cover={e.coverUrl} title={e.title} off={e.soldOut} fit={square(52)} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="kd-hs kd-ell">{e.title}</span>
         <span className="kd-s flex min-w-0 items-center gap-1.5">

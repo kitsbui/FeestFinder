@@ -14,6 +14,7 @@ import { cx } from '../../cx';
 import { day, daysBetween, dayMonth, weekdayLong } from '../../format';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
+import { DAY } from '../card-fit';
 import { LIST } from './copy';
 
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -108,7 +109,7 @@ export function DayGrid({ groups, lang, className, eager = false }: {
                 <div className="kd-day-stack">{stack.map((e) => <EventCard key={e.id} e={e} lang={lang} look="row" morph eager={e.id === eagerId} />)}</div>
               </div>
             ) : null}
-            {rest.length && !(g.byDay && g.items.length <= 2) ? <div className="kd-cards">{rest.map((e) => <EventCard key={e.id} e={e} lang={lang} morph eager={e.id === eagerId} />)}</div> : null}
+            {rest.length && !(g.byDay && g.items.length <= 2) ? <div className="kd-cards">{rest.map((e) => <EventCard key={e.id} e={e} lang={lang} morph eager={e.id === eagerId} fit={DAY} />)}</div> : null}
           </section>
         );
       })}

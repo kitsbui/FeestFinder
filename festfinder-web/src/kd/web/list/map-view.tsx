@@ -21,6 +21,7 @@ import { RadarTag } from '../../ui/origin';
 import { Art } from '../../ui/parts';
 import { apiQuery, type Filters, type Meta } from './browser';
 import { LIST } from './copy';
+import { square } from '../../img';
 
 interface MapItem {
   id: string; slug: string; title: string; genre: string | null; lat: number; lng: number; venue: string | null; area: string | null;
@@ -198,7 +199,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
                 g(familyOf(x.genre)),
               )}
             >
-              <Art family={familyOf(x.genre)} cover={x.coverUrl} title={x.title} off={x.soldOut} className="h-12 w-12 rounded-seg" />
+              <Art family={familyOf(x.genre)} cover={x.coverUrl} title={x.title} off={x.soldOut} fit={square(48)} className="h-12 w-12 rounded-seg" />
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex min-w-0 items-center gap-2"><span className="kd-hs kd-ell">{x.title}</span>{x.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>
                 <span className="kd-s flex min-w-0 items-center gap-1.5"><span className="kd-mk" aria-hidden="true" /><span className="kd-ell">{whenShort(x, lang)}{x.area ? ' · ' + x.area : ''}</span></span>
@@ -236,7 +237,7 @@ export function MapView({ lang, meta, filters: f, onBbox, onClear, viewSwitch, t
         {note ? <span role="status" className="kd-tag kd-tag-glass absolute bottom-4 right-4 z-[2] text-fg-1">{note}</span> : null}
         {chosen ? (
           <div className={cx('kd-glass absolute bottom-4 left-4 z-[3] grid w-[min(380px,calc(100%-32px))] grid-cols-[76px_minmax(0,1fr)] items-center gap-3 rounded-org p-3', g(familyOf(chosen.genre)))}>
-            <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} title={chosen.title} className="h-19 w-19 rounded-seg" />
+            <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} title={chosen.title} fit={square(76)} className="h-19 w-19 rounded-seg" />
             <div className="flex min-w-0 flex-col gap-1">
               <span className="flex items-start gap-2">
                 <span className="kd-hs kd-ell flex-1">{chosen.title}</span>
