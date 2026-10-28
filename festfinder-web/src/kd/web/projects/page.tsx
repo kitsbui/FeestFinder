@@ -85,7 +85,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
           <WebNav lang={lang} current="projects" />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
           <main id="main" className="flex flex-col">
-            <div className="kd-wrap"><Art title={p.title} family="edm" cover={p.coverUrl} alt={p.title} fit={FIT.banner} className="h-[clamp(200px,28vw,380px)]" /></div>
+            <div className="kd-wrap"><Art title={p.title} family="edm" cover={p.coverUrl} alt={p.title} fit={FIT.banner} eager className="h-[clamp(200px,28vw,380px)]" /></div>
 
             <section className="kd-wrap pt-7" aria-labelledby="p-h">
               <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">

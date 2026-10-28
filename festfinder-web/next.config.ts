@@ -64,8 +64,10 @@ const config: NextConfig = {
   // (the OAuth hand-back, timers, loaders).
   reactStrictMode: false,
   poweredByHeader: false,
-  // Which build a bug report came from (kd/feedback/telemetry.ts).
-  env: { NEXT_PUBLIC_BUILD_ID: buildId() },
+  // Which build a bug report came from (kd/feedback/telemetry.ts). A build whose API sits behind
+  // Vercel's protection (a preview: FF_API_BYPASS) draws stored pictures from their own links, since
+  // /img reaches the API through the fallback rewrite, which cannot send the bypass (kd/img.ts).
+  env: { NEXT_PUBLIC_BUILD_ID: buildId(), NEXT_PUBLIC_IMG_RAW: process.env.FF_API_BYPASS?.trim() ? '1' : '' },
   // src/proxy.ts sees the request as it came: Next would hide the router's headers from it
   // (next-router-prefetch among them), and the proxy answers a prefetch it would move with no content.
   // It drops the router's `_rsc` from the address itself, and its redirects go out as it writes them

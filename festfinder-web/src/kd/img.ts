@@ -33,18 +33,21 @@ export function fit(sizes: string, from: number, to: number, shape: Shape): Fit 
 /** A square box `px` CSS pixels wide (an avatar, a row's picture): copies for one to three device pixels per CSS pixel. */
 export const square = (px: number, sizes = px + 'px'): Fit => fit(sizes, px, px * 3, 'square');
 
+/** A preview build, whose API is protected (next.config.ts): /img cannot reach it, so links are drawn as they are. */
+const RAW = process.env.NEXT_PUBLIC_IMG_RAW === '1';
+
 /** The smallest width of the ladder that holds `n` pixels (the largest when none does). */
 const up = (n: number) => WIDTHS.find((w) => w >= n) ?? 1920;
 
 /**
  * An <img>'s src, srcSet and sizes for a stored picture drawn in `box`; the link alone when /img
- * cannot make copies of it (not https, not an upload), or for an unsaved one (no `box`). A box of
+ * cannot make copies of it (not https, not an upload), for an unsaved one (no `box`), or on a preview. A box of
  * 256px or less is a thumbnail, square whatever the box above it (a card becomes an 88px row on a
  * phone). A framing's zoom draws the picture larger than its box, so each width asks for a copy
  * that much wider. `lazy`: Chrome measures the box itself (`sizes="auto"`), the rest read the list.
  */
 export function imgAttrs(url: string, box: Fit | null | undefined, lazy = false): Attrs {
-  if (!box || !/^(https:\/\/|\/files\/)/i.test(url)) return { src: url };
+  if (!box || RAW || !/^(https:\/\/|\/files\/)/i.test(url)) return { src: url };
   let bin = '';
   for (const b of new TextEncoder().encode(url.split('#')[0])) bin += String.fromCharCode(b);
   const key = btoa(bin).replace(/[+/=]/g, (c) => (c == '+' ? '-' : c == '/' ? '_' : ''));

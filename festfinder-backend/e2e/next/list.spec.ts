@@ -316,6 +316,15 @@ test.describe("one city's list, drawn on the server", () => {
     await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(0);
   });
 
+  test('a city the site does not list leads to the home page in its language, never a page of its own', async ({ request }) => {
+    for (const [from, to] of [['/?city=atlantis', '/'], ['/?city=atlantis&lang=en', '/?lang=en'], ['/?city=atlantis&lang=ja', '/?lang=ja']]) {
+      const res = await request.get(from, { maxRedirects: 0 });
+      expect(res.status(), from).toBe(307);
+      // Next writes the header twice on the first render of a redirect (the same address both times).
+      expect([...new Set(res.headers().location.split(', '))], from).toEqual([to]);
+    }
+  });
+
   test('its own address leads to the home page\'s', async ({ request }) => {
     for (const [from, to] of [['/in/ho-chi-minh', '/?city=ho-chi-minh'], ['/in/ho-chi-minh/en', '/?city=ho-chi-minh&lang=en'], ['/in/ha-noi/th', '/?city=ha-noi&lang=th']]) {
       const res = await request.get(from, { maxRedirects: 0 });

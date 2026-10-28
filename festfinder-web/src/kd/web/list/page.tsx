@@ -61,7 +61,7 @@ export async function ListPage({ lang, city }: { lang: Lang; city?: string }) {
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="list" />
           {/* Before the list, so the newcomer's city is known before it is drawn. */}
-          <CityFirst meta={meta} />
+          <CityFirst meta={meta} listed={[...new Set(initial.items.map((e) => meta.cities.find((c) => c.slug === e.city)?.country).filter((c): c is string => !!c))]} />
           <ListBrowser lang={lang} meta={meta} initial={initial} city={known} highlight={highlight} highlightArt={!!hero} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>

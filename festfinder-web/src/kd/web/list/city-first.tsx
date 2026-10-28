@@ -8,7 +8,9 @@
  * what it has); an address with a filter other than the city (not the map) `data-list-wait` (the
  * server drew every night: ListBrowser asks for the filter's) and `data-asked` (the highlight, which
  * shows only while nothing but the city narrows the list, is never painted). kd.css keeps the list's
- * place hidden until the browser has drawn it, 2.5 s at most, so nothing on screen moves.
+ * place hidden until the browser has drawn it, 2.5 s at most, so nothing on screen moves: a country
+ * is marked only when the server drew its nights and another country's, so grouping changes the
+ * list; otherwise the list the server drew is the one shown, at once.
  */
 import type { Meta } from './browser';
 
@@ -22,7 +24,8 @@ const SLUG = /^[a-z0-9-]+$/;
 /** The filters that hide the highlight, as ListBrowser reads them (browser.tsx `readFilters`): null takes any value. */
 const FILTERS = { q: null, style: null, type: null, time: ['tonight', 'weekend', '7days', 'month'], price: ['free'], origin: ['radar', 'posted'] };
 
-export function CityFirst({ meta }: { meta: Meta }) {
+/** `listed`: the countries of the nights the server drew; the list is grouped (and held back) only when they are its country and another. */
+export function CityFirst({ meta, listed }: { meta: Meta; listed: string[] }) {
   const cities = meta.cities.filter((c) => SLUG.test(c.slug));
   const codes = new Set(meta.countries.map((c) => c.code));
   // Every zone a listed city or country keeps, to its country.
@@ -38,6 +41,6 @@ export function CityFirst({ meta }: { meta: Meta }) {
     + `var cities=${JSON.stringify(cities.map((c) => c.slug))},z=${JSON.stringify(zones)},l=${JSON.stringify(langs)},c=null;try{c=localStorage.getItem('ff_city')}catch(e){}`
     + `if(c&&cities.indexOf(c)>=0){h.setAttribute('data-city-first',c);return}`
     + `var k=z[Intl.DateTimeFormat().resolvedOptions().timeZone]||l[String(navigator.language||'').slice(0,2).toLowerCase()];`
-    + `if(k)h.setAttribute('data-place-first',k)}catch(e){}})();`;
+    + `if(k&&${JSON.stringify(listed)}.length>1&&${JSON.stringify(listed)}.indexOf(k)>=0)h.setAttribute('data-place-first',k)}catch(e){}})();`;
   return <script dangerouslySetInnerHTML={{ __html: js }} />;
 }

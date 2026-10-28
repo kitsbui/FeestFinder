@@ -160,6 +160,17 @@ test.describe('the artist page', () => {
     // React preloads the same copies in the head.
     const head = html.slice(0, html.indexOf('</head>'));
     expect([...head.matchAll(/<link\b[^>]*>/g)].some(([t]) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && /\simagesrcset="[^"]*\/img\/192x192\//i.test(t) && t.includes(key))).toBe(true);
+
+    // In the directory (drawn again with the new photo, as the studio's save does: kd/fresh.ts), the grid's
+    // first picture is the page's one fetched first.
+    expect((await page.request.post('/kd-fresh', { data: { kind: 'a', slug } })).status()).toBe(204);
+    const dir = await (await page.request.get('/a')).text();
+    const grid = dir.slice(dir.indexOf('<ul class="kd-dir-cards'), dir.indexOf('</ul>', dir.indexOf('<ul class="kd-dir-cards')));
+    const tiles = [...grid.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]);
+    expect(tiles.length, 'a tile with a picture').toBeGreaterThan(0);
+    expect(tiles[0]).toMatch(/\bfetchpriority="high"/i);
+    expect(tiles[0]).not.toContain('loading="lazy"');
+    expect(tiles.slice(1).filter((t) => /\bfetchpriority="high"/i.test(t))).toEqual([]);
   });
 });
 

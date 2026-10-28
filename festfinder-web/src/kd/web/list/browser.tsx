@@ -133,7 +133,7 @@ function address(f: Filters, lang: Lang) {
   return '/' + (s ? '?' + s : '');
 }
 
-interface Page { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
+interface Page { items: Card[]; total: number; nextCursor: string | null; today?: string; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
 
 export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt = false }: {
   lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode;
@@ -411,8 +411,8 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
   const countryOf = (slug: string) => meta.cities.find((c) => c.slug === slug)?.country ?? null;
   const mine = country && f.city === 'all' ? sorted.filter((e) => countryOf(e.city) === country) : [];
   const split = mine.length > 0 && mine.length < sorted.length;
-  const groups = f.view === 'grid' ? groupByDay(split ? mine : sorted, lang, today) : [];
-  const elsewhere = split ? groupByDay(sorted.filter((e) => countryOf(e.city) !== country), lang, today) : [];
+  const groups = f.view === 'grid' ? groupByDay(split ? mine : sorted, lang, today, page.today ?? null) : [];
+  const elsewhere = split ? groupByDay(sorted.filter((e) => countryOf(e.city) !== country), lang, today, page.today ?? null) : [];
   const countryName = country ? tx(meta.countries.find((c) => c.code === country)?.name, lang) : null;
   // The world's biggest festivals (or the shelf on), while nothing but the city narrows the list. Decided
   // once, from the filters: the server and the first render in the browser (both what the server drew, a city at most) agree.

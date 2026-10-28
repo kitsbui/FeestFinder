@@ -90,6 +90,7 @@
   .kd-btn:disabled, .kd-btn[aria-disabled='true'] { opacity: 0.38; cursor: default; }
   /* A primary that cannot act yet: a quiet surface, not a murky gradient. */
   .kd-btn-acc:disabled, .kd-btn-acc[aria-disabled='true'] { opacity: 1; background: var(--color-surface-2); color: var(--color-fg-3); box-shadow: inset 0 0 0 1px var(--color-line-1); filter: none; animation: none; }
+  .kd-btn-acc:disabled::before, .kd-btn-acc[aria-disabled='true']::before { animation: none; opacity: 0; }
   .kd-btn-sm::after, .kd-chip::after, .kd-ib-sm::after { content: ''; position: absolute; inset: -4px 0; }
   /* 32px segments and 36px steppers keep a 44px hit area. */
   .kd-seg > button::after { content: ''; position: absolute; inset: -6px 0; }

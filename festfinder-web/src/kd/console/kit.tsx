@@ -55,13 +55,15 @@ export function useLoad<T>(path: string | null, first?: () => Early<T> | null) {
   const [error, setError] = useState<unknown>(null);
   const [tick, setTick] = useState(0);
   const taken = useRef(false);
+  /** The first render already drew the early answer (it can arrive between that render and the effect). */
+  const drawn = useRef(early?.data !== undefined);
   useEffect(() => {
     if (!path) return;
     let live = true;
     setError(null);
     const handed = !taken.current ? early : null;
     taken.current = true;
-    if (handed?.data !== undefined) return;
+    if (handed && drawn.current) return;
     const ask = handed ? handed.promise.catch((): Promise<T> => FF.get(path)) : (FF.get(path) as Promise<T>);
     ask.then((d: T) => { if (live) setData(d); }, (e: unknown) => { if (live) setError(e); });
     return () => { live = false; };

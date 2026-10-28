@@ -181,6 +181,31 @@ test('the days are grouped the same on the server and in a browser whose day dif
 });
 
 
+/*
+ * A night under way since yesterday (a festival's second day, a club night past midnight) counts on
+ * the API's day (the answer's `today`), and the headings start at the earliest night, whatever order
+ * the answer lists them in.
+ */
+test('a night already under way counts on today, and the days start at the earliest night', async ({ page, request }) => {
+  const real = await (await request.get('/events?time=all&upcoming=true&limit=60')).json();
+  const [a, b, c] = real.items as { slug: string }[];
+  const answer = {
+    ...real, today: '2026-09-14', nextCursor: null, total: 3,
+    items: [
+      { ...b, startsOn: '2026-09-16', endsOn: '2026-09-16' },
+      { ...a, startsOn: '2026-09-12', endsOn: '2026-09-15' },
+      { ...c, startsOn: '2026-09-14', endsOn: '2026-09-15' },
+    ],
+  };
+  await page.route((u) => u.pathname === '/events' && u.searchParams.get('style') === 'techno', (r) => r.fulfill({ json: answer }));
+  const problems = await open(page, '/?style=techno');
+  const days = page.locator('section[id^="day-"]');
+  await expect(days.first()).toHaveAttribute('id', 'day-2026-09-14');
+  expect(await days.evaluateAll((all) => all.map((x) => x.id))).toEqual(['day-2026-09-14', 'day-2026-09-16']);
+  for (const e of [a, c]) await expect(days.first().locator(`a[href^="/e/${e.slug}"]`).first()).toBeAttached();
+  expect(problems).toEqual([]);
+});
+
 /** Every <img> tag of a page's HTML. */
 const imgTags = (html: string) => [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]);
 

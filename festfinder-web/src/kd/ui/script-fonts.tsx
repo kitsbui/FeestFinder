@@ -10,7 +10,8 @@
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
-const CJK = /[　-ヿ㐀-䶿一-鿿豈-﫿＀-￯]/;
+/** Kana, CJK ideographs and full-width forms, written as escapes so no editor's normalising moves a range (U+F900 became U+8C48 once, taking in emoji and Hangul). */
+const CJK = /[\u3000-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/;
 const HREF = '/fonts/noto-sans-jp.css';
 /** Text inside these is never drawn. */
 const UNSEEN = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT']);

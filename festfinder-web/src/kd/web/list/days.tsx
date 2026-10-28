@@ -3,8 +3,9 @@
  * seven days has its heading ("Thứ Bảy 17.10 · hôm nay"), a lead card and the next nights as rows
  * beside it, then cards; after the first week, a heading per month. In a box narrower than 600px (a
  * phone) every event is a row (kd.css `.kd-days`). Grouped by the events' own calendar days from the
- * first night listed (owner, 2026-10-22), never from the device's clock, so the server and the browser
- * draw the same headings in any time zone; "hôm nay" and "ngày mai" come once the clock is known.
+ * earliest night listed (owner, 2026-10-22), or the API's day when a night is already under way,
+ * never from the device's clock, so the server and the browser draw the same headings in any time
+ * zone; "hôm nay" and "ngày mai" come once the clock is known.
  *
  * The days take the page's whole width (owner, 2026-10-20: the rail of the week and the cities is
  * gone); on a wide screen the lead and its rows share the row evenly (kd.css).
@@ -29,19 +30,22 @@ const addDays = (iso: string, n: number) => {
 };
 
 /**
- * The first day the list counts from: the first night listed (owner, 2026-10-22: when nothing is on
- * today, the seven days start at it), so the browser groups as the server did; today only when
- * nothing listed has a date.
+ * The first day the list counts from: its earliest night (owner, 2026-10-22: when nothing is on today,
+ * the seven days start at it), never earlier than the day the API read the list on (`listedOn`, its
+ * answer's `today`), so a night under way since yesterday counts on today. Both come with the list,
+ * so the browser groups as the server did; the device's today only when nothing listed has a date.
  */
-export function anchorDay(items: Card[], today: string | null): string | null {
-  const first = items.find((e) => e.startsOn)?.startsOn ?? null;
-  return first ?? today;
+export function anchorDay(items: Card[], today: string | null, listedOn: string | null = null): string | null {
+  let first: string | null = null;
+  for (const e of items) if (e.startsOn && (first === null || e.startsOn < first)) first = e.startsOn;
+  if (!first) return listedOn ?? today;
+  return listedOn && listedOn > first ? listedOn : first;
 }
 
 /** The events (already in date order) under their day, or their month after the first week. */
-export function groupByDay(items: Card[], lang: Lang, today: string | null): DayGroup[] {
+export function groupByDay(items: Card[], lang: Lang, today: string | null, listedOn: string | null = null): DayGroup[] {
   const T = pick(LIST, lang);
-  const anchor = anchorDay(items, today);
+  const anchor = anchorDay(items, today, listedOn);
   const groups = new Map<string, DayGroup>();
   for (const e of items) {
     // A night that started before the anchor and is still on counts on the anchor's day.

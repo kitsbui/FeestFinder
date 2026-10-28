@@ -232,6 +232,8 @@ export default async function catalogRoutes(app: FastifyInstance) {
       total: rows[0]?.total ?? 0,
       nextCursor,
       hero,
+      // The API's day where the list is (its city's, else Vietnam's): the list's day headings start no earlier.
+      today,
       facets: {
         time: facetTime, city: Object.fromEntries(facetCity.map((r) => [r.city, r.n])),
         style: Object.fromEntries(facetStyle.filter((r) => isStyle(r.key)).map((r) => [r.key, r.n])), free: facetFree?.n ?? 0,

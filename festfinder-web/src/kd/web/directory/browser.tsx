@@ -218,6 +218,8 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   const styleFamily = style ? familyOf(style.genre) : null;
   const role = roles.find((r) => r.key === f.role);
   const city = meta.cities.find((c) => c.slug === f.city);
+  // The grid's first picture is the page's largest: it loads first, with high priority, and React preloads it.
+  const eagerId = list.items.find((a) => a.imageUrl ?? a.coverUrl)?.id;
 
   return (
     <>
@@ -300,7 +302,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
 
         {list.items.length ? (
           <ul className={cx('kd-dir-cards mt-2 transition-opacity', busy && 'opacity-60')} aria-label={T.results} aria-busy={busy}>
-            {list.items.map((a) => <li key={a.id} className="min-w-0"><ArtistCard a={a} lang={lang} /></li>)}
+            {list.items.map((a) => <li key={a.id} className="min-w-0"><ArtistCard a={a} lang={lang} eager={a.id === eagerId} /></li>)}
           </ul>
         ) : busy ? (
           <div className="kd-skel h-40" aria-hidden="true" />

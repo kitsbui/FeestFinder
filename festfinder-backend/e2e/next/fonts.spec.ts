@@ -75,3 +75,17 @@ test('CJK that is not shown adds no Noto Sans JP', async ({ page }) => {
   await page.waitForTimeout(500);
   await expect(page.locator('link[href="/fonts/noto-sans-jp.css"]')).toHaveCount(0);
 });
+
+/* Emoji and Korean are not CJK ideographs: a party emoji in a title or Hangul in a name adds nothing. */
+test('emoji and Hangul add no Noto Sans JP', async ({ page }) => {
+  await settle(page, '/');
+  await page.evaluate(() => {
+    for (const t of ['🎉 Rave 🔊', '서울 테크노']) {
+      const p = document.createElement('p');
+      p.textContent = t;
+      document.querySelector('main, ff-app')!.append(p);
+    }
+  });
+  await page.waitForTimeout(500);
+  await expect(page.locator('link[href="/fonts/noto-sans-jp.css"]')).toHaveCount(0);
+});
