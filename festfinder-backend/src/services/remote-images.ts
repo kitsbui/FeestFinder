@@ -51,6 +51,9 @@ export const fetchImageFull: ImageFetcher = (url) => fetchPublic(url, {
   types: /^(?:image\/|application\/octet-stream|binary\/octet-stream)|^$/i,
   maxBytes: MAX_IMAGE_BYTES,
   timeoutMs: 8000,
+  // GET /img's fetch: https on every hop, and 12 s for the whole of it.
+  httpsOnly: true,
+  totalMs: 12_000,
 });
 
 /**
@@ -219,7 +222,7 @@ export async function checkRemoteImages(ctx: Ctx, max = 20): Promise<{ checked: 
  */
 export const PICTURE_COLUMNS: { table: string; columns: string[]; lists?: string[]; shown?: string }[] = [
   { table: 'events', columns: ['cover_url', 'logo_url'] },
-  { table: 'artists', columns: ['image_url', 'cover_url'] },
+  { table: 'artists', columns: ['image_url', 'cover_url'], shown: 'hidden_at is null' },
   { table: 'organizers', columns: ['logo_url', 'cover_url'] },
   { table: 'users', columns: ['photo_url'] },
   { table: 'projects', columns: ['cover_url'] },
@@ -229,9 +232,10 @@ export const PICTURE_COLUMNS: { table: string; columns: string[]; lists?: string
   { table: 'blog_tracks', columns: ['thumbnail_url'] },
   { table: 'blog_posts', columns: ['cover_url'], shown: `status <> 'hidden'` },
   { table: 'ad_campaigns', columns: ['logo_url'], lists: ['images'] },
-  { table: 'ad_inquiries', columns: ['logo_url'], lists: ['product_images'] },
   { table: 'recaps', columns: [], lists: ['photo_urls'] },
 ];
+/** Picture columns no page shows to the public (a brand's request, read by the team as linked): never resized. */
+export const UNSERVED_PICTURE_COLUMNS = ['ad_inquiries.logo_url', 'ad_inquiries.product_images'];
 
 /** One query: whether a stored link (framed or not) or a picture in a post's body is `$1`. */
 const KNOWN_IMAGE_SQL = `select (${[
@@ -239,9 +243,10 @@ const KNOWN_IMAGE_SQL = `select (${[
     ...(columns.length ? [`exists (select 1 from ${table} where ${shown ? `${shown} and ` : ''}(${columns.map((c) => `split_part(${c}, '#', 1) = $1`).join(' or ')}))`] : []),
     ...lists.map((l) => `exists (select 1 from ${table} t, unnest(t.${l}) as x(link) where ${shown ? `t.${shown} and ` : ''}split_part(x.link, '#', 1) = $1)`),
   ]),
-  // A post's body names its pictures as ![alt](link) or ![alt](link "caption").
-  `exists (select 1 from blog_posts p, jsonb_each_text(case when jsonb_typeof(p.body) = 'object' then p.body else '{}' end) as b(lang, text) where p.status <> 'hidden'
-     and (strpos(b.text, '](' || $1::text || ')') > 0 or strpos(b.text, '](' || $1::text || ' ') > 0 or strpos(b.text, '](' || $1::text || '#') > 0))`,
+  // A post's body names its pictures as ![alt](link) or ![alt](link "caption"), each checked as an
+  // image when it was added (routes/blog.ts); a plain [text](link) is a link, never a picture.
+  String.raw`exists (select 1 from blog_posts p, jsonb_each_text(case when jsonb_typeof(p.body) = 'object' then p.body else '{}' end) as b(lang, text),
+     regexp_matches(b.text, '!\[[^\]]*\]\((https://[^[:space:])#]+)', 'g') as m(found) where p.status <> 'hidden' and (m.found)[1] = $1)`,
 ].join('\n  or ')}) as known`;
 
 /** Whether a page shows this link (given without its fragment): the gate of GET /img. */
@@ -266,13 +271,31 @@ function loadSharp(): Promise<Sharp> {
   sharpLib ??= import('sharp').then(({ default: sharp }) => {
     // Every picture is read once per box and then kept by the CDN: nothing to gain from libvips' cache.
     sharp.cache(false);
+    // One thread per picture: two at once (AT_ONCE) leave the rest of the machine to the API.
+    sharp.concurrency(1);
     return sharp;
   });
   return sharpLib;
 }
 
-/** A source bigger than this many pixels is not decoded (about 200 MB of memory). */
-const MAX_PIXELS = 50_000_000;
+/** A source bigger than this many pixels is not decoded (about 130 MB of memory): the browser loads it as linked. */
+const MAX_PIXELS = 32_000_000;
+/** The formats a copy is made from; anything else (SVG, TIFF, HEIC…) is left to the browser as linked. */
+const FORMATS = new Set(['jpeg', 'png', 'webp', 'gif', 'avif']);
+/** Pictures decoded at once by this process, the rest wait their turn: the API serves the site meanwhile. */
+const AT_ONCE = 2;
+let running = 0;
+const waiting: (() => void)[] = [];
+async function inTurn<T>(work: () => Promise<T>): Promise<T> {
+  if (running >= AT_ONCE) await new Promise<void>((go) => waiting.push(go));
+  else running++;
+  try {
+    return await work();
+  } finally {
+    const next = waiting.shift();
+    if (next) next(); else running--;
+  }
+}
 
 /**
  * A picture as WebP covering a box of width × height: scaled so its shorter side fills the box,
@@ -282,12 +305,18 @@ const MAX_PIXELS = 50_000_000;
 async function toWebp(source: Buffer, width: number, height: number): Promise<Buffer | null> {
   try {
     const sharp = await loadSharp();
-    const image = sharp(source, { limitInputPixels: MAX_PIXELS, failOn: 'none' });
-    if (((await image.metadata()).pages ?? 1) > 1) return null;
-    return await image.autoOrient()
-      .resize({ width, height, fit: 'outside', withoutEnlargement: true })
-      .webp({ quality: 75 })
-      .toBuffer();
+    return await inTurn(async () => {
+      const image = sharp(source, { limitInputPixels: MAX_PIXELS, failOn: 'none' });
+      const meta = await image.metadata();
+      // sharp names AVIF 'heif' with AV1 compression; HEIC (HEVC) is not drawn by browsers anyway.
+      const format = meta.format === 'heif' && meta.compression === 'av1' ? 'avif' : meta.format;
+      if (!FORMATS.has(format ?? '') || (meta.pages ?? 1) > 1) return null;
+      return await image.autoOrient()
+        .resize({ width, height, fit: 'outside', withoutEnlargement: true })
+        .webp({ quality: 75 })
+        .timeout({ seconds: 5 })
+        .toBuffer();
+    });
   } catch {
     return null;
   }

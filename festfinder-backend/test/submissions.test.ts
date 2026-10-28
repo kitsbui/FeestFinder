@@ -4,7 +4,7 @@ import { setup, type TestEnv } from './helpers.ts';
 import { phoneUser } from './people.ts';
 import { multipart, png } from './files.ts';
 import { cityFrom, EMPTY_PREFILL, prefillFromJsonLd, type Prefill, type PrefillGenerator, type PrefillInput } from '../src/services/prefill.ts';
-import { fetchPublicPage, isPrivateAddress, PageUnavailable } from '../src/services/fetchpage.ts';
+import { fetchPublic, fetchPublicPage, isPrivateAddress, PageUnavailable } from '../src/services/fetchpage.ts';
 
 const TICKETBOX_PAGE = `<html><head><title>TicketBox | Saigon Techno Garden</title>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Event","name":"TicketBox | Saigon Techno Garden Vol. 5",
@@ -44,6 +44,15 @@ describe('reading an event off a page or a poster', () => {
   it('never fetches a page on a private network', async () => {
     assert.ok(isPrivateAddress('127.0.0.1') && isPrivateAddress('10.1.2.3') && isPrivateAddress('192.168.1.1') && isPrivateAddress('169.254.169.254') && isPrivateAddress('::1'));
     assert.ok(!isPrivateAddress('104.18.1.1'));
+    // IPv6 that carries a private IPv4 address (mapped, compatible, NAT64, 6to4), local NAT64 and Teredo.
+    for (const ip of ['::ffff:127.0.0.1', '::ffff:7f00:1', '::10.0.0.1', '64:ff9b::a9fe:a9fe', '64:ff9b::192.168.0.1', '64:ff9b:1::1', '2002:a00:1::', '2001:0:4136:e378::1', 'fd00::1', 'fe80::1', 'ff02::1', '::']) {
+      assert.ok(isPrivateAddress(ip), ip);
+    }
+    for (const ip of ['2606:4700::6810:101', '64:ff9b::6812:101', '2002:6812:101::1', '::ffff:104.18.1.1']) assert.ok(!isPrivateAddress(ip), ip);
+    // GET /img's fetch is https on every hop: an http link is refused before anything is asked.
+    for (const url of ['http://pics.example/a.jpg', 'https://pics.example:8443/a.jpg']) {
+      await assert.rejects(fetchPublic(url, { httpsOnly: true }), (e: unknown) => e instanceof PageUnavailable && e.reason === 'bad_url', url);
+    }
     for (const url of ['http://127.0.0.1/admin', 'http://localhost:4000/', 'http://[::1]/', 'http://169.254.169.254/latest/meta-data']) {
       await assert.rejects(fetchPublicPage(url), (e: unknown) => e instanceof PageUnavailable && (e.reason === 'private_address' || e.reason === 'bad_url'), url);
     }

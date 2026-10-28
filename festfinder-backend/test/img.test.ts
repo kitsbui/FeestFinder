@@ -6,7 +6,7 @@ import { emailUser } from './people.ts';
 import { multipart } from './files.ts';
 import { many, one } from '../src/db/index.ts';
 import { IMG_SHAPES, IMG_WIDTHS, imgHeight, imgKey, isImgBox, linkOfKey, upstreamFor } from '../src/lib/remote-image.ts';
-import { fakeImageFull, PICTURE_COLUMNS, type ImageFetcher } from '../src/services/remote-images.ts';
+import { fakeImageFull, PICTURE_COLUMNS, UNSERVED_PICTURE_COLUMNS, type ImageFetcher } from '../src/services/remote-images.ts';
 import { vnDate } from '../src/lib/time.ts';
 
 /** A real picture of w×h, as a host would send it. */
@@ -22,6 +22,8 @@ const pictures = (hits: string[]): ImageFetcher => async (url) => {
   if (/broken/.test(url)) throw new TypeError('fetch failed');
   const u = new URL(url);
   const bytes = /junk/.test(url) ? Buffer.from('<html>not a picture</html>')
+    : /vector/.test(url) ? Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000"><rect width="1600" height="1000" fill="red"/></svg>')
+    : /tiff/.test(url) ? await sharp(await picture(400, 300)).tiff().toBuffer()
     : /animated/.test(url) ? await sharp([await picture(300, 200), await picture(300, 200, 160)], { join: { animated: true } }).gif().toBuffer()
     : await picture(Number(u.searchParams.get('w') ?? 1600), Number(u.searchParams.get('h') ?? 1000));
   return { url, status: 200, contentType: 'image/png', bytes, totalBytes: bytes.length };
@@ -136,6 +138,24 @@ describe('GET /img', () => {
     const animated = 'https://pics.example/animated-logo.gif';
     await env.ctx.db.query(`update organizers set logo_url = $1 where id = (select organizer_id from events where id = $2)`, [animated, env.ids.event.ravo]);
     assert.equal((await img(animated, '192x192')).status, 302, 'an animated picture keeps moving, from its host');
+    // Only the formats a page draws anyway are decoded here: SVG and TIFF are left to the browser.
+    for (const [i, link] of ['https://pics.example/vector-cover.svg', 'https://pics.example/tiff-cover.tif'].entries()) {
+      await env.ctx.db.query(`update events set cover_url = $1 where id = $2`, [link, events[i]]);
+      const res = await img(link, '384x240');
+      assert.deepEqual([res.status, res.headers.location], [302, link], link);
+    }
+  });
+
+  it('never resizes the picture of a profile the team hid', async () => {
+    const photo = 'https://pics.example/hidden-artist.jpg';
+    await env.ctx.db.query(`update artists set image_url = $1 where name = 'SlimV'`, [photo]);
+    assert.equal((await img(photo, '192x192')).status, 200);
+    await env.ctx.db.query(`update artists set hidden_at = now() where name = 'SlimV'`);
+    try {
+      assert.equal((await img(photo, '256x256')).status, 404);
+    } finally {
+      await env.ctx.db.query(`update artists set hidden_at = null where name = 'SlimV'`);
+    }
   });
 
   it('serves an upload from storage, by its path or its full address', async () => {
@@ -163,6 +183,13 @@ describe('GET /img', () => {
     assert.equal((await img('https://pics.example/body-only.jpg', '828x466')).status, 200);
     assert.equal((await img('https://pics.example/booth.jpg', '828x466')).status, 200);
     assert.equal((await img('https://pics.example/body-only.jp', '828x466')).status, 404, 'a piece of a link is not a link');
+    // A plain link in the words is never a picture: /img neither fetches it nor sends anyone to it.
+    const before = hits.length;
+    await env.ctx.db.query(
+      `insert into blog_posts (slug, byline, category, title, body, status) values ('img-link-test', 'FeestFinder', 'styles', $1, $2, 'draft')`,
+      [{ en: 'Link', vi: 'Link' }, { en: 'Read [the guide](https://pics.example/elsewhere.jpg) and [this](https://phish.example/login).', vi: '' }]);
+    for (const link of ['https://pics.example/elsewhere.jpg', 'https://phish.example/login']) assert.equal((await img(link, '96x96')).status, 404, link);
+    assert.equal(hits.length, before, 'nothing fetched');
     await env.ctx.db.query(`update blog_posts set status = 'hidden' where slug = 'img-body-test'`);
     assert.equal((await img('https://pics.example/booth.jpg', '828x466')).status, 404, 'a post the team hid shows nothing');
   });
@@ -204,7 +231,7 @@ describe('GET /img', () => {
       `select table_name, column_name from information_schema.columns
         where table_schema = 'public' and (column_name ~ '(cover|image|logo|photo|thumbnail)_urls?$' or column_name ~ 'images$')`);
     const known = new Set(PICTURE_COLUMNS.flatMap((t) => [...t.columns, ...(t.lists ?? [])].map((c) => `${t.table}.${c}`)));
-    const missing = cols.map((c) => `${c.table_name}.${c.column_name}`).filter((c) => !known.has(c));
+    const missing = cols.map((c) => `${c.table_name}.${c.column_name}`).filter((c) => !known.has(c) && !UNSERVED_PICTURE_COLUMNS.includes(c));
     assert.deepEqual(missing, [], 'add these to PICTURE_COLUMNS (services/remote-images.ts)');
     assert.ok(cols.length >= 15, 'the query found the picture columns');
   });
