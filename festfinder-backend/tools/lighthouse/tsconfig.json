@@ -1,0 +1,8 @@
+{
+  "//": "The runner's own check (npm run typecheck here, with this folder installed): it reads Lighthouse's types, which the API's tsconfig never sees.",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": ["../../node_modules/@types"]
+  },
+  "include": ["*.ts"]
+}

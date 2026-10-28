@@ -28,6 +28,7 @@ npm test                   # every API test (a few minutes)
 node --test test/auth.test.ts                  # one file
 npm run test:screens       # Playwright: e2e/next against a production Next build (3100) and its own API (4100, own PGlite)
 npm run dev                # the API on :4000 against the staging database in .env
+npm run lighthouse -- --base https://feestfinder.com   # Lighthouse 13.4.1 (tools/lighthouse, its own install): 5 runs per page and form, medians, points lost per metric; --serve measures this checkout on :3200/:4500 (.next-lh)
 ```
 
 For the Next front, run `npm run dev` / `npm run build` from `festfinder-web/`. Both copy `public/ui/` first. `npm run lint` there runs type-aware ESLint: no errors, and no more warnings than the budget in its `package.json` (lower it when you fix some). In `festfinder-backend/`, `npm run lint` runs oxlint type-aware (through typescript-go, so it reads TypeScript 7), configured in `.oxlintrc.json`: no errors, and no more warnings than its `--max-warnings` budget (lower it when you fix some); `npm run lint:warnings` lists them.

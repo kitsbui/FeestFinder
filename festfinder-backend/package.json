@@ -16,9 +16,11 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.e2e.json",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "test:screens": "playwright test -c playwright.next.config.ts",
-    "lint": "oxlint --type-aware --quiet --max-warnings 1093 src test e2e index.ts",
-    "lint:warnings": "oxlint --type-aware src test e2e index.ts",
-    "test:visual": "FF_VISUAL=1 playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts"
+    "lint": "oxlint --type-aware --quiet --max-warnings 1093 src test e2e tools index.ts",
+    "lint:warnings": "oxlint --type-aware src test e2e tools index.ts",
+    "test:visual": "FF_VISUAL=1 playwright test -c playwright.next.config.ts e2e/next/visual.spec.ts",
+    "lighthouse": "node tools/lighthouse/run.ts",
+    "lighthouse:test": "(test -d tools/lighthouse/node_modules/lighthouse || npm ci --prefix tools/lighthouse --no-audit --no-fund) && node --test tools/lighthouse/run.test.ts && npm run --prefix tools/lighthouse typecheck"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

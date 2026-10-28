@@ -58,6 +58,8 @@ const ONLY_CITY = LIST_KEYS.map((key) => ({ type: 'query' as const, key }));
 const CITY = { type: 'query' as const, key: 'city', value: '(?<city>[a-z0-9-]+)' };
 
 const config: NextConfig = {
+  // festfinder-backend's Lighthouse runner (tools/lighthouse, --serve) builds into .next-lh, beside the screen checks' .next.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // Strict mode's deliberate double mount would run the pages' effects twice in development
   // (the OAuth hand-back, timers, loaders).
   reactStrictMode: false,
