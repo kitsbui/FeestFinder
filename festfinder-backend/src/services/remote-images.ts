@@ -233,9 +233,10 @@ export const PICTURE_COLUMNS: { table: string; columns: string[]; lists?: string
   { table: 'blog_posts', columns: ['cover_url'], shown: `status <> 'hidden'` },
   { table: 'ad_campaigns', columns: ['logo_url'], lists: ['images'] },
   { table: 'recaps', columns: [], lists: ['photo_urls'] },
+  { table: 'news_items', columns: ['image_url'], shown: 'hidden_at is null' },
 ];
-/** Picture columns no page shows to the public (a brand's request, read by the team as linked): never resized. */
-export const UNSERVED_PICTURE_COLUMNS = ['ad_inquiries.logo_url', 'ad_inquiries.product_images'];
+/** Picture columns no page shows to the public (a brand's request, read by the team as linked; a chart's sleeve, which no page draws): never resized. */
+export const UNSERVED_PICTURE_COLUMNS = ['ad_inquiries.logo_url', 'ad_inquiries.product_images', 'chart_entries.image_url'];
 
 /** One query: whether a stored link (framed or not) or a picture in a post's body is `$1`. */
 const KNOWN_IMAGE_SQL = `select (${[
