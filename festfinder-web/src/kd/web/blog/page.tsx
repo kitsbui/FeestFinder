@@ -21,6 +21,7 @@ import { BLOG } from './copy';
 import { EditLink } from './edit-link';
 import { readIn, say, text, type Post, type PostList } from './model';
 import { PostTracks } from './tracks';
+import { FIT } from '../../fits';
 
 const enc = encodeURIComponent;
 /** "20.10.2026" / "20 Oct 2026". */
@@ -106,7 +107,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
               </header>
               {post.coverUrl ? (
                 <figure className="flex flex-col gap-2 pt-6">
-                  <Art title={title} family="edm" cover={post.coverUrl} alt={title} eager className="aspect-video w-full" />
+                  <Art title={title} family="edm" cover={post.coverUrl} alt={title} eager fit={FIT.read} className="aspect-video w-full" />
                   {post.coverCredit ? <figcaption className="kd-s" lang={lang}>{T.cover} · {inline(post.coverCredit, 'cover', true)}</figcaption> : null}
                 </figure>
               ) : null}
