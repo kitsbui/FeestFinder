@@ -58,8 +58,9 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
   });
   const db = await openDb(config);
   await migrate(db);
-  // The suggested publications migration 065 switches on: the tests never read a feed.
+  // The suggested publications and charts migrations 065 and 066 switch on: the tests never read a feed or a chart.
   await db.query('delete from news_sources');
+  await db.query('delete from chart_sources');
   const seeded: any = opts.seed === false ? { ids: { event: {}, org: {}, friend: {} } } : await seed(db, clock.now(), { volume: 'small' });
   const transport = new ConsoleTransport(() => {});
   const ctx: Ctx = {

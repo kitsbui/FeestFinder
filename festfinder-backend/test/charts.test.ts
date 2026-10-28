@@ -66,6 +66,19 @@ describe('reading a YouTube Music playlist', () => {
   });
 });
 
+describe('the YouTube Music charts migration 066 lists', () => {
+  it('names a style of the site for each, one playlist each, sixteen switched on', async () => {
+    const { isStyle } = await import('../src/lib/styles.ts');
+    const sql = readFileSync(new URL('../src/db/migrations/066_youtube_charts.sql', import.meta.url), 'utf8');
+    const rows = [...sql.matchAll(/^  \('((?:[^']|'')+)', '([a-z-]+)', '([A-Za-z0-9_-]+)', 'https:\/\/music\.youtube\.com\/playlist\?list=\3', (true|false)\)/gm)];
+    assert.equal(rows.length, 22);
+    assert.ok(rows.every((r) => isStyle(r[2])), 'every style is the site’s');
+    assert.equal(new Set(rows.map((r) => r[3])).size, rows.length, 'one playlist once');
+    assert.equal(rows.filter((r) => r[4] === 'true').length, 16);
+    assert.equal(new Set(rows.filter((r) => r[4] === 'true').map((r) => r[2])).size, 16, 'one chart on per style');
+  });
+});
+
 describe('charts refreshed on a schedule and the style hub', () => {
   let env: TestEnv;
   let admin: string;
