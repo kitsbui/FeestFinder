@@ -115,8 +115,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Not the files this app serves itself (public/, Google Search Console's verification file among them), nor uploads (/files/): those that are the
-  // API's (/ui/ files this app lacks, /files/) reach it through the fallback rewrite, unsigned,
-  // which is fine because the API does not rate-limit them, and Vercel caches them.
-  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|fonts/|files/|favicon.ico|sw.js|manifest.webmanifest|google69f1c7d1cf79cd6d.html).*)'],
+  // Not the files this app serves itself (public/, Google Search Console's verification file among them), nor uploads (/files/) and
+  // resized pictures (/img/): those that are the API's (/ui/ files this app lacks, /files/, /img/) reach it through the fallback
+  // rewrite, unsigned, which is fine because the API does not rate-limit them, and Vercel's CDN keeps what they say to keep
+  // (vercel.json turns that on for /img/: a fetch from here would cost a function call per picture and never be cached).
+  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|fonts/|files/|img/|favicon.ico|sw.js|manifest.webmanifest|google69f1c7d1cf79cd6d.html).*)'],
 };

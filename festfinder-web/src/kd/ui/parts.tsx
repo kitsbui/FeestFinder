@@ -7,6 +7,7 @@ import { CaretDownIcon } from '@phosphor-icons/react/ssr';
 import { cx } from '../cx';
 import { g, type Family } from '../genre';
 import { frameStyle } from '../frame';
+import type { Fit } from '../img';
 
 // ---- type ---------------------------------------------------------------------------
 
@@ -74,10 +75,13 @@ export function monogram(title: string): string {
  * on a page that names the event beside it, a poster of its date instead (`poster`).
  * No shapes and no gradients stand in for a picture. `off` dims it (sold out, past, not chosen).
  */
-export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false }: {
+export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false, fit }: {
   family: Family; cover?: string | null; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
   /** The page's main picture (a hero, the home page's first picture): fetched first, with high priority, never lazily. One per page. */
   eager?: boolean;
+  /** The box it is drawn in (kd/img.ts, kd/fits.ts): a stored cover then loads as a copy of that size (/img). Without it, the
+   *  link itself: a cover not saved yet, which /img does not know. */
+  fit?: Fit;
   /** The name a text tile shows when there is no cover, or the cover does not load. */
   title?: string | null;
   /** The style, in the information colour, at the start of the line under the name ("Hard techno"). */
@@ -104,7 +108,7 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
         </>
       ) : null}
       {cover ? (
-        <img src={cover} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
+        <img src={cover} {...fit?.attrs(cover, !eager)} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
       ) : null}
       {children}
     </div>
@@ -138,10 +142,12 @@ export function StatRow({ children, className }: { children: ReactNode; classNam
 }
 
 /** People are circles, organisers rounded squares. `ring` sits above a cover it overlaps. */
-export function Avatar({ name, src, size = 40, org, ring, acc, className, eager = false }: {
+export function Avatar({ name, src, size = 40, org, ring, acc, className, eager = false, fit }: {
   name: string; src?: string | null; size?: number; org?: boolean; ring?: boolean; acc?: boolean; className?: string;
   /** Never lazily: 'high' when it is the page's main picture (an artist's page without a cover). */
   eager?: boolean | 'high';
+  /** Its box (kd/img.ts `square`), for a stored photo: a copy its size (/img). Without it, the link itself (a form's preview). */
+  fit?: Fit;
 }) {
   const initials = String(name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
   return (
@@ -155,7 +161,7 @@ export function Avatar({ name, src, size = 40, org, ring, acc, className, eager 
       <span className="kd-av-i" data-i={initials} aria-hidden="true" />
       {src ? (
          
-        <img src={src} alt={name} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager === 'high' ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" style={frameStyle(src)} />
+        <img src={src} {...fit?.attrs(src, !eager)} alt={name} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager === 'high' ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" style={frameStyle(src)} />
       ) : null}
     </span>
   );
@@ -202,11 +208,15 @@ function tilt(seed: string): string {
  * A night in the passport (design v2 phase 8): each stamp its own, the night's cover in the information
  * colour or, without one, the event's initials, the city along its foot, a turn of its own.
  */
-export function Stamp({ family, date, name, dim, href, cover, city }: { family: Family; date: string; name: string; dim?: boolean; href?: string; cover?: string | null; city?: string | null }) {
+export function Stamp({ family, date, name, dim, href, cover, city, fit }: {
+  family: Family; date: string; name: string; dim?: boolean; href?: string; cover?: string | null; city?: string | null;
+  /** The stamp's box (kd/img.ts), for a stored cover: a copy its size. */
+  fit?: Fit;
+}) {
   const body = (
     <>
       <span className="kd-tile" style={{ '--tilt': tilt(name + date) } as CSSProperties} aria-hidden="true">
-        {cover ? <img className="kd-stamp-img" src={cover} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <b className="kd-stamp-mono" data-t={monogram(name)} />}
+        {cover ? <img className="kd-stamp-img" src={cover} {...fit?.attrs(cover, true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <b className="kd-stamp-mono" data-t={monogram(name)} />}
         {city ? <i className="kd-stamp-city" data-c={city} /> : null}
       </span>
       <span className="kd-m kd-num">{date}</span>
