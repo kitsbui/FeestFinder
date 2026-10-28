@@ -243,6 +243,9 @@ async function serve(out: string) {
     ...base, PORT: String(SERVE.api), PUBLIC_BASE_URL: web, DATABASE_URL: '', DATABASE_URL_FROM: '',
     PGLITE_DIR: './.data/pglite-lh', UPLOAD_DIR: './.data/uploads-lh', JOBS_ENABLED: 'false', LINK_CHECKS_ENABLED: 'false',
     SEED_BLOG: '1', RATE_LIMIT_PER_MINUTE: '10000',
+    // The demo data's clock, as the screen checks pin it (playwright.next.config.ts): its nights are
+    // still to come, so the home page has cards; linked pictures read from the fake network.
+    FF_NOW: '2026-09-14T10:00:00+07:00', FAKE_REMOTE_MEDIA: '1',
   };
   console.log('serve: the demo data into .data/pglite-lh');
   await run(process.execPath, ['test/fixtures/reset.ts'], BACKEND, apiEnv, join(out, 'seed.log'));

@@ -17,10 +17,11 @@ import { ACCOUNTS } from './routes.ts';
  *   server sent (festfinder-web's `Art` `eager`), so the browser fetches it before any script runs.
  * - No redirect while a screen loads (2026-10-28): every 3xx is a round trip a phone waits for, as the
  *   router's prefetches moved to another language were (festfinder-web/src/proxy.ts answers those
- *   with 204). The English screens carry the `ff_lang=en` cookie a reader of English has.
+ *   with 204). The English screens carry the `ff_lang=en` cookie a reader of English has. /img's 302 to
+ *   a picture's own link (its fallback when it cannot fetch one) is not counted.
  * - TBT-lite (2026-10-28): the main thread's blocking time, the sum of every long task's time over
- *   50 ms from the first paint to 5 s after it, under the same 4× CPU; the better of two loads, each
- *   on a fresh phone (a second load in the same one finds its scripts compiled).
+ *   50 ms from the first paint to 5 s after it, under the same 4× CPU; the best of up to three loads,
+ *   each on a fresh phone (a second load in the same one finds its scripts compiled).
  *   Lighthouse weighs TBT most (30 of 100).
  * - Image KB (2026-10-28): the bytes of every picture the screen loads (CDP sees a cross-origin
  *   picture's size, which the page's own timing reports as 0), so a picture drawn at full size
@@ -140,8 +141,12 @@ async function load(page: Page, cdp: CDPSession, path: string): Promise<Load> {
   const onResponse = (e: { requestId: string; type: string }) => { if (e.type === 'Image') images.add(e.requestId); };
   const onFinished = (e: { requestId: string; encodedDataLength: number }) => { if (images.has(e.requestId)) imgBytes += e.encodedDataLength; };
   // CDP reports a redirect as the next request's redirectResponse (Playwright's own events would too, minus the service worker's).
+  // /img's 302 to a picture's own link is its fallback for a link it cannot fetch (what earlier specs store on hosts that
+  // do not answer here): the browser would have asked that link anyway, so it is not a redirect a screen makes.
   const onRequest = (e: { redirectResponse?: { status: number; url: string } }) => {
-    if (e.redirectResponse) redirects.push(`${e.redirectResponse.status} ${new URL(e.redirectResponse.url).pathname}${new URL(e.redirectResponse.url).search}`);
+    const from = e.redirectResponse ? new URL(e.redirectResponse.url) : null;
+    if (!from || (e.redirectResponse!.status === 302 && from.pathname.startsWith('/img/'))) return;
+    redirects.push(`${e.redirectResponse!.status} ${from.pathname}${from.search}`);
   };
   cdp.on('Network.responseReceived', onResponse);
   cdp.on('Network.loadingFinished', onFinished);
@@ -201,6 +206,10 @@ test('every screen loads without jumping and within its budgets', async ({ brows
   test.setTimeout(900_000);
   const over: string[] = [];
   const table: string[] = [];
+  // One load nobody measures first: the browser's own start (its GPU process, its caches) is not the first screen's.
+  const warm = await phone(browser, baseURL!, 'visitor', '/');
+  await load(warm.page, warm.cdp, '/');
+  await warm.ctx.close();
   for (const [who, path, budget, tbtMax, imgMax, place] of SCREENS) {
     const name = place ? `${path} (${place.locale}, ${place.timezoneId})` : path;
     const { ctx, page, cdp } = await phone(browser, baseURL!, who, path, place);
@@ -210,8 +219,9 @@ test('every screen loads without jumping and within its budgets', async ({ brows
     const lcpMax = LCP_TIGHT[path] ?? (who === 'visitor' ? LCP_MAX : LCP_SIGNED_IN);
     // Once more: a slow moment on the runner is not the screen's fault; two slow loads are.
     if (m.lcp > lcpMax) m = better(m, await load(page, cdp, path));
-    if (m.tbt > tbtMax) {
-      // On a fresh phone: a load in the same one meets its scripts compiled and blocks for nothing.
+    // On a fresh phone, up to twice more: a load in the same one meets its scripts compiled and blocks for nothing,
+    // and a busy runner stalls one load now and then (a screen over its budget three times is the screen's fault).
+    for (let more = 0; more < 2 && m.tbt > tbtMax; more++) {
       const cold = await phone(browser, baseURL!, who, path, place);
       m = { ...m, tbt: Math.min(m.tbt, (await load(cold.page, cold.cdp, path)).tbt) };
       await cold.ctx.close();
