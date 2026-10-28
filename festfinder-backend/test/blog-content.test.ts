@@ -58,19 +58,24 @@ describe('blog content packs: written once in the repository, edited by the team
     }
   });
 
+  // Packs the owner approved as written go public as they arrive; the rest wait for the team.
+  const waiting = PACKS.filter((p) => !p.publish).flatMap((p) => p.posts);
+  const approved = PACKS.filter((p) => p.publish).flatMap((p) => p.posts);
+
   it('adds new posts for the team’s review, with their tracks and their guide above them, and tells the admins', async () => {
     const first = await importBlogContent(env.ctx);
     assert.deepEqual(first, { added: posts.length, updated: 0 });
     const queue = (await env.as(admin).get('/admin/posts')).body;
-    assert.equal(queue.items.length, posts.length);
+    assert.equal(queue.items.length, waiting.length);
     const techno = queue.items.find((p: { slug: string }) => p.slug === 'techno');
     assert.deepEqual([techno.author.name, techno.author.editorial, techno.imported, techno.tracks.length, techno.tracks[0].provider], ['FeestFinder', true, true, 5, 'youtube']);
     const row = await env.ctx.db.query<{ parent: string }>(`select p.slug as parent from blog_posts c join blog_posts p on p.id = c.parent_id where c.slug = 'techno'`);
     assert.equal(row.rows[0].parent, 'edm');
     const told = await env.ctx.db.query<{ n: number }>(`select count(*)::int as n from notifications where kind = 'blog_review'`);
     assert.ok(told.rows[0].n >= 1);
-    // Nothing public before the team says so; a second run changes nothing.
-    assert.equal((await env.as().get('/posts')).body.total, 0);
+    // Nothing public before the team says so, but for the packs the owner approved; a second run changes nothing.
+    assert.equal((await env.as().get('/posts')).body.total, approved.length);
+    assert.ok(approved.length > 0 && approved.every((p) => p.category !== 'styles' && p.category !== 'dj'));
     assert.deepEqual(await importBlogContent(env.ctx), { added: 0, updated: 0 });
   });
 
@@ -127,6 +132,29 @@ describe('blog content packs: written once in the repository, edited by the team
     assert.equal((await graph('/seo/blog/techno')).find((n) => n['@type'] === 'HowTo'), undefined, 'a genre guide is no how-to');
   });
 
+  it('reads a club guide’s clubs as NightClubs, a news post’s confirmed festival as a MusicEvent in a NewsArticle, a playlist as a MusicPlaylist', async () => {
+    for (const slug of ['club-ha-noi', 'tomorrowland-thailand-2026', 'playlist-techno']) assert.equal((await env.as().get(`/posts/${slug}`)).status, 200, slug);
+    type Node = { '@type': string; [k: string]: unknown };
+    const graph = async (path: string) => (await env.as().get(path)).body.jsonLd['@graph'] as Node[];
+    const clubs = (await graph('/seo/blog/club-ha-noi?lang=en')).find((n) => n['@type'] === 'ItemList' && String(n['@id']).endsWith('#venues')) as unknown as { itemListElement: { item: { '@type': string; name: string; address: string; url?: string } }[] };
+    assert.equal(clubs.itemListElement.length, 7);
+    assert.deepEqual(clubs.itemListElement.map((x) => x.item['@type']), Array(7).fill('NightClub'));
+    assert.ok(clubs.itemListElement.every((x) => x.item.address && x.item.url?.startsWith('https://')));
+    const news = await graph('/seo/blog/tomorrowland-thailand-2026?lang=en');
+    assert.ok(news.some((n) => n['@type'] === 'NewsArticle'));
+    assert.equal(news.find((n) => n['@type'] === 'BlogPosting'), undefined);
+    const events = news.find((n) => String(n['@id']).endsWith('#events')) as unknown as { itemListElement: { item: { '@type': string; name: string; startDate: string; endDate: string; url: string } }[] };
+    const tl = events.itemListElement[0].item;
+    assert.deepEqual([tl['@type'], tl.startDate, tl.endDate], ['MusicEvent', '2026-12-11', '2026-12-13']);
+    assert.match(tl.url, /^https:\/\/[^/]*tomorrowland\.com\//);
+    // A playlist is a MusicPlaylist of its tracks.
+    const list = (await graph('/seo/blog/playlist-techno?lang=en')).find((n) => n['@type'] === 'MusicPlaylist') as unknown as { numTracks: number; track: { '@type': string }[] };
+    assert.ok(list.numTracks >= 10 && list.track.every((tr) => tr['@type'] === 'MusicRecording'));
+    // A genre guide is neither.
+    const techno = await graph('/seo/blog/techno');
+    assert.ok(!techno.some((n) => String(n['@id']).endsWith('#venues') || String(n['@id']).endsWith('#events')));
+  });
+
   it('takes a pack’s newer words until someone edits a post, and never after', async () => {
     const changed: BlogPack[] = PACKS.map((p) => ({ ...p, posts: p.posts.map((x) => ({ ...x, excerpt: { ...x.excerpt, en: `${x.excerpt.en} (revised)` } })) }));
     // An admin edits the techno guide in the Console.
@@ -144,5 +172,21 @@ describe('blog content packs: written once in the repository, edited by the team
     await env.as(admin).post(`/admin/posts/${id}/decision`, { action: 'hide' });
     await importBlogContent(env.ctx, changed);
     assert.equal((await env.ctx.db.query<{ status: string }>(`select status from blog_posts where slug = 'techno'`)).rows[0].status, 'hidden');
+  });
+
+  it('publishes the posts still waiting once the owner approves their pack, never one the team took down', async () => {
+    const dj = PACKS.find((p) => p.pack === 'dj-skills')!;
+    const rows = async () => Object.fromEntries((await env.ctx.db.query<{ import_key: string; status: string }>(`select import_key, status from blog_posts where import_key like 'dj-skills/%'`)).rows.map((r) => [r.import_key, r.status]));
+    const before = await rows();
+    const left = Object.keys(before).filter((k) => before[k] === 'in_review');
+    assert.ok(left.length >= 2);
+    const id = (await env.ctx.db.query<{ id: string }>('select id from blog_posts where import_key = $1', [left[0]])).rows[0].id;
+    await env.as(admin).post(`/admin/posts/${id}/decision`, { action: 'hide' });
+    await importBlogContent(env.ctx, [{ ...dj, publish: true }]);
+    const now = await rows();
+    assert.equal(now[left[0]], 'hidden');
+    assert.ok(left.slice(1).every((k) => now[k] === 'published'));
+    const audit = await env.ctx.db.query<{ n: number }>(`select count(*)::int as n from audit_log where action = 'blog.publish_pack' and target_label = 'dj-skills'`);
+    assert.equal(audit.rows[0].n, 1);
   });
 });

@@ -7,7 +7,7 @@ import { openDb, poolConfig, type Db } from '../src/db/index.ts';
 import { migrate } from '../src/db/migrate.ts';
 import { ensureAdmin, syncAdmins } from '../src/bootstrap.ts';
 import { checkEnvironment, claimEnvironment, readEnvironment } from '../src/db/environment.ts';
-import { runDueJobs } from '../src/jobs.ts';
+import { dueJobs, runDueJobs, SCHEDULE } from '../src/jobs.ts';
 import { DbStorage } from '../src/services/storage.ts';
 
 /** Runs `fn` with these environment variables (undefined unsets one), then puts them back. */
@@ -203,13 +203,28 @@ describe('deployment', () => {
     assert.equal(plain.ssl, undefined);
   });
 
-  it('runs each job about as often as its timer did', async () => {
+  it('runs each job as often as its interval, never two heavy jobs in one call, ingest last', () => {
+    const start = 60 * 1000 * 240; // a minute that starts every cycle
+    const runs = new Map<string, number>();
+    const heavy = new Set(SCHEDULE.filter((s) => s.heavy).map((s) => s.job));
+    for (let m = start; m < start + 240; m++) {
+      const due = dueJobs(m);
+      for (const j of due) runs.set(j, (runs.get(j) ?? 0) + 1);
+      assert.ok(due.filter((j) => heavy.has(j)).length <= 1, `minute ${m % 60}: ${due.join(', ')}`);
+      if (due.includes('ingest')) assert.equal(due.at(-1), 'ingest');
+    }
+    assert.equal(SCHEDULE.length, 19);
+    for (const s of SCHEDULE) assert.equal(runs.get(s.job), 240 / Math.max(1, Math.round(s.every / 60_000)), s.job);
+    // The charts are tried every ten minutes, not once an hour at minute 0.
+    assert.deepEqual([...Array(60).keys()].filter((m) => dueJobs(start + m).includes('refreshCharts')), [8, 18, 28, 38, 48, 58]);
+  });
+
+  it('runs a call’s due jobs and only those', async () => {
     const env = await setup();
     try {
-      const everyJob = await runDueJobs(env.ctx, new Date(60_000 * 60 * 1000));
-      assert.equal(Object.keys(everyJob).length, 16);
-      const minuteJobs = await runDueJobs(env.ctx, new Date(60_000 * (60 * 1000 + 1)));
-      assert.deepEqual(Object.keys(minuteJobs).sort(), ['deliverOutbox', 'sendScheduledAnnouncements']);
+      const minute = 60 * 1000 * 240 + 1;
+      assert.deepEqual(Object.keys(await runDueJobs(env.ctx, new Date(60_000 * minute))), dueJobs(minute));
+      assert.deepEqual(dueJobs(minute), ['deliverOutbox', 'sendScheduledAnnouncements', 'translateDescriptions']);
     } finally { await env.close(); }
   });
 

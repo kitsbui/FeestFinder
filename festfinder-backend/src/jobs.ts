@@ -17,6 +17,8 @@ import { checkRemoteImages } from './services/remote-images.ts';
 import { importBlogContent } from './services/blog-content.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
 import { webHealth } from './services/web-signals.ts';
+import { digestPending, fetchDueNews } from './services/news.ts';
+import { refreshDueCharts } from './services/charts.ts';
 
 /** One pass of every scheduled task. Tests call this directly with a controlled clock. */
 export const jobs = {
@@ -127,6 +129,21 @@ export const jobs = {
     return webHealth(ctx.db, ctx.clock.now());
   },
 
+  /** The news feed: each publication's feed read on its interval, new headlines kept with their pictures (services/news.ts). */
+  async fetchNews(ctx: Ctx) {
+    return (await fetchDueNews(ctx)).reduce((n, s) => n + s.added, 0);
+  },
+
+  /** Two-sentence digests of the newest headlines, in both languages, when Claude is configured. */
+  async digestNews(ctx: Ctx) {
+    return (await digestPending(ctx, 20)).written;
+  },
+
+  /** The charts of each style (YouTube Music, Beatport, Spotify) read on their interval, with the keys in the environment (services/charts.ts). */
+  async refreshCharts(ctx: Ctx) {
+    return (await refreshDueCharts(ctx)).filter((r) => !r.error).length;
+  },
+
   async checkTicketLinks(ctx: Ctx) {
     if (!ctx.config.linkChecksEnabled) return 0;
     const rows = await many<any>(ctx.db,
@@ -136,25 +153,46 @@ export const jobs = {
   },
 };
 
-const SCHEDULE: [keyof typeof jobs, number][] = [
-  ['deliverOutbox', 5_000],
-  ['sendScheduledAnnouncements', 30_000],
-  ['reminders', 5 * 60_000],
-  ['expireAppeals', 10 * 60_000],
-  ['checkTicketLinks', 15 * 60_000],
-  ['checkRemoteImages', 10 * 60_000],
-  ['purgeFeedbackAttachments', 4 * 60 * 60_000],
-  ['pingIndexNow', 5 * 60_000],
-  ['refreshConfidence', 60 * 60_000],
-  ['expireRadar', 60 * 60_000],
-  ['translateDescriptions', 10 * 60_000],
-  ['importBlogContent', 10 * 60_000],
-  ['refreshFit', 60 * 60_000],
-  ['awardBadges', 60 * 60_000],
-  ['webHealth', 60 * 60_000],
-  // Last: it spends whatever time the call has left.
-  ['ingest', 5 * 60_000],
+/**
+ * Every job, how often it runs, and at which minute of its interval (`at`): POST /internal/jobs
+ * comes once a minute and runs what is due in one call, so the heavy jobs (those that read the
+ * network, call Claude or walk many rows) each have a minute of their own and never share a call
+ * (test/deploy.test.ts checks it); the light ones go where they fall. Before 2026-10-28 every
+ * job ran at minute 0, and the hourly ones at the end of the list could miss their turn when
+ * the call ran out of time.
+ */
+type Slot = { job: keyof typeof jobs; every: number; at?: number; heavy?: true };
+export const SCHEDULE: Slot[] = [
+  { job: 'deliverOutbox', every: 5_000 },
+  { job: 'sendScheduledAnnouncements', every: 30_000 },
+  { job: 'reminders', every: 5 * 60_000 },
+  { job: 'pingIndexNow', every: 5 * 60_000, at: 2 },
+  { job: 'expireAppeals', every: 10 * 60_000 },
+  { job: 'importBlogContent', every: 10 * 60_000, at: 2 },
+  { job: 'translateDescriptions', every: 10 * 60_000, at: 1, heavy: true },
+  { job: 'checkRemoteImages', every: 10 * 60_000, at: 3, heavy: true },
+  { job: 'digestNews', every: 10 * 60_000, at: 6, heavy: true },
+  // Every ten minutes: each chart has its own interval, so a run with nothing due is one query.
+  { job: 'refreshCharts', every: 10 * 60_000, at: 8, heavy: true },
+  { job: 'checkTicketLinks', every: 15 * 60_000 },
+  { job: 'fetchNews', every: 15 * 60_000, at: 5, heavy: true },
+  { job: 'refreshConfidence', every: 60 * 60_000, at: 10, heavy: true },
+  { job: 'refreshFit', every: 60 * 60_000, at: 17, heavy: true },
+  { job: 'awardBadges', every: 60 * 60_000, at: 27, heavy: true },
+  { job: 'expireRadar', every: 60 * 60_000, at: 30 },
+  { job: 'webHealth', every: 60 * 60_000, at: 40 },
+  { job: 'purgeFeedbackAttachments', every: 4 * 60 * 60_000, at: 47 },
+  // Last in a call: it spends whatever time the call has left.
+  { job: 'ingest', every: 5 * 60_000, at: 4, heavy: true },
 ];
+
+/** The jobs one call of POST /internal/jobs runs in a given minute since the epoch, in order. */
+export function dueJobs(minute: number): (keyof typeof jobs)[] {
+  return SCHEDULE.filter((s) => {
+    const minutes = Math.max(1, Math.round(s.every / 60_000));
+    return ((minute - (s.at ?? 0)) % minutes + minutes) % minutes === 0;
+  }).map((s) => s.job);
+}
 
 /**
  * One scheduler per job name across the whole fleet.
@@ -167,7 +205,7 @@ const SCHEDULE: [keyof typeof jobs, number][] = [
 export function startJobs(ctx: Ctx): () => void {
   const timers: NodeJS.Timeout[] = [];
   const running = new Set<string>();
-  for (const [name, every] of SCHEDULE) {
+  for (const { job: name, every } of SCHEDULE) {
     const tick = async () => {
       if (running.has(name)) return;
       running.add(name);
@@ -203,15 +241,12 @@ export async function withJobLock(ctx: Ctx, name: string, fn: () => Promise<unkn
 /**
  * One call of POST /internal/jobs, made every minute by a scheduler outside the process
  * (pg_cron on Supabase). Each job keeps roughly its interval: those under a minute run on
- * every call, the others when the wall-clock minute is a multiple of theirs. Each still
- * takes its lock, so an overlapping call skips what is already running.
+ * every call, the others at their minute (`dueJobs`). Each still takes its lock, so an
+ * overlapping call skips what is already running.
  */
 export async function runDueJobs(ctx: Ctx, at = new Date()) {
-  const minute = Math.floor(at.getTime() / 60_000);
   const out: Record<string, unknown> = {};
-  for (const [name, every] of SCHEDULE) {
-    const minutes = Math.max(1, Math.round(every / 60_000));
-    if (minute % minutes !== 0) continue;
+  for (const name of dueJobs(Math.floor(at.getTime() / 60_000))) {
     try {
       out[name] = await withJobLock(ctx, name, () => jobs[name](ctx));
     } catch (e) {

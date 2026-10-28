@@ -43,6 +43,8 @@ import adminIngestRoutes from './routes/admin/ingest.ts';
 import devConsoleRoutes from './routes/dev-console.ts';
 import projectRoutes from './routes/projects.ts';
 import blogRoutes from './routes/blog.ts';
+import newsRoutes from './routes/news.ts';
+import styleRoutes from './routes/styles.ts';
 import trackRoutes from './routes/tracks.ts';
 import internalRoutes from './routes/internal.ts';
 import discussionRoutes from './routes/discussion.ts';
@@ -92,7 +94,7 @@ export function isInternal(ip: string): boolean {
  * Reads that answer every visitor without a session alike, which the CDN may keep for a minute.
  * One path segment after the prefix at most, so nothing nested (a ticket, a plan) is ever public.
  */
-const PUBLIC_READS = [/^\/events$/, /^\/events\/map$/, /^\/events\/[^/]+$/, /^\/artists$/, /^\/artists\/[^/]+$/, /^\/organizers\/[^/]+$/, /^\/collections\/[^/]+$/, /^\/shelves$/, /^\/embed\/organizers\/[^/]+$/, /^\/posts$/, /^\/posts\/[^/]+$/];
+const PUBLIC_READS = [/^\/events$/, /^\/events\/map$/, /^\/events\/[^/]+$/, /^\/artists$/, /^\/artists\/[^/]+$/, /^\/organizers\/[^/]+$/, /^\/collections\/[^/]+$/, /^\/shelves$/, /^\/embed\/organizers\/[^/]+$/, /^\/posts$/, /^\/posts\/[^/]+$/, /^\/news$/, /^\/styles\/[^/]+$/, /^\/charts$/];
 export const isPublicRead = (url: string) => PUBLIC_READS.some((r) => r.test(url.split('?')[0]));
 /** Whether a value (a string, or one inside an object or array, a few levels deep) holds a NUL. */
 function hasNul(v: unknown, depth = 0): boolean {
@@ -376,6 +378,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   await app.register(brandRoutes);
   await app.register(projectRoutes);
   await app.register(blogRoutes);
+  await app.register(newsRoutes);
+  await app.register(styleRoutes);
   await app.register(trackRoutes);
   await app.register(momentRoutes);
   await app.register(mixRoutes);

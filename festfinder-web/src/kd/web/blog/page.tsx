@@ -20,6 +20,7 @@ import { BlogBrowser } from './browser';
 import { BLOG } from './copy';
 import { EditLink } from './edit-link';
 import { readIn, say, text, type Post, type PostList } from './model';
+import { StyleHub } from './style-hub';
 import { PostTracks } from './tracks';
 import { FIT } from '../../fits';
 
@@ -139,6 +140,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
                     </div>
                   </section>
                 ) : null}
+                {post.styles[0] ? <StyleHub style={post.styles[0].key} lang={lang} except={post.slug} /> : null}
                 {post.children.length ? (
                   <section aria-labelledby="in-h" className="flex max-w-read flex-col gap-3" lang={lang}>
                     <h2 id="in-h" className="kd-d3">{T.inThis}</h2>

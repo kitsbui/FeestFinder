@@ -1,9 +1,11 @@
 'use client';
 /**
  * /blog's list: the categories as tabs (with their counts), 24 posts at a time. The address keeps
- * the category (?category=); the server renders the first page of all.
+ * the category (?category=); the server renders the first page of all. Under News, the EDM
+ * press's latest headlines come first (news.tsx), then the posts.
  */
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
@@ -14,6 +16,9 @@ import { Tabs } from '../../ui/shell';
 import { PostCard } from './card';
 import { BLOG, CATEGORY_LABEL } from './copy';
 import { CATEGORIES, type Category, type PostList } from './model';
+
+// The EDM press's headlines, only under the News tab (few open it; its code loads then).
+const NewsFeed = dynamic(() => import('./news').then((m) => m.NewsFeed), { ssr: false, loading: () => <div className="kd-skel h-40" aria-hidden="true" /> });
 
 const query = (c: Category | null, offset = 0) => {
   const q = new URLSearchParams({ limit: '24' });
@@ -58,6 +63,8 @@ export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList }) {
         onSelect={(k) => choose(k === 'all' ? null : (k as Category))}
         items={[{ key: 'all', label: T.all, count: total || null }, ...CATEGORIES.map((k) => ({ key: k, label: C[k], count: list.categories[k] || null }))]}
       />
+      {category === 'news' ? <NewsFeed lang={lang} /> : null}
+      {category === 'news' && list.items.length ? <h2 className="kd-d3">{T.newsPosts}</h2> : null}
       {list.items.length ? (
         <div className={cx('kd-cards transition-opacity', busy && 'opacity-60')}>
           {list.items.map((p, i) => <PostCard key={p.id} post={p} lang={lang} eager={i === 0 && !category} />)}

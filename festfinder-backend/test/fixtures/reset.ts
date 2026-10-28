@@ -12,6 +12,7 @@ import { openDb } from '../../src/db/index.ts';
 import { migrate } from '../../src/db/migrate.ts';
 import { fixedClock, systemClock } from '../../src/lib/time.ts';
 import { importBlogContent } from '../../src/services/blog-content.ts';
+import { seedNews } from './news.ts';
 import { seedRadar } from './radar.ts';
 import { seed } from './seed.ts';
 
@@ -23,6 +24,9 @@ if (config.databaseUrl || !config.pgliteDir || config.pgliteDir.startsWith('memo
 rmSync(config.pgliteDir, { recursive: true, force: true });
 const db = await openDb({ databaseUrl: null, pgliteDir: config.pgliteDir });
 await migrate(db, (m) => console.log(m));
+// The suggested publications and charts migrations 065 and 066 switch on: the preview and the screen tests read no feed or chart.
+await db.query('delete from news_sources');
+await db.query('delete from chart_sources');
 const clock = config.fixedNow ? fixedClock(config.fixedNow) : systemClock;
 const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: process.env.SEED_VOLUME === 'small' ? 'small' : 'full' })) as Record<string, unknown>;
 // The local preview also shows what Feest Radar finds (test/fixtures/radar.ts).
@@ -34,5 +38,7 @@ if (process.env.SEED_BLOG === '1') {
   await db.query(`update blog_posts set status = 'published', published_at = $1, decided_at = $1 where import_key is not null and status = 'in_review'`, [clock.now()]);
   Object.assign(summary, { blog: blog.added });
 }
+// And a few headlines of the news feed (test/fixtures/news.ts), read by no network: the screen tests and the preview show the news page filled.
+if (process.env.SEED_NEWS === '1') Object.assign(summary, await seedNews(db, clock.now()));
 console.log(`seeded ${config.pgliteDir}: ${JSON.stringify(summary)}`);
 await db.close();

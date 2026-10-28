@@ -20,12 +20,29 @@ def search(q):
         elif isinstance(o, list):
             for x in o: walk(x)
     walk(d); return out
+def details(vid):
+    """The watch page's own facts: title, channel, the day it was published, its length. None when the page does not answer."""
+    try:
+        s = get(f"https://www.youtube.com/watch?v={vid}&hl=en")
+    except Exception:
+        return None
+    def grab(key):
+        m = re.search(r'"%s":"((?:[^"\\]|\\.)*)"' % key, s)
+        return json.loads('"' + m.group(1) + '"') if m else None
+    return {'id': vid, 'title': grab('title'), 'channel': grab('ownerChannelName'), 'published': grab('publishDate') or grab('uploadDate'),
+            'seconds': int(grab('lengthSeconds') or 0), 'unlisted': grab('isUnlisted') == 'true'}
 def oembed(vid):
     try:
         return json.loads(get(f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={vid}&format=json"))
     except Exception as e:
         return None
 if __name__ == '__main__':
+    if sys.argv[1] == 'details':
+        # yt.py details <id> [<id>…]: the watch page's facts and whether oEmbed allows the embed.
+        for vid in sys.argv[2:]:
+            d = details(vid); o = oembed(vid)
+            print(json.dumps({**(d or {'id': vid, 'error': 'no page'}), 'embeddable': bool(o), 'oembed_author': (o or {}).get('author_name')}, ensure_ascii=False))
+        sys.exit(0)
     qs = json.load(open(sys.argv[1]))
     def one(q):
         try: return q, search(q)[:6]

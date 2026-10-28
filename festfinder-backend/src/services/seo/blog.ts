@@ -53,12 +53,74 @@ function termsOf(md: string) {
   return terms.length >= 5 ? terms : null;
 }
 
+const VENUE_ADDRESS = /^-\s+\*\*(?:Địa chỉ|Address):\*\*\s*(.+)$/;
+const VENUE_LINK = /^-\s+\*\*(?:Trang chính thức|Official page):\*\*\s*\[[^\]]*\]\((https:\/\/[^\s)]+)\)/;
+
+/**
+ * A club guide's venues for an ItemList of NightClub (the club guides, src/content/blog/club-guides):
+ * every "## Name — what it is" section whose list gives an address, with its official link and
+ * the words under the list. A post without three such sections is no venue list.
+ */
+function venuesOf(md: string) {
+  const out: { name: string; address: string; url: string | null; description: string }[] = [];
+  let cur: { name: string; address: string | null; url: string | null; lines: string[] } | null = null;
+  const close = () => { if (cur?.address) out.push({ name: cur.name, address: cur.address, url: cur.url, description: clip(plain(cur.lines.join('\n')), 300) }); cur = null; };
+  for (const line of md.split('\n')) {
+    if (/^##\s/.test(line)) { close(); cur = { name: plain(line.replace(/^##\s+/, '')).split(/\s[—–]\s/)[0], address: null, url: null, lines: [] }; continue; }
+    if (!cur) continue;
+    const a = VENUE_ADDRESS.exec(line);
+    if (a) { cur.address = plain(a[1]); continue; }
+    const l = VENUE_LINK.exec(line);
+    if (l) { cur.url = l[1]; continue; }
+    if (/^-\s+\*\*/.test(line) || /^\s*\|/.test(line)) continue;
+    cur.lines.push(line);
+  }
+  close();
+  return out.length >= 3 ? out : null;
+}
+
+const EVENT_DATES = /^-\s+\*\*(?:Ngày|Dates):\*\*\s*(\d{4}-\d{2}-\d{2})(?:\s*[–-]\s*(\d{4}-\d{2}-\d{2}))?\s*$/;
+const EVENT_PLACE = /^-\s+\*\*(?:Địa điểm|Place):\*\*\s*(.+)$/;
+const EVENT_SITE = /^-\s+\*\*(?:Trang chính thức|Official site):\*\*\s*\[[^\]]*\]\((https:\/\/[^\s)]+)\)/;
+const EVENT_LINEUP = /^-\s+\*\*(?:Lineup|Line-up):\*\*\s*(.+)$/;
+const EVENT_CONFIRMED = /^-\s+\*\*(?:Trạng thái|Status):\*\*\s*(?:Đã xác minh|Confirmed)/;
+
+/**
+ * A news post's festivals for Event markup (the news pack's `eventSection`, src/content/blog/edm-news):
+ * every "## Name — what it is" section whose list gives ISO dates, a place and the organiser's
+ * page, and says the organiser confirmed them. A festival still to be checked stays words only.
+ */
+function eventsOf(md: string) {
+  type Ev = { name: string; start: string | null; end: string | null; place: string | null; url: string | null; lineup: string[]; confirmed: boolean; lines: string[] };
+  const out: { name: string; start: string; end: string | null; place: string; url: string; lineup: string[]; description: string }[] = [];
+  let cur: Ev | null = null;
+  const close = () => {
+    if (cur?.confirmed && cur.start && cur.place && cur.url) out.push({ name: cur.name, start: cur.start, end: cur.end, place: cur.place, url: cur.url, lineup: cur.lineup, description: clip(plain(cur.lines.join('\n')), 300) });
+    cur = null;
+  };
+  for (const line of md.split('\n')) {
+    if (/^##\s/.test(line)) { close(); cur = { name: plain(line.replace(/^##\s+/, '')).split(/\s[—–]\s/)[0], start: null, end: null, place: null, url: null, lineup: [], confirmed: false, lines: [] }; continue; }
+    if (!cur) continue;
+    let m: RegExpExecArray | null;
+    if ((m = EVENT_DATES.exec(line))) { cur.start = m[1]; cur.end = m[2] ?? null; continue; }
+    if ((m = EVENT_PLACE.exec(line))) { cur.place = plain(m[1]); continue; }
+    if ((m = EVENT_SITE.exec(line))) { cur.url = m[1]; continue; }
+    if ((m = EVENT_LINEUP.exec(line))) { cur.lineup = m[1].split(',').map(plain).filter((x) => x && !/^(Chưa công bố|Not announced)$/.test(x)); continue; }
+    if (EVENT_CONFIRMED.test(line)) { cur.confirmed = true; continue; }
+    if (/^-\s+\*\*/.test(line) || /^\s*\|/.test(line)) continue;
+    cur.lines.push(line);
+  }
+  close();
+  return out.length ? out : null;
+}
+
 /**
  * A published post (services/blog.ts): Vietnamese at /blog/<slug>, English at ?lang=en, each
  * its own page with the other named, when the post is written in both; a post written in one
  * language has that one address. A guide adds its facts, its questions (FAQPage), its tracks
- * (ItemList of MusicRecording) and its sources (citation); a lesson its steps (HowTo) and a
- * glossary its terms (DefinedTermSet). Drafts, posts in review and posts the
+ * (ItemList of MusicRecording) and its sources (citation); a lesson its steps (HowTo), a
+ * glossary its terms (DefinedTermSet), a club guide its venues (ItemList of NightClub) and a
+ * playlist post its MusicPlaylist. Drafts, posts in review and posts the
  * team took down have no page (null).
  */
 export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): Promise<BlogSeo | null> {
@@ -98,10 +160,14 @@ export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): P
     { label: t('published', lang), value: published ? longDate(published, lang) : '', datetime: published ?? undefined },
     { label: t('readTime', lang), value: vi ? `${post.minutes[written]} phút` : `${post.minutes[written]} min` },
   ].filter((f) => f.value);
-  const ids = { page: url, post: `${canonical}#post`, crumbs: `${url}#breadcrumb`, faq: `${url}#faq`, tracks: `${url}#tracks`, topic: `${canonical}#topic`, howTo: `${url}#howto`, terms: `${url}#terms` };
+  const ids = { page: url, post: `${canonical}#post`, crumbs: `${url}#breadcrumb`, faq: `${url}#faq`, tracks: `${url}#tracks`, topic: `${canonical}#topic`, howTo: `${url}#howto`, terms: `${url}#terms`, venues: `${url}#venues`, playlist: `${url}#playlist`, events: `${url}#events` };
   const guideTopic = post.category.key === 'styles' && post.facts.length > 0;
   const howTo = howToOf(say(body, written));
   const terms = termsOf(say(body, written));
+  const venues = post.category.key === 'venues' ? venuesOf(say(body, written)) : null;
+  const playlist = post.category.key === 'playlist' && post.tracks.length > 0;
+  const news = post.category.key === 'news';
+  const events = news ? eventsOf(say(body, written)) : null;
   const graph = [
     ...siteNodes(base),
     {
@@ -110,7 +176,8 @@ export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): P
       primaryImageOfPage: { '@type': 'ImageObject', url: image.url, width: image.width, height: image.height },
     },
     {
-      '@type': 'BlogPosting', '@id': ids.post, headline: clip(title, 110), description, url: canonical, image: image.url, inLanguage: written,
+      // A news post is a NewsArticle (the news pack, services/news.ts's feed aside); every other post a BlogPosting.
+      '@type': news ? 'NewsArticle' : 'BlogPosting', '@id': ids.post, headline: clip(title, 110), description, url: canonical, image: image.url, inLanguage: written,
       articleSection: category, keywords: post.styles.map((s) => text(s.label, lang)).join(', ') || undefined,
       author: post.author.editorial ? { '@id': `${base}/#organization` } : { '@type': 'Person', name: author },
       publisher: { '@id': `${base}/#organization` },
@@ -140,6 +207,29 @@ export async function buildBlogSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'): P
     terms ? {
       '@type': 'DefinedTermSet', '@id': ids.terms, name: title, inLanguage: written,
       hasDefinedTerm: terms.map((x) => ({ '@type': 'DefinedTerm', name: x.name, description: x.description })),
+    } : null,
+    // A club guide's venues, each a NightClub with its address and its own page.
+    venues ? {
+      '@type': 'ItemList', '@id': ids.venues, name: title, numberOfItems: venues.length,
+      itemListElement: venues.map((v, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'NightClub', name: v.name, address: v.address, url: v.url ?? undefined, description: v.description || undefined } })),
+    } : null,
+    // A news post's confirmed festivals, each a MusicEvent with its days, its place and the organiser's page.
+    events ? {
+      '@type': 'ItemList', '@id': ids.events, name: title, numberOfItems: events.length,
+      itemListElement: events.map((e, i) => ({
+        '@type': 'ListItem', position: i + 1,
+        item: {
+          '@type': 'MusicEvent', name: e.name, startDate: e.start, endDate: e.end ?? undefined, url: e.url, description: e.description || undefined,
+          eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+          location: { '@type': 'Place', name: e.place, address: e.place },
+          performer: e.lineup.length ? e.lineup.map((name) => ({ '@type': 'PerformingGroup', name })) : undefined,
+        },
+      })),
+    } : null,
+    // A playlist post is a MusicPlaylist of its tracks (each also in the ItemList below).
+    playlist ? {
+      '@type': 'MusicPlaylist', '@id': ids.playlist, name: clip(title, 110), description, url: canonical, numTracks: post.tracks.length,
+      track: post.tracks.map((tr) => ({ '@type': 'MusicRecording', name: tr.title, url: tr.url ?? undefined, datePublished: tr.year ? String(tr.year) : undefined, byArtist: tr.authorName ? { '@type': 'MusicGroup', name: tr.authorName } : undefined })),
     } : null,
     post.tracks.length ? {
       '@type': 'ItemList', '@id': ids.tracks, name: t('tracks', lang), numberOfItems: post.tracks.length,

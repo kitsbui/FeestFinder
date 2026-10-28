@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Mixmag</title>
+  <link>https://mixmag.example</link>
+  <atom:link href="https://mixmag.example/rss.xml" rel="self" type="application/rss+xml"/>
+  <description>Dance music &amp; club culture</description>
+  <item>
+    <title><![CDATA[Tomorrowland announces 2027 dates & pre-registration]]></title>
+    <link>https://mixmag.example/news/tomorrowland-2027-dates</link>
+    <guid isPermaLink="false">mixmag-1001</guid>
+    <pubDate>Tue, 20 Oct 2026 09:30:00 +0000</pubDate>
+    <dc:creator>Becky Buckle</dc:creator>
+    <category>News</category>
+    <category>Festivals</category>
+    <description><![CDATA[<p>The Belgian festival will return to Boom over two weekends in July. Pre-registration opens next week, the organisers said on Monday.</p>]]></description>
+    <media:content url="https://mixmag.example/images/tomorrowland-2027.jpg" medium="image" width="1600" height="900"/>
+  </item>
+  <item>
+    <title>Hard techno keeps rising: Beatport&#8217;s mid-year report</title>
+    <link>https://mixmag.example/feature/hard-techno-beatport-report</link>
+    <guid>https://mixmag.example/feature/hard-techno-beatport-report</guid>
+    <pubDate>Mon, 19 Oct 2026 16:05:00 +0000</pubDate>
+    <category>Techno</category>
+    <description>Hard techno and hard dance grew fastest on the store in the first half of the year, according to the report. Here is what the numbers say, and what they do not.</description>
+    <enclosure url="https://mixmag.example/images/beatport-report.png" type="image/png" length="120000"/>
+  </item>
+  <item>
+    <title>Vinahouse heads west: how Vietnam&#39;s club sound reached London</title>
+    <link>https://mixmag.example/feature/vinahouse-london</link>
+    <guid>mixmag-1003</guid>
+    <pubDate>Sun, 18 Oct 2026 12:00:00 +0000</pubDate>
+    <description><![CDATA[From Saigon's clubs to a London warehouse: a short history of Vinahouse and the DJs carrying it abroad. <img src="https://mixmag.example/images/vinahouse.jpg" alt=""> Read on.]]></description>
+  </item>
+  <item>
+    <title>An item without a link</title>
+    <guid>mixmag-1004</guid>
+    <pubDate>Sat, 17 Oct 2026 12:00:00 +0000</pubDate>
+  </item>
+  <item>
+    <title>Old news from last year</title>
+    <link>https://mixmag.example/news/old</link>
+    <guid>mixmag-0001</guid>
+    <pubDate>Fri, 03 Jan 2025 12:00:00 +0000</pubDate>
+    <description>Too old to keep.</description>
+  </item>
+</channel>
+</rss>

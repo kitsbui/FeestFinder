@@ -54,6 +54,8 @@ export default defineConfig({
         LINK_CHECKS_ENABLED: 'false',
         // Linked images and music embeds read from a fake network: no request leaves the machine.
         FAKE_REMOTE_MEDIA: '1',
+        // The blog's news page shows a few demo headlines (test/fixtures/news.ts): their feeds are never read.
+        SEED_NEWS: '1',
         RATE_LIMIT_PER_MINUTE: '10000',
       },
     },

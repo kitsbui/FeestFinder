@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Vietcetera</title>
+  <link>https://vietcetera.example</link>
+  <item>
+    <title>Hà Nội thí điểm kéo dài giờ mở cửa quán bar ở phố cổ đến 2 giờ sáng</title>
+    <link>https://vietcetera.example/vn/ha-noi-thi-diem-gio-mo-cua</link>
+    <guid>vc-1</guid>
+    <pubDate>Wed, 21 Oct 2026 03:00:00 +0700</pubDate>
+    <description>Quận Hoàn Kiếm cho phép các quán bar, club trong khu phố cổ mở cửa đến 2 giờ sáng vào cuối tuần. Các DJ techno và house ở Hà Nội nói gì?</description>
+    <enclosure url="http://vietcetera.example/images/pho-co.jpg" type="image/jpeg" length="1"/>
+  </item>
+</channel>
+</rss>

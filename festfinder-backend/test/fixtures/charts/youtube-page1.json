@@ -1,0 +1,8 @@
+{
+  "nextPageToken": "P2",
+  "items": [
+    { "snippet": { "title": "Lose Control", "videoOwnerChannelTitle": "Amelie Lens - Topic", "resourceId": { "videoId": "aaaaaaaaaa1" }, "thumbnails": { "high": { "url": "https://i.ytimg.com/vi/aaaaaaaaaa1/hqdefault.jpg" } } }, "contentDetails": { "videoId": "aaaaaaaaaa1", "videoPublishedAt": "2026-08-21T00:00:00Z" } },
+    { "snippet": { "title": "Deleted video", "resourceId": { "videoId": "bbbbbbbbbb2" }, "thumbnails": {} }, "contentDetails": { "videoId": "bbbbbbbbbb2" } },
+    { "snippet": { "title": "Sara Landry - Rave Alarm (Official Video)", "videoOwnerChannelTitle": "Drumcode", "resourceId": { "videoId": "cccccccccc3" }, "thumbnails": { "medium": { "url": "https://i.ytimg.com/vi/cccccccccc3/mqdefault.jpg" } } }, "contentDetails": { "videoId": "cccccccccc3", "videoPublishedAt": "2026-10-10T08:00:00Z" } }
+  ]
+}

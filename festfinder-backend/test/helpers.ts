@@ -14,6 +14,8 @@ import { fakeOembed, type OembedFetcher } from '../src/services/mixes.ts';
 import { fakeAudio } from '../src/services/audio.ts';
 import { DisabledGuide, type GuideGenerator } from '../src/services/guide.ts';
 import { DisabledTranslator, type Translator } from '../src/services/translate.ts';
+import { DisabledDigester, type NewsDigester } from '../src/services/news.ts';
+import type { ChartFetch } from '../src/services/charts.ts';
 import { MockOAuth } from '../src/services/oauth.ts';
 import { DisabledPrefill, type PrefillGenerator } from '../src/services/prefill.ts';
 import type { PageFetcher } from '../src/services/fetchpage.ts';
@@ -46,7 +48,7 @@ async function freshDatabaseUrl(): Promise<string | null> {
  * A test API on a fresh database. With `seed: false` the database has the migrations only,
  * the way production starts; otherwise it holds the demo data from fixtures/seed.ts.
  */
-export async function setup(opts: { now?: string; guide?: GuideGenerator; translator?: Translator; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; fetchImageFull?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; errors?: ErrorReporter; config?: Partial<Config>; seed?: boolean } = {}) {
+export async function setup(opts: { now?: string; guide?: GuideGenerator; translator?: Translator; digester?: NewsDigester; chartFetch?: ChartFetch; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; fetchImageFull?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; errors?: ErrorReporter; config?: Partial<Config>; seed?: boolean } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
@@ -56,6 +58,9 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
   });
   const db = await openDb(config);
   await migrate(db);
+  // The suggested publications and charts migrations 065 and 066 switch on: the tests never read a feed or a chart.
+  await db.query('delete from news_sources');
+  await db.query('delete from chart_sources');
   const seeded: any = opts.seed === false ? { ids: { event: {}, org: {}, friend: {} } } : await seed(db, clock.now(), { volume: 'small' });
   const transport = new ConsoleTransport(() => {});
   const ctx: Ctx = {
@@ -64,6 +69,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
     analytics: opts.analytics ?? new NoopAnalytics(),
     guide: opts.guide ?? new DisabledGuide(),
     translator: opts.translator ?? new DisabledTranslator(),
+    digester: opts.digester ?? new DisabledDigester(),
     prefill: opts.prefill ?? new DisabledPrefill(),
     // The tests never reach the internet.
     fetchPage: opts.fetchPage ?? (async () => { throw new Error('no network in tests'); }),
@@ -75,6 +81,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
     checkLink: opts.checkLink ?? (async () => 'ok'),
     // The tests never reach the internet: without fixtures, ingestion has nothing to read.
     ingestIO: opts.ingestIO ?? (() => ({ now: clock.now(), secrets: {}, fetchPage: async () => { throw new Error('no network in tests'); }, fetchText: async () => { throw new Error('no network in tests'); } })),
+    chartFetch: opts.chartFetch ?? { token: async () => { throw new Error('no network in tests'); }, get: async () => { throw new Error('no network in tests'); } },
     log: () => {},
   };
   const app = await buildApp(ctx);
