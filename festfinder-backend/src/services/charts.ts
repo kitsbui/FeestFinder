@@ -49,10 +49,19 @@ export const realChartFetch: ChartFetch = {
   async get(url, headers) {
     allowed(url);
     const res = await fetch(url, { headers: { accept: 'application/json', ...headers }, signal: AbortSignal.timeout(15_000) });
-    if (!res.ok) throw new Error(`status ${res.status}`);
+    if (!res.ok) throw new Error(`status ${res.status}${await reasonOf(res)}`);
     return res.json();
   },
 };
+
+/** What the provider said went wrong, for the Console (Google's `error.message`, e.g. a key restricted to websites). */
+async function reasonOf(res: Response): Promise<string> {
+  try {
+    const body = await res.json() as { error?: { message?: string } | string; error_description?: string };
+    const msg = typeof body.error === 'string' ? body.error_description ?? body.error : body.error?.message;
+    return msg ? `: ${String(msg).replace(/<[^>]+>/g, '').slice(0, 200)}` : '';
+  } catch { return ''; }
+}
 
 export interface ChartKeys { beatport?: { id: string; secret: string }; spotify?: { id: string; secret: string }; youtube?: { key: string } }
 export const chartKeysFromEnv = (env = process.env): ChartKeys => ({
@@ -184,14 +193,22 @@ export async function refreshChart(ctx: Ctx, sourceId: string, opts: { io?: Char
   }
 }
 
-/** Sources due now, one after another. A provider without keys is skipped, not marked. */
-export async function refreshDueCharts(ctx: Ctx, opts: { io?: ChartFetch; keys?: ChartKeys } = {}) {
+/**
+ * Sources due now, one after another, within a time budget per call (the job runs inside one
+ * POST /internal/jobs): what the budget leaves waits for the next run. A provider without keys
+ * is skipped, not marked.
+ */
+export async function refreshDueCharts(ctx: Ctx, opts: { io?: ChartFetch; keys?: ChartKeys; budgetMs?: number } = {}) {
+  const started = Date.now();
   const keys = opts.keys ?? chartKeysFromEnv();
   const on = CHART_PROVIDERS.filter((p) => !!keys[p]);
   if (!on.length) return [];
   const due = await many<{ id: string }>(ctx.db, `select id from chart_sources where enabled and next_run_at <= $1 and provider = any($2::text[]) order by next_run_at limit 10`, [ctx.clock.now(), on]);
   const out = [];
-  for (const d of due) out.push(await refreshChart(ctx, d.id, { ...opts, keys }));
+  for (const d of due) {
+    if (Date.now() - started > (opts.budgetMs ?? 25_000)) break;
+    out.push(await refreshChart(ctx, d.id, { ...opts, keys }));
+  }
   return out;
 }
 
