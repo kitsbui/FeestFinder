@@ -6,6 +6,8 @@
  * ever HTML. Links leave with `nofollow ugc` unless the team wrote the post (`trusted`).
  */
 import type { ReactNode } from 'react';
+import { imgAttrs } from '../../img';
+import { FIT } from '../../fits';
 
 type Block =
   | { kind: 'h2'; text: string } | { kind: 'h3'; text: string } | { kind: 'p'; text: string } | { kind: 'quote'; text: string }
@@ -65,7 +67,11 @@ export function inline(text: string, key: string, trusted = false): ReactNode[] 
   return out;
 }
 
-export function PostBody({ text, trusted = false }: { text: string; trusted?: boolean }) {
+export function PostBody({ text, trusted = false, resized = true }: {
+  text: string; trusted?: boolean;
+  /** Pictures as copies the size of the column (/img); the Console reads the links themselves, since a hidden post's are not served. */
+  resized?: boolean;
+}) {
   return (
     <div className="flex max-w-read flex-col gap-5">
       {blocks(text).map((b, i) => {
@@ -79,7 +85,7 @@ export function PostBody({ text, trusted = false }: { text: string; trusted?: bo
         if (b.kind === 'img') {
           return (
             <figure key={k} className="flex flex-col gap-2">
-              <img src={b.src} alt={b.alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="aspect-video w-full rounded-card bg-surface-1 object-cover" />
+              <img {...imgAttrs(b.src, resized ? FIT.read : null, true)} alt={b.alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="aspect-video w-full rounded-card bg-surface-1 object-cover" />
               {b.caption ? <figcaption className="kd-s">{inline(b.caption, `${k}-c`, true)}</figcaption> : null}
             </figure>
           );

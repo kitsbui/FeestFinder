@@ -265,3 +265,62 @@ test('mixes: a pasted link is previewed from the service, added, pinned, and sho
   expect(((await (await page.request.get(`/artists/${me.slug}`)).json()).mixes as { pinned: boolean }[])[0].pinned).toBe(true);
   expect(problems).toEqual([]);
 });
+
+/** Counts layout shifts no input caused, from the page's first paint (or from now, `buffered` false). */
+function countShifts(page: Page, buffered = true) {
+  return page.evaluate((b) => {
+    const w = window as unknown as { __shifts: number };
+    w.__shifts = 0;
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) if (!e.hadRecentInput) w.__shifts += e.value;
+    }).observe({ type: 'layout-shift', buffered: b });
+  }, buffered);
+}
+const shifts = (page: Page) => page.evaluate(() => (window as unknown as { __shifts: number }).__shifts);
+
+test('the profile comes with its styles and cities, asked beside the session, and the form never moves', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await newArtist(page);
+  // The session answers late: the profile is already on its way (it no longer waits for it).
+  const order: string[] = [];
+  page.on('request', (r) => { const p = new URL(r.url()).pathname; if (p === '/me/artist' || p === '/meta/form-options') order.push('ask ' + p); });
+  page.on('response', (r) => { if (new URL(r.url()).pathname === '/auth/session') order.push('session answered'); });
+  await page.route((u) => u.pathname === '/auth/session', async (route) => { await new Promise((r) => setTimeout(r, 800)); await route.continue(); });
+  await page.addInitScript(() => {
+    const w = window as unknown as { __shifts: number };
+    w.__shifts = 0;
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) if (!e.hadRecentInput) w.__shifts += e.value;
+    }).observe({ type: 'layout-shift', buffered: true });
+  });
+  await page.goto('/studio/artist');
+  const about = page.getByLabel('Giới thiệu (tiếng Việt)');
+  await about.waitFor();
+  // Every style is a chip from the first paint, so the field under them stays where it is.
+  await expect(page.getByRole('button', { name: 'Techno', exact: true })).toBeVisible();
+  const first = (await about.boundingBox())!.y;
+  await page.waitForLoadState('networkidle');
+  expect((await about.boundingBox())!.y).toBe(first);
+  expect(order.indexOf('ask /me/artist'), order.join(', ')).toBeGreaterThanOrEqual(0);
+  expect(order.indexOf('ask /me/artist'), order.join(', ')).toBeLessThan(order.indexOf('session answered'));
+  expect(order).not.toContain('ask /meta/form-options');
+  expect(await shifts(page)).toBeLessThanOrEqual(0.01);
+});
+
+test('on a phone the menu closes at the tap, so a slow next screen does not move the page', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await newArtist(page);
+  await open(page, '/studio/artist');
+  await page.waitForLoadState('networkidle');
+  await countShifts(page, false);
+  // A slow phone: the next screen's answer comes well after the tap.
+  await page.route((u) => u.searchParams.has('_rsc'), async (route) => { await new Promise((r) => setTimeout(r, 800)); await route.continue(); });
+  const rail = page.getByRole('navigation', { name: 'Studio nghệ sĩ' });
+  await rail.getByRole('button', { name: 'Menu' }).click();
+  await rail.getByRole('link', { name: 'Mix', exact: true }).click();
+  await expect(rail.getByRole('button', { name: 'Menu' })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page).toHaveURL(/\/studio\/artist\/mixes$/);
+  await expect(page.getByText('Chưa có mix')).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(await shifts(page)).toBeLessThanOrEqual(0.05);
+});

@@ -15,7 +15,7 @@
  * Styles are filters of the list, not a place: the list's bar and the search sheet offer them.
  */
 import { KdLink as Link, inLang } from '../link';
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type RefObject } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type ComponentType, type FormEvent, type RefObject } from 'react';
 import { CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
@@ -26,17 +26,21 @@ import { buttonClass, IconButton } from '../ui/actions';
 import { Menu } from '../ui/menu';
 import { Avatar } from '../ui/parts';
 import { Input } from '../ui/forms';
+import { countVisit } from '../ui/install-gate';
 import { Logo } from '../ui/logo';
-import { TabBar } from '../ui/shell';
+import { SkipLink } from '../ui/skip-link';
+import { TabBar } from '../ui/tabbar';
 import { WEB } from './copy';
 import { LANG_KEY, rememberLang, useHere } from './lang';
 
 /** Loads after the page: the frame hiding on scroll and full screen on a phone (ui/immersive.tsx). */
 const Immersive = dynamic(() => import('../ui/immersive').then((m) => m.Immersive), { ssr: false });
 
-/** Loads after the page (growth plan card F): no page carries the install code at boot. */
+/** Loads only on a page where the strip shows (growth plan card F, ui/install-gate.ts): no page carries the install code at boot. */
 const InstallBar = dynamic(() => import('../ui/install').then((m) => m.InstallBar), { ssr: false });
-import { MeMenuItems } from './me';
+
+/** The account menu's items (web/me.tsx): loaded once someone is signed in, never for a visitor. */
+type MeItems = ComponentType<{ lang: Lang; name: string }>;
 
 /** The flags (lang-switch.tsx): a computer's alone, so a phone's script never carries them; the box keeps their size meanwhile. */
 const LangSwitch = dynamic(() => import('./lang-switch').then((m) => m.LangSwitch), { ssr: false, loading: () => <span className="kd-flags hidden w-22 desk:inline-flex" aria-hidden="true" /> });
@@ -63,6 +67,14 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
   const [search, setSearch] = useState(false);
   const field = useRef<HTMLInputElement>(null);
   const user = kd.user;
+  // Loaded as a component, not with next/dynamic, so the menu opens with its items in place (and the arrow keys find them).
+  const [MeMenuItems, setMeMenuItems] = useState<MeItems | null>(null);
+  useEffect(() => {
+    if (user && !MeMenuItems) void import('./me').then((m) => setMeMenuItems(() => m.MeMenuItems));
+  }, [user, MeMenuItems]);
+  // Whether the install strip shows on this page: counted once per page, its code loaded only then.
+  const [strip, setStrip] = useState(false);
+  useEffect(() => { if (countVisit()) setStrip(true); }, []);
 
   // ⌘K / Ctrl+K: the bar's field when it is there, else the search sheet.
   useEffect(() => {
@@ -80,12 +92,13 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
   const on = placeOf(current);
   return (
     <>
+      <SkipLink lang={lang} />
       <header className="kd-nav">
         <div className="kd-wrap flex h-14 items-center gap-2 desk:h-16">
           <Logo lang={lang} height={20} className="mr-2 desk:mr-3" />
           <nav aria-label={T.mainNav} className="hidden items-center gap-0.5 desk:flex">
             {PLACES.filter((p) => p.key !== 'me').map((p) => (
-              <Link key={p.key} className="kd-nl" href={inLang(p.href, lang)} aria-current={on === p.key ? 'page' : undefined} onClick={track(p.key, 'nav')}>
+              <Link key={p.key} className="kd-nl" href={inLang(p.href, lang)} prefetch="viewport" aria-current={on === p.key ? 'page' : undefined} onClick={track(p.key, 'nav')}>
                 <PlaceIcon k={p.key} size={18} />{T[p.label]}
               </Link>
             ))}
@@ -111,7 +124,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
                   </button>
                 )}
               >
-                <MeMenuItems lang={lang} name={user.name || T.you} />
+                {MeMenuItems ? <MeMenuItems lang={lang} name={user.name || T.you} /> : null}
               </Menu>
               </div>
             ) : kd.session === undefined ? (
@@ -123,7 +136,7 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
         </div>
       </header>
       <Immersive />
-      <InstallBar lang={lang} />
+      {strip ? <InstallBar lang={lang} /> : null}
       <WebTabs lang={lang} current={current} />
       {search ? <SearchSheet lang={lang} onClose={() => setSearch(false)} /> : null}
     </>
@@ -161,7 +174,11 @@ function NavSearch({ lang, field }: { lang: Lang; field: RefObject<HTMLInputElem
   );
 }
 
-/** The places, in order, on a computer's bar and a phone's tab bar alike (owner, 2026-10-21). */
+/**
+ * The places, in order, on a computer's bar and a phone's tab bar alike (owner, 2026-10-21). Their
+ * pages are prefetched as soon as the links are in sight (owner, 2026-10-22); every other link of
+ * the site waits until someone reaches for it (kd/link-client.tsx).
+ */
 const PLACES = [
   { key: 'events', label: 'events', href: '/' },
   { key: 'artists', label: 'artists', href: '/a' },
@@ -186,7 +203,7 @@ function WebTabs({ lang, current }: { lang: Lang; current: WebSection }) {
       label={T.mainNav}
       current={placeOf(current)}
       items={PLACES.map((p) => ({
-        key: p.key, label: T[p.label], href: inLang(p.href, lang), icon: <PlaceIcon k={p.key} size={22} />, onClick: track(p.key, 'tabs'),
+        key: p.key, label: T[p.label], href: inLang(p.href, lang), icon: <PlaceIcon k={p.key} size={22} />, onClick: track(p.key, 'tabs'), prefetch: 'viewport' as const,
         // The list: a full load, so it reads its address again (a view or filters left on the map).
         ...(p.key === 'events' ? { external: true } : {}),
       }))}

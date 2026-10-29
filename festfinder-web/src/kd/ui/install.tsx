@@ -12,6 +12,7 @@ import { FF } from '@/runtime/ff';
 import { canPromptInstall, promptInstall } from '@/runtime/pwa';
 import { pick, type Lang } from '../copy';
 import { Button } from './actions';
+import { dismissStrip, isInstalled, platformOf, type Platform } from './install-gate';
 import { Sheet } from './sheet';
 
 const COPY = {
@@ -31,35 +32,6 @@ const COPY = {
   webview: { en: 'Open in Safari to install', vi: 'Mở trong Safari để cài' },
   pushNote: { en: 'Once installed, notifications work', vi: 'Cài xong, thông báo hoạt động' },
 };
-
-export type Platform = 'ios' | 'ios-webview' | 'android' | 'desktop';
-const DISMISS_KEY = 'ff:install-dismissed';
-const VISITS_KEY = 'ff:visits';
-
-/** Which steps fit this browser. */
-export function platformOf(ua: string): Platform {
-  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1);
-  if (ios) return /FBAN|FBAV|Instagram|Zalo|Line\/|Messenger|TikTok/i.test(ua) ? 'ios-webview' : 'ios';
-  return /Android/.test(ua) ? 'android' : 'desktop';
-}
-
-/** Whether this window is the installed app. */
-export function isInstalled(): boolean {
-  if (typeof window === 'undefined') return false;
-  try { if (matchMedia('(display-mode: standalone)').matches) return true; } catch { /* no matchMedia */ }
-  if ((navigator as Navigator & { standalone?: boolean }).standalone) return true;
-  return new URLSearchParams(location.search).get('source') === 'app';
-}
-
-/** The strip's rule: a phone, a second visit or more, not installed, not dismissed in the last 30 days. */
-export function shouldNudge(o: { installed: boolean; platform: Platform; visits: number; dismissedAt: number | null; now: number }): boolean {
-  if (o.installed || o.platform === 'desktop') return false;
-  if (o.dismissedAt && o.now - o.dismissedAt < 30 * 86_400_000) return false;
-  return o.visits >= 2;
-}
-
-const read = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
-const write = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage blocked */ } };
 
 /** What the install parts need: whether it is installed, which steps fit, and the tap. */
 export function useInstall() {
@@ -108,28 +80,18 @@ async function install(): Promise<boolean> {
   return true;
 }
 
-/** The phone's strip above the tab bar. */
+/** The phone's strip above the tab bar: the frame renders it only when it shows (install-gate.ts). */
 export function InstallBar({ lang }: { lang: Lang }) {
   const T = pick(COPY, lang);
   const st = useInstall();
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
   const [sheet, setSheet] = useState(false);
-  useEffect(() => {
-    if (!st) return;
-    const visits = Number(read(VISITS_KEY) ?? '0') + 1;
-    write(VISITS_KEY, String(visits));
-    const dismissed = Number(read(DISMISS_KEY) ?? '') || null;
-    // Not over a sheet the person is in (the first-run questions, the sign-in).
-    const busy = !!document.querySelector('dialog[open]');
-    setShow(!busy && shouldNudge({ installed: st.installed, platform: st.platform, visits, dismissedAt: dismissed, now: Date.now() }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page, when the platform is known
-  }, [st?.platform, st?.installed]);
   if (!st || !show || st.installed) return sheet && st ? <InstallSheet lang={lang} platform={st.platform} onClose={() => setSheet(false)} /> : null;
-  const close = () => { write(DISMISS_KEY, String(Date.now())); setShow(false); };
+  const close = () => { dismissStrip(); setShow(false); };
   return (
     <>
       <div className="kd-install" role="region" aria-label={T.title}>
-        <img src="/ui/assets/apple-touch-icon.png" alt="" width={32} height={32} className="rounded-lg" />
+        <img src="/ui/assets/ff-appicon.svg" alt="" width={32} height={32} className="size-8 rounded-lg" />
         <span className="kd-hs min-w-0 flex-1 kd-ell">{T.title}</span>
         <Button size="sm" onClick={async () => { if (await install()) setSheet(true); }}>{T.install}</Button>
         <button type="button" className="kd-ib -mr-2" aria-label={T.dismiss} onClick={close}><XIcon size={18} aria-hidden="true" /></button>

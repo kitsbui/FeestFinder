@@ -34,6 +34,8 @@ import { EventCard } from '../card';
 import { MIXES } from './copy';
 import { ClaimButton, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
 import { InLang } from '@/kd/ui/in-lang';
+import { FIT } from '../../fits';
+import { square } from '../../img';
 
 const enc = encodeURIComponent;
 
@@ -182,14 +184,15 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
             {a.coverUrl ? (
               <div className="kd-wrap" aria-hidden="true">
                 <div className="kd-artist-cover relative overflow-hidden rounded-card">
-                  <Art family={tiles[0]} cover={a.coverUrl} eager className="absolute inset-0 rounded-none" />
+                  <Art family={tiles[0]} cover={a.coverUrl} eager fit={FIT.banner} className="absolute inset-0 rounded-none" />
                   <div className="kd-hero-fade absolute inset-0" />
                 </div>
               </div>
             ) : null}
             <div className={cx('kd-wrap relative', a.coverUrl ? '-mt-24 tab:-mt-32' : 'pt-6')}>
               <div className="mx-auto flex max-w-page flex-col items-start gap-5 tab:flex-row tab:items-end tab:gap-8">
-                <Avatar ring name={a.name} src={a.imageUrl} size={192} className="kd-artist-photo shrink-0" />
+                {/* Without a cover, the photo is the page's main picture (on a phone, larger than the name): fetched first. */}
+                <Avatar ring name={a.name} src={a.imageUrl} size={192} fit={square(192, '(min-width: 760px) 192px, 128px')} eager={a.coverUrl ? false : 'high'} className="kd-artist-photo shrink-0" />
                 <div className="flex min-w-0 flex-col gap-3 pb-1">
                   <span className="kd-m flex flex-wrap items-center gap-2">
                     {a.verified ? <><SealCheckIcon size={18} weight="fill" className="text-info" aria-hidden="true" /><span>{T.artistVerified}</span></> : <span>{T.artistKind}</span>}
@@ -203,7 +206,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
             </div>
           </header>
 
-          <main className="kd-wrap flex flex-col">
+          <main id="main" className="kd-wrap flex flex-col">
             <div className="mx-auto flex w-full max-w-page flex-col">
               {/* ---- what to do: play, follow (or claim), share ---- */}
               <div className="flex flex-wrap items-center gap-3 pt-7">
@@ -294,7 +297,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                       {withMost.map((x) => (
                         <li key={x.key}>
                           <Link className="kd-lrow" href={inLang(x.href, lang)}>
-                            <Avatar name={x.name} src={x.logo} size={40} org={x.org} />
+                            <Avatar name={x.name} src={x.logo} size={40} org={x.org} fit={square(40)} />
                             <span className="flex min-w-0 flex-1 flex-col">
                               <span className="kd-hs kd-ell">{x.name}</span>
                               <span className="kd-s">{x.line}</span>

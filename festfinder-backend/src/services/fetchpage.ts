@@ -12,16 +12,43 @@ export class PageUnavailable extends Error {
 export interface FetchedPage { url: string; html: string }
 export type PageFetcher = (url: string) => Promise<FetchedPage>;
 
-/** Loopback, private, link-local, carrier-grade NAT, multicast and reserved addresses. */
+/** An IPv6 address as its eight 16-bit words (a dotted IPv4 tail read as two), or null. */
+function words6(ip: string): number[] | null {
+  let s = ip.toLowerCase();
+  const tail = /^(.*:)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);
+  if (tail) s = tail[1] + ((+tail[2] << 8) | +tail[3]).toString(16) + ':' + ((+tail[4] << 8) | +tail[5]).toString(16);
+  const halves = s.split('::');
+  if (halves.length > 2) return null;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const rest = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+  const gap = halves.length === 2 ? 8 - head.length - rest.length : 0;
+  if (gap < 0) return null;
+  const all = [...head, ...Array<string>(gap).fill('0'), ...rest];
+  if (all.length !== 8 || all.some((w) => !/^[0-9a-f]{1,4}$/.test(w))) return null;
+  return all.map((w) => parseInt(w, 16));
+}
+
+const v4of = (hi: number, lo: number) => `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`;
+
+/**
+ * Loopback, private, link-local, carrier-grade NAT, multicast and reserved addresses, and an IPv6
+ * address that carries one of those IPv4 addresses (mapped ::ffff:0:0/96, compatible ::/96, NAT64
+ * 64:ff9b::/96, 6to4 2002::/16) or is local NAT64 (64:ff9b:1::/48) or Teredo (2001::/32).
+ */
 export function isPrivateAddress(ip: string): boolean {
-  const v4 = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
-  if (isIP(v4) === 4) {
-    const [a, b] = v4.split('.').map(Number);
+  if (isIP(ip) === 4) {
+    const [a, b] = ip.split('.').map(Number);
     return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31)
       || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || (a === 192 && b === 0) || (a === 198 && (b === 18 || b === 19));
   }
-  const v6 = ip.toLowerCase();
-  return v6 === '::' || v6 === '::1' || /^f[cd]/.test(v6) || /^fe[89ab]/.test(v6) || v6.startsWith('ff');
+  const w = words6(ip);
+  if (!w) return true;
+  const zero = (from: number, to: number) => w.slice(from, to).every((x) => x === 0);
+  if (zero(0, 5) && (w[5] === 0xffff || w[5] === 0)) return isPrivateAddress(v4of(w[6], w[7]));
+  if (w[0] === 0x64 && w[1] === 0xff9b) return w[2] === 1 || isPrivateAddress(v4of(w[6], w[7]));
+  if (w[0] === 0x2002) return isPrivateAddress(v4of(w[1], w[2]));
+  if (w[0] === 0x2001 && w[1] === 0) return true;
+  return (w[0] & 0xfe00) === 0xfc00 || (w[0] & 0xffc0) === 0xfe80 || (w[0] & 0xff00) === 0xff00;
 }
 
 async function assertPublicHost(hostname: string) {
@@ -51,12 +78,19 @@ export async function fetchPublic(raw: string, opts: {
   maxBytes?: number; timeoutMs?: number; accept?: string; types?: RegExp; headers?: Record<string, string>;
   /** Stop at maxBytes and keep what was read, instead of failing (enough to read an image's header). */
   truncate?: boolean;
+  /** Every hop https (a redirect to http: is refused). */
+  httpsOnly?: boolean;
+  /** One limit for every hop and the body together, besides each hop's timeoutMs. */
+  totalMs?: number;
 } = {}): Promise<PublicResponse> {
   const maxBytes = opts.maxBytes ?? 2_000_000;
+  const schemes = opts.httpsOnly ? ['https:'] : ['http:', 'https:'];
+  const ports = opts.httpsOnly ? ['443'] : ['80', '443'];
+  const total = opts.totalMs ? AbortSignal.timeout(opts.totalMs) : null;
   let current: URL;
   try { current = new URL(raw); } catch { throw new PageUnavailable('bad_url'); }
   for (let hop = 0; hop < 4; hop++) {
-    if (!['http:', 'https:'].includes(current.protocol) || (current.port && !['80', '443'].includes(current.port))) throw new PageUnavailable('bad_url');
+    if (!schemes.includes(current.protocol) || (current.port && !ports.includes(current.port))) throw new PageUnavailable('bad_url');
     if (current.username || current.password) throw new PageUnavailable('bad_url');
     await assertPublicHost(current.hostname);
     let res: Response;
@@ -64,7 +98,7 @@ export async function fetchPublic(raw: string, opts: {
       res = await fetch(current, {
         redirect: 'manual',
         headers: { 'user-agent': BOT_USER_AGENT, accept: opts.accept ?? 'text/html,application/xhtml+xml', 'accept-language': 'vi,en;q=0.8', ...opts.headers },
-        signal: AbortSignal.timeout(opts.timeoutMs ?? 8000),
+        signal: total ? AbortSignal.any([AbortSignal.timeout(opts.timeoutMs ?? 8000), total]) : AbortSignal.timeout(opts.timeoutMs ?? 8000),
       });
     } catch (e) {
       throw new PageUnavailable('upstream', (e as Error).message);

@@ -10,7 +10,7 @@ Design v2 phase 6 ("QA và quản trị", continuous). The design review canvas 
 | Layout | `e2e/next/layout.spec.ts` | any screen of any role scrolls sideways at 390, 768 or 1440px |
 | Accessibility | `e2e/next/wcag.spec.ts` | axe finds a serious or critical WCAG 2.1 AA violation on any screen of any role at 390 or 1440px |
 | Touch targets | `e2e/next/targets.spec.ts` | anything one taps on a phone (390px, touch) is under 44 × 44px |
-| Performance | `e2e/next/perf.spec.ts` | on a phone with a slow CPU (4×) and 4G, a screen's layout jumps (CLS) more than 0.05 while it loads, or the JS it boots with (the chunks its HTML names, gzipped) is over its budget. Budgets only go down. |
+| Performance | `e2e/next/perf.spec.ts` | on a phone with a slow CPU (4×) and 4G, a screen's layout jumps (CLS) more than 0.05 while it loads, its largest content paints late (LCP), its largest picture is lazy, not `fetchpriority="high"` or missing from the server's HTML, anything redirects while it loads, or its main-thread blocking (TBT-lite), its pictures' KB or the JS it boots with (the chunks its HTML names, gzipped) is over its budget. Budgets only go down. |
 | Flows | the rest of `e2e/next/` | a flow breaks |
 | Screens | `visual.yml` | the main screens look different from the base branch's and nobody accepted it |
 | Checklist | `design-checklist.yml` | a PR that touches `festfinder-web` or `festfinder-frontend` has an unticked box in its "Thiết kế" checklist |
@@ -26,6 +26,10 @@ The baselines committed next to `visual.spec.ts` are for local runs only (`npm r
 ### Performance
 
 `perf.spec.ts` loads each screen it lists on a throttled phone and adds up how far things moved (CLS) and the JS the screen boots with. When it fails it names what moved. The usual causes: a box that arrives after the first paint without its space held (give the skeleton the final size, or let the server render it), a footer that shows on a short loading page (the content holds the screen's height, `min-h-dvh`), a margin on the first box of a page (it moves `<body>`), a choice made in an effect after the first render (make it in the render). Something few people open (a sheet, a picker, a first-run screen) loads when it opens (`next/dynamic`), as the sign-in sheet, the role picker, the search sheet and the feedback sheet do.
+
+Since 2026-10-28 it also checks what Lighthouse marked down in production: the largest picture of a screen is the one `Art` draws `eager` (in the server's HTML, never lazy, `fetchpriority="high"`, one per page); nothing redirects while a screen loads (the router's prefetches the proxy would move to another language get a 204; `/img`'s 302 to a link it cannot fetch is its fallback, not counted); the main thread blocks no longer than the screen's TBT-lite budget (long tasks over 50 ms, from the first paint to 5 s after, the best of up to three loads, each on a fresh phone); and the screen's pictures stay within their KB (stored pictures come from `/img` copies their size). The home page is also loaded as a phone in Vietnam opens it (`vi-VN`, `Asia/Ho_Chi_Minh`), in English and with a filter (`?time=tonight`), and the artist studio joins the screens. The home and event pages must also go quiet on the network within 15 s of their load.
+
+Lighthouse itself is not a gate (it is noisy, and its throttling is simulated): `npm run lighthouse` in `festfinder-backend/` (`tools/lighthouse`, Lighthouse 13.4.1) measures medians of five fresh-profile runs per page, on production after a deploy (`--base https://feestfinder.com`) or on a branch (`--serve`), with the points each metric loses, the LCP element and its request, picture KB, redirects and the machine's `benchmarkIndex`. Compare medians from the same machine, idle.
 
 ### Touch targets
 

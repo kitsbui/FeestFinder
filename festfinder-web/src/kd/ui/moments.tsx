@@ -9,6 +9,10 @@ import { useEffect, useRef, useState } from 'react';
 import { CaretLeftIcon, CaretRightIcon, FlagIcon, PlusIcon, TrashIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { familyOf } from '../genre';
 import { Art } from './parts';
+import { fit, imgAttrs } from '../img';
+
+/** A photo in a grid of three (.kd-mgrid, at most 720px): moments, a night's photos, a recap's. */
+export const MOMENT = fit('(max-width: 759px) 33vw, 240px', 192, 640, 'square');
 
 export interface Moment { id: string; url: string | null; caption?: string | null; genre?: string | null; takenOn?: string | null }
 
@@ -36,7 +40,7 @@ export function MomentsGrid({ items, owner, onAdd, onRemove, onReport, reasons, 
             <Art family={familyOf(m.genre)} />
             {m.url ? (
                
-              <img src={m.url} alt={m.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+              <img {...imgAttrs(m.url, MOMENT, true)} alt={m.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
             ) : null}
           </button>
         ))}

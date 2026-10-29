@@ -17,7 +17,7 @@ import { ClaudePrefill, DisabledPrefill } from './services/prefill.ts';
 import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, TikTokOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
-import { fakeImageFetcher, fetchImageHead } from './services/remote-images.ts';
+import { fakeImageFetcher, fakeImageFull, fetchImageFull, fetchImageHead } from './services/remote-images.ts';
 import { fakeAudio, fetchAudio } from './services/audio.ts';
 import { fakeOembed, fetchOembed } from './services/mixes.ts';
 import { addStarterSources } from './services/ingest/starter.ts';
@@ -113,6 +113,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     prefill: config.aiGuideEnabled && hasAnthropic ? new ClaudePrefill(config.anthropicModel) : new DisabledPrefill(),
     fetchPage: (url: string) => fetchPublicPage(url),
     fetchImage: config.fakeRemoteMedia ? fakeImageFetcher : fetchImageHead,
+    fetchImageFull: config.fakeRemoteMedia ? fakeImageFull : fetchImageFull,
     oembed: config.fakeRemoteMedia ? fakeOembed : fetchOembed,
     fetchAudio: config.fakeRemoteMedia ? fakeAudio : fetchAudio,
     oauth: { google: googleOAuth(), fb: oauthFor('fb'), ig: oauthFor('ig'), tiktok: process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET ? new TikTokOAuth(process.env.TIKTOK_CLIENT_KEY, process.env.TIKTOK_CLIENT_SECRET) : null },

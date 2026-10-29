@@ -22,6 +22,7 @@ import { EditLink } from './edit-link';
 import { readIn, say, text, type Post, type PostList } from './model';
 import { StyleHub } from './style-hub';
 import { PostTracks } from './tracks';
+import { FIT } from '../../fits';
 
 const enc = encodeURIComponent;
 /** "20.10.2026" / "20 Oct 2026". */
@@ -37,7 +38,7 @@ export async function BlogPage({ lang }: { lang: Lang }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="blog" />
-          <main className="kd-wrap flex flex-col gap-5 py-8">
+          <main id="main" className="kd-wrap flex flex-col gap-5 py-8">
             <div className="kd-sec items-end">
               <h1 className="kd-d2">{T.title}</h1>
               <div className="flex flex-wrap gap-2">
@@ -80,7 +81,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
           <WebNav lang={lang} current="blog" />
           <Crumbs width="read" label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
           {/* The article in the middle of the page on every width (owner, 2026-10-20). */}
-          <main className="kd-wrap flex flex-col pb-4">
+          <main id="main" className="kd-wrap flex flex-col pb-4">
             <article className="mx-auto flex w-full max-w-read flex-col" lang={l}>
               <header className={`flex flex-col gap-3 pt-4 ${g('edm')}`}>
                 <a href={inLang(`/blog?category=${post.category.key}`, lang)} className="kd-m kd-hit flex items-center gap-1.5 self-start text-info" lang={lang}>
@@ -107,7 +108,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
               </header>
               {post.coverUrl ? (
                 <figure className="flex flex-col gap-2 pt-6">
-                  <Art title={title} family="edm" cover={post.coverUrl} alt={title} eager className="aspect-video w-full" />
+                  <Art title={title} family="edm" cover={post.coverUrl} alt={title} eager fit={FIT.read} className="aspect-video w-full" />
                   {post.coverCredit ? <figcaption className="kd-s" lang={lang}>{T.cover} · {inline(post.coverCredit, 'cover', true)}</figcaption> : null}
                 </figure>
               ) : null}

@@ -137,7 +137,7 @@ function Review({ lang, p, onClose }: { lang: Lang; p: Item; onClose: (changed: 
         {/* The team edits every word, both languages, in the post's own editor. */}
         <LinkButton href={`/blog/${encodeURIComponent(p.slug)}/edit`} className="self-start"><PencilSimpleIcon size={16} aria-hidden="true" />{T.edit}</LinkButton>
         {say(p.excerpt, lang) ? <p className="kd-t text-fg-1">{say(p.excerpt, lang)}</p> : null}
-        <PostBody text={say(p.body, lang)} trusted={p.author.editorial} />
+        <PostBody text={say(p.body, lang)} trusted={p.author.editorial} resized={false} />
         {p.tracks.length ? (
           <ul className="flex flex-col">
             {p.tracks.map((t) => (

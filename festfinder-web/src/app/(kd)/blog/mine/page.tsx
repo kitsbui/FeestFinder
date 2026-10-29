@@ -11,7 +11,7 @@ export default function Page() {
     <KdProvider lang="vi">
       <div className="flex min-h-dvh flex-col" lang="vi">
         <WebNav lang="vi" current="blog" />
-        <main className="kd-wrap min-h-dvh py-8"><div className="mx-auto w-full max-w-3xl"><MyPosts lang="vi" /></div></main>
+        <main id="main" className="kd-wrap min-h-dvh py-8"><div className="mx-auto w-full max-w-3xl"><MyPosts lang="vi" /></div></main>
         <div className="mt-auto"><WebFooter lang="vi" /></div>
       </div>
     </KdProvider>

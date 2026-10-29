@@ -246,6 +246,7 @@ describe('public discovery (Web + App, signed out)', () => {
   it('lists events by city', async () => {
     const all = await env.as().get('/events?time=all&limit=60');
     assert.ok(all.body.items.every((e: any) => e.city === 'ho-chi-minh' && e.cityLabel.vi === 'TP.HCM'));
+    assert.equal(all.body.today, '2026-09-14', 'the API\'s day, from which the list\'s day headings start');
     const hanoi = await env.as().get('/events?time=all&city=ha-noi');
     assert.equal(hanoi.body.items.length, 0);
     assert.equal((await env.as().get('/events?city=da-lat')).status, 400);

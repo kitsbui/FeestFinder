@@ -68,7 +68,7 @@ export function Kit() {
   const days = Array.from({ length: 14 }, (_, i) => ({ label: `${i + 5}/9`, value: Math.round(120 + 80 * Math.sin(i / 2) + i * 18) }));
 
   return (
-    <main className="kd-wrap flex flex-col gap-18 py-16 tab:py-18">
+    <main id="main" className="kd-wrap flex flex-col gap-18 py-16 tab:py-18">
       <header className="grid grid-cols-1 gap-12 desk:grid-cols-2 desk:items-end">
         <div className="flex flex-col gap-5">
           <Logo height={28} className="self-start" />

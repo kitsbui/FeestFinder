@@ -54,6 +54,39 @@ test('the strip waits for a second visit, sits above the tab bar, and "✕" puts
   await context.close();
 });
 
+/*
+ * The strip's code and its icon load only on a page where it shows (ui/install-gate.ts): a first
+ * visit fetches neither; the second draws it with the app's icon (ff-appicon.svg).
+ */
+test('a first visit loads none of the strip; the second shows it with the app icon', async ({ browser }) => {
+  const { context, page } = await phone(browser, IPHONE);
+  const scripts: Promise<string>[] = [];
+  const icons: string[] = [];
+  page.on('response', (r) => {
+    const u = new URL(r.url());
+    if (/\.js$/.test(u.pathname)) scripts.push(r.text().catch(() => ''));
+    if (/ff-appicon\.svg|apple-touch-icon\.png/.test(u.pathname)) icons.push(u.pathname);
+  });
+  // A line of the strip's sheet (ui/install.tsx), in no other script.
+  const stripCode = async () => (await Promise.all(scripts)).some((t) => t.includes('Tap Share in the bar below'));
+  await page.goto('/');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000);
+  await expect(page.locator('.kd-install')).toHaveCount(0);
+  expect(await stripCode(), 'no script of the strip on a first visit').toBe(false);
+  expect(icons).toEqual([]);
+
+  await page.goto('/saved');
+  await expect(strip(page)).toBeVisible();
+  const icon = strip(page).locator('img');
+  await expect(icon).toHaveAttribute('src', '/ui/assets/ff-appicon.svg');
+  await expect.poll(() => icon.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+  expect(await stripCode(), 'the strip came with its own script').toBe(true);
+  expect(icons).not.toContain('/ui/assets/apple-touch-icon.png');
+  await context.close();
+});
+
 test('on Android a tap shows Chrome’s own prompt when it has one', async ({ browser }) => {
   const { context, page } = await phone(browser, ANDROID);
   await page.goto('/');

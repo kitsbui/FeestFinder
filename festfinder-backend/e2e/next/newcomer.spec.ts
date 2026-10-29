@@ -29,8 +29,26 @@ test('a night sold at a price nobody gave is never "free"', async ({ page }) => 
 /** The phone's city chooser (above the list since design v2 phase 12). */
 const cityOf = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Thành phố:/ }).locator('visible=true');
 
+/** Records whether the page ever held its list back for a country (city-first.tsx's data-place-first). */
+const held = () => {
+  const w = window as unknown as { __held: boolean };
+  w.__held = false;
+  new MutationObserver(() => { if (document.documentElement?.hasAttribute('data-place-first')) w.__held = true; })
+    .observe(document, { attributes: true, subtree: true, attributeFilter: ['data-place-first'] });
+};
+
 test('the country comes first: a phone in Vietnam sees Vietnam\u2019s nights first, a chosen city is kept, and the page never jumps', async ({ browser, request }) => {
-  // The demo's nights are all in TP.HCM: one in Bangkok, posted by the team for this test, gives the list an elsewhere.
+  // The demo's nights are all in TP.HCM: grouping them would change nothing, so a phone in Vietnam is shown
+  // the list the server drew at once, never held back (city-first.tsx marks no country).
+  const alone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, timezoneId: 'Asia/Ho_Chi_Minh' });
+  const first = await alone.newPage();
+  await first.addInitScript(held);
+  await first.goto('/');
+  await first.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await expect(first.getByRole('main').getByRole('heading', { level: 2, name: 'Nơi khác' })).toHaveCount(0);
+  expect(await first.evaluate(() => (window as unknown as { __held: boolean }).__held)).toBe(false);
+  await alone.close();
+  // One in Bangkok, posted by the team for this test, gives the list an elsewhere.
   expect((await request.post('/auth/login', { data: { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' } })).ok()).toBeTruthy();
   const org = (await (await request.get('/admin/organizers?q=Ravolution')).json()).items[0];
   const made = await request.post('/admin/events', { data: { organizerId: org.id, title: 'Bangkok Night Test', city: 'bangkok', venueName: 'Beam', address: '72 Sukhumvit 55', startsOn: '2026-11-21', startTime: '22:00', endTime: '04:00', entryMode: 'free', styles: ['techno'], publish: true } });
@@ -49,9 +67,11 @@ test('the country comes first: a phone in Vietnam sees Vietnam\u2019s nights fir
       for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) w.__shift += e.value;
     }).observe({ type: 'layout-shift', buffered: true });
   });
+  await page.addInitScript(held);
   await page.goto('/');
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
   await expect(page.locator('html')).not.toHaveAttribute('data-place-first', /./);
+  expect(await page.evaluate(() => (window as unknown as { __held: boolean }).__held), 'held back while it groups').toBe(true);
   const main = page.getByRole('main');
   await expect(main.getByRole('heading', { level: 2, name: 'Việt Nam' })).toBeVisible();
   await expect(main.getByRole('heading', { level: 2, name: 'Nơi khác' })).toBeAttached();

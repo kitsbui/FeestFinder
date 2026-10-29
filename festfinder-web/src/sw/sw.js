@@ -40,6 +40,9 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    // Navigation preload: the browser asks for a page while the worker is still starting, rather
+    // than after it (a returning visitor's page no longer waits on the worker's boot).
+    if (self.registration.navigationPreload) await self.registration.navigationPreload.enable().catch(() => {});
     for (const key of await caches.keys()) if (!key.startsWith(VERSION + '-')) await caches.delete(key);
     await self.clients.claim();
   })());
@@ -70,7 +73,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (req.mode === 'navigate') {
-    if (OFFLINE_PAGES.some((re) => re.test(url.pathname))) event.respondWith(page(req));
+    // Every page answers with the preload already on its way (the plain network when there is none),
+    // so no page is asked twice.
+    event.respondWith(OFFLINE_PAGES.some((re) => re.test(url.pathname)) ? page(event) : preloaded(event));
     return;
   }
 
@@ -99,11 +104,18 @@ async function staleWhileRevalidate(req, event) {
   return hit;
 }
 
+/** The navigation preload's answer when the browser made one, else the network's. */
+async function preloaded(event) {
+  const early = await event.preloadResponse;
+  return early || fetch(event.request);
+}
+
 /** A page the app works offline on: fresh when there is signal, the last good copy (or the saved nights) when not. */
-async function page(req) {
+async function page(event) {
+  const req = event.request;
   const cache = await caches.open(PAGES);
   try {
-    const res = await fetch(req);
+    const res = await preloaded(event);
     if (res.ok && res.type === 'basic') cache.put(req, res.clone());
     return res;
   } catch (err) {
@@ -113,10 +125,23 @@ async function page(req) {
   }
 }
 
+/**
+ * What is kept of an answer. The session's leaves out the server's clock (`time`): offline, the
+ * page would set its clock back to when it was cached (FF's takeClock keeps the last offset instead).
+ */
+async function keepable(req, copy) {
+  if (new URL(req.url).pathname !== '/auth/session') return copy;
+  const body = await copy.json();
+  delete body.time;
+  const headers = new Headers(copy.headers);
+  headers.delete('content-length');
+  return new Response(JSON.stringify(body), { status: copy.status, statusText: copy.statusText, headers });
+}
+
 async function networkFirst(req, name) {
   const cache = await caches.open(name);
   const network = fetch(req).then((res) => {
-    if (res.ok && res.type === 'basic') cache.put(req, res.clone());
+    if (res.ok && res.type === 'basic') keepable(req, res.clone()).then((kept) => cache.put(req, kept)).catch(() => {});
     return res;
   });
   const cached = await cache.match(req);

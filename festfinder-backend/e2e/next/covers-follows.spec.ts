@@ -66,13 +66,47 @@ test('a cover is framed once and shows framed, at once, on the page and in the d
   // The page shows it now, not a minute later, drawn around the point chosen.
   await open(page, '/a/' + me.slug);
   const cover = page.locator('img.kd-cover').first();
-  await expect(cover).toHaveAttribute('src', url + '#ff=40,30,2');
+  // A copy of the picture without its framing (kd/img.ts), twice as wide for a zoom of 2; the framing stays the style.
+  const key = Buffer.from(url).toString('base64url');
+  await expect(cover).toHaveAttribute('src', new RegExp(`^/img/\\d+x\\d+/${key}\\.webp$`));
+  await expect(cover).toHaveAttribute('srcset', new RegExp(`^/img/1280x640/${key}\\.webp 640w,`));
   // (The fake host does not open in the browser, so the picture is hidden: its style is what counts.)
   await expect(cover).toHaveAttribute('style', /object-position:\s*40% 30%/);
   await expect(cover).toHaveAttribute('style', /transform:\s*scale\(2\)/);
   // And so does its card in the directory.
   await open(page, '/a?q=' + encodeURIComponent(me.name));
-  await expect(page.locator(`img.kd-cover[src="${url}#ff=40,30,2"]`)).toHaveCount(1);
+  await expect(page.locator(`img.kd-cover[src*="/${key}.webp"]`)).toHaveCount(1);
+  expect(problems).toEqual([]);
+});
+
+test('a stored picture is drawn from a copy its size, and a dead one leaves the initials', async ({ page }) => {
+  const me = await newArtist(page);
+  // The test network: pics.example gives the API a real picture; img.example passes the check on saving but never opens.
+  const cover = `https://pics.example/cover-${me.slug}.png`;
+  const photo = `https://img.example/gone-${me.slug}.png`;
+  expect((await page.request.patch('/me/artist', { data: { coverUrl: cover, imageUrl: photo } })).status()).toBe(200);
+  await page.route('https://img.example/**', (route) => route.fulfill({ status: 404, body: '' }));
+
+  const problems = await open(page, '/a/' + me.slug);
+  const img = page.locator('img.kd-cover').first();
+  const key = Buffer.from(cover).toString('base64url');
+  await expect(img).toHaveAttribute('src', new RegExp(`^/img/\\d+x\\d+/${key}\\.webp$`));
+  await expect.poll(() => img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0 && new URL(i.currentSrc).pathname.startsWith('/img/'))).toBe(true);
+  // Through the web app as the browser asks: a WebP kept a year, never the stored PNG.
+  const copy = await page.request.get(await img.evaluate((i: HTMLImageElement) => i.currentSrc));
+  expect(copy.status()).toBe(200);
+  expect(copy.headers()['content-type']).toBe('image/webp');
+  expect(copy.headers()['cache-control']).toContain('immutable');
+
+  // The photo's copy cannot be made: /img sends the browser to the link, which is gone, and the initials stay.
+  const av = page.locator('.kd-artist-photo img');
+  const src = await av.getAttribute('src');
+  expect(src).toMatch(new RegExp(`^/img/\\d+x\\d+/${Buffer.from(photo).toString('base64url')}\\.webp$`));
+  const moved = await page.request.get(src!, { maxRedirects: 0 });
+  expect(moved.status()).toBe(302);
+  expect(moved.headers()['location']).toBe(photo);
+  await expect(av).toHaveAttribute('data-broken', '');
+  await expect(page.locator('.kd-artist-photo .kd-av-i')).toBeVisible();
   expect(problems).toEqual([]);
 });
 

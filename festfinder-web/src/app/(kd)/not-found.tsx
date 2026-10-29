@@ -6,7 +6,10 @@ export const metadata: Metadata = { title: 'Không tìm thấy trang', robots: {
 /** An unknown event, organiser or artist: say so in both languages and point home. */
 export default function NotFound() {
   return (
-    <main className="kd-wrap flex min-h-dvh flex-col justify-center gap-4 py-24">
+    <>
+    {/* The skip link as plain HTML: this page is part of every page's root, where a client part would load everywhere. */}
+    <a href="#main" className="kd-skip">Bỏ qua tới nội dung</a>
+    <main id="main" className="kd-wrap flex min-h-dvh flex-col justify-center gap-4 py-24">
       <span className="kd-m">404</span>
       <h1 className="kd-d1">Không tìm thấy trang này</h1>
       <p className="kd-tl max-w-[560px]">Sự kiện có thể đã kết thúc, bị gỡ, hoặc đường dẫn bị gõ sai.</p>
@@ -15,5 +18,6 @@ export default function NotFound() {
         <a className={buttonClass({ tone: 'acc' })} href="/">Xem sự kiện</a>
       </p>
     </main>
+    </>
   );
 }

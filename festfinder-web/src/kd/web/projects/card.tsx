@@ -9,6 +9,7 @@ import { KdLink as Link, inLang } from '../../link';
 import { Art } from '../../ui/parts';
 import { PROJ } from './copy';
 import { text, type Project } from './model';
+import { CARD } from '../card-fit';
 
 export function ProjectCard({ p, lang }: { p: Project; lang: Lang }) {
   const T = pick(PROJ, lang);
@@ -16,7 +17,7 @@ export function ProjectCard({ p, lang }: { p: Project; lang: Lang }) {
   const where = [text(p.city.label, lang) || p.city.slug, p.targetOn ? `${T.target.toLowerCase()} ${dayMonth(p.targetOn, lang)}` : ''].filter(Boolean).join(' · ');
   return (
     <article className={`kd-ev ${g('edm')}`}>
-      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={p.coverUrl} title={p.title} /></Link>
+      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={p.coverUrl} title={p.title} fit={CARD} /></Link>
       <div className="flex flex-col gap-1.5">
         <Link href={href} className="kd-hit kd-h">{p.title}</Link>
         {p.pitch ? <span className="kd-s line-clamp-2">{p.pitch}</span> : null}

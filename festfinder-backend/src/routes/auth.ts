@@ -442,13 +442,14 @@ export default async function authRoutes(app: FastifyInstance) {
   });
 
   // ?optional=1 answers a visitor who is not signed in with {user: null} instead of a 401,
-  // so a page that only wants to know does not log an error on every load.
+  // so a page that only wants to know does not log an error on every load. Both answers carry the
+  // API's clock (`time`), which the site's countdowns and "today" follow: a page asks nothing else.
   app.get<{ Querystring: { optional?: string } }>('/auth/session', async (req) => {
-    if (!req.session && req.query.optional === '1') return { user: null };
+    if (!req.session && req.query.optional === '1') return { user: null, time: ctx.clock.now() };
     const s = requireUser(req);
     const user = await one<any>(ctx.db, 'select * from users where id = $1', [s.user.id]);
     const orgs = await ctx.db.query<any>(
       `select o.id, o.slug, o.name, m.role from organizer_members m join organizers o on o.id = m.organizer_id where m.user_id = $1`, [s.user.id]);
-    return { user: publicUser(user, s.method, ctx), organizers: orgs.rows, readOnly: s.readOnly, impersonatedBy: s.impersonatorId, ...(await personasOf(ctx.db, s.user.id)) };
+    return { user: publicUser(user, s.method, ctx), organizers: orgs.rows, readOnly: s.readOnly, impersonatedBy: s.impersonatorId, ...(await personasOf(ctx.db, s.user.id)), time: ctx.clock.now() };
   });
 }

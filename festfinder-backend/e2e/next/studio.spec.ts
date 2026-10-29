@@ -84,7 +84,12 @@ test.describe('Studio, signed in', () => {
     await expect(page.getByText('Còn thiếu trước khi gửi')).toHaveCount(0);
     const send = page.getByRole('button', { name: 'Gửi duyệt', exact: true });
     await expect(send).toBeDisabled();
+    // A primary that cannot act yet has no halo: the glow breathes only on one that can.
+    const halo = (b: typeof send) => b.evaluate((el) => { const s = getComputedStyle(el, '::before'); return `${s.animationName} ${s.opacity}`; });
+    expect(await halo(send)).toBe('none 0');
     await page.getByRole('checkbox').check();
+    await expect(send).toBeEnabled();
+    expect(await halo(send)).not.toMatch(/^none/);
     await send.click();
     await expect(page.getByText('Đã gửi duyệt')).toBeVisible();
     await expect(page.getByText('Nháp · tự lưu'), 'sent: no longer a draft').toHaveCount(0);

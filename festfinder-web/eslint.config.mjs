@@ -6,7 +6,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import nextPlugin from '@next/eslint-plugin-next';
 
 export default tseslint.config(
-  { ignores: ['.next/**', 'public/**', 'src/sw/**', 'next-env.d.ts', 'node_modules/**', 'scripts/**', '*.config.mjs', '*.config.ts'] },
+  { ignores: ['.next/**', '.next-lh/**', 'public/**', 'src/sw/**', 'next-env.d.ts', 'node_modules/**', 'scripts/**', '*.config.mjs', '*.config.ts'] },
   ...tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },

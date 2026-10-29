@@ -17,6 +17,10 @@ import { Art, Card as Panel, Status } from '../ui/parts';
 import { AppBar } from '../ui/shell';
 import type { EventDetail } from '../types';
 import { APP } from './copy';
+import { fit } from '../img';
+
+/** The night's picture across the screen, 240px high. */
+const LIVE = fit('100vw', 640, 1280, 'card');
 
 interface Set { setId: string; artist: string; startsAt: string; endsAt: string; time: string; state: 'now' | 'next' | 'later' | 'done' | string; inPlan: boolean; reminded: boolean }
 interface Stage { id: string; name: Pair; now: { setId: string } | null; next: { setId: string } | null; sets: Set[] }
@@ -93,7 +97,7 @@ export function LiveMode({ lang, ev }: { lang: Lang; ev: EventDetail }) {
       {!d ? <div className="kd-skel mx-4 h-60" aria-hidden="true" /> : (
         <>
           <section className={cx('relative mx-4 h-60', g(fam))} aria-label={now ? fill(T.onNow, { s: tx(st!.name, lang) }) : T.nothingLive}>
-            <Art title={ev.title} family={fam} cover={ev.coverUrl} className="absolute inset-0" />
+            <Art title={ev.title} family={fam} cover={ev.coverUrl} fit={LIVE} className="absolute inset-0" />
             <div className="kd-glass absolute inset-x-2.5 bottom-2.5 flex flex-col gap-2.5 rounded-[10px] p-3.5">
               <div className="flex flex-col gap-1">
                 <span className="kd-m text-fg-2">{lead ? fill(now ? T.onNow : T.upNext, { s: tx(st!.name, lang) }) : T.nothingLive}</span>

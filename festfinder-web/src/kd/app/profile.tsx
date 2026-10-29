@@ -18,6 +18,10 @@ import { Stamp } from '../ui/parts';
 import { ImageLinkField } from '../ui/image-link';
 import { Sheet } from '../ui/sheet';
 import { APP } from './copy';
+import { square } from '../img';
+
+/** A stamp's tile in the passport: four to a row, eight in a wider box. */
+const STAMP = square(96, '(max-width: 759px) 25vw, 160px');
 
 export interface Me { user: { id: string; name: string | null; email: string | null; phone: string | null; city: string | null; photoUrl: string | null; locale: 'vi' | 'en' } }
 export interface Passport { stats: { nights: number; events: number; styles: number; venues: number; cities: number }; stamps: { eventId: string; slug: string; title: string; genre: string | null; date: string; venue: string | null; coverUrl?: string | null; city?: { vi: string; en: string } | string | null }[] }
@@ -58,7 +62,7 @@ export function PassportSection({ lang, pp, year, onWrapped, flush, appLinks = t
             <ul className="mt-1 grid grid-cols-4 gap-x-2 @2xl:grid-cols-8 gap-y-3.5">
               {shown.map((s) => (
                 <li key={s.eventId}>
-                  <Stamp family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} cover={s.coverUrl} city={typeof s.city === 'string' ? s.city : tx(s.city, lang)} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
+                  <Stamp fit={STAMP} family={familyOf(s.genre)} date={dayMonth(s.date, lang)} name={s.title} cover={s.coverUrl} city={typeof s.city === 'string' ? s.city : tx(s.city, lang)} dim={!!only && familyOf(s.genre) !== only} href={appLinks ? '/e/' + s.slug : inLang('/e/' + s.slug, lang)} />
                 </li>
               ))}
             </ul>

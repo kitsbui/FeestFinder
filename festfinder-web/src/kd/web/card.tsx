@@ -10,13 +10,19 @@ import { ViewTransition } from 'react';
 import { KdLink as Link, inLang } from '../link';
 import { fill, pick, type Lang, tx } from '../copy';
 import { cx } from '../cx';
-import { count, money, whenShort } from '../format';
+import { count, whenShort } from '../format';
 import { familyOf, g, styleLabel } from '../genre';
 import { RadarTag } from '../ui/origin';
 import { Art } from '../ui/parts';
+import { square, type Fit } from '../img';
+import { CARD, LEAD } from './card-fit';
 import type { Card } from '../types';
 import { WEB } from './copy';
+import { priceLine } from './price';
 import { SaveToggle } from './save-toggle';
+
+/** The Console's event form and the wizard's last step read it here; the wizard's other steps from ./price, without the card. */
+export { priceLine };
 
 /** The badges a card still shows (design v2 phase 12): the ones that change whether to go now. */
 const URGENT = new Set(['low_tickets', 'selling_fast']);
@@ -33,21 +39,22 @@ export function cardTag(e: Card, lang: Lang): string | null {
   return null;
 }
 
-export function priceLine(e: Pick<Card, 'isFree' | 'priceFrom' | 'currency' | 'entryMode' | 'priceUnknown'>, lang: Lang): string {
-  const T = pick(WEB, lang);
-  if (e.isFree || e.entryMode === 'free') return T.free;
-  // Sold at a price nobody gave yet: never "free" (design v2 phase 11).
-  if (e.priceUnknown) return T.priceUnknown;
-  return fill(T.fromPrice, { p: money(e.priceFrom, e.currency, lang) });
-}
-
 export type CardLook = 'card' | 'lead' | 'row';
+
+/** The box a look draws its picture in (kd/img.ts); a card in the list's days says its own (DAY). */
+const LOOK_FIT: Record<CardLook, Fit> = { card: CARD, lead: LEAD, row: square(88) };
 
 /**
  * `morph`: the picture becomes the event page's hero when it opens (React's ViewTransition, design v2
  * phase 8). Only where an event appears once on the page (the list's days): two of one name would clash.
  */
-export function EventCard({ e, lang, look = 'card', morph = false, eager = false }: { e: Card; lang: Lang; look?: CardLook; morph?: boolean; /** Its picture loads first: the list's first lead (design v2 phase 13). */ eager?: boolean }) {
+export function EventCard({ e, lang, look = 'card', morph = false, eager = false, fit = LOOK_FIT[look] }: {
+  e: Card; lang: Lang; look?: CardLook; morph?: boolean;
+  /** Its picture loads first: the home page's first picture (list/page.tsx, days.tsx). */
+  eager?: boolean;
+  /** The box its picture is drawn in, when the look's own is not it. */
+  fit?: Fit;
+}) {
   const T = pick(WEB, lang);
   const fam = familyOf(e.genre);
   const tag = cardTag(e, lang);
@@ -55,7 +62,7 @@ export function EventCard({ e, lang, look = 'card', morph = false, eager = false
   const lead = !e.past && !e.soldOut && e.status !== 'cancelled' && (!!e.festival?.flagship || (!e.badge && e.featured));
   const href = inLang('/e/' + e.slug, lang);
   const radar = e.origin === 'radar';
-  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} eager={eager} />;
+  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} eager={eager} fit={fit} />;
   return (
     <article className={cx('kd-ev', look !== 'card' && `kd-ev-${look}`, g(fam))}>
       <div className="kd-ev-art relative">

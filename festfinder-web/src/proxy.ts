@@ -32,6 +32,8 @@ const OURS = ['x-ff-web-secret', 'x-ff-client-ip', 'x-ff-client-country', 'x-ff-
 const SESSION = /(?:^|;\s*)ff_session=/;
 /** Hop-by-hop and framing headers, which the fetch sets for itself. */
 const HOP = ['host', 'connection', 'keep-alive', 'proxy-connection', 'transfer-encoding', 'te', 'trailer', 'upgrade', 'expect', 'content-length'];
+/** The router's own headers, which this proxy sees (next.config.ts `skipProxyUrlNormalize`) and the API never needs. */
+const ROUTER = ['rsc', 'next-router-state-tree', 'next-router-prefetch', 'next-router-segment-prefetch', 'next-hmr-refresh'];
 
 /** This app's own paths besides its pages: Next's, the sitemap and robots, its page refresh (kd-fresh), the old landing URLs it redirects. */
 const OWN = /^\/(_next\/|__next|sitemap\.xml$|robots\.txt$|kd-fresh$|(vi|en)\/)/;
@@ -42,12 +44,20 @@ function isOwn(path: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  // The address as the visitor asked for it: without the router's `_rsc`, which `skipProxyUrlNormalize`
+  // (next.config.ts) leaves on it, taken off as Next would (the rest of the query written the same way).
+  const url = request.nextUrl.clone();
+  url.searchParams.delete('_rsc');
+  const { pathname, search } = url;
   if (isOwn(pathname)) {
     // A page in the language this visitor reads (English when new, then their last choice: kd/lang-pref.ts).
     if (request.method === 'GET') {
       const move = langRedirect({ path: pathname, search, cookie: cookieLang(request.headers.get('cookie')), ua: request.headers.get('user-agent') });
       if (move) {
+        // Never the router's prefetch (of a link, and of every linked path without its query): a moved
+        // one is followed, fetched again and left unread, so a page load never goes quiet. No content
+        // is a miss to the router (it may try again later); the click is a navigation, which moves.
+        if (request.headers.has('next-router-prefetch')) return new NextResponse(null, { status: 204, headers: { 'cache-control': 'private, no-store' } });
         const res = NextResponse.redirect(new URL(move.to, request.nextUrl), 307);
         if (move.set) res.cookies.set(LANG_COOKIE, move.set, { path: '/', maxAge: 400 * 86400, sameSite: 'lax', secure: request.nextUrl.protocol === 'https:' });
         return res;
@@ -57,7 +67,7 @@ export async function proxy(request: NextRequest) {
   }
   const headers = new Headers(request.headers);
   // Only this proxy speaks these headers; Vercel's own (its OIDC token among them) stay here.
-  for (const h of [...OURS, ...HOP]) headers.delete(h);
+  for (const h of [...OURS, ...HOP, ...ROUTER]) headers.delete(h);
   for (const h of [...headers.keys()]) if (h.startsWith('x-vercel-') || h.startsWith('x-middleware-')) headers.delete(h);
   if (BYPASS) headers.set('x-vercel-protection-bypass', BYPASS);
   // Whether the visitor is signed in, as one yes: the API's public reads vary on this header for
@@ -105,8 +115,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Not the files this app serves itself (public/, Google Search Console's verification file among them), nor uploads (/files/): those that are the
-  // API's (/ui/ files this app lacks, /files/) reach it through the fallback rewrite, unsigned,
-  // which is fine because the API does not rate-limit them, and Vercel caches them.
-  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|fonts/|files/|favicon.ico|sw.js|manifest.webmanifest|google69f1c7d1cf79cd6d.html).*)'],
+  // Not the files this app serves itself (public/, Google Search Console's verification file among them), nor uploads (/files/) and
+  // resized pictures (/img/): those that are the API's (/ui/ files this app lacks, /files/, /img/) reach it through the fallback
+  // rewrite, unsigned, which is fine because the API does not rate-limit them, and Vercel's CDN keeps what they say to keep
+  // (vercel.json turns that on for /img/: a fetch from here would cost a function call per picture and never be cached).
+  matcher: ['/((?!_next/static|_next/image|kd/|icons/|ui/|fonts/|files/|img/|favicon.ico|sw.js|manifest.webmanifest|google69f1c7d1cf79cd6d.html).*)'],
 };

@@ -37,6 +37,13 @@ for (const [role, routes, account] of WALKS) {
         await page.goto(path);
         await page.locator('html[data-kd-session]').waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
         await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+        // One skip link, first on the page, leading to the one <main id="main"> (ui/skip-link.tsx).
+        const skip = await page.evaluate(() => ({
+          links: [...document.querySelectorAll('a.kd-skip')].map((a) => a.getAttribute('href')),
+          first: document.querySelector('a[href], button')?.classList.contains('kd-skip') ?? false,
+          targets: [...document.querySelectorAll('#main')].map((m) => m.tagName),
+        }));
+        if (skip.links.join() !== '#main' || !skip.first || skip.targets.join() !== 'MAIN') failures.push(`${path}: skip link ${JSON.stringify(skip)}`);
         const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
         for (const v of violations) {
           if (v.impact !== 'serious' && v.impact !== 'critical') continue;

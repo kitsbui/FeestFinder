@@ -199,7 +199,9 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   /*
    * A ceiling per IP so one client cannot flood the API. Sign-in, OTP and the door
    * scanner have their own tighter limits in their routes; webhooks and the static
-   * files under /ui, /pages (Ops) and /files are not counted.
+   * files under /ui, /pages (Ops) and /files are not counted, nor the resized pictures
+   * under /img: like /files they reach the API through the web app's unsigned rewrite,
+   * where every visitor would share one bucket, and the CDN keeps them.
    *
    * Nor are calls from our own network with no client behind them: the Next.js app
    * rendering pages on the server, so a crawler burst cannot turn those pages into errors.
@@ -215,7 +217,7 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
     // page with a query (/a?q=…) is rendered on request, so a visitor can make it read.
     max: (_req, key) => (key === WEB_RENDER ? ctx.config.rateLimitPerMinute * 20 : ctx.config.rateLimitPerMinute),
     timeWindow: '1 minute',
-    allowList: (req) => req.url.startsWith('/ui/') || req.url.startsWith('/files/')
+    allowList: (req) => req.url.startsWith('/ui/') || req.url.startsWith('/files/') || req.url.startsWith('/img/')
       || (isInternal(req.ip) && !req.headers['x-forwarded-for'] && !req.headers['x-forwarded-host']),
     keyGenerator: (req) => {
       // Next.js forwards the client's X-Forwarded-For but never adds the client's address
@@ -252,6 +254,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   const activeToday = new Set<string>();
   app.addHook('onRequest', async (req) => {
     req.lang = langFrom(req.query, req.headers);
+    // A resized picture is the same for everyone and kept by the CDN: it never reads the session.
+    if (req.url.startsWith('/img/')) return;
     req.session = await resolveSession(ctx, req);
     const user = req.session?.user;
     if (user && !req.session!.impersonatorId) {

@@ -19,7 +19,7 @@ import { money, whenShort } from '../format';
 import { g, styleLabel } from '../genre';
 import { KdLink } from '../link';
 import dynamic from 'next/dynamic';
-import { priceLine } from '../web/card';
+import { priceLine } from '../web/price';
 
 /** The last step's page preview (design v2 phase 16): loaded when that step shows, never with the form. */
 const ReviewPreview = dynamic(() => import('./wizard-preview').then((m) => m.ReviewPreview), { ssr: false });
@@ -28,6 +28,7 @@ import { Button, buttonClass, Chip } from '../ui/actions';
 import { FieldError, FieldLabel, Input, Segmented, Select, SwitchRow, TextArea } from '../ui/forms';
 import { Art, Card as Panel, Status } from '../ui/parts';
 import { Logo } from '../ui/logo';
+import { SkipLink } from '../ui/skip-link';
 import { BackLink } from '../ui/back-link';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
@@ -226,6 +227,7 @@ export function Wizard() {
 
   return (
     <div className="flex min-h-dvh flex-col">
+      <SkipLink lang={lang} />
       <header className="border-b border-line-1">
         <div className="kd-wrap flex h-16 items-center gap-3.5">
           <Logo lang={lang} mark height={24} />
@@ -238,7 +240,7 @@ export function Wizard() {
         </div>
       </header>
 
-      <div className="kd-wrap pb-12 pt-7">
+      <main id="main" className="kd-wrap pb-12 pt-7">
         {/* "Đăng sự kiện" posts an event or a project; a new listing can still become a project. */}
         <div className="kd-split gap-[clamp(24px,4vw,56px)]">
           <form className="kd-main flex max-w-[720px] flex-col" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
@@ -429,7 +431,7 @@ export function Wizard() {
             </article>
           </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

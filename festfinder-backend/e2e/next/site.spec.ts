@@ -136,6 +136,26 @@ test('saved nights still open with no signal', async ({ page, context }) => {
   await context.setOffline(false);
 });
 
+test('the worker turns on navigation preload, and the pages it answers arrive once, through it', async ({ page, context }) => {
+  await page.goto('/a');
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await expect.poll(() => page.evaluate(async () => (await (await navigator.serviceWorker.ready).navigationPreload.getState()).enabled)).toBe(true);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  // A page the worker keeps (/) and one it only passes on (/a): each asked of the server once, never twice.
+  for (const path of ['/', '/a']) {
+    const asked: string[] = [];
+    const count = (r: import('@playwright/test').Request) => { const u = new URL(r.url()); if (u.pathname === path && !u.searchParams.has('_rsc') && r.resourceType() === 'document') asked.push(r.url()); };
+    context.on('request', count);
+    const res = await page.goto(path);
+    expect(res?.ok(), path).toBeTruthy();
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    expect(await page.evaluate(() => (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).workerStart > 0), path + ' through the worker').toBe(true);
+    expect(asked.length, path + ': ' + asked.join(', ')).toBeLessThanOrEqual(1);
+    context.off('request', count);
+  }
+});
+
 test('signing out drops the cached personal answers from the device', async ({ page }) => {
   await page.request.post('/auth/login', { data: { identifier: 'minh@example.com', password: 'festfinder123' } });
   await page.goto('/saved');

@@ -2,13 +2,14 @@
  * The home page (/ and /?lang=en; /list redirects here, owner 2026-10-17): every upcoming event
  * by day (the grid), as a table or on a map, the first featured shelf (paid ones say so) or else the
  * world's biggest festivals first, then the banner ad. The questions moved to /about (owner, 2026-10-17). The server renders the first events by
- * day; the browser takes the filters from the address.
+ * day, of one city at /?city=<slug> (city.tsx); the browser takes the other filters from the address.
  */
 import { apiOr, type Lang } from '@/lib/api';
 import { pick, tx, type Pair } from '../../copy';
 import { KdProvider } from '../../runtime';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
+import { DAY } from '../card-fit';
 import { WebFooter, WebNav } from '../chrome';
 import { AdBanner, type Ad } from './ad';
 import { ListBrowser, type Meta } from './browser';
@@ -16,31 +17,42 @@ import { LIST } from './copy';
 import { InLang } from '@/kd/ui/in-lang';
 import { CityFirst } from './city-first';
 
-export async function ListPage({ lang }: { lang: Lang }) {
+type Answer = { items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number> } };
+const EVERY = '/events?time=all&upcoming=true&limit=60';
+const NONE: Answer = { items: [], total: 0, nextCursor: null, facets: { city: {} } };
+
+/** `city`: one city's list (/?city=<slug>, app/(kd)/in/[city]); one the site does not list is every city, as the browser reads it. */
+export async function ListPage({ lang, city }: { lang: Lang; city?: string }) {
   const T = pick(LIST, lang);
-  const [meta, initial, ad, flagship, shelves] = await Promise.all([
+  const asked = city && city !== 'all' ? `/events?city=${encodeURIComponent(city)}&time=all&upcoming=true&limit=60` : EVERY;
+  const [meta, first, ad, flagship, shelves] = await Promise.all([
     apiOr<Meta>('/meta/discovery', { cities: [], countries: [], styles: [], eventTypes: [], genres: [] }, { revalidate: 300 }),
-    apiOr<{ items: Card[]; total: number; nextCursor: string | null; facets: { city: Record<string, number> } }>(
-      '/events?time=all&upcoming=true&limit=60', { items: [], total: 0, nextCursor: null, facets: { city: {} } }, { lang }),
+    apiOr<Answer>(asked, NONE, { lang }),
     apiOr<{ ad: Ad | null }>('/ads?placement=banner', { ad: null }, { lang }),
     apiOr<{ items: Card[] }>('/events?time=all&upcoming=true&flagship=true&limit=8', { items: [] }, { lang }),
     apiOr<{ items: { id: string; slug: string; name: Pair; sponsored: boolean; items: Card[] }[] }>('/shelves', { items: [] }, { lang }),
   ]);
+  const known = city && meta.cities.some((c) => c.slug === city) ? city : undefined;
+  const initial = asked === EVERY || known ? first : await apiOr<Answer>(EVERY, NONE, { lang });
   // One highlight slot (growth plan card 5): the first shelf on (three live events or more), else the festivals.
   const shelf = shelves.items[0] ?? null;
+  const items = shelf ? shelf.items.slice(0, 8) : flagship.items;
+  // Above the list, so its first picture is the page's first: fetched first, the one with high priority (the list's waits).
+  const hero = items.find((e) => e.coverUrl)?.id;
+  const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} fit={DAY} />);
   const highlight = shelf ? (
     <section key="shelf" aria-labelledby="shelf-h" data-surface="shelf" className="kd-days flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 id="shelf-h" className="kd-d3">{tx(shelf.name, lang)}</h2>
         {shelf.sponsored ? <span className="kd-m">{T.sponsored}</span> : null}
       </div>
-      <div className="kd-cards">{shelf.items.slice(0, 8).map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div>
+      <div className="kd-cards">{cards}</div>
     </section>
   ) : flagship.items.length ? (
     // Keyed: it is handed to ListBrowser, a client component, which places it among its own children.
     <section key="flagship" aria-labelledby="flagship-h" data-surface="flagship" className="kd-days flex flex-col gap-3">
       <h2 id="flagship-h" className="kd-d3">{T.flagship}</h2>
-      <div className="kd-cards">{flagship.items.map((e) => <EventCard key={e.id} e={e} lang={lang} />)}</div>
+      <div className="kd-cards">{cards}</div>
     </section>
   ) : null;
   return (
@@ -49,8 +61,8 @@ export async function ListPage({ lang }: { lang: Lang }) {
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="list" />
           {/* Before the list, so the newcomer's city is known before it is drawn. */}
-          <CityFirst meta={meta} />
-          <ListBrowser lang={lang} meta={meta} initial={initial} highlight={highlight} />
+          <CityFirst meta={meta} listed={[...new Set(initial.items.map((e) => meta.cities.find((c) => c.slug === e.city)?.country).filter((c): c is string => !!c))]} />
+          <ListBrowser lang={lang} meta={meta} initial={initial} city={known} highlight={highlight} highlightArt={!!hero} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
         </div>

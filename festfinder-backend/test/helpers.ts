@@ -48,7 +48,7 @@ async function freshDatabaseUrl(): Promise<string | null> {
  * A test API on a fresh database. With `seed: false` the database has the migrations only,
  * the way production starts; otherwise it holds the demo data from fixtures/seed.ts.
  */
-export async function setup(opts: { now?: string; guide?: GuideGenerator; translator?: Translator; digester?: NewsDigester; chartFetch?: ChartFetch; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; errors?: ErrorReporter; config?: Partial<Config>; seed?: boolean } = {}) {
+export async function setup(opts: { now?: string; guide?: GuideGenerator; translator?: Translator; digester?: NewsDigester; chartFetch?: ChartFetch; prefill?: PrefillGenerator; fetchPage?: PageFetcher; fetchImage?: ImageFetcher; fetchImageFull?: ImageFetcher; oembed?: OembedFetcher; checkLink?: Ctx['checkLink']; ingestIO?: () => IngestIO; analytics?: Analytics; errors?: ErrorReporter; config?: Partial<Config>; seed?: boolean } = {}) {
   const clock = fixedClock(opts.now ?? PROTOTYPE_NOW);
   const config = loadConfig({
     env: 'test', databaseUrl: await freshDatabaseUrl(), pgliteDir: 'memory://', jobsEnabled: false, exposeDevCodes: true, linkChecksEnabled: false,
@@ -74,6 +74,7 @@ export async function setup(opts: { now?: string; guide?: GuideGenerator; transl
     // The tests never reach the internet.
     fetchPage: opts.fetchPage ?? (async () => { throw new Error('no network in tests'); }),
     fetchImage: opts.fetchImage ?? fakeImageFetcher,
+    fetchImageFull: opts.fetchImageFull ?? (async () => { throw new Error('no network in tests'); }),
     oembed: opts.oembed ?? fakeOembed,
     fetchAudio: fakeAudio,
     oauth: { google: new MockOAuth('google'), fb: new MockOAuth('fb'), ig: new MockOAuth('ig'), tiktok: new MockOAuth('tiktok') },

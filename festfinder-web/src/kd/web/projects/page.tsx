@@ -22,6 +22,8 @@ import { OfferBox } from './offer';
 import { Waitlist } from './waitlist';
 import { ShareButton } from '../share';
 import { InLang } from '@/kd/ui/in-lang';
+import { FIT } from '../../fits';
+import { square } from '../../img';
 
 const enc = encodeURIComponent;
 const NO_WAITLIST: Project['waitlist'] = { count: 0, target: null, joined: false };
@@ -40,7 +42,7 @@ export async function ProjectsPage({ lang }: { lang: Lang }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="projects" />
-          <main className="kd-wrap flex flex-col gap-5 py-8">
+          <main id="main" className="kd-wrap flex flex-col gap-5 py-8">
             <div className="kd-sec items-end">
               <h1 className="kd-d2">{T.title}</h1>
               <div className="flex flex-wrap gap-2">
@@ -82,8 +84,8 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="projects" />
           <Crumbs label={W.crumbs} items={seo.page.crumbs.map((c, i, a) => (i === a.length - 1 ? { name: c.name } : { name: c.name, href: c.path }))} />
-          <main className="flex flex-col">
-            <div className="kd-wrap"><Art title={p.title} family="edm" cover={p.coverUrl} alt={p.title} className="h-[clamp(200px,28vw,380px)]" /></div>
+          <main id="main" className="flex flex-col">
+            <div className="kd-wrap"><Art title={p.title} family="edm" cover={p.coverUrl} alt={p.title} fit={FIT.banner} eager className="h-[clamp(200px,28vw,380px)]" /></div>
 
             <section className="kd-wrap pt-7" aria-labelledby="p-h">
               <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
@@ -145,7 +147,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                         {lineup.map((a) => (
                           <li key={a.slug}>
                             <Link href={inLang('/a/' + enc(a.slug), lang)} className="kd-lrow">
-                              <Avatar name={a.name} src={a.imageUrl} size={36} />
+                              <Avatar name={a.name} src={a.imageUrl} size={36} fit={square(36)} />
                               <span className="kd-hs kd-ell min-w-0">{a.name}</span>
                             </Link>
                           </li>

@@ -36,7 +36,8 @@ export function ArtistMixesStudio() {
     <>
       <PageHead
         title={T.mixesTitle}
-        sub={load.data ? fill(T.mixCount, { n: load.data.items.length, m: load.data.max }) : undefined}
+        // The count's line is held while it loads, so the screen under the head does not move when it comes.
+        sub={load.data ? fill(T.mixCount, { n: load.data.items.length, m: load.data.max }) : '\u00a0'}
         actions={<Button tone="acc" disabled={!load.data || full} onClick={() => setAdding(true)}><PlusIcon size={16} aria-hidden="true" />{T.mixAdd}</Button>}
       />
       <Body>

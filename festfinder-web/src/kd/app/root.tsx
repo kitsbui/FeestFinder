@@ -44,7 +44,7 @@ export function AppRoot({ tab, children }: { tab: AppTab; children: (lang: Lang)
     <ChromeCtx.Provider value={{ lang, setLang }}>
       <KdProvider lang={lang}>
         <WebNav lang={lang} current={tab ? SECTION[tab] : 'none'} />
-        <main className="kd-app" lang={lang}>
+        <main id="main" className="kd-app" lang={lang}>
           {children(lang)}
         </main>
       </KdProvider>

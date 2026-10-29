@@ -39,6 +39,8 @@ export interface Ctx {
   fetchPage: PageFetcher;
   /** Reads the head of a linked image (or the page it is on), never anything on a private network. */
   fetchImage: ImageFetcher;
+  /** Reads a whole linked image (at most 10 MB), to resize it for GET /img, never anything on a private network. */
+  fetchImageFull: ImageFetcher;
   /** Asks SoundCloud, Mixcloud or Spotify about a pasted link (oEmbed). */
   oembed: OembedFetcher;
   /** Reads an MP3 an artist linked, once, to measure its waveform (services/audio.ts). */

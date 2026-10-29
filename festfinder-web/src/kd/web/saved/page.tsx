@@ -41,7 +41,7 @@ function OnDevice({ lang }: { lang: Lang }) {
     return () => { live = false; };
   }, [ids]);
   return (
-    <main className="kd-wrap flex min-h-dvh flex-col gap-6 py-8" data-ff-gate>
+    <main id="main" className="kd-wrap flex min-h-dvh flex-col gap-6 py-8" data-ff-gate>
       <h1 className="kd-d2">{T.title}</h1>
       <Panel className="flex flex-wrap items-center justify-between gap-3 p-4">
         <span className="kd-s">{T.keep}</span>
@@ -92,7 +92,7 @@ export function SavedPage({ lang, initial }: { lang: Lang; initial: string | nul
 
   let body;
   if (kd.session === undefined) {
-    body = <main className="kd-wrap min-h-dvh py-8"><div className="kd-skel h-80" aria-hidden="true" /></main>;
+    body = <main id="main" className="kd-wrap min-h-dvh py-8"><div className="kd-skel h-80" aria-hidden="true" /></main>;
   } else if (!kd.user) {
     body = <OnDevice lang={lang} />;
   } else {
@@ -210,7 +210,7 @@ function Mine({ lang, cur, select }: { lang: Lang; cur: string | null; select: (
   const folderLabel = (e: Card) => fill(T.collectEvent, { t: e.title });
 
   return (
-    <main className="kd-wrap flex min-h-dvh flex-col gap-5 pb-8 pt-8">
+    <main id="main" className="kd-wrap flex min-h-dvh flex-col gap-5 pb-8 pt-8">
       <h1 className="kd-d1">{T.title}</h1>
 
       <div className="kd-hscroll" role="group" aria-label={T.collections}>
