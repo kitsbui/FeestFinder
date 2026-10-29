@@ -567,8 +567,8 @@
 
   /* ---- skeleton while a client part loads ---- */
   .kd-skel { border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); }
-  /* The list waits for the newcomer's city or country, or the address's filters (web/list/city-first.tsx): its place kept, hidden, 2.5 s at most. */
-  html[data-city-first] [data-list], html[data-place-first] [data-list], html[data-list-wait] [data-list] { visibility: hidden; animation: kd-list-wait 0s linear 2.5s forwards; }
+  /* The list waits for a city this device chose that the server did not draw, or the address's filters (web/list/city-first.tsx): its place kept, hidden, 2.5 s at most. */
+  html[data-city-first] [data-list], html[data-list-wait] [data-list] { visibility: hidden; animation: kd-list-wait 0s linear 2.5s forwards; }
   @keyframes kd-list-wait { to { visibility: visible; } }
 
   /* ---- touch targets: 44 × 44px at least (e2e/next/targets.spec.ts); last, so they win over each part's own size ---- */

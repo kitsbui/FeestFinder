@@ -2,7 +2,8 @@
  * The home page (/ and /?lang=en; /list redirects here, owner 2026-10-17): every upcoming event
  * by day (the grid), as a table or on a map, the first featured shelf (paid ones say so) or else the
  * world's biggest festivals first, then the banner ad. The questions moved to /about (owner, 2026-10-17). The server renders the first events by
- * day, of one city at /?city=<slug> (city.tsx); the browser takes the other filters from the address.
+ * day, of one city at /?city=<slug> or for a device that chose one, its country's nights first for a
+ * visitor from a listed country (city.tsx, kd/home-place.ts); the browser takes the other filters from the address.
  */
 import { apiOr, type Lang } from '@/lib/api';
 import { pick, tx, type Pair } from '../../copy';
@@ -21,8 +22,12 @@ type Answer = { items: Card[]; total: number; nextCursor: string | null; facets:
 const EVERY = '/events?time=all&upcoming=true&limit=60';
 const NONE: Answer = { items: [], total: 0, nextCursor: null, facets: { city: {} } };
 
-/** `city`: one city's list (/?city=<slug>, app/(kd)/in/[city]); one the site does not list is every city, as the browser reads it. */
-export async function ListPage({ lang, city }: { lang: Lang; city?: string }) {
+/**
+ * `city`: one city's list (/?city=<slug>, or the city this device chose: app/(kd)/in/[city]); one the
+ * site does not list is every city, as the browser reads it. `country`: every city, that listed
+ * country's nights first (the visitor's country: app/(kd)/from/[country], kd/home-place.ts).
+ */
+export async function ListPage({ lang, city, country }: { lang: Lang; city?: string; country?: string }) {
   const T = pick(LIST, lang);
   const asked = city && city !== 'all' ? `/events?city=${encodeURIComponent(city)}&time=all&upcoming=true&limit=60` : EVERY;
   const [meta, first, ad, flagship, shelves] = await Promise.all([
@@ -34,6 +39,7 @@ export async function ListPage({ lang, city }: { lang: Lang; city?: string }) {
   ]);
   const known = city && meta.cities.some((c) => c.slug === city) ? city : undefined;
   const initial = asked === EVERY || known ? first : await apiOr<Answer>(EVERY, NONE, { lang });
+  const place = !known && country && meta.countries.some((c) => c.code === country) ? country : undefined;
   // One highlight slot (growth plan card 5): the first shelf on (three live events or more), else the festivals.
   const shelf = shelves.items[0] ?? null;
   const items = shelf ? shelf.items.slice(0, 8) : flagship.items;
@@ -60,9 +66,9 @@ export async function ListPage({ lang, city }: { lang: Lang; city?: string }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} current="list" />
-          {/* Before the list, so the newcomer's city is known before it is drawn. */}
-          <CityFirst meta={meta} listed={[...new Set(initial.items.map((e) => meta.cities.find((c) => c.slug === e.city)?.country).filter((c): c is string => !!c))]} />
-          <ListBrowser lang={lang} meta={meta} initial={initial} city={known} highlight={highlight} highlightArt={!!hero} />
+          {/* Before the list, so a city this device chose that the server did not draw is known before the list is. */}
+          <CityFirst meta={meta} drawn={known} />
+          <ListBrowser lang={lang} meta={meta} initial={initial} city={known} country={place} highlight={highlight} highlightArt={!!hero} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
         </div>

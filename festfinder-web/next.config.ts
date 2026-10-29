@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import { buildId } from './scripts/build-id.ts';
+import { LIST_KEYS } from './src/kd/home-place.ts';
 
 /** Where the FeestFinder API runs. The browser never talks to it directly. */
 const API = process.env.FF_API_ORIGIN ?? 'http://localhost:4000';
@@ -48,12 +49,11 @@ const SECURITY_HEADERS = [
   ...(dev ? [] : [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]),
 ];
 
-/**
- * Every query key the home page's list reads besides the city and the language (kd/web/list/browser.tsx
- * `readFilters`, list/from-app.ts): while none is in the address, /?city=<slug> is that city's own
- * cached page (app/(kd)/in/[city]); with one, the browser asks the API for what it narrows.
+/*
+ * While no other key the home page's list reads is in the address (kd/home-place.ts LIST_KEYS),
+ * /?city=<slug> is that city's own cached page (app/(kd)/in/[city]); with one, the browser asks the
+ * API for what it narrows.
  */
-const LIST_KEYS = ['view', 'q', 'bbox', 'style', 'time', 'type', 'price', 'origin', 'genre', 'source'];
 const ONLY_CITY = LIST_KEYS.map((key) => ({ type: 'query' as const, key }));
 const CITY = { type: 'query' as const, key: 'city', value: '(?<city>[a-z0-9-]+)' };
 
@@ -164,6 +164,9 @@ const config: NextConfig = {
       // One city's home page has the home page's address.
       { source: '/in/:city', destination: '/?city=:city', permanent: true },
       { source: '/in/:city/:lang(en|th|ja|id)', destination: '/?city=:city&lang=:lang', permanent: true },
+      // One country's home page (src/proxy.ts rewrites the home page there for a visitor from it) is the home page.
+      { source: '/from/:country', destination: '/', permanent: true },
+      { source: '/from/:country/:lang(en|th|ja|id)', destination: '/?lang=:lang', permanent: true },
       // The same for Thai, Japanese and Indonesian (design v2 phase 10).
       { source: '/:lang(th|ja|id)', destination: '/?lang=:lang', permanent: true },
       { source: '/list/:lang(th|ja|id)', destination: '/?lang=:lang', permanent: true },

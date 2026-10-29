@@ -1,7 +1,8 @@
 /**
  * Where the app is looking, kept on this device only (a per-viewer convenience, never sent
  * anywhere but as a filter): the chosen city, the last known position, the genres picked at
- * onboarding. Storage can be blocked; every read falls back to nothing.
+ * onboarding. Storage can be blocked; every read falls back to nothing. The chosen city is also a
+ * cookie, so the site's proxy serves the home page already drawn for it (kd/home-place.ts).
  */
 import { STYLE_LABEL } from '../genre';
 import { LANGS, type Lang } from '@/kd/copy';
@@ -17,7 +18,10 @@ function write(k: string, v: string | null) {
 
 export const place = {
   city: () => read(KEY.city),
-  setCity: (slug: string) => write(KEY.city, slug),
+  setCity: (slug: string) => {
+    write(KEY.city, slug);
+    keepCity(slug);
+  },
   /** The last position the person shared, at most a day old. */
   at: (): { lat: number; lng: number } | null => {
     try {
@@ -42,6 +46,12 @@ export const place = {
   },
   setLang: (l: Lang) => write(KEY.lang, l),
 };
+
+/** The chosen city as the `ff_city` cookie the proxy reads (kd/home-place.ts), a slug or 'all'. */
+export function keepCity(slug: string) {
+  if (!/^[a-z0-9-]{1,40}$/.test(slug)) return;
+  try { document.cookie = `${KEY.city}=${slug}; path=/; max-age=${400 * 86400}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`; } catch { /* no document */ }
+}
 
 /** Kilometres between two points. */
 export function distanceKm(a: { lat: number; lng: number }, b: { lat: number | null; lng: number | null }): number | null {

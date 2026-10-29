@@ -22,6 +22,8 @@
  * reads English on a first visit, as production does, and fetches the real picture hosts.
  *
  * Options: --chrome <path> (else CHROME_PATH, else Playwright's Chromium), --tz <zone> (Asia/Ho_Chi_Minh),
+ * --country <code> (sends x-vercel-ip-country, the country Vercel's edge names, so the home page is the one
+ * a person from there gets: festfinder-web/src/kd/home-place.ts; only on this machine, Vercel sets its own),
  * --out <dir>, --min-score <n>, --event <slug>, --post <slug>. The signed-in page (studio-artist)
  * signs in as the demo artist with --serve; on another base it needs LH_COOKIE, a session cookie
  * from the environment (never written to the repo).
@@ -302,6 +304,7 @@ async function main() {
     options: {
       base: { type: 'string' }, serve: { type: 'boolean' }, pages: { type: 'string' }, form: { type: 'string', default: 'mobile,desktop' },
       runs: { type: 'string', default: '5' }, tz: { type: 'string', default: 'Asia/Ho_Chi_Minh' }, chrome: { type: 'string' }, out: { type: 'string' },
+      country: { type: 'string' },
       'min-score': { type: 'string' }, event: { type: 'string' }, post: { type: 'string', default: 'beatmatch-bang-tai' },
     },
   });
@@ -336,7 +339,8 @@ async function main() {
         console.warn(`${name}: skipped, it needs LH_COOKIE (a session cookie) on ${base}`);
         continue;
       }
-      const headers: Record<string, string> = cookie ? { cookie } : {};
+      const country: Record<string, string> = values.country ? { 'x-vercel-ip-country': values.country.toUpperCase() } : {};
+      const headers: Record<string, string> = { ...(cookie ? { cookie } : {}), ...country };
       // The session goes into the browser's jar for this host only (Lighthouse's extraHeaders would send it to every host the page asks).
       const host = new URL(base);
       const jar = (cookie ?? '').split(';').map((c) => c.trim()).filter(Boolean).map((c) => {
@@ -352,7 +356,7 @@ async function main() {
           const driver = await puppeteer.connect({ browserURL: `http://127.0.0.1:${browser.port}`, defaultViewport: null });
           try {
             if (jar.length) await driver.setCookie(...jar);
-            const result = await lighthouse(url, { logLevel: 'error', output: 'json', onlyCategories: ['performance'] },
+            const result = await lighthouse(url, { logLevel: 'error', output: 'json', onlyCategories: ['performance'], extraHeaders: country },
               form === 'desktop' ? desktopConfig : undefined, await driver.newPage());
             if (!result) throw new Error(`${url}: Lighthouse gave no result`);
             const lhr = result.lhr as unknown as Lhr;
@@ -387,7 +391,7 @@ async function main() {
     served?.stop();
   }
 
-  const md = `# Lighthouse ${VERSION} on ${base}\n\n${new Date().toISOString()}, ${runs} runs per page, TZ ${values.tz}\n\n${table(rows)}\n`;
+  const md = `# Lighthouse ${VERSION} on ${base}\n\n${new Date().toISOString()}, ${runs} runs per page, TZ ${values.tz}${values.country ? `, country ${values.country}` : ''}\n\n${table(rows)}\n`;
   writeFileSync(join(out, 'summary.json'), JSON.stringify(rows, null, 2));
   writeFileSync(join(out, 'summary.md'), md);
   console.log(`\n${table(rows)}\n\n${out}`);

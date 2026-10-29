@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 export default function KdLayout({ children }: { children: ReactNode }) {
   return (
     // The list's inline script marks <html> before React arrives (kd/web/list/city-first.tsx: data-city-first,
-    // data-place-first), on purpose: those attributes are not a mismatch to warn about.
+    // data-list-wait, data-asked), on purpose: those attributes are not a mismatch to warn about.
     <html lang="vi" suppressHydrationWarning>
       <head>
         <ExtensionGuardScript />

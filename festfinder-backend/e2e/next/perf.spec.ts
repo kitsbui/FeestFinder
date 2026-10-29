@@ -61,8 +61,9 @@ const SCREENS: [Who, string, number, number, number, Place?][] = [
   // 2026-10-23: the map view, the worker's registration, the account menu's items and the install strip load when they are needed, and the public frame's tab bar left the back offices' shell (ui/tabbar.tsx): 2–10 KB less on every public screen (measured +1).
   ['visitor', '/', 183, 100, 6], ['visitor', '/e/ravo', 189, 200, 6], ['visitor', '/a', 196, 150, 6], ['visitor', '/a/slimv', 192, 150, 6],
   ['visitor', '/o/ravoent', 190, 200, 6], ['visitor', '/p', 177, 150, 6], ['visitor', '/?view=map', 183, 350, 6], ['visitor', '/about', 167, 150, 6],
-  // 2026-10-28: the home page as a phone in Vietnam opens it: its country's nights lead (festfinder-web/src/kd/web/list/city-first.tsx, data-place-first).
-  ['visitor', '/', 183, 150, 6, { timezoneId: 'Asia/Ho_Chi_Minh', locale: 'vi-VN' }],
+  // 2026-10-28: the home page as a phone in Vietnam opens it: its country's nights lead (since 2026-10-29 drawn on the server
+  // for Vercel's x-vercel-ip-country: festfinder-web/src/kd/home-place.ts).
+  ['visitor', '/', 183, 150, 6, { timezoneId: 'Asia/Ho_Chi_Minh', locale: 'vi-VN', country: 'VN' }],
   // 2026-10-28: the home page in English, as Lighthouse and a first visit in production read it.
   ['visitor', '/?lang=en', 183, 150, 6],
   // 2026-10-28: a filtered address: the list waits for its answer and never paints the highlight (city-first.tsx, data-asked).
@@ -81,7 +82,7 @@ const SCREENS: [Who, string, number, number, number, Place?][] = [
 ];
 
 /** A phone's own zone and language. */
-type Place = { timezoneId: string; locale: string };
+type Place = { timezoneId: string; locale: string; country?: string };
 
 /** What one load of a screen measured. */
 type Load = {
@@ -96,7 +97,12 @@ type Load = {
 };
 
 async function phone(browser: Browser, baseURL: string, who: Who, path: string, place?: Place) {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, ...place });
+  const { country, ...where } = place ?? {};
+  // The country as Vercel's edge names it (x-vercel-ip-country), which the screens' build reads as production does.
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, ...where,
+    ...(country ? { extraHTTPHeaders: { 'x-vercel-ip-country': country } } : {}),
+  });
   // The screens' build reads Vietnamese on a first visit (NEXT_PUBLIC_DEFAULT_LANG): an English screen is a reader who chose English.
   if (/[?&]lang=en\b/.test(path)) await ctx.addCookies([{ name: 'ff_lang', value: 'en', url: baseURL }]);
   const page = await ctx.newPage();
@@ -211,10 +217,10 @@ test('every screen loads without jumping and within its budgets', async ({ brows
   await load(warm.page, warm.cdp, '/');
   await warm.ctx.close();
   for (const [who, path, budget, tbtMax, imgMax, place] of SCREENS) {
-    const name = place ? `${path} (${place.locale}, ${place.timezoneId})` : path;
+    const name = place ? `${path} (${[place.locale, place.timezoneId, place.country].filter(Boolean).join(', ')})` : path;
     const { ctx, page, cdp } = await phone(browser, baseURL!, who, path, place);
     // Warm: the server's first render of a route after it starts is not what a visitor meets (ISR and the CDN keep it in production).
-    await page.request.get(path);
+    await page.request.get(path, place?.country ? { headers: { 'x-vercel-ip-country': place.country } } : undefined);
     let m = await load(page, cdp, path);
     const lcpMax = LCP_TIGHT[path] ?? (who === 'visitor' ? LCP_MAX : LCP_SIGNED_IN);
     // Once more: a slow moment on the runner is not the screen's fault; two slow loads are.

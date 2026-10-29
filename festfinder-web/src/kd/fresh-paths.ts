@@ -1,14 +1,18 @@
 /** Which public pages a save of an event, an artist, an organiser, a project, a featured shelf or a blog post changes (kd/fresh.ts). */
 export type FreshKind = 'e' | 'a' | 'o' | 'p' | 's' | 'blog';
 
-/** The lists that show each kind's cover or photo, besides its own page (`[city]`: every city's home page, app/(kd)/in). */
+/**
+ * The lists that show each kind's cover or photo, besides its own page (`[city]`, `[country]`: every
+ * city's and country's home page, app/(kd)/in and from). A route pattern names its route group, or
+ * revalidatePath matches nothing.
+ */
 const LISTS: Record<FreshKind, string[]> = {
-  e: ['/', '/in/[city]'],
+  e: ['/', '/(kd)/in/[city]', '/(kd)/from/[country]'],
   a: ['/a', '/a/radar'],
   o: [],
   p: ['/p'],
   // A shelf has no page of its own: the home page draws it.
-  s: ['/', '/in/[city]'],
+  s: ['/', '/(kd)/in/[city]', '/(kd)/from/[country]'],
   blog: ['/blog'],
 };
 
