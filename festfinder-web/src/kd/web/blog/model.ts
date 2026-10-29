@@ -50,7 +50,9 @@ export interface Post {
   missing?: Pair[];
 }
 
-export interface PostList { items: Post[]; total: number; categories: Record<Category, number>; nextOffset: number | null }
+/** A post in GET /posts (presentCard): what a card draws, in both languages. */
+export type ListedPost = Pick<Post, 'id' | 'slug' | 'category' | 'lang' | 'title' | 'excerpt' | 'coverUrl' | 'author' | 'minutes' | 'trackCount' | 'publishedAt'>;
+export interface PostList<T = ListedPost> { items: T[]; total: number; categories: Record<Category, number>; nextOffset: number | null }
 
 export const text = (v: Pair | null | undefined, lang: Lang) => (v ? tx(v, lang) || v.vi || v.en || '' : '');
 

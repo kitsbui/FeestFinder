@@ -77,6 +77,8 @@ describe('blog: posts about styles, news, playlists, DJ skills and venues, revie
 
     const list = (await env.as().get('/posts')).body;
     assert.deepEqual([list.total, list.items[0].slug, list.categories.styles, list.categories.news], [1, slug, 1, 0]);
+    // The list gives what a card draws, never the post's body, facts, questions or sources (/blog's HTML carries it).
+    assert.deepEqual(Object.keys(list.items[0]).sort(), ['author', 'category', 'coverUrl', 'excerpt', 'id', 'lang', 'minutes', 'publishedAt', 'slug', 'title', 'trackCount']);
     assert.equal((await env.as().get('/posts?category=news')).body.total, 0);
     const page = (await env.as(other).get(`/posts/${slug}`)).body;
     assert.equal(page.mine, undefined);
