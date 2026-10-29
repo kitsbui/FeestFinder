@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { isCutOver } from './kd/cutover';
+import { COUNTRY_HEADER, cookieCity, homeRewrite } from './kd/home-place';
 import { cookieLang, LANG_COOKIE, langRedirect } from './kd/lang-pref';
 
 /*
@@ -43,6 +44,47 @@ function isOwn(path: string): boolean {
   return !path.endsWith('.md') && (OWN.test(path) || isCutOver(path));
 }
 
+/** The listed cities and their countries (/meta/discovery), as the home page's rewrite reads them. */
+type Listed = { cities: string[]; countries: string[] };
+const LISTED_TTL = 5 * 60_000;
+let listedNow: { at: number; value: Listed } | null = null;
+let listedNext: Promise<Listed | null> | null = null;
+
+function readListed(): Promise<Listed | null> {
+  listedNext ??= (async () => {
+    try {
+      const res = await fetch(new URL('/meta/discovery', API), {
+        headers: BYPASS ? { 'x-vercel-protection-bypass': BYPASS } : {}, cache: 'no-store', signal: AbortSignal.timeout(3000),
+      });
+      if (!res.ok) return null;
+      const meta = (await res.json()) as { cities?: { slug: string; country: string }[]; countries?: { code: string }[] };
+      const value = { cities: (meta.cities ?? []).map((c) => c.slug), countries: (meta.countries ?? []).map((c) => c.code) };
+      listedNow = { at: Date.now(), value };
+      return value;
+    } catch {
+      // Not again for half a minute: until then the home page is served as it is.
+      listedNow = { at: Date.now() - LISTED_TTL + 30_000, value: listedNow?.value ?? { cities: [], countries: [] } };
+      return null;
+    } finally {
+      listedNext = null;
+    }
+  })();
+  return listedNext;
+}
+
+/**
+ * The listed places, kept five minutes and read again behind the request that finds them old; the
+ * first home page request of an instance waits for them a second at most, else is served as it is.
+ */
+async function listed(): Promise<Listed> {
+  const none = { cities: [], countries: [] };
+  if (listedNow) {
+    if (Date.now() - listedNow.at > LISTED_TTL) void readListed();
+    return listedNow.value;
+  }
+  return (await Promise.race([readListed(), new Promise<null>((r) => setTimeout(() => r(null), 1000))])) ?? none;
+}
+
 export async function proxy(request: NextRequest) {
   // The address as the visitor asked for it: without the router's `_rsc`, which `skipProxyUrlNormalize`
   // (next.config.ts) leaves on it, taken off as Next would (the rest of the query written the same way).
@@ -61,6 +103,18 @@ export async function proxy(request: NextRequest) {
         const res = NextResponse.redirect(new URL(move.to, request.nextUrl), 307);
         if (move.set) res.cookies.set(LANG_COOKIE, move.set, { path: '/', maxAge: 400 * 86400, sameSite: 'lax', secure: request.nextUrl.protocol === 'https:' });
         return res;
+      }
+      // The home page already in its order for this visitor: their chosen city, else their country (kd/home-place.ts).
+      if (pathname === '/') {
+        const cookie = request.headers.get('cookie');
+        const country = request.headers.get(COUNTRY_HEADER);
+        const city = cookieCity(cookie);
+        const to = city || country ? homeRewrite({ path: pathname, search, cookie: city, country, ua: request.headers.get('user-agent'), listed: await listed() }) : null;
+        if (to) {
+          const dest = request.nextUrl.clone();
+          dest.pathname = to;
+          return NextResponse.rewrite(dest);
+        }
       }
     }
     return NextResponse.next();

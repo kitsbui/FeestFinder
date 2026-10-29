@@ -135,10 +135,12 @@ function address(f: Filters, lang: Lang) {
 
 interface Page { items: Card[]; total: number; nextCursor: string | null; today?: string; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
 
-export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt = false }: {
+export function ListBrowser({ lang, meta, initial, city, country = null, highlight, highlightArt = false }: {
   lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode;
-  /** The city whose nights the server drew (/?city=<slug>, list/city.tsx): the list starts there and asks nothing on load. */
+  /** The city whose nights the server drew (/?city=<slug> or the device's chosen city, list/city.tsx): the list starts there and asks nothing on load. */
   city?: string;
+  /** The visitor's country (kd/home-place.ts): its nights lead the list while every city shows. */
+  country?: string | null;
   /** The highlight has a picture, which then loads first (list/page.tsx); else the list's first picture does. */
   highlightArt?: boolean;
 }) {
@@ -153,8 +155,6 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
   /** Counts the list's answers, so "today" is read again with each (by the API's clock: `at` below). */
   const [reads, setReads] = useState(0);
   const [ready, setReady] = useState(false);
-  /** The newcomer's country (city-first.tsx): its nights lead the list while every city shows. */
-  const [country, setCountry] = useState<string | null>(null);
   const [firstRun, setFirstRun] = useState(false);
   const openedByApp = useRef(false);
   const seq = useRef(0);
@@ -188,6 +188,8 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
     openedByApp.current = fromApp();
     // The installed app keeps its tickets working offline from its first screen on.
     if (openedByApp.current) void import('@/runtime/pwa').then((m) => m.registerServiceWorker());
+    // The city this device chose, drawn by the server at an address that does not name it (kd/home-place.ts).
+    if (!q.has('city') && city) next.city = city;
     if (!q.has('city') && openedByApp.current) {
       const c = place.city();
       if (c && meta.cities.some((x) => x.slug === c)) next.city = c;
@@ -196,13 +198,8 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
     const first = document.documentElement.getAttribute('data-city-first');
     if (first && !q.has('city') && meta.cities.some((x) => x.slug === first)) next.city = first;
     else if (first) document.documentElement.removeAttribute('data-city-first');
-    // Or the newcomer's country: what the list has, its nights first (design v2 phase 13, owner 2026-10-19).
-    const placeFirst = document.documentElement.getAttribute('data-place-first');
-    const country = placeFirst && !q.has('city') && meta.countries.some((x) => x.code === placeFirst) ? placeFirst : null;
-    if (placeFirst && !country) document.documentElement.removeAttribute('data-place-first');
     // In a transition, and only what changed: the list the server drew stays while this draws.
     startTransition(() => {
-      if (country) setCountry(country);
       if (JSON.stringify(next) !== JSON.stringify(drawn)) setF(next);
       setReady(true);
     });
@@ -222,12 +219,12 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
   }, [kd.session, kd.user]);
   // When the list was read, by the API's clock (it is pinned in the tests; null until it is known, as on the server).
   const at = useMemo(() => (clockReady && reads >= 0 ? FF.now() : null), [clockReady, reads]);
-  // The newcomer's city is in (or the list asked nothing), its country is grouped, or the address's filters
-  // have their answer: show the list (and drop the highlight's hiding) city-first.tsx held back.
+  // The device's city is in (or the list asked nothing), or the address's filters have their answer:
+  // show the list (and drop the highlight's hiding) city-first.tsx held back.
   useEffect(() => {
     if (!ready || busy) return;
-    for (const a of ['data-city-first', 'data-place-first', 'data-list-wait', 'data-asked']) document.documentElement.removeAttribute(a);
-  }, [ready, busy, rows, country]);
+    for (const a of ['data-city-first', 'data-list-wait', 'data-asked']) document.documentElement.removeAttribute(a);
+  }, [ready, busy, rows]);
 
   // Every minute while the list is on screen (not more pages: they would be dropped).
   useEffect(() => {
@@ -407,7 +404,7 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
 
   const heading = [f.time !== 'all' ? timeLabel(f.time) : T.title, f.city !== 'all' ? cityName(f.city) : null].filter(Boolean).join(' · ');
   const today = at ? todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone, at) : null;
-  // The newcomer's country first (phase 13): its nights under its name, the rest under "Nơi khác", while every city shows.
+  // The visitor's country first (phase 13; decided on the server since 2026-10-29): its nights under its name, the rest under "Nơi khác", while every city shows.
   const countryOf = (slug: string) => meta.cities.find((c) => c.slug === slug)?.country ?? null;
   const mine = country && f.city === 'all' ? sorted.filter((e) => countryOf(e.city) === country) : [];
   const split = mine.length > 0 && mine.length < sorted.length;
