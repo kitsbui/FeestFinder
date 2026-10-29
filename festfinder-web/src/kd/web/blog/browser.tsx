@@ -56,6 +56,8 @@ export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList<CardP
     void load(lang, c);
   };
   const total = Object.values(list.categories).reduce((a, b) => a + b, 0);
+  // The page's main picture: the first card's that has one.
+  const lead = list.items.findIndex((p) => p.cover);
 
   return (
     <div className="flex flex-col gap-5">
@@ -69,7 +71,7 @@ export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList<CardP
       {category === 'news' && list.items.length ? <h2 className="kd-d3">{T.newsPosts}</h2> : null}
       {list.items.length ? (
         <div className={cx('kd-cards transition-opacity', busy && 'opacity-60')}>
-          {list.items.map((p, i) => <PostCard key={p.id} post={p} eager={i === 0 && !category} />)}
+          {list.items.map((p, i) => <PostCard key={p.id} post={p} eager={i === lead && !category} />)}
         </div>
       ) : busy ? <div className="kd-skel h-40" aria-hidden="true" /> : (
         <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">

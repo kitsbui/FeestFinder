@@ -29,11 +29,12 @@ export function cardOf(post: ListedPost, lang: Lang): CardPost {
   };
 }
 
+/** `eager`: the list's first picture, the page's main one; the others wait for it (`later`). */
 export function PostCard({ post, eager = false }: { post: CardPost; eager?: boolean }) {
   const { href, title, excerpt, l } = post;
   return (
     <article className={`kd-ev ${g('edm')}`}>
-      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={post.cover} title={title} eager={eager} fit={CARD} /></Link>
+      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={post.cover} title={title} eager={eager} later={!eager} fit={CARD} /></Link>
       <div className="flex flex-col gap-1.5">
         <span className="kd-m flex items-center gap-1.5 text-info"><span className="kd-mk" aria-hidden="true" />{post.category}</span>
         <Link href={href} className="kd-hit kd-h" lang={l}>{title}</Link>
