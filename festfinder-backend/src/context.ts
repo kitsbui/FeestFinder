@@ -16,6 +16,7 @@ import type { Analytics } from './services/analytics.ts';
 import type { ImageFetcher } from './services/remote-images.ts';
 import type { OembedFetcher } from './services/mixes.ts';
 import type { AudioFetcher } from './services/audio.ts';
+import type { ImageCdn } from './services/image-cdn.ts';
 
 /** Everything a route or job needs. Built once in server.ts, or per test. */
 export interface Ctx {
@@ -41,6 +42,8 @@ export interface Ctx {
   fetchImage: ImageFetcher;
   /** Reads a whole linked image (at most 10 MB), to resize it for GET /img, never anything on a private network. */
   fetchImageFull: ImageFetcher;
+  /** Purges a taken-down picture's /img copies from Vercel's CDN and makes a new cover's ahead of its first visitor (services/image-cdn.ts). Tests hand in fakes; without it neither happens. */
+  imageCdn?: ImageCdn;
   /** Asks SoundCloud, Mixcloud or Spotify about a pasted link (oEmbed). */
   oembed: OembedFetcher;
   /** Reads an MP3 an artist linked, once, to measure its waveform (services/audio.ts). */

@@ -28,6 +28,16 @@ function bool(name: string, fallback: boolean): boolean {
   return v === '1' || v.toLowerCase() === 'true';
 }
 
+/** A URL's origin when it is a public https site (not localhost), else null. */
+function httpsOrigin(url: string): string | null {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && u.hostname.includes('.') && !u.hostname.endsWith('.localhost') ? u.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface Config {
   env: 'development' | 'test' | 'production';
   port: number;
@@ -153,8 +163,21 @@ export interface Config {
    * own origin in x-ff-* headers, signed by this; without it those headers are ignored.
    */
   webProxySecret: string | null;
+  /**
+   * Vercel's REST API, to delete a taken-down picture's /img copies from the CDN of other projects
+   * (services/image-cdn.ts): VERCEL_PURGE_TOKEN (an access token of the team), VERCEL_TEAM_ID, and
+   * VERCEL_PURGE_PROJECTS (the web app's project, whose rewrite caching keeps the copies, by
+   * default). Without the token only this deployment's own CDN is purged, from the function.
+   */
+  imgPurge: { token: string; teamId: string | null; projects: string[] } | null;
+  /**
+   * The public origin a cover that goes live is resized through ahead of its first visitor
+   * (services/image-cdn.ts): PUBLIC_BASE_URL in production when it is an https site, never in
+   * development or the tests; IMG_WARM=0 turns it off.
+   */
+  imgWarmOrigin: string | null;
   /** Object storage for uploads (Supabase Storage over S3). Without S3_BUCKET they go to the database. */
-  s3: { bucket: string; region: string; endpoint: string | null; accessKeyId: string; secretAccessKey: string; publicBaseUrl: string | null } | null;
+  s3:{ bucket: string; region: string; endpoint: string | null; accessKeyId: string; secretAccessKey: string; publicBaseUrl: string | null } | null;
   /** SMTP relay for email. Without SMTP_HOST, email is printed to the log. */
   smtp: { host: string; port: number; secure: boolean; user: string; pass: string; from: string } | null;
   /** One endpoint that forwards push, Zalo and SMS to whichever provider is in use. */
@@ -240,7 +263,15 @@ export function loadConfig(overrides: Partial<Config> = {}): Config {
     trustProxy: trust(process.env.TRUST_PROXY),
     // Trimmed as the web app trims it (a pasted value often ends in a newline).
     webProxySecret: (process.env.WEB_PROXY_SECRET ?? '').trim().length >= 32 ? process.env.WEB_PROXY_SECRET!.trim() : null,
-    s3: process.env.S3_BUCKET
+    imgPurge: (process.env.VERCEL_PURGE_TOKEN ?? '').trim()
+      ? {
+        token: process.env.VERCEL_PURGE_TOKEN!.trim(),
+        teamId: (process.env.VERCEL_TEAM_ID ?? '').trim() || null,
+        projects: str('VERCEL_PURGE_PROJECTS', 'feestfinder-web').split(',').map((p) => p.trim()).filter(Boolean),
+      }
+      : null,
+    imgWarmOrigin: prod && bool('IMG_WARM', true) ? httpsOrigin(publicBaseUrl) : null,
+    s3:process.env.S3_BUCKET
       ? {
         bucket: str('S3_BUCKET'),
         region: str('S3_REGION', 'auto'),

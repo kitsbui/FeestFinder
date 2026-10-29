@@ -6,7 +6,9 @@ import { emailUser } from './people.ts';
 import { multipart } from './files.ts';
 import { many, one } from '../src/db/index.ts';
 import { IMG_SHAPES, IMG_WIDTHS, imgHeight, imgKey, isImgBox, linkOfKey, upstreamFor } from '../src/lib/remote-image.ts';
-import { fakeImageFull, PICTURE_COLUMNS, UNSERVED_PICTURE_COLUMNS, type ImageFetcher } from '../src/services/remote-images.ts';
+import { fakeImageFull, KNOWN_IMAGE_SQL, PICTURE_COLUMNS, UNSERVED_PICTURE_COLUMNS, type ImageFetcher } from '../src/services/remote-images.ts';
+import { MemoryStorage } from '../src/services/storage.ts';
+import { IMG_MISSES } from '../src/routes/images.ts';
 import { vnDate } from '../src/lib/time.ts';
 
 /** A real picture of w×h, as a host would send it. */
@@ -158,13 +160,19 @@ describe('GET /img', () => {
     }
   });
 
-  it('serves an upload from storage, by its path or its full address', async () => {
-    const mp = multipart(await picture(1600, 900), 'cover.png');
-    const token = await env.attendee();
-    const up = await env.app.inject({ method: 'POST', url: '/uploads?purpose=cover', payload: mp.payload, headers: { 'content-type': mp.type, authorization: `Bearer ${token}` } });
-    assert.equal(up.statusCode, 201, up.body);
-    const url: string = up.json().url;
+  it('serves an upload a row shows from storage, by its path or its full address, and no other', async () => {
+    const upload = async (g: number) => {
+      const mp = multipart(await picture(1600, 900, g), 'cover.png');
+      const up = await env.app.inject({ method: 'POST', url: '/uploads?purpose=cover', payload: mp.payload, headers: { 'content-type': mp.type, authorization: `Bearer ${await env.attendee()}` } });
+      assert.equal(up.statusCode, 201, up.body);
+      return up.json().url as string;
+    };
+    const url = await upload(70);
     const path = url.slice(url.indexOf('/files/'));
+    const event = env.ids.event['ravo-warmup'];
+    assert.equal((await img(url, '640x360')).status, 404, 'uploaded, but no row shows it yet');
+    // A row may keep either spelling; both addresses name the same picture.
+    await env.ctx.db.query(`update events set cover_url = $1 where id = $2`, [path + '#ff=50,50,1', event]);
     const before = hits.length;
     for (const link of [url, path]) {
       const res = await img(link, '640x360');
@@ -173,6 +181,57 @@ describe('GET /img', () => {
     }
     assert.equal(hits.length, before, 'read from storage, not fetched');
     assert.equal((await img('/files/cover/ab/' + 'a'.repeat(64) + '.png', '640x360')).status, 404, 'an upload nobody made');
+
+    // Replaced: the old upload is served no more, at any size, by either spelling.
+    const next = await upload(160);
+    await env.ctx.db.query(`update events set cover_url = $1 where id = $2`, [next, event]);
+    for (const link of [url, path]) assert.equal((await img(link, '828x466')).status, 404, link);
+    assert.equal((await img(next, '828x466')).status, 200);
+    // Deleted from storage while a row still names it: a 404, never an error.
+    (env.ctx.storage as MemoryStorage).files.delete(next.slice(next.indexOf('/files/') + '/files/'.length));
+    assert.equal((await img(next, '384x240')).status, 404, 'a deleted upload');
+  });
+
+  it('asks every picture column by an index, whatever the key', async () => {
+    // As on a large table: the planner may not read a whole table where an index answers.
+    await env.ctx.db.query('set enable_seqscan = off');
+    try {
+      const plan = (await many<Record<string, string>>(env.ctx.db, `explain ${KNOWN_IMAGE_SQL}`, [['https://pics.example/any.jpg', '/files/cover/ab/x.png']]))
+        .map((r) => r['QUERY PLAN']).join('\n');
+      assert.doesNotMatch(plan, /Seq Scan/, plan);
+      const indexes = [...plan.matchAll(/(?:Index Scan using|Bitmap Index Scan on) (\w+)/g)].map((m) => m[1]);
+      const expected = PICTURE_COLUMNS.reduce((n, t) => n + t.columns.length + (t.lists?.length ?? 0) + (t.body ? 1 : 0), 0);
+      assert.equal(new Set(indexes).size, expected, `one index per picture column: ${indexes.join(', ')}`);
+      assert.ok(indexes.every((i) => i.startsWith('img_')), indexes.join(', '));
+    } finally {
+      await env.ctx.db.query('reset enable_seqscan');
+    }
+  });
+
+  it('puts a takedown trigger on every table of pictures, naming its columns and what it shows', async () => {
+    const rows = await many<{ table: string; args: string[] }>(env.ctx.db,
+      `select c.relname as table, string_to_array(encode(t.tgargs, 'escape'), E'\\\\000') as args
+         from pg_trigger t join pg_class c on c.oid = t.tgrelid where t.tgname = 'img_takedown'`);
+    const found = new Map(rows.map((r) => [r.table, r.args.slice(0, 4)]));
+    for (const t of PICTURE_COLUMNS) {
+      assert.deepEqual(found.get(t.table), [t.columns.join(','), (t.lists ?? []).join(','), t.shown ?? '', t.body ? 'body' : ''], t.table);
+    }
+    assert.equal(found.size, PICTURE_COLUMNS.length);
+  });
+
+  it('counts only the misses of a visitor, refuses only misses, and never a picture a page shows', async () => {
+    const from = (ip: string) => ({ 'x-forwarded-for': ip });
+    const miss = (i: number, ip: string) => img(`https://pics.example/nobody-has-${ip}-${i}.jpg`, '96x96', from(ip));
+    for (let i = 0; i < IMG_MISSES - 1; i++) assert.equal((await miss(i, '203.0.113.7')).status, 404, `miss ${i}`);
+    // A visitor's pictures in between count for nothing.
+    for (const box of ['96x96', '192x192', '256x256']) assert.equal((await img(cover, box, from('203.0.113.7'))).status, 200, box);
+    assert.equal((await miss(IMG_MISSES, '203.0.113.7')).status, 404, 'the last miss within the minute');
+    const over = await miss(IMG_MISSES + 1, '203.0.113.7');
+    assert.equal(over.status, 429);
+    assert.equal(over.headers['cache-control'], 'private, no-store', 'the CDN never keeps a refusal');
+    assert.ok(Number(over.headers['retry-after']) >= 1);
+    assert.equal((await img(cover, '384x240', from('203.0.113.7'))).status, 200, 'past its misses, a visitor still sees every picture');
+    assert.equal((await miss(0, '198.51.100.4')).status, 404, 'another visitor has misses of their own');
   });
 
   it('knows a picture that is only in a post’s body, and only as a whole link', async () => {

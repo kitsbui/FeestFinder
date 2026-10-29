@@ -14,6 +14,7 @@ import { expireRadar } from './services/ingest/expire.ts';
 import { translatePending } from './services/translate.ts';
 import { refreshAllFit } from './services/ingest/fit.ts';
 import { checkRemoteImages } from './services/remote-images.ts';
+import { runImageCdn } from './services/image-cdn.ts';
 import { importBlogContent } from './services/blog-content.ts';
 import { purgeFeedbackAttachments } from './routes/feedback.ts';
 import { webHealth } from './services/web-signals.ts';
@@ -114,6 +115,11 @@ export const jobs = {
     return checkRemoteImages(ctx);
   },
 
+  /** A taken-down picture's /img copies deleted from the CDN, a new cover's made ahead of its first visitor (services/image-cdn.ts). */
+  async imageCdn(ctx: Ctx) {
+    return runImageCdn(ctx);
+  },
+
   /** The team's editorial posts from the repository's content packs: new ones wait for review, edited ones are never written over (services/blog-content.ts). */
   async importBlogContent(ctx: Ctx) {
     return (await importBlogContent(ctx)).added;
@@ -165,6 +171,7 @@ type Slot = { job: keyof typeof jobs; every: number; at?: number; heavy?: true }
 export const SCHEDULE: Slot[] = [
   { job: 'deliverOutbox', every: 5_000 },
   { job: 'sendScheduledAnnouncements', every: 30_000 },
+  { job: 'imageCdn', every: 60_000 },
   { job: 'reminders', every: 5 * 60_000 },
   { job: 'pingIndexNow', every: 5 * 60_000, at: 2 },
   { job: 'expireAppeals', every: 10 * 60_000 },

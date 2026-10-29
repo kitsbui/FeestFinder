@@ -213,7 +213,7 @@ describe('deployment', () => {
       assert.ok(due.filter((j) => heavy.has(j)).length <= 1, `minute ${m % 60}: ${due.join(', ')}`);
       if (due.includes('ingest')) assert.equal(due.at(-1), 'ingest');
     }
-    assert.equal(SCHEDULE.length, 19);
+    assert.equal(SCHEDULE.length, 20);
     for (const s of SCHEDULE) assert.equal(runs.get(s.job), 240 / Math.max(1, Math.round(s.every / 60_000)), s.job);
     // The charts are tried every ten minutes, not once an hour at minute 0.
     assert.deepEqual([...Array(60).keys()].filter((m) => dueJobs(start + m).includes('refreshCharts')), [8, 18, 28, 38, 48, 58]);
@@ -224,7 +224,7 @@ describe('deployment', () => {
     try {
       const minute = 60 * 1000 * 240 + 1;
       assert.deepEqual(Object.keys(await runDueJobs(env.ctx, new Date(60_000 * minute))), dueJobs(minute));
-      assert.deepEqual(dueJobs(minute), ['deliverOutbox', 'sendScheduledAnnouncements', 'translateDescriptions']);
+      assert.deepEqual(dueJobs(minute), ['deliverOutbox', 'sendScheduledAnnouncements', 'imageCdn', 'translateDescriptions']);
     } finally { await env.close(); }
   });
 
