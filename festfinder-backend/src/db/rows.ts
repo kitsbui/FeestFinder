@@ -813,6 +813,14 @@ export interface Rows {
     event_id: string;
     created_at: Date;
   };
+  img_purges: {
+    link: string;
+    at: Date;
+  };
+  img_warms: {
+    link: string;
+    at: Date;
+  };
   inbox_messages: {
     id: string;
     seq: number;
