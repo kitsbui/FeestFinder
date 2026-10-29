@@ -215,44 +215,77 @@ export async function checkRemoteImages(ctx: Ctx, max = 20): Promise<{ checked: 
 
 // ---- resized copies (GET /img) ------------------------------------------------------------------
 
+/** Which rows of a table still show their pictures: the rules the gate reads and migration 067's takedown triggers name. */
+export const SHOWN = {
+  hidden_at: 'hidden_at is null',
+  removed_at: 'removed_at is null',
+  visible: `status = 'visible'`,
+  not_hidden: `status <> 'hidden'`,
+} as const;
+
 /**
- * Every column a page shows a picture link from (`lists` are arrays of links), and which rows
- * still show it. GET /img resizes only a link one of these holds, so it is never an open proxy;
- * test/img.test.ts fails when a picture column is missing here.
+ * Every column a page shows a picture link from (`lists` are arrays of links; `body`: the
+ * pictures a post's body names), and which rows still show it (`shown`, a rule of SHOWN). GET /img
+ * resizes only a link one of these holds, so it is never an open proxy. Migration 067 indexes each
+ * one exactly as the gate below reads it and puts a takedown trigger on each table: a new picture
+ * column needs both in a new migration, and test/img.test.ts fails while one is missing.
  */
-export const PICTURE_COLUMNS: { table: string; columns: string[]; lists?: string[]; shown?: string }[] = [
+export const PICTURE_COLUMNS: { table: string; columns: string[]; lists?: string[]; shown?: keyof typeof SHOWN; body?: true }[] = [
   { table: 'events', columns: ['cover_url', 'logo_url'] },
-  { table: 'artists', columns: ['image_url', 'cover_url'], shown: 'hidden_at is null' },
+  { table: 'artists', columns: ['image_url', 'cover_url'], shown: 'hidden_at' },
   { table: 'organizers', columns: ['logo_url', 'cover_url'] },
   { table: 'users', columns: ['photo_url'] },
   { table: 'projects', columns: ['cover_url'] },
-  { table: 'moments', columns: ['url'], shown: 'removed_at is null' },
-  { table: 'event_posts', columns: ['photo_url'], shown: `status = 'visible'` },
+  { table: 'moments', columns: ['url'], shown: 'removed_at' },
+  { table: 'event_posts', columns: ['photo_url'], shown: 'visible' },
   { table: 'artist_mixes', columns: ['thumbnail_url'] },
   { table: 'blog_tracks', columns: ['thumbnail_url'] },
-  { table: 'blog_posts', columns: ['cover_url'], shown: `status <> 'hidden'` },
+  { table: 'blog_posts', columns: ['cover_url'], shown: 'not_hidden', body: true },
   { table: 'ad_campaigns', columns: ['logo_url'], lists: ['images'] },
   { table: 'recaps', columns: [], lists: ['photo_urls'] },
-  { table: 'news_items', columns: ['image_url'], shown: 'hidden_at is null' },
+  { table: 'news_items', columns: ['image_url'], shown: 'hidden_at' },
 ];
 /** Picture columns no page shows to the public (a brand's request, read by the team as linked; a chart's sleeve, which no page draws): never resized. */
 export const UNSERVED_PICTURE_COLUMNS = ['ad_inquiries.logo_url', 'ad_inquiries.product_images', 'chart_entries.image_url'];
 
-/** One query: whether a stored link (framed or not) or a picture in a post's body is `$1`. */
-const KNOWN_IMAGE_SQL = `select (${[
-  ...PICTURE_COLUMNS.flatMap(({ table, columns, lists = [], shown }) => [
-    ...(columns.length ? [`exists (select 1 from ${table} where ${shown ? `${shown} and ` : ''}(${columns.map((c) => `split_part(${c}, '#', 1) = $1`).join(' or ')}))`] : []),
-    ...lists.map((l) => `exists (select 1 from ${table} t, unnest(t.${l}) as x(link) where ${shown ? `t.${shown} and ` : ''}split_part(x.link, '#', 1) = $1)`),
-  ]),
-  // A post's body names its pictures as ![alt](link) or ![alt](link "caption"), each checked as an
-  // image when it was added (routes/blog.ts); a plain [text](link) is a link, never a picture.
-  String.raw`exists (select 1 from blog_posts p, jsonb_each_text(case when jsonb_typeof(p.body) = 'object' then p.body else '{}' end) as b(lang, text),
-     regexp_matches(b.text, '!\[[^\]]*\]\((https://[^[:space:])#]+)', 'g') as m(found) where p.status <> 'hidden' and (m.found)[1] = $1)`,
-].join('\n  or ')}) as known`;
+/**
+ * One query: whether a stored link (framed or not), a link in a list or a picture in a post's
+ * body is one of `$1` (the spellings of one picture). Anyone may ask with any key, so each EXISTS
+ * is written exactly as migration 067 indexes it (split_part(col, '#', 1), ff_link_bases(list),
+ * ff_body_pictures(body), partial on the same rule): every one is an index probe.
+ */
+export const KNOWN_IMAGE_SQL = `select (${PICTURE_COLUMNS.flatMap(({ table, columns, lists = [], shown, body }) => {
+  const where = shown ? `${SHOWN[shown]} and ` : '';
+  return [
+    ...columns.map((c) => `exists (select 1 from ${table} where ${where}split_part(${c}, '#', 1) = any($1::text[]))`),
+    ...lists.map((l) => `exists (select 1 from ${table} where ${where}ff_link_bases(${l}) && $1::text[])`),
+    // ![alt](link) or ![alt](link "caption"), each checked as an image when it was added
+    // (routes/blog.ts); a plain [text](link) is a link, never a picture.
+    ...(body ? [`exists (select 1 from ${table} where ${where}ff_body_pictures(body) && $1::text[])`] : []),
+  ];
+}).join('\n  or ')}) as known`;
 
-/** Whether a page shows this link (given without its fragment): the gate of GET /img. */
+/** Whether a page shows this picture (its link without the fragment, an upload in any spelling): the gate of GET /img. */
 export async function knownImage(ctx: Ctx, link: string): Promise<boolean> {
-  return !!(await one<{ known: boolean }>(ctx.db, KNOWN_IMAGE_SQL, [link]))?.known;
+  return !!(await one<{ known: boolean }>(ctx.db, KNOWN_IMAGE_SQL, [spellingsOf(ctx, link)]))?.known;
+}
+
+/** Every way a row may spell this picture: an upload by its path or its full addresses, a link as it is. */
+export function spellingsOf(ctx: Ctx, link: string): string[] {
+  const key = uploadKeyOf(ctx, link);
+  if (!key) return [link];
+  const s3 = ctx.config.s3?.publicBaseUrl?.replace(/\/+$/, '');
+  return [...new Set([`/files/${key}`, `${ctx.config.publicBaseUrl.replace(/\/+$/, '')}/files/${key}`, ...(s3 ? [`${s3}/${key}`] : [])])];
+}
+
+/**
+ * The CDN's cache tag of a picture's resized copies, the same for every spelling of an upload:
+ * GET /img sends it as Vercel-Cache-Tag, and the imageCdn job purges it once no row shows the
+ * picture (services/image-cdn.ts). Within Vercel's 256 bytes, with no comma.
+ */
+export function imgTag(ctx: Ctx, link: string): string {
+  const key = uploadKeyOf(ctx, link);
+  return `img-${sha256(key ? `upload:${key}` : link).slice(0, 32)}`;
 }
 
 /** The storage key of one of FeestFinder's own uploads, from its link in any spelling, or null. */
@@ -344,12 +377,13 @@ async function fetchSource(ctx: Ctx, link: string, need: number): Promise<Buffer
  */
 export async function resizedImage(ctx: Ctx, link: string, width: number, height: number): Promise<Buffer | 'unknown' | 'unavailable'> {
   const key = uploadKeyOf(ctx, link);
+  // An upload too, only while a row shows it: a cover replaced or a photo hidden is served no more.
+  if (!(key || isHttpsLink(link)) || !(await knownImage(ctx, link))) return 'unknown';
   let source: Buffer | null;
   if (key) {
     source = await ctx.storage.get(key);
     if (!source) return 'unknown';
   } else {
-    if (!isHttpsLink(link) || !(await knownImage(ctx, link))) return 'unknown';
     // The width a landscape source up to 2:1 needs to cover the box.
     source = await fetchSource(ctx, link, Math.max(width, 2 * height));
     if (!source) return 'unavailable';

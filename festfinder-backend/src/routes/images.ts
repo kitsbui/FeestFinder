@@ -1,12 +1,12 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { parse } from '../lib/validate.ts';
-import { badRequest, notFound } from '../lib/errors.ts';
+import { AppError, badRequest, notFound } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
 import { sha256 } from '../lib/crypto.ts';
 import { isHttpsLink, isImgBox, linkOfKey } from '../lib/remote-image.ts';
 import { requireUser } from '../http/guards.ts';
-import { probeImage, resizedImage, uploadKeyOf } from '../services/remote-images.ts';
+import { imgTag, probeImage, resizedImage, uploadKeyOf } from '../services/remote-images.ts';
 
 /*
  * POST /images/check {url, purpose}: what the screens call when someone pastes an image link,
@@ -19,7 +19,9 @@ import { probeImage, resizedImage, uploadKeyOf } from '../services/remote-images
  * Only a link a page shows (knownImage) or one of FeestFinder's uploads, so never an open proxy.
  * The answer is the same for everyone and never changes, so browsers and the CDN keep it for a
  * year; it reads no session and sets no cookie. A link that does not open, or a picture that
- * moves, sends the browser to the link itself for a few minutes.
+ * moves, sends the browser to the link itself for a few minutes. Every answer carries the
+ * picture's cache tag (Vercel-Cache-Tag), by which services/image-cdn.ts deletes its copies from
+ * the CDN once no row shows it; a key no row shows counts against the visitor's misses (IMG_MISSES).
  */
 
 const CheckBody = z.object({
@@ -28,6 +30,13 @@ const CheckBody = z.object({
 });
 
 const IMG_PATH = /^(\d{2,4})x(\d{2,4})\/([\w-]+)\.webp$/;
+/**
+ * Misses per visitor a minute: a page that shows its pictures asks for none, and one whose 30 or
+ * so were all taken down (a copy of the page kept somewhere) stays well within it; the CDN keeps
+ * each miss five minutes.
+ */
+export const IMG_MISSES = 120;
+const tooManyMisses = () => new AppError(429, 'rate_limited', L('Too many pictures that do not exist; try again in a minute', 'Quá nhiều ảnh không tồn tại, hãy thử lại sau một phút'));
 /** A resized picture never changes: its address names the picture and the box. */
 const YEAR = 31_536_000;
 
@@ -52,6 +61,11 @@ export default async function imageRoutes(app: FastifyInstance) {
     return probeImage(ctx, body.url, body.purpose);
   });
 
+  // The misses (a key no row shows) one visitor may ask for in a minute; the global limit spares
+  // /img. Only misses count and only misses are refused: a picture a page shows is always served,
+  // so even if visitors reached the API here under one address, nobody's pictures would stop.
+  const misses = app.createRateLimit({ max: IMG_MISSES, timeWindow: 60_000, allowList: () => false });
+
   app.get<{ Params: { '*': string } }>('/img/*', async (req, reply) => {
     const path = req.params['*'];
     const m = IMG_PATH.exec(path);
@@ -65,6 +79,16 @@ export default async function imageRoutes(app: FastifyInstance) {
     if (req.url.includes('?')) return keep(reply.code(301), 3600).header('location', `/img/${path}`).send();
 
     const out = await resizedImage(ctx, link, width, height);
+    if (out === 'unknown') {
+      const counted = await misses(req);
+      if (!counted.isAllowed && counted.isExceeded) {
+        const e = tooManyMisses();
+        return reply.code(429).header('cache-control', 'private, no-store').header('retry-after', String(Math.max(1, counted.ttlInSeconds)))
+          .send({ error: { code: e.code, message: e.text[req.lang] } });
+      }
+    }
+    // What the CDN keeps of this picture, at any size, carries its tag: services/image-cdn.ts purges it.
+    reply.header('vercel-cache-tag', imgTag(ctx, link));
     if (out === 'unknown') {
       const e = notFound();
       return keep(reply.code(404), 300).send({ error: { code: e.code, message: e.text[req.lang] } });
