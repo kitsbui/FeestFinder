@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { setup, type TestEnv } from './helpers.ts';
 import { jobs } from '../src/jobs.ts';
-import { type ChartFetch, readBeatport, readSpotify, readYoutube, refreshDueCharts } from '../src/services/charts.ts';
+import { type ChartFetch, readBeatport, readSpotify, readYoutube, refreshChart, refreshDueCharts, RETRY_MINUTES } from '../src/services/charts.ts';
 
 /*
  * Charts (migration 064, services/charts.ts) and the style hub (routes/styles.ts): a style's top
@@ -117,11 +117,14 @@ describe('charts refreshed on a schedule and the style hub', () => {
     assert.equal((await refreshDueCharts(env.ctx, { io, keys: KEYS })).length, 2);
     assert.equal((await env.ctx.db.query<{ n: number }>('select count(*)::int as n from chart_entries')).rows[0].n, 4);
     assert.equal((await env.as().get('/charts?style=polka')).status, 400);
-    // A chart the provider cannot answer says so and waits its interval.
+    // A chart the provider cannot answer says so and is tried again within the hour, not a day later.
     const broken = (await env.as(admin).patch(`/admin/charts/sources/${sp}`, { externalId: 'gone' })).body;
     assert.equal(broken.externalId, 'gone');
     const run = (await env.as(admin).post(`/admin/charts/sources/${sp}/run`)).body;
     assert.match(run.run.error, /no spotify keys|404/);
+    assert.match((await refreshChart(env.ctx, sp, { io, keys: KEYS })).error ?? '', /404/);
+    const next = (await env.ctx.db.query<{ next_run_at: Date }>('select next_run_at from chart_sources where id = $1', [sp])).rows[0].next_run_at;
+    assert.equal(next.getTime() - env.clock.now().getTime(), RETRY_MINUTES * 60_000);
     assert.equal(jobs.refreshCharts.length, 1);
   });
 

@@ -72,6 +72,8 @@ export const chartKeysFromEnv = (env = process.env): ChartKeys => ({
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const CHART_MAX = 100;
+/** How soon a chart whose read failed is tried again. */
+export const RETRY_MINUTES = 60;
 
 /** Beatport's top 100 of a genre (v4 catalog API): the artists joined as the chart prints them, the mix name after the title. */
 export async function readBeatport(io: ChartFetch, keys: { id: string; secret: string }, genreId: string): Promise<ChartTrack[]> {
@@ -187,7 +189,10 @@ export async function refreshChart(ctx: Ctx, sourceId: string, opts: { io?: Char
     return { sourceId: s.id, name: s.name, count: tracks.length, error: null };
   } catch (e) {
     const error = (e as Error).message.slice(0, 300);
-    await ctx.db.query(`update chart_sources set last_run_at = $2, next_run_at = $3, last_error = $4, updated_at = $2 where id = $1`, [s.id, now, next, error]);
+    // A failed read is tried again within the hour, not a day later: the cause is often a key or a
+    // setting someone is fixing right now (owner, 2026-10-29).
+    const retry = new Date(now.getTime() + Math.min(s.interval_minutes, RETRY_MINUTES) * 60_000);
+    await ctx.db.query(`update chart_sources set last_run_at = $2, next_run_at = $3, last_error = $4, updated_at = $2 where id = $1`, [s.id, now, retry, error]);
     ctx.log(`chart ${s.name}: ${error}`);
     return { sourceId: s.id, name: s.name, count: 0, error };
   }
