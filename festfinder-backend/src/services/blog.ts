@@ -140,6 +140,16 @@ export function presentPost(p: PostRow, opts: { tracks?: TrackRow[]; viewer?: Po
   };
 }
 
+/**
+ * A post in GET /posts: only what a card draws (festfinder-web kd/web/blog/card.tsx). The facts,
+ * questions and sources, both languages of each, made /blog's first page 137 KB of JSON and its
+ * HTML 51 KB; the post's own address gives the rest.
+ */
+export function presentCard(p: PostRow) {
+  const { id, slug, category, lang, title, excerpt, coverUrl, author, minutes, trackCount, publishedAt } = presentPost(p);
+  return { id, slug, category, lang, title, excerpt, coverUrl, author, minutes, trackCount, publishedAt };
+}
+
 export const POST = `select b.*, u.name as author_name, (select count(*)::int from blog_tracks t where t.post_id = b.id) as track_count
   from blog_posts b left join users u on u.id = b.author_user_id`;
 

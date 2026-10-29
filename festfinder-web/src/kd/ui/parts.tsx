@@ -75,10 +75,13 @@ export function monogram(title: string): string {
  * on a page that names the event beside it, a poster of its date instead (`poster`).
  * No shapes and no gradients stand in for a picture. `off` dims it (sold out, past, not chosen).
  */
-export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false, fit }: {
+export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false, later = false, fit }: {
   family: Family; cover?: string | null; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
   /** The page's main picture (a hero, the home page's first picture): fetched first, with high priority, never lazily. One per page. */
   eager?: boolean;
+  /** A picture the first screen may show beside the main one (a list's cards after its first): fetched with low priority,
+   *  which Chrome keeps when it is in sight, so the main picture has the network to itself. */
+  later?: boolean;
   /** The box it is drawn in (kd/img.ts, kd/fits.ts): a stored cover then loads as a copy of that size (/img). Without it, the
    *  link itself: a cover not saved yet, which /img does not know. */
   fit?: Fit;
@@ -108,7 +111,7 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
         </>
       ) : null}
       {cover ? (
-        <img src={cover} {...fit?.attrs(cover, !eager)} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : undefined} decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
+        <img src={cover} {...fit?.attrs(cover, !eager)} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : later ? 'low' : undefined} decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
       ) : null}
       {children}
     </div>

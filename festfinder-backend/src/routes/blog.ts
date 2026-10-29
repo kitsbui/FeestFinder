@@ -12,13 +12,13 @@ import { personId } from '../services/analytics.ts';
 import { appendAudit } from '../services/audit.ts';
 import { notifyAdmins, notifyUser } from '../services/notify.ts';
 import { importBlogContent } from '../services/blog-content.ts';
-import { BLOG_CATEGORIES, loadPost, missingForReview, newPostSlug, pairOf, POST, type PostRow, presentPost, resolveTrack, type TrackRow, TRACKS_MAX } from '../services/blog.ts';
+import { BLOG_CATEGORIES, loadPost, missingForReview, newPostSlug, pairOf, POST, type PostRow, presentCard, presentPost, resolveTrack, type TrackRow, TRACKS_MAX } from '../services/blog.ts';
 
 /*
  * The blog (migration 060, services/blog.ts). The API's addresses are /posts because /blog is
  * the site's page (as /artists is the API and /a the page).
  *
- *   anyone   GET /posts (published; ?category= &style= &city=), GET /posts/:slug
+ *   anyone   GET /posts (published, as cards: no body, facts, questions or sources; ?category= &style= &city=), GET /posts/:slug
  *   author   GET/POST /me/posts, GET/PATCH /me/posts/:id, POST /me/posts/:id/submit,
  *            POST /me/posts/:id/tracks { source, title, year, note }, DELETE /me/posts/:id/tracks/:trackId
  *   team     the same on any post, GET /admin/posts?status=, POST /admin/posts/:id/decision { approve | reject | hide | restore },
@@ -138,7 +138,7 @@ export default async function blogRoutes(app: FastifyInstance) {
     ]);
     const n = total?.n ?? 0;
     return {
-      items: rows.map((r) => presentPost(r)),
+      items: rows.map(presentCard),
       total: n,
       categories: Object.fromEntries(BLOG_CATEGORIES.map((k) => [k, kinds.find((x) => x.category === k)?.n ?? 0])),
       nextOffset: f.offset + rows.length < n ? f.offset + rows.length : null,

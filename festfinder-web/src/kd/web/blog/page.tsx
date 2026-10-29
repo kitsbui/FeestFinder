@@ -17,6 +17,7 @@ import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { inline, PostBody } from './body';
 import { BlogBrowser } from './browser';
+import { cardOf } from './card';
 import { BLOG } from './copy';
 import { EditLink } from './edit-link';
 import { readIn, say, text, type Post, type PostList } from './model';
@@ -32,7 +33,9 @@ const EMPTY: PostList = { items: [], total: 0, categories: { styles: 0, news: 0,
 export async function BlogPage({ lang }: { lang: Lang }) {
   const T = pick(BLOG, lang);
   const W = pick(WEB, lang);
-  const first = await apiOr<PostList>('/posts?limit=24', EMPTY, { lang, revalidate: 120 });
+  const got = await apiOr<PostList>('/posts?limit=24', EMPTY, { lang, revalidate: 120 });
+  // Each card's words in this page's language, nothing more: the browser gets only what it draws.
+  const first = { ...got, items: got.items.map((p) => cardOf(p, lang)) };
   return (
     <InLang lang={lang}>
       <KdProvider lang={lang}>

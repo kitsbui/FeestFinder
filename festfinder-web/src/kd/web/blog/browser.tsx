@@ -13,7 +13,7 @@ import { inLang } from '../../link';
 import { Button, LinkButton } from '../../ui/actions';
 import { Card as Panel } from '../../ui/parts';
 import { Tabs } from '../../ui/shell';
-import { PostCard } from './card';
+import { cardOf, PostCard, type CardPost } from './card';
 import { BLOG, CATEGORY_LABEL } from './copy';
 import { CATEGORIES, type Category, type PostList } from './model';
 
@@ -27,33 +27,37 @@ const query = (c: Category | null, offset = 0) => {
   return q.toString();
 };
 
-export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList }) {
+export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList<CardPost> }) {
   const T = pick(BLOG, lang);
   const C = pick(CATEGORY_LABEL, lang);
   const [category, setCategory] = useState<Category | null>(null);
-  const [list, setList] = useState<PostList>(first);
+  const [list, setList] = useState<PostList<CardPost>>(first);
   const [busy, setBusy] = useState(false);
 
-  const load = async (c: Category | null, offset = 0) => {
+  // The page's language comes as an argument, so the effect below depends on nothing that changes.
+  const load = async (l: Lang, c: Category | null, offset = 0) => {
     setBusy(true);
     const out = (await FF.maybe(FF.get('/posts?' + query(c, offset)), null)) as PostList | null;
     setBusy(false);
     if (!out) return;
-    setList((cur) => (offset ? { ...out, items: [...cur.items, ...out.items] } : out));
+    const items = out.items.map((p) => cardOf(p, l));
+    setList((cur) => ({ ...out, items: offset ? [...cur.items, ...items] : items }));
   };
   useEffect(() => {
     const c = new URLSearchParams(location.search).get('category') as Category | null;
-    if (c && CATEGORIES.includes(c)) { setCategory(c); void load(c); }
-  }, []);
+    if (c && CATEGORIES.includes(c)) { setCategory(c); void load(lang, c); }
+  }, [lang]);
   const choose = (c: Category | null) => {
     setCategory(c);
     const q = new URLSearchParams();
     if (c) q.set('category', c);
     if (lang !== 'vi') q.set('lang', lang);
     history.replaceState(history.state, '', '/blog' + (q.size ? '?' + q : ''));
-    void load(c);
+    void load(lang, c);
   };
   const total = Object.values(list.categories).reduce((a, b) => a + b, 0);
+  // The page's main picture: the first card's that has one.
+  const lead = list.items.findIndex((p) => p.cover);
 
   return (
     <div className="flex flex-col gap-5">
@@ -67,7 +71,7 @@ export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList }) {
       {category === 'news' && list.items.length ? <h2 className="kd-d3">{T.newsPosts}</h2> : null}
       {list.items.length ? (
         <div className={cx('kd-cards transition-opacity', busy && 'opacity-60')}>
-          {list.items.map((p, i) => <PostCard key={p.id} post={p} lang={lang} eager={i === 0 && !category} />)}
+          {list.items.map((p, i) => <PostCard key={p.id} post={p} eager={i === lead && !category} />)}
         </div>
       ) : busy ? <div className="kd-skel h-40" aria-hidden="true" /> : (
         <Panel role="status" className="flex flex-wrap items-center justify-between gap-4 p-7">
@@ -75,7 +79,7 @@ export function BlogBrowser({ lang, first }: { lang: Lang; first: PostList }) {
           {category ? <Button onClick={() => choose(null)}>{T.all}</Button> : <LinkButton href={inLang('/blog/new', lang)}>{T.write}</LinkButton>}
         </Panel>
       )}
-      {list.nextOffset != null ? <Button className="self-center" disabled={busy} onClick={() => load(category, list.nextOffset!)}>{T.more}</Button> : null}
+      {list.nextOffset != null ? <Button className="self-center" disabled={busy} onClick={() => load(lang, category, list.nextOffset!)}>{T.more}</Button> : null}
     </div>
   );
 }

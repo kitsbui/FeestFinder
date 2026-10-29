@@ -1,4 +1,5 @@
 import { expect, request, test } from '@playwright/test';
+import { gzipSync } from 'node:zlib';
 import { watch } from '../checks.ts';
 import { ACCOUNTS } from './routes.ts';
 
@@ -121,4 +122,37 @@ test('the team approves the waiting editorial posts in one go, and the blog show
   await expect(visitor.getByRole('tab', { name: /^Tất cả/ })).toHaveAccessibleName(new RegExp(`^Tất cả\\s*${total}$`));
   await expect(visitor.getByRole('tab', { name: /^Kỹ năng DJ/ })).toHaveAccessibleName(/^Kỹ năng DJ\s*17$/);
   await visitor.close();
+});
+
+/**
+ * /blog's document, gzipped, at most (2026-10-29): it carried every listed post's facts, questions
+ * and sources in both languages (51 KB in production for 24 cards; Lighthouse gave the list 79 on a
+ * phone). GET /posts lists cards and the page sends each card's words in its language: 18.1 KB here
+ * with the editorial packs approved above (the local preview's /blog went from 53 to 18), rounded up.
+ * Only goes down.
+ */
+const BLOG_HTML_KB = 19;
+
+test('the list sends only what its cards draw, its first picture alone asks first, and "Tải thêm" adds the next', async ({ page }) => {
+  const html = await (await page.request.get('/blog')).text();
+  const kb = gzipSync(html).length / 1024;
+  expect(kb, `/blog is ${kb.toFixed(1)} KB gzipped`).toBeLessThanOrEqual(BLOG_HTML_KB);
+  // No post's facts, questions or sources ride along with the cards, in the HTML or the page's data.
+  expect(html).not.toMatch(/\\?"(facts|faq|sources|body)\\?":/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/blog');
+  const covers = page.locator('main article img.kd-cover');
+  await expect(page.locator('main article')).toHaveCount(24);
+  expect(await covers.count()).toBeGreaterThan(1);
+  // One picture leads, the first card's that has one: eager and high. The rest wait their turn, lazy and low, even the one in sight.
+  await expect(page.locator('img[fetchpriority="high"]')).toHaveCount(1);
+  await expect(covers.first()).toHaveAttribute('fetchpriority', 'high');
+  await expect(covers.first()).toHaveAttribute('loading', 'eager');
+  await expect(page.locator('main article img.kd-cover:not([fetchpriority="high"]):not([loading="lazy"][fetchpriority="low"])')).toHaveCount(0);
+
+  // The next ones, drawn as the first: their words in the page's language.
+  await page.getByRole('button', { name: 'Tải thêm' }).click();
+  await expect.poll(() => page.locator('main article').count()).toBeGreaterThan(24);
+  await expect(page.locator('main article').nth(24).locator('.kd-m').last()).toHaveText(/phút đọc|bài/);
 });
