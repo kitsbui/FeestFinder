@@ -5,7 +5,8 @@ import { L } from '../lib/i18n.ts';
 import { baseOf, fragmentIsFrame, frameOf, withFrame } from '../lib/frame.ts';
 import { webImageInfo, type WebImageMime } from '../lib/image.ts';
 import { checkDimensions, type ImagePurpose } from '../lib/image-rules.ts';
-import { normalizeImageUrl, previewImageOf } from '../lib/remote-image.ts';
+import { isHttpsLink, normalizeImageUrl, previewImageOf, upstreamFor } from '../lib/remote-image.ts';
+import { UPLOAD_PATH } from '../lib/validate.ts';
 import { sha256 } from '../lib/crypto.ts';
 import { fetchPublic, PageUnavailable } from './fetchpage.ts';
 import { notifyOrganizer, notifyUser } from './notify.ts';
@@ -43,6 +44,32 @@ export const fakeImageFetcher: ImageFetcher = async (url) => {
 
 /** Heavier than this and a phone on 4G waits too long for one picture. */
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+
+/** Reads a whole linked image, to resize it for GET /img (resizedImage below). */
+export const fetchImageFull: ImageFetcher = (url) => fetchPublic(url, {
+  accept: 'image/avif,image/webp,image/png,image/jpeg,image/gif',
+  types: /^(?:image\/|application\/octet-stream|binary\/octet-stream)|^$/i,
+  maxBytes: MAX_IMAGE_BYTES,
+  timeoutMs: 8000,
+  // GET /img's fetch: https on every hop, and 12 s for the whole of it.
+  httpsOnly: true,
+  totalMs: 12_000,
+});
+
+/**
+ * The whole-file network of the screen tests and the offline preview (FAKE_REMOTE_MEDIA): only
+ * https://pics.example/ answers, with a real PNG (1600×1000, or ?w=&h=); any other link does not
+ * open, so /img sends the browser to the link itself and the screens show the art as before.
+ */
+export const fakeImageFull: ImageFetcher = async (url) => {
+  const u = new URL(url);
+  if (u.hostname !== 'pics.example' || /broken/i.test(url)) throw new PageUnavailable('upstream', 'fake network: only pics.example opens');
+  const side = (name: string, fallback: number) => Math.min(4000, Math.max(1, Number(u.searchParams.get(name)) || fallback));
+  const sharp = await loadSharp();
+  const bytes = await sharp({ create: { width: side('w', 1600), height: side('h', 1000), channels: 3, background: { r: 40, g: 120, b: 200 } } }).png().toBuffer();
+  return { url, status: 200, contentType: 'image/png', bytes, totalBytes: bytes.length };
+};
+
 /** A link checked this recently is not fetched again when someone saves it. */
 const FRESH_MS = 24 * 3600_000;
 /** How often a saved link is checked again, and after how many failures in a row it counts as broken. */
@@ -184,4 +211,148 @@ export async function checkRemoteImages(ctx: Ctx, max = 20): Promise<{ checked: 
     if (fails >= BROKEN_AFTER) { broken++; await tellOwners(ctx, r.url); }
   }
   return { checked: due.length, broken };
+}
+
+// ---- resized copies (GET /img) ------------------------------------------------------------------
+
+/**
+ * Every column a page shows a picture link from (`lists` are arrays of links), and which rows
+ * still show it. GET /img resizes only a link one of these holds, so it is never an open proxy;
+ * test/img.test.ts fails when a picture column is missing here.
+ */
+export const PICTURE_COLUMNS: { table: string; columns: string[]; lists?: string[]; shown?: string }[] = [
+  { table: 'events', columns: ['cover_url', 'logo_url'] },
+  { table: 'artists', columns: ['image_url', 'cover_url'], shown: 'hidden_at is null' },
+  { table: 'organizers', columns: ['logo_url', 'cover_url'] },
+  { table: 'users', columns: ['photo_url'] },
+  { table: 'projects', columns: ['cover_url'] },
+  { table: 'moments', columns: ['url'], shown: 'removed_at is null' },
+  { table: 'event_posts', columns: ['photo_url'], shown: `status = 'visible'` },
+  { table: 'artist_mixes', columns: ['thumbnail_url'] },
+  { table: 'blog_tracks', columns: ['thumbnail_url'] },
+  { table: 'blog_posts', columns: ['cover_url'], shown: `status <> 'hidden'` },
+  { table: 'ad_campaigns', columns: ['logo_url'], lists: ['images'] },
+  { table: 'recaps', columns: [], lists: ['photo_urls'] },
+  { table: 'news_items', columns: ['image_url'], shown: 'hidden_at is null' },
+];
+/** Picture columns no page shows to the public (a brand's request, read by the team as linked; a chart's sleeve, which no page draws): never resized. */
+export const UNSERVED_PICTURE_COLUMNS = ['ad_inquiries.logo_url', 'ad_inquiries.product_images', 'chart_entries.image_url'];
+
+/** One query: whether a stored link (framed or not) or a picture in a post's body is `$1`. */
+const KNOWN_IMAGE_SQL = `select (${[
+  ...PICTURE_COLUMNS.flatMap(({ table, columns, lists = [], shown }) => [
+    ...(columns.length ? [`exists (select 1 from ${table} where ${shown ? `${shown} and ` : ''}(${columns.map((c) => `split_part(${c}, '#', 1) = $1`).join(' or ')}))`] : []),
+    ...lists.map((l) => `exists (select 1 from ${table} t, unnest(t.${l}) as x(link) where ${shown ? `t.${shown} and ` : ''}split_part(x.link, '#', 1) = $1)`),
+  ]),
+  // A post's body names its pictures as ![alt](link) or ![alt](link "caption"), each checked as an
+  // image when it was added (routes/blog.ts); a plain [text](link) is a link, never a picture.
+  String.raw`exists (select 1 from blog_posts p, jsonb_each_text(case when jsonb_typeof(p.body) = 'object' then p.body else '{}' end) as b(lang, text),
+     regexp_matches(b.text, '!\[[^\]]*\]\((https://[^[:space:])#]+)', 'g') as m(found) where p.status <> 'hidden' and (m.found)[1] = $1)`,
+].join('\n  or ')}) as known`;
+
+/** Whether a page shows this link (given without its fragment): the gate of GET /img. */
+export async function knownImage(ctx: Ctx, link: string): Promise<boolean> {
+  return !!(await one<{ known: boolean }>(ctx.db, KNOWN_IMAGE_SQL, [link]))?.known;
+}
+
+/** The storage key of one of FeestFinder's own uploads, from its link in any spelling, or null. */
+export function uploadKeyOf(ctx: Ctx, link: string): string | null {
+  const prefixes = ['/files/', `${ctx.config.publicBaseUrl.replace(/\/+$/, '')}/files/`];
+  const s3 = ctx.config.s3?.publicBaseUrl?.replace(/\/+$/, '');
+  if (s3) prefixes.push(`${s3}/`);
+  const prefix = prefixes.find((p) => link.startsWith(p));
+  const key = prefix ? link.slice(prefix.length) : null;
+  return key && UPLOAD_PATH.test(`/files/${key}`) ? key : null;
+}
+
+type Sharp = typeof import('sharp').default;
+let sharpLib: Promise<Sharp> | null = null;
+/** sharp, loaded with the first picture resized: the API starts without libvips. */
+function loadSharp(): Promise<Sharp> {
+  sharpLib ??= import('sharp').then(({ default: sharp }) => {
+    // Every picture is read once per box and then kept by the CDN: nothing to gain from libvips' cache.
+    sharp.cache(false);
+    // One thread per picture: two at once (AT_ONCE) leave the rest of the machine to the API.
+    sharp.concurrency(1);
+    return sharp;
+  });
+  return sharpLib;
+}
+
+/** A source bigger than this many pixels is not decoded (about 130 MB of memory): the browser loads it as linked. */
+const MAX_PIXELS = 32_000_000;
+/** The formats a copy is made from; anything else (SVG, TIFF, HEIC…) is left to the browser as linked. */
+const FORMATS = new Set(['jpeg', 'png', 'webp', 'gif', 'avif']);
+/** Pictures decoded at once by this process, the rest wait their turn: the API serves the site meanwhile. */
+const AT_ONCE = 2;
+let running = 0;
+const waiting: (() => void)[] = [];
+async function inTurn<T>(work: () => Promise<T>): Promise<T> {
+  if (running >= AT_ONCE) await new Promise<void>((go) => waiting.push(go));
+  else running++;
+  try {
+    return await work();
+  } finally {
+    const next = waiting.shift();
+    if (next) next(); else running--;
+  }
+}
+
+/**
+ * A picture as WebP covering a box of width × height: scaled so its shorter side fills the box,
+ * never cropped (the framing, #ff=, stays the screen's object-position) and never enlarged.
+ * Null when it cannot be read, or moves: an animated picture is left to the browser as linked.
+ */
+async function toWebp(source: Buffer, width: number, height: number): Promise<Buffer | null> {
+  try {
+    const sharp = await loadSharp();
+    return await inTurn(async () => {
+      const image = sharp(source, { limitInputPixels: MAX_PIXELS, failOn: 'none' });
+      const meta = await image.metadata();
+      // sharp names AVIF 'heif' with AV1 compression; HEIC (HEVC) is not drawn by browsers anyway.
+      const format = meta.format === 'heif' && meta.compression === 'av1' ? 'avif' : meta.format;
+      if (!FORMATS.has(format ?? '') || (meta.pages ?? 1) > 1) return null;
+      return await image.autoOrient()
+        .resize({ width, height, fit: 'outside', withoutEnlargement: true })
+        .webp({ quality: 75 })
+        .timeout({ seconds: 5 })
+        .toBuffer();
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** A linked picture's bytes: a smaller copy its host makes when there is one, else the link. Null when neither opens. */
+async function fetchSource(ctx: Ctx, link: string, need: number): Promise<Buffer | null> {
+  const smaller = upstreamFor(link, need);
+  for (const url of smaller ? [smaller, link] : [link]) {
+    try {
+      const res = await ctx.fetchImageFull(url);
+      if (res.bytes.length) return res.bytes;
+    } catch (e) {
+      ctx.log(`img: ${new URL(url).hostname} did not give the picture (${(e as Error).message})`);
+    }
+  }
+  return null;
+}
+
+/**
+ * The picture at `link` (an https link a page shows, or an upload) resized for a box: 'unknown'
+ * when nothing stores it, 'unavailable' when it cannot be fetched or read (the browser then loads
+ * the link itself).
+ */
+export async function resizedImage(ctx: Ctx, link: string, width: number, height: number): Promise<Buffer | 'unknown' | 'unavailable'> {
+  const key = uploadKeyOf(ctx, link);
+  let source: Buffer | null;
+  if (key) {
+    source = await ctx.storage.get(key);
+    if (!source) return 'unknown';
+  } else {
+    if (!isHttpsLink(link) || !(await knownImage(ctx, link))) return 'unknown';
+    // The width a landscape source up to 2:1 needs to cover the box.
+    source = await fetchSource(ctx, link, Math.max(width, 2 * height));
+    if (!source) return 'unavailable';
+  }
+  return (await toWebp(source, width, height)) ?? 'unavailable';
 }

@@ -13,6 +13,7 @@ export async function POST(req: Request): Promise<Response> {
   let body: unknown = null;
   try { body = await req.json(); } catch { /* an empty or broken body freshens nothing */ }
   const { kind, slug } = (body ?? {}) as { kind?: unknown; slug?: unknown };
-  for (const path of pathsToFreshen(kind, slug)) revalidatePath(path);
+  // A route with a [segment] is every page of it.
+  for (const path of pathsToFreshen(kind, slug)) revalidatePath(path, path.includes('[') ? 'page' : undefined);
   return new Response(null, { status: 204 });
 }

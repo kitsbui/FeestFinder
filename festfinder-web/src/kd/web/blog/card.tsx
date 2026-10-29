@@ -9,6 +9,7 @@ import { KdLink as Link, inLang } from '../../link';
 import { Art } from '../../ui/parts';
 import { BLOG } from './copy';
 import { readIn, say, text, type Post } from './model';
+import { CARD } from '../card-fit';
 
 export function PostCard({ post, lang, eager = false }: { post: Post; lang: Lang; eager?: boolean }) {
   const T = pick(BLOG, lang);
@@ -23,7 +24,7 @@ export function PostCard({ post, lang, eager = false }: { post: Post; lang: Lang
   const title = say(post.title, l), excerpt = say(post.excerpt, l);
   return (
     <article className={`kd-ev ${g('edm')}`}>
-      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={post.coverUrl} title={title} eager={eager} /></Link>
+      <Link href={href} tabIndex={-1} aria-hidden="true"><Art family="edm" cover={post.coverUrl} title={title} eager={eager} fit={CARD} /></Link>
       <div className="flex flex-col gap-1.5">
         <span className="kd-m flex items-center gap-1.5 text-info"><span className="kd-mk" aria-hidden="true" />{category}</span>
         <Link href={href} className="kd-hit kd-h" lang={l}>{title}</Link>

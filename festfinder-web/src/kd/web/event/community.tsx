@@ -19,6 +19,11 @@ import { Accordion, Avatar, BarTrack, Tag } from '../../ui/parts';
 import type { Discussion, Post } from '../../types';
 import { WEB } from '../copy';
 import { useEvent } from './context';
+import { fit, imgAttrs, square } from '../../img';
+import { MOMENT } from '../../ui/moments';
+
+/** A post's photo in Hỏi đáp: a 4:3 box, the width up to 384px. */
+const PHOTO = fit('(max-width: 415px) 100vw, 384px', 384, 1080, 'square');
 
 export function ago(iso: string, lang: Lang, now = FF.now().getTime()): string {
   const T = pick(WEB, lang);
@@ -127,8 +132,10 @@ export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }
 
   const gate = d?.me.canWrite ?? 'signin';
   const posted = () => { setReplyTo(null); void load(); void reloadEvent(); };
-  // Nothing written yet: one sentence and one action (design kit), not an empty field.
-  if (d && !d.total && !ev.faq.length && !writing) {
+  // Nothing written yet: one sentence and one action (design kit), not an empty field. The page's
+  // own count says so before the thread answers, so the section never draws the field to fold it.
+  const total = d ? d.total : (ev.discussion?.total ?? 0);
+  if (!total && !ev.faq.length && !writing) {
     return (
       <section id="discussion" aria-labelledby={bare ? undefined : 'disc-h'} aria-label={bare ? T.discussion : undefined} className="flex max-w-read scroll-mt-32 flex-wrap items-center justify-between gap-3">
         {bare ? <p className="kd-s">{T.discEmpty}</p> : <h2 id="disc-h" className="kd-d3">{T.discussion}</h2>}
@@ -158,13 +165,12 @@ export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }
       ) : (
         <Composer lang={lang} onPosted={posted} write={write} autoFocus={writing} />
       )}
-      {/* The rules behind a link beside the field, not a line telling everyone off (design v2 phase 2). */}
-      {d?.rules ? (
-        <div className="flex flex-col gap-1.5">
-          <button type="button" className="kd-more self-start" aria-expanded={rules} onClick={() => setRules((r) => !r)}>{T.discRules}</button>
-          {rules ? <p className="kd-s">{tx(d.rules, lang)}</p> : null}
-        </div>
-      ) : null}
+      {/* The rules behind a link beside the field, not a line telling everyone off (design v2 phase 2);
+          the link is there from the first paint, the words come with the thread. */}
+      <div className="flex flex-col gap-1.5">
+        <button type="button" className="kd-more self-start" aria-expanded={rules} onClick={() => setRules((r) => !r)}>{T.discRules}</button>
+        {rules && d?.rules ? <p className="kd-s">{tx(d.rules, lang)}</p> : null}
+      </div>
       {d ? (
         d.items.length ? (
           <ul className="flex flex-col">
@@ -189,7 +195,7 @@ export function DiscussionSection({ lang, bare }: { lang: Lang; bare?: boolean }
             ))}
           </ul>
         ) : null
-      ) : <div className="kd-skel h-24" aria-hidden="true" />}
+      ) : total ? <div className="kd-skel h-24" aria-hidden="true" /> : null}
       {phoneFor ? <PhoneSheet lang={lang} onClose={() => setPhoneFor(null)} onDone={() => { const f = phoneFor; setPhoneFor(null); f(); }} /> : null}
     </section>
   );
@@ -299,7 +305,7 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
   };
   return (
     <article className="flex gap-3">
-      <Avatar name={p.author?.name || T.discMember} src={p.author?.photoUrl} size={32} />
+      <Avatar name={p.author?.name || T.discMember} src={p.author?.photoUrl} size={32} fit={square(32)} />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           {/* A hidden post steps back in its name, never by dimming (contrast). */}
@@ -323,7 +329,12 @@ function PostView({ lang, post: p, team, write, reload, onReply }: {
             {p.removed ? T.discRemoved : p.body}
           </p>
         )}
-        {p.photoUrl ? <img src={p.photoUrl} alt="" loading="lazy" className="max-h-80 w-auto max-w-full rounded-card object-cover" /> : null}
+        {/* A box of its own size, so the thread never moves when the photo arrives. */}
+        {p.photoUrl ? (
+          <span className="block aspect-4/3 w-full max-w-sm overflow-hidden rounded-card bg-surface-1" data-post-photo>
+            <img {...imgAttrs(p.photoUrl, PHOTO, true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" className="size-full object-cover" />
+          </span>
+        ) : null}
         {!p.removed && editing === null ? (
           <div className="-ml-2 flex flex-wrap items-center gap-1">
             <button
@@ -382,7 +393,7 @@ export function PhotoWall({ lang }: { lang: Lang }) {
         {items.slice(0, 9).map((x) => (
           <figure key={x.url} className="kd-mtile m-0 cursor-default">
             { }
-            <img src={x.url} alt={x.caption ?? ''} loading="lazy" />
+            <img {...imgAttrs(x.url, MOMENT, true)} alt={x.caption ?? ''} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
           </figure>
         ))}
       </div>

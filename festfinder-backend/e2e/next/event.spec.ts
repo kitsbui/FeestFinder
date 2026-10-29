@@ -268,3 +268,72 @@ test('back from the group plan returns to the web event page it came from, not t
   await page.getByRole('link', { name: 'Quay lại' }).first().click();
   await expect(page).toHaveURL(/\/e\/ravo$/);
 });
+
+test.describe('"Thêm" opening on a slow phone', () => {
+  /** The live nights nobody has asked about yet (no comment, no organiser answer), first one first. */
+  async function quiet(page: Page): Promise<{ id: string; slug: string }[]> {
+    const { items } = await (await page.request.get('/events?time=all&upcoming=true&limit=60')).json() as { items: { slug: string }[] };
+    const out: { id: string; slug: string }[] = [];
+    for (const { slug } of items) {
+      const ev = await (await page.request.get('/events/' + slug)).json();
+      if (!ev.past && ev.discussion && ev.discussion.total === 0 && !ev.faq.length) out.push({ id: ev.id, slug });
+    }
+    return out;
+  }
+
+  test('"Bình luận" with nothing asked opens without moving what follows it', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const [ev] = await quiet(page);
+    expect(ev, 'a live night nobody asked about').toBeTruthy();
+    await open(page, '/e/' + ev.slug);
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const w = window as unknown as { __shifts: number };
+      w.__shifts = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) if (!e.hadRecentInput) w.__shifts += e.value;
+      }).observe({ type: 'layout-shift' });
+    });
+    // The section's code and the thread both arrive well after the tap.
+    const late = async (route: import('@playwright/test').Route) => { await new Promise((r) => setTimeout(r, 800)); await route.continue(); };
+    await page.route('**/_next/static/chunks/**', late);
+    await page.route((u) => u.pathname.endsWith('/discussion'), late);
+    const footer = page.locator('footer').first();
+    await page.locator('summary', { hasText: /^Bình luận/ }).click();
+    // At the tap the row takes the height of what it will show, before its code is in, and keeps it.
+    await page.waitForTimeout(150);
+    const atTap = (await footer.boundingBox())!.y;
+    await expect(page.getByRole('button', { name: 'Viết bình luận' })).toBeVisible();
+    await page.waitForTimeout(2000);
+    expect(await page.evaluate(() => (window as unknown as { __shifts: number }).__shifts)).toBeLessThanOrEqual(0.01);
+    expect((await footer.boundingBox())!.y).toBe(atTap);
+  });
+
+  test("a comment's photo sits in a box of its own size, from before it loads", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await signInWith(page, ATTENDEE);
+    const [, ev] = await quiet(page);
+    expect(ev, 'a second live night nobody asked about').toBeTruthy();
+    const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+    const up = await page.request.post('/uploads?purpose=recap', { multipart: { file: { name: 'night.png', mimeType: 'image/png', buffer: PNG } } });
+    expect(up.ok(), 'upload').toBeTruthy();
+    const posted = await page.request.post(`/events/${ev.id}/posts`, { data: { kind: 'talk', body: 'Ảnh tối qua', photoUrl: (await up.json()).url } });
+    expect(posted.ok(), 'post').toBeTruthy();
+    const postId = (await posted.json()).post.id as string;
+    try {
+      // The photo takes its time: its box is already there, at its final height.
+      await page.route((u) => u.pathname.startsWith('/files/recap/'), async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.continue(); });
+      await open(page, '/e/' + ev.slug);
+      await page.locator('summary', { hasText: /^Bình luận/ }).click();
+      const box = page.locator('[data-post-photo]').first();
+      await expect(box).toBeVisible();
+      const early = (await box.boundingBox())!.height;
+      expect(early).toBeGreaterThan(100);
+      await expect(box.locator('img')).toHaveAttribute('referrerpolicy', 'no-referrer');
+      await box.locator('img').evaluate((img: HTMLImageElement) => img.decode());
+      expect((await box.boundingBox())!.height).toBe(early);
+    } finally {
+      if (postId) await page.request.delete('/posts/' + postId);
+    }
+  });
+});

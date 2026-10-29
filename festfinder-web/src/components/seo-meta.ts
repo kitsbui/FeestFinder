@@ -17,6 +17,18 @@ const OG_LOCALE: Record<Lang, string> = { vi: 'vi_VN', en: 'en_US', th: 'th_TH',
 const ogLocales = (lang: Lang) => ({ locale: OG_LOCALE[lang], alternateLocale: LANGS.filter((l) => l !== lang).map((l) => OG_LOCALE[l]) });
 /** The home page's addresses in every language. */
 export const homeAlternates = everyLang('/');
+/** The home page's title in each language but Vietnamese, which keeps the layout's. */
+const HOME_TITLE: Partial<Record<Lang, string>> = {
+  en: 'FeestFinder — EDM club nights, raves and festivals',
+  th: 'FeestFinder — คลับไนท์ เรฟ และเทศกาลดนตรี EDM',
+  ja: 'FeestFinder — EDMのクラブナイト、レイブ、フェス',
+  id: 'FeestFinder — Malam klub, rave, dan festival EDM',
+};
+/** The home page's head in a language; one city's list (app/(kd)/in) is the same page, so it shares it. */
+export function homeMetadata(lang: Lang): Metadata {
+  const title = HOME_TITLE[lang];
+  return { ...(title ? { title: { absolute: title } } : {}), alternates: { canonical: lang === 'vi' ? '/' : `/?lang=${lang}`, languages: homeAlternates } };
+}
 
 export type Kind = 'events' | 'organizers' | 'collections' | 'artists' | 'projects' | 'blog';
 export type Props = { params: Promise<{ slug: string }> };

@@ -11,13 +11,14 @@ import { RadarTag } from '../ui/origin';
 import { Art, Card as Panel, Marker } from '../ui/parts';
 import type { Card } from '../types';
 import { APP } from './copy';
+import { square } from '../img';
 
 export function EventRow({ e, lang, d, dim }: { e: Card; lang: Lang; d?: number | null; dim?: boolean }) {
   const T = pick(APP, lang);
   const fam = familyOf(e.genre);
   return (
     <Link className={cx('kd-row', g(fam))} href={'/e/' + e.slug}>
-      <Art title={e.title} family={fam} cover={e.coverUrl} off={e.soldOut || e.past} />
+      <Art title={e.title} family={fam} cover={e.coverUrl} off={e.soldOut || e.past} fit={square(52)} />
       <span className="flex min-w-0 flex-col gap-0.5">
         {/* A past night steps back in its name, never by dimming the row (contrast). */}
         <span className="flex min-w-0 items-center gap-2"><span className={cx('kd-hs kd-ell', dim && 'text-fg-3')}>{e.title}</span>{e.origin === 'radar' ? <RadarTag lang={lang} /> : null}</span>

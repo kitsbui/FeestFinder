@@ -260,7 +260,7 @@ function Studio({ lang, current, children, seats, switchOrg }: { lang: Lang; cur
     />
   );
   // The wizard and the door are pages of their own (Studio-Wizard, Studio-Checkin): no side nav, their own top bar.
-  const frame = (body: ReactNode) => (current === 'new' || current === 'door' ? body : <Shell nav={nav}>{body}</Shell>);
+  const frame = (body: ReactNode) => (current === 'new' || current === 'door' ? body : <Shell lang={lang} nav={nav}>{body}</Shell>);
   if (!org || !events) return frame(<div className="p-6" aria-hidden="true"><div className="kd-skel h-60" /></div>);
   return (
     <Ctx.Provider value={{ lang, org, events, event, setEvent, reload, seats, switchOrg }}>

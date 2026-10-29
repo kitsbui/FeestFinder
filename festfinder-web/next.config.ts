@@ -48,13 +48,31 @@ const SECURITY_HEADERS = [
   ...(dev ? [] : [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]),
 ];
 
+/**
+ * Every query key the home page's list reads besides the city and the language (kd/web/list/browser.tsx
+ * `readFilters`, list/from-app.ts): while none is in the address, /?city=<slug> is that city's own
+ * cached page (app/(kd)/in/[city]); with one, the browser asks the API for what it narrows.
+ */
+const LIST_KEYS = ['view', 'q', 'bbox', 'style', 'time', 'type', 'price', 'origin', 'genre', 'source'];
+const ONLY_CITY = LIST_KEYS.map((key) => ({ type: 'query' as const, key }));
+const CITY = { type: 'query' as const, key: 'city', value: '(?<city>[a-z0-9-]+)' };
+
 const config: NextConfig = {
+  // festfinder-backend's Lighthouse runner (tools/lighthouse, --serve) builds into .next-lh, beside the screen checks' .next.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // Strict mode's deliberate double mount would run the pages' effects twice in development
   // (the OAuth hand-back, timers, loaders).
   reactStrictMode: false,
   poweredByHeader: false,
-  // Which build a bug report came from (kd/feedback/telemetry.ts).
-  env: { NEXT_PUBLIC_BUILD_ID: buildId() },
+  // Which build a bug report came from (kd/feedback/telemetry.ts). A build whose API sits behind
+  // Vercel's protection (a preview: FF_API_BYPASS) draws stored pictures from their own links, since
+  // /img reaches the API through the fallback rewrite, which cannot send the bypass (kd/img.ts).
+  env: { NEXT_PUBLIC_BUILD_ID: buildId(), NEXT_PUBLIC_IMG_RAW: process.env.FF_API_BYPASS?.trim() ? '1' : '' },
+  // src/proxy.ts sees the request as it came: Next would hide the router's headers from it
+  // (next-router-prefetch among them), and the proxy answers a prefetch it would move with no content.
+  // It drops the router's `_rsc` from the address itself, and its redirects go out as it writes them
+  // (absolute, on the host the visitor asked for; Next no longer makes them relative).
+  skipProxyUrlNormalize: true,
 
   async rewrites() {
     return {
@@ -68,6 +86,11 @@ const config: NextConfig = {
         { source: '/p/:file([^/]+\\.md)', destination: `${API}/p/:file` },
         { source: '/blog/:file([^/]+\\.md)', destination: `${API}/blog/:file` },
         { source: '/a/:by(style|city)/:file([^/]+\\.md)', destination: `${API}/a/:by/:file` },
+        // One city's home page, /?city=<slug> with nothing else the list reads, is a cached page of its own
+        // in each language, drawn with that city's nights (first: the rules below would take its `/`).
+        { source: '/', has: [CITY], missing: [...ONLY_CITY, { type: 'query', key: 'lang' }], destination: '/in/:city' },
+        { source: '/', has: [CITY, { type: 'query', key: 'lang', value: 'vi' }], missing: ONLY_CITY, destination: '/in/:city' },
+        { source: '/', has: [CITY, { type: 'query', key: 'lang', value: '(?<lang>en|th|ja|id)' }], missing: ONLY_CITY, destination: '/in/:city/:lang' },
         // The home page in English is /?lang=en: a cached page of its own; in Thai, Japanese and
         // Indonesian /?lang=th|ja|id (design v2 phase 10), each its own too.
         { source: '/', has: [{ type: 'query', key: 'lang', value: 'en' }], destination: '/en' },
@@ -138,6 +161,9 @@ const config: NextConfig = {
       { source: '/blog/:slug/en', destination: '/blog/:slug?lang=en', permanent: true },
       { source: '/a/:slug/en', destination: '/a/:slug?lang=en', permanent: true },
       { source: '/a/:by(style|city)/:slug/en', destination: '/a/:by/:slug?lang=en', permanent: true },
+      // One city's home page has the home page's address.
+      { source: '/in/:city', destination: '/?city=:city', permanent: true },
+      { source: '/in/:city/:lang(en|th|ja|id)', destination: '/?city=:city&lang=:lang', permanent: true },
       // The same for Thai, Japanese and Indonesian (design v2 phase 10).
       { source: '/:lang(th|ja|id)', destination: '/?lang=:lang', permanent: true },
       { source: '/list/:lang(th|ja|id)', destination: '/?lang=:lang', permanent: true },

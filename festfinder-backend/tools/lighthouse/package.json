@@ -1,0 +1,15 @@
+{
+  "name": "festfinder-lighthouse",
+  "private": true,
+  "description": "Lighthouse 13.4.1 on FeestFinder's pages (npm run lighthouse in festfinder-backend). Its own package so the ~175 MB stay out of every other install.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test run.test.ts",
+    "typecheck": "../../node_modules/.bin/tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "chrome-launcher": "1.2.2",
+    "lighthouse": "13.4.1",
+    "puppeteer-core": "25.16.0"
+  }
+}

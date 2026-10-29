@@ -21,6 +21,8 @@ import { BackLink } from '../ui/back-link';
 import type { EventDetail } from '../types';
 import { APP } from './copy';
 import { SignInCard } from './row';
+import { imgAttrs } from '../img';
+import { MOMENT } from '../ui/moments';
 
 type Aspect = 'sound' | 'crowd' | 'value' | 'org' | 'queue' | 'food';
 interface Recap {
@@ -121,7 +123,7 @@ function RecapForm({ lang, ev }: { lang: Lang; ev: EventDetail }) {
           {photos.map((u) => (
             <div key={u} className="kd-mtile relative">
               { }
-              <img src={u} alt="" />
+              <img {...imgAttrs(u, MOMENT, true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
               <button type="button" className="kd-ib kd-ib-sm kd-glass absolute right-1 top-1 text-fg-1" aria-label={T.removePhoto} onClick={() => setPhotos((xs) => xs.filter((x) => x !== u))}><XIcon size={14} aria-hidden="true" /></button>
             </div>
           ))}

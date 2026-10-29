@@ -237,11 +237,14 @@ describe('sign-up and sign-in', () => {
 
   it('tells a page who is signed in without an error for a visitor, and keeps answers private', async () => {
     const visitor = await env.as().get('/auth/session?optional=1');
-    assert.deepEqual([visitor.status, visitor.body], [200, { user: null }]);
+    // Both answers carry the API's clock: the site's "today" and countdowns follow it, and ask /health nothing.
+    const now = env.clock.now().toISOString();
+    assert.deepEqual([visitor.status, visitor.body], [200, { user: null, time: now }]);
     assert.equal((await env.as().get('/auth/session')).status, 401, 'without ?optional=1 it still says who is missing');
     const token = await emailUser(env, 'private.answers@example.com');
     const mine = await env.as(token).get('/auth/session?optional=1');
     assert.equal(mine.body.user.email, 'private.answers@example.com');
+    assert.equal(mine.body.time, env.clock.now().toISOString());
     assert.equal(mine.headers['cache-control'], 'private, no-store');
     assert.equal((await env.as(token).get('/me')).headers['cache-control'], 'private, no-store');
   });

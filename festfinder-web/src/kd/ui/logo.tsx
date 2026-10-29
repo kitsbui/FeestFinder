@@ -12,11 +12,13 @@ import { KdLink as Link, inLang } from '../link';
 const RATIO = 5560 / 1080;
 
 export function Logo({ lang = 'vi', height = 22, mark = false, className }: { lang?: Lang; height?: number; mark?: boolean; className?: string }) {
+  // The height in CSS too: Tailwind's `img { height: auto }` would leave it unsized to the browser, which
+  // then names the logo for every layout shift around it.
   return (
     <Link href={inLang('/', lang)} aria-label={pick(COMMON, lang).homeLink} className={cx('inline-flex h-11 min-w-11 shrink-0 items-center', className)}>
       {mark
-        ? <img src="/kd/ff-mark.svg" alt="" width={height} height={height} />
-        : <img src="/kd/ff-wordmark.svg" alt="" width={Math.round(height * RATIO)} height={height} />}
+        ? <img src="/kd/ff-mark.svg" alt="" width={height} height={height} style={{ height }} />
+        : <img src="/kd/ff-wordmark.svg" alt="" width={Math.round(height * RATIO)} height={height} style={{ height }} />}
     </Link>
   );
 }
@@ -31,7 +33,7 @@ export function FlagLoader({ lang = 'vi', size = 56 }: { lang?: Lang; size?: num
     <div role="status" aria-label={pick(COMMON, lang).loading} className="flex min-h-dvh items-center justify-center">
       <picture>
         <source media="(prefers-reduced-motion: reduce)" srcSet="/kd/ff-mark.svg" />
-        <img src="/kd/ff-mark-wave.svg" alt="" width={size} height={size} />
+        <img src="/kd/ff-mark-wave.svg" alt="" width={size} height={size} style={{ height: size }} />
       </picture>
     </div>
   );

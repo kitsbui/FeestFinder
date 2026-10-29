@@ -70,7 +70,10 @@
   .kd-btn:hover { background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 0 0 1px var(--color-line-2); }
   .kd-btn-acc { background: var(--gradient-accent); color: var(--color-on-accent); font-weight: 600; box-shadow: none; }
   .kd-btn-acc:hover { background: var(--gradient-accent); box-shadow: none; filter: brightness(1.06) saturate(1.05); }
-  .kd-btn-glow { animation: var(--animate-kd-glow); }
+  .kd-btn-glow::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+    box-shadow: 0 0 22px 2px color-mix(in srgb, var(--color-lime) 50%, transparent); animation: var(--animate-kd-glow);
+  }
   /* Not a tone: the one button on a warning bar (the Console's "viewing as"), dark on the amber. */
   .kd-btn-dark { background: var(--color-on-inverse); color: var(--color-inverse); box-shadow: none; }
   .kd-btn-dark:hover { background: color-mix(in srgb, var(--color-on-inverse) 86%, var(--color-white)); box-shadow: none; }
@@ -87,6 +90,7 @@
   .kd-btn:disabled, .kd-btn[aria-disabled='true'] { opacity: 0.38; cursor: default; }
   /* A primary that cannot act yet: a quiet surface, not a murky gradient. */
   .kd-btn-acc:disabled, .kd-btn-acc[aria-disabled='true'] { opacity: 1; background: var(--color-surface-2); color: var(--color-fg-3); box-shadow: inset 0 0 0 1px var(--color-line-1); filter: none; animation: none; }
+  .kd-btn-acc:disabled::before, .kd-btn-acc[aria-disabled='true']::before { animation: none; opacity: 0; }
   .kd-btn-sm::after, .kd-chip::after, .kd-ib-sm::after { content: ''; position: absolute; inset: -4px 0; }
   /* 32px segments and 36px steppers keep a 44px hit area. */
   .kd-seg > button::after { content: ''; position: absolute; inset: -6px 0; }
@@ -563,8 +567,8 @@
 
   /* ---- skeleton while a client part loads ---- */
   .kd-skel { border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); }
-  /* The list waits for the newcomer's city or country (web/list/city-first.tsx): its place kept, hidden, 2.5 s at most. */
-  html[data-city-first] [data-list], html[data-place-first] [data-list] { visibility: hidden; animation: kd-list-wait 0s linear 2.5s forwards; }
+  /* The list waits for the newcomer's city or country, or the address's filters (web/list/city-first.tsx): its place kept, hidden, 2.5 s at most. */
+  html[data-city-first] [data-list], html[data-place-first] [data-list], html[data-list-wait] [data-list] { visibility: hidden; animation: kd-list-wait 0s linear 2.5s forwards; }
   @keyframes kd-list-wait { to { visibility: visible; } }
 
   /* ---- touch targets: 44 × 44px at least (e2e/next/targets.spec.ts); last, so they win over each part's own size ---- */
@@ -581,6 +585,10 @@
 @media print {
   .kd-nav, .kd-tabbar, .kd-dock, .kd-scrim { display: none !important; }
 }
+
+/* A filter other than the city (web/list/city-first.tsx): the highlight, which the browser drops (web/list/browser.tsx),
+   is never painted. Outside the layers, so it wins over the section's own `flex`. */
+html[data-asked] :is([data-surface="flagship"], [data-surface="shelf"]) { display: none; }
 
 /* The sheet's backdrop: the page dims behind a modal. */
 .kd-sheet::backdrop {

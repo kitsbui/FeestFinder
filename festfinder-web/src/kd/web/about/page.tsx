@@ -52,7 +52,7 @@ export async function AboutPage({ lang }: { lang: Lang }) {
       <KdProvider lang={lang}>
         <div className="flex min-h-dvh flex-col" lang={lang}>
           <WebNav lang={lang} />
-          <main className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
+          <main id="main" className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
             <header className="flex max-w-read flex-col gap-4">
               <span className="kd-m">{T.title}</span>
               <h1 className="kd-d1">{T.headline}</h1>

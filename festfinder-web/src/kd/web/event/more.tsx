@@ -13,9 +13,14 @@ import { Accordion } from '../../ui/parts';
 import { WEB } from '../copy';
 import { CalendarRow } from './calendar';
 
-/** Loaded when their rows open (design v2 phase 14), never with the page. */
-const DiscussionSection = dynamic(() => import('./community').then((m) => m.DiscussionSection), { ssr: false });
-const Hype = dynamic(() => import('./community').then((m) => m.Hype), { ssr: false });
+/**
+ * Loaded when their rows open (design v2 phase 14), never with the page. While the code comes, the
+ * row holds the height of its first line (an "Đặt câu hỏi" or a hype button), so what follows the
+ * section does not jump twice on a slow phone.
+ */
+const Holding = () => <div className="min-h-11" aria-hidden="true" />;
+const DiscussionSection = dynamic(() => import('./community').then((m) => m.DiscussionSection), { ssr: false, loading: Holding });
+const Hype = dynamic(() => import('./community').then((m) => m.Hype), { ssr: false, loading: Holding });
 import { useEvent } from './context';
 import { GoTogetherRow } from './friends';
 

@@ -10,6 +10,7 @@ import { pick, type Lang, type Pair, tx } from '../../copy';
 import { useKd } from '../../runtime';
 import { buttonClass, IconButton } from '../../ui/actions';
 import { LIST } from './copy';
+import { imgAttrs, square } from '../../img';
 
 export interface Ad { id: string; brand: string; logo: string | null; logoUrl?: string | null; image?: string | null; headline: Pair; body: Pair; cta: Pair; url: string | null; sponsoredLabel: Pair; why: Pair }
 
@@ -32,7 +33,7 @@ export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
       <span className="kd-av kd-av-sq h-12 w-12 text-base" aria-hidden="true">
         <span>{ad.logo || ad.brand.slice(0, 2)}</span>
         {/* The brand's logo is a link it gave; the initials show under it if it does not open. */}
-        {ad.logoUrl ? <img src={ad.logoUrl} alt="" loading="lazy" referrerPolicy="no-referrer" /> : null}
+        {ad.logoUrl ? <img {...imgAttrs(ad.logoUrl, square(48), true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : null}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="kd-m" title={tx(ad.why, lang)}>{tx(ad.sponsoredLabel, lang)} · {ad.brand}</span>
@@ -41,7 +42,7 @@ export function AdBanner({ ad, lang }: { ad: Ad; lang: Lang }) {
       </div>
       {ad.image ? (
          
-        <img src={ad.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="hidden h-16 w-24 shrink-0 rounded-seg object-cover tab:block" />
+        <img {...imgAttrs(ad.image, square(96), true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" className="hidden h-16 w-24 shrink-0 rounded-seg object-cover tab:block" />
       ) : null}
       {ad.url ? (
         <a className={buttonClass({ size: 'sm' })} href={ad.url} target={ad.url.startsWith('/') ? undefined : '_blank'} rel={ad.url.startsWith('/') ? undefined : 'noopener sponsored'} onClick={click}>

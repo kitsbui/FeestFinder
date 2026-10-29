@@ -2,5 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "regions": ["hnd1"],
-  "git": { "deploymentEnabled": { "**": true } }
+  "git": { "deploymentEnabled": { "**": true } },
+  "headers": [
+    { "source": "/img/(.*)", "headers": [{ "key": "x-vercel-enable-rewrite-caching", "value": "1" }] }
+  ]
 }

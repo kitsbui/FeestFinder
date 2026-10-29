@@ -55,3 +55,37 @@ test('Thai text fetches the Thai file; Japanese text adds Noto Sans JP', async (
   await page.evaluate(() => document.fonts.load('16px "Noto Sans JP Variable"', '東京のテクノ'));
   await expect.poll(async () => (await fontFiles(page)).map((f) => f.name).join(' ')).toMatch(/noto-sans-jp-\d+-wght/);
 });
+
+/*
+ * Only text one can see asks for Noto Sans JP: a page's data in a script (a Tokyo venue in the
+ * list's data, a language's name in an attribute) adds nothing.
+ */
+test('CJK that is not shown adds no Noto Sans JP', async ({ page }) => {
+  await settle(page, '/');
+  await page.evaluate(() => {
+    const data = document.createElement('script');
+    data.type = 'application/json';
+    data.textContent = '"渋谷区 円山町"';
+    document.body.append(data);
+    const box = document.createElement('div');
+    box.dataset.name = '日本語';
+    box.innerHTML = '<template><p>東京</p></template><script type="application/json">"東京"</script>';
+    document.querySelector('main, ff-app')!.append(box);
+  });
+  await page.waitForTimeout(500);
+  await expect(page.locator('link[href="/fonts/noto-sans-jp.css"]')).toHaveCount(0);
+});
+
+/* Emoji and Korean are not CJK ideographs: a party emoji in a title or Hangul in a name adds nothing. */
+test('emoji and Hangul add no Noto Sans JP', async ({ page }) => {
+  await settle(page, '/');
+  await page.evaluate(() => {
+    for (const t of ['🎉 Rave 🔊', '서울 테크노']) {
+      const p = document.createElement('p');
+      p.textContent = t;
+      document.querySelector('main, ff-app')!.append(p);
+    }
+  });
+  await page.waitForTimeout(500);
+  await expect(page.locator('link[href="/fonts/noto-sans-jp.css"]')).toHaveCount(0);
+});

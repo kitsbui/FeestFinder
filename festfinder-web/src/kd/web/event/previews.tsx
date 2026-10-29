@@ -13,6 +13,7 @@ import { KdLink as Link, inLang } from '../../link';
 import { Art } from '../../ui/parts';
 import { WEB } from '../copy';
 import { useEvent } from './context';
+import { square } from '../../img';
 
 export function ListenFirst({ lang }: { lang: Lang }) {
   const { ev } = useEvent();
@@ -42,7 +43,7 @@ export function ListenFirst({ lang }: { lang: Lang }) {
                 onClick={() => { setPlaying(m.id); FF.track('mix_play', { kind: m.provider, surface: 'event' }); }}
               >
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-tag">
-                  <Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" />
+                  <Art title={m.title} family="edm" cover={m.thumbnailUrl} fit={square(56)} className="absolute inset-0 rounded-none" />
                   <span className="absolute inset-0 grid place-items-center bg-surface-0/30 text-fg-1 transition-colors duration-(--dur-1) group-hover:bg-surface-0/10" aria-hidden="true"><PlayIcon size={20} weight="fill" /></span>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">

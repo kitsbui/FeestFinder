@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Request } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 import { ACCOUNTS, ROUTES } from './routes.ts';
 
@@ -121,6 +121,71 @@ test('a phone: scrolling down hides the frame, scrolling up brings it back (ui/i
   await page.mouse.wheel(0, -200);
   await expect(away).toHaveCount(0);
   await expect(page.getByRole('navigation', { name: 'Chính' }).getByText('Đã lưu', { exact: true })).toBeInViewport();
+  expect(problems).toEqual([]);
+  await ctx.close();
+});
+
+test('a link prefetches its page once someone reaches for it; only the five places as soon as they are in sight (owner, 2026-10-22)', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const problems = watch(page);
+  /** The addresses the router prefetched, without its _rsc, and the prefetches not answered yet. */
+  const prefetched: string[] = [];
+  const pending = new Set<Request>();
+  page.on('request', (r) => {
+    if (!r.headers()['next-router-prefetch']) return;
+    pending.add(r);
+    const u = new URL(r.url());
+    u.searchParams.delete('_rsc');
+    prefetched.push(u.pathname + u.search);
+  });
+  page.on('requestfinished', (r) => pending.delete(r));
+  page.on('requestfailed', (r) => pending.delete(r));
+  const settled = async () => { await expect.poll(() => [...pending].map((r) => r.url())).toEqual([]); await page.waitForTimeout(300); };
+  const pathOf = (a: string) => new URL(a, 'http://x').pathname;
+  await page.goto('/?lang=en');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  // On a phone the places are the tab bar (Sự kiện reloads the list, so it is a plain link), prefetched
+  // with and without their query; nothing else, not one card.
+  await expect.poll(() => prefetched).toContain('/blog?lang=en');
+  await settled();
+  expect(prefetched.filter((p) => !['/a', '/blog', '/saved', '/profile'].includes(pathOf(p)))).toEqual([]);
+
+  // A pointer over a card's name: that one page, once (and its path without the query, as Next does).
+  const titles = page.getByRole('main').locator('a.kd-ev-title');
+  const first = titles.first();
+  const href = (await first.getAttribute('href'))!;
+  expect(href).toMatch(/^\/e\/[^?]+\?lang=en$/);
+  prefetched.length = 0;
+  await first.hover();
+  await expect.poll(() => prefetched).toContain(href);
+  await settled();
+  expect(prefetched.filter((p) => p === href)).toHaveLength(1);
+  expect(new Set(prefetched.map(pathOf))).toEqual(new Set([pathOf(href)]));
+  const once = prefetched.length;
+  await page.mouse.move(0, 0);
+  await first.hover();
+  await settled();
+  expect(prefetched).toHaveLength(once);
+
+  // A tap opens the page.
+  await first.tap();
+  await expect(page).toHaveURL((u) => u.pathname + u.search === href);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+  // Focus (a keyboard) reaches for a page too: an event's organiser (a page of its own kind: Next
+  // fetches nothing more for a second event, whose route it already knows).
+  // (A full load: what the last page left in flight is not this page's.)
+  prefetched.length = 0;
+  pending.clear();
+  await page.goto('/e/ravo?lang=en');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  const org = page.locator('a[href="/o/ravoent?lang=en"]').first();
+  await expect.poll(() => prefetched).toContain('/blog?lang=en');
+  await settled();
+  expect(prefetched).not.toContain('/o/ravoent?lang=en');
+  await org.focus();
+  await expect.poll(() => prefetched).toContain('/o/ravoent?lang=en');
   expect(problems).toEqual([]);
   await ctx.close();
 });

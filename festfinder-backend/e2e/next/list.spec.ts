@@ -258,3 +258,78 @@ test.describe('the list, the home page', () => {
     await expect(page.locator('link[rel="alternate"][hreflang="vi"]')).toHaveAttribute('href', /^https?:\/\/[^/]+\/?$/);
   });
 });
+
+/*
+ * One city's list, /?city=<slug> with nothing else the list reads, is drawn on the server in every
+ * language (festfinder-web/src/kd/web/list/city.tsx, rewritten to app/(kd)/in/[city] by
+ * next.config.ts): the browser asks the API nothing on load and swaps nothing on screen. Any other
+ * filter still goes through the browser.
+ */
+test.describe("one city's list, drawn on the server", () => {
+  /** The links of the list's own events in a page's HTML (not the highlight's above it). */
+  const listed = (html: string) => {
+    const list = html.slice(html.indexOf('data-list'), html.indexOf('</main>'));
+    return [...new Set([...list.matchAll(/href="\/e\/([^"?]+)/g)].map((m) => m[1]))].sort();
+  };
+  type Answer = { items: { slug: string; city: string; past?: boolean }[] };
+  const slugs = (a: Answer) => a.items.filter((e) => !e.past).map((e) => e.slug).sort();
+
+  test('a city with no night is the empty panel, and a city with nights shows only its own', async ({ request }) => {
+    const every = (await (await request.get('/events?time=all&upcoming=true&limit=60')).json()) as Answer;
+    const hcmc = (await (await request.get('/events?city=ho-chi-minh&time=all&upcoming=true&limit=60')).json()) as Answer;
+    expect(slugs(hcmc).length).toBeGreaterThan(0);
+    expect(every.items.filter((e) => e.city === 'ha-noi')).toEqual([]);
+    const hanoi = await (await request.get('/?city=ha-noi&lang=en')).text();
+    expect(hanoi).toContain('Nothing matches');
+    expect(listed(hanoi)).toEqual([]);
+    expect(hanoi).toMatch(/<h1\b[^>]*>Every event · Hanoi<\/h1>/);
+    for (const path of ['/?city=ho-chi-minh', '/?city=ho-chi-minh&lang=en']) {
+      const html = await (await request.get(path)).text();
+      expect(listed(html), path).toEqual(slugs(hcmc));
+    }
+  });
+
+  test('opening it asks the API for no list, and the address stays as it was', async ({ page }) => {
+    const asked: string[] = [];
+    page.on('request', (r) => { if (new URL(r.url()).pathname === '/events') asked.push(r.url()); });
+    const problems = await open(page, '/?city=ho-chi-minh&lang=en');
+    await expect(page.getByRole('heading', { level: 1, name: 'Every event · Ho Chi Minh City' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Filters' }).getByRole('button', { name: /^City/ })).toContainText('Ho Chi Minh City');
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await page.waitForLoadState('networkidle');
+    expect(asked).toEqual([]);
+    await expect(page).toHaveURL(/\/\?city=ho-chi-minh&lang=en$/);
+    expect(problems).toEqual([]);
+  });
+
+  test('a city with another filter is still the browser\'s list of that filter', async ({ page, request }) => {
+    // The server's page is not the filter's: the rewrite takes only an address that names nothing else.
+    const techno = slugs((await (await request.get('/events?city=ho-chi-minh&style=techno&time=all&upcoming=true&limit=60')).json()) as Answer);
+    expect(listed(await (await request.get('/?city=ho-chi-minh&style=techno')).text()).some((x) => !techno.includes(x))).toBe(true);
+    const asked: string[] = [];
+    page.on('request', (r) => { if (new URL(r.url()).pathname === '/events') asked.push(r.url()); });
+    await open(page, '/?city=ho-chi-minh&style=techno');
+    await expect.poll(() => asked.length).toBe(1);
+    expect(asked[0]).toMatch(/city=ho-chi-minh/);
+    expect(asked[0]).toMatch(/style=techno/);
+    await expect(cards(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(cards(page).filter({ hasText: 'HOZO' })).toHaveCount(0);
+  });
+
+  test('a city the site does not list leads to the home page in its language, never a page of its own', async ({ request }) => {
+    for (const [from, to] of [['/?city=atlantis', '/'], ['/?city=atlantis&lang=en', '/?lang=en'], ['/?city=atlantis&lang=ja', '/?lang=ja']]) {
+      const res = await request.get(from, { maxRedirects: 0 });
+      expect(res.status(), from).toBe(307);
+      // Next writes the header twice on the first render of a redirect (the same address both times).
+      expect([...new Set(res.headers().location.split(', '))], from).toEqual([to]);
+    }
+  });
+
+  test('its own address leads to the home page\'s', async ({ request }) => {
+    for (const [from, to] of [['/in/ho-chi-minh', '/?city=ho-chi-minh'], ['/in/ho-chi-minh/en', '/?city=ho-chi-minh&lang=en'], ['/in/ha-noi/th', '/?city=ha-noi&lang=th']]) {
+      const res = await request.get(from, { maxRedirects: 0 });
+      expect(res.status(), from).toBe(308);
+      expect(res.headers().location, from).toBe(to);
+    }
+  });
+});

@@ -5,6 +5,8 @@ import { emailUser } from './people.ts';
 import { artistKey, backfillArtists, ensureArtists } from '../src/services/artists.ts';
 import { refreshDerived } from '../src/services/events.ts';
 import { one } from '../src/db/index.ts';
+import { STYLES } from '../src/lib/styles.ts';
+import { launchedCities } from '../src/lib/places.ts';
 
 describe('artists', () => {
   let env: TestEnv;
@@ -75,6 +77,16 @@ describe('artists', () => {
     await env.ctx.db.query(`update artists set name = 'Slim V' where slug = 'slimv'`);
     assert.equal((await env.as().get('/artists/slimv')).body.artist.followers, before, 'followers follow the profile, not the spelling');
     await env.ctx.db.query(`update artists set name = 'SlimV' where slug = 'slimv'`);
+  });
+
+  it("the artist's own profile comes with every style and launched city the form offers", async () => {
+    const slimvUser = await env.login('slimv@example.com', 'festfinder123');
+    const me = await env.as(slimvUser).get('/me/artist');
+    assert.equal(me.status, 200);
+    const styles = me.body.options.styles as { value: string; label: { en: string; vi: string } }[];
+    assert.deepEqual(styles.map((s) => s.value), STYLES.map((s) => s.key));
+    assert.deepEqual(me.body.options.cities, launchedCities().map((c) => ({ value: c.slug, label: c.name })));
+    assert.ok(styles.every((s) => s.label.en && s.label.vi), 'each style is named in both languages');
   });
 
   it('a follow made by name joins the profile at boot, and a claim takes over follows and Smart Alerts of the name', async () => {

@@ -11,6 +11,7 @@ import { Art } from '../../ui/parts';
 import { BLOG } from './copy';
 import { say, type Track } from './model';
 import { cx } from '../../cx';
+import { square } from '../../img';
 
 export function PostTracks({ lang, tracks }: { lang: Lang; tracks: Track[] }) {
   const T = pick(BLOG, lang);
@@ -40,7 +41,7 @@ export function PostTracks({ lang, tracks }: { lang: Lang; tracks: Track[] }) {
                 onClick={() => { setPlaying(m.id); FF.track('mix_play', { kind: m.provider, surface: 'blog' }); }}
               >
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-tag">
-                  <Art title={m.title} family="edm" cover={m.thumbnailUrl} className="absolute inset-0 rounded-none" />
+                  <Art title={m.title} family="edm" cover={m.thumbnailUrl} fit={square(56)} className="absolute inset-0 rounded-none" />
                   <span className="absolute inset-0 grid place-items-center bg-surface-0/30 text-fg-1 transition-colors duration-(--dur-1) group-hover:bg-surface-0/10" aria-hidden="true"><PlayIcon size={20} weight="fill" /></span>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">

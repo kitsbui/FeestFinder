@@ -17,7 +17,8 @@
     ".data",
     "e2e/.cache",
     "test-results",
-    "playwright-report"
+    "playwright-report",
+    "tools/lighthouse/node_modules"
   ],
   "rules": {
     "typescript/no-floating-promises": "error",
@@ -33,7 +34,8 @@
     {
       "files": [
         "test/**",
-        "e2e/**"
+        "e2e/**",
+        "tools/**/*.test.ts"
       ],
       "rules": {
         "typescript/no-floating-promises": "off"

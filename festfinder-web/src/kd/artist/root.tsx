@@ -22,7 +22,7 @@ import { Avatar, Card as Panel } from '../ui/parts';
 import { FlagLoader, Logo } from '../ui/logo';
 import { Shell, SideNav } from '../ui/shell';
 import { WorkspaceSwitch } from '../ui/workspaces';
-import { AskHost } from '../console/kit';
+import { AskHost, type Early } from '../console/kit';
 import { ARTIST } from './copy';
 
 export type ArtistScreen = 'profile' | 'mixes' | 'gigs' | 'opportunities' | 'gear';
@@ -38,10 +38,29 @@ export function useArtist(): ArtistCtx {
   return v;
 }
 
+/**
+ * The profile screen's /me/artist, asked beside the session rather than after it (the cookie rides
+ * along either way): the profile takes it once (`takeProfile`, through useLoad's `first`), drawing
+ * it at once when it is already in; a visitor who turns out not to be an artist leaves it unread.
+ */
+let early: Early<unknown> | null = null;
+export const takeProfile = <T,>(): Early<T> | null => {
+  const e = early as Early<T> | null;
+  early = null;
+  return e;
+};
+
 export function ArtistRoot({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('vi');
-  // What this device chose, else the site's first-visit language (kd/lang-pref.ts).
-  useEffect(() => { setLang(place.lang() ?? DEFAULT_LANG); }, []);
+  useEffect(() => {
+    // What this device chose, else the site's first-visit language (kd/lang-pref.ts).
+    setLang(place.lang() ?? DEFAULT_LANG);
+    if (location.pathname.replace(/\/$/, '') === '/studio/artist' && !early) {
+      const asked: Early<unknown> = { promise: FF.get('/me/artist') };
+      asked.promise.then((d) => { asked.data = d; }, () => {});
+      early = asked;
+    }
+  }, []);
   return (
     <KdProvider lang={lang}>
       <Gate lang={lang}>{children}</Gate>
@@ -126,7 +145,7 @@ function Studio({ lang, artist, children }: { lang: Lang; artist: ArtistRef; chi
   return (
     <Ctx.Provider value={{ lang, artist }}>
       <AskHost lang={lang}>
-        <Shell nav={nav}>{children}</Shell>
+        <Shell lang={lang} nav={nav}>{children}</Shell>
       </AskHost>
     </Ctx.Provider>
   );

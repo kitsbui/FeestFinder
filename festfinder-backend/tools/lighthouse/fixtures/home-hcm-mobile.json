@@ -1,0 +1,743 @@
+{
+ "lighthouseVersion": "13.4.1",
+ "requestedUrl": "https://feestfinder.com/?city=ho-chi-minh&lang=en",
+ "finalDisplayedUrl": "https://feestfinder.com/?city=ho-chi-minh&lang=en",
+ "fetchTime": "2026-10-21T09:45:49.984Z",
+ "runWarnings": [
+  "The page loaded too slowly to finish within the time limit. Results may be incomplete."
+ ],
+ "environment": {
+  "benchmarkIndex": 2295.5
+ },
+ "configSettings": {
+  "formFactor": "mobile"
+ },
+ "categories": {
+  "performance": {
+   "id": "performance",
+   "score": 0.5,
+   "auditRefs": [
+    {
+     "id": "first-contentful-paint",
+     "weight": 10
+    },
+    {
+     "id": "largest-contentful-paint",
+     "weight": 25
+    },
+    {
+     "id": "total-blocking-time",
+     "weight": 30
+    },
+    {
+     "id": "cumulative-layout-shift",
+     "weight": 25
+    },
+    {
+     "id": "speed-index",
+     "weight": 10
+    }
+   ]
+  }
+ },
+ "audits": {
+  "first-contentful-paint": {
+   "id": "first-contentful-paint",
+   "score": 0.99,
+   "scoreDisplayMode": "numeric",
+   "numericValue": 1098.766
+  },
+  "largest-contentful-paint": {
+   "id": "largest-contentful-paint",
+   "score": 0.23,
+   "scoreDisplayMode": "numeric",
+   "numericValue": 5216.016249999999
+  },
+  "total-blocking-time": {
+   "id": "total-blocking-time",
+   "score": 0.51,
+   "scoreDisplayMode": "numeric",
+   "numericValue": 581.5
+  },
+  "cumulative-layout-shift": {
+   "id": "cumulative-layout-shift",
+   "score": 0.37,
+   "scoreDisplayMode": "numeric",
+   "numericValue": 0.3132801430789961
+  },
+  "speed-index": {
+   "id": "speed-index",
+   "score": 1,
+   "scoreDisplayMode": "numeric",
+   "numericValue": 1470.0056556454401
+  },
+  "interactive": {
+   "id": "interactive",
+   "score": 0.61,
+   "scoreDisplayMode": "numeric",
+   "numericValue": 6323.514424999999
+  },
+  "lcp-discovery-insight": {
+   "id": "lcp-discovery-insight",
+   "score": 0,
+   "scoreDisplayMode": "numeric",
+   "details": {
+    "type": "list",
+    "items": [
+     {
+      "type": "checklist",
+      "items": {
+       "priorityHinted": {
+        "label": "fetchpriority=high should be applied",
+        "value": false
+       },
+       "requestDiscoverable": {
+        "label": "Request is discoverable in initial document",
+        "value": true
+       },
+       "eagerlyLoaded": {
+        "label": "LCP resources should not use loading=lazy",
+        "value": false
+       }
+      }
+     },
+     {
+      "type": "node",
+      "lhId": "page-0-IMG",
+      "path": "1,HTML,1,BODY,1,FF-APP,1,DIV,4,MAIN,2,SECTION,1,DIV,0,ARTICLE,0,DIV,0,A,0,DIV,2,IMG",
+      "selector": "div.kd-ev-art > a > div.kd-art > img.kd-cover",
+      "boundingRect": {
+       "top": 259,
+       "bottom": 347,
+       "left": 16,
+       "right": 104,
+       "width": 88,
+       "height": 88
+      },
+      "snippet": "<img src=\"https://d3vhc53cl8e8km.cloudfront.net/hello-staging/wp-content/uploads/sit…\" alt=\"\" loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\" class=\"kd-cover\">",
+      "nodeLabel": "div.kd-ev-art > a > div.kd-art > img.kd-cover"
+     }
+    ]
+   }
+  },
+  "lcp-breakdown-insight": {
+   "id": "lcp-breakdown-insight",
+   "score": 1,
+   "scoreDisplayMode": "informative",
+   "details": {
+    "type": "list",
+    "items": [
+     {
+      "type": "table",
+      "headings": [
+       {
+        "key": "label",
+        "valueType": "text",
+        "label": "Subpart"
+       },
+       {
+        "key": "duration",
+        "valueType": "ms",
+        "label": "Duration"
+       }
+      ],
+      "items": [
+       {
+        "subpart": "timeToFirstByte",
+        "label": "Time to first byte",
+        "duration": 321.125
+       },
+       {
+        "subpart": "resourceLoadDelay",
+        "label": "Resource load delay",
+        "duration": 328.021
+       },
+       {
+        "subpart": "resourceLoadDuration",
+        "label": "Resource load duration",
+        "duration": 411.853
+       },
+       {
+        "subpart": "elementRenderDelay",
+        "label": "Element render delay",
+        "duration": 44.661
+       }
+      ]
+     },
+     {
+      "type": "node",
+      "lhId": "page-0-IMG",
+      "path": "1,HTML,1,BODY,1,FF-APP,1,DIV,4,MAIN,2,SECTION,1,DIV,0,ARTICLE,0,DIV,0,A,0,DIV,2,IMG",
+      "selector": "div.kd-ev-art > a > div.kd-art > img.kd-cover",
+      "boundingRect": {
+       "top": 259,
+       "bottom": 347,
+       "left": 16,
+       "right": 104,
+       "width": 88,
+       "height": 88
+      },
+      "snippet": "<img src=\"https://d3vhc53cl8e8km.cloudfront.net/hello-staging/wp-content/uploads/sit…\" alt=\"\" loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\" class=\"kd-cover\">",
+      "nodeLabel": "div.kd-ev-art > a > div.kd-art > img.kd-cover"
+     }
+    ]
+   }
+  },
+  "network-requests": {
+   "id": "network-requests",
+   "score": 1,
+   "scoreDisplayMode": "informative",
+   "details": {
+    "type": "table",
+    "items": [
+     {
+      "url": "https://feestfinder.com/?city=ho-chi-minh&lang=en",
+      "statusCode": 200,
+      "resourceType": "Document",
+      "transferSize": 15781,
+      "priority": "VeryHigh"
+     },
+     {
+      "url": "https://feestfinder.com/kd/ff-wordmark.svg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 4387,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/3k3byg15la7pb.css",
+      "statusCode": 200,
+      "resourceType": "Stylesheet",
+      "transferSize": 22469,
+      "priority": "VeryHigh"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/3m13ccz6zvjqf.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 3940,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/1z-_fd8dn0l-2.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 9092,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/19f-84lyc8un4.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 73562,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/2m9nk_mr5kcl5.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 43481,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/turbopack-3wj0_1m28hj34.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 4285,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/2fjnsagprwj1d.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 4581,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/33sper1errokc.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 674,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/3hkfjudmrlfrw.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 12733,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/17jjqcwwgni22.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 11752,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/0w-was0oo_lop.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 11018,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/0e73-akj5lyy3.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 18423,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/1fcxg8_z45ouh.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 13185,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/manifest.webmanifest",
+      "statusCode": 200,
+      "resourceType": "Manifest",
+      "transferSize": 1680,
+      "priority": "Medium"
+     },
+     {
+      "url": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M20…",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M16…",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M88…",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M17…",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M23…",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M22…",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/media/noto-sans-latin-wght-normal.0ac9n74nuuqb5.woff2",
+      "statusCode": 200,
+      "resourceType": "Font",
+      "transferSize": 36134,
+      "priority": "VeryHigh"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/media/noto-sans-vietnamese-wght-normal.2cvjouf5jj5ml.woff2",
+      "statusCode": 200,
+      "resourceType": "Font",
+      "transferSize": 15359,
+      "priority": "VeryHigh"
+     },
+     {
+      "url": "https://d3vhc53cl8e8km.cloudfront.net/hello-staging/wp-content/uploads/sites/124/2026/03/08190923/edth_2026_mk_an_fest_site_seo_1200x630_r01.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 270996,
+      "priority": "High"
+     },
+     {
+      "url": "https://images.microcms-assets.io/assets/b898bb943976426d8860f3cf49a3be81/0b5ce0c66ed44a12aaf20c0d08b8e092/102926SONIC%20BOOM.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 639159,
+      "priority": "High"
+     },
+     {
+      "url": "https://media.megatix.com.au/e/75446/9HCBkugoTmMqeUniMQtgAtZM0f7qRS5IFZtd4gkt.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 294196,
+      "priority": "Low"
+     },
+     {
+      "url": "https://media.megatix.com.au/e/76575/bz7DUEFsKpc9WOLEKYXp5XKS4v9oXc7pKju2rZD8.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 312642,
+      "priority": "Low"
+     },
+     {
+      "url": "https://media.megatix.com.au/e/58642/IIDyXPrEoTVbJ3a3J0Py1Cf0pfWkGjAGQNCCT7rU.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 377758,
+      "priority": "Low"
+     },
+     {
+      "url": "https://media.megatix.com.au/e/76133/7D9SFoPyDRqhPz9xH6ff0jE11Tn5zeDFcQixWpkr.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 267406,
+      "priority": "Low"
+     },
+     {
+      "url": "https://media.megatix.com.au/e/74262/GHFVtWwcx0EuqRNdGIgBSUhmwfnQF0epJJi5SG5y.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 302229,
+      "priority": "Low"
+     },
+     {
+      "url": "https://media.megatix.com.au/e/73228/foFzMpeTv2JyDLlJV8g3Nqi7j6I6CK77xsOfh1Ir.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 209449,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/events?city=ho-chi-minh&time=all&upcoming=true&limit=60",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 1838,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/fonts/noto-sans-jp.css",
+      "statusCode": 200,
+      "resourceType": "Stylesheet",
+      "transferSize": 28705,
+      "priority": "VeryHigh"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/1e89m8wj0wtfv.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 1064,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/3o15ylkkewpit.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 1031,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/1ac5gtk9qpnbn.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 4790,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/health",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 253,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/auth/session?optional=1",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 725,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 539,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/a?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 391,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/blog?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 782,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/saved?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 69,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/1b1yf099xuakl.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 1717,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/profile?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 412,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/ui/assets/favicon.svg",
+      "statusCode": 200,
+      "resourceType": "Other",
+      "transferSize": 721,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/icons/app-icon-192.png",
+      "statusCode": 200,
+      "resourceType": "Other",
+      "transferSize": 22525,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/e/edc-thailand-th-2026-4m5n?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 12033,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/3ot8kzhf4c9kc.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/2ppcwdhxc7upg.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "https://d3vhc53cl8e8km.cloudfront.net/hello-staging/wp-content/uploads/sites/124/2026/03/08190923/edth_2026_mk_an_fest_site_seo_1200x630_r01.jpg",
+      "statusCode": 200,
+      "resourceType": "Image",
+      "transferSize": 0,
+      "priority": "High"
+     },
+     {
+      "url": "https://feestfinder.com/e/headsmasher-5-ns66?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 12419,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/?lang=en&_rsc=4dK6qjpWWAzb_OZa",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 10009,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/a?lang=en&_rsc=1vwYfVB7_E9t4fEj",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 221,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/blog?lang=en&_rsc=Ibj2_h3KULhML_Ik",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 42423,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/profile?lang=en&_rsc=1vwYfVB7_E9t4fEj",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 1145,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/_next/static/immutable/chunks/0-2mni9l6wkg4.js",
+      "statusCode": 200,
+      "resourceType": "Script",
+      "transferSize": 0,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 97,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/a?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 491,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/saved?lang=en&_rsc=1vwYfVB7_E9t4fEj",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 59,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 732,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/blog?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 62,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/a?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 420,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/blog?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 635,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/saved?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 63,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 494,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/blog?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 562,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/a?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 59,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/saved?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 275,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/profile?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 86,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/e/edc-thailand-th-2026-4m5n?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 84,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/profile?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 421,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/e/edc-thailand-th-2026-4m5n?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 11990,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/saved?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 265,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/e/headsmasher-5-ns66?_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 307,
+      "transferSize": 516,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/e/edc-thailand-th-2026-4m5n?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 11895,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/e/headsmasher-5-ns66?lang=en",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 12227,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/profile?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 325,
+      "priority": "Low"
+     },
+     {
+      "url": "https://feestfinder.com/e/headsmasher-5-ns66?lang=en&_rsc=ry-B8umWgNEV4JR9",
+      "statusCode": 200,
+      "resourceType": "Fetch",
+      "transferSize": 12188,
+      "priority": "Low"
+     }
+    ]
+   }
+  }
+ }
+}

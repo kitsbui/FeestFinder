@@ -141,6 +141,37 @@ test.describe('the artist page', () => {
     await expect(visitor.getByRole('heading', { level: 1 })).toHaveText(name);
     await expect(visitor.getByRole('link', { name: 'Chỉnh hồ sơ' })).toHaveCount(0);
   });
+
+  test('without a cover, their photo is the page’s main picture: fetched first, never lazily', async ({ page }) => {
+    await newAccount(page, `photo${Date.now() % 1_000_000}@example.com`);
+    expect((await page.request.post('/me/roles/artist', { data: { stageName: `Photo Owl ${Date.now() % 100000}`, roles: ['dj'] } })).ok()).toBeTruthy();
+    const slug = (await (await page.request.get('/auth/session')).json()).artist.slug;
+    // A link (the test API reads every https link as a picture).
+    const photo = `https://img.example/photo-${slug}.png`;
+    expect((await page.request.patch('/me/artist', { data: { imageUrl: photo } })).status()).toBe(200);
+    const html = await (await page.request.get('/a/' + slug)).text();
+    const high = [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((t) => /\bfetchpriority="high"/i.test(t));
+    expect(high, 'one picture first').toHaveLength(1);
+    // A copy its size (kd/img.ts): 128px on a phone, 192px from 760px.
+    const key = Buffer.from(photo).toString('base64url');
+    expect(high[0]).toMatch(new RegExp(`src="/img/\\d+x\\d+/${key}\\.webp"`));
+    expect(high[0]).toContain('sizes="(min-width: 760px) 192px, 128px"');
+    expect(high[0]).not.toContain('loading="lazy"');
+    // React preloads the same copies in the head.
+    const head = html.slice(0, html.indexOf('</head>'));
+    expect([...head.matchAll(/<link\b[^>]*>/g)].some(([t]) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && /\simagesrcset="[^"]*\/img\/192x192\//i.test(t) && t.includes(key))).toBe(true);
+
+    // In the directory (drawn again with the new photo, as the studio's save does: kd/fresh.ts), the grid's
+    // first picture is the page's one fetched first.
+    expect((await page.request.post('/kd-fresh', { data: { kind: 'a', slug } })).status()).toBe(204);
+    const dir = await (await page.request.get('/a')).text();
+    const grid = dir.slice(dir.indexOf('<ul class="kd-dir-cards'), dir.indexOf('</ul>', dir.indexOf('<ul class="kd-dir-cards')));
+    const tiles = [...grid.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]);
+    expect(tiles.length, 'a tile with a picture').toBeGreaterThan(0);
+    expect(tiles[0]).toMatch(/\bfetchpriority="high"/i);
+    expect(tiles[0]).not.toContain('loading="lazy"');
+    expect(tiles.slice(1).filter((t) => /\bfetchpriority="high"/i.test(t))).toEqual([]);
+  });
 });
 
 test.describe('mixes on the artist page', () => {
