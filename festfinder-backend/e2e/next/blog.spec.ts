@@ -127,10 +127,11 @@ test('the team approves the waiting editorial posts in one go, and the blog show
 /**
  * /blog's document, gzipped, at most (2026-10-29): it carried every listed post's facts, questions
  * and sources in both languages (51 KB in production for 24 cards; Lighthouse gave the list 79 on a
- * phone). GET /posts lists cards and the page sends each card's words in its language. Measured
- * with the editorial packs approved above, +1. Only goes down.
+ * phone). GET /posts lists cards and the page sends each card's words in its language: 18.1 KB here
+ * with the editorial packs approved above (the local preview's /blog went from 53 to 18), rounded up.
+ * Only goes down.
  */
-const BLOG_HTML_KB = 20;
+const BLOG_HTML_KB = 19;
 
 test('the list sends only what its cards draw, its first picture alone asks first, and "Tải thêm" adds the next', async ({ page }) => {
   const html = await (await page.request.get('/blog')).text();
