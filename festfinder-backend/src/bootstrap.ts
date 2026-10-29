@@ -18,6 +18,7 @@ import { fetchPublicPage } from './services/fetchpage.ts';
 import { FacebookOAuth, GoogleOAuth, InstagramOAuth, TikTokOAuth, MockOAuth } from './services/oauth.ts';
 import { checkLink } from './services/risk.ts';
 import { fakeImageFetcher, fakeImageFull, fetchImageFull, fetchImageHead } from './services/remote-images.ts';
+import { imageCdnFrom } from './services/image-cdn.ts';
 import { fakeAudio, fetchAudio } from './services/audio.ts';
 import { fakeOembed, fetchOembed } from './services/mixes.ts';
 import { addStarterSources } from './services/ingest/starter.ts';
@@ -114,6 +115,7 @@ export async function createContext(config: Config): Promise<Ctx> {
     fetchPage: (url: string) => fetchPublicPage(url),
     fetchImage: config.fakeRemoteMedia ? fakeImageFetcher : fetchImageHead,
     fetchImageFull: config.fakeRemoteMedia ? fakeImageFull : fetchImageFull,
+    imageCdn: imageCdnFrom(config, log),
     oembed: config.fakeRemoteMedia ? fakeOembed : fetchOembed,
     fetchAudio: config.fakeRemoteMedia ? fakeAudio : fetchAudio,
     oauth: { google: googleOAuth(), fb: oauthFor('fb'), ig: oauthFor('ig'), tiktok: process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET ? new TikTokOAuth(process.env.TIKTOK_CLIENT_KEY, process.env.TIKTOK_CLIENT_SECRET) : null },

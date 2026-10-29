@@ -67,6 +67,7 @@ import momentRoutes from './routes/moments.ts';
 import mixRoutes from './routes/mixes.ts';
 import feedbackRoutes from './routes/feedback.ts';
 import frontendRoutes from './routes/frontend.ts';
+import { kickImageCdn } from './services/image-cdn.ts';
 
 declare module 'fastify' {
   interface FastifyInstance { ctx: Ctx }
@@ -201,7 +202,8 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
    * scanner have their own tighter limits in their routes; webhooks and the static
    * files under /ui, /pages (Ops) and /files are not counted, nor the resized pictures
    * under /img: like /files they reach the API through the web app's unsigned rewrite,
-   * where every visitor would share one bucket, and the CDN keeps them.
+   * where every visitor would share one bucket, and the CDN keeps them (/img counts only the
+   * keys no row shows, routes/images.ts IMG_MISSES).
    *
    * Nor are calls from our own network with no client behind them: the Next.js app
    * rendering pages on the server, so a crawler burst cannot turn those pages into errors.
@@ -280,6 +282,13 @@ export async function buildApp(ctx: Ctx): Promise<FastifyInstance> {
   // answer under it.
   // A serverless function may be frozen once it has answered: the waiting log lines leave first.
   if (ctx.flushLogs) app.addHook('onResponse', async () => { await ctx.flushLogs!(); });
+  // A signed-in write may have taken a picture down or put a cover live: the CDN hears of it now,
+  // not at the next minute's job (services/image-cdn.ts; never in the tests).
+  if (ctx.imageCdn?.purge || ctx.imageCdn?.warm) {
+    app.addHook('onResponse', async (req, reply) => {
+      if (WRITE_METHODS.has(req.method) && req.session && reply.statusCode < 400) kickImageCdn(ctx);
+    });
+  }
 
   app.addHook('onSend', async (req, reply, payload) => {
     if (reply.hasHeader('cache-control')) return payload;
