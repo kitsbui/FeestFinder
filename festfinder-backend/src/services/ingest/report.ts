@@ -7,7 +7,7 @@ import { refreshDerived } from '../events.ts';
 import { refreshConfidence } from './confidence.ts';
 import { finalize, hostOf } from './normalize.ts';
 import { findSimilar, MATCH_RULES } from './resolve.ts';
-import { conflictsWith, createCandidate, enrich, flagRisk, matchVenue } from './run.ts';
+import { conflictsWith, createCandidate, enrich, flagRisk, matchVenue } from './candidate.ts';
 import { isRejection } from './types.ts';
 import { askOrganizerToAdd } from '../lineup.ts';
 

@@ -57,15 +57,16 @@ describe('EDM only', () => {
     // so it is taken again.
     await env.ctx.db.query('drop schema backup_before_031 cascade');
     // Since migration 051 the ticketing tables live in archive_ticketing; the old files still name them bare.
+    // Since 068 (Radar removed) raw_events and ingest_runs are gone: the old files' lines about them are skipped.
     const old = async (sql: string) => env.ctx.db.tx(async (q) => {
       await q.query('set local search_path to public, archive_ticketing');
-      for (const s of splitSql(sql)) await q.query(s);
+      for (const s of splitSql(sql)) if (!/\b(raw_events|ingest_runs)\b/.test(s)) await q.query(s);
     });
     await old(BACKUP);
     await old(MIGRATION);
     assert.equal(await count(env, 'backup_before_031.events'), events, 'every event is kept in the copy');
 
-    for (const t of ['events', 'saves', 'raw_events', 'event_sources']) assert.equal(await count(env, t), 0, t);
+    for (const t of ['events', 'saves', 'event_sources']) assert.equal(await count(env, t), 0, t);
     assert.deepEqual({ users: await count(env, 'users'), organizers: await count(env, 'organizers'), venues: await count(env, 'venues'), artists: await count(env, 'artists') }, kept);
     const src = (await one<any>(env.ctx.db, `select config, etag, content_hash, next_run_at from ingest_sources where name = 'TicketGo · Âm nhạc'`))!;
     assert.equal(src.config.requireStyle, true, 'a general music listing now needs an EDM style');

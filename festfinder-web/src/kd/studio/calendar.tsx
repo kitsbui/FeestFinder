@@ -1,18 +1,15 @@
 'use client';
 /**
  * Studio › Hồ sơ › "Lịch" (growth plan card 1): the two lines that put the organiser's FeestFinder
- * calendar on their own website, and an existing calendar (ICS, or a page with schema.org events)
- * connected so its nights come into Studio, waiting for review under their name.
+ * calendar on their own website. (Connecting an existing calendar left with Radar, 2026-11-04.)
  */
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { CopyIcon } from '@phosphor-icons/react/ssr';
-import { FF } from '@/runtime/ff';
-import { fill, pick, type Lang } from '../copy';
+import { pick, type Lang } from '../copy';
 import { useKd } from '../runtime';
 import { Button } from '../ui/actions';
-import { FieldLabel, Input, Segmented } from '../ui/forms';
+import { Segmented } from '../ui/forms';
 import { copyText } from '../console/parts';
-import { stamp } from '../console/kit';
 import { Block } from './parts';
 
 const COPY = {
@@ -24,15 +21,7 @@ const COPY = {
   theme: { en: 'Background', vi: 'Nền' },
   language: { en: 'Language', vi: 'Ngôn ngữ' },
   preview: { en: 'Preview', vi: 'Xem trước' },
-  connect: { en: 'Connect an existing calendar', vi: 'Kết nối lịch có sẵn' },
-  address: { en: 'Calendar address', vi: 'Địa chỉ lịch' },
-  connectBtn: { en: 'Connect', vi: 'Kết nối' },
-  disconnect: { en: 'Disconnect', vi: 'Ngắt' },
-  lastRead: { en: 'Last read {t}', vi: 'Đọc lần cuối {t}' },
-  inReview: { en: '{n} in review', vi: '{n} chờ duyệt' },
 };
-
-interface Calendar { url: string; lastReadAt: string | null; lastError: string | null; inReview: number }
 
 export function CalendarBlock({ lang, slug }: { lang: Lang; slug: string }) {
   const T = pick(COPY, lang);
@@ -40,26 +29,8 @@ export function CalendarBlock({ lang, slug }: { lang: Lang; slug: string }) {
   const [wlang, setWlang] = useState<Lang>(lang);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [preview, setPreview] = useState(false);
-  const [cal, setCal] = useState<Calendar | null | undefined>(undefined);
-  const [url, setUrl] = useState('');
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { FF.maybe(FF.get('/organizer/calendar'), { calendar: null }).then((r: { calendar: Calendar | null }) => setCal(r.calendar)); }, []);
   const origin = typeof location === 'undefined' ? 'https://feestfinder.com' : location.origin;
   const snippet = `<div data-ff-org="${slug}" data-ff-lang="${wlang}" data-ff-theme="${theme}" data-ff-limit="6"></div>\n<script src="${origin}/ui/widget/ff-widget.js" async></script>`;
-  const connect = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const r = await FF.post('/organizer/calendar', { url: url.trim() }) as { calendar: Calendar; message: unknown };
-      setCal(r.calendar);
-      setUrl('');
-      kd.toast(FF.text(r.message, lang));
-    } catch (err) { kd.toast(FF.errorText(err, lang)); } finally { setBusy(false); }
-  };
-  const disconnect = async () => {
-    setBusy(true);
-    try { await FF.del('/organizer/calendar'); setCal(null); } catch (err) { kd.toast(FF.errorText(err, lang)); } finally { setBusy(false); }
-  };
   return (
     <Block title={T.title}>
       <div className="flex flex-col gap-3">
@@ -74,26 +45,6 @@ export function CalendarBlock({ lang, slug }: { lang: Lang; slug: string }) {
           <Button size="sm" tone="ghost" aria-pressed={preview} onClick={() => setPreview(!preview)}>{T.preview}</Button>
         </div>
         {preview ? <WidgetPreview key={wlang + theme} slug={slug} lang={wlang} theme={theme} /> : null}
-      </div>
-      <div className="flex flex-col gap-3 border-t border-line-1 pt-4">
-        <h3 className="kd-hs">{T.connect}</h3>
-        {cal === undefined ? <div className="kd-skel h-12" aria-hidden="true" /> : cal ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="flex min-w-0 flex-col">
-              <span className="kd-s kd-ell text-fg-1">{cal.url}</span>
-              <span className="kd-s">{fill(T.lastRead, { t: stamp(cal.lastReadAt, lang) })} · {fill(T.inReview, { n: cal.inReview })}</span>
-            </span>
-            <Button size="sm" tone="ghost" disabled={busy} onClick={disconnect}>{T.disconnect}</Button>
-          </div>
-        ) : (
-          <form onSubmit={connect} className="flex flex-col gap-2">
-            <FieldLabel htmlFor="calUrl" hint="https://…">{T.address}</FieldLabel>
-            <div className="flex flex-wrap gap-2">
-              <Input id="calUrl" type="url" inputMode="url" className="min-w-0 flex-1" placeholder="https://" value={url} onChange={(e) => setUrl(e.target.value)} />
-              <Button type="submit" tone="acc" disabled={busy || !url.trim()}>{T.connectBtn}</Button>
-            </div>
-          </form>
-        )}
       </div>
     </Block>
   );

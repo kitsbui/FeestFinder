@@ -45,7 +45,9 @@ export async function ListPage({ lang, city, country }: { lang: Lang; city?: str
   const items = shelf ? shelf.items.slice(0, 8) : flagship.items;
   // Above the list, so its first picture is the page's first: fetched first, the one with high priority (the list's waits).
   const hero = items.find((e) => e.coverUrl)?.id;
-  const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} fit={DAY} />);
+  // A world festival names its country: the highlight shows every city's nights, whoever reads it.
+  const countryName = (code: string) => tx(meta.countries.find((c) => c.code === code)?.name, lang) || null;
+  const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} fit={DAY} country={countryName(e.country)} />);
   const highlight = shelf ? (
     <section key="shelf" aria-labelledby="shelf-h" data-surface="shelf" className="kd-days flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -68,7 +70,7 @@ export async function ListPage({ lang, city, country }: { lang: Lang; city?: str
           <WebNav lang={lang} current="list" />
           {/* Before the list, so a city this device chose that the server did not draw is known before the list is. */}
           <CityFirst meta={meta} drawn={known} />
-          <ListBrowser lang={lang} meta={meta} initial={initial} city={known} country={place} highlight={highlight} highlightArt={!!hero} />
+          <ListBrowser lang={lang} meta={meta} initial={initial} city={known} country={place} highlight={highlight} />
           {ad.ad ? <section className="kd-wrap pt-14"><AdBanner ad={ad.ad} lang={lang} /></section> : null}
           <div className="mt-auto pt-12"><WebFooter lang={lang} otherLang={lang === 'vi' ? { href: '/?lang=en', label: 'English' } : { href: '/', label: 'Tiếng Việt' }} /></div>
         </div>

@@ -126,6 +126,11 @@ test('a featured shelf takes the highlight slot, and says when it is paid for', 
     await expect(slot.getByText('Được tài trợ', { exact: true })).toBeVisible();
     await expect(slot.locator('a[href^="/e/"]').first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Lễ hội lớn thế giới' })).toHaveCount(0);
+    // A chosen city, or any filter, hides the highlight: testers read "Hà Nội · 0" over a Phuket festival as EDC in Hà Nội (2026-10-21).
+    await page.goto('/?city=ho-chi-minh');
+    await expect(page.locator('[data-surface]')).toHaveCount(0);
+    await page.goto('/?time=tonight');
+    await expect(page.locator('[data-surface]')).toHaveCount(0);
   } finally {
     await page.request.put(`/admin/shelves/${shelf.id}/items`, { data: { eventIds: shelf.items.map((i) => i.id) } });
     await page.request.patch(`/admin/shelves/${shelf.id}`, { data: { enabled: shelf.enabled, sponsored: shelf.sponsored, startsOn: shelf.startsOn, endsOn: shelf.endsOn } });
@@ -235,7 +240,9 @@ test('the first picture is fetched first, and a filtered address never paints th
     const html = await (await page.request.get('/')).text();
     const imgs = imgTags(html);
     const high = imgs.filter((t) => /\bfetchpriority="high"/i.test(t));
-    expect(high, 'one picture first').toHaveLength(1);
+    // Two since 2026-11-04: the highlight's first cover and the list's (on a phone the highlight is a row of 88px thumbs
+    // and the list's lead card is the page's largest picture).
+    expect(high, 'the highlight\'s first picture and the list\'s').toHaveLength(2);
     expect(high[0]).toBe(imgs.find((t) => /\bclass="kd-cover\b/.test(t) && /\bsrc="/.test(t)));
     // A copy the size of its box (kd/img.ts: /img on the API), with the ladder's widths beside it.
     const key = Buffer.from(cover).toString('base64url');
@@ -247,10 +254,9 @@ test('the first picture is fetched first, and a filtered address never paints th
     // React preloads the same copies, so the browser never fetches the picture twice.
     const head = html.slice(0, html.indexOf('</head>'));
     const preload = [...head.matchAll(/<link\b[^>]*>/g)].map(([t]) => t).filter((t) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && t.includes(key));
-    expect(preload, 'preloaded').toHaveLength(1);
+    expect(preload, 'preloaded').toHaveLength(2);
     const attr = (tag: string, name: string) => new RegExp(`\\s${name}="([^"]*)"`, 'i').exec(tag)?.[1];
-    expect(attr(preload[0], 'imagesrcset')).toBe(attr(high[0], 'srcset'));
-    expect(attr(preload[0], 'imagesizes')).toBe(attr(high[0], 'sizes'));
+    expect(preload.map((p) => attr(p, 'imagesrcset') + ' ' + attr(p, 'imagesizes')).sort()).toEqual(high.map((t) => attr(t, 'srcset') + ' ' + attr(t, 'sizes')).sort());
 
     // A filtered address on a phone: the highlight never shows, the list's first picture is the one.
     await page.setViewportSize({ width: 390, height: 844 });
@@ -290,4 +296,18 @@ test('the first picture is fetched first, and a filtered address never paints th
     await page.request.post(`/admin/events/${ev.id}/status`, { data: { action: 'take_down' } });
     await fresh(page.request);
   }
+});
+
+/*
+ * A night outside the visitor's country names its country after its city on its card (feedback, 2026-10-21:
+ * "Phuket, Thailand" at a glance). Here nobody's country is known, so every card names one; the page of a
+ * city leaves its own country off.
+ */
+test('a card names its country when the night is outside the visitor\'s country', async ({ page }) => {
+  await page.goto('/?lang=en');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await expect(page.locator('article.kd-ev').first()).toContainText(', Vietnam');
+  await page.goto('/?lang=en&city=ho-chi-minh');
+  await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+  await expect(page.locator('article.kd-ev').first()).not.toContainText(', Vietnam');
 });

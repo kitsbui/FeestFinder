@@ -590,7 +590,6 @@ export interface Rows {
     source_url: string | null;
     source_host: string | null;
     ingest_source_id: string | null;
-    raw_event_id: string | null;
     provider_confidence: number;
     match_score: number | null;
     match_reason: string | null;
@@ -848,21 +847,6 @@ export interface Rows {
   indexnow_sent: {
     url: string;
     sent_at: Date;
-  };
-  ingest_runs: {
-    id: string;
-    source_id: string;
-    started_at: Date;
-    finished_at: Date | null;
-    fetched: number;
-    parsed: number;
-    rejected: number;
-    created: number;
-    merged: number;
-    unchanged: number;
-    failed: number;
-    errors: unknown;
-    trigger: string;
   };
   ingest_sources: {
     id: string;
@@ -1227,23 +1211,6 @@ export interface Rows {
     refresh_token: string;
     expires_at: Date;
     updated_at: Date;
-  };
-  raw_events: {
-    id: string;
-    source_id: string;
-    provider: string;
-    external_id: string;
-    source_url: string | null;
-    payload: unknown;
-    content_hash: string;
-    fetched_at: Date;
-    last_seen_at: Date;
-    status: string;
-    error: string | null;
-    event_id: string | null;
-    match_score: number | null;
-    match_reason: string | null;
-    processed_at: Date | null;
   };
   recaps: {
     id: string;

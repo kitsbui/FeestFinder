@@ -18,8 +18,16 @@ import { ScriptFonts } from '@/kd/ui/script-fonts';
 import { FeedbackWidget } from '@/kd/feedback/widget';
 import { Vitals } from '@/kd/ui/vitals';
 import { InstallCapture, Worker } from '@/kd/ui/worker';
+import { PageLang } from '@/kd/ui/page-lang';
 
 export const metadata: Metadata = siteMetadata;
+
+/**
+ * The page's language on <html> before React arrives (feedback FF-007, 2026-11-04): the server HTML is one ISR
+ * copy per path and says "vi"; the address names the language (?lang=, kept by the rewrite), so this script sets
+ * it at once for screen readers; PageLang (kd/ui/page-lang.tsx) sets it again once React has drawn.
+ */
+const PAGE_LANG = "(function(){var l=new URLSearchParams(location.search).get('lang');if(l&&/^(en|th|ja|id)$/.test(l))document.documentElement.lang=l})()";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -35,6 +43,7 @@ export default function KdLayout({ children }: { children: ReactNode }) {
     // data-list-wait, data-asked), on purpose: those attributes are not a mismatch to warn about.
     <html lang="vi" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: PAGE_LANG }} />
         <ExtensionGuardScript />
         <InstallCapture />
       </head>
@@ -47,6 +56,7 @@ export default function KdLayout({ children }: { children: ReactNode }) {
           <BrokenCovers />
           <FeedbackWidget />
           <Vitals />
+          <PageLang />
           <Worker />
           <ExtensionGuardRelease />
         </ff-app>

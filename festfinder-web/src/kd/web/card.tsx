@@ -48,8 +48,10 @@ const LOOK_FIT: Record<CardLook, Fit> = { card: CARD, lead: LEAD, row: square(88
  * `morph`: the picture becomes the event page's hero when it opens (React's ViewTransition, design v2
  * phase 8). Only where an event appears once on the page (the list's days): two of one name would clash.
  */
-export function EventCard({ e, lang, look = 'card', morph = false, eager = false, fit = LOOK_FIT[look] }: {
+export function EventCard({ e, lang, look = 'card', morph = false, eager = false, fit = LOOK_FIT[look], country = null }: {
   e: Card; lang: Lang; look?: CardLook; morph?: boolean;
+  /** The country's name after the city, for a night outside the visitor's country (feedback, 2026-10-21). */
+  country?: string | null;
   /** Its picture loads first: the home page's first picture (list/page.tsx, days.tsx). */
   eager?: boolean;
   /** The box its picture is drawn in, when the look's own is not it. */
@@ -79,7 +81,7 @@ export function EventCard({ e, lang, look = 'card', morph = false, eager = false
         <Link href={href} className="kd-h kd-ev-title">{e.title}</Link>
         <span className="kd-s flex min-w-0 items-center gap-1.5">
           <span className="kd-mk" aria-hidden="true" />
-          <span className="kd-ell">{whenShort(e, lang)}{e.startTime ? ' · ' + e.startTime : ''}{e.venue.name ? ' · ' + e.venue.name : ''} · {tx(e.cityLabel, lang)}</span>
+          <span className="kd-ell">{whenShort(e, lang)}{e.startTime ? ' · ' + e.startTime : ''}{e.venue.name ? ' · ' + e.venue.name : ''} · {tx(e.cityLabel, lang)}{country ? ', ' + country : ''}</span>
         </span>
         <span className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className={cx('kd-mb kd-num', (e.isFree || e.entryMode === 'free') && 'text-info')}>{priceLine(e, lang)}</span>

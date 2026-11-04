@@ -8,12 +8,12 @@ const kualaLumpur: CityGuide = {
   city: null,
   name: { vi: 'Kuala Lumpur', en: 'Kuala Lumpur' },
   title: {
-    vi: 'Club ở Kuala Lumpur 2026: Kyō, Over & Above và khu TREC',
-    en: 'Clubs in Kuala Lumpur 2026: Kyō, Over & Above and TREC',
+    vi: 'Club ở Kuala Lumpur 2026: Kyo, Over & Above và khu TREC',
+    en: 'Clubs in Kuala Lumpur 2026: Kyo, Over & Above and TREC',
   },
   excerpt: {
-    vi: 'Đi club ở Kuala Lumpur năm 2026: Over & Above cho techno, Kyō và Pitt Club ở trung tâm, khu TREC mở đến 5 giờ sáng. Giờ mở, giá vé bằng ringgit, tuổi 21+ và Grab về nhà.',
-    en: 'Clubbing in Kuala Lumpur in 2026: Over & Above for techno, Kyō and Pitt Club downtown, the TREC strip open till 5 am. Hours, ringgit prices, the 21+ rule and a Grab home.',
+    vi: 'Đi club ở Kuala Lumpur năm 2026: Over & Above cho techno, Kyo và Pitt Club ở trung tâm, khu TREC mở đến 5 giờ sáng. Giờ mở, giá vé bằng ringgit, tuổi 21+ và Grab về nhà.',
+    en: 'Clubbing in Kuala Lumpur in 2026: Over & Above for techno, Kyo and Pitt Club downtown, the TREC strip open till 5 am. Hours, ringgit prices, the 21+ rule and a Grab home.',
   },
   cover: CLUB_MEDIA.kualaLumpur[0],
   figure: {
@@ -23,25 +23,25 @@ const kualaLumpur: CityGuide = {
   },
   styles: ['techno', 'hard-techno', 'house', 'edm', 'mainstage'],
   lead: {
-    vi: '**Club ở Kuala Lumpur** chia làm ba khu: TREC trên đường Tun Razak, mở đến 5 giờ sáng; Bukit Bintang và KLCC với Kyō, Pitt Club và Pisco Bar; và Chinatown với Over & Above, phòng techno của thành phố. Phần lớn các phòng chính chơi hip-hop, nên bài này chỉ giữ những nơi có nhạc điện tử thật sự, tháng 10/2026.',
-    en: '**Kuala Lumpur\'s clubs** fall into three areas: TREC on Jalan Tun Razak, open until 5 am; Bukit Bintang and KLCC with Kyō, Pitt Club and Pisco Bar; and Chinatown with Over & Above, the city\'s techno room. Most main rooms play hip-hop, so this guide keeps only the places with real electronic music, as of October 2026.',
+    vi: '**Club ở Kuala Lumpur** chia làm ba khu: TREC trên đường Tun Razak, mở đến 5 giờ sáng; Bukit Bintang và KLCC với Kyo, Pitt Club và Pisco Bar; và Chinatown với Over & Above, phòng techno của thành phố. Phần lớn các phòng chính chơi hip-hop, nên bài này chỉ giữ những nơi có nhạc điện tử thật sự, tháng 10/2026.',
+    en: '**Kuala Lumpur\'s clubs** fall into three areas: TREC on Jalan Tun Razak, open until 5 am; Bukit Bintang and KLCC with Kyo, Pitt Club and Pisco Bar; and Chinatown with Over & Above, the city\'s techno room. Most main rooms play hip-hop, so this guide keeps only the places with real electronic music, as of October 2026.',
   },
   quick: {
     areas: {
-      vi: 'TREC (438 Jalan Tun Razak) là khu club: năm khu với 24 điểm vui chơi, dãy Electric Boulevard là club. Tam giác vàng (Bukit Bintang/KLCC) có phố bar Changkat Bukit Bintang, Pisco Bar ở Jalan Mesui, Pitt Club ở Life Centre và Kyō dưới hầm Mandarin Oriental. Chinatown/Masjid Jamek có Over & Above. Bangsar (Jalan Telawi) là các bar nhỏ.',
-      en: 'TREC (438 Jalan Tun Razak) is the club precinct: five zones with 24 venues, the Electric Boulevard strip being the clubs. The Golden Triangle (Bukit Bintang/KLCC) has the Changkat Bukit Bintang bar street, Pisco Bar on Jalan Mesui, Pitt Club in Life Centre and Kyō under the Mandarin Oriental. Chinatown/Masjid Jamek has Over & Above. Bangsar (Jalan Telawi) has the smaller bars.',
+      vi: 'TREC (438 Jalan Tun Razak) là khu club: năm khu với 24 điểm vui chơi, dãy Electric Boulevard là club. Tam giác vàng (Bukit Bintang/KLCC) có phố bar Changkat Bukit Bintang, Pisco Bar ở Jalan Mesui, Pitt Club ở Life Centre và Kyo dưới hầm Mandarin Oriental. Chinatown/Masjid Jamek có Over & Above. Bangsar (Jalan Telawi) là các bar nhỏ.',
+      en: 'TREC (438 Jalan Tun Razak) is the club precinct: five zones with 24 venues, the Electric Boulevard strip being the clubs. The Golden Triangle (Bukit Bintang/KLCC) has the Changkat Bukit Bintang bar street, Pisco Bar on Jalan Mesui, Pitt Club in Life Centre and Kyo under the Mandarin Oriental. Chinatown/Masjid Jamek has Over & Above. Bangsar (Jalan Telawi) has the smaller bars.',
     },
     hours: {
-      vi: 'Đêm club thường là 22:00–03:00 (Kyō thứ Tư–Chủ nhật 22:00–03:00); khu TREC và The Iron Fairies mở đến 05:00 từ thứ Tư đến Chủ nhật. Phòng đông từ khoảng 23:00 đến nửa đêm. Không thấy luật giờ đóng cửa chung: đây là giờ của từng nơi.',
-      en: 'A club night usually runs 22:00–03:00 (Kyō Wednesday to Sunday 22:00–03:00); the TREC precinct and The Iron Fairies stay open until 05:00 from Wednesday to Sunday. Rooms fill from about 23:00 to midnight. No citywide closing law was found: these are each venue\'s own hours.',
+      vi: 'Đêm club thường là 22:00–03:00 (Kyo thứ Tư–Chủ nhật 22:00–03:00); khu TREC và The Iron Fairies mở đến 05:00 từ thứ Tư đến Chủ nhật. Phòng đông từ khoảng 23:00 đến nửa đêm. Không thấy luật giờ đóng cửa chung: đây là giờ của từng nơi.',
+      en: 'A club night usually runs 22:00–03:00 (Kyo Wednesday to Sunday 22:00–03:00); the TREC precinct and The Iron Fairies stay open until 05:00 from Wednesday to Sunday. Rooms fill from about 23:00 to midnight. No citywide closing law was found: these are each venue\'s own hours.',
     },
     music: {
-      vi: 'Hip-hop và R&B dẫn đầu hầu hết các phòng chính. Nhạc điện tử nhỏ hơn nhưng rõ ràng: techno và hard techno ở Over & Above, house, techno và disco ở phòng Ren của Kyō, EDM big-room và house ở Pitt Club, và các đêm của nhóm tổ chức (Beatlab, Less Is More, Ohrwurm) ở The Iron Fairies và Pisco Bar.',
-      en: 'Hip-hop and R&B lead most main rooms. The electronic circuit is smaller but clear: techno and hard techno at Over & Above, house, techno and disco in Kyō\'s Ren room, big-room EDM and house at Pitt Club, and promoter nights (Beatlab, Less Is More, Ohrwurm) at The Iron Fairies and Pisco Bar.',
+      vi: 'Hip-hop và R&B dẫn đầu hầu hết các phòng chính. Nhạc điện tử nhỏ hơn nhưng rõ ràng: techno và hard techno ở Over & Above, house, techno và disco ở phòng Ren của Kyo, EDM big-room và house ở Pitt Club, và các đêm của nhóm tổ chức (Beatlab, Less Is More, Ohrwurm) ở The Iron Fairies và Pisco Bar.',
+      en: 'Hip-hop and R&B lead most main rooms. The electronic circuit is smaller but clear: techno and hard techno at Over & Above, house, techno and disco in Kyo\'s Ren room, big-room EDM and house at Pitt Club, and promoter nights (Beatlab, Less Is More, Ohrwurm) at The Iron Fairies and Pisco Bar.',
     },
     prices: {
-      vi: 'Ít club công bố giá. TREC không thu vé vào khu, nhưng các club thu phí vào cửa vào một số ngày; giá vào cửa Kyō công bố lần cuối là RM40 trước 01:00 và RM60 sau đó (2018). Đêm techno ở Over & Above bán vé qua Ticketmelon; bàn và chai phải đặt trước. Mọi con số đều cũ: hãy xem trang sự kiện.',
-      en: 'Few clubs publish prices. TREC charges no precinct entry, but its clubs add cover on some nights; Kyō\'s last published cover was RM40 before 01:00 and RM60 after (2018). Techno nights at Over & Above sell through Ticketmelon; booths and bottles are by reservation. Every figure is dated: check the event page.',
+      vi: 'Ít club công bố giá. TREC không thu vé vào khu, nhưng các club thu phí vào cửa vào một số ngày; giá vào cửa Kyo công bố lần cuối là RM40 trước 01:00 và RM60 sau đó (2018). Đêm techno ở Over & Above bán vé qua Ticketmelon; bàn và chai phải đặt trước. Mọi con số đều cũ: hãy xem trang sự kiện.',
+      en: 'Few clubs publish prices. TREC charges no precinct entry, but its clubs add cover on some nights; Kyo\'s last published cover was RM40 before 01:00 and RM60 after (2018). Techno nights at Over & Above sell through Ticketmelon; booths and bottles are by reservation. Every figure is dated: check the event page.',
     },
     home: {
       vi: 'Tàu LRT, MRT và Monorail chạy khoảng 06:00–23:00, chỉ kéo dài vào những đêm đặc biệt như Giao thừa và Merdeka. Sau nửa đêm là Grab: GrabCar và taxi có đồng hồ của Grab chạy 24/7 khắp Malaysia. TREC có bãi đỗ xe và dịch vụ đỗ hộ; lái xe khi say bị kiểm tra nồng độ và phạt nặng.',
@@ -70,7 +70,7 @@ const kualaLumpur: CityGuide = {
       },
     },
     {
-      name: 'Kyō KL',
+      name: 'Kyo KL',
       tagline: { vi: 'house và techno dưới hầm Mandarin Oriental', en: 'house and techno under the Mandarin Oriental' },
       area: { vi: 'KLCC', en: 'KLCC' },
       address: 'Mandarin Oriental Kuala Lumpur, Basement Level 3, Kuala Lumpur City Centre, 50450 Kuala Lumpur',
@@ -81,8 +81,8 @@ const kualaLumpur: CityGuide = {
       price: { vi: 'RM40 trước 01:00, RM60 sau đó (giá 2018); hiện không công bố', en: 'RM40 before 01:00, RM60 after (2018 prices); none published now' },
       url: 'https://clubkyokl.asia/',
       why: {
-        vi: 'Kyō là chi nhánh Kuala Lumpur của club cùng tên ở Singapore, công bố tháng 6/2016 và mở dưới tầng hầm B3 của khách sạn Mandarin Oriental; khi Kyō Singapore đóng tháng 6/2017, đội ngũ chuyển hẳn sang chi nhánh này (Bandwagon). Khoảng 6.000 ft² trên hai tầng, sức chứa khoảng 770 (Time Out KL, 2019), phòng Ren có tranh Nhật và cửa shoji tre. Những năm đầu, Kyō mang về Seth Troxler, Dubfire và Pan-Pot với chính sách chỉ house và techno; nay phòng chính chơi hip-hop và R&B, còn phòng Ren giữ house, techno và disco. Vé qua TicketMelon hoặc WhatsApp, bàn đặt trước.',
-        en: 'Kyō is the Kuala Lumpur branch of the Singapore club of the same name, announced in June 2016 and opened on Basement Level 3 of the Mandarin Oriental; when Kyō Singapore closed in June 2017, the team moved its focus here (Bandwagon). About 6,000 sq ft over two floors, around 770 capacity (Time Out KL, 2019), with Japanese art and bamboo shoji doors in the Ren room. In its early years Kyō brought Seth Troxler, Dubfire and Pan-Pot under a house-and-techno-only policy; today the main room plays hip-hop and R&B while Ren keeps house, techno and disco. Tickets through TicketMelon or WhatsApp, booths by reservation.',
+        vi: 'Kyo là chi nhánh Kuala Lumpur của club cùng tên ở Singapore, công bố tháng 6/2016 và mở dưới tầng hầm B3 của khách sạn Mandarin Oriental; khi Kyo Singapore đóng tháng 6/2017, đội ngũ chuyển hẳn sang chi nhánh này (Bandwagon). Khoảng 6.000 ft² trên hai tầng, sức chứa khoảng 770 (Time Out KL, 2019), phòng Ren có tranh Nhật và cửa shoji tre. Những năm đầu, Kyo mang về Seth Troxler, Dubfire và Pan-Pot với chính sách chỉ house và techno; nay phòng chính chơi hip-hop và R&B, còn phòng Ren giữ house, techno và disco. Vé qua TicketMelon hoặc WhatsApp, bàn đặt trước.',
+        en: 'Kyo is the Kuala Lumpur branch of the Singapore club of the same name, announced in June 2016 and opened on Basement Level 3 of the Mandarin Oriental; when Kyo Singapore closed in June 2017, the team moved its focus here (Bandwagon). About 6,000 sq ft over two floors, around 770 capacity (Time Out KL, 2019), with Japanese art and bamboo shoji doors in the Ren room. In its early years Kyo brought Seth Troxler, Dubfire and Pan-Pot under a house-and-techno-only policy; today the main room plays hip-hop and R&B while Ren keeps house, techno and disco. Tickets through TicketMelon or WhatsApp, booths by reservation.',
       },
     },
     {
@@ -178,14 +178,14 @@ Many guides still mention Zouk KL, but it closed for good in November 2020 after
     vi: [
       'Mang hộ chiếu: mọi club đều giới hạn 21+.',
       'Theo dõi Over & Above trên Ticketmelon, The Iron Fairies và Pisco Bar trên Resident Advisor.',
-      'Đến trước 23:00 ở The Iron Fairies và Kyō để tránh hàng.',
+      'Đến trước 23:00 ở The Iron Fairies và Kyo để tránh hàng.',
       'Tàu dừng khoảng 23:00: dùng GrabCar hoặc taxi đồng hồ của Grab để về.',
       'Giữ ly trong tầm mắt và tránh mọi chất cấm: luật Malaysia rất nặng.',
     ],
     en: [
       'Carry your passport: every club is 21+.',
       'Follow Over & Above on Ticketmelon, The Iron Fairies and Pisco Bar on Resident Advisor.',
-      'Arrive before 23:00 at The Iron Fairies and Kyō to skip the queue.',
+      'Arrive before 23:00 at The Iron Fairies and Kyo to skip the queue.',
       'Trains stop around 23:00: take GrabCar or Grab\'s metered taxis home.',
       'Keep your glass in sight and stay away from any drugs: Malaysian law is severe.',
     ],
@@ -205,7 +205,7 @@ Many guides still mention Zouk KL, but it closed for good in November 2020 after
     { label: { vi: 'Cập nhật', en: 'Updated' }, value: { vi: 'Tháng 10/2026', en: 'October 2026' } },
   ],
   faq: [
-    { q: { vi: 'Club techno nào ở Kuala Lumpur?', en: 'Where is techno in Kuala Lumpur?' }, a: { vi: 'Over & Above ở 53 Jalan Tun H.S. Lee, Chinatown, là phòng techno chính, với Jeff Mills và Angerfist năm 2026. Phòng Ren của Kyō và các đêm ở Pisco Bar, The Iron Fairies cũng chơi house và techno.', en: 'Over & Above at 53 Jalan Tun H.S. Lee, Chinatown, is the main techno room, with Jeff Mills and Angerfist in 2026. Kyō\'s Ren room and the nights at Pisco Bar and The Iron Fairies play house and techno too.' } },
+    { q: { vi: 'Club techno nào ở Kuala Lumpur?', en: 'Where is techno in Kuala Lumpur?' }, a: { vi: 'Over & Above ở 53 Jalan Tun H.S. Lee, Chinatown, là phòng techno chính, với Jeff Mills và Angerfist năm 2026. Phòng Ren của Kyo và các đêm ở Pisco Bar, The Iron Fairies cũng chơi house và techno.', en: 'Over & Above at 53 Jalan Tun H.S. Lee, Chinatown, is the main techno room, with Jeff Mills and Angerfist in 2026. Kyo\'s Ren room and the nights at Pisco Bar and The Iron Fairies play house and techno too.' } },
     { q: { vi: 'Zouk KL còn mở không?', en: 'Is Zouk KL still open?' }, a: { vi: 'Không. Zouk KL đóng hẳn tháng 11/2020. Toà nhà mở lại năm 2022 với tên Spark Club, nhưng chưa xác minh được Spark còn hoạt động năm 2026.', en: 'No. Zouk KL closed for good in November 2020. The building reopened in 2022 as Spark Club, but Spark could not be verified as open in 2026.' } },
     { q: { vi: 'Đi club ở Kuala Lumpur cần bao nhiêu tuổi?', en: 'What is the clubbing age in Kuala Lumpur?' }, a: { vi: '21 tuổi: tuổi mua rượu hợp pháp ở Malaysia là 21 từ năm 2017. Mang hộ chiếu.', en: '21: Malaysia\'s legal purchase age for alcohol has been 21 since 2017. Carry your passport.' } },
     { q: { vi: 'Club ở Kuala Lumpur mở đến mấy giờ?', en: 'How late do Kuala Lumpur clubs open?' }, a: { vi: 'Thường đến 03:00; khu TREC và The Iron Fairies mở đến 05:00 từ thứ Tư đến Chủ nhật.', en: 'Usually until 03:00; the TREC precinct and The Iron Fairies stay open until 05:00 from Wednesday to Sunday.' } },
@@ -216,7 +216,7 @@ Many guides still mention Zouk KL, but it closed for good in November 2020 after
     { title: 'The best clubs for dancing in KL', url: 'https://www.timeout.com/kuala-lumpur/nightlife/best-clubs-for-dancing-in-kl', publisher: 'Time Out Kuala Lumpur' },
     { title: 'Post-pandemic partying: 5 KL clubs for a night out', url: 'https://zafigo.com/travel/zafigo-stories/20221209-partying-kl-clubs-night-out/', publisher: 'Zafigo' },
     { title: 'Myth and mayhem reign supreme at The Iron Fairies KL', url: 'https://www.freemalaysiatoday.com/category/leisure/2019/05/08/myth-and-mayhem-reign-supreme-at-the-iron-fairies-kl/', publisher: 'Free Malaysia Today' },
-    { title: 'Club Kyō to open in Kuala Lumpur', url: 'https://bandwagon.asia/articles/club-kyo-to-open-in-kuala-lumpur', publisher: 'Bandwagon' },
+    { title: 'Club Kyo to open in Kuala Lumpur', url: 'https://bandwagon.asia/articles/club-kyo-to-open-in-kuala-lumpur', publisher: 'Bandwagon' },
     { title: 'Zouk officially reopens, now called Spark Club KL', url: 'https://says.com/my/lifestyle/zouk-officially-reopens-now-called-spark-club-kl', publisher: 'SAYS' },
     { title: 'A traveller\'s guide to electronic music in Kuala Lumpur', url: 'https://newrhythmsmusic.com/2018/03/27/a-travellers-guide-to-electronic-music-in-kuala-lumpur/', publisher: 'New Rhythms' },
   ],

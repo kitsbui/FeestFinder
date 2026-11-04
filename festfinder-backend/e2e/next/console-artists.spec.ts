@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { signInWith, watch } from '../checks.ts';
 
 /*
- * The Console's artists, gear and sources (festfinder-web/src/kd/console/artists, sources),
- * signed in as the demo admin. These tests add rows (a source or two, an affiliate link), set
- * Kreo's other names and hide Kreo, then show it again; they delete nothing. "Run now" is never pressed: it reads the network.
+ * The Console's artists and gear (festfinder-web/src/kd/console/artists),
+ * signed in as the demo admin. These tests add rows (an affiliate link), set
+ * Kreo's other names and hide Kreo, then show it again; they delete nothing.
  */
 
 const ADMIN = { identifier: 'admin@feestfinder.com', password: 'festfinder-admin' };
@@ -18,8 +18,6 @@ async function open(page: Page, path: string) {
 
 const artistsNamed = async (page: Page, q: string) =>
   (await (await page.request.get('/admin/artists?q=' + encodeURIComponent(q))).json()).items as { name: string; aliases: string[] }[];
-const sources = async (page: Page) =>
-  (await (await page.request.get('/admin/sources')).json()).items as { id: string; name: string; enabled: boolean; config: Record<string, unknown> }[];
 
 test.describe('the Console: artists, gear and sources', () => {
   test.beforeEach(async ({ page }) => signInWith(page, ADMIN));
@@ -96,85 +94,6 @@ test.describe('the Console: artists, gear and sources', () => {
     // And back to none.
     await pickLink.selectOption('');
     await expect.poll(async () => (await gear())?.affiliateLinkId).toBeNull();
-    expect(problems).toEqual([]);
-  });
-
-  test('sources: add one (switched off), see it listed, open its runs and records, reprocess', async ({ page }) => {
-    const name = `E2E nguồn ${Date.now().toString(36)}`;
-    const problems = await open(page, '/console/sources');
-    await expect(page.getByRole('heading', { level: 1, name: 'Nguồn dữ liệu' })).toBeVisible();
-
-    await page.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
-    const form = page.getByRole('dialog', { name: 'Thêm nguồn' });
-    await expect(form.getByRole('button', { name: 'Trang web (schema.org)' })).toHaveAttribute('aria-pressed', 'true');
-    await form.getByLabel('Tên', { exact: true }).fill(name);
-    // Resident Advisor is never read automatically: the API says so under the address.
-    await form.getByLabel('Địa chỉ trang').fill('https://ra.co/events/1');
-    await form.getByRole('switch', { name: 'Đang bật' }).click();
-    await form.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
-    await expect(form.getByRole('alert').filter({ hasText: 'FeestFinder không tự động đọc trang này' })).toBeVisible();
-
-    await form.getByLabel('Địa chỉ trang').fill(`https://example.org/events-${Date.now()}`);
-    await form.getByLabel('Đọc cả các trang có đường dẫn chứa').fill('/event/');
-    await form.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Đã thêm nguồn' })).toBeVisible();
-    await expect(form).toBeHidden();
-    const row = page.getByRole('row').filter({ hasText: name });
-    await expect(row).toContainText('Tắt');
-    await expect(row).toContainText('Chưa chạy');
-    const added = (await sources(page)).find((s) => s.name === name)!;
-    expect(added.enabled).toBe(false);
-    expect(added.config).toEqual({ follow: '/event/', maxPages: 20 });
-
-    // A club's WordPress site (phase 18): the kind of post, a filter, the venue and its address travel in the config.
-    const club = `E2E club ${Date.now().toString(36)}`;
-    await page.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
-    await form.getByRole('button', { name: 'Trang venue (WordPress)' }).click();
-    await form.getByLabel('Tên', { exact: true }).fill(club);
-    await form.getByLabel('Địa chỉ trang').fill(`https://club-${Date.now()}.example/`);
-    await form.getByLabel('Loại bài').fill('events');
-    await form.getByLabel('Bộ lọc').fill('event-types=2');
-    await form.getByLabel('Địa điểm', { exact: true }).fill(club);
-    await form.getByLabel('Địa chỉ địa điểm').fill('8B Tạ Hiện');
-    await form.getByRole('switch', { name: 'Đang bật' }).click();
-    await form.getByRole('button', { name: 'Thêm nguồn', exact: true }).click();
-    await expect(form).toBeHidden();
-    await expect(page.getByRole('row').filter({ hasText: club })).toContainText('Trang venue (WordPress)');
-    expect((await sources(page)).find((s) => s.name === club)!.config).toEqual({ type: 'events', query: 'event-types=2', venue: club, address: '8B Tạ Hiện' });
-
-    await row.getByRole('button', { name: 'Mở ' + name }).click();
-    await expect(page).toHaveURL(new RegExp(`[?&]id=${added.id}`));
-    const detail = page.getByRole('dialog', { name });
-    await expect(detail.getByText('Chưa chạy lần nào')).toBeVisible();
-    await detail.getByRole('tab', { name: 'Bản ghi' }).click();
-    await expect(detail.getByText('Không có bản ghi')).toBeVisible();
-    await detail.getByRole('group', { name: 'Kết quả' }).getByRole('button', { name: 'Lỗi' }).click();
-    await expect(detail.getByText('Không có bản ghi')).toBeVisible();
-    // Reprocessing reads the records kept, not the network.
-    await detail.getByRole('button', { name: 'Xử lý lại' }).click();
-    await expect(page.getByRole('status').filter({ hasText: '0 mới · 0 gộp · 0 bỏ qua' })).toBeVisible();
-    await detail.getByRole('button', { name: 'Đóng' }).first().click();
-    await expect(page).not.toHaveURL(/[?&]id=/);
-    expect(problems).toEqual([]);
-  });
-
-  test('sources: editing keeps the config keys the form does not show', async ({ page }) => {
-    const name = `E2E giữ cấu hình ${Date.now().toString(36)}`;
-    const made = await page.request.post('/admin/sources', { data: {
-      adapter: 'website', name, url: `https://example.net/calendar-${Date.now()}`, authority: 'listing', enabled: false,
-      config: { follow: '^/event/', maxPages: 5, requireStyle: true, eventType: 'club' },
-    } });
-    expect(made.status()).toBe(201);
-
-    const problems = await open(page, '/console/sources');
-    await page.getByRole('button', { name: 'Sửa ' + name }).click();
-    const form = page.getByRole('dialog', { name });
-    await expect(form.getByLabel('Đọc cả các trang có đường dẫn chứa')).toHaveValue('^/event/');
-    await form.getByLabel('Tối đa số trang').fill('8');
-    await form.getByRole('button', { name: 'Lưu', exact: true }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Đã lưu nguồn' })).toBeVisible();
-    const saved = (await sources(page)).find((s) => s.name === name)!;
-    expect(saved.config).toEqual({ follow: '^/event/', maxPages: 8, requireStyle: true, eventType: 'club' });
     expect(problems).toEqual([]);
   });
 });

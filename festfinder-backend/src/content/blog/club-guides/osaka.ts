@@ -44,12 +44,12 @@ const osaka: CityGuide = {
       en: 'Prices are published per night, and the big clubs usually include a drink: Owl ¥1,500–3,500 (men), free to ¥2,500 (women); Piccadilly Premium ¥1,000–3,000; Circus ¥2,000–3,000; Joule ¥3,000–4,000 for international guests, ¥2,000 under 24, ¥1,500 on Wednesdays for Osaka residents; Noon+Cafe ¥1,500–2,500 plus a drink.',
     },
     home: {
-      vi: 'Umeda, Shinsaibashi và Namba cách nhau ba ga trên tuyến Midōsuji; club chạy đến chuyến tàu đầu. Giữa hai giờ đó là taxi: khoảng ¥400–750 cho 1–2 km đầu, phụ thu khoảng 20% từ 22:00 đến 05:00; ứng dụng GO, Uber và DiDi đều chạy.',
-      en: 'Umeda, Shinsaibashi and Namba are three stops apart on the Midōsuji line; clubs run until the first trains. In between, take a taxi: about ¥400–750 for the first 1–2 km, with about 20% added from 22:00 to 05:00; the GO, Uber and DiDi apps all work.',
+      vi: 'Umeda, Shinsaibashi và Namba cách nhau ba ga trên tuyến Midosuji; club chạy đến chuyến tàu đầu. Giữa hai giờ đó là taxi: khoảng ¥400–750 cho 1–2 km đầu, phụ thu khoảng 20% từ 22:00 đến 05:00; ứng dụng GO, Uber và DiDi đều chạy.',
+      en: 'Umeda, Shinsaibashi and Namba are three stops apart on the Midosuji line; clubs run until the first trains. In between, take a taxi: about ¥400–750 for the first 1–2 km, with about 20% added from 22:00 to 05:00; the GO, Uber and DiDi apps all work.',
     },
     safety: {
-      vi: 'Tội phạm thấp, đồn cảnh sát kōban ở khắp nơi, số khẩn cấp 110. Bộ Ngoại giao Anh cảnh báo bỏ thuốc vào đồ uống và gian lận thẻ đang tăng ở khu giải trí: đừng theo cò mồi, xem giá trước khi vào. Ma tuý, kể cả cần sa, bị cấm tuyệt đối. Mang hộ chiếu; nhiều club từ chối đồ thể thao, dép và hình xăm lộ.',
-      en: 'Crime is low, kōban police boxes are everywhere, and the emergency number is 110. The UK Foreign Office warns that drink spiking and card fraud are rising in nightlife districts: never follow touts, check prices before you go in. Drugs, cannabis included, are zero tolerance. Carry your passport; many clubs refuse sportswear, sandals and visible tattoos.',
+      vi: 'Tội phạm thấp, đồn cảnh sát koban ở khắp nơi, số khẩn cấp 110. Bộ Ngoại giao Anh cảnh báo bỏ thuốc vào đồ uống và gian lận thẻ đang tăng ở khu giải trí: đừng theo cò mồi, xem giá trước khi vào. Ma tuý, kể cả cần sa, bị cấm tuyệt đối. Mang hộ chiếu; nhiều club từ chối đồ thể thao, dép và hình xăm lộ.',
+      en: 'Crime is low, koban police boxes are everywhere, and the emergency number is 110. The UK Foreign Office warns that drink spiking and card fraud are rising in nightlife districts: never follow touts, check prices before you go in. Drugs, cannabis included, are zero tolerance. Carry your passport; many clubs refuse sportswear, sandals and visible tattoos.',
     },
   },
   clubs: [
@@ -129,8 +129,8 @@ const osaka: CityGuide = {
       price: { vi: 'Nam ¥1.500–3.500, nữ miễn phí–¥2.500, kèm một đồ uống', en: 'Men ¥1,500–3,500, women free to ¥2,500, with a drink' },
       url: 'https://owl-osaka.net/language/en/',
       why: {
-        vi: 'Owl mở năm 2012 dưới toà Umeda Rakutenchi, bốn phút từ cửa Midōsuji của ga JR Osaka, và theo cục du lịch đón hơn 400.000 lượt khách mỗi năm. Club có một trong những màn LED lớn nhất Nhật Bản, hai tầng với sàn chính và tầng trên dành cho VIP và khu riêng cho nữ, hơn 700 khách ngày thường và 1.500 cuối tuần. Đây là định chế của đêm thương mại ở Umeda chứ không phải club underground; nhạc là EDM và party với DJ "đẳng cấp thế giới". Mọi người đều bị kiểm tra giấy tờ và túi xách; quy định trang phục được áp dụng nghiêm.',
-        en: 'Owl opened in 2012 under the Umeda Rakutenchi Building, four minutes from the Midōsuji exit of JR Osaka Station, and according to the tourism bureau draws more than 400,000 visitors a year. It has one of the largest LED screens in Japan, two floors with the main floor and an upper deck for VIP and ladies-only areas, more than 700 guests on weekdays and 1,500 at weekends. It is Umeda\'s mainstream institution rather than an underground club; the music is EDM and party sets from "world-class DJs". Everyone\'s ID and bag are checked, and the dress code is strict.',
+        vi: 'Owl mở năm 2012 dưới toà Umeda Rakutenchi, bốn phút từ cửa Midosuji của ga JR Osaka, và theo cục du lịch đón hơn 400.000 lượt khách mỗi năm. Club có một trong những màn LED lớn nhất Nhật Bản, hai tầng với sàn chính và tầng trên dành cho VIP và khu riêng cho nữ, hơn 700 khách ngày thường và 1.500 cuối tuần. Đây là định chế của đêm thương mại ở Umeda chứ không phải club underground; nhạc là EDM và party với DJ "đẳng cấp thế giới". Mọi người đều bị kiểm tra giấy tờ và túi xách; quy định trang phục được áp dụng nghiêm.',
+        en: 'Owl opened in 2012 under the Umeda Rakutenchi Building, four minutes from the Midosuji exit of JR Osaka Station, and according to the tourism bureau draws more than 400,000 visitors a year. It has one of the largest LED screens in Japan, two floors with the main floor and an upper deck for VIP and ladies-only areas, more than 700 guests on weekdays and 1,500 at weekends. It is Umeda\'s mainstream institution rather than an underground club; the music is EDM and party sets from "world-class DJs". Everyone\'s ID and bag are checked, and the dress code is strict.',
       },
     },
     {
@@ -145,8 +145,8 @@ const osaka: CityGuide = {
       price: { vi: 'Khách nước ngoài: vào cửa và 2 đồ uống ¥1.000; uống không giới hạn ¥2.000', en: 'Foreign visitors: entry and 2 drinks ¥1,000; unlimited drinks ¥2,000' },
       url: 'https://giraffe-japan.com/',
       why: {
-        vi: 'Giraffe là cái tên nổi tiếng nhất của đêm thương mại Osaka. Mùa xuân 2025 club trở lại "trong một hình hài mới" ở tầng 5 toà Nakaza Kuidaore trên Dotonbori, khoảng 500 m², sửa mới toàn bộ đèn và âm thanh, với cà phê sân thượng ban ngày và show tối do nghệ sĩ EBIKEN dàn dựng. Nhạc là open format giữa hip-hop và EDM với DJ quốc tế và địa phương. Khách nước ngoài có vé rẻ kèm đồ uống và phải trình hộ chiếu ở cửa. Địa chỉ cũ ở Sōemonchō nay là Gala Resort, một club hip-hop lớn khác.',
-        en: 'Giraffe is the best-known name in Osaka\'s mainstream clubbing. In spring 2025 it returned "in a new form" on the fifth floor of the Nakaza Kuidaore Building on Dotonbori, about 500 m², with all-new lighting and sound, a rooftop café by day and a nightly stage show produced by the performer EBIKEN. The music is open format between hip-hop and EDM with international and local DJs. Foreign visitors get cheap tickets with drinks and must show a passport at the door. Its old Sōemonchō address now trades as Gala Resort, a big hip-hop club.',
+        vi: 'Giraffe là cái tên nổi tiếng nhất của đêm thương mại Osaka. Mùa xuân 2025 club trở lại "trong một hình hài mới" ở tầng 5 toà Nakaza Kuidaore trên Dotonbori, khoảng 500 m², sửa mới toàn bộ đèn và âm thanh, với cà phê sân thượng ban ngày và show tối do nghệ sĩ EBIKEN dàn dựng. Nhạc là open format giữa hip-hop và EDM với DJ quốc tế và địa phương. Khách nước ngoài có vé rẻ kèm đồ uống và phải trình hộ chiếu ở cửa. Địa chỉ cũ ở Soemoncho nay là Gala Resort, một club hip-hop lớn khác.',
+        en: 'Giraffe is the best-known name in Osaka\'s mainstream clubbing. In spring 2025 it returned "in a new form" on the fifth floor of the Nakaza Kuidaore Building on Dotonbori, about 500 m², with all-new lighting and sound, a rooftop café by day and a nightly stage show produced by the performer EBIKEN. The music is open format between hip-hop and EDM with international and local DJs. Foreign visitors get cheap tickets with drinks and must show a passport at the door. Its old Soemoncho address now trades as Gala Resort, a big hip-hop club.',
       },
     },
     {
@@ -169,7 +169,7 @@ const osaka: CityGuide = {
   tips: {
     vi: [
       'Mang hộ chiếu bản gốc: mọi club kiểm tra tuổi 20, có nơi kiểm tra cả túi.',
-      'Đi theo khu: Minami cho house và techno (Circus, Joule), Kita cho club lớn (Piccadilly, Owl). Hai khu cách nhau ba ga Midōsuji.',
+      'Đi theo khu: Minami cho house và techno (Circus, Joule), Kita cho club lớn (Piccadilly, Owl). Hai khu cách nhau ba ga Midosuji.',
       'Joule giảm còn ¥1.500 tối thứ Tư cho cư dân Osaka và ¥2.000 cho người dưới 24 tuổi.',
       'Ở club lớn, giá vào gần như luôn kèm một đồ uống; đến sớm để trả ít hơn.',
       'Không theo cò mồi ở Dotonbori; xem menu và phụ thu trước khi vào bar.',
@@ -177,7 +177,7 @@ const osaka: CityGuide = {
     ],
     en: [
       'Carry your original passport: every club checks for 20+, some check bags too.',
-      'Go by area: Minami for house and techno (Circus, Joule), Kita for the big clubs (Piccadilly, Owl). The two are three Midōsuji stops apart.',
+      'Go by area: Minami for house and techno (Circus, Joule), Kita for the big clubs (Piccadilly, Owl). The two are three Midosuji stops apart.',
       'Joule drops to ¥1,500 on Wednesdays for Osaka residents and ¥2,000 for under-24s.',
       'At the big clubs the door price nearly always includes a drink; arrive early to pay less.',
       'Never follow touts on Dotonbori; check the menu and cover before entering a bar.',

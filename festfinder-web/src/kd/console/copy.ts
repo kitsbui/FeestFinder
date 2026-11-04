@@ -18,7 +18,6 @@ export const CONSOLE = {
   tabOrganizers: { en: 'Organisers', vi: 'Nhà tổ chức' },
   tabVenues: { en: 'Venues', vi: 'Địa điểm' },
   tabArtists: { en: 'Artists', vi: 'Nghệ sĩ' },
-  tabSources: { en: 'Sources', vi: 'Nguồn dữ liệu' },
   tabPartners: { en: 'Ticket partners', vi: 'Đối tác vé' },
   tabAffiliate: { en: 'Affiliate', vi: 'Tiếp thị liên kết' },
   tabBrands: { en: 'Brand campaigns', vi: 'Chiến dịch thương hiệu' },

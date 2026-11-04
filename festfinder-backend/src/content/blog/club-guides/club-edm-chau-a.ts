@@ -23,7 +23,7 @@ ${fig('vi')}
 | TP.HCM | Quận 1, Quận 3 | Ciné Saigon, APLUS Saigon | Mainstage, house, melodic techno, Vinahouse | [Club ở TP.HCM](${g('club-sai-gon', 'vi')}) |
 | Đà Nẵng | Sông Hàn, An Thượng, Mỹ Khê | SAGA, Sky36 | Techno ở SAGA; EDM, Vinahouse | [Club ở Đà Nẵng](${g('club-da-nang', 'vi')}) |
 | Singapore | Clarke Quay, Marina Bay, CBD | Zouk, Marquee | EDM, house, techno ở CBD | [Club ở Singapore](${g('club-singapore', 'vi')}) |
-| Kuala Lumpur | TREC, Bukit Bintang, Chinatown | Over & Above, Kyō | Techno, house, EDM | [Club ở Kuala Lumpur](${g('club-kuala-lumpur', 'vi')}) |
+| Kuala Lumpur | TREC, Bukit Bintang, Chinatown | Over & Above, Kyo | Techno, house, EDM | [Club ở Kuala Lumpur](${g('club-kuala-lumpur', 'vi')}) |
 | Tokyo | Shibuya, Kabukicho, Aoyama, Ginza | WOMB, ZEROTOKYO | Techno, house, EDM | [Club ở Tokyo](${g('club-tokyo', 'vi')}) |
 | Osaka | Shinsaibashi, Umeda | Circus, Joule | Techno, house, EDM | [Club ở Osaka](${g('club-osaka', 'vi')}) |
 | Seoul | Itaewon, Hongdae, Gangnam | Cakeshop, Faust | Techno, house; EDM ở Gangnam | [Club ở Seoul](${g('club-seoul', 'vi')}) |
@@ -43,7 +43,7 @@ ${fig('vi')}
 
 **Singapore** có club xếp hạng cao nhất trong danh sách này: Zouk, hạng 17 DJ Mag Top 100 Clubs 2026, ở Clarke Quay. Marquee ở Marina Bay Sands và CÉ LA VI trên sân thượng là phòng lớn cho EDM, còn khu CBD và Tanjong Pagar giữ những phòng nhỏ chơi techno và house như Tuff Club, Rasa và MDLR. Singapore đắt nhất trong 11 thành phố: vé S$27–80, bàn từ S$1.000. Giờ đóng cửa được luật hoá: 3 giờ sáng từ Chủ nhật đến thứ Sáu và 4 giờ sáng thứ Bảy.
 
-**Kuala Lumpur** khác: phần lớn các phòng chính chơi hip-hop, nên nhạc điện tử nằm ở vài nơi rõ ràng. Over & Above ở Chinatown là phòng techno, với Jeff Mills và Angerfist năm 2026; Kyō dưới hầm Mandarin Oriental giữ house và techno ở phòng Ren; khu TREC mở đến 5 giờ sáng. Club ở Malaysia giới hạn 21 tuổi, và Zouk KL mà nhiều cẩm nang vẫn nhắc đã đóng hẳn từ tháng 11/2020.
+**Kuala Lumpur** khác: phần lớn các phòng chính chơi hip-hop, nên nhạc điện tử nằm ở vài nơi rõ ràng. Over & Above ở Chinatown là phòng techno, với Jeff Mills và Angerfist năm 2026; Kyo dưới hầm Mandarin Oriental giữ house và techno ở phòng Ren; khu TREC mở đến 5 giờ sáng. Club ở Malaysia giới hạn 21 tuổi, và Zouk KL mà nhiều cẩm nang vẫn nhắc đã đóng hẳn từ tháng 11/2020.
 
 ## Nhật Bản và Hàn Quốc: Tokyo, Osaka, Seoul
 
@@ -101,7 +101,7 @@ ${fig('en')}
 | Ho Chi Minh City | District 1, District 3 | Ciné Saigon, APLUS Saigon | Mainstage, house, melodic techno, Vinahouse | [Clubs in HCMC](${g('club-sai-gon', 'en')}) |
 | Da Nang | Hàn riverfront, An Thượng, Mỹ Khê | SAGA, Sky36 | Techno at SAGA; EDM, Vinahouse | [Clubs in Da Nang](${g('club-da-nang', 'en')}) |
 | Singapore | Clarke Quay, Marina Bay, CBD | Zouk, Marquee | EDM, house, techno in the CBD | [Clubs in Singapore](${g('club-singapore', 'en')}) |
-| Kuala Lumpur | TREC, Bukit Bintang, Chinatown | Over & Above, Kyō | Techno, house, EDM | [Clubs in Kuala Lumpur](${g('club-kuala-lumpur', 'en')}) |
+| Kuala Lumpur | TREC, Bukit Bintang, Chinatown | Over & Above, Kyo | Techno, house, EDM | [Clubs in Kuala Lumpur](${g('club-kuala-lumpur', 'en')}) |
 | Tokyo | Shibuya, Kabukicho, Aoyama, Ginza | WOMB, ZEROTOKYO | Techno, house, EDM | [Clubs in Tokyo](${g('club-tokyo', 'en')}) |
 | Osaka | Shinsaibashi, Umeda | Circus, Joule | Techno, house, EDM | [Clubs in Osaka](${g('club-osaka', 'en')}) |
 | Seoul | Itaewon, Hongdae, Gangnam | Cakeshop, Faust | Techno, house; EDM in Gangnam | [Clubs in Seoul](${g('club-seoul', 'en')}) |
@@ -121,7 +121,7 @@ ${fig('en')}
 
 **Singapore** has the highest-ranked club on this list: Zouk, No. 17 in DJ Mag's Top 100 Clubs 2026, at Clarke Quay. Marquee at Marina Bay Sands and CÉ LA VI on the rooftop are the big EDM rooms, while the CBD and Tanjong Pagar keep the smaller techno and house rooms such as Tuff Club, Rasa and MDLR. Singapore is the most expensive of the 11 cities: tickets S$27–80, tables from S$1,000. Closing time is set by law: 3 am from Sunday to Friday and 4 am on Saturday.
 
-**Kuala Lumpur** is different: most main rooms play hip-hop, so electronic music lives in a few clear places. Over & Above in Chinatown is the techno room, with Jeff Mills and Angerfist in 2026; Kyō under the Mandarin Oriental keeps house and techno in its Ren room; the TREC precinct stays open until 5 am. Malaysian clubs are 21 and over, and Zouk KL, which many guides still mention, closed for good in November 2020.
+**Kuala Lumpur** is different: most main rooms play hip-hop, so electronic music lives in a few clear places. Over & Above in Chinatown is the techno room, with Jeff Mills and Angerfist in 2026; Kyo under the Mandarin Oriental keeps house and techno in its Ren room; the TREC precinct stays open until 5 am. Malaysian clubs are 21 and over, and Zouk KL, which many guides still mention, closed for good in November 2020.
 
 ## Japan and Korea: Tokyo, Osaka, Seoul
 

@@ -1,20 +1,6 @@
 import { L, type Localized } from '../../lib/i18n.ts';
-import { icsAdapter } from './adapters/ics.ts';
-import { ticketmasterAdapter } from './adapters/ticketmaster.ts';
-import { websiteAdapter } from './adapters/website.ts';
-import { wordpressAdapter } from './adapters/wordpress.ts';
 import type { Authority } from './confidence.ts';
 import { hostOf } from './normalize.ts';
-import type { SourceAdapter } from './types.ts';
-
-/** The adapters a source can use. Adding one here is all a new kind of source needs. */
-export const ADAPTERS: Record<string, SourceAdapter> = {
-  website: websiteAdapter,
-  ics: icsAdapter,
-  ticketmaster: ticketmasterAdapter,
-  wordpress: wordpressAdapter,
-};
-export const ADAPTER_IDS = Object.keys(ADAPTERS) as [string, ...string[]];
 
 /** Who a fact came from, as shown in the Console and on the event page. */
 export const PROVIDER_LABEL: Record<string, Localized> = {

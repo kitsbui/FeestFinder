@@ -24,6 +24,6 @@ export const ROUTES: Record<Role, string[]> = {
     '/studio/ads', '/studio/gigs', '/studio/profile', '/studio/events/:first'],
   artist: ['/studio/artist', '/studio/artist/mixes', '/studio/artist/gigs', '/studio/artist/opportunities', '/studio/artist/gear'],
   admin: ['/console', '/console/overview', '/console/claims', '/console/reports', '/console/feedback', '/console/events', '/console/events/new',
-    '/console/organizers', '/console/venues', '/console/artists', '/console/sources', '/console/partners', '/console/affiliate', '/console/brands',
+    '/console/organizers', '/console/venues', '/console/artists', '/console/partners', '/console/affiliate', '/console/brands',
     '/console/projects', '/console/blog', '/console/news', '/console/featured', '/console/users', '/console/insights', '/console/audit', '/console/verification'],
 };

@@ -57,6 +57,9 @@ for (const lang of OTHER_LANGS) {
         await page.locator('html[data-kd-session]').waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
         await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
         for (const f of await overflow(page)) failures.push(`${path}: ${f}`);
+        // <html lang> names the language of the address the page ended on (feedback FF-007; the layout's inline
+        // script reads ?lang=; a page without Thai, Japanese or Indonesian goes to English and says so).
+        if (!await page.evaluate(() => document.documentElement.lang === (new URLSearchParams(location.search).get('lang') || 'vi'))) failures.push(`${path}: html lang does not match the address`);
       }
       expect(failures, failures.join('\n')).toEqual([]);
     });

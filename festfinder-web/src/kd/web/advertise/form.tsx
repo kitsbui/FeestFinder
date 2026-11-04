@@ -25,7 +25,7 @@ export function AdEnquiry({ lang }: { lang: Lang }) {
   const T = pick(ADVERTISE, lang);
   // Each request is a fresh form: "Send another" mounts a new one.
   const [round, setRound] = useState(0);
-  if (kd.session === undefined) return <div className="kd-skel h-[560px]" aria-hidden="true" />;
+  if (kd.session === undefined) return <div className="kd-skel h-[122px]" aria-hidden="true" />;
   if (!kd.user) {
     return (
       <Card className="flex flex-col items-start gap-4 p-[clamp(20px,3vw,28px)]" data-ff-gate>

@@ -203,7 +203,7 @@ describe('deployment', () => {
     assert.equal(plain.ssl, undefined);
   });
 
-  it('runs each job as often as its interval, never two heavy jobs in one call, ingest last', () => {
+  it('runs each job as often as its interval, never two heavy jobs in one call', () => {
     const start = 60 * 1000 * 240; // a minute that starts every cycle
     const runs = new Map<string, number>();
     const heavy = new Set(SCHEDULE.filter((s) => s.heavy).map((s) => s.job));
@@ -211,9 +211,8 @@ describe('deployment', () => {
       const due = dueJobs(m);
       for (const j of due) runs.set(j, (runs.get(j) ?? 0) + 1);
       assert.ok(due.filter((j) => heavy.has(j)).length <= 1, `minute ${m % 60}: ${due.join(', ')}`);
-      if (due.includes('ingest')) assert.equal(due.at(-1), 'ingest');
     }
-    assert.equal(SCHEDULE.length, 20);
+    assert.equal(SCHEDULE.length, 18);
     for (const s of SCHEDULE) assert.equal(runs.get(s.job), 240 / Math.max(1, Math.round(s.every / 60_000)), s.job);
     // The charts are tried every ten minutes, not once an hour at minute 0.
     assert.deepEqual([...Array(60).keys()].filter((m) => dueJobs(start + m).includes('refreshCharts')), [8, 18, 28, 38, 48, 58]);

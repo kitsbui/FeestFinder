@@ -21,7 +21,6 @@ import { fakeImageFetcher, fakeImageFull, fetchImageFull, fetchImageHead } from 
 import { imageCdnFrom } from './services/image-cdn.ts';
 import { fakeAudio, fetchAudio } from './services/audio.ts';
 import { fakeOembed, fetchOembed } from './services/mixes.ts';
-import { addStarterSources } from './services/ingest/starter.ts';
 import { logShipper } from './services/remote-logs.ts';
 import { appendAudit } from './services/audit.ts';
 
@@ -36,11 +35,6 @@ export async function createContext(config: Config): Promise<Ctx> {
   const unlabelled = db.kind === 'postgres' && await checkEnvironment(db, config.environment);
   await migrate(db, log);
   if (unlabelled) await claimEnvironment(db, config.environment, log);
-  // Production reads the starter sources from its first start; the team can turn any off in /console/sources.
-  if (config.env === 'production' && db.kind === 'postgres') {
-    const added = await addStarterSources(db, new Date());
-    if (added) log(`added ${added} starter event sources`);
-  }
   if (db.kind === 'postgres') log(`environment: ${config.environment}`);
   // The pinned clock exists for the demo data in the tests. On a shared database it would
   // stamp real orders, sessions and audit entries with a made-up date.

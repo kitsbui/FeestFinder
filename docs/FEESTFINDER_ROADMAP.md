@@ -2,6 +2,10 @@
 
 How each phase of [the implementation plan](FEESTFINDER_IMPLEMENTATION_PLAN.md) is progressing. Update this page in the same change as the work.
 
+**2026-11-04 (night):** friends' feedback of 2026-10-21 and Lighthouse: `<html lang>` follows `?lang=`, the highlight hides with any filter, a card names a night's country outside the visitor's, blog cards capped at 640px, breadcrumbs 44px rows, the advertise skeleton the card's height, Kyō/Midōsuji without macrons (no latin-ext font); the uptime check stays at 15 minutes until the owner edits `uptime.yml` (30 minutes decided; the push token lacks the workflow scope); mobile Lighthouse stays 95–97 on image-led pages by design (LCP = the hero after FCP), desktop 100.
+
+**2026-11-04:** Feest Radar ingestion was removed. Events are posted manually only (Studio, community form, artist gig reports). The ingest pipeline, adapters, starter sources, and the calendar source are gone. Candidate creation, matching, and confidence scoring remain for manual posts. `ingest_runs` and `raw_events` tables dropped; migration `068_no_radar.sql`.
+
 - [x] Phase 0: Audit ([current architecture](CURRENT_ARCHITECTURE.md), [tech debt](TECH_DEBT.md), [plan](FEESTFINDER_IMPLEMENTATION_PLAN.md))
 - [x] Phase 1: Canonical data architecture
   - Migration `016_intelligence.sql`: `countries`, `cities`, venue fields, event currency/styles/type/confidence/freshness, `ingest_sources`, `ingest_runs`, `raw_events`, `event_sources` with a backfill.

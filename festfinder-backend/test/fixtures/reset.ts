@@ -13,7 +13,6 @@ import { migrate } from '../../src/db/migrate.ts';
 import { fixedClock, systemClock } from '../../src/lib/time.ts';
 import { importBlogContent } from '../../src/services/blog-content.ts';
 import { seedNews } from './news.ts';
-import { seedRadar } from './radar.ts';
 import { seed } from './seed.ts';
 
 const config = loadConfig();
@@ -29,9 +28,7 @@ await db.query('delete from news_sources');
 await db.query('delete from chart_sources');
 const clock = config.fixedNow ? fixedClock(config.fixedNow) : systemClock;
 const { ids: _ids, ...summary } = (await seed(db, clock.now(), { volume: process.env.SEED_VOLUME === 'small' ? 'small' : 'full' })) as Record<string, unknown>;
-// The local preview also shows what Feest Radar finds (test/fixtures/radar.ts).
-if (process.env.SEED_RADAR === '1') Object.assign(summary, await seedRadar(db, clock));
-// And the blog's editorial packs (src/content/blog), published as the team would publish them: a
+// The blog's editorial packs (src/content/blog), published as the team would publish them: a
 // reset preview never shows an empty blog (the import job does not run there).
 if (process.env.SEED_BLOG === '1') {
   const blog = await importBlogContent({ db, clock } as unknown as Ctx);

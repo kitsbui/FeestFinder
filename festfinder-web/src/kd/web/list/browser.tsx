@@ -135,14 +135,13 @@ function address(f: Filters, lang: Lang) {
 
 interface Page { items: Card[]; total: number; nextCursor: string | null; today?: string; facets: { city: Record<string, number>; style?: Record<string, number>; origin?: { posted: number; radar: number } } }
 
-export function ListBrowser({ lang, meta, initial, city, country = null, highlight, highlightArt = false }: {
+export function ListBrowser({ lang, meta, initial, city, country = null, highlight }: {
   lang: Lang; meta: Meta; initial: Page; highlight?: ReactNode;
   /** The city whose nights the server drew (/?city=<slug> or the device's chosen city, list/city.tsx): the list starts there and asks nothing on load. */
   city?: string;
   /** The visitor's country (kd/home-place.ts): its nights lead the list while every city shows. */
   country?: string | null;
   /** The highlight has a picture, which then loads first (list/page.tsx); else the list's first picture does. */
-  highlightArt?: boolean;
 }) {
   const T = pick(LIST, lang);
   /** What the server drew: every city, or the address's one. */
@@ -412,11 +411,15 @@ export function ListBrowser({ lang, meta, initial, city, country = null, highlig
   const groups = f.view === 'grid' ? groupByDay(split ? mine : sorted, lang, today, page.today ?? null) : [];
   const elsewhere = split ? groupByDay(sorted.filter((e) => countryOf(e.city) !== country), lang, today, page.today ?? null) : [];
   const countryName = country ? tx(meta.countries.find((c) => c.code === country)?.name, lang) : null;
-  // The world's biggest festivals (or the shelf on), while nothing but the city narrows the list. Decided
-  // once, from the filters: the server and the first render in the browser (both what the server drew, a city at most) agree.
-  const showHighlight = !!highlight && JSON.stringify({ ...f, city: 'all', view: 'grid', bbox: null }) === JSON.stringify(DEFAULT);
-  // One picture first on the page: the highlight's when it has one, else the list's.
-  const listEager = !(showHighlight && highlightArt);
+  // The world's biggest festivals (or the shelf on) only while nothing narrows the list, not even the city (testers,
+  // 2026-10-21: "Hà Nội · 0 sự kiện" over EDC Thailand read as EDC in Hà Nội). Decided once, from the filters.
+  const showHighlight = !!highlight && JSON.stringify(f) === JSON.stringify(DEFAULT);
+  // A night outside the visitor's country (the chosen city's, else the one the server read) names its country on its card.
+  const home = f.city !== 'all' ? countryOf(f.city) : country;
+  const countryLabel = (e: Card) => (e.country === home ? null : tx(meta.countries.find((c) => c.code === e.country)?.name, lang) || null);
+  // The list's first cover loads first as well as the highlight's: on a phone the highlight is a row with an 88px
+  // thumb and the first day's lead card is the page's largest picture (Lighthouse 2026-11-04), on a computer the highlight's is.
+  const listEager = true;
 
   return (
     <>
@@ -454,12 +457,12 @@ export function ListBrowser({ lang, meta, initial, city, country = null, highlig
             split ? (
               <div className={cx('flex min-w-0 flex-col gap-10 transition-opacity', busy && 'opacity-60')}>
                 <h2 id="here-h" className="kd-d2">{countryName}</h2>
-                <DayGrid groups={groups} lang={lang} eager={listEager} />
+                <DayGrid groups={groups} lang={lang} eager={listEager} countryOf={countryLabel} />
                 <h2 id="elsewhere-h" className="kd-d2 border-t border-line-1 pt-10">{T.elsewhere}</h2>
                 <DayGrid groups={elsewhere} lang={lang} />
               </div>
             ) : (
-              <DayGrid groups={groups} lang={lang} eager={listEager} className={cx('min-w-0 transition-opacity', busy && 'opacity-60')} />
+              <DayGrid groups={groups} lang={lang} eager={listEager} countryOf={countryLabel} className={cx('min-w-0 transition-opacity', busy && 'opacity-60')} />
             )
           ) : (
             <div className={cx('kd-tbl -mx-4 tab:mx-0 transition-opacity', busy && 'opacity-60')} role="table" aria-label={T.title} data-fold="xl">

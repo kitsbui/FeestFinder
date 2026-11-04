@@ -185,7 +185,7 @@ const singapore: CityGuide = {
     ],
   },
   related: [
-    { slug: 'club-kuala-lumpur', line: { vi: 'Top club ở Kuala Lumpur · Kyō, Over & Above và TREC', en: 'Best clubs in Kuala Lumpur · Kyō, Over & Above and TREC' } },
+    { slug: 'club-kuala-lumpur', line: { vi: 'Top club ở Kuala Lumpur · Kyo, Over & Above và TREC', en: 'Best clubs in Kuala Lumpur · Kyo, Over & Above and TREC' } },
     { slug: 'club-tokyo', line: { vi: 'Top club ở Tokyo · WOMB, Zerotokyo và Shibuya', en: 'Best clubs in Tokyo · WOMB, Zerotokyo and Shibuya' } },
     { slug: 'club-edm-chau-a', line: { vi: 'Club EDM ở châu Á · cẩm nang 11 thành phố', en: 'EDM clubs in Asia · the 11-city guide' } },
     { slug: 'techno', line: { vi: 'Techno là gì? · âm thanh của khu CBD', en: 'What is techno? · the sound of the CBD rooms' } },

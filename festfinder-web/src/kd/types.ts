@@ -25,6 +25,8 @@ export interface Card {
   venue: { id: string | null; name: string | null; area: string | null; address?: string | null; lat: number | null; lng: number | null };
   city: string;
   cityLabel: Pair;
+  /** ISO country code of the city (lib/places.ts). */
+  country: string;
   timezone: string;
   distanceKm: number | null;
   entryMode: 'free' | 'paid' | 'donation';

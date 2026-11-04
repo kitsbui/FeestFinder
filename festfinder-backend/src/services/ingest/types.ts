@@ -2,30 +2,20 @@ import type { Genre } from '../../lib/i18n.ts';
 import type { EventType } from '../../lib/styles.ts';
 import type { PageFetcher } from '../fetchpage.ts';
 
-/** One configured source, as stored in ingest_sources. */
+/** One configured source, as stored in ingest_sources. Used by gig reports and other manual posts. */
 export interface IngestSource {
   id: string;
-  adapter: string;
+  adapter?: string;
   name: string;
   url: string | null;
-  city: string | null;
-  authority: 'official' | 'ticketing' | 'listing';
-  config: Record<string, unknown>;
-  interval_minutes: number;
-  etag: string | null;
-  last_modified: string | null;
-  content_hash: string | null;
-  /** An organiser's own calendar (migration 056): its events are theirs, posted, and wait for review. */
+  city?: string | null;
+  authority?: 'official' | 'ticketing' | 'listing';
+  config?: Record<string, unknown>;
+  interval_minutes?: number;
+  etag?: string | null;
+  last_modified?: string | null;
+  content_hash?: string | null;
   organizer_id?: string | null;
-}
-
-/** One event as a source sent it, before any cleaning. */
-export interface RawRecord {
-  /** Stable within the source: the provider's id, else the event's URL. */
-  externalId: string;
-  url: string | null;
-  /** The source's own record for this event (a JSON-LD node, an ICS VEVENT, an API object). */
-  payload: unknown;
 }
 
 /** An event in FeestFinder's terms, ready to be matched against the catalogue. */
@@ -85,26 +75,3 @@ export interface IngestIO {
 }
 
 export interface FetchedText { status: number; url: string; text: string; etag: string | null; lastModified: string | null }
-
-export interface NormalizeContext {
-  source: IngestSource;
-  now: Date;
-}
-
-export interface SourceAdapter {
-  readonly id: string;
-  /** Fetches the source and splits it into records. Network only through `io`. */
-  discover(source: IngestSource, io: IngestIO): Promise<DiscoverResult>;
-  /** Pure: one record into FeestFinder's terms, or why not. */
-  normalize(raw: RawRecord, ctx: NormalizeContext): NormalizedEvent | Rejection;
-}
-
-export interface DiscoverResult {
-  records: RawRecord[];
-  /** Set when the source answered "not modified": nothing to do this run. */
-  notModified?: boolean;
-  etag?: string | null;
-  lastModified?: string | null;
-  contentHash?: string | null;
-  errors?: string[];
-}

@@ -9,8 +9,6 @@ import { checkTicketLink } from './routes/organizer/events.ts';
 import { pingIndexNow } from './services/seo.ts';
 import { refreshConfidence } from './services/ingest/confidence.ts';
 import { awardAll } from './services/badges.ts';
-import { runDueSources } from './services/ingest/run.ts';
-import { expireRadar } from './services/ingest/expire.ts';
 import { translatePending } from './services/translate.ts';
 import { refreshAllFit } from './services/ingest/fit.ts';
 import { checkRemoteImages } from './services/remote-images.ts';
@@ -78,12 +76,6 @@ export const jobs = {
     return sent;
   },
 
-  /** Sources whose interval has come round, within a time budget per call. */
-  async ingest(ctx: Ctx) {
-    const runs = await runDueSources(ctx, { budgetMs: 35_000 });
-    return runs.map((r) => ({ source: r.name, created: r.created, merged: r.merged, rejected: r.rejected, failed: r.failed }));
-  },
-
   /** Badges reached since the last run, for everyone who could have reached one. */
   async awardBadges(ctx: Ctx) {
     return awardAll(ctx.db, ctx.clock.now());
@@ -95,12 +87,7 @@ export const jobs = {
     return translatePending(ctx, 10);
   },
 
-  /** Feest Radar's finds go a day after they end (services/ingest/expire.ts). */
-  async expireRadar(ctx: Ctx) {
-    return ctx.db.tx((q) => expireRadar(q, ctx.clock.now()));
-  },
-
-  /** The fit of what waits for review and of upcoming Radar finds, as people's follows and alerts change. */
+  /** The fit of what waits for review, as people's follows and alerts change. */
   async refreshFit(ctx: Ctx) {
     return ctx.db.tx((q) => refreshAllFit(q, ctx.clock.now()));
   },
@@ -186,11 +173,8 @@ export const SCHEDULE: Slot[] = [
   { job: 'refreshConfidence', every: 60 * 60_000, at: 10, heavy: true },
   { job: 'refreshFit', every: 60 * 60_000, at: 17, heavy: true },
   { job: 'awardBadges', every: 60 * 60_000, at: 27, heavy: true },
-  { job: 'expireRadar', every: 60 * 60_000, at: 30 },
   { job: 'webHealth', every: 60 * 60_000, at: 40 },
   { job: 'purgeFeedbackAttachments', every: 4 * 60 * 60_000, at: 47 },
-  // Last in a call: it spends whatever time the call has left.
-  { job: 'ingest', every: 5 * 60_000, at: 4, heavy: true },
 ];
 
 /** The jobs one call of POST /internal/jobs runs in a given minute since the epoch, in order. */
