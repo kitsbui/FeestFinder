@@ -36,3 +36,7 @@ Thumbs.db
 .env*.local
 .preview/
 festfinder-web/public/sw.js
+
+# Impeccable (npx impeccable install): the skill is committed, its downloaded engine binary is not
+.claude/skills/impeccable/scripts/bin/
+.agents/skills/impeccable/scripts/bin/

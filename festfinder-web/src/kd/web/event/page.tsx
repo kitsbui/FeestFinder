@@ -10,7 +10,7 @@ import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, dayMonth, money, timeRange, weekdayLong, whenLong, whenShort } from '../../format';
-import { FAMILY_LABEL, familyOf, g, styleLabel } from '../../genre';
+import { familyOf, g, styleLabel } from '../../genre';
 import { KdProvider } from '../../runtime';
 import { buttonClass } from '../../ui/actions';
 import { Clamp } from '../../ui/clamp';
@@ -49,7 +49,7 @@ export async function loadEvent(slug: string, lang: Lang) {
 /** lib/styles.ts EVENT_TYPE_LABEL; "other" says nothing, so it is left out. */
 const EVENT_TYPE: Record<string, { vi: string; en: string }> = {
   club: { vi: 'Club', en: 'Club night' }, festival: { vi: 'Lễ hội', en: 'Festival' }, concert: { vi: 'Concert', en: 'Concert' },
-  rave: { vi: 'Rave', en: 'Rave' }, party: { vi: 'Tiệc', en: 'Party' }, show: { vi: 'Show', en: 'Show' },
+  rave: { vi: 'Rave', en: 'Rave' }, party: { vi: 'Tiệc', en: 'Party' }, show: { vi: 'Show', en: 'Show' }, day: { vi: 'Ban ngày', en: 'Day party' },
 };
 
 export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: EventSeo; lang: Lang }) {
@@ -64,7 +64,6 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
     big: several ? whenShort(ev, lang) : dayMonth(ev.startsOn, lang),
     line: [several ? null : weekdayLong(ev.startsOn, lang), ev.startTime, tx(ev.cityLabel, lang)].filter(Boolean).join(' · '),
   } : null;
-  const familyLine = [tx(FAMILY_LABEL[fam], lang), ev.eventType ? tx(EVENT_TYPE[ev.eventType], lang) : null, tx(ev.cityLabel, lang)].filter(Boolean).join(' · ');
   // FeestFinder sells no tickets: the price is the organiser's "from", and every button goes through /go to the seller.
   const cheapest = ev.priceFrom;
   const hasTickets = !free && !ev.past && !!ev.links.go;
@@ -76,10 +75,11 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   const textLang = lang === 'vi' ? 'vi' : 'en';
   const machine = !!ev.descriptionAuto?.includes(textLang) && description === (ev.description?.[textLang] ?? '').trim();
   const original = machine ? (textLang === 'vi' ? ev.description?.en : ev.description?.vi) ?? '' : '';
+  // The chips under "Giới thiệu": the kind of night, the room and the styles. The age is a fact of the hero already.
   const facts = [
-    ev.age,
+    ev.eventType ? tx(EVENT_TYPE[ev.eventType], lang) : null,
     ev.capacity ? fill(T.places, { n: count(ev.capacity, lang) }) : null,
-    ...(ev.styles ?? []).slice(0, 3),
+    ...(ev.styles ?? []).slice(0, 3).map((s) => styleLabel(s, lang)),
   ].filter((x): x is string => !!x);
   const org = ev.organizer;
   // Nobody posted a Radar event: it is Feest Radar's find, not its placeholder organiser's.
@@ -117,10 +117,8 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                   <Countdown lang={lang} />
                 </div>
                 <div className="flex min-w-0 flex-col gap-4.5">
-                  <div className="flex flex-col gap-2.5">
-                    <span className="kd-m flex items-center gap-1.5"><span className="kd-mk" aria-hidden="true" />{familyLine}</span>
-                    <h1 className="kd-d1">{ev.title}</h1>
-                  </div>
+                  {/* The name alone, nothing above it: the style is on the poster and under "Giới thiệu", the city in the trail and the facts. */}
+                  <h1 className="kd-d1">{ev.title}</h1>
                   {/* The four facts (design v2 phase 2): a grid of two on a computer, rows on a phone. Only facts
                       (design v2 phase 12): "Chỉ đường" is under the venue, "Thêm lịch" under "Thêm". */}
                   <div data-facts className="grid grid-cols-1 border-t border-line-1 desk:grid-cols-2 desk:gap-x-6">
@@ -140,14 +138,8 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                     ) : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {/* Under 900px the dock's "Mua vé" is the one way to the tickets. */}
-                    {hasTickets ? (
-                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto max-desk:hidden')} href="#tickets">
-                        {T.buyTickets}
-                      </a>
-                    ) : free && !ev.past ? (
-                      <a className={buttonClass({ size: 'lg' }, 'w-full tab:w-auto')} href="#venue">{T.freeEntry}</a>
-                    ) : null}
+                    {/* No ticket button of its own: the panel right under the hero (the dock on a phone) is the one way to the
+                        tickets, and a free night says so in its price fact. One primary action in sight. */}
                     <SaveWithCount lang={lang} />
                     <ShareButton lang={lang} />
                   </div>
@@ -250,7 +242,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             <section id="venue" aria-labelledby="venue-h" className="kd-wrap scroll-mt-32 pt-[clamp(56px,7vw,88px)]">
               <div className="flex flex-col gap-6">
                 <div className="flex max-w-read flex-col gap-3">
-                  <span className="kd-m">{T.venue}</span>
+                  {/* The name is the heading; the address and "Chỉ đường" under it say what it is. No label above it. */}
                   <h2 id="venue-h" className="kd-d2">{ev.venue.name}</h2>
                   {address ? <p className="kd-t">{address}</p> : null}
                   <div className="mt-1 flex flex-wrap gap-2">
@@ -282,10 +274,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
             {also.length ? (
               <section aria-labelledby="also-h" className="kd-wrap flex flex-col gap-5 pt-[clamp(56px,7vw,88px)]">
                 <div className="kd-sec">
-                  <div className="flex flex-col gap-2">
-                    {alsoIsOrg && org ? <span className="kd-m">{fill(T.alsoBy, { o: org.name })}</span> : null}
-                    <h2 id="also-h" className="kd-d2">{alsoIsOrg ? T.upcoming : T.youMayLike}</h2>
-                  </div>
+                  <h2 id="also-h" className="kd-d2">{alsoIsOrg && org ? fill(T.alsoBy, { o: org.name }) : T.youMayLike}</h2>
                   {alsoIsOrg && org ? <Link className={buttonClass({ size: 'sm' })} href={inLang('/o/' + org.slug, lang)}>{T.viewProfile}</Link> : null}
                 </div>
                 {/* Rows, a column on a phone and side by side wider (design v2 phase 11): a night without a cover is no big title tile. */}

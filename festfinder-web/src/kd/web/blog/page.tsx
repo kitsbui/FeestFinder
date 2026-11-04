@@ -15,7 +15,7 @@ import { Accordion, Art, Avatar } from '../../ui/parts';
 import { WebFooter, WebNav } from '../chrome';
 import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
-import { inline, PostBody } from './body';
+import { inline, keepSign, PostBody } from './body';
 import { BlogBrowser } from './browser';
 import { cardOf } from './card';
 import { BLOG } from './copy';
@@ -91,7 +91,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
                   <span className="kd-mk" aria-hidden="true" />{category}
                 </a>
                 <h1 className="kd-d1 [overflow-wrap:anywhere]">{title}</h1>
-                {excerpt ? <p className="kd-t text-fg-2">{excerpt}</p> : null}
+                {excerpt ? <p className="kd-t text-fg-2">{keepSign(excerpt)}</p> : null}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1" lang={lang}>
                   <span className="kd-s flex items-center gap-2">
                     <Avatar name={post.author.name} size={28} />
@@ -123,7 +123,7 @@ export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; la
                       {post.facts.map((f, i) => (
                         <div key={i} className="flex flex-col gap-0.5">
                           <dt className="kd-m">{say(f.label, l)}</dt>
-                          <dd className="kd-s text-fg-1">{say(f.value, l)}</dd>
+                          <dd className="kd-s text-fg-1">{keepSign(say(f.value, l))}</dd>
                         </div>
                       ))}
                     </dl>

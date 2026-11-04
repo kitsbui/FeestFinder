@@ -46,7 +46,11 @@ function blocks(src: string): Block[] {
 }
 
 /** **bold**, *emphasis*, [text](url) and bare https links, in a line of text. */
+/** "300,000 ₫" never breaks before its sign: a post's words, its facts and its excerpt. */
+export const keepSign = (t: string) => t.replace(/ ₫/g, '\u00a0₫');
+
 export function inline(text: string, key: string, trusted = false): ReactNode[] {
+  text = keepSign(text);
   const out: ReactNode[] = [];
   const re = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(((?:https:\/\/|\/)[^\s)]+)\)|(https:\/\/[^\s<>"')\]]+[^\s<>"')\].,;:!?])|\*([^*]+)\*/g;
   const rel = trusted ? 'noopener' : 'noopener nofollow ugc';
@@ -72,16 +76,17 @@ export function PostBody({ text, trusted = false, resized = true }: {
   /** Pictures as copies the size of the column (/img); the Console reads the links themselves, since a hidden post's are not served. */
   resized?: boolean;
 }) {
+  // The words read at 17px on a 65ch measure (max-w-prose); pictures and tables take the column (max-w-read).
   return (
     <div className="flex max-w-read flex-col gap-5">
       {blocks(text).map((b, i) => {
         const k = String(i);
         const md = (t: string, key: string) => inline(t, key, trusted);
-        if (b.kind === 'h2') return <h2 key={k} className="kd-d3 pt-3">{md(b.text, k)}</h2>;
-        if (b.kind === 'h3') return <h3 key={k} className="kd-h pt-2">{md(b.text, k)}</h3>;
-        if (b.kind === 'ul') return <ul key={k} className="kd-t flex list-disc flex-col gap-2 pl-5 text-fg-2">{b.items.map((it, j) => <li key={j}>{md(it, `${k}-${j}`)}</li>)}</ul>;
-        if (b.kind === 'ol') return <ol key={k} className="kd-t flex list-decimal flex-col gap-2 pl-5 text-fg-2">{b.items.map((it, j) => <li key={j}>{md(it, `${k}-${j}`)}</li>)}</ol>;
-        if (b.kind === 'quote') return <blockquote key={k} className="kd-t whitespace-pre-line border-l-2 border-info pl-4 text-fg-1">{md(b.text, k)}</blockquote>;
+        if (b.kind === 'h2') return <h2 key={k} className="kd-d3 max-w-prose pt-3">{md(b.text, k)}</h2>;
+        if (b.kind === 'h3') return <h3 key={k} className="kd-h max-w-prose pt-2">{md(b.text, k)}</h3>;
+        if (b.kind === 'ul') return <ul key={k} className="kd-tl flex max-w-prose list-disc flex-col gap-2 pl-5 text-fg-2">{b.items.map((it, j) => <li key={j}>{md(it, `${k}-${j}`)}</li>)}</ul>;
+        if (b.kind === 'ol') return <ol key={k} className="kd-tl flex max-w-prose list-decimal flex-col gap-2 pl-5 text-fg-2">{b.items.map((it, j) => <li key={j}>{md(it, `${k}-${j}`)}</li>)}</ol>;
+        if (b.kind === 'quote') return <blockquote key={k} className="kd-tl max-w-prose whitespace-pre-line border-l border-line-2 pl-4 text-fg-1">{md(b.text, k)}</blockquote>;
         if (b.kind === 'img') {
           return (
             <figure key={k} className="flex flex-col gap-2">
@@ -103,7 +108,7 @@ export function PostBody({ text, trusted = false, resized = true }: {
             </div>
           );
         }
-        return <p key={k} className="kd-t whitespace-pre-line text-fg-2">{md(b.text, k)}</p>;
+        return <p key={k} className="kd-tl max-w-prose whitespace-pre-line text-fg-2">{md(b.text, k)}</p>;
       })}
     </div>
   );

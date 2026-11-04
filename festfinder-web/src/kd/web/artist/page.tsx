@@ -114,8 +114,8 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
   const links: ProfileLink[] = [...a.links, ...(a.website ? [{ kind: 'website', label: { vi: host(a.website), en: host(a.website) }, url: a.website }] : [])];
   // Who they play with most: the organisers who book them, then the artists on their lineups.
   const withMost = [
-    ...rel.organizers.map((o) => ({ key: 'o' + o.id, href: '/o/' + o.slug, name: o.name, logo: o.logoUrl, org: true, line: fill(T.orgShows, { n: o.events }) })),
-    ...rel.sharedLineups.map((x) => ({ key: 'a' + x.id, href: '/a/' + x.slug, name: x.name, logo: null, org: false, line: fill(T.together, { n: x.events }) })),
+    ...rel.organizers.map((o) => ({ key: 'o' + o.id, href: '/o/' + o.slug, name: o.name, logo: o.logoUrl, org: true, line: o.events === 1 ? T.orgShowOne : fill(T.orgShows, { n: o.events }) })),
+    ...rel.sharedLineups.map((x) => ({ key: 'a' + x.id, href: '/a/' + x.slug, name: x.name, logo: null, org: false, line: x.events === 1 ? T.togetherOne : fill(T.together, { n: x.events }) })),
   ].slice(0, 5);
   const languages = a.languages.map((code) => {
     try { return new Intl.DisplayNames([lang], { type: 'language' }).of(code) ?? code; } catch { return code; }
@@ -194,13 +194,16 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 {/* Without a cover, the photo is the page's main picture (on a phone, larger than the name): fetched first. */}
                 <Avatar ring name={a.name} src={a.imageUrl} size={192} fit={square(192, '(min-width: 760px) 192px, 128px')} eager={a.coverUrl ? false : 'high'} className="kd-artist-photo shrink-0" />
                 <div className="flex min-w-0 flex-col gap-3 pb-1">
-                  <span className="kd-m flex flex-wrap items-center gap-2">
-                    {a.verified ? <><SealCheckIcon size={18} weight="fill" className="text-info" aria-hidden="true" /><span>{T.artistVerified}</span></> : <span>{T.artistKind}</span>}
+                  {/* The name first, nothing above it: the seal sits beside it, and what the profile is (Radar, unclaimed) on the line under it. */}
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                    <h1 className="kd-artist-name min-w-0">{a.name}</h1>
+                    {a.verified ? <SealCheckIcon size={28} weight="fill" className="shrink-0 text-info" role="img" aria-label={T.artistVerified} /> : null}
+                  </div>
+                  <span className="kd-s flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span>{meta}</span>
                     {a.origin === 'radar' ? <RadarTag lang={lang} /> : null}
                     {unclaimed ? <span className="kd-tag">{P.unclaimed}</span> : null}
                   </span>
-                  <h1 className="kd-artist-name">{a.name}</h1>
-                  <span className="kd-s">{meta}</span>
                 </div>
               </div>
             </div>
@@ -232,7 +235,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 {a.booking ? <Status tone={BOOKING_TONE[a.booking.key] ?? 'none'}>{text(a.booking.label, lang)}</Status> : null}
               </div>
               {!unclaimed || a.claimed ? (
-                <div className="mt-6 flex flex-wrap gap-x-12 gap-y-4 border-y border-line-1 py-4">
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-4 border-y border-line-1 py-4 tab:gap-x-12">
                   {unclaimed ? null : <FollowersStat lang={lang} kind="art" id={a.id} source={source} served={a.followers} />}
                   {a.claimed ? <Stat value={count(a.followingCount ?? 0, lang)} label={T.followingN} /> : null}
                   <Stat value={count(data.upcoming.length, lang)} label={T.upcomingTab} />

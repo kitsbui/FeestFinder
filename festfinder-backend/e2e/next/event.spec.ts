@@ -85,8 +85,7 @@ test.describe('the event page', () => {
 
   test('every ticket button goes through /go to the seller: FeestFinder sells no tickets', async ({ page }) => {
     await open(page, '/e/ravo');
-    await page.getByRole('link', { name: 'Mua vé', exact: true }).first().click();
-    await expect(page).toHaveURL(/#tickets$/);
+    // The panel right under the hero is the one way to the tickets on a computer: the hero has no button of its own.
     const panel = page.locator('#tickets');
     await expect(panel.getByText('từ 1.200.000₫')).toBeVisible();
     await expect(panel.getByRole('radiogroup')).toHaveCount(0);
@@ -110,7 +109,9 @@ test.describe('the event page', () => {
     expect([hop.status(), hop.headers().location]).toEqual([302, 'https://tickets.example/nhacvien?utm_source=feestfinder&utm_medium=referral&utm_campaign=nhacvien&utm_content=detail']);
 
     await open(page, '/e/outcast');
-    await expect(page.getByRole('link', { name: 'Vào cửa miễn phí' })).toHaveAttribute('href', '#venue');
+    // A free night says so in its panel; the hero has no button for it (its price fact already says "Miễn phí").
+    await expect(page.locator('#tickets')).toContainText('Không cần vé');
+    await expect(page.getByRole('main').locator('a[href="#venue"]')).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Chỉ đường' }).last()).toHaveAttribute('href', 'https://www.google.com/maps/dir/?api=1&destination=10.8065%2C106.7411');
   });
 

@@ -3,7 +3,6 @@ import type { Dict } from '../../copy';
 
 export const ADVERTISE = {
   title: { en: 'Advertise on FeestFinder', vi: 'Quảng cáo trên FeestFinder' },
-  kicker: { en: 'Advertise', vi: 'Quảng cáo' },
   sub: {
     en: 'For brands the festival crowd already carries: drinks, clothing, hearing protection, recovery. Tell us who you are and we come back within two working days.',
     vi: 'Dành cho thương hiệu mà người đi lễ hội vốn đã dùng: nước uống, quần áo, bảo vệ tai, phục hồi. Cho chúng tôi biết bạn là ai, chúng tôi phản hồi trong hai ngày làm việc.',

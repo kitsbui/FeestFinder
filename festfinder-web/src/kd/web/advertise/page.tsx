@@ -34,7 +34,6 @@ export async function AdvertisePage({ lang }: { lang: Lang }) {
         <main id="main" className="kd-wrap flex flex-col pt-[clamp(32px,5vw,64px)]">
           <div className="mx-auto flex w-full max-w-read flex-col gap-10">
             <header className="flex flex-col gap-4">
-              <span className="kd-m">{T.kicker}</span>
               <h1 className="kd-d1">{T.title}</h1>
               <p className="kd-t">{T.sub}</p>
               {reach?.events ? (

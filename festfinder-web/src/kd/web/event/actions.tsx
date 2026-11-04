@@ -31,12 +31,14 @@ export function SaveWithCount({ lang, size = 'md' }: { lang: Lang; size?: 'sm' |
   const was = personal?.viewer ? personal.viewer.saved : kd.user ? null : false;
   const delta = was === null ? 0 : (on ? 1 : 0) - (was ? 1 : 0);
   const t = T(lang);
+  const n = Math.max(0, ev.saveCount + delta);
   return (
     <>
       <IconButton label={on ? t.savedThis : t.saveThis} line pressed={on} onClick={toggle} size={size}>
         <HeartIcon size={20} weight={on ? 'fill' : 'regular'} aria-hidden="true" />
       </IconButton>
-      <span className="kd-m kd-num ml-1.5">{fill(t.interested, { n: count(Math.max(0, ev.saveCount + delta), lang) })}</span>
+      {/* A zero says nothing (as Hype hides its own). */}
+      {n > 0 ? <span className="kd-m kd-num ml-1.5">{fill(t.interested, { n: count(n, lang) })}</span> : null}
     </>
   );
 }
