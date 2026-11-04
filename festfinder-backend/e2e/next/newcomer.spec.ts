@@ -260,8 +260,7 @@ test('the first screens ask little: few controls, a time in one tap, the tickets
   await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
   const event = await controlsInSight(page);
   expect(event.n, event.names.join(' | ')).toBeLessThanOrEqual(IN_SIGHT.event);
-  // Only one way to the tickets in sight: the dock.
-  // The hero's own "Mua vé" is for a computer; on a phone the dock is the one way.
+  // Only one way to the tickets in sight: the dock. The hero has no button of its own (the panel's is the one on a computer).
   await expect(page.getByRole('main').locator('a[href="#tickets"]').first()).toBeHidden();
   await page.locator('.kd-buy-dock').getByRole('link', { name: 'Mua vé' }).click();
   await expect(page.locator('#tickets')).toBeInViewport();

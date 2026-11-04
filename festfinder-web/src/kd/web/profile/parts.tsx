@@ -88,7 +88,8 @@ export function FollowersStat({ lang, kind, id, source, served }: { lang: Lang; 
   const T = pick(PROFILE, lang);
   const v = useViewer(source);
   const [, n] = useFollowing(kind, id, v);
-  return <Stat value={count(v ? n : served, lang)} label={T.followers} />;
+  const shown = v ? n : served;
+  return <Stat value={count(shown, lang)} label={shown === 1 ? T.follower : T.followers} />;
 }
 
 /** "Chỉnh hồ sơ" for the profile's own people. */

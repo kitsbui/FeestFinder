@@ -36,8 +36,8 @@ test.describe('the about page', () => {
 
   test('its numbers, cities, contacts, social links and office', async ({ page }) => {
     const problems = await open(page, '/about');
+    // The tagline is the title, with no label over it (impeccable audit, 2026-10-29).
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Một nơi để biết tối nay có gì');
-    await expect(page.getByRole('main')).toContainText(/VỀ FEESTFINDER/i);
 
     const numbers = page.getByRole('region', { name: 'FeestFinder qua các con số' });
     await expect(numbers.getByText('Sự kiện sắp diễn ra')).toBeVisible();

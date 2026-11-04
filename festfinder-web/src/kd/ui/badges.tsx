@@ -71,7 +71,7 @@ export function Badges({ lang, items, who, own, compact, className }: { lang: La
             <button key={b.code} type="button" className="kd-bdg" aria-pressed={open === b.code} onClick={() => setOpen(open === b.code ? null : b.code)}>
               <BadgeMark b={b} size={64} />
               <span className="kd-hs text-[13px] leading-tight">{tx(b.label, lang)}</span>
-              {b.earnedAt ? <span className="kd-m kd-num text-[10px]">{date(b.earnedAt, lang)}</span> : null}
+              {b.earnedAt ? <span className="kd-m kd-num text-[11px]">{date(b.earnedAt, lang)}</span> : null}
               {own && b.isNew ? <span className="kd-tag kd-tag-acc absolute right-1.5 top-1.5 h-[18px] px-1.5 text-[10px]">{T.isNew}</span> : null}
             </button>
           ))}

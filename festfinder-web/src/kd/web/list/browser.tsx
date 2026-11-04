@@ -11,7 +11,7 @@
  * minute while it is open.
  */
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { ArrowDownIcon, ArrowUpIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { ArrowDownIcon, ArrowUpIcon, CaretDownIcon, XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair, tx } from '../../copy';
@@ -291,6 +291,7 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
       trigger={(p) => (
         <button type="button" {...p} ref={p.ref} className={cx('kd-chip', kindLabel && 'kd-chip-on')} aria-label={`${kindLabel ?? T.anyKind}, ${T.kind}`}>
           {kindLabel ?? T.anyKind}
+          <CaretDownIcon size={14} className="kd-chev" aria-hidden="true" />
         </button>
       )}
     >
@@ -441,8 +442,10 @@ export function ListBrowser({ lang, meta, initial, city, highlight, highlightArt
       {/* A screen's height before the footer: the list changes after the first paint (the address's city, a
           filter, an empty answer) and must not pull the footer into view (CLS). */}
       <main id="main" className="kd-wrap flex min-h-dvh flex-col gap-6 pb-8 pt-6" onClickCapture={openCard}>
-        {/* On a phone the day headings lead; the page keeps its heading for screen readers and search. */}
-        <h1 className="kd-d2 max-tab:sr-only">{heading}</h1>
+        {/* On a phone the day headings lead, and on a computer the country's name does while the list is split by
+            country (its heading would sit right under this one, at the same size): the page keeps its heading for
+            screen readers and search. */}
+        <h1 className={split && f.view === 'grid' ? 'sr-only' : 'kd-d2 max-tab:sr-only'}>{heading}</h1>
         {/* A phone: the city first (the newcomer's question), then the styles that have nights here. */}
         <div className="flex flex-wrap items-center gap-2 tab:hidden">{cityPicker}{styleRow}{queryChip}</div>
         {/* The world's biggest festivals, always first, while nothing narrows the list. */}
