@@ -64,7 +64,7 @@ export function EventCard({ e, lang, look = 'card', morph = false, eager = false
   const lead = !e.past && !e.soldOut && e.status !== 'cancelled' && (!!e.festival?.flagship || (!e.badge && e.featured));
   const href = inLang('/e/' + e.slug, lang);
   const radar = e.origin === 'radar';
-  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} eager={eager} fit={fit} />;
+  const art = <Art family={fam} cover={e.coverUrl} title={e.title} kicker={e.styles[0] ? styleLabel(e.styles[0], lang) : null} meta={whenShort(e, lang)} off={e.past || e.soldOut} eager={eager} inline={eager ? e.coverInline : null} fit={fit} />;
   return (
     <article className={cx('kd-ev', look !== 'card' && `kd-ev-${look}`, g(fam))}>
       <div className="kd-ev-art relative">

@@ -3,6 +3,7 @@
  * stats, avatars, accordions, emblems and passport stamps. All server-safe.
  */
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import { LqCover } from './lq-cover';
 import { CaretDownIcon } from '@phosphor-icons/react/ssr';
 import { cx } from '../cx';
 import { g, type Family } from '../genre';
@@ -75,7 +76,7 @@ export function monogram(title: string): string {
  * on a page that names the event beside it, a poster of its date instead (`poster`).
  * No shapes and no gradients stand in for a picture. `off` dims it (sold out, past, not chosen).
  */
-export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false, later = false, fit }: {
+export function Art({ family, cover, off, className, style, children, alt = '', title, kicker, meta, poster, layout = 'card', eager = false, later = false, fit, inline }: {
   family: Family; cover?: string | null; off?: boolean; className?: string; style?: CSSProperties; children?: ReactNode; alt?: string;
   /** The page's main picture (a hero, the home page's first picture): fetched first, with high priority, never lazily. One per page. */
   eager?: boolean;
@@ -85,6 +86,8 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
   /** The box it is drawn in (kd/img.ts, kd/fits.ts): a stored cover then loads as a copy of that size (/img). Without it, the
    *  link itself: a cover not saved yet, which /img does not know. */
   fit?: Fit;
+  /** The eager picture's small copy as a data URI (lib/api.ts inlineCover): drawn with the HTML, so it is on screen at the first paint; the ladder's copy takes its place once painted (ui/lq-cover.tsx, which preloads it). */
+  inline?: string | null;
   /** The name a text tile shows when there is no cover, or the cover does not load. */
   title?: string | null;
   /** The style, in the information colour, at the start of the line under the name ("Hard techno"). */
@@ -99,6 +102,8 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
    *  date set large (`big`) and a line under it, `kicker` first. The name is never printed twice. */
   poster?: { big: string; line?: string | null } | null;
 }) {
+  const img = cover ? { src: cover, ...fit?.attrs(cover, !eager), alt, loading: eager ? 'eager' : 'lazy', fetchPriority: eager ? 'high' : later ? 'low' : undefined, decoding: 'async', referrerPolicy: 'no-referrer', className: cx('kd-cover', off && 'opacity-40 grayscale'), style: frameStyle(cover) } as const : null;
+  const lq = img && eager && img.srcSet ? inline : null;
   return (
     <div className={cx('kd-art', g(family), off && 'kd-off', layout !== 'card' && `kd-art-${layout}`, className)} style={style}>
       {poster ? (
@@ -110,9 +115,7 @@ export function Art({ family, cover, off, className, style, children, alt = '', 
           <span className="kd-art-m" aria-hidden="true"><b data-t={monogram(title)} /><i data-k={kicker ?? ''} /></span>
         </>
       ) : null}
-      {cover ? (
-        <img src={cover} {...fit?.attrs(cover, !eager)} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchPriority={eager ? 'high' : later ? 'low' : undefined} decoding="async" referrerPolicy="no-referrer" className={cx('kd-cover', off && 'opacity-40 grayscale')} style={frameStyle(cover)} />
-      ) : null}
+      {img ? (lq ? <LqCover inline={lq} {...img} /> : <img {...img} />) : null}
       {children}
     </div>
   );
