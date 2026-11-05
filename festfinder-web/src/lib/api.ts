@@ -21,6 +21,7 @@ export const SITE_URL = (process.env.SITE_URL ?? 'http://localhost:3000').replac
 
 export type { Lang } from '@/kd/copy';
 import { dataLang, type Lang } from '@/kd/copy';
+import { imgAttrs, type Fit } from '@/kd/img';
 export type Localized = { en: string; vi: string };
 
 /** The API did not answer, or answered with an error: not the same as "does not exist". */
@@ -173,4 +174,28 @@ export interface DirectorySeo extends Omit<OrganizerSeo, 'kind'> {
 /** Structured data goes in as a JSON data block, never as script the browser runs. */
 export function jsonLdHtml(data: unknown): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
+/** The inlined copy may weigh this much (base64 adds a third): a hero at 384px wide is 10–20 KB, a thumb at 192px about 14. */
+const INLINE_MAX = 40 * 1024;
+
+/**
+ * A stored picture's copy (/img, `width` px wide, 384 by default) as a data URI, for the page's one eager picture (Art `inline`,
+ * Lighthouse 2026-11-05): drawn with the HTML, it is painted at the first paint, so the largest
+ * contentful paint is the first paint itself instead of the copy's download after it; the ladder's
+ * copy takes over once React is up (ui/lq-cover.tsx). `null` when /img has no copy (a preview, a
+ * link it cannot fetch, one too heavy): the picture then loads as every other.
+ */
+export async function inlineCover(url: string | null | undefined, box: Fit, width = 384): Promise<string | null> {
+  if (!url) return null;
+  const { src, srcSet } = imgAttrs(url, { ...box, from: width, to: width });
+  if (!srcSet) return null;
+  try {
+    const res = await fetch(API_ORIGIN + src, { headers: SIGNED, redirect: 'manual', signal: AbortSignal.timeout(4000), next: { revalidate: 86400 } });
+    if (!res.ok || res.headers.get('content-type') !== 'image/webp') return null;
+    const bytes = Buffer.from(await res.arrayBuffer());
+    return bytes.length <= INLINE_MAX ? 'data:image/webp;base64,' + bytes.toString('base64') : null;
+  } catch {
+    return null;
+  }
 }

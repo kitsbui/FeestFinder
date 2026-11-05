@@ -10,6 +10,8 @@ export interface Card {
   title: string;
   genre: string | null;
   coverUrl: string | null;
+  /** Set by the page's server render on its one eager card: the cover's 384px copy as a data URI (lib/api.ts inlineCover). */
+  coverInline?: string | null;
   badge: { key: string; label: Pair } | null;
   featured: boolean;
   soldOut: boolean;

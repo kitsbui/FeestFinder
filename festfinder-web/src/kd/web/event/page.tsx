@@ -6,7 +6,7 @@
 import { KdLink as Link, inLang } from '../../link';
 import { BroadcastIcon, CalendarBlankIcon, HandshakeIcon, IdentificationBadgeIcon, MapPinIcon, SealCheckIcon, ArrowUpRightIcon, TicketIcon } from '@phosphor-icons/react/ssr';
 import { ViewTransition, type ReactNode } from 'react';
-import { api, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
+import { api, inlineCover, jsonLdHtml, type EventSeo, type Lang } from '@/lib/api';
 import { fill, pick, tx } from '../../copy';
 import { cx } from '../../cx';
 import { count, dayMonth, money, timeRange, weekdayLong, whenLong, whenShort } from '../../format';
@@ -84,7 +84,10 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
   const org = ev.organizer;
   // Nobody posted a Radar event: it is Feest Radar's find, not its placeholder organiser's.
   const radarHosts = [...new Set(ev.sources.map((s) => s.host || tx(s.label, lang)).filter(Boolean))].join(', ');
-  const orgData = org ? await api<{ upcoming: Card[] }>(`/organizers/${enc(org.slug)}`, { lang }).catch(() => null) : null;
+  const [orgData, inline] = await Promise.all([
+    org ? api<{ upcoming: Card[] }>(`/organizers/${enc(org.slug)}`, { lang }).catch(() => null) : null,
+    inlineCover(ev.coverUrl, FIT.hero),
+  ]);
   const more = (orgData?.upcoming ?? []).filter((x) => x.id !== ev.id).slice(0, 3);
   const also = more.length ? more : ev.similar.slice(0, 3);
   const alsoIsOrg = more.length > 0;
@@ -106,7 +109,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                 <div className="relative">
                   {/* Without a cover, a poster of the date: the name is the H1 beside it, never twice. */}
                   <ViewTransition name={'ev-' + ev.slug} share="morph" default="none">
-                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" eager fit={FIT.hero} className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
+                    <Art family={fam} cover={ev.coverUrl} alt={ev.title} title={ev.title} layout="hero" eager inline={inline} fit={FIT.hero} className="aspect-video w-full" off={ev.past} kicker={ev.styles?.[0] ? styleLabel(ev.styles[0], lang) : null} poster={poster} />
                   </ViewTransition>
                   <div className="absolute left-3.5 top-3.5 z-[1] flex gap-1.5">
                     {ev.age ? <span className="kd-tag kd-tag-glass text-fg-1">{ev.age}</span> : null}

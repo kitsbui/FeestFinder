@@ -59,8 +59,10 @@ const SCREENS: [Who, string, number, number, number, Place?][] = [
   // 2026-10-20 (later): the wizard measured 210 twice after the owner's requests (breadcrumbs left the client bundle).
   // 2026-10-20: the story images left the runtime for a chunk of their own (runtime/story.ts), which paid for the install strip and the worker (growth plan card F) and lowered the event page, an organiser, the artists and Studio.
   // 2026-10-23: the map view, the worker's registration, the account menu's items and the install strip load when they are needed, and the public frame's tab bar left the back offices' shell (ui/tabbar.tsx): 2–10 KB less on every public screen (measured +1).
-  ['visitor', '/', 183, 100, 6], ['visitor', '/e/ravo', 189, 200, 6], ['visitor', '/a', 196, 150, 6], ['visitor', '/a/slimv', 192, 150, 6],
-  ['visitor', '/o/ravoent', 190, 200, 6], ['visitor', '/p', 177, 150, 6], ['visitor', '/?view=map', 183, 350, 6], ['visitor', '/about', 167, 150, 6],
+  // 2026-11-05: the eager picture's inlined copy (Art `inline`, the swap in ui/covers.tsx): a third of a kilobyte in the parts every screen
+  // loads, which tipped the four screens that sat on their rounding (/a, an organiser, /saved, Studio: +1); the rest measured the same.
+  ['visitor', '/', 183, 100, 6], ['visitor', '/e/ravo', 189, 200, 6], ['visitor', '/a', 197, 150, 6], ['visitor', '/a/slimv', 192, 150, 6],
+  ['visitor', '/o/ravoent', 191, 200, 6], ['visitor', '/p', 177, 150, 6], ['visitor', '/?view=map', 183, 350, 6], ['visitor', '/about', 167, 150, 6],
   // 2026-10-28: the home page as a phone in Vietnam opens it: its country's nights lead (since 2026-10-29 drawn on the server
   // for Vercel's x-vercel-ip-country: festfinder-web/src/kd/home-place.ts).
   ['visitor', '/', 183, 150, 6, { timezoneId: 'Asia/Ho_Chi_Minh', locale: 'vi-VN', country: 'VN' }],
@@ -73,9 +75,9 @@ const SCREENS: [Who, string, number, number, number, Place?][] = [
   // 2026-10-23: one city's list is drawn on the server (festfinder-web/src/kd/web/list/city.tsx): the address Lighthouse measured in production.
   ['visitor', '/?city=ho-chi-minh&lang=en', 183, 150, 6],
   // 2026-10-23 (later): the skip link is drawn by each frame without a store of its own (ui/skip-link.tsx): /saved a kilobyte lighter (measured +1).
-  ['fan', '/profile', 196, 150, 6], ['fan', '/saved', 192, 150, 6],
+  ['fan', '/profile', 196, 150, 6], ['fan', '/saved', 193, 150, 6],
   // 2026-10-28: the wizard reads its price line from web/price.ts, without the event card (and its save toggle and links): 4 KB less (measured +1).
-  ['organizer', '/studio', 196, 100, 8], ['organizer', '/studio/new', 207, 100, 4],
+  ['organizer', '/studio', 197, 100, 8], ['organizer', '/studio/new', 207, 100, 4],
   // 2026-10-28: the artist studio, which production showed shifting on its profile form (fixed with /me/artist's form options).
   ['artist', '/studio/artist', 207, 100, 8],
   ['admin', '/console', 200, 100, 8],

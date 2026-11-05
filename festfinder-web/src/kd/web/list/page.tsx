@@ -5,12 +5,12 @@
  * day, of one city at /?city=<slug> or for a device that chose one, its country's nights first for a
  * visitor from a listed country (city.tsx, kd/home-place.ts); the browser takes the other filters from the address.
  */
-import { apiOr, type Lang } from '@/lib/api';
+import { apiOr, inlineCover, type Lang } from '@/lib/api';
 import { pick, tx, type Pair } from '../../copy';
 import { KdProvider } from '../../runtime';
 import type { Card } from '../../types';
 import { EventCard } from '../card';
-import { DAY } from '../card-fit';
+import { DAY, LEAD } from '../card-fit';
 import { WebFooter, WebNav } from '../chrome';
 import { AdBanner, type Ad } from './ad';
 import { ListBrowser, type Meta } from './browser';
@@ -45,6 +45,15 @@ export async function ListPage({ lang, city, country }: { lang: Lang; city?: str
   const items = shelf ? shelf.items.slice(0, 8) : flagship.items;
   // Above the list, so its first picture is the page's first: fetched first, the one with high priority (the list's waits).
   const hero = items.find((e) => e.coverUrl)?.id;
+  // Those two pictures' 384px copies travel in the HTML (lib/api.ts inlineCover), so they are on screen at the first
+  // paint; the list's is the first card with a cover, which days.tsx leads with (a day of three or more leads with a
+  // featured night: then it is another card and the copy goes unused, no worse than before).
+  // The 192px copy: on a phone both are 88px thumbs, so that is the copy the phone loads anyway (a computer's card shows it until the ladder's arrives).
+  const top = items.find((e) => e.id === hero);
+  const lead = initial.items.find((e) => e.coverUrl);
+  const [topInline, leadInline] = await Promise.all([inlineCover(top?.coverUrl, DAY, 192), inlineCover(lead?.coverUrl, LEAD, 192)]);
+  if (top) top.coverInline = topInline;
+  if (lead) lead.coverInline = leadInline;
   // A world festival names its country: the highlight shows every city's nights, whoever reads it.
   const countryName = (code: string) => tx(meta.countries.find((c) => c.code === code)?.name, lang) || null;
   const cards = items.map((e) => <EventCard key={e.id} e={e} lang={lang} eager={e.id === hero} fit={DAY} country={countryName(e.country)} />);

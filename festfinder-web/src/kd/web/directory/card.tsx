@@ -40,7 +40,7 @@ export function ArtistCard({ a, lang, eager = false }: { a: DirArtist; lang: Lan
     <article className="flex min-w-0 flex-col gap-3" aria-labelledby={id}>
       <div className="relative">
         <Link href={href} tabIndex={-1} aria-hidden="true" className="block">
-          <Art family={fam ?? 'free'} cover={a.imageUrl ?? a.coverUrl} title={a.name} layout="mono" fit={FIT.tile} eager={eager} className="aspect-square" />
+          <Art family={fam ?? 'free'} cover={a.imageUrl ?? a.coverUrl} title={a.name} layout="mono" fit={FIT.tile} eager={eager} inline={eager ? a.coverInline : null} className="aspect-square" />
         </Link>
         {booking || a.origin === 'radar' ? (
           <span className="pointer-events-none absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
