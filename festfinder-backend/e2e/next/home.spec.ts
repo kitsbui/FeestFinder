@@ -244,13 +244,10 @@ test('the first picture is fetched first, and a filtered address never paints th
     // and the list's lead card is the page's largest picture).
     expect(high, 'the highlight\'s first picture and the list\'s').toHaveLength(2);
     expect(high[0]).toBe(imgs.find((t) => /\bclass="kd-cover\b/.test(t) && /\bsrc="/.test(t)));
-    // Both carry their 192px copy in the HTML (lib/api.ts inlineCover, Lighthouse 2026-11-05), painted with the page; the
-    // copy the size of its box (kd/img.ts: /img on the API) and the ladder's widths wait in data- attributes for the swap
-    // (ui/lq-cover.tsx), preloaded with the page.
+    // A copy the size of its box (kd/img.ts: /img on the API), with the ladder's widths beside it.
     const key = Buffer.from(cover).toString('base64url');
-    for (const t of high) expect(t).toMatch(/\ssrc="data:image\/webp;base64,[A-Za-z0-9+/]+=*"/);
-    expect(high[0]).toMatch(new RegExp(`data-src="/img/\\d+x\\d+/${key}\\.webp"`));
-    expect(high[0]).toMatch(new RegExp(`data-srcset="/img/96x96/${key}\\.webp 96w,`, 'i'));
+    expect(high[0]).toMatch(new RegExp(`src="/img/\\d+x\\d+/${key}\\.webp"`));
+    expect(high[0]).toMatch(new RegExp(`\\ssrcset="/img/96x96/${key}\\.webp 96w,`, 'i'));
     expect(high[0]).not.toContain('loading="lazy"');
     // The list's card of the same night waits its turn.
     expect(imgs.filter((t) => t.includes(`/${key}.webp`))).toHaveLength(2);
@@ -259,7 +256,7 @@ test('the first picture is fetched first, and a filtered address never paints th
     const preload = [...head.matchAll(/<link\b[^>]*>/g)].map(([t]) => t).filter((t) => /\brel="preload"/.test(t) && /\bas="image"/.test(t) && t.includes(key));
     expect(preload, 'preloaded').toHaveLength(2);
     const attr = (tag: string, name: string) => new RegExp(`\\s${name}="([^"]*)"`, 'i').exec(tag)?.[1];
-    expect(preload.map((p) => attr(p, 'imagesrcset') + ' ' + attr(p, 'imagesizes')).sort()).toEqual(high.map((t) => attr(t, 'data-srcset') + ' ' + attr(t, 'data-sizes')).sort());
+    expect(preload.map((p) => attr(p, 'imagesrcset') + ' ' + attr(p, 'imagesizes')).sort()).toEqual(high.map((t) => attr(t, 'srcset') + ' ' + attr(t, 'sizes')).sort());
 
     // A filtered address on a phone: the highlight never shows, the list's first picture is the one.
     await page.setViewportSize({ width: 390, height: 844 });

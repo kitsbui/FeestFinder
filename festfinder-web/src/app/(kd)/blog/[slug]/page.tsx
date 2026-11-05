@@ -14,5 +14,5 @@ export const generateMetadata = seoMetadata('blog', 'vi');
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const data = await loadPost((await params).slug, 'vi');
   if (!data) notFound();
-  return <BlogPostPage post={data.post} seo={data.seo} coverInline={data.inline} lang="vi" />;
+  return <BlogPostPage post={data.post} seo={data.seo} lang="vi" />;
 }

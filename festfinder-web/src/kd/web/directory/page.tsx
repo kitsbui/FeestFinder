@@ -7,8 +7,7 @@
  * opens on its list.
  */
 import { notFound } from 'next/navigation';
-import { FIT } from '../../fits';
-import { api, apiOr, inlineCover, jsonLdHtml, type DirectorySeo, type Lang } from '@/lib/api';
+import { api, apiOr, jsonLdHtml, type DirectorySeo, type Lang } from '@/lib/api';
 import { loadDir } from '@/components/seo-meta';
 import { KdProvider } from '../../runtime';
 import { WebNav } from '../chrome';
@@ -46,9 +45,6 @@ export async function loadDirectory(scope: Scope, lang: Lang, search?: Search) {
     if (out) { start = at; first = out; }
   }
   const page: DirPage = { items: first.items, total: first.total, nextOffset: first.nextOffset, filters: { roles }, kinds: first.kinds };
-  // The grid's first picture (browser.tsx eagerId) travels in the HTML, so it is on screen at the first paint.
-  const tile = page.items.find((a) => a.imageUrl ?? a.coverUrl);
-  if (tile) tile.coverInline = await inlineCover(tile.imageUrl ?? tile.coverUrl, FIT.tile);
   return { seo, first: page, meta: lists, start };
 }
 

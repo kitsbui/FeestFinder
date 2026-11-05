@@ -3,7 +3,7 @@
  * /blog/<slug>: one post, with its structured data. Rendered on the server; the category tabs
  * and "Sửa" for its author come in the browser.
  */
-import { api, apiOr, inlineCover, jsonLdHtml, type BlogSeo, type Lang } from '@/lib/api';
+import { api, apiOr, jsonLdHtml, type BlogSeo, type Lang } from '@/lib/api';
 import { fill, pick } from '../../copy';
 import { dayMonth } from '../../format';
 import { g } from '../../genre';
@@ -64,10 +64,10 @@ export async function loadPost(slug: string, lang: Lang) {
     api<Post>(`/posts/${enc(slug)}`, { lang }),
     api<BlogSeo>(`/seo/blog/${enc(slug)}${lang === 'vi' ? '' : '?lang=en'}`),
   ]);
-  return post && seo ? { post, seo, inline: await inlineCover(post.coverUrl, FIT.read) } : null;
+  return post && seo ? { post, seo } : null;
 }
 
-export function BlogPostPage({ post, seo, lang, coverInline = null }: { post: Post; seo: BlogSeo; lang: Lang; coverInline?: string | null }) {
+export function BlogPostPage({ post, seo, lang }: { post: Post; seo: BlogSeo; lang: Lang }) {
   const T = pick(BLOG, lang);
   const W = pick(WEB, lang);
   // The words in the frame's language when written, else the other's (the page says which with lang=).
@@ -111,7 +111,7 @@ export function BlogPostPage({ post, seo, lang, coverInline = null }: { post: Po
               </header>
               {post.coverUrl ? (
                 <figure className="flex flex-col gap-2 pt-6">
-                  <Art title={title} family="edm" cover={post.coverUrl} alt={title} eager inline={coverInline} fit={FIT.read} className="aspect-video w-full" />
+                  <Art title={title} family="edm" cover={post.coverUrl} alt={title} eager fit={FIT.read} className="aspect-video w-full" />
                   {post.coverCredit ? <figcaption className="kd-s" lang={lang}>{T.cover} · {inline(post.coverCredit, 'cover', true)}</figcaption> : null}
                 </figure>
               ) : null}

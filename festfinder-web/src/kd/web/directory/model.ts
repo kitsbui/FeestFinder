@@ -17,8 +17,6 @@ export interface DirArtist {
   name: string;
   imageUrl: string | null;
   coverUrl?: string | null;
-  /** Set by the server on the grid's eager tile: its picture's 384px copy as a data URI (lib/api.ts inlineCover). */
-  coverInline?: string | null;
   roles: Keyed[];
   basedIn: { city: string; label: Pair | null } | null;
   styles: (Keyed & { genre: string | null })[];
