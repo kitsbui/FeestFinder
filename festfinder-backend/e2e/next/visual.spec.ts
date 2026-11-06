@@ -35,9 +35,20 @@ for (const size of SIZES) {
       await page.locator('html[data-kd-session]').waitFor({ state: 'attached', timeout: 15_000 }).catch(() => {});
       await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
       await page.evaluate(() => document.fonts.ready);
+      // A region the base branch does not have yet is not shot there: the PR's shot then arrives with no
+      // expectation, fails, and lands in the visual-diff artifact to be looked at.
+      if (region && !(await page.locator(region).count())) test.skip(true, `${region} is not on this branch`);
+      // The home page's map: MapLibre in place of the board (a pointer over it wakes it), and its
+      // canvas masked, since WebGL draws differently from run to run; the pins stay in the shot.
+      const map = page.getByRole('region', { name: 'Bản đồ sự kiện' });
+      if (await map.count()) {
+        await map.hover();
+        await map.locator('.maplibregl-marker').first().waitFor({ timeout: 15_000 }).catch(() => {});
+      }
+      const opts = { animations: 'disabled' as const, caret: 'hide' as const, maxDiffPixelRatio: 0.01, mask: [page.locator('canvas.maplibregl-canvas')] };
       const name = `${label ?? (path === '/' ? 'home' : path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, ''))}-${size.name}.png`;
-      if (region) await expect(page.locator(region).first()).toHaveScreenshot(name, { animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 });
-      else await expect(page).toHaveScreenshot(name, { fullPage: true, animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 });
+      if (region) await expect(page.locator(region).first()).toHaveScreenshot(name, opts);
+      else await expect(page).toHaveScreenshot(name, { ...opts, fullPage: true });
     });
   }
 }
