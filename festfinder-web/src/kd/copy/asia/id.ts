@@ -466,6 +466,8 @@ export const ID: Record<string, string> = {
   'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': 'Memasang acara gratis. Tautan tiketmu, ketukan Beli tiket, dan simpanan ada di Studio.',
   'Fee to publish': 'Biaya pasang',
   // the home page's map and calendar (2026-11-06)
+  'No events coming up': 'Belum ada acara mendatang',
+  'The events could not load': 'Acara tidak dapat dimuat',
   'Use Ctrl + scroll to zoom the map': 'Tahan Ctrl dan gulir untuk memperbesar peta',
   'Use ⌘ + scroll to zoom the map': 'Tahan ⌘ dan gulir untuk memperbesar peta',
   'Use two fingers to move the map': 'Gunakan dua jari untuk menggeser peta',

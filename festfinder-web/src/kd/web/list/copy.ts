@@ -6,6 +6,12 @@ export const LIST = {
   free: { en: 'Free', vi: 'Miễn phí' },
   seePrice: { en: 'See price', vi: 'Xem giá' },
   clear: { en: 'Clear filters', vi: 'Bỏ lọc' },
+  // nothing to show, or the API did not answer
+  noUpcoming: { en: 'No events coming up', vi: 'Chưa có sự kiện sắp tới' },
+  noMatch: { en: 'Nothing matches', vi: 'Không có sự kiện nào khớp' },
+  postEvent: { en: 'List your event', vi: 'Đăng sự kiện' },
+  loadFailed: { en: 'The events could not load', vi: 'Không tải được sự kiện' },
+  retry: { en: 'Try again', vi: 'Thử lại' },
   // the map
   mapLabel: { en: 'Event map', vi: 'Bản đồ sự kiện' },
   mapFailed: { en: 'The map could not load', vi: 'Không tải được bản đồ' },

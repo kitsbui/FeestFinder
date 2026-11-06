@@ -10,7 +10,8 @@ import { XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { pick, tx, type Lang, type Pair } from '../../copy';
-import { Chip } from '../../ui/actions';
+import { Button, Chip, LinkButton } from '../../ui/actions';
+import { inLang } from '../../link';
 import { Calendar, type HomeEvent } from './calendar';
 import { LIST } from './copy';
 import { MapBoard } from './map-board';
@@ -27,7 +28,8 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   // The cached page is every visitor's; the address is read in the browser only.
   const search = useSyncExternalStore(never, () => location.search, () => '');
   const [cleared, setCleared] = useState(false);
-  const [found, setFound] = useState<HomeEvent[] | null>(null);
+  const [found, setFound] = useState<HomeEvent[] | 'error' | null>(null);
+  const [tries, setTries] = useState(0);
   const p = new URLSearchParams(cleared ? '' : search);
   const q = p.get('q')?.trim() ?? '', style = p.get('style') ?? '';
   const asked = !!(q || style);
@@ -39,9 +41,9 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
     if (q) query.set('q', q);
     if (style) query.set('style', style);
     let live = true;
-    FF.get('/events/map?' + query, { lang }).then((r: { items: HomeEvent[] }) => { if (live) setFound(r.items); }, () => { if (live) setFound([]); });
+    FF.get('/events/map?' + query, { lang }).then((r: { items: HomeEvent[] }) => { if (live) setFound(r.items); }, () => { if (live) setFound('error'); });
     return () => { live = false; };
-  }, [asked, q, style, city, lang]);
+  }, [asked, q, style, city, lang, tries]);
 
   const clear = () => {
     const keep = new URLSearchParams(location.search);
@@ -68,7 +70,12 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
     return () => { removeEventListener('load', later); clearTimeout(t); };
   }, [live]);
 
-  const shown = asked && found ? found : events;
+  const shown = asked && Array.isArray(found) ? found : events;
+  // Nothing to show, or the search's answer did not come: a title and the one thing to do.
+  const note = found === 'error' ? { title: T.loadFailed, action: <Button size="sm" onClick={() => { setFound(null); setTries((n) => n + 1); }}>{T.retry}</Button> }
+    : asked && Array.isArray(found) && !found.length ? { title: T.noMatch, action: <Button size="sm" onClick={clear}>{T.clear}</Button> }
+    : !asked && !events.length ? { title: T.noUpcoming, action: <LinkButton size="sm" href={inLang('/studio/new', lang)}>{T.postEvent}</LinkButton> }
+    : null;
   return (
     <main id="main" className="flex flex-1 flex-col">
       <h1 className="sr-only">{heading}</h1>
@@ -79,6 +86,14 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
       >
         {live ? <HomeMap lang={lang} events={shown} places={places} onReady={ready} /> : null}
         {drawn ? null : <MapBoard lang={lang} events={shown} places={places} />}
+        {note ? (
+          <div className="pointer-events-none absolute inset-0 z-[2] grid place-items-center p-4">
+            <div className="kd-glass pointer-events-auto flex flex-col items-center gap-3 rounded-card p-5">
+              <p className="kd-hs">{note.title}</p>
+              {note.action}
+            </div>
+          </div>
+        ) : null}
         {asked ? (
           <div className="absolute left-4 top-4 z-[3] max-w-[calc(100%-2rem)]">
             <Chip on className="kd-glass" onClick={clear}>

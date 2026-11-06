@@ -466,6 +466,8 @@ export const JA: Record<string, string> = {
   'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': '掲載は無料です。チケットリンク、「チケットを買う」のタップ数、保存数はStudioにあります。',
   'Fee to publish': '掲載料',
   // the home page's map and calendar (2026-11-06)
+  'No events coming up': '今後のイベントはまだありません',
+  'The events could not load': 'イベントを読み込めませんでした',
   'Use Ctrl + scroll to zoom the map': 'Ctrl キーを押しながらスクロールで地図を拡大',
   'Use ⌘ + scroll to zoom the map': '⌘ キーを押しながらスクロールで地図を拡大',
   'Use two fingers to move the map': '2 本の指で地図を動かします',

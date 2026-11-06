@@ -466,6 +466,8 @@ export const TH: Record<string, string> = {
   'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': 'ลงประกาศฟรี ลิงก์ขายบัตร ยอดกดซื้อบัตร และยอดบันทึกอยู่ใน Studio',
   'Fee to publish': 'ค่าลงประกาศ',
   // the home page's map and calendar (2026-11-06)
+  'No events coming up': 'ยังไม่มีอีเวนต์ที่กำลังจะมาถึง',
+  'The events could not load': 'โหลดอีเวนต์ไม่สำเร็จ',
   'Use Ctrl + scroll to zoom the map': 'กด Ctrl ค้างแล้วเลื่อนเพื่อซูมแผนที่',
   'Use ⌘ + scroll to zoom the map': 'กด ⌘ ค้างแล้วเลื่อนเพื่อซูมแผนที่',
   'Use two fingers to move the map': 'ใช้สองนิ้วเพื่อเลื่อนแผนที่',

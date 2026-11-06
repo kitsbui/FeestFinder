@@ -13,7 +13,7 @@ import { timeRange, whenShort } from '../../format';
 import { familyOf, g } from '../../genre';
 import { inLang } from '../../link';
 import { createKdMap, type KdMap, type Pin } from '../../map/kd-map';
-import { IconButton, LinkButton } from '../../ui/actions';
+import { Button, IconButton, LinkButton } from '../../ui/actions';
 import { Art } from '../../ui/parts';
 import { square } from '../../img';
 import { priceLine } from '../price';
@@ -28,6 +28,7 @@ export function HomeMap({ lang, events, places, onReady }: {
   const el = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<KdMap | null>(null);
   const [failed, setFailed] = useState(false);
+  const [tries, setTries] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
   const first = useRef({ events, places });
 
@@ -50,7 +51,7 @@ export function HomeMap({ lang, events, places, onReady }: {
       if (!dead) setMap(m);
     }, () => setFailed(true));
     return () => { dead = true; made?.destroy(); };
-  }, [lang]);
+  }, [lang, tries]);
 
   // The pins, and the frame whenever the nights change (a search from the address).
   useEffect(() => {
@@ -67,7 +68,14 @@ export function HomeMap({ lang, events, places, onReady }: {
     <>
       {/* MapLibre makes its container `position: relative`: the box that fills the section is around it. */}
       <div className="absolute inset-0"><div ref={el} className="size-full" /></div>
-      {failed ? <p className="kd-s absolute inset-0 grid place-items-center">{T.mapFailed}</p> : null}
+      {failed ? (
+        <div className="absolute inset-0 z-[2] grid place-items-center p-4">
+          <div className="kd-glass flex flex-col items-center gap-3 rounded-card p-5">
+            <p className="kd-hs">{T.mapFailed}</p>
+            <Button size="sm" onClick={() => { setFailed(false); setTries((n) => n + 1); }}>{T.retry}</Button>
+          </div>
+        </div>
+      ) : null}
       {chosen ? (
         <div className={cx('kd-glass absolute bottom-4 left-4 z-[3] grid w-[min(380px,calc(100%-32px))] grid-cols-[76px_minmax(0,1fr)] items-center gap-3 rounded-org p-3', g(familyOf(chosen.genre)))}>
           <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} title={chosen.title} fit={square(76)} className="h-19 w-19 rounded-seg" />

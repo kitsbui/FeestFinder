@@ -90,6 +90,24 @@ test.describe('the home page: map and calendar', () => {
     expect(problems).toEqual([]);
   });
 
+  test('a search with no answer says so and offers the way back; one that fails offers to try again', async ({ page }) => {
+    const map = page.getByRole('region', { name: 'Bản đồ sự kiện' });
+    let fail = true;
+    await page.route(/\/events\/map\?.*q=ravolution/, (route) => (fail ? (fail = false, route.fulfill({ status: 500, json: { error: { code: 'internal', message: 'x' } } })) : route.continue()));
+    const problems = await open(page, '/?q=ravolution');
+    await expect(map.getByText('Không tải được sự kiện')).toBeVisible();
+    await map.getByRole('button', { name: 'Thử lại' }).click();
+    await expect(chips(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(map.getByText('Không tải được sự kiện')).toHaveCount(0);
+    expect(problems.filter((p) => !/500/.test(p))).toEqual([]);
+
+    await open(page, '/?q=khongcosukiennao');
+    await expect(map.getByText('Không có sự kiện nào khớp')).toBeVisible();
+    await map.getByRole('button', { name: 'Bỏ lọc' }).first().click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(chips(page).filter({ hasText: 'HOZO Super Fest' })).toHaveCount(3);
+  });
+
   test('a style’s link narrows to its nights', async ({ page }) => {
     const problems = await open(page, '/?style=techno');
     await expect(chips(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
