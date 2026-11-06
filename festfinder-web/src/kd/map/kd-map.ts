@@ -37,6 +37,8 @@ export type Box = [number, number, number, number];
 
 export interface KdMapOptions {
   bounds?: Box;
+  /** The closest zoom fitting `bounds` may reach (one pin, or a few on one street). */
+  fitMaxZoom?: number;
   center?: [number, number];
   zoom?: number;
   interactive?: boolean;
@@ -47,6 +49,8 @@ export interface KdMapOptions {
   zoomLabels?: { in: string; out: string };
   /** Place names, [lng, lat]: shown zoomed out, and at every zoom on a bare board. */
   places?: { name: string; at: [number, number] }[];
+  /** A page that scrolls past the map: one finger and the wheel scroll the page; these lines say how to move the map. */
+  cooperative?: { windows: string; mac: string; mobile: string };
 }
 
 export interface KdMap {
@@ -86,7 +90,15 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
   const map = new m.Map({
     container: el,
     style,
-    ...(opts.bounds ? { bounds: opts.bounds, fitBoundsOptions: { padding: 40 } } : { center: opts.center, zoom: opts.zoom ?? 13 }),
+    ...(opts.bounds ? { bounds: opts.bounds, fitBoundsOptions: { padding: 40, maxZoom: opts.fitMaxZoom ?? 17 } } : { center: opts.center, zoom: opts.zoom ?? 13 }),
+    ...(opts.cooperative ? {
+      cooperativeGestures: true,
+      locale: {
+        'CooperativeGesturesHandler.WindowsHelpText': opts.cooperative.windows,
+        'CooperativeGesturesHandler.MacHelpText': opts.cooperative.mac,
+        'CooperativeGesturesHandler.MobileHelpText': opts.cooperative.mobile,
+      },
+    } : {}),
     attributionControl: { compact: true },
     dragRotate: false,
     pitchWithRotate: false,
@@ -255,7 +267,7 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
       const b = map.getBounds();
       return [r3(Math.max(-180, b.getWest())), r3(Math.max(-85, b.getSouth())), r3(Math.min(180, b.getEast())), r3(Math.min(85, b.getNorth()))];
     },
-    fit(box, animate) { map.fitBounds(box, { padding: 40, animate: animate !== false, duration: 600 }); },
+    fit(box, animate) { map.fitBounds(box, { padding: 40, maxZoom: opts.fitMaxZoom ?? 17, animate: animate !== false, duration: 600 }); },
     flyTo(at, zoom) { map.easeTo({ center: [at.lng, at.lat], zoom: zoom ?? Math.max(map.getZoom(), 13) }); },
     zoom(by) { map.easeTo({ zoom: map.getZoom() + by }); },
     resize() { map.resize(); },

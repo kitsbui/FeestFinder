@@ -366,28 +366,9 @@
   .kd-ev-row .kd-ev-inline { display: inline-flex; }
   .kd-ev-row .kd-ev-save { top: 50%; right: 0; transform: translateY(-50%); }
   .kd-ev-row .kd-ev-title { font-size: 16px; }
-  /* The list's days (web/list/days.tsx): a lead with rows beside it, then cards; in a box narrower than 600px every event is a row. */
+  /* The home page's highlight (web/list/page.tsx): in a box narrower than 600px every card is a row. */
   .kd-days { container: days / inline-size; }
-  .kd-day-top { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px 32px; align-items: start; }
-  .kd-day-stack { display: flex; flex-direction: column; }
-  .kd-day-stack > .kd-ev-row:first-child { padding-top: 0; }
-  /* One night: across the width, the picture beside the words. Two: two leads side by side. */
-  .kd-day-solo .kd-ev { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: center; gap: 16px 32px; }
-  /* The save button stays on the picture's corner: the words' column is 2 of 5 parts, after a 32px gap. */
-  .kd-day-solo .kd-ev-save { right: calc((100% - 32px) * 0.4 + 42px); }
-  .kd-day-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; align-items: start; }
-  /* The whole width on a wide screen (the rail went, owner 2026-10-20): the lead and its rows share it evenly, so the lead's picture never towers over them. */
-  @container days (min-width: 1100px) {
-    .kd-day-top, .kd-day-solo .kd-ev { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .kd-day-solo .kd-ev-save { right: calc((100% - 32px) * 0.5 + 42px); }
-    /* A lead half the page wide stays short enough to leave the next day in sight. */
-    .kd-day-top .kd-ev-lead .kd-art, .kd-day-pair .kd-ev-lead .kd-art, .kd-day-solo .kd-ev-lead .kd-art { aspect-ratio: 2 / 1; }
-    /* A night alone on its day: its words carry the half beside the picture (night build 2026-10-21). */
-    .kd-day-solo .kd-ev-lead .kd-ev-title { font-size: 32px; letter-spacing: -0.03em; }
-  }
   @container days (max-width: 599px) {
-    .kd-day-pair { grid-template-columns: minmax(0, 1fr); gap: 0; }
-    .kd-day-top { grid-template-columns: minmax(0, 1fr); gap: 0; }
     .kd-days .kd-cards { grid-template-columns: minmax(0, 1fr); gap: 0; }
     .kd-days .kd-ev { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; column-gap: 14px; padding: 12px 52px 12px 0; border-bottom: 1px solid var(--color-line-1); }
     .kd-days .kd-ev .kd-art { width: 88px; aspect-ratio: 1; }
@@ -395,7 +376,6 @@
     .kd-days .kd-ev .kd-ev-inline { display: inline-flex; }
     .kd-days .kd-ev .kd-ev-save { top: 50%; right: 0; transform: translateY(-50%); }
     .kd-days .kd-ev .kd-ev-title { font-size: 16px; line-height: 1.3; letter-spacing: -0.015em; font-weight: 600; }
-    .kd-day-stack > .kd-ev-row:first-child { padding-top: 12px; }
   }
   .kd-sec { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .kd-split { display: flex; flex-wrap: wrap; gap: 32px; }
@@ -573,9 +553,6 @@
 
   /* ---- skeleton while a client part loads ---- */
   .kd-skel { border-radius: var(--radius-btn); background: rgba(255, 255, 255, 0.05); }
-  /* The list waits for a city this device chose that the server did not draw, or the address's filters (web/list/city-first.tsx): its place kept, hidden, 2.5 s at most. */
-  html[data-city-first] [data-list], html[data-list-wait] [data-list] { visibility: hidden; animation: kd-list-wait 0s linear 2.5s forwards; }
-  @keyframes kd-list-wait { to { visibility: visible; } }
 
   /* ---- touch targets: 44 × 44px at least (e2e/next/targets.spec.ts); last, so they win over each part's own size ---- */
   /* A short label still gets the width. */
@@ -592,9 +569,9 @@
   .kd-nav, .kd-tabbar, .kd-dock, .kd-scrim { display: none !important; }
 }
 
-/* A filter other than the city (web/list/city-first.tsx): the highlight, which the browser drops (web/list/browser.tsx),
-   is never painted. Outside the layers, so it wins over the section's own `flex`. */
-html[data-asked] :is([data-surface="flagship"], [data-surface="shelf"]) { display: none; }
+/* An address that narrows the home page (?q=, ?style=; web/list/page.tsx): the highlight is never painted.
+   Outside the layers, so it wins over the section's own `flex`. */
+html[data-asked] [data-surface] { display: none; }
 
 /* The sheet's backdrop: the page dims behind a modal. */
 .kd-sheet::backdrop {

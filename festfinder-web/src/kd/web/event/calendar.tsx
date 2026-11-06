@@ -32,7 +32,10 @@ const nextDay = (date: string) => new Date(Date.parse(date + 'T00:00:00Z') + 86_
 export interface CalendarFields { title: string; startMs: number | null; endMs: number | null; dates: string; location: string; details: string; timezone: string }
 
 /** What every calendar gets: the night's name, when, where, and the way back to it. */
-export function calendarFields(ev: EventDetail, lang: Lang, origin: string): CalendarFields {
+export function calendarFields(
+  ev: Pick<EventDetail, 'title' | 'slug' | 'startsAt' | 'endsAt' | 'startTime' | 'startsOn' | 'endsOn' | 'timezone' | 'cityLabel' | 'description'> & { venue: { name: string | null; address?: string | null } },
+  lang: Lang, origin: string,
+): CalendarFields {
   const place = [ev.venue.name, ev.venue.address, tx(ev.cityLabel, lang)].filter((x, i, all) => x && all.indexOf(x) === i).join(', ');
   const about = (tx(ev.description, lang) || ev.description?.vi || ev.description?.en || '').trim();
   const link = origin + inLang(`/e/${encodeURIComponent(ev.slug)}`, lang);

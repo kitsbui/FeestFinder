@@ -197,7 +197,7 @@ test('browser extensions adding <div>s to <body> do not break hydration', async 
       document.body.append(last);
     }).observe(document, { childList: true, subtree: true });
   });
-  for (const path of ['/', '/e/ravo', '/?view=grid', '/app']) {
+  for (const path of ['/', '/e/ravo', '/?city=ho-chi-minh', '/app']) {
     await page.goto(path);
     // Once the page has hydrated, the extension's elements are back where it put them.
     await expect.poll(() => page.evaluate(() => ({
@@ -244,13 +244,15 @@ test.describe('full width on desktop', () => {
 test('a cover that does not load leaves the art, not a broken image', async ({ page }) => {
   // One event's cover lives on a site that has lost it.
   await page.route('https://covers.example/**', (route) => route.fulfill({ status: 404, body: '' }));
-  await page.route(/\/events\?.*city=ho-chi-minh/, async (route) => {
+  // A search asks the API in the browser; the pin's card over the map shows the night's cover.
+  await page.route(/\/events\/map\?.*q=ravolution/, async (route) => {
     const body = await (await route.fetch()).json();
-    body.items[0] = { ...body.items[0], coverUrl: 'https://covers.example/gone.jpg' };
+    body.items = body.items.map((e: object) => ({ ...e, coverUrl: 'https://covers.example/gone.jpg' }));
     await route.fulfill({ json: body });
   });
-  await page.goto('/?view=grid&city=ho-chi-minh');
-  const cover = page.locator('.kd-ev').first().locator('img.kd-cover');
+  await page.goto('/?q=ravolution');
+  await page.locator('.maplibregl-marker button').first().click();
+  const cover = page.getByRole('region', { name: 'Bản đồ sự kiện' }).locator('img.kd-cover').first();
   await expect(cover).toHaveAttribute('data-broken', '');
   await expect(cover).toBeHidden();
 });

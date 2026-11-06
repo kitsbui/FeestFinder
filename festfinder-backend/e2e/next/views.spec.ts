@@ -5,7 +5,7 @@ import { ACCOUNTS } from './routes.ts';
 /*
  * Pictures and motion (design v2 phase 8, artboard 23 "Trên 9"): a page never prints a name twice
  * (an event without a cover shows a poster of its date beside its H1; an organiser without a cover
- * has no banner); a quiet day of the list fills the row on a computer; every stamp of the passport
+ * has no banner); every stamp of the passport
  * and every badge has its own art; the passport shares as a story; the Console counts the coming
  * listings with a real cover.
  *
@@ -40,24 +40,6 @@ test('an organiser without a cover has no banner repeating the name', async ({ p
   await open(page, '/o/ravoent');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Ravolution Entertainment');
   expect(await tileNames(page)).not.toContain('Ravolution Entertainment');
-});
-
-test('a computer: a day of one or two nights fills the row', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await open(page, '/');
-  const days = page.locator('.kd-days > section');
-  await expect(days.first()).toBeVisible();
-  let quiet = 0;
-  for (const day of await days.all()) {
-    const cards = day.locator(':scope > .kd-day-solo .kd-ev, :scope > .kd-day-pair .kd-ev');
-    const n = await cards.count();
-    if (!n) continue;
-    quiet++;
-    const row = (await day.boundingBox())!.width;
-    const used = (await Promise.all((await cards.all()).map(async (c) => (await c.boundingBox())!.width))).reduce((a, b) => a + b, 0);
-    expect(used, `${await day.locator('h2').textContent()}: the cards use ${Math.round(used)} of ${Math.round(row)} px`).toBeGreaterThan(row * 0.9);
-  }
-  expect(quiet, 'the demo week has days of one and two nights').toBeGreaterThan(0);
 });
 
 test('every stamp and badge has its own art; the passport shares as a story', async ({ page }) => {

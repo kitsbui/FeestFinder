@@ -17,7 +17,7 @@ import { join, relative } from 'node:path';
 import { rewrite } from './tokens-v2.ts';
 
 /** Arbitrary px values in src (148 at design phase 0, 130 after phase 4 removed the app's discovery screens). Lower it when you fix some; never raise it. */
-const PX_BUDGET = 98;
+const PX_BUDGET = 97;
 
 const WEB = join(import.meta.dirname, '..');
 const SRC = join(WEB, 'src');

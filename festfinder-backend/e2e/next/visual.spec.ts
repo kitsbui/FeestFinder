@@ -15,14 +15,14 @@ import { expect, test } from '@playwright/test';
 test.skip(!process.env.FF_VISUAL, 'set FF_VISUAL=1 (npm run test:visual)');
 
 /**
- * The home page by day (its default view) and as a table, the event page, the artists, the kit;
+ * The home page (owner, 2026-11-06: map + calendar), the event page, the artists, the kit;
  * and two regions on their own (design v2 phase 14), because a full page's 1 % misses a change
- * in a small place: the event hero and the home page's filter bar.
+ * in a small place: the event hero and the home page's calendar toolbar.
  */
 const screens: { path: string; region?: string; name?: string }[] = [
-  { path: '/' }, { path: '/?view=table' }, { path: '/e/ravo' }, { path: '/a' }, { path: '/kit' },
+  { path: '/' }, { path: '/e/ravo' }, { path: '/a' }, { path: '/kit' },
   { path: '/e/ravo', region: 'section.kd-wrap', name: 'event-hero' },
-  { path: '/', region: '.kd-cmd', name: 'home-bar' },
+  { path: '/', region: 'section[aria-labelledby="cal-h"]', name: 'home-calendar' },
 ];
 const SIZES = [{ name: 'phone', width: 390, height: 844 }, { name: 'tablet', width: 768, height: 1024 }, { name: 'desktop', width: 1440, height: 900 }];
 

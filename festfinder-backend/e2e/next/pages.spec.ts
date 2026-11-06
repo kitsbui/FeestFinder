@@ -2,11 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { watch } from '../checks.ts';
 
 /*
- * The home page and the event page of design v2 phase 2 (artboards 04–07 of the design review):
- * the list by day is the default and its first event is in the first screen at 390 and 1440px;
- * the table is a view to ask for; the questions live on /about with their FAQPage JSON-LD; on a
- * phone the event page keeps "Mua vé" within reach and puts the tickets right after the hero;
- * the organiser's answers and everyone's comments are one "Bình luận".
+ * The home page (owner, 2026-11-06) shows a map and calendar. The event page keeps "Mua vé" within reach;
+ * the organiser's answers and everyone's comments are one "Bình luận". Questions live on /about
+ * with their FAQPage JSON-LD.
  */
 
 async function open(page: Page, path: string) {
@@ -17,47 +15,17 @@ async function open(page: Page, path: string) {
 }
 
 for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop', width: 1440, height: 900 }]) {
-  test(`${size.name}: the home page lists by day, its first event in the first screen`, async ({ page }) => {
+  test(`${size.name}: the home page shows a map and calendar`, async ({ page }) => {
     await page.setViewportSize({ width: size.width, height: size.height });
     const problems = await open(page, '/');
     const main = page.getByRole('main');
-    await expect(main.getByRole('heading', { level: 2, name: /^(Thứ|Chủ nhật)/ }).first()).toBeVisible();
-    await expect(main.getByRole('table')).toHaveCount(0);
-    const first = await main.locator('article.kd-ev').first().boundingBox();
-    expect(first, 'an event card').toBeTruthy();
-    expect(first!.y + 48, 'its top and title in the first screen').toBeLessThan(size.height);
+    // Map section
+    await expect(main.locator('section[aria-label*="Bản đồ"]')).toBeVisible();
+    // Calendar section (which is a table)
+    await expect(main.locator('section[aria-labelledby="cal-h"] table')).toBeVisible();
     expect(problems).toEqual([]);
   });
 }
-
-test('the table is the view to ask for; the bar keeps the filters on screen while the list scrolls', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await open(page, '/?view=table');
-  await expect(page.getByRole('main').getByRole('table')).toBeVisible();
-  await page.getByRole('button', { name: 'Lưới', exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
-  await page.mouse.wheel(0, 1200);
-  const bar = page.getByRole('group', { name: 'Bộ lọc' });
-  await expect(bar).toBeInViewport();
-});
-
-test('a phone filters with three times in one tap and the styles that have nights', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await open(page, '/');
-  // No "Lọc" sheet on a phone any more (design v2 phase 12, owner 2026-10-18).
-  await expect(page.getByRole('button', { name: /^Lọc/ })).toHaveCount(0);
-  const times = page.locator('.kd-cmd').getByRole('group', { name: 'Thời gian' });
-  for (const name of ['Tối nay', 'Cuối tuần này', 'Tất cả']) await expect(times.getByRole('button', { name })).toBeVisible();
-  await expect(times.getByRole('button', { name: '7 ngày tới' })).toHaveCount(0);
-  await times.getByRole('button', { name: 'Cuối tuần này' }).click();
-  await expect(page).toHaveURL(/time=weekend/);
-  await expect(times.getByRole('button', { name: 'Cuối tuần này' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cuối tuần này');
-  // The styles row offers only styles that have nights; one tap filters.
-  const styles = page.getByRole('main').getByRole('button', { name: 'Techno', exact: true });
-  await styles.click();
-  await expect(page).toHaveURL(/style=techno/);
-});
 
 test('the questions are on /about with their FAQPage JSON-LD, no longer on the home page', async ({ request }) => {
   const home = await (await request.get('/')).text();

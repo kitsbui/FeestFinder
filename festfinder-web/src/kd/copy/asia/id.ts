@@ -306,6 +306,7 @@ export const ID: Record<string, string> = {
   'Any price': 'Harga apa saja',
   'Show events': 'Tampilkan acara',
   'Clear the search “{q}”': 'Hapus pencarian “{q}”',
+  'Add to Google Calendar': 'Tambahkan ke Google Kalender',
   'Which city are you in?': 'Kamu di kota mana?',
   'What do you like?': 'Kamu suka apa?',
   'Step {n} of 2': 'Langkah {n} dari 2',
@@ -464,4 +465,12 @@ export const ID: Record<string, string> = {
   'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'Penjual milik penyelenggara. FeestFinder tidak menjual tiket: Beli tiket membawamu ke penjual.',
   'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': 'Memasang acara gratis. Tautan tiketmu, ketukan Beli tiket, dan simpanan ada di Studio.',
   'Fee to publish': 'Biaya pasang',
+  // the home page's map and calendar (2026-11-06)
+  'Use Ctrl + scroll to zoom the map': 'Tahan Ctrl dan gulir untuk memperbesar peta',
+  'Use ⌘ + scroll to zoom the map': 'Tahan ⌘ dan gulir untuk memperbesar peta',
+  'Use two fingers to move the map': 'Gunakan dua jari untuk menggeser peta',
+  'Previous month': 'Bulan sebelumnya',
+  'Next month': 'Bulan berikutnya',
+  '{n} more': '{n} lainnya',
+  '{n} events': '{n} acara',
 };

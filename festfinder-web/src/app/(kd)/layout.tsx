@@ -39,8 +39,7 @@ export const viewport: Viewport = {
 
 export default function KdLayout({ children }: { children: ReactNode }) {
   return (
-    // The list's inline script marks <html> before React arrives (kd/web/list/city-first.tsx: data-city-first,
-    // data-list-wait, data-asked), on purpose: those attributes are not a mismatch to warn about.
+    // Inline scripts mark <html> before React arrives (PAGE_LANG its lang, the home page data-asked), on purpose: not a mismatch to warn about.
     <html lang="vi" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: PAGE_LANG }} />

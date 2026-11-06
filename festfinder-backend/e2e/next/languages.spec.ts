@@ -69,7 +69,9 @@ test('a Thai page reads Thai from the list to an event, and offers every languag
   await expect(footer.getByRole('link', { name: '日本語' })).toHaveAttribute('href', '/?lang=ja');
   await expect(footer.getByRole('link', { name: 'Bahasa Indonesia' })).toHaveAttribute('href', '/?lang=id');
   await expect(footer.getByRole('link', { name: 'ไทย' })).toHaveCount(0);
+  // A night in the calendar opens its card, and the card the event.
   await page.getByRole('link', { name: /Ravolution Music Festival/ }).first().click();
+  await page.getByRole('dialog').locator('a[href="/e/ravo?lang=th"]').click();
   await expect(page).toHaveURL(/\/e\/ravo\?lang=th$/);
   await expect(page.getByText('ราคา', { exact: true }).first()).toBeVisible();
   // What the organiser wrote stays as written; the API answers in English.

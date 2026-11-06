@@ -280,13 +280,15 @@ export default async function catalogRoutes(app: FastifyInstance) {
           id: c.id, slug: c.slug, title: c.title, genre: c.genre, styles: c.styles, eventType: c.eventType,
           lat: Number(r.pin_lat), lng: Number(r.pin_lng), approx: !!r.pin_approx,
           venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel, origin: c.origin,
-          startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime,
+          startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime, startsAt: c.startsAt, endsAt: c.endsAt, timezone: c.timezone,
           art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, priceUnknown: c.priceUnknown, soldOut: c.soldOut,
           lineup: c.lineup.slice(0, 6), confidence: c.confidence,
         };
       }),
       total,
       truncated: total > rows.length,
+      // The API's day, so the home page's calendar marks the same today on the server and in the browser.
+      today: todayFor(f, now),
     };
   });
 

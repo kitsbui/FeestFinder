@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 /**
  * Makes the attendee app installable, so tickets and the plan sit on the home screen. It opens on
- * the home page (design v2 phase 4: the app is the site), which asks a first-time device its city
- * and styles (web/list/first-run.tsx); `id` stays /app so installed copies keep their identity.
+ * the home page (design v2 phase 4: the app is the site); `id` stays /app so installed copies keep
+ * their identity.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

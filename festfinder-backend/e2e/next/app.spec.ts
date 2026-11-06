@@ -49,24 +49,9 @@ test.describe('the app', () => {
   test.describe('installed', () => {
     // This one checks the service worker too (the config blocks it elsewhere).
     test.use({ serviceWorkers: 'allow' });
-  test('the installed app asks a new device two things, then opens the list on them; a browser asks nothing', async ({ page }) => {
-    // In a browser: the list is the first screen.
-    await open(page, '/');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    // The installed app starts at /?source=app.
+  test('the installed app opens on the home page, asking nothing (owner, 2026-11-06)', async ({ page }) => {
     const problems = await open(page, '/?source=app');
-    const city = page.getByRole('dialog', { name: 'Bạn ở thành phố nào?' });
-    await expect(city.getByText('Bước 1/2')).toBeVisible();
-    await city.getByRole('group', { name: 'Thành phố' }).getByRole('button', { name: 'TP.HCM' }).click();
-    const styles = page.getByRole('dialog', { name: 'Bạn thích nghe gì?' });
-    await styles.getByRole('button', { name: 'Techno' }).click();
-    await styles.getByRole('button', { name: 'Xem sự kiện' }).click();
-    await expect(page).toHaveURL(/city=ho-chi-minh/);
-    await expect(page).toHaveURL(/style=techno/);
-    // The device keeps the city: the app opens on it next time, without asking again.
-    await page.goto('/?source=app');
-    await page.locator('html[data-kd-session]').waitFor({ state: 'attached' });
-    await expect(page).toHaveURL(/city=ho-chi-minh/);
+    await expect(page.getByRole('region', { name: 'Bản đồ sự kiện' })).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).active?.scriptURL)).toMatch(/\/sw\.js$/);
     expect(problems).toEqual([]);
@@ -78,7 +63,10 @@ test.describe('the app', () => {
     await signInWith(page, ATTENDEE);
     const problems = await open(page, '/');
     await inFrame(page);
-    await page.getByRole('main').getByRole('link', { name: 'Ravolution Music Festival' }).first().click();
+    // The night's pin on the home page's map opens its card, and the card the event.
+    const map = page.getByRole('region', { name: 'Bản đồ sự kiện' });
+    await map.getByRole('button', { name: /Ravolution Music Festival/ }).click();
+    await map.getByRole('link', { name: 'Xem chi tiết' }).click();
     await expect(page).toHaveURL(/\/e\/ravo$/);
     await inFrame(page);
     const buy = page.locator('#tickets').getByRole('link', { name: /^Mua vé/ });

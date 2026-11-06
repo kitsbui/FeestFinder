@@ -306,6 +306,7 @@ export const TH: Record<string, string> = {
   'Any price': 'ทุกราคา',
   'Show events': 'แสดงอีเวนต์',
   'Clear the search “{q}”': 'ล้างการค้นหา “{q}”',
+  'Add to Google Calendar': 'เพิ่มไปยัง Google Calendar',
   'Which city are you in?': 'คุณอยู่เมืองไหน?',
   'What do you like?': 'คุณชอบแนวไหน?',
   'Step {n} of 2': 'ขั้นตอนที่ {n} จาก 2',
@@ -464,4 +465,12 @@ export const TH: Record<string, string> = {
   'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.': 'ผู้ขายของผู้จัดงานเอง FeestFinder ไม่ขายบัตร: ปุ่มซื้อบัตรจะพาคุณไปยังผู้ขาย',
   'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': 'ลงประกาศฟรี ลิงก์ขายบัตร ยอดกดซื้อบัตร และยอดบันทึกอยู่ใน Studio',
   'Fee to publish': 'ค่าลงประกาศ',
+  // the home page's map and calendar (2026-11-06)
+  'Use Ctrl + scroll to zoom the map': 'กด Ctrl ค้างแล้วเลื่อนเพื่อซูมแผนที่',
+  'Use ⌘ + scroll to zoom the map': 'กด ⌘ ค้างแล้วเลื่อนเพื่อซูมแผนที่',
+  'Use two fingers to move the map': 'ใช้สองนิ้วเพื่อเลื่อนแผนที่',
+  'Previous month': 'เดือนก่อน',
+  'Next month': 'เดือนถัดไป',
+  '{n} more': 'อีก {n} รายการ',
+  '{n} events': '{n} อีเวนต์',
 };

@@ -306,6 +306,7 @@ export const JA: Record<string, string> = {
   'Any price': 'すべての価格',
   'Show events': 'イベントを表示',
   'Clear the search “{q}”': '「{q}」の検索をクリア',
+  'Add to Google Calendar': 'Google カレンダーに追加',
   'Which city are you in?': 'どの都市にいますか?',
   'What do you like?': '好きなスタイルは?',
   'Step {n} of 2': 'ステップ {n}/2',
@@ -464,4 +465,12 @@ export const JA: Record<string, string> = {
   'The organiser’s own seller. FeestFinder sells no tickets: Buy tickets takes you to the seller.': '主催者の販売元です。FeestFinderはチケットを販売しません：「チケットを買う」で販売元へ移動します。',
   'Publishing is free. Your ticket link, the taps on Buy tickets and the saves are in Studio.': '掲載は無料です。チケットリンク、「チケットを買う」のタップ数、保存数はStudioにあります。',
   'Fee to publish': '掲載料',
+  // the home page's map and calendar (2026-11-06)
+  'Use Ctrl + scroll to zoom the map': 'Ctrl キーを押しながらスクロールで地図を拡大',
+  'Use ⌘ + scroll to zoom the map': '⌘ キーを押しながらスクロールで地図を拡大',
+  'Use two fingers to move the map': '2 本の指で地図を動かします',
+  'Previous month': '前の月',
+  'Next month': '次の月',
+  '{n} more': '他 {n} 件',
+  '{n} events': '{n} 件のイベント',
 };

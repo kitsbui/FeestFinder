@@ -5,6 +5,7 @@ import { L, type Lang } from '../lib/i18n.ts';
 import { formatMoney } from '../lib/money.ts';
 import { cityOf } from '../lib/places.ts';
 import { isoIn } from '../lib/time.ts';
+import { buildIcs } from '../services/ics.ts';
 
 /*
  * An organiser's calendar on their own website (growth plan card 1): the public feed the widget
@@ -16,20 +17,6 @@ import { isoIn } from '../lib/time.ts';
  */
 
 const LIMIT = 20;
-const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-/** Folds a line at 75 octets, as RFC 5545 asks. */
-const fold = (line: string) => {
-  const out: string[] = [];
-  let rest = line;
-  while (Buffer.byteLength(rest) > 75) {
-    let cut = 75;
-    while (Buffer.byteLength(rest.slice(0, cut)) > 75) cut--;
-    out.push(rest.slice(0, cut));
-    rest = ' ' + rest.slice(cut);
-  }
-  out.push(rest);
-  return out.join('\r\n');
-};
 const WEEKDAY: Record<Lang, string[]> = { vi: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'], en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] };
 
 export default async function embedRoutes(app: FastifyInstance) {
@@ -77,23 +64,14 @@ export default async function embedRoutes(app: FastifyInstance) {
 
   const ics = async (slug: string, reply: import('fastify').FastifyReply) => {
     const { org, events } = await load(slug, LIMIT * 5);
-    const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-    const local = (d: Date, tz: string) => isoIn(d, tz).slice(0, 19).replace(/[-:]/g, '');
-    const lines = [
-      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FeestFinder//Organiser calendar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-      `X-WR-CALNAME:${esc(org.name)} · FeestFinder`,
-      ...events.flatMap((e) => {
-        const tz = cityOf(e.city).timezone;
-        const url = `${base()}/e/${e.slug}`;
-        return [
-          'BEGIN:VEVENT', `UID:${e.id}@feestfinder.com`, `DTSTAMP:${stamp(new Date(e.updated_at ?? ctx.clock.now()))}`,
-          `DTSTART;TZID=${tz}:${local(new Date(e.starts_at), tz)}`, `DTEND;TZID=${tz}:${local(new Date(e.ends_at), tz)}`,
-          `SUMMARY:${esc(e.title)}`, `LOCATION:${esc([e.venue_name, e.address, e.area].filter(Boolean).join(', '))}`, `URL:${url}`,
-          `DESCRIPTION:${esc(`${(e.description?.vi || e.description?.en || '').slice(0, 500)}\n${url}`)}`, 'END:VEVENT',
-        ];
-      }),
-      'END:VCALENDAR', '',
-    ];
-    return reply.type('text/calendar; charset=utf-8').header('cache-control', 'public, max-age=300').send(lines.map(fold).join('\r\n'));
+    const icsContent = buildIcs({
+      events,
+      calendarName: `${org.name} · FeestFinder`,
+      baseUrl: base(),
+      now: ctx.clock.now(),
+      refreshable: false,
+      productId: 'Organiser calendar',
+    });
+    return reply.type('text/calendar; charset=utf-8').header('cache-control', 'public, max-age=300').send(icsContent);
   };
 }

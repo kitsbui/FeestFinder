@@ -151,9 +151,10 @@ test('a link prefetches its page once someone reaches for it; only the five plac
   await settled();
   expect(prefetched.filter((p) => !['/a', '/blog', '/saved', '/profile'].includes(pathOf(p)))).toEqual([]);
 
-  // A pointer over a card's name: that one page, once (and its path without the query, as Next does).
-  const titles = page.getByRole('main').locator('a.kd-ev-title');
-  const first = titles.first();
+  // A pointer over a night in a day's sheet (a phone's calendar): that one page, once (and its path
+  // without the query, as Next does).
+  await page.locator('section[aria-labelledby="cal-h"] td button').first().tap();
+  const first = page.getByRole('dialog').getByRole('link').first();
   const href = (await first.getAttribute('href'))!;
   expect(href).toMatch(/^\/e\/[^?]+\?lang=en$/);
   prefetched.length = 0;
@@ -168,8 +169,9 @@ test('a link prefetches its page once someone reaches for it; only the five plac
   await settled();
   expect(prefetched).toHaveLength(once);
 
-  // A tap opens the page.
+  // A tap opens the night's card, and its link the page.
   await first.tap();
+  await page.getByRole('dialog').getByRole('link', { name: 'See details' }).tap();
   await expect(page).toHaveURL((u) => u.pathname + u.search === href);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
