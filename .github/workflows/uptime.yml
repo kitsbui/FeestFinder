@@ -1,13 +1,13 @@
 name: Uptime
 
-# The "Liên tục" item of artboard 23: feestfinder.com checked from outside Vercel every 15 minutes.
+# The "Liên tục" item of artboard 23: feestfinder.com checked from outside Vercel every 30 minutes (15 until 2026-11-06).
 # The site's home page, the API through the site's proxy with its database (/health), the event
 # list and the sitemap must answer 200 within the time docs/RELIABILITY.md allows; a failed run is
 # GitHub's usual email to whoever last changed this file. Read-only: nothing is written anywhere.
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions: {}
