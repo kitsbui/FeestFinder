@@ -15,7 +15,11 @@ import { FF } from '@/runtime/ff';
 import type { Family } from '../genre';
 
 /** An event on the map; `approx` when only its city is known, so its pin sits near the city's centre. */
-export interface Pin { id: string; lat: number | null; lng: number | null; family: Family; label: string; title?: string; approx?: boolean }
+export interface Pin {
+  id: string; lat: number | null; lng: number | null; family: Family; label: string; title?: string; approx?: boolean;
+  /** A night under way: its stamp (web/list/stamp.tsx stampOf) leads the pin, bouncing. */
+  live?: { src: string | null; logo: boolean; mono: string; tilt: string };
+}
 
 /**
  * Pins that share a point only because their city's centre stands for them, laid out on a small
@@ -34,6 +38,31 @@ function spread(items: Pin[]): Pin[] {
   });
 }
 export type Box = [number, number, number, number];
+
+/** The stamp of a night under way (kd.css .kd-cstamp, as web/list/stamp.tsx draws it), in a bouncing box. */
+function liveStamp(s: NonNullable<Pin['live']>): HTMLElement {
+  const hop = document.createElement('span');
+  hop.className = 'kd-bounce';
+  hop.setAttribute('aria-hidden', 'true');
+  const tile = document.createElement('span');
+  tile.className = 'kd-cstamp';
+  tile.style.setProperty('--tilt', s.tilt);
+  if (s.src) {
+    const img = document.createElement('img');
+    img.className = s.logo ? 'kd-cstamp-logo' : 'kd-stamp-img';
+    img.src = s.src;
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    tile.append(img);
+  } else {
+    const b = document.createElement('b');
+    b.className = 'kd-stamp-mono';
+    b.dataset.t = s.mono;
+    tile.append(b);
+  }
+  hop.append(tile);
+  return hop;
+}
 
 export interface KdMapOptions {
   bounds?: Box;
@@ -117,7 +146,7 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
 
   let items: Pin[] = [];
   let selected: string | null = null;
-  const pins = new Map<string, { marker: any; button: HTMLButtonElement }>();
+  const pins = new Map<string, { marker: any; button: HTMLButtonElement; live: boolean }>();
   const counts = new Map<number, any>();
   let me: any = null;
   // Under the point, so a cluster on the city centre keeps its count readable.
@@ -167,21 +196,23 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
 
   const pinFor = (p: Pin) => {
     let pin = pins.get(p.id);
+    // A night that starts or ends while the map is open gets its pin drawn again.
+    if (pin && pin.live !== !!p.live) { pin.marker.remove(); pins.delete(p.id); pin = undefined; }
     if (!pin) {
       const wrap = document.createElement('div');
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `kd-ppin kd-g-${p.family}${p.approx ? ' kd-ppin-approx' : ''}`;
+      button.className = `kd-ppin kd-g-${p.family}${p.approx ? ' kd-ppin-approx' : ''}${p.live ? ' kd-ppin-live' : ''}`;
       button.setAttribute('aria-pressed', 'false');
       button.setAttribute('aria-label', opts.pinLabel ? opts.pinLabel(p) : p.title || p.label);
       const mk = document.createElement('span');
       mk.className = 'kd-mk';
       mk.setAttribute('aria-hidden', 'true');
-      button.append(mk, document.createTextNode(p.label));
+      button.append(p.live ? liveStamp(p.live) : mk, document.createTextNode(p.label));
       button.addEventListener('click', (e) => { e.stopPropagation(); opts.onSelect?.(p.id); });
       wrap.append(button);
       const marker = new m.Marker({ element: wrap }).setLngLat([p.lng, p.lat]).addTo(map);
-      pin = { marker, button };
+      pin = { marker, button, live: !!p.live };
       pins.set(p.id, pin);
     }
     pin.button.setAttribute('aria-pressed', String(p.id === selected));

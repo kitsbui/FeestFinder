@@ -201,7 +201,7 @@ export function Emblem({ family = 'free', n, off, small, className, icon }: { fa
 }
 
 /** A small turn of a stamp, the same every time for the same night (-5° to 5°): stamped by hand, not printed. */
-function tilt(seed: string): string {
+export function tilt(seed: string): string {
   let h = 0;
   for (const c of seed) h = (h * 31 + c.charCodeAt(0)) | 0;
   return `${(Math.abs(h) % 11) - 5}deg`;

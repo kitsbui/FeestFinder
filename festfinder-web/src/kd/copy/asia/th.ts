@@ -473,6 +473,6 @@ export const TH: Record<string, string> = {
   'Use two fingers to move the map': 'ใช้สองนิ้วเพื่อเลื่อนแผนที่',
   'Previous month': 'เดือนก่อน',
   'Next month': 'เดือนถัดไป',
-  '{n} more': 'อีก {n} รายการ',
+  'more': 'รายการเพิ่มเติม',
   '{n} events': '{n} อีเวนต์',
 };

@@ -281,7 +281,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
           lat: Number(r.pin_lat), lng: Number(r.pin_lng), approx: !!r.pin_approx,
           venue: c.venue.name, area: c.venue.area, city: c.city, cityLabel: c.cityLabel, origin: c.origin,
           startsOn: c.startsOn, endsOn: c.endsOn, startTime: c.startTime, endTime: c.endTime, startsAt: c.startsAt, endsAt: c.endsAt, timezone: c.timezone,
-          art: c.art, coverUrl: c.coverUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, priceUnknown: c.priceUnknown, soldOut: c.soldOut,
+          art: c.art, coverUrl: c.coverUrl, logoUrl: c.logoUrl, priceFrom: c.priceFrom, currency: c.currency, isFree: c.isFree, priceUnknown: c.priceUnknown, soldOut: c.soldOut,
           lineup: c.lineup.slice(0, 6), confidence: c.confidence,
         };
       }),

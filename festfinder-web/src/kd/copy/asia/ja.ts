@@ -473,6 +473,6 @@ export const JA: Record<string, string> = {
   'Use two fingers to move the map': '2 本の指で地図を動かします',
   'Previous month': '前の月',
   'Next month': '次の月',
-  '{n} more': '他 {n} 件',
+  'more': 'その他',
   '{n} events': '{n} 件のイベント',
 };

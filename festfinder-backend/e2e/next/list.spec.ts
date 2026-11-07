@@ -17,6 +17,8 @@ async function open(page: Page, path: string) {
 test.describe('the home page: map and calendar', () => {
   const cal = (page: Page) => page.locator('section[aria-labelledby="cal-h"]');
   const chips = (page: Page) => cal(page).locator('table a[href^="/e/"]');
+  /** A night's stamps in the month, by the name they are read by (its time and title). */
+  const night = (page: Page, name: string) => cal(page).locator('table').getByRole('link', { name: new RegExp(name) });
 
   test('the map holds its place before it loads, then frames the pins; the calendar arrives in the HTML', async ({ page, request }) => {
     const html = await (await request.get('/')).text();
@@ -44,10 +46,10 @@ test.describe('the home page: map and calendar', () => {
     const title = cal(page).locator('#cal-h');
     const september = await title.textContent();
     // HOZO Super Fest runs 18–20 September: one chip a day.
-    await expect(chips(page).filter({ hasText: 'HOZO Super Fest' })).toHaveCount(3);
+    await expect(night(page, 'HOZO Super Fest')).toHaveCount(3);
     await cal(page).getByRole('button', { name: 'Tháng sau' }).click();
     await expect(title).not.toHaveText(september!);
-    await expect(chips(page).filter({ hasText: 'HOZO Super Fest' })).toHaveCount(0);
+    await expect(night(page, 'HOZO Super Fest')).toHaveCount(0);
     await cal(page).getByRole('button', { name: 'Tháng trước' }).click();
     await cal(page).getByRole('button', { name: 'Tháng trước' }).click();
     await cal(page).getByRole('button', { name: 'Hôm nay' }).click();
@@ -58,7 +60,7 @@ test.describe('the home page: map and calendar', () => {
   test('a chip opens the night beside it, with its page and Google Calendar', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     const problems = await open(page, '/');
-    await chips(page).filter({ hasText: 'Ravolution Warm-up' }).click();
+    await night(page, 'Ravolution Warm-up').click();
     const card = page.getByRole('dialog', { name: /Ravolution Warm-up/ });
     await expect(card).toBeVisible();
     await expect(page).toHaveURL(/\/$/);
@@ -81,12 +83,12 @@ test.describe('the home page: map and calendar', () => {
 
   test('a search from the address narrows the map and the calendar, and its chip clears it', async ({ page }) => {
     const problems = await open(page, '/?q=hozo');
-    await expect(chips(page).filter({ hasText: 'Ravolution' })).toHaveCount(0);
-    await expect(chips(page).filter({ hasText: 'HOZO Super Fest' })).toHaveCount(3);
+    await expect(night(page, 'Ravolution')).toHaveCount(0);
+    await expect(night(page, 'HOZO Super Fest')).toHaveCount(3);
     await expect(page.locator('[data-surface]')).toHaveCount(0);
     await page.getByRole('button', { name: /“hozo”/ }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(chips(page).filter({ hasText: 'Ravolution' }).first()).toBeVisible();
+    await expect(night(page, 'Ravolution').first()).toBeVisible();
     expect(problems).toEqual([]);
   });
 
@@ -97,7 +99,7 @@ test.describe('the home page: map and calendar', () => {
     const problems = await open(page, '/?q=ravolution');
     await expect(map.getByText('Không tải được sự kiện')).toBeVisible();
     await map.getByRole('button', { name: 'Thử lại' }).click();
-    await expect(chips(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
+    await expect(night(page, 'Ravolution Music Festival')).toHaveCount(1);
     await expect(map.getByText('Không tải được sự kiện')).toHaveCount(0);
     expect(problems.filter((p) => !/500/.test(p))).toEqual([]);
 
@@ -105,13 +107,41 @@ test.describe('the home page: map and calendar', () => {
     await expect(map.getByText('Không có sự kiện nào khớp')).toBeVisible();
     await map.getByRole('button', { name: 'Bỏ lọc' }).first().click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(chips(page).filter({ hasText: 'HOZO Super Fest' })).toHaveCount(3);
+    await expect(night(page, 'HOZO Super Fest')).toHaveCount(3);
+  });
+
+  test('each night is a stamp: a day’s stamps share its box, and a night under way bounces on the calendar and the map', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // Ravolution Music Festival under way whatever the clock says.
+    await page.route(/\/events\/map\?.*q=ravolution/, async (route) => {
+      const body = await (await route.fetch()).json();
+      body.items = body.items.map((e: { slug: string }) => (e.slug === 'ravo' ? { ...e, startsAt: '2000-01-01T00:00:00Z', endsAt: '2100-01-01T00:00:00Z' } : e));
+      await route.fulfill({ json: body });
+    });
+    const problems = await open(page, '/');
+    // 19 September holds three nights: three stamps side by side, inside the day.
+    const day = cal(page).locator('td').filter({ has: page.locator('a[href="/e/ravo"]') }).first();
+    const box = (await day.boundingBox())!;
+    const stamps = day.locator('a[href^="/e/"]');
+    await expect(stamps).toHaveCount(3);
+    for (const st of await stamps.all()) {
+      const b = (await st.boundingBox())!;
+      expect(b.width).toBeLessThanOrEqual(box.width / 3);
+      expect(b.x).toBeGreaterThanOrEqual(box.x - 4);
+      expect(b.y + b.height).toBeLessThanOrEqual(box.y + box.height + 4);
+    }
+    await expect(cal(page).locator('.kd-bounce')).toHaveCount(0);
+
+    await open(page, '/?q=ravolution');
+    await expect(night(page, 'Ravolution Music Festival').locator('.kd-bounce')).toHaveCount(1);
+    await expect(page.getByRole('region', { name: 'Bản đồ sự kiện' }).locator('.kd-ppin-live .kd-bounce')).toHaveCount(1);
+    expect(problems).toEqual([]);
   });
 
   test('a style’s link narrows to its nights', async ({ page }) => {
     const problems = await open(page, '/?style=techno');
-    await expect(chips(page).filter({ hasText: 'Ravolution Music Festival' })).toHaveCount(1);
-    await expect(chips(page).filter({ hasText: 'HOZO Super Fest' })).toHaveCount(0);
+    await expect(night(page, 'Ravolution Music Festival')).toHaveCount(1);
+    await expect(night(page, 'HOZO Super Fest')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Techno/ })).toBeVisible();
     expect(problems).toEqual([]);
   });

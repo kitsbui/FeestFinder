@@ -7,7 +7,7 @@
  * beside it (a sheet on a phone, where a tap on the day lists its nights). Dates are calendar days
  * ('YYYY-MM-DD', already in each event's city), counted in UTC so the server and the browser agree.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { CalendarPlusIcon, CaretLeftIcon, CaretRightIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { fill, INTL, pick, tx, type Lang } from '../../copy';
 import { cx } from '../../cx';
@@ -20,9 +20,10 @@ import type { Card } from '../../types';
 import { priceLine } from '../price';
 import { calendarFields, googleCalendarUrl } from '../event/calendar';
 import { LIST } from './copy';
+import { EventStamp, isLive } from './stamp';
 
 /** One night as GET /events/map answers it: what the map and the calendar draw. */
-export type HomeEvent = Pick<Card, 'id' | 'slug' | 'title' | 'genre' | 'styles' | 'startsOn' | 'endsOn' | 'startTime' | 'endTime' | 'startsAt' | 'endsAt' | 'timezone' | 'cityLabel' | 'coverUrl' | 'priceFrom' | 'currency' | 'isFree' | 'priceUnknown' | 'soldOut'> & {
+export type HomeEvent = Pick<Card, 'id' | 'slug' | 'title' | 'genre' | 'styles' | 'startsOn' | 'endsOn' | 'startTime' | 'endTime' | 'startsAt' | 'endsAt' | 'timezone' | 'cityLabel' | 'coverUrl' | 'logoUrl' | 'priceFrom' | 'currency' | 'isFree' | 'priceUnknown' | 'soldOut'> & {
   venue: string | null; lat: number; lng: number; approx: boolean;
 };
 
@@ -31,8 +32,9 @@ const at = (iso: string) => Date.parse(iso + 'T00:00:00Z');
 const isoOf = (t: number) => new Date(t).toISOString().slice(0, 10);
 /** 'YYYY-MM' moved by n months. */
 const shift = (ym: string, n: number) => isoOf(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1)).slice(0, 7);
-/** The visible chips per day (a phone shows two, under the date). */
-const FIT = 3;
+/** Columns × rows for a day's n stamps, nine at most (the ninth then says how many more). */
+const GRID: [number, number][] = [[1, 1], [1, 1], [2, 1], [3, 1], [2, 2], [3, 2], [3, 2], [3, 3], [3, 3], [3, 3]];
+const MAX = 9;
 
 /**
  * The days a night fills: a festival every day from its first to its last, a club night that ends
@@ -49,8 +51,10 @@ const spans = (e: HomeEvent) => daysOf(e).length > 1;
 
 type Open = { kind: 'event'; ev: HomeEvent; from: HTMLElement } | { kind: 'day'; day: string; from: HTMLElement };
 
-export function Calendar({ lang, events, today, city, siteUrl }: {
+export function Calendar({ lang, events, today, now, city, siteUrl }: {
   lang: Lang; events: HomeEvent[]; today: string; city?: string; siteUrl: string;
+  /** The API's clock in ms (0 on the server): which nights are under way. */
+  now: number;
 }) {
   const T = pick(LIST, lang);
   const [ym, setYm] = useState(today.slice(0, 7));
@@ -81,26 +85,22 @@ export function Calendar({ lang, events, today, city, siteUrl }: {
   const show = (o: Open) => { setSheet(matchMedia('(max-width: 759px)').matches); setOpen(o); };
   const close = () => { const from = open?.from; setOpen(null); from?.focus(); };
 
-  const chip = (e: HomeEvent, d: string) => {
-    const bar = spans(e);
-    return (
-      <KdLink
-        key={e.id}
-        href={inLang('/e/' + e.slug, lang)}
-        className={cx('flex min-w-0 items-center gap-1 rounded-sm px-1 py-px text-xs leading-4 transition-colors hover:bg-surface-2', bar ? 'bg-surface-2 text-fg-1' : 'text-fg-2 max-tab:bg-surface-2')}
-        onClick={(ev) => {
-          if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
-          ev.preventDefault();
-          show({ kind: 'event', ev: e, from: ev.currentTarget });
-        }}
-      >
-        {/* A phone has room for the name only, on a filled chip (Google Calendar's phone month). */}
-        {bar ? null : <span className="size-1.5 shrink-0 rounded-full bg-info max-tab:hidden" aria-hidden="true" />}
-        {!bar && e.startTime && d === e.startsOn ? <span className="kd-num shrink-0 max-tab:hidden">{e.startTime}</span> : null}
-        <span className="kd-ell text-fg-1">{e.title}</span>
-      </KdLink>
-    );
-  };
+  /** A night's stamp: its link (in the HTML), named by its time and title; a click opens its card. */
+  const stamp = (e: HomeEvent, d: string) => (
+    <KdLink
+      key={e.id}
+      href={inLang('/e/' + e.slug, lang)}
+      aria-label={[d === e.startsOn ? e.startTime : null, e.title].filter(Boolean).join(' ')}
+      title={e.title}
+      onClick={(ev) => {
+        if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+        ev.preventDefault();
+        show({ kind: 'event', ev: e, from: ev.currentTarget });
+      }}
+    >
+      <EventStamp e={e} live={isLive(e, now)} />
+    </KdLink>
+  );
 
   return (
     <section aria-labelledby="cal-h" className="kd-wrap relative flex flex-col gap-4 pt-10">
@@ -126,22 +126,28 @@ export function Calendar({ lang, events, today, city, siteUrl }: {
                 const out = d.slice(0, 7) !== ym;
                 const named = `${weekdayLong(d, lang)} ${dayMonth(d, lang)}`;
                 return (
-                  <td key={d} className="relative h-16 border border-line-1 p-0.5 align-top tab:h-28 tab:p-1">
-                    <div className="flex justify-center pb-0.5">
-                      <span className={cx('kd-num grid size-6 place-items-center rounded-full text-xs', d === today ? 'bg-info font-semibold text-on-accent' : out ? 'text-fg-3' : 'text-fg-1')}>{+d.slice(8)}</span>
+                  <td key={d} className="relative border border-line-1 p-0 align-top">
+                    <div className="flex h-16 flex-col p-0.5 tab:h-28 tab:p-1">
+                      <div className="flex justify-center pb-0.5">
+                        <span className={cx('kd-num grid size-6 place-items-center rounded-full text-xs', d === today ? 'bg-info font-semibold text-on-accent' : out ? 'text-fg-3' : 'text-fg-1')}>{+d.slice(8)}</span>
+                      </div>
+                      {list.length ? (
+                        <div className="kd-cstamp-box min-h-0 flex-1 max-tab:pointer-events-none">
+                          <div className="kd-cstamps" style={{ '--cols': GRID[Math.min(list.length, MAX)][0], '--rows': GRID[Math.min(list.length, MAX)][1] } as CSSProperties}>
+                            {list.slice(0, list.length > MAX ? MAX - 1 : MAX).map((e) => stamp(e, d))}
+                            {list.length > MAX ? (
+                              <button type="button" className="kd-cstamp-more kd-num" onClick={(ev) => show({ kind: 'day', day: d, from: ev.currentTarget })}>
+                                +{list.length - MAX + 1}<span className="sr-only"> {T.moreRest}</span>
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                     {/* A phone: the whole day is one tap, listing its nights. */}
                     {list.length ? (
                       <button type="button" className="absolute inset-0 tab:hidden" aria-label={`${named}, ${fill(T.nNights, { n: list.length })}`} onClick={(ev) => show({ kind: 'day', day: d, from: ev.currentTarget })} />
                     ) : null}
-                    <div className="flex flex-col gap-px max-tab:pointer-events-none">
-                      {list.slice(0, FIT).map((e, i) => <div key={e.id} className={cx(i === FIT - 1 && 'max-tab:hidden')}>{chip(e, d)}</div>)}
-                      {list.length > FIT ? (
-                        <button type="button" className="kd-s px-1 text-left text-fg-2 hover:text-fg-1 max-tab:hidden" onClick={(ev) => show({ kind: 'day', day: d, from: ev.currentTarget })}>
-                          {fill(T.moreN, { n: list.length - FIT })}
-                        </button>
-                      ) : null}
-                    </div>
                   </td>
                 );
               })}

@@ -116,6 +116,7 @@
   --animate-kd-pulse: kd-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   --animate-kd-scan: kd-scan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   --animate-kd-glow: kd-glow 2.4s ease-in-out infinite;
+  --animate-kd-bounce: kd-bounce 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 /* Keyframes live outside @theme so they are always emitted (the components below use them too). */
@@ -134,6 +135,15 @@
 @keyframes kd-glow {
   0%, 100% { opacity: 0; }
   50% { opacity: 1; }
+}
+
+/* A night under way (the home page's calendar and map, web/list/stamp.tsx): its stamp hops and lands. */
+@keyframes kd-bounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-22%) scale(0.95, 1.05); }
+  50% { transform: translateY(0) scale(1.08, 0.92); }
+  65% { transform: translateY(-6%) scale(1, 1); }
+  80% { transform: translateY(0) scale(1, 1); }
 }
 
 @layer base {

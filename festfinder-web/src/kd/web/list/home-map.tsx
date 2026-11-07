@@ -20,9 +20,10 @@ import { priceLine } from '../price';
 import type { HomeEvent } from './calendar';
 import { LIST } from './copy';
 import { boxOf, pinText } from './map-board';
+import { isLive, stampOf } from './stamp';
 
-export function HomeMap({ lang, events, places, onReady }: {
-  lang: Lang; events: HomeEvent[]; places: { name: string; at: [number, number] }[]; onReady: () => void;
+export function HomeMap({ lang, events, now, places, onReady }: {
+  lang: Lang; events: HomeEvent[]; now: number; places: { name: string; at: [number, number] }[]; onReady: () => void;
 }) {
   const T = pick(LIST, lang);
   const el = useRef<HTMLDivElement>(null);
@@ -56,10 +57,13 @@ export function HomeMap({ lang, events, places, onReady }: {
   // The pins, and the frame whenever the nights change (a search from the address).
   useEffect(() => {
     if (!map) return;
-    map.setEvents(events.map((x): Pin => ({ id: x.id, lat: x.lat, lng: x.lng, family: familyOf(x.genre), title: x.title, approx: x.approx, label: pinText(x, lang) })));
+    map.setEvents(events.map((x): Pin => ({
+      id: x.id, lat: x.lat, lng: x.lng, family: familyOf(x.genre), title: x.title, approx: x.approx, label: pinText(x, lang),
+      live: isLive(x, now) ? stampOf(x) : undefined,
+    })));
     if (events !== first.current.events) map.fit(boxOf(events));
     onReady();
-  }, [map, events, lang, onReady]);
+  }, [map, events, lang, now, onReady]);
 
   useEffect(() => { map?.select(sel); }, [map, sel]);
 

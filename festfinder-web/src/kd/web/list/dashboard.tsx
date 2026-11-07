@@ -19,6 +19,9 @@ import { MapBoard } from './map-board';
 const HomeMap = dynamic(() => import('./home-map').then((m) => m.HomeMap), { ssr: false });
 
 const never = () => () => {};
+/** The API's clock to the minute (FF.now), so a night under way starts and stops bouncing on time. */
+const everyMinute = (tick: () => void) => { const t = setInterval(tick, 60_000); return () => clearInterval(t); };
+const minute = () => Math.floor(FF.now().getTime() / 60_000) * 60_000;
 
 export function Dashboard({ lang, heading, events, today, city, styles, places, highlight, siteUrl }: {
   lang: Lang; heading: string; events: HomeEvent[]; today: string; city?: string; places: { name: string; at: [number, number] }[];
@@ -27,6 +30,8 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   const T = pick(LIST, lang);
   // The cached page is every visitor's; the address is read in the browser only.
   const search = useSyncExternalStore(never, () => location.search, () => '');
+  // 0 on the server: the cached page shows no night under way; the browser knows the minute.
+  const now = useSyncExternalStore(everyMinute, minute, () => 0);
   const [cleared, setCleared] = useState(false);
   const [found, setFound] = useState<HomeEvent[] | 'error' | null>(null);
   const [tries, setTries] = useState(0);
@@ -84,8 +89,8 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
         className="relative h-[60dvh] min-h-80 overflow-hidden bg-map tab:h-[70dvh]"
         onPointerEnter={wake} onPointerDown={wake} onTouchStart={wake} onWheel={wake} onFocus={wake}
       >
-        {live ? <HomeMap lang={lang} events={shown} places={places} onReady={ready} /> : null}
-        {drawn ? null : <MapBoard lang={lang} events={shown} places={places} />}
+        {live ? <HomeMap lang={lang} events={shown} now={now} places={places} onReady={ready} /> : null}
+        {drawn ? null : <MapBoard lang={lang} events={shown} now={now} places={places} />}
         {note ? (
           <div className="pointer-events-none absolute inset-0 z-[2] grid place-items-center p-4">
             <div className="kd-glass pointer-events-auto flex flex-col items-center gap-3 rounded-card p-5">
@@ -105,7 +110,7 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
         ) : null}
       </section>
       {asked ? null : highlight}
-      <Calendar lang={lang} events={shown} today={today} city={city} siteUrl={siteUrl} />
+      <Calendar lang={lang} events={shown} today={today} now={now} city={city} siteUrl={siteUrl} />
     </main>
   );
 }

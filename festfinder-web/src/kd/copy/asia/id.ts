@@ -473,6 +473,6 @@ export const ID: Record<string, string> = {
   'Use two fingers to move the map': 'Gunakan dua jari untuk menggeser peta',
   'Previous month': 'Bulan sebelumnya',
   'Next month': 'Bulan berikutnya',
-  '{n} more': '{n} lainnya',
+  'more': 'lainnya',
   '{n} events': '{n} acara',
 };

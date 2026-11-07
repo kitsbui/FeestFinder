@@ -13,6 +13,7 @@ import { familyOf } from '../../genre';
 import type { Box } from '../../map/kd-map';
 import type { HomeEvent } from './calendar';
 import { LIST } from './copy';
+import { EventStamp, isLive } from './stamp';
 
 /** The box around the pins; Vietnam and its neighbours when there are none. */
 export function boxOf(items: { lat: number; lng: number }[]): Box {
@@ -42,7 +43,7 @@ export function frame(box: Box, w: number, h: number, pad = 40, maxZoom = 12) {
 
 type Dot = { x: number; y: number; items: HomeEvent[] };
 
-export function MapBoard({ lang, events, places }: { lang: Lang; events: HomeEvent[]; places: { name: string; at: [number, number] }[] }) {
+export function MapBoard({ lang, events, now, places }: { lang: Lang; events: HomeEvent[]; now: number; places: { name: string; at: [number, number] }[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => {
@@ -75,8 +76,8 @@ export function MapBoard({ lang, events, places }: { lang: Lang; events: HomeEve
           {d.items.length > 1 ? (
             <span className="kd-mb kd-num grid size-9 place-items-center rounded-full bg-surface-0/70 ring-1 ring-line-2">{d.items.length}</span>
           ) : (
-            <span className={cx('kd-ppin', `kd-g-${familyOf(d.items[0].genre)}`, d.items[0].approx && 'kd-ppin-approx')}>
-              <span className="kd-mk" />{pinText(d.items[0], lang)}
+            <span className={cx('kd-ppin', `kd-g-${familyOf(d.items[0].genre)}`, d.items[0].approx && 'kd-ppin-approx', isLive(d.items[0], now) && 'kd-ppin-live')}>
+              {isLive(d.items[0], now) ? <EventStamp e={d.items[0]} live /> : <span className="kd-mk" />}{pinText(d.items[0], lang)}
             </span>
           )}
         </span>

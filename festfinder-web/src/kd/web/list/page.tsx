@@ -32,7 +32,7 @@ type Shelf = { id: string; slug: string; name: Pair; sponsored: boolean; items: 
 const slim = (e: HomeEvent): HomeEvent => ({
   id: e.id, slug: e.slug, title: e.title, genre: e.genre, styles: e.styles, startsOn: e.startsOn, endsOn: e.endsOn,
   startTime: e.startTime, endTime: e.endTime, startsAt: e.startsAt, endsAt: e.endsAt, timezone: e.timezone, cityLabel: e.cityLabel,
-  coverUrl: e.coverUrl, priceFrom: e.priceFrom, currency: e.currency, isFree: e.isFree, priceUnknown: e.priceUnknown, soldOut: e.soldOut,
+  coverUrl: e.coverUrl, logoUrl: e.logoUrl ?? null, priceFrom: e.priceFrom, currency: e.currency, isFree: e.isFree, priceUnknown: e.priceUnknown, soldOut: e.soldOut,
   venue: e.venue, lat: e.lat, lng: e.lng, approx: e.approx,
 });
 

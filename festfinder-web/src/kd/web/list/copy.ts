@@ -28,7 +28,7 @@ export const LIST = {
   nextMonth: { en: 'Next month', vi: 'Tháng sau' },
   addGoogleCal: { en: 'Add to Google Calendar', vi: 'Thêm vào Google Calendar' },
   addOne: { en: 'Add to calendar', vi: 'Thêm lịch' },
-  moreN: { en: '{n} more', vi: '{n} sự kiện nữa' },
+  moreRest: { en: 'more', vi: 'sự kiện nữa' },
   nNights: { en: '{n} events', vi: '{n} sự kiện' },
   stSold: { en: 'Sold out', vi: 'Hết vé' },
   // the highlight and the banner

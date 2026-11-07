@@ -220,6 +220,9 @@
   /* Only its city is known (/events/map `approx`): the pin's outline is broken. */
   .kd-ppin-approx { box-shadow: none; outline: 1px dashed rgba(255, 255, 255, 0.34); outline-offset: -1px; }
   .kd-ppin:hover { transform: scale(1.05); }
+  /* A night under way: its stamp leads the pin, bouncing. */
+  .kd-ppin-live { height: 40px; padding-left: 4px; }
+  .kd-ppin-live .kd-bounce { width: 32px; flex-shrink: 0; }
   .kd-ppin[aria-pressed='true'] { z-index: 3; background: var(--color-info); color: var(--color-on-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-info) 22%, transparent); transform: scale(1.08); }
   .kd-me { width: 16px; height: 16px; border-radius: 50%; background: var(--color-info); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-info) 22%, transparent), 0 0 0 10px color-mix(in srgb, var(--color-info) 8%, transparent); }
   .kd-area { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); white-space: nowrap; pointer-events: none; }
@@ -502,6 +505,20 @@
   .kd-stamp-city { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 11px; font-style: normal; font-size: 9px; line-height: 1; letter-spacing: 0.12em; text-transform: uppercase; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-fg-1); }
   .kd-stamp-city::before { content: attr(data-c); }
   .kd-stamp.kd-dim { opacity: 0.22; }
+  /* An event as a stamp on the home page's calendar and map (web/list/stamp.tsx): its logo whole, else
+     its cover in the information colour, else its initials; a turn of its own; a night under way bounces. */
+  .kd-cstamp { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; border-radius: var(--radius-opt); background: var(--color-surface-1); box-shadow: inset 0 0 0 1px var(--color-line-2); overflow: hidden; container-type: inline-size; transform: rotate(var(--tilt, 0deg)); }
+  .kd-cstamp::after { content: ''; position: absolute; z-index: 2; inset: 8%; border-radius: 4px; border: 1px dashed var(--color-line-2); pointer-events: none; }
+  .kd-cstamp:has(.kd-stamp-img)::before { content: ''; position: absolute; z-index: 1; inset: 0; background: color-mix(in srgb, var(--color-info) 38%, transparent); mix-blend-mode: color; }
+  .kd-cstamp-logo { position: absolute; inset: 14%; width: 72%; height: 72%; object-fit: contain; }
+  .kd-cstamp .kd-stamp-mono { font-size: clamp(7px, 38cqi, 26px); }
+  .kd-bounce { display: block; animation: var(--animate-kd-bounce); }
+  /* A day's stamps share its box, as large as they fit (--cols × --rows, 64px at most). */
+  .kd-cstamp-box { container-type: size; }
+  .kd-cstamps { --s: min(calc((100cqw - (var(--cols) - 1) * 4px) / var(--cols)), calc((100cqh - (var(--rows) - 1) * 4px) / var(--rows)), 64px); display: grid; grid-template-columns: repeat(var(--cols), var(--s)); grid-auto-rows: var(--s); gap: 4px; height: 100%; place-content: center; }
+  .kd-cstamps > * { display: block; width: var(--s); height: var(--s); }
+  .kd-cstamp-more { display: grid; place-items: center; border-radius: var(--radius-opt); font-size: clamp(9px, calc(var(--s) * 0.32), 15px); font-weight: 600; color: var(--color-fg-2); box-shadow: inset 0 0 0 1px var(--color-line-1); }
+  .kd-cstamp-more:hover { color: var(--color-fg-1); }
   .kd-bdg { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 8px 12px; border: 0; border-radius: var(--radius-card); text-align: center; cursor: pointer; color: inherit; background: var(--color-surface-1); box-shadow: inset 0 0 0 1px var(--color-line-1); transition: box-shadow var(--dur-1) var(--ease-ff), background-color var(--dur-1) var(--ease-ff); }
   .kd-bdg:hover { box-shadow: inset 0 0 0 1px var(--color-line-2); }
   .kd-bdg[aria-pressed='true'] { background: var(--color-surface-2); box-shadow: inset 0 0 0 1.5px var(--color-fg-1); }

@@ -10,6 +10,8 @@ export interface Card {
   title: string;
   genre: string | null;
   coverUrl: string | null;
+  /** The event's own logo (an upload), when it has one. */
+  logoUrl?: string | null;
   badge: { key: string; label: Pair } | null;
   featured: boolean;
   soldOut: boolean;

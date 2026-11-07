@@ -55,20 +55,21 @@ const QUIET = new Set(['/', '/e/ravo']);
  */
 const SCREENS: [Who, string, number, number, number, Place?][] = [
   // Phase 19 moved the sign-in sheet's own lines out of the boot JS: phase 17's kilobyte on /, the map and the wizard is back.
+  // 2026-11-06 (later): the calendar's stamps and their resized pictures (owner): the home page's boot JS 181 KB (180 → 182).
   // 2026-11-06: the home page is a map and a calendar (owner): its boot JS reads 179 KB (183 → 180); MapLibre waits for a pointer on the map or five seconds after load (web/list/map-board.tsx), so the TBT budgets stay (measured 64–129 ms); the list's removal moved shared code into an organiser's page and the profile (+1 KB each).
   // 2026-10-21: the nav's icons are drawn by CSS (one navigation for both devices): 3–5 KB less on every public screen (measured +1 for gzip rounding).
   // 2026-10-20 (later): the wizard measured 210 twice after the owner's requests (breadcrumbs left the client bundle).
   // 2026-10-20: the story images left the runtime for a chunk of their own (runtime/story.ts), which paid for the install strip and the worker (growth plan card F) and lowered the event page, an organiser, the artists and Studio.
   // 2026-10-23: the map view, the worker's registration, the account menu's items and the install strip load when they are needed, and the public frame's tab bar left the back offices' shell (ui/tabbar.tsx): 2–10 KB less on every public screen (measured +1).
-  ['visitor', '/', 180, 100, 6], ['visitor', '/e/ravo', 189, 200, 6], ['visitor', '/a', 196, 150, 6], ['visitor', '/a/slimv', 192, 150, 6],
+  ['visitor', '/', 182, 100, 6], ['visitor', '/e/ravo', 189, 200, 6], ['visitor', '/a', 196, 150, 6], ['visitor', '/a/slimv', 192, 150, 6],
   ['visitor', '/o/ravoent', 191, 200, 6], ['visitor', '/p', 177, 150, 6], ['visitor', '/about', 167, 150, 6],
-  ['visitor', '/', 180, 150, 6, { timezoneId: 'Asia/Ho_Chi_Minh', locale: 'vi-VN', country: 'VN' }],
+  ['visitor', '/', 182, 150, 6, { timezoneId: 'Asia/Ho_Chi_Minh', locale: 'vi-VN', country: 'VN' }],
   // The home page in English.
-  ['visitor', '/?lang=en', 180, 150, 6],
+  ['visitor', '/?lang=en', 182, 150, 6],
   // A city page drawn on the server: the footer must not rise.
-  ['visitor', '/?city=ha-noi', 180, 150, 6],
+  ['visitor', '/?city=ha-noi', 182, 150, 6],
   // One city with events.
-  ['visitor', '/?city=ho-chi-minh&lang=en', 180, 150, 6],
+  ['visitor', '/?city=ho-chi-minh&lang=en', 182, 150, 6],
   // 2026-10-23 (later): the skip link is drawn by each frame without a store of its own (ui/skip-link.tsx): /saved a kilobyte lighter (measured +1).
   ['fan', '/profile', 197, 150, 6], ['fan', '/saved', 192, 150, 6],
   // 2026-10-28: the wizard reads its price line from web/price.ts, without the event card (and its save toggle and links): 4 KB less (measured +1).
