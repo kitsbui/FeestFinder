@@ -3,16 +3,18 @@
  * The home page's body (owner, 2026-11-06): the map of every night, the highlight, the calendar.
  * Nothing filters it but an address that arrives with `?q=` (the search) or `?style=` (a style's
  * link): then the API's answer for it fills the map and the calendar, the highlight steps aside and
- * one chip above the map names it; its × goes back to every night.
+ * one chip above the map names it; its × goes back to every night. Beside it, "Tối nay · n" leads to
+ * the next nights' list under the calendar.
  */
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
-import { pick, tx, type Lang, type Pair } from '../../copy';
+import { fill, pick, tx, type Lang, type Pair } from '../../copy';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { inLang } from '../../link';
-import { Calendar, type HomeEvent } from './calendar';
+import { useKd } from '../../runtime';
+import { Calendar, dayName, nextNights, type HomeEvent } from './calendar';
 import { LIST } from './copy';
 import { MapBoard } from './map-board';
 
@@ -30,8 +32,11 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   const T = pick(LIST, lang);
   // The cached page is every visitor's; the address is read in the browser only.
   const search = useSyncExternalStore(never, () => location.search, () => '');
-  // 0 on the server: the cached page shows no night under way; the browser knows the minute.
-  const now = useSyncExternalStore(everyMinute, minute, () => 0);
+  // 0 on the server and until the API's clock is known (a device's own clock may be wrong): the
+  // cached page shows no night under way and every one of today's; then the browser knows the minute.
+  const { clockReady } = useKd();
+  const tick = useSyncExternalStore(everyMinute, minute, () => 0);
+  const now = clockReady ? tick : 0;
   const [cleared, setCleared] = useState(false);
   const [found, setFound] = useState<HomeEvent[] | 'error' | null>(null);
   const [tries, setTries] = useState(0);
@@ -76,6 +81,7 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   }, [live]);
 
   const shown = asked && Array.isArray(found) ? found : events;
+  const next = nextNights(shown, today, now);
   // Nothing to show, or the search's answer did not come: a title and the one thing to do.
   const note = found === 'error' ? { title: T.loadFailed, action: <Button size="sm" onClick={() => { setFound(null); setTries((n) => n + 1); }}>{T.retry}</Button> }
     : asked && Array.isArray(found) && !found.length ? { title: T.noMatch, action: <Button size="sm" onClick={clear}>{T.clear}</Button> }
@@ -99,13 +105,17 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
             </div>
           </div>
         ) : null}
-        {asked ? (
-          <div className="absolute left-4 top-4 z-[3] max-w-[calc(100%-2rem)]">
-            <Chip on className="kd-glass" onClick={clear}>
-              <span className="kd-ell">{q ? `“${q}”` : tx(styles.find((s) => s.key === style)?.label, lang) ?? style}</span>
-              <XIcon size={14} aria-hidden="true" />
-              <span className="sr-only">{T.clear}</span>
-            </Chip>
+        {asked || (next && !note) ? (
+          <div className="absolute left-4 top-4 z-[3] flex max-w-[calc(100%-2rem)] flex-wrap gap-2">
+            {asked ? (
+              <Chip on className="kd-glass" onClick={clear}>
+                <span className="kd-ell">{q ? `“${q}”` : tx(styles.find((s) => s.key === style)?.label, lang) ?? style}</span>
+                <XIcon size={14} aria-hidden="true" />
+                <span className="sr-only">{T.clear}</span>
+              </Chip>
+            ) : null}
+            {/* What's on tonight, in one tap from the first screen (persona review, 2026-11-07). */}
+            {next && !note ? <a href="#tonight" className="kd-chip kd-glass">{dayName(next.day, today, lang)} · {fill(T.nNights, { n: next.list.length })}</a> : null}
           </div>
         ) : null}
       </section>

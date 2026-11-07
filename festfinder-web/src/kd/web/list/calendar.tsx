@@ -4,7 +4,8 @@
  * ‹ ›, the month, "Thêm vào Google Calendar", which subscribes Google Calendar to /calendar.ics),
  * then the weeks, Monday first. Each day shows its nights as one-line chips (a festival on every day
  * it spans) and "+n" when they do not fit; a chip is the event's link, and a click opens its card
- * beside it (a sheet on a phone, where a tap on the day lists its nights). Dates are calendar days
+ * beside it (a sheet on a phone, where a tap on the day lists its nights). Under the weeks, the next
+ * nights as a list (#tonight, where the map's "Tối nay" leads). Dates are calendar days
  * ('YYYY-MM-DD', already in each event's city), counted in UTC so the server and the browser agree.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -49,6 +50,30 @@ function daysOf(e: HomeEvent): string[] {
 }
 const spans = (e: HomeEvent) => daysOf(e).length > 1;
 
+/** Each day's nights, festivals first, then by the time they start (Google's order). */
+function byDayOf(events: HomeEvent[]) {
+  const m = new Map<string, HomeEvent[]>();
+  for (const e of events) for (const d of daysOf(e)) m.set(d, [...(m.get(d) ?? []), e]);
+  for (const list of m.values()) list.sort((a, b) => Number(spans(b)) - Number(spans(a)) || (a.startTime ?? '').localeCompare(b.startTime ?? ''));
+  return m;
+}
+
+/**
+ * The next nights (persona review, 2026-11-07: "what's on tonight?"): today's that have not ended,
+ * else the first day after with any. `now` is 0 on the server, where every one of today's counts.
+ */
+export function nextNights(events: HomeEvent[], today: string, now: number, byDay = byDayOf(events)): { day: string; list: HomeEvent[] } | null {
+  const day = [...byDay.keys()].filter((d) => d >= today).sort().find((d) => d > today || byDay.get(d)!.some((e) => !now || !e.endsAt || Date.parse(e.endsAt) > now));
+  if (!day) return null;
+  return { day, list: byDay.get(day)!.filter((e) => day > today || !now || !e.endsAt || Date.parse(e.endsAt) > now) };
+}
+
+/** "Tối nay", "Ngày mai", else the day's name. */
+export function dayName(day: string, today: string, lang: Lang) {
+  const T = pick(LIST, lang);
+  return day === today ? T.tonight : day === isoOf(at(today) + DAY) ? T.tomorrow : `${weekdayLong(day, lang)} ${dayMonth(day, lang)}`;
+}
+
 type Open = { kind: 'event'; ev: HomeEvent; from: HTMLElement } | { kind: 'day'; day: string; from: HTMLElement };
 
 export function Calendar({ lang, events, today, now, city, siteUrl }: {
@@ -61,13 +86,8 @@ export function Calendar({ lang, events, today, now, city, siteUrl }: {
   const [open, setOpen] = useState<Open | null>(null);
   const [sheet, setSheet] = useState(false);
 
-  const byDay = useMemo(() => {
-    const m = new Map<string, HomeEvent[]>();
-    for (const e of events) for (const d of daysOf(e)) m.set(d, [...(m.get(d) ?? []), e]);
-    // Festivals first, then by the time they start (Google's order).
-    for (const list of m.values()) list.sort((a, b) => Number(spans(b)) - Number(spans(a)) || (a.startTime ?? '').localeCompare(b.startTime ?? ''));
-    return m;
-  }, [events]);
+  const byDay = useMemo(() => byDayOf(events), [events]);
+  const next = nextNights(events, today, now, byDay);
 
   const first = at(ym + '-01');
   const lead = (new Date(first).getUTCDay() + 6) % 7;
@@ -155,6 +175,27 @@ export function Calendar({ lang, events, today, now, city, siteUrl }: {
           ))}
         </tbody>
       </table>
+
+      {/* The next nights as a list, where the map's "Tối nay" leads. */}
+      {next ? (
+        <section id="tonight" aria-labelledby="tonight-h" className="flex scroll-mt-20 flex-col gap-2 pt-4">
+          <h3 id="tonight-h" className="kd-h first-letter:uppercase">{dayName(next.day, today, lang)}</h3>
+          <ul className="flex flex-col">
+            {next.list.map((e) => (
+              <li key={e.id} className="border-b border-line-1 last:border-0">
+                <KdLink href={inLang('/e/' + e.slug, lang)} className="flex min-h-16 min-w-0 items-center gap-3 py-2 hover:bg-surface-1">
+                  <span className="size-11 shrink-0"><EventStamp e={e} live={isLive(e, now)} /></span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="kd-ell text-fg-1">{e.title}</span>
+                    <span className="kd-s kd-ell">{[e.startsOn === next.day ? timeRange(e) : null, e.venue, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}</span>
+                  </span>
+                  <span className={cx('kd-mb kd-num shrink-0', e.isFree && 'text-info')}>{priceLine({ ...e, entryMode: e.isFree ? 'free' : 'paid' }, lang)}</span>
+                </KdLink>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {open && sheet ? (
         <Sheet onClose={close} closeLabel={T.close} title={open.kind === 'event' ? open.ev.title : `${weekdayLong(open.day, lang)} ${dayMonth(open.day, lang)}`}>

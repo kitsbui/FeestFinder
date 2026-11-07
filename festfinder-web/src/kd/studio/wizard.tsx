@@ -15,7 +15,7 @@ import { ArrowRightIcon, CheckIcon, RocketLaunchIcon, XIcon } from '@phosphor-ic
 import { FF } from '@/runtime/ff';
 import { fill, INTL, type Pair, pick, tx } from '../copy';
 import { cx } from '../cx';
-import { money, whenShort } from '../format';
+import { money, todayIn, whenShort } from '../format';
 import { g, styleLabel } from '../genre';
 import { KdLink } from '../link';
 import dynamic from 'next/dynamic';
@@ -35,10 +35,18 @@ import { useStudio } from './root';
 import { AGES, check, type City, COMMON_STYLES, type Draft, type Form, fromDraft, int, NAME_MAX, payload, type Payload, readLocal, STEP_KEYS, STYLE_MAX, STYLES, url, type Venue, writeLocal } from './wizard-model';
 import { Appeal, Lineup, Upload, VenueField } from './fields';
 
+/** A calendar day moved by n days. */
+const plus = (iso: string, n: number) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86_400_000).toISOString().slice(0, 10);
+/** The field each missing item of the last step leads to. */
+const FIELD: Record<string, string> = { mTitle: 'evName', mGenre: 'evStyles', mLogo: 'evLogo', mCover: 'evCover', mEventUrl: 'evPage', mDates: 'evDate', mVenue: 'evVenue', mPrice: 'evPrice' };
 
 export function Wizard() {
   const { lang, org, events, reload, guest } = useStudio();
   const T = pick(STUDIO, lang);
+  /** Tối nay, Ngày mai and the coming Saturday, from the city's today. */
+  const quick = (today: string): [string, string, boolean][] => [
+    [T.fTonight, today, true], [T.fTomorrow, plus(today, 1), false], [T.fThisSaturday, plus(today, 6 - new Date(today + 'T00:00:00Z').getUTCDay()), false],
+  ];
   const kd = useKd();
   const [cities, setCities] = useState<City[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -295,8 +303,19 @@ export function Wizard() {
 
             {step(1, T.s2, (
               <>
+                <div className="flex flex-col gap-2">
+                  <FieldLabel htmlFor="evDate">{T.fDate}</FieldLabel>
+                  {/* One tap for the usual days (persona review, 2026-11-07), in the city's own day by the API's clock. */}
+                  {city?.timezone ? (
+                    <div className="flex flex-wrap gap-2">
+                      {quick(todayIn(city.timezone, FF.now())).map(([label, date, tonight]) => (
+                        <Chip key={label} on={f.date === date} onClick={() => set({ date, start: tonight && !f.start ? '22:00' : f.start })}>{label}</Chip>
+                      ))}
+                    </div>
+                  ) : null}
+                  <Input id="evDate" type="date" className="kd-num" value={f.date} onChange={(e) => set({ date: e.target.value })} />
+                </div>
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
-                  <div className="flex flex-col gap-2"><FieldLabel htmlFor="evDate">{T.fDate}</FieldLabel><Input id="evDate" type="date" className="kd-num" value={f.date} onChange={(e) => set({ date: e.target.value })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="evStart">{T.fDoors}</FieldLabel><Input id="evStart" type="time" className="kd-num" value={f.start} onChange={(e) => set({ start: e.target.value })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="evEnd">{T.fEnd}</FieldLabel><Input id="evEnd" type="time" className="kd-num" value={f.end} onChange={(e) => set({ end: e.target.value })} /></div>
                 </div>
@@ -386,7 +405,11 @@ export function Wizard() {
                   <Panel role="status" className="flex flex-col gap-2 px-4 py-3.5">
                     <span className="kd-hs flex items-center gap-2"><span className="kd-st kd-warn" aria-hidden="true" />{T.missingHead}</span>
                     {missing.map((m) => (
-                      <button key={m.key} type="button" className="kd-more" onClick={() => setOpen(m.step)}>
+                      <button key={m.key} type="button" className="kd-more" onClick={() => {
+                        setOpen(m.step);
+                        // Straight to the field, once its step is open.
+                        requestAnimationFrame(() => { const el = document.getElementById(FIELD[m.key]); el?.focus({ preventScroll: true }); el?.scrollIntoView({ block: 'center' }); });
+                      }}>
                         {T[m.key as keyof typeof T]}<ArrowRightIcon size={14} aria-hidden="true" />
                       </button>
                     ))}

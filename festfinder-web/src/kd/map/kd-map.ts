@@ -74,6 +74,8 @@ export interface KdMapOptions {
   /** The accessible name of a pin: its title by default. */
   pinLabel?: (p: Pin) => string;
   onSelect?: (id: string | null) => void;
+  /** A cluster that never splits (its nights share one place, a club's coming nights): their ids. */
+  onSelectMany?: (ids: string[]) => void;
   onMove?: () => void;
   zoomLabels?: { in: string; out: string };
   /** Place names, [lng, lat]: shown zoomed out, and at every zoom on a bare board. */
@@ -231,8 +233,9 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
       shown.add(p.id);
       pinFor(p);
     }
-    // The chosen event keeps its pill even inside a cluster.
+    // The chosen event, and a night under way, keep their pill even inside a cluster.
     if (selected && byId.has(selected)) { shown.add(selected); pinFor(byId.get(selected)!); }
+    for (const p of items) if (p.live && !shown.has(p.id) && p.lat != null && p.lng != null) { shown.add(p.id); pinFor(p); }
     for (const [id, pin] of pins) if (!shown.has(id)) { pin.marker.remove(); pins.delete(id); }
     const seen = new Set<number>();
     for (const f of map.queryRenderedFeatures({ layers: ['kd-clusters'] })) {
@@ -258,7 +261,15 @@ export async function createKdMap(el: HTMLElement, opts: KdMapOptions): Promise<
     const f = e.features?.[0];
     if (!f) return;
     e.preventDefault();
-    const zoom = await map.getSource('kd-events').getClusterExpansionZoom(f.properties.cluster_id);
+    const src = map.getSource('kd-events'), id = f.properties.cluster_id;
+    // Nights at one place never split, at any zoom: list them instead.
+    const leaves: { geometry: { coordinates: [number, number] }; properties: { id: string } }[] = opts.onSelectMany ? await src.getClusterLeaves(id, 100, 0) : [];
+    const [x, y] = leaves[0]?.geometry.coordinates ?? [];
+    if (leaves.length && leaves.every((l) => Math.abs(l.geometry.coordinates[0] - x) < 1e-4 && Math.abs(l.geometry.coordinates[1] - y) < 1e-4)) {
+      opts.onSelectMany!(leaves.map((l) => l.properties.id));
+      return;
+    }
+    const zoom = await src.getClusterExpansionZoom(id);
     map.easeTo({ center: f.geometry.coordinates, zoom: Math.min(zoom, 16) });
   });
   map.on('click', (e: any) => { if (!e.defaultPrevented) opts.onSelect?.(null); });

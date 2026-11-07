@@ -4,7 +4,7 @@
  * applications (shortlist, decline, book; best match first, never by followers), a form to
  * post one, and the booking requests sent to one artist ("Hỏi trực tiếp") with their answers.
  */
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang, type Pair, tx } from '../copy';
 import { dayMonth, money } from '../format';
@@ -70,7 +70,7 @@ export function Gigs() {
                 {inq.map((i) => (
                   <li key={i.id} className="flex flex-col gap-1 border-b border-line-1 py-3 first:pt-0 last:border-b-0">
                     <span className="flex items-center justify-between gap-3">
-                      {i.artist ? <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
+                      {i.artist ? <KdLink className="kd-hit kd-hs inline-block min-w-11 hover:underline" href={'/a/' + i.artist.slug}>{i.artist.name}</KdLink> : <span />}
                       <Status tone={i.status === 'accepted' ? 'ok' : i.status === 'declined' ? 'bad' : 'warn'}>{i.status === 'accepted' ? T.inqAccepted : i.status === 'declined' ? T.inqDeclined : T.inqPending}</Status>
                     </span>
                     <span className="kd-m kd-num">{[dayMonth(i.eventOn, lang), tx(i.cityLabel, lang), i.feeOffer != null ? money(i.feeOffer, i.currency, lang) : null].filter(Boolean).join(' · ')}</span>
@@ -109,7 +109,7 @@ function GigRow({ lang, g, onChange }: { lang: Lang; g: Gig; onChange: () => voi
               {apps.map((a) => (
                 <li key={a.id} className="flex flex-col gap-1.5 border-b border-line-1 py-3 last:border-b-0">
                   <span className="flex flex-wrap items-center justify-between gap-2">
-                    <KdLink className="kd-hit kd-hs hover:underline" href={'/a/' + a.artist.slug}>{a.artist.name}</KdLink>
+                    <KdLink className="kd-hit kd-hs inline-block min-w-11 hover:underline" href={'/a/' + a.artist.slug}>{a.artist.name}</KdLink>
                     <Status tone={a.status === 'booked' ? 'ok' : a.status === 'shortlisted' ? 'warn' : a.status === 'declined' ? 'bad' : 'none'}>
                       {a.status === 'booked' ? T.appBooked : a.status === 'shortlisted' ? T.appShortlisted : a.status === 'declined' ? T.appDeclined : T.appNew}
                     </Status>
@@ -203,12 +203,24 @@ function AskArtist({ lang, cities, onSent }: { lang: Lang; cities: City[]; onSen
   const empty = { artist: null as PickItem | null, eventOn: '', city: '', message: '', feeOffer: '' };
   const [f, setF] = useState(empty);
   const [busy, setBusy] = useState(false);
+  const date = useRef<HTMLInputElement>(null);
   const city = f.city || cities[0]?.slug || '';
   const cur = cities.find((c) => c.slug === city)?.currency;
   const find = useCallback(async (q: string): Promise<PickItem[]> => {
     // Only artists who run their profile read a request (the API refuses the others): the directory's list, less those only the team verified.
     const out = await FF.get('/artists?limit=20&sort=name' + (q ? '&q=' + encodeURIComponent(q) : ''));
     return out.items.filter((a: { claimed: boolean }) => a.claimed).map((a: { id: string; name: string; slug: string }) => ({ value: a.id, label: a.name, sub: '/a/' + a.slug }));
+  }, []);
+
+  // "Mời biểu diễn" on an artist's page (/studio/gigs?invite=<slug>): that artist chosen, the date next.
+  useEffect(() => {
+    const slug = new URLSearchParams(location.search).get('invite');
+    if (!slug) return;
+    FF.maybe(FF.get('/artists/' + encodeURIComponent(slug)), null).then((r: { artist: { id: string; name: string; slug: string; claimed: boolean } } | null) => {
+      if (!r?.artist.claimed) return;
+      setF((p) => ({ ...p, artist: { value: r.artist.id, label: r.artist.name, sub: '/a/' + r.artist.slug } }));
+      date.current?.focus();
+    });
   }, []);
   const send = async (e: FormEvent) => {
     e.preventDefault();
@@ -223,7 +235,7 @@ function AskArtist({ lang, cities, onSent }: { lang: Lang; cities: City[]; onSen
       <form className="flex flex-col gap-3.5" onSubmit={send}>
         <div className="flex flex-col gap-2"><span className="kd-flabel">{T.inqArtist}</span><AsyncPick label={T.inqArtist} placeholder={T.inqFind} load={find} value={f.artist} onPick={(a) => setF({ ...f, artist: a })} /></div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-3">
-          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqDate">{T.inqDate}</FieldLabel><Input id="iqDate" type="date" required className="kd-num" value={f.eventOn} onChange={(e) => setF({ ...f, eventOn: e.target.value })} /></div>
+          <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqDate">{T.inqDate}</FieldLabel><Input ref={date} id="iqDate" type="date" required className="kd-num" value={f.eventOn} onChange={(e) => setF({ ...f, eventOn: e.target.value })} /></div>
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqCity">{T.fCity}</FieldLabel><Select id="iqCity" value={city} onChange={(e) => setF({ ...f, city: e.target.value })}>{cities.map((c) => <option key={c.slug} value={c.slug}>{tx(c.name, lang)}</option>)}</Select></div>
           <div className="flex flex-col gap-2"><FieldLabel htmlFor="iqFee">{T.inqFee} ({cur === 'VND' ? '₫' : cur ?? ''})</FieldLabel><Input id="iqFee" inputMode="numeric" className="kd-num" value={f.feeOffer} onChange={(e) => setF({ ...f, feeOffer: e.target.value.replace(/\D/g, '') })} /></div>
         </div>

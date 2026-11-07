@@ -57,10 +57,10 @@ export function MapBoard({ lang, events, now, places }: { lang: Lang; events: Ho
   let names: { name: string; x: number; y: number }[] = [];
   if (size) {
     const at = frame(boxOf(events), size.w, size.h);
-    // MapLibre's clusters gather pins within 52px.
+    // MapLibre's clusters gather pins within 52px; a night under way keeps its own, as it does there.
     for (const e of events) {
       const [x, y] = at(e.lng, e.lat);
-      const near = dots.find((d) => Math.hypot(d.x - x, d.y - y) < 52);
+      const near = !isLive(e, now) && dots.find((d) => !isLive(d.items[0], now) && Math.hypot(d.x - x, d.y - y) < 52);
       if (near) near.items.push(e);
       else dots.push({ x, y, items: [e] });
     }

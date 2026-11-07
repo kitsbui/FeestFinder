@@ -24,6 +24,8 @@ export const LIST = {
   close: { en: 'Close', vi: 'Đóng' },
   // the calendar
   today: { en: 'Today', vi: 'Hôm nay' },
+  tonight: { en: 'Tonight', vi: 'Tối nay' },
+  tomorrow: { en: 'Tomorrow', vi: 'Ngày mai' },
   prevMonth: { en: 'Previous month', vi: 'Tháng trước' },
   nextMonth: { en: 'Next month', vi: 'Tháng sau' },
   addGoogleCal: { en: 'Add to Google Calendar', vi: 'Thêm vào Google Calendar' },

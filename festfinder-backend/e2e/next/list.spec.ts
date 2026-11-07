@@ -81,6 +81,44 @@ test.describe('the home page: map and calendar', () => {
     expect(problems).toEqual([]);
   });
 
+  test('"Tối nay" over the map leads to tonight’s nights, listed under the calendar', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const problems = await open(page, '/');
+    // The demo clock is 2026-09-14 10:00: tonight's nights have not started.
+    const tonight = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Tối nay · \d+ sự kiện$/ });
+    await expect(tonight).toBeInViewport();
+    await tonight.click();
+    const list = page.locator('#tonight');
+    await expect(list).toBeInViewport();
+    await expect(list.getByRole('heading', { name: 'Tối nay' })).toBeVisible();
+    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await tonight.innerText()))![1]));
+    expect(problems).toEqual([]);
+  });
+
+  test('nights at one place stay one cluster at any zoom: a tap on it lists them', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // Every night of the search at one venue, as a club's coming nights are.
+    await page.route(/\/events\/map\?.*q=ravolution/, async (route) => {
+      const body = await (await route.fetch()).json();
+      const [a] = body.items as { lat: number; lng: number }[];
+      body.items = body.items.map((e: object) => ({ ...e, lat: a.lat, lng: a.lng, approx: false }));
+      await route.fulfill({ json: body });
+    });
+    const problems = await open(page, '/?q=ravolution');
+    const map = page.getByRole('region', { name: 'Bản đồ sự kiện' });
+    await map.hover();
+    const count = map.locator('.maplibregl-marker.kd-mb').first();
+    await expect(count).toBeAttached({ timeout: 15_000 });
+    const n = Number(await count.innerText());
+    expect(n).toBeGreaterThan(1);
+    const b = (await count.boundingBox())!;
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    const card = map.getByRole('dialog');
+    await expect(card.getByRole('link')).toHaveCount(n);
+    await expect(card.getByRole('link', { name: /Ravolution Music Festival/ })).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
   test('a search from the address narrows the map and the calendar, and its chip clears it', async ({ page }) => {
     const problems = await open(page, '/?q=hozo');
     await expect(night(page, 'Ravolution')).toHaveCount(0);

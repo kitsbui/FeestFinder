@@ -19,7 +19,7 @@ export function writeLocal(f: Form | null) {
   try { if (f) localStorage.setItem(LOCAL, JSON.stringify(f)); else localStorage.removeItem(LOCAL); } catch { /* storage blocked */ }
 }
 
-export interface City { slug: string; name: Pair; currency: string }
+export interface City { slug: string; name: Pair; currency: string; timezone?: string }
 export interface Venue { id: string; name: string; address: string | null; area: string | null }
 export interface Form {
   title: string; styles: string[]; description: string; lineup: string[];

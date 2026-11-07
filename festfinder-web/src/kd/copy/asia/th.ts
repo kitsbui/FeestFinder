@@ -339,6 +339,7 @@ export const TH: Record<string, string> = {
   'Playing soon': 'เล่นเร็ว ๆ นี้',
   'No artists match': 'ไม่พบศิลปินที่ตรงกัน',
   'More artists': 'ศิลปินเพิ่มเติม',
+  'Invite to play': 'เชิญให้แสดง',
   'Next:': 'ถัดไป:',
   'Listen': 'ฟัง',
   'Mixes': 'มิกซ์',

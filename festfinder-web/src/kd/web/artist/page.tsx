@@ -32,6 +32,7 @@ import { LazyPlaylist } from './music';
 import type { Track } from './track';
 import { EventCard } from '../card';
 import { MIXES } from './copy';
+import { InviteButton } from './invite';
 import { ClaimButton, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
 import { InLang } from '@/kd/ui/in-lang';
 import { FIT } from '../../fits';
@@ -211,7 +212,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
 
           <main id="main" className="kd-wrap flex flex-col">
             <div className="mx-auto flex w-full max-w-page flex-col">
-              {/* ---- what to do: play, follow (or claim), share ---- */}
+              {/* ---- what to do: play, follow (or claim), share, invite ---- */}
               <div className="flex flex-wrap items-center gap-3 pt-7">
                 {tracks.length || mixes.length ? (
                   // The playlist plays it when its code is in (data-play-artist); before that, and without tracks, it is a link.
@@ -229,6 +230,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                   <>
                     <FollowButton lang={lang} kind="art" id={a.id} name={a.name} source={source} />
                     <OwnerLink lang={lang} source={source} href="/studio/artist" />
+                    {!unclaimed && a.kind === 'owned' && a.booking?.key !== 'unavailable' ? <InviteButton lang={lang} slug={a.slug} /> : null}
                   </>
                 )}
                 <ShareProfile lang={lang} title={a.name} />

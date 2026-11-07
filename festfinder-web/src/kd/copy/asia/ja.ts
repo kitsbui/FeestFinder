@@ -339,6 +339,7 @@ export const JA: Record<string, string> = {
   'Playing soon': '近日出演',
   'No artists match': '該当するアーティストはいません',
   'More artists': 'その他のアーティスト',
+  'Invite to play': '出演を依頼',
   'Next:': '次回:',
   'Listen': '聴く',
   'Mixes': 'ミックス',

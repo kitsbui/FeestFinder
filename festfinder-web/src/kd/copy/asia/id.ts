@@ -339,6 +339,7 @@ export const ID: Record<string, string> = {
   'Playing soon': 'Segera tampil',
   'No artists match': 'Tidak ada artis yang cocok',
   'More artists': 'Artis lainnya',
+  'Invite to play': 'Ajak untuk tampil',
   'Next:': 'Berikutnya:',
   'Listen': 'Dengarkan',
   'Mixes': 'Mix',
