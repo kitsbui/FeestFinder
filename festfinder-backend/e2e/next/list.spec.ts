@@ -19,6 +19,9 @@ test.describe('the home page: map and calendar', () => {
   const chips = (page: Page) => cal(page).locator('table a[href^="/e/"]');
   /** A night's stamps in the month, by the name they are read by (its time and title). */
   const night = (page: Page, name: string) => cal(page).locator('table').getByRole('link', { name: new RegExp(name) });
+  /** The one list under the calendar; the chips over the map choose what it shows. */
+  const list = (page: Page) => page.locator('section#nights');
+  const chip = (page: Page, name: RegExp) => page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('button', { name });
 
   test('the map holds its place before it loads, then frames the pins; the calendar arrives in the HTML', async ({ page, request }) => {
     const html = await (await request.get('/')).text();
@@ -81,59 +84,65 @@ test.describe('the home page: map and calendar', () => {
     expect(problems).toEqual([]);
   });
 
-  test('"Tối nay" over the map leads to tonight’s nights, listed under the calendar', async ({ page }) => {
+  test('the chips over the map choose the list under the calendar; a chosen chip again goes back to the next seven days', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const problems = await open(page, '/');
+    const week = list(page).getByRole('heading', { name: '7 ngày tới' });
+    await expect(week).toBeVisible();
     // The demo clock is 2026-09-14 10:00: tonight's nights have not started.
-    const tonight = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Tối nay · \d+ sự kiện$/ });
-    await expect(tonight).toBeInViewport();
-    await tonight.click();
-    const list = page.locator('#tonight');
-    await expect(list).toBeInViewport();
-    await expect(list.getByRole('heading', { name: 'Tối nay' })).toBeVisible();
-    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await tonight.innerText()))![1]));
+    for (const [name, heading] of [
+      [/^Tối nay · \d+ sự kiện$/, 'Tối nay'],
+      [/^Cuối tuần · \d+ sự kiện$/, 'Cuối tuần'],
+      [/^Miễn phí · \d+ sự kiện$/, 'Miễn phí'],
+    ] as const) {
+      const button = chip(page, name);
+      const count = Number(/(\d+) sự kiện/.exec(await button.innerText())![1]);
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(list(page)).toBeInViewport();
+      await expect(list(page).getByRole('heading', { name: heading })).toBeVisible();
+      await expect(list(page).getByRole('link')).toHaveCount(count);
+      await expect(week).toHaveCount(0);
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'false');
+      await expect(week).toBeVisible();
+    }
     expect(problems).toEqual([]);
   });
 
-  test('"Cuối tuần" over the map leads to the weekend’s nights, listed under the calendar', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+  test('the list under the calendar holds the next seven days by default, at most eight rows, on every width', async ({ page, request }) => {
+    // The server draws the list before any script runs.
+    expect(await (await request.get('/')).text()).toContain('id="nights"');
     const problems = await open(page, '/');
-    const weekend = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Cuối tuần · \d+ sự kiện$/ });
-    await expect(weekend).toBeInViewport();
-    await weekend.click();
-    const list = page.locator('#weekend');
-    await expect(list).toBeInViewport();
-    await expect(list.getByRole('heading', { name: 'Cuối tuần' })).toBeVisible();
-    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await weekend.innerText()))![1]));
-    expect(problems).toEqual([]);
-  });
-
-  test('"Miễn phí" over the map leads to the free nights still to come, listed under the calendar', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    const problems = await open(page, '/');
-    const free = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Miễn phí · \d+ sự kiện$/ });
-    await expect(free).toBeInViewport();
-    await free.click();
-    const list = page.locator('#free');
-    await expect(list).toBeInViewport();
-    await expect(list.getByRole('heading', { name: 'Miễn phí' })).toBeVisible();
-    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await free.innerText()))![1]));
-    expect(problems).toEqual([]);
-  });
-
-  test('on a phone the next seven days are rows under the month, at most eight; a computer has none of them', async ({ page, request }) => {
-    // The server draws the rows before any script runs.
-    expect(await (await request.get('/')).text()).toContain('id="week"');
-    await page.setViewportSize({ width: 390, height: 844 });
-    const problems = await open(page, '/');
-    const week = page.locator('#week');
-    await expect(week.getByRole('heading', { name: '7 ngày tới' })).toBeVisible();
-    const rows = await week.getByRole('link').count();
-    expect(rows).toBeGreaterThan(0);
-    expect(rows).toBeLessThanOrEqual(8);
-    expect(problems).toEqual([]);
+    await expect(list(page).getByRole('heading', { name: '7 ngày tới' })).toBeVisible();
+    const hrefs = await list(page).getByRole('link').evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+    expect(hrefs.length).toBeGreaterThan(0);
+    expect(hrefs.length).toBeLessThanOrEqual(8);
+    // Each night once, however many of its days fall in the seven.
+    expect(new Set(hrefs).size).toBe(hrefs.length);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await expect(week).toBeHidden();
+    await expect(list(page)).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('the seven days leave out a night the API clock has already ended', async ({ page }) => {
+    // The demo clock is 2026-09-14 10:00: one night ended at 08:00 that morning, the other runs until 23:00.
+    const today = '2026-09-14';
+    await page.route(/\/events\/map\?.*q=ravolution/, async (route) => {
+      const body = await (await route.fetch()).json();
+      const ravo = (body.items as { slug: string }[]).find((e) => e.slug === 'ravo');
+      body.items = [
+        ...body.items,
+        { ...ravo, id: 'ended-check', slug: 'ended-check', title: 'Đã kết thúc', startsOn: today, endsOn: today, endsAt: '2026-09-14T08:00:00+07:00' },
+        { ...ravo, id: 'open-check', slug: 'open-check', title: 'Còn mở', startsOn: today, endsOn: today, endsAt: '2026-09-14T23:00:00+07:00' },
+      ];
+      await route.fulfill({ json: body });
+    });
+    const problems = await open(page, '/?q=ravolution');
+    // The open night proves the answer is the one the list shows; the ended one is left out of it.
+    await expect(list(page).getByRole('link', { name: /Còn mở/ })).toBeVisible();
+    await expect(list(page).getByRole('link', { name: /Đã kết thúc/ })).toHaveCount(0);
+    expect(problems).toEqual([]);
   });
 
   test('a search names up to three of its artists under the chips, each a link to the artist page', async ({ page }) => {

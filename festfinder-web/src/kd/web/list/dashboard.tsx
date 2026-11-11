@@ -3,11 +3,13 @@
  * The home page's body (owner, 2026-11-06): the map of every night, the highlight, the calendar.
  * Nothing filters it but an address that arrives with `?q=` (the search) or `?style=` (a style's
  * link): then the API's answer for it fills the map and the calendar, the highlight steps aside and
- * one chip above the map names it; its × goes back to every night. Beside it, "Tối nay · n",
- * "Cuối tuần · n" and "Miễn phí · n" lead to their lists under the calendar. A search also names up to
- * three artists, a row of links under those chips.
+ * one chip above the map names it; its × goes back to every night. Beside it, the chips "Tối nay · n",
+ * "Cuối tuần · n" and "Miễn phí · n" choose what the one list under the calendar shows: the next seven
+ * days by default, and a chosen chip again goes back to them. A search also names up to three artists,
+ * a row of links under those chips.
  */
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
@@ -15,7 +17,7 @@ import { fill, pick, tx, type Lang, type Pair } from '../../copy';
 import { Button, Chip, LinkButton } from '../../ui/actions';
 import { KdLink, inLang } from '../../link';
 import { useKd } from '../../runtime';
-import { Calendar, dayName, freeNights, nextNights, weekendNights, type HomeEvent } from './calendar';
+import { Calendar, dayName, freeNights, nextNights, weekNights, weekendNights, type HomeEvent, type Listed } from './calendar';
 import { LIST } from './copy';
 import { MapBoard } from './map-board';
 
@@ -25,6 +27,8 @@ const never = () => () => {};
 /** The API's clock to the minute (FF.now), so a night under way starts and stops bouncing on time. */
 const everyMinute = (tick: () => void) => { const t = setInterval(tick, 60_000); return () => clearInterval(t); };
 const minute = () => Math.floor(FF.now().getTime() / 60_000) * 60_000;
+/** The chip chosen above the map; none chosen is the next seven days. */
+type Choice = 'tonight' | 'weekend' | 'free';
 
 export function Dashboard({ lang, heading, events, today, city, styles, places, highlight, siteUrl }: {
   lang: Lang; heading: string; events: HomeEvent[]; today: string; city?: string; places: { name: string; at: [number, number] }[];
@@ -39,6 +43,7 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   // The snapshot reads 0 until the clock is ready, so the first check after hydration matches the server's and does not re-render the page.
   const now = useSyncExternalStore(everyMinute, () => (clockReady ? minute() : 0), () => 0);
   const [cleared, setCleared] = useState(false);
+  const [choice, setChoice] = useState<Choice | null>(null);
   const [found, setFound] = useState<HomeEvent[] | 'error' | null>(null);
   const [tries, setTries] = useState(0);
   const [artists, setArtists] = useState<{ q: string; items: { slug: string; name: string }[] } | null>(null);
@@ -94,8 +99,9 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
 
   const shown = asked && Array.isArray(found) ? found : events;
   // Recomputed only when the nights or the minute change, not on every render (the clock and the map's wake re-render).
-  const { next, weekend, free } = useMemo(() => ({
+  const { next, week, weekend, free } = useMemo(() => ({
     next: nextNights(shown, today, now),
+    week: weekNights(shown, today, now),
     weekend: weekendNights(shown, today, now),
     free: freeNights(shown, today, now),
   }), [shown, today, now]);
@@ -106,6 +112,18 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
     : !asked && !events.length ? { title: T.noUpcoming, action: <LinkButton size="sm" href={inLang('/studio/new', lang)}>{T.postEvent}</LinkButton> }
     : null;
   const quick = !note && !!(next || weekend.length || free.length);
+  // The one list under the calendar: the chip chosen above the map (its chip is shown only without a note and with nights), else the next seven days, eight rows at most.
+  const lists: Record<Choice, { title: string; rows: Listed[]; dated: boolean }> = {
+    tonight: { title: next ? dayName(next.day, today, lang) : '', rows: next ? next.list.map((e) => ({ day: next.day, e })) : [], dated: false },
+    weekend: { title: T.weekend, rows: weekend, dated: true },
+    free: { title: T.free, rows: free, dated: true },
+  };
+  const nights = choice && !note && lists[choice].rows.length ? lists[choice] : { title: T.nextWeek, rows: week.slice(0, 8), dated: true };
+  /** A chip picks its list, or goes back to the next seven days when chosen again; the list is brought into view with the choice applied. */
+  const choose = (c: Choice) => {
+    flushSync(() => setChoice(choice === c ? null : c));
+    document.getElementById('nights')?.scrollIntoView({ block: 'start' });
+  };
   return (
     <main id="main" className="flex flex-1 flex-col">
       <h1 className="sr-only">{heading}</h1>
@@ -135,10 +153,10 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
                     <span className="sr-only">{T.clear}</span>
                   </Chip>
                 ) : null}
-                {/* What's on tonight, in one tap from the first screen (persona review, 2026-11-07). */}
-                {next && !note ? <a href="#tonight" className="kd-chip kd-glass">{dayName(next.day, today, lang)} · {fill(T.nNights, { n: next.list.length })}</a> : null}
-                {weekend.length && !note ? <a href="#weekend" className="kd-chip kd-glass">{T.weekend} · {fill(T.nNights, { n: weekend.length })}</a> : null}
-                {free.length && !note ? <a href="#free" className="kd-chip kd-glass">{T.free} · {fill(T.nNights, { n: free.length })}</a> : null}
+                {/* What's on tonight, in one tap from the first screen (persona review, 2026-11-07): each chip picks the list under the calendar. */}
+                {next && !note ? <Chip className="kd-glass" on={choice === 'tonight'} onClick={() => choose('tonight')}>{dayName(next.day, today, lang)} · {fill(T.nNights, { n: next.list.length })}</Chip> : null}
+                {weekend.length && !note ? <Chip className="kd-glass" on={choice === 'weekend'} onClick={() => choose('weekend')}>{T.weekend} · {fill(T.nNights, { n: weekend.length })}</Chip> : null}
+                {free.length && !note ? <Chip className="kd-glass" on={choice === 'free'} onClick={() => choose('free')}>{T.free} · {fill(T.nNights, { n: free.length })}</Chip> : null}
               </div>
             ) : null}
             {arts.length ? (
@@ -151,7 +169,7 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
         ) : null}
       </section>
       {asked ? null : highlight}
-      <Calendar lang={lang} events={shown} today={today} now={now} city={city} siteUrl={siteUrl} />
+      <Calendar lang={lang} events={shown} today={today} now={now} city={city} siteUrl={siteUrl} nights={nights} />
     </main>
   );
 }

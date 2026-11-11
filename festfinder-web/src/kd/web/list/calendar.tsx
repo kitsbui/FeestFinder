@@ -4,9 +4,8 @@
  * ‹ ›, the month, "Thêm vào Google Calendar", which subscribes Google Calendar to /calendar.ics),
  * then the weeks, Monday first. Each day shows its nights as one-line chips (a festival on every day
  * it spans) and "+n" when they do not fit; a chip is the event's link, and a click opens its card
- * beside it (a sheet on a phone, where a tap on the day lists its nights). Under the weeks: on a phone
- * the next seven days (#week); then the next nights (#tonight, where the map's "Tối nay" leads), the
- * weekend (#weekend) and the free nights (#free) as lists. Dates are calendar days
+ * beside it (a sheet on a phone, where a tap on the day lists its nights). Under the weeks: one list
+ * (#nights) of what the chips above the map choose, the next seven days by default. Dates are calendar days
  * ('YYYY-MM-DD', already in each event's city), counted in UTC so the server and the browser agree.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -103,10 +102,10 @@ export function freeNights(events: HomeEvent[], today: string, now: number): Lis
   return listed(events.filter((e) => e.isFree && notEnded(e, now)), (d) => d >= today);
 }
 
-/** The next seven days, for the phone's list: no clock, so the server and the browser draw the same rows. */
-export function weekNights(events: HomeEvent[], today: string): Listed[] {
+/** The next seven days, the list's default: a night already over is left out (`now` is 0 on the server, where every one counts). */
+export function weekNights(events: HomeEvent[], today: string, now: number): Listed[] {
   const end = isoOf(at(today) + 6 * DAY);
-  return listed(events, (d) => d >= today && d <= end);
+  return listed(events.filter((e) => notEnded(e, now)), (d) => d >= today && d <= end);
 }
 
 /** "Tối nay", "Ngày mai", else the day's name. */
@@ -117,10 +116,12 @@ export function dayName(day: string, today: string, lang: Lang) {
 
 type Open = { kind: 'event'; ev: HomeEvent; from: HTMLElement } | { kind: 'day'; day: string; from: HTMLElement };
 
-export function Calendar({ lang, events, today, now, city, siteUrl }: {
+export function Calendar({ lang, events, today, now, city, siteUrl, nights }: {
   lang: Lang; events: HomeEvent[]; today: string; city?: string; siteUrl: string;
   /** The API's clock in ms (0 on the server): which nights are under way. */
   now: number;
+  /** The one list under the weeks: its heading, its rows, and whether each row names its day. */
+  nights: { title: string; rows: Listed[]; dated: boolean };
 }) {
   const T = pick(LIST, lang);
   const [ym, setYm] = useState(today.slice(0, 7));
@@ -128,13 +129,6 @@ export function Calendar({ lang, events, today, now, city, siteUrl }: {
   const [sheet, setSheet] = useState(false);
 
   const byDay = useMemo(() => byDayOf(events), [events]);
-  // Recomputed when the nights, the day or the minute change, not on every render.
-  const { next, week, weekend, free } = useMemo(() => ({
-    next: nextNights(events, today, now, byDay),
-    week: weekNights(events, today).slice(0, 8),
-    weekend: weekendNights(events, today, now),
-    free: freeNights(events, today, now),
-  }), [events, today, now, byDay]);
 
   const first = at(ym + '-01');
   const lead = (new Date(first).getUTCDay() + 6) % 7;
@@ -223,20 +217,8 @@ export function Calendar({ lang, events, today, now, city, siteUrl }: {
         </tbody>
       </table>
 
-      {/* The next seven days on a phone: the month's cells are too small to tap, so the list is here. */}
-      {week.length ? <NightList id="week" title={T.nextWeek} rows={week} lang={lang} now={now} className="tab:hidden" /> : null}
-
-      {/* The next nights as a list, where the map's "Tối nay" leads. */}
-      {next ? (
-        <section id="tonight" aria-labelledby="tonight-h" className="flex scroll-mt-20 flex-col gap-2 pt-4">
-          <h3 id="tonight-h" className="kd-h first-letter:uppercase">{dayName(next.day, today, lang)}</h3>
-          <ul className="flex flex-col">
-            {next.list.map((e) => <NightRow key={e.id} e={e} lang={lang} now={now} when={[e.startsOn === next.day ? timeRange(e) : null]} />)}
-          </ul>
-        </section>
-      ) : null}
-      {weekend.length ? <NightList id="weekend" title={T.weekend} rows={weekend} lang={lang} now={now} /> : null}
-      {free.length ? <NightList id="free" title={T.free} rows={free} lang={lang} now={now} /> : null}
+      {/* The one list under the weeks, on every width: the chips above the map choose what it shows. */}
+      {nights.rows.length ? <NightList title={nights.title} rows={nights.rows} dated={nights.dated} lang={lang} now={now} /> : null}
 
       {open && sheet ? (
         <Sheet onClose={close} closeLabel={T.close} title={open.kind === 'event' ? open.ev.title : `${weekdayLong(open.day, lang)} ${dayMonth(open.day, lang)}`}>
@@ -357,13 +339,13 @@ function NightRow({ e, lang, now, when }: { e: HomeEvent; lang: Lang; now: numbe
   );
 }
 
-/** A titled list of nights under the calendar, each row dated (the day it is listed under, then its time). */
-function NightList({ id, title, rows, lang, now, className }: { id: string; title: string; rows: Listed[]; lang: Lang; now: number; className?: string }) {
+/** The one list under the calendar: the chips above the map choose its title and rows; `dated` rows name their day. */
+function NightList({ title, rows, dated, lang, now }: { title: string; rows: Listed[]; dated: boolean; lang: Lang; now: number }) {
   return (
-    <section id={id} aria-labelledby={id + '-h'} className={cx('flex scroll-mt-20 flex-col gap-2 pt-4', className)}>
-      <h3 id={id + '-h'} className="kd-h">{title}</h3>
+    <section id="nights" aria-labelledby="nights-h" className="flex scroll-mt-20 flex-col gap-2 pt-4">
+      <h3 id="nights-h" className="kd-h first-letter:uppercase">{title}</h3>
       <ul className="flex flex-col">
-        {rows.map(({ day, e }) => <NightRow key={e.id} e={e} lang={lang} now={now} when={[dayLabel(day, lang), e.startsOn === day ? timeRange(e) : null]} />)}
+        {rows.map(({ day, e }) => <NightRow key={e.id} e={e} lang={lang} now={now} when={[dated ? dayLabel(day, lang) : null, e.startsOn === day ? timeRange(e) : null]} />)}
       </ul>
     </section>
   );
