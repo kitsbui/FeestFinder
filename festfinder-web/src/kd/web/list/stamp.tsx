@@ -34,7 +34,9 @@ export function EventStamp({ e, live }: { e: Pick<HomeEvent, 'id' | 'title' | 'l
     <span className={cx(live && 'kd-bounce')} aria-hidden="true">
       <span className="kd-cstamp" style={{ '--tilt': s.tilt } as React.CSSProperties}>
         {url && !bad ? (
-          <img className={s.logo ? 'kd-cstamp-logo' : 'kd-stamp-img'} {...BOX.attrs(url, true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setBad(true)} />
+          <img className={s.logo ? 'kd-cstamp-logo' : 'kd-stamp-img'} {...BOX.attrs(url, true)} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setBad(true)}
+            // A picture that failed before React arrived fired its error to nobody: the stamp is checked as it mounts.
+            ref={(img) => { if (img?.complete && !img.naturalWidth && img.currentSrc) setBad(true); }} />
         ) : <b className="kd-stamp-mono" data-t={s.mono} />}
       </span>
     </span>
