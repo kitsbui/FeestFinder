@@ -1,3 +1,8 @@
+/** The artist page: invite to play, and mixes. */
+export const ARTIST = {
+  invite: { en: 'Invite to play', vi: 'Mời biểu diễn' },
+};
+
 /** The artist page's mixes: the "Nghe" section, its likes and its comments. */
 export const MIXES = {
   title: { en: 'Listen', vi: 'Nghe' },
@@ -5,6 +10,7 @@ export const MIXES = {
   latest: { en: 'Latest mix', vi: 'Mix mới nhất' },
   playlist: { en: 'Playlist', vi: 'Playlist' },
   playTrack: { en: 'Play', vi: 'Phát' },
+  addMusic: { en: 'Add music', vi: 'Thêm nhạc' },
   pause: { en: 'Pause', vi: 'Tạm dừng' },
   prev: { en: 'Previous track', vi: 'Bài trước' },
   next: { en: 'Next track', vi: 'Bài sau' },

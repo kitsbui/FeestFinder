@@ -72,7 +72,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState<string | null>(null);
+  const [sent, setSent] = useState<{ message: string; reference: string; dueOn: string } | null>(null);
   const brandRef = useRef<HTMLInputElement>(null);
   const sentRef = useRef<HTMLHeadingElement>(null);
 
@@ -108,9 +108,10 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
         budgetAmount: amount, startsOn: from, endsOn: to,
         // The API takes at least one; with none ticked, the feed card is the default.
         placements: placements.length ? placements : ['feed'],
-        cities, isAlcohol: alcohol, message: msg.trim(),
+        cities, isAlcohol: alcohol, message: msg.trim(), lang: lang === 'en' ? 'en' : 'vi',
       });
-      setSent(FF.text((out as { message?: unknown } | null)?.message, lang) || T.submitted);
+      const got = out as { message?: unknown; reference?: string; dueOn?: string } | null;
+      setSent({ message: FF.text(got?.message, lang) || T.submitted, reference: got?.reference ?? '', dueOn: got?.dueOn ?? '' });
     } catch (x) {
       const { code, status } = x as { code?: string; status?: number };
       if (status === 401) kd.openSignIn(T.gate);
@@ -128,7 +129,9 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
       <Card className="flex flex-col items-start gap-3 p-[clamp(20px,3vw,28px)]">
         <CheckCircleIcon size={28} className="text-ok" aria-hidden="true" />
         <h2 ref={sentRef} tabIndex={-1} className="kd-h outline-none">{T.sentTitle}</h2>
-        <p className="kd-s">{sent}</p>
+        <p className="kd-s">{sent.message}</p>
+        {sent.reference ? <p className="kd-s">{fill(T.reference, { r: sent.reference })}</p> : null}
+        {sent.dueOn ? <p className="kd-s">{fill(T.dueOn, { d: dayMonth(sent.dueOn, lang) })}</p> : null}
         <Button size="sm" className="mt-1" onClick={onAnother}>{T.another}</Button>
       </Card>
     );
@@ -252,6 +255,7 @@ function EnquiryForm({ lang, email: accountEmail, name: accountName, focusFirst,
 interface Mine {
   id: string; brand: string; status: 'new' | 'approved' | 'declined'; budgetAmount: number | null; currency: string;
   startsOn: string | null; endsOn: string | null; reply: string | null;
+  campaign: { budgetTotal: number; remaining: number | null } | null;
 }
 const TONE: Record<Mine['status'], StatusTone> = { new: 'warn', approved: 'ok', declined: 'bad' };
 
@@ -273,7 +277,8 @@ function MyRequests({ lang }: { lang: Lang }) {
               <Status tone={TONE[r.status]}>{status[r.status]}</Status>
             </span>
             <span className="kd-s kd-num">
-              {[r.budgetAmount != null ? money(r.budgetAmount, r.currency, lang) : null, r.startsOn && r.endsOn ? `${dayMonth(r.startsOn, lang)} – ${dayMonth(r.endsOn, lang)}` : null].filter(Boolean).join(' · ')}
+              {[r.budgetAmount != null ? money(r.budgetAmount, r.currency, lang) : null, r.startsOn && r.endsOn ? `${dayMonth(r.startsOn, lang)} – ${dayMonth(r.endsOn, lang)}` : null,
+                r.campaign?.remaining != null ? fill(T.remaining, { r: money(r.campaign.remaining, r.currency, lang) }) : null].filter(Boolean).join(' · ')}
             </span>
             {r.reply ? <span className="kd-s text-fg-2">{fill(T.reply, { r: r.reply })}</span> : null}
           </li>

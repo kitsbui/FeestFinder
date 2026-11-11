@@ -18,10 +18,11 @@ import { DateBlock, Marker, Stat } from '../../ui/parts';
 import { Tabs } from '../../ui/shell';
 import { MomentsSection } from '../../moments';
 import type { Moment } from '../../ui/moments';
+import { ClaimButton } from './claim';
 import { PROFILE } from './copy';
 
 /** What the page's own API answer says about the viewer. */
-export interface Viewer { following: boolean; followers: number; owner: boolean; claimed: boolean; moments: Moment[] | null }
+export interface Viewer { following: boolean; followers: number; owner: boolean; claimed: boolean; claimPending?: boolean; moments: Moment[] | null }
 
 /** Whose page this is: plain data, so the server page can hand it over. */
 export type Source = { kind: 'org' | 'artist'; slug: string };
@@ -33,7 +34,7 @@ const READ: Record<Source['kind'], { path: (slug: string) => string; read: (d: a
   },
   artist: {
     path: (slug) => '/artists/' + encodeURIComponent(slug),
-    read: (d) => ({ following: !!d.artist?.following, followers: d.artist?.followers ?? 0, owner: !!d.artist?.editable, claimed: !!d.artist?.claimed, moments: d.moments ?? null }),
+    read: (d) => ({ following: !!d.artist?.following, followers: d.artist?.followers ?? 0, owner: !!d.artist?.editable, claimed: !!d.artist?.claimed, claimPending: !!d.artist?.claimPending, moments: d.moments ?? null }),
   },
 };
 
@@ -132,20 +133,10 @@ export function ClaimLink({ lang, kind, name, source }: { lang: Lang; kind: 'org
   return <button type="button" className="kd-nl" onClick={go}>{kind === 'organizer' ? T.isThisYouOrg : T.isThisYouArtist}</button>;
 }
 
-/**
- * "Đây là tôi" on a profile nobody runs yet (D13), outlined beside the page's one action: sign in, then
- * the role picker offers this listing to claim.
- */
-export function ClaimButton({ lang, kind, name, size, className }: { lang: Lang; kind: 'organizer' | 'artist'; name: string; size?: 'sm'; className?: string }) {
-  const kd = useKd();
-  const T = pick(PROFILE, lang);
-  const go = () => {
-    // Counted (the design plan's gate for phase 3: "Đây là tôi" leads to more profiles claimed).
-    FF.track('role_picker_shown', { role: kind, surface: 'claim' });
-    if (!kd.requireSignIn(undefined, T.gateClaim)) return;
-    kd.openRolePicker(kind, name);
-  };
-  return <button type="button" onClick={go} className={buttonClass({ size }, className)}>{T.thisIsMe}</button>;
+/** "Đây là tôi" on an artist's page, which also knows whether this person's claim is already waiting. */
+export function ArtistClaim({ lang, name, source }: { lang: Lang; name: string; source: Source }) {
+  const v = useViewer(source);
+  return <ClaimButton lang={lang} kind="artist" name={name} pending={!!v?.claimPending} />;
 }
 
 /**

@@ -190,6 +190,7 @@ export const WEB = {
   factWhere: { en: 'Where', vi: 'Địa điểm' },
   factPrice: { en: 'Price', vi: 'Giá' },
   factAge: { en: 'Age', vi: 'Độ tuổi' },
+  dressCode: { en: 'Dress code', vi: 'Trang phục' },
   dockFrom: { en: 'From', vi: 'Từ' },
   goTogether: { en: 'Go with friends', vi: 'Đi cùng bạn bè' },
   friendsGoing: { en: '{n} going', vi: '{n} bạn sẽ đi' },

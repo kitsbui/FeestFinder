@@ -7,11 +7,11 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { XIcon } from '@phosphor-icons/react/ssr';
-import { pick, type Lang } from '../../copy';
+import { fill, pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
 import { timeRange, whenShort } from '../../format';
 import { familyOf, g } from '../../genre';
-import { inLang } from '../../link';
+import { KdLink, inLang } from '../../link';
 import { createKdMap, type KdMap, type Pin } from '../../map/kd-map';
 import { Button, IconButton, LinkButton } from '../../ui/actions';
 import { Art } from '../../ui/parts';
@@ -22,6 +22,9 @@ import { LIST } from './copy';
 import { boxOf, pinText } from './map-board';
 import { isLive, stampOf } from './stamp';
 
+/** The card over the map: a night's, or a place's nights. */
+const CARD = 'kd-glass absolute bottom-4 left-4 z-[3] w-[min(380px,calc(100%-32px))] rounded-org p-3';
+
 export function HomeMap({ lang, events, now, places, onReady }: {
   lang: Lang; events: HomeEvent[]; now: number; places: { name: string; at: [number, number] }[]; onReady: () => void;
 }) {
@@ -31,6 +34,8 @@ export function HomeMap({ lang, events, now, places, onReady }: {
   const [failed, setFailed] = useState(false);
   const [tries, setTries] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
+  // A club's coming nights share one pin's place: their list.
+  const [many, setMany] = useState<string[] | null>(null);
   const first = useRef({ events, places });
 
   useEffect(() => {
@@ -44,7 +49,8 @@ export function HomeMap({ lang, events, now, places, onReady }: {
       // The name starts with what the pin shows (its price), then says whose it is.
       pinLabel: (p) => `${p.label}, ${p.title ?? ''}`,
       places: first.current.places,
-      onSelect: setSel,
+      onSelect: (id) => { setSel(id); setMany(null); },
+      onSelectMany: (ids) => { setSel(null); setMany(ids); },
     }).then(async (m) => {
       made = m;
       if (dead) return m.destroy();
@@ -68,6 +74,7 @@ export function HomeMap({ lang, events, now, places, onReady }: {
   useEffect(() => { map?.select(sel); }, [map, sel]);
 
   const chosen = events.find((e) => e.id === sel) ?? null;
+  const list = many ? events.filter((e) => many.includes(e.id)) : [];
   return (
     <>
       {/* MapLibre makes its container `position: relative`: the box that fills the section is around it. */}
@@ -81,7 +88,7 @@ export function HomeMap({ lang, events, now, places, onReady }: {
         </div>
       ) : null}
       {chosen ? (
-        <div className={cx('kd-glass absolute bottom-4 left-4 z-[3] grid w-[min(380px,calc(100%-32px))] grid-cols-[76px_minmax(0,1fr)] items-center gap-3 rounded-org p-3', g(familyOf(chosen.genre)))}>
+        <div className={cx(CARD, 'grid grid-cols-[76px_minmax(0,1fr)] items-center gap-3', g(familyOf(chosen.genre)))}>
           <Art family={familyOf(chosen.genre)} cover={chosen.coverUrl} title={chosen.title} fit={square(76)} className="h-19 w-19 rounded-seg" />
           <div className="flex min-w-0 flex-col gap-1">
             <span className="flex items-start gap-2">
@@ -94,6 +101,27 @@ export function HomeMap({ lang, events, now, places, onReady }: {
               <LinkButton size="sm" href={inLang('/e/' + chosen.slug, lang)}>{T.details}</LinkButton>
             </span>
           </div>
+        </div>
+      ) : null}
+      {list.length ? (
+        <div role="dialog" aria-label={[list[0].venue, fill(T.nNights, { n: list.length })].filter(Boolean).join(' · ')} className={cx(CARD, 'flex max-h-[70%] flex-col gap-1')}>
+          <span className="flex items-start gap-2">
+            <span className="kd-hs kd-ell flex-1">{list[0].venue ?? fill(T.nNights, { n: list.length })}</span>
+            <IconButton label={T.close} size="sm" className="-mr-1 -mt-1" onClick={() => setMany(null)}><XIcon size={16} aria-hidden="true" /></IconButton>
+          </span>
+          <ul className="flex min-h-0 flex-col overflow-y-auto">
+            {list.map((e) => (
+              <li key={e.id}>
+                <KdLink href={inLang('/e/' + e.slug, lang)} className="flex min-h-11 min-w-0 items-center gap-3 rounded-sm px-1 hover:bg-surface-2">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="kd-ell text-fg-1">{e.title}</span>
+                    <span className="kd-s kd-ell">{[whenShort(e, lang), timeRange(e)].filter(Boolean).join(' · ')}</span>
+                  </span>
+                  <span className={cx('kd-mb kd-num shrink-0', e.isFree && 'text-info')}>{pinText(e, lang)}</span>
+                </KdLink>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
     </>

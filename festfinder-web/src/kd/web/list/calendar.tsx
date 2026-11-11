@@ -4,7 +4,9 @@
  * ‹ ›, the month, "Thêm vào Google Calendar", which subscribes Google Calendar to /calendar.ics),
  * then the weeks, Monday first. Each day shows its nights as one-line chips (a festival on every day
  * it spans) and "+n" when they do not fit; a chip is the event's link, and a click opens its card
- * beside it (a sheet on a phone, where a tap on the day lists its nights). Dates are calendar days
+ * beside it (a sheet on a phone, where a tap on the day lists its nights). Under the weeks: on a phone
+ * the next seven days (#week); then the next nights (#tonight, where the map's "Tối nay" leads), the
+ * weekend (#weekend) and the free nights (#free) as lists. Dates are calendar days
  * ('YYYY-MM-DD', already in each event's city), counted in UTC so the server and the browser agree.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -49,6 +51,70 @@ function daysOf(e: HomeEvent): string[] {
 }
 const spans = (e: HomeEvent) => daysOf(e).length > 1;
 
+/** Each day's nights, festivals first, then by the time they start (Google's order). */
+function byDayOf(events: HomeEvent[]) {
+  const m = new Map<string, HomeEvent[]>();
+  for (const e of events) for (const d of daysOf(e)) m.set(d, [...(m.get(d) ?? []), e]);
+  for (const list of m.values()) list.sort((a, b) => Number(spans(b)) - Number(spans(a)) || (a.startTime ?? '').localeCompare(b.startTime ?? ''));
+  return m;
+}
+
+/**
+ * The next nights (persona review, 2026-11-07: "what's on tonight?"): today's that have not ended,
+ * else the first day after with any. `now` is 0 on the server, where every one of today's counts.
+ */
+export function nextNights(events: HomeEvent[], today: string, now: number, byDay = byDayOf(events)): { day: string; list: HomeEvent[] } | null {
+  const day = [...byDay.keys()].filter((d) => d >= today).sort().find((d) => d > today || byDay.get(d)!.some((e) => !now || !e.endsAt || Date.parse(e.endsAt) > now));
+  if (!day) return null;
+  return { day, list: byDay.get(day)!.filter((e) => day > today || !now || !e.endsAt || Date.parse(e.endsAt) > now) };
+}
+
+/** A night the clock has not yet ended (0 on the server, where every night counts). */
+const notEnded = (e: HomeEvent, now: number) => !now || !e.endsAt || Date.parse(e.endsAt) > now;
+
+/** A night and the day it is listed under. */
+export type Listed = { day: string; e: HomeEvent };
+
+/** Each night once, on the first of its days that `keep` takes; by day, then by its start (Google's order). */
+function listed(events: HomeEvent[], keep: (d: string) => boolean): Listed[] {
+  const out: Listed[] = [];
+  for (const e of events) {
+    const day = daysOf(e).find(keep);
+    if (day) out.push({ day, e });
+  }
+  return out.sort((a, b) => a.day.localeCompare(b.day) || (a.e.startTime ?? '').localeCompare(b.e.startTime ?? ''));
+}
+
+/** The coming weekend's days: Friday to Sunday, or the current one on a Saturday or Sunday. */
+function weekendDays(today: string) {
+  const dow = (new Date(at(today)).getUTCDay() + 6) % 7;
+  const fri = at(today) + (4 - dow) * DAY;
+  return [0, 1, 2].map((i) => isoOf(fri + i * DAY)).filter((d) => d >= today);
+}
+
+/** The coming weekend's nights ("Cuối tuần"). */
+export function weekendNights(events: HomeEvent[], today: string, now: number): Listed[] {
+  const days = new Set(weekendDays(today));
+  return listed(events.filter((e) => notEnded(e, now)), (d) => days.has(d));
+}
+
+/** The free nights still to come ("Miễn phí"). */
+export function freeNights(events: HomeEvent[], today: string, now: number): Listed[] {
+  return listed(events.filter((e) => e.isFree && notEnded(e, now)), (d) => d >= today);
+}
+
+/** The next seven days, for the phone's list: no clock, so the server and the browser draw the same rows. */
+export function weekNights(events: HomeEvent[], today: string): Listed[] {
+  const end = isoOf(at(today) + 6 * DAY);
+  return listed(events, (d) => d >= today && d <= end);
+}
+
+/** "Tối nay", "Ngày mai", else the day's name. */
+export function dayName(day: string, today: string, lang: Lang) {
+  const T = pick(LIST, lang);
+  return day === today ? T.tonight : day === isoOf(at(today) + DAY) ? T.tomorrow : `${weekdayLong(day, lang)} ${dayMonth(day, lang)}`;
+}
+
 type Open = { kind: 'event'; ev: HomeEvent; from: HTMLElement } | { kind: 'day'; day: string; from: HTMLElement };
 
 export function Calendar({ lang, events, today, now, city, siteUrl }: {
@@ -61,13 +127,14 @@ export function Calendar({ lang, events, today, now, city, siteUrl }: {
   const [open, setOpen] = useState<Open | null>(null);
   const [sheet, setSheet] = useState(false);
 
-  const byDay = useMemo(() => {
-    const m = new Map<string, HomeEvent[]>();
-    for (const e of events) for (const d of daysOf(e)) m.set(d, [...(m.get(d) ?? []), e]);
-    // Festivals first, then by the time they start (Google's order).
-    for (const list of m.values()) list.sort((a, b) => Number(spans(b)) - Number(spans(a)) || (a.startTime ?? '').localeCompare(b.startTime ?? ''));
-    return m;
-  }, [events]);
+  const byDay = useMemo(() => byDayOf(events), [events]);
+  // Recomputed when the nights, the day or the minute change, not on every render.
+  const { next, week, weekend, free } = useMemo(() => ({
+    next: nextNights(events, today, now, byDay),
+    week: weekNights(events, today).slice(0, 8),
+    weekend: weekendNights(events, today, now),
+    free: freeNights(events, today, now),
+  }), [events, today, now, byDay]);
 
   const first = at(ym + '-01');
   const lead = (new Date(first).getUTCDay() + 6) % 7;
@@ -155,6 +222,21 @@ export function Calendar({ lang, events, today, now, city, siteUrl }: {
           ))}
         </tbody>
       </table>
+
+      {/* The next seven days on a phone: the month's cells are too small to tap, so the list is here. */}
+      {week.length ? <NightList id="week" title={T.nextWeek} rows={week} lang={lang} now={now} className="tab:hidden" /> : null}
+
+      {/* The next nights as a list, where the map's "Tối nay" leads. */}
+      {next ? (
+        <section id="tonight" aria-labelledby="tonight-h" className="flex scroll-mt-20 flex-col gap-2 pt-4">
+          <h3 id="tonight-h" className="kd-h first-letter:uppercase">{dayName(next.day, today, lang)}</h3>
+          <ul className="flex flex-col">
+            {next.list.map((e) => <NightRow key={e.id} e={e} lang={lang} now={now} when={[e.startsOn === next.day ? timeRange(e) : null]} />)}
+          </ul>
+        </section>
+      ) : null}
+      {weekend.length ? <NightList id="weekend" title={T.weekend} rows={weekend} lang={lang} now={now} /> : null}
+      {free.length ? <NightList id="free" title={T.free} rows={free} lang={lang} now={now} /> : null}
 
       {open && sheet ? (
         <Sheet onClose={close} closeLabel={T.close} title={open.kind === 'event' ? open.ev.title : `${weekdayLong(open.day, lang)} ${dayMonth(open.day, lang)}`}>
@@ -253,5 +335,36 @@ function DayList({ day, list, lang, onPick }: { day: string; list: HomeEvent[]; 
         </li>
       ))}
     </ul>
+  );
+}
+
+/** "T7 19/9": the day a list row is listed under. */
+const dayLabel = (d: string, lang: Lang) => `${weekdayShort(d, lang)} ${dayMonth(d, lang)}`;
+
+/** A night as a list row: its stamp, title, the meta line (`when` · venue · city) and its price. */
+function NightRow({ e, lang, now, when }: { e: HomeEvent; lang: Lang; now: number; when: (string | null)[] }) {
+  return (
+    <li className="border-b border-line-1 last:border-0">
+      <KdLink href={inLang('/e/' + e.slug, lang)} className="flex min-h-16 min-w-0 items-center gap-3 py-2 hover:bg-surface-1">
+        <span className="size-11 shrink-0"><EventStamp e={e} live={isLive(e, now)} /></span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="kd-ell text-fg-1">{e.title}</span>
+          <span className="kd-s kd-ell">{[...when, e.venue, tx(e.cityLabel, lang)].filter(Boolean).join(' · ')}</span>
+        </span>
+        <span className={cx('kd-mb kd-num shrink-0', e.isFree && 'text-info')}>{priceLine({ ...e, entryMode: e.isFree ? 'free' : 'paid' }, lang)}</span>
+      </KdLink>
+    </li>
+  );
+}
+
+/** A titled list of nights under the calendar, each row dated (the day it is listed under, then its time). */
+function NightList({ id, title, rows, lang, now, className }: { id: string; title: string; rows: Listed[]; lang: Lang; now: number; className?: string }) {
+  return (
+    <section id={id} aria-labelledby={id + '-h'} className={cx('flex scroll-mt-20 flex-col gap-2 pt-4', className)}>
+      <h3 id={id + '-h'} className="kd-h">{title}</h3>
+      <ul className="flex flex-col">
+        {rows.map(({ day, e }) => <NightRow key={e.id} e={e} lang={lang} now={now} when={[dayLabel(day, lang), e.startsOn === day ? timeRange(e) : null]} />)}
+      </ul>
+    </section>
   );
 }

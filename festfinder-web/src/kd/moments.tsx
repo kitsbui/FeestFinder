@@ -5,6 +5,7 @@
  * else signed in can report one. Nobody's photos and not the owner: no section.
  */
 import { useState, type FormEvent } from 'react';
+import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
 import { fill, pick, type Lang } from './copy';
 import { cx } from './cx';
@@ -12,9 +13,11 @@ import { PhoneSheet } from './phone';
 import { useKd } from './runtime';
 import { Button } from './ui/actions';
 import { FieldLabel, Input } from './ui/forms';
-import { ImageLinkField } from './ui/image-link';
 import { MOMENTS_MAX, MomentsGrid, type Moment } from './ui/moments';
 import { Sheet } from './ui/sheet';
+
+// The add sheet's picture field (and the frame editor it carries) loads when the owner opens the sheet.
+const ImageLinkField = dynamic(() => import('./ui/image-link').then((m) => m.ImageLinkField), { ssr: false });
 
 export type MomentOwner = 'user' | 'artist' | 'organizer';
 

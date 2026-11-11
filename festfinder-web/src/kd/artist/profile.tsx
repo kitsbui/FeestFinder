@@ -8,12 +8,13 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowUpRightIcon, SealCheckIcon } from '@phosphor-icons/react/ssr';
 import { FF } from '@/runtime/ff';
 import { freshen } from '../fresh';
-import { pick, type Lang, type Pair, tx } from '../copy';
+import { COMMON, pick, type Lang, type Pair, tx } from '../copy';
 import { count } from '../format';
 import { useKd } from '../runtime';
 import { Button, LinkButton } from '../ui/actions';
 import { Input, Select, SwitchRow, TextArea } from '../ui/forms';
-import { Stat, StatRow } from '../ui/parts';
+import { Avatar, Stat, StatRow } from '../ui/parts';
+import { Sheet } from '../ui/sheet';
 import { Body, Field, Loaded, PageHead, useLoad } from '../console/kit';
 import { ARTIST } from './copy';
 import { Block, ChipPick } from './parts';
@@ -29,7 +30,7 @@ interface Me {
     bookingStatus: string | null; travelScope: string | null; gigTypes: string[] | null; setLengths: string[] | null;
     links: Record<string, string> | null; openToBrands: boolean; verified: boolean;
   };
-  stats: { upcoming: number; events: number; followers: number };
+  stats: { upcoming: number; events: number; followers: number; ticketClicks: number };
   // Styles and cities come with the profile, so the form never grows after its first paint.
   options: { roles: Opt[]; booking: Opt[]; travel: Opt[]; gigs: Opt[]; setLengths: Opt[]; links: Opt[]; styles: Choice[]; cities: Choice[] };
 }
@@ -55,6 +56,7 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
   const [base, setBase] = useState(() => JSON.stringify(formOf(me.profile)));
   const [err, setErr] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [followersOpen, setFollowersOpen] = useState(false);
   const dirty = JSON.stringify(f) !== base;
   const set = <K extends keyof F>(k: K) => (v: F[K]) => setF((x) => ({ ...x, [k]: v }));
 
@@ -121,8 +123,13 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
         <StatRow>
           <Stat value={count(me.stats.upcoming, lang)} label={T.upcoming} />
           <Stat value={count(me.stats.events, lang)} label={T.events} />
-          <Stat value={count(me.stats.followers, lang)} label={T.followers} />
+          <button type="button" className="kd-stat kd-tap text-left" onClick={() => setFollowersOpen(true)}>
+            <span className="kd-v">{count(me.stats.followers, lang)}</span>
+            <span className="kd-m">{T.followers}</span>
+          </button>
+          <Stat value={count(me.stats.ticketClicks, lang)} label={T.ticketClicks} />
         </StatRow>
+        {followersOpen ? <Followers lang={lang} onClose={() => setFollowersOpen(false)} /> : null}
         <div className="kd-split gap-3">
           <div className="kd-main flex flex-col gap-3">
             <Block title={T.who}>
@@ -194,5 +201,51 @@ function Form({ lang, me }: { lang: Lang; me: Me }) {
         </div>
       </Body>
     </form>
+  );
+}
+
+interface Follower { id: string; name: string; photoUrl: string | null }
+interface FollowerPage { items: Follower[]; nextCursor: string | null }
+const followerPage = (cursor?: string) => FF.get(`/me/artist/followers${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`) as Promise<FollowerPage>;
+
+/** Who follows the profile, newest first, a page at a time: names and photos only, no links (nobody has a public profile yet). */
+function Followers({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const T = pick(ARTIST, lang);
+  const C = pick(COMMON, lang);
+  const [list, setList] = useState<{ items: Follower[]; next: string | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState('');
+  useEffect(() => {
+    let live = true;
+    followerPage().then((p) => { if (live) setList({ items: p.items, next: p.nextCursor }); }, (x: unknown) => { if (live) setFailed(FF.errorText(x, lang)); });
+    return () => { live = false; };
+  }, [lang]);
+
+  const more = async () => {
+    if (!list?.next) return;
+    setBusy(true);
+    try {
+      const p = await followerPage(list.next);
+      setList({ items: [...list.items, ...p.items], next: p.nextCursor });
+    } catch (x) {
+      setFailed(FF.errorText(x, lang));
+    }
+    setBusy(false);
+  };
+
+  return (
+    <Sheet title={T.followers} closeLabel={C.close} onClose={onClose} wide>
+      {failed ? <p className="text-bad">{failed}</p> : null}
+      {list && !list.items.length ? <p className="text-fg-2">{T.noFollowers}</p> : null}
+      <ul className="flex flex-col gap-3">
+        {list?.items.map((x) => (
+          <li key={x.id} className="flex items-center gap-3">
+            <Avatar name={x.name} src={x.photoUrl} size={36} />
+            <span className="text-fg-1">{x.name}</span>
+          </li>
+        ))}
+      </ul>
+      {list?.next ? <Button type="button" disabled={busy} onClick={more}>{C.more}</Button> : null}
+    </Sheet>
   );
 }

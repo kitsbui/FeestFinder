@@ -76,6 +76,7 @@ export const PROFILE = {
   bellOn: { en: 'Alerts on for {n}', vi: 'Sẽ báo khi {n} có show' },
   isThisYouArtist: { en: 'Are you this artist?', vi: 'Bạn là nghệ sĩ này?' },
   thisIsMe: { en: 'This is me', vi: 'Đây là tôi' },
+  claimPending: { en: 'Claim under review', vi: 'Đang chờ duyệt' },
   unclaimed: { en: 'Not run by anyone yet', vi: 'Chưa có người quản lý' },
   remind: { en: 'Tell me when they play', vi: 'Nhắc khi có show' },
   reminding: { en: 'You will be told', vi: 'Sẽ nhắc bạn' },

@@ -27,12 +27,14 @@ import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { PROFILE } from '../profile/copy';
 import { ProfileLinks, type ProfileLink } from '../profile/links';
+import { AddMusic } from './add-music';
 import { ArtistMixes, type Mix } from './mixes';
 import { LazyPlaylist } from './music';
 import type { Track } from './track';
 import { EventCard } from '../card';
 import { MIXES } from './copy';
-import { ClaimButton, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
+import { InviteButton } from './invite';
+import { ArtistClaim, FollowButton, FollowersStat, OwnerLink, PastList, ProfileMoments, RemindButton, ShareProfile, type Source } from '../profile/parts';
 import { InLang } from '@/kd/ui/in-lang';
 import { FIT } from '../../fits';
 import { square } from '../../img';
@@ -211,7 +213,7 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
 
           <main id="main" className="kd-wrap flex flex-col">
             <div className="mx-auto flex w-full max-w-page flex-col">
-              {/* ---- what to do: play, follow (or claim), share ---- */}
+              {/* ---- what to do: play, follow (or claim), share, invite ---- */}
               <div className="flex flex-wrap items-center gap-3 pt-7">
                 {tracks.length || mixes.length ? (
                   // The playlist plays it when its code is in (data-play-artist); before that, and without tracks, it is a link.
@@ -222,13 +224,15 @@ export function ArtistPage({ data, seo, lang }: { data: ArtistData; seo: ArtistS
                 {unclaimed ? (
                   // Nobody runs this profile: claiming it is the action, and a fan asks to be told instead of following.
                   <>
-                    <ClaimButton lang={lang} kind="artist" name={a.name} />
+                    <ArtistClaim lang={lang} name={a.name} source={source} />
                     <RemindButton lang={lang} name={a.name} />
                   </>
                 ) : (
                   <>
                     <FollowButton lang={lang} kind="art" id={a.id} name={a.name} source={source} />
                     <OwnerLink lang={lang} source={source} href="/studio/artist" />
+                    {!tracks.length && !mixes.length ? <AddMusic lang={lang} source={source} /> : null}
+                    {!unclaimed && a.kind === 'owned' && a.booking?.key !== 'unavailable' ? <InviteButton lang={lang} slug={a.slug} /> : null}
                   </>
                 )}
                 <ShareProfile lang={lang} title={a.name} />

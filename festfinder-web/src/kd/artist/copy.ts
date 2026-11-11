@@ -75,6 +75,8 @@ export const ARTIST = {
   upcoming: { en: 'Upcoming shows', vi: 'Show sắp tới' },
   events: { en: 'Events', vi: 'Tổng sự kiện' },
   followers: { en: 'Followers', vi: 'Người theo dõi' },
+  noFollowers: { en: 'No followers yet', vi: 'Chưa có người theo dõi' },
+  ticketClicks: { en: 'Ticket clicks · 30 days', vi: 'Lượt bấm mua vé · 30 ngày' },
   who: { en: 'Who you are', vi: 'Bạn là ai' },
   stageName: { en: 'Stage name', vi: 'Nghệ danh' },
   basedIn: { en: 'Based in', vi: 'Thành phố' },

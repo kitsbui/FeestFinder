@@ -4,13 +4,14 @@ import { json, many, one } from '../db/index.ts';
 import { badRequest } from '../lib/errors.ts';
 import { GENRES, L } from '../lib/i18n.ts';
 import { isEmail, normalizeEmail } from '../lib/contact.ts';
-import { vnDate } from '../lib/time.ts';
+import { addWorkingDays, vnDate } from '../lib/time.ts';
+import { formatMoney } from '../lib/money.ts';
 import { dateStr, parse, uuid } from '../lib/validate.ts';
 import { citySlug, cityLabel } from '../lib/places.ts';
 import { AD_CATEGORIES, AD_CATEGORY_LABEL, AD_CURRENCY, BRAND_AD_PLACEMENT_LABEL, BRAND_AD_PLACEMENTS, BRAND_LINKS, type AdCategory, type BrandAdPlacement } from '../lib/ads.ts';
 import { requireUser } from '../http/guards.ts';
 import { imageChange } from '../services/remote-images.ts';
-import { notifyAdmins } from '../services/notify.ts';
+import { enqueue, notifyAdmins } from '../services/notify.ts';
 import { SqlParams } from '../http/sql.ts';
 
 export default async function discoveryRoutes(app: FastifyInstance) {
@@ -65,7 +66,8 @@ export default async function discoveryRoutes(app: FastifyInstance) {
     const id = parse(uuid, req.params.id);
     const rates = (await one<any>(ctx.db, 'select rates from ad_settings where id = 1'))!.rates;
     await ctx.db.query(
-      `update ad_campaigns set impressions = impressions + 1, spend = spend + ($2::jsonb ->> placement)::bigint / 1000 where id = $1 and active`,
+      // Once the spend reaches the budget, a campaign counts no more impressions (GET /ads stops serving it too).
+      `update ad_campaigns set impressions = impressions + 1, spend = spend + ($2::jsonb ->> placement)::bigint / 1000 where id = $1 and active and (budget_total = 0 or spend < budget_total)`,
       [id, JSON.stringify(rates)]);
     return reply.code(202).send({ ok: true });
   });
@@ -107,6 +109,7 @@ export default async function discoveryRoutes(app: FastifyInstance) {
       cities: z.array(citySlug).max(20).default([]),
       isAlcohol: z.boolean().default(false),
       message: z.string().max(2000).default(''),
+      lang: z.enum(['en', 'vi']).default('vi'),
     }), req.body);
     if (!isEmail(body.email)) throw badRequest('invalid_email', L('That email address does not look right', 'Email chưa đúng định dạng'));
     if (body.endsOn < body.startsOn) throw badRequest('dates_order', L('The end date is before the start date', 'Ngày kết thúc trước ngày bắt đầu'));
@@ -132,8 +135,21 @@ export default async function discoveryRoutes(app: FastifyInstance) {
       });
       return r!;
     });
+    const reference = `FF-AD-${row.id.slice(0, 8).toUpperCase()}`;
+    const dueOn = addWorkingDays(vnDate(now), 2);
+    const placed = [...new Set(body.placements)];
+    const confirmation = (l: 'en' | 'vi') => (l === 'en'
+      ? `Reference ${reference}. Placements: ${placed.map((k) => BRAND_AD_PLACEMENT_LABEL[k].en).join(', ')}. Dates: ${body.startsOn} → ${body.endsOn}. Budget: ${formatMoney(body.budgetAmount, AD_CURRENCY, 'en')}. We reply by ${dueOn}, within two working days.`
+      : `Mã ${reference}. Vị trí: ${placed.map((k) => BRAND_AD_PLACEMENT_LABEL[k].vi).join(', ')}. Thời gian: ${body.startsOn} → ${body.endsOn}. Ngân sách: ${formatMoney(body.budgetAmount, AD_CURRENCY, 'vi')}. Chúng tôi trả lời trước ${dueOn}, trong hai ngày làm việc.`);
+    // To the contact address the form gave. A mail that cannot be queued never fails the request.
+    try {
+      await enqueue(ctx.db, s.user.id, 'email', normalizeEmail(body.email), 'ad_inquiry_received',
+        { lang: body.lang, title: L('We received your ad request', 'Đã nhận yêu cầu quảng cáo'), body: { en: confirmation('en'), vi: confirmation('vi') }, link: null }, now);
+    } catch (err) {
+      req.log.warn({ reference, code: (err as { code?: string }).code }, 'ad inquiry confirmation not queued');
+    }
     return reply.code(201).send({
-      ok: true, id: row.id,
+      ok: true, id: row.id, reference, dueOn,
       message: L('Thanks — our partnerships team replies within two working days.', 'Cảm ơn — đội đối tác sẽ phản hồi trong hai ngày làm việc.'),
     });
   });
@@ -150,11 +166,19 @@ export default async function discoveryRoutes(app: FastifyInstance) {
   /** The signed-in person's own requests, with the team's answer. */
   app.get('/me/ad-inquiries', async (req) => {
     const s = requireUser(req);
-    const rows = await many<any>(ctx.db, `select * from ad_inquiries where user_id = $1 order by created_at desc limit 30`, [s.user.id]);
+    const rows = await many<any>(ctx.db,
+      `select r.*, c.budget_total as campaign_budget, c.spend as campaign_spend
+         from ad_inquiries r left join ad_campaigns c on c.inquiry_id = r.id
+        where r.user_id = $1 order by r.created_at desc limit 30`, [s.user.id]);
     return {
       items: rows.map((r) => ({
         id: r.id, brand: r.brand, category: r.category, categoryLabel: AD_CATEGORY_LABEL[r.category as AdCategory] ?? null, status: r.status,
         budgetAmount: r.budget_amount == null ? null : Number(r.budget_amount), currency: r.currency,
+        // Once approved: the campaign's budget and what is left of it (null when it has no budget).
+        campaign: r.campaign_budget == null ? null : {
+          budgetTotal: Number(r.campaign_budget),
+          remaining: Number(r.campaign_budget) ? Math.max(0, Number(r.campaign_budget) - Number(r.campaign_spend)) : null,
+        },
         startsOn: r.starts_on ? String(r.starts_on).slice(0, 10) : null, endsOn: r.ends_on ? String(r.ends_on).slice(0, 10) : null,
         placements: (r.placements as BrandAdPlacement[]).map((k) => ({ key: k, label: BRAND_AD_PLACEMENT_LABEL[k] ?? L(k, k) })),
         cities: (r.cities as string[]).map((c) => ({ slug: c, label: cityLabel(c) })),

@@ -18,14 +18,29 @@ export function readLocal(): Partial<Form> | null {
 export function writeLocal(f: Form | null) {
   try { if (f) localStorage.setItem(LOCAL, JSON.stringify(f)); else localStorage.removeItem(LOCAL); } catch { /* storage blocked */ }
 }
+/** A submit before there is an organiser: the role picker makes it, then the wizard comes back; `send` when the form was complete at the tap. */
+const SEND = 'ff:wizard-send';
+const SEND_MS = 30 * 60 * 1000;
+export function markSend(send: boolean) {
+  try { localStorage.setItem(SEND, JSON.stringify({ at: Date.now(), send })); } catch { /* storage blocked */ }
+}
+export function pendingSend(): { send: boolean } | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(SEND) || 'null') as { at?: number; send?: boolean } | null;
+    return v && Date.now() - (v.at ?? 0) < SEND_MS ? { send: !!v.send } : null;
+  } catch { return null; }
+}
+export function clearSend() {
+  try { localStorage.removeItem(SEND); } catch { /* storage blocked */ }
+}
 
-export interface City { slug: string; name: Pair; currency: string }
+export interface City { slug: string; name: Pair; currency: string; timezone?: string }
 export interface Venue { id: string; name: string; address: string | null; area: string | null }
 export interface Form {
   title: string; styles: string[]; description: string; lineup: string[];
   logoUrl: string | null; coverUrl: string | null; eventUrl: string;
   date: string; start: string; end: string;
-  venueId: string | null; venueName: string; city: string; age: (typeof AGES)[number];
+  venueId: string | null; venueName: string; city: string; age: (typeof AGES)[number]; dressCode: string;
   entryMode: 'paid' | 'free'; price: string; ticketUrl: string; register: boolean;
 }
 export interface Draft {
@@ -33,7 +48,7 @@ export interface Draft {
   city: string; currency: string; logoUrl: string | null; coverUrl: string | null;
   startsOn: string | null; startTime: string | null; endTime: string | null;
   venue: { id: string | null; name: string | null };
-  entryMode: 'free' | 'paid' | 'donation'; priceFrom: number; age: string | null; lineup: string[] | null;
+  entryMode: 'free' | 'paid' | 'donation'; priceFrom: number; age: string | null; dressCode?: string | null; lineup: string[] | null;
   ticketUrl: string | null; eventUrl: string | null;
   moderation?: { decision: string; reason: Pair | null; message: string | null; appeal: { state: string; closesAt: string } | null } | null;
 }
@@ -57,6 +72,7 @@ export function fromDraft(d: Draft | null, orgLogo: string | null, city: string)
     date: d?.startsOn ?? '', start: d?.startTime ?? '', end: d?.endTime ?? '',
     venueId: d?.venue.id ?? null, venueName: d?.venue.name ?? '', city: d?.city || city,
     age: (AGES as readonly string[]).includes(d?.age ?? '') ? (d!.age as Form['age']) : '18+',
+    dressCode: d?.dressCode ?? '',
     entryMode: d?.entryMode === 'free' ? 'free' : 'paid',
     price: d?.priceFrom ? String(d.priceFrom) : '',
     ticketUrl: d?.ticketUrl ?? '',
@@ -84,6 +100,7 @@ export function payload(f: Form) {
     venueName: f.venueName.trim() || null,
     ...(f.venueId ? {} : { city: f.city }),
     age: f.age,
+    dressCode: f.dressCode.trim() || null,
     entryMode: f.entryMode,
     ...(f.entryMode === 'paid' ? { priceFrom: int(f.price) } : {}),
     ticketUrl: f.entryMode === 'free' && !f.register ? null : url(f.ticketUrl),

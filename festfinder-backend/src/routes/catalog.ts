@@ -356,6 +356,7 @@ export default async function catalogRoutes(app: FastifyInstance) {
       descriptionAuto: (ev.auto_translated ?? []) as string[],
       // Feest Radar never reads an age, so its finds hold only the column's default: unknown, not "all ages".
       age: ev.origin === 'radar' && ev.age === 'All ages' ? null : ev.age,
+      dressCode: ev.dress_code ?? null,
       capacity: ev.capacity,
       links: {
         event: ev.event_url ?? `${ctx.config.publicBaseUrl.replace(/\/$/, '')}/e/${ev.slug}`,

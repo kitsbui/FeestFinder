@@ -81,6 +81,103 @@ test.describe('the home page: map and calendar', () => {
     expect(problems).toEqual([]);
   });
 
+  test('"Tối nay" over the map leads to tonight’s nights, listed under the calendar', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const problems = await open(page, '/');
+    // The demo clock is 2026-09-14 10:00: tonight's nights have not started.
+    const tonight = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Tối nay · \d+ sự kiện$/ });
+    await expect(tonight).toBeInViewport();
+    await tonight.click();
+    const list = page.locator('#tonight');
+    await expect(list).toBeInViewport();
+    await expect(list.getByRole('heading', { name: 'Tối nay' })).toBeVisible();
+    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await tonight.innerText()))![1]));
+    expect(problems).toEqual([]);
+  });
+
+  test('"Cuối tuần" over the map leads to the weekend’s nights, listed under the calendar', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const problems = await open(page, '/');
+    const weekend = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Cuối tuần · \d+ sự kiện$/ });
+    await expect(weekend).toBeInViewport();
+    await weekend.click();
+    const list = page.locator('#weekend');
+    await expect(list).toBeInViewport();
+    await expect(list.getByRole('heading', { name: 'Cuối tuần' })).toBeVisible();
+    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await weekend.innerText()))![1]));
+    expect(problems).toEqual([]);
+  });
+
+  test('"Miễn phí" over the map leads to the free nights still to come, listed under the calendar', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const problems = await open(page, '/');
+    const free = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('link', { name: /^Miễn phí · \d+ sự kiện$/ });
+    await expect(free).toBeInViewport();
+    await free.click();
+    const list = page.locator('#free');
+    await expect(list).toBeInViewport();
+    await expect(list.getByRole('heading', { name: 'Miễn phí' })).toBeVisible();
+    await expect(list.getByRole('link')).toHaveCount(Number(/(\d+) sự kiện/.exec((await free.innerText()))![1]));
+    expect(problems).toEqual([]);
+  });
+
+  test('on a phone the next seven days are rows under the month, at most eight; a computer has none of them', async ({ page, request }) => {
+    // The server draws the rows before any script runs.
+    expect(await (await request.get('/')).text()).toContain('id="week"');
+    await page.setViewportSize({ width: 390, height: 844 });
+    const problems = await open(page, '/');
+    const week = page.locator('#week');
+    await expect(week.getByRole('heading', { name: '7 ngày tới' })).toBeVisible();
+    const rows = await week.getByRole('link').count();
+    expect(rows).toBeGreaterThan(0);
+    expect(rows).toBeLessThanOrEqual(8);
+    expect(problems).toEqual([]);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(week).toBeHidden();
+  });
+
+  test('a search names up to three of its artists under the chips, each a link to the artist page', async ({ page }) => {
+    await page.route(/\/artists\/suggest\?/, (route) => route.fulfill({ json: { items: [
+      { slug: 'dtap', name: 'DTAP', imageUrl: null, claimed: true },
+      { slug: 'dj-mie', name: 'DJ Mie', imageUrl: null, claimed: true },
+      { slug: 'slimv', name: 'SlimV', imageUrl: null, claimed: true },
+      { slug: 'triple-d', name: 'Triple D', imageUrl: null, claimed: true },
+      { slug: 'radar-only', name: 'Radar Only', imageUrl: null, claimed: false },
+    ] } }));
+    const problems = await open(page, '/?q=ravolution');
+    const names = page.getByRole('region', { name: 'Bản đồ sự kiện' }).getByRole('navigation', { name: 'Nghệ sĩ' });
+    await expect(names).toBeVisible();
+    await expect(names.getByRole('link')).toHaveCount(3);
+    await expect(names.getByRole('link', { name: 'DTAP' })).toHaveAttribute('href', '/a/dtap');
+    await expect(names.getByRole('link', { name: 'Triple D' })).toHaveCount(0);
+    await expect(names.getByRole('link', { name: 'Radar Only' })).toHaveCount(0);
+    expect(problems).toEqual([]);
+  });
+
+  test('nights at one place stay one cluster at any zoom: a tap on it lists them', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // Every night of the search at one venue, as a club's coming nights are.
+    await page.route(/\/events\/map\?.*q=ravolution/, async (route) => {
+      const body = await (await route.fetch()).json();
+      const [a] = body.items as { lat: number; lng: number }[];
+      body.items = body.items.map((e: object) => ({ ...e, lat: a.lat, lng: a.lng, approx: false }));
+      await route.fulfill({ json: body });
+    });
+    const problems = await open(page, '/?q=ravolution');
+    const map = page.getByRole('region', { name: 'Bản đồ sự kiện' });
+    await map.hover();
+    const count = map.locator('.maplibregl-marker.kd-mb').first();
+    await expect(count).toBeAttached({ timeout: 15_000 });
+    const n = Number(await count.innerText());
+    expect(n).toBeGreaterThan(1);
+    const b = (await count.boundingBox())!;
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    const card = map.getByRole('dialog');
+    await expect(card.getByRole('link')).toHaveCount(n);
+    await expect(card.getByRole('link', { name: /Ravolution Music Festival/ })).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
   test('a search from the address narrows the map and the calendar, and its chip clears it', async ({ page }) => {
     const problems = await open(page, '/?q=hozo');
     await expect(night(page, 'Ravolution')).toHaveCount(0);

@@ -168,6 +168,7 @@ export function ProjectPage({ p, seo, lang }: { p: Project; seo: ProjectSeo; lan
                           </li>
                         ))}
                       </ul>
+                      <p className="kd-s">{T.noMoney}</p>
                     </section>
                   ) : null}
                   <Accordion small summary={seo.headings.facts} className="max-w-read border-t border-line-1">

@@ -11,7 +11,7 @@ import { familyOf } from '../../genre';
 import { KdLink as Link, inLang } from '../../link';
 import { RadarTag } from '../../ui/origin';
 import { Art, Status, type StatusTone } from '../../ui/parts';
-import { ClaimButton } from '../profile/parts';
+import { ClaimButton } from '../profile/claim';
 import { DIR } from './copy';
 import type { DirArtist } from './model';
 import { FIT } from '../../fits';

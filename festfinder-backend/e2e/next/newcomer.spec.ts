@@ -146,9 +146,12 @@ async function controlsInSight(page: import('@playwright/test').Page) {
  * The first screens ask little (design v2 phase 12, owner 2026-10-18). The counts include the site's
  * frame (the logo, search and the tabs). Like the JS budgets, controls only go down. 2026-11-06: the
  * home page's first screen is the map, whose pins are drawn without MapLibre until a touch, then the
- * calendar's toolbar (22 → 11).
+ * calendar's toolbar (22 → 11). 2026-11-07 (owner, from the persona review): the two language flags on
+ * a phone's top bar (+2 on every page) and the map's "Tối nay" (+1): home 11 → 14, event 13 → 15.
+ * 2026-11-11 (owner's request): the map's "Cuối tuần" and "Miễn phí" beside "Tối nay" (+2; the demo
+ * has a weekend night and free nights): home 14 → 16.
  */
-const IN_SIGHT = { home: 11, event: 13 };
+const IN_SIGHT = { home: 16, event: 15 };
 
 test('the first screens ask little: few controls in sight', async ({ page }) => {
   const problems = watch(page);

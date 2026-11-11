@@ -50,7 +50,6 @@ export function Dashboard() {
   // How Google and AI assistants see the listings still to come, weakest first.
   const [search, setSearch] = useState<{ average: number | null; items: { id: string; title: string; score: number; missing: Pair[] }[] } | null>(null);
   const [clicks, setClicks] = useState<Clicks | null>(null);
-  const [gaps, setGaps] = useState<string[] | null>(null);
   const load = useCallback(async () => {
     if (!event?.hasPerformance) { setPerf(null); return; }
     setPerf(undefined);
@@ -62,13 +61,6 @@ export function Dashboard() {
     FF.maybe(FF.get('/organizer/search'), null).then((d: typeof search) => setSearch(d));
     FF.maybe(FF.get('/organizer/affiliate?days=30'), null).then(setClicks);
   }, []);
-  // Verification is on the same list: what the profile still lacks before FeestFinder can check it.
-  useEffect(() => {
-    if (org.verified) { setGaps(null); return; }
-    FF.maybe(FF.get('/organizer/profile'), null).then((p: { legalName: string | null; taxCode: string | null; bank: unknown } | null) => {
-      if (p) setGaps([[p.legalName, T.gapLegal], [p.taxCode, T.gapTax], [p.bank, T.gapBank]].filter(([ok]) => !ok).map(([, l]) => l as string));
-    });
-  }, [org.verified, T.gapLegal, T.gapTax, T.gapBank]);
   const sentBack = events.filter((e) => e.status === 'rejected');
 
   const free = event?.entryMode === 'free';
@@ -201,10 +193,10 @@ export function Dashboard() {
               ) : null)}
             </Panel>
           ) : null}
-          {todo.length || sentBack.length || gaps || !events.length || !org.logoUrl ? (
+          {todo.length || sentBack.length || !events.length || !org.logoUrl ? (
             // One row per thing to do, each with the action that does it (design v2 phase 5); a new organiser's first three (phase 16).
             <Panel as="section" className="flex flex-col p-5 pb-2" aria-labelledby="todo-h">
-              <h2 id="todo-h" className="kd-h pb-2">{T.todo}<span className="kd-s kd-num"> · {todo.length + sentBack.length + (gaps ? 1 : 0) + (events.length ? 0 : 1) + (org.logoUrl ? 0 : 1)}</span></h2>
+              <h2 id="todo-h" className="kd-h pb-2">{T.todo}<span className="kd-s kd-num"> · {todo.length + sentBack.length + (events.length ? 0 : 1) + (org.logoUrl ? 0 : 1)}</span></h2>
               <ul className="flex flex-col">
                 {!events.length ? (
                   <li className="kd-lrow min-h-12 gap-3">
@@ -224,12 +216,6 @@ export function Dashboard() {
                     <KdLink className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href={'/studio/events/' + e.id}>{T.todoFix}</KdLink>
                   </li>
                 ))}
-                {gaps ? (
-                  <li className="kd-lrow min-h-12 gap-3">
-                    <span className="kd-s flex-1 text-fg-2">{gaps.length ? fill(T.todoVerify, { m: gaps.join(', ') }) : T.todoVerifyWait}</span>
-                    <KdLink className={buttonClass({ size: 'sm', tone: 'ghost' }, '-mr-2 shrink-0')} href="/studio/profile">{T.todoAdd}</KdLink>
-                  </li>
-                ) : null}
                 {todo.map((t, i) => {
                   const draftish = events.some((e) => e.id === t.eventId && (e.status === 'draft' || e.status === 'rejected'));
                   return (

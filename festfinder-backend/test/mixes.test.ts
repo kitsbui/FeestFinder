@@ -4,6 +4,8 @@ import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
 import { many, one } from '../src/db/index.ts';
 import { embedFrom, parseAt, parseMixUrl } from '../src/lib/mixes.ts';
+import { resolveMix } from '../src/services/mixes.ts';
+import { PageUnavailable } from '../src/services/fetchpage.ts';
 
 const code = (fn: () => unknown) => {
   try { fn(); return null; } catch (e) { return (e as { code?: string }).code ?? 'thrown'; }
@@ -91,6 +93,12 @@ describe('mixes on an artist page', () => {
     assert.equal(sp.body.embedSrc, 'https://open.spotify.com/embed/track/4uLU6hMCjMI75M1A2tKUQC?theme=0');
     assert.equal((await env.as(owner).post('/me/artist/mixes', { url: SC + '?si=again' })).body.error.code, 'mix_exists');
     assert.equal((await env.as(owner).post('/me/artist/mixes', { url: 'https://soundcloud.com/may-dem/missing-set' })).body.error.code, 'mix_unavailable');
+    // Why it is refused: a link the service does not share, or a service that did not answer.
+    const refused = (e: unknown) => resolveMix({ ...env.ctx, oembed: async () => { throw e; } }, SC).then(() => null, (err: { text: { en: string } }) => err.text.en);
+    assert.equal(await refused(new PageUnavailable('upstream', 'status 404', 404)), 'This link is private or wrong');
+    assert.equal(await refused(new PageUnavailable('upstream', 'socket hang up')), 'SoundCloud did not answer, try again later');
+    assert.equal(await refused(new PageUnavailable('upstream', 'status 502', 502)), 'SoundCloud did not answer, try again later');
+    assert.equal(await refused(new PageUnavailable('upstream', 'status 429', 429)), 'SoundCloud did not answer, try again later');
     assert.equal((await env.as(fan).post('/me/artist/mixes', { url: SC })).body.error.code, 'not_found', 'a fan has no artist profile');
 
     // Pinned first on the page, everyone sees them.

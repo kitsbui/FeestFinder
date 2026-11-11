@@ -104,14 +104,29 @@ export function moneyCompact(n: number, currency: string, lang: Lang = 'vi'): st
   return new Intl.NumberFormat(INTL[lang], { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(n);
 }
 
-/** A short price for pins and tight rows: 350K, 1,2TR (vi) / 350K, 1.2M (en). */
+/** How Intl writes a VND amount in each language, cached: the sign and its place come from Intl, never typed in. */
+const vndParts = new Map<Lang, Intl.NumberFormatPart[]>();
+/** A VND amount with its short number in place of the figure: "350K ₫" (vi), "₫350K" (en). */
+function vndWith(short: string, lang: Lang): string {
+  let parts = vndParts.get(lang);
+  if (!parts) {
+    parts = new Intl.NumberFormat(INTL[lang], { style: 'currency', currency: 'VND' }).formatToParts(0);
+    vndParts.set(lang, parts);
+  }
+  return parts.map((p) => (p.type === 'integer' ? short : p.value)).join('');
+}
+
+/** A short price for pins and tight rows: 350K ₫, 1,2TR ₫ (vi) / ₫350K, ₫1.2M (en). */
 export function moneyShort(n: number, currency?: string | null, lang: Lang = 'vi'): string {
   if (currency && currency !== 'VND') return money(n, currency, lang);
+  let short: string;
   if (n >= 1_000_000) {
     const v = (n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0);
-    return lang === 'vi' ? v.replace('.', ',') + 'TR' : (COMMA.has(lang) ? v.replace('.', ',') : v) + 'M';
+    short = lang === 'vi' ? v.replace('.', ',') + 'TR' : (COMMA.has(lang) ? v.replace('.', ',') : v) + 'M';
+  } else {
+    short = Math.round(n / 1000) + 'K';
   }
-  return Math.round(n / 1000) + 'K';
+  return vndWith(short, lang);
 }
 
 /** 12.400 / 12,400; and 12,4K / 12.4K from ten thousand up. */

@@ -40,7 +40,7 @@ interface Inquiry {
 }
 interface Ads {
   inquiries: Inquiry[];
-  campaigns: { id: string; brand: string; placement: string; active: boolean; impressions: number; clicks: number; spend: number }[];
+  campaigns: { id: string; brand: string; placement: string; active: boolean; impressions: number; clicks: number; spend: number; budgetTotal: number; remaining: number | null }[];
   rates: { feed: number; banner: number; live: number };
 }
 /** Ads are sold in đồng (ad_settings rates, campaign spend). */
@@ -341,7 +341,7 @@ function AdsBlock({ lang, ads, act }: { lang: Lang; ads: Ads; act: ReturnType<ty
           <span className="kd-m pt-2">{T.adCampaigns}</span>
           {ads.campaigns.map((c) => (
             <div key={c.id} className="flex items-center gap-3 border-b border-line-1 py-2 last:border-b-0">
-              <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs">{c.brand} · {c.placement}</span><span className="kd-s kd-num">{fill(T.adLine, { i: count(c.impressions, lang), c: count(c.clicks, lang), p: m(c.spend) })}</span></span>
+              <span className="flex min-w-0 flex-1 flex-col"><span className="kd-hs">{c.brand} · {c.placement}</span><span className="kd-s kd-num">{fill(T.adLine, { i: count(c.impressions, lang), c: count(c.clicks, lang), p: m(c.spend) })}</span>{c.budgetTotal ? <span className="kd-s kd-num">{fill(T.adBudget, { b: m(c.budgetTotal), r: m(c.remaining ?? 0) })}</span> : null}</span>
               <Switch checked={c.active} label={fill(T.adActive, { b: c.brand })} onChange={(v) => act(() => FF.patch('/admin/ads/campaigns/' + c.id, { active: v }))} />
             </div>
           ))}

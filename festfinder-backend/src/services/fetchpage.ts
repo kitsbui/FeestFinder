@@ -3,10 +3,22 @@ import { isIP } from 'node:net';
 
 export class PageUnavailable extends Error {
   readonly reason: 'bad_url' | 'private_address' | 'not_html' | 'too_large' | 'upstream';
-  constructor(reason: PageUnavailable['reason'], message?: string) {
+  /** The HTTP status when the other side answered; null when it did not answer at all. */
+  readonly status: number | null;
+  constructor(reason: PageUnavailable['reason'], message?: string, status: number | null = null) {
     super(message ?? reason);
     this.reason = reason;
+    this.status = status;
   }
+}
+
+/**
+ * Whether the other side refused the link (it is not public, is gone or is not a link at all)
+ * rather than failing to answer (a timeout, a network error, a server error or too many asks).
+ */
+export function hostRefused(e: PageUnavailable): boolean {
+  if (e.reason === 'bad_url' || e.reason === 'private_address') return true;
+  return e.status !== null && e.status < 500 && e.status !== 429;
 }
 
 export interface FetchedPage { url: string; html: string }
@@ -115,7 +127,7 @@ export async function fetchPublic(raw: string, opts: {
       totalBytes: range ? Number(range) : length && /^\d+$/.test(length) ? Number(length) : null,
     };
     if (res.status === 304) return { status: 304, text: '', bytes: Buffer.alloc(0), ...meta };
-    if (!res.ok) throw new PageUnavailable('upstream', `status ${res.status}`);
+    if (!res.ok) throw new PageUnavailable('upstream', `status ${res.status}`, res.status);
     if (opts.types && !opts.types.test(meta.contentType)) throw new PageUnavailable('not_html');
     const reader = res.body?.getReader();
     if (!reader) throw new PageUnavailable('upstream', 'empty body');

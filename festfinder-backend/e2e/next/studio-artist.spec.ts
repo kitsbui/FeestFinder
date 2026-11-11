@@ -126,6 +126,45 @@ test.describe('the artist studio, signed in', () => {
     expect(problems).toEqual([]);
   });
 
+  test('the followers count opens who follows the profile, to its owner only, beside the ticket clicks', async ({ page, baseURL }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const me = await newArtist(page);
+    const problems = await open(page, '/studio/artist');
+    await expect(page.locator('.kd-stat').filter({ hasText: 'Lượt bấm mua vé · 30 ngày' })).toBeVisible();
+    await page.getByRole('button', { name: /Người theo dõi/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Người theo dõi' })).toContainText('Chưa có người theo dõi');
+    await page.keyboard.press('Escape');
+
+    const fan = await as(baseURL, ATTENDEE);
+    expect((await fan.put(`/me/follows/artists/${me.slug}`)).ok(), 'a fan follows the profile').toBeTruthy();
+    await open(page, '/studio/artist');
+    await page.getByRole('button', { name: /Người theo dõi/ }).click();
+    const sheet = page.getByRole('dialog', { name: 'Người theo dõi' });
+    await expect(sheet.getByRole('listitem')).toHaveCount(1);
+    // A follower has no public page of their own, so nothing in the list is a link.
+    await expect(sheet.getByRole('link')).toHaveCount(0);
+    expect(problems).toEqual([]);
+  });
+
+  test('an artist with no music yet is offered "Thêm nhạc" on their own page, and nobody else is', async ({ page, browser, baseURL }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const me = await newArtist(page);
+    const problems = await open(page, `/a/${me.slug}`);
+    await expect(page.getByRole('link', { name: 'Thêm nhạc', exact: true })).toHaveAttribute('href', '/studio/artist/mixes');
+
+    const visitor = await browser.newContext({ baseURL });
+    try {
+      const other = await visitor.newPage();
+      await other.goto(`/a/${me.slug}`);
+      await expect(other.getByRole('heading', { level: 1 })).toHaveText(me.name);
+      await other.locator('html[data-kd-session]').waitFor({ state: 'attached' });
+      await expect(other.getByRole('link', { name: 'Thêm nhạc', exact: true })).toHaveCount(0);
+    } finally {
+      await visitor.close();
+    }
+    expect(problems).toEqual([]);
+  });
+
   test('applies to an open gig, sees it under applications and withdraws it', async ({ page, baseURL }) => {
     await newArtist(page);
     const title = `Rooftop warm-up slot ${stamp()}`;

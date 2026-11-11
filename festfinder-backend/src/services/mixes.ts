@@ -4,7 +4,7 @@ import { many } from '../db/index.ts';
 import { badRequest } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
 import { embedFrom, oembedEndpoint, parseMixUrl, playerHeight, PROVIDER_LABEL, type MixKind, type MixProvider } from '../lib/mixes.ts';
-import { fetchPublic, PageUnavailable } from './fetchpage.ts';
+import { fetchPublic, hostRefused, PageUnavailable } from './fetchpage.ts';
 
 /*
  * Mixes: an artist's sets and tracks on SoundCloud, Mixcloud and Spotify (lib/mixes.ts has the
@@ -26,7 +26,7 @@ export const fetchOembed: OembedFetcher = async (endpoint) => {
  */
 export const fakeOembed: OembedFetcher = async (endpoint) => {
   const url = new URL(endpoint).searchParams.get('url') ?? '';
-  if (/missing/.test(url)) throw new PageUnavailable('upstream', 'fake network: not found');
+  if (/missing/.test(url)) throw new PageUnavailable('upstream', 'fake network: not found', 404);
   const name = decodeURIComponent(url.split('/').filter(Boolean).pop() ?? 'set').replace(/[-_]+/g, ' ');
   if (endpoint.startsWith('https://soundcloud.com/oembed')) {
     // Hashes code points on purpose: the made-up id must not change.
@@ -71,7 +71,10 @@ export async function resolveMix(ctx: Ctx, raw: string): Promise<ResolvedMix> {
     answer = await ctx.oembed(oembedEndpoint(parsed.provider, parsed.url));
   } catch (e) {
     if (e instanceof PageUnavailable || e instanceof SyntaxError || e instanceof TypeError) {
-      throw badRequest('mix_unavailable', L(`${PROVIDER_LABEL[parsed.provider]} does not share this one; check it is public`, `${PROVIDER_LABEL[parsed.provider]} không chia sẻ link này; hãy kiểm tra nó đang công khai`));
+      const name = PROVIDER_LABEL[parsed.provider];
+      throw badRequest('mix_unavailable', e instanceof PageUnavailable && !hostRefused(e)
+        ? L(`${name} did not answer, try again later`, `${name} chưa phản hồi, thử lại sau`)
+        : L('This link is private or wrong', 'Link này không công khai hoặc không đúng'));
     }
     throw e;
   }

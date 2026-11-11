@@ -59,10 +59,10 @@ export async function buildArtistSeo(ctx: Ctx, slug: string, lang: Lang = 'vi'):
   ].filter(Boolean).join(' ');
   const description = clip(`${a.name}: ${upcoming.length ? upcoming.slice(0, 3).map((e) => `${e.title} (${shortDay(e.starts_on, lang)}${cityOf(e.city) ? `, ${text(cityLabel(e.city), lang)}` : ''})`).join('; ') : summary}`, 160);
   const title = [`${a.name} – ${vi ? 'lịch diễn' : 'upcoming shows'}${cities[0] ? ` · ${cities[0]}` : ''}`, a.name].find((x) => x.length <= 62) ?? clip(a.name, 62);
-  const cover = a.image_url ? { cover_url: a.image_url } : upcoming.find((e) => e.cover_url) ?? events.find((e) => e.cover_url);
-  const image = cover
-    ? { url: abs(ctx, cover.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
-    : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
+  // The cover (a wide banner), else the photo (drawn square), else the site's picture.
+  const image = a.cover_url ? { url: abs(ctx, a.cover_url)!, width: 1600, height: 900, type: 'image/jpeg' }
+    : a.image_url ? { url: abs(ctx, a.image_url)!, width: 1200, height: 1200, type: 'image/jpeg' }
+      : { url: ogFallback(base), width: OG_WIDTH, height: OG_HEIGHT, type: 'image/png' };
   const crumbs = [{ name: 'FeestFinder', path: inLang('/', lang) }, { name: lang === 'vi' ? 'Nghệ sĩ' : 'Artists', path: inLang('/a', lang) }, { name: a.name, path: inLang(path, lang) }];
   const facts: Fact[] = [
     { label: t('styles', lang), value: what },

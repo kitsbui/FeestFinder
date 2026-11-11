@@ -4,6 +4,7 @@ import type { Dict } from '../../copy';
 export const LIST = {
   title: { en: 'Every event', vi: 'Tất cả sự kiện' },
   free: { en: 'Free', vi: 'Miễn phí' },
+  weekend: { en: 'Weekend', vi: 'Cuối tuần' },
   seePrice: { en: 'See price', vi: 'Xem giá' },
   clear: { en: 'Clear filters', vi: 'Bỏ lọc' },
   // nothing to show, or the API did not answer
@@ -24,6 +25,8 @@ export const LIST = {
   close: { en: 'Close', vi: 'Đóng' },
   // the calendar
   today: { en: 'Today', vi: 'Hôm nay' },
+  tonight: { en: 'Tonight', vi: 'Tối nay' },
+  tomorrow: { en: 'Tomorrow', vi: 'Ngày mai' },
   prevMonth: { en: 'Previous month', vi: 'Tháng trước' },
   nextMonth: { en: 'Next month', vi: 'Tháng sau' },
   addGoogleCal: { en: 'Add to Google Calendar', vi: 'Thêm vào Google Calendar' },
@@ -35,4 +38,7 @@ export const LIST = {
   flagship: { en: 'World-class festivals', vi: 'Lễ hội lớn thế giới' },
   sponsored: { en: 'Sponsored', vi: 'Được tài trợ' },
   adHide: { en: 'Hide this ad', vi: 'Ẩn quảng cáo' },
+  // the search's artists, and the phone's next seven days
+  artists: { en: 'Artists', vi: 'Nghệ sĩ' },
+  nextWeek: { en: 'Next 7 days', vi: '7 ngày tới' },
 } satisfies Dict;

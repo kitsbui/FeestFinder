@@ -134,7 +134,7 @@ export async function EventPage({ ev, seo, lang }: { ev: EventDetail; seo: Event
                       </FactCell>
                     ) : null}
                     {ev.age ? (
-                      <FactCell icon={<IdentificationBadgeIcon size={18} aria-hidden="true" />} label={T.factAge}>{ev.age}</FactCell>
+                      <FactCell icon={<IdentificationBadgeIcon size={18} aria-hidden="true" />} label={T.factAge}>{ev.age}{ev.dressCode ? <span className="block text-fg-3">{T.dressCode}: {ev.dressCode}</span> : null}</FactCell>
                     ) : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">

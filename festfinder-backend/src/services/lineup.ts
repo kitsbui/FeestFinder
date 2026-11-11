@@ -52,6 +52,11 @@ export async function confirmLineup(q: Queryable, artistId: string, eventId: str
   return !!r;
 }
 
+/** A lineup shows on the artist's profile only once its night is live; until then the answers say so. */
+export async function isLiveEvent(q: Queryable, eventId: string): Promise<boolean> {
+  return !!(await one(q, `select 1 from events where id = $1 and status = 'live'`, [eventId]));
+}
+
 export async function disputeLineup(q: Queryable, artistId: string, eventId: string, note: string | null, now: Date): Promise<boolean> {
   const row = await one<any>(q,
     `select a.normalized_name, a.name, e.organizer_id, e.title from event_artists ea join artists a on a.id = ea.artist_id join events e on e.id = ea.event_id

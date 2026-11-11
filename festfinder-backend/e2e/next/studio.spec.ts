@@ -105,6 +105,38 @@ test.describe('Studio, signed in', () => {
     expect(problems).toEqual([]);
   });
 
+  test('the wizard: one tap for tonight, tomorrow or Saturday; a missing item leads to its field', async ({ page }) => {
+    const problems = await open(page, '/studio/new');
+    await page.getByLabel('Tên sự kiện').fill(`Đêm thử ${Date.now() % 100000}`);
+    await page.getByRole('button', { name: 'EDM', exact: true }).click();
+    await page.locator('input[type=file]').first().setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: png(400, 400) });
+    await page.locator('input[type=file]').nth(1).setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: png(1600, 900) });
+    await page.getByLabel('Trang sự kiện').fill('https://example.com/dem-thu');
+    await page.getByRole('button', { name: 'Tiếp tục' }).click();
+    // The API's day in Hồ Chí Minh City, the wizard's first city.
+    const now = new Date((await (await page.request.get('/auth/session?optional=1')).json()).time);
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+    const plus = (n: number) => new Date(Date.parse(today + 'T00:00:00Z') + n * 86_400_000).toISOString().slice(0, 10);
+    const date = page.getByLabel('Ngày', { exact: true });
+    await page.getByRole('button', { name: 'Tối nay' }).click();
+    await expect(date).toHaveValue(today);
+    await expect(page.getByLabel('Mở cửa')).toHaveValue('22:00');
+    await page.getByRole('button', { name: 'Ngày mai' }).click();
+    await expect(date).toHaveValue(plus(1));
+    await page.getByRole('button', { name: 'Thứ Bảy này' }).click();
+    await expect(date).toHaveValue(plus(6 - new Date(today + 'T00:00:00Z').getUTCDay()));
+    await expect(page.getByRole('button', { name: 'Thứ Bảy này' })).toHaveAttribute('aria-pressed', 'true');
+    // No end time: the last step lists it, and its item lands on the date's field.
+    await page.getByRole('combobox', { name: 'Địa điểm' }).fill('Kho Số 9');
+    await page.getByRole('button', { name: 'Tiếp tục' }).click();
+    await page.getByLabel(/Giá từ/).fill('250000');
+    await page.getByLabel('Link bán vé').fill('https://tickets.example.com/dem-thu');
+    await page.getByRole('button', { name: 'Tiếp tục' }).click();
+    await page.getByRole('button', { name: 'Ngày, giờ mở cửa và kết thúc' }).click();
+    await expect(date).toBeFocused();
+    expect(problems).toEqual([]);
+  });
+
   test('announcements: reach before sending, then it is listed', async ({ page }) => {
     await open(page, '/studio/announce');
     await page.getByRole('button', { name: /^Sẽ đi/ }).click();
@@ -151,6 +183,26 @@ test.describe('Studio, signed in', () => {
     await expect(page.getByRole('option', { name: /DJ Mie/ })).toHaveCount(0);
     await pick.fill('slim');
     await expect(page.getByRole('option', { name: /SlimV/ })).toBeVisible();
+  });
+
+  test('"Mời biểu diễn" on an artist’s page opens the booking request with that artist chosen', async ({ page }) => {
+    // Not on a name nobody runs.
+    await page.goto('/a/radar');
+    await page.getByRole('list', { name: 'Danh sách nghệ sĩ' }).getByRole('listitem').first().getByRole('link').first().click();
+    await expect(page.getByRole('button', { name: 'Đây là tôi' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Mời biểu diễn' })).toHaveCount(0);
+    await page.goto('/a/slimv');
+    const invite = page.getByRole('link', { name: 'Mời biểu diễn' });
+    await invite.click();
+    await expect(page).toHaveURL(/\/studio\/gigs\?invite=slimv$/);
+    const form = page.locator('form').filter({ has: page.locator('#iqDate') });
+    await expect(form.getByText('/a/slimv')).toBeVisible();
+    await expect(page.locator('#iqDate')).toBeFocused();
+    await page.locator('#iqDate').fill('2026-12-12');
+    await page.getByLabel('Lời nhắn').fill('A closing set for our year-end night');
+    await page.getByRole('button', { name: 'Gửi lời mời' }).click();
+    await expect.poll(async () => ((await (await page.request.get('/organizer/inquiries')).json()).items as { eventOn: string; artist?: { slug: string } }[])
+      .some((i) => i.artist?.slug === 'slimv' && i.eventOn === '2026-12-12')).toBe(true);
   });
 
   test('business details save', async ({ page }) => {

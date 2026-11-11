@@ -43,7 +43,7 @@ const InstallBar = dynamic(() => import('../ui/install').then((m) => m.InstallBa
 type MeItems = ComponentType<{ lang: Lang; name: string }>;
 
 /** The flags (lang-switch.tsx): a computer's alone, so a phone's script never carries them; the box keeps their size meanwhile. */
-const LangSwitch = dynamic(() => import('./lang-switch').then((m) => m.LangSwitch), { ssr: false, loading: () => <span className="kd-flags hidden w-22 desk:inline-flex" aria-hidden="true" /> });
+const LangSwitch = dynamic(() => import('./lang-switch').then((m) => m.LangSwitch), { ssr: false, loading: () => <span className="kd-flags w-22" aria-hidden="true" /> });
 
 /** The "Tìm" sheet loads the first time it opens (search-sheet.tsx). */
 const SearchSheet = dynamic(() => import('./search-sheet'), { ssr: false });
@@ -109,7 +109,8 @@ export function WebNav({ lang, current = 'none' }: { lang: Lang; current?: WebSe
             <IconButton label={T.search} className="wide:hidden" aria-haspopup="dialog" onClick={() => { track('search', 'nav')(); setSearch(true); }}>
               <MagnifyingGlassIcon size={20} aria-hidden="true" />
             </IconButton>
-            <LangSwitch lang={lang} className="hidden desk:inline-flex" />
+            {/* On a phone too (persona review, 2026-11-07): a newcomer reading English finds Vietnamese at the top. */}
+            <LangSwitch lang={lang} />
             {/* Straight to the wizard (owner, 2026-10-17); a project starts from /p. Outlined: the page's own action is the one primary on the screen.
                 On a phone it lives in "Tôi" and the footer (owner, 2026-10-18): the top is the newcomer's. */}
             <Link className={buttonClass({ size: 'sm' }, 'hidden desk:inline-flex')} href="/studio/new" onClick={track('post', 'nav')}>{T.listEvent}</Link>

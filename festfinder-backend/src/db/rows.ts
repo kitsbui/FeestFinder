@@ -686,6 +686,7 @@ export interface Rows {
     expired_at: Date | null;
     auto_translated: string[];
     ticket_links: unknown;
+    dress_code: string | null;
   };
   feedback: {
     id: string;

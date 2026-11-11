@@ -303,7 +303,6 @@ export const APP = {
   meetSpot: { en: 'Meet spot', vi: 'Điểm hẹn' },
   split: { en: 'Splitting the tickets', vi: 'Chia tiền vé' },
   perHead: { en: '{p} each', vi: '{p} mỗi người' },
-  askMoney: { en: 'Ask by {m}', vi: 'Nhắc trả qua {m}' },
   chatPh: { en: 'Message the group…', vi: 'Nhắn cả nhóm…' },
   dmPh: { en: 'Message…', vi: 'Nhắn tin…' },
   send: { en: 'Send', vi: 'Gửi' },

@@ -1,7 +1,7 @@
 'use client';
 /**
  * The app's people screens in Kính đêm: /app/plan/<event> (the group going together: who is in,
- * the meet spot, splitting the tickets with a VietQR request, the group chat; or "Rủ bạn bè"
+ * the meet spot, the share of the tickets each person owes, the group chat; or "Rủ bạn bè"
  * when there is no plan yet), /app/chat/<friend>, /app/hyped and /app/following.
  */
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
@@ -47,7 +47,7 @@ interface Msg { id: string; kind: string; body: string; fromMe: boolean; author?
 interface Plan {
   id: string; isOwner: boolean; headsLine: Pair; members: Member[];
   meetSpots: { id: 'gate' | 'cafe' | 'park'; name: Pair; time: string }[]; meetSpot: string | null;
-  split: { perHead: number; paidLine: Pair; owedCount: number; owedLine: Pair; payeeReady: boolean } | null;
+  split: { perHead: number; paidLine: Pair; owedCount: number; owedLine: Pair } | null;
   messages: Msg[];
 }
 
@@ -129,28 +129,11 @@ function PlanBody({ lang, ev }: { lang: Lang; ev: EventDetail }) {
 
 function Split({ lang, plan }: { lang: Lang; plan: Plan }) {
   const T = pick(APP, lang);
-  const kd = useKd();
   const s = plan.split!;
-  const [req, setReq] = useState<{ title: Pair; qrPayload: string; amount: number; reference: string; payeeLine: string; note: Pair } | null>(null);
-  const ask = async (method: 'vietqr' | 'momo' | 'zalopay') => {
-    try { setReq(await FF.post('/plans/' + plan.id + '/payment-requests', { method, post: true })); } catch (e) { kd.toast(FF.errorText(e, lang)); }
-  };
   return (
     <Panel className="flex flex-col gap-3 p-4">
       <div className="flex items-baseline justify-between"><span className="kd-hs">{T.split}</span><span className="kd-mb kd-num">{fill(T.perHead, { p: money(s.perHead, 'VND', lang) })}</span></div>
       <span className="kd-s">{tx(s.paidLine, lang)}{s.owedCount ? ' · ' + tx(s.owedLine, lang) : ''}</span>
-      {plan.isOwner && s.owedCount && s.payeeReady ? (
-        <div className="flex flex-wrap gap-2">
-          {(['vietqr', 'momo', 'zalopay'] as const).map((m) => <Button key={m} size="sm" onClick={() => ask(m)}>{fill(T.askMoney, { m: m === 'vietqr' ? 'VietQR' : m === 'momo' ? 'MoMo' : 'ZaloPay' })}</Button>)}
-        </div>
-      ) : null}
-      {req ? (
-        <div className="flex flex-col items-center gap-2 pt-1">
-          <QrCode value={req.qrPayload} size={180} label={tx(req.title, lang)} />
-          <span className="kd-s text-center">{req.payeeLine} · {money(req.amount, 'VND', lang)} · {req.reference}</span>
-          <span className="kd-s text-center">{tx(req.note, lang)}</span>
-        </div>
-      ) : null}
     </Panel>
   );
 }

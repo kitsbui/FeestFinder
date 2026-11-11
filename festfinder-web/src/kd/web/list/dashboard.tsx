@@ -3,16 +3,19 @@
  * The home page's body (owner, 2026-11-06): the map of every night, the highlight, the calendar.
  * Nothing filters it but an address that arrives with `?q=` (the search) or `?style=` (a style's
  * link): then the API's answer for it fills the map and the calendar, the highlight steps aside and
- * one chip above the map names it; its × goes back to every night.
+ * one chip above the map names it; its × goes back to every night. Beside it, "Tối nay · n",
+ * "Cuối tuần · n" and "Miễn phí · n" lead to their lists under the calendar. A search also names up to
+ * three artists, a row of links under those chips.
  */
-import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { XIcon } from '@phosphor-icons/react/ssr';
 import dynamic from 'next/dynamic';
 import { FF } from '@/runtime/ff';
-import { pick, tx, type Lang, type Pair } from '../../copy';
+import { fill, pick, tx, type Lang, type Pair } from '../../copy';
 import { Button, Chip, LinkButton } from '../../ui/actions';
-import { inLang } from '../../link';
-import { Calendar, type HomeEvent } from './calendar';
+import { KdLink, inLang } from '../../link';
+import { useKd } from '../../runtime';
+import { Calendar, dayName, freeNights, nextNights, weekendNights, type HomeEvent } from './calendar';
 import { LIST } from './copy';
 import { MapBoard } from './map-board';
 
@@ -30,11 +33,15 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   const T = pick(LIST, lang);
   // The cached page is every visitor's; the address is read in the browser only.
   const search = useSyncExternalStore(never, () => location.search, () => '');
-  // 0 on the server: the cached page shows no night under way; the browser knows the minute.
-  const now = useSyncExternalStore(everyMinute, minute, () => 0);
+  // 0 on the server and until the API's clock is known (a device's own clock may be wrong): the
+  // cached page shows no night under way and every one of today's; then the browser knows the minute.
+  const { clockReady } = useKd();
+  // The snapshot reads 0 until the clock is ready, so the first check after hydration matches the server's and does not re-render the page.
+  const now = useSyncExternalStore(everyMinute, () => (clockReady ? minute() : 0), () => 0);
   const [cleared, setCleared] = useState(false);
   const [found, setFound] = useState<HomeEvent[] | 'error' | null>(null);
   const [tries, setTries] = useState(0);
+  const [artists, setArtists] = useState<{ q: string; items: { slug: string; name: string }[] } | null>(null);
   const p = new URLSearchParams(cleared ? '' : search);
   const q = p.get('q')?.trim() ?? '', style = p.get('style') ?? '';
   const asked = !!(q || style);
@@ -49,6 +56,16 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
     FF.get('/events/map?' + query, { lang }).then((r: { items: HomeEvent[] }) => { if (live) setFound(r.items); }, () => { if (live) setFound('error'); });
     return () => { live = false; };
   }, [asked, q, style, city, lang, tries]);
+
+  // A search's artists: the profiles an artist runs or the team verified, three at most (followers never rank them).
+  useEffect(() => {
+    if (!q) return;
+    let on = true;
+    FF.get('/artists/suggest?' + new URLSearchParams({ q })).then((r: { items: { slug: string; name: string; claimed: boolean }[] }) => {
+      if (on) setArtists({ q, items: r.items.filter((a) => a.claimed).slice(0, 3) });
+    }, () => {});
+    return () => { on = false; };
+  }, [q]);
 
   const clear = () => {
     const keep = new URLSearchParams(location.search);
@@ -76,11 +93,19 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
   }, [live]);
 
   const shown = asked && Array.isArray(found) ? found : events;
+  // Recomputed only when the nights or the minute change, not on every render (the clock and the map's wake re-render).
+  const { next, weekend, free } = useMemo(() => ({
+    next: nextNights(shown, today, now),
+    weekend: weekendNights(shown, today, now),
+    free: freeNights(shown, today, now),
+  }), [shown, today, now]);
+  const arts = artists?.q === q ? artists.items : [];
   // Nothing to show, or the search's answer did not come: a title and the one thing to do.
   const note = found === 'error' ? { title: T.loadFailed, action: <Button size="sm" onClick={() => { setFound(null); setTries((n) => n + 1); }}>{T.retry}</Button> }
     : asked && Array.isArray(found) && !found.length ? { title: T.noMatch, action: <Button size="sm" onClick={clear}>{T.clear}</Button> }
     : !asked && !events.length ? { title: T.noUpcoming, action: <LinkButton size="sm" href={inLang('/studio/new', lang)}>{T.postEvent}</LinkButton> }
     : null;
+  const quick = !note && !!(next || weekend.length || free.length);
   return (
     <main id="main" className="flex flex-1 flex-col">
       <h1 className="sr-only">{heading}</h1>
@@ -99,13 +124,29 @@ export function Dashboard({ lang, heading, events, today, city, styles, places, 
             </div>
           </div>
         ) : null}
-        {asked ? (
-          <div className="absolute left-4 top-4 z-[3] max-w-[calc(100%-2rem)]">
-            <Chip on className="kd-glass" onClick={clear}>
-              <span className="kd-ell">{q ? `“${q}”` : tx(styles.find((s) => s.key === style)?.label, lang) ?? style}</span>
-              <XIcon size={14} aria-hidden="true" />
-              <span className="sr-only">{T.clear}</span>
-            </Chip>
+        {asked || quick || arts.length ? (
+          <div className="absolute left-4 top-4 z-[3] flex max-w-[calc(100%-2rem)] flex-col items-start gap-2">
+            {asked || quick ? (
+              <div className="flex flex-wrap gap-2">
+                {asked ? (
+                  <Chip on className="kd-glass" onClick={clear}>
+                    <span className="kd-ell">{q ? `“${q}”` : tx(styles.find((s) => s.key === style)?.label, lang) ?? style}</span>
+                    <XIcon size={14} aria-hidden="true" />
+                    <span className="sr-only">{T.clear}</span>
+                  </Chip>
+                ) : null}
+                {/* What's on tonight, in one tap from the first screen (persona review, 2026-11-07). */}
+                {next && !note ? <a href="#tonight" className="kd-chip kd-glass">{dayName(next.day, today, lang)} · {fill(T.nNights, { n: next.list.length })}</a> : null}
+                {weekend.length && !note ? <a href="#weekend" className="kd-chip kd-glass">{T.weekend} · {fill(T.nNights, { n: weekend.length })}</a> : null}
+                {free.length && !note ? <a href="#free" className="kd-chip kd-glass">{T.free} · {fill(T.nNights, { n: free.length })}</a> : null}
+              </div>
+            ) : null}
+            {arts.length ? (
+              <nav aria-label={T.artists} className="kd-glass flex max-w-full flex-wrap items-center gap-2 rounded-card p-2">
+                <span className="kd-s px-1 text-fg-2">{T.artists}</span>
+                {arts.map((a) => <KdLink key={a.slug} href={inLang('/a/' + a.slug, lang)} className="kd-chip kd-ell max-w-full">{a.name}</KdLink>)}
+              </nav>
+            ) : null}
           </div>
         ) : null}
       </section>

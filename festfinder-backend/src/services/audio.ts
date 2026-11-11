@@ -4,7 +4,7 @@ import { many } from '../db/index.ts';
 import type { Row } from '../db/rows.ts';
 import { badRequest } from '../lib/errors.ts';
 import { L } from '../lib/i18n.ts';
-import { fetchPublic, PageUnavailable, type PublicResponse } from './fetchpage.ts';
+import { fetchPublic, hostRefused, PageUnavailable, type PublicResponse } from './fetchpage.ts';
 
 /*
  * An artist's MP3 playlist (migration 061): a track is an https link to an MP3 file the artist
@@ -31,7 +31,7 @@ export const fetchAudio: AudioFetcher = (url) => fetchPublic(url, {
  * repository's two-second tone; a link with "missing" in it is not found.
  */
 export const fakeAudio: AudioFetcher = async (url) => {
-  if (/missing/.test(url)) throw new PageUnavailable('upstream', 'fake network: not found');
+  if (/missing/.test(url)) throw new PageUnavailable('upstream', 'fake network: not found', 404);
   const { readFile } = await import('node:fs/promises');
   const bytes = await readFile(new URL('../../test/fixtures/audio/tone.mp3', import.meta.url));
   return { status: 200, url, text: '', contentType: 'audio/mpeg', etag: null, lastModified: null, bytes, totalBytes: bytes.length };
@@ -80,9 +80,12 @@ export async function readTrack(ctx: Ctx, url: string): Promise<{ peaks: number[
     res = await ctx.fetchAudio(url);
   } catch (e) {
     if (e instanceof PageUnavailable) {
-      throw badRequest('audio_unavailable', e.reason === 'too_large'
-        ? L('This file is over 60 MB', 'File này lớn hơn 60 MB')
-        : e.reason === 'not_html' ? L('This link is not an MP3 file', 'Link này không phải file MP3') : L('This file cannot be read; check the link is public', 'Không đọc được file này; hãy kiểm tra link công khai'));
+      if (e.reason === 'too_large') throw badRequest('audio_unavailable', L('This file is over 60 MB', 'File này lớn hơn 60 MB'));
+      if (e.reason === 'not_html') throw badRequest('audio_unavailable', L('This link is not an MP3 file', 'Link này không phải file MP3'));
+      if (hostRefused(e)) throw badRequest('audio_unavailable', L('This link is private or wrong', 'Link này không công khai hoặc không đúng'));
+      // The file's own server did not answer: name it, as the mixes name their service.
+      const host = new URL(url).hostname;
+      throw badRequest('audio_unavailable', L(`${host} did not answer, try again later`, `${host} chưa phản hồi, thử lại sau`));
     }
     throw e;
   }

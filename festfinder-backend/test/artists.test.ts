@@ -89,7 +89,37 @@ describe('artists', () => {
     assert.ok(styles.every((s) => s.label.en && s.label.vi), 'each style is named in both languages');
   });
 
-  it('a follow made by name joins the profile at boot, and a claim takes over follows and Smart Alerts of the name', async () => {
+  it('counts an artist’s ticket clicks from confirmed shows in the last 30 days, and lists their followers for them alone', async () => {
+    const slimvUser = await env.login('slimv@example.com', 'festfinder123');
+    assert.equal((await env.as(minh).get('/me/artist/followers')).status, 404, 'a fan has no profile whose followers to list');
+    await env.as(minh).put('/me/follows/artists/slimv');
+    const list = await env.as(slimvUser).get('/me/artist/followers');
+    assert.equal(list.status, 200);
+    const items = list.body.items as { followedAt: string }[];
+    assert.ok(items.length >= 1, 'the fan who just followed is listed');
+    assert.ok(items.every((x, i) => i === 0 || items[i - 1].followedAt >= x.followedAt), 'newest first');
+    await env.as(minh).delete('/me/follows/artists/slimv');
+
+    const slimv = (await one<{ id: string }>(env.ctx.db, `select id from artists where slug = 'slimv'`))!;
+    const night = (await one<{ id: string }>(env.ctx.db, 'select id from events limit 1'))!;
+    const prior = await one<{ confirmed_at: Date | null }>(env.ctx.db, 'select confirmed_at from event_artists where event_id = $1 and artist_id = $2', [night.id, slimv.id]);
+    const before = (await env.as(slimvUser).get('/me/artist')).body.stats.ticketClicks as number;
+    const now = env.clock.now();
+    const ago = (days: number) => new Date(now.getTime() - days * 86_400_000);
+    await env.ctx.db.query(
+      `insert into event_artists (event_id, artist_id, confirmed_at) values ($1, $2, $3)
+       on conflict (event_id, artist_id) do update set confirmed_at = $3`, [night.id, slimv.id, now]);
+    const clicks = await env.ctx.db.query<{ id: string }>(
+      `insert into outbound_clicks (event_id, source, target, created_at)
+       values ($1, 'detail', 'organizer', $2), ($1, 'detail', 'organizer', $3) returning id`, [night.id, now, ago(40)]);
+    assert.equal((await env.as(slimvUser).get('/me/artist')).body.stats.ticketClicks, before + 1, 'one click in the last 30 days, on a confirmed show');
+
+    await env.ctx.db.query('delete from outbound_clicks where id = any($1)', [clicks.rows.map((r) => r.id)]);
+    if (prior) await env.ctx.db.query('update event_artists set confirmed_at = $3 where event_id = $1 and artist_id = $2', [night.id, slimv.id, prior.confirmed_at]);
+    else await env.ctx.db.query('delete from event_artists where event_id = $1 and artist_id = $2', [night.id, slimv.id]);
+  });
+
+  it('a follow made by name joins the profile at boot; a claim shows as under review until decided, takes over follows and Smart Alerts, and a runner gets no second profile', async () => {
     const minhId = (await one<{ id: string }>(env.ctx.db, `select id from users where email = 'minh@example.com'`))!.id;
     const legacy = await one<any>(env.ctx.db, `select artist_id from artist_follows where user_id = $1 and artist = 'Hoaprox'`, [minhId]);
     assert.ok(legacy.artist_id, 'the seed follow by name was linked to the Hoaprox record');
@@ -103,6 +133,9 @@ describe('artists', () => {
     const claim = await env.as(owner).post('/me/roles/artist', { claimArtistId: mie!.id, note: 'Me', proofUrl: 'https://instagram.com/djmie' });
     assert.ok(claim.status < 300, JSON.stringify(claim.body));
     const pending = await one<{ id: string }>(env.ctx.db, `select id from artist_claims where artist_id = $1 and status = 'pending'`, [mie!.id]);
+    // While it waits, the claimant's own page says so; nobody else's does.
+    assert.equal((await env.as(owner).get('/artists/dj-mie')).body.artist.claimPending, true);
+    assert.equal((await env.as().get('/artists/dj-mie')).body.artist.claimPending, false);
     const admin = await env.admin();
     const decided = await env.as(admin).post(`/admin/profile-claims/artist/${pending!.id}/decision`, { approve: true });
     assert.equal(decided.status, 200, JSON.stringify(decided.body));
@@ -111,6 +144,12 @@ describe('artists', () => {
     assert.deepEqual(alerts.artists, []);
     assert.equal((await env.as().get('/artists/dj-mie')).body.artist.kind, 'owned');
     assert.ok((await env.as().get('/artists?limit=60')).body.items.some((a: any) => a.slug === 'dj-mie'), 'now in the directory');
+    // Running a profile now: the approved claim is no longer pending, and a second profile is refused.
+    assert.equal((await env.as(owner).get('/artists/dj-mie')).body.artist.claimPending, false);
+    const hoaprox = await one<{ id: string }>(env.ctx.db, `select id from artists where slug = 'hoaprox'`);
+    const second = await env.as(owner).post('/me/roles/artist', { claimArtistId: hoaprox!.id, note: 'Me', proofUrl: 'https://instagram.com/hoaprox' });
+    assert.equal(second.status, 409, JSON.stringify(second.body));
+    assert.equal(second.body.error.code, 'has_profile');
     void fan;
   });
 
@@ -140,6 +179,17 @@ describe('artists', () => {
     const lone = await ensureArtists(env.ctx.db, ['Never Claimed']);
     assert.ok(lone.size);
     assert.equal((await env.as().get('/seo/artists/never-claimed')).status, 404, 'a name nobody claimed and no event lists has no page');
+  });
+
+  it('shares an artist’s cover, else the photo, else the site’s picture, with the framing left out', async () => {
+    const shared = async () => (await env.as().get('/seo/artists/first-timer')).body.image;
+    assert.match((await shared()).url, /\/ui\/assets\/og\.png$/);
+    await env.ctx.db.query(`update artists set image_url = 'https://img.example.com/photo.jpg#ff=50,40,1' where slug = 'first-timer'`);
+    const photo = await shared();
+    assert.deepEqual([photo.url, photo.width], ['https://img.example.com/photo.jpg', 1200]);
+    await env.ctx.db.query(`update artists set cover_url = 'https://img.example.com/cover.jpg#ff=30,20,1.2' where slug = 'first-timer'`);
+    const cover = await shared();
+    assert.deepEqual([cover.url, cover.width], ['https://img.example.com/cover.jpg', 1600]);
   });
 });
 

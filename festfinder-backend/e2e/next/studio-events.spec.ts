@@ -144,6 +144,27 @@ test.describe('Studio events', () => {
     expect(problems).toEqual([]);
   });
 
+  test('a duplicate of a dated night lands on its next occurrence, on the same weekday', async ({ page }) => {
+    const problems = await open(page, '/studio/events?status=past');
+    const table = page.getByRole('table', { name: 'Sự kiện của tôi' });
+    await table.getByRole('button', { name: 'Thao tác cho Ravolution Music Festival 2025' }).click();
+    await page.getByRole('menuitem', { name: 'Nhân bản thành nháp' }).click();
+    await expect(page).toHaveURL(/\/studio\/events\/[0-9a-f-]{36}$/);
+    const copy = page.url().split('/').pop()!;
+    const made = await (await page.request.get('/organizer/events/' + copy)).json();
+    // The edition ran on a Saturday in 2025; its copy is the next Saturday that has not started yet.
+    // The API's clock here is 2026-09-14 (playwright.next.config.ts), a Monday: the next Saturday is the 19th.
+    expect(made.startsOn).toBe('2026-09-19');
+    expect(new Date(made.startsOn + 'T00:00:00Z').getUTCDay()).toBe(6);
+    await expect(page.getByRole('button', { name: 'Gửi duyệt', exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Thêm thao tác' }).click();
+    await page.getByRole('menuitem', { name: 'Xoá bản nháp' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Xoá bản nháp' }).click();
+    await expect(page).toHaveURL(/\/studio\/events$/);
+    expect(problems).toEqual([]);
+  });
+
   test('hype goals and live updates on a live event', async ({ page }) => {
     const id = await eventId(page, 'Ravolution Warm-up · Rooftop');
     const before = (await (await page.request.get(`/organizer/events/${id}/hype-goals`)).json()).goals;

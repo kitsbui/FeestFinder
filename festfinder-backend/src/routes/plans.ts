@@ -5,16 +5,12 @@ import { json, many, one } from '../db/index.ts';
 import { badRequest, forbidden, notFound, tooMany } from '../lib/errors.ts';
 import { fill, L, type Localized } from '../lib/i18n.ts';
 import { initialsOf } from '../lib/contact.ts';
-import { randomCode } from '../lib/crypto.ts';
 import { vnd } from '../lib/format.ts';
 import { fromMinutes, toMinutes } from '../lib/time.ts';
 import { parse, uuid } from '../lib/validate.ts';
-import { buildVietQr, BANKS } from '../lib/vietqr.ts';
 import { requireUser } from '../http/guards.ts';
 import { awardSoon } from '../services/badges.ts';
 import { notifyUser } from '../services/notify.ts';
-
-const METHODS: Record<'vietqr' | 'momo' | 'zalopay', string> = { vietqr: 'VietQR', momo: 'Momo', zalopay: 'ZaloPay' };
 
 function meetSpots(ev: any): { id: 'gate' | 'cafe' | 'park'; name: Localized; time: string }[] {
   const start = ev.start_time ?? '19:00';
@@ -47,7 +43,7 @@ export default async function planRoutes(app: FastifyInstance) {
   async function presentPlan(planId: string, userId: string) {
     const plan = await loadPlan(planId, userId);
     const [owner, members, messages] = await Promise.all([
-      one<any>(ctx.db, 'select id, name, photo_url, payee_bank_bin, payee_account_no, payee_account_name from users where id = $1', [plan.owner_id]),
+      one<any>(ctx.db, 'select id, name, photo_url from users where id = $1', [plan.owner_id]),
       many<any>(ctx.db,
         `select m.user_id, m.status, m.paid, u.name, u.photo_url from group_plan_members m join users u on u.id = m.user_id
           where m.plan_id = $1 order by m.invited_at`, [planId]),
@@ -82,7 +78,6 @@ export default async function planRoutes(app: FastifyInstance) {
         owedCount: owed,
         owedAmount: unit * owed,
         owedLine: owed > 0 ? L(`${owed} still owe you ${vnd(unit * owed, 'en')}`, `${owed} người còn nợ bạn ${vnd(unit * owed, 'vi')}`) : null,
-        payeeReady: !!owner.payee_account_no,
       } : null,
       messages: messages.map((m) => ({
         id: m.id, kind: m.kind, body: m.body, payload: m.payload, createdAt: m.created_at,
@@ -243,65 +238,5 @@ export default async function planRoutes(app: FastifyInstance) {
       return m;
     });
     return { id: msg.id, kind: 'text', body, fromMe: true, createdAt: msg.created_at };
-  });
-
-  /**
-   * One request for everyone who still owes. The QR carries the per-head amount and a
-   * shared reference so the owner can match transfers. Momo and ZaloPay both scan VietQR.
-   */
-  app.post<{ Params: { id: string } }>('/plans/:id/payment-requests', async (req) => {
-    const s = requireUser(req);
-    const planId = parse(uuid, req.params.id);
-    const { method, post } = parse(z.object({ method: z.enum(['vietqr', 'momo', 'zalopay']), post: z.boolean().default(false) }), req.body);
-    const plan = await loadPlan(planId, s.user.id);
-    if (plan.owner_id !== s.user.id) throw forbidden('owner_only', L('Only the person who made the plan can request money', 'Chỉ người tạo kế hoạch gửi được yêu cầu'));
-    const owner = await one<any>(ctx.db, 'select name, payee_bank_bin, payee_account_no, payee_account_name from users where id = $1', [s.user.id]);
-    if (!owner.payee_account_no) {
-      throw badRequest('payee_missing', L('Add the bank account you want to be paid into first', 'Hãy thêm tài khoản ngân hàng nhận tiền trước'));
-    }
-    const unpaid = await many<any>(ctx.db, `select user_id from group_plan_members where plan_id = $1 and status = 'going' and not paid`, [planId]);
-    if (!unpaid.length) throw badRequest('nobody_owes', L('Everyone has paid', 'Mọi người đã trả đủ'));
-    const going = await one<any>(ctx.db, `select count(*)::int as n from group_plan_members where plan_id = $1 and status = 'going'`, [planId]);
-    const unit = await pricePerHead(ctx.db, plan);
-    const prefix = String(plan.slug).replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase();
-    const reference = `FF-${prefix}-${going.n + 1}P-${randomCode(3)}`;
-    const qrPayload = buildVietQr({ bankBin: owner.payee_bank_bin, accountNo: owner.payee_account_no, amount: unit, purpose: reference });
-    const bankName = BANKS[owner.payee_bank_bin] ?? owner.payee_bank_bin;
-    const payee = { name: owner.payee_account_name, bank: bankName, accountMasked: `•••• ${owner.payee_account_no.slice(-4)}` };
-    const amountText = vnd(unit, 'vi');
-    const chatLine = fill(L('Ticket money: {v} each. QR is in the chat, reference {r}.', 'Tiền vé: {v}/người. Mã QR ở trong chat, nội dung {r}.'), { v: amountText, r: reference });
-    const now = ctx.clock.now();
-
-    await ctx.db.tx(async (q) => {
-      const r = await one<any>(q,
-        `insert into payment_requests (plan_id, created_by, method, amount_per_head, reference, qr_payload, payee, recipient_ids, created_at)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id`,
-        [planId, s.user.id, method, unit, reference, qrPayload, json(payee), unpaid.map((u) => u.user_id), now]);
-      if (post) {
-        await q.query(`insert into group_plan_messages (plan_id, user_id, kind, body, payload, created_at) values ($1,$2,'payment_request',$3,$4,$5)`,
-          [planId, s.user.id, chatLine.vi, json({ requestId: r.id, method, amount: unit, reference, qrPayload, payee }), now]);
-        for (const u of unpaid) {
-          await notifyUser(q, now, {
-            userId: u.user_id, topic: 'friends', kind: 'plan_payment_request',
-            title: L('Ticket money request', 'Yêu cầu tiền vé'), body: chatLine, link: { screen: 'plan', planId, eventId: plan.event_id },
-          });
-        }
-      }
-    });
-
-    return {
-      method,
-      title: fill(L('Request by {m}', 'Yêu cầu qua {m}'), { m: METHODS[method] }),
-      sub: fill(L('{n} people · {v} each', '{n} người · {v} mỗi người'), { n: unpaid.length, v: amountText }),
-      amount: unit,
-      reference,
-      qrPayload,
-      payee,
-      payeeLine: `${payee.name} · ${payee.bank} ${payee.accountMasked}`,
-      chatLine,
-      transferDetails: { bank: bankName, accountNo: owner.payee_account_no, accountName: owner.payee_account_name, amount: unit, note: reference },
-      note: L('The QR carries the amount and the reference. Nothing leaves this group.', 'Mã QR đã có số tiền và nội dung chuyển khoản. Không có gì ra khỏi nhóm này.'),
-      posted: post,
-    };
   });
 }

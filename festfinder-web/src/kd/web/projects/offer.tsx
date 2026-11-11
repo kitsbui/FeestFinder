@@ -105,6 +105,7 @@ function OfferSheet({ lang, slug, kinds, packages, currency, onClose }: {
             <Input id="po-amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </>
         ) : null}
+        {kind === 'sponsor' ? <p className="kd-s">{T.noMoney}</p> : null}
         <FieldLabel htmlFor="po-msg">{T.message}</FieldLabel>
         <TextArea id="po-msg" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} />
         <FieldError>{err}</FieldError>

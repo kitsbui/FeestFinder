@@ -5,14 +5,14 @@ import type { Queryable } from '../../db/index.ts';
 import { json, many, one } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
 import { fill, GENRES, L, REJECT_REASONS, type Localized } from '../../lib/i18n.ts';
-import { citySlug, launchedCity } from '../../lib/places.ts';
+import { citySlug, launchedCity, timezoneOf } from '../../lib/places.ts';
 import { ARTIST_LINK, ORGANIZER_TYPE, type OrganizerType } from '../../lib/network.ts';
 import { cleanOrgLinks } from '../../services/organizers.ts';
 import { EVENT_TYPES, isStyle } from '../../lib/styles.ts';
 import { isEmail, normalizeEmail, slugify } from '../../lib/contact.ts';
 import { randomCode } from '../../lib/crypto.ts';
 import { vnd } from '../../lib/format.ts';
-import { atVn, toMinutes, addDays, vnDate } from '../../lib/time.ts';
+import { atVn, atZone, dateIn, daysBetween, toMinutes, addDays, vnDate } from '../../lib/time.ts';
 import { baseOf } from '../../lib/frame.ts';
 import { dateStr, imageUrl, localized, parse, timeStr, uuid } from '../../lib/validate.ts';
 import { imageChange } from '../../services/remote-images.ts';
@@ -24,7 +24,7 @@ import { draftFacts, refreshDerived, reviewSnapshot } from '../../services/event
 import { qualityScore, searchScore, type SearchFacts } from '../../services/quality.ts';
 import { assessRisk } from '../../services/risk.ts';
 import { inBackground } from '../../lib/background.ts';
-import { askArtistsToConfirm } from '../../services/lineup.ts';
+import { askArtistsToConfirm, isLiveEvent } from '../../services/lineup.ts';
 import { notifyUser } from '../../services/notify.ts';
 import type { Row } from '../../db/rows.ts';
 import { artistKey } from '../../services/artists.ts';
@@ -52,7 +52,7 @@ export function presentDraft(ev: any) {
     logoUrl: ev.logo_url, coverUrl: ev.cover_url,
     startsOn: ev.starts_on, endsOn: ev.ends_on, startTime: ev.start_time, endTime: ev.end_time,
     venue: { id: ev.venue_id, name: ev.venue_name, address: ev.address, area: ev.area, lat: ev.lat, lng: ev.lng, resolved: !!ev.venue_id || ev.lat !== null },
-    entryMode: ev.entry_mode, priceFrom: ev.price_from, capacity: ev.capacity, age: ev.age, lineup: ev.lineup,
+    entryMode: ev.entry_mode, priceFrom: ev.price_from, capacity: ev.capacity, age: ev.age, dressCode: ev.dress_code ?? null, lineup: ev.lineup,
     ticketUrl: ev.ticket_url, ticketLinks: ev.ticket_links ?? [], eventUrl: ev.event_url, brandUrl: ev.brand_url, soldOut: !!ev.sold_out,
     submittedAt: ev.submitted_at, publishedAt: ev.published_at,
     quality: qualityScore(draftFacts(ev)),
@@ -91,6 +91,8 @@ export const DraftInput = z.object({
   priceFrom: z.number().int().min(0).max(100_000_000),
   capacity: z.number().int().min(1).max(500_000).nullable(),
   age: z.enum(['All ages', '16+', '18+']),
+  /** What the night asks people to wear: one line, 120 characters at most; empty means none is asked. */
+  dressCode: z.string().trim().max(120).nullable().transform((v) => v || null),
   lineup: z.array(z.string().trim().min(1).max(100)).max(80),
   ticketUrl: z.string().url().nullable(),
   /** More sellers, each for the viewers of some countries (ISO codes); the main link serves everyone else. */
@@ -158,7 +160,7 @@ export async function applyDraft(q: Queryable, id: string, body: z.infer<typeof 
   const map: Record<string, string> = {
     title: 'title', genre: 'genre', logoUrl: 'logo_url', coverUrl: 'cover_url', startsOn: 'starts_on', endsOn: 'ends_on',
     startTime: 'start_time', endTime: 'end_time', entryMode: 'entry_mode', priceFrom: 'price_from', capacity: 'capacity',
-    age: 'age', ticketUrl: 'ticket_url', eventUrl: 'event_url', brandUrl: 'brand_url', address: 'address', area: 'area', venueName: 'venue_name',
+    age: 'age', dressCode: 'dress_code', ticketUrl: 'ticket_url', eventUrl: 'event_url', brandUrl: 'brand_url', address: 'address', area: 'area', venueName: 'venue_name',
     city: 'city', eventType: 'event_type', soldOut: 'sold_out',
   };
   for (const [k, col] of Object.entries(map)) if ((body as any)[k] !== undefined) set[col] = (body as any)[k];
@@ -405,10 +407,13 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
       // Both sides said so: the artist by reporting it, the organiser now.
       await q.query(`update event_artists set confirmed_at = $3, confirmed_by = 'both' where event_id = $1 and artist_id = $2`, [r.event_id, r.artist_id, now]);
       const to = r.owner_user_id ?? r.user_id;
+      const live = await isLiveEvent(q, r.event_id);
       if (to) await notifyUser(q, now, {
         userId: to, topic: 'artists', kind: 'lineup_accepted', dedupeKey: `lineup-accepted:${r.id}`,
         title: L(`You are on the lineup of ${r.title}`, `Bạn đã có tên trong lineup ${r.title}`),
-        body: L('The organiser added you; it shows on your profile.', 'Nhà tổ chức đã thêm bạn; show hiện trên hồ sơ của bạn.'),
+        body: live
+          ? L('The organiser added you; it shows on your profile.', 'Nhà tổ chức đã thêm bạn; show hiện trên hồ sơ của bạn.')
+          : L('The organiser added you; it shows on your profile once the event is live.', 'Nhà tổ chức đã thêm bạn; show hiện trên hồ sơ khi sự kiện lên sóng.'),
         link: { url: '/studio/artist/gigs' },
       });
     });
@@ -441,12 +446,15 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  /** "Duplicate": a new draft with the same details, for the next edition or a recurring night. Dates are left for the organiser. */
+  /** "Duplicate": a new draft with the same details on the next occurrence of a dated night (its weekdays and clock times). */
   app.post<{ Params: { id: string } }>('/organizer/events/:id/duplicate', async (req, reply) => {
     const org = await requireOrganizer(ctx, req);
     const ev = await requireOwnEvent(ctx, org, req.params.id);
-    const copy = await duplicateEvent(ctx, ev, ev.organizer_id);
-    return reply.code(201).send({ ...presentDraft(copy), message: L('Copied into a new draft. Set the dates and submit.', 'Đã sao chép thành bản nháp mới. Chọn ngày rồi gửi duyệt.') });
+    const copy = await duplicateEvent(ctx, ev, ev.organizer_id, { nextOccurrence: true });
+    const message = copy.starts_on
+      ? L('Copied into a new draft for the next night. Check it and submit.', 'Đã sao chép thành bản nháp cho đêm kế tiếp. Kiểm tra rồi gửi duyệt.')
+      : L('Copied into a new draft. Set the dates and submit.', 'Đã sao chép thành bản nháp mới. Chọn ngày rồi gửi duyệt.');
+    return reply.code(201).send({ ...presentDraft(copy), message });
   });
 
   /** What Google and AI assistants get from the organiser's listings (services/quality.ts searchChecks). */
@@ -579,19 +587,33 @@ export default async function organizerEventRoutes(app: FastifyInstance) {
   });
 }
 
-/** Copies a listing into a fresh draft for the same organiser: details, lineup and images, but no dates or history. */
-export async function duplicateEvent(ctx: Ctx, ev: any, organizerId: string): Promise<any> {
+/** The next occurrence of a dated night: the same weekdays and clock times in the city's timezone, moved by whole weeks until it starts after `now`. A multi-day night keeps its length. */
+function nextOccurrence(ev: any, now: Date): { starts_on: string; ends_on: string | null } | null {
+  if (!ev.starts_on) return null;
+  const tz = timezoneOf(ev.city);
+  const time = ev.start_time ?? '00:00';
+  const startAt = (weeks: number) => atZone(addDays(ev.starts_on, 7 * weeks), time, tz);
+  let weeks = Math.max(1, Math.floor(daysBetween(ev.starts_on, dateIn(now, tz)) / 7));
+  while (weeks > 1 && startAt(weeks - 1) > now) weeks--;
+  while (startAt(weeks) <= now) weeks++;
+  const starts_on = addDays(ev.starts_on, 7 * weeks);
+  return { starts_on, ends_on: ev.ends_on ? addDays(starts_on, daysBetween(ev.starts_on, ev.ends_on)) : null };
+}
+
+/** Copies a listing into a fresh draft for the same organiser: details, lineup and images, but no history. With `nextOccurrence` the draft takes the next night's dates. */
+export async function duplicateEvent(ctx: Ctx, ev: any, organizerId: string, opts: { nextOccurrence?: boolean } = {}): Promise<any> {
+  const dates = opts.nextOccurrence ? nextOccurrence(ev, ctx.clock.now()) : null;
   return ctx.db.tx(async (q) => {
     const title = `${ev.title}`.slice(0, 112);
     const row = await one<any>(q,
       `insert into events (slug, organizer_id, title, genre, description, city, venue_id, venue_name, address, area, lat, lng, start_time, end_time,
                            entry_mode, price_from, capacity, age, lineup, artists, art, cover_url, cover_sha256, logo_url, ticket_url, event_url, brand_url,
-                           status, previous_edition_id)
+                           status, previous_edition_id, dress_code, starts_on, ends_on)
        select $2, $3, $4, genre, description, city, venue_id, venue_name, address, area, lat, lng, start_time, end_time,
               entry_mode, price_from, capacity, age, lineup, artists, art, cover_url, cover_sha256, logo_url, ticket_url, event_url, brand_url,
-              'draft', id
+              'draft', id, dress_code, $5::date, $6::date
          from events where id = $1 returning id`,
-      [ev.id, `${slugify(title) || 'event'}-${randomCode(4).toLowerCase()}`, organizerId, title]);
+      [ev.id, `${slugify(title) || 'event'}-${randomCode(4).toLowerCase()}`, organizerId, title, dates?.starts_on ?? null, dates?.ends_on ?? null]);
     await refreshDerived(q, row.id);
     return one<any>(q, 'select * from events where id = $1', [row.id]);
   });

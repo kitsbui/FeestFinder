@@ -158,6 +158,7 @@ export const CONSOLE = {
   adDecline: { en: 'Decline', vi: 'Từ chối' },
   adActive: { en: 'Run {b}', vi: 'Chạy {b}' },
   adLine: { en: '{i} impressions · {c} clicks · {p} spent', vi: '{i} lượt hiển thị · {c} lượt bấm · đã chi {p}' },
+  adBudget: { en: 'Budget {b} · Remaining {r}', vi: 'Ngân sách {b} · Còn lại {r}' },
   rates: { en: 'CPM rates', vi: 'Giá CPM' },
   ratesSave: { en: 'Save rates', vi: 'Lưu giá' },
   noAds: { en: 'Nothing waiting', vi: 'Không có gì đang chờ' },

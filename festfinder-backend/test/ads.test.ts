@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, type TestEnv } from './helpers.ts';
 import { many, one } from '../src/db/index.ts';
+import { formatMoney } from '../src/lib/money.ts';
 
 /*
  * Advertising: an organiser asks to promote an event they posted (placements, budget, dates),
@@ -92,14 +93,17 @@ describe('advertising', () => {
     env.clock.set('2026-09-14T10:00:00+07:00');
   });
 
+  // A brand's enquiry as the form sends it; the tests below change only what they need.
+  const base = {
+    brand: 'Mây Kombucha', category: 'F&B', logoUrl: 'https://cdn.zenkai.test/logo.png', website: 'https://zenkai.test',
+    links: { instagram: 'https://instagram.com/zenkai' }, description: 'Nước tăng lực không đường cho người đi rave.',
+    productImages: ['https://cdn.zenkai.test/can.jpg', 'https://cdn.zenkai.test/pack.jpg'],
+    contactName: 'Lan Trần', email: 'lan@zenkai.test', phone: '0903 118 224', budgetAmount: 80_000_000,
+    startsOn: '2026-10-01', endsOn: '2026-10-31', placements: ['banner', 'feed'], cities: ['ho-chi-minh', 'ha-noi'],
+  };
+
   it('a brand books an ad with its details; pictures are checked links; admins are told', async () => {
-    const base = {
-      brand: 'Mây Kombucha', category: 'F&B', logoUrl: 'https://cdn.zenkai.test/logo.png', website: 'https://zenkai.test',
-      links: { instagram: 'https://instagram.com/zenkai' }, description: 'Nước tăng lực không đường cho người đi rave.',
-      productImages: ['https://cdn.zenkai.test/can.jpg', 'https://cdn.zenkai.test/pack.jpg'],
-      contactName: 'Lan Trần', email: 'lan@zenkai.test', phone: '0903 118 224', budgetAmount: 80_000_000,
-      startsOn: '2026-10-01', endsOn: '2026-10-31', placements: ['banner', 'feed'], cities: ['ho-chi-minh', 'ha-noi'],
-    };
+    env.clock.set('2026-09-14T10:00:00+07:00');
     assert.equal((await env.as().post('/ad-inquiries', base)).status, 401);
     assert.equal((await env.as(minh).post('/ad-inquiries', { ...base, website: null, links: {} })).body.error.code, 'link_required');
     assert.equal((await env.as(minh).post('/ad-inquiries', { ...base, logoUrl: 'https://cdn.zenkai.test/broken.png' })).body.error.code, 'image_unreachable');
@@ -107,6 +111,16 @@ describe('advertising', () => {
     assert.equal((await env.as(minh).post('/ad-inquiries', { ...base, startsOn: '2026-11-02' })).body.error.code, 'dates_order');
     const sent = await env.as(minh).post('/ad-inquiries', base);
     assert.equal(sent.status, 201, JSON.stringify(sent.body));
+    assert.match(sent.body.reference, /^FF-AD-[0-9A-F]{8}$/);
+    assert.equal(sent.body.reference, `FF-AD-${sent.body.id.slice(0, 8).toUpperCase()}`);
+    assert.equal(sent.body.dueOn, '2026-09-16', 'two working days after a Monday');
+    const confirm = await many<any>(env.ctx.db, `select address, payload from outbox where template = 'ad_inquiry_received'`);
+    assert.equal(confirm.length, 1, 'the contact gets one confirmation');
+    assert.equal(confirm[0].address, 'lan@zenkai.test');
+    assert.equal(confirm[0].payload.lang, 'vi');
+    assert.ok(confirm[0].payload.body.en.includes(sent.body.reference), 'the English text names the reference');
+    assert.ok(confirm[0].payload.body.vi.includes(sent.body.reference), 'the Vietnamese text names it too');
+    assert.ok(confirm[0].payload.body.vi.includes(formatMoney(80_000_000, 'VND', 'vi')), 'the budget, formatted');
     const told = await many(env.ctx.db, `select 1 from notifications where user_id = $1 and kind = 'ad_inquiry'`, [adminId]);
     assert.equal(told.length, 1);
 
@@ -131,16 +145,55 @@ describe('advertising', () => {
     assert.equal(made.body.images.length, 2);
     assert.equal(made.body.startsOn, '2026-10-01');
     assert.equal(made.body.budgetTotal, 80_000_000);
+    assert.equal(made.body.dailyCap, 2_580_646, 'the budget spread over its 31 days, rounded up');
+    assert.equal(made.body.remaining, 80_000_000);
     assert.deepEqual(made.body.cities, ['ho-chi-minh', 'ha-noi']);
     const c = await one<any>(env.ctx.db, 'select url, category from ad_campaigns where id = $1', [made.body.id]);
     assert.equal(c.url, 'https://zenkai.test');
     const back = await env.as(minh).get('/me/ad-inquiries');
-    assert.equal(back.body.items[0].status, 'approved');
-    assert.equal(back.body.items[0].reply, 'Hẹn gọi chị Lan thứ Hai để chốt banner.');
-    const minhId = (await one<{ id: string }>(env.ctx.db, `select id from users where email = 'minh@example.com'`))!.id;
-    assert.equal((await many(env.ctx.db, `select 1 from outbox where user_id = $1 and channel = 'email' and template = 'ad_inquiry'`, [minhId])).length, 1, 'by email too');
+    const item = back.body.items.find((x: any) => x.brand === 'Mây Kombucha');
+    assert.equal(item.status, 'approved');
+    assert.equal(item.reply, 'Hẹn gọi chị Lan thứ Hai để chốt banner.');
+    assert.equal(item.campaign.budgetTotal, 80_000_000);
+    assert.equal(item.campaign.remaining, 80_000_000);
+    const mailed = await many<{ address: string }>(env.ctx.db, `select address from outbox where template = 'ad_inquiry' and channel = 'email'`);
+    assert.ok(mailed.some((r) => r.address === 'minh@example.com'), 'the account hears it by email');
+    assert.ok(mailed.some((r) => r.address === 'lan@zenkai.test'), 'and the contact address the form gave');
 
     // Not before its first day.
     assert.notEqual((await env.as().get('/ads?placement=banner')).body.ad?.id, made.body.id);
+  });
+
+  it('declined, the brand hears the team’s reply at the contact address', async () => {
+    env.clock.set('2026-09-14T10:00:00+07:00');
+    const sent = await env.as(minh).post('/ad-inquiries', { ...base, brand: 'Sóng Tết', contactName: 'Song Vy', email: 'pr@song.test' });
+    assert.equal(sent.status, 201, JSON.stringify(sent.body));
+    const no = await env.as(admin).post(`/admin/ads/inquiries/${sent.body.id}/decline`, { reply: 'Lịch banner tháng 10 đã kín.' });
+    assert.equal(no.status, 200, JSON.stringify(no.body));
+    const row = await one<any>(env.ctx.db, 'select status, reply from ad_inquiries where id = $1', [sent.body.id]);
+    assert.equal(row.status, 'declined');
+    assert.equal(row.reply, 'Lịch banner tháng 10 đã kín.');
+    const mailed = await many<any>(env.ctx.db, `select 1 from outbox where template = 'ad_inquiry' and address = 'pr@song.test'`);
+    assert.equal(mailed.length, 1);
+    const back = await env.as(minh).get('/me/ad-inquiries');
+    assert.equal(back.body.items.find((x: any) => x.id === sent.body.id).status, 'declined');
+  });
+
+  it('a campaign that has spent its budget is no longer counted or served', async () => {
+    env.clock.set('2026-10-05T10:00:00+07:00');
+    const camp = (await one<{ id: string; impressions: string }>(env.ctx.db,
+      `select c.id, c.impressions from ad_campaigns c join ad_inquiries r on r.id = c.inquiry_id where r.brand = 'Mây Kombucha'`))!;
+    const before = Number(camp.impressions);
+    assert.equal((await env.as().post(`/ads/${camp.id}/impression`)).status, 202);
+    assert.equal(Number((await one<any>(env.ctx.db, 'select impressions from ad_campaigns where id = $1', [camp.id])).impressions), before + 1);
+
+    await env.ctx.db.query('update ad_campaigns set spend = budget_total where id = $1', [camp.id]);
+    assert.equal((await env.as().post(`/ads/${camp.id}/impression`)).status, 202);
+    assert.equal(Number((await one<any>(env.ctx.db, 'select impressions from ad_campaigns where id = $1', [camp.id])).impressions), before + 1, 'spent: no more impressions');
+    for (let i = 0; i < 10; i++) assert.notEqual((await env.as().get('/ads?placement=banner')).body.ad?.id, camp.id, 'spent: not served');
+
+    const back = await env.as(minh).get('/me/ad-inquiries');
+    assert.equal(back.body.items.find((x: any) => x.brand === 'Mây Kombucha').campaign.remaining, 0);
+    env.clock.set('2026-09-14T10:00:00+07:00');
   });
 });

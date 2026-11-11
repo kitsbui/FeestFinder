@@ -23,7 +23,7 @@ import { Tabs } from '../../ui/shell';
 import { Input } from '../../ui/forms';
 import { Menu, MenuItem } from '../../ui/menu';
 import { Card as Panel, Marker } from '../../ui/parts';
-import { WebFooter } from '../chrome';
+import { styleHref, WebFooter } from '../chrome';
 import { Crumbs } from '../crumbs';
 import { WEB } from '../copy';
 import { ArtistCard } from './card';
@@ -215,6 +215,7 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
   );
 
   const style = meta.styles.find((s) => s.key === f.style);
+  const pageStyle = meta.styles.find((s) => s.key === scope.style);
   const styleFamily = style ? familyOf(style.genre) : null;
   const role = roles.find((r) => r.key === f.role);
   const city = meta.cities.find((c) => c.slug === f.city);
@@ -228,6 +229,8 @@ export function DirectoryBrowser({ lang, scope, h1, first, start, meta }: {
         <div className="kd-sec">
           <div className="flex min-w-0 flex-col gap-1.5">
             <h1 id="dir-title" className="kd-d2">{title}</h1>
+            {/* /a/style/<style>: the one link the header keeps, to that style's nights on the home page. */}
+            {pageStyle ? <KdLink href={styleHref(pageStyle.key, lang)} className="kd-hit w-fit text-info hover:underline">{`${W.events} ${text(pageStyle.label, lang)}`}</KdLink> : null}
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 tab:w-auto">
           {/* An artist not listed yet starts their own profile (the role picker; signing in first). */}

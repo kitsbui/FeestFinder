@@ -10,6 +10,7 @@ import {
 } from '../lib/network.ts';
 import { bool, csv, dateStr, limit, localized, parse, timeStr, uuid } from '../lib/validate.ts';
 import { requireAdmin, requireUser } from '../http/guards.ts';
+import { decodeCursor, page } from '../http/sql.ts';
 import { CARD_COLUMNS, loadViewer, presentCard } from '../presenters/event.ts';
 import { artistKey, presentLinks, searchArtists } from '../services/artists.ts';
 import { directoryPages } from '../services/seo.ts';
@@ -55,7 +56,7 @@ import { artistKind, label, styleItem } from '../services/artists.ts';
 import { badgesOf } from '../services/badges.ts';
 import { momentsOf } from './moments.ts';
 import { mixesOf } from '../services/mixes.ts';
-import { confirmLineup, disputeLineup, lineupOf } from '../services/lineup.ts';
+import { confirmLineup, disputeLineup, isLiveEvent, lineupOf } from '../services/lineup.ts';
 import { artistCounts } from '../services/follows.ts';
 import { tracksOf } from '../services/audio.ts';
 
@@ -103,7 +104,7 @@ export default async function artistRoutes(app: FastifyInstance) {
     if (!a) throw notFound(L('Artist not found', 'Không tìm thấy nghệ sĩ'));
     const now = ctx.clock.now();
     const userId = req.session?.user?.id ?? null;
-    const [rows, past, follows, styles, organizers, venues, lineups, similar] = await Promise.all([
+    const [rows, past, follows, styles, organizers, venues, lineups, similar, claim] = await Promise.all([
       many<any>(ctx.db,
         // A profile an artist runs shows the shows they confirmed (anyone can type a name into a lineup).
         `select ${CARD_COLUMNS} from event_artists ea join events e on e.id = ea.event_id join organizers o on o.id = e.organizer_id
@@ -119,6 +120,8 @@ export default async function artistRoutes(app: FastifyInstance) {
       artistVenues(ctx.db, a.id),
       sharedLineups(ctx.db, a.id),
       similarArtists(ctx.db, a.id),
+      // The viewer's own open claim on this name: the page says it is under review.
+      userId ? one<{ id: string }>(ctx.db, `select id from artist_claims where artist_id = $1 and user_id = $2 and status = 'pending'`, [a.id, userId]) : null,
     ]);
     const [gear, badges, moments, kind, mixes, counts, tracks] = await Promise.all([gearOf(ctx.db, a.id, { includePending: false }), badgesOf(ctx.db, 'artist', a.id, now), momentsOf(ctx.db, 'artist', a.id), artistKind(ctx.db, a), mixesOf(ctx.db, a.id), artistCounts(ctx.db, a.id, a.owner_user_id), tracksOf(ctx.db, a.id)]);
     const origin = kind === 'radar' ? 'radar' : 'posted';
@@ -146,6 +149,7 @@ export default async function artistRoutes(app: FastifyInstance) {
         followingCount: counts.following,
         following: !!userId && follows.some((f) => f.user_id === userId),
         editable: !!userId && a.owner_user_id === userId,
+        claimPending: !!claim,
       },
       upcoming: cards,
       past: past.map((e) => ({ id: e.id, slug: e.slug, title: e.title, startsOn: e.starts_on, city: e.city, cityLabel: cityLabel(e.city), venue: e.venue_name })),
@@ -191,8 +195,10 @@ export default async function artistRoutes(app: FastifyInstance) {
       one<any>(ctx.db,
         `select (select count(*)::int from event_artists ea join events e on e.id = ea.event_id where ea.artist_id = $1 and ${LIVE} and e.ends_at >= $2) as upcoming,
                 (select count(*)::int from event_artists ea join events e on e.id = ea.event_id where ea.artist_id = $1 and ${PUBLIC}) as events,
-                (select count(distinct user_id)::int from artist_follows where artist_id = $1) as followers`,
-        [a.id, ctx.clock.now()]),
+                (select count(distinct user_id)::int from artist_follows where artist_id = $1) as followers,
+                (select count(*)::int from outbound_clicks oc join event_artists ea on ea.event_id = oc.event_id
+                  where ea.artist_id = $1 and ea.confirmed_at is not null and oc.created_at >= $3) as "ticketClicks"`,
+        [a.id, ctx.clock.now(), new Date(ctx.clock.now().getTime() - 30 * 86_400_000)]),
     ]);
     return {
       profile: editable(a), stats,
@@ -205,6 +211,23 @@ export default async function artistRoutes(app: FastifyInstance) {
         cities: launchedCities().map((c) => ({ value: c.slug, label: c.name })),
       },
     };
+  });
+
+  // Who follows the owner's profile, newest first (never ranked by how many follow anyone), a page at a time.
+  app.get('/me/artist/followers', async (req) => {
+    const s = requireUser(req);
+    const a = await owned(s.user.id);
+    const { cursor, limit: lim } = parse(z.object({ cursor: z.string().optional(), limit: limit(100, 50) }), req.query);
+    const offset = decodeCursor(cursor);
+    const rows = await many<{ id: string; name: string; photo_url: string | null; followed_at: Date }>(ctx.db,
+      `select u.id, u.name, u.photo_url, min(f.created_at) as followed_at
+         from artist_follows f join users u on u.id = f.user_id
+        where f.artist_id = $1
+        group by u.id, u.name, u.photo_url
+        order by followed_at desc, u.id
+        limit $2 offset $3`, [a.id, lim + 1, offset]);
+    const p = page(rows, offset, lim);
+    return { items: p.items.map((r) => ({ id: r.id, name: r.name, photoUrl: r.photo_url, followedAt: r.followed_at })), nextCursor: p.nextCursor };
   });
 
   const ProfilePatch = z.object({
@@ -315,8 +338,12 @@ export default async function artistRoutes(app: FastifyInstance) {
   app.post<{ Params: { eventId: string } }>('/me/artist/lineup/:eventId/confirm', async (req) => {
     const s = requireUser(req);
     const a = await owned(s.user.id);
-    if (!(await confirmLineup(ctx.db, a.id, parse(uuid, req.params.eventId), ctx.clock.now()))) throw notFound(L('You are not on this lineup', 'Bạn không có trong lineup này'));
-    return { ok: true, message: L('Confirmed · it shows on your profile', 'Đã xác nhận · show hiện trên hồ sơ của bạn') };
+    const eventId = parse(uuid, req.params.eventId);
+    if (!(await confirmLineup(ctx.db, a.id, eventId, ctx.clock.now()))) throw notFound(L('You are not on this lineup', 'Bạn không có trong lineup này'));
+    const live = await isLiveEvent(ctx.db, eventId);
+    return { ok: true, message: live
+      ? L('Confirmed · it shows on your profile', 'Đã xác nhận · show hiện trên hồ sơ của bạn')
+      : L('Confirmed · it shows on your profile once the event is live', 'Đã xác nhận · show hiện trên hồ sơ khi sự kiện lên sóng') };
   });
 
   app.post<{ Params: { eventId: string } }>('/me/artist/lineup/:eventId/dispute', async (req) => {

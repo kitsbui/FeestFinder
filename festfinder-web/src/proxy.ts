@@ -49,6 +49,11 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   url.searchParams.delete('_rsc');
   const { pathname, search } = url;
+  // A page opened in the browser at /gigs (the API's JSON board) goes to the artist studio's opportunities: the document only,
+  // so fetch and JSON calls to the same address still reach the API.
+  if (pathname === '/gigs' && request.method === 'GET' && (request.headers.get('accept') ?? '').includes('text/html')) {
+    return NextResponse.redirect(new URL('/studio/artist/opportunities' + search, request.nextUrl), 307);
+  }
   if (isOwn(pathname)) {
     // A page in the language this visitor reads (English when new, then their last choice: kd/lang-pref.ts).
     if (request.method === 'GET') {

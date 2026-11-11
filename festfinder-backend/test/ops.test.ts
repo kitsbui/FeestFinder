@@ -1,6 +1,6 @@
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { setup, type TestEnv } from './helpers.ts';
+import { PROTOTYPE_NOW, setup, type TestEnv } from './helpers.ts';
 import { many, one } from '../src/db/index.ts';
 
 /** The operations back office (/ops): the catalogue, venues, organiser onboarding, accounts and orders. */
@@ -166,9 +166,35 @@ describe('operations back office', () => {
     const copy = await env.as(organizer).post(`/organizer/events/${ravo.id}/duplicate`);
     assert.equal(copy.status, 201);
     assert.equal(copy.body.status, 'draft');
-    assert.equal(copy.body.startsOn, null, 'dates are left for the organiser');
+    assert.equal(copy.body.startsOn, '2026-09-26', 'the next Saturday, at the same times');
     assert.equal(copy.body.venue.resolved, true);
     assert.equal(copy.body.ticketUrl, ravo.ticketUrl ?? copy.body.ticketUrl, 'the seller\'s link comes along');
+  });
+
+  it('duplicates a dated night onto its next occurrence: same weekdays and clock times, moved by whole weeks', async () => {
+    const copyOf = async (slug: string) => {
+      const src = (await one<{ id: string }>(env.ctx.db, 'select id from events where slug = $1', [slug]))!.id;
+      const copy = await env.as(organizer).post(`/organizer/events/${src}/duplicate`);
+      assert.equal(copy.status, 201, JSON.stringify(copy.body));
+      return copy.body;
+    };
+    // a past weekly night: Saturday 20 Sep 2025, 16:00 to 02:00 → the next Saturday after the clock
+    const past = await copyOf('ravo-2025');
+    assert.equal(past.startsOn, '2026-09-19');
+    const row = await one<any>(env.ctx.db, 'select start_time, end_time, starts_at from events where id = $1', [past.id]);
+    assert.equal(row.start_time, '16:00');
+    assert.equal(row.end_time, '02:00');
+    assert.equal(new Date(row.starts_at).toISOString(), '2026-09-19T09:00:00.000Z', '16:00 in Ho Chi Minh City');
+    // a future weekly night moves exactly seven days
+    assert.equal((await copyOf('ravo-warmup')).startsOn, '2026-09-25');
+    // a two-day festival keeps its span, moved from the past to its next occurrence
+    const busId = (await one<{ id: string }>(env.ctx.db, 'select id from events where slug = $1', ['ravo-bus']))!.id;
+    await env.as(organizer).patch(`/organizer/events/${busId}`, { endsOn: '2026-10-04' });
+    env.clock.set('2026-10-20T10:00:00+07:00');
+    let span: any;
+    try { span = await copyOf('ravo-bus'); } finally { env.clock.set(PROTOTYPE_NOW); }
+    assert.equal(span.startsOn, '2026-10-24');
+    assert.equal(span.endsOn, '2026-10-25');
   });
 
   it('finds accounts; the Console can never grant or take away admin', async () => {

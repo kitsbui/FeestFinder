@@ -1,15 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { json, many, one } from '../../db/index.ts';
+import { json, many, one, type Queryable } from '../../db/index.ts';
 import { badRequest, conflict, notFound } from '../../lib/errors.ts';
 import { GENRES, L, type Localized } from '../../lib/i18n.ts';
-import { initialsOf, searchNormalize, slugify } from '../../lib/contact.ts';
-import { vnDate } from '../../lib/time.ts';
+import { initialsOf, normalizeEmail, searchNormalize, slugify } from '../../lib/contact.ts';
+import { daysBetween, vnDate } from '../../lib/time.ts';
 import { dateStr, localized, parse, uuid } from '../../lib/validate.ts';
 import { requireAdmin, type UserSession } from '../../http/guards.ts';
 import { CARD_COLUMNS, presentCard } from '../../presenters/event.ts';
 import { appendAudit } from '../../services/audit.ts';
-import { notifyOrganizer, notifyUser } from '../../services/notify.ts';
+import { enqueue, notifyOrganizer, notifyUser } from '../../services/notify.ts';
 import { cityBySlug, cityLabel } from '../../lib/places.ts';
 import { AD_CATEGORY_LABEL, BRAND_AD_PLACEMENT_LABEL, type AdCategory } from '../../lib/ads.ts';
 import { AD_REQUEST_COLUMNS, presentAdRequest } from '../organizer/ads.ts';
@@ -232,6 +232,7 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     headline: c.headline, body: c.body, cta: c.cta, url: c.url, genres: c.genres, areas: c.areas, isAlcohol: c.is_alcohol,
     impressions: c.impressions, clicks: c.clicks, ctrPct: c.impressions ? Math.round((c.clicks / c.impressions) * 10000) / 100 : null,
     spend: c.spend, budgetTotal: c.budget_total, dailyCap: c.daily_cap,
+    remaining: c.budget_total ? Math.max(0, c.budget_total - c.spend) : null,
     pacingPct: c.budget_total ? Math.min(100, Math.round((c.spend / c.budget_total) * 100)) : 0,
   });
 
@@ -260,13 +261,26 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
     };
   });
 
+  /**
+   * The team's answer also goes to the contact address the form gave, when that is not the account's
+   * own address (the account's copy goes through notifyUser). The address is never logged.
+   */
+  const mailContact = async (q: Queryable, now: Date, inq: any, title: Localized, body: Localized) => {
+    const account = inq.user_id ? await one<{ email: string | null; locale: string | null }>(q, 'select email, locale from users where id = $1', [inq.user_id]) : null;
+    const contact = normalizeEmail(inq.email ?? '');
+    if (!contact || contact === normalizeEmail(account?.email ?? '')) return;
+    await enqueue(q, inq.user_id ?? null, 'email', contact, 'ad_inquiry',
+      { lang: account?.locale ?? 'vi', title, body, link: { url: '/advertise' } }, now);
+  };
+
   app.post<{ Params: { id: string } }>('/admin/ads/inquiries/:id/approve', async (req, reply) => {
     const s = requireAdmin(req);
     const body = parse(z.object({
       placement: z.enum(['feed', 'banner', 'live']).optional(),
       genres: z.array(z.enum(GENRES)).default([]),
       areas: z.array(z.string().max(60)).default([]),
-      dailyCap: z.number().int().min(1_000_000).max(60_000_000).default(12_000_000),
+      // Left out: the budget spread over the campaign's days (see below).
+      dailyCap: z.number().int().min(1_000_000).max(60_000_000).optional(),
       budgetTotal: z.number().int().min(0).default(0),
       headline: localized.optional(), body: localized.optional(), cta: localized.optional(), url: z.string().url().optional(),
       isAlcohol: z.boolean().optional(),
@@ -281,22 +295,29 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
       // What the brand sent becomes the campaign: its logo and images, its site, its dates and cities.
       const links = Object.values((inq.links ?? {}) as Record<string, string>);
       const text = (v: string) => ({ en: v, vi: v });
+      // Without a cap of its own, the budget spread evenly over the campaign's days (both ends counted), rounded up.
+      const budget = body.budgetTotal || Number(inq.budget_amount ?? 0);
+      const from = day(inq.starts_on);
+      const to = day(inq.ends_on);
+      const days = from && to ? Math.max(1, daysBetween(from, to) + 1) : 1;
+      const dailyCap = body.dailyCap ?? (budget ? Math.max(1, Math.ceil(budget / days)) : 12_000_000);
       const c = await one<any>(q,
         `insert into ad_campaigns (inquiry_id, brand, category, logo, art, headline, body, cta, url, placement, genres, areas, is_alcohol, budget_total, daily_cap,
                                    logo_url, images, starts_on, ends_on, cities)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) returning *`,
         [inq.id, inq.brand, inq.category, initialsOf(inq.brand), AD_ART[inq.category], json(body.headline ?? text(inq.brand)), json(body.body ?? text(inq.description ?? '')),
           json(body.cta ?? { en: 'Visit', vi: 'Xem ngay' }), body.url ?? inq.website ?? links[0] ?? null, body.placement ?? inq.placements[0], body.genres, body.areas,
-          body.isAlcohol ?? inq.is_alcohol, body.budgetTotal || Number(inq.budget_amount ?? 0), body.dailyCap,
+          body.isAlcohol ?? inq.is_alcohol, budget, dailyCap,
           inq.logo_url, inq.product_images ?? [], inq.starts_on, inq.ends_on, inq.cities ?? []]);
+      const title = L(`Your ad for ${inq.brand} is approved`, `Quảng cáo ${inq.brand} đã được duyệt`);
+      const answer: Localized = body.reply ? { en: body.reply, vi: body.reply } : L('Our partnerships team will be in touch about the next steps.', 'Đội đối tác sẽ liên hệ bạn về các bước tiếp theo.');
       if (inq.user_id) {
         await notifyUser(q, now, {
           userId: inq.user_id, topic: null, kind: 'ad_inquiry', dedupeKey: `ad-inquiry-answer:${inq.id}`, email: true,
-          title: L(`Your ad for ${inq.brand} is approved`, `Quảng cáo ${inq.brand} đã được duyệt`),
-          body: body.reply ? { en: body.reply, vi: body.reply } : L('Our partnerships team will be in touch about the next steps.', 'Đội đối tác sẽ liên hệ bạn về các bước tiếp theo.'),
-          link: { url: '/advertise' },
+          title, body: answer, link: { url: '/advertise' },
         });
       }
+      await mailContact(q, now, inq, title, answer);
       await appendAudit(q, { at: now, ...admin(s), action: 'ads.campaign_created', targetType: 'campaign', targetId: c.id, targetLabel: inq.brand,
         diff: [{ f: 'placement', a: '—', b: c.placement }, { f: 'daily_cap', a: '—', b: String(c.daily_cap) }] });
       return c;
@@ -312,14 +333,15 @@ export default async function adminCatalogRoutes(app: FastifyInstance) {
       const inq = await one<any>(q, `update ad_inquiries set status = 'declined', decided_at = $2, reply = $3 where id = $1 and status = 'new' returning *`, [parse(uuid, req.params.id), now, reply || null]);
       if (!inq) throw notFound();
       await appendAudit(q, { at: now, ...admin(s), action: 'ads.inquiry_declined', targetType: 'inquiry', targetId: inq.id, targetLabel: inq.brand, diff: null });
+      const title = L(`About your ad for ${inq.brand}`, `Về quảng cáo ${inq.brand}`);
+      const answer: Localized = reply ? { en: reply, vi: reply } : L('We cannot run this one. Thank you for asking.', 'Lần này chúng tôi chưa thể chạy quảng cáo này. Cảm ơn bạn đã gửi.');
       if (inq.user_id) {
         await notifyUser(q, now, {
           userId: inq.user_id, topic: null, kind: 'ad_inquiry', dedupeKey: `ad-inquiry-answer:${inq.id}`, email: true,
-          title: L(`About your ad for ${inq.brand}`, `Về quảng cáo ${inq.brand}`),
-          body: reply ? { en: reply, vi: reply } : L('We cannot run this one. Thank you for asking.', 'Lần này chúng tôi chưa thể chạy quảng cáo này. Cảm ơn bạn đã gửi.'),
-          link: { url: '/advertise' },
+          title, body: answer, link: { url: '/advertise' },
         });
       }
+      await mailContact(q, now, inq, title, answer);
       return inq.brand;
     });
     return { ok: true, message: L(`${brand} declined`, `Đã từ chối ${brand}`) };

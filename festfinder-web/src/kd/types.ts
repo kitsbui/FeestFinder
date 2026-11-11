@@ -103,6 +103,7 @@ export interface EventDetail extends Omit<Card, 'organizer'> {
   mine: { refCode: string | null; broughtVisits: number; commissionPct: number | null; claim: { organiser: boolean; canClaim: boolean; pending: boolean } | null } | null;
   travel?: string | null;
   entryRules?: string | null;
+  dressCode?: string | null;
 }
 
 export interface Discussion {

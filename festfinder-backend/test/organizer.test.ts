@@ -192,6 +192,17 @@ describe('organizer back office (Ravolution)', () => {
     assert.ok(queue.body.items.some((i: any) => i.id === draft.body.id));
   });
 
+  it('keeps a dress code of 120 characters at most, and clears it when blank', async () => {
+    const draft = await env.as(token).post('/organizer/events', { title: 'Dress', genre: 'EDM' });
+    const set = await env.as(token).patch(`/organizer/events/${draft.body.id}`, { dressCode: 'Smart casual, no sportswear' });
+    assert.equal(set.status, 200);
+    assert.equal(set.body.dressCode, 'Smart casual, no sportswear');
+    const long = await env.as(token).patch(`/organizer/events/${draft.body.id}`, { dressCode: 'x'.repeat(121) });
+    assert.equal(long.body.error.code, 'invalid_input');
+    const blank = await env.as(token).patch(`/organizer/events/${draft.body.id}`, { dressCode: '  ' });
+    assert.equal(blank.body.dressCode, null);
+  });
+
   it('reads the inbox, replies, and gets an acknowledgement', async () => {
     const inbox = await env.as(token).get('/organizer/inbox');
     assert.equal(inbox.body.unread, 1);

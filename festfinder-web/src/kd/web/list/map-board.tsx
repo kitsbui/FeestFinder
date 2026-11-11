@@ -5,7 +5,7 @@
  * clusters, and the cities' names, placed where the map will put them. The frame is MapLibre's own
  * fit of the pins' bounds (Web Mercator, 40px padding, zoom 12 at most), so the map takes over in place.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { pick, type Lang } from '../../copy';
 import { cx } from '../../cx';
 import { moneyShort } from '../../format';
@@ -41,7 +41,8 @@ export function frame(box: Box, w: number, h: number, pad = 40, maxZoom = 12) {
   return (lng: number, lat: number) => [w / 2 + (mx(lng) - cx) * scale, h / 2 + (my(lat) - cy) * scale] as const;
 }
 
-type Dot = { x: number; y: number; items: HomeEvent[] };
+/** A pin or a cluster; `live` is the night under way it stands for (its first night). */
+type Dot = { x: number; y: number; items: HomeEvent[]; live: boolean };
 
 export function MapBoard({ lang, events, now, places }: { lang: Lang; events: HomeEvent[]; now: number; places: { name: string; at: [number, number] }[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -53,20 +54,31 @@ export function MapBoard({ lang, events, now, places }: { lang: Lang; events: Ho
     return () => ro.disconnect();
   }, []);
 
-  const dots: Dot[] = [];
-  let names: { name: string; x: number; y: number }[] = [];
-  if (size) {
-    const at = frame(boxOf(events), size.w, size.h);
-    // MapLibre's clusters gather pins within 52px.
-    for (const e of events) {
-      const [x, y] = at(e.lng, e.lat);
-      const near = dots.find((d) => Math.hypot(d.x - x, d.y - y) < 52);
-      if (near) near.items.push(e);
-      else dots.push({ x, y, items: [e] });
+  // The pins and the cities, once per change of nights, size or minute (not on every render).
+  const { dots, names } = useMemo(() => {
+    const dots: Dot[] = [];
+    // The dots a plain pin can gather into: those not under way (a night under way keeps its own, as it does on MapLibre's map).
+    const gather: Dot[] = [];
+    let names: { name: string; x: number; y: number }[] = [];
+    if (size) {
+      const at = frame(boxOf(events), size.w, size.h);
+      // MapLibre's clusters gather pins within 52px.
+      for (const e of events) {
+        const [x, y] = at(e.lng, e.lat);
+        const live = isLive(e, now);
+        const near = !live && gather.find((d) => Math.hypot(d.x - x, d.y - y) < 52);
+        if (near) near.items.push(e);
+        else {
+          const d: Dot = { x, y, items: [e], live };
+          dots.push(d);
+          if (!live) gather.push(d);
+        }
+      }
+      names = places.map((p) => { const [x, y] = at(p.at[0], p.at[1]); return { name: p.name, x, y }; })
+        .filter((p) => p.x > 0 && p.x < size.w && p.y > 0 && p.y < size.h);
     }
-    names = places.map((p) => { const [x, y] = at(p.at[0], p.at[1]); return { name: p.name, x, y }; })
-      .filter((p) => p.x > 0 && p.x < size.w && p.y > 0 && p.y < size.h);
-  }
+    return { dots, names };
+  }, [events, now, size, places]);
 
   return (
     <div ref={ref} className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -76,8 +88,8 @@ export function MapBoard({ lang, events, now, places }: { lang: Lang; events: Ho
           {d.items.length > 1 ? (
             <span className="kd-mb kd-num grid size-9 place-items-center rounded-full bg-surface-0/70 ring-1 ring-line-2">{d.items.length}</span>
           ) : (
-            <span className={cx('kd-ppin', `kd-g-${familyOf(d.items[0].genre)}`, d.items[0].approx && 'kd-ppin-approx', isLive(d.items[0], now) && 'kd-ppin-live')}>
-              {isLive(d.items[0], now) ? <EventStamp e={d.items[0]} live /> : <span className="kd-mk" />}{pinText(d.items[0], lang)}
+            <span className={cx('kd-ppin', `kd-g-${familyOf(d.items[0].genre)}`, d.items[0].approx && 'kd-ppin-approx', d.live && 'kd-ppin-live')}>
+              {d.live ? <EventStamp e={d.items[0]} live /> : <span className="kd-mk" />}{pinText(d.items[0], lang)}
             </span>
           )}
         </span>

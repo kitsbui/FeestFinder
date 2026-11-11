@@ -34,6 +34,7 @@ const PAGE = {
   performNeedsArtist: { en: 'Offer to perform from your artist profile', vi: 'Đề nghị biểu diễn bằng hồ sơ nghệ sĩ của bạn' },
   manage: { en: 'Manage', vi: 'Quản lý' },
   lineup: { en: 'Lineup', vi: 'Line-up' },
+  noMoney: { en: 'FeestFinder never handles the money.', vi: 'FeestFinder không xử lý tiền.' },
 } satisfies Dict;
 
 /** The list's lines and the page's, for a project's page and what it opens. */

@@ -15,7 +15,7 @@ import { ArrowRightIcon, CheckIcon, RocketLaunchIcon, XIcon } from '@phosphor-ic
 import { FF } from '@/runtime/ff';
 import { fill, INTL, type Pair, pick, tx } from '../copy';
 import { cx } from '../cx';
-import { money, whenShort } from '../format';
+import { money, todayIn, whenShort } from '../format';
 import { g, styleLabel } from '../genre';
 import { KdLink } from '../link';
 import dynamic from 'next/dynamic';
@@ -32,13 +32,22 @@ import { SkipLink } from '../ui/skip-link';
 import { BackLink } from '../ui/back-link';
 import { STUDIO } from './copy';
 import { useStudio } from './root';
-import { AGES, check, type City, COMMON_STYLES, type Draft, type Form, fromDraft, int, NAME_MAX, payload, type Payload, readLocal, STEP_KEYS, STYLE_MAX, STYLES, url, type Venue, writeLocal } from './wizard-model';
+import { AGES, check, type City, clearSend, COMMON_STYLES, type Draft, type Form, fromDraft, int, markSend, NAME_MAX, payload, pendingSend, type Payload, readLocal, STEP_KEYS, STYLE_MAX, STYLES, url, type Venue, writeLocal } from './wizard-model';
 import { Appeal, Lineup, Upload, VenueField } from './fields';
+
+/** A calendar day moved by n days. */
+const plus = (iso: string, n: number) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 86_400_000).toISOString().slice(0, 10);
+/** The field each missing item of the last step leads to. */
+const FIELD: Record<string, string> = { mTitle: 'evName', mGenre: 'evStyles', mLogo: 'evLogo', mCover: 'evCover', mEventUrl: 'evPage', mDates: 'evDate', mVenue: 'evVenue', mPrice: 'evPrice' };
 
 
 export function Wizard() {
   const { lang, org, events, reload, guest } = useStudio();
   const T = pick(STUDIO, lang);
+  /** Tối nay, Ngày mai and the coming Saturday, from the city's today. */
+  const quick = (today: string): [string, string, boolean][] => [
+    [T.fTonight, today, true], [T.fTomorrow, plus(today, 1), false], [T.fThisSaturday, plus(today, 6 - new Date(today + 'T00:00:00Z').getUTCDay()), false],
+  ];
   const kd = useKd();
   const [cities, setCities] = useState<City[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -123,7 +132,7 @@ export function Wizard() {
   // Autosave a moment after the last change, drafts only; before signing in, on this device at once.
   useEffect(() => {
     if (!f || !editable || sent) return;
-    const has = !!(f.title.trim() || f.styles.length || f.date || f.venueName || f.description || f.coverUrl);
+    const has = !!(f.title.trim() || f.styles.length || f.date || f.venueName || f.description || f.logoUrl || f.coverUrl);
     if (!has && !id.current) return;
     if (guest) { writeLocal(f); return; }
     const t = setTimeout(() => void persist(f), 800);
@@ -144,6 +153,38 @@ export function Wizard() {
     return events.map((e) => e.venueName).filter((n): n is string => !!n && !seen.has(n) && !!seen.add(n)).slice(0, 4);
   }, [events]);
 
+  // Saves the form as the organiser's draft, then sends it for review (the API's submit).
+  const sendForm = async (form: Form) => {
+    setBusy(true);
+    if (!(await persist(form))) { setBusy(false); return; }
+    if (live) { setBusy(false); void reload(); return; }
+    try {
+      // The listing it became (in review, or live for the team): the header stops saying "Nháp".
+      const out = await FF.post('/organizer/events/' + id.current + '/submit');
+      setDraft((d) => ({ ...(d ?? {}), ...out } as Draft));
+      setSent({ boost: 'none' });
+      FF.track('wizard_step', { kind: 'submitted', role: 'organizer' });
+      void reload();
+    } catch (e) { kd.toast(FF.errorText(e, lang)); }
+    setBusy(false);
+  };
+  // Signed in from a submit made before there was an organiser: the role picker makes it (a returning account is not asked its role again).
+  const signedIn = !!kd.user;
+  useEffect(() => {
+    if (guest && signedIn && pendingSend()) kd.openRolePicker('organizer');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when signing in changes, not on every session refresh
+  }, [guest, signedIn]);
+  // Back from the role picker: the form is the organiser's draft now, and a submit made before signing in is sent (once).
+  useEffect(() => {
+    if (guest || draft === undefined || !f) return;
+    const p = pendingSend();
+    if (!p) return;
+    clearSend();
+    setOpen(check(f).missing[0]?.step ?? 3);
+    if (p.send && !check(f).missing.length) void sendForm(f);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the page has its organiser; the send is cleared first
+  }, [guest, draft, f]);
+
   if (draft === undefined || !f) return <div className="p-6" aria-hidden="true"><div className="kd-skel h-80" /></div>;
 
   const { missing, done } = check(f);
@@ -155,26 +196,16 @@ export function Wizard() {
   const ready = !missing.length && agree;
 
   const submit = async () => {
-    // Before signing in: sign in now, then make the organiser profile; the form carries on afterwards.
+    // Before signing in: sign in now; the organiser is made, and the submit is sent once the form is back (`markSend`).
     if (guest) {
+      markSend(ready);
       writeLocal(f);
       FF.track('wizard_step', { kind: 'signin', role: 'guest' });
       if (kd.requireSignIn(undefined, T.wSignSubmit)) kd.openRolePicker('organizer');
       return;
     }
     if (!ready || busy) return;
-    setBusy(true);
-    if (!(await persist(f))) { setBusy(false); return; }
-    if (live) { setBusy(false); void reload(); return; }
-    try {
-      // The listing it became (in review, or live for the team): the header stops saying "Nháp".
-      const out = await FF.post('/organizer/events/' + id.current + '/submit');
-      setDraft((d) => ({ ...(d ?? {}), ...out } as Draft));
-      setSent({ boost: 'none' });
-      FF.track('wizard_step', { kind: 'submitted', role: 'organizer' });
-      void reload();
-    } catch (e) { kd.toast(FF.errorText(e, lang)); }
-    setBusy(false);
+    await sendForm(f);
   };
   // "Đẩy tin" asks for advertising: the form opens on the event just sent.
   const boost = () => {
@@ -295,8 +326,19 @@ export function Wizard() {
 
             {step(1, T.s2, (
               <>
+                <div className="flex flex-col gap-2">
+                  <FieldLabel htmlFor="evDate">{T.fDate}</FieldLabel>
+                  {/* One tap for the usual days (persona review, 2026-11-07), in the city's own day by the API's clock. */}
+                  {city?.timezone ? (
+                    <div className="flex flex-wrap gap-2">
+                      {quick(todayIn(city.timezone, FF.now())).map(([label, date, tonight]) => (
+                        <Chip key={label} on={f.date === date} onClick={() => set({ date, start: tonight && !f.start ? '22:00' : f.start })}>{label}</Chip>
+                      ))}
+                    </div>
+                  ) : null}
+                  <Input id="evDate" type="date" className="kd-num" value={f.date} onChange={(e) => set({ date: e.target.value })} />
+                </div>
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
-                  <div className="flex flex-col gap-2"><FieldLabel htmlFor="evDate">{T.fDate}</FieldLabel><Input id="evDate" type="date" className="kd-num" value={f.date} onChange={(e) => set({ date: e.target.value })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="evStart">{T.fDoors}</FieldLabel><Input id="evStart" type="time" className="kd-num" value={f.start} onChange={(e) => set({ start: e.target.value })} /></div>
                   <div className="flex flex-col gap-2"><FieldLabel htmlFor="evEnd">{T.fEnd}</FieldLabel><Input id="evEnd" type="time" className="kd-num" value={f.end} onChange={(e) => set({ end: e.target.value })} /></div>
                 </div>
@@ -315,6 +357,10 @@ export function Wizard() {
                     <Select id="evAge" value={f.age} onChange={(e) => set({ age: e.target.value as Form['age'] })}>
                       {AGES.map((a) => <option key={a} value={a}>{a === 'All ages' ? T.allAges : a}</option>)}
                     </Select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <FieldLabel htmlFor="evDress">{T.fDress}</FieldLabel>
+                    <Input id="evDress" value={f.dressCode} maxLength={120} onChange={(e) => set({ dressCode: e.target.value })} />
                   </div>
                 </div>
                 {next(1)}
@@ -386,7 +432,11 @@ export function Wizard() {
                   <Panel role="status" className="flex flex-col gap-2 px-4 py-3.5">
                     <span className="kd-hs flex items-center gap-2"><span className="kd-st kd-warn" aria-hidden="true" />{T.missingHead}</span>
                     {missing.map((m) => (
-                      <button key={m.key} type="button" className="kd-more" onClick={() => setOpen(m.step)}>
+                      <button key={m.key} type="button" className="kd-more" onClick={() => {
+                        setOpen(m.step);
+                        // Straight to the field, once its step is open.
+                        requestAnimationFrame(() => { const el = document.getElementById(FIELD[m.key]); el?.focus({ preventScroll: true }); el?.scrollIntoView({ block: 'center' }); });
+                      }}>
                         {T[m.key as keyof typeof T]}<ArrowRightIcon size={14} aria-hidden="true" />
                       </button>
                     ))}

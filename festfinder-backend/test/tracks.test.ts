@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { setup, type TestEnv } from './helpers.ts';
 import { emailUser } from './people.ts';
-import { mp3Peaks } from '../src/services/audio.ts';
+import { mp3Peaks, readTrack } from '../src/services/audio.ts';
+import { PageUnavailable } from '../src/services/fetchpage.ts';
 import { TRACK_ADDS } from '../src/routes/tracks.ts';
 
 describe('an artist’s MP3 playlist: ten tracks at most, measured once, played by the page', () => {
@@ -20,6 +21,14 @@ describe('an artist’s MP3 playlist: ten tracks at most, measured once, played 
     slug = (await env.ctx.db.query<{ slug: string }>(`select slug from artists where name = 'Song Waves'`)).rows[0].slug;
   });
   after(async () => { await env.close(); });
+
+  it('says why a track link is refused: private or wrong, or its server did not answer', async () => {
+    const refused = (e: unknown) => readTrack({ ...env.ctx, fetchAudio: async () => { throw e; } }, 'https://cdn.example.com/a.mp3').then(() => null, (err: { text: { en: string } }) => err.text.en);
+    assert.equal(await refused(new PageUnavailable('upstream', 'status 404', 404)), 'This link is private or wrong');
+    assert.equal(await refused(new PageUnavailable('upstream', 'socket hang up')), 'cdn.example.com did not answer, try again later');
+    assert.equal(await refused(new PageUnavailable('upstream', 'status 503', 503)), 'cdn.example.com did not answer, try again later');
+    assert.equal(await refused(new PageUnavailable('too_large')), 'This file is over 60 MB');
+  });
 
   it('reads an MP3 into 600 peaks and its length, without holding it whole', async () => {
     const out = await mp3Peaks(await readFile(new URL('./fixtures/audio/tone.mp3', import.meta.url)));

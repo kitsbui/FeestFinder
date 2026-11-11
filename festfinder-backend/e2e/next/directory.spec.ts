@@ -80,6 +80,20 @@ test.describe('the artist directory', () => {
     expect(problems).toEqual([]);
   });
 
+  test('a style’s artists link back to that style’s nights, in the page’s language', async ({ page }) => {
+    const { styles } = await meta(page);
+    const style = styles[0];
+    const problems = await open(page, `/a/style/${style.key}`);
+    const nights = page.getByRole('link', { name: `Sự kiện ${style.label.vi}`, exact: true });
+    await expect(nights).toHaveAttribute('href', `/?style=${style.key}`);
+    await nights.click();
+    await expect(page).toHaveURL(new RegExp(`/\\?style=${style.key}$`));
+    expect(problems).toEqual([]);
+
+    await open(page, `/a/style/${style.key}?lang=en`);
+    await expect(page.getByRole('link', { name: `Events ${style.label.en}`, exact: true })).toHaveAttribute('href', `/?style=${style.key}&lang=en`);
+  });
+
   test('search finds an artist by part of the name, and the card opens their page', async ({ page }) => {
     const problems = await open(page, '/a');
     await page.getByRole('searchbox', { name: 'Tìm nghệ sĩ' }).fill('slim');

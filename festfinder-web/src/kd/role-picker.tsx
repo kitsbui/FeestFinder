@@ -15,6 +15,7 @@ import { useKd } from './runtime';
 import { Button, Chip } from './ui/actions';
 import { FieldError, FieldLabel, Input } from './ui/forms';
 import { Sheet } from './ui/sheet';
+import { clearSend, pendingSend } from './studio/wizard-model';
 
 const R = {
   title: { en: 'How do you use music?', vi: 'Bạn đến với âm nhạc thế nào?' },
@@ -41,7 +42,13 @@ interface Suggestion { id: string; name: string; owned?: boolean; managed?: bool
 export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lang: Lang; start?: RoleStep; name?: string; onClose: (done: boolean) => void }) {
   const C = pick(COMMON, lang);
   const t = pick(R, lang);
-  const [step, setStep] = useState<RoleStep>(start);
+  // On the wizard a submit may be waiting for its organiser: the picker opens on that step, and the first-run question stays off.
+  const onWizard = location.pathname === '/studio/new';
+  const sending = onWizard ? pendingSend() : null;
+  const [step, setStep] = useState<RoleStep>(() => (start === 'menu' && sending ? 'organizer' : start));
+  // Already open (the first-run question, held back on the wizard) when the wizard asks for another step: that step shows.
+  const [from, setFrom] = useState(start);
+  if (start !== from) { setFrom(start); setStep(start === 'menu' && sending ? 'organizer' : start); }
   // Opened from a listed profile ("Are you this artist?"): its name, so the listing is offered to claim.
   const [name, setName] = useState(asked ?? '');
   const [roles, setRoles] = useState<Record<string, boolean>>({ dj: true });
@@ -72,6 +79,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
   };
   const choose = (to: 'artist' | 'organizer') => {
     if (craft === to && kd.session?.roles?.[to] === 'active') { location.assign(WORKSPACE[to]); return; }
+    if (to === 'artist') clearSend();
     setStep(to); setName(''); setSug(null); setErr('');
   };
 
@@ -81,7 +89,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fan = () => { FF.fire(FF.post('/me/onboarding')); onClose(true); };
+  const fan = () => { clearSend(); FF.fire(FF.post('/me/onboarding')); onClose(true); };
   const suggest = (v: string) => {
     if (timer.current) clearTimeout(timer.current);
     if (v.trim().length < 2) { setSug(null); return; }
@@ -98,7 +106,8 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
         location.assign('/studio/artist');
       } else {
         await FF.post('/me/roles/organizer', { name: name.trim(), type, city: city || null });
-        location.assign('/studio');
+        // A send waiting on the wizard goes back there: a fresh load, so the form is the organiser's draft.
+        location.assign(sending ? '/studio/new' : '/studio');
       }
     } catch (e) {
       setBusy(false);
@@ -113,7 +122,7 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
     try {
       await FF.post(step === 'artist' ? '/me/roles/artist' : '/me/roles/organizer', step === 'artist' ? { claimArtistId: id } : { claimOrganizerId: id });
       FF.fire(FF.post('/me/onboarding'));
-      onClose(true);
+      if (sending) location.assign('/studio/new'); else onClose(true);
     } catch (e) { setBusy(false); setErr(FF.errorText(e, lang)); }
   };
 
@@ -125,6 +134,8 @@ export function RolePicker({ lang, start = 'menu', name: asked, onClose }: { lan
     </button>
   );
   const list = sug ? (step === 'artist' ? sug.artists : sug.organizers) : [];
+  // The first-run question is not asked on the wizard: it would cover the send, which the next step takes up.
+  if (step === 'menu' && onWizard && !sending && kd.session?.user?.onboarded === false) return null;
 
   return (
     <Sheet title={t.title} closeLabel={C.close} onClose={fan}>
